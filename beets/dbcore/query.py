@@ -15,6 +15,7 @@
 """The Query type hierarchy for DBCore.
 """
 import re
+from operator import attrgetter
 from beets import util
 from datetime import datetime, timedelta
 
@@ -497,3 +498,257 @@ class DateQuery(FieldQuery):
             # Match any date.
             clause = '1'
         return clause, subvals
+
+
+class Sort(object):
+    """An abstract class representing a sort operation for a query into the
+    item database.
+    """
+    def select_clause(self):
+        """ Generates a select sql fragment if the sort operation requires one,
+        an empty string otherwise.
+        """
+        return ""
+
+    def union_clause(self):
+        """ Generates a union sql fragment if the sort operation requires one,
+        an empty string otherwise.
+        """
+        return ""
+
+    def order_clause(self):
+        """Generates a sql fragment to be use in a ORDER BY clause or None if
+        it's a slow query.
+        """
+        return None
+
+    def sort(self, items):
+        """Return a key function that can be used with the list.sort() method.
+        Meant to be used with slow sort, it must be implemented even for sort
+        that can be done with sql, as they might be used in conjunction with
+        slow sort.
+        """
+        return sorted(items, key=lambda x: x)
+
+    def is_slow(self):
+        return False
+
+
+class MultipleSort(Sort):
+    """Sort class that combines several sort criteria.
+    This implementation tries to implement as many sort operation in sql,
+    falling back to python sort only when necessary.
+    """
+
+    def __init__(self):
+        self.sorts = []
+
+    def add_criteria(self, sort):
+        self.sorts.append(sort)
+
+    def _sql_sorts(self):
+        """ Returns the list of sort for which sql can be used
+        """
+        # with several Sort, we can use SQL sorting only if there is only
+        # SQL-capable Sort or if the list ends with SQl-capable Sort.
+        sql_sorts = []
+        for sort in reversed(self.sorts):
+            if not sort.order_clause() is None:
+                sql_sorts.append(sort)
+            else:
+                break
+        sql_sorts.reverse()
+        return sql_sorts
+
+    def select_clause(self):
+        sql_sorts = self._sql_sorts()
+        select_strings = []
+        for sort in sql_sorts:
+            select = sort.select_clause()
+            if select:
+                select_strings.append(select)
+
+        select_string = ",".join(select_strings)
+        return select_string
+
+    def union_clause(self):
+        sql_sorts = self._sql_sorts()
+        union_strings = []
+        for sort in sql_sorts:
+            union = sort.union_clause()
+            union_strings.append(union)
+
+        return "".join(union_strings)
+
+    def order_clause(self):
+        sql_sorts = self._sql_sorts()
+        order_strings = []
+        for sort in sql_sorts:
+            order = sort.order_clause()
+            order_strings.append(order)
+
+        return ",".join(order_strings)
+
+    def is_slow(self):
+        for sort in self.sorts:
+            if sort.is_slow():
+                return True
+        return False
+
+    def sort(self, items):
+        slow_sorts = []
+        switch_slow = False
+        for sort in reversed(self.sorts):
+            if switch_slow:
+                slow_sorts.append(sort)
+            elif sort.order_clause() is None:
+                switch_slow = True
+                slow_sorts.append(sort)
+            else:
+                pass
+
+        for sort in slow_sorts:
+            items = sort.sort(items)
+        return items
+
+
+class FlexFieldSort(Sort):
+    """Sort object to sort on a flexible attribute field
+    """
+    def __init__(self, model_cls, field, is_ascending):
+        self.model_cls = model_cls
+        self.field = field
+        self.is_ascending = is_ascending
+
+    def select_clause(self):
+        """ Return a select sql fragment.
+        """
+        return "sort_flexattr{0!s}.value as flex_{0!s} ".format(self.field)
+
+    def union_clause(self):
+        """ Returns an union sql fragment.
+        """
+        union = ("LEFT JOIN {flextable} as sort_flexattr{index!s} "
+                 "ON {table}.id = sort_flexattr{index!s}.entity_id "
+                 "AND sort_flexattr{index!s}.key='{flexattr}' ").format(
+            flextable=self.model_cls._flex_table,
+            table=self.model_cls._table,
+            index=self.field, flexattr=self.field)
+        return union
+
+    def order_clause(self):
+        """ Returns an order sql fragment.
+        """
+        order = "ASC" if self.is_ascending else "DESC"
+        return "flex_{0} {1} ".format(self.field, order)
+
+    def sort(self, items):
+        return sorted(items, key=attrgetter(self.field),
+                      reverse=(not self.is_ascending))
+
+
+class FixedFieldSort(Sort):
+    """Sort object to sort on a fixed field
+    """
+    def __init__(self, field, is_ascending=True):
+        self.field = field
+        self.is_ascending = is_ascending
+
+    def order_clause(self):
+        order = "ASC" if self.is_ascending else "DESC"
+        return "{0} {1}".format(self.field, order)
+
+    def sort(self, items):
+        return sorted(items, key=attrgetter(self.field),
+                      reverse=(not self.is_ascending))
+
+
+class SmartArtistSort(Sort):
+    """ Sort Album or Item on artist sort fields, defaulting back on
+        artist field if the sort specific field is empty.
+    """
+    def __init__(self, model_cls, is_ascending=True):
+        self.model_cls = model_cls
+        self.is_ascending = is_ascending
+
+    def select_clause(self):
+        return ""
+
+    def union_clause(self):
+        return ""
+
+    def order_clause(self):
+        order = "ASC" if self.is_ascending else "DESC"
+        if 'albumartist_sort' in self.model_cls._fields:
+            exp1 = 'albumartist_sort'
+            exp2 = 'albumartist'
+        elif 'artist_sort' in self.model_cls_fields:
+            exp1 = 'artist_sort'
+            exp2 = 'artist'
+        else:
+            return ""
+
+        order_str = ('(CASE {0} WHEN NULL THEN {1} '
+                     'WHEN "" THEN {1} '
+                     'ELSE {0} END) {2} ').format(exp1, exp2, order)
+        return order_str
+
+
+class ComputedFieldSort(Sort):
+
+    def __init__(self, model_cls, field, is_ascending=True):
+        self.is_ascending = is_ascending
+        self.field = field
+        self._getters = model_cls._getters()
+
+    def is_slow(self):
+        return True
+
+    def sort(self, items):
+        return sorted(items, key=lambda x: self._getters[self.field](x),
+                      reverse=(not self.is_ascending))
+
+special_sorts = {'smartartist': SmartArtistSort}
+
+
+def build_sql(model_cls, query, sort):
+    """ Generate a sql statement (and the values that must be injected into it)
+    from a query, sort and a model class. Query and sort objects are returned
+    only for slow query and slow sort operation.
+    """
+    where, subvals = query.clause()
+    if where is not None:
+        query = None
+
+    if not sort:
+        sort_select = ""
+        sort_union = ""
+        sort_order = ""
+        sort = None
+    elif isinstance(sort, basestring):
+        sort_select = ""
+        sort_union = ""
+        sort_order = " ORDER BY {0}".format(sort) \
+            if sort else ""
+        sort = None
+    elif isinstance(sort, Sort):
+        select_clause = sort.select_clause()
+        sort_select = " ,{0} ".format(select_clause) \
+            if select_clause else ""
+        sort_union = sort.union_clause()
+        order_clause = sort.order_clause()
+        sort_order = " ORDER BY {0}".format(order_clause) \
+            if order_clause else ""
+        if sort.is_slow():
+            sort = None
+
+    sql = ("SELECT {table}.* {sort_select} FROM {table} {sort_union} WHERE "
+           "{query_clause} {sort_order}").format(
+        sort_select=sort_select,
+        sort_union=sort_union,
+        table=model_cls._table,
+        query_clause=where or '1',
+        sort_order=sort_order
+    )
+
+    return sql, subvals, query, sort

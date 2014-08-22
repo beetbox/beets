@@ -42,7 +42,7 @@ def _items_for_query(lib, playlist, album=False):
         query_strings = [query_strings]
     model = library.Album if album else library.Item
     query = dbcore.OrQuery(
-        [library.get_query(q, model) for q in query_strings]
+        [library.get_query_sort(q, model)[0] for q in query_strings]
     )
 
     # Execute query, depending on type.
