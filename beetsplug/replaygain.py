@@ -135,7 +135,7 @@ class CommandBackend(Backend):
 
         supported_items = filter(self.format_supported, album.items())
         if len(supported_items) != len(album.items()):
-            log.debug('replaygain: tracks are of unsupported format')
+            log.debug(u'replaygain: tracks are of unsupported format')
             return AlbumGain(None, [])
 
         output = self.compute_gain(supported_items, True)
@@ -577,12 +577,12 @@ class ReplayGainPlugin(BeetsPlugin):
         in the item, nothing is done.
         """
         if not self.track_requires_gain(item):
-            log.info(u'Skipping track {0} - {1}'.format(item.artist,
-                                                        item.title))
+            log.info(u'Skipping track {0} - {1}'
+                     .format(item.artist,item.title))
             return
 
-        log.info(u'analyzing {0} - {1}'.format(item.artist,
-                                               item.title))
+        log.info(u'analyzing {0} - {1}'
+                 .format(item.artist,item.title))
 
         try:
             track_gains = self.backend_instance.compute_track_gain([item])

@@ -66,7 +66,7 @@ def _tags_for(obj, min_weight=None):
         else:
             res = obj.get_top_tags()
     except PYLAST_EXCEPTIONS as exc:
-        log.debug(u'last.fm error: %s' % unicode(exc))
+        log.debug(u'last.fm error: {0}'.format(exc))
         return []
 
     # Filter by weight (optionally).
@@ -368,10 +368,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
                         item.store()
-                        log.info(
-                            u'genre for track {0} - {1} ({2}): {3}'. format(
-                                item.artist, item.title, src, item.genre
-                            )
+                        log.info(u'genre for track {0} - {1} ({2}): {3}'
+                                 .format(item.artist, item.title, src,
+                                         item.genre)
                         )
 
                     if write:
