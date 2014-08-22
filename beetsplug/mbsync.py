@@ -64,13 +64,29 @@ def mbsync_albums(lib, query, move, pretend, write):
             log.info(u'Release ID not found: {0}'.format(a.mb_albumid))
             continue
 
+        # Construct an hash mapping recording MBIDs to their information. A
+        # release can have recording MBIDs that appear multiple times in the
+        # same release.
+        track_index = {}
+        for track_info in album_info.tracks:
+            if track_info.track_id in track_index:
+                track_index[track_info.track_id].append(track_info)
+            else:
+                track_index[track_info.track_id] = [track_info]
+
         # Construct a track mapping according to MBIDs. This should work
-        # for albums that have missing or extra tracks.
+        # for albums that have missing or extra tracks. If a mapping is
+        # ambiguous, the items' disc and track number need to match in order
+        # for an item to be mapped.
         mapping = {}
         for item in items:
-            for track_info in album_info.tracks:
-                if item.mb_trackid == track_info.track_id:
-                    mapping[item] = track_info
+            candidates = track_index.get(item.mb_trackid, [])
+            if len(candidates) == 1:
+                mapping[item] = candidates[0]
+                continue
+            for c in candidates:
+                if c.medium_index == item.track and c.medium == item.disc:
+                    mapping[item] = c
                     break
 
         # Apply.
