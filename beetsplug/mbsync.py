@@ -20,6 +20,7 @@ from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from beets import config
+from collections import defaultdict
 
 log = logging.getLogger('beets')
 
@@ -64,30 +65,27 @@ def mbsync_albums(lib, query, move, pretend, write):
             log.info(u'Release ID not found: {0}'.format(a.mb_albumid))
             continue
 
-        # Construct an hash mapping recording MBIDs to their information. A
-        # release can have recording MBIDs that appear multiple times in the
-        # same release.
-        track_index = {}
+        # Map recording MBIDs to their information. Recordings can appear
+        # multiple times on a release, so each MBID maps to a list of TrackInfo
+        # objects.
+        track_index = defaultdict(list)
         for track_info in album_info.tracks:
-            if track_info.track_id in track_index:
-                track_index[track_info.track_id].append(track_info)
-            else:
-                track_index[track_info.track_id] = [track_info]
+            track_index[track_info.track_id].append(track_info)
 
         # Construct a track mapping according to MBIDs. This should work
-        # for albums that have missing or extra tracks. If a mapping is
-        # ambiguous, the items' disc and track number need to match in order
-        # for an item to be mapped.
+        # for albums that have missing or extra tracks. If there are multiple
+        # copies of a recording, they are disambiguated using their disc and
+        # track number.
         mapping = {}
         for item in items:
-            candidates = track_index.get(item.mb_trackid, [])
+            candidates = track_index[item.mb_trackid]
             if len(candidates) == 1:
                 mapping[item] = candidates[0]
-                continue
-            for c in candidates:
-                if c.medium_index == item.track and c.medium == item.disc:
-                    mapping[item] = c
-                    break
+            else:
+                for c in candidates:
+                    if c.medium_index == item.track and c.medium == item.disc:
+                        mapping[item] = c
+                        break
 
         # Apply.
         with lib.transaction():
