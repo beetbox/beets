@@ -264,7 +264,7 @@ def slugify(text):
         text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
         text = unicode(re.sub('[-\s]+', ' ', text))
     except UnicodeDecodeError:
-        log.exception("Failing to normalize '%s'" % (text))
+        log.exception(u"Failing to normalize '{0}'".format(text))
     return text
 
 
@@ -347,7 +347,7 @@ def is_lyrics(text, artist=None):
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
-        log.debug("Ignoring too short lyrics '%s'" % text)
+        log.debug(u"Ignoring too short lyrics '{0}'".format(text))
         return 0
     elif nbLines < 5:
         badTriggersOcc.append('too_short')
@@ -365,7 +365,7 @@ def is_lyrics(text, artist=None):
                                                   text, re.I))
 
     if badTriggersOcc:
-        log.debug('Bad triggers detected: %s' % badTriggersOcc)
+        log.debug(u'Bad triggers detected: {0}'.format(badTriggersOcc))
 
     return len(badTriggersOcc) < 2
 
@@ -394,8 +394,8 @@ def scrape_lyrics_from_url(url):
             tag.name = 'p'          # keep tag contents
 
     except Exception, e:
-        log.debug('Error %s when replacing containing marker by p marker' % e,
-                  exc_info=True)
+        log.debug('Error {0} when replacing containing marker by p marker'
+                  .format(e,exc_info=True))
 
     # Make better soup from current soup! The previous unclosed <p> sections
     # are now closed.  Use str() rather than prettify() as it's more
@@ -437,7 +437,7 @@ def fetch_google(artist, title):
     data = json.load(data)
     if 'error' in data:
         reason = data['error']['errors'][0]['reason']
-        log.debug(u'google lyrics backend error: %s' % reason)
+        log.debug(u'google lyrics backend error: {0}'.format(reason))
         return
 
     if 'items' in data.keys():
@@ -453,7 +453,7 @@ def fetch_google(artist, title):
             lyrics = sanitize_lyrics(lyrics)
 
             if is_lyrics(lyrics, artist):
-                log.debug(u'got lyrics from %s' % item['displayLink'])
+                log.debug(u'got lyrics from {0}'.format(item['displayLink']))
                 return lyrics
 
 
@@ -514,8 +514,8 @@ class LyricsPlugin(BeetsPlugin):
         """
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
-            log.log(loglevel, u'lyrics already present: %s - %s' %
-                              (item.artist, item.title))
+            log.log(loglevel, u'lyrics already present: {0} - {1}'
+                    .format((item.artist, item.title)))
             return
 
         lyrics = None
@@ -530,7 +530,7 @@ class LyricsPlugin(BeetsPlugin):
             log.log(loglevel, u'fetched lyrics: %s - %s' %
                               (item.artist, item.title))
         else:
-            log.log(loglevel, u'lyrics not found: %s - %s' %
+            log.log(loglevel, u'lyrics not found: {0} - {1}'
                               (item.artist, item.title))
             fallback = self.config['fallback'].get()
             if fallback:
@@ -553,7 +553,7 @@ class LyricsPlugin(BeetsPlugin):
             if lyrics:
                 if isinstance(lyrics, str):
                     lyrics = lyrics.decode('utf8', 'ignore')
-                log.debug(u'got lyrics from backend: {0}'.format(
-                    backend.__name__
-                ))
+                log.debug(u'got lyrics from backend: {0}'
+                          .format(backend.__name__)
+                )
                 return lyrics.strip()

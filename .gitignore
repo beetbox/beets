@@ -6,6 +6,7 @@
 .svn
 .tox
 .coverage
+.idea
 
 # file patterns
 

@@ -40,19 +40,19 @@ def fetch_item_tempo(lib, loglevel, item, write):
     """
     # Skip if the item already has the tempo field.
     if item.bpm:
-        log.log(loglevel, u'bpm already present: %s - %s' %
-                          (item.artist, item.title))
+        log.log(loglevel, u'bpm already present: {0} - {1}'
+                          .format(item.artist, item.title))
         return
 
     # Fetch tempo.
     tempo = get_tempo(item.artist, item.title, item.length)
     if not tempo:
-        log.log(loglevel, u'tempo not found: %s - %s' %
-                          (item.artist, item.title))
+        log.log(loglevel, u'tempo not found: {0} - {1}'
+                          .format(item.artist, item.title))
         return
 
-    log.log(loglevel, u'fetched tempo: %s - %s' %
-                      (item.artist, item.title))
+    log.log(loglevel, u'fetched tempo: {0} - {1}'
+                      .format(item.artist, item.title))
     item.bpm = int(tempo)
     if write:
         item.try_write()

@@ -60,14 +60,14 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             return self.get_albums(query)
         except DiscogsAPIError as e:
-            log.debug('Discogs API Error: %s (query: %s' % (e, query))
+            log.debug(u'Discogs API Error: {0} (query: {1})'.format(e, query))
             return []
 
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
         """
-        log.debug('Searching discogs for release %s' % str(album_id))
+        log.debug(u'Searching Discogs for release {0}'.format(str(album_id)))
         # Discogs-IDs are simple integers. We only look for those at the end
         # of an input string as to avoid confusion with other metadata plugins.
         # An optional bracket can follow the integer, as this is how discogs
@@ -82,8 +82,8 @@ class DiscogsPlugin(BeetsPlugin):
             getattr(result, 'title')
         except DiscogsAPIError as e:
             if e.message != '404 Not Found':
-                log.debug('Discogs API Error: %s (query: %s)'
-                          % (e, result._uri))
+                log.debug(u'Discogs API Error: {0} (query: {1})'
+                          .format(e, result._uri))
             return None
         return self.get_album_info(result)
 
@@ -225,7 +225,7 @@ class DiscogsPlugin(BeetsPlugin):
         if match:
             medium, index = match.groups()
         else:
-            log.debug('Invalid discogs position: %s' % position)
+            log.debug(u'Invalid Discogs position: {0}'.format(position))
             medium = index = None
         return medium or None, index or None
 

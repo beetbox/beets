@@ -81,7 +81,7 @@ def _save_state(state):
         with open(config['statefile'].as_filename(), 'w') as f:
             pickle.dump(state, f)
     except IOError as exc:
-        log.error(u'state file could not be written: %s' % unicode(exc))
+        log.error(u'state file could not be written: {0}'.format(exc))
 
 
 # Utilities for reading and writing the beets progress file, which
@@ -339,7 +339,8 @@ class ImportSession(object):
             # Either accept immediately or prompt for input to decide.
             if self.want_resume is True or \
                self.should_resume(toppath):
-                log.warn('Resuming interrupted import of %s' % toppath)
+                log.warn(u'Resuming interrupted import of {0}'.format(
+                    util.displayable_path(toppath)))
                 self._is_resuming[toppath] = True
             else:
                 # Clear progress; we're starting from the top.
@@ -446,13 +447,13 @@ class ImportTask(object):
 
     def remove_duplicates(self, lib):
         duplicate_items = self.duplicate_items(lib)
-        log.debug('removing %i old duplicated items' %
-                  len(duplicate_items))
+        log.debug(u'removing {0} old duplicated items'
+                  .format(len(duplicate_items)))
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
-                log.debug(u'deleting duplicate %s' %
-                          util.displayable_path(item.path))
+                log.debug(u'deleting duplicate {0}'
+                          .format(util.displayable_path(item.path)))
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
@@ -634,11 +635,13 @@ class ImportTask(object):
             ))
             self.replaced_items[item] = dup_items
             for dup_item in dup_items:
-                log.debug('replacing item %i: %s' %
-                          (dup_item.id, displayable_path(item.path)))
+                log.debug(u'replacing item {0}: {1}'
+                          .format((dup_item.id,
+                                   displayable_path(item.path))))
                 dup_item.remove()
-        log.debug('%i of %i items replaced' % (len(self.replaced_items),
-                                               len(self.imported_items())))
+        log.debug(u'{0} of {1} items replaced'
+                  .format((len(self.replaced_items),
+                           len(self.imported_items()))))
 
     def choose_match(self, session):
         """Ask the session which match should apply and apply it.
@@ -958,17 +961,17 @@ def read_tasks(session):
         archive_task = None
         if ArchiveImportTask.is_archive(syspath(toppath)):
             if not (session.config['move'] or session.config['copy']):
-                log.warn("Archive importing requires either "
+                log.warn(u"Archive importing requires either "
                          "'copy' or 'move' to be enabled.")
                 continue
 
-            log.debug('extracting archive {0}'
+            log.debug(u'extracting archive {0}'
                       .format(displayable_path(toppath)))
             archive_task = ArchiveImportTask(toppath)
             try:
                 archive_task.extract()
             except Exception as exc:
-                log.error('extraction failed: {0}'.format(exc))
+                log.error(u'extraction failed: {0}'.format(exc))
                 continue
 
             # Continue reading albums from the extracted directory.
@@ -1036,8 +1039,8 @@ def query_tasks(session):
     else:
         # Search for albums.
         for album in session.lib.albums(session.query):
-            log.debug('yielding album %i: %s - %s' %
-                      (album.id, album.albumartist, album.album))
+            log.debug(u'yielding album {0}: {1} - {2}'
+                      .format((album.id, album.albumartist, album.album)))
             items = list(album.items())
 
             # Clear IDs from re-tagged items so they appear "fresh" when
@@ -1062,7 +1065,7 @@ def lookup_candidates(session, task):
         return
 
     plugins.send('import_task_start', session=session, task=task)
-    log.debug('Looking up: %s' % displayable_path(task.paths))
+    log.debug(u'Looking up: {0}'.format(displayable_path(task.paths)))
     task.lookup_candidates()
 
 

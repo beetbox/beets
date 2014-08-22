@@ -909,10 +909,10 @@ def _configure(options):
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
-        log.debug('user configuration: {0}'.format(
+        log.debug(u'user configuration: {0}'.format(
             util.displayable_path(config_path)))
     else:
-        log.debug('no user configuration found at {0}'.format(
+        log.debug(u'no user configuration found at {0}'.format(
             util.displayable_path(config_path)))
 
     log.debug(u'data directory: {0}'
