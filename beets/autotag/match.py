@@ -404,7 +404,7 @@ def tag_album(items, search_artist=None, search_album=None,
     likelies, consensus = current_metadata(items)
     cur_artist = likelies['artist']
     cur_album = likelies['album']
-    log.debug(u'Tagging {0} - {1}'.format((cur_artist, cur_album)))
+    log.debug(u'Tagging {0} - {1}'.format(cur_artist, cur_album))
 
     # The output result (distance, AlbumInfo) tuples (keyed by MB album
     # ID).

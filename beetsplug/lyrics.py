@@ -497,7 +497,7 @@ class LyricsPlugin(BeetsPlugin):
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
             log.log(loglevel, u'lyrics already present: {0} - {1}'
-                    .format((item.artist, item.title)))
+                    .format(item.artist, item.title))
             return
 
         artist = remove_ft_artist_suffix(item.artist)

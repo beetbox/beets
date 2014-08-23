@@ -630,12 +630,12 @@ class ImportTask(object):
             self.replaced_items[item] = dup_items
             for dup_item in dup_items:
                 log.debug(u'replacing item {0}: {1}'
-                          .format((dup_item.id,
-                                   displayable_path(item.path))))
+                          .format(dup_item.id,
+                                  displayable_path(item.path)))
                 dup_item.remove()
         log.debug(u'{0} of {1} items replaced'
-                  .format((len(self.replaced_items),
-                           len(self.imported_items()))))
+                  .format(len(self.replaced_items),
+                          len(self.imported_items())))
 
     def choose_match(self, session):
         """Ask the session which match should apply and apply it.
@@ -904,8 +904,7 @@ def read_tasks(session):
                 item = library.Item.from_path(toppath)
             except mediafile.UnreadableFileError:
                 log.warn(u'unreadable file: {0}'.format(
-                    util.displayable_path(toppath)
-                ))
+                    util.displayable_path(toppath)))
                 continue
             if session.config['singletons']:
                 yield SingletonImportTask(toppath, item)
@@ -974,7 +973,7 @@ def query_tasks(session):
         # Search for albums.
         for album in session.lib.albums(session.query):
             log.debug(u'yielding album {0}: {1} - {2}'
-                      .format((album.id, album.albumartist, album.album)))
+                      .format(album.id, album.albumartist, album.album))
             items = list(album.items())
 
             # Clear IDs from re-tagged items so they appear "fresh" when
