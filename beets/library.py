@@ -398,7 +398,7 @@ class Item(LibModel):
         try:
             mediafile = MediaFile(syspath(path),
                                   id3v23=beets.config['id3v23'].get(bool))
-        except (OSError, IOError) as exc:
+        except (OSError, IOError, UnreadableFileError) as exc:
             raise ReadError(self.path, exc)
 
         mediafile.update(self)
