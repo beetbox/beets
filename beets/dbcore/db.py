@@ -24,7 +24,7 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
-from .query import MatchQuery
+from .query import MatchQuery, build_sql
 from .types import BASE_TYPE
 
 
@@ -483,40 +483,64 @@ class Results(object):
     """An item query result set. Iterating over the collection lazily
     constructs LibModel objects that reflect database rows.
     """
-    def __init__(self, model_class, rows, db, query=None):
+    def __init__(self, model_class, rows, db, query=None, sort=None):
         """Create a result set that will construct objects of type
         `model_class`, which should be a subclass of `LibModel`, out of
         the query result mapping in `rows`. The new objects are
-        associated with the database `db`. If `query` is provided, it is
-        used as a predicate to filter the results for a "slow query" that
-        cannot be evaluated by the database directly.
+        associated with the database `db`.
+        If `query` is provided, it is used as a predicate to filter the results
+        for a "slow query" that cannot be evaluated by the database directly.
+        If `sort` is provided, it is used to sort the full list of results
+        before returning. This means it is a "slow sort" and all objects must
+        be built before returning the first one.
         """
         self.model_class = model_class
         self.rows = rows
         self.db = db
         self.query = query
+        self.sort = sort
 
     def __iter__(self):
         """Construct Python objects for all rows that pass the query
         predicate.
         """
-        for row in self.rows:
-            # Get the flexible attributes for the object.
-            with self.db.transaction() as tx:
-                flex_rows = tx.query(
-                    'SELECT * FROM {0} WHERE entity_id=?'.format(
-                        self.model_class._flex_table
-                    ),
-                    (row['id'],)
-                )
-            values = dict(row)
-            flex_values = dict((row['key'], row['value']) for row in flex_rows)
+        if self.sort:
+            # Slow sort. Must build the full list first.
+            objects = []
+            for row in self.rows:
+                obj = self._make_model(row)
+                # check the predicate if any
+                if not self.query or self.query.match(obj):
+                    objects.append(obj)
+            # Now that we have the full list, we can sort it
+            objects = self.sort.sort(objects)
+            for o in objects:
+                yield o
+        else:
+            for row in self.rows:
+                obj = self._make_model(row)
+                # check the predicate if any
+                if not self.query or self.query.match(obj):
+                    yield obj
 
-            # Construct the Python object and yield it if it passes the
-            # predicate.
-            obj = self.model_class._awaken(self.db, values, flex_values)
-            if not self.query or self.query.match(obj):
-                yield obj
+    def _make_model(self, row):
+        # Get the flexible attributes for the object.
+        with self.db.transaction() as tx:
+            flex_rows = tx.query(
+                'SELECT * FROM {0} WHERE entity_id=?'.format(
+                    self.model_class._flex_table
+                ),
+                (row['id'],)
+            )
+
+        cols = dict(row)
+        values = dict((k, v) for (k, v) in cols.items()
+                      if not k[:4] == 'flex')
+        flex_values = dict((row['key'], row['value']) for row in flex_rows)
+
+        # Construct the Python object
+        obj = self.model_class._awaken(self.db, values, flex_values)
+        return obj
 
     def __len__(self):
         """Get the number of matching objects.
@@ -739,24 +763,20 @@ class Database(object):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, order_by=None):
+    def _fetch(self, model_cls, query, sort_order=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
         Query object, or None (to fetch everything). If provided,
-        `order_by` is a SQLite ORDER BY clause for sorting.
-        """
-        where, subvals = query.clause()
+       `sort_order` is either a SQLite ORDER BY clause for sorting or a
+        Sort object.
+         """
 
-        sql = "SELECT * FROM {0} WHERE {1}".format(
-            model_cls._table,
-            where or '1',
-        )
-        if order_by:
-            sql += " ORDER BY {0}".format(order_by)
+        sql, subvals, query, sort = build_sql(model_cls, query, sort_order)
+
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
 
-        return Results(model_cls, rows, self, None if where else query)
+        return Results(model_cls, rows, self, query, sort)
 
     def _get(self, model_cls, id):
         """Get a Model object by its id or None if the id does not
