@@ -17,7 +17,8 @@ discogs-client library.
 """
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
-from discogs_client import DiscogsAPIError, Release, Search
+from discogs_client import Release, Client
+from discogs_client.exceptions import DiscogsAPIError
 import beets
 import discogs_client
 import logging
@@ -42,6 +43,8 @@ class DiscogsPlugin(BeetsPlugin):
         self.config.add({
             'source_weight': 0.5,
         })
+        self.discogs_client = Client('beets/%s +http://beets.radbox.org/' %
+                                     beets.__version__)
 
     def album_distance(self, items, album_info, mapping):
         """Returns the album distance.
@@ -101,7 +104,7 @@ class DiscogsPlugin(BeetsPlugin):
         # can also negate an otherwise positive result.
         query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
         albums = []
-        for result in Search(query).results():
+        for result in self.discogs_client.search(query):
             if isinstance(result, Release):
                 albums.append(self.get_album_info(result))
             if len(albums) >= 5:
@@ -113,7 +116,7 @@ class DiscogsPlugin(BeetsPlugin):
         """
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
-        artist, artist_id = self.get_artist(result.data['artists'])
+        artist, artist_id = self.get_artist([a.data for a in result.artists])
         # Use `.data` to access the tracklist directly instead of the
         # convenient `.tracklist` property, which will strip out useful artist
         # information and leave us with skeleton `Artist` objects that will
