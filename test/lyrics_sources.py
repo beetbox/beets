@@ -164,7 +164,8 @@ class LyricsScrapingPluginTest(unittest.TestCase):
             # a random improvement in the scraping algo: we want to
             # be noticed if it's the case.
             if is_lyrics_content_ok(s['title'], res):
-                log.debug(u'Source {0} actually return valid lyrics!'.format(s['url']))
+                log.debug(u'Source {0} actually return valid lyrics!'
+                          .format(s['url']))
 
     def test_is_page_candidate(self):
         for s in self.sourcesOk:

@@ -408,7 +408,8 @@ def tag_album(items, search_artist=None, search_album=None,
         if not (search_artist and search_album):
             # No explicit search terms -- use current metadata.
             search_artist, search_album = cur_artist, cur_album
-        log.debug(u'Search terms: {0} - {1}'.format(search_artist, search_album))
+        log.debug(u'Search terms: {0} - {1}'.format(search_artist,
+                                                    search_album))
 
         # Is this album likely to be a "various artist" release?
         va_likely = ((not consensus['artist']) or
@@ -466,7 +467,8 @@ def tag_item(item, search_artist=None, search_title=None,
     # Search terms.
     if not (search_artist and search_title):
         search_artist, search_title = item.artist, item.title
-    log.debug(u'Item search terms: {0} - {1}'.format(search_artist, search_title))
+    log.debug(u'Item search terms: {0} - {1}'.format(search_artist,
+                                                     search_title))
 
     # Get and evaluate candidate metadata.
     for track_info in hooks.item_candidates(item, search_artist, search_title):

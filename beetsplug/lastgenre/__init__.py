@@ -370,8 +370,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         item.store()
                         log.info(u'genre for track {0} - {1} ({2}): {3}'
                                  .format(item.artist, item.title, src,
-                                         item.genre)
-                        )
+                                         item.genre))
 
                     if write:
                         item.try_write()
@@ -385,22 +384,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             album = task.album
             album.genre, src = self._get_genre(album)
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
-                src, album.genre
-            ))
+                src, album.genre))
             album.store()
 
             if 'track' in self.sources:
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
                     log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                        src, item.genre
-                    ))
+                        src, item.genre))
                     item.store()
 
         else:
             item = task.item
             item.genre, src = self._get_genre(item)
             log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                src, item.genre
-            ))
+                src, item.genre))
             item.store()
