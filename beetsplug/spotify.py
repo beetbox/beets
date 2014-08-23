@@ -63,7 +63,8 @@ class SpotifyPlugin(BeetsPlugin):
             self.config['show_failures'].set(True)
 
         if self.config['mode'].get() not in ['list', 'open']:
-            log.warn(u'{0} is not a valid mode'.format(self.config['mode'].get()))
+            log.warn(u'{0} is not a valid mode'
+                     .format(self.config['mode'].get()))
             return False
 
         self.opts = opts
@@ -112,7 +113,8 @@ class SpotifyPlugin(BeetsPlugin):
             try:
                 r.raise_for_status()
             except HTTPError as e:
-                log.debug(u'URL returned a {0} error'.format(e.response.status_code))
+                log.debug(u'URL returned a {0} error'
+                          .format(e.response.status_code))
                 failures.append(search_url)
                 continue
 
@@ -128,13 +130,13 @@ class SpotifyPlugin(BeetsPlugin):
             # Simplest, take the first result
             chosen_result = None
             if len(r_data) == 1 or self.config['tiebreak'].get() == "first":
-                log.debug(u'Spotify track(s) found, count: {0}'.format(len(r_data)))
+                log.debug(u'Spotify track(s) found, count: {0}'
+                          .format(len(r_data)))
                 chosen_result = r_data[0]
             elif len(r_data) > 1:
                 # Use the popularity filter
                 log.debug(u'Most popular track chosen, count: {0}'
-                          .format(len(r_data))
-                )
+                          .format(len(r_data)))
                 chosen_result = max(r_data, key=lambda x: x['popularity'])
 
             if chosen_result:
@@ -147,16 +149,14 @@ class SpotifyPlugin(BeetsPlugin):
         if failure_count > 0:
             if self.config['show_failures'].get():
                 log.info(u'{0} track(s) did not match a Spotify ID:'
-                         .format(failure_count)
-                )
+                         .format(failure_count))
                 for track in failures:
                     log.info(u'track: {0}'.format(track))
                 log.info(u'')                             # Is this necesssary
             else:
                 log.warn(u'{0} track(s) did not match a Spotify ID;\n'
                          u'use --show-failures to display'
-                         .format(failure_count)
-                )
+                         .format(failure_count))
 
         return results
 

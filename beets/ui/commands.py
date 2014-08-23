@@ -1298,7 +1298,8 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
             if move:
                 cur_path = obj.path
                 if lib.directory in ancestry(cur_path):  # In library?
-                    log.debug(u'moving object {0}'.format(displayable_path(cur_path)))
+                    log.debug(u'moving object {0}'
+                              .format(displayable_path(cur_path)))
                     obj.move()
 
             obj.store()
@@ -1386,7 +1387,7 @@ def move_items(lib, dest, query, copy, album):
     entity = 'album' if album else 'item'
     log.info('{0} {1} {2}s.'.format(action, len(objs), entity))
     for obj in objs:
-        log.debug(u'moving: {0}'.format(displayable_pathobj.path)))
+        log.debug(u'moving: {0}'.format(util.displayable_pathobj.path))
 
         obj.move(copy, basedir=dest)
         obj.store()

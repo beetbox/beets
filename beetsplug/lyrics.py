@@ -375,7 +375,7 @@ def scrape_lyrics_from_url(url):
 
     except Exception, e:
         log.debug('Error {0} when replacing containing marker by p marker'
-                  .format(e,exc_info=True))
+                  .format(e, exc_info=True))
 
     # Make better soup from current soup! The previous unclosed <p> sections
     # are now closed.  Use str() rather than prettify() as it's more
@@ -554,6 +554,5 @@ class LyricsPlugin(BeetsPlugin):
                 if isinstance(lyrics, str):
                     lyrics = lyrics.decode('utf8', 'ignore')
                 log.debug(u'got lyrics from backend: {0}'
-                          .format(backend.__name__)
-                )
+                          .format(backend.__name__))
                 return lyrics.strip()

@@ -54,7 +54,7 @@ def acoustid_match(path):
         duration, fp = acoustid.fingerprint_file(util.syspath(path))
     except acoustid.FingerprintGenerationError as exc:
         log.error(u'fingerprinting of {0} failed: {1}'
-                  .format(displayable_path(repr(path)), str(exc)))
+                  .format(util.displayable_path(repr(path)), str(exc)))
         return None
     _fingerprints[path] = fp
     try:
@@ -62,9 +62,10 @@ def acoustid_match(path):
                               meta='recordings releases')
     except acoustid.AcoustidError as exc:
         log.debug(u'fingerprint matching {0} failed: {1}'
-                  .format(displayable_path(repr(path)), str(exc)))
+                  .format(util.displayable_path(repr(path)), str(exc)))
         return None
-    log.debug(u'chroma: fingerprinted {0}'.format(displayable_path(repr(path))))
+    log.debug(u'chroma: fingerprinted {0}'
+              .format(util.displayable_path(repr(path))))
 
     # Ensure the response is usable and parse it.
     if res['status'] != 'ok' or not res.get('results'):

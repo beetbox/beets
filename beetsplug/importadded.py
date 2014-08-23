@@ -64,9 +64,9 @@ def record_import_mtime(item, source, destination):
 
     mtime = os.stat(util.syspath(source)).st_mtime
     item_mtime[destination] = mtime
-    log.debug(u"Recorded mtime {0} for item '{1}' imported from '{2}'"
-              .format(mtime, util.displayable_path(destination),
-              util.displayable_path(source)))
+    log.debug(u"Recorded mtime {0} for item '{1}' imported from '{2}'".format(
+        mtime, util.displayable_path(destination),
+        util.displayable_path(source)))
 
 
 @ImportAddedPlugin.listen('album_imported')

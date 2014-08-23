@@ -578,11 +578,11 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         if not self.track_requires_gain(item):
             log.info(u'Skipping track {0} - {1}'
-                     .format(item.artist,item.title))
+                     .format(item.artist, item.title))
             return
 
         log.info(u'analyzing {0} - {1}'
-                 .format(item.artist,item.title))
+                 .format(item.artist, item.title))
 
         try:
             track_gains = self.backend_instance.compute_track_gain([item])

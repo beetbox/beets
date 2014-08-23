@@ -64,7 +64,8 @@ class ScrubPlugin(BeetsPlugin):
 
             # Walk through matching files and remove tags.
             for item in lib.items(ui.decargs(args)):
-                log.info(u'scrubbing: {0}'.format(util.displayable_path(item.path)))
+                log.info(u'scrubbing: {0}'.format(
+                    util.displayable_path(item.path)))
 
                 # Get album art if we need to restore it.
                 if opts.write:
