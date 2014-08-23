@@ -383,7 +383,7 @@ def _add_candidate(items, results, info):
             log.debug(u'Ignored. Penalty: {0}'.format(penalty))
             return
 
-    log.debug(u'Success. Distance: {0:2.2f}'.format(dist))
+    log.debug(u'Success. Distance: {0}'.format(dist))
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
                                               extra_items, extra_tracks)
 
