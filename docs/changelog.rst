@@ -9,6 +9,9 @@ This release adds **sorting** to beets queries. See :ref:`query-sort`.
 Fixes:
 
 * Invalid state files don't crash the importer.
+* The :doc:`/plugins/lyrics` only strips featured artists and
+  parenthesized title suffixes if no lyrics for the original artist and
+  title were found.
 
 
 1.3.7 (August 22, 2014)
