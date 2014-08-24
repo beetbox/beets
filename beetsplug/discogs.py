@@ -109,9 +109,9 @@ class DiscogsPlugin(BeetsPlugin):
     def get_album_info(self, result):
         """Returns an AlbumInfo object for a discogs Release object.
         """
+        artist, artist_id = self.get_artist([a.data for a in result.artists])
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
-        artist, artist_id = self.get_artist([a.data for a in result.artists])
         # Use `.data` to access the tracklist directly instead of the
         # convenient `.tracklist` property, which will strip out useful artist
         # information and leave us with skeleton `Artist` objects that will
