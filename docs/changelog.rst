@@ -18,6 +18,8 @@ Fixes:
   need to upgrade to the latest version of the library to use the
   correspondingly new version of the plugin (e.g., with
   ``pip install -U discogs-client``). Thanks to Andriy Kohut.
+* Fix a crash when writing files that can't be read. Thanks to Jocelyn De La
+  Rosa.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
