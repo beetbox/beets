@@ -65,7 +65,7 @@ def _open_state():
     try:
         with open(config['statefile'].as_filename()) as f:
             return pickle.load(f)
-    except (IOError, EOFError):
+    except:
         return {}
 
 

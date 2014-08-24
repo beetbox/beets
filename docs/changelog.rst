@@ -6,6 +6,10 @@ Changelog
 
 This release adds **sorting** to beets queries. See :ref:`query-sort`.
 
+Fixes:
+
+* Invalid state files don't crash the importer.
+
 
 1.3.7 (August 22, 2014)
 -----------------------

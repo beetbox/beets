@@ -1197,6 +1197,13 @@ class IncrementalImportTest(unittest.TestCase, TestHelper):
         importer.run()
         self.assertEqual(len(self.lib.items()), 2)
 
+    def test_invalid_state_file(self):
+        importer = self.create_importer()
+        with open(self.config['statefile'].as_filename(), 'w') as f:
+            f.write('000')
+        importer.run()
+        self.assertEqual(len(self.lib.albums()), 1)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
