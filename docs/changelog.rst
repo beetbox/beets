@@ -12,6 +12,7 @@ Fixes:
 * The :doc:`/plugins/lyrics` only strips featured artists and
   parenthesized title suffixes if no lyrics for the original artist and
   title were found.
+* Fix a crash when reading some files with missing tags.
 
 
 1.3.7 (August 22, 2014)

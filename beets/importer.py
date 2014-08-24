@@ -65,7 +65,12 @@ def _open_state():
     try:
         with open(config['statefile'].as_filename()) as f:
             return pickle.load(f)
-    except:
+    except Exception as exc:
+        # The `pickle` module can emit all sorts of exceptions during
+        # unpickling, including ImportError. We use a catch-all
+        # exception to avoid enumerating them all (the docs don't even have a
+        # full list!).
+        log.debug(u'state file could not be read: {0}'.format(exc))
         return {}
 
 
