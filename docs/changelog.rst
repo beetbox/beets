@@ -9,10 +9,17 @@ This release adds **sorting** to beets queries. See :ref:`query-sort`.
 Fixes:
 
 * Invalid state files don't crash the importer.
-* The :doc:`/plugins/lyrics` only strips featured artists and
+* :doc:`/plugins/lyrics`: Only strip featured artists and
   parenthesized title suffixes if no lyrics for the original artist and
   title were found.
 * Fix a crash when reading some files with missing tags.
+* :doc:`/plugins/discogs`: Compatibility with the new 2.0 version of the
+  `discogs_client`_ Python library. If you were using the old version, you wil
+  need to upgrade to the latest version of the library to use the
+  correspondingly new version of the plugin (e.g., with
+  ``pip install -U discogs-client``). Thanks to Andriy Kohut.
+
+.. _discogs_client: https://github.com/discogs/discogs_client
 
 
 1.3.7 (August 22, 2014)

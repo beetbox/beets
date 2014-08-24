@@ -98,7 +98,7 @@ setup(
         'beatport': ['requests'],
         'fetchart': ['requests'],
         'chroma': ['pyacoustid'],
-        'discogs': ['discogs-client'],
+        'discogs': ['discogs-client>=2.0.0'],
         'echonest': ['pyechonest'],
         'echonest_tempo': ['pyechonest'],
         'lastgenre': ['pylast'],
