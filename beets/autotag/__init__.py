@@ -14,12 +14,9 @@
 
 """Facilities for automatically determining files' correct metadata.
 """
-import os
 import logging
-import re
 
-from beets import library, mediafile, config
-from beets.util import ancestry, displayable_path
+from beets import config
 
 # Parts of external interface.
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch  # noqa
