@@ -237,8 +237,8 @@ class TestHelper(object):
         path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(count):
             item = Item.from_path(str(path))
-            item.album = u'\xc3\xa4lbum {0}'.format(i)  # Check unicode paths
-            item.title = u't\xc3\x8ftle {0}'.format(i)
+            item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
+            item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
             item.move(copy=True)
             item.store()

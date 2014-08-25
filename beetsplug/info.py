@@ -21,42 +21,30 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import mediafile
 from beets import util
+from beets.util import displayable_path
 
 
 def run(lib, opts, args):
-    """Print tag info for each file referenced by args.
+    """Print tag info or library data for each file referenced by args.
 
     Main entry point for the `beet info ARGS...` command.
+    """
+    if opts.library:
+        print_library_info(lib, args)
+    else:
+        print_tag_info(lib, args)
+
+def print_tag_info(lib, args):
+    """Print tag info for each file referenced by args.
 
     If an argument is a path pointing to an existing file, then the tags
     of that file are printed. All other arguments are considered
     queries, and for each item matching all those queries the tags from
     the file are printed.
     """
-    paths, query = parse_args(args)
-
-    first = True
-    for path in paths:
-        if not first:
-            ui.print_()
-        print_tags(path)
-        first = False
-
-    if not query:
-        return
-
-    for item in lib.items(*query):
-        if not first:
-            ui.print_()
-        print_tags(item.path)
-        first = False
-
-
-def parse_args(args):
-    """Split `args` into a tuple of paths and querys.
-    """
     if not args:
         raise ui.UserError('no file specified')
+
     paths = []
     query = []
     for arg in args:
@@ -64,34 +52,63 @@ def parse_args(args):
             paths.append(util.normpath(arg))
         else:
             query.append(arg)
-    return paths, query
+
+    if query:
+        for item in lib.items(query):
+            paths.append(item.path)
+
+    first = True
+    for path in paths:
+        if not first:
+            ui.print_()
+        try:
+            data = tag_data(path)
+        except mediafile.UnreadableFileError:
+            ui.print_('cannot read file: {0}'.format(
+                util.displayable_path(path)
+            ))
+        else:
+            print_data(path, data)
+        first = False
 
 
-def print_tags(path):
-    # Set up fields to output.
+def print_library_info(lib, queries):
+    """Print library data for each item matching all queries
+    """
+    first = True
+    for item in lib.items(queries):
+        if not first:
+            ui.print_()
+        print_data(item.path, library_data(item))
+        first = False
+
+
+def tag_data(path):
     fields = list(mediafile.MediaFile.readable_fields())
-    fields.remove('art')
     fields.remove('images')
+    mf = mediafile.MediaFile(path)
+    tags = {}
+    for field in fields:
+        tags[field] = getattr(mf, field)
+    tags['art'] = mf.art is not None
+    return tags
 
-    # Line format.
-    other_fields = ['album art']
-    maxwidth = max(len(name) for name in fields + other_fields)
+
+def library_data(item):
+    return dict(item.formatted())
+
+
+def print_data(path, data):
+    maxwidth = max(len(key) for key in data)
     lineformat = u'{{0:>{0}}}: {{1}}'.format(maxwidth)
 
-    ui.print_(path)
-    try:
-        mf = mediafile.MediaFile(path)
-    except mediafile.UnreadableFileError:
-        ui.print_('cannot read file: {0}'.format(
-            util.displayable_path(path)
-        ))
-        return
+    ui.print_(displayable_path(path))
 
-    # Basic fields.
-    for name in fields:
-        ui.print_(lineformat.format(name, getattr(mf, name)))
-    # Extra stuff.
-    ui.print_(lineformat.format('album art', mf.art is not None))
+    for field in sorted(data):
+        value = data[field]
+        if isinstance(value, list):
+            value = u'; '.join(value)
+        ui.print_(lineformat.format(field, value))
 
 
 class InfoPlugin(BeetsPlugin):
@@ -99,4 +116,6 @@ class InfoPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('info', help='show file metadata')
         cmd.func = run
+        cmd.parser.add_option('-l', '--library', action='store_true',
+                              help='show library fields instead of tags')
         return [cmd]
