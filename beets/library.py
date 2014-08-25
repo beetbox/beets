@@ -216,6 +216,54 @@ class LibModel(dbcore.Model):
         plugins.send('database_change', lib=self._db)
 
 
+class FormattedItemMapping(dbcore.db.FormattedMapping):
+    """Add lookup for album level fields.
+    """
+
+    def __init__(self, item, for_path=False):
+        super(FormattedItemMapping, self).__init__(item, for_path)
+        self.album = item.get_album()
+        self.album_keys = []
+        if self.album:
+            for key in self.album.keys(True):
+                if key in Album.item_keys or key not in item._fields.keys():
+                    self.album_keys.append(key)
+        self.all_keys = set(self.model_keys).union(self.album_keys)
+
+    def _get(self, key):
+        """Get the value for a key, either from the album or the item.
+        Raise a KeyError for invalid keys.
+        """
+        if key in self.album_keys:
+            return self._get_formatted(self.album, key)
+        elif key in self.model_keys:
+            return self._get_formatted(self.model, key)
+        else:
+            raise KeyError(key)
+
+    def __getitem__(self, key):
+        """Get the value for a key. Certain unset values are remapped.
+        """
+        value = self._get(key)
+
+        # `artist` and `albumartist` fields fall back to one another.
+        # This is helpful in path formats when the album artist is unset
+        # on as-is imports.
+        if key == 'artist' and not value:
+            return self._get('albumartist')
+        elif key == 'albumartist' and not value:
+            return self._get('artist')
+        else:
+            return value
+
+    def __iter__(self):
+        return iter(self.all_keys)
+
+    def __len__(self):
+        return len(self.all_keys)
+
+
+
 class Item(LibModel):
     _table = 'items'
     _flex_table = 'item_attributes'
@@ -295,6 +343,8 @@ class Item(LibModel):
     field. Only these fields are read from disk in `read` and written in
     `write`.
     """
+
+    _formatter = FormattedItemMapping
 
     @classmethod
     def _getters(cls):
@@ -523,12 +573,6 @@ class Item(LibModel):
 
     # Templating.
 
-    def _formatted_mapping(self, for_path=False):
-        """Get a mapping containing string-formatted values from either
-        this item or the associated album, if any.
-        """
-        return FormattedItemMapping(self, for_path)
-
     def destination(self, fragment=False, basedir=None, platform=None,
                     path_formats=None):
         """Returns the path in the library directory designated for the
@@ -602,56 +646,6 @@ class Item(LibModel):
             return subpath
         else:
             return normpath(os.path.join(basedir, subpath))
-
-
-class FormattedItemMapping(dbcore.db.FormattedMapping):
-    """A `dict`-like formatted view of an item that inherits album fields.
-
-    The accessor ``mapping[key]`` returns the formated version of either
-    ``item[key]`` or ``album[key]``. Here `album` is the album
-    associated to `item` if it exists.
-    """
-    def __init__(self, item, for_path=False):
-        super(FormattedItemMapping, self).__init__(item, for_path)
-        self.album = item.get_album()
-        self.album_keys = []
-        if self.album:
-            for key in self.album.keys(True):
-                if key in Album.item_keys or key not in item._fields.keys():
-                    self.album_keys.append(key)
-        self.all_keys = set(self.model_keys).union(self.album_keys)
-
-    def _get(self, key):
-        """Get the value for a key, either from the album or the item.
-        Raise a KeyError for invalid keys.
-        """
-        if key in self.album_keys:
-            return self.album._get_formatted(key, self.for_path)
-        elif key in self.model_keys:
-            return self.model._get_formatted(key, self.for_path)
-        else:
-            raise KeyError(key)
-
-    def __getitem__(self, key):
-        """Get the value for a key. Certain unset values are remapped.
-        """
-        value = self._get(key)
-
-        # `artist` and `albumartist` fields fall back to one another.
-        # This is helpful in path formats when the album artist is unset
-        # on as-is imports.
-        if key == 'artist' and not value:
-            return self._get('albumartist')
-        elif key == 'albumartist' and not value:
-            return self._get('artist')
-        else:
-            return value
-
-    def __iter__(self):
-        return iter(self.all_keys)
-
-    def __len__(self):
-        return len(self.all_keys)
 
 
 class Album(LibModel):
@@ -1219,7 +1213,7 @@ class DefaultTemplateFunctions(object):
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = album._get_formatted(disambiguator, True)
+        disam_value = album.formatted(True).get(disambiguator)
         res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res
