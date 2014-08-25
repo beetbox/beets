@@ -98,13 +98,8 @@ class DiscogsPlugin(BeetsPlugin):
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
         query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
-        albums = []
-        for result in self.discogs_client.search(query):
-            if isinstance(result, Release):
-                albums.append(self.get_album_info(result))
-            if len(albums) >= 5:
-                break
-        return albums
+        releases = self.discogs_client.search(query, type='release').page(1)
+        return [self.get_album_info(release) for release in releases[:5]]
 
     def get_album_info(self, result):
         """Returns an AlbumInfo object for a discogs Release object.
