@@ -6,6 +6,9 @@ Changelog
 
 This release adds **sorting** to beets queries. See :ref:`query-sort`.
 
+Features:
+* :doc:`/plugins/info`: Files can be specified through library queries.
+
 Fixes:
 
 * Invalid state files don't crash the importer.

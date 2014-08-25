@@ -80,12 +80,13 @@ def capture_stdout():
     'spam'
     """
     org = sys.stdout
-    sys.stdout = StringIO()
+    sys.stdout = capture = StringIO()
     sys.stdout.encoding = 'utf8'
     try:
         yield sys.stdout
     finally:
         sys.stdout = org
+        print(capture.getvalue())
 
 
 def has_program(cmd, args=['--version']):
@@ -288,6 +289,11 @@ class TestHelper(object):
         else:
             lib = Library(':memory:')
         beets.ui._raw_main(list(args), lib)
+
+    def run_with_output(self, *args):
+        with capture_stdout() as out:
+            self.run_command(*args)
+        return out.getvalue()
 
     def create_temp_dir(self):
         """Create a temporary directory and assign it into
