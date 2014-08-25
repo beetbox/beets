@@ -24,6 +24,8 @@ Fixes:
   more accurately reflects the number of albums in the database.
 * :doc:`/plugins/convert`: Avoid crashes when tags cannot be written to newly
   converted files.
+* Formatting templates with item data no longer confusingly shows album-level
+  data when the two are inconsistent.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
