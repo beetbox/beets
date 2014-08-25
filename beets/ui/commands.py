@@ -1186,6 +1186,7 @@ def show_stats(lib, query, exact):
     total_items = 0
     artists = set()
     albums = set()
+    album_artists = set()
 
     for item in items:
         if exact:
@@ -1195,6 +1196,7 @@ def show_stats(lib, query, exact):
         total_time += item.length
         total_items += 1
         artists.add(item.artist)
+        album_artists.add(item.albumartist)
         albums.add(item.album)
 
     size_str = '' + ui.human_bytes(total_size)
@@ -1205,8 +1207,10 @@ def show_stats(lib, query, exact):
 Total time: {1} ({2:.2f} seconds)
 Total size: {3}
 Artists: {4}
-Albums: {5}""".format(total_items, ui.human_seconds(total_time), total_time,
-                      size_str, len(artists), len(albums)))
+Albums: {5}
+Album artists: {6}""".format(total_items, ui.human_seconds(total_time),
+                             total_time, size_str, len(artists), len(albums),
+                             len(album_artists)))
 
 
 def stats_func(lib, opts, args):
