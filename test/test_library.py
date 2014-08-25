@@ -478,7 +478,19 @@ class ItemFormattedMappingTest(_common.LibTestCase):
         formatted = self.i.formatted()
         self.assertEqual(formatted.get('other_field', 'default'), 'default')
 
-    def test_album_field_overrides_item_field(self):
+    def test_item_precedence(self):
+        album = self.lib.add_album([self.i])
+        album['artist'] = 'foo'
+        album.store()
+        self.assertNotEqual('foo', self.i.formatted().get('artist'))
+
+    def test_album_flex_field(self):
+        album = self.lib.add_album([self.i])
+        album['flex'] = 'foo'
+        album.store()
+        self.assertEqual('foo', self.i.formatted().get('flex'))
+
+    def test_album_field_overrides_item_field_for_path(self):
         # Make the album inconsistent with the item.
         album = self.lib.add_album([self.i])
         album.album = 'foo'
@@ -487,7 +499,7 @@ class ItemFormattedMappingTest(_common.LibTestCase):
         self.i.store()
 
         # Ensure the album takes precedence.
-        formatted = self.i.formatted()
+        formatted = self.i.formatted(for_path=True)
         self.assertEqual(formatted['album'], 'foo')
 
     def test_artist_falls_back_to_albumartist(self):

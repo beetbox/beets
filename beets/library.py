@@ -217,7 +217,9 @@ class LibModel(dbcore.Model):
 
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
-    """Add lookup for album level fields.
+    """Add lookup for album-level fields.
+
+    Album-level fields take precedence if `for_path` is true.
     """
 
     def __init__(self, item, for_path=False):
@@ -234,10 +236,12 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         """Get the value for a key, either from the album or the item.
         Raise a KeyError for invalid keys.
         """
-        if key in self.album_keys:
+        if self.for_path and key in self.album_keys:
             return self._get_formatted(self.album, key)
         elif key in self.model_keys:
             return self._get_formatted(self.model, key)
+        elif key in self.album_keys:
+            return self._get_formatted(self.album, key)
         else:
             raise KeyError(key)
 
@@ -261,7 +265,6 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     def __len__(self):
         return len(self.all_keys)
-
 
 
 class Item(LibModel):
