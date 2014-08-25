@@ -1264,7 +1264,8 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
     # Apply changes *temporarily*, preview them, and collect modified
     # objects.
-    print_('Modifying {0} {1}s.'.format(len(objs), 'album' if album else 'item'))
+    print_('Modifying {0} {1}s.'
+           .format(len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
         obj.update(mods)
