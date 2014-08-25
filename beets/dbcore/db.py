@@ -55,7 +55,9 @@ class FormattedMapping(collections.Mapping):
     def __len__(self):
         return len(self.model_keys)
 
-    def get(self, key, default=u''):
+    def get(self, key, default=None):
+        if default is None:
+            default = self.model._type(key).format(None)
         return super(FormattedMapping, self).get(key, default)
 
     def _get_formatted(self, model, key):
