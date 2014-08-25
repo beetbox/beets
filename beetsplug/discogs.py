@@ -76,7 +76,7 @@ class DiscogsPlugin(BeetsPlugin):
                           album_id)
         if not match:
             return None
-        result = Release(match.group(2))
+        result = Release(self.discogs_client, {'id': int(match.group(2))})
         # Try to obtain title to verify that we indeed have a valid Release
         try:
             getattr(result, 'title')
