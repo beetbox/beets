@@ -1247,15 +1247,16 @@ default_commands.append(version_cmd)
 
 def modify_items(lib, mods, dels, query, write, move, album, confirm):
     """Modifies matching items according to user-specified assignments and
-    deletions. `mods` is a list of "field=value" strings indicating
+    deletions.
+
+    `mods` is a dictionary of field and value pairse indicating
     assignments. `dels` is a list of fields to be deleted.
     """
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
-    fsets = {}
-    for mod in mods:
-        key, value = mod.split('=', 1)
-        fsets[key] = model_cls._parse(key, value)
+
+    for key, value in mods.items():
+        mods[key] = model_cls._parse(key, value)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
@@ -1263,11 +1264,10 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
     # Apply changes *temporarily*, preview them, and collect modified
     # objects.
-    print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
+    print_('Modifying {0} {1}s.'.format(len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
-        for field, value in fsets.iteritems():
-            obj[field] = value
+        obj.update(mods)
         for field in dels:
             del obj[field]
         if ui.show_model_changes(obj):
@@ -1318,14 +1318,15 @@ def modify_parse_args(args):
     assignments (field=value), and deletions (field!).  Returns the result as
     a three-tuple in that order.
     """
-    mods = []
+    mods = {}
     dels = []
     query = []
     for arg in args:
         if arg.endswith('!') and '=' not in arg and ':' not in arg:
             dels.append(arg[:-1])  # Strip trailing !.
         elif '=' in arg and ':' not in arg.split('=', 1)[0]:
-            mods.append(arg)
+            key, val = arg.split('=', 1)
+            mods[key] = val
         else:
             query.append(arg)
     return query, mods, dels

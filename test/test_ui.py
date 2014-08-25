@@ -22,7 +22,7 @@ import platform
 
 import _common
 from _common import unittest
-from helper import capture_stdout, has_program, TestHelper
+from helper import capture_stdout, has_program, TestHelper, control_stdin
 
 from beets import library
 from beets import ui
@@ -141,100 +141,104 @@ class RemoveTest(_common.TestCase):
         self.assertFalse(os.path.exists(self.i.path))
 
 
-class ModifyTest(_common.TestCase):
+class ModifyTest(unittest.TestCase, TestHelper):
+
     def setUp(self):
-        super(ModifyTest, self).setUp()
+        self.setup_beets()
+        self.add_album_fixture()
 
-        self.io.install()
+    def tearDown(self):
+        self.teardown_beets()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+    def modify(self, *args):
+        with control_stdin('y'):
+            ui._raw_main(['modify'] + list(args), self.lib)
 
-        # Copy a file into the library.
-        self.lib = library.Library(':memory:', self.libdir)
-        self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
-        self.lib.add(self.i)
-        self.i.move(copy=True)
-        self.album = self.lib.add_album([self.i])
+    # Item tests
 
-    def _modify(self, mods=(), dels=(), query=(), write=False, move=False,
-                album=False):
-        self.io.addinput('y')
-        commands.modify_items(self.lib, mods, dels, query,
-                              write, move, album, True)
-
-    def test_modify_item_dbdata(self):
-        self._modify(["title=newTitle"])
+    def test_modify_item(self):
+        self.modify("title=newTitle")
         item = self.lib.items().get()
         self.assertEqual(item.title, 'newTitle')
 
-    def test_modify_album_dbdata(self):
-        self._modify(["album=newAlbum"], album=True)
-        album = self.lib.albums()[0]
+    def test_modify_write_tags(self):
+        self.modify("title=newTitle")
+        item = self.lib.items().get()
+        item.read()
+        self.assertEqual(item.title, 'newTitle')
+
+    def test_modify_dont_write_tags(self):
+        self.modify("--nowrite", "title=newTitle")
+        item = self.lib.items().get()
+        item.read()
+        self.assertNotEqual(item.title, 'newTitle')
+
+    def test_move(self):
+        self.modify("title=newTitle")
+        item = self.lib.items().get()
+        self.assertIn('newTitle', item.path)
+
+    def test_not_move(self):
+        self.modify("--nomove", "title=newTitle")
+        item = self.lib.items().get()
+        self.assertNotIn('newTitle', item.path)
+
+    # Album Tests
+
+    def test_modify_album(self):
+        self.modify("--album", "album=newAlbum")
+        album = self.lib.albums().get()
         self.assertEqual(album.album, 'newAlbum')
 
-    def test_modify_item_tag_unmodified(self):
-        self._modify(["title=newTitle"], write=False)
-        item = self.lib.items().get()
-        item.read()
-        self.assertEqual(item.title, 'full')
-
-    def test_modify_album_tag_unmodified(self):
-        self._modify(["album=newAlbum"], write=False, album=True)
-        item = self.lib.items().get()
-        item.read()
-        self.assertEqual(item.album, 'the album')
-
-    def test_modify_item_tag(self):
-        self._modify(["title=newTitle"], write=True)
-        item = self.lib.items().get()
-        item.read()
-        self.assertEqual(item.title, 'newTitle')
-
-    def test_modify_album_tag(self):
-        self._modify(["album=newAlbum"], write=True, album=True)
+    def test_modify_album_write_tags(self):
+        self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
         self.assertEqual(item.album, 'newAlbum')
 
-    def test_item_move(self):
-        self._modify(["title=newTitle"], move=True)
+    def test_modify_album_dont_write_tags(self):
+        self.modify("--album", "--nowrite", "album=newAlbum")
         item = self.lib.items().get()
-        self.assertTrue('newTitle' in item.path)
+        item.read()
+        self.assertEqual(item.album, 'the album')
 
     def test_album_move(self):
-        self._modify(["album=newAlbum"], move=True, album=True)
+        self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertTrue('newAlbum' in item.path)
-
-    def test_item_not_move(self):
-        self._modify(["title=newTitle"], move=False)
-        item = self.lib.items().get()
-        self.assertFalse('newTitle' in item.path)
+        self.assertIn('newAlbum', item.path)
 
     def test_album_not_move(self):
-        self._modify(["album=newAlbum"], move=False, album=True)
+        self.modify("--nomove", "--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertFalse('newAlbum' in item.path)
+        self.assertNotIn('newAlbum', item.path)
+
+    # Misc
 
     def test_write_initial_key_tag(self):
-        self._modify(["initial_key=C#m"], write=True)
+        self.modify("initial_key=C#m")
         item = self.lib.items().get()
         mediafile = MediaFile(item.path)
         self.assertEqual(mediafile.initial_key, 'C#m')
 
-    def test_remove_flexattr(self):
-        self._modify(["flexattr=testAttr"], write=True)
+    def test_set_flexattr(self):
+        self.modify("flexattr=testAttr")
         item = self.lib.items().get()
         self.assertEqual(item.flexattr, 'testAttr')
-        self._modify(dels=["flexattr"], write=True)
+
+    def test_remove_flexattr(self):
         item = self.lib.items().get()
-        self.assertTrue("flexattr" not in item)
+        item.flexattr = 'testAttr'
+        item.store()
+
+        self.modify("flexattr!")
+        item = self.lib.items().get()
+        self.assertNotIn("flexattr", item)
 
     @unittest.skip('not yet implemented')
     def test_delete_initial_key_tag(self):
-        item = self.i
+        item = self.lib.items().get()
         item.initial_key = 'C#m'
         item.write()
         item.store()
@@ -242,7 +246,7 @@ class ModifyTest(_common.TestCase):
         mediafile = MediaFile(item.path)
         self.assertEqual(mediafile.initial_key, 'C#m')
 
-        self._modify(dels=["initial_key!"], write=True)
+        self.modify("initial_key!")
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.initial_key)
 
@@ -250,7 +254,7 @@ class ModifyTest(_common.TestCase):
         (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
                                                           "title=newTitle"])
         self.assertEqual(query, ["title:oldTitle"])
-        self.assertEqual(mods, ["title=newTitle"])
+        self.assertEqual(mods, {"title": "newTitle"})
 
     def test_arg_parsing_delete(self):
         (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
@@ -262,13 +266,13 @@ class ModifyTest(_common.TestCase):
         (query, mods, dels) = commands.modify_parse_args(["title:oldTitle!",
                                                           "title=newTitle!"])
         self.assertEqual(query, ["title:oldTitle!"])
-        self.assertEqual(mods, ["title=newTitle!"])
+        self.assertEqual(mods, {"title": "newTitle!"})
 
     def test_arg_parsing_equals_in_value(self):
         (query, mods, dels) = commands.modify_parse_args(["title:foo=bar",
                                                           "title=newTitle"])
         self.assertEqual(query, ["title:foo=bar"])
-        self.assertEqual(mods, ["title=newTitle"])
+        self.assertEqual(mods, {"title": "newTitle"})
 
 
 class MoveTest(_common.TestCase):
