@@ -340,37 +340,37 @@ class DestinationTest(_common.TestCase):
         with _common.platform_posix():
             name = os.path.join('a', 'b')
             self.i.title = name
-            newname = self.i._get_formatted('title')
+            newname = self.i.formatted().get('title')
         self.assertEqual(name, newname)
 
     def test_get_formatted_pads_with_zero(self):
         with _common.platform_posix():
             self.i.track = 1
-            name = self.i._get_formatted('track')
+            name = self.i.formatted().get('track')
         self.assertTrue(name.startswith('0'))
 
     def test_get_formatted_uses_kbps_bitrate(self):
         with _common.platform_posix():
             self.i.bitrate = 12345
-            val = self.i._get_formatted('bitrate')
+            val = self.i.formatted().get('bitrate')
         self.assertEqual(val, u'12kbps')
 
     def test_get_formatted_uses_khz_samplerate(self):
         with _common.platform_posix():
             self.i.samplerate = 12345
-            val = self.i._get_formatted('samplerate')
+            val = self.i.formatted().get('samplerate')
         self.assertEqual(val, u'12kHz')
 
     def test_get_formatted_datetime(self):
         with _common.platform_posix():
             self.i.added = 1368302461.210265
-            val = self.i._get_formatted('added')
+            val = self.i.formatted().get('added')
         self.assertTrue(val.startswith('2013'))
 
     def test_get_formatted_none(self):
         with _common.platform_posix():
             self.i.some_other_field = None
-            val = self.i._get_formatted('some_other_field')
+            val = self.i.formatted().get('some_other_field')
         self.assertEqual(val, u'')
 
     def test_artist_falls_back_to_albumartist(self):
@@ -462,23 +462,35 @@ class DestinationTest(_common.TestCase):
 
 class ItemFormattedMappingTest(_common.LibTestCase):
     def test_formatted_item_value(self):
-        formatted = self.i._formatted_mapping()
+        formatted = self.i.formatted()
         self.assertEqual(formatted['artist'], 'the artist')
 
     def test_get_unset_field(self):
-        formatted = self.i._formatted_mapping()
+        formatted = self.i.formatted()
         with self.assertRaises(KeyError):
             formatted['other_field']
 
-    def test_get_method_with_none_default(self):
-        formatted = self.i._formatted_mapping()
-        self.assertIsNone(formatted.get('other_field'))
+    def test_get_method_with_default(self):
+        formatted = self.i.formatted()
+        self.assertEqual(formatted.get('other_field'), u'')
 
     def test_get_method_with_specified_default(self):
-        formatted = self.i._formatted_mapping()
+        formatted = self.i.formatted()
         self.assertEqual(formatted.get('other_field', 'default'), 'default')
 
-    def test_album_field_overrides_item_field(self):
+    def test_item_precedence(self):
+        album = self.lib.add_album([self.i])
+        album['artist'] = 'foo'
+        album.store()
+        self.assertNotEqual('foo', self.i.formatted().get('artist'))
+
+    def test_album_flex_field(self):
+        album = self.lib.add_album([self.i])
+        album['flex'] = 'foo'
+        album.store()
+        self.assertEqual('foo', self.i.formatted().get('flex'))
+
+    def test_album_field_overrides_item_field_for_path(self):
         # Make the album inconsistent with the item.
         album = self.lib.add_album([self.i])
         album.album = 'foo'
@@ -487,23 +499,23 @@ class ItemFormattedMappingTest(_common.LibTestCase):
         self.i.store()
 
         # Ensure the album takes precedence.
-        formatted = self.i._formatted_mapping()
+        formatted = self.i.formatted(for_path=True)
         self.assertEqual(formatted['album'], 'foo')
 
     def test_artist_falls_back_to_albumartist(self):
         self.i.artist = ''
-        formatted = self.i._formatted_mapping()
+        formatted = self.i.formatted()
         self.assertEqual(formatted['artist'], 'the album artist')
 
     def test_albumartist_falls_back_to_artist(self):
         self.i.albumartist = ''
-        formatted = self.i._formatted_mapping()
+        formatted = self.i.formatted()
         self.assertEqual(formatted['albumartist'], 'the artist')
 
     def test_both_artist_and_albumartist_empty(self):
         self.i.artist = ''
         self.i.albumartist = ''
-        formatted = self.i._formatted_mapping()
+        formatted = self.i.formatted()
         self.assertEqual(formatted['albumartist'], '')
 
 

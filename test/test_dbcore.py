@@ -255,54 +255,54 @@ class FormatTest(_common.TestCase):
     def test_format_fixed_field(self):
         model = TestModel1()
         model.field_one = u'caf\xe9'
-        value = model._get_formatted('field_one')
+        value = model.formatted().get('field_one')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field(self):
         model = TestModel1()
         model.other_field = u'caf\xe9'
-        value = model._get_formatted('other_field')
+        value = model.formatted().get('other_field')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field_bytes(self):
         model = TestModel1()
         model.other_field = u'caf\xe9'.encode('utf8')
-        value = model._get_formatted('other_field')
+        value = model.formatted().get('other_field')
         self.assertTrue(isinstance(value, unicode))
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_unset_field(self):
         model = TestModel1()
-        value = model._get_formatted('other_field')
+        value = model.formatted().get('other_field')
         self.assertEqual(value, u'')
 
     def test_format_typed_flex_field(self):
         model = TestModel1()
         model.some_float_field = 3.14159265358979
-        value = model._get_formatted('some_float_field')
+        value = model.formatted().get('some_float_field')
         self.assertEqual(value, u'3.1')
 
 
 class FormattedMappingTest(_common.TestCase):
     def test_keys_equal_model_keys(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
+        formatted = model.formatted()
         self.assertEqual(set(model.keys(True)), set(formatted.keys()))
 
     def test_get_unset_field(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
+        formatted = model.formatted()
         with self.assertRaises(KeyError):
             formatted['other_field']
 
-    def test_get_method_with_none_default(self):
+    def test_get_method_with_default(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
-        self.assertIsNone(formatted.get('other_field'))
+        formatted = model.formatted()
+        self.assertEqual(formatted.get('other_field'), u'')
 
     def test_get_method_with_specified_default(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
+        formatted = model.formatted()
         self.assertEqual(formatted.get('other_field', 'default'), 'default')
 
 

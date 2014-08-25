@@ -28,6 +28,50 @@ from .query import MatchQuery, build_sql
 from .types import BASE_TYPE
 
 
+class FormattedMapping(collections.Mapping):
+    """A `dict`-like formatted view of a model.
+
+    The accessor `mapping[key]` returns the formated version of
+    `model[key]` as a unicode string.
+
+    If `for_path` is true, all path separators in the formatted values
+    are replaced.
+    """
+
+    def __init__(self, model, for_path=False):
+        self.for_path = for_path
+        self.model = model
+        self.model_keys = model.keys(True)
+
+    def __getitem__(self, key):
+        if key in self.model_keys:
+            return self._get_formatted(self.model, key)
+        else:
+            raise KeyError(key)
+
+    def __iter__(self):
+        return iter(self.model_keys)
+
+    def __len__(self):
+        return len(self.model_keys)
+
+    def get(self, key, default=u''):
+        return super(FormattedMapping, self).get(key, default)
+
+    def _get_formatted(self, model, key):
+        value = model._type(key).format(model.get(key))
+        if isinstance(value, bytes):
+            value = value.decode('utf8', 'ignore')
+
+        if self.for_path:
+            sep_repl = beets.config['path_sep_replace'].get(unicode)
+            for sep in (os.path.sep, os.path.altsep):
+                if sep:
+                    value = value.replace(sep, sep_repl)
+
+        return value
+
+
 # Abstract base for model classes.
 
 class Model(object):
@@ -380,63 +424,24 @@ class Model(object):
 
     # Formatting and templating.
 
-    @classmethod
-    def _format(cls, key, value, for_path=False):
-        """Format a value as the given field for this model.
-        """
-        # Format the value as a string according to its type.
-        value = cls._type(key).format(value)
+    _formatter = FormattedMapping
 
-        # Formatting must result in a string. To deal with
-        # Python2isms, implicitly convert ASCII strings.
-        assert isinstance(value, basestring), \
-            u'field formatter must produce strings'
-        if isinstance(value, bytes):
-            value = value.decode('utf8', 'ignore')
-
-        if for_path:
-            sep_repl = beets.config['path_sep_replace'].get(unicode)
-            for sep in (os.path.sep, os.path.altsep):
-                if sep:
-                    value = value.replace(sep, sep_repl)
-
-        return value
-
-    def _get_formatted(self, key, for_path=False):
-        """Get a field value formatted as a string (`unicode` object)
-        for display to the user. If `for_path` is true, then the value
-        will be sanitized for inclusion in a pathname (i.e., path
-        separators will be removed from the value).
-        """
-        return self._format(key, self.get(key), for_path)
-
-    def _formatted_mapping(self, for_path=False):
+    def formatted(self, for_path=False):
         """Get a mapping containing all values on this object formatted
-        as human-readable strings.
+        as human-readable unicode strings.
         """
-        return FormattedMapping(self, for_path)
-
-    @property
-    def formatted(self):
-        """A `dict`-like view containing formatted values.
-        """
-        return self._formatted_mapping(False)
+        return self._formatter(self, for_path)
 
     def evaluate_template(self, template, for_path=False):
         """Evaluate a template (a string or a `Template` object) using
         the object's fields. If `for_path` is true, then no new path
         separators will be added to the template.
         """
-        # Build value mapping.
-        mapping = self._formatted_mapping(for_path)
-
-        # Get template functions.
-        funcs = self._template_funcs()
-
         # Perform substitution.
         if isinstance(template, basestring):
             template = Template(template)
-        return template.substitute(mapping, funcs)
+        return template.substitute(self.formatted(for_path),
+                                   self._template_funcs())
 
     # Parsing.
 
@@ -448,33 +453,6 @@ class Model(object):
             raise TypeError("_parse() argument must be a string")
 
         return cls._type(key).parse(string)
-
-
-class FormattedMapping(collections.Mapping):
-    """A `dict`-like formatted view of a model.
-
-    The accessor ``mapping[key]`` returns the formated version of
-    ``model[key]``. The formatting is handled by `model._format()`.
-    """
-    # TODO Move all formatting logic here
-    # TODO Add caching
-
-    def __init__(self, model, for_path=False):
-        self.for_path = for_path
-        self.model = model
-        self.model_keys = model.keys(True)
-
-    def __getitem__(self, key):
-        if key in self.model_keys:
-            return self.model._get_formatted(key, self.for_path)
-        else:
-            raise KeyError(key)
-
-    def __iter__(self):
-        return iter(self.model_keys)
-
-    def __len__(self):
-        return len(self.model_keys)
 
 
 # Database controller and supporting interfaces.
