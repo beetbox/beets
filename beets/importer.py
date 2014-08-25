@@ -918,38 +918,41 @@ def read_tasks(session):
 
         # A flat album import merges all items into one album.
         if session.config['flat'] and not session.config['singletons']:
-            all_items = []
-            for _, items in albums_in_dir(toppath):
-                all_items += items
-            if all_items:
+            all_item_paths = []
+            for _, item_paths in albums_in_dir(toppath):
+                all_item_paths += item_paths
+            if all_item_paths:
                 if session.already_imported(toppath, [toppath]):
                     log.debug(u'Skipping previously-imported path: {0}'
                               .format(displayable_path(toppath)))
                     skipped += 1
                     continue
+                all_items = read_items(all_item_paths)
                 yield ImportTask(toppath, [toppath], all_items)
                 yield SentinelImportTask(toppath)
             continue
 
         # Produce paths under this directory.
-        for paths, items in albums_in_dir(toppath):
+        for dirs, paths in albums_in_dir(toppath):
             if session.config['singletons']:
-                for item in items:
-                    if session.already_imported(toppath, [item.path]):
+                for path in paths:
+                    if session.already_imported(toppath, [path]):
                         log.debug(u'Skipping previously-imported path: {0}'
-                                  .format(displayable_path(paths)))
+                                  .format(displayable_path(path)))
                         skipped += 1
                         continue
-                    yield SingletonImportTask(toppath, item)
-                yield SentinelImportTask(toppath, paths)
+                    yield SingletonImportTask(toppath, read_items([path])[0])
+                yield SentinelImportTask(toppath, dirs)
 
             else:
-                if session.already_imported(toppath, paths):
+                if session.already_imported(toppath, dirs):
                     log.debug(u'Skipping previously-imported path: {0}'
-                              .format(displayable_path(paths)))
+                              .format(displayable_path(dirs)))
                     skipped += 1
                     continue
-                yield ImportTask(toppath, paths, items)
+                print(paths)
+                print(read_items(paths))
+                yield ImportTask(toppath, dirs, read_items(paths))
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
@@ -1178,27 +1181,7 @@ def albums_in_dir(path):
     ignore = config['ignore'].as_str_seq()
 
     for root, dirs, files in sorted_walk(path, ignore=ignore, logger=log):
-        # Get a list of items in the directory.
-        items = []
-        for filename in files:
-            try:
-                i = library.Item.from_path(os.path.join(root, filename))
-            except library.ReadError as exc:
-                if isinstance(exc.reason, mediafile.FileTypeError):
-                    # Silently ignore non-music files.
-                    pass
-                elif isinstance(exc.reason, mediafile.UnreadableFileError):
-                    log.warn(u'unreadable file: {0}'.format(
-                        displayable_path(filename))
-                    )
-                else:
-                    log.error(u'error reading {0}: {1}'.format(
-                        displayable_path(filename),
-                        exc,
-                    ))
-            else:
-                items.append(i)
-
+        items = [os.path.join(root, f) for f in files]
         # If we're currently collapsing the constituent directories in a
         # multi-disc album, check whether we should continue collapsing
         # and add the current directory. If so, just add the directory
@@ -1284,3 +1267,27 @@ def albums_in_dir(path):
         yield collapse_paths, collapse_items
 
 
+def read_items(paths):
+    """Return a list of items created from each path.
+
+    If an item could not be read it skips the item and logs an error.
+    """
+    # TODO remove this method. Should be handled in ImportTask creation.
+    items = []
+    for path in paths:
+        try:
+            items.append(library.Item.from_path(path))
+        except library.ReadError as exc:
+            if isinstance(exc.reason, mediafile.FileTypeError):
+                # Silently ignore non-music files.
+                pass
+            elif isinstance(exc.reason, mediafile.UnreadableFileError):
+                log.warn(u'unreadable file: {0}'.format(
+                    displayable_path(path))
+                )
+            else:
+                log.error(u'error reading {0}: {1}'.format(
+                    displayable_path(path),
+                    exc,
+                ))
+    return items
