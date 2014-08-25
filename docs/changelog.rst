@@ -20,6 +20,8 @@ Fixes:
   ``pip install -U discogs-client``). Thanks to Andriy Kohut.
 * Fix a crash when writing files that can't be read. Thanks to Jocelyn De La
   Rosa.
+* The :ref:`stats-cmd` command now counts album artists. The album count also
+  more accurately reflects the number of albums in the database.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
