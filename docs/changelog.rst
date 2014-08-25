@@ -26,6 +26,8 @@ Fixes:
   converted files.
 * Formatting templates with item data no longer confusingly shows album-level
   data when the two are inconsistent.
+* Resuming imports and beginning incremental imports should now be much faster
+  when there is a lot of previously-imported music to skip.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
