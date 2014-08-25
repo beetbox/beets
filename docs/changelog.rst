@@ -22,6 +22,8 @@ Fixes:
   Rosa.
 * The :ref:`stats-cmd` command now counts album artists. The album count also
   more accurately reflects the number of albums in the database.
+* :doc:`/plugins/convert`: Avoid crashes when tags cannot be written to newly
+  converted files.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
