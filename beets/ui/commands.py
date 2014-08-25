@@ -1197,7 +1197,8 @@ def show_stats(lib, query, exact):
         total_items += 1
         artists.add(item.artist)
         album_artists.add(item.albumartist)
-        albums.add(item.album)
+        if item.album_id:
+            albums.add(item.album_id)
 
     size_str = '' + ui.human_bytes(total_size)
     if exact:
