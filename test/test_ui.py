@@ -183,6 +183,20 @@ class ModifyTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertNotIn('newTitle', item.path)
 
+    def test_set_flexattr(self):
+        self.modify("flexattr=testAttr")
+        item = self.lib.items().get()
+        self.assertEqual(item.flexattr, 'testAttr')
+
+    def test_remove_flexattr(self):
+        item = self.lib.items().get()
+        item.flexattr = 'testAttr'
+        item.store()
+
+        self.modify("flexattr!")
+        item = self.lib.items().get()
+        self.assertNotIn("flexattr", item)
+
     # Album Tests
 
     def test_modify_album(self):
@@ -214,7 +228,17 @@ class ModifyTest(unittest.TestCase, TestHelper):
         item.read()
         self.assertNotIn('newAlbum', item.path)
 
-    # Misc
+    def test_album_delete_art_path(self):
+        album = self.lib.albums().get()
+        self.assertIsNone(album['artpath'])
+        album['artpath'] = '/path/to/cover.jpg'
+        album.store()
+
+        self.modify("--album", "artpath!")
+        album = self.lib.albums().get()
+        self.assertIsNone(album['artpath'])
+
+    # Misc (initial_key)
 
     def test_write_initial_key_tag(self):
         self.modify("initial_key=C#m")
@@ -222,21 +246,6 @@ class ModifyTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(item.path)
         self.assertEqual(mediafile.initial_key, 'C#m')
 
-    def test_set_flexattr(self):
-        self.modify("flexattr=testAttr")
-        item = self.lib.items().get()
-        self.assertEqual(item.flexattr, 'testAttr')
-
-    def test_remove_flexattr(self):
-        item = self.lib.items().get()
-        item.flexattr = 'testAttr'
-        item.store()
-
-        self.modify("flexattr!")
-        item = self.lib.items().get()
-        self.assertNotIn("flexattr", item)
-
-    @unittest.skip('not yet implemented')
     def test_delete_initial_key_tag(self):
         item = self.lib.items().get()
         item.initial_key = 'C#m'
@@ -249,6 +258,8 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.modify("initial_key!")
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.initial_key)
+
+    # Test `modify_parse_args()`
 
     def test_arg_parsing_colon_query(self):
         (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",

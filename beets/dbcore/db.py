@@ -251,7 +251,8 @@ class Model(object):
         elif key in self._getters():  # Computed.
             raise KeyError('computed field {0} cannot be deleted'.format(key))
         elif key in self._fields:  # Fixed.
-            raise KeyError('fixed field {0} cannot be deleted'.format(key))
+            self._values_fixed[key] = None
+            self._dirty.add(key)  # Mark for dropping on store.
         else:
             raise KeyError('no such field {0}'.format(key))
 

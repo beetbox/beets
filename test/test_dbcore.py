@@ -231,8 +231,23 @@ class ModelTest(unittest.TestCase):
 
     def test_delete_fixed_attribute(self):
         model = TestModel1()
-        with self.assertRaises(KeyError):
-            del model['field_one']
+        del model['field_one']
+        self.assertIsNone(model['field_one'])
+
+    def test_deleted_attribute_is_normalized_after_load(self):
+        model = TestModel1()
+        del model['field_one']
+        model.add(self.db)
+        model.load()
+        self.assertEqual(model['field_one'], 0)
+
+    def test_deleted_attribute_is_normalized_when_fetching(self):
+        model = TestModel1()
+        del model['field_one']
+        model.add(self.db)
+
+        model = self.db._get(TestModel1, model.id)
+        self.assertEqual(model['field_one'], 0)
 
     def test_null_value_normalization_by_type(self):
         model = TestModel1()
