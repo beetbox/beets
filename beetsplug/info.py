@@ -75,7 +75,8 @@ def print_tag_info(lib, args, summarize=False):
             try:
                 data = tag_data(path)
             except mediafile.UnreadableFileError:
-                ui.print_('cannot read file: {0}'.format(displayable_path(path)))
+                ui.print_('cannot read file: {0}'
+                          .format(displayable_path(path)))
             else:
                 print_data(path, data)
             first = False

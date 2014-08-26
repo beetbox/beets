@@ -7,6 +7,7 @@ Changelog
 This release adds **sorting** to beets queries. See :ref:`query-sort`.
 
 Features:
+
 * :doc:`/plugins/info`: Files can be specified through library queries
   and the `--library` option prints library fields instead of tags.
   Tags and library fields can be summarized with `--summarize` option.
