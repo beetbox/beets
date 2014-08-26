@@ -21,7 +21,7 @@ import logging
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import mediafile
-from beets.util import displayable_path, normpath
+from beets.util import displayable_path, normpath, syspath
 
 
 log = logging.getLogger('beets')
@@ -72,7 +72,7 @@ def tag_data(lib, args):
     query = []
     for arg in args:
         path = normpath(arg)
-        if os.path.isfile(path):
+        if os.path.isfile(syspath(path)):
             yield tag_data_emitter(path)
         else:
             query.append(arg)
@@ -86,7 +86,7 @@ def tag_data_emitter(path):
     def emitter():
         fields = list(mediafile.MediaFile.readable_fields())
         fields.remove('images')
-        mf = mediafile.MediaFile(path)
+        mf = mediafile.MediaFile(syspath(path))
         tags = {}
         for field in fields:
             tags[field] = getattr(mf, field)
