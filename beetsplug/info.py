@@ -20,8 +20,7 @@ import os
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import mediafile
-from beets import util
-from beets.util import displayable_path
+from beets.util import displayable_path, syspath, normpath
 
 
 def run(lib, opts, args):
@@ -48,8 +47,9 @@ def print_tag_info(lib, args):
     paths = []
     query = []
     for arg in args:
-        if os.sep in arg and os.path.exists(arg):
-            paths.append(util.normpath(arg))
+        path = normpath(arg)
+        if os.path.isfile(path):
+            paths.append(path)
         else:
             query.append(arg)
 
@@ -64,9 +64,7 @@ def print_tag_info(lib, args):
         try:
             data = tag_data(path)
         except mediafile.UnreadableFileError:
-            ui.print_('cannot read file: {0}'.format(
-                util.displayable_path(path)
-            ))
+            ui.print_('cannot read file: {0}'.format(displayable_path(path)))
         else:
             print_data(path, data)
         first = False
