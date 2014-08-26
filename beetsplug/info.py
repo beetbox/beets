@@ -98,13 +98,20 @@ def library_data(item):
 
 
 def print_data(path, data):
-    maxwidth = max(len(key) for key in data)
+    formatted = {}
+    for key, value in data.iteritems():
+        if isinstance(value, list):
+            formatted[key] = u'; '.join(value)
+        if value is not None:
+            formatted[key] = value
+
+    maxwidth = max(len(key) for key in formatted)
     lineformat = u'{{0:>{0}}}: {{1}}'.format(maxwidth)
 
     ui.print_(displayable_path(path))
 
-    for field in sorted(data):
-        value = data[field]
+    for field in sorted(formatted):
+        value = formatted[field]
         if isinstance(value, list):
             value = u'; '.join(value)
         ui.print_(lineformat.format(field, value))
