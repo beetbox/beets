@@ -16,6 +16,7 @@
 """
 
 import os
+import logging
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -23,97 +24,89 @@ from beets import mediafile
 from beets.util import displayable_path, normpath
 
 
+log = logging.getLogger('beets')
+
+
 def run(lib, opts, args):
     """Print tag info or library data for each file referenced by args.
 
     Main entry point for the `beet info ARGS...` command.
-    """
-    if opts.library:
-        print_library_info(lib, args, opts.summarize)
-    else:
-        print_tag_info(lib, args, opts.summarize)
-
-
-def print_tag_info(lib, args, summarize=False):
-    """Print tag info for each file referenced by args.
 
     If an argument is a path pointing to an existing file, then the tags
     of that file are printed. All other arguments are considered
     queries, and for each item matching all those queries the tags from
     the file are printed.
 
-    If `summarize` is true, the function merges all tags into one
+    If `opts.summarize` is true, the function merges all tags into one
     dictionary and only prints that. If two files have different values
     for the same tag, the value is set to '[various]'
     """
-    if not args:
-        raise ui.UserError('no file specified')
+    if opts.library:
+        data_collector = library_data
+    else:
+        data_collector = tag_data
 
-    paths = []
+    first = True
+    summary = {}
+    for data_emitter in data_collector(lib, ui.decargs(args)):
+        try:
+            data = data_emitter()
+        except mediafile.UnreadableFileError as ex:
+            log.error('cannot read file: {0}'.format(ex.message))
+            continue
+
+        if opts.summarize:
+            update_summary(summary, data)
+        else:
+            if not first:
+                ui.print_()
+            else:
+                print_data(data)
+            first = False
+
+    if opts.summarize:
+        print_data(summary)
+
+
+def tag_data(lib, args):
     query = []
     for arg in args:
         path = normpath(arg)
         if os.path.isfile(path):
-            paths.append(path)
+            yield tag_data_emitter(path)
         else:
             query.append(arg)
 
     if query:
-        for item in lib.items(ui.decargs(query)):
-            paths.append(item.path)
-
-    first = True
-    # FIXME the summary thing is horrible and duplicates code from print
-    # library info.
-    summary = {}
-    for path in paths:
-        if summarize:
-            update_summary(summary, tag_data(path))
-        else:
-            if not first:
-                ui.print_()
-            try:
-                data = tag_data(path)
-            except mediafile.UnreadableFileError:
-                ui.print_('cannot read file: {0}'
-                          .format(displayable_path(path)))
-            else:
-                print_data(path, data)
-            first = False
-    if summarize:
-        print_data(None, summary)
+        for item in lib.items(query):
+            yield tag_data_emitter(item.path)
 
 
-def print_library_info(lib, queries, summarize=False):
-    """Print library data for each item matching all queries
-    """
-    first = True
-    summary = {}
-    for item in lib.items(queries):
-        if summarize:
-            update_summary(summary, library_data(item))
-        else:
-            if not first:
-                ui.print_()
-            print_data(item.path, library_data(item))
-            first = False
-    if summarize:
-        print_data(None, summary)
+def tag_data_emitter(path):
+    def emitter():
+        fields = list(mediafile.MediaFile.readable_fields())
+        fields.remove('images')
+        mf = mediafile.MediaFile(path)
+        tags = {}
+        for field in fields:
+            tags[field] = getattr(mf, field)
+        tags['art'] = mf.art is not None
+        tags['path'] = displayable_path(path)
+        return tags
+    return emitter
 
 
-def tag_data(path):
-    fields = list(mediafile.MediaFile.readable_fields())
-    fields.remove('images')
-    mf = mediafile.MediaFile(path)
-    tags = {}
-    for field in fields:
-        tags[field] = getattr(mf, field)
-    tags['art'] = mf.art is not None
-    return tags
+def library_data(lib, args):
+    for item in lib.items(args):
+        yield library_data_emitter(item)
 
 
-def library_data(item):
-    return dict(item.formatted())
+def library_data_emitter(item):
+    def emitter():
+        data = dict(item.formatted())
+        data['path'] = displayable_path(item.path)
+        return data
+    return emitter
 
 
 def update_summary(summary, tags):
@@ -125,7 +118,8 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(path, data):
+def print_data(data):
+    path = data.pop('path')
     formatted = {}
     for key, value in data.iteritems():
         if isinstance(value, list):
