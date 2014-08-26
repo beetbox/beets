@@ -20,7 +20,7 @@ import os
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import mediafile
-from beets.util import displayable_path, syspath, normpath
+from beets.util import displayable_path, normpath
 
 
 def run(lib, opts, args):
@@ -32,6 +32,7 @@ def run(lib, opts, args):
         print_library_info(lib, args)
     else:
         print_tag_info(lib, args)
+
 
 def print_tag_info(lib, args):
     """Print tag info for each file referenced by args.
