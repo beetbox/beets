@@ -72,6 +72,25 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn(item.path, out)
         self.assertIn('album: xxxx', out)
 
+    def test_collect_item_and_path(self):
+        path = self.create_mediafile_fixture()
+        mediafile = MediaFile(path)
+        item, = self.add_item_fixtures()
+
+        item.album = mediafile.album = 'AAA'
+        item.tracktotal = mediafile.tracktotal = 5
+        item.title = 'TTT'
+        mediafile.title = 'SSS'
+
+        item.write()
+        item.store()
+        mediafile.save()
+
+        out = self.run_with_output('--summarize', 'album:AAA', path)
+        self.assertIn('album: AAA', out)
+        self.assertIn('tracktotal: 5', out)
+        self.assertIn('title: [various]', out)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
