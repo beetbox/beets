@@ -59,7 +59,7 @@ def print_tag_info(lib, args, summarize=False):
             query.append(arg)
 
     if query:
-        for item in lib.items(query):
+        for item in lib.items(ui.decargs(query)):
             paths.append(item.path)
 
     first = True
@@ -136,7 +136,8 @@ def print_data(path, data):
     maxwidth = max(len(key) for key in formatted)
     lineformat = u'{{0:>{0}}}: {{1}}'.format(maxwidth)
 
-    ui.print_(displayable_path(path))
+    if path:
+        ui.print_(displayable_path(path))
 
     for field in sorted(formatted):
         value = formatted[field]
