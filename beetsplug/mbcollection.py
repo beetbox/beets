@@ -96,17 +96,14 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             config['musicbrainz']['pass'].get(unicode),
         )
         self.config.add({'auto': False})
-        self.automatic = self.config['auto'].get(bool)
-        self.import_stages = [self.imported]
+        if self.config['auto']:
+            self.import_stages = [self.imported]
 
     def commands(self):
         return [update_mb_collection_cmd]
 
     def imported(self, session, task):
-        """Add each added album to the musicbrainz collection
+        """Add each imported album to the collection.
         """
-        if not self.automatic:
-            return
-
         if task.is_album:
             update_album_list([task.album])

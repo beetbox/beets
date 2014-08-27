@@ -19,16 +19,16 @@ command automatically adds all of your albums to the first collection it finds.
 If you don't have a MusicBrainz collection yet, you may need to add one to your
 profile first.
 
-Auto Update Mode
-----------------
+Automatically Update on Import
+------------------------------
 
-You can now add each imported album to your MusicBrainz collection, without 
-needing a separate ``beet mbupdate`` command.  To do this, first enable the 
-plugin and add your MusicBrainz account using the instructions above.  Then, 
-add a block for the ``mbcollection`` plugin to enable ``auto`` configuration::
+You can also configure the plugin to automatically amend your MusicBrainz
+collection whenever you import a new album. To do this, first enable the
+plugin and add your MusicBrainz account as above.  Then, add ``mbcollection``
+section and enable the enable ``auto`` flag therein::
 
     mbcollection:
         auto: yes
 
-During future imports, your default collection will be updated with the
+During future imports, your default collection will be updated with each
 imported album.

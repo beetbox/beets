@@ -12,6 +12,8 @@ Features:
   and the ``--library`` option prints library fields instead of tags.
   Tags and library fields for multiple files can be summarized with the
   ``--summarize`` option.
+* :doc:`/plugins/mbcollection`: A new option lets you automatically update
+  your collection on import. Thanks to Olin Gay.
 
 Fixes:
 
