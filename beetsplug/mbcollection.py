@@ -54,7 +54,9 @@ def submit_albums(collection_id, release_ids):
         )
 
 
-def update_collection(lib, opts, args):
+def update_album_list(album_list):
+    """Update the MusicBrainz colleciton from a list of Beets albums
+    """
     # Get the collection to modify.
     collections = mb_call(musicbrainzngs.get_collections)
     if not collections['collection-list']:
@@ -63,7 +65,7 @@ def update_collection(lib, opts, args):
 
     # Get a list of all the album IDs.
     album_ids = []
-    for album in lib.albums():
+    for album in album_list:
         aid = album.mb_albumid
         if aid:
             if re.match(UUID_REGEX, aid):
@@ -75,6 +77,11 @@ def update_collection(lib, opts, args):
     print('Updating MusicBrainz collection {0}...'.format(collection_id))
     submit_albums(collection_id, album_ids)
     print('...MusicBrainz collection updated.')
+
+
+def update_collection(lib, opts, args):
+    update_album_list(lib.albums())
+
 
 update_mb_collection_cmd = Subcommand('mbupdate',
                                       help='Update MusicBrainz collection')
@@ -88,6 +95,18 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             config['musicbrainz']['user'].get(unicode),
             config['musicbrainz']['pass'].get(unicode),
         )
+        self.config.add({'auto': False})
+        self.automatic = self.config['auto'].get(bool)
+        self.import_stages = [self.imported]
 
     def commands(self):
         return [update_mb_collection_cmd]
+
+    def imported(self, session, task):
+        """Add each added album to the musicbrainz collection
+        """
+        if not self.automatic:
+            return
+
+        if task.is_album:
+            update_album_list([task.album])
