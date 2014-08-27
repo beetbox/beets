@@ -198,7 +198,7 @@ def convert_item(dest_dir, keep_new, path_formats, command, ext,
             continue
 
         # Write tags from the database to the converted file.
-        item.write(path=converted)
+        item.try_write(path=converted)
 
         if keep_new:
             # If we're keeping the transcoded file, read it again (after

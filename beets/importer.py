@@ -18,6 +18,7 @@ autotagging music files.
 from __future__ import print_function
 
 import os
+import re
 import logging
 import pickle
 import itertools
@@ -33,7 +34,7 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
-from beets.util import pipeline
+from beets.util import pipeline, sorted_walk, ancestry
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
 from beets import mediafile
@@ -65,7 +66,12 @@ def _open_state():
     try:
         with open(config['statefile'].as_filename()) as f:
             return pickle.load(f)
-    except (IOError, EOFError):
+    except Exception as exc:
+        # The `pickle` module can emit all sorts of exceptions during
+        # unpickling, including ImportError. We use a catch-all
+        # exception to avoid enumerating them all (the docs don't even have a
+        # full list!).
+        log.debug(u'state file could not be read: {0}'.format(exc))
         return {}
 
 
@@ -103,8 +109,8 @@ def progress_add(toppath, *paths):
         for path in paths:
             # Normally `progress_add` will be called with the path
             # argument increasing. This is because of the ordering in
-            # `autotag.albums_in_dir`. We take advantage of that to make
-            # the code faster
+            # `albums_in_dir`. We take advantage of that to make the
+            # code faster
             if imported and imported[len(imported) - 1] <= path:
                 imported.append(path)
             else:
@@ -912,38 +918,41 @@ def read_tasks(session):
 
         # A flat album import merges all items into one album.
         if session.config['flat'] and not session.config['singletons']:
-            all_items = []
-            for _, items in autotag.albums_in_dir(toppath):
-                all_items += items
-            if all_items:
+            all_item_paths = []
+            for _, item_paths in albums_in_dir(toppath):
+                all_item_paths += item_paths
+            if all_item_paths:
                 if session.already_imported(toppath, [toppath]):
                     log.debug(u'Skipping previously-imported path: {0}'
                               .format(displayable_path(toppath)))
                     skipped += 1
                     continue
+                all_items = read_items(all_item_paths)
                 yield ImportTask(toppath, [toppath], all_items)
                 yield SentinelImportTask(toppath)
             continue
 
         # Produce paths under this directory.
-        for paths, items in autotag.albums_in_dir(toppath):
+        for dirs, paths in albums_in_dir(toppath):
             if session.config['singletons']:
-                for item in items:
-                    if session.already_imported(toppath, [item.path]):
+                for path in paths:
+                    if session.already_imported(toppath, [path]):
                         log.debug(u'Skipping previously-imported path: {0}'
-                                  .format(displayable_path(paths)))
+                                  .format(displayable_path(path)))
                         skipped += 1
                         continue
-                    yield SingletonImportTask(toppath, item)
-                yield SentinelImportTask(toppath, paths)
+                    yield SingletonImportTask(toppath, read_items([path])[0])
+                yield SentinelImportTask(toppath, dirs)
 
             else:
-                if session.already_imported(toppath, paths):
+                if session.already_imported(toppath, dirs):
                     log.debug(u'Skipping previously-imported path: {0}'
-                              .format(displayable_path(paths)))
+                              .format(displayable_path(dirs)))
                     skipped += 1
                     continue
-                yield ImportTask(toppath, paths, items)
+                print(paths)
+                print(read_items(paths))
+                yield ImportTask(toppath, dirs, read_items(paths))
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
@@ -1156,3 +1165,129 @@ def group_albums(session):
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
         task = pipeline.multiple(tasks)
+
+
+MULTIDISC_MARKERS = (r'dis[ck]', r'cd')
+MULTIDISC_PAT_FMT = r'^(.*%s[\W_]*)\d'
+
+
+def albums_in_dir(path):
+    """Recursively searches the given directory and returns an iterable
+    of (paths, items) where paths is a list of directories and items is
+    a list of Items that is probably an album. Specifically, any folder
+    containing any media files is an album.
+    """
+    collapse_pat = collapse_paths = collapse_items = None
+    ignore = config['ignore'].as_str_seq()
+
+    for root, dirs, files in sorted_walk(path, ignore=ignore, logger=log):
+        items = [os.path.join(root, f) for f in files]
+        # If we're currently collapsing the constituent directories in a
+        # multi-disc album, check whether we should continue collapsing
+        # and add the current directory. If so, just add the directory
+        # and move on to the next directory. If not, stop collapsing.
+        if collapse_paths:
+            if (not collapse_pat and collapse_paths[0] in ancestry(root)) or \
+                    (collapse_pat and
+                     collapse_pat.match(os.path.basename(root))):
+                # Still collapsing.
+                collapse_paths.append(root)
+                collapse_items += items
+                continue
+            else:
+                # Collapse finished. Yield the collapsed directory and
+                # proceed to process the current one.
+                if collapse_items:
+                    yield collapse_paths, collapse_items
+                collapse_pat = collapse_paths = collapse_items = None
+
+        # Check whether this directory looks like the *first* directory
+        # in a multi-disc sequence. There are two indicators: the file
+        # is named like part of a multi-disc sequence (e.g., "Title Disc
+        # 1") or it contains no items but only directories that are
+        # named in this way.
+        start_collapsing = False
+        for marker in MULTIDISC_MARKERS:
+            marker_pat = re.compile(MULTIDISC_PAT_FMT % marker, re.I)
+            match = marker_pat.match(os.path.basename(root))
+
+            # Is this directory the root of a nested multi-disc album?
+            if dirs and not items:
+                # Check whether all subdirectories have the same prefix.
+                start_collapsing = True
+                subdir_pat = None
+                for subdir in dirs:
+                    # The first directory dictates the pattern for
+                    # the remaining directories.
+                    if not subdir_pat:
+                        match = marker_pat.match(subdir)
+                        if match:
+                            subdir_pat = re.compile(
+                                r'^%s\d' % re.escape(match.group(1)), re.I
+                            )
+                        else:
+                            start_collapsing = False
+                            break
+
+                    # Subsequent directories must match the pattern.
+                    elif not subdir_pat.match(subdir):
+                        start_collapsing = False
+                        break
+
+                # If all subdirectories match, don't check other
+                # markers.
+                if start_collapsing:
+                    break
+
+            # Is this directory the first in a flattened multi-disc album?
+            elif match:
+                start_collapsing = True
+                # Set the current pattern to match directories with the same
+                # prefix as this one, followed by a digit.
+                collapse_pat = re.compile(
+                    r'^%s\d' % re.escape(match.group(1)), re.I
+                )
+                break
+
+        # If either of the above heuristics indicated that this is the
+        # beginning of a multi-disc album, initialize the collapsed
+        # directory and item lists and check the next directory.
+        if start_collapsing:
+            # Start collapsing; continue to the next iteration.
+            collapse_paths = [root]
+            collapse_items = items
+            continue
+
+        # If it's nonempty, yield it.
+        if items:
+            yield [root], items
+
+    # Clear out any unfinished collapse.
+    if collapse_paths and collapse_items:
+        yield collapse_paths, collapse_items
+
+
+def read_items(paths):
+    """Return a list of items created from each path.
+
+    If an item could not be read it skips the item and logs an error.
+    """
+    # TODO remove this method. Should be handled in ImportTask creation.
+    items = []
+    for path in paths:
+        try:
+            items.append(library.Item.from_path(path))
+        except library.ReadError as exc:
+            if isinstance(exc.reason, mediafile.FileTypeError):
+                # Silently ignore non-music files.
+                pass
+            elif isinstance(exc.reason, mediafile.UnreadableFileError):
+                log.warn(u'unreadable file: {0}'.format(
+                    displayable_path(path))
+                )
+            else:
+                log.error(u'error reading {0}: {1}'.format(
+                    displayable_path(path),
+                    exc,
+                ))
+    return items

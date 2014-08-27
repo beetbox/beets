@@ -255,54 +255,54 @@ class FormatTest(_common.TestCase):
     def test_format_fixed_field(self):
         model = TestModel1()
         model.field_one = u'caf\xe9'
-        value = model._get_formatted('field_one')
+        value = model.formatted().get('field_one')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field(self):
         model = TestModel1()
         model.other_field = u'caf\xe9'
-        value = model._get_formatted('other_field')
+        value = model.formatted().get('other_field')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field_bytes(self):
         model = TestModel1()
         model.other_field = u'caf\xe9'.encode('utf8')
-        value = model._get_formatted('other_field')
+        value = model.formatted().get('other_field')
         self.assertTrue(isinstance(value, unicode))
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_unset_field(self):
         model = TestModel1()
-        value = model._get_formatted('other_field')
+        value = model.formatted().get('other_field')
         self.assertEqual(value, u'')
 
     def test_format_typed_flex_field(self):
         model = TestModel1()
         model.some_float_field = 3.14159265358979
-        value = model._get_formatted('some_float_field')
+        value = model.formatted().get('some_float_field')
         self.assertEqual(value, u'3.1')
 
 
 class FormattedMappingTest(_common.TestCase):
     def test_keys_equal_model_keys(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
+        formatted = model.formatted()
         self.assertEqual(set(model.keys(True)), set(formatted.keys()))
 
     def test_get_unset_field(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
+        formatted = model.formatted()
         with self.assertRaises(KeyError):
             formatted['other_field']
 
-    def test_get_method_with_none_default(self):
+    def test_get_method_with_default(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
-        self.assertIsNone(formatted.get('other_field'))
+        formatted = model.formatted()
+        self.assertEqual(formatted.get('other_field'), u'')
 
     def test_get_method_with_specified_default(self):
         model = TestModel1()
-        formatted = model._formatted_mapping()
+        formatted = model.formatted()
         self.assertEqual(formatted.get('other_field', 'default'), 'default')
 
 
@@ -410,6 +410,37 @@ class QueryFromStringsTest(_common.TestCase):
     def test_parse_flex_type_query(self):
         q = self.qfs(['some_float_field:2..3'])
         self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
+
+
+class SortFromStringsTest(_common.TestCase):
+    def sfs(self, strings):
+        return dbcore.queryparse.sort_from_strings(
+            TestModel1,
+            strings,
+        )
+
+    def test_zero_parts(self):
+        s = self.sfs([])
+        self.assertIsNone(s)
+
+    def test_one_parts(self):
+        s = self.sfs(['field+'])
+        self.assertIsInstance(s, dbcore.query.Sort)
+
+    def test_two_parts(self):
+        s = self.sfs(['field+', 'another_field-'])
+        self.assertIsInstance(s, dbcore.query.MultipleSort)
+        self.assertEqual(len(s.sorts), 2)
+
+    def test_fixed_field_sort(self):
+        s = self.sfs(['field_one+'])
+        self.assertIsInstance(s, dbcore.query.MultipleSort)
+        self.assertIsInstance(s.sorts[0], dbcore.query.FixedFieldSort)
+
+    def test_flex_field_sort(self):
+        s = self.sfs(['flex_field+'])
+        self.assertIsInstance(s, dbcore.query.MultipleSort)
+        self.assertIsInstance(s.sorts[0], dbcore.query.FlexFieldSort)
 
 
 def suite():

@@ -121,3 +121,33 @@ def query_from_strings(query_cls, model_cls, prefixes, query_parts):
     if not subqueries:  # No terms in query.
         subqueries = [query.TrueQuery()]
     return query_cls(subqueries)
+
+
+def construct_sort_part(model_cls, part):
+    """ Creates a Sort object from a single criteria. Returns a `Sort` instance.
+    """
+    sort = None
+    field = part[:-1]
+    is_ascending = (part[-1] == '+')
+    if field in model_cls._fields:
+        sort = query.FixedFieldSort(field, is_ascending)
+    elif field in model_cls._getters():
+        # Computed field, all following fields must use the slow path.
+        sort = query.ComputedFieldSort(model_cls, field, is_ascending)
+    elif field in query.special_sorts:
+        sort = query.special_sorts[field](model_cls, is_ascending)
+    else:
+        # Neither fixed nor computed : must be a flex attr.
+        sort = query.FlexFieldSort(model_cls, field, is_ascending)
+    return sort
+
+
+def sort_from_strings(model_cls, sort_parts):
+    """Creates a Sort object from a list of sort criteria strings.
+    """
+    if not sort_parts:
+        return None
+    sort = query.MultipleSort()
+    for part in sort_parts:
+        sort.add_criteria(construct_sort_part(model_cls, part))
+    return sort

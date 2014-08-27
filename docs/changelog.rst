@@ -1,35 +1,84 @@
 Changelog
 =========
 
-1.3.7 (in development)
+1.3.8 (in development)
 ----------------------
 
-New stuff
+This release adds **sorting** to beets queries. See :ref:`query-sort`.
 
+Features:
+
+* :doc:`/plugins/info`: Files can be specified through library queries
+  and the ``--library`` option prints library fields instead of tags.
+  Tags and library fields for multiple files can be summarized with the
+  ``--summarize`` option.
+
+Fixes:
+
+* Invalid state files don't crash the importer.
+* :doc:`/plugins/lyrics`: Only strip featured artists and
+  parenthesized title suffixes if no lyrics for the original artist and
+  title were found.
+* Fix a crash when reading some files with missing tags.
+* :doc:`/plugins/discogs`: Compatibility with the new 2.0 version of the
+  `discogs_client`_ Python library. If you were using the old version, you wil
+  need to upgrade to the latest version of the library to use the
+  correspondingly new version of the plugin (e.g., with
+  ``pip install -U discogs-client``). Thanks to Andriy Kohut.
+* Fix a crash when writing files that can't be read. Thanks to Jocelyn De La
+  Rosa.
+* The :ref:`stats-cmd` command now counts album artists. The album count also
+  more accurately reflects the number of albums in the database.
+* :doc:`/plugins/convert`: Avoid crashes when tags cannot be written to newly
+  converted files.
+* Formatting templates with item data no longer confusingly shows album-level
+  data when the two are inconsistent.
+* Resuming imports and beginning incremental imports should now be much faster
+  when there is a lot of previously-imported music to skip.
+
+.. _discogs_client: https://github.com/discogs/discogs_client
+
+
+1.3.7 (August 22, 2014)
+-----------------------
+
+This release of beets fixes all the bugs, and you can be confident that you
+will never again find any bugs in beets, ever.
+It also adds support for plain old AIFF files and adds three more plugins,
+including a nifty one that lets you measure a song's tempo by tapping out the
+beat on your keyboard.
+The importer deals more elegantly with duplicates and you can broaden your
+cover art search to the entire web with Google Image Search.
+
+The big new features are:
+
+* Support for AIFF files. Tags are stored as ID3 frames in one of the file's
+  IFF chunks. Thanks to Evan Purkhiser for contributing support to `Mutagen`_.
 * The new :doc:`/plugins/importadded` reads files' modification times to set
   their "added" date. Thanks to Stig Inge Lea Bjørnsen.
-* Support for AIFF files. Tags are stored as ID3 frames in one of the file's
-  IFF chunks.
-* A new :ref:`required` configuration option for the importer skips matches
-  that are missing certain data. Thanks to oprietop.
 * The new :doc:`/plugins/bpm` lets you manually measure the tempo of a playing
   song. Thanks to aroquen.
 * The new :doc:`/plugins/spotify` generates playlists for your `Spotify`_
   account. Thanks to Olin Gay.
+* A new :ref:`required` configuration option for the importer skips matches
+  that are missing certain data. Thanks to oprietop.
 * When the importer detects duplicates, it now shows you some details about
   the potentially-replaced music so you can make an informed decision. Thanks
   to Howard Jones.
+* :doc:`/plugins/fetchart`: You can now optionally search for cover art on
+  Google Image Search. Thanks to Lemutar.
+* A new :ref:`asciify-paths` configuration option replaces all non-ASCII
+  characters in paths.
 
+.. _Mutagen: https://bitbucket.org/lazka/mutagen
 .. _Spotify: https://www.spotify.com/
 
-Little improvements and fixes:
+And the multitude of little improvements and fixes:
 
+* Compatibility with the latest version of `Mutagen`_, 1.23.
 * :doc:`/plugins/web`: Lyrics now display readably with correct line breaks.
   Also, the detail view scrolls to reveal all of the lyrics. Thanks to Meet
   Udeshi.
-* Compatibility with the latest version of Mutagen, 1.23.
-* :doc:`/plugins/fetchart`: You can now optionally search for cover art on
-  Google Image Search. Thanks to Lemutar.
 * :doc:`/plugins/play`: The ``command`` config option can now contain
   arguments (rather than just an executable). Thanks to Alessandro Ghedini.
 * Fix an error when using the :ref:`modify-cmd` command to remove a flexible
@@ -51,11 +100,11 @@ Little improvements and fixes:
 * Don't display changes for fields that are not in the restricted field set.
   This fixes :ref:`write-cmd` showing changes for fields that are not written
   to the file.
-* :ref:`write-cmd` command: Don't display the item name if there are no
-  changes for it.
-* When using both :doc:`/plugins/convert` and :doc:`/plugins/scrub`, avoid
-  scrubbing the source file of conversions. (Fix a regression introduced in
-  the previous release.)
+* The :ref:`write-cmd` command avoids displaying the item name if there are
+  no changes for it.
+* When using both the :doc:`/plugins/convert` and the :doc:`/plugins/scrub`,
+  avoid scrubbing the source file of conversions. (Fix a regression introduced
+  in the previous release.)
 * :doc:`/plugins/replaygain`: Logging is now quieter during import. Thanks to
   Yevgeny Bezman.
 * :doc:`/plugins/fetchart`: When loading art from the filesystem, we now
@@ -71,7 +120,7 @@ Little improvements and fixes:
 * :doc:`/plugins/bucket`: You can now customize the definition of alphanumeric
   "ranges" using regular expressions. And the heuristic for detecting years
   has been improved. Thanks to sotho.
-* Already imported singleton tracks are skipped when resuming an
+* Already-imported singleton tracks are skipped when resuming an
   import.
 * :doc:`/plugins/chroma`: A new ``auto`` configuration option disables
   fingerprinting on import. Thanks to ddettrittus.
@@ -79,8 +128,6 @@ Little improvements and fixes:
   transcoding preset from the command-line.
 * :doc:`/plugins/convert`: Transcoding presets can now omit their filename
   extensions (extensions default to the name of the preset).
-* A new :ref:`asciify-paths` configuration option replaces all non-ASCII
-  characters in paths.
 * :doc:`/plugins/convert`: A new ``--pretend`` option lets you preview the
   commands the plugin will execute without actually taking any action. Thanks
   to Dietrich Daroch.
@@ -90,6 +137,8 @@ Little improvements and fixes:
   work in ``auto`` mode. Thanks to Harry Khanna.
 * The :ref:`write-cmd` command now has a ``--force`` flag. Thanks again to
   Harry Khanna.
+* :doc:`/plugins/mbsync`: Track alignment now works with albums that have
+  multiple copies of the same recording. Thanks to Rui Gonçalves.
 
 
 1.3.6 (May 10, 2014)

@@ -39,6 +39,7 @@ from beets.util.functemplate import Template
 from beets import library
 from beets import config
 from beets.util.confit import _package_path
+from beets.dbcore import sort_from_strings
 
 VARIOUS_ARTISTS = u'Various Artists'
 
@@ -966,11 +967,18 @@ def list_items(lib, query, album, fmt):
     albums instead of single items.
     """
     tmpl = Template(ui._pick_format(album, fmt))
+
     if album:
-        for album in lib.albums(query):
+        sort_parts = str(config['sort_album']).split()
+        sort_order = sort_from_strings(library.Album,
+                                       sort_parts)
+        for album in lib.albums(query, sort_order):
             ui.print_obj(album, lib, tmpl)
     else:
-        for item in lib.items(query):
+        sort_parts = str(config['sort_item']).split()
+        sort_order = sort_from_strings(library.Item,
+                                       sort_parts)
+        for item in lib.items(query, sort_order):
             ui.print_obj(item, lib, tmpl)
 
 
@@ -1178,7 +1186,7 @@ def show_stats(lib, query, exact):
     total_items = 0
     artists = set()
     albums = set()
-    albumartists = set()
+    album_artists = set()
 
     for item in items:
         if exact:
@@ -1188,8 +1196,9 @@ def show_stats(lib, query, exact):
         total_time += item.length
         total_items += 1
         artists.add(item.artist)
-        albums.add(item.album)
-        albumartists.add(item.albumartist)
+        album_artists.add(item.albumartist)
+        if item.album_id:
+            albums.add(item.album_id)
 
     size_str = '' + ui.human_bytes(total_size)
     if exact:
@@ -1199,9 +1208,10 @@ def show_stats(lib, query, exact):
 Total time: {1} ({2:.2f} seconds)
 Total size: {3}
 Artists: {4}
-Album Artists: {5}
-Albums: {6}""".format(total_items, ui.human_seconds(total_time), total_time,
-                      size_str, len(artists), len(albumartists), len(albums)))
+Albums: {5}
+Album artists: {6}""".format(total_items, ui.human_seconds(total_time),
+                             total_time, size_str, len(artists), len(albums),
+                             len(album_artists)))
 
 
 def stats_func(lib, opts, args):
@@ -1242,15 +1252,16 @@ default_commands.append(version_cmd)
 
 def modify_items(lib, mods, dels, query, write, move, album, confirm):
     """Modifies matching items according to user-specified assignments and
-    deletions. `mods` is a list of "field=value" strings indicating
+    deletions.
+
+    `mods` is a dictionary of field and value pairse indicating
     assignments. `dels` is a list of fields to be deleted.
     """
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
-    fsets = {}
-    for mod in mods:
-        key, value = mod.split('=', 1)
-        fsets[key] = model_cls._parse(key, value)
+
+    for key, value in mods.items():
+        mods[key] = model_cls._parse(key, value)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
@@ -1258,11 +1269,11 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
     # Apply changes *temporarily*, preview them, and collect modified
     # objects.
-    print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
+    print_('Modifying {0} {1}s.'
+           .format(len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
-        for field, value in fsets.iteritems():
-            obj[field] = value
+        obj.update(mods)
         for field in dels:
             del obj[field]
         if ui.show_model_changes(obj):
@@ -1313,14 +1324,15 @@ def modify_parse_args(args):
     assignments (field=value), and deletions (field!).  Returns the result as
     a three-tuple in that order.
     """
-    mods = []
+    mods = {}
     dels = []
     query = []
     for arg in args:
         if arg.endswith('!') and '=' not in arg and ':' not in arg:
             dels.append(arg[:-1])  # Strip trailing !.
         elif '=' in arg and ':' not in arg.split('=', 1)[0]:
-            mods.append(arg)
+            key, val = arg.split('=', 1)
+            mods[key] = val
         else:
             query.append(arg)
     return query, mods, dels

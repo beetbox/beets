@@ -188,6 +188,24 @@ Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
 
+.. _sort_item:
+
+sort_item
+~~~~~~~~~
+
+Sort order to use when listing *individual items* with the :ref:`list-cmd`
+command and other commands that need to print out items. Defaults to
+``smartartist+``. Any command-line sort order overrides this setting.
+
+.. _sort_album:
+
+sort_album
+~~~~~~~~~~
+
+Sort order to use when listing *albums* with the :ref:`list-cmd`
+command. Defaults to ``smartartist+``. Any command-line sort order overrides
+this setting.
+
 .. _original_date:
 
 original_date

@@ -411,7 +411,7 @@ class StorageStyle(object):
         """
         try:
             return mutagen_file[self.key][0]
-        except KeyError:
+        except (KeyError, IndexError):
             return None
 
     def deserialize(self, mutagen_value):
@@ -665,7 +665,7 @@ class MP3StorageStyle(StorageStyle):
     def fetch(self, mutagen_file):
         try:
             return mutagen_file[self.key].text[0]
-        except KeyError:
+        except (KeyError, IndexError):
             return None
 
     def store(self, mutagen_file, value):

@@ -22,6 +22,7 @@ import urllib
 import json
 import unicodedata
 import difflib
+import itertools
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -130,33 +131,51 @@ def strip_cruft(lyrics, wscollapse=True):
     return lyrics
 
 
-def split_multi_titles(s):
-    """Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
-    and returns titles as a list or None if song is not dual."""
-    if '/' not in s:
-        return None
-    return [x.strip() for x in s.split('/')]
+def search_pairs(item):
+    """Yield a pairs of artists and titles to search for.
 
+    The first item in the pair is the name of the artist, the second
+    item is a list of song names.
 
-def remove_ft_artist_suffix(s):
-    """Remove any featuring artists from an artist string.
+    In addition to the artist and title obtained from the `item` the
+    method tries to strip extra information like paranthesized suffixes
+    and featured artists from the strings and add them as caniddates.
+    The method also tries to split multiple titles separated with `/`.
     """
-    pattern = r"(.*?) (&|\b(and|feat(uring)?\b))"
-    match = re.search(pattern, s, re.IGNORECASE)
+
+    title, artist = item.title, item.artist
+    titles = [title]
+    artists = [artist]
+
+    # Remove any featuring artists from the artists name
+    pattern = r"(.*?) (&|\b(and|ft|feat(uring)?\b))"
+    match = re.search(pattern, artist, re.IGNORECASE)
     if match:
-        s = match.group(1)
-    return s
+        artists.append(match.group(1))
 
-
-def remove_parenthesized_suffix(s):
-    """Remove a parenthesized suffix from a title string. Common
-    examples include (live), (remix), and (acoustic).
-    """
+    # Remove a parenthesized suffix from a title string. Common
+    # examples include (live), (remix), and (acoustic).
     pattern = r"(.+?)\s+[(].*[)]$"
-    match = re.search(pattern, s, re.IGNORECASE)
+    match = re.search(pattern, title, re.IGNORECASE)
     if match:
-        s = match.group(1)
-    return s
+        titles.append(match.group(1))
+
+    # Remove any featuring artists from the title
+    pattern = r"(.*?) \b(ft|feat(uring)?)\b"
+    for title in titles:
+        match = re.search(pattern, title, re.IGNORECASE)
+        if match:
+            titles.append(match.group(1))
+
+    # Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
+    # and each of them.
+    multi_titles = []
+    for title in titles:
+        multi_titles.append([title])
+        if '/' in title:
+            multi_titles.append([x.strip() for x in title.split('/')])
+
+    return itertools.product(artists, multi_titles)
 
 
 def _encode(s):
@@ -492,45 +511,31 @@ class LyricsPlugin(BeetsPlugin):
         parameter controls the visibility of the function's status log
         messages.
         """
-        fallback = self.config['fallback'].get()
-
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
             log.log(loglevel, u'lyrics already present: %s - %s' %
                               (item.artist, item.title))
             return
 
-        artist = remove_ft_artist_suffix(item.artist)
-        title = remove_parenthesized_suffix(
-            remove_ft_artist_suffix(item.title)
-        )
+        lyrics = None
+        for artist, titles in search_pairs(item):
+            lyrics = [self.get_lyrics(artist, title) for title in titles]
+            if any(lyrics):
+                break
 
-        # Fetch lyrics.
-        lyrics = self.get_lyrics(artist, title)
+        lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
 
-        if not lyrics:
-            # Check for combined title.
-            # (e.g. Pink Floyd - Speak to Me / Breathe)
-            titles = split_multi_titles(title)
-            if titles:
-                for t in titles:
-                    lyrics_title = self.get_lyrics(artist, t)
-                    if lyrics_title:
-                        if lyrics:
-                            lyrics += u"\n\n---\n\n%s" % lyrics_title
-                        else:
-                            lyrics = lyrics_title
-
-        if not lyrics:
+        if lyrics:
+            log.log(loglevel, u'fetched lyrics: %s - %s' %
+                              (item.artist, item.title))
+        else:
             log.log(loglevel, u'lyrics not found: %s - %s' %
-                              (artist, title))
+                              (item.artist, item.title))
+            fallback = self.config['fallback'].get()
             if fallback:
                 lyrics = fallback
             else:
                 return
-        else:
-            log.log(loglevel, u'fetched lyrics : %s - %s' %
-                              (artist, title))
 
         item.lyrics = lyrics
 
@@ -542,12 +547,6 @@ class LyricsPlugin(BeetsPlugin):
         """Fetch lyrics, trying each source in turn. Return a string or
         None if no lyrics were found.
         """
-        # Remove featuring artists from search.
-        pattern = u"(.*) feat(uring|\.)?\s\S+"
-        match = re.search(pattern, artist, re.IGNORECASE)
-        if match:
-            artist = match.group(0)
-
         for backend in self.backends:
             lyrics = backend(artist, title)
             if lyrics:
