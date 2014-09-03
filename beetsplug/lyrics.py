@@ -122,7 +122,7 @@ def strip_cruft(lyrics, wscollapse=True):
     lyrics = unescape(lyrics)
     if wscollapse:
         lyrics = re.sub(r'\s+', ' ', lyrics)  # Whitespace collapse.
-    lyrics = re.sub(r'<(script).*?</\1>(?s)', '', lyrics)  # Strip script tags
+    lyrics = re.sub(r'<(script).*?</\1>(?s)', '', lyrics)  # Strip script tags.
     lyrics = BREAK_RE.sub('\n', lyrics)  # <BR> newlines.
     lyrics = re.sub(r'\n +', '\n', lyrics)
     lyrics = re.sub(r' +\n', '\n', lyrics)

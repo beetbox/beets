@@ -37,6 +37,8 @@ Fixes:
   data when the two are inconsistent.
 * Resuming imports and beginning incremental imports should now be much faster
   when there is a lot of previously-imported music to skip.
+* :doc:`/plugins/lyrics`: Remove ``<script>`` tags from scraped lyrics. Thanks
+  to Bombardment.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
