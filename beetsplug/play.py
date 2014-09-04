@@ -19,6 +19,7 @@ from beets.ui import Subcommand
 from beets import config
 from beets import ui
 from beets import util
+from os.path import relpath
 import platform
 import logging
 import shlex
@@ -33,6 +34,9 @@ def play_music(lib, opts, args):
     """
     command_str = config['play']['command'].get()
     use_folders = config['play']['use_folders'].get(bool)
+    relative_to = config['play']['relative_to'].get()
+    if relative_to:
+        relative_to = util.normpath(relative_to)
     if command_str:
         command = shlex.split(command_str)
     else:
@@ -86,7 +90,10 @@ def play_music(lib, opts, args):
     # Create temporary m3u file to hold our playlist.
     m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
     for item in paths:
-        m3u.write(item + '\n')
+        if relative_to:
+            m3u.write(relpath(item, relative_to) + '\n')
+        else:
+            m3u.write(item + '\n')
     m3u.close()
 
     command.append(m3u.name)
