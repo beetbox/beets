@@ -96,7 +96,7 @@ def play_music(lib, opts, args):
     if output:
         log.debug(u'Output of {0}: {1}'.format(command[0], output))
 
-    ui.print_(u'Playing {0} {1}.'.format(len(paths), item_type))
+    ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
 
 
 class PlayPlugin(BeetsPlugin):
