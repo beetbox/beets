@@ -23,8 +23,8 @@ would on the command-line)::
     play:
         command: /usr/bin/command --option1 --option2 some_other_option
 
-The plugin also supports generating the playlist items with relative paths 
-to a folder, just pass the option relative_to specifying the location::
+You can configure the plugin to emit relative paths. Use the ``relative_to``
+configuration option::
 
 	play:
 		relative_to: /my/music/folder

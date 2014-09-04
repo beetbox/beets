@@ -39,6 +39,8 @@ Fixes:
   when there is a lot of previously-imported music to skip.
 * :doc:`/plugins/lyrics`: Remove ``<script>`` tags from scraped lyrics. Thanks
   to Bombardment.
+* :doc:`/plugins/play`: Add a ``relative_to`` config option. Thanks to
+  BrainDamage.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
