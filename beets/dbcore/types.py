@@ -34,7 +34,7 @@ class Type(object):
     """The `Query` subclass to be used when querying the field.
     """
 
-    null = None
+    default = u''
     """The value to be exposed when the underlying value is None.
     """
 
@@ -42,32 +42,25 @@ class Type(object):
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
-        # Fallback formatter. Convert to Unicode at all cost.
-        if value is None:
-            return u''
-        elif isinstance(value, basestring):
-            if isinstance(value, bytes):
-                return value.decode('utf8', 'ignore')
-            else:
-                return value
-        else:
-            return unicode(value)
+        return unicode(value)
 
     def parse(self, string):
-        """Parse a (possibly human-written) string and return the
+        """Parse a human-written unicode object and return the
         indicated value of this type.
         """
-        return string
+        return self.normalize(string)
 
     def normalize(self, value):
         """Given a value that will be assigned into a field of this
-        type, normalize the value to have the appropriate type. This
-        base implementation only reinterprets `None`.
+        type, normalize the value to have the appropriate type.
         """
-        if value is None:
-            return self.null
-        else:
-            return value
+        return value
+
+    def to_sql(self, value):
+        return value
+
+    def from_sql(self, value):
+        return value
 
 
 # Reusable types.
@@ -77,16 +70,13 @@ class Integer(Type):
     """
     sql = u'INTEGER'
     query = query.NumericQuery
-    null = 0
+    default = 0
 
     def format(self, value):
-        return unicode(value or 0)
+        return unicode(value)
 
     def parse(self, string):
-        try:
-            return int(string)
-        except ValueError:
-            return 0
+        return int(string)
 
 
 class PaddedInt(Integer):
@@ -97,7 +87,7 @@ class PaddedInt(Integer):
         self.digits = digits
 
     def format(self, value):
-        return u'{0:0{1}d}'.format(value or 0, self.digits)
+        return u'{0:0{1}d}'.format(value, self.digits)
 
 
 class ScaledInt(Integer):
@@ -109,14 +99,14 @@ class ScaledInt(Integer):
         self.suffix = suffix
 
     def format(self, value):
-        return u'{0}{1}'.format((value or 0) // self.unit, self.suffix)
+        return u'{0}{1}'.format(value // self.unit, self.suffix)
 
 
 class Id(Integer):
     """An integer used as the row id or a foreign key in a SQLite table.
     This type is nullable: None values are not translated to zero.
     """
-    null = None
+    default = None
 
     def __init__(self, primary=True):
         if primary:
@@ -128,22 +118,17 @@ class Float(Type):
     """
     sql = u'REAL'
     query = query.NumericQuery
-    null = 0.0
+    default = 0.0
 
     def format(self, value):
-        return u'{0:.1f}'.format(value or 0.0)
+        return u'{0:.1f}'.format(value)
 
-    def parse(self, string):
-        try:
-            return float(string)
-        except ValueError:
-            return 0.0
+    def normalize(self, value):
+        return float(value)
 
 
 class NullFloat(Float):
-    """Same as `Float`, but does not normalize `None` to `0.0`.
-    """
-    null = None
+    default = None
 
 
 class String(Type):
@@ -151,13 +136,19 @@ class String(Type):
     """
     sql = u'TEXT'
     query = query.SubstringQuery
-    null = u''
+    default = u''
 
-    def format(self, value):
-        return unicode(value) if value else u''
+    def normalize(self, value):
+        if isinstance(value, unicode):
+            return value
+        else:
+            return value.decode('utf-8')
 
-    def parse(self, string):
-        return string
+    def to_sql(self, value):
+        return value.encode('utf-8')
+
+    def from_sql(self, value):
+        return value.decode('utf-8')
 
 
 class Boolean(Type):
@@ -170,8 +161,32 @@ class Boolean(Type):
     def format(self, value):
         return unicode(bool(value))
 
+    def normalize(self, value):
+        return bool(value)
+
     def parse(self, string):
         return str2bool(string)
+
+class Bytes(Type):
+
+    sql = u'BLOB'
+    default = bytearray()
+
+    def format(self, value):
+        return value.decode('utf-8')
+
+    def normalize(self, value):
+        return bytearray(value)
+
+    def parse(self, string):
+        return bytearray(string, 'utf-8')
+
+    def from_sql(self, sql_value):
+        # sql_value is a buffer
+        return bytearray(sql_value)
+
+    def to_sql(self, local_value):
+        return buffer(local_value)
 
 
 # Shared instances of common types.
