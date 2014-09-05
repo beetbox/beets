@@ -17,7 +17,6 @@
 import os
 import sqlite3
 
-import _common
 from _common import unittest
 from beets import dbcore
 from tempfile import mkstemp
@@ -125,8 +124,6 @@ class MigrationTest(unittest.TestCase):
 
     def tearDown(self):
         os.remove(self.libfile)
-
-
 
     def test_open_with_same_fields_leaves_untouched(self):
         new_lib = TestDatabase2(self.libfile)
