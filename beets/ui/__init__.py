@@ -499,14 +499,6 @@ def get_plugin_paths():
     The value for "pluginpath" may be a single string or a list of
     strings.
     """
-    pluginpaths = config['pluginpath'].get()
-    if isinstance(pluginpaths, basestring):
-        pluginpaths = [pluginpaths]
-    if not isinstance(pluginpaths, list):
-        raise confit.ConfigTypeError(
-            u'pluginpath must be string or a list of strings'
-        )
-    return map(util.normpath, pluginpaths)
 
 
 def _pick_format(album, fmt=None):
@@ -850,19 +842,20 @@ def vararg_callback(option, opt_str, value, parser):
 
 # The main entry point and bootstrapping.
 
-def _load_plugins():
+def _load_plugins(config):
     """Load the plugins specified in the configuration.
     """
-    # Add plugin paths.
+    paths = config['pluginpath'].get(confit.EnsureStringList())
+    paths = map(util.normpath, paths)
+
     import beetsplug
-    beetsplug.__path__ = get_plugin_paths() + beetsplug.__path__
-
+    beetsplug.__path__ = paths + beetsplug.__path__
     # For backwards compatibility.
-    sys.path += get_plugin_paths()
+    sys.path += paths
 
-    # Load requested plugins.
     plugins.load_plugins(config['plugins'].as_str_seq())
     plugins.send("pluginload")
+    return plugins
 
 
 def _setup(options, lib=None):
@@ -873,9 +866,9 @@ def _setup(options, lib=None):
     # Configure the MusicBrainz API.
     mb.configure()
 
-    _configure(options)
+    config = _configure(options)
 
-    _load_plugins()
+    plugins = _load_plugins(config)
 
     # Temporary: Migrate from 1.0-style configuration.
     from beets.ui import migrate
@@ -924,6 +917,7 @@ def _configure(options):
 
     log.debug(u'data directory: {0}'
               .format(util.displayable_path(config.config_dir())))
+    return config
 
 
 def _open_library(config):
