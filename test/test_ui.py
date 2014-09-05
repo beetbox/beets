@@ -740,7 +740,7 @@ class ConfigTest(unittest.TestCase, TestHelper):
         beetsdir = os.path.join(self.temp_dir, 'beetsfile')
         open(beetsdir, 'a').close()
         os.environ['BEETSDIR'] = beetsdir
-        self.assertRaises(ConfigError, ui._raw_main, 'test')
+        self.assertRaises(ConfigError, ui._raw_main, ['test'])
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
         os.environ['BEETSDIR'] = self.beetsdir
