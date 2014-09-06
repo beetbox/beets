@@ -950,8 +950,6 @@ def read_tasks(session):
                               .format(displayable_path(dirs)))
                     skipped += 1
                     continue
-                print(paths)
-                print(read_items(paths))
                 yield ImportTask(toppath, dirs, read_items(paths))
 
         # Indicate the directory is finished.

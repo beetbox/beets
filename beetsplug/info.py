@@ -60,8 +60,7 @@ def run(lib, opts, args):
         else:
             if not first:
                 ui.print_()
-            else:
-                print_data(data)
+            print_data(data)
             first = False
 
     if opts.summarize:

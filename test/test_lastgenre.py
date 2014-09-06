@@ -70,7 +70,7 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         """
         self._setup_config(canonical=True, whitelist=True, count=99)
         self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         'Delta Blues, Country Blues, Blues')
+                         'Delta Blues, Blues')
 
     def test_whitelist_custom(self):
         """Keep only genres that are in the whitelist.

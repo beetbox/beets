@@ -23,6 +23,12 @@ would on the command-line)::
     play:
         command: /usr/bin/command --option1 --option2 some_other_option
 
+You can configure the plugin to emit relative paths. Use the ``relative_to``
+configuration option::
+
+	play:
+		relative_to: /my/music/folder
+
 When using the ``-a`` option, the m3u will have the paths to each track on
 the matched albums. If you wish to have folders instead, you can change that
 by setting ``use_files: False`` in your configuration file.

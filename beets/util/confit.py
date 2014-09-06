@@ -1073,6 +1073,22 @@ class StrSeq(Template):
                 self.fail('must be a list of strings', view, True)
 
 
+class EnsureStringList(Template):
+    """Always return a list of strings.
+
+    The raw value may either be a single string or a list of strings.
+    Otherwise a type error is raised. For single strings a singleton
+    list is returned.
+    """
+    def convert(self, paths, view):
+        if isinstance(paths, basestring):
+            paths = [paths]
+        if not isinstance(paths, list) or \
+           not all(map(lambda p: isinstance(p, basestring), paths)):
+            self.fail(u'must be string or a list of strings', view, True)
+        return paths
+
+
 class Filename(Template):
     """A template that validates strings as filenames.
 
