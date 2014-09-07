@@ -620,14 +620,23 @@ class ImportTask(object):
         with lib.transaction():
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
+            replaced_album = self.replaced_albums.get(self.album.path)
+            if replaced_album:
+                self.album.added = replaced_album.added
+                log.debug('reimported added date %s from album %i for %s',
+                          self.album.added, replaced_album.id,
+                          self.album.path)
 
     def remove_replaced(self, lib):
         """Removes all the items from the library that have the same
         path as an item from this task.
 
-        Records the replaced items in the `replaced_items` dictionary
+        Records the replaced items and albums in the `replaced_items`
+        and `replaced_albums` dictionaries.
         """
         self.replaced_items = defaultdict(list)
+        self.replaced_albums = defaultdict(list)
+        replaced_album_ids = set()
         for item in self.imported_items():
             dup_items = list(lib.items(
                 dbcore.query.BytesQuery('path', item.path)
@@ -637,6 +646,18 @@ class ImportTask(object):
                 log.debug('replacing item %i: %s' %
                           (dup_item.id, displayable_path(item.path)))
                 dup_item.remove()
+                if dup_item.added and not item.added:
+                    item.added = dup_item.added
+                    log.debug('reimported added date %s from item %i for %s',
+                              item.added, dup_item.id, item.path)
+                if (dup_item.album_id and
+                    not dup_item.album_id in replaced_album_ids):
+                    album_query = dbcore.query.MatchQuery('id',
+                                                          dup_item.album_id)
+                    replaced_album = lib.albums(album_query).get()
+                    if replaced_album:
+                        replaced_album_ids.add(dup_item.album_id)
+                        self.replaced_albums[replaced_album.path] = replaced_album
         log.debug('%i of %i items replaced' % (len(self.replaced_items),
                                                len(self.imported_items())))
 

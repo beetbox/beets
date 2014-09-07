@@ -404,8 +404,10 @@ class Model(object):
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
 
-        The object's `id` and `added` fields are set along with any
+        The object's `id` field is set along with any
         current field values.
+
+        The object's `added` field is given a value if it is missing.
         """
         if db:
             self._db = db
@@ -416,7 +418,8 @@ class Model(object):
                 'INSERT INTO {0} DEFAULT VALUES'.format(self._table)
             )
             self.id = new_id
-            self.added = time.time()
+            if not hasattr(self, 'added') or not self.added:
+                self.added = time.time()
 
             # Mark every non-null field as dirty and store.
             for key in self:
