@@ -135,8 +135,9 @@ def should_transcode(item, format):
 
 def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
     command, ext = get_format(format)
+    item, original, converted = None, None, None
     while True:
-        item = yield
+        item = yield (item, original, converted)
         dest = item.destination(basedir=dest_dir, path_formats=path_formats)
 
         # When keeping the new file in the library, we first move the
