@@ -494,13 +494,6 @@ def get_replacements():
     return replacements
 
 
-def get_plugin_paths():
-    """Get the list of search paths for plugins from the config file.
-    The value for "pluginpath" may be a single string or a list of
-    strings.
-    """
-
-
 def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
     falling back to config options and defaults.
