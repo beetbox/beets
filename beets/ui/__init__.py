@@ -937,10 +937,8 @@ def _open_library(config):
         ))
     log.debug(u'library database: {0}\n'
               u'library directory: {1}'
-              .format(
-                  util.displayable_path(lib.path),
-                  util.displayable_path(lib.directory),
-              ))
+              .format(util.displayable_path(lib.path),
+                      util.displayable_path(lib.directory)))
     return lib
 
 

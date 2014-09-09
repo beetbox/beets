@@ -1261,7 +1261,7 @@ class MediaFile(object):
         except Exception as exc:
             # Isolate bugs in Mutagen.
             log.debug(traceback.format_exc())
-            log.error('uncaught Mutagen exception in open: {0}'.format(exc))
+            log.error(u'uncaught Mutagen exception in open: {0}'.format(exc))
             raise MutagenError(path, exc)
 
         if self.mgfile is None:
@@ -1328,7 +1328,7 @@ class MediaFile(object):
             raise
         except Exception as exc:
             log.debug(traceback.format_exc())
-            log.error('uncaught Mutagen exception in save: {0}'.format(exc))
+            log.error(u'uncaught Mutagen exception in save: {0}'.format(exc))
             raise MutagenError(self.path, exc)
 
     def delete(self):

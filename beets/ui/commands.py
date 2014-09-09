@@ -778,7 +778,7 @@ class TerminalImportSession(importer.ImportSession):
         that's already in the library.
         """
         log.warn(u"This {0} is already in the library!"
-                 .format("album" if task.is_album else "item"))
+                 .format('album' if task.is_album else 'item'))
 
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
@@ -1392,7 +1392,7 @@ def move_items(lib, dest, query, copy, album):
 
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
-    log.info('{0} {1} {2}s.'.format(action, len(objs), entity))
+    log.info(u'{0} {1} {2}s.'.format(action, len(objs), entity))
     for obj in objs:
         log.debug(u'moving: {0}'.format(util.displayable_path(obj.path)))
 

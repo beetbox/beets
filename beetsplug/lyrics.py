@@ -394,7 +394,7 @@ def scrape_lyrics_from_url(url):
             tag.name = 'p'          # keep tag contents
 
     except Exception, e:
-        log.debug('Error {0} when replacing containing marker by p marker'
+        log.debug(u'Error {0} when replacing containing marker by p marker'
                   .format(e, exc_info=True))
 
     # Make better soup from current soup! The previous unclosed <p> sections
@@ -527,11 +527,11 @@ class LyricsPlugin(BeetsPlugin):
         lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
 
         if lyrics:
-            log.log(loglevel, u'fetched lyrics: %s - %s' %
-                              (item.artist, item.title))
+            log.log(loglevel, u'fetched lyrics: {0} - {1}'
+                              .format(item.artist, item.title))
         else:
             log.log(loglevel, u'lyrics not found: {0} - {1}'
-                              (item.artist, item.title))
+                              .format(item.artist, item.title))
             fallback = self.config['fallback'].get()
             if fallback:
                 lyrics = fallback
