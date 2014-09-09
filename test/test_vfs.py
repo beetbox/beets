@@ -18,6 +18,7 @@ from _common import unittest
 from beets import library
 from beets import vfs
 
+
 class VFSTest(_common.TestCase):
     def setUp(self):
         super(VFSTest, self).setUp()
@@ -36,6 +37,7 @@ class VFSTest(_common.TestCase):
     def test_album_item(self):
         self.assertEqual(self.tree.dirs['albums'].dirs['the album'].
                          files['the title'], 2)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

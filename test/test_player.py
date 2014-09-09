@@ -17,6 +17,7 @@
 from _common import unittest
 from beetsplug import bpd
 
+
 class CommandParseTest(unittest.TestCase):
     def test_no_args(self):
         s = ur'command'
@@ -58,9 +59,9 @@ class CommandParseTest(unittest.TestCase):
         c = bpd.Command(s)
         self.assertEqual(c.args, [u'hello \ there'])
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-

@@ -34,7 +34,8 @@ class FetchImageTest(_common.TestCase):
         super(FetchImageTest, self).run(*args, **kwargs)
 
     def mock_response(self, content_type):
-        responses.add(responses.GET, 'http://example.com', content_type=content_type)
+        responses.add(responses.GET, 'http://example.com',
+                      content_type=content_type)
 
     def test_invalid_type_returns_none(self):
         self.mock_response('image/watercolour')
@@ -82,15 +83,20 @@ class FSArtTest(_common.TestCase):
         _common.touch(os.path.join(self.dpath, 'back.jpg'))
         _common.touch(os.path.join(self.dpath, 'front.jpg'))
         _common.touch(os.path.join(self.dpath, 'front-cover.jpg'))
-        fn = fetchart.art_in_path(self.dpath, ('cover', 'front', 'back'), False)
+        fn = fetchart.art_in_path(self.dpath,
+                                  ('cover', 'front', 'back'), False)
         self.assertEqual(fn, os.path.join(self.dpath, 'front-cover.jpg'))
+
 
 class CombinedTest(_common.TestCase):
     ASIN = 'xxxx'
     MBID = 'releaseid'
-    AMAZON_URL = 'http://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg'.format(ASIN)
-    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
-    CAA_URL = 'http://coverartarchive.org/release/{0}/front-500.jpg'.format(MBID)
+    AMAZON_URL = 'http://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
+                 .format(ASIN)
+    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}' \
+              .format(ASIN)
+    CAA_URL = 'http://coverartarchive.org/release/{0}/front-500.jpg' \
+              .format(MBID)
 
     def setUp(self):
         super(CombinedTest, self).setUp()
@@ -162,7 +168,8 @@ class CombinedTest(_common.TestCase):
     def test_local_only_gets_fs_image(self):
         _common.touch(os.path.join(self.dpath, 'art.jpg'))
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
-        artpath = fetchart.art_for_album(album, [self.dpath], None, local_only=True)
+        artpath = fetchart.art_for_album(album, [self.dpath],
+                                         None, local_only=True)
         self.assertEqual(artpath, os.path.join(self.dpath, 'art.jpg'))
         self.assertEqual(len(responses.calls), 0)
 
@@ -182,8 +189,10 @@ class AAOTest(_common.TestCase):
     def test_aao_scraper_finds_image(self):
         body = """
         <br />
-        <a href="TARGET_URL" title="View larger image" class="thickbox" style="color: #7E9DA2; text-decoration:none;">
-        <img src="http://www.albumart.org/images/zoom-icon.jpg" alt="View larger image" width="17" height="15"  border="0"/></a>
+        <a href="TARGET_URL" title="View larger image"
+           class="thickbox" style="color: #7E9DA2; text-decoration:none;">
+        <img src="http://www.albumart.org/images/zoom-icon.jpg"
+             alt="View larger image" width="17" height="15"  border="0"/></a>
         """
         self.mock_response(self.AAO_URL, body)
         res = fetchart.aao_art(self.ASIN)
@@ -232,8 +241,10 @@ class ArtImporterTest(_common.TestCase):
         _common.touch(self.art_file)
         self.old_afa = fetchart.art_for_album
         self.afa_response = self.art_file
+
         def art_for_album(i, p, maxwidth=None, local_only=False):
             return self.afa_response
+
         fetchart.art_for_album = art_for_album
 
         # Test library.
@@ -258,11 +269,11 @@ class ArtImporterTest(_common.TestCase):
         self.task.is_album = True
         self.task.album = self.album
         info = AlbumInfo(
-            album = 'some album',
-            album_id = 'albumid',
-            artist = 'some artist',
-            artist_id = 'artistid',
-            tracks = [],
+            album='some album',
+            album_id='albumid',
+            artist='some artist',
+            artist_id='artistid',
+            tracks=[],
         )
         self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
 
@@ -283,8 +294,10 @@ class ArtImporterTest(_common.TestCase):
 
         artpath = self.lib.albums()[0].artpath
         if should_exist:
-            self.assertEqual(artpath,
-                os.path.join(os.path.dirname(self.i.path), 'cover.jpg'))
+            self.assertEqual(
+                artpath,
+                os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
+            )
             self.assertExists(artpath)
         else:
             self.assertEqual(artpath, None)

@@ -19,6 +19,7 @@ from _common import unittest
 from beets.autotag import mb
 from beets import config
 
+
 class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
                       track_artist=False):
@@ -311,6 +312,7 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
+
 class ParseIDTest(_common.TestCase):
     def test_parse_id_correct(self):
         id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
@@ -327,6 +329,7 @@ class ParseIDTest(_common.TestCase):
         id_url = "http://musicbrainz.org/entity/%s" % id_string
         out = mb._parse_id(id_url)
         self.assertEqual(out, id_string)
+
 
 class ArtistFlatteningTest(_common.TestCase):
     def _credit_dict(self, suffix=''):
@@ -367,7 +370,8 @@ class ArtistFlatteningTest(_common.TestCase):
     def test_alias(self):
         credit_dict = self._credit_dict()
         self._add_alias(credit_dict, suffix='en', locale='en', primary=True)
-        self._add_alias(credit_dict, suffix='en_GB', locale='en_GB', primary=True)
+        self._add_alias(credit_dict, suffix='en_GB', locale='en_GB',
+                        primary=True)
         self._add_alias(credit_dict, suffix='fr', locale='fr')
         self._add_alias(credit_dict, suffix='fr_P', locale='fr', primary=True)
         self._add_alias(credit_dict, suffix='pt_BR', locale='pt_BR')
@@ -401,6 +405,7 @@ class ArtistFlatteningTest(_common.TestCase):
         config['import']['languages'] = ['pt_BR', 'fr']
         flat = mb._flatten_artist_credit([credit_dict])
         self.assertEqual(flat, ('ALIASfr_P', 'ALIASSORTfr_P', 'CREDIT'))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -31,6 +31,7 @@ try:
 except KeyError:
     pass
 
+
 def suite():
     s = unittest.TestSuite()
     # Get the suite() of every module in this directory beginning with
