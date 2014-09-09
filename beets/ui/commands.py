@@ -778,7 +778,7 @@ class TerminalImportSession(importer.ImportSession):
         that's already in the library.
         """
         log.warn(u"This {0} is already in the library!"
-                 .format('album' if task.is_album else 'item'))
+                 .format("album" if task.is_album else "item"))
 
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
