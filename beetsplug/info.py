@@ -102,7 +102,10 @@ def library_data(lib, args):
 
 def library_data_emitter(item):
     def emitter():
-        data = dict(item.formatted())
+        data = {}
+        formatted = item.formatted()
+        for k in formatted:
+            data[k] = formatted.get(k, None)
         data['path'] = displayable_path(item.path)
         return data
     return emitter

@@ -450,7 +450,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 if field == 'bpm':
                     item[field] = int(v)
                 else:
-                    item[field] = v
+                    item[field] = unicode(v)
         if 'key' in values and 'mode' in values:
             key = MUSICAL_SCALE[values['key'] - 1]
             if values['mode'] == 0:  # Minor key
