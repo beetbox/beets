@@ -448,9 +448,10 @@ def move(path, dest, replace=False):
             raise FilesystemError(exc, 'move', (path, dest),
                                   traceback.format_exc())
 
+
 def link(path, dest, replace=False):
-    """Create a symbolic link from path to `dest`. Raises an OSError if 
-    `dest` already exists, unless `replace` is True. Does nothing if 
+    """Create a symbolic link from path to `dest`. Raises an OSError if
+    `dest` already exists, unless `replace` is True. Does nothing if
     `path` == `dest`."""
     if (samefile(path, dest)):
         return
@@ -464,7 +465,7 @@ def link(path, dest, replace=False):
         os.symlink(path, dest)
     except OSError:
         raise FilesystemError('Operating system does not support symbolic '
-                              'links.', 'link', (path, dest), 
+                              'links.', 'link', (path, dest),
                               traceback.format_exc())
 
 
