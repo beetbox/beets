@@ -274,9 +274,9 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         # `artist` and `albumartist` fields fall back to one another.
         # This is helpful in path formats when the album artist is unset
         # on as-is imports.
-        if self._missing_value('artist'):
+        if key == 'artist' and self._missing_value('artist'):
             return 'albumartist'
-        elif self._missing_value('albumartist'):
+        elif key == 'albumartist' and self._missing_value('albumartist'):
             return 'artist'
         return key
 
