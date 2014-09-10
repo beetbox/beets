@@ -269,28 +269,9 @@ class ModelTest(unittest.TestCase):
         del model['some_float_field']
         self.assertEqual(model.get('some_float_field'), 0.0)
 
-
-class FormattedMappingTest(unittest.TestCase):
-
-    def test_keys_equal_model_keys(self):
-        model = TestModel1()
-        formatted = model.formatted()
-        self.assertEqual(set(model.keys(True)), set(formatted.keys()))
-
-    def test_unset_flex_with_string_default(self):
-        model = TestModel1()
-        formatted = model.formatted()
-        self.assertEqual(formatted['flex_field'], u'')
-        self.assertEqual(formatted.get('flex_field'), u'')
-
-    def test_unset_flex_with_custom_default(self):
-        model = TestModel1()
-        formatted = model.formatted()
-        self.assertEqual(formatted.get('flex_field', 'default'), 'default')
-
     def test_load_deleted_flex_field(self):
         model1 = TestModel1()
-        model1['flex_field'] = True
+        model1['flex_field'] = 'str'
         model1.add(self.db)
 
         model2 = self.db._get(TestModel1, model1.id)
@@ -303,7 +284,29 @@ class FormattedMappingTest(unittest.TestCase):
         self.assertNotIn('flex_field', model2)
 
 
-class FormatTest(unittest.TestCase):
+class FormattedMappingTest(unittest.TestCase):
+
+    def test_keys_equal_model_keys(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        self.assertEqual(set(model.keys(True)), set(formatted.keys()))
+
+    def test_unset_flex_raises(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        with self.assertRaises(KeyError):
+            formatted['flex_field']
+
+    def test_unset_flex_with_string_default(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        self.assertEqual(formatted.get('flex_field'), u'')
+
+    def test_unset_flex_with_custom_default(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        self.assertEqual(formatted.get('flex_field', 'default'), 'default')
+
     def test_format_fixed_field(self):
         model = TestModel1()
         model.field_one = u'caf\xe9'

@@ -144,12 +144,6 @@ class String(Type):
         else:
             return value.decode('utf-8')
 
-    def to_sql(self, value):
-        return value.encode('utf-8')
-
-    def from_sql(self, value):
-        return value.decode('utf-8')
-
 
 class Boolean(Type):
     """A boolean type.

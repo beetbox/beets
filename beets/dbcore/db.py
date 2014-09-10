@@ -14,6 +14,7 @@
 
 """The central Model and Database constructs for DBCore.
 """
+import time
 import os
 from collections import defaultdict
 import threading
@@ -25,6 +26,9 @@ import beets
 from beets.util.functemplate import Template
 from .query import MatchQuery, TrueQuery, build_sql
 from .types import STRING
+
+
+COLUMN_DEFAULT = object()
 
 
 class FormattedMapping(collections.Mapping):
@@ -49,17 +53,24 @@ class FormattedMapping(collections.Mapping):
         return len(self.model_keys)
 
     def __getitem__(self, key):
-        return self.get(key)
+        value = self.model[key]
+        if value is None:
+            raise KeyError(key)
 
-    def get(self, key, default=None):
+        value = self.model._type(key).format(value)
+        return self._path_replace(value)
+
+    def get(self, key, default=COLUMN_DEFAULT):
         value = self.model.get(key, default)
         value = self.model._type(key).format(value)
+        return self._path_replace(value)
+
+    def _path_replace(self, value):
         if self.for_path:
             sep_repl = beets.config['path_sep_replace'].get(unicode)
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
                     value = value.replace(sep, sep_repl)
-
         return value
 
 
@@ -281,11 +292,11 @@ class Model(object):
         for key in self:
             yield key, self[key]
 
-    def get(self, key, default=None):
+    def get(self, key, default=COLUMN_DEFAULT):
         """Get the value for a given key or `default` if it does not
         exist.
         """
-        if default is None:
+        if default == COLUMN_DEFAULT:
             default = self._type(key).default
         try:
             value = self[key]
@@ -431,6 +442,9 @@ class Model(object):
         if db:
             self._db = db
         self._check_db(False)
+
+        if 'added' in self._fields and not self['added']:
+            self.added = time.time()
 
         with self._db.transaction() as tx:
             new_id = tx.mutate(
