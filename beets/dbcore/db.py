@@ -374,7 +374,7 @@ class Model(object):
 
                 # None values are stored as NULL
                 if value is not None:
-                    value = self._type(key).to_sql(value)
+                    value = self._to_sql(key, value)
                 subvars.append(value)
                 assignments.append(key + '=?')
 
@@ -392,7 +392,7 @@ class Model(object):
                 if key in self._dirty or all:
                     if key in self._dirty:
                         self._dirty.remove(key)
-                    value = self._type(key).to_sql(value)
+                    value = self._to_sql(key, value)
                     tx.mutate(
                         'INSERT INTO {0} '
                         '(entity_id, key, value) '
