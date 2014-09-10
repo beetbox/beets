@@ -1261,7 +1261,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     model_cls = library.Album if album else library.Item
 
     for key, value in mods.items():
-        mods[key] = model_cls._parse(key, value)
+        mods[key] = model_cls.parse(key, value)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)

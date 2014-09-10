@@ -211,6 +211,12 @@ class Model(object):
         if value is not None:
             return cls._type(key).to_sql(value)
 
+    @classmethod
+    def parse(cls, key, string):
+        if not isinstance(string, unicode):
+            raise TypeError(u'{0!r} must be a unicode object')
+        return cls._type(key).parse(string)
+
     # Essential field accessors.
 
     def __getitem__(self, key):
@@ -310,11 +316,7 @@ class Model(object):
     def set(self, key, string):
         """Parse a string as a value for the given key.
         """
-        if not isinstance(string, unicode):
-            raise TypeError(u'{0!r} must be a unicode object')
-
-        value = self._type(key).parse(string)
-        self[key] = value
+        self[key] = self.parse(key, string)
 
     def __contains__(self, key):
         """Determine whether `key` is an attribute on this object.
