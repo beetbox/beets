@@ -257,14 +257,17 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     def get(self, key, default=COLUMN_DEFAULT):
         key = self._translate_key(key)
         model = self._model_for_key(key)
-        value = model.get(key, default)
-        value = model._type(key).format(value)
-        if self.for_path:
-            sep_repl = beets.config['path_sep_replace'].get(unicode)
-            for sep in (os.path.sep, os.path.altsep):
-                if sep:
-                    value = value.replace(sep, sep_repl)
-        return value
+        if default == COLUMN_DEFAULT:
+            value = model.get(key, default)
+            value = model._type(key).format(value)
+        else:
+            value = model.get(key, None)
+            if value is None:
+                value = default
+            else:
+                value = model._type(key).format(value)
+
+        return self._path_replace(value)
 
     def _missing_value(self, key):
         return not (key in self.item and self.item[key] or
