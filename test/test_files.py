@@ -368,7 +368,7 @@ class ArtFileTest(_common.TestCase):
 
     def test_move_not_last_file_does_not_move_albumart(self):
         i2 = item()
-        i2.albumid = self.ai.id
+        i2.album_id = self.ai.id
         self.lib.add(i2)
 
         oldartpath = self.lib.albums()[0].artpath
