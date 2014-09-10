@@ -249,6 +249,20 @@ class ModelTest(unittest.TestCase):
         model.some_float_field = None
         self.assertEqual(model.some_float_field, 0.0)
 
+    def test_load_deleted_flex_field(self):
+        model1 = TestModel1()
+        model1['flex_field'] = True
+        model1.add(self.db)
+
+        model2 = self.db._get(TestModel1, model1.id)
+        self.assertIn('flex_field', model2)
+
+        del model1['flex_field']
+        model1.store()
+
+        model2.load()
+        self.assertNotIn('flex_field', model2)
+
 
 class FormatTest(unittest.TestCase):
     def test_format_fixed_field(self):

@@ -382,6 +382,8 @@ class Model(object):
         self._check_db()
         stored_obj = self._db._get(type(self), self.id)
         assert stored_obj is not None, "object {0} not in DB".format(self.id)
+        self._values_fixed = {}
+        self._values_flex = {}
         self.update(dict(stored_obj))
         self.clear_dirty()
 
