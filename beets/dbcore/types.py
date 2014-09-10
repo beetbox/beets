@@ -161,6 +161,7 @@ class Boolean(Type):
     def parse(self, string):
         return str2bool(string)
 
+
 class Bytes(Type):
 
     sql = u'BLOB'

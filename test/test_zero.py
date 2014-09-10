@@ -93,7 +93,6 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertNotIn('TRCK', MediaFile(item.path).mgfile)
 
 
-
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
