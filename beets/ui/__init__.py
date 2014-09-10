@@ -494,21 +494,6 @@ def get_replacements():
     return replacements
 
 
-def get_plugin_paths():
-    """Get the list of search paths for plugins from the config file.
-    The value for "pluginpath" may be a single string or a list of
-    strings.
-    """
-    pluginpaths = config['pluginpath'].get()
-    if isinstance(pluginpaths, basestring):
-        pluginpaths = [pluginpaths]
-    if not isinstance(pluginpaths, list):
-        raise confit.ConfigTypeError(
-            u'pluginpath must be string or a list of strings'
-        )
-    return map(util.normpath, pluginpaths)
-
-
 def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
     falling back to config options and defaults.
@@ -694,6 +679,16 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
         # Super constructor.
         optparse.OptionParser.__init__(self, *args, **kwargs)
+        self.add_option('-l', '--library', dest='library',
+                        help='library database file to use')
+        self.add_option('-d', '--directory', dest='directory',
+                        help="destination music directory")
+        self.add_option('-v', '--verbose', dest='verbose', action='store_true',
+                        help='print debugging information')
+        self.add_option('-c', '--config', dest='config',
+                        help='path to configuration file')
+        self.add_option('-h', '--help', dest='help', action='store_true',
+                        help='how this help message and exit')
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -840,26 +835,34 @@ def vararg_callback(option, opt_str, value, parser):
 
 # The main entry point and bootstrapping.
 
-def _load_plugins():
+def _load_plugins(config):
     """Load the plugins specified in the configuration.
     """
-    # Add plugin paths.
+    paths = config['pluginpath'].get(confit.EnsureStringList())
+    paths = map(util.normpath, paths)
+
     import beetsplug
-    beetsplug.__path__ = get_plugin_paths() + beetsplug.__path__
-
+    beetsplug.__path__ = paths + beetsplug.__path__
     # For backwards compatibility.
-    sys.path += get_plugin_paths()
+    sys.path += paths
 
-    # Load requested plugins.
     plugins.load_plugins(config['plugins'].as_str_seq())
     plugins.send("pluginload")
+    return plugins
 
 
-def _configure(args):
-    """Parse the command line, load configuration files (including
-    loading any indicated plugins), and return the invoked subcomand,
-    the subcommand options, and the subcommand arguments.
+def _setup(options, lib=None):
+    """Prepare and global state and updates it with command line options.
+
+    Returns a list of subcommands, a list of plugins, and a library instance.
     """
+    # Configure the MusicBrainz API.
+    mb.configure()
+
+    config = _configure(options)
+
+    plugins = _load_plugins(config)
+
     # Temporary: Migrate from 1.0-style configuration.
     from beets.ui import migrate
     migrate.automigrate()
@@ -867,21 +870,20 @@ def _configure(args):
     # Get the default subcommands.
     from beets.ui.commands import default_commands
 
-    # Construct the root parser.
-    parser = SubcommandsOptionParser()
-    parser.add_option('-l', '--library', dest='library',
-                      help='library database file to use')
-    parser.add_option('-d', '--directory', dest='directory',
-                      help="destination music directory")
-    parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
-                      help='print debugging information')
-    parser.add_option('-c', '--config', dest='config',
-                      help='path to configuration file')
-    parser.add_option('-h', '--help', dest='help', action='store_true',
-                      help='how this help message and exit')
+    subcommands = list(default_commands)
+    subcommands.append(migrate.migrate_cmd)
+    subcommands.extend(plugins.commands())
 
-    # Parse the command-line!
-    options, subargs = parser.parse_global_options(args)
+    if lib is None:
+        lib = _open_library(config)
+        plugins.send("library_opened", lib=lib)
+
+    return subcommands, plugins, lib
+
+
+def _configure(options):
+    """Amend the global configuration object with command line options.
+    """
 
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
@@ -906,54 +908,48 @@ def _configure(args):
         log.debug('no user configuration found at {0}'.format(
             util.displayable_path(config_path)))
 
-    # Add builtin subcommands
-    parser.add_subcommand(*default_commands)
-    parser.add_subcommand(migrate.migrate_cmd)
+    log.debug(u'data directory: {0}'
+              .format(util.displayable_path(config.config_dir())))
+    return config
 
-    # Now add the plugin commands to the parser.
-    _load_plugins()
-    for cmd in plugins.commands():
-        parser.add_subcommand(cmd)
 
-    # Parse the remainder of the command line with loaded plugins.
-    return parser.parse_subcommand(subargs)
+def _open_library(config):
+    """Create a new library instance from the configuration.
+    """
+    dbpath = config['library'].as_filename()
+    try:
+        lib = library.Library(
+            dbpath,
+            config['directory'].as_filename(),
+            get_path_formats(),
+            get_replacements(),
+        )
+    except sqlite3.OperationalError:
+        raise UserError(u"database file {0} could not be opened".format(
+            util.displayable_path(dbpath)
+        ))
+    log.debug(u'library database: {0}\n'
+              u'library directory: {1}'
+              .format(
+                  util.displayable_path(lib.path),
+                  util.displayable_path(lib.directory),
+              ))
+    return lib
 
 
 def _raw_main(args, lib=None):
     """A helper function for `main` without top-level exception
     handling.
     """
-    subcommand, suboptions, subargs = _configure(args)
 
-    if lib is None:
-        # Open library file.
-        dbpath = config['library'].as_filename()
-        try:
-            lib = library.Library(
-                dbpath,
-                config['directory'].as_filename(),
-                get_path_formats(),
-                get_replacements(),
-            )
-        except sqlite3.OperationalError:
-            raise UserError(u"database file {0} could not be opened".format(
-                util.displayable_path(dbpath)
-            ))
-        plugins.send("library_opened", lib=lib)
+    parser = SubcommandsOptionParser()
+    options, subargs = parser.parse_global_options(args)
 
-    log.debug(u'data directory: {0}\n'
-              u'library database: {1}\n'
-              u'library directory: {2}'
-              .format(
-                  util.displayable_path(config.config_dir()),
-                  util.displayable_path(lib.path),
-                  util.displayable_path(lib.directory),
-              ))
+    subcommands, plugins, lib = _setup(options, lib)
 
-    # Configure the MusicBrainz API.
-    mb.configure()
+    parser.add_subcommand(*subcommands)
+    subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
 
-    # Invoke the subcommand.
     subcommand.func(lib, suboptions, subargs)
     plugins.send('cli_exit', lib=lib)
 

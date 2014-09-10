@@ -859,6 +859,87 @@ class ArchiveImportTask(SentinelImportTask):
         self.toppath = extract_to
 
 
+class ImportTaskFactory(object):
+    """Create album and singleton import tasks from paths for toppaths
+    in session.
+
+    The `singleton()` and `album()` methods accept paths and return
+    instances of `SingletonImportTask` and `ImportTask`, respectively.
+    `None` is returned if either no media file items could be created
+    from the paths or if the paths have already been imported. In both
+    cases it logs messages.
+    """
+    def __init__(self, toppath, session):
+        self.toppath = toppath
+        self.session = session
+        self.skipped = 0
+
+    def singleton(self, path):
+        if self.session.already_imported(self.toppath, [path]):
+            log.debug(u'Skipping previously-imported path: {0}'
+                      .format(displayable_path(path)))
+            self.skipped += 1
+            return None
+
+        item = self.read_item(path)
+        if item:
+            return SingletonImportTask(self.toppath, item)
+        else:
+            return None
+
+    def album(self, paths, dir=None):
+        """Return `ImportTask` with all media files from paths.
+
+        `dir` is a common parent directory of all paths.
+        """
+        if not paths:
+            return None
+
+        if dir:
+            dirs = [dir]
+        else:
+            dirs = list(set(os.path.dirname(p) for p in paths))
+
+        if self.session.already_imported(self.toppath, dirs):
+            log.debug(u'Skipping previously-imported path: {0}'
+                      .format(displayable_path(dirs)))
+            self.skipped += 1
+            return None
+
+        items = map(self.read_item, paths)
+        items = [item for item in items if item]
+
+        if items:
+            return ImportTask(self.toppath, dirs, items)
+        else:
+            return None
+
+    def sentinel(self, paths=None):
+        return SentinelImportTask(self.toppath, paths)
+
+    def read_item(self, path):
+        """Return an item created from the path.
+
+        If an item could not be read it returns None and logs an error.
+        """
+        # TODO remove this method. Should be handled in ImportTask creation.
+        try:
+            return library.Item.from_path(path)
+        except library.ReadError as exc:
+            if isinstance(exc.reason, mediafile.FileTypeError):
+                # Silently ignore non-music files.
+                pass
+            elif isinstance(exc.reason, mediafile.UnreadableFileError):
+                log.warn(u'unreadable file: {0}'.format(
+                    displayable_path(path))
+                )
+            else:
+                log.error(u'error reading {0}: {1}'.format(
+                    displayable_path(path),
+                    exc,
+                ))
+
+
 # Full-album pipeline stages.
 
 def read_tasks(session):
@@ -868,6 +949,7 @@ def read_tasks(session):
     """
     skipped = 0
     for toppath in session.paths:
+        task_factory = ImportTaskFactory(toppath, session)
 
         # Determine if we want to resume import of the toppath
         session.ask_resume(toppath)
@@ -894,70 +976,45 @@ def read_tasks(session):
 
         # Check whether the path is to a file.
         if not os.path.isdir(syspath(toppath)):
-            # FIXME remove duplicate code. We could put the debug
-            # statement into `session.alread_imported` but I don't feel
-            # comfortable triggering an action in a query.
-            if session.already_imported(toppath, toppath):
-                log.debug(u'Skipping previously-imported path: {0}'
-                          .format(displayable_path(toppath)))
-                skipped += 1
-                continue
-
-            try:
-                item = library.Item.from_path(toppath)
-            except mediafile.UnreadableFileError:
-                log.warn(u'unreadable file: {0}'.format(
-                    util.displayable_path(toppath)
-                ))
-                continue
             if session.config['singletons']:
-                yield SingletonImportTask(toppath, item)
+                task = task_factory.singleton(toppath)
             else:
-                yield ImportTask(toppath, [toppath], [item])
+                task = task_factory.album([toppath], dir=toppath)
+
+            if task:
+                yield task
+                yield task_factory.sentinel()
             continue
 
         # A flat album import merges all items into one album.
         if session.config['flat'] and not session.config['singletons']:
-            all_item_paths = []
+            paths = []
             for _, item_paths in albums_in_dir(toppath):
-                all_item_paths += item_paths
-            if all_item_paths:
-                if session.already_imported(toppath, [toppath]):
-                    log.debug(u'Skipping previously-imported path: {0}'
-                              .format(displayable_path(toppath)))
-                    skipped += 1
-                    continue
-                all_items = read_items(all_item_paths)
-                yield ImportTask(toppath, [toppath], all_items)
-                yield SentinelImportTask(toppath)
+                paths += item_paths
+            task = task_factory.album(paths)
+            if task:
+                yield task
+                yield task_factory.sentinel()
             continue
 
         # Produce paths under this directory.
         for dirs, paths in albums_in_dir(toppath):
             if session.config['singletons']:
                 for path in paths:
-                    if session.already_imported(toppath, [path]):
-                        log.debug(u'Skipping previously-imported path: {0}'
-                                  .format(displayable_path(path)))
-                        skipped += 1
-                        continue
-                    yield SingletonImportTask(toppath, read_items([path])[0])
-                yield SentinelImportTask(toppath, dirs)
+                    task = task_factory.singleton(path)
+                    if task:
+                        yield task
+                yield task_factory.sentinel(dirs)
 
             else:
-                if session.already_imported(toppath, dirs):
-                    log.debug(u'Skipping previously-imported path: {0}'
-                              .format(displayable_path(dirs)))
-                    skipped += 1
-                    continue
-                print(paths)
-                print(read_items(paths))
-                yield ImportTask(toppath, dirs, read_items(paths))
+                task = task_factory.album(paths)
+                if task:
+                    yield task
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
         if archive_task is None:
-            yield SentinelImportTask(toppath)
+            yield task_factory.sentinel()
         else:
             yield archive_task
 
@@ -1265,29 +1322,3 @@ def albums_in_dir(path):
     # Clear out any unfinished collapse.
     if collapse_paths and collapse_items:
         yield collapse_paths, collapse_items
-
-
-def read_items(paths):
-    """Return a list of items created from each path.
-
-    If an item could not be read it skips the item and logs an error.
-    """
-    # TODO remove this method. Should be handled in ImportTask creation.
-    items = []
-    for path in paths:
-        try:
-            items.append(library.Item.from_path(path))
-        except library.ReadError as exc:
-            if isinstance(exc.reason, mediafile.FileTypeError):
-                # Silently ignore non-music files.
-                pass
-            elif isinstance(exc.reason, mediafile.UnreadableFileError):
-                log.warn(u'unreadable file: {0}'.format(
-                    displayable_path(path))
-                )
-            else:
-                log.error(u'error reading {0}: {1}'.format(
-                    displayable_path(path),
-                    exc,
-                ))
-    return items

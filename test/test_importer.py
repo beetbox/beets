@@ -528,6 +528,14 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         self.assertEqual(self.lib.items().get(), None)
 
+    def test_skip_non_album_dirs(self):
+        self.assertTrue(os.path.isdir(
+            os.path.join(self.import_dir, 'the_album')))
+        self.touch('cruft', dir=self.import_dir)
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(len(self.lib.albums()), 1)
+
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
     """Test TRACKS and APPLY choice.

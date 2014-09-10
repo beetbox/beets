@@ -21,14 +21,12 @@ import datetime
 import logging
 import re
 from munkres import Munkres
-import enum
 
 from beets import plugins
 from beets import config
 from beets.util import plurality
 from beets.autotag import hooks
-
-# Recommendation enumeration.
+from beets.util.enumeration import OrderedEnum
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -41,31 +39,6 @@ log = logging.getLogger('beets')
 
 
 # Recommendation enumeration.
-
-# https://docs.python.org/3.4/library/enum.html#orderedenum
-class OrderedEnum(enum.Enum):
-    """An Enum subclass that allows comparison of members.
-    """
-    def __ge__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value >= other.value
-        return NotImplemented
-
-    def __gt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value > other.value
-        return NotImplemented
-
-    def __le__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value <= other.value
-        return NotImplemented
-
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value < other.value
-        return NotImplemented
-
 
 class Recommendation(OrderedEnum):
     """Indicates a qualitative suggestion to the user about what should

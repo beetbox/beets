@@ -18,6 +18,7 @@ from helper import TestHelper
 
 from beets.library import Item
 
+
 class KeyFinderTest(unittest.TestCase, TestHelper):
 
     def setUp(self):

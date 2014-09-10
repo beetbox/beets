@@ -36,3 +36,5 @@ notifications:
             - "irc.freenode.org#beets"
         use_notice: true
         skip_join: true
+        on_success: change
+        on_failure: always

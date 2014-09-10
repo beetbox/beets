@@ -17,9 +17,9 @@
 import os
 import sqlite3
 
-import _common
 from _common import unittest
 from beets import dbcore
+from tempfile import mkstemp
 
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -105,15 +105,14 @@ class TestDatabaseTwoModels(dbcore.Database):
     pass
 
 
-class MigrationTest(_common.TestCase):
+class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
     """
     def setUp(self):
-        super(MigrationTest, self).setUp()
-
+        handle, self.libfile = mkstemp('db')
+        os.close(handle)
         # Set up a database with the two-field schema.
-        self.libfile = os.path.join(self.temp_dir, 'temp.db')
         old_lib = TestDatabase2(self.libfile)
 
         # Add an item to the old library.
@@ -122,6 +121,9 @@ class MigrationTest(_common.TestCase):
         )
         old_lib._connection().commit()
         del old_lib
+
+    def tearDown(self):
+        os.remove(self.libfile)
 
     def test_open_with_same_fields_leaves_untouched(self):
         new_lib = TestDatabase2(self.libfile)
@@ -159,15 +161,12 @@ class MigrationTest(_common.TestCase):
             self.fail("select failed")
 
 
-class ModelTest(_common.TestCase):
+class ModelTest(unittest.TestCase):
     def setUp(self):
-        super(ModelTest, self).setUp()
-        dbfile = os.path.join(self.temp_dir, 'temp.db')
-        self.db = TestDatabase1(dbfile)
+        self.db = TestDatabase1(':memory:')
 
     def tearDown(self):
         self.db._connection().close()
-        super(ModelTest, self).tearDown()
 
     def test_add_model(self):
         model = TestModel1()
@@ -251,7 +250,7 @@ class ModelTest(_common.TestCase):
         self.assertEqual(model.some_float_field, 0.0)
 
 
-class FormatTest(_common.TestCase):
+class FormatTest(unittest.TestCase):
     def test_format_fixed_field(self):
         model = TestModel1()
         model.field_one = u'caf\xe9'
@@ -283,7 +282,7 @@ class FormatTest(_common.TestCase):
         self.assertEqual(value, u'3.1')
 
 
-class FormattedMappingTest(_common.TestCase):
+class FormattedMappingTest(unittest.TestCase):
     def test_keys_equal_model_keys(self):
         model = TestModel1()
         formatted = model.formatted()
@@ -306,7 +305,7 @@ class FormattedMappingTest(_common.TestCase):
         self.assertEqual(formatted.get('other_field', 'default'), 'default')
 
 
-class ParseTest(_common.TestCase):
+class ParseTest(unittest.TestCase):
     def test_parse_fixed_field(self):
         value = TestModel1._parse('field_one', u'2')
         self.assertIsInstance(value, int)
@@ -322,7 +321,7 @@ class ParseTest(_common.TestCase):
         self.assertEqual(value, u'2')
 
 
-class QueryParseTest(_common.TestCase):
+class QueryParseTest(unittest.TestCase):
     def pqp(self, part):
         return dbcore.queryparse.parse_query_part(
             part,
@@ -381,7 +380,7 @@ class QueryParseTest(_common.TestCase):
         self.assertEqual(self.pqp(q), r)
 
 
-class QueryFromStringsTest(_common.TestCase):
+class QueryFromStringsTest(unittest.TestCase):
     def qfs(self, strings):
         return dbcore.queryparse.query_from_strings(
             dbcore.query.AndQuery,
@@ -412,7 +411,7 @@ class QueryFromStringsTest(_common.TestCase):
         self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
 
 
-class SortFromStringsTest(_common.TestCase):
+class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):
         return dbcore.queryparse.sort_from_strings(
             TestModel1,

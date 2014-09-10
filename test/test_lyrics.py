@@ -112,7 +112,7 @@ class LyricsPluginTest(unittest.TestCase):
             ""
         )
         text = """Look at all the shit that i done bought her
-                  See lyrics ain't nothin 
+                  See lyrics ain't nothin
                   if the beat aint crackin"""
         self.assertEqual(lyrics.remove_credits(text), text)
 

@@ -3,7 +3,6 @@
 from _common import unittest
 import _common
 import json
-import beets
 import beetsplug
 from beets.library import Item, Album
 beetsplug.__path__ = ['./beetsplug', '../beetsplug']
@@ -100,8 +99,6 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json['albums']), 2)
-
-    
 
 
 def suite():

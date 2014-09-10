@@ -306,6 +306,27 @@ class TestHelper(object):
         """
         shutil.rmtree(self.temp_dir)
 
+    def touch(self, path, dir=None, content=''):
+        """Create a file at `path` with given content.
+
+        If `dir` is given, it is prepended to `path`. After that, if the
+        path is relative, it is resolved with respect to
+        `self.temp_dir`.
+        """
+        if dir:
+            path = os.path.join(dir, path)
+
+        if not os.path.isabs(path):
+            path = os.path.join(self.temp_dir, path)
+
+        parent = os.path.dirname(path)
+        if not os.path.isdir(parent):
+            os.makedirs(parent)
+
+        with open(path, 'a+') as f:
+            f.write(content)
+        return path
+
 
 class TestImportSession(importer.ImportSession):
     """ImportSession that can be controlled programaticaly.
