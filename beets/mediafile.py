@@ -1122,13 +1122,15 @@ class DateField(MediaField):
         """
         if year is None:
             self.__delete__(mediafile)
-        date = [year]
+            return
+
+        date = [u'{0:04d}'.format(int(year))]
         if month:
-            date.append(month)
+            date.append(u'{0:02d}'.format(int(month)))
         if month and day:
-            date.append(day)
+            date.append(u'{0:02d}'.format(int(day)))
         date = map(unicode, date)
-        super(DateField, self).__set__(mediafile, '-'.join(date))
+        super(DateField, self).__set__(mediafile, u'-'.join(date))
 
         if hasattr(self, '_year_field'):
             self._year_field.__set__(mediafile, year)
