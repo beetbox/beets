@@ -42,6 +42,7 @@ Fixes:
 * :doc:`/plugins/play`: Add a ``relative_to`` config option. Thanks to
   BrainDamage.
 * Fix a crash when a MusicBrainz release has zero tracks.
+* The ``--version`` flag now works as an alias for the ``version`` command.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 

@@ -689,6 +689,8 @@ class SubcommandsOptionParser(optparse.OptionParser):
                         help='path to configuration file')
         self.add_option('-h', '--help', dest='help', action='store_true',
                         help='how this help message and exit')
+        self.add_option('--version', dest='version', action='store_true',
+                        help=optparse.SUPPRESS_HELP)
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -948,9 +950,14 @@ def _raw_main(args, lib=None):
     subcommands, plugins, lib = _setup(options, lib)
 
     parser.add_subcommand(*subcommands)
-    subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
 
-    subcommand.func(lib, suboptions, subargs)
+    if options.version:
+        from beets.ui import commands
+        commands.version_cmd.func(lib, None, None)
+    else:
+        subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
+        subcommand.func(lib, suboptions, subargs)
+
     plugins.send('cli_exit', lib=lib)
 
 
