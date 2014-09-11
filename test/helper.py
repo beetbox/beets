@@ -230,6 +230,28 @@ class TestHelper(object):
         return TestImportSession(self.lib, logfile=None, query=None,
                                  paths=[import_dir])
 
+    # Library fixtures methods
+
+    def add_item(self, **values_):
+        """Add an item to the library and return it.
+
+        The item receives sensible default values for the title, artist,
+        and album fields. These default values contain unicode
+        characters to test for encoding issues. The track title also
+        includes a counter to make sure we do not create items with the
+        same attributes.
+        """
+        values = {
+            'title': u't\u00eftle {0}'.format(self._get_item_count()),
+            'artist': u'the \u00e4rtist',
+            'album': u'the \u00e4lbum',
+        }
+        values.update(values_)
+        item = Item(**values)
+        if hasattr(self, 'lib'):
+            item.add(self.lib)
+        return item
+
     def add_item_fixtures(self, ext='mp3', count=1):
         """Add a number of items with files to the database.
         """
@@ -283,6 +305,14 @@ class TestHelper(object):
             for path in self._mediafile_fixtures:
                 os.remove(path)
 
+    def _get_item_count(self):
+        if not hasattr(self, '__item_count'):
+            count = 0
+        self.__item_count = count + 1
+        return count
+
+    # Running beets commands
+
     def run_command(self, *args):
         if hasattr(self, 'lib'):
             lib = self.lib
@@ -294,6 +324,8 @@ class TestHelper(object):
         with capture_stdout() as out:
             self.run_command(*args)
         return out.getvalue()
+
+    # Safe file operations
 
     def create_temp_dir(self):
         """Create a temporary directory and assign it into
