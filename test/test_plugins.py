@@ -66,3 +66,10 @@ class PluginTest(unittest.TestCase, TestHelper):
 
     def register_plugin(self, plugin_class):
         self._plugin_classes.add(plugin_class)
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')

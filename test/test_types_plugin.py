@@ -124,3 +124,10 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
 def mktime(*args):
     return time.mktime(datetime(*args).timetuple())
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
