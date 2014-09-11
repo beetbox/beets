@@ -332,6 +332,11 @@ def _add_candidate(items, results, info):
     """
     log.debug('Candidate: %s - %s' % (info.artist, info.album))
 
+    # Discard albums with zero tracks.
+    if not info.tracks:
+        log.debug('No tracks.')
+        return
+
     # Don't duplicate.
     if info.album_id in results:
         log.debug('Duplicate.')
