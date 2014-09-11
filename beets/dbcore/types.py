@@ -168,6 +168,12 @@ class Boolean(Type):
     def parse(self, string):
         return str2bool(string)
 
+    def from_sql(self, value):
+        if isinstance(value, unicode):
+            return str2bool(value)
+        else:
+            return bool(value)
+
 
 class Bytes(Type):
 
