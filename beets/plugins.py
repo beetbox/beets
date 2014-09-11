@@ -144,7 +144,7 @@ class BeetsPlugin(object):
 
             >>> @MyPlugin.listen("imported")
             >>> def importListener(**kwargs):
-            >>>     pass
+            ...     pass
         """
         def helper(func):
             if cls.listeners is None:
