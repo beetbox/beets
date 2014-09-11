@@ -62,13 +62,11 @@ class PathQuery(dbcore.FieldQuery):
 # Library-specific field types.
 
 
-class DateType(types.Type):
+class DateType(types.Float):
     """Dates are represented by floats.
     """
     # TODO representation should be struct_time
-    sql = u'REAL'
     query = dbcore.query.DateQuery
-    default = 0.0
 
     def format(self, value):
         fmt = beets.config['time_format'].get(unicode)
@@ -84,12 +82,12 @@ class DateType(types.Type):
             return float(string)
 
 
-class PathType(types.Type):
+class PathType(types.Bytes):
     """Paths are stored as `str` internally
     """
 
-    sql = u'BLOB'
     query = PathQuery
+    model_type = str
 
     def format(self, value):
         return util.displayable_path(value)
@@ -102,12 +100,6 @@ class PathType(types.Type):
             return bytestring_path(value)
         else:
             return str(value)
-
-    def from_sql(self, sql_value):
-        if isinstance(sql_value, unicode):
-            # For backwards compatibility.
-            return bytestring_path(sql_value)
-        return bytes(sql_value)
 
     def to_sql(self, local_value):
         return buffer(local_value)

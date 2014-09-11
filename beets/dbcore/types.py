@@ -34,9 +34,19 @@ class Type(object):
     """The `Query` subclass to be used when querying the field.
     """
 
-    default = u''
-    """The value to be exposed when the underlying value is None.
+    model_type = unicode
+    """The python type that is used to represent the value in the model.
+
+    The model is guaranteed to return a value of this type if the field
+    is accessed.  To this end, the constructor is used by the `normalize`
+    and `from_sql` methods and the `default` property.
     """
+
+    @property
+    def default(self):
+        """The value to be exposed when the underlying value is None.
+        """
+        return self.model_type()
 
     def format(self, value):
         """Given a value of this type, produce a Unicode string
@@ -54,13 +64,24 @@ class Type(object):
         """Given a value that will be assigned into a field of this
         type, normalize the value to have the appropriate type.
         """
-        return value
+        return self.model_type(value)
 
     def to_sql(self, value):
         return value
 
     def from_sql(self, value):
-        return value
+        """Receives the value stored in the SQL backend and return the
+        value to be stored in the model.
+
+        For fixed fields the type of `value` is determined by the column
+        type given in the `sql` property and the SQL to Python mapping
+        given here:
+        https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
+
+        For flexible field the value is a unicode object. The method
+        must therefore be able to parse them.
+        """
+        return self.model_type(value)
 
 
 # Reusable types.
@@ -70,13 +91,7 @@ class Integer(Type):
     """
     sql = u'INTEGER'
     query = query.NumericQuery
-    default = 0
-
-    def format(self, value):
-        return unicode(value)
-
-    def parse(self, string):
-        return int(string)
+    model_type = int
 
 
 class PaddedInt(Integer):
@@ -106,6 +121,7 @@ class Id(Integer):
     """An integer used as the row id or a foreign key in a SQLite table.
     This type is nullable: None values are not translated to zero.
     """
+    # TODO we should be able to remove the default value
     default = None
 
     def __init__(self, primary=True):
@@ -118,15 +134,13 @@ class Float(Type):
     """
     sql = u'REAL'
     query = query.NumericQuery
-    default = 0.0
+    model_type = float
 
     def format(self, value):
         return u'{0:.1f}'.format(value)
 
-    def normalize(self, value):
-        return float(value)
 
-
+# TODO we should be able to remove this type
 class NullFloat(Float):
     default = None
 
@@ -136,7 +150,6 @@ class String(Type):
     """
     sql = u'TEXT'
     query = query.SubstringQuery
-    default = u''
 
     def normalize(self, value):
         if isinstance(value, unicode):
@@ -150,13 +163,7 @@ class Boolean(Type):
     """
     sql = u'INTEGER'
     query = query.BooleanQuery
-    null = False
-
-    def format(self, value):
-        return unicode(bool(value))
-
-    def normalize(self, value):
-        return bool(value)
+    model_type = bool
 
     def parse(self, string):
         return str2bool(string)
@@ -165,22 +172,21 @@ class Boolean(Type):
 class Bytes(Type):
 
     sql = u'BLOB'
-    default = bytearray()
+    model_type = bytearray
 
     def format(self, value):
         return value.decode('utf-8')
-
-    def normalize(self, value):
-        return bytearray(value)
 
     def parse(self, string):
         return bytearray(string, 'utf-8')
 
     def from_sql(self, sql_value):
-        # sql_value is a buffer
-        return bytearray(sql_value)
+        if isinstance(sql_value, unicode):
+            sql_value = sql_value.encode('utf-8')
+        return self.model_type(sql_value)
 
     def to_sql(self, local_value):
+        # local_value is a buffer
         return buffer(local_value)
 
 

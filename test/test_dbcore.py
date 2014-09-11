@@ -31,6 +31,7 @@ class TestModel1(dbcore.Model):
     _fields = {
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
     _types = {
         'some_float_field': dbcore.types.FLOAT,
@@ -54,6 +55,7 @@ class TestModel2(TestModel1):
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
         'field_two': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
 
 
@@ -68,6 +70,7 @@ class TestModel3(TestModel1):
         'field_one': dbcore.types.INTEGER,
         'field_two': dbcore.types.INTEGER,
         'field_three': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
 
 
@@ -83,6 +86,7 @@ class TestModel4(TestModel1):
         'field_two': dbcore.types.INTEGER,
         'field_three': dbcore.types.INTEGER,
         'field_four': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
 
 
@@ -309,8 +313,8 @@ class FormattedMappingTest(unittest.TestCase):
 
     def test_format_fixed_field(self):
         model = TestModel1()
-        model.field_one = u'caf\xe9'
-        value = model.formatted().get('field_one')
+        model.string_field = u'caf\xe9'
+        value = model.formatted().get('string_field')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field(self):
