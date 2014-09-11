@@ -402,7 +402,7 @@ class IntQueryTest(unittest.TestCase, TestHelper):
     def test_flex_range_match(self):
         Item._types = {'myint': types.Integer()}
         item = self.add_item(myint=2)
-        matched = self.lib.items('myint:2').get()
+        matched = self.lib.items('myint:1..3').get()
         self.assertEqual(item.id, matched.id)
 
     def test_flex_dont_match_missing(self):
