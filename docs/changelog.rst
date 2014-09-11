@@ -43,6 +43,8 @@ Fixes:
   BrainDamage.
 * Fix a crash when a MusicBrainz release has zero tracks.
 * The ``--version`` flag now works as an alias for the ``version`` command.
+* :doc:`/plugins/lastgenre`: Remove some unhelpful genres from the default
+  whitelist. Thanks to gwern.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
