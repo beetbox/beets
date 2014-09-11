@@ -65,7 +65,8 @@ class PathQuery(dbcore.FieldQuery):
 class DateType(types.Float):
     """Dates are represented by floats.
     """
-    # TODO representation should be struct_time
+    # TODO representation should be `datetime` object
+    # TODO distinguish beetween date and time types
     query = dbcore.query.DateQuery
 
     def format(self, value):
