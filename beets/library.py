@@ -62,6 +62,8 @@ class PathQuery(dbcore.FieldQuery):
 
 
 class DateType(types.Type):
+    # TODO representation should be `datetime` object
+    # TODO distinguish beetween date and time types
     sql = u'REAL'
     query = dbcore.query.DateQuery
     null = 0.0
