@@ -21,8 +21,9 @@ your ``plugins`` line in :doc:`config file </reference/config>`.
 The plugin chooses genres based on a *whitelist*, meaning that only certain
 tags can be considered genres. This way, tags like "my favorite music" or "seen
 live" won't be considered genres. The plugin ships with a fairly extensive
-internal whitelist, but you can set your own in the config file using the
-``whitelist`` configuration value::
+[internal whitelist](https://raw.githubusercontent.com/sampsyo/beets/master/beetsplug/lastgenre/genres.txt), 
+but you can set your own in the config file using the ``whitelist`` configuration
+value::
 
     lastgenre:
         whitelist: /path/to/genres.txt
