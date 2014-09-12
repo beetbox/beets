@@ -241,16 +241,26 @@ class TestHelper(object):
         includes a counter to make sure we do not create items with the
         same attributes.
         """
+        item_count = self._get_item_count()
         values = {
-            'title': u't\u00eftle {0}'.format(self._get_item_count()),
+            'title': u't\u00eftle {0}',
             'artist': u'the \u00e4rtist',
             'album': u'the \u00e4lbum',
+            'track': item_count,
+            'path': 'audio.mp3',
         }
         values.update(values_)
+        values['title'] = values['title'].format(item_count)
         item = Item(**values)
-        if hasattr(self, 'lib'):
-            item.add(self.lib)
+        item.add(self.lib)
+        if not 'path' in values_:
+            item['path'] = item.destination()
+            item.store()
         return item
+
+    def add_album(self, **values):
+        item = self.add_item(**values)
+        return self.lib.add_album([item])
 
     def add_item_fixtures(self, ext='mp3', count=1):
         """Add a number of items with files to the database.
