@@ -43,7 +43,7 @@ from enum import Enum
 import beets
 from beets import config
 import beets.plugins
-from beets.library import Library, Item
+from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile
@@ -168,18 +168,24 @@ class TestHelper(object):
         Similar setting a list of plugins in the configuration. Make
         sure you call ``unload_plugins()`` afterwards.
         """
+        # FIXME this should eventually be handled by a plugin manager
         beets.config['plugins'] = plugins
         beets.plugins.load_plugins(plugins)
         beets.plugins.find_plugins()
+        Item._types = beets.plugins.types(Item)
+        Album._types = beets.plugins.types(Album)
 
     def unload_plugins(self):
         """Unload all plugins and remove the from the configuration.
         """
+        # FIXME this should eventually be handled by a plugin manager
         beets.config['plugins'] = []
         for plugin in beets.plugins._classes:
             plugin.listeners = None
         beets.plugins._classes = set()
         beets.plugins._instances = {}
+        Item._types = {}
+        Album._types = {}
 
     def create_importer(self, item_count=1, album_count=1):
         """Create files to import and return corresponding session.
