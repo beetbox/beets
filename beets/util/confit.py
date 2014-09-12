@@ -1077,16 +1077,21 @@ class StrSeq(Template):
                 return value.split()
             else:
                 return [value]
-        else:
-            try:
-                value = list(value)
-            except TypeError:
-                self.fail('must be a whitespace-separated string or a list',
-                          view, True)
-            if all(isinstance(x, BASESTRING) for x in value):
-                return value
+
+        try:
+            value = list(value)
+        except TypeError:
+            self.fail('must be a whitespace-separated string or a list',
+                      view, True)
+
+        def convert(x):
+            if isinstance(x, unicode):
+                return x
+            elif isinstance(x, BASESTRING):
+                return x.decode('utf8', 'ignore')
             else:
                 self.fail('must be a list of strings', view, True)
+        return map(convert, value)
 
 
 class Filename(Template):

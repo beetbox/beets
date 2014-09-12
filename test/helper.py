@@ -253,7 +253,7 @@ class TestHelper(object):
         values['title'] = values['title'].format(item_count)
         item = Item(**values)
         item.add(self.lib)
-        if not 'path' in values_:
+        if 'path' not in values_:
             item['path'] = item.destination()
             item.store()
         return item

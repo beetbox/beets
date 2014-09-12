@@ -234,6 +234,7 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
 
     # Local art.
     cover_names = config['fetchart']['cover_names'].as_str_seq()
+    cover_names = map(util.bytestring_path, cover_names)
     cautious = config['fetchart']['cautious'].get(bool)
     if paths:
         for path in paths:
