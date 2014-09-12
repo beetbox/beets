@@ -737,7 +737,7 @@ class Database(object):
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
-                    value TEXT,
+                    value NONE,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
