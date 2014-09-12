@@ -23,6 +23,7 @@ from string import Template
 import subprocess
 
 from beets import util, config, plugins, ui
+from beets.dbcore import types
 import pyechonest
 import pyechonest.song
 import pyechonest.track
@@ -38,7 +39,9 @@ DEVNULL = open(os.devnull, 'wb')
 ALLOWED_FORMATS = ('MP3', 'OGG', 'AAC')
 UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
-# The attributes we can import and where to store them in beets fields.
+# Maps attribute names from echonest to their field names in beets.
+# The attributes are retrieved from a songs `audio_summary`. See:
+# http://echonest.github.io/pyechonest/song.html#pyechonest.song.profile
 ATTRIBUTES = {
     'energy':       'energy',
     'liveness':     'liveness',
@@ -47,6 +50,16 @@ ATTRIBUTES = {
     'danceability': 'danceability',
     'valence':      'valence',
     'tempo':        'bpm',
+}
+
+# Types for the flexible fields added by `ATTRIBUTES`
+FIELD_TYPES = {
+    'energy':       types.FLOAT,
+    'liveness':     types.FLOAT,
+    'speechiness':  types.FLOAT,
+    'acousticness': types.FLOAT,
+    'danceability': types.FLOAT,
+    'valence':      types.FLOAT,
 }
 
 MUSICAL_SCALE = ['C', 'C#', 'D', 'D#', 'E' 'F',
@@ -104,6 +117,9 @@ def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
 
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):
+
+    item_types = FIELD_TYPES
+
     def __init__(self):
         super(EchonestMetadataPlugin, self).__init__()
         self.config.add({
@@ -447,10 +463,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             if k in ATTRIBUTES:
                 field = ATTRIBUTES[k]
                 log.debug(u'echonest: metadata: {0} = {1}'.format(field, v))
-                if field == 'bpm':
-                    item[field] = int(v)
-                else:
-                    item[field] = unicode(v)
+                item[field] = v
         if 'key' in values and 'mode' in values:
             key = MUSICAL_SCALE[values['key'] - 1]
             if values['mode'] == 0:  # Minor key
