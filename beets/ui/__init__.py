@@ -776,6 +776,8 @@ class SubcommandsOptionParser(optparse.OptionParser):
         # Force the help command
         if options.help:
             subargs = ['help']
+        elif options.version:
+            subargs = ['version']
         return options, subargs
 
     def parse_subcommand(self, args):
@@ -951,12 +953,8 @@ def _raw_main(args, lib=None):
 
     parser.add_subcommand(*subcommands)
 
-    if options.version:
-        from beets.ui import commands
-        commands.version_cmd.func(lib, None, None)
-    else:
-        subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
-        subcommand.func(lib, suboptions, subargs)
+    subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
+    subcommand.func(lib, suboptions, subargs)
 
     plugins.send('cli_exit', lib=lib)
 
