@@ -62,6 +62,7 @@ by typing ``beet version``.
    importadded
    bpm
    spotify
+   types
 
 Autotagger Extensions
 ---------------------
@@ -137,6 +138,7 @@ Miscellaneous
 * :doc:`missing`: List missing tracks.
 * :doc:`duplicates`: List duplicate tracks or albums.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
+* :doc:`types`: Declare types for flexible attributes.
 
 .. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
