@@ -550,11 +550,23 @@ class MultipleSort(Sort):
     def add_sort(self, sort):
         self.sorts.append(sort)
 
+    def _sql_sorts(self):
+        """ Returns the list of sort for which sql can be used
+        """
+        # With several sort criteria, we can use SQL sorting only if there is
+        # only SQL-capable Sort or if the list ends with SQL-capable Sort.
+        sql_sorts = []
+        for sort in reversed(self.sorts):
+            if not sort.order_clause() is None:
+                sql_sorts.append(sort)
+            else:
+                break
+        sql_sorts.reverse()
+        return sql_sorts
+
     def select_clause(self):
-        if self.is_slow():
-            return ""
         select_strings = []
-        for sort in self.sorts:
+        for sort in self._sql_sorts():
             select = sort.select_clause()
             if select:
                 select_strings.append(select)
@@ -563,20 +575,16 @@ class MultipleSort(Sort):
         return select_string
 
     def union_clause(self):
-        if self.is_slow():
-            return ""
         union_strings = []
-        for sort in self.sorts:
+        for sort in self._sql_sorts():
             union = sort.union_clause()
             union_strings.append(union)
 
         return "".join(union_strings)
 
     def order_clause(self):
-        if self.is_slow():
-            return None
         order_strings = []
-        for sort in self.sorts:
+        for sort in self._sql_sorts():
             order = sort.order_clause()
             order_strings.append(order)
 
