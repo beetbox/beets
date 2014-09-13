@@ -124,6 +124,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(converted)
         self.assertEqual(mediafile.images[0].data, image_data)
 
+
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -162,6 +163,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
             self.run_command('convert', self.album_ogg.items()[0].path)
         converted = os.path.join(self.convert_dest, 'converted.mp3')
         self.assertTrue(os.path.isfile(converted))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
