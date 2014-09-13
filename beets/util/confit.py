@@ -1065,6 +1065,7 @@ class StrSeq(Template):
         string, it should be split on whitespace. Otherwise, the
         resulting value is a list containing a single string.
         """
+        super(StrSeq, self).__init__()
         self.split = split
 
     def convert(self, value, view):
