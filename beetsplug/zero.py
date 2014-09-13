@@ -86,11 +86,11 @@ class ZeroPlugin(BeetsPlugin):
 
         for field, patterns in self.patterns.items():
             try:
-                value = getattr(item, field)
-            except AttributeError:
+                value = item[field]
+            except KeyError:
                 log.error(u'[zero] no such field: {0}'.format(field))
                 continue
 
             if self.match_patterns(value, patterns):
                 log.debug(u'[zero] {0}: {1} -> None'.format(field, value))
-                setattr(item, field, None)
+                del item[field]

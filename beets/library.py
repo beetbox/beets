@@ -29,6 +29,7 @@ from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
+from beets.dbcore.db import COLUMN_DEFAULT
 import beets
 
 
@@ -61,51 +62,48 @@ class PathQuery(dbcore.FieldQuery):
 # Library-specific field types.
 
 
-class DateType(types.Type):
-    sql = u'REAL'
+class DateType(types.Float):
+    """Dates are represented by floats.
+    """
+    # TODO representation should be `datetime` object
+    # TODO distinguish beetween date and time types
     query = dbcore.query.DateQuery
-    null = 0.0
 
     def format(self, value):
-        return time.strftime(beets.config['time_format'].get(unicode),
-                             time.localtime(value or 0))
+        fmt = beets.config['time_format'].get(unicode)
+        return time.strftime(fmt, time.localtime(value or 0))
 
     def parse(self, string):
         try:
             # Try a formatted date string.
-            return time.mktime(
-                time.strptime(string, beets.config['time_format'].get(unicode))
-            )
+            fmt = beets.config['time_format'].get(unicode)
+            return time.mktime(time.strptime(string, fmt))
         except ValueError:
             # Fall back to a plain timestamp number.
-            try:
-                return float(string)
-            except ValueError:
-                return self.null
+            return float(string)
 
 
-class PathType(types.Type):
-    sql = u'BLOB'
+class PathType(types.Bytes):
+    """Paths are stored as `str` internally
+    """
+
     query = PathQuery
+    model_type = str
 
     def format(self, value):
         return util.displayable_path(value)
 
     def parse(self, string):
-        return normpath(bytestring_path(string))
+        return self.normalize(normpath(bytestring_path(string)))
 
     def normalize(self, value):
         if isinstance(value, unicode):
-            # Paths stored internally as encoded bytes.
             return bytestring_path(value)
-
-        elif isinstance(value, buffer):
-            # SQLite must store bytestings as buffers to avoid decoding.
-            # We unwrap buffers to bytes.
-            return bytes(value)
-
         else:
-            return value
+            return str(value)
+
+    def to_sql(self, local_value):
+        return buffer(local_value)
 
 
 class MusicalKey(types.String):
@@ -129,10 +127,7 @@ class MusicalKey(types.String):
         return key.capitalize()
 
     def normalize(self, key):
-        if key is None:
-            return None
-        else:
-            return self.parse(key)
+        return self.parse(key)
 
 
 # Special path format key.
@@ -203,8 +198,8 @@ class LibModel(dbcore.Model):
         funcs.update(plugins.template_funcs())
         return funcs
 
-    def store(self):
-        super(LibModel, self).store()
+    def store(self, all=False):
+        super(LibModel, self).store(all)
         plugins.send('database_change', lib=self._db)
 
     def remove(self):
@@ -224,6 +219,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     def __init__(self, item, for_path=False):
         super(FormattedItemMapping, self).__init__(item, for_path)
+        self.item = item
         self.album = item.get_album()
         self.album_keys = []
         if self.album:
@@ -232,33 +228,53 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
                     self.album_keys.append(key)
         self.all_keys = set(self.model_keys).union(self.album_keys)
 
-    def _get(self, key):
-        """Get the value for a key, either from the album or the item.
-        Raise a KeyError for invalid keys.
-        """
+    def _model_for_key(self, key):
         if self.for_path and key in self.album_keys:
-            return self._get_formatted(self.album, key)
+            return self.album
         elif key in self.model_keys:
-            return self._get_formatted(self.model, key)
+            return self.item
         elif key in self.album_keys:
-            return self._get_formatted(self.album, key)
+            return self.album
         else:
-            raise KeyError(key)
+            return self.item
 
     def __getitem__(self, key):
-        """Get the value for a key. Certain unset values are remapped.
-        """
-        value = self._get(key)
+        key = self._translate_key(key)
+        model = self._model_for_key(key)
+        value = model[key]
+        if value is None:
+            raise KeyError(key)
+        value = model._type(key).format(value)
+        return self._path_replace(value)
 
+    def get(self, key, default=COLUMN_DEFAULT):
+        key = self._translate_key(key)
+        model = self._model_for_key(key)
+        if default == COLUMN_DEFAULT:
+            value = model.get(key, default)
+            value = model._type(key).format(value)
+        else:
+            value = model.get(key, None)
+            if value is None:
+                value = default
+            else:
+                value = model._type(key).format(value)
+
+        return self._path_replace(value)
+
+    def _missing_value(self, key):
+        return not (key in self.item and self.item[key] or
+                    key in self.album_keys and self.album[key])
+
+    def _translate_key(self, key):
         # `artist` and `albumartist` fields fall back to one another.
         # This is helpful in path formats when the album artist is unset
         # on as-is imports.
-        if key == 'artist' and not value:
-            return self._get('albumartist')
-        elif key == 'albumartist' and not value:
-            return self._get('artist')
-        else:
-            return value
+        if key == 'artist' and self._missing_value('artist'):
+            return 'albumartist'
+        elif key == 'albumartist' and self._missing_value('albumartist'):
+            return 'artist'
+        return key
 
     def __iter__(self):
         return iter(self.all_keys)
@@ -872,7 +888,7 @@ class Album(LibModel):
             util.move(path, artdest)
         self.artpath = artdest
 
-    def store(self):
+    def store(self, all=False):
         """Update the database with the album information. The album's
         tracks are also updated.
         """
@@ -883,7 +899,7 @@ class Album(LibModel):
                 track_updates[key] = self[key]
 
         with self._db.transaction():
-            super(Album, self).store()
+            super(Album, self).store(all)
             if track_updates:
                 for item in self.items():
                     for key, value in track_updates.items():

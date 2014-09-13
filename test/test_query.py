@@ -16,8 +16,12 @@
 """
 import _common
 from _common import unittest
+from helper import TestHelper
+
 import beets.library
 from beets import dbcore
+from beets.dbcore import types
+from beets.library import Library, Item
 
 
 class AnyFieldQueryTest(_common.LibTestCase):
@@ -372,6 +376,50 @@ class PathQueryTest(_common.LibTestCase, AssertsMixin):
         q = 'path::\\.mp3$'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
+
+
+class IntQueryTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.lib = Library(':memory:')
+
+    def tearDown(self):
+        Item._types = {}
+
+    def test_exact_value_match(self):
+        item = self.add_item(bpm=120)
+        matched = self.lib.items('bpm:120').get()
+        self.assertEqual(item.id, matched.id)
+
+    def test_range_match(self):
+        item = self.add_item(bpm=120)
+        self.add_item(bpm=130)
+
+        matched = self.lib.items('bpm:110..125')
+        self.assertEqual(1, len(matched))
+        self.assertEqual(item.id, matched.get().id)
+
+    def test_flex_range_match(self):
+        Item._types = {'myint': types.Integer()}
+        item = self.add_item(myint=2)
+        matched = self.lib.items('myint:1..3').get()
+        self.assertEqual(item.id, matched.id)
+
+    def test_flex_dont_match_missing(self):
+        Item._types = {'myint': types.Integer()}
+        self.add_item()
+        matched = self.lib.items('myint:2').get()
+        self.assertIsNone(matched)
+
+    def test_no_substring_match(self):
+        self.add_item(bpm=120)
+        matched = self.lib.items('bpm:12').get()
+        self.assertIsNone(matched)
+
+    def add_item(self, **values):
+        item = Item(db=self.lib, **values)
+        item.add()
+        return item
 
 
 class DefaultSearchFieldsTest(DummyDataTestCase):

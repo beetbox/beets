@@ -81,14 +81,21 @@ class PluralityTest(_common.TestCase):
         self.assertFalse(consensus['artist'])
 
     def test_current_metadata_likelies(self):
-        fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
-                  'mb_albumid', 'label', 'catalognum', 'country', 'media',
-                  'albumdisambig']
-        items = [Item(**dict((f, '%s_%s' % (f, i or 1)) for f in fields))
-                 for i in range(5)]
-        likelies, _ = match.current_metadata(items)
-        for f in fields:
+        string_fields = ['artist', 'album', 'albumartist', 'mb_albumid',
+                         'label', 'catalognum', 'country', 'media',
+                         'albumdisambig']
+        int_fields = ['year', 'disctotal']
+
+        def item(i):
+            return Item(**dict(
+                [(f, '%s_%s' % (f, i or 1)) for f in string_fields] +
+                [(f, i or 1) for f in int_fields]
+            ))
+        likelies, _ = match.current_metadata([item(i) for i in range(5)])
+        for f in string_fields:
             self.assertEqual(likelies[f], '%s_1' % f)
+        for f in int_fields:
+            self.assertEqual(likelies[f], 1)
 
 
 def _make_item(title, track, artist=u'some artist'):

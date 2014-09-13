@@ -31,6 +31,7 @@ class TestModel1(dbcore.Model):
     _fields = {
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
     _types = {
         'some_float_field': dbcore.types.FLOAT,
@@ -54,6 +55,7 @@ class TestModel2(TestModel1):
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
         'field_two': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
 
 
@@ -68,6 +70,7 @@ class TestModel3(TestModel1):
         'field_one': dbcore.types.INTEGER,
         'field_two': dbcore.types.INTEGER,
         'field_three': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
 
 
@@ -83,6 +86,7 @@ class TestModel4(TestModel1):
         'field_two': dbcore.types.INTEGER,
         'field_three': dbcore.types.INTEGER,
         'field_four': dbcore.types.INTEGER,
+        'string_field': dbcore.types.STRING
     }
 
 
@@ -169,18 +173,9 @@ class ModelTest(unittest.TestCase):
         self.db._connection().close()
 
     def test_add_model(self):
-        model = TestModel1()
-        model.add(self.db)
-        rows = self.db._connection().execute('select * from test').fetchall()
-        self.assertEqual(len(rows), 1)
-
-    def test_store_fixed_field(self):
-        model = TestModel1()
-        model.add(self.db)
-        model.field_one = 123
-        model.store()
-        row = self.db._connection().execute('select * from test').fetchone()
-        self.assertEqual(row['field_one'], 123)
+        self.assertEqual(0, len(self.db._fetch(TestModel1)))
+        TestModel1().add(self.db)
+        self.assertEqual(1, len(self.db._fetch(TestModel1)))
 
     def test_retrieve_by_id(self):
         model = TestModel1()
@@ -188,14 +183,31 @@ class ModelTest(unittest.TestCase):
         other_model = self.db._get(TestModel1, model.id)
         self.assertEqual(model.id, other_model.id)
 
+    def test_store_fixed_field(self):
+        model = TestModel1()
+        model.add(self.db)
+        model['field_one'] = 123
+        model.store()
+
+        model = self.db._get(TestModel1, model.id)
+        self.assertEqual(model['field_one'], 123)
+
+    def test_add_fields(self):
+        model = TestModel1()
+        model['field_one'] = 123
+        model.add(self.db)
+
+        model = self.db._get(TestModel1, model.id)
+        self.assertEqual(model['field_one'], 123)
+
     def test_store_and_retrieve_flexattr(self):
         model = TestModel1()
         model.add(self.db)
-        model.foo = 'bar'
+        model['foo'] = 'bar'
         model.store()
 
         other_model = self.db._get(TestModel1, model.id)
-        self.assertEqual(other_model.foo, 'bar')
+        self.assertEqual(other_model['foo'], 'bar')
 
     def test_delete_flexattr(self):
         model = TestModel1()
@@ -204,17 +216,10 @@ class ModelTest(unittest.TestCase):
         del model['foo']
         self.assertFalse('foo' in model)
 
-    def test_delete_flexattr_via_dot(self):
-        model = TestModel1()
-        model['foo'] = 'bar'
-        self.assertTrue('foo' in model)
-        del model.foo
-        self.assertFalse('foo' in model)
-
     def test_delete_flexattr_persists(self):
         model = TestModel1()
         model.add(self.db)
-        model.foo = 'bar'
+        model['foo'] = 'bar'
         model.store()
 
         model = self.db._get(TestModel1, model.id)
@@ -222,7 +227,7 @@ class ModelTest(unittest.TestCase):
         model.store()
 
         model = self.db._get(TestModel1, model.id)
-        self.assertFalse('foo' in model)
+        self.assertNotIn('foo', model)
 
     def test_delete_non_existent_attribute(self):
         model = TestModel1()
@@ -230,28 +235,47 @@ class ModelTest(unittest.TestCase):
             del model['foo']
 
     def test_delete_fixed_attribute(self):
-        model = TestModel1()
-        with self.assertRaises(KeyError):
-            del model['field_one']
+        model = TestModel1(field_one=True)
+        self.assertIsNotNone(model['field_one'])
+        del model['field_one']
+        self.assertIsNone(model['field_one'])
 
-    def test_null_value_normalization_by_type(self):
-        model = TestModel1()
-        model.field_one = None
-        self.assertEqual(model.field_one, 0)
+    def test_delete_fixed_attribute_persists(self):
+        model = TestModel1(db=self.db, field_one=True)
+        model.add()
 
-    def test_null_value_stays_none_for_untyped_field(self):
-        model = TestModel1()
-        model.foo = None
-        self.assertEqual(model.foo, None)
+        model = self.db._get(TestModel1, model.id)
+        self.assertIsNotNone(model['field_one'])
+        del model['field_one']
+        model.store()
 
-    def test_normalization_for_typed_flex_fields(self):
+        model = self.db._get(TestModel1, model.id)
+        self.assertIsNone(model['field_one'])
+
+    def test_deleted_attribute_has_default_after_load(self):
         model = TestModel1()
-        model.some_float_field = None
-        self.assertEqual(model.some_float_field, 0.0)
+        del model['field_one']
+        model.add(self.db)
+        model.load()
+        self.assertEqual(model.get('field_one'), 0)
+
+    def test_deleted_attribute_has_default_when_fetching(self):
+        model = TestModel1()
+        del model['field_one']
+        model.add(self.db)
+
+        model = self.db._get(TestModel1, model.id)
+        self.assertEqual(model.get('field_one'), 0)
+
+    def test_flex_default(self):
+        model = TestModel1()
+        model['some_float_field'] = 1
+        del model['some_float_field']
+        self.assertEqual(model.get('some_float_field'), 0.0)
 
     def test_load_deleted_flex_field(self):
         model1 = TestModel1()
-        model1['flex_field'] = True
+        model1['flex_field'] = 'str'
         model1.add(self.db)
 
         model2 = self.db._get(TestModel1, model1.id)
@@ -264,11 +288,33 @@ class ModelTest(unittest.TestCase):
         self.assertNotIn('flex_field', model2)
 
 
-class FormatTest(unittest.TestCase):
+class FormattedMappingTest(unittest.TestCase):
+
+    def test_keys_equal_model_keys(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        self.assertEqual(set(model.keys(True)), set(formatted.keys()))
+
+    def test_unset_flex_raises(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        with self.assertRaises(KeyError):
+            formatted['flex_field']
+
+    def test_unset_flex_with_string_default(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        self.assertEqual(formatted.get('flex_field'), u'')
+
+    def test_unset_flex_with_custom_default(self):
+        model = TestModel1()
+        formatted = model.formatted()
+        self.assertEqual(formatted.get('flex_field', 'default'), 'default')
+
     def test_format_fixed_field(self):
         model = TestModel1()
-        model.field_one = u'caf\xe9'
-        value = model.formatted().get('field_one')
+        model.string_field = u'caf\xe9'
+        value = model.formatted().get('string_field')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field(self):
@@ -296,43 +342,23 @@ class FormatTest(unittest.TestCase):
         self.assertEqual(value, u'3.1')
 
 
-class FormattedMappingTest(unittest.TestCase):
-    def test_keys_equal_model_keys(self):
-        model = TestModel1()
-        formatted = model.formatted()
-        self.assertEqual(set(model.keys(True)), set(formatted.keys()))
-
-    def test_get_unset_field(self):
-        model = TestModel1()
-        formatted = model.formatted()
-        with self.assertRaises(KeyError):
-            formatted['other_field']
-
-    def test_get_method_with_default(self):
-        model = TestModel1()
-        formatted = model.formatted()
-        self.assertEqual(formatted.get('other_field'), u'')
-
-    def test_get_method_with_specified_default(self):
-        model = TestModel1()
-        formatted = model.formatted()
-        self.assertEqual(formatted.get('other_field', 'default'), 'default')
-
-
 class ParseTest(unittest.TestCase):
     def test_parse_fixed_field(self):
-        value = TestModel1._parse('field_one', u'2')
-        self.assertIsInstance(value, int)
-        self.assertEqual(value, 2)
+        model = TestModel1()
+        model.set('field_one', u'2')
+        self.assertIsInstance(model['field_one'], int)
+        self.assertEqual(model['field_one'], 2)
 
     def test_parse_flex_field(self):
-        value = TestModel1._parse('some_float_field', u'2')
-        self.assertIsInstance(value, float)
-        self.assertEqual(value, 2.0)
+        model = TestModel1()
+        model.set('some_float_field', u'2')
+        self.assertIsInstance(model['some_float_field'], float)
+        self.assertEqual(model['some_float_field'], 2.0)
 
     def test_parse_untyped_field(self):
-        value = TestModel1._parse('field_nine', u'2')
-        self.assertEqual(value, u'2')
+        model = TestModel1()
+        model.set('unknown_flex', u'2')
+        self.assertEqual(model['unknown_flex'], u'2')
 
 
 class QueryParseTest(unittest.TestCase):

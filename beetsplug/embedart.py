@@ -98,13 +98,11 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None):
     """Embed an image into the item's media file.
     """
     try:
-        item['images'] = [_mediafile_image(imagepath, maxwidth)]
-        item.try_write(itempath)
-    except IOError as exc:
+        mf = mediafile.MediaFile(itempath or item.path)
+        mf.images = [_mediafile_image(imagepath, maxwidth)]
+        mf.save()
+    except (IOError, OSError, mediafile.MutagenError) as exc:
         log.error(u'embedart: could not read image file: {0}'.format(exc))
-    finally:
-        # We don't want to store the image in the database
-        del item['images']
 
 
 def embed_album(album, maxwidth=None):
