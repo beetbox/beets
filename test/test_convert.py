@@ -124,6 +124,44 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(converted)
         self.assertEqual(mediafile.images[0].data, image_data)
 
+class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_beets(disk=True)  # Converter is threaded
+        self.album_ogg = self.add_album_fixture(ext='ogg')
+        self.album_flac = self.add_album_fixture(ext='flac')
+        self.load_plugins('convert')
+
+        self.convert_dest = os.path.join(self.temp_dir, 'convert_dest')
+        self.config['convert'] = {
+            'dest': self.convert_dest,
+            'paths': {'default': 'converted'},
+            'never_convert_lossy_files': False,
+            'format': 'mp3',
+            'formats': {
+                'mp3': 'cp $source $dest',
+                'opus': {
+                    'command': 'cp $source $dest',
+                    'extension': 'ops',
+                }
+            }
+        }
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
+
+    def test_convert_flac_to_mp3_works(self):
+        with control_stdin('y'):
+            self.run_command('convert', self.album_flac.items()[0].path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertTrue(os.path.isfile(converted))
+
+    def test_convert_ogg_to_mp3_prevented(self):
+        with control_stdin('y'):
+            self.run_command('convert', self.album_ogg.items()[0].path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertTrue(os.path.isfile(converted))
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
