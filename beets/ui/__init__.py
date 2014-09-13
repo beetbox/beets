@@ -936,15 +936,15 @@ def _raw_main(args, lib=None):
     parser.add_option('-l', '--library', dest='library',
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
-                     help="destination music directory")
+                      help="destination music directory")
     parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
-                     help='print debugging information')
+                      help='print debugging information')
     parser.add_option('-c', '--config', dest='config',
-                     help='path to configuration file')
+                      help='path to configuration file')
     parser.add_option('-h', '--help', dest='help', action='store_true',
-                     help='how this help message and exit')
+                      help='how this help message and exit')
     parser.add_option('--version', dest='version', action='store_true',
-                     help=optparse.SUPPRESS_HELP)
+                      help=optparse.SUPPRESS_HELP)
 
     options, subargs = parser.parse_global_options(args)
     subcommands, plugins, lib = _setup(options, lib)
