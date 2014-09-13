@@ -1055,15 +1055,27 @@ class Choice(Template):
 class StrSeq(Template):
     """A template for values that are lists of strings.
 
-    Validates both actual YAML string lists and whitespace-separated
-    strings.
+    Validates both actual YAML string lists and single strings. Strings
+    can optionally be split on whitespace.
     """
+    def __init__(self, split=True):
+        """Create a new template.
+
+        `split` indicates whether, when the underlying value is a single
+        string, it should be split on whitespace. Otherwise, the
+        resulting value is a list containing a single string.
+        """
+        self.split = split
+
     def convert(self, value, view):
         if isinstance(value, bytes):
             value = value.decode('utf8', 'ignore')
 
         if isinstance(value, STRING):
-            return value.split()
+            if self.split:
+                return value.split()
+            else:
+                return [value]
         else:
             try:
                 value = list(value)
@@ -1074,22 +1086,6 @@ class StrSeq(Template):
                 return value
             else:
                 self.fail('must be a list of strings', view, True)
-
-
-class EnsureStringList(Template):
-    """Always return a list of strings.
-
-    The raw value may either be a single string or a list of strings.
-    Otherwise a type error is raised. For single strings a singleton
-    list is returned.
-    """
-    def convert(self, paths, view):
-        if isinstance(paths, basestring):
-            paths = [paths]
-        if not isinstance(paths, list) or \
-           not all(map(lambda p: isinstance(p, basestring), paths)):
-            self.fail(u'must be string or a list of strings', view, True)
-        return paths
 
 
 class Filename(Template):

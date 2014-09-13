@@ -830,7 +830,7 @@ def vararg_callback(option, opt_str, value, parser):
 def _load_plugins(config):
     """Load the plugins specified in the configuration.
     """
-    paths = config['pluginpath'].get(confit.EnsureStringList())
+    paths = config['pluginpath'].get(confit.StrSeq(split=False))
     paths = map(util.normpath, paths)
 
     import beetsplug
