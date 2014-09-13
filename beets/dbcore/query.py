@@ -18,6 +18,10 @@ import re
 from operator import attrgetter
 from beets import util
 from datetime import datetime, timedelta
+from collections import namedtuple
+
+
+SortedQuery = namedtuple('SortedQuery', 'query', 'sort')
 
 
 class Query(object):
@@ -500,19 +504,21 @@ class DateQuery(FieldQuery):
         return clause, subvals
 
 
+# Sorting.
+
 class Sort(object):
-    """An abstract class representing a sort operation for a query into the
-    item database.
+    """An abstract class representing a sort operation for a query into
+    the item database.
     """
+
     def select_clause(self):
-        """ Generates a select sql fragment if the sort operation requires one,
-        an empty string otherwise.
+        """Generate a SELECT fragment (possibly an empty string) for the
+        sort.
         """
         return ""
 
     def union_clause(self):
-        """ Generates a union sql fragment if the sort operation requires one,
-        an empty string otherwise.
+        """Generate a join SQL fragment (possibly an empty string).
         """
         return ""
 
@@ -523,47 +529,32 @@ class Sort(object):
         return None
 
     def sort(self, items):
-        """Return a key function that can be used with the list.sort() method.
-        Meant to be used with slow sort, it must be implemented even for sort
-        that can be done with sql, as they might be used in conjunction with
-        slow sort.
+        """Sort the list of objects and return a list.
         """
         return sorted(items, key=lambda x: x)
 
     def is_slow(self):
+        """Indicate whether this query is *slow*, meaning that it cannot
+        be executed in SQL and must be executed in Python.
+        """
         return False
 
 
 class MultipleSort(Sort):
-    """Sort class that combines several sort criteria.
-    This implementation tries to implement as many sort operation in sql,
-    falling back to python sort only when necessary.
+    """Sort that encapsulates multiple sub-sorts.
     """
 
     def __init__(self):
         self.sorts = []
 
-    def add_criteria(self, sort):
+    def add_sort(self, sort):
         self.sorts.append(sort)
 
-    def _sql_sorts(self):
-        """ Returns the list of sort for which sql can be used
-        """
-        # with several Sort, we can use SQL sorting only if there is only
-        # SQL-capable Sort or if the list ends with SQl-capable Sort.
-        sql_sorts = []
-        for sort in reversed(self.sorts):
-            if not sort.order_clause() is None:
-                sql_sorts.append(sort)
-            else:
-                break
-        sql_sorts.reverse()
-        return sql_sorts
-
     def select_clause(self):
-        sql_sorts = self._sql_sorts()
+        if self.is_slow():
+            return ""
         select_strings = []
-        for sort in sql_sorts:
+        for sort in self.sorts:
             select = sort.select_clause()
             if select:
                 select_strings.append(select)
@@ -572,18 +563,20 @@ class MultipleSort(Sort):
         return select_string
 
     def union_clause(self):
-        sql_sorts = self._sql_sorts()
+        if self.is_slow():
+            return ""
         union_strings = []
-        for sort in sql_sorts:
+        for sort in self.sorts:
             union = sort.union_clause()
             union_strings.append(union)
 
         return "".join(union_strings)
 
     def order_clause(self):
-        sql_sorts = self._sql_sorts()
+        if self.is_slow():
+            return None
         order_strings = []
-        for sort in sql_sorts:
+        for sort in self.sorts:
             order = sort.order_clause()
             order_strings.append(order)
 
@@ -621,12 +614,12 @@ class FlexFieldSort(Sort):
         self.is_ascending = is_ascending
 
     def select_clause(self):
-        """ Return a select sql fragment.
+        """Return a SELECT fragment.
         """
         return "sort_flexattr{0!s}.value as flex_{0!s} ".format(self.field)
 
     def union_clause(self):
-        """ Returns an union sql fragment.
+        """Return a JOIN fragment.
         """
         union = ("LEFT JOIN {flextable} as sort_flexattr{index!s} "
                  "ON {table}.id = sort_flexattr{index!s}.entity_id "
@@ -637,7 +630,7 @@ class FlexFieldSort(Sort):
         return union
 
     def order_clause(self):
-        """ Returns an order sql fragment.
+        """Return an ORDER BY fragment.
         """
         order = "ASC" if self.is_ascending else "DESC"
         return "flex_{0} {1} ".format(self.field, order)

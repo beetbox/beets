@@ -149,5 +149,5 @@ def sort_from_strings(model_cls, sort_parts):
         return None
     sort = query.MultipleSort()
     for part in sort_parts:
-        sort.add_criteria(construct_sort_part(model_cls, part))
+        sort.add_sort(construct_sort_part(model_cls, part))
     return sort
