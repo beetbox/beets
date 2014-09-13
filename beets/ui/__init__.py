@@ -679,18 +679,6 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
         # Super constructor.
         optparse.OptionParser.__init__(self, *args, **kwargs)
-        self.add_option('-l', '--library', dest='library',
-                        help='library database file to use')
-        self.add_option('-d', '--directory', dest='directory',
-                        help="destination music directory")
-        self.add_option('-v', '--verbose', dest='verbose', action='store_true',
-                        help='print debugging information')
-        self.add_option('-c', '--config', dest='config',
-                        help='path to configuration file')
-        self.add_option('-h', '--help', dest='help', action='store_true',
-                        help='how this help message and exit')
-        self.add_option('--version', dest='version', action='store_true',
-                        help=optparse.SUPPRESS_HELP)
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -947,6 +935,19 @@ def _raw_main(args, lib=None):
     """
 
     parser = SubcommandsOptionParser()
+    parser.add_option('-l', '--library', dest='library',
+                      help='library database file to use')
+    parser.add_option('-d', '--directory', dest='directory',
+                     help="destination music directory")
+    parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
+                     help='print debugging information')
+    parser.add_option('-c', '--config', dest='config',
+                     help='path to configuration file')
+    parser.add_option('-h', '--help', dest='help', action='store_true',
+                     help='how this help message and exit')
+    parser.add_option('--version', dest='version', action='store_true',
+                     help=optparse.SUPPRESS_HELP)
+
     options, subargs = parser.parse_global_options(args)
 
     subcommands, plugins, lib = _setup(options, lib)
