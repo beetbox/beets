@@ -876,7 +876,6 @@ def _setup(options, lib=None):
 def _configure(options):
     """Amend the global configuration object with command line options.
     """
-
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
@@ -933,7 +932,6 @@ def _raw_main(args, lib=None):
     """A helper function for `main` without top-level exception
     handling.
     """
-
     parser = SubcommandsOptionParser()
     parser.add_option('-l', '--library', dest='library',
                       help='library database file to use')
@@ -949,9 +947,7 @@ def _raw_main(args, lib=None):
                      help=optparse.SUPPRESS_HELP)
 
     options, subargs = parser.parse_global_options(args)
-
     subcommands, plugins, lib = _setup(options, lib)
-
     parser.add_subcommand(*subcommands)
 
     subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
