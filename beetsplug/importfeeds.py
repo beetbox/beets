@@ -13,18 +13,20 @@
 # included in all copies or substantial portions of the Software.
 
 """Write paths of imported files in various formats to ease later import in a
-music player.
+music player. Also allow printing the new file locations to stdout in case
+one wants to manually add music to a player by its path.
 """
 import datetime
 import os
 import re
+import logging
 
 from beets.plugins import BeetsPlugin
 from beets.util import normpath, syspath, bytestring_path
 from beets import config
 
 M3U_DEFAULT_NAME = 'imported.m3u'
-
+log = logging.getLogger('beets')
 
 class ImportFeedsPlugin(BeetsPlugin):
     def __init__(self):
@@ -80,11 +82,16 @@ def _build_m3u_filename(basename):
 
 
 def _write_m3u(m3u_path, items_paths):
-    """Append relative paths to items into m3u file.
+    """Append relative paths to items into m3u file, or write to stdout.
     """
-    with open(syspath(m3u_path), 'a') as f:
+    if m3u_path == "stdout":
+        log.info("Location of imported music:")
         for path in items_paths:
-            f.write(path + '\n')
+            log.info("  " + path)
+    else:
+        with open(syspath(m3u_path), 'a') as f:
+            for path in items_paths:
+                f.write(path + '\n')
 
 
 def _record_items(lib, basename, items):
@@ -125,6 +132,10 @@ def _record_items(lib, basename, items):
             dest = os.path.join(feedsdir, os.path.basename(path))
             if not os.path.exists(syspath(dest)):
                 os.symlink(syspath(path), syspath(dest))
+
+    if 'echo' in formats:
+        m3u_path = _build_m3u_filename(basename)
+        _write_m3u("stdout", paths)
 
 
 @ImportFeedsPlugin.listen('library_opened')
