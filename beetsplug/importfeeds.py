@@ -28,6 +28,7 @@ from beets import config
 M3U_DEFAULT_NAME = 'imported.m3u'
 log = logging.getLogger('beets')
 
+
 class ImportFeedsPlugin(BeetsPlugin):
     def __init__(self):
         super(ImportFeedsPlugin, self).__init__()
