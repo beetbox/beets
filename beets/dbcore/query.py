@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from collections import namedtuple
 
 
-SortedQuery = namedtuple('SortedQuery', 'query', 'sort')
+SortedQuery = namedtuple('SortedQuery', ['query', 'sort'])
 
 
 class Query(object):
