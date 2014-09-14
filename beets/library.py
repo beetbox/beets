@@ -108,6 +108,9 @@ class PathType(types.Type):
         else:
             return value
 
+    def from_sql(self, sql_value):
+        return self.normalize(sql_value)
+
     def to_sql(self, value):
         if isinstance(value, str):
             value = buffer(value)

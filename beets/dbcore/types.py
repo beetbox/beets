@@ -93,12 +93,16 @@ class Type(object):
         http://www.sqlite.org/datatype3.html
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
-        Flexible fields have the type afinity `NULL`. This means the
-        `sql_value` may be of any type returned by the database adapter.
-        Since the schema might change it is advisable that this method
-        handles all of them.
+        Flexible fields have the type afinity `TEXT`. This means the
+        `sql_value` is either a `buffer` or a `unicode` object` and the
+        method must handle these in addition.
         """
-        return self.normalize(sql_value)
+        if isinstance(sql_value, buffer):
+            sql_value = bytes(sql_value).decode('utf8', 'ignore')
+        if isinstance(sql_value, unicode):
+            return self.parse(sql_value)
+        else:
+            return self.normalize(sql_value)
 
     def to_sql(self, model_value):
         """Convert a value as stored in the model object to a value used
