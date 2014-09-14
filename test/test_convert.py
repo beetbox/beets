@@ -155,7 +155,8 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     def test_convert_flac_to_mp3_works(self):
         with control_stdin('y'):
             self.run_command('convert', self.album_flac.items()[0].path)
-        self.assertTrue(os.path.isfile(os.path.join(self.convert_dest, 'converted.mp3')))
+        mp3path = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertTrue(os.path.isfile(mp3path))
 
     def test_convert_ogg_to_mp3_prevented(self):
         with control_stdin('y'):
