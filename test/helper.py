@@ -238,30 +238,57 @@ class TestHelper(object):
 
     # Library fixtures methods
 
-    def add_item(self, **values_):
-        """Add an item to the library and return it.
+    def create_item(self, **values):
+        """Return an `Item` instance with sensible default values.
 
-        The item receives sensible default values for the title, artist,
-        and album fields. These default values contain unicode
-        characters to test for encoding issues. The track title also
-        includes a counter to make sure we do not create items with the
-        same attributes.
+        The item receives its attributes from `**values` paratmeter. The
+        `title`, `artist`, `album`, `track`, `format` and `path`
+        attributes have defaults if they are not given as parameters.
+        The `title` attribute is formated with a running item count to
+        prevent duplicates. The default for the `path` attribute
+        respects the `format` value.
+
+        The item is attached to the database from `self.lib`.
         """
         item_count = self._get_item_count()
-        values = {
+        values_ = {
             'title': u't\u00eftle {0}',
             'artist': u'the \u00e4rtist',
             'album': u'the \u00e4lbum',
             'track': item_count,
-            'path': 'audio.mp3',
+            'format': 'MP3',
         }
-        values.update(values_)
-        values['title'] = values['title'].format(item_count)
-        item = Item(**values)
+        values_.update(values)
+        values_['title'] = values_['title'].format(item_count)
+        values_['db'] = self.lib
+        item = Item(**values_)
+        if 'path' not in values:
+            item['path'] = 'audio.' + item['format'].lower()
+        return item
+
+    def add_item(self, **values):
+        """Add an item to the library and return it.
+
+        Creates the item by passing the parameters to `create_item()`.
+
+        If `path` is not set in `values` it is set to `item.destination()`.
+        """
+        item = self.create_item(**values)
         item.add(self.lib)
-        if 'path' not in values_:
+        if 'path' not in values:
             item['path'] = item.destination()
             item.store()
+        return item
+
+    def add_item_fixture(self, **values):
+        """Add an item with an actual audio file to the library.
+        """
+        item = self.create_item(**values)
+        extension = item['format'].lower()
+        item['path'] = os.path.join(_common.RSRC, 'min.' + extension)
+        item.add(self.lib)
+        item.move(copy=True)
+        item.store()
         return item
 
     def add_album(self, **values):
@@ -271,6 +298,7 @@ class TestHelper(object):
     def add_item_fixtures(self, ext='mp3', count=1):
         """Add a number of items with files to the database.
         """
+        # TODO base this on `add_item()`
         items = []
         path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(count):
