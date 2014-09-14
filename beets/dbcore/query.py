@@ -511,20 +511,9 @@ class Sort(object):
     the item database.
     """
 
-    def select_clause(self):
-        """Generate a SELECT fragment (possibly an empty string) for the
-        sort.
-        """
-        return ""
-
-    def union_clause(self):
-        """Generate a join SQL fragment (possibly an empty string).
-        """
-        return ""
-
     def order_clause(self):
-        """Generates a sql fragment to be use in a ORDER BY clause or None if
-        it's a slow query.
+        """Generates a SQL fragment to be used in a ORDER BY clause, or
+        None if no fragment is used (i.e., this is a slow sort).
         """
         return None
 
@@ -551,10 +540,13 @@ class MultipleSort(Sort):
         self.sorts.append(sort)
 
     def _sql_sorts(self):
-        """ Returns the list of sort for which sql can be used
+        """Return the list of sub-sorts for which we can be (at least
+        partially) fast.
+
+        A contiguous suffix of fast (SQL-capable) sub-sorts are
+        executable in SQL. The remaining, even if they are fast
+        independently, must be executed slowly.
         """
-        # With several sort criteria, we can use SQL sorting only if there is
-        # only SQL-capable Sort or if the list ends with SQL-capable Sort.
         sql_sorts = []
         for sort in reversed(self.sorts):
             if not sort.order_clause() is None:
@@ -564,31 +556,13 @@ class MultipleSort(Sort):
         sql_sorts.reverse()
         return sql_sorts
 
-    def select_clause(self):
-        select_strings = []
-        for sort in self._sql_sorts():
-            select = sort.select_clause()
-            if select:
-                select_strings.append(select)
-
-        select_string = ",".join(select_strings)
-        return select_string
-
-    def union_clause(self):
-        union_strings = []
-        for sort in self._sql_sorts():
-            union = sort.union_clause()
-            union_strings.append(union)
-
-        return "".join(union_strings)
-
     def order_clause(self):
         order_strings = []
         for sort in self._sql_sorts():
             order = sort.order_clause()
             order_strings.append(order)
 
-        return ",".join(order_strings)
+        return ", ".join(order_strings)
 
     def is_slow(self):
         for sort in self.sorts:
@@ -663,7 +637,7 @@ class SmartArtistSort(Sort):
             field = 'artist'
         return ('(CASE {0}_sort WHEN NULL THEN {0} '
                 'WHEN "" THEN {0} '
-                'ELSE {0}_sort END) {1} ').format(field, order)
+                'ELSE {0}_sort END) {1}').format(field, order)
 
 
 class SlowFieldSort(FieldSort):
@@ -693,34 +667,19 @@ def build_sql(model_cls, query, sort):
         query = None
 
     if not sort:
-        sort_select = ""
-        sort_union = ""
         sort_order = ""
         sort = None
-    elif isinstance(sort, basestring):
-        sort_select = ""
-        sort_union = ""
-        sort_order = " ORDER BY {0}".format(sort) \
-            if sort else ""
-        sort = None
     elif isinstance(sort, Sort):
-        select_clause = sort.select_clause()
-        sort_select = " ,{0} ".format(select_clause) \
-            if select_clause else ""
-        sort_union = sort.union_clause()
         order_clause = sort.order_clause()
-        sort_order = " ORDER BY {0}".format(order_clause) \
+        sort_order = "ORDER BY {0}".format(order_clause) \
             if order_clause else ""
         if not sort.is_slow():
             sort = None
 
-    sql = ("SELECT {table}.* {sort_select} FROM {table} {sort_union} WHERE "
-           "{query_clause} {sort_order}").format(
-        sort_select=sort_select,
-        sort_union=sort_union,
+    sql = ("SELECT * FROM {table} WHERE {query_clause} {sort_order}").format(
         table=model_cls._table,
         query_clause=where or '1',
-        sort_order=sort_order
+        sort_order=sort_order,
     )
 
     return sql, subvals, query, sort
