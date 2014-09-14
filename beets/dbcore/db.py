@@ -115,11 +115,6 @@ class Model(object):
     keys are field names and the values are `Type` objects.
     """
 
-    _bytes_keys = ()
-    """Keys whose values should be stored as raw bytes blobs rather than
-    strings.
-    """
-
     _search_fields = ()
     """The fields that should be queried by default by unqualified query
     terms.
@@ -338,11 +333,7 @@ class Model(object):
             if key != 'id' and key in self._dirty:
                 self._dirty.remove(key)
                 assignments += key + '=?,'
-                value = self[key]
-                # Wrap path strings in buffers so they get stored
-                # "in the raw".
-                if key in self._bytes_keys and isinstance(value, str):
-                    value = buffer(value)
+                value = self._type(key).to_sql(self[key])
                 subvars.append(value)
         assignments = assignments[:-1]  # Knock off last ,
 

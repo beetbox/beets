@@ -75,6 +75,12 @@ class Type(object):
         """
         return self.normalize(sql_value)
 
+    def to_sql(self, model_value):
+        """Convert a value as stored in the model object to a value used
+        by the database adapter.
+        """
+        return model_value
+
 
 # Reusable types.
 

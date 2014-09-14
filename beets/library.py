@@ -109,6 +109,11 @@ class PathType(types.Type):
         else:
             return value
 
+    def to_sql(self, value):
+        if isinstance(value, str):
+            value = buffer(value)
+        return value
+
 
 class MusicalKey(types.String):
     """String representing the musical key of a song.
@@ -188,7 +193,6 @@ class WriteError(FileOperationError):
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
-    _bytes_keys = ('path', 'artpath')
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
