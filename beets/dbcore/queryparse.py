@@ -131,10 +131,11 @@ def construct_sort_part(model_cls, part):
     is_ascending = (part[-1] == '+')
     if field in model_cls._fields:
         sort = query.FixedFieldSort(field, is_ascending)
-    elif field in query.special_sorts:
-        sort = query.special_sorts[field](model_cls, is_ascending)
+    elif field == 'smartartist':
+        # Special case for smart artist sort.
+        sort = query.SmartArtistSort(model_cls, is_ascending)
     else:
-        # Flexible or comptued.
+        # Flexible or computed.
         sort = query.SlowFieldSort(field, is_ascending)
     return sort
 
