@@ -137,7 +137,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
         self.config['convert'] = {
             'dest': self.convert_dest,
             'paths': {'default': 'converted'},
-            'never_convert_lossy_files': False,
+            'never_convert_lossy_files': True,
             'format': 'mp3',
             'formats': {
                 'mp3': 'cp $source $dest',
@@ -155,14 +155,15 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     def test_convert_flac_to_mp3_works(self):
         with control_stdin('y'):
             self.run_command('convert', self.album_flac.items()[0].path)
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
-        self.assertTrue(os.path.isfile(converted))
+        self.assertTrue(os.path.isfile(os.path.join(self.convert_dest, 'converted.mp3')))
 
     def test_convert_ogg_to_mp3_prevented(self):
         with control_stdin('y'):
             self.run_command('convert', self.album_ogg.items()[0].path)
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
-        self.assertTrue(os.path.isfile(converted))
+        mp3path = os.path.join(self.convert_dest, 'converted.mp3')
+        oggpath = os.path.join(self.convert_dest, 'converted.ogg')
+        self.assertFalse(os.path.isfile(mp3path))
+        self.assertTrue(os.path.isfile(oggpath))
 
 
 def suite():
