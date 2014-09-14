@@ -471,13 +471,14 @@ class Item(LibModel):
             return False
 
     def try_sync(self, write=None):
-        """Synchronizes the current state with the database and the
-        media file tags.
+        """Synchronize the item with the database and the media file
+        tags, updating them with this object's current state.
 
-        If `write` is `None` or `True` the method tries to write the
-        tags to `self.path`.  If `write` is `False` it does not write
-        tags. Otherwise it interprets `write` as a path and tries to
-        write the tags to that file.
+        By default, the current `path` for the item is used to write
+        tags. If `write` is `False`, no tags are written. If `write` is
+        a path, tags are written to that file instead.
+
+        Similar to calling :meth:`write` and :meth:`store`.
         """
         if write is True:
             write = None
@@ -898,12 +899,10 @@ class Album(LibModel):
                     item.store()
 
     def try_sync(self, write=True):
-        """Synchronizes the current state with the database, propagates
-        it to the items and synchronizes them with the database and
-        their files.
+        """Synchronize the album and its items with the database and
+        their files by updating them with this object's current state.
 
-        The `write` parameter is a boolean indicating whether to write
-        tags to the item files.
+        `write` indicates whether to write tags to the item files.
         """
         self.store()
         for item in self.items():
