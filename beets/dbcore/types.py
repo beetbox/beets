@@ -52,9 +52,9 @@ class Type(object):
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
-        # Fallback formatter. Convert to Unicode at all cost.
         if value is None:
             value = self.null
+        # `self.null` might be `None`
         if value is None:
             value = u''
         if isinstance(value, bytes):
@@ -88,20 +88,21 @@ class Type(object):
         value to be stored in the model.
 
         For fixed fields the type of `value` is determined by the column
-        type given in the `sql` property and the SQL to Python mapping
-        given here:
+        type affinity given in the `sql` property and the SQL to Python
+        mapping of the database adapter. For more information see:
+        http://www.sqlite.org/datatype3.html
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
-        For flexible field the value is a unicode object. The method
-        must therefore be able to parse them.
+        Flexible fields have the type afinity `NULL`. This means the
+        `sql_value` may be of any type returned by the database adapter.
+        Since the schema might change it is advisable that this method
+        handles all of them.
         """
         return self.normalize(sql_value)
 
     def to_sql(self, model_value):
         """Convert a value as stored in the model object to a value used
         by the database adapter.
-        For flexible field the value is a unicode object. The method
-        must therefore be able to parse them.
         """
         return model_value
 
