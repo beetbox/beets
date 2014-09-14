@@ -61,12 +61,10 @@ class PathQuery(dbcore.FieldQuery):
 # Library-specific field types.
 
 
-class DateType(types.Type):
+class DateType(types.Float):
     # TODO representation should be `datetime` object
     # TODO distinguish beetween date and time types
-    sql = u'REAL'
     query = dbcore.query.DateQuery
-    null = 0.0
 
     def format(self, value):
         return time.strftime(beets.config['time_format'].get(unicode),
