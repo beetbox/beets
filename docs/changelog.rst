@@ -14,6 +14,8 @@ Features:
   ``--summarize`` option.
 * :doc:`/plugins/mbcollection`: A new option lets you automatically update
   your collection on import. Thanks to Olin Gay.
+* :doc:`/plugins/convert`: A new ``never_convert_lossy_files`` option can
+  prevent lossy transcoding. Thanks to Simon Kohlmeyer.
 
 Fixes:
 
