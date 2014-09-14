@@ -655,31 +655,3 @@ class NullSort(Sort):
 
     def __nonzero__(self):
         return False
-
-
-def build_sql(model_cls, query, sort):
-    """ Generate a sql statement (and the values that must be injected into it)
-    from a query, sort and a model class. Query and sort objects are returned
-    only for slow query and slow sort operation.
-    """
-    where, subvals = query.clause()
-    if where is not None:
-        query = None
-
-    if not sort:
-        sort_order = ""
-        sort = None
-    elif isinstance(sort, Sort):
-        order_clause = sort.order_clause()
-        sort_order = "ORDER BY {0}".format(order_clause) \
-            if order_clause else ""
-        if not sort.is_slow():
-            sort = None
-
-    sql = ("SELECT * FROM {table} WHERE {query_clause} {sort_order}").format(
-        table=model_cls._table,
-        query_clause=where or '1',
-        sort_order=sort_order,
-    )
-
-    return sql, subvals, query, sort
