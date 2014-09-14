@@ -126,6 +126,8 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
 
 
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
+    """Test the effect of the `never_convert_lossy_files` option.
+    """
 
     def setUp(self):
         self.setup_beets(disk=True)  # Converter is threaded
@@ -137,7 +139,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
         self.config['convert'] = {
             'dest': self.convert_dest,
             'paths': {'default': 'converted'},
-            'never_convert_lossy_files': False,
+            'never_convert_lossy_files': True,
             'format': 'mp3',
             'formats': {
                 'mp3': 'cp $source $dest',
@@ -161,7 +163,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     def test_convert_ogg_to_mp3_prevented(self):
         with control_stdin('y'):
             self.run_command('convert', self.album_ogg.items()[0].path)
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, 'converted.ogg')
         self.assertTrue(os.path.isfile(converted))
 
 
