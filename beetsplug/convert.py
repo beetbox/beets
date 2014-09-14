@@ -150,10 +150,9 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
         # back to its old path or transcode it to a new path.
         if keep_new:
             original = dest
-            converted = replace_ext(item.path, ext)
+            converted = item.path
         else:
             original = item.path
-            dest = replace_ext(dest, ext)
             converted = dest
 
         # Ensure that only one thread tries to create directories at a
@@ -194,6 +193,7 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                 )
                 util.copy(original, converted)
         else:
+            converted = replace_ext(converted, ext)
             try:
                 encode(command, original, converted, pretend)
             except subprocess.CalledProcessError:
@@ -217,7 +217,12 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
             if album and album.artpath:
                 embed_item(item, album.artpath, itempath=converted)
 
-        plugins.send('after_convert', item=item, dest=dest, keepnew=keep_new)
+        if keep_new:
+            plugins.send('after_convert', item=item,
+                         dest=dest, keepnew=True)
+        else:
+            plugins.send('after_convert', item=item,
+                         dest=converted, keepnew=False)
 
 
 def convert_on_import(lib, item):
