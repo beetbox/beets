@@ -155,21 +155,17 @@ class Model(object):
         self.clear_dirty()
 
     @classmethod
-    def _awaken(cls, db=None, fixed_values=None, flex_values=None):
+    def _awaken(cls, db=None, fixed_values={}, flex_values={}):
         """Create an object with values drawn from the database.
 
         This is a performance optimization: the checks involved with
         ordinary construction are bypassed.
         """
         obj = cls(db)
-        if fixed_values:
-            for key, value in fixed_values.items():
-                obj._values_fixed[key] = cls._fields[key].from_sql(value)
-        if flex_values:
-            for key, value in flex_values.items():
-                if key in cls._types:
-                    value = cls._types[key].from_sql(value)
-                obj._values_flex[key] = value
+        for key, value in fixed_values.iteritems():
+            obj._values_fixed[key] = cls._type(key).from_sql(value)
+        for key, value in flex_values.iteritems():
+            obj._values_flex[key] = cls._type(key).from_sql(value)
         return obj
 
     def __repr__(self):
@@ -327,15 +323,15 @@ class Model(object):
         self._check_db()
 
         # Build assignments for query.
-        assignments = ''
+        assignments = []
         subvars = []
         for key in self._fields:
             if key != 'id' and key in self._dirty:
                 self._dirty.remove(key)
-                assignments += key + '=?,'
+                assignments.append(key + '=?')
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
-        assignments = assignments[:-1]  # Knock off last ,
+        assignments = ','.join(assignments)
 
         with self._db.transaction() as tx:
             # Main table update.
