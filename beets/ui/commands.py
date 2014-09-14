@@ -20,7 +20,6 @@ from __future__ import print_function
 import logging
 import os
 import time
-import itertools
 import codecs
 import platform
 import re
@@ -1298,7 +1297,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
         if not ui.input_yn('Really modify%s (Y/n)?' % extra):
             return
 
-    # Apply changes to database.
+    # Apply changes to database and files
     with lib.transaction():
         for obj in changed:
             if move:
@@ -1307,16 +1306,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
                     log.debug('moving object %s' % cur_path)
                     obj.move()
 
-            obj.store()
-
-    # Apply tags if requested.
-    if write:
-        if album:
-            changed_items = itertools.chain(*(a.items() for a in changed))
-        else:
-            changed_items = changed
-        for item in changed_items:
-            item.try_write()
+            obj.try_sync(write)
 
 
 def modify_parse_args(args):
@@ -1457,7 +1447,7 @@ def write_items(lib, query, pretend, force):
         changed = ui.show_model_changes(item, clean_item,
                                         library.Item._media_fields, force)
         if (changed or force) and not pretend:
-            item.try_write()
+            item.try_sync()
 
 
 def write_func(lib, opts, args):

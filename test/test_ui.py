@@ -145,7 +145,8 @@ class ModifyTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_beets()
-        self.add_album_fixture()
+        self.album = self.add_album_fixture()
+        [self.item] = self.album.items()
 
     def tearDown(self):
         self.teardown_beets()
@@ -182,6 +183,22 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.modify("--nomove", "title=newTitle")
         item = self.lib.items().get()
         self.assertNotIn('newTitle', item.path)
+
+    def test_update_mtime(self):
+        item = self.item
+        old_mtime = item.mtime
+
+        self.modify("title=newTitle")
+        item.load()
+        self.assertNotEqual(old_mtime, item.mtime)
+        self.assertEqual(item.current_mtime(), item.mtime)
+
+    def test_reset_mtime_with_no_write(self):
+        item = self.item
+
+        self.modify("--nowrite", "title=newTitle")
+        item.load()
+        self.assertEqual(0, item.mtime)
 
     # Album Tests
 
@@ -273,6 +290,30 @@ class ModifyTest(unittest.TestCase, TestHelper):
                                                           "title=newTitle"])
         self.assertEqual(query, ["title:foo=bar"])
         self.assertEqual(mods, {"title": "newTitle"})
+
+
+class WriteTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def write_cmd(self, *args):
+        ui._raw_main(['write'] + list(args), self.lib)
+
+    def test_update_mtime(self):
+        item = self.add_item_fixture()
+        item['title'] = 'a new title'
+        item.store()
+
+        item = self.lib.items().get()
+        self.assertEqual(item.mtime, 0)
+
+        self.write_cmd()
+        item = self.lib.items().get()
+        self.assertEqual(item.mtime, item.current_mtime())
 
 
 class MoveTest(_common.TestCase):
