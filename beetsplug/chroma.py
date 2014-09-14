@@ -53,32 +53,33 @@ def acoustid_match(path):
     try:
         duration, fp = acoustid.fingerprint_file(util.syspath(path))
     except acoustid.FingerprintGenerationError as exc:
-        log.error('fingerprinting of %s failed: %s' %
-                  (repr(path), str(exc)))
+        log.error(u'fingerprinting of {0} failed: {1}'
+                  .format(util.displayable_path(repr(path)), str(exc)))
         return None
     _fingerprints[path] = fp
     try:
         res = acoustid.lookup(API_KEY, fp, duration,
                               meta='recordings releases')
     except acoustid.AcoustidError as exc:
-        log.debug('fingerprint matching %s failed: %s' %
-                  (repr(path), str(exc)))
+        log.debug(u'fingerprint matching {0} failed: {1}'
+                  .format(util.displayable_path(repr(path)), str(exc)))
         return None
-    log.debug('chroma: fingerprinted %s' % repr(path))
+    log.debug(u'chroma: fingerprinted {0}'
+              .format(util.displayable_path(repr(path))))
 
     # Ensure the response is usable and parse it.
     if res['status'] != 'ok' or not res.get('results'):
-        log.debug('chroma: no match found')
+        log.debug(u'chroma: no match found')
         return None
     result = res['results'][0]  # Best match.
     if result['score'] < SCORE_THRESH:
-        log.debug('chroma: no results above threshold')
+        log.debug(u'chroma: no results above threshold')
         return None
     _acoustids[path] = result['id']
 
     # Get recording and releases from the result.
     if not result.get('recordings'):
-        log.debug('chroma: no recordings found')
+        log.debug(u'chroma: no recordings found')
         return None
     recording_ids = []
     release_ids = []
@@ -87,7 +88,7 @@ def acoustid_match(path):
         if 'releases' in recording:
             release_ids += [rel['id'] for rel in recording['releases']]
 
-    log.debug('chroma: matched recordings {0}'.format(recording_ids))
+    log.debug(u'chroma: matched recordings {0}'.format(recording_ids))
     _matches[path] = recording_ids, release_ids
 
 
@@ -141,7 +142,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             if album:
                 albums.append(album)
 
-        log.debug('acoustid album candidates: %i' % len(albums))
+        log.debug(u'acoustid album candidates: {0}'.format(len(albums)))
         return albums
 
     def item_candidates(self, item, artist, title):
@@ -154,7 +155,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             track = hooks.track_for_mbid(recording_id)
             if track:
                 tracks.append(track)
-        log.debug('acoustid item candidates: {0}'.format(len(tracks)))
+        log.debug(u'acoustid item candidates: {0}'.format(len(tracks)))
         return tracks
 
     def commands(self):
@@ -216,7 +217,7 @@ def submit_items(userkey, items, chunksize=64):
 
     def submit_chunk():
         """Submit the current accumulated fingerprint data."""
-        log.info('submitting {0} fingerprints'.format(len(data)))
+        log.info(u'submitting {0} fingerprints'.format(len(data)))
         try:
             acoustid.submit(API_KEY, userkey, data)
         except acoustid.AcoustidError as exc:
@@ -233,7 +234,7 @@ def submit_items(userkey, items, chunksize=64):
         }
         if item.mb_trackid:
             item_data['mbid'] = item.mb_trackid
-            log.debug('submitting MBID')
+            log.debug(u'submitting MBID')
         else:
             item_data.update({
                 'track': item.title,
@@ -244,7 +245,7 @@ def submit_items(userkey, items, chunksize=64):
                 'trackno': item.track,
                 'discno': item.disc,
             })
-            log.debug('submitting textual metadata')
+            log.debug(u'submitting textual metadata')
         data.append(item_data)
 
         # If we have enough data, submit a chunk.
@@ -294,6 +295,5 @@ def fingerprint_item(item, write=False):
                 item.store()
             return item.acoustid_fingerprint
         except acoustid.FingerprintGenerationError as exc:
-            log.info(
-                'fingerprint generation failed: {0}'.format(exc)
-            )
+            log.info(u'fingerprint generation failed: {0}'
+                     .format(exc))

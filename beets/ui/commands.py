@@ -776,12 +776,12 @@ class TerminalImportSession(importer.ImportSession):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
-        log.warn("This %s is already in the library!" %
-                 ("album" if task.is_album else "item"))
+        log.warn(u"This {0} is already in the library!"
+                 .format("album" if task.is_album else "item"))
 
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
-            log.info('Skipping.')
+            log.info(u'Skipping.')
             sel = 's'
         else:
             # Print some detail about the existing and new items so the
@@ -1029,8 +1029,8 @@ def update_items(lib, query, album, move, pretend):
 
             # Did the item change since last checked?
             if item.current_mtime() <= item.mtime:
-                log.debug(u'skipping %s because mtime is up to date (%i)' %
-                          (displayable_path(item.path), item.mtime))
+                log.debug(u'skipping {0} because mtime is up to date ({1})'
+                          .format(displayable_path(item.path), item.mtime))
                 continue
 
             # Read new data.
@@ -1080,7 +1080,7 @@ def update_items(lib, query, album, move, pretend):
                 continue
             album = lib.get_album(album_id)
             if not album:  # Empty albums have already been removed.
-                log.debug('emptied album %i' % album_id)
+                log.debug(u'emptied album {0}'.format(album_id))
                 continue
             first_item = album.items().get()
 
@@ -1091,7 +1091,7 @@ def update_items(lib, query, album, move, pretend):
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
-                log.debug('moving album %i' % album_id)
+                log.debug(u'moving album {0}'.format(album_id))
                 album.move()
 
 
@@ -1303,7 +1303,8 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
             if move:
                 cur_path = obj.path
                 if lib.directory in ancestry(cur_path):  # In library?
-                    log.debug('moving object %s' % cur_path)
+                    log.debug(u'moving object {0}'
+                              .format(displayable_path(cur_path)))
                     obj.move()
 
             obj.try_sync(write)
@@ -1381,9 +1382,9 @@ def move_items(lib, dest, query, copy, album):
 
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
-    log.info('%s %i %ss.' % (action, len(objs), entity))
+    log.info(u'{0} {1} {2}s.'.format(action, len(objs), entity))
     for obj in objs:
-        log.debug('moving: %s' % obj.path)
+        log.debug(u'moving: {0}'.format(util.displayable_path(obj.path)))
 
         obj.move(copy, basedir=dest)
         obj.store()

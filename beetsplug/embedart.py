@@ -40,8 +40,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         if self.config['maxwidth'].get(int) and \
                 not ArtResizer.shared.local:
             self.config['maxwidth'] = 0
-            log.warn("embedart: ImageMagick or PIL not found; "
-                     "'maxwidth' option ignored")
+            log.warn(u"embedart: ImageMagick or PIL not found; "
+                     u"'maxwidth' option ignored")
 
     def commands(self):
         # Embed command.
@@ -145,7 +145,7 @@ def _mediafile_image(image_path, maxwidth=None):
 def extract(lib, outpath, query):
     item = lib.items(query).get()
     if not item:
-        log.error('No item matches query.')
+        log.error(u'No item matches query.')
         return
 
     # Extract the art.
@@ -159,14 +159,14 @@ def extract(lib, outpath, query):
 
     art = mf.art
     if not art:
-        log.error('No album art present in %s - %s.' %
-                  (item.artist, item.title))
+        log.error(u'No album art present in {0} - {1}.'
+                  .format(item.artist, item.title))
         return
 
     # Add an extension to the filename.
     ext = imghdr.what(None, h=art)
     if not ext:
-        log.error('Unknown image type.')
+        log.error(u'Unknown image type.')
         return
     outpath += '.' + ext
 
@@ -179,9 +179,9 @@ def extract(lib, outpath, query):
 # 'clearart' command.
 
 def clear(lib, query):
-    log.info('Clearing album art from items:')
+    log.info(u'Clearing album art from items:')
     for item in lib.items(query):
-        log.info(u'%s - %s' % (item.artist, item.title))
+        log.info(u'{0} - {1}'.format(item.artist, item.title))
         try:
             mf = mediafile.MediaFile(syspath(item.path),
                                      config['id3v23'].get(bool))
