@@ -34,9 +34,19 @@ class Type(object):
     """The `Query` subclass to be used when querying the field.
     """
 
-    null = None
-    """The value to be exposed when the underlying value is None.
+    model_type = unicode
+    """The python type that is used to represent the value in the model.
+
+    The model is guaranteed to return a value of this type if the field
+    is accessed.  To this end, the constructor is used by the `normalize`
+    and `from_sql` methods and the `default` property.
     """
+
+    @property
+    def null(self):
+        """The value to be exposed when the underlying value is None.
+        """
+        return self.model_type()
 
     def format(self, value):
         """Given a value of this type, produce a Unicode string
@@ -44,20 +54,22 @@ class Type(object):
         """
         # Fallback formatter. Convert to Unicode at all cost.
         if value is None:
-            return u''
-        elif isinstance(value, basestring):
-            if isinstance(value, bytes):
-                return value.decode('utf8', 'ignore')
-            else:
-                return value
-        else:
-            return unicode(value)
+            value = self.null
+        if value is None:
+            value = u''
+        if isinstance(value, bytes):
+            value = value.decode('utf8', 'ignore')
+
+        return unicode(value)
 
     def parse(self, string):
         """Parse a (possibly human-written) string and return the
         indicated value of this type.
         """
-        return string
+        try:
+            return self.model_type(string)
+        except ValueError:
+            return self.null
 
     def normalize(self, value):
         """Given a value that will be assigned into a field of this
@@ -67,26 +79,45 @@ class Type(object):
         if value is None:
             return self.null
         else:
+            # TODO This should eventually be replaced by
+            # `self.model_type(value)`
             return value
+
+    def from_sql(self, sql_value):
+        """Receives the value stored in the SQL backend and return the
+        value to be stored in the model.
+
+        For fixed fields the type of `value` is determined by the column
+        type given in the `sql` property and the SQL to Python mapping
+        given here:
+        https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
+
+        For flexible field the value is a unicode object. The method
+        must therefore be able to parse them.
+        """
+        return self.normalize(sql_value)
+
+    def to_sql(self, model_value):
+        """Convert a value as stored in the model object to a value used
+        by the database adapter.
+        For flexible field the value is a unicode object. The method
+        must therefore be able to parse them.
+        """
+        return model_value
 
 
 # Reusable types.
+
+class Default(Type):
+    null = None
+
 
 class Integer(Type):
     """A basic integer type.
     """
     sql = u'INTEGER'
     query = query.NumericQuery
-    null = 0
-
-    def format(self, value):
-        return unicode(value or 0)
-
-    def parse(self, string):
-        try:
-            return int(string)
-        except ValueError:
-            return 0
+    model_type = int
 
 
 class PaddedInt(Integer):
@@ -128,16 +159,10 @@ class Float(Type):
     """
     sql = u'REAL'
     query = query.NumericQuery
-    null = 0.0
+    model_type = float
 
     def format(self, value):
         return u'{0:.1f}'.format(value or 0.0)
-
-    def parse(self, string):
-        try:
-            return float(string)
-        except ValueError:
-            return 0.0
 
 
 class NullFloat(Float):
@@ -151,13 +176,6 @@ class String(Type):
     """
     sql = u'TEXT'
     query = query.SubstringQuery
-    null = u''
-
-    def format(self, value):
-        return unicode(value) if value else u''
-
-    def parse(self, string):
-        return string
 
 
 class Boolean(Type):
@@ -165,7 +183,7 @@ class Boolean(Type):
     """
     sql = u'INTEGER'
     query = query.BooleanQuery
-    null = False
+    model_type = bool
 
     def format(self, value):
         return unicode(bool(value))
@@ -175,7 +193,7 @@ class Boolean(Type):
 
 
 # Shared instances of common types.
-BASE_TYPE = Type()
+DEFAULT = Default()
 INTEGER = Integer()
 PRIMARY_ID = Id(True)
 FOREIGN_ID = Id(False)

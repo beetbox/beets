@@ -61,12 +61,10 @@ class PathQuery(dbcore.FieldQuery):
 # Library-specific field types.
 
 
-class DateType(types.Type):
+class DateType(types.Float):
     # TODO representation should be `datetime` object
     # TODO distinguish beetween date and time types
-    sql = u'REAL'
     query = dbcore.query.DateQuery
-    null = 0.0
 
     def format(self, value):
         return time.strftime(beets.config['time_format'].get(unicode),
@@ -89,6 +87,7 @@ class DateType(types.Type):
 class PathType(types.Type):
     sql = u'BLOB'
     query = PathQuery
+    model_type = str
 
     def format(self, value):
         return util.displayable_path(value)
@@ -108,6 +107,11 @@ class PathType(types.Type):
 
         else:
             return value
+
+    def to_sql(self, value):
+        if isinstance(value, str):
+            value = buffer(value)
+        return value
 
 
 class MusicalKey(types.String):
@@ -188,7 +192,6 @@ class WriteError(FileOperationError):
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
-    _bytes_keys = ('path', 'artpath')
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()

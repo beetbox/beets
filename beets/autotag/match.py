@@ -65,10 +65,10 @@ def current_metadata(items):
     fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
               'mb_albumid', 'label', 'catalognum', 'country', 'media',
               'albumdisambig']
-    for key in fields:
-        values = [getattr(item, key) for item in items if item]
-        likelies[key], freq = plurality(values)
-        consensus[key] = (freq == len(values))
+    for field in fields:
+        values = [item[field] for item in items if item]
+        likelies[field], freq = plurality(values)
+        consensus[field] = (freq == len(values))
 
     # If there's an album artist consensus, use this for the artist.
     if consensus['albumartist'] and likelies['albumartist']:
