@@ -115,7 +115,8 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
             self.run_command('ls')
 
     def modify(self, *args):
-        return self.run_with_output('modify', '--yes', '--nowrite', *args)
+        return self.run_with_output('modify', '--yes', '--nowrite',
+                                    '--nomove', *args)
 
     def list(self, query, fmt='$artist - $album - $title'):
         return self.run_with_output('ls', '-f', fmt, query).strip()
