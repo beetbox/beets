@@ -169,11 +169,11 @@ class Model(object):
         obj = cls(db)
         if fixed_values:
             for key, value in fixed_values.items():
-                obj._values_fixed[key] = cls._fields[key].normalize(value)
+                obj._values_fixed[key] = cls._fields[key].from_sql(value)
         if flex_values:
             for key, value in flex_values.items():
                 if key in cls._types:
-                    value = cls._types[key].normalize(value)
+                    value = cls._types[key].from_sql(value)
                 obj._values_flex[key] = value
         return obj
 

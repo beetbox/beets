@@ -69,6 +69,12 @@ class Type(object):
         else:
             return value
 
+    def from_sql(self, sql_value):
+        """Convert a value received from the database adapter to a value
+        stored in the model object.
+        """
+        return self.normalize(sql_value)
+
 
 # Reusable types.
 
