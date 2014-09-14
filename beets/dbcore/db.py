@@ -24,8 +24,8 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
+from beets.dbcore import types
 from .query import MatchQuery, NullSort
-from .types import BASE_TYPE
 
 
 class FormattedMapping(collections.Mapping):
@@ -199,7 +199,7 @@ class Model(object):
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
         """
-        return self._fields.get(key) or self._types.get(key) or BASE_TYPE
+        return self._fields.get(key) or self._types.get(key) or types.DEFAULT
 
     def __getitem__(self, key):
         """Get the value for a field. Raise a KeyError if the field is

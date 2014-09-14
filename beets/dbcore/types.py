@@ -84,6 +84,10 @@ class Type(object):
 
 # Reusable types.
 
+class Default(Type):
+    pass
+
+
 class Integer(Type):
     """A basic integer type.
     """
@@ -187,7 +191,7 @@ class Boolean(Type):
 
 
 # Shared instances of common types.
-BASE_TYPE = Type()
+DEFAULT = Default()
 INTEGER = Integer()
 PRIMARY_ID = Id(True)
 FOREIGN_ID = Id(False)
