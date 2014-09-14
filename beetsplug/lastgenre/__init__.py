@@ -15,7 +15,8 @@
 """Gets genres for imported music based on Last.fm tags.
 
 Uses a provided whitelist file to determine which tags are valid genres.
-The included (default) genre list was produced by scraping Wikipedia.
+The included (default) genre list was originally produced by scraping Wikipedia
+and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """

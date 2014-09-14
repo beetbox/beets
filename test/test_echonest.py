@@ -70,8 +70,16 @@ class EchonestCliTest(unittest.TestCase, TestHelper):
 
         self.run_command('echonest')
         item.load()
-        self.assertEqual(item['danceability'], '0.5')
+        self.assertEqual(item['danceability'], 0.5)
+        self.assertEqual(item['liveness'], 0.5)
+        self.assertEqual(item['bpm'], 120)
         self.assertEqual(item['initial_key'], 'C#m')
+
+    def test_custom_field_range_query(self):
+        item = Item(liveness=2.2)
+        item.add(self.lib)
+        item = self.lib.items('liveness:2.2..3').get()
+        self.assertEqual(item['liveness'], 2.2)
 
 
 def suite():

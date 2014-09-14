@@ -174,9 +174,8 @@ list
 
 Want to search for "Gronlandic Edit" by of Montreal? Try ``beet list
 gronlandic``.  Maybe you want to see everything released in 2009 with
-"vegetables" in the title? Try ``beet list year:2009 title:vegetables``. You 
-can also specify the order used when outputting the results (Read more in 
-:doc:`query`.)
+"vegetables" in the title? Try ``beet list year:2009 title:vegetables``. You
+can also specify the sort order. (Read more in :doc:`query`.)
 
 You can use the ``-a`` switch to search for albums instead of individual items.
 In this case, the queries you use are restricted to album-level fields: for

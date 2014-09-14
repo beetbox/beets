@@ -20,18 +20,19 @@ transcode the audio, so you might want to install it.
 Usage
 -----
 
-To convert a part of your collection, run ``beet convert QUERY``. This
-will display all items matching ``QUERY`` and ask you for confirmation before
-starting the conversion. The command will then transcode all the
-matching files to the destination directory given by the ``-d``
-(``--dest``) option or the ``dest`` configuration. The path layout
-mirrors that of your library, but it may be customized through the
-``paths`` configuration.
+To convert a part of your collection, run ``beet convert QUERY``. The
+command will transcode all the files matching the query to the
+destination directory given by the ``-d`` (``--dest``) option or the
+``dest`` configuration. The path layout mirrors that of your library,
+but it may be customized through the ``paths`` configuration.
 
 The plugin uses a command-line program to transcode the audio. With the
 ``-f`` (``--format``) option you can choose the transcoding command
 and customize the available commands
 :ref:`through the configuration <convert-format-config>`.
+
+Unless the ``-y`` (``--yes``) flag is set, the command will list all
+the items to be converted and ask for your confirmation.
 
 The ``-a`` (or ``--album``) option causes the command
 to match albums instead of tracks.
@@ -67,6 +68,10 @@ The plugin offers several configuration options, all of which live under the
   adding them to your library.
 * ``quiet`` mode prevents the plugin from announcing every file it processes.
   Default: false.
+* ``never_convert_lossy_files`` means that lossy codecs, such as mp3, ogg vorbis,
+  etc, are never converted, as converting lossy files to other lossy codecs will
+  decrease quality further. If set to true, lossy files are always copied.
+  Default: false
 * ``paths`` lets you specify the directory structure and naming scheme for the
   converted files. Use the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`). By default, the plugin reuses your top-level

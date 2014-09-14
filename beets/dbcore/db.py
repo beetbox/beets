@@ -24,7 +24,7 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
-from .query import MatchQuery, build_sql
+from .query import MatchQuery, NullSort
 from .types import BASE_TYPE
 
 
@@ -382,6 +382,8 @@ class Model(object):
         self._check_db()
         stored_obj = self._db._get(type(self), self.id)
         assert stored_obj is not None, "object {0} not in DB".format(self.id)
+        self._values_fixed = {}
+        self._values_flex = {}
         self.update(dict(stored_obj))
         self.clear_dirty()
 
@@ -735,7 +737,7 @@ class Database(object):
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
-                    value TEXT,
+                    value NONE,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
@@ -743,20 +745,30 @@ class Database(object):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort_order=None):
+    def _fetch(self, model_cls, query, sort=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
-        Query object, or None (to fetch everything). If provided,
-       `sort_order` is either a SQLite ORDER BY clause for sorting or a
-        Sort object.
-         """
+        Query object, or None (to fetch everything). `sort` is an
+        optional Sort object.
+        """
+        where, subvals = query.clause()
+        sort = sort or NullSort()
+        order_by = sort.order_clause()
 
-        sql, subvals, query, sort = build_sql(model_cls, query, sort_order)
+        sql = ("SELECT * FROM {0} WHERE {1} {2}").format(
+            model_cls._table,
+            where or '1',
+            "ORDER BY {0}".format(order_by) if order_by else '',
+        )
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
 
-        return Results(model_cls, rows, self, query, sort)
+        return Results(
+            model_cls, rows, self,
+            None if where else query,  # Slow query component.
+            sort if sort.is_slow() else None,  # Slow sort component.
+        )
 
     def _get(self, model_cls, id):
         """Get a Model object by its id or None if the id does not

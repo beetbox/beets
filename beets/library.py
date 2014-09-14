@@ -62,6 +62,8 @@ class PathQuery(dbcore.FieldQuery):
 
 
 class DateType(types.Type):
+    # TODO representation should be `datetime` object
+    # TODO distinguish beetween date and time types
     sql = u'REAL'
     query = dbcore.query.DateQuery
     null = 0.0
@@ -137,16 +139,6 @@ class MusicalKey(types.String):
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
-
-
-# A little SQL utility.
-def _orelse(exp1, exp2):
-    """Generates an SQLite expression that evaluates to exp1 if exp1 is
-    non-null and non-empty or exp2 otherwise.
-    """
-    return ("""(CASE {0} WHEN NULL THEN {1}
-                         WHEN "" THEN {1}
-                         ELSE {0} END)""").format(exp1, exp2)
 
 
 # Exceptions.

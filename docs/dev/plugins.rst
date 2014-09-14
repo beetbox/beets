@@ -397,3 +397,37 @@ plugin will be used if we issue a command like ``beet ls @something`` or
             return {
                 '@': ExactMatchQuery
             }
+
+
+Flexible Field Types
+^^^^^^^^^^^^^^^^^^^^
+
+If your plugin uses flexible fields to store numbers or other
+non-string values you can specify the types of those fields. A rating
+plugin, for example might look like this. ::
+
+    from beets.plugins import BeetsPlugin
+    from beets.dbcore import types
+
+    class RatingPlugin(BeetsPlugin):
+        item_types = {'rating': types.INTEGER}
+
+        @property
+        def album_types(self):
+            return {'rating': types.INTEGER}
+
+A plugin may define two attributes, `item_types` and `album_types`.
+Each of those attributes is a dictionary mapping a flexible field name
+to a type instance. You can find the built-in types in the
+`beets.dbcore.types` and `beets.library` modules or implement your own
+ones.
+
+Specifying types has the following advantages.
+
+* The flexible field accessors ``item['my_field']`` return the
+  specified type instead of a string.
+
+* Users can use advanced queries (like :ref:`ranges <numericquery>`)
+  from the command line.
+
+* User input for flexible fields may be validated.

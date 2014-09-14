@@ -14,6 +14,10 @@ Features:
   ``--summarize`` option.
 * :doc:`/plugins/mbcollection`: A new option lets you automatically update
   your collection on import. Thanks to Olin Gay.
+* :doc:`/plugins/convert`: A new ``never_convert_lossy_files`` option can
+  prevent lossy transcoding. Thanks to Simon Kohlmeyer.
+* :doc:`/plugins/convert`: A new ``--yes`` command-line flag skips the
+  confirmation.
 
 Fixes:
 
@@ -41,6 +45,10 @@ Fixes:
   to Bombardment.
 * :doc:`/plugins/play`: Add a ``relative_to`` config option. Thanks to
   BrainDamage.
+* Fix a crash when a MusicBrainz release has zero tracks.
+* The ``--version`` flag now works as an alias for the ``version`` command.
+* :doc:`/plugins/lastgenre`: Remove some unhelpful genres from the default
+  whitelist. Thanks to gwern.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 

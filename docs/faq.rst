@@ -139,15 +139,14 @@ it's helpful to run on the "bleeding edge". To run the latest source:
 
    -  Use ``pip`` to install the latest snapshot tarball: just type
       ``pip install https://github.com/sampsyo/beets/tarball/master``.
-   -  Grab the source using Mercurial
-      (``hg clone https://bitbucket.org/adrian/beets``) or git
-      (``git clone https://github.com/sampsyo/beets.git``). Then
+   -  Grab the source using Git:
+      ``git clone https://github.com/sampsyo/beets.git``. Then
       ``cd beets`` and type ``python setup.py install``.
    -  Use ``pip`` to install an "editable" version of beets based on an
       automatic source checkout. For example, run
-      ``pip install -e hg+https://bitbucket.org/adrian/beets#egg=beets``
-      to clone beets from BitBucket using Mercurial and install it,
-      allowing you to modify the source in-place to try out changes.
+      ``pip install -e git+https://github.com/sampsyo/beets#egg=beets``
+      to clone beets and install it, allowing you to modify the source
+      in-place to try out changes.
 
 More details about the beets source are available on the :doc:`developer documentation </dev/index>`
 pages.

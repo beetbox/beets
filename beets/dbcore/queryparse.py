@@ -124,30 +124,36 @@ def query_from_strings(query_cls, model_cls, prefixes, query_parts):
 
 
 def construct_sort_part(model_cls, part):
-    """ Creates a Sort object from a single criteria. Returns a `Sort` instance.
+    """Create a `Sort` from a single string criterion.
+
+    `model_cls` is the `Model` being queried. `part` is a single string
+    ending in ``+`` or ``-`` indicating the sort.
     """
-    sort = None
+    assert part, "part must be a field name and + or -"
     field = part[:-1]
-    is_ascending = (part[-1] == '+')
+    assert field, "field is missing"
+    direction = part[-1]
+    assert direction in ('+', '-'), "part must end with + or -"
+    is_ascending = direction == '+'
+
     if field in model_cls._fields:
         sort = query.FixedFieldSort(field, is_ascending)
-    elif field in model_cls._getters():
-        # Computed field, all following fields must use the slow path.
-        sort = query.ComputedFieldSort(model_cls, field, is_ascending)
-    elif field in query.special_sorts:
-        sort = query.special_sorts[field](model_cls, is_ascending)
+    elif field == 'smartartist':
+        # Special case for smart artist sort.
+        sort = query.SmartArtistSort(model_cls, is_ascending)
     else:
-        # Neither fixed nor computed : must be a flex attr.
-        sort = query.FlexFieldSort(model_cls, field, is_ascending)
+        # Flexible or computed.
+        sort = query.SlowFieldSort(field, is_ascending)
     return sort
 
 
 def sort_from_strings(model_cls, sort_parts):
-    """Creates a Sort object from a list of sort criteria strings.
+    """Create a `Sort` from a list of sort criteria (strings).
     """
     if not sort_parts:
-        return None
-    sort = query.MultipleSort()
-    for part in sort_parts:
-        sort.add_criteria(construct_sort_part(model_cls, part))
-    return sort
+        return query.NullSort()
+    else:
+        sort = query.MultipleSort()
+        for part in sort_parts:
+            sort.add_sort(construct_sort_part(model_cls, part))
+        return sort
