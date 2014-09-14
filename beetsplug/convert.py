@@ -192,7 +192,9 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                 log.info(u'Copying {0}'.format(
                     util.displayable_path(item.path))
                 )
-                util.copy(original, converted)
+                util.copy(
+                    original,
+                    replace_ext(converted, os.path.splitext(original)[1][1:]))
         else:
             try:
                 encode(command, original, converted, pretend)
