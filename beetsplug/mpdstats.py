@@ -25,6 +25,7 @@ from beets import config
 from beets import plugins
 from beets import library
 from beets.util import displayable_path
+from beets.dbcore import types
 
 log = logging.getLogger('beets')
 
@@ -308,6 +309,14 @@ class MPDStats(object):
 
 
 class MPDStatsPlugin(plugins.BeetsPlugin):
+
+    item_types = {
+        'play_count':  types.INTEGER,
+        'skip_count':  types.INTEGER,
+        'last_played': library.Date(),
+        'rating':      types.FLOAT,
+    }
+
     def __init__(self):
         super(MPDStatsPlugin, self).__init__()
         self.config.add({

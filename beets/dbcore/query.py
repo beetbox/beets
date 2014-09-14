@@ -208,7 +208,9 @@ class NumericQuery(FieldQuery):
             self.rangemax = self._convert(parts[1])
 
     def match(self, item):
-        value = getattr(item, self.field)
+        if self.field not in item:
+            return False
+        value = item[self.field]
         if isinstance(value, basestring):
             value = self._convert(value)
 
