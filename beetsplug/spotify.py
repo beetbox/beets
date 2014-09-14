@@ -152,7 +152,7 @@ class SpotifyPlugin(BeetsPlugin):
                          .format(failure_count))
                 for track in failures:
                     log.info(u'track: {0}'.format(track))
-                log.info(u'')                             # Is this necesssary
+                log.info(u'')
             else:
                 log.warn(u'{0} track(s) did not match a Spotify ID;\n'
                          u'use --show-failures to display'
