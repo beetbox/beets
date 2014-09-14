@@ -383,6 +383,9 @@ class IntQueryTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.lib = Library(':memory:')
 
+    def tearDown(self):
+        Item._types = {}
+
     def test_exact_value_match(self):
         item = self.add_item(bpm=120)
         matched = self.lib.items('bpm:120').get()
