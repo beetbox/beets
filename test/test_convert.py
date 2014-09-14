@@ -131,8 +131,6 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_beets(disk=True)  # Converter is threaded
-        self.album_ogg = self.add_album_fixture(ext='ogg')
-        self.album_flac = self.add_album_fixture(ext='flac')
         self.load_plugins('convert')
 
         self.convert_dest = os.path.join(self.temp_dir, 'convert_dest')
@@ -143,10 +141,6 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
             'format': 'mp3',
             'formats': {
                 'mp3': 'cp $source $dest',
-                'opus': {
-                    'command': 'cp $source $dest',
-                    'extension': 'ops',
-                }
             }
         }
 
@@ -154,15 +148,25 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_convert_flac_to_mp3_works(self):
+    def test_transcode_from_lossles(self):
+        [item] = self.add_item_fixtures(ext='flac')
         with control_stdin('y'):
-            self.run_command('convert', self.album_flac.items()[0].path)
+            self.run_command('convert', item.path)
         converted = os.path.join(self.convert_dest, 'converted.mp3')
         self.assertTrue(os.path.isfile(converted))
 
-    def test_convert_ogg_to_mp3_prevented(self):
+    def test_transcode_from_lossy(self):
+        self.config['convert']['never_convert_lossy_files'] = False
+        [item] = self.add_item_fixtures(ext='ogg')
         with control_stdin('y'):
-            self.run_command('convert', self.album_ogg.items()[0].path)
+            self.run_command('convert', item.path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertTrue(os.path.isfile(converted))
+
+    def test_transcode_from_lossy_prevented(self):
+        [item] = self.add_item_fixtures(ext='ogg')
+        with control_stdin('y'):
+            self.run_command('convert', item.path)
         converted = os.path.join(self.convert_dest, 'converted.ogg')
         self.assertTrue(os.path.isfile(converted))
 
