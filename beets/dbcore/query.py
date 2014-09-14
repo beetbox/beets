@@ -531,7 +531,7 @@ class Sort(object):
     def sort(self, items):
         """Sort the list of objects and return a list.
         """
-        return sorted(items, key=lambda x: x)
+        return sorted(items)
 
     def is_slow(self):
         """Indicate whether this query is *slow*, meaning that it cannot
@@ -544,8 +544,8 @@ class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts.
     """
 
-    def __init__(self):
-        self.sorts = []
+    def __init__(self, sorts=None):
+        self.sorts = sorts or []
 
     def add_sort(self, sort):
         self.sorts.append(sort)
@@ -612,6 +612,9 @@ class MultipleSort(Sort):
             items = sort.sort(items)
         return items
 
+    def __repr__(self):
+        return u'MultipleSort({0})'.format(repr(self.sorts))
+
 
 class FieldSort(Sort):
     """An abstract sort criterion that orders by a specific field (of
@@ -627,6 +630,13 @@ class FieldSort(Sort):
         # attributes with different types without falling over.
         return sorted(objs, key=attrgetter(self.field),
                       reverse=not self.ascending)
+
+    def __repr__(self):
+        return u'<{0}: {1}{2}>'.format(
+            type(self).__name__,
+            self.field,
+            '+' if self.ascending else '-',
+        )
 
 
 class FixedFieldSort(FieldSort):
@@ -653,7 +663,7 @@ class SmartArtistSort(Sort):
             field = 'artist'
         return ('(CASE {0}_sort WHEN NULL THEN {0} '
                 'WHEN "" THEN {0} '
-                'ELSE {0}_sort END) {2} ').format(field, order)
+                'ELSE {0}_sort END) {1} ').format(field, order)
 
 
 class SlowFieldSort(FieldSort):
@@ -662,6 +672,15 @@ class SlowFieldSort(FieldSort):
     """
     def is_slow(self):
         return True
+
+
+class NullSort(Sort):
+    """No sorting. Leave results unsorted."""
+    def sort(items):
+        return items
+
+    def __nonzero__(self):
+        return False
 
 
 def build_sql(model_cls, query, sort):

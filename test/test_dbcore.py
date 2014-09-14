@@ -434,7 +434,7 @@ class SortFromStringsTest(unittest.TestCase):
 
     def test_zero_parts(self):
         s = self.sfs([])
-        self.assertIsNone(s)
+        self.assertIsInstance(s, dbcore.query.NullSort)
 
     def test_one_parts(self):
         s = self.sfs(['field+'])
