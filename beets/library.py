@@ -470,6 +470,21 @@ class Item(LibModel):
             log.error(exc)
             return False
 
+    def try_sync(self, write=None):
+        """Synchronizes the current state with the database and the
+        media file tags.
+
+        If `write` is `None` or `True` the method tries to write the
+        tags to `self.path`.  If `write` is `False` it does not write
+        tags. Otherwise it interprets `write` as a path and tries to
+        write the tags to that file.
+        """
+        if write is True:
+            write = None
+        if write is not False:
+            self.try_write(path=write)
+        self.store()
+
     # Files themselves.
 
     def move_file(self, dest, copy=False):
@@ -881,6 +896,18 @@ class Album(LibModel):
                     for key, value in track_updates.items():
                         item[key] = value
                     item.store()
+
+    def try_sync(self, write=True):
+        """Synchronizes the current state with the database, propagates
+        it to the items and synchronizes them with the database and
+        their files.
+
+        The `write` parameter is a boolean indicating whether to write
+        tags to the item files.
+        """
+        self.store()
+        for item in self.items():
+            item.try_sync(bool(write))
 
 
 # Query construction helper.
