@@ -417,6 +417,67 @@ class IntQueryTest(unittest.TestCase, TestHelper):
         self.assertIsNone(matched)
 
 
+class BoolQueryTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.lib = Library(':memory:')
+        Item._types = {'flexbool': types.Boolean()}
+
+    def tearDown(self):
+        Item._types = {}
+
+    def test_parse_true(self):
+        item_true = self.add_item(comp=True)
+        item_false = self.add_item(comp=False)
+        matched = self.lib.items('comp:true')
+        self.assertInResult(item_true, matched)
+        self.assertNotInResult(item_false, matched)
+
+    def test_flex_parse_true(self):
+        item_true = self.add_item(flexbool=True)
+        item_false = self.add_item(flexbool=False)
+        matched = self.lib.items('flexbool:true')
+        self.assertInResult(item_true, matched)
+        self.assertNotInResult(item_false, matched)
+
+    def test_flex_parse_false(self):
+        item_true = self.add_item(flexbool=True)
+        item_false = self.add_item(flexbool=False)
+        matched = self.lib.items('flexbool:false')
+        self.assertInResult(item_false, matched)
+        self.assertNotInResult(item_true, matched)
+
+    def test_flex_parse_1(self):
+        item_true = self.add_item(flexbool=True)
+        item_false = self.add_item(flexbool=False)
+        matched = self.lib.items('flexbool:1')
+        self.assertInResult(item_true, matched)
+        self.assertNotInResult(item_false, matched)
+
+    def test_flex_parse_0(self):
+        item_true = self.add_item(flexbool=True)
+        item_false = self.add_item(flexbool=False)
+        matched = self.lib.items('flexbool:0')
+        self.assertInResult(item_false, matched)
+        self.assertNotInResult(item_true, matched)
+
+    def test_flex_parse_any_string(self):
+        # TODO this should be the other way around
+        item_true = self.add_item(flexbool=True)
+        item_false = self.add_item(flexbool=False)
+        matched = self.lib.items('flexbool:something')
+        self.assertInResult(item_false, matched)
+        self.assertNotInResult(item_true, matched)
+
+    def assertInResult(self, item, results):
+        result_ids = map(lambda i: i.id, results)
+        self.assertIn(item.id, result_ids)
+
+    def assertNotInResult(self, item, results):
+        result_ids = map(lambda i: i.id, results)
+        self.assertNotIn(item.id, result_ids)
+
+
 class DefaultSearchFieldsTest(DummyDataTestCase):
     def test_albums_matches_album(self):
         albums = list(self.lib.albums('baz'))
