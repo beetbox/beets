@@ -131,14 +131,11 @@ def construct_sort_part(model_cls, part):
     is_ascending = (part[-1] == '+')
     if field in model_cls._fields:
         sort = query.FixedFieldSort(field, is_ascending)
-    elif field in model_cls._getters():
-        # Computed field, all following fields must use the slow path.
-        sort = query.ComputedFieldSort(model_cls, field, is_ascending)
     elif field in query.special_sorts:
         sort = query.special_sorts[field](model_cls, is_ascending)
     else:
-        # Neither fixed nor computed : must be a flex attr.
-        sort = query.FlexFieldSort(model_cls, field, is_ascending)
+        # Flexible or comptued.
+        sort = query.SlowFieldSort(field, is_ascending)
     return sort
 
 

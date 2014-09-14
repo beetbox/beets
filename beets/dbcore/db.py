@@ -751,7 +751,7 @@ class Database(object):
         Query object, or None (to fetch everything). If provided,
        `sort_order` is either a SQLite ORDER BY clause for sorting or a
         Sort object.
-         """
+        """
 
         sql, subvals, query, sort = build_sql(model_cls, query, sort_order)
 

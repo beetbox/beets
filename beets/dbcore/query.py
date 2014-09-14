@@ -613,55 +613,28 @@ class MultipleSort(Sort):
         return items
 
 
-class FlexFieldSort(Sort):
-    """Sort object to sort on a flexible attribute field
+class FieldSort(Sort):
+    """An abstract sort criterion that orders by a specific field (of
+    any kind).
     """
-    def __init__(self, model_cls, field, is_ascending):
-        self.model_cls = model_cls
+    def __init__(self, field, ascending=True):
         self.field = field
-        self.is_ascending = is_ascending
+        self.ascending = ascending
 
-    def select_clause(self):
-        """Return a SELECT fragment.
-        """
-        return "sort_flexattr{0!s}.value as flex_{0!s} ".format(self.field)
-
-    def union_clause(self):
-        """Return a JOIN fragment.
-        """
-        union = ("LEFT JOIN {flextable} as sort_flexattr{index!s} "
-                 "ON {table}.id = sort_flexattr{index!s}.entity_id "
-                 "AND sort_flexattr{index!s}.key='{flexattr}' ").format(
-            flextable=self.model_cls._flex_table,
-            table=self.model_cls._table,
-            index=self.field, flexattr=self.field)
-        return union
-
-    def order_clause(self):
-        """Return an ORDER BY fragment.
-        """
-        order = "ASC" if self.is_ascending else "DESC"
-        return "flex_{0} {1} ".format(self.field, order)
-
-    def sort(self, items):
-        return sorted(items, key=attrgetter(self.field),
-                      reverse=(not self.is_ascending))
+    def sort(self, objs):
+        # TODO: Conversion and null-detection here. In Python 3,
+        # comparisons with None fail. We should also support flexible
+        # attributes with different types without falling over.
+        return sorted(objs, key=attrgetter(self.field),
+                      reverse=not self.ascending)
 
 
-class FixedFieldSort(Sort):
-    """Sort object to sort on a fixed field
+class FixedFieldSort(FieldSort):
+    """Sort object to sort on a fixed field.
     """
-    def __init__(self, field, is_ascending=True):
-        self.field = field
-        self.is_ascending = is_ascending
-
     def order_clause(self):
-        order = "ASC" if self.is_ascending else "DESC"
+        order = "ASC" if self.ascending else "DESC"
         return "{0} {1}".format(self.field, order)
-
-    def sort(self, items):
-        return sorted(items, key=attrgetter(self.field),
-                      reverse=(not self.is_ascending))
 
 
 class SmartArtistSort(Sort):
@@ -695,19 +668,13 @@ class SmartArtistSort(Sort):
         return order_str
 
 
-class ComputedFieldSort(Sort):
-
-    def __init__(self, model_cls, field, is_ascending=True):
-        self.is_ascending = is_ascending
-        self.field = field
-        self._getters = model_cls._getters()
-
+class SlowFieldSort(FieldSort):
+    """A sort criterion by some model field other than a fixed field:
+    i.e., a computed or flexible field.
+    """
     def is_slow(self):
         return True
 
-    def sort(self, items):
-        return sorted(items, key=lambda x: self._getters[self.field](x),
-                      reverse=(not self.is_ascending))
 
 special_sorts = {'smartartist': SmartArtistSort}
 
@@ -740,7 +707,7 @@ def build_sql(model_cls, query, sort):
         order_clause = sort.order_clause()
         sort_order = " ORDER BY {0}".format(order_clause) \
             if order_clause else ""
-        if sort.is_slow():
+        if not sort.is_slow():
             sort = None
 
     sql = ("SELECT {table}.* {sort_select} FROM {table} {sort_union} WHERE "

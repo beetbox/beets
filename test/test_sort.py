@@ -131,7 +131,7 @@ class SortFixedFieldTest(DummyDataTestCase):
 class SortFlexFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ''
-        sort = dbcore.query.FlexFieldSort(beets.library.Item, "flex1", True)
+        sort = dbcore.query.SlowFieldSort("flex1", True)
         results = self.lib.items(q, sort)
         self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
         self.assertEqual(results[0]['flex1'], 'flex1-0')
@@ -143,7 +143,7 @@ class SortFlexFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ''
-        sort = dbcore.query.FlexFieldSort(beets.library.Item, "flex1", False)
+        sort = dbcore.query.SlowFieldSort("flex1", False)
         results = self.lib.items(q, sort)
         self.assertGreaterEqual(results[0]['flex1'], results[1]['flex1'])
         self.assertGreaterEqual(results[1]['flex1'], results[2]['flex1'])
@@ -157,8 +157,8 @@ class SortFlexFieldTest(DummyDataTestCase):
 
     def test_sort_two_field(self):
         q = ''
-        s1 = dbcore.query.FlexFieldSort(beets.library.Item, "flex2", False)
-        s2 = dbcore.query.FlexFieldSort(beets.library.Item, "flex1", True)
+        s1 = dbcore.query.SlowFieldSort("flex2", False)
+        s2 = dbcore.query.SlowFieldSort("flex1", True)
         sort = dbcore.query.MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
@@ -220,10 +220,10 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
             self.assertEqual(r1.id, r2.id)
 
 
-class SortAlbumFlexdFieldTest(DummyDataTestCase):
+class SortAlbumFlexFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ''
-        sort = dbcore.query.FlexFieldSort(beets.library.Album, "flex1", True)
+        sort = dbcore.query.SlowFieldSort("flex1", True)
         results = self.lib.albums(q, sort)
         self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
         self.assertLessEqual(results[1]['flex1'], results[2]['flex1'])
@@ -235,7 +235,7 @@ class SortAlbumFlexdFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ''
-        sort = dbcore.query.FlexFieldSort(beets.library.Album, "flex1", False)
+        sort = dbcore.query.SlowFieldSort("flex1", False)
         results = self.lib.albums(q, sort)
         self.assertGreaterEqual(results[0]['flex1'], results[1]['flex1'])
         self.assertGreaterEqual(results[1]['flex1'], results[2]['flex1'])
@@ -247,8 +247,8 @@ class SortAlbumFlexdFieldTest(DummyDataTestCase):
 
     def test_sort_two_field_asc(self):
         q = ''
-        s1 = dbcore.query.FlexFieldSort(beets.library.Album, "flex2", True)
-        s2 = dbcore.query.FlexFieldSort(beets.library.Album, "flex1", True)
+        s1 = dbcore.query.SlowFieldSort("flex2", True)
+        s2 = dbcore.query.SlowFieldSort("flex1", True)
         sort = dbcore.query.MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
@@ -268,8 +268,7 @@ class SortAlbumFlexdFieldTest(DummyDataTestCase):
 class SortAlbumComputedFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ''
-        sort = dbcore.query.ComputedFieldSort(beets.library.Album, "path",
-                                              True)
+        sort = dbcore.query.SlowFieldSort("path", True)
         results = self.lib.albums(q, sort)
         self.assertLessEqual(results[0]['path'], results[1]['path'])
         self.assertLessEqual(results[1]['path'], results[2]['path'])
@@ -281,8 +280,7 @@ class SortAlbumComputedFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ''
-        sort = dbcore.query.ComputedFieldSort(beets.library.Album, "path",
-                                              False)
+        sort = dbcore.query.SlowFieldSort("path", False)
         results = self.lib.albums(q, sort)
         self.assertGreaterEqual(results[0]['path'], results[1]['path'])
         self.assertGreaterEqual(results[1]['path'], results[2]['path'])
@@ -296,7 +294,7 @@ class SortAlbumComputedFieldTest(DummyDataTestCase):
 class SortCombinedFieldTest(DummyDataTestCase):
     def test_computed_first(self):
         q = ''
-        s1 = dbcore.query.ComputedFieldSort(beets.library.Album, "path", True)
+        s1 = dbcore.query.SlowFieldSort("path", True)
         s2 = dbcore.query.FixedFieldSort("year", True)
         sort = dbcore.query.MultipleSort()
         sort.add_sort(s1)
@@ -312,7 +310,7 @@ class SortCombinedFieldTest(DummyDataTestCase):
     def test_computed_second(self):
         q = ''
         s1 = dbcore.query.FixedFieldSort("year", True)
-        s2 = dbcore.query.ComputedFieldSort(beets.library.Album, "path", True)
+        s2 = dbcore.query.SlowFieldSort("path", True)
         sort = dbcore.query.MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)

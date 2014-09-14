@@ -453,7 +453,7 @@ class SortFromStringsTest(unittest.TestCase):
     def test_flex_field_sort(self):
         s = self.sfs(['flex_field+'])
         self.assertIsInstance(s, dbcore.query.MultipleSort)
-        self.assertIsInstance(s.sorts[0], dbcore.query.FlexFieldSort)
+        self.assertIsInstance(s.sorts[0], dbcore.query.SlowFieldSort)
 
 
 def suite():
