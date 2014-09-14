@@ -87,7 +87,7 @@ class DateType(types.Float):
 class PathType(types.Type):
     sql = u'BLOB'
     query = PathQuery
-    model_type = str
+    model_type = bytes
 
     def format(self, value):
         return util.displayable_path(value)

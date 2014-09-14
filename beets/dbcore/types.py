@@ -35,7 +35,7 @@ class Type(object):
     """
 
     model_type = unicode
-    """The python type that is used to represent the value in the model.
+    """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
     is accessed.  To this end, the constructor is used by the `normalize`
