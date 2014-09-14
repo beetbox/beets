@@ -16,6 +16,8 @@ Features:
   your collection on import. Thanks to Olin Gay.
 * :doc:`/plugins/convert`: A new ``never_convert_lossy_files`` option can
   prevent lossy transcoding. Thanks to Simon Kohlmeyer.
+* :doc:`/plugins/convert`: A new ``--yes`` command-line flag skips the
+  confirmation.
 
 Fixes:
 

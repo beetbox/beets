@@ -95,6 +95,17 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         converted = os.path.join(self.convert_dest, 'converted.mp3')
         self.assertTrue(os.path.isfile(converted))
 
+    def test_convert_with_auto_confirmation(self):
+        self.run_command('convert', '--yes', self.item.path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertTrue(os.path.isfile(converted))
+
+    def test_rejecet_confirmation(self):
+        with control_stdin('n'):
+            self.run_command('convert', self.item.path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertFalse(os.path.isfile(converted))
+
     def test_convert_keep_new(self):
         self.assertEqual(os.path.splitext(self.item.path)[1], '.ogg')
 

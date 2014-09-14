@@ -269,7 +269,7 @@ def convert_func(lib, opts, args):
     if not pretend:
         ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
-        if not ui.input_yn("Convert? (Y/n)"):
+        if not (opts.yes or ui.input_yn("Convert? (Y/n)")):
             return
 
     if opts.album:
@@ -338,6 +338,8 @@ class ConvertPlugin(BeetsPlugin):
                               help='set the destination directory')
         cmd.parser.add_option('-f', '--format', action='store', dest='format',
                               help='set the destination directory')
+        cmd.parser.add_option('-y', '--yes', action='store', dest='yes',
+                              help='do not ask for confirmation')
         cmd.func = convert_func
         return [cmd]
 
