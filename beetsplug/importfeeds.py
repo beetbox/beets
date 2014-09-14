@@ -83,16 +83,11 @@ def _build_m3u_filename(basename):
 
 
 def _write_m3u(m3u_path, items_paths):
-    """Append relative paths to items into m3u file, or write to stdout.
+    """Append relative paths to items into m3u file.
     """
-    if m3u_path == "stdout":
-        log.info("Location of imported music:")
+    with open(syspath(m3u_path), 'a') as f:
         for path in items_paths:
-            log.info("  " + path)
-    else:
-        with open(syspath(m3u_path), 'a') as f:
-            for path in items_paths:
-                f.write(path + '\n')
+            f.write(path + '\n')
 
 
 def _record_items(lib, basename, items):
@@ -135,8 +130,9 @@ def _record_items(lib, basename, items):
                 os.symlink(syspath(path), syspath(dest))
 
     if 'echo' in formats:
-        m3u_path = _build_m3u_filename(basename)
-        _write_m3u("stdout", paths)
+        log.info("Location of imported music:")
+        for path in paths:
+            log.info("  " + path)
 
 
 @ImportFeedsPlugin.listen('library_opened')
