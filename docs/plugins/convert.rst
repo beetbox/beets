@@ -67,6 +67,10 @@ The plugin offers several configuration options, all of which live under the
   adding them to your library.
 * ``quiet`` mode prevents the plugin from announcing every file it processes.
   Default: false.
+* ``never_convert_lossy_files`` means that lossy codecs, such as mp3, ogg vorbis,
+  etc, are never converted, as converting lossy files to other lossy codecs will
+  decrease quality further. If set to true, lossy files are always copied.
+  Default: false
 * ``paths`` lets you specify the directory structure and naming scheme for the
   converted files. Use the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`). By default, the plugin reuses your top-level
