@@ -4,7 +4,18 @@ Changelog
 1.3.8 (in development)
 ----------------------
 
-This release adds **sorting** to beets queries. See :ref:`query-sort`.
+This release has two big new chunks of functionality. Queries now support
+**sorting** and user-defined fields can now have **types**.
+
+For more on sorting, see :ref:`query-sort`. (We should write more here
+eventually.)
+
+Flexible field types mean that some functionality that has previously only
+worked for built-in fields, like range queries for numeric fields, can now
+work with plugin- and user-defined fields too. For starters, the
+:doc:`/plugins/echonest/` and :doc:`/plugins/mpdstats` now mark the types of
+the fields they provide---so you can now say, for example, ``beet ls
+liveness:0.5..1.5`` for the Echo Nest "liveness" attribute.
 
 Features:
 
