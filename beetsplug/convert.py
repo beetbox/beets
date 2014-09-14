@@ -180,7 +180,13 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                 )
                 util.move(item.path, original)
 
-        if not should_transcode(item, format):
+        if should_transcode(item, format):
+            converted = replace_ext(converted, ext)
+            try:
+                encode(command, original, converted, pretend)
+            except subprocess.CalledProcessError:
+                continue
+        else:
             if pretend:
                 log.info(u'cp {0} {1}'.format(
                     util.displayable_path(original),
@@ -192,12 +198,6 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                     util.displayable_path(item.path))
                 )
                 util.copy(original, converted)
-        else:
-            converted = replace_ext(converted, ext)
-            try:
-                encode(command, original, converted, pretend)
-            except subprocess.CalledProcessError:
-                continue
 
         if pretend:
             continue
