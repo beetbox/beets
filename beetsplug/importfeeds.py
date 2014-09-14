@@ -13,17 +13,20 @@
 # included in all copies or substantial portions of the Software.
 
 """Write paths of imported files in various formats to ease later import in a
-music player.
+music player. Also allow printing the new file locations to stdout in case
+one wants to manually add music to a player by its path.
 """
 import datetime
 import os
 import re
+import logging
 
 from beets.plugins import BeetsPlugin
 from beets.util import normpath, syspath, bytestring_path
 from beets import config
 
 M3U_DEFAULT_NAME = 'imported.m3u'
+log = logging.getLogger('beets')
 
 
 class ImportFeedsPlugin(BeetsPlugin):
@@ -125,6 +128,11 @@ def _record_items(lib, basename, items):
             dest = os.path.join(feedsdir, os.path.basename(path))
             if not os.path.exists(syspath(dest)):
                 os.symlink(syspath(path), syspath(dest))
+
+    if 'echo' in formats:
+        log.info("Location of imported music:")
+        for path in paths:
+            log.info("  " + path)
 
 
 @ImportFeedsPlugin.listen('library_opened')
