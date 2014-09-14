@@ -60,6 +60,8 @@ Fixes:
 * The ``--version`` flag now works as an alias for the ``version`` command.
 * :doc:`/plugins/lastgenre`: Remove some unhelpful genres from the default
   whitelist. Thanks to gwern.
+* :doc:`/plugins/importfeeds`: A new ``echo`` output mode prints files' paths
+  to standard error. Thanks to robotanarchy.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
