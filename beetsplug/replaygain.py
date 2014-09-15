@@ -198,6 +198,9 @@ class CommandBackend(Backend):
         out = []
         for line in text.split('\n')[1:num_lines + 1]:
             parts = line.split('\t')
+            if len(parts) != 6 or parts[0] == 'File':
+                log.debug(u'replaygain: bad tool output: {0}'.format(text))
+                raise ReplayGainError('mp3gain failed')
             d = {
                 'file': parts[0],
                 'mp3gain': int(parts[1]),

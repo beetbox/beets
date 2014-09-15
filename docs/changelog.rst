@@ -62,6 +62,9 @@ Fixes:
   whitelist. Thanks to gwern.
 * :doc:`/plugins/importfeeds`: A new ``echo`` output mode prints files' paths
   to standard error. Thanks to robotanarchy.
+* :doc:`/plugins/replaygain`: Restore some error handling when ``mp3gain``
+  output cannot be parsed. The verbose log now contains the bad tool output in
+  this case.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
