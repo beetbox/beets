@@ -959,15 +959,9 @@ def get_query_sort(val, model_cls):
             path_parts = ()
             non_path_parts = val
 
-        # separate query token and sort token
-        query_val = [s for s in non_path_parts if not s.endswith(('+', '-'))]
-        sort_val = [s for s in non_path_parts if s.endswith(('+', '-'))]
-
-        # Parse remaining parts and construct an AndQuery.
-        query = dbcore.query_from_strings(
-            dbcore.AndQuery, model_cls, prefixes, query_val
+        query, sort = dbcore.parse_sorted_query(
+            model_cls, non_path_parts, prefixes
         )
-        sort = dbcore.sort_from_strings(model_cls, sort_val)
 
         # Add path queries to aggregate query.
         if path_parts:

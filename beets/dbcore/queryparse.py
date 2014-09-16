@@ -157,3 +157,28 @@ def sort_from_strings(model_cls, sort_parts):
         for part in sort_parts:
             sort.add_sort(construct_sort_part(model_cls, part))
         return sort
+
+
+def parse_sorted_query(model_cls, parts, prefixes={},
+                       query_cls=query.AndQuery):
+    """Given a list of strings, create the `Query` and `Sort` that they
+    represent.
+
+    Return a `SortedQuery` namedtuple, which is a pair of a `Query` and
+    `Sort`.
+    """
+    # Separate query token and sort token.
+    query_parts = []
+    sort_parts = []
+    for part in parts:
+        if part.endswith((u'+', u'-')) and u':' not in part:
+            sort_parts.append(part)
+        else:
+            query_parts.append(part)
+
+    # Parse each.
+    q = query_from_strings(
+        query_cls, model_cls, prefixes, query_parts
+    )
+    s = sort_from_strings(model_cls, sort_parts)
+    return query.SortedQuery(q, s)
