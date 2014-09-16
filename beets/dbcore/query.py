@@ -654,6 +654,3 @@ class NullSort(Sort):
     """No sorting. Leave results unsorted."""
     def sort(items):
         return items
-
-    def __nonzero__(self):
-        return False

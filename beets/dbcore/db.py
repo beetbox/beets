@@ -25,7 +25,7 @@ import collections
 import beets
 from beets.util.functemplate import Template
 from beets.dbcore import types
-from .query import MatchQuery, NullSort
+from .query import MatchQuery, NullSort, TrueQuery
 
 
 class FormattedMapping(collections.Mapping):
@@ -732,14 +732,15 @@ class Database(object):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort=None):
+    def _fetch(self, model_cls, query=None, sort=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
         Query object, or None (to fetch everything). `sort` is an
-        optional Sort object.
+        `Sort` object.
         """
+        query = query or TrueQuery()  # A null query.
+        sort = sort or NullSort()  # Unsorted.
         where, subvals = query.clause()
-        sort = sort or NullSort()
         order_by = sort.order_clause()
 
         sql = ("SELECT * FROM {0} WHERE {1} {2}").format(

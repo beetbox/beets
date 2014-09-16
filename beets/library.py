@@ -968,27 +968,6 @@ def parse_query_string(s, model_cls):
     return parse_query_parts(parts, model_cls)
 
 
-def get_query_sort(val, model_cls):
-    """Take a value which may be None, a query string, a query string
-    list, or a Query object, and return a suitable Query object and Sort
-    object.
-
-    `model_cls` is the subclass of Model indicating which entity this
-    is a query for (i.e., Album or Item) and is used to determine which
-    fields are searched.
-    """
-    if isinstance(val, basestring):
-        return parse_query_string(val, model_cls)
-    elif val is None:
-        return dbcore.query.TrueQuery(), None
-    elif isinstance(val, list) or isinstance(val, tuple):
-        return parse_query_parts(val, model_cls)
-    elif isinstance(val, dbcore.Query):
-        return val, None
-    else:
-        raise ValueError('query must be None or have type Query or str')
-
-
 # The Library: interface to the database.
 
 class Library(dbcore.Database):
@@ -1050,30 +1029,35 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort_order=None):
-        """Parse a query and fetch. If a order specification is present in the
-        query string the sort_order argument is ignored.
-          """
-        query, sort = get_query_sort(query, model_cls)
-        sort = sort or sort_order
+    def _fetch(self, model_cls, query, sort=None):
+        """Parse a query and fetch. If a order specification is present
+        in the query string the `sort` argument is ignored.
+        """
+        # Parse the query, if necessary.
+        parsed_sort = None
+        if isinstance(query, basestring):
+            query, parsed_sort = parse_query_string(query, model_cls)
+        elif isinstance(query, (list, tuple)):
+            query, parsed_sort = parse_query_parts(query, model_cls)
+
+        # Any non-null sort specified by the parsed query overrides the
+        # provided sort.
+        if parsed_sort and not isinstance(parsed_sort, dbcore.query.NullSort):
+            sort = parsed_sort
 
         return super(Library, self)._fetch(
             model_cls, query, sort
         )
 
-    def albums(self, query=None, sort_order=None):
-        """Get a sorted list of :class:`Album` objects matching the
-        given sort order. If a order specification is present in the query
-        string the sort_order argument is ignored.
+    def albums(self, query=None, sort=None):
+        """Get :class:`Album` objects matching the query.
         """
-        return self._fetch(Album, query, sort_order)
+        return self._fetch(Album, query, sort)
 
-    def items(self, query=None, sort_order=None):
-        """Get a sorted list of :class:`Item` objects matching the given
-        given sort order. If a order specification is present in the query
-        string the sort_order argument is ignored.
+    def items(self, query=None, sort=None):
+        """Get :class:`Item` objects matching the query.
         """
-        return self._fetch(Item, query, sort_order)
+        return self._fetch(Item, query, sort)
 
     # Convenience accessors.
 
