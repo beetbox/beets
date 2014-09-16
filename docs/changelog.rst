@@ -65,6 +65,8 @@ Fixes:
 * :doc:`/plugins/replaygain`: Restore some error handling when ``mp3gain``
   output cannot be parsed. The verbose log now contains the bad tool output in
   this case.
+* :doc:`/plugins/convert`: Fix filename extensions when converting
+  automatically.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 

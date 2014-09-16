@@ -232,7 +232,7 @@ def convert_on_import(lib, item):
     format = config['convert']['format'].get(unicode).lower()
     if should_transcode(item, format):
         command, ext = get_format()
-        fd, dest = tempfile.mkstemp(ext)
+        fd, dest = tempfile.mkstemp('.' + ext)
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         try:
