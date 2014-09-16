@@ -39,10 +39,13 @@ class AutotagStub(object):
     autotagger returns.
     """
 
-    NONE   = 'NONE'
-    IDENT  = 'IDENT'
-    GOOD   = 'GOOD'
-    BAD    = 'BAD'
+    NONE    = 'NONE'
+    IDENT   = 'IDENT'
+    GOOD    = 'GOOD'
+    BAD     = 'BAD'
+    MISSING = 'MISSING'
+    """Generate an album match for all but one track
+    """
 
     length = 2
     matching = IDENT
@@ -72,6 +75,9 @@ class AutotagStub(object):
             for i in range(self.length):
                 yield self._make_album_match(albumartist, album, tracks, i + 1)
 
+        elif self.matching == self.MISSING:
+            yield self._make_album_match(albumartist, album, tracks, missing=1)
+
     def match_track(self, artist, title):
         yield TrackInfo(
             title=title.replace('Tag', 'Applied'),
@@ -89,7 +95,7 @@ class AutotagStub(object):
             length=1
         )
 
-    def _make_album_match(self, artist, album, tracks, distance=0):
+    def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
         if distance:
             id = ' ' + 'M' * distance
         else:
@@ -101,7 +107,7 @@ class AutotagStub(object):
         album = album.replace('Tag', 'Applied') + id
 
         trackInfos = []
-        for i in range(tracks):
+        for i in range(tracks - missing):
             trackInfos.append(self._make_track_match(artist, album, i + 1))
 
         return AlbumInfo(
@@ -535,6 +541,13 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
         self.assertEqual(len(self.lib.albums()), 1)
+
+    def test_unmatched_tracks_not_added(self):
+        self._create_import_dir(2)
+        self.matcher.matching = self.matcher.MISSING
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 1)
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
