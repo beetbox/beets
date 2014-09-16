@@ -352,6 +352,30 @@ class ImportSession(object):
 class ImportTask(object):
     """Represents a single set of items to be imported along with its
     intermediate state. May represent an album or a single item.
+
+    The import session and stages call the following methods in the
+    given order.
+
+    * `lookup_candidates()` Sets the `common_artist`, `common_album`,
+      `candidates`, and `rec` attributes. `candidates` is a list of
+      `AlbumMatch` objects.
+
+    * `choose_match()` Uses the session to set the `match` attribute
+      from the `candidates` list.
+
+    * `find_duplicates()` Returns a list of albums from `lib` with the
+       same artist and album name as the task.
+
+    * `apply_metadata()` Sets the attributes of the items from the
+      task's `match` attribute.
+
+    * `add()` Add the imported items and album to the database.
+
+    * `manipulate_files()` Copy, move, and write files depending on the
+      session configuration.
+
+    * `finalize()` Update the import progress and cleanup the file
+      system.
     """
     def __init__(self, toppath=None, paths=None, items=None):
         self.toppath = toppath
@@ -423,12 +447,15 @@ class ImportTask(object):
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
-        If this is an album task, return the list of items in the
-        selected match or everything if the choice is ASIS. If this is a
-        singleton task, return a list containing the item.
+
+        If the tasks applies an album match the method only returns the
+        matched items.
         """
         if self.choice_flag == action.ASIS:
             return list(self.items)
+        # FIXME this should be a simple attribute. There should be no
+        # need to retrieve the keys of `match.mapping`. This requires
+        # that we remove unmatched items from the list.
         elif self.choice_flag == action.APPLY:
             return self.match.mapping.keys()
         else:
@@ -437,6 +464,8 @@ class ImportTask(object):
     def apply_metadata(self):
         """Copy metadata from match info to the items.
         """
+        # TODO call should be more descriptive like
+        # apply_metadata(self.match, self.items)
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
     def duplicate_items(self, lib):
