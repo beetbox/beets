@@ -7,8 +7,9 @@ Changelog
 This release has two big new chunks of functionality. Queries now support
 **sorting** and user-defined fields can now have **types**.
 
-For more on sorting, see :ref:`query-sort`. (We should write more here
-eventually.)
+If you want to see all your songs in reverse chronological order, just type
+``beet list year-``. It couldn't be easier. For details, see
+:ref:`query-sort`.
 
 Flexible field types mean that some functionality that has previously only
 worked for built-in fields, like range queries for numeric fields, can now
