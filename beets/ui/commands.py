@@ -38,7 +38,6 @@ from beets.util.functemplate import Template
 from beets import library
 from beets import config
 from beets.util.confit import _package_path
-from beets.dbcore import sort_from_strings
 
 VARIOUS_ARTISTS = u'Various Artists'
 
@@ -966,18 +965,11 @@ def list_items(lib, query, album, fmt):
     albums instead of single items.
     """
     tmpl = Template(ui._pick_format(album, fmt))
-
     if album:
-        sort_parts = str(config['sort_album']).split()
-        sort_order = sort_from_strings(library.Album,
-                                       sort_parts)
-        for album in lib.albums(query, sort_order):
+        for album in lib.albums(query):
             ui.print_obj(album, lib, tmpl)
     else:
-        sort_parts = str(config['sort_item']).split()
-        sort_order = sort_from_strings(library.Item,
-                                       sort_parts)
-        for item in lib.items(query, sort_order):
+        for item in lib.items(query):
             ui.print_obj(item, lib, tmpl)
 
 

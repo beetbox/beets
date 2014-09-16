@@ -1083,11 +1083,17 @@ class Library(dbcore.Database):
     def albums(self, query=None, sort=None):
         """Get :class:`Album` objects matching the query.
         """
+        sort = sort or dbcore.sort_from_strings(
+            Album, beets.config['sort_album'].as_str_seq()
+        )
         return self._fetch(Album, query, sort)
 
     def items(self, query=None, sort=None):
         """Get :class:`Item` objects matching the query.
         """
+        sort = sort or dbcore.sort_from_strings(
+            Item, beets.config['sort_item'].as_str_seq()
+        )
         return self._fetch(Item, query, sort)
 
     # Convenience accessors.
