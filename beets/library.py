@@ -149,13 +149,13 @@ class SmartArtistSort(dbcore.query.Sort):
     """Sort by artist (either album artist or track artist),
     prioritizing the sort field over the raw field.
     """
-    def __init__(self, model_cls, is_ascending=True):
-        self.model_cls = model_cls
-        self.is_ascending = is_ascending
+    def __init__(self, model_cls, ascending=True):
+        self.album = model_cls is Album
+        self.ascending = ascending
 
     def order_clause(self):
-        order = "ASC" if self.is_ascending else "DESC"
-        if 'albumartist' in self.model_cls._fields:
+        order = "ASC" if self.ascending else "DESC"
+        if self.album:
             field = 'albumartist'
         else:
             field = 'artist'
@@ -164,11 +164,11 @@ class SmartArtistSort(dbcore.query.Sort):
                 'ELSE {0}_sort END) {1}').format(field, order)
 
     def sort(self, objs):
-        if 'albumartist' in self.model_cls._fields:
+        if self.album:
             key = lambda a: a.albumartist_sort or a.albumartist
         else:
             key = lambda i: i.artist_sort or i.artist
-        return sorted(objs, key=key)
+        return sorted(objs, key=key, reverse=not self.ascending)
 
 
 # Special path format key.
@@ -374,7 +374,7 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts = {'smartartist': SmartArtistSort}
+    _sorts = {'artist': SmartArtistSort}
 
     @classmethod
     def _getters(cls):
@@ -739,7 +739,10 @@ class Album(LibModel):
 
     _search_fields = ('album', 'albumartist', 'genre')
 
-    _sorts = {'smartartist': SmartArtistSort}
+    _sorts = {
+        'albumartist': SmartArtistSort,
+        'artist': SmartArtistSort,
+    }
 
     item_keys = [
         'added',

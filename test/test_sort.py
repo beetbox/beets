@@ -62,6 +62,7 @@ class DummyDataTestCase(_common.TestCase):
         items[0].flex1 = "flex1-0"
         items[0].flex2 = "flex2-A"
         items[0].album_id = albums[0].id
+        items[0].artist_sort = None
         items[1].title = 'baz qux'
         items[1].artist = 'two'
         items[1].album = 'baz'
@@ -70,6 +71,7 @@ class DummyDataTestCase(_common.TestCase):
         items[1].flex1 = "flex1-1"
         items[1].flex2 = "flex2-A"
         items[1].album_id = albums[0].id
+        items[1].artist_sort = None
         items[2].title = 'beets 4 eva'
         items[2].artist = 'three'
         items[2].album = 'foo'
@@ -78,6 +80,7 @@ class DummyDataTestCase(_common.TestCase):
         items[2].flex1 = "flex1-2"
         items[2].flex2 = "flex1-B"
         items[2].album_id = albums[1].id
+        items[2].artist_sort = None
         items[3].title = 'beets 4 eva'
         items[3].artist = 'three'
         items[3].album = 'foo2'
@@ -86,6 +89,7 @@ class DummyDataTestCase(_common.TestCase):
         items[3].flex1 = "flex1-2"
         items[3].flex2 = "flex1-C"
         items[3].album_id = albums[2].id
+        items[3].artist_sort = None
         for item in items:
             self.lib.add(item)
 

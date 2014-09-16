@@ -55,8 +55,8 @@ list_format_item: $artist - $album - $title
 list_format_album: $albumartist - $album
 time_format: '%Y-%m-%d %H:%M:%S'
 
-sort_album: smartartist+ album+
-sort_item: smartartist+ album+ disc+ track+
+sort_album: albumartist+ album+
+sort_item: artist+ album+ disc+ track+
 
 paths:
     default: $albumartist/$album%aunique{}/$track $title
