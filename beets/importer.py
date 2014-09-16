@@ -652,9 +652,7 @@ class ImportTask(object):
                               item.added, dup_item.id, item.path)
                 if (dup_item.album_id and
                     not dup_item.album_id in replaced_album_ids):
-                    album_query = dbcore.query.MatchQuery('id',
-                                                          dup_item.album_id)
-                    replaced_album = lib.albums(album_query).get()
+                    replaced_album = dup_item.get_album()
                     if replaced_album:
                         replaced_album_ids.add(dup_item.album_id)
                         self.replaced_albums[replaced_album.path] = replaced_album
