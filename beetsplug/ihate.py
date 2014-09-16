@@ -17,7 +17,7 @@
 import logging
 from beets.plugins import BeetsPlugin
 from beets.importer import action
-from beets.library import get_query_sort
+from beets.library import parse_query_string
 from beets.library import Item
 from beets.library import Album
 
@@ -55,11 +55,10 @@ class IHatePlugin(BeetsPlugin):
         """
         if action_patterns:
             for query_string in action_patterns:
-                query = None
-                if task.is_album:
-                    (query, _) = get_query_sort(query_string, Album)
-                else:
-                    (query, _) = get_query_sort(query_string, Item)
+                query, _ = parse_query_string(
+                    query_string,
+                    Album if task.is_album else Item,
+                )
                 if any(query.match(item) for item in task.imported_items()):
                     return True
         return False

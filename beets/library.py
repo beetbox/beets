@@ -609,7 +609,7 @@ class Item(LibModel):
         for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
-            query, _ = get_query_sort(query, type(self))
+            query, _ = parse_query_string(query, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
@@ -917,7 +917,7 @@ class Album(LibModel):
 
 # Query construction helpers.
 
-def parse_query(val, model_cls):
+def parse_query_parts(parts, model_cls):
     """Given a beets query string as a list of components, return the
     `Query` and `Sort` they represent.
 
@@ -933,7 +933,7 @@ def parse_query(val, model_cls):
     if 'path' in model_cls._fields:
         path_parts = []
         non_path_parts = []
-        for s in val:
+        for s in parts:
             if s.find(os.sep, 0, s.find(':')) != -1:
                 # Separator precedes colon.
                 path_parts.append(s)
@@ -941,7 +941,7 @@ def parse_query(val, model_cls):
                 non_path_parts.append(s)
     else:
         path_parts = ()
-        non_path_parts = val
+        non_path_parts = parts
 
     query, sort = dbcore.parse_sorted_query(
         model_cls, non_path_parts, prefixes
@@ -953,6 +953,21 @@ def parse_query(val, model_cls):
     return dbcore.query.SortedQuery(query, sort)
 
 
+def parse_query_string(s, model_cls):
+    """Given a beets query string, return the `Query` and `Sort` they
+    represent.
+
+    The string is split into components using shell-like syntax.
+    """
+    # A bug in Python < 2.7.3 prevents correct shlex splitting of
+    # Unicode strings.
+    # http://bugs.python.org/issue6988
+    if isinstance(s, unicode):
+        s = s.encode('utf8')
+    parts = [p.decode('utf8') for p in shlex.split(s)]
+    return parse_query_parts(parts, model_cls)
+
+
 def get_query_sort(val, model_cls):
     """Take a value which may be None, a query string, a query string
     list, or a Query object, and return a suitable Query object and Sort
@@ -962,20 +977,12 @@ def get_query_sort(val, model_cls):
     is a query for (i.e., Album or Item) and is used to determine which
     fields are searched.
     """
-    # Convert a single string into a list of space-separated
-    # criteria.
     if isinstance(val, basestring):
-        # A bug in Python < 2.7.3 prevents correct shlex splitting of
-        # Unicode strings.
-        # http://bugs.python.org/issue6988
-        if isinstance(val, unicode):
-            val = val.encode('utf8')
-        val = [s.decode('utf8') for s in shlex.split(val)]
-
-    if val is None:
+        return parse_query_string(val, model_cls)
+    elif val is None:
         return dbcore.query.TrueQuery(), None
     elif isinstance(val, list) or isinstance(val, tuple):
-        return parse_query(val, model_cls)
+        return parse_query_parts(val, model_cls)
     elif isinstance(val, dbcore.Query):
         return val, None
     else:
