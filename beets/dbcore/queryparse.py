@@ -136,11 +136,10 @@ def construct_sort_part(model_cls, part):
     assert direction in ('+', '-'), "part must end with + or -"
     is_ascending = direction == '+'
 
-    if field in model_cls._fields:
+    if field in model_cls._sorts:
+        sort = model_cls._sorts[field](model_cls, is_ascending)
+    elif field in model_cls._fields:
         sort = query.FixedFieldSort(field, is_ascending)
-    elif field == 'smartartist':
-        # Special case for smart artist sort.
-        sort = query.SmartArtistSort(model_cls, is_ascending)
     else:
         # Flexible or computed.
         sort = query.SlowFieldSort(field, is_ascending)

@@ -25,6 +25,10 @@ from tempfile import mkstemp
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
 
+class TestSort(dbcore.query.FieldSort):
+    pass
+
+
 class TestModel1(dbcore.Model):
     _table = 'test'
     _flex_table = 'testflex'
@@ -34,6 +38,9 @@ class TestModel1(dbcore.Model):
     }
     _types = {
         'some_float_field': dbcore.types.FLOAT,
+    }
+    _sorts = {
+        'some_sort': TestSort,
     }
 
     @classmethod
@@ -454,6 +461,10 @@ class SortFromStringsTest(unittest.TestCase):
         s = self.sfs(['flex_field+'])
         self.assertIsInstance(s, dbcore.query.MultipleSort)
         self.assertIsInstance(s.sorts[0], dbcore.query.SlowFieldSort)
+
+    def test_special_sort(self):
+        s = self.sfs(['some_sort+'])
+        self.assertIsInstance(s.sorts[0], TestSort)
 
 
 def suite():

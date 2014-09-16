@@ -619,25 +619,6 @@ class FixedFieldSort(FieldSort):
         return "{0} {1}".format(self.field, order)
 
 
-class SmartArtistSort(Sort):
-    """Sort by artist (either album artist or track artist),
-    prioritizing the sort field over the raw field.
-    """
-    def __init__(self, model_cls, is_ascending=True):
-        self.model_cls = model_cls
-        self.is_ascending = is_ascending
-
-    def order_clause(self):
-        order = "ASC" if self.is_ascending else "DESC"
-        if 'albumartist' in self.model_cls._fields:
-            field = 'albumartist'
-        else:
-            field = 'artist'
-        return ('(CASE {0}_sort WHEN NULL THEN {0} '
-                'WHEN "" THEN {0} '
-                'ELSE {0}_sort END) {1}').format(field, order)
-
-
 class SlowFieldSort(FieldSort):
     """A sort criterion by some model field other than a fixed field:
     i.e., a computed or flexible field.

@@ -60,7 +60,6 @@ class PathQuery(dbcore.FieldQuery):
 
 # Library-specific field types.
 
-
 class DateType(types.Float):
     # TODO representation should be `datetime` object
     # TODO distinguish beetween date and time types
@@ -142,6 +141,27 @@ class MusicalKey(types.String):
             return None
         else:
             return self.parse(key)
+
+
+# Library-specific sort types.
+
+class SmartArtistSort(dbcore.query.Sort):
+    """Sort by artist (either album artist or track artist),
+    prioritizing the sort field over the raw field.
+    """
+    def __init__(self, model_cls, is_ascending=True):
+        self.model_cls = model_cls
+        self.is_ascending = is_ascending
+
+    def order_clause(self):
+        order = "ASC" if self.is_ascending else "DESC"
+        if 'albumartist' in self.model_cls._fields:
+            field = 'albumartist'
+        else:
+            field = 'artist'
+        return ('(CASE {0}_sort WHEN NULL THEN {0} '
+                'WHEN "" THEN {0} '
+                'ELSE {0}_sort END) {1}').format(field, order)
 
 
 # Special path format key.
@@ -346,6 +366,8 @@ class Item(LibModel):
     """
 
     _formatter = FormattedItemMapping
+
+    _sorts = {'smartartist': SmartArtistSort}
 
     @classmethod
     def _getters(cls):
@@ -709,6 +731,8 @@ class Album(LibModel):
     }
 
     _search_fields = ('album', 'albumartist', 'genre')
+
+    _sorts = {'smartartist': SmartArtistSort}
 
     item_keys = [
         'added',

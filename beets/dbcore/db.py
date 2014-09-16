@@ -124,6 +124,11 @@ class Model(object):
     """Optional Types for non-fixed (i.e., flexible and computed) fields.
     """
 
+    _sorts = {}
+    """Optional named sort criteria. The keys are strings and the values
+    are subclasses of `Sort`.
+    """
+
     @classmethod
     def _getters(cls):
         """Return a mapping from field names to getter functions.
