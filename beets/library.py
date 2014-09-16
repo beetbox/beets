@@ -163,6 +163,13 @@ class SmartArtistSort(dbcore.query.Sort):
                 'WHEN "" THEN {0} '
                 'ELSE {0}_sort END) {1}').format(field, order)
 
+    def sort(self, objs):
+        if 'albumartist' in self.model_cls._fields:
+            key = lambda a: a.albumartist_sort or a.albumartist
+        else:
+            key = lambda i: i.artist_sort or i.artist
+        return sorted(objs, key=key)
+
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
