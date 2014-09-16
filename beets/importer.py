@@ -543,7 +543,7 @@ class ImportTask(object):
                 duplicates.append(album)
         return duplicates
 
-    def infer_album_fields(self):
+    def align_album_level_fields(self):
         """Make the some album fields equal across `self.items`
         """
         changes = {}
@@ -618,6 +618,7 @@ class ImportTask(object):
     def add(self, lib):
         """Add the items as an album to the library and remove replaced items.
         """
+        self.align_album_level_fields()
         with lib.transaction():
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
@@ -1161,10 +1162,6 @@ def apply_choices(session, task):
     if task.apply:
         task.apply_metadata()
         plugins.send('import_task_apply', session=session, task=task)
-
-    # Infer album-level fields.
-    if task.is_album:
-        task.infer_album_fields()
 
     task.add(session.lib)
 
