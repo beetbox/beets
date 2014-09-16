@@ -18,10 +18,6 @@ import re
 from operator import attrgetter
 from beets import util
 from datetime import datetime, timedelta
-from collections import namedtuple
-
-
-SortedQuery = namedtuple('SortedQuery', ['query', 'sort'])
 
 
 class Query(object):

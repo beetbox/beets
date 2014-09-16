@@ -950,7 +950,7 @@ def parse_query_parts(parts, model_cls):
     # Add path queries to aggregate query.
     if path_parts:
         query.subqueries += [PathQuery('path', s) for s in path_parts]
-    return dbcore.query.SortedQuery(query, sort)
+    return query, sort
 
 
 def parse_query_string(s, model_cls):

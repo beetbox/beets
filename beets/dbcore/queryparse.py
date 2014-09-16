@@ -163,9 +163,6 @@ def parse_sorted_query(model_cls, parts, prefixes={},
                        query_cls=query.AndQuery):
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
-
-    Return a `SortedQuery` namedtuple, which is a pair of a `Query` and
-    `Sort`.
     """
     # Separate query token and sort token.
     query_parts = []
@@ -181,4 +178,4 @@ def parse_sorted_query(model_cls, parts, prefixes={},
         query_cls, model_cls, prefixes, query_parts
     )
     s = sort_from_strings(model_cls, sort_parts)
-    return query.SortedQuery(q, s)
+    return q, s
