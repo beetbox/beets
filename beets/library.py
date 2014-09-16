@@ -609,7 +609,7 @@ class Item(LibModel):
         for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
-            (query, _) = get_query_sort(query, type(self))
+            query, _ = get_query_sort(query, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
@@ -915,7 +915,43 @@ class Album(LibModel):
             item.try_sync(bool(write))
 
 
-# Query construction helper.
+# Query construction helpers.
+
+def parse_query(val, model_cls):
+    """Given a beets query string as a list of components, return the
+    `Query` and `Sort` they represent.
+
+    Like `dbcore.parse_sorted_query`, with beets query prefixes and
+    special path query detection.
+    """
+    # Get query types and their prefix characters.
+    prefixes = {':': dbcore.query.RegexpQuery}
+    prefixes.update(plugins.queries())
+
+    # Special-case path-like queries, which are non-field queries
+    # containing path separators (/).
+    if 'path' in model_cls._fields:
+        path_parts = []
+        non_path_parts = []
+        for s in val:
+            if s.find(os.sep, 0, s.find(':')) != -1:
+                # Separator precedes colon.
+                path_parts.append(s)
+            else:
+                non_path_parts.append(s)
+    else:
+        path_parts = ()
+        non_path_parts = val
+
+    query, sort = dbcore.parse_sorted_query(
+        model_cls, non_path_parts, prefixes
+    )
+
+    # Add path queries to aggregate query.
+    if path_parts:
+        query.subqueries += [PathQuery('path', s) for s in path_parts]
+    return dbcore.query.SortedQuery(query, sort)
+
 
 def get_query_sort(val, model_cls):
     """Take a value which may be None, a query string, a query string
@@ -926,10 +962,6 @@ def get_query_sort(val, model_cls):
     is a query for (i.e., Album or Item) and is used to determine which
     fields are searched.
     """
-    # Get query types and their prefix characters.
-    prefixes = {':': dbcore.query.RegexpQuery}
-    prefixes.update(plugins.queries())
-
     # Convert a single string into a list of space-separated
     # criteria.
     if isinstance(val, basestring):
@@ -941,36 +973,11 @@ def get_query_sort(val, model_cls):
         val = [s.decode('utf8') for s in shlex.split(val)]
 
     if val is None:
-        return (dbcore.query.TrueQuery(), None)
-
+        return dbcore.query.TrueQuery(), None
     elif isinstance(val, list) or isinstance(val, tuple):
-        # Special-case path-like queries, which are non-field queries
-        # containing path separators (/).
-        if 'path' in model_cls._fields:
-            path_parts = []
-            non_path_parts = []
-            for s in val:
-                if s.find(os.sep, 0, s.find(':')) != -1:
-                    # Separator precedes colon.
-                    path_parts.append(s)
-                else:
-                    non_path_parts.append(s)
-        else:
-            path_parts = ()
-            non_path_parts = val
-
-        query, sort = dbcore.parse_sorted_query(
-            model_cls, non_path_parts, prefixes
-        )
-
-        # Add path queries to aggregate query.
-        if path_parts:
-            query.subqueries += [PathQuery('path', s) for s in path_parts]
-        return query, sort
-
+        return parse_query(val, model_cls)
     elif isinstance(val, dbcore.Query):
         return val, None
-
     else:
         raise ValueError('query must be None or have type Query or str')
 
