@@ -473,7 +473,8 @@ class Item(LibModel):
         else:
             path = normpath(path)
 
-        plugins.send('write', item=self, path=path)
+        tags = dict(self)
+        plugins.send('write', item=self, path=path, tags=tags)
 
         try:
             mediafile = MediaFile(syspath(path),
@@ -481,7 +482,7 @@ class Item(LibModel):
         except (OSError, IOError, UnreadableFileError) as exc:
             raise ReadError(self.path, exc)
 
-        mediafile.update(self)
+        mediafile.update(tags)
         try:
             mediafile.save()
         except (OSError, IOError, MutagenError) as exc:
