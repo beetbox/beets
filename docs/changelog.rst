@@ -68,6 +68,8 @@ Fixes:
   this case.
 * :doc:`/plugins/convert`: Fix filename extensions when converting
   automatically.
+* The ``write`` event allows plugins to change the tags that are
+  written to a media file.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 

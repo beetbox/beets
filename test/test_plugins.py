@@ -14,16 +14,17 @@
 
 from mock import patch
 from _common import unittest
-from helper import TestHelper
+import helper
 
 from beets import plugins
 from beets.library import Item
 from beets.dbcore import types
+from beets.mediafile import MediaFile
 
 
-class PluginTest(unittest.TestCase, TestHelper):
+class TestHelper(helper.TestHelper):
 
-    def setUp(self):
+    def setup_plugin_loader(self):
         # FIXME the mocking code is horrific, but this is the lowest and
         # earliest level of the plugin mechanism we can hook into.
         self._plugin_loader_patch = patch('beets.plugins.load_plugins')
@@ -35,9 +36,22 @@ class PluginTest(unittest.TestCase, TestHelper):
         load_plugins.side_effect = myload
         self.setup_beets()
 
-    def tearDown(self):
+    def teardown_plugin_loader(self):
         self._plugin_loader_patch.stop()
         self.unload_plugins()
+
+    def register_plugin(self, plugin_class):
+        self._plugin_classes.add(plugin_class)
+
+
+class ItemTypesTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_plugin_loader()
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_plugin_loader()
         self.teardown_beets()
 
     def test_flex_field_type(self):
@@ -64,8 +78,38 @@ class PluginTest(unittest.TestCase, TestHelper):
         out = self.run_with_output('ls', 'rating:3..5')
         self.assertNotIn('aaa', out)
 
-    def register_plugin(self, plugin_class):
-        self._plugin_classes.add(plugin_class)
+
+class ItemWriteTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_plugin_loader()
+        self.setup_beets()
+
+        class EventListenerPlugin(plugins.BeetsPlugin):
+            pass
+        self.event_listener_plugin = EventListenerPlugin
+        self.register_plugin(EventListenerPlugin)
+
+    def tearDown(self):
+        self.teardown_plugin_loader()
+        self.teardown_beets()
+
+    def test_change_tags(self):
+
+        def on_write(item=None, path=None, tags=None):
+            if tags['artist'] == 'XXX':
+                tags['artist'] = 'YYY'
+
+        self.register_listener('write', on_write)
+
+        item = self.add_item_fixture(artist='XXX')
+        item.write()
+
+        mediafile = MediaFile(item.path)
+        self.assertEqual(mediafile.artist, 'YYY')
+
+    def register_listener(self, event, func):
+        self.event_listener_plugin.register_listener(event, func)
 
 
 def suite():

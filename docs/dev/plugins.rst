@@ -143,11 +143,14 @@ currently available are:
   or album's part) is removed from the library (even when its file is not
   deleted from disk).
 
-* *write*: called with an ``Item`` object just before a file's metadata is
-  written to disk (i.e., just before the file on disk is opened). Event
-  handlers may raise a ``library.FileOperationError`` exception to abort
-  the write operation. Beets will catch that exception, print an error
-  message and continue.
+* *write*: called with an ``Item`` object, a ``path``, and a ``tags``
+  dictionary just before a file's metadata is written to disk (i.e.,
+  just before the file on disk is opened). Event handlers may change
+  the ``tags`` dictionary to customize the tags that are written to the
+  media file. Event handlers may also raise a
+  ``library.FileOperationError`` exception to abort the write
+  operation. Beets will catch that exception, print an error message
+  and continue.
 
 * *after_write*: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).
