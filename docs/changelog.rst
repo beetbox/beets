@@ -70,6 +70,8 @@ Fixes:
   automatically.
 * The ``write`` event allows plugins to change the tags that are
   written to a media file.
+* :doc:`/plugins/zero`: Do not delete database values, only media file
+  tags.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
