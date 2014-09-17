@@ -34,9 +34,10 @@ the two does not exceed a given threshold.
 The threshold used is given by the ``compare_threshold`` option:
 
 * use '0' to always embed image (disable similarity check)
+
 * use any positive integer to define a similarity threshold. The smaller the
-value, the more similar the images must be. A value in the range [10,100] is
-recommended.
+  value, the more similar the images must be. A value in the range [10,100] is
+  recommended.
 
 Requires `ImageMagick`_
 

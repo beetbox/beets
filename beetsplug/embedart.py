@@ -225,6 +225,7 @@ def extract(outpath, item):
 
 # 'clearart' command.
 
+
 def clear(lib, query):
     log.info(u'Clearing album art from items:')
     for item in lib.items(query):
