@@ -16,12 +16,24 @@
 """
 import _common
 from _common import unittest
-from helper import TestHelper
+import helper
 
 import beets.library
 from beets import dbcore
 from beets.dbcore import types
+from beets.dbcore.query import NoneQuery
 from beets.library import Library, Item
+
+
+class TestHelper(helper.TestHelper):
+
+    def assertInResult(self, item, results):
+        result_ids = map(lambda i: i.id, results)
+        self.assertIn(item.id, result_ids)
+
+    def assertNotInResult(self, item, results):
+        result_ids = map(lambda i: i.id, results)
+        self.assertNotIn(item.id, result_ids)
 
 
 class AnyFieldQueryTest(_common.LibTestCase):
@@ -469,14 +481,6 @@ class BoolQueryTest(unittest.TestCase, TestHelper):
         self.assertInResult(item_false, matched)
         self.assertNotInResult(item_true, matched)
 
-    def assertInResult(self, item, results):
-        result_ids = map(lambda i: i.id, results)
-        self.assertIn(item.id, result_ids)
-
-    def assertNotInResult(self, item, results):
-        result_ids = map(lambda i: i.id, results)
-        self.assertNotIn(item.id, result_ids)
-
 
 class DefaultSearchFieldsTest(DummyDataTestCase):
     def test_albums_matches_album(self):
@@ -494,6 +498,30 @@ class DefaultSearchFieldsTest(DummyDataTestCase):
     def test_items_does_not_match_year(self):
         items = self.lib.items('2001')
         self.assert_matched(items, [])
+
+
+class NoneQueryTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.lib = Library(':memory:')
+
+    def test_match_singletons(self):
+        singleton = self.add_item()
+        album_item = self.add_album().items().get()
+
+        matched = self.lib.items(NoneQuery('album_id'))
+        self.assertInResult(singleton, matched)
+        self.assertNotInResult(album_item, matched)
+
+    def test_match_after_set_none(self):
+        item = self.add_item(rg_track_gain=0)
+        matched = self.lib.items(NoneQuery('rg_track_gain'))
+        self.assertNotInResult(item, matched)
+
+        item['rg_track_gain'] = None
+        item.store()
+        matched = self.lib.items(NoneQuery('rg_track_gain'))
+        self.assertInResult(item, matched)
 
 
 def suite():

@@ -83,6 +83,23 @@ class MatchQuery(FieldQuery):
         return pattern == value
 
 
+class NoneQuery(FieldQuery):
+
+    def __init__(self, field, fast=True):
+        self.field = field
+        self.fast = fast
+
+    def col_clause(self):
+        return self.field + " IS NULL", ()
+
+    @classmethod
+    def match(self, item):
+        try:
+            return item[self.field] is None
+        except KeyError:
+            return True
+
+
 class StringFieldQuery(FieldQuery):
     """A FieldQuery that converts values to strings before matching
     them.
