@@ -56,7 +56,7 @@ import _common
 class LogCapture(logging.Handler):
 
     def __init__(self):
-        super(LogCapture, self).__init__()
+        logging.Handler.__init__(self)
         self.messages = []
 
     def emit(self, record):
