@@ -12,18 +12,23 @@ If you want to see all your songs in reverse chronological order, just type
 :ref:`query-sort`.
 
 Flexible field types mean that some functionality that has previously only
-worked for built-in fields, like range queries for numeric fields, can now
-work with plugin- and user-defined fields too. For starters, the
-:doc:`/plugins/echonest/` and :doc:`/plugins/mpdstats` now mark the types of
-the fields they provide---so you can now say, for example, ``beet ls
-liveness:0.5..1.5`` for the Echo Nest "liveness" attribute.
+worked for built-in fields, like range queries, can now work with plugin- and
+user-defined fields too. For starters, the :doc:`/plugins/echonest/` and
+:doc:`/plugins/mpdstats` now mark the types of the fields they provide---so
+you can now say, for example, ``beet ls liveness:0.5..1.5`` for the Echo Nest
+"liveness" attribute. The :doc:`/plugins/types` makes it easy to specify field
+types in your config file.
 
-Features:
+One upgrade note: if you use the :doc:`/plugins/discogs`, you will need to
+upgrade the Discogs client library to use this version. Just type
+``pip install -U discogs-client``.
 
-* :doc:`/plugins/info`: Files can be specified through library queries
-  and the ``--library`` option prints library fields instead of tags.
-  Tags and library fields for multiple files can be summarized with the
-  ``--summarize`` option.
+Other new features:
+
+* :doc:`/plugins/info`: Target files can now be specified through library
+  queries (in addition to filenames). The ``--library`` option prints library
+  fields instead of tags. Multiple files can be summarized together with the
+  new ``--summarize`` option.
 * :doc:`/plugins/mbcollection`: A new option lets you automatically update
   your collection on import. Thanks to Olin Gay.
 * :doc:`/plugins/convert`: A new ``never_convert_lossy_files`` option can
@@ -31,7 +36,7 @@ Features:
 * :doc:`/plugins/convert`: A new ``--yes`` command-line flag skips the
   confirmation.
 
-Fixes:
+Still more fixes and little improvements:
 
 * Invalid state files don't crash the importer.
 * :doc:`/plugins/lyrics`: Only strip featured artists and
@@ -68,10 +73,10 @@ Fixes:
   this case.
 * :doc:`/plugins/convert`: Fix filename extensions when converting
   automatically.
-* The ``write`` event allows plugins to change the tags that are
+* The ``write`` plugin event allows plugins to change the tags that are
   written to a media file.
-* :doc:`/plugins/zero`: Do not delete database values, only media file
-  tags.
+* :doc:`/plugins/zero`: Do not delete database values; only media file
+  tags are affected.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
