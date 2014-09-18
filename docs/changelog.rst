@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.8 (in development)
-----------------------
+1.3.8 (September 17, 2014)
+--------------------------
 
 This release has two big new chunks of functionality. Queries now support
 **sorting** and user-defined fields can now have **types**.
