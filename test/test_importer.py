@@ -888,7 +888,6 @@ class InferAlbumDataTest(_common.TestCase):
 
         self.task = importer.ImportTask(paths=['a path'], toppath='top path',
                                         items=self.items)
-        self.task.set_null_candidates()
 
     def test_asis_homogenous_single_artist(self):
         self.task.set_choice(importer.action.ASIS)
@@ -1016,6 +1015,29 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.title, u'new title')
+
+    def test_no_autotag_keeps_duplicate_album(self):
+        config['import']['autotag'] = False
+        item = self.lib.items().get()
+        self.assertEqual(item.title, u't\xeftle 0')
+        self.assertTrue(os.path.isfile(item.path))
+
+        # Imported item has the same artist and album as the one in the
+        # library.
+        import_file = os.path.join(self.importer.paths[0],
+                                   'album 0', 'track 0.mp3')
+        import_file = MediaFile(import_file)
+        import_file.artist = item['artist']
+        import_file.albumartist = item['artist']
+        import_file.album = item['album']
+        import_file.title = 'new title'
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        self.assertTrue(os.path.isfile(item.path))
+        self.assertEqual(len(self.lib.albums()), 2)
+        self.assertEqual(len(self.lib.items()), 2)
 
     def test_keep_duplicate_album(self):
         self.importer.default_resolution = self.importer.Resolution.KEEPBOTH

@@ -278,10 +278,8 @@ class ImportSession(object):
             # Split directory tasks into one task for each album
             stages += [group_albums(self)]
         if self.config['autotag']:
-            # Only look up and query the user when autotagging.
-
             # FIXME We should also resolve duplicates when not
-            # autotagging.
+            # autotagging. This is currently handled in `user_query`
             stages += [lookup_candidates(self), user_query(self)]
         else:
             stages += [import_asis(self)]
@@ -382,17 +380,14 @@ class ImportTask(object):
         self.paths = paths
         self.items = items
         self.choice_flag = None
+
+        self.cur_album = None
+        self.cur_artist = None
+        self.candidates = []
+        self.rec = None
         # TODO remove this eventually
         self.should_remove_duplicates = False
         self.is_album = True
-
-    def set_null_candidates(self):
-        """Set the candidates to indicate no album match was found.
-        """
-        self.cur_artist = None
-        self.cur_album = None
-        self.candidates = None
-        self.rec = None
 
     def set_choice(self, choice):
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -1173,9 +1168,6 @@ def import_asis(session, task):
         return
 
     log.info(displayable_path(task.paths))
-
-    # Behave as if ASIS were selected.
-    task.set_null_candidates()
     task.set_choice(action.ASIS)
 
 
