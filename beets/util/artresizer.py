@@ -76,7 +76,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
 
 def im_resize(maxwidth, path_in, path_out=None):
     """Resize using ImageMagick's ``convert`` tool.
-    tool. Return the output path of resized image.
+    Return the output path of resized image.
     """
     path_out = path_out or temp_file_for(path_in)
     log.debug(u'artresizer: ImageMagick resizing {0} to {1}'.format(
@@ -164,25 +164,39 @@ class ArtResizer(object):
         return self.method in BACKEND_FUNCS
 
     @staticmethod
-    def _guess_method():
-        """Determine which resizing method to use. Returns PIL,
-        IMAGEMAGICK, or WEBPROXY depending on available dependencies.
+    def check_method(method):
+        """A boolean indicating whether current method is available
         """
-        # Try importing PIL.
-        try:
-            __import__('PIL', fromlist=['Image'])
-            return PIL
-        except ImportError:
-            pass
 
-        # Try invoking ImageMagick's "convert".
-        try:
-            out = util.command_output(['convert', '--version'])
-            if 'imagemagick' in out.lower():
-                # system32/convert.exe may be interfering
-                return IMAGEMAGICK
-        except (subprocess.CalledProcessError, OSError):
-            pass
+        if method == IMAGEMAGICK:
+            # Try invoking ImageMagick's "convert".
+            try:
+                out = util.command_output(['convert', '--version'])
+                if 'imagemagick' in out.lower():
+                    # system32/convert.exe may be interfering
+                    return True
+            except (subprocess.CalledProcessError, OSError):
+                return False
+
+        if method == PIL:
+            # Try importing PIL.
+            try:
+                __import__('PIL', fromlist=['Image'])
+                return True
+            except ImportError:
+                return False
+
+    @staticmethod
+    def _guess_method():
+        """Determine which resizing method to use. Returns PIL, IMAGEMAGICK,
+        or WEBPROXY depending on available dependencies.
+        """
+
+        if ArtResizer.check_method(PIL):
+            return PIL
+
+        if ArtResizer.check_method(IMAGEMAGICK):
+            return IMAGEMAGICK
 
         # Fall back to Web proxy method.
         return WEBPROXY

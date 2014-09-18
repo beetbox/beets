@@ -18,16 +18,25 @@ from _common import unittest
 from helper import TestHelper
 
 from beets.mediafile import MediaFile
+from beets import config
+from beets.util import syspath
 
 
 class EmbedartCliTest(unittest.TestCase, TestHelper):
 
-    artpath = os.path.join(_common.RSRC, 'image-2x3.jpg')
+    small_artpath = os.path.join(_common.RSRC, 'image-2x3.jpg')
+    abbey_artpath = os.path.join(_common.RSRC, 'abbey.jpg')
+    abbey_similarpath = os.path.join(_common.RSRC, 'abbey-similar.jpg')
+    abbey_differentpath = os.path.join(_common.RSRC, 'abbey-different.jpg')
 
     def setUp(self):
         self.setup_beets()  # Converter is threaded
         self.load_plugins('embedart')
-        with open(self.artpath) as f:
+
+    def _setup_data(self, artpath=None):
+        if not artpath:
+            artpath = self.small_artpath
+        with open(syspath(artpath)) as f:
             self.image_data = f.read()
 
     def tearDown(self):
@@ -35,21 +44,48 @@ class EmbedartCliTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def test_embed_art_from_file(self):
+        self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.run_command('embedart', '-f', self.artpath)
-        mediafile = MediaFile(item.path)
+        self.run_command('embedart', '-f', self.small_artpath)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
     def test_embed_art_from_album(self):
+        self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-
-        album.artpath = self.artpath
+        album.artpath = self.small_artpath
         album.store()
         self.run_command('embedart')
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
+
+    def test_reject_different_art(self):
+        self._setup_data(self.abbey_artpath)
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command('embedart', '-f', self.abbey_artpath)
+        config['embedart']['compare_threshold'] = 20
+        self.run_command('embedart', '-f', self.abbey_differentpath)
+        mediafile = MediaFile(syspath(item.path))
+
+        self.assertEqual(mediafile.images[0].data, self.image_data,
+                         'Image written is not {0}'.format(
+                         self.abbey_artpath))
+
+    def test_accept_similar_art(self):
+        self._setup_data(self.abbey_similarpath)
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command('embedart', '-f', self.abbey_artpath)
+        config['embedart']['compare_threshold'] = 20
+        self.run_command('embedart', '-f', self.abbey_similarpath)
+        mediafile = MediaFile(syspath(item.path))
+
+        self.assertEqual(mediafile.images[0].data, self.image_data,
+                         'Image written is not {0}'.format(
+                         self.abbey_similarpath))
 
 
 def suite():
