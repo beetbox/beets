@@ -151,8 +151,12 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
         if keep_new:
             original = dest
             converted = item.path
+            if should_transcode(item, format):
+                converted = replace_ext(converted, ext)
         else:
             original = item.path
+            if should_transcode(item, format):
+                dest = replace_ext(dest, ext)
             converted = dest
 
         # Ensure that only one thread tries to create directories at a
@@ -181,7 +185,6 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                 util.move(item.path, original)
 
         if should_transcode(item, format):
-            converted = replace_ext(converted, ext)
             try:
                 encode(command, original, converted, pretend)
             except subprocess.CalledProcessError:
