@@ -99,11 +99,11 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None):
     """
     try:
         item['images'] = [_mediafile_image(imagepath, maxwidth)]
-        item.try_write(itempath)
     except IOError as exc:
         log.error(u'embedart: could not read image file: {0}'.format(exc))
-    finally:
+    else:
         # We don't want to store the image in the database
+        item.try_write(itempath)
         del item['images']
 
 

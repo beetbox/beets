@@ -15,7 +15,7 @@
 import os.path
 import _common
 from _common import unittest
-from helper import TestHelper
+from helper import TestHelper, capture_log
 
 from beets.mediafile import MediaFile
 
@@ -50,6 +50,12 @@ class EmbedartCliTest(unittest.TestCase, TestHelper):
         self.run_command('embedart')
         mediafile = MediaFile(item.path)
         self.assertEqual(mediafile.images[0].data, self.image_data)
+
+    def test_art_file_missing(self):
+        self.add_album_fixture()
+        with capture_log() as logs:
+            self.run_command('embedart', '-f', '/doesnotexist')
+        self.assertIn(u'embedart: could not read image file:', ''.join(logs))
 
 
 def suite():

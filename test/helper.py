@@ -35,6 +35,7 @@ import os
 import os.path
 import shutil
 import subprocess
+import logging
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
 from StringIO import StringIO
@@ -50,6 +51,27 @@ from beets.mediafile import MediaFile
 
 # TODO Move AutotagMock here
 import _common
+
+
+class LogCapture(logging.Handler):
+
+    def __init__(self):
+        super(LogCapture, self).__init__()
+        self.messages = []
+
+    def emit(self, record):
+        self.messages.append(str(record.msg))
+
+
+@contextmanager
+def capture_log(logger='beets'):
+    capture = LogCapture()
+    log = logging.getLogger(logger)
+    log.addHandler(capture)
+    try:
+        yield capture.messages
+    finally:
+        log.removeHandler(capture)
 
 
 @contextmanager
