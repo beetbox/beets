@@ -21,6 +21,7 @@ import os
 from tempfile import NamedTemporaryFile
 import logging
 from beets import util
+from collections import namedtuple
 
 # Resizing methods
 PIL = 1
@@ -132,8 +133,9 @@ class ArtResizer(object):
         """Create a resizer object for the given method or, if none is
         specified, with an inferred method.
         """
-        self.method = method or self._guess_method()
+        self.method = self._check_method(method)
         log.debug(u"artresizer: method is {0}".format(self.method))
+        self.can_compare = self._can_compare()
 
     def resize(self, maxwidth, path_in, path_out=None):
         """Manipulate an image file according to the method, returning a
@@ -163,40 +165,45 @@ class ArtResizer(object):
         """
         return self.method in BACKEND_FUNCS
 
-    @staticmethod
-    def check_method(method):
-        """A boolean indicating whether current method is available
-        """
+    def _can_compare(self):
+        """A boolean indicating whether image comparison is available"""
+        return self.method[0] == IMAGEMAGICK and self.method[1] > (6,8,7)
+
+
+@staticmethod
+def _check_method(method=None):
+    """A tuple indicating whether current method is available and its version.
+       If no method is given, it returns a supported one.
+    """
+        # Guess available method
+        if not method:
+            for m in [IMAGEMAGICK, PIL]:
+                _, version = check_method(m)
+                if version:
+                    return (m, version)
+            return (WEBPROXY, (None, None, None))
 
         if method == IMAGEMAGICK:
             # Try invoking ImageMagick's "convert".
             try:
                 out = util.command_output(['convert', '--version'])
                 if 'imagemagick' in out.lower():
-                    # system32/convert.exe may be interfering
-                    return True
+                    pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
+                    m = re.search(pattern, s)
+                    if match:     
+                        return (IMAGEMAGICK, 
+                                (int(match.group(1)),
+                                 int(match.group(2)),
+                                 int(match.group(3))))  
+                    return (IMAGEMAGICK, (None, None, None))
+
             except (subprocess.CalledProcessError, OSError):
-                return False
+                return (IMAGEMAGICK, None)
 
         if method == PIL:
             # Try importing PIL.
             try:
                 __import__('PIL', fromlist=['Image'])
-                return True
+                return (PIL, (None, None, None))
             except ImportError:
-                return False
-
-    @staticmethod
-    def _guess_method():
-        """Determine which resizing method to use. Returns PIL, IMAGEMAGICK,
-        or WEBPROXY depending on available dependencies.
-        """
-
-        if ArtResizer.check_method(PIL):
-            return PIL
-
-        if ArtResizer.check_method(IMAGEMAGICK):
-            return IMAGEMAGICK
-
-        # Fall back to Web proxy method.
-        return WEBPROXY
+                return (PIL, None)
