@@ -185,6 +185,9 @@ def changelog_as_markdown():
     # Other backslashes with verbatim ranges.
     rst = re.sub(r'(\s)`([^`]+)`([^_])', r'\1``\2``\3', rst)
 
+    # Command links with command names.
+    rst = re.sub(r':ref:`(\w+)-cmd`', r'``\1``', rst)
+
     return rst2md(rst)
 
 
