@@ -16,11 +16,23 @@ import os.path
 import _common
 from _common import unittest
 from helper import TestHelper
+from nose.plugins.skip import SkipTest
 
 from beets.mediafile import MediaFile
 from beets import config
 from beets.util import syspath
+from beets.util.artresizer import ArtResizer
 
+def require_artresizer_compare(test):
+
+    def wrapper(*args, **kwargs):
+      if not ArtResizer.shared.can_compare:
+        raise SkipTest()
+      else:
+        return test(*args, **kwargs)
+
+    wrapper.__name__ = test.__name__
+    return wrapper
 
 class EmbedartCliTest(unittest.TestCase, TestHelper):
 
@@ -61,6 +73,7 @@ class EmbedartCliTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
+    @require_artresizer_compare
     def test_reject_different_art(self):
         self._setup_data(self.abbey_artpath)
         album = self.add_album_fixture()
@@ -74,6 +87,7 @@ class EmbedartCliTest(unittest.TestCase, TestHelper):
                          'Image written is not {0}'.format(
                          self.abbey_artpath))
 
+    @require_artresizer_compare
     def test_accept_similar_art(self):
         self._setup_data(self.abbey_similarpath)
         album = self.add_album_fixture()
