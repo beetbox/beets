@@ -23,16 +23,18 @@ from beets import config
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 
+
 def require_artresizer_compare(test):
 
     def wrapper(*args, **kwargs):
-      if not ArtResizer.shared.can_compare:
-        raise SkipTest()
-      else:
-        return test(*args, **kwargs)
+        if not ArtResizer.shared.can_compare:
+            raise SkipTest()
+        else:
+            return test(*args, **kwargs)
 
     wrapper.__name__ = test.__name__
     return wrapper
+
 
 class EmbedartCliTest(unittest.TestCase, TestHelper):
 

@@ -167,8 +167,7 @@ class ArtResizer(object):
 
     def _can_compare(self):
         """A boolean indicating whether image comparison is available"""
-        return self.method[0] == IMAGEMAGICK and self.method[1] > (6,8,7)
-
+        return self.method[0] == IMAGEMAGICK and self.method[1] > (6, 8, 7)
 
     @staticmethod
     def _check_method(method=None):
