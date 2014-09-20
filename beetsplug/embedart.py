@@ -41,14 +41,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             'auto': True,
             'compare_threshold': 0
         })
+
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
             self.config['maxwidth'] = 0
             log.warn(u"embedart: ImageMagick or PIL not found; "
                      u"'maxwidth' option ignored")
-        if self.config['compare_threshold'].get(int) and \
-                not ArtResizer.shared.check_method(ArtResizer.IMAGEMAGICK):
+        if self.config['compare_threshold'].get(int) and not \
+                ArtResizer.shared.can_compare:
             self.config['compare_threshold'] = 0
-            log.warn(u"embedart: ImageMagick not found; "
+            log.warn(u"embedart: ImageMagick 6.8.7 or higher not installed; "
                      u"'compare_threshold' option ignored")
 
     def commands(self):
@@ -82,8 +83,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         def extract_func(lib, opts, args):
             outpath = normpath(opts.outpath or 'cover')
-            query = lib.items(decargs(args)).get()
-            extract(outpath, query)
+            item = lib.items(decargs(args)).get()
+            extract(outpath, item)
         extract_cmd.func = extract_func
 
         # Clear command.

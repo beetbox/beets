@@ -18,10 +18,10 @@ public resizing proxy if neither is available.
 import urllib
 import subprocess
 import os
+import re
 from tempfile import NamedTemporaryFile
 import logging
 from beets import util
-from collections import namedtuple
 
 # Resizing methods
 PIL = 1
@@ -170,18 +170,18 @@ class ArtResizer(object):
         return self.method[0] == IMAGEMAGICK and self.method[1] > (6,8,7)
 
 
-@staticmethod
-def _check_method(method=None):
-    """A tuple indicating whether current method is available and its version.
-       If no method is given, it returns a supported one.
-    """
+    @staticmethod
+    def _check_method(method=None):
+        """A tuple indicating whether current method is available and its version.
+           If no method is given, it returns a supported one.
+        """
         # Guess available method
         if not method:
             for m in [IMAGEMAGICK, PIL]:
-                _, version = check_method(m)
+                _, version = ArtResizer._check_method(m)
                 if version:
                     return (m, version)
-            return (WEBPROXY, (None, None, None))
+            return (WEBPROXY, (0))
 
         if method == IMAGEMAGICK:
             # Try invoking ImageMagick's "convert".
@@ -189,13 +189,13 @@ def _check_method(method=None):
                 out = util.command_output(['convert', '--version'])
                 if 'imagemagick' in out.lower():
                     pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
-                    m = re.search(pattern, s)
-                    if match:     
-                        return (IMAGEMAGICK, 
+                    match = re.search(pattern, out)
+                    if match:
+                        return (IMAGEMAGICK,
                                 (int(match.group(1)),
                                  int(match.group(2)),
-                                 int(match.group(3))))  
-                    return (IMAGEMAGICK, (None, None, None))
+                                 int(match.group(3))))
+                    return (IMAGEMAGICK, (0))
 
             except (subprocess.CalledProcessError, OSError):
                 return (IMAGEMAGICK, None)
@@ -204,6 +204,6 @@ def _check_method(method=None):
             # Try importing PIL.
             try:
                 __import__('PIL', fromlist=['Image'])
-                return (PIL, (None, None, None))
+                return (PIL, (0))
             except ImportError:
                 return (PIL, None)
