@@ -109,6 +109,7 @@ class EmbedartCliTest(unittest.TestCase, TestHelper):
                          'Image written is not {0}'.format(
                          self.abbey_similarpath))
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
