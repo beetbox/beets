@@ -167,6 +167,7 @@ class ArtResizer(object):
 
     def _can_compare(self):
         """A boolean indicating whether image comparison is available"""
+
         return self.method[0] == IMAGEMAGICK and self.method[1] > (6, 8, 7)
 
     @staticmethod
@@ -174,6 +175,7 @@ class ArtResizer(object):
         """A tuple indicating whether current method is available and its version.
            If no method is given, it returns a supported one.
         """
+
         # Guess available method
         if not method:
             for m in [IMAGEMAGICK, PIL]:
@@ -183,9 +185,11 @@ class ArtResizer(object):
             return (WEBPROXY, (0))
 
         if method == IMAGEMAGICK:
+
             # Try invoking ImageMagick's "convert".
             try:
-                out = util.command_output(['convert', '--version'])
+                out = util.command_output(['identify', '--version'])
+
                 if 'imagemagick' in out.lower():
                     pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
                     match = re.search(pattern, out)
