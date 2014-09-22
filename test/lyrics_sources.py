@@ -90,16 +90,13 @@ class LyricsScrapingPluginTest(unittest.TestCase):
     # Use default query when possible, or override artist and title field
     # if website don't have lyrics for default query.
     sourcesOk = [
-        dict(definfo, url=u'http://www.smartlyrics.com',
-             path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
+        dict(definfo, url='http://www.songlyrics.com',
+             path=u'/the-beatles/lady-madonna-lyrics'),
         dict(definfo, url=u'http://www.elyricsworld.com',
              path=u'/lady_madonna_lyrics_beatles.html'),
         dict(artist=u'Beres Hammond', title=u'I could beat myself',
              url=u'http://www.reggaelyrics.info',
              path=u'/beres-hammond/i-could-beat-myself'),
-        dict(definfo, artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
-             url=u'http://www.lyricsmania.com',
-             path=u'/hey_its_ok_lyrics_lilly_wood_and_the_prick.html'),
         dict(definfo, artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
              url=u'http://www.paroles.net/',
              path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
@@ -108,25 +105,28 @@ class LyricsScrapingPluginTest(unittest.TestCase):
              path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
         dict(definfo, url=u'http://www.sweetslyrics.com',
              path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html'),
-        dict(definfo, url=u'http://www.lyrics007.com',
-             path=u'/The%20Beatles%20Lyrics/Lady%20Madonna%20Lyrics.html'),
         dict(definfo, url=u'http://www.absolutelyrics.com',
              path=u'/lyrics/view/the_beatles/lady_madonna'),
         dict(definfo, url=u'http://www.azlyrics.com/',
              path=u'/lyrics/beatles/ladymadonna.html'),
         dict(definfo, url=u'http://www.chartlyrics.com',
              path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
-        dict(definfo, url='http://www.releaselyrics.com',
-             path=u'/e35f/the-beatles-lady-madonna'),
     ]
 
     # Websites that can't be scraped yet and whose results must be
     # flagged as invalid lyrics.
     sourcesFail = [
-        dict(definfo, url='http://www.songlyrics.com',
-             path=u'/the-beatles/lady-madonna-lyrics'),
+        dict(definfo, url=u'http://www.smartlyrics.com',
+             path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
         dict(definfo, url='http://www.metrolyrics.com/',
-             path='best-for-last-lyrics-adele.html')
+             path='best-for-last-lyrics-adele.html'),
+        dict(definfo, artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
+             url=u'http://www.lyricsmania.com',
+             path=u'/hey_its_ok_lyrics_lilly_wood_and_the_prick.html'),
+        dict(definfo, url=u'http://www.lyrics007.com',
+             path=u'/The%20Beatles%20Lyrics/Lady%20Madonna%20Lyrics.html'),
+        dict(definfo, url='http://www.releaselyrics.com',
+             path=u'/e35f/the-beatles-lady-madonna'),
     ]
 
     # Websites that return truncated lyrics because of scraping issues, and
