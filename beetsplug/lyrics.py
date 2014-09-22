@@ -33,10 +33,10 @@ from beets import config
 
 log = logging.getLogger('beets')
 
-DIV_RE = re.compile(r'<(/?)div>?')
+DIV_RE = re.compile(r'<(/?)div>?', re.I)
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
 TAG_RE = re.compile(r'<[^>]*>')
-BREAK_RE = re.compile(r'<br\s*/?>')
+BREAK_RE = re.compile(r'<br\s*/?>', re.I)
 URL_CHARACTERS = {
     u'\u2018': u"'",
     u'\u2019': u"'",
@@ -122,6 +122,7 @@ def strip_cruft(lyrics, wscollapse=True):
     lyrics = unescape(lyrics)
     if wscollapse:
         lyrics = re.sub(r'\s+', ' ', lyrics)  # Whitespace collapse.
+
     lyrics = re.sub(r'<(script).*?</\1>(?s)', '', lyrics)  # Strip script tags.
     lyrics = BREAK_RE.sub('\n', lyrics)  # <BR> newlines.
     lyrics = re.sub(r'\n +', '\n', lyrics)
@@ -294,36 +295,6 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
 
 
-def insert_line_feeds(text):
-    """Insert newlines before upper-case characters.
-    """
-    tokensStr = re.split("([a-z][A-Z])", text)
-    for idx in range(1, len(tokensStr), 2):
-        ltoken = list(tokensStr[idx])
-        tokensStr[idx] = ltoken[0] + '\n' + ltoken[1]
-    return ''.join(tokensStr)
-
-
-def sanitize_lyrics(text):
-    """Clean text, returning raw lyrics as output or None if it happens
-    that input text is actually not lyrics content.  Clean (x)html tags
-    in text, correct layout and syntax...
-    """
-    text = strip_cruft(text, False)
-
-    # Restore \n in input text
-    if '\n' not in text:
-        text = insert_line_feeds(text)
-
-    while text.count('\n\n') > text.count('\n') // 4:
-        # Remove first occurrence of \n for each sequence of \n
-        text = re.sub(r'\n(\n+)', '\g<1>', text)
-
-    text = re.sub(r'\n\n+', '\n\n', text)   # keep at most two \n in a row
-
-    return text
-
-
 def remove_credits(text):
     """Remove first/last line of text if it contains the word 'lyrics'
     eg 'Lyrics by songsdatabase.com'
@@ -343,7 +314,7 @@ def is_lyrics(text, artist=None):
     """
     if not text:
         return
-
+    log.info(text)
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
@@ -356,7 +327,7 @@ def is_lyrics(text, artist=None):
         # down
         text = remove_credits(text)
 
-    badTriggers = ['lyrics', 'copyright', 'property']
+    badTriggers = ['lyrics', 'copyright', 'property', 'links']
     if artist:
         badTriggersOcc += [artist]
 
@@ -450,7 +421,7 @@ def fetch_google(artist, title):
             if not lyrics:
                 continue
 
-            lyrics = sanitize_lyrics(lyrics)
+            lyrics = strip_cruft(lyrics, False)
 
             if is_lyrics(lyrics, artist):
                 log.debug(u'got lyrics from {0}'.format(item['displayLink']))
