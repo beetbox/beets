@@ -314,7 +314,6 @@ def is_lyrics(text, artist=None):
     """
     if not text:
         return
-    log.info(text)
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
