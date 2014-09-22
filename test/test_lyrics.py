@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2014, Fabrice Laporte.
 #
@@ -111,10 +112,31 @@ class LyricsPluginTest(unittest.TestCase):
             lyrics.remove_credits("""Lyrics brought by example.com"""),
             ""
         )
+
+        # don't remove 2nd verse for the only reason it contains 'lyrics' word
         text = """Look at all the shit that i done bought her
                   See lyrics ain't nothin
                   if the beat aint crackin"""
         self.assertEqual(lyrics.remove_credits(text), text)
+
+    def test_strip_cruft(self):
+        text = """<!--lyrics below-->
+                  <script type="javascript">
+                  &nbsp;  One<BR>\r\n
+                  <blink>Two</blink>
+               """
+        self.assertEqual(lyrics.strip_cruft(text), u"One\nTwo")
+
+    def test_is_lyrics(self):
+        texts = ['LyricsMania.com - Copyright (c) 2013 - All Rights Reserved']
+        texts += ["""All material found on this site is property\n
+                     of mywickedsongtext brand"""]
+        for t in texts:
+            self.assertFalse(lyrics.is_lyrics(t))
+
+    def test_slugify(self):
+        text = u"http://site.com/çafe-au_lait(boisson)"
+        self.assertEqual(lyrics.slugify(text), 'http://site.com/cafe_au_lait')
 
 
 def suite():
