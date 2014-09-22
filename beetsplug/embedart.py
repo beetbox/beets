@@ -17,6 +17,7 @@ import os.path
 import logging
 import imghdr
 import subprocess
+import platform
 from tempfile import NamedTemporaryFile
 
 from beets.plugins import BeetsPlugin
@@ -25,7 +26,7 @@ from beets import ui
 from beets.ui import decargs
 from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
-from beets import config, util
+from beets import config
 
 
 log = logging.getLogger('beets')
@@ -159,15 +160,20 @@ def check_art_similarity(item, imagepath, compare_threshold):
                   'compare -metric PHASH - null:'.format(syspath(imagepath),
                                                          syspath(art))
 
-            try:
-                phashDiff = util.command_output(cmd, shell=True)
-            except subprocess.CalledProcessError, e:
-                if e.returncode != 1:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    close_fds=platform.system() != 'Windows',
+                                    shell=True)
+            stdout, stderr  = proc.communicate()
+            if proc.returncode:
+                if proc.returncode != 1:
                     log.warn(u'embedart: IM phashes compare failed for {0}, \
-                               {1}'.format(displayable_path(imagepath),
-                                           displayable_path(art)))
+                   {1}'.format(displayable_path(imagepath),
+                               displayable_path(art)))
                     return
-                phashDiff = float(e.output)
+                phashDiff = float(stderr)
+            else:
+                phashDiff = float(stdout)
 
             log.info(u'embedart: compare PHASH score is {0}'.format(phashDiff))
             if phashDiff > compare_threshold:

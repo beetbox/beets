@@ -633,14 +633,13 @@ def command_output(cmd, shell=False):
     Python 2.6 and which can have problems if lots of output is sent to
     stderr.
     """
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            close_fds=platform.system() != 'Windows',
-                            shell=shell)
-    stdout, stderr  = proc.communicate()
-
+    with open(os.devnull, 'wb') as devnull:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=devnull,
+                                close_fds=platform.system() != 'Windows',
+                                shell=shell)
+        stdout, _ = proc.communicate()
     if proc.returncode:
-        raise subprocess.CalledProcessError(proc.returncode, cmd, stderr)
+        raise subprocess.CalledProcessError(proc.returncode, cmd)
     return stdout
 
 
