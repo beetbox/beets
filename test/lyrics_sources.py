@@ -46,7 +46,7 @@ class MockFetchUrl(object):
         fn = "".join(x for x in url if (x.isalnum() or x == '/'))
         fn = fn.split('/')
         fn = os.path.join('rsrc', 'lyrics', fn[0], fn[-1]) + '.txt'
-        
+
         with open(fn, 'r') as f:
             content = f.read()
         return content
@@ -71,42 +71,42 @@ class LyricsSourcesPluginTest(unittest.TestCase):
     # Use default query when possible, or override artist and title field
     # if website don't have lyrics for default query.
     sourcesOk = [
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.absolutelyrics.com',
              path=u'/lyrics/view/the_beatles/lady_madonna'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.azlyrics.com',
              path=u'/lyrics/beatles/ladymadonna.html'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.chartlyrics.com',
              path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.elyricsworld.com',
              path=u'/lady_madonna_lyrics_beatles.html'),
-       dict(definfo, 
+       dict(definfo,
              url=u'http://www.lacoccinelle.net',
              artist=u'Jacques Brel', title=u"Amsterdam",
              path=u'/paroles-officielles/275679.html'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.lyrics007.com',
              path=u'/The%20Beatles%20Lyrics/Lady%20Madonna%20Lyrics.html'),
-        dict(definfo, 
+        dict(definfo,
              url='http://www.lyrics.com/',
              path=u'lady-madonna-lyrics-the-beatles.html'),
-        dict(definfo, 
+        dict(definfo,
              url='http://www.lyricsmania.com/',
              path='lady_madonna_lyrics_the_beatles.html'),
-        dict(definfo, 
-             url=u'http://www.lyrics.net', 
+        dict(definfo,
+             url=u'http://www.lyrics.net',
              path=u'/lyric/17547916'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.lyricsontop.com',
              artist=u'Amy Winehouse', title=u"Jazz'n'blues",
              path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://lyrics.wikia.com/',
              path=u'The_Beatles:Lady_Madonna'),
-        dict(definfo, 
+        dict(definfo,
              url='http://www.metrolyrics.com/',
              path='lady-madonna-lyrics-beatles.html'),
         dict(definfo,
@@ -117,23 +117,22 @@ class LyricsSourcesPluginTest(unittest.TestCase):
              url=u'http://www.reggaelyrics.info',
              artist=u'Beres Hammond', title=u'I could beat myself',
              path=u'/beres-hammond/i-could-beat-myself'),
-        dict(definfo, 
+        dict(definfo,
              url='http://www.releaselyrics.com',
             path=u'/e35f/the-beatles-lady-madonna'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.smartlyrics.com',
              path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
-        dict(definfo, 
+        dict(definfo,
              url='http://www.songlyrics.com',
              path=u'/the-beatles/lady-madonna-lyrics'),
-        dict(definfo, 
-             url=u'http://www.stlyrics.com', 
+        dict(definfo,
+             url=u'http://www.stlyrics.com',
              path=u'/songs/r/richiehavens48961/ladymadonna2069109.html'),
-        dict(definfo, 
+        dict(definfo,
              url=u'http://www.sweetslyrics.com',
              path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html'),
     ]
-
 
 
     def setUp(self):

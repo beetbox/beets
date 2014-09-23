@@ -347,20 +347,19 @@ def _scrape_normalize_eol(html):
     html.replace('\r','\n')
     # Replace <br> without introducing superfluous newline in the output
     BREAK_RE = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
-    html = BREAK_RE.sub('\n', html)   
+    html = BREAK_RE.sub('\n', html)
     return html
 
 def _scrape_merge_paragraphs(html):
     regex = re.compile(r'</p>\s*<p(\s*[^>]*)>')
-    html = regex.sub('\n', html) 
-
+    html = regex.sub('\n', html)
     return html
 
 def _scrape_filter_soup(soup):
     """Remove sections from soup that cannot be parents of lyrics section
     """
     # Remove non relevant html parts
-    [s.extract() for s in soup(['head', 'script'])]
+    [s.extract() for s in soup(['head', 'script', 'iframe', 'a'])]
     comments = soup.findAll(text=lambda text: isinstance(text, Comment))
     [s.extract() for s in comments]
 
@@ -385,9 +384,8 @@ def _scrape_streamline_soup(soup):
                   .format(e, exc_info=True))
 
     # Make better soup from current soup! The previous unclosed <p> sections
-    # are now closed.  Use str() rather than prettify() as it's more
-    # conservative concerning EOL
-    soup = BeautifulSoup(str(soup))
+    # are now closed.
+    soup = BeautifulSoup(soup.prettify(formatter=None))
 
     # Insert the whole body in a <p> in case lyrics are nested in no markup but
     # <body>
@@ -419,12 +417,15 @@ def scrape_lyrics_from_html(html):
     """
     if not html:
         return None
-       
+
     html = _scrape_normalize_eol(html)
     html = _scrape_merge_paragraphs(html)
+
     soup = BeautifulSoup(html)
+
     soup = _scrape_filter_soup(soup)
     soup = _scrape_streamline_soup(soup)
+
     soup = _scrape_longest_paragraph(soup)
 
     return soup
