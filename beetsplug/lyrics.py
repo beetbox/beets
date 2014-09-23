@@ -143,7 +143,7 @@ def search_pairs(item):
 
     In addition to the artist and title obtained from the `item` the
     method tries to strip extra information like paranthesized suffixes
-    and featured artists from the strings and add them as caniddates.
+    and featured artists from the strings and add them as candidates.
     The method also tries to split multiple titles separated with `/`.
     """
 
@@ -319,7 +319,7 @@ def is_lyrics(text, artist=None):
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
-        log.debug(u"Ignoring too short lyrics '{0}'".format(text))
+        log.debug(u"Ignoring too short lyrics '{0}'".format(text.decode('utf8')))
         return 0
     elif nbLines < 5:
         badTriggersOcc.append('too_short')
@@ -341,14 +341,19 @@ def is_lyrics(text, artist=None):
 
     return len(badTriggersOcc) < 2
 
-
 def _scrape_normalize_eol(html):
-    """Return html text where only authorized eol marker is \n
+    """Return html text where the only authorized eol marker is \n
     """
     html.replace('\r','\n')
     # Replace <br> without introducing superfluous newline in the output
-    BREAK_RE = re.compile(r'\n?\s*<br\s*/?>\s*\n?', re.I)
+    BREAK_RE = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
     html = BREAK_RE.sub('\n', html)   
+    return html
+
+def _scrape_merge_paragraphs(html):
+    regex = re.compile(r'</p>\s*<p(\s*[^>]*)>')
+    html = regex.sub('\n', html) 
+
     return html
 
 def _scrape_filter_soup(soup):
@@ -360,13 +365,17 @@ def _scrape_filter_soup(soup):
     [s.extract() for s in comments]
 
     # Remove ads now as they can interrupt the lyrics block
-    ads = soup.find_all('div', class_=re.compile('ad'))
+    ads = soup.find_all('div', class_=re.compile('^ad'))
     [s.extract() for s in ads]
     return soup
 
 def _scrape_streamline_soup(soup):
     """Transform soup into a succession of <p></p> blocks
     """
+    for tag in ['em','i','b','strong']:
+        for match in soup.find_all(tag):
+            match.unwrap()
+
     try:
         for tag in soup.findAll(True):
             tag.name = 'p'          # keep tag contents
@@ -380,8 +389,8 @@ def _scrape_streamline_soup(soup):
     # conservative concerning EOL
     soup = BeautifulSoup(str(soup))
 
-    # In case lyrics are nested in no markup but <body>
-    # Insert the whole body in a <p>
+    # Insert the whole body in a <p> in case lyrics are nested in no markup but
+    # <body>
     bodyTag = soup.find('body')
     if bodyTag:
         pTag = soup.new_tag("p")
@@ -393,7 +402,7 @@ def _scrape_longest_paragraph(soup):
     """Return longest paragraph from soup
     """
     tagTokens = []
-    
+
     for tag in soup.findAll('p'):
         soup2 = BeautifulSoup(str(tag))
         # Extract all text of <p> section.
@@ -404,28 +413,18 @@ def _scrape_longest_paragraph(soup):
         soup = BeautifulSoup(tagTokens[0])
         return unescape(tagTokens[0].strip("\n\r: "))
 
-def _scrape_custom_process_soup(soup):
-    """Apply custom operations on soup to handle cases for specific websites
-    """
-    # metrolyrics.com: lyrics text is splitted into multiple <p class='verse'>
-    for match in soup.find_all('p', class_='verse'):
-        match.insert_before('\n')
-        match.unwrap()
-    return soup
-    
 def scrape_lyrics_from_html(html):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
     """
     if not html:
         return None
-    
+       
     html = _scrape_normalize_eol(html)
+    html = _scrape_merge_paragraphs(html)
     soup = BeautifulSoup(html)
     soup = _scrape_filter_soup(soup)
     soup = _scrape_streamline_soup(soup)
-    soup = _scrape_custom_process_soup(soup)
- #   print(soup)
     soup = _scrape_longest_paragraph(soup)
 
     return soup
