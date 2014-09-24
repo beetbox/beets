@@ -20,7 +20,6 @@ import _common
 from _common import unittest
 from beetsplug import lyrics
 from beets.library import Item
-from beets import config
 from beets.util import confit
 
 
@@ -150,9 +149,6 @@ class LyricsPluginTest(unittest.TestCase):
                          "one\ntwo\nthree")
 
 
-
-
-
 LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, 'lyricstext.yaml'))
 definfo = dict(artist=u'The Beatles', title=u'Lady Madonna')  # default query
 
@@ -262,7 +258,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
             __import__('bs4')
         except ImportError:
             self.skipTest('Beautiful Soup 4 not available')
-            
+
         lyrics.LyricsPlugin()
         lyrics.fetch_url = MockFetchUrl()
 

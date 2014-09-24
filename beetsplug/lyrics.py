@@ -113,6 +113,7 @@ def extract_text(html, starttag):
     lyrics = ''.join(parts)
     return _scrape_strip_cruft(lyrics, True)
 
+
 def search_pairs(item):
     """Yield a pairs of artists and titles to search for.
 
@@ -297,7 +298,8 @@ def is_lyrics(text, artist=None):
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
-        log.debug(u"Ignoring too short lyrics '{0}'".format(text.decode('utf8')))
+        log.debug(u"Ignoring too short lyrics '{0}'".format(
+                  text.decode('utf8')))
         return 0
     elif nbLines < 5:
         badTriggersOcc.append('too_short')
@@ -319,29 +321,32 @@ def is_lyrics(text, artist=None):
 
     return len(badTriggersOcc) < 2
 
+
 def _scrape_strip_cruft(html, plain_text_out=False):
     """Clean up HTML
     """
     html = unescape(html)
 
-    # Normalize EOL 
-    html = html.replace('\r','\n')
+    # Normalize EOL
+    html = html.replace('\r', '\n')
     html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
     regex = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
-    html = regex.sub('\n', html) # When present, <br> eat up surrounding '\n' 
-   
-    if plain_text_out: # Strip remaining HTML tags
-        html = TAG_RE.sub('', html)  
+    html = regex.sub('\n', html)  # When present, <br> eat up surrounding '\n'
+
+    if plain_text_out:  # Strip remaining HTML tags
+        html = TAG_RE.sub('', html)
         html = COMMENT_RE.sub('', html)
-   
+
     # Strip lines
     html = '\n'.join([x.strip() for x in html.strip().split('\n')])
     return html
+
 
 def _scrape_merge_paragraphs(html):
     regex = re.compile(r'</p>\s*<p(\s*[^>]*)>')
     html = regex.sub('\n', html)
     return html
+
 
 def scrape_lyrics_from_html(html):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
@@ -349,22 +354,25 @@ def scrape_lyrics_from_html(html):
     """
     from bs4 import SoupStrainer, BeautifulSoup
 
-    def may_be_lyrics(string):
-        length = len(string) 
-        return (length > 20 and
-                string.count(' ') > length/25 
-                and (string.find('=')==-1 or string.find(';')==1))
-
     if not html:
         return None
-       
+
+    def is_text_notcode(string):
+        length = len(string)
+        return (length > 20 and
+                string.count(' ') > length / 25
+                and (string.find('=') == -1 or string.find(';') == 1))
+
     html = _scrape_strip_cruft(html)
     html = _scrape_merge_paragraphs(html)
-    soup = BeautifulSoup(html, "html.parser", 
-                         parse_only=SoupStrainer(text=may_be_lyrics))
+
+    # extract all long text blocks that are not code
+    soup = BeautifulSoup(html, "html.parser",
+                         parse_only=SoupStrainer(text=is_text_notcode))
     soup = sorted(soup.stripped_strings, key=len)[-1]
 
     return soup
+
 
 def fetch_google(artist, title):
     """Fetch lyrics from Google search results.
