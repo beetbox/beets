@@ -119,14 +119,6 @@ class LyricsPluginTest(unittest.TestCase):
                   if the beat aint crackin"""
         self.assertEqual(lyrics.remove_credits(text), text)
 
-    def test_strip_cruft(self):
-        text = """<!--lyrics below-->
-                  <script type="javascript">
-                  &nbsp;  One<BR>\r\n
-                  <blink>Two</blink>
-               """
-        self.assertEqual(lyrics.strip_cruft(text), u"One\nTwo")
-
     def test_is_lyrics(self):
         texts = ['LyricsMania.com - Copyright (c) 2013 - All Rights Reserved']
         texts += ["""All material found on this site is property\n
@@ -138,6 +130,20 @@ class LyricsPluginTest(unittest.TestCase):
         text = u"http://site.com/çafe-au_lait(boisson)"
         self.assertEqual(lyrics.slugify(text), 'http://site.com/cafe_au_lait')
 
+    def test_scrape_strip_cruft(self):
+        text = u"""<!--lyrics below-->
+                  &nbsp;one
+                  <br class='myclass'>
+                  two  !
+                  <br><br \>
+                  <blink>four</blink>"""
+        self.assertEqual(lyrics._scrape_strip_cruft(text, True),
+                         "one\ntwo !\n\nfour")
+
+    def test_scrape_merge_paragraphs(self):
+        text = u"one</p>   <p class='myclass'>two</p><p>three"
+        self.assertEqual(lyrics._scrape_merge_paragraphs(text),
+                         "one\ntwo\nthree")
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

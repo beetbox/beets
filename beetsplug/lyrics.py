@@ -113,27 +113,7 @@ def extract_text(html, starttag):
         print('no closing tag found!')
         return
     lyrics = ''.join(parts)
-    return strip_cruft(lyrics)
-
-
-def strip_cruft(lyrics, wscollapse=True):
-    """Clean up HTML from an extracted lyrics string. For example, <BR>
-    tags are replaced with newlines.
-    """
-    lyrics = COMMENT_RE.sub('', lyrics)
-    lyrics = unescape(lyrics)
-    if wscollapse:
-        lyrics = re.sub(r'\s+', ' ', lyrics)  # Whitespace collapse.
-
-    lyrics = re.sub(r'<(script).*?</\1>(?s)', '', lyrics)  # Strip script tags.
-    lyrics = BREAK_RE.sub('\n', lyrics)  # <BR> newlines.
-    lyrics = re.sub(r'\n +', '\n', lyrics)
-    lyrics = re.sub(r' +\n', '\n', lyrics)
-    lyrics = TAG_RE.sub('', lyrics)  # Strip remaining HTML tags.
-    lyrics = lyrics.replace('\r', '\n')
-    lyrics = lyrics.strip()
-    return lyrics
-
+    return _scrape_strip_cruft(lyrics, True)
 
 def search_pairs(item):
     """Yield a pairs of artists and titles to search for.
@@ -341,13 +321,23 @@ def is_lyrics(text, artist=None):
 
     return len(badTriggersOcc) < 2
 
-def _scrape_normalize_eol(html):
-    """Return html text where the only authorized eol marker is \n
+def _scrape_strip_cruft(html, plain_text_out=False):
+    """Clean up HTML
     """
-    html.replace('\r','\n')
-    # Replace <br> without introducing superfluous newline in the output
-    BREAK_RE = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
-    html = BREAK_RE.sub('\n', html)
+    html = unescape(html)
+
+    # Normalize EOL 
+    html = html.replace('\r','\n')
+    html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
+    regex = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
+    html = regex.sub('\n', html) # When present, <br> eat up surrounding '\n' 
+   
+    if plain_text_out: # Strip remaining HTML tags
+        html = TAG_RE.sub('', html)  
+        html = COMMENT_RE.sub('', html)
+   
+    # Strip lines
+    html = '\n'.join([x.strip() for x in html.strip().split('\n')])
     return html
 
 def _scrape_merge_paragraphs(html):
@@ -417,8 +407,8 @@ def scrape_lyrics_from_html(html):
     """
     if not html:
         return None
-
-    html = _scrape_normalize_eol(html)
+       
+    html = _scrape_strip_cruft(html)
     html = _scrape_merge_paragraphs(html)
 
     soup = BeautifulSoup(html)
@@ -457,8 +447,6 @@ def fetch_google(artist, title):
             lyrics = scrape_lyrics_from_html(html)
             if not lyrics:
                 continue
-
-            lyrics = strip_cruft(lyrics, False)
 
             if is_lyrics(lyrics, artist):
                 log.debug(u'got lyrics from {0}'.format(item['displayLink']))

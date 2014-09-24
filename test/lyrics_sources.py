@@ -154,7 +154,7 @@ class LyricsSourcesPluginTest(unittest.TestCase):
     def test_sources_ok(self):
         for s in self.sourcesOk:
             url = s['url'] + s['path']
-            log.info('Trying to scrape lyrics from {0}'.format(url))
+            log.info('Scraping lyrics from {0}'.format(url))
             res = lyrics.scrape_lyrics_from_html(lyrics.fetch_url(url))
             self.assertTrue(lyrics.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
