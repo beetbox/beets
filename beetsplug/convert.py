@@ -341,7 +341,7 @@ class ConvertPlugin(BeetsPlugin):
                               help='set the destination directory')
         cmd.parser.add_option('-f', '--format', action='store', dest='format',
                               help='set the destination directory')
-        cmd.parser.add_option('-y', '--yes', action='store', dest='yes',
+        cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help='do not ask for confirmation')
         cmd.func = convert_func
         return [cmd]

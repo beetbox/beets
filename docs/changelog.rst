@@ -10,6 +10,8 @@ Fixes:
   fails.
 * :doc:`/plugins/mpdstats`: Fix an error on start (introduced in the previous
   version). Thanks to Zach Denton.
+* :doc:`/plugins/convert`: The ``--yes`` command-line flag no longer expects
+  an argument.
 
 1.3.8 (September 17, 2014)
 --------------------------
