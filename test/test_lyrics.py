@@ -280,6 +280,18 @@ class LyricsGooglePluginTest(unittest.TestCase):
             self.assertTrue(lyrics.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
+    def test_is_page_candidate(self):
+        from bs4 import SoupStrainer, BeautifulSoup
+
+        for s in self.sourcesOk:
+            url = unicode(s['url'] + s['path'])
+            html = lyrics.fetch_url(url)
+            soup = BeautifulSoup(html, "html.parser",
+                                 parse_only=SoupStrainer('title'))
+            self.assertEqual(lyrics.is_page_candidate(url, soup.title.string,
+                                                      s['title'], s['artist']),
+                             True, url)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
