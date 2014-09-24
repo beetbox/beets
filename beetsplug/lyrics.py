@@ -24,8 +24,6 @@ import unicodedata
 import difflib
 import itertools
 
-from bs4 import BeautifulSoup, Comment
-
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import config
@@ -345,78 +343,26 @@ def _scrape_merge_paragraphs(html):
     html = regex.sub('\n', html)
     return html
 
-def _scrape_filter_soup(soup):
-    """Remove sections from soup that cannot be parents of lyrics section
-    """
-    # Remove non relevant html parts
-    [s.extract() for s in soup(['head', 'script', 'iframe', 'a'])]
-    comments = soup.findAll(text=lambda text: isinstance(text, Comment))
-    [s.extract() for s in comments]
-
-    # Remove ads now as they can interrupt the lyrics block
-    ads = soup.find_all('div', class_=re.compile('^ad'))
-    [s.extract() for s in ads]
-    return soup
-
-def _scrape_streamline_soup(soup):
-    """Transform soup into a succession of <p></p> blocks
-    """
-    for tag in ['em','i','b','strong']:
-        for match in soup.find_all(tag):
-            match.unwrap()
-
-    try:
-        for tag in soup.findAll(True):
-            tag.name = 'p'          # keep tag contents
-
-    except Exception, e:
-        log.debug(u'Error {0} when replacing containing marker by p marker'
-                  .format(e, exc_info=True))
-
-    # Make better soup from current soup! The previous unclosed <p> sections
-    # are now closed.
-    soup = BeautifulSoup(soup.prettify(formatter=None))
-
-    # Insert the whole body in a <p> in case lyrics are nested in no markup but
-    # <body>
-    bodyTag = soup.find('body')
-    if bodyTag:
-        pTag = soup.new_tag("p")
-        bodyTag.parent.insert(0, pTag)
-        pTag.insert(0, bodyTag)
-    return soup
-
-def _scrape_longest_paragraph(soup):
-    """Return longest paragraph from soup
-    """
-    tagTokens = []
-
-    for tag in soup.findAll('p'):
-        soup2 = BeautifulSoup(str(tag))
-        # Extract all text of <p> section.
-        tagTokens += soup2.findAll(text=True)
-
-    if tagTokens:
-        tagTokens = sorted(tagTokens, key=len, reverse=True)
-        soup = BeautifulSoup(tagTokens[0])
-        return unescape(tagTokens[0].strip("\n\r: "))
-
 def scrape_lyrics_from_html(html):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
     """
+    from bs4 import SoupStrainer, BeautifulSoup
+
+    def may_be_lyrics(string):
+        length = len(string) 
+        return (length > 20 and
+                string.count(' ') > length/25 
+                and (string.find('=')==-1 or string.find(';')==1))
+
     if not html:
         return None
        
     html = _scrape_strip_cruft(html)
     html = _scrape_merge_paragraphs(html)
-
-    soup = BeautifulSoup(html)
-
-    soup = _scrape_filter_soup(soup)
-    soup = _scrape_streamline_soup(soup)
-
-    soup = _scrape_longest_paragraph(soup)
+    soup = BeautifulSoup(html, "html.parser", 
+                         parse_only=SoupStrainer(text=may_be_lyrics))
+    soup = sorted(soup.stripped_strings, key=len)[-1]
 
     return soup
 
