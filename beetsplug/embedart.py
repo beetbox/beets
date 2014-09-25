@@ -16,6 +16,9 @@
 import os.path
 import logging
 import imghdr
+import subprocess
+import platform
+from tempfile import NamedTemporaryFile
 
 from beets.plugins import BeetsPlugin
 from beets import mediafile
@@ -24,6 +27,7 @@ from beets.ui import decargs
 from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import config
+
 
 log = logging.getLogger('beets')
 
@@ -36,12 +40,18 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         self.config.add({
             'maxwidth': 0,
             'auto': True,
+            'compare_threshold': 0
         })
-        if self.config['maxwidth'].get(int) and \
-                not ArtResizer.shared.local:
+
+        if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
             self.config['maxwidth'] = 0
             log.warn(u"embedart: ImageMagick or PIL not found; "
                      u"'maxwidth' option ignored")
+        if self.config['compare_threshold'].get(int) and not \
+                ArtResizer.shared.can_compare:
+            self.config['compare_threshold'] = 0
+            log.warn(u"embedart: ImageMagick 6.8.7 or higher not installed; "
+                     u"'compare_threshold' option ignored")
 
     def commands(self):
         # Embed command.
@@ -52,12 +62,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             '-f', '--file', metavar='PATH', help='the image file to embed'
         )
         maxwidth = config['embedart']['maxwidth'].get(int)
+        compare_threshold = config['embedart']['compare_threshold'].get(int)
 
         def embed_func(lib, opts, args):
             if opts.file:
                 imagepath = normpath(opts.file)
                 for item in lib.items(decargs(args)):
-                    embed_item(item, imagepath, maxwidth)
+                    embed_item(item, imagepath, maxwidth, None,
+                               compare_threshold)
             else:
                 for album in lib.albums(decargs(args)):
                     embed_album(album, maxwidth)
@@ -72,7 +84,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         def extract_func(lib, opts, args):
             outpath = normpath(opts.outpath or 'cover')
-            extract(lib, outpath, decargs(args))
+            item = lib.items(decargs(args)).get()
+            extract(outpath, item)
         extract_cmd.func = extract_func
 
         # Clear command.
@@ -94,10 +107,16 @@ def album_imported(lib, album):
         embed_album(album, config['embedart']['maxwidth'].get(int))
 
 
-def embed_item(item, imagepath, maxwidth=None, itempath=None):
+def embed_item(item, imagepath, maxwidth=None, itempath=None,
+               compare_threshold=0):
     """Embed an image into the item's media file.
     """
+    if compare_threshold:
+        if not check_art_similarity(item, imagepath, compare_threshold):
+            log.warn('Image not similar, skipping it.')
+            return
     try:
+        log.info(u'embedart: writing %s', displayable_path(imagepath))
         item['images'] = [_mediafile_image(imagepath, maxwidth)]
     except IOError as exc:
         log.error(u'embedart: could not read image file: {0}'.format(exc))
@@ -124,7 +143,43 @@ def embed_album(album, maxwidth=None):
              .format(album))
 
     for item in album.items():
-        embed_item(item, imagepath, maxwidth)
+        embed_item(item, imagepath, maxwidth, None,
+                   config['embedart']['compare_threshold'].get(int))
+
+
+def check_art_similarity(item, imagepath, compare_threshold):
+    """A boolean indicating if an image is similar to embedded item art.
+    """
+    with NamedTemporaryFile(delete=True) as f:
+        art = extract(f.name, item)
+
+        if art:
+            # Converting images to grayscale tends to minimize the weight
+            # of colors in the diff score
+            cmd = 'convert {0} {1} -colorspace gray MIFF:- | ' \
+                  'compare -metric PHASH - null:'.format(syspath(imagepath),
+                                                         syspath(art))
+
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    close_fds=platform.system() != 'Windows',
+                                    shell=True)
+            stdout, stderr  = proc.communicate()
+            if proc.returncode:
+                if proc.returncode != 1:
+                    log.warn(u'embedart: IM phashes compare failed for {0}, \
+                   {1}'.format(displayable_path(imagepath),
+                               displayable_path(art)))
+                    return
+                phashDiff = float(stderr)
+            else:
+                phashDiff = float(stdout)
+
+            log.info(u'embedart: compare PHASH score is {0}'.format(phashDiff))
+            if phashDiff > compare_threshold:
+                return False
+
+    return True
 
 
 def _mediafile_image(image_path, maxwidth=None):
@@ -142,8 +197,7 @@ def _mediafile_image(image_path, maxwidth=None):
 
 # 'extractart' command.
 
-def extract(lib, outpath, query):
-    item = lib.items(query).get()
+def extract(outpath, item):
     if not item:
         log.error(u'No item matches query.')
         return
@@ -170,13 +224,14 @@ def extract(lib, outpath, query):
         return
     outpath += '.' + ext
 
-    log.info(u'Extracting album art from: {0.artist} - {0.title}\n'
-             u'To: {1}'.format(item, displayable_path(outpath)))
+    log.info(u'Extracting album art from: {0.artist} - {0.title} '
+             u'to: {1}'.format(item, displayable_path(outpath)))
     with open(syspath(outpath), 'wb') as f:
         f.write(art)
-
+    return outpath
 
 # 'clearart' command.
+
 
 def clear(lib, query):
     log.info(u'Clearing album art from items:')
