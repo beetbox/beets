@@ -21,25 +21,22 @@ This behavior can be disabled with the ``auto`` config option (see below).
 
 .. _image-similarity-check:
 
-Checking image similarity before embedding
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Image Similarity
+''''''''''''''''
 
 When importing a lot of files with the ``auto`` option, one may be reluctant to
 overwrite existing embedded art for all of them.
 
-It's possible to tell beets to embed fetched art only if it corresponds to a
-similar image than already embedded art. This works by computing the perceptual
-hashes (`PHASH`_) of the two images and checking that the difference between
-the two does not exceed a given threshold.
-The threshold used is given by the ``compare_threshold`` option:
+You can tell beets to avoid embedding images that are too different from the
+This works by computing the perceptual hashes (`PHASH`_) of the two images and
+checking that the difference between the two does not exceed a
+threshold. You can set the threshold with the ``compare_threshold`` option.
 
-* use '0' to always embed image (disable similarity check)
+A threshold of 0 (the default) disables similarity checking and always embeds
+new images. Set the threshold to a number between 10 and 100 to adjust the
+sensitivity of the comparison.
 
-* use any positive integer to define a similarity threshold. The smaller the
-  value, the more similar the images must be. A value in the range [10,100] is
-  recommended.
-
-Requires `ImageMagick`_
+This feature requires `ImageMagick`_.
 
 Manually Embedding and Extracting Art
 -------------------------------------
@@ -73,16 +70,14 @@ To do so, add this to your ``config.yaml``::
 A maximum image width can be configured as ``maxwidth`` to downscale images
 before embedding them (the original image file is not altered). The resize
 operation reduces image width to ``maxwidth`` pixels. The height is recomputed
+so that the aspect ratio is preserved. `PIL`_ or `ImageMagick`_ is required to
+use the ``maxwidth`` config option. See also :ref:`image-resizing` for further
 so that the aspect ratio is preserved.
-Requires `ImageMagick`_ or `PIL`_, see :ref:`image-resizing` for further
-caveats about image resizing.
 
 The ``compare_threshold`` option defines how similar must candidate art be
-regarding to embedded art to be written to the file, see
-:ref:`image-similarity-check` for more infos.
-By default the option is set to '0' (candidate art is always written to file).
-Requires `ImageMagick`_
-
+regarding to embedded art to be written to the file (see
+:ref:`image-similarity-check`). The default is 0 (no similarity check).
+Requires `ImageMagick`_.
 
 .. _PIL: http://www.pythonware.com/products/pil/
 .. _ImageMagick: http://www.imagemagick.org/

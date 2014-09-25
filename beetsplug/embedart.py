@@ -40,7 +40,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         self.config.add({
             'maxwidth': 0,
             'auto': True,
-            'compare_threshold': 0
+            'compare_threshold': 0,
         })
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
@@ -164,7 +164,7 @@ def check_art_similarity(item, imagepath, compare_threshold):
                                     stderr=subprocess.PIPE,
                                     close_fds=platform.system() != 'Windows',
                                     shell=True)
-            stdout, stderr  = proc.communicate()
+            stdout, stderr = proc.communicate()
             if proc.returncode:
                 if proc.returncode != 1:
                     log.warn(u'embedart: IM phashes compare failed for {0}, \
@@ -230,8 +230,8 @@ def extract(outpath, item):
         f.write(art)
     return outpath
 
-# 'clearart' command.
 
+# 'clearart' command.
 
 def clear(lib, query):
     log.info(u'Clearing album art from items:')

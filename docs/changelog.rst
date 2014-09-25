@@ -4,6 +4,12 @@ Changelog
 1.3.9 (in development)
 ----------------------
 
+Features:
+
+* :doc:`/plugins/embedart`: You can now automatically check that new art looks
+  similar to existing art---ensuring that you only get a better "version" of
+  the art you already have. See :ref:`image-similarity-check`.
+
 Fixes:
 
 * :doc:`/plugins/convert`: Does not crash when embedding cover art

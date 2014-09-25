@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Fabrice Laporte
+# Copyright 2014, Fabrice Laporte
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -172,10 +172,9 @@ class ArtResizer(object):
 
     @staticmethod
     def _check_method(method=None):
-        """A tuple indicating whether current method is available and its version.
-           If no method is given, it returns a supported one.
+        """A tuple indicating whether current method is available and its
+        version. If no method is given, it returns a supported one.
         """
-
         # Guess available method
         if not method:
             for m in [IMAGEMAGICK, PIL]:
