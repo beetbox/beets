@@ -36,7 +36,7 @@ log = logging.getLogger('beets')
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
 TAG_RE = re.compile(r'<[^>]*>')
-BREAK_RE = re.compile(r'<br\s*/?>', re.I)
+BREAK_RE = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
 URL_CHARACTERS = {
     u'\u2018': u"'",
     u'\u2019': u"'",
@@ -330,8 +330,7 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     # Normalize EOL
     html = html.replace('\r', '\n')
     html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
-    regex = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
-    html = regex.sub('\n', html)  # When present, <br> eat up surrounding '\n'
+    html = BREAK_RE.sub('\n', html)  # <br> eats up surrounding '\n'
 
     if plain_text_out:  # Strip remaining HTML tags
         html = TAG_RE.sub('', html)
@@ -343,9 +342,7 @@ def _scrape_strip_cruft(html, plain_text_out=False):
 
 
 def _scrape_merge_paragraphs(html):
-    regex = re.compile(r'</p>\s*<p(\s*[^>]*)>')
-    html = regex.sub('\n', html)
-    return html
+    return re.sub(r'</p>\s*<p(\s*[^>]*)>', '\n', html)
 
 
 def scrape_lyrics_from_html(html):
