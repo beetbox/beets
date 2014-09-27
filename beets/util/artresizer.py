@@ -161,9 +161,9 @@ class ArtResizer(object):
     @property
     def local(self):
         """A boolean indicating whether the resizing method is performed
-        locally (i.e., PIL or IMAGEMAGICK).
+        locally (i.e., PIL or ImageMagick).
         """
-        return self.method in BACKEND_FUNCS
+        return self.method[0] in BACKEND_FUNCS
 
     def _can_compare(self):
         """A boolean indicating whether image comparison is available"""
