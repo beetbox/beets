@@ -674,11 +674,7 @@ class ImportTask(object):
         path as an item from this task.
         """
         for item in self.imported_items():
-            dup_items = list(lib.items(
-                dbcore.query.BytesQuery('path', item.path)
-            ))
-            self.replaced_items[item] = dup_items
-            for dup_item in dup_items:
+            for dup_item in self.replaced_items[item]:
                 log.debug('replacing item %i: %s' %
                           (dup_item.id, displayable_path(item.path)))
                 dup_item.remove()
