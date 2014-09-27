@@ -33,8 +33,9 @@ checking that the difference between the two does not exceed a
 threshold. You can set the threshold with the ``compare_threshold`` option.
 
 A threshold of 0 (the default) disables similarity checking and always embeds
-new images. Set the threshold to a number between 10 and 100 to adjust the
-sensitivity of the comparison.
+new images. Set the threshold to a number between 10 and 100 (recommended range) 
+to adjust the sensitivity of the comparison : the smaller the threshold, the 
+more similar the images must be.
 
 This feature requires `ImageMagick`_.
 
