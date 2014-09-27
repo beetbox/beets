@@ -648,14 +648,15 @@ class ImportTask(object):
         """
         For reimports, preserves metadata for reimported items and albums.
         """
-        replaced_album = self.replaced_albums.get(self.album.path)
-        if replaced_album:
-            self.album.added = replaced_album.added
-            self.album.update(replaced_album._values_flex)
-            self.album.store()
-            log.debug('reimported added date %s, flexible attributes %s from album %i for %s',
-                      self.album.added, replaced_album._values_flex.keys(),
-                      replaced_album.id, self.album.path)
+        if self.is_album:
+            replaced_album = self.replaced_albums.get(self.album.path)
+            if replaced_album:
+                self.album.added = replaced_album.added
+                self.album.update(replaced_album._values_flex)
+                self.album.store()
+                log.debug('reimported added date %s, flexible attributes %s from album %i for %s',
+                          self.album.added, replaced_album._values_flex.keys(),
+                          replaced_album.id, self.album.path)
 
         for item in self.imported_items():
             dup_items = self.replaced_items[item]
@@ -767,8 +768,10 @@ class SingletonImportTask(ImportTask):
 
     def add(self, lib):
         with lib.transaction():
+            self.record_replaced(lib)
             self.remove_replaced(lib)
             lib.add(self.item)
+            self.reimport_metadata(lib)
 
     def infer_album_fields(self):
         raise NotImplementedError
