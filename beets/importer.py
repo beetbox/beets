@@ -637,12 +637,13 @@ class ImportTask(object):
             ))
             self.replaced_items[item] = dup_items
             for dup_item in dup_items:
-                if (dup_item.album_id and
-                    not dup_item.album_id in replaced_album_ids):
-                    replaced_album = dup_item.get_album()
-                    if replaced_album:
-                        replaced_album_ids.add(dup_item.album_id)
-                        self.replaced_albums[replaced_album.path] = replaced_album
+                if (not dup_item.album_id or
+                        dup_item.album_id in replaced_album_ids):
+                    continue
+                replaced_album = dup_item.get_album()
+                if replaced_album:
+                    replaced_album_ids.add(dup_item.album_id)
+                    self.replaced_albums[replaced_album.path] = replaced_album
 
     def reimport_metadata(self, lib):
         """
@@ -654,7 +655,8 @@ class ImportTask(object):
                 self.album.added = replaced_album.added
                 self.album.update(replaced_album._values_flex)
                 self.album.store()
-                log.debug('reimported added date %s, flexible attributes %s from album %i for %s',
+                log.debug('reimported added date %s, flexible attributes %s' +
+                          ' from album %i for %s',
                           self.album.added, replaced_album._values_flex.keys(),
                           replaced_album.id, self.album.path)
 
@@ -666,7 +668,8 @@ class ImportTask(object):
                     log.debug('reimported added date %s from item %i for %s',
                               item.added, dup_item.id, item.path)
                 item.update(dup_item._values_flex)
-                log.debug('reimported flexible attributes %s from item %i for %s',
+                log.debug('reimported flexible attributes %s from item %i' +
+                          ' for %s',
                           dup_item._values_flex.keys(), dup_item.id, item.path)
                 item.store()
 
