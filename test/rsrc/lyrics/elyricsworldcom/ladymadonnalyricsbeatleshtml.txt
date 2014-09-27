@@ -267,6 +267,10 @@
                     <div id="related_artists">
                         <div id="ratitle">Latest Beatles Lyrics</div>
                         
+                        <a href="http://www.elyricsworld.com/let's_twist_again_lyrics_beatles.html">Let's Twist Again Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/little_child_(mono)_lyrics_beatles.html">Little Child (mono) Lyrics</a>
+                        
                         <a href="http://www.elyricsworld.com/be-bop-a-lula_(live)_lyrics_beatles.html">BE-BOP-A-LULA (Live) Lyrics</a>
                         
                         <a href="http://www.elyricsworld.com/reminiscing_(live)_lyrics_beatles.html">REMINISCING (Live) Lyrics</a>
@@ -282,10 +286,6 @@
                         <a href="http://www.elyricsworld.com/while_my_guitar_genly_weeps_lyrics_beatles.html">While My Guitar Genly Weeps Lyrics</a>
                         
                         <a href="http://www.elyricsworld.com/strawberry_field_forever_(emi-remix_15.12.66)_lyrics_beatles.html">Strawberry Field Forever (Emi-remix 15.12.66) Lyrics</a>
-                        
-                        <a href="http://www.elyricsworld.com/step_inside_love_lyrics_beatles.html">Step Inside Love Lyrics</a>
-                        
-                        <a href="http://www.elyricsworld.com/it_came_upon_midnight_clear_(babys_in_black)_lyrics_beatles.html">It Came Upon Midnight Clear (Babys In Black) Lyrics</a>
                     </div>              
                 </div>
                 <div id="pright">
@@ -440,7 +440,6 @@ click: function(score, evt) {
                             </div>
                             <div id="panel_in" style="padding-left:9px;">                           
                                     <object width="279" height="193"><param name="movie" value="http://www.youtube.com/v/VfthrizXKOM&amp;hl=en_US&amp;fs=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/VfthrizXKOM&amp;hl=en_US&amp;fs=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="280" height="193"></embed></object>
-                                    <div style="width:300px; margin-top:5px;">Embed Video <input onclick="select();" value="&lt;div style=&quot;text-align:center;width:302px;height:220px;&quot;&gt;&lt;object width=&quot;300&quot; height=&quot;193&quot;&gt;&lt;param name=&quot;movie&quot; value=&quot;http://www.youtube.com/v/VfthrizXKOM&amp;amp;hl=en_US&amp;amp;fs=1&quot;&gt;&lt;/param&gt;&lt;param name=&quot;allowFullScreen&quot; value=&quot;true&quot;&gt;&lt;/param&gt;&lt;param name=&quot;allowscriptaccess&quot; value=&quot;always&quot;&gt;&lt;/param&gt;&lt;embed src=&quot;http://www.youtube.com/v/VfthrizXKOM&amp;amp;hl=en_US&amp;amp;fs=1&quot; type=&quot;application/x-shockwave-flash&quot; allowscriptaccess=&quot;always&quot; allowfullscreen=&quot;true&quot; width=&quot;300&quot; height=&quot;193&quot;&gt;&lt;/embed&gt;&lt;/object&gt;&lt;br&gt;&lt;a href=&quot;http://www.elyricsworld.com/lady_madonna_lyrics_beatles.html&quot;&gt;Lady Madonna Lyrics&lt;/a&gt; at elw&lt;/div&gt;" style="width: 276px;" readonly="readonly" type="text"></div>
                             </div>
                                                     </div>
                                                 <div id="artist_panel_l" style="margin-top:20px; margin-bottom:10px;">
@@ -450,14 +449,6 @@ click: function(score, evt) {
                             </div>
                             <div id="panel_in" style="padding-left:9px;">                           
                                     <embed src='http://widget.elyricsworld.com/scroller.swf?lid=154160&speed=4' width='280' height='160' type='application/x-shockwave-flash'/></embed></object>
-                                    <div style="width:300px; margin-top:5px;">Embed Widget <input onclick="select();" value="&lt;div style='font-size:10px; font-family: Verdana, Tahoma, Sans-serif; line-height:10px; width:300px;'&gt;
-&lt;object width='300' height='175'&gt;
-&lt;embed src='http://widget.elyricsworld.com/scroller.swf?lid=154160&amp;speed=4' 
-width='300' height='175' type='application/x-shockwave-flash'/&gt;&lt;/embed&gt;
-&lt;/object&gt;
-&lt;br /&gt;&lt;center&gt;&lt;a href='http://www.elyricsworld.com/lady_madonna_lyrics_beatles.html' target='_blank'&gt;Lady Madonna&lt;/a&gt; 
-found at &lt;a href='http://www.elyricsworld.com' target='_blank'&gt;elyricsworld.com&lt;/a&gt;&lt;/center&gt;
-&lt;/div&gt;" style="width: 276px;" readonly="readonly" type="text"></div>
                             </div>
                         </div>
                                                 <div id="banner_rr2">
