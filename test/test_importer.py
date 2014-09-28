@@ -1401,7 +1401,6 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         item.store()
 
         # Set up an import pipeline with a "good" match.
-        self._setup_import_session(self.libdir)  # Import library directory.
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.GOOD
 
@@ -1409,35 +1408,55 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         self.teardown_beets()
         self.matcher.restore()
 
+    def _setup_session(self, singletons=False):
+        self._setup_import_session(self._album().path, singletons=singletons)
+        self.importer.add_choice(importer.action.APPLY)
+
     def _album(self):
         return self.lib.albums().get()
 
     def _item(self):
-        return self._album().items().get()
+        return self.lib.items().get()
 
     def test_reimported_album_gets_new_metadata(self):
-        self.assertEqual(self.lib.albums().get().album, u'\xe4lbum')
-        self.importer.add_choice(importer.action.APPLY)
+        self._setup_session()
+        self.assertEqual(self._album().album, u'\xe4lbum')
         self.importer.run()
         self.assertEqual(self._album().album, u'the album')
 
     def test_reimported_album_preserves_flexattr(self):
-        self.importer.add_choice(importer.action.APPLY)
+        self._setup_session()
         self.importer.run()
         self.assertEqual(self._album().foo, u'bar')
 
     def test_reimported_album_preserves_added(self):
-        self.importer.add_choice(importer.action.APPLY)
+        self._setup_session()
         self.importer.run()
         self.assertEqual(self._album().added, 4242.0)
 
     def test_reimported_album_preserves_item_flexattr(self):
-        self.importer.add_choice(importer.action.APPLY)
+        self._setup_session()
         self.importer.run()
         self.assertEqual(self._item().baz, u'qux')
 
     def test_reimported_album_preserves_item_added(self):
-        self.importer.add_choice(importer.action.APPLY)
+        self._setup_session()
+        self.importer.run()
+        self.assertEqual(self._item().added, 4747.0)
+
+    def test_reimported_item_gets_new_metadata(self):
+        self._setup_session(True)
+        self.assertEqual(self._item().title, u't\xeftle 0')
+        self.importer.run()
+        self.assertEqual(self._item().title, u'full')
+
+    def test_reimported_item_preserves_flexattr(self):
+        self._setup_session(True)
+        self.importer.run()
+        self.assertEqual(self._item().baz, u'qux')
+
+    def test_reimported_item_preserves_added(self):
+        self._setup_session(True)
         self.importer.run()
         self.assertEqual(self._item().added, 4747.0)
 
