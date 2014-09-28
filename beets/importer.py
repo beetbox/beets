@@ -720,12 +720,12 @@ class ImportTask(object):
         """
         for item in self.imported_items():
             for dup_item in self.replaced_items[item]:
-                log.debug(u'replacing item {0}: {1}'
+                log.debug(u'Replacing item {0}: {1}'
                           .format(dup_item.id,
                                   displayable_path(item.path)))
                 dup_item.remove()
         log.debug(u'{0} of {1} items replaced'
-                  .format(len(self.replaced_items),
+                  .format(sum(bool(l) for l in self.replaced_items.values()),
                           len(self.imported_items())))
 
     def choose_match(self, session):
