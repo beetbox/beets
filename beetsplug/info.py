@@ -52,7 +52,7 @@ def run(lib, opts, args):
         try:
             data = data_emitter()
         except mediafile.UnreadableFileError as ex:
-            log.error('cannot read file: {0}'.format(ex.message))
+            log.error(u'cannot read file: {0}'.format(ex.message))
             continue
 
         if opts.summarize:

@@ -113,7 +113,8 @@ class PlayPlugin(BeetsPlugin):
 
         config['play'].add({
             'command': None,
-            'use_folders': False
+            'use_folders': False,
+            'relative_to': None,
         })
 
     def commands(self):

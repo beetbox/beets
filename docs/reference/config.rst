@@ -193,18 +193,16 @@ option overrides this setting.
 sort_item
 ~~~~~~~~~
 
-Sort order to use when listing *individual items* with the :ref:`list-cmd`
-command and other commands that need to print out items. Defaults to
-``smartartist+``. Any command-line sort order overrides this setting.
+Default sort order to use when fetching items from the database. Defaults to
+``artist+ album+ disc+ track+``. Explicit sort orders override this default.
 
 .. _sort_album:
 
 sort_album
 ~~~~~~~~~~
 
-Sort order to use when listing *albums* with the :ref:`list-cmd`
-command. Defaults to ``smartartist+``. Any command-line sort order overrides
-this setting.
+Default sort order to use when fetching items from the database. Defaults to
+``albumartist+ album+``. Explicit sort orders override this default.
 
 .. _original_date:
 

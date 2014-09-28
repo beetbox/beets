@@ -25,6 +25,10 @@ from tempfile import mkstemp
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
 
+class TestSort(dbcore.query.FieldSort):
+    pass
+
+
 class TestModel1(dbcore.Model):
     _table = 'test'
     _flex_table = 'testflex'
@@ -34,6 +38,9 @@ class TestModel1(dbcore.Model):
     }
     _types = {
         'some_float_field': dbcore.types.FLOAT,
+    }
+    _sorts = {
+        'some_sort': TestSort,
     }
 
     @classmethod
@@ -249,6 +256,20 @@ class ModelTest(unittest.TestCase):
         model.some_float_field = None
         self.assertEqual(model.some_float_field, 0.0)
 
+    def test_load_deleted_flex_field(self):
+        model1 = TestModel1()
+        model1['flex_field'] = True
+        model1.add(self.db)
+
+        model2 = self.db._get(TestModel1, model1.id)
+        self.assertIn('flex_field', model2)
+
+        del model1['flex_field']
+        model1.store()
+
+        model2.load()
+        self.assertNotIn('flex_field', model2)
+
 
 class FormatTest(unittest.TestCase):
     def test_format_fixed_field(self):
@@ -420,7 +441,7 @@ class SortFromStringsTest(unittest.TestCase):
 
     def test_zero_parts(self):
         s = self.sfs([])
-        self.assertIsNone(s)
+        self.assertIsInstance(s, dbcore.query.NullSort)
 
     def test_one_parts(self):
         s = self.sfs(['field+'])
@@ -439,7 +460,11 @@ class SortFromStringsTest(unittest.TestCase):
     def test_flex_field_sort(self):
         s = self.sfs(['flex_field+'])
         self.assertIsInstance(s, dbcore.query.MultipleSort)
-        self.assertIsInstance(s.sorts[0], dbcore.query.FlexFieldSort)
+        self.assertIsInstance(s.sorts[0], dbcore.query.SlowFieldSort)
+
+    def test_special_sort(self):
+        s = self.sfs(['some_sort+'])
+        self.assertIsInstance(s.sorts[0], TestSort)
 
 
 def suite():

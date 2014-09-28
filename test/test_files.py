@@ -25,6 +25,7 @@ from _common import item, touch
 import beets.library
 from beets import util
 
+
 class MoveTest(_common.TestCase):
     def setUp(self):
         super(MoveTest, self).setUp()
@@ -120,15 +121,18 @@ class MoveTest(_common.TestCase):
         self.assertEqual(os.path.dirname(self.i.path),
                          os.path.dirname(dest))
 
+
 class HelperTest(_common.TestCase):
     def test_ancestry_works_on_file(self):
         p = '/a/b/c'
-        a =  ['/','/a','/a/b']
+        a = ['/', '/a', '/a/b']
         self.assertEqual(util.ancestry(p), a)
+
     def test_ancestry_works_on_dir(self):
         p = '/a/b/c/'
         a = ['/', '/a', '/a/b', '/a/b/c']
         self.assertEqual(util.ancestry(p), a)
+
     def test_ancestry_works_on_relative(self):
         p = 'a/b/c'
         a = ['a', 'a/b']
@@ -136,16 +140,19 @@ class HelperTest(_common.TestCase):
 
     def test_components_works_on_file(self):
         p = '/a/b/c'
-        a =  ['/', 'a', 'b', 'c']
+        a = ['/', 'a', 'b', 'c']
         self.assertEqual(util.components(p), a)
+
     def test_components_works_on_dir(self):
         p = '/a/b/c/'
-        a =  ['/', 'a', 'b', 'c']
+        a = ['/', 'a', 'b', 'c']
         self.assertEqual(util.components(p), a)
+
     def test_components_works_on_relative(self):
         p = 'a/b/c'
-        a =  ['a', 'b', 'c']
+        a = ['a', 'b', 'c']
         self.assertEqual(util.components(p), a)
+
 
 class AlbumFileTest(_common.TestCase):
     def setUp(self):
@@ -201,13 +208,14 @@ class AlbumFileTest(_common.TestCase):
         self.ai.store()
         self.assertTrue('testotherdir' in self.i.path)
 
+
 class ArtFileTest(_common.TestCase):
     def setUp(self):
         super(ArtFileTest, self).setUp()
 
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
-        self.libdir = os.path.abspath(os.path.join(self.temp_dir, 'testlibdir'))
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         self.lib.directory = self.libdir
         self.i = item(self.lib)
         self.i.path = self.i.destination()
@@ -326,7 +334,7 @@ class ArtFileTest(_common.TestCase):
 
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
-        os.chmod(newart, 0400) # read-only
+        os.chmod(newart, 0400)  # read-only
 
         try:
             i2 = item()
@@ -367,7 +375,7 @@ class ArtFileTest(_common.TestCase):
         self.assertExists(oldartpath)
 
         self.i.album = 'different_album'
-        self.i.album_id = None # detach from album
+        self.i.album_id = None  # detach from album
         self.i.move()
 
         artpath = self.lib.albums()[0].artpath
@@ -375,13 +383,14 @@ class ArtFileTest(_common.TestCase):
         self.assertEqual(artpath, oldartpath)
         self.assertExists(oldartpath)
 
+
 class RemoveTest(_common.TestCase):
     def setUp(self):
         super(RemoveTest, self).setUp()
 
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
-        self.libdir = os.path.abspath(os.path.join(self.temp_dir, 'testlibdir'))
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         self.lib.directory = self.libdir
         self.i = item(self.lib)
         self.i.path = self.i.destination()
@@ -419,7 +428,7 @@ class RemoveTest(_common.TestCase):
         self.assertExists(self.libdir)
 
     def test_removing_item_outside_of_library_deletes_nothing(self):
-        self.lib.directory = os.path.abspath(os.path.join(self.temp_dir, 'xxx'))
+        self.lib.directory = os.path.join(self.temp_dir, 'xxx')
         parent = os.path.dirname(self.i.path)
         self.i.remove(True)
         self.assertExists(parent)
@@ -433,6 +442,7 @@ class RemoveTest(_common.TestCase):
         parent = os.path.dirname(self.i.path)
         self.i.remove(True)
         self.assertNotExists(parent)
+
 
 # Tests that we can "delete" nonexistent files.
 class SoftRemoveTest(_common.TestCase):
@@ -451,6 +461,7 @@ class SoftRemoveTest(_common.TestCase):
             util.remove(self.path + 'XXX', True)
         except OSError:
             self.fail('OSError when removing path')
+
 
 class SafeMoveCopyTest(_common.TestCase):
     def setUp(self):
@@ -488,6 +499,7 @@ class SafeMoveCopyTest(_common.TestCase):
         util.copy(self.path, self.path)
         self.assertExists(self.path)
 
+
 class PruneTest(_common.TestCase):
     def setUp(self):
         super(PruneTest, self).setUp()
@@ -506,6 +518,7 @@ class PruneTest(_common.TestCase):
         util.prune_dirs(os.path.join(self.sub, 'another'), self.base)
         self.assertExists(self.base)
         self.assertNotExists(self.sub)
+
 
 class WalkTest(_common.TestCase):
     def setUp(self):
@@ -546,6 +559,7 @@ class WalkTest(_common.TestCase):
         self.assertEqual(res[0],
                          (self.base, [], []))
 
+
 class UniquePathTest(_common.TestCase):
     def setUp(self):
         super(UniquePathTest, self).setUp()
@@ -572,6 +586,23 @@ class UniquePathTest(_common.TestCase):
     def test_conflicting_file_with_number_increases_number(self):
         path = util.unique_path(os.path.join(self.base, 'x.1.mp3'))
         self.assertEqual(path, os.path.join(self.base, 'x.3.mp3'))
+
+
+class MkDirAllTest(_common.TestCase):
+    def test_parent_exists(self):
+        path = os.path.join(self.temp_dir, 'foo', 'bar', 'baz', 'qux.mp3')
+        util.mkdirall(path)
+        self.assertTrue(os.path.isdir(
+            os.path.join(self.temp_dir, 'foo', 'bar', 'baz')
+        ))
+
+    def test_child_does_not_exist(self):
+        path = os.path.join(self.temp_dir, 'foo', 'bar', 'baz', 'qux.mp3')
+        util.mkdirall(path)
+        self.assertTrue(not os.path.exists(
+            os.path.join(self.temp_dir, 'foo', 'bar', 'baz', 'qux.mp3')
+        ))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

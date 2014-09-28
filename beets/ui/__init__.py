@@ -494,13 +494,6 @@ def get_replacements():
     return replacements
 
 
-def get_plugin_paths():
-    """Get the list of search paths for plugins from the config file.
-    The value for "pluginpath" may be a single string or a list of
-    strings.
-    """
-
-
 def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
     falling back to config options and defaults.
@@ -686,16 +679,6 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
         # Super constructor.
         optparse.OptionParser.__init__(self, *args, **kwargs)
-        self.add_option('-l', '--library', dest='library',
-                        help='library database file to use')
-        self.add_option('-d', '--directory', dest='directory',
-                        help="destination music directory")
-        self.add_option('-v', '--verbose', dest='verbose', action='store_true',
-                        help='print debugging information')
-        self.add_option('-c', '--config', dest='config',
-                        help='path to configuration file')
-        self.add_option('-h', '--help', dest='help', action='store_true',
-                        help='how this help message and exit')
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -781,6 +764,8 @@ class SubcommandsOptionParser(optparse.OptionParser):
         # Force the help command
         if options.help:
             subargs = ['help']
+        elif options.version:
+            subargs = ['version']
         return options, subargs
 
     def parse_subcommand(self, args):
@@ -845,7 +830,7 @@ def vararg_callback(option, opt_str, value, parser):
 def _load_plugins(config):
     """Load the plugins specified in the configuration.
     """
-    paths = config['pluginpath'].get(confit.EnsureStringList())
+    paths = config['pluginpath'].get(confit.StrSeq(split=False))
     paths = map(util.normpath, paths)
 
     import beetsplug
@@ -884,6 +869,8 @@ def _setup(options, lib=None):
     if lib is None:
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
+    library.Item._types = plugins.types(library.Item)
+    library.Album._types = plugins.types(library.Album)
 
     return subcommands, plugins, lib
 
@@ -891,7 +878,6 @@ def _setup(options, lib=None):
 def _configure(options):
     """Amend the global configuration object with command line options.
     """
-
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
@@ -909,10 +895,10 @@ def _configure(options):
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
-        log.debug('user configuration: {0}'.format(
+        log.debug(u'user configuration: {0}'.format(
             util.displayable_path(config_path)))
     else:
-        log.debug('no user configuration found at {0}'.format(
+        log.debug(u'no user configuration found at {0}'.format(
             util.displayable_path(config_path)))
 
     log.debug(u'data directory: {0}'
@@ -937,10 +923,8 @@ def _open_library(config):
         ))
     log.debug(u'library database: {0}\n'
               u'library directory: {1}'
-              .format(
-                  util.displayable_path(lib.path),
-                  util.displayable_path(lib.directory),
-              ))
+              .format(util.displayable_path(lib.path),
+                      util.displayable_path(lib.directory)))
     return lib
 
 
@@ -948,16 +932,27 @@ def _raw_main(args, lib=None):
     """A helper function for `main` without top-level exception
     handling.
     """
-
     parser = SubcommandsOptionParser()
+    parser.add_option('-l', '--library', dest='library',
+                      help='library database file to use')
+    parser.add_option('-d', '--directory', dest='directory',
+                      help="destination music directory")
+    parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
+                      help='print debugging information')
+    parser.add_option('-c', '--config', dest='config',
+                      help='path to configuration file')
+    parser.add_option('-h', '--help', dest='help', action='store_true',
+                      help='how this help message and exit')
+    parser.add_option('--version', dest='version', action='store_true',
+                      help=optparse.SUPPRESS_HELP)
+
     options, subargs = parser.parse_global_options(args)
-
     subcommands, plugins, lib = _setup(options, lib)
-
     parser.add_subcommand(*subcommands)
-    subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
 
+    subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
     subcommand.func(lib, suboptions, subargs)
+
     plugins.send('cli_exit', lib=lib)
 
 

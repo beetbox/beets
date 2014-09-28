@@ -372,13 +372,13 @@ def album_for_id(releaseid):
     """
     albumid = _parse_id(releaseid)
     if not albumid:
-        log.debug('Invalid MBID (%s).' % (releaseid))
+        log.debug(u'Invalid MBID ({0}).'.format(releaseid))
         return
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:
-        log.debug('Album ID match failed.')
+        log.debug(u'Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
@@ -392,12 +392,12 @@ def track_for_id(releaseid):
     """
     trackid = _parse_id(releaseid)
     if not trackid:
-        log.debug('Invalid MBID (%s).' % (releaseid))
+        log.debug(u'Invalid MBID ({0}).'.format(releaseid))
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
     except musicbrainzngs.ResponseError:
-        log.debug('Track ID match failed.')
+        log.debug(u'Track ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'get recording by ID', trackid,

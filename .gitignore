@@ -6,6 +6,7 @@
 .svn
 .tox
 .coverage
+.idea
 
 # file patterns
 
@@ -22,6 +23,7 @@
 *.project
 *.pydevproject
 *.ropeproject
+*.orig
 
 # Project Specific patterns
 

@@ -13,15 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 
-import os
-import shutil
-from glob import glob
-
-import _common
 from _common import unittest
 from helper import TestHelper, has_program
 
-from beets.library import Item, Album
 from beets.mediafile import MediaFile
 
 try:

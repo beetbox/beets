@@ -18,12 +18,13 @@ root of your music library.
 The ``absolute_path`` configuration option can be set to use absolute paths
 instead of relative paths. Some applications may need this to work properly.
 
-Three different types of outputs coexist, specify the ones you want to use by
-setting the ``formats`` parameter:
+Four different types of outputs are available. Specify the ones you want to
+use by setting the ``formats`` parameter:
 
 - ``m3u``: catalog the imports in a centralized playlist. By default, the playlist is named ``imported.m3u``. To use a different file, just set the ``m3u_name`` parameter inside the ``importfeeds`` config section.
 - ``m3u_multi``: create a new playlist for each import (uniquely named by appending the date and track/album name).
 - ``link``: create a symlink for each imported item. This is the recommended setting to propagate beets imports to your iTunes library: just drag and drop the ``dir`` folder on the iTunes dock icon.
+- ``echo``: do not write a playlist file at all, but echo a list of new file paths to the terminal.
 
 Here's an example configuration for this plugin::
 

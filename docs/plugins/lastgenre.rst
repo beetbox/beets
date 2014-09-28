@@ -21,7 +21,7 @@ your ``plugins`` line in :doc:`config file </reference/config>`.
 The plugin chooses genres based on a *whitelist*, meaning that only certain
 tags can be considered genres. This way, tags like "my favorite music" or "seen
 live" won't be considered genres. The plugin ships with a fairly extensive
-internal whitelist, but you can set your own in the config file using the
+`internal whitelist`_, but you can set your own in the config file using the 
 ``whitelist`` configuration value::
 
     lastgenre:
@@ -36,6 +36,7 @@ Wikipedia`_.
 .. _pip: http://www.pip-installer.org/
 .. _pylast: http://code.google.com/p/pylast/
 .. _script that scrapes Wikipedia: https://gist.github.com/1241307
+.. _internal whitelist: https://raw.githubusercontent.com/sampsyo/beets/master/beetsplug/lastgenre/genres.txt
 
 By default, beets will always fetch new genres, even if the files already have
 once. To instead leave genres in place in when they pass the whitelist, set

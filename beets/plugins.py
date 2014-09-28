@@ -31,6 +31,14 @@ LASTFM_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
 log = logging.getLogger('beets')
 
 
+class PluginConflictException(Exception):
+    """Indicates that the services provided by one plugin conflict with
+    those of another.
+
+    For example two plugins may define different types for flexible fields.
+    """
+
+
 # Managing the plugins themselves.
 
 class BeetsPlugin(object):
@@ -136,7 +144,7 @@ class BeetsPlugin(object):
 
             >>> @MyPlugin.listen("imported")
             >>> def importListener(**kwargs):
-            >>>     pass
+            ...     pass
         """
         def helper(func):
             if cls.listeners is None:
@@ -194,7 +202,7 @@ def load_plugins(names=()):
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
-                    log.warn('** plugin %s not found' % name)
+                    log.warn(u'** plugin {0} not found'.format(name))
                 else:
                     raise
             else:
@@ -204,7 +212,7 @@ def load_plugins(names=()):
                         _classes.add(obj)
 
         except:
-            log.warn('** error loading plugin %s' % name)
+            log.warn(u'** error loading plugin {0}'.format(name))
             log.warn(traceback.format_exc())
 
 
@@ -245,6 +253,22 @@ def queries():
     for plugin in find_plugins():
         out.update(plugin.queries())
     return out
+
+
+def types(model_cls):
+    # Gives us `item_types` and `album_types`
+    attr_name = '{0}_types'.format(model_cls.__name__.lower())
+    types = {}
+    for plugin in find_plugins():
+        plugin_types = getattr(plugin, attr_name, {})
+        for field in plugin_types:
+            if field in types:
+                raise PluginConflictException(
+                    u'Plugin {0} defines flexible field {1} '
+                    'which has already been defined.'
+                    .format(plugin.name,))
+        types.update(plugin_types)
+    return types
 
 
 def track_distance(item, info):
@@ -371,7 +395,7 @@ def send(event, **arguments):
 
     Returns a list of return values from the handlers.
     """
-    log.debug('Sending event: %s' % event)
+    log.debug(u'Sending event: {0}'.format(event))
     for handler in event_handlers()[event]:
         # Don't break legacy plugins if we want to pass more arguments
         argspec = inspect.getargspec(handler).args

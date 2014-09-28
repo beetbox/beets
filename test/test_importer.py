@@ -39,10 +39,13 @@ class AutotagStub(object):
     autotagger returns.
     """
 
-    NONE   = 'NONE'
-    IDENT  = 'IDENT'
-    GOOD   = 'GOOD'
-    BAD    = 'BAD'
+    NONE    = 'NONE'
+    IDENT   = 'IDENT'
+    GOOD    = 'GOOD'
+    BAD     = 'BAD'
+    MISSING = 'MISSING'
+    """Generate an album match for all but one track
+    """
 
     length = 2
     matching = IDENT
@@ -72,6 +75,9 @@ class AutotagStub(object):
             for i in range(self.length):
                 yield self._make_album_match(albumartist, album, tracks, i + 1)
 
+        elif self.matching == self.MISSING:
+            yield self._make_album_match(albumartist, album, tracks, missing=1)
+
     def match_track(self, artist, title):
         yield TrackInfo(
             title=title.replace('Tag', 'Applied'),
@@ -89,7 +95,7 @@ class AutotagStub(object):
             length=1
         )
 
-    def _make_album_match(self, artist, album, tracks, distance=0):
+    def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
         if distance:
             id = ' ' + 'M' * distance
         else:
@@ -101,7 +107,7 @@ class AutotagStub(object):
         album = album.replace('Tag', 'Applied') + id
 
         trackInfos = []
-        for i in range(tracks):
+        for i in range(tracks - missing):
             trackInfos.append(self._make_track_match(artist, album, i + 1))
 
         return AlbumInfo(
@@ -536,6 +542,13 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         self.assertEqual(len(self.lib.albums()), 1)
 
+    def test_unmatched_tracks_not_added(self):
+        self._create_import_dir(2)
+        self.matcher.matching = self.matcher.MISSING
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 1)
+
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
     """Test TRACKS and APPLY choice.
@@ -875,11 +888,10 @@ class InferAlbumDataTest(_common.TestCase):
 
         self.task = importer.ImportTask(paths=['a path'], toppath='top path',
                                         items=self.items)
-        self.task.set_null_candidates()
 
     def test_asis_homogenous_single_artist(self):
         self.task.set_choice(importer.action.ASIS)
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
         self.assertFalse(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
@@ -888,7 +900,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[1].artist = 'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertTrue(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, 'Various Artists')
@@ -898,7 +910,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[1].artist = 'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         for item in self.items:
             self.assertTrue(item.comp)
@@ -908,7 +920,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[0].artist = 'another artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertFalse(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
@@ -921,7 +933,7 @@ class InferAlbumDataTest(_common.TestCase):
             item.mb_albumartistid = 'some album artist id'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist,
                          'some album artist')
@@ -931,7 +943,7 @@ class InferAlbumDataTest(_common.TestCase):
     def test_apply_gets_artist_and_id(self):
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist, self.items[0].artist)
         self.assertEqual(self.items[0].mb_albumartistid,
@@ -943,7 +955,7 @@ class InferAlbumDataTest(_common.TestCase):
             item.mb_albumartistid = 'some album artist id'
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist,
                          'some album artist')
@@ -954,7 +966,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items = [self.items[0]]
         self.task.items = self.items
         self.task.set_choice(importer.action.ASIS)
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
         self.assertFalse(self.items[0].comp)
 
 
@@ -1003,6 +1015,29 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.title, u'new title')
+
+    def test_no_autotag_keeps_duplicate_album(self):
+        config['import']['autotag'] = False
+        item = self.lib.items().get()
+        self.assertEqual(item.title, u't\xeftle 0')
+        self.assertTrue(os.path.isfile(item.path))
+
+        # Imported item has the same artist and album as the one in the
+        # library.
+        import_file = os.path.join(self.importer.paths[0],
+                                   'album 0', 'track 0.mp3')
+        import_file = MediaFile(import_file)
+        import_file.artist = item['artist']
+        import_file.albumartist = item['artist']
+        import_file.album = item['album']
+        import_file.title = 'new title'
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        self.assertTrue(os.path.isfile(item.path))
+        self.assertEqual(len(self.lib.albums()), 2)
+        self.assertEqual(len(self.lib.items()), 2)
 
     def test_keep_duplicate_album(self):
         self.importer.default_resolution = self.importer.Resolution.KEEPBOTH

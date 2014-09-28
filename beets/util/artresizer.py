@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Fabrice Laporte
+# Copyright 2014, Fabrice Laporte
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -18,6 +18,7 @@ public resizing proxy if neither is available.
 import urllib
 import subprocess
 import os
+import re
 from tempfile import NamedTemporaryFile
 import logging
 from beets import util
@@ -76,7 +77,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
 
 def im_resize(maxwidth, path_in, path_out=None):
     """Resize using ImageMagick's ``convert`` tool.
-    tool. Return the output path of resized image.
+    Return the output path of resized image.
     """
     path_out = path_out or temp_file_for(path_in)
     log.debug(u'artresizer: ImageMagick resizing {0} to {1}'.format(
@@ -132,8 +133,9 @@ class ArtResizer(object):
         """Create a resizer object for the given method or, if none is
         specified, with an inferred method.
         """
-        self.method = method or self._guess_method()
+        self.method = self._check_method(method)
         log.debug(u"artresizer: method is {0}".format(self.method))
+        self.can_compare = self._can_compare()
 
     def resize(self, maxwidth, path_in, path_out=None):
         """Manipulate an image file according to the method, returning a
@@ -159,30 +161,51 @@ class ArtResizer(object):
     @property
     def local(self):
         """A boolean indicating whether the resizing method is performed
-        locally (i.e., PIL or IMAGEMAGICK).
+        locally (i.e., PIL or ImageMagick).
         """
-        return self.method in BACKEND_FUNCS
+        return self.method[0] in BACKEND_FUNCS
+
+    def _can_compare(self):
+        """A boolean indicating whether image comparison is available"""
+
+        return self.method[0] == IMAGEMAGICK and self.method[1] > (6, 8, 7)
 
     @staticmethod
-    def _guess_method():
-        """Determine which resizing method to use. Returns PIL,
-        IMAGEMAGICK, or WEBPROXY depending on available dependencies.
+    def _check_method(method=None):
+        """A tuple indicating whether current method is available and its
+        version. If no method is given, it returns a supported one.
         """
-        # Try importing PIL.
-        try:
-            __import__('PIL', fromlist=['Image'])
-            return PIL
-        except ImportError:
-            pass
+        # Guess available method
+        if not method:
+            for m in [IMAGEMAGICK, PIL]:
+                _, version = ArtResizer._check_method(m)
+                if version:
+                    return (m, version)
+            return (WEBPROXY, (0))
 
-        # Try invoking ImageMagick's "convert".
-        try:
-            out = util.command_output(['convert', '--version'])
-            if 'imagemagick' in out.lower():
-                # system32/convert.exe may be interfering
-                return IMAGEMAGICK
-        except (subprocess.CalledProcessError, OSError):
-            pass
+        if method == IMAGEMAGICK:
 
-        # Fall back to Web proxy method.
-        return WEBPROXY
+            # Try invoking ImageMagick's "convert".
+            try:
+                out = util.command_output(['identify', '--version'])
+
+                if 'imagemagick' in out.lower():
+                    pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
+                    match = re.search(pattern, out)
+                    if match:
+                        return (IMAGEMAGICK,
+                                (int(match.group(1)),
+                                 int(match.group(2)),
+                                 int(match.group(3))))
+                    return (IMAGEMAGICK, (0))
+
+            except (subprocess.CalledProcessError, OSError):
+                return (IMAGEMAGICK, None)
+
+        if method == PIL:
+            # Try importing PIL.
+            try:
+                __import__('PIL', fromlist=['Image'])
+                return (PIL, (0))
+            except ImportError:
+                return (PIL, None)

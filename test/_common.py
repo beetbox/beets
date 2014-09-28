@@ -36,8 +36,9 @@ import beets
 
 # Make sure the development versions of the plugins are used
 import beetsplug
-beetsplug.__path__ = [ os.path.abspath(
-    os.path.join(__file__, '..', '..', 'beetsplug')) ]
+beetsplug.__path__ = [os.path.abspath(
+    os.path.join(__file__, '..', '..', 'beetsplug')
+)]
 
 # Test resources path.
 RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
@@ -49,70 +50,76 @@ log.setLevel(logging.DEBUG)
 
 # Dummy item creation.
 _item_ident = 0
+
+
 def item(lib=None):
     global _item_ident
     _item_ident += 1
     i = beets.library.Item(
-        title =            u'the title',
-        artist =           u'the artist',
-        albumartist =      u'the album artist',
-        album =            u'the album',
-        genre =            u'the genre',
-        composer =         u'the composer',
-        grouping =         u'the grouping',
-        year =             1,
-        month =            2,
-        day =              3,
-        track =            4,
-        tracktotal =       5,
-        disc =             6,
-        disctotal =        7,
-        lyrics =           u'the lyrics',
-        comments =         u'the comments',
-        bpm =              8,
-        comp =             True,
-        path =             'somepath' + str(_item_ident),
-        length =           60.0,
-        bitrate =          128000,
-        format =           'FLAC',
-        mb_trackid =       'someID-1',
-        mb_albumid =       'someID-2',
-        mb_artistid =      'someID-3',
-        mb_albumartistid = 'someID-4',
-        album_id =         None,
+        title=u'the title',
+        artist=u'the artist',
+        albumartist=u'the album artist',
+        album=u'the album',
+        genre=u'the genre',
+        composer=u'the composer',
+        grouping=u'the grouping',
+        year=1,
+        month=2,
+        day=3,
+        track=4,
+        tracktotal=5,
+        disc=6,
+        disctotal=7,
+        lyrics=u'the lyrics',
+        comments=u'the comments',
+        bpm=8,
+        comp=True,
+        path='somepath' + str(_item_ident),
+        length=60.0,
+        bitrate=128000,
+        format='FLAC',
+        mb_trackid='someID-1',
+        mb_albumid='someID-2',
+        mb_artistid='someID-3',
+        mb_albumartistid='someID-4',
+        album_id=None,
     )
     if lib:
         lib.add(i)
     return i
 
 _album_ident = 0
+
+
 def album(lib=None):
     global _item_ident
     _item_ident += 1
     i = beets.library.Album(
-        artpath= None,
-        albumartist = 'some album artist',
-        albumartist_sort = 'some sort album artist',
-        albumartist_credit = 'some album artist credit',
-        album = 'the album',
-        genre = 'the genre',
-        year = 2014,
-        month = 2,
-        day = 5,
-        tracktotal = 0,
-        disctotal = 1,
-        comp = False,
-        mb_albumid = 'someID-1',
-        mb_albumartistid = 'someID-1'
+        artpath=None,
+        albumartist='some album artist',
+        albumartist_sort='some sort album artist',
+        albumartist_credit='some album artist credit',
+        album='the album',
+        genre='the genre',
+        year=2014,
+        month=2,
+        day=5,
+        tracktotal=0,
+        disctotal=1,
+        comp=False,
+        mb_albumid='someID-1',
+        mb_albumartistid='someID-1'
     )
     if lib:
         lib.add(i)
-    return i    
-    
+    return i
+
+
 # Dummy import session.
 def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
     cls = commands.TerminalImportSession if cli else importer.ImportSession
     return cls(lib, logfile, paths, query)
+
 
 # A test harness for all beets tests.
 # Provides temporary, isolated configuration.
@@ -161,7 +168,8 @@ class TestCase(unittest.TestCase):
 
     def assertNotExists(self, path):
         self.assertFalse(os.path.exists(path),
-                        'file exists: %s' % path)
+                         'file exists: %s' % path)
+
 
 class LibTestCase(TestCase):
     """A test case that includes an in-memory library object (`lib`) and
@@ -175,7 +183,6 @@ class LibTestCase(TestCase):
     def tearDown(self):
         self.lib._connection().close()
         super(LibTestCase, self).tearDown()
-
 
 
 # Mock timing.

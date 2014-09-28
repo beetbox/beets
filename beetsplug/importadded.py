@@ -44,8 +44,8 @@ def write_item_mtime(item, mtime):
     item's file.
     """
     if mtime is None:
-        log.warn("No mtime to be preserved for item "
-                 + util.displayable_path(item.path))
+        log.warn(u"No mtime to be preserved for item {0}"
+                 .format(util.displayable_path(item.path)))
         return
 
     # The file's mtime on disk must be in sync with the item's mtime
@@ -64,10 +64,9 @@ def record_import_mtime(item, source, destination):
 
     mtime = os.stat(util.syspath(source)).st_mtime
     item_mtime[destination] = mtime
-    log.debug('Recorded mtime %s for item "%s" imported from "%s"',
-              mtime,
-              util.displayable_path(destination),
-              util.displayable_path(source))
+    log.debug(u"Recorded mtime {0} for item '{1}' imported from '{2}'".format(
+        mtime, util.displayable_path(destination),
+        util.displayable_path(source)))
 
 
 @ImportAddedPlugin.listen('album_imported')

@@ -55,7 +55,7 @@ VERSION_LOCS = [
         os.path.join(BASE, 'setup.py'),
         [
             (
-                r'version\s*=\s*[\'"]([0-9\.]+)[\'"]',
+                r'\s*version\s*=\s*[\'"]([0-9\.]+)[\'"]',
                 "    version='{version}',",
             )
         ]
@@ -77,6 +77,7 @@ def bump_version(version):
         # Read and transform the file.
         out_lines = []
         with open(filename) as f:
+            found = False
             for line in f:
                 for pattern, template in locations:
                     match = re.match(pattern, line)
@@ -96,11 +97,15 @@ def bump_version(version):
                             minor=minor,
                         ) + '\n')
 
+                        found = True
                         break
 
                 else:
                     # Normal line.
                     out_lines.append(line)
+
+            if not found:
+                print("No pattern found in {}".format(filename))
 
         # Write the file back.
         with open(filename, 'w') as f:
@@ -179,6 +184,9 @@ def changelog_as_markdown():
 
     # Other backslashes with verbatim ranges.
     rst = re.sub(r'(\s)`([^`]+)`([^_])', r'\1``\2``\3', rst)
+
+    # Command links with command names.
+    rst = re.sub(r':ref:`(\w+)-cmd`', r'``\1``', rst)
 
     return rst2md(rst)
 
