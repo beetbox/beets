@@ -53,15 +53,21 @@ class AutotagStub(object):
     def install(self):
         self.mb_match_album = autotag.mb.match_album
         self.mb_match_track = autotag.mb.match_track
+        self.mb_album_for_id = autotag.mb.album_for_id
+        self.mb_track_for_id = autotag.mb.track_for_id
 
         autotag.mb.match_album = self.match_album
         autotag.mb.match_track = self.match_track
+        autotag.mb.album_for_id = self.album_for_id
+        autotag.mb.track_for_id = self.track_for_id
 
         return self
 
     def restore(self):
         autotag.mb.match_album = self.mb_match_album
         autotag.mb.match_track = self.mb_match_album
+        autotag.mb.album_for_id = self.mb_album_for_id
+        autotag.mb.track_for_id = self.mb_track_for_id
 
     def match_album(self, albumartist, album, tracks):
         if self.matching == self.IDENT:
@@ -86,6 +92,12 @@ class AutotagStub(object):
             artist_id=u'artistid',
             length=1
         )
+
+    def album_for_id(self, mbid):
+        return None
+
+    def track_for_id(self, mbid):
+        return None
 
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
