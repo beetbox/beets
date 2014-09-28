@@ -1395,6 +1395,10 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         album.added = 4242.0
         album.foo = u'bar'  # Some flexible attribute.
         album.store()
+        item = album.items().get()
+        item.baz = u'qux'
+        item.added = 4747.0
+        item.store()
 
         # Set up an import pipeline with a "good" match.
         self._setup_import_session(self.libdir)  # Import library directory.
@@ -1405,21 +1409,37 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         self.teardown_beets()
         self.matcher.restore()
 
+    def _album(self):
+        return self.lib.albums().get()
+
+    def _item(self):
+        return self._album().items().get()
+
     def test_reimported_album_gets_new_metadata(self):
         self.assertEqual(self.lib.albums().get().album, u'\xe4lbum')
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, u'the album')
+        self.assertEqual(self._album().album, u'the album')
 
     def test_reimported_album_preserves_flexattr(self):
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().foo, u'bar')
+        self.assertEqual(self._album().foo, u'bar')
 
     def test_reimported_album_preserves_added(self):
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().added, 4242.0)
+        self.assertEqual(self._album().added, 4242.0)
+
+    def test_reimported_album_preserves_item_flexattr(self):
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self._item().baz, u'qux')
+
+    def test_reimported_album_preserves_item_added(self):
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self._item().added, 4747.0)
 
 
 def suite():
