@@ -650,8 +650,7 @@ class ImportTask(object):
             self.reimport_metadata(lib)
 
     def record_replaced(self, lib):
-        """
-        Records the replaced items and albums in the `replaced_items`
+        """Records the replaced items and albums in the `replaced_items`
         and `replaced_albums` dictionaries.
         """
         self.replaced_items = defaultdict(list)
@@ -672,8 +671,8 @@ class ImportTask(object):
                     self.replaced_albums[replaced_album.path] = replaced_album
 
     def reimport_metadata(self, lib):
-        """
-        For reimports, preserves metadata for reimported items and albums.
+        """For reimports, preserves metadata for reimported items and
+        albums.
         """
         if self.is_album:
             replaced_album = self.replaced_albums.get(self.album.path)
