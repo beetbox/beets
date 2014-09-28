@@ -970,6 +970,23 @@ class InferAlbumDataTest(_common.TestCase):
         self.assertFalse(self.items[0].comp)
 
 
+def test_album_info():
+    """Create an AlbumInfo object for testing.
+    """
+    track_info = TrackInfo(
+        title=u'new title',
+        track_id=u'trackid',
+    )
+    album_info = AlbumInfo(
+        artist=u'artist',
+        album=u'album',
+        tracks=[track_info],
+        album_id=u'albumid',
+        artist_id=u'artistid',
+    )
+    return album_info
+
+
 class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -981,18 +998,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         # Create duplicate through autotagger
         self.match_album_patcher = patch('beets.autotag.mb.match_album')
         self.match_album = self.match_album_patcher.start()
-        track_info = TrackInfo(
-            title=u'new title',
-            track_id=u'trackid',
-        )
-        album_info = AlbumInfo(
-            artist=u'artist',
-            album=u'album',
-            tracks=[track_info],
-            album_id=u'albumid',
-            artist_id=u'artistid',
-        )
-        self.match_album.return_value = iter([album_info])
+        self.match_album.return_value = iter([test_album_info()])
 
         # Create import session
         self.importer = self.create_importer()
@@ -1370,6 +1376,50 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
             os.remove(path)
         albums = list(albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
+
+
+class ReimportTest(unittest.TestCase, ImportHelper):
+    """Test "re-imports", in which the autotagging machinery is used for
+    music that's already in the library.
+
+    This works by importing new database entries for the same files and
+    replacing the old data with the new data. We also copy over flexible
+    attributes and the added date.
+    """
+
+    def setUp(self):
+        self.setup_beets()
+
+        # The existing album.
+        album = self.add_album_fixture()
+        album.added = 4242.0
+        album.foo = u'bar'  # Some flexible attribute.
+        album.store()
+
+        # Set up an import pipeline with a "good" match.
+        self._setup_import_session(self.libdir)  # Import library directory.
+        self.matcher = AutotagStub().install()
+        self.matcher.matching = AutotagStub.GOOD
+
+    def tearDown(self):
+        self.teardown_beets()
+        self.matcher.restore()
+
+    def test_reimported_album_gets_new_metadata(self):
+        self.assertEqual(self.lib.albums().get().album, u'\xe4lbum')
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, u'the album')
+
+    def test_reimported_album_preserves_flexattr(self):
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().foo, u'bar')
+
+    def test_reimported_album_preserves_added(self):
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().added, 4242.0)
 
 
 def suite():
