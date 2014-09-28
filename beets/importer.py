@@ -680,22 +680,38 @@ class ImportTask(object):
                 self.album.added = replaced_album.added
                 self.album.update(replaced_album._values_flex)
                 self.album.store()
-                log.debug('reimported added date %s, flexible attributes %s' +
-                          ' from album %i for %s',
-                          self.album.added, replaced_album._values_flex.keys(),
-                          replaced_album.id, self.album.path)
+                log.debug(
+                    u'Reimported album: added {0}, flexible '
+                    u'attributes {1} from album {2} for {3}'.format(
+                        self.album.added,
+                        replaced_album._values_flex.keys(),
+                        replaced_album.id,
+                        displayable_path(self.album.path),
+                    )
+                )
 
         for item in self.imported_items():
             dup_items = self.replaced_items[item]
             for dup_item in dup_items:
                 if dup_item.added and dup_item.added != item.added:
                     item.added = dup_item.added
-                    log.debug('reimported added date %s from item %i for %s',
-                              item.added, dup_item.id, item.path)
+                    log.debug(
+                        u'Reimported item added {0} '
+                        u'from item {1} for {2}'.format(
+                            item.added,
+                            dup_item.id,
+                            displayable_path(item.path),
+                        )
+                    )
                 item.update(dup_item._values_flex)
-                log.debug('reimported flexible attributes %s from item %i' +
-                          ' for %s',
-                          dup_item._values_flex.keys(), dup_item.id, item.path)
+                log.debug(
+                    u'Reimported item flexible attributes {0} '
+                    u'from item {1} for {2}'.format(
+                        dup_item._values_flex.keys(),
+                        dup_item.id,
+                        displayable_path(item.path),
+                    )
+                )
                 item.store()
 
     def remove_replaced(self, lib):
