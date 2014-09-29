@@ -9,6 +9,8 @@ Features:
 * :doc:`/plugins/embedart`: You can now automatically check that new art looks
   similar to existing art---ensuring that you only get a better "version" of
   the art you already have. See :ref:`image-similarity-check`.
+* Re-imports of your existing music (see :ref:`reimport`) now preserve its
+  added date and flexible attributes. Thanks to Stig Inge Lea Bjørnsen.
 
 Fixes:
 

@@ -644,28 +644,88 @@ class ImportTask(object):
         """
         self.align_album_level_fields()
         with lib.transaction():
+            self.record_replaced(lib)
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
+            self.reimport_metadata(lib)
 
-    def remove_replaced(self, lib):
-        """Removes all the items from the library that have the same
-        path as an item from this task.
-
-        Records the replaced items in the `replaced_items` dictionary
+    def record_replaced(self, lib):
+        """Records the replaced items and albums in the `replaced_items`
+        and `replaced_albums` dictionaries.
         """
         self.replaced_items = defaultdict(list)
+        self.replaced_albums = defaultdict(list)
+        replaced_album_ids = set()
         for item in self.imported_items():
             dup_items = list(lib.items(
                 dbcore.query.BytesQuery('path', item.path)
             ))
             self.replaced_items[item] = dup_items
             for dup_item in dup_items:
-                log.debug(u'replacing item {0}: {1}'
+                if (not dup_item.album_id or
+                        dup_item.album_id in replaced_album_ids):
+                    continue
+                replaced_album = dup_item.get_album()
+                if replaced_album:
+                    replaced_album_ids.add(dup_item.album_id)
+                    self.replaced_albums[replaced_album.path] = replaced_album
+
+    def reimport_metadata(self, lib):
+        """For reimports, preserves metadata for reimported items and
+        albums.
+        """
+        if self.is_album:
+            replaced_album = self.replaced_albums.get(self.album.path)
+            if replaced_album:
+                self.album.added = replaced_album.added
+                self.album.update(replaced_album._values_flex)
+                self.album.store()
+                log.debug(
+                    u'Reimported album: added {0}, flexible '
+                    u'attributes {1} from album {2} for {3}'.format(
+                        self.album.added,
+                        replaced_album._values_flex.keys(),
+                        replaced_album.id,
+                        displayable_path(self.album.path),
+                    )
+                )
+
+        for item in self.imported_items():
+            dup_items = self.replaced_items[item]
+            for dup_item in dup_items:
+                if dup_item.added and dup_item.added != item.added:
+                    item.added = dup_item.added
+                    log.debug(
+                        u'Reimported item added {0} '
+                        u'from item {1} for {2}'.format(
+                            item.added,
+                            dup_item.id,
+                            displayable_path(item.path),
+                        )
+                    )
+                item.update(dup_item._values_flex)
+                log.debug(
+                    u'Reimported item flexible attributes {0} '
+                    u'from item {1} for {2}'.format(
+                        dup_item._values_flex.keys(),
+                        dup_item.id,
+                        displayable_path(item.path),
+                    )
+                )
+                item.store()
+
+    def remove_replaced(self, lib):
+        """Removes all the items from the library that have the same
+        path as an item from this task.
+        """
+        for item in self.imported_items():
+            for dup_item in self.replaced_items[item]:
+                log.debug(u'Replacing item {0}: {1}'
                           .format(dup_item.id,
                                   displayable_path(item.path)))
                 dup_item.remove()
         log.debug(u'{0} of {1} items replaced'
-                  .format(len(self.replaced_items),
+                  .format(sum(bool(l) for l in self.replaced_items.values()),
                           len(self.imported_items())))
 
     def choose_match(self, session):
@@ -754,8 +814,10 @@ class SingletonImportTask(ImportTask):
 
     def add(self, lib):
         with lib.transaction():
+            self.record_replaced(lib)
             self.remove_replaced(lib)
             lib.add(self.item)
+            self.reimport_metadata(lib)
 
     def infer_album_fields(self):
         raise NotImplementedError
