@@ -1149,16 +1149,19 @@ class BPDPlugin(BeetsPlugin):
             'host': u'',
             'port': 6600,
             'password': u'',
+            'volume': VOLUME_MAX,
         })
 
-    def start_bpd(self, lib, host, port, password, debug):
+    def start_bpd(self, lib, host, port, password, volume, debug):
         """Starts a BPD server."""
         if debug:
             log.setLevel(logging.DEBUG)
         else:
             log.setLevel(logging.WARNING)
         try:
-            Server(lib, host, port, password).run()
+            server = Server(lib, host, port, password)
+            server.cmd_setvol(None, volume)
+            server.run()
         except NoGstreamerError:
             global_log.error(u'Gstreamer Python bindings not found.')
             global_log.error(u'Install "python-gst0.10", "py27-gst-python", '
@@ -1179,8 +1182,9 @@ class BPDPlugin(BeetsPlugin):
             if args:
                 raise beets.ui.UserError('too many arguments')
             password = self.config['password'].get(unicode)
+            volume = self.config['volume'].get(int)
             debug = opts.debug or False
-            self.start_bpd(lib, host, int(port), password, debug)
+            self.start_bpd(lib, host, int(port), password, volume, debug)
 
         cmd.func = func
         return [cmd]

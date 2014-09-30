@@ -71,12 +71,14 @@ on your headless server box. Rad!
 
 To configure the BPD server, add a ``bpd:`` section to your ``config.yaml``
 file. The configuration values, which are pretty self-explanatory, are ``host``,
-``port``, and ``password``. Here's an example::
+``port``, ``password`` and ``volume``. The volume option sets the initial 
+volume (in percent, default: 100). Here's an example::
 
     bpd:
         host: 127.0.0.1
         port: 6600
         password: seekrit
+        volume: 100
 
 Implementation Notes
 --------------------
