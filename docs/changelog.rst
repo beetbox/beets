@@ -11,6 +11,8 @@ Features:
   the art you already have. See :ref:`image-similarity-check`.
 * Re-imports of your existing music (see :ref:`reimport`) now preserve its
   added date and flexible attributes. Thanks to Stig Inge Lea Bjørnsen.
+* :doc:`/plugins/bpd`: Add a new configuration option for setting the default
+  volume. Thanks to IndiGit.
 
 Fixes:
 
