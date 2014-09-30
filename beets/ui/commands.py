@@ -318,17 +318,9 @@ def show_change(cur_artist, cur_album, match):
                 color = 'lightgray'
             else:
                 color = 'red'
-            if (cur_track + new_track).count('-') == 1:
-                lhs_track, rhs_track = (ui.colorize(color, cur_track),
-                                        ui.colorize(color, new_track))
-            else:
-                color = 'red'
-                lhs_track, rhs_track = ui.color_diff_suffix(cur_track,
-                                                            new_track)
-            templ = (ui.colorize(color, u' (#') + u'{0}' +
-                     ui.colorize(color, u')'))
-            lhs += templ.format(lhs_track)
-            rhs += templ.format(rhs_track)
+            templ = ui.colorize(color, u' (#{0})')
+            lhs += templ.format(cur_track)
+            rhs += templ.format(new_track)
             lhs_width += len(cur_track) + 4
 
         # Length change.
@@ -337,12 +329,9 @@ def show_change(cur_artist, cur_album, match):
                 config['ui']['length_diff_thresh'].as_number():
             cur_length = ui.human_seconds_short(item.length)
             new_length = ui.human_seconds_short(track_info.length)
-            lhs_length, rhs_length = ui.color_diff_suffix(cur_length,
-                                                          new_length)
-            templ = (ui.colorize('red', u' (') + u'{0}' +
-                     ui.colorize('red', u')'))
-            lhs += templ.format(lhs_length)
-            rhs += templ.format(rhs_length)
+            templ = ui.colorize('red', u' ({0})')
+            lhs += templ.format(cur_length)
+            rhs += templ.format(new_length)
             lhs_width += len(cur_length) + 3
 
         # Penalties.
