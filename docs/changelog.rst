@@ -26,6 +26,8 @@ Fixes:
   the player.
 * The importer no longer tries to highlight partial differences in numeric
   quantities (track numbers and durations), which was often confusing.
+* Date-based queries that are malformed (not parse-able) no longer crash
+  beets and instead fail silently.
 
 
 1.3.8 (September 17, 2014)

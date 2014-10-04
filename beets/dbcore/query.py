@@ -418,10 +418,14 @@ class Period(object):
             return None
         ordinal = string.count('-')
         if ordinal >= len(cls.date_formats):
-            raise ValueError('date is not in one of the formats '
-                             + ', '.join(cls.date_formats))
+            # Too many components.
+            return None
         date_format = cls.date_formats[ordinal]
-        date = datetime.strptime(string, date_format)
+        try:
+            date = datetime.strptime(string, date_format)
+        except ValueError:
+            # Parsing failed.
+            return None
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
