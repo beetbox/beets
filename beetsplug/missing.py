@@ -88,7 +88,7 @@ def _item(track_info, album_info, album_id):
         'mb_artistid':        t.artist_id,
         'mb_releasegroupid':  a.releasegroup_id,
         'mb_trackid':         t.track_id,
-        'media':              a.media,
+        'media':              t.media,
         'month':              a.month,
         'script':             a.script,
         'title':              t.title,

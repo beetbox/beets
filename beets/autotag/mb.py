@@ -209,6 +209,7 @@ def album_info(release):
     index = 0
     for medium in release['medium-list']:
         disctitle = medium.get('title')
+        format = medium.get('format')
         for track in medium['track-list']:
             # Basic information from the recording.
             index += 1
@@ -220,6 +221,7 @@ def album_info(release):
                 len(medium['track-list']),
             )
             ti.disctitle = disctitle
+            ti.media = format
 
             # Prefer track data, where present, over recording data.
             if track.get('title'):
