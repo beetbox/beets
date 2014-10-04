@@ -18,6 +18,7 @@ import musicbrainzngs
 import re
 import traceback
 from urlparse import urljoin
+from collections import defaultdict
 
 from beets import logging
 import beets.autotag.hooks
@@ -48,6 +49,8 @@ class MusicBrainzAPIError(util.HumanReadableException):
 
 log = logging.getLogger('beets')
 
+alias_cache = defaultdict(list)
+
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases']
 TRACK_INCLUDES = ['artists', 'aliases']
@@ -72,11 +75,30 @@ def configure():
     )
 
 
-def _preferred_alias(aliases):
+def _preferred_alias(aliases, artist_id):
     """Given an list of alias structures for an artist credit, select
     and return the user's preferred alias alias or None if no matching
     alias is found.
     """
+    if not aliases:
+        if not artist_id:
+            return
+        elif artist_id in alias_cache:
+            aliases = alias_cache[artist_id]
+        else:
+            """A missing alias does not actually indicate that there is no
+            alias. Track artist information can override recording artist
+            information,but when it does, it does not contain the artist
+            aliases. So we need to check the artist itself for it to be sure.
+            """
+            aliases = musicbrainzngs.get_artist_by_id(
+                artist_id,
+                ['aliases']
+            )['artist'].get('alias-list', ())
+
+    if artist_id not in alias_cache:
+        alias_cache[artist_id] = aliases
+
     if not aliases:
         return
 
@@ -111,7 +133,11 @@ def _flatten_artist_credit(credit):
             artist_sort_parts.append(el)
 
         else:
-            alias = _preferred_alias(el['artist'].get('alias-list', ()))
+            artist_id = el['artist'].get('id', ())
+            alias = _preferred_alias(
+                el['artist'].get('alias-list', ()),
+                artist_id
+            )
 
             # An artist.
             if alias:

@@ -290,28 +290,38 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(t[1].disctitle, 'MEDIUM TITLE')
 
     def test_missing_language(self):
-        release = self._make_release(None)
-        del release['text-representation']['language']
-        d = mb.album_info(release)
-        self.assertEqual(d.language, None)
+        with mock.patch('musicbrainzngs.get_artist_by_id') as p:
+            release = self._make_release(None)
+            del release['text-representation']['language']
+            d = mb.album_info(release)
+            self.assertTrue(p.called)
+            self.assertEqual(d.language, None)
 
     def test_parse_recording_artist(self):
-        tracks = [self._make_track('a', 'b', 1, True)]
-        release = self._make_release(None, tracks=tracks)
-        track = mb.album_info(release).tracks[0]
-        self.assertEqual(track.artist, 'RECORDING ARTIST NAME')
-        self.assertEqual(track.artist_id, 'RECORDING ARTIST ID')
-        self.assertEqual(track.artist_sort, 'RECORDING ARTIST SORT NAME')
-        self.assertEqual(track.artist_credit, 'RECORDING ARTIST CREDIT')
+        with mock.patch('musicbrainzngs.get_artist_by_id') as p:
+            tracks = [self._make_track('a', 'b', 1, True)]
+            release = self._make_release(None, tracks=tracks)
+            track = mb.album_info(release).tracks[0]
+            self.assertTrue(p.called)
+            self.assertEqual(track.artist, 'RECORDING ARTIST NAME')
+            self.assertEqual(track.artist_id, 'RECORDING ARTIST ID')
+            self.assertEqual(track.artist_sort, 'RECORDING ARTIST SORT NAME')
+            self.assertEqual(track.artist_credit, 'RECORDING ARTIST CREDIT')
 
     def test_track_artist_overrides_recording_artist(self):
-        tracks = [self._make_track('a', 'b', 1, True)]
-        release = self._make_release(None, tracks=tracks, track_artist=True)
-        track = mb.album_info(release).tracks[0]
-        self.assertEqual(track.artist, 'TRACK ARTIST NAME')
-        self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
-        self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
-        self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
+        with mock.patch('musicbrainzngs.get_artist_by_id') as p:
+            tracks = [self._make_track('a', 'b', 1, True)]
+            release = self._make_release(
+                None,
+                tracks=tracks,
+                track_artist=True
+            )
+            track = mb.album_info(release).tracks[0]
+            self.assertTrue(p.called)
+            self.assertEqual(track.artist, 'TRACK ARTIST NAME')
+            self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
+            self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
+            self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
 
 class ParseIDTest(_common.TestCase):
@@ -459,13 +469,19 @@ class MBLibraryTest(unittest.TestCase):
                         }
                     }
                 }
+                with mock.patch('musicbrainzngs.get_artist_by_id') as p:
 
-                ai = list(mb.match_album('hello', 'there'))[0]
+                    ai = list(mb.match_album('hello', 'there'))[0]
 
-                sp.assert_called_with(artist='hello', release='there', limit=5)
-                gp.assert_calledwith(mbid)
-                self.assertEqual(ai.tracks[0].title, 'foo')
-                self.assertEqual(ai.album, 'hi')
+                    sp.assert_called_with(
+                        artist='hello',
+                        release='there',
+                        limit=5
+                    )
+                    gp.assert_calledwith(mbid)
+                    self.assertTrue(p.called)
+                    self.assertEqual(ai.tracks[0].title, 'foo')
+                    self.assertEqual(ai.album, 'hi')
 
     def test_match_track_empty(self):
         with mock.patch('musicbrainzngs.search_recordings') as p:
