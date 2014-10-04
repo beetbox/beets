@@ -127,6 +127,7 @@ class TrackInfo(object):
     - ``artist_id``
     - ``length``: float: duration of the track in seconds
     - ``index``: position on the entire release
+    - ``media``: delivery mechanism (Vinyl, etc.)
     - ``medium``: the disc number this track appears on in the album
     - ``medium_index``: the track's position on the disc
     - ``medium_total``: the number of tracks on the item's disc
@@ -141,13 +142,15 @@ class TrackInfo(object):
     def __init__(self, title, track_id, artist=None, artist_id=None,
                  length=None, index=None, medium=None, medium_index=None,
                  medium_total=None, artist_sort=None, disctitle=None,
-                 artist_credit=None, data_source=None, data_url=None):
+                 artist_credit=None, data_source=None, data_url=None,
+                 media=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
         self.artist_id = artist_id
         self.length = length
         self.index = index
+        self.media = media
         self.medium = medium
         self.medium_index = medium_index
         self.medium_total = medium_total
@@ -163,7 +166,7 @@ class TrackInfo(object):
         to Unicode.
         """
         for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
-                    'artist_credit']:
+                    'artist_credit', 'media']:
             value = getattr(self, fld)
             if isinstance(value, str):
                 setattr(self, fld, value.decode(codec, 'ignore'))

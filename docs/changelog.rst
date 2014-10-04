@@ -37,6 +37,7 @@ Fixes:
   temporarily
 * :doc:`/plugins/discogs`: Recover from HTTP errors when communicating with
   the Discogs servers. Thanks to Dustin Rodriguez.
+* Fix storing media types for albums consisting of different media.
 
 
 1.3.8 (September 17, 2014)
