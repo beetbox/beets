@@ -28,6 +28,7 @@ When importing a lot of files with the ``auto`` option, one may be reluctant to
 overwrite existing embedded art for all of them.
 
 You can tell beets to avoid embedding images that are too different from the
+existing ones. 
 This works by computing the perceptual hashes (`PHASH`_) of the two images and
 checking that the difference between the two does not exceed a
 threshold. You can set the threshold with the ``compare_threshold`` option.
