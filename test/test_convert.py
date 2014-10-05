@@ -165,6 +165,13 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(converted)
         self.assertEqual(mediafile.images[0].data, image_data)
 
+    def test_skip_existing(self):
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.touch(converted, content='XXX')
+        self.run_command('convert', '--yes', self.item.path)
+        with open(converted, 'r') as f:
+            self.assertEqual(f.read(), 'XXX')
+
 
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     """Test the effect of the `never_convert_lossy_files` option.

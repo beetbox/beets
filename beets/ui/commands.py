@@ -20,7 +20,6 @@ from __future__ import print_function
 import logging
 import os
 import time
-import itertools
 import codecs
 import platform
 import re
@@ -39,7 +38,6 @@ from beets.util.functemplate import Template
 from beets import library
 from beets import config
 from beets.util.confit import _package_path
-from beets.dbcore import sort_from_strings
 
 VARIOUS_ARTISTS = u'Various Artists'
 
@@ -320,17 +318,9 @@ def show_change(cur_artist, cur_album, match):
                 color = 'lightgray'
             else:
                 color = 'red'
-            if (cur_track + new_track).count('-') == 1:
-                lhs_track, rhs_track = (ui.colorize(color, cur_track),
-                                        ui.colorize(color, new_track))
-            else:
-                color = 'red'
-                lhs_track, rhs_track = ui.color_diff_suffix(cur_track,
-                                                            new_track)
-            templ = (ui.colorize(color, u' (#') + u'{0}' +
-                     ui.colorize(color, u')'))
-            lhs += templ.format(lhs_track)
-            rhs += templ.format(rhs_track)
+            templ = ui.colorize(color, u' (#{0})')
+            lhs += templ.format(cur_track)
+            rhs += templ.format(new_track)
             lhs_width += len(cur_track) + 4
 
         # Length change.
@@ -339,12 +329,9 @@ def show_change(cur_artist, cur_album, match):
                 config['ui']['length_diff_thresh'].as_number():
             cur_length = ui.human_seconds_short(item.length)
             new_length = ui.human_seconds_short(track_info.length)
-            lhs_length, rhs_length = ui.color_diff_suffix(cur_length,
-                                                          new_length)
-            templ = (ui.colorize('red', u' (') + u'{0}' +
-                     ui.colorize('red', u')'))
-            lhs += templ.format(lhs_length)
-            rhs += templ.format(rhs_length)
+            templ = ui.colorize('red', u' ({0})')
+            lhs += templ.format(cur_length)
+            rhs += templ.format(new_length)
             lhs_width += len(cur_length) + 3
 
         # Penalties.
@@ -777,12 +764,12 @@ class TerminalImportSession(importer.ImportSession):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
-        log.warn("This %s is already in the library!" %
-                 ("album" if task.is_album else "item"))
+        log.warn(u"This {0} is already in the library!"
+                 .format("album" if task.is_album else "item"))
 
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
-            log.info('Skipping.')
+            log.info(u'Skipping.')
             sel = 's'
         else:
             # Print some detail about the existing and new items so the
@@ -967,18 +954,11 @@ def list_items(lib, query, album, fmt):
     albums instead of single items.
     """
     tmpl = Template(ui._pick_format(album, fmt))
-
     if album:
-        sort_parts = str(config['sort_album']).split()
-        sort_order = sort_from_strings(library.Album,
-                                       sort_parts)
-        for album in lib.albums(query, sort_order):
+        for album in lib.albums(query):
             ui.print_obj(album, lib, tmpl)
     else:
-        sort_parts = str(config['sort_item']).split()
-        sort_order = sort_from_strings(library.Item,
-                                       sort_parts)
-        for item in lib.items(query, sort_order):
+        for item in lib.items(query):
             ui.print_obj(item, lib, tmpl)
 
 
@@ -1030,8 +1010,8 @@ def update_items(lib, query, album, move, pretend):
 
             # Did the item change since last checked?
             if item.current_mtime() <= item.mtime:
-                log.debug(u'skipping %s because mtime is up to date (%i)' %
-                          (displayable_path(item.path), item.mtime))
+                log.debug(u'skipping {0} because mtime is up to date ({1})'
+                          .format(displayable_path(item.path), item.mtime))
                 continue
 
             # Read new data.
@@ -1081,7 +1061,7 @@ def update_items(lib, query, album, move, pretend):
                 continue
             album = lib.get_album(album_id)
             if not album:  # Empty albums have already been removed.
-                log.debug('emptied album %i' % album_id)
+                log.debug(u'emptied album {0}'.format(album_id))
                 continue
             first_item = album.items().get()
 
@@ -1092,7 +1072,7 @@ def update_items(lib, query, album, move, pretend):
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
-                log.debug('moving album %i' % album_id)
+                log.debug(u'moving album {0}'.format(album_id))
                 album.move()
 
 
@@ -1298,25 +1278,17 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
         if not ui.input_yn('Really modify%s (Y/n)?' % extra):
             return
 
-    # Apply changes to database.
+    # Apply changes to database and files
     with lib.transaction():
         for obj in changed:
             if move:
                 cur_path = obj.path
                 if lib.directory in ancestry(cur_path):  # In library?
-                    log.debug('moving object %s' % cur_path)
+                    log.debug(u'moving object {0}'
+                              .format(displayable_path(cur_path)))
                     obj.move()
 
-            obj.store()
-
-    # Apply tags if requested.
-    if write:
-        if album:
-            changed_items = itertools.chain(*(a.items() for a in changed))
-        else:
-            changed_items = changed
-        for item in changed_items:
-            item.try_write()
+            obj.try_sync(write)
 
 
 def modify_parse_args(args):
@@ -1391,9 +1363,9 @@ def move_items(lib, dest, query, copy, album):
 
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
-    log.info('%s %i %ss.' % (action, len(objs), entity))
+    log.info(u'{0} {1} {2}s.'.format(action, len(objs), entity))
     for obj in objs:
-        log.debug('moving: %s' % obj.path)
+        log.debug(u'moving: {0}'.format(util.displayable_path(obj.path)))
 
         obj.move(copy, basedir=dest)
         obj.store()
@@ -1457,7 +1429,7 @@ def write_items(lib, query, pretend, force):
         changed = ui.show_model_changes(item, clean_item,
                                         library.Item._media_fields, force)
         if (changed or force) and not pretend:
-            item.try_write()
+            item.try_sync()
 
 
 def write_func(lib, opts, args):

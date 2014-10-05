@@ -18,10 +18,6 @@ import re
 from operator import attrgetter
 from beets import util
 from datetime import datetime, timedelta
-from collections import namedtuple
-
-
-SortedQuery = namedtuple('SortedQuery', ['query', 'sort'])
 
 
 class Query(object):
@@ -85,6 +81,23 @@ class MatchQuery(FieldQuery):
     @classmethod
     def value_match(cls, pattern, value):
         return pattern == value
+
+
+class NoneQuery(FieldQuery):
+
+    def __init__(self, field, fast=True):
+        self.field = field
+        self.fast = fast
+
+    def col_clause(self):
+        return self.field + " IS NULL", ()
+
+    @classmethod
+    def match(self, item):
+        try:
+            return item[self.field] is None
+        except KeyError:
+            return True
 
 
 class StringFieldQuery(FieldQuery):
@@ -405,10 +418,14 @@ class Period(object):
             return None
         ordinal = string.count('-')
         if ordinal >= len(cls.date_formats):
-            raise ValueError('date is not in one of the formats '
-                             + ', '.join(cls.date_formats))
+            # Too many components.
+            return None
         date_format = cls.date_formats[ordinal]
-        date = datetime.strptime(string, date_format)
+        try:
+            date = datetime.strptime(string, date_format)
+        except ValueError:
+            # Parsing failed.
+            return None
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
@@ -623,25 +640,6 @@ class FixedFieldSort(FieldSort):
         return "{0} {1}".format(self.field, order)
 
 
-class SmartArtistSort(Sort):
-    """Sort by artist (either album artist or track artist),
-    prioritizing the sort field over the raw field.
-    """
-    def __init__(self, model_cls, is_ascending=True):
-        self.model_cls = model_cls
-        self.is_ascending = is_ascending
-
-    def order_clause(self):
-        order = "ASC" if self.is_ascending else "DESC"
-        if 'albumartist' in self.model_cls._fields:
-            field = 'albumartist'
-        else:
-            field = 'artist'
-        return ('(CASE {0}_sort WHEN NULL THEN {0} '
-                'WHEN "" THEN {0} '
-                'ELSE {0}_sort END) {1}').format(field, order)
-
-
 class SlowFieldSort(FieldSort):
     """A sort criterion by some model field other than a fixed field:
     i.e., a computed or flexible field.
@@ -654,6 +652,3 @@ class NullSort(Sort):
     """No sorting. Leave results unsorted."""
     def sort(items):
         return items
-
-    def __nonzero__(self):
-        return False

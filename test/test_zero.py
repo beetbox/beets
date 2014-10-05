@@ -18,37 +18,38 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def test_no_patterns(self):
-        i = Item(
-            comments='test comment',
-            day=13,
-            month=3,
-            year=2012,
-        )
+        tags = {
+            'comments': 'test comment',
+            'day': 13,
+            'month': 3,
+            'year': 2012,
+        }
         z = ZeroPlugin()
         z.debug = False
         z.fields = ['comments', 'month', 'day']
         z.patterns = {'comments': ['.'],
                       'month': ['.'],
                       'day': ['.']}
-        z.write_event(i)
-        self.assertEqual(i.comments, '')
-        self.assertEqual(i.day, 0)
-        self.assertEqual(i.month, 0)
-        self.assertEqual(i.year, 2012)
+        z.write_event(None, None, tags)
+        self.assertEqual(tags['comments'], None)
+        self.assertEqual(tags['day'], None)
+        self.assertEqual(tags['month'], None)
+        self.assertEqual(tags['year'], 2012)
 
     def test_patterns(self):
-        i = Item(
-            comments='from lame collection, ripped by eac',
-            year=2012,
-        )
         z = ZeroPlugin()
         z.debug = False
         z.fields = ['comments', 'year']
         z.patterns = {'comments': 'eac lame'.split(),
                       'year': '2098 2099'.split()}
-        z.write_event(i)
-        self.assertEqual(i.comments, '')
-        self.assertEqual(i.year, 2012)
+
+        tags = {
+            'comments': 'from lame collection, ripped by eac',
+            'year': 2012,
+        }
+        z.write_event(None, None, tags)
+        self.assertEqual(tags['comments'], None)
+        self.assertEqual(tags['year'], 2012)
 
     def test_delete_replaygain_tag(self):
         path = self.create_mediafile_fixture()
@@ -69,6 +70,17 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.rg_track_peak)
         self.assertIsNone(mediafile.rg_track_gain)
+
+    def test_do_not_change_database(self):
+        item = self.add_item_fixture(year=2000)
+        mediafile = MediaFile(item.path)
+
+        config['zero'] = {'fields': ['year']}
+        self.load_plugins('zero')
+
+        item.write()
+        self.assertEqual(item['year'], 2000)
+        self.assertIsNone(mediafile.year)
 
 
 def suite():

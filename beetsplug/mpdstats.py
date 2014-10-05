@@ -313,7 +313,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
     item_types = {
         'play_count':  types.INTEGER,
         'skip_count':  types.INTEGER,
-        'last_played': library.Date(),
+        'last_played': library.DateType(),
         'rating':      types.FLOAT,
     }
 

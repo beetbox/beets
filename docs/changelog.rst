@@ -1,17 +1,63 @@
 Changelog
 =========
 
-1.3.8 (in development)
+1.3.9 (in development)
 ----------------------
-
-This release adds **sorting** to beets queries. See :ref:`query-sort`.
 
 Features:
 
-* :doc:`/plugins/info`: Files can be specified through library queries
-  and the ``--library`` option prints library fields instead of tags.
-  Tags and library fields for multiple files can be summarized with the
-  ``--summarize`` option.
+* :doc:`/plugins/embedart`: You can now automatically check that new art looks
+  similar to existing art---ensuring that you only get a better "version" of
+  the art you already have. See :ref:`image-similarity-check`.
+* Re-imports of your existing music (see :ref:`reimport`) now preserve its
+  added date and flexible attributes. Thanks to Stig Inge Lea Bjørnsen.
+* :doc:`/plugins/bpd`: Add a new configuration option for setting the default
+  volume. Thanks to IndiGit.
+
+Fixes:
+
+* :doc:`/plugins/convert`: Does not crash when embedding cover art
+  fails.
+* :doc:`/plugins/mpdstats`: Fix an error on start (introduced in the previous
+  version). Thanks to Zach Denton.
+* :doc:`/plugins/convert`: The ``--yes`` command-line flag no longer expects
+  an argument.
+* :doc:`/plugins/play`: Remove the temporary .m3u file after sending it to
+  the player.
+* The importer no longer tries to highlight partial differences in numeric
+  quantities (track numbers and durations), which was often confusing.
+* Date-based queries that are malformed (not parse-able) no longer crash
+  beets and instead fail silently.
+
+
+1.3.8 (September 17, 2014)
+--------------------------
+
+This release has two big new chunks of functionality. Queries now support
+**sorting** and user-defined fields can now have **types**.
+
+If you want to see all your songs in reverse chronological order, just type
+``beet list year-``. It couldn't be easier. For details, see
+:ref:`query-sort`.
+
+Flexible field types mean that some functionality that has previously only
+worked for built-in fields, like range queries, can now work with plugin- and
+user-defined fields too. For starters, the :doc:`/plugins/echonest/` and
+:doc:`/plugins/mpdstats` now mark the types of the fields they provide---so
+you can now say, for example, ``beet ls liveness:0.5..1.5`` for the Echo Nest
+"liveness" attribute. The :doc:`/plugins/types` makes it easy to specify field
+types in your config file.
+
+One upgrade note: if you use the :doc:`/plugins/discogs`, you will need to
+upgrade the Discogs client library to use this version. Just type
+``pip install -U discogs-client``.
+
+Other new features:
+
+* :doc:`/plugins/info`: Target files can now be specified through library
+  queries (in addition to filenames). The ``--library`` option prints library
+  fields instead of tags. Multiple files can be summarized together with the
+  new ``--summarize`` option.
 * :doc:`/plugins/mbcollection`: A new option lets you automatically update
   your collection on import. Thanks to Olin Gay.
 * :doc:`/plugins/convert`: A new ``never_convert_lossy_files`` option can
@@ -19,7 +65,7 @@ Features:
 * :doc:`/plugins/convert`: A new ``--yes`` command-line flag skips the
   confirmation.
 
-Fixes:
+Still more fixes and little improvements:
 
 * Invalid state files don't crash the importer.
 * :doc:`/plugins/lyrics`: Only strip featured artists and
@@ -49,6 +95,17 @@ Fixes:
 * The ``--version`` flag now works as an alias for the ``version`` command.
 * :doc:`/plugins/lastgenre`: Remove some unhelpful genres from the default
   whitelist. Thanks to gwern.
+* :doc:`/plugins/importfeeds`: A new ``echo`` output mode prints files' paths
+  to standard error. Thanks to robotanarchy.
+* :doc:`/plugins/replaygain`: Restore some error handling when ``mp3gain``
+  output cannot be parsed. The verbose log now contains the bad tool output in
+  this case.
+* :doc:`/plugins/convert`: Fix filename extensions when converting
+  automatically.
+* The ``write`` plugin event allows plugins to change the tags that are
+  written to a media file.
+* :doc:`/plugins/zero`: Do not delete database values; only media file
+  tags are affected.
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 

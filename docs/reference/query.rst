@@ -190,25 +190,23 @@ ones you've already added to your beets library.
 Sort Order
 ----------
 
-You can also specify the order used when outputting the results. Of course, this
-is only useful when displaying the result, for example with the ``list``
-command, and is useless when the query is used as a filter for an command. Use
-the name of the `field` you want to sort on, followed by a ``+`` or ``-`` sign
-if you want ascending or descending sort. For example this command::
+Queries can specify a sort order. Use the name of the `field` you want to sort
+on, followed by a ``+`` or ``-`` sign to indicate ascending or descending
+sort. For example, this command::
 
     $ beet list -a year+
 
-will list all albums in chronological order.
-
-There is a special ``smartartist`` sort that uses sort-specific field (
-``artist_sort`` for items and ``albumartist_sort`` for albums) but falls back to
-standard artist fields if these are empty. When no sort order is specified,
-``smartartist+`` is used (but this is configurable).
-
-You can also specify several sort orders, which will be used in the same order at
-which they appear in your query::
+will list all albums in chronological order. You can also specify several sort
+orders, which will be used in the same order as they appear in your query::
 
     $ beet list -a genre+ year+
 
 This command will sort all albums by genre and, in each genre, in chronological
 order.
+
+The ``artist`` and ``albumartist`` keys are special: they attempt to use their
+corresponding ``artist_sort`` and ``albumartist_sort`` fields for sorting
+transparently (but fall back to the ordinary fields when those are empty).
+
+You can set the default sorting behavior with the :ref:`sort_item` and
+:ref:`sort_album` configuration options.

@@ -588,6 +588,22 @@ class UniquePathTest(_common.TestCase):
         self.assertEqual(path, os.path.join(self.base, 'x.3.mp3'))
 
 
+class MkDirAllTest(_common.TestCase):
+    def test_parent_exists(self):
+        path = os.path.join(self.temp_dir, 'foo', 'bar', 'baz', 'qux.mp3')
+        util.mkdirall(path)
+        self.assertTrue(os.path.isdir(
+            os.path.join(self.temp_dir, 'foo', 'bar', 'baz')
+        ))
+
+    def test_child_does_not_exist(self):
+        path = os.path.join(self.temp_dir, 'foo', 'bar', 'baz', 'qux.mp3')
+        util.mkdirall(path)
+        self.assertTrue(not os.path.exists(
+            os.path.join(self.temp_dir, 'foo', 'bar', 'baz', 'qux.mp3')
+        ))
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

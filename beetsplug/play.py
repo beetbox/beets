@@ -105,6 +105,8 @@ def play_music(lib, opts, args):
 
     ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
 
+    util.remove(m3u.name)
+
 
 class PlayPlugin(BeetsPlugin):
 

@@ -24,8 +24,8 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
-from .query import MatchQuery, NullSort
-from .types import BASE_TYPE
+from beets.dbcore import types
+from .query import MatchQuery, NullSort, TrueQuery
 
 
 class FormattedMapping(collections.Mapping):
@@ -115,11 +115,6 @@ class Model(object):
     keys are field names and the values are `Type` objects.
     """
 
-    _bytes_keys = ()
-    """Keys whose values should be stored as raw bytes blobs rather than
-    strings.
-    """
-
     _search_fields = ()
     """The fields that should be queried by default by unqualified query
     terms.
@@ -127,6 +122,11 @@ class Model(object):
 
     _types = {}
     """Optional Types for non-fixed (i.e., flexible and computed) fields.
+    """
+
+    _sorts = {}
+    """Optional named sort criteria. The keys are strings and the values
+    are subclasses of `Sort`.
     """
 
     @classmethod
@@ -160,21 +160,17 @@ class Model(object):
         self.clear_dirty()
 
     @classmethod
-    def _awaken(cls, db=None, fixed_values=None, flex_values=None):
+    def _awaken(cls, db=None, fixed_values={}, flex_values={}):
         """Create an object with values drawn from the database.
 
         This is a performance optimization: the checks involved with
         ordinary construction are bypassed.
         """
         obj = cls(db)
-        if fixed_values:
-            for key, value in fixed_values.items():
-                obj._values_fixed[key] = cls._fields[key].normalize(value)
-        if flex_values:
-            for key, value in flex_values.items():
-                if key in cls._types:
-                    value = cls._types[key].normalize(value)
-                obj._values_flex[key] = value
+        for key, value in fixed_values.iteritems():
+            obj._values_fixed[key] = cls._type(key).from_sql(value)
+        for key, value in flex_values.iteritems():
+            obj._values_flex[key] = cls._type(key).from_sql(value)
         return obj
 
     def __repr__(self):
@@ -208,7 +204,7 @@ class Model(object):
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
         """
-        return self._fields.get(key) or self._types.get(key) or BASE_TYPE
+        return self._fields.get(key) or self._types.get(key) or types.DEFAULT
 
     def __getitem__(self, key):
         """Get the value for a field. Raise a KeyError if the field is
@@ -332,19 +328,15 @@ class Model(object):
         self._check_db()
 
         # Build assignments for query.
-        assignments = ''
+        assignments = []
         subvars = []
         for key in self._fields:
             if key != 'id' and key in self._dirty:
                 self._dirty.remove(key)
-                assignments += key + '=?,'
-                value = self[key]
-                # Wrap path strings in buffers so they get stored
-                # "in the raw".
-                if key in self._bytes_keys and isinstance(value, str):
-                    value = buffer(value)
+                assignments.append(key + '=?')
+                value = self._type(key).to_sql(self[key])
                 subvars.append(value)
-        assignments = assignments[:-1]  # Knock off last ,
+        assignments = ','.join(assignments)
 
         with self._db.transaction() as tx:
             # Main table update.
@@ -737,7 +729,7 @@ class Database(object):
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
-                    value NONE,
+                    value TEXT,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
@@ -745,14 +737,15 @@ class Database(object):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort=None):
+    def _fetch(self, model_cls, query=None, sort=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
         Query object, or None (to fetch everything). `sort` is an
-        optional Sort object.
+        `Sort` object.
         """
+        query = query or TrueQuery()  # A null query.
+        sort = sort or NullSort()  # Unsorted.
         where, subvals = query.clause()
-        sort = sort or NullSort()
         order_by = sort.order_clause()
 
         sql = ("SELECT * FROM {0} WHERE {1} {2}").format(

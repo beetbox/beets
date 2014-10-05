@@ -39,10 +39,13 @@ class AutotagStub(object):
     autotagger returns.
     """
 
-    NONE   = 'NONE'
-    IDENT  = 'IDENT'
-    GOOD   = 'GOOD'
-    BAD    = 'BAD'
+    NONE    = 'NONE'
+    IDENT   = 'IDENT'
+    GOOD    = 'GOOD'
+    BAD     = 'BAD'
+    MISSING = 'MISSING'
+    """Generate an album match for all but one track
+    """
 
     length = 2
     matching = IDENT
@@ -50,15 +53,21 @@ class AutotagStub(object):
     def install(self):
         self.mb_match_album = autotag.mb.match_album
         self.mb_match_track = autotag.mb.match_track
+        self.mb_album_for_id = autotag.mb.album_for_id
+        self.mb_track_for_id = autotag.mb.track_for_id
 
         autotag.mb.match_album = self.match_album
         autotag.mb.match_track = self.match_track
+        autotag.mb.album_for_id = self.album_for_id
+        autotag.mb.track_for_id = self.track_for_id
 
         return self
 
     def restore(self):
         autotag.mb.match_album = self.mb_match_album
         autotag.mb.match_track = self.mb_match_album
+        autotag.mb.album_for_id = self.mb_album_for_id
+        autotag.mb.track_for_id = self.mb_track_for_id
 
     def match_album(self, albumartist, album, tracks):
         if self.matching == self.IDENT:
@@ -72,6 +81,9 @@ class AutotagStub(object):
             for i in range(self.length):
                 yield self._make_album_match(albumartist, album, tracks, i + 1)
 
+        elif self.matching == self.MISSING:
+            yield self._make_album_match(albumartist, album, tracks, missing=1)
+
     def match_track(self, artist, title):
         yield TrackInfo(
             title=title.replace('Tag', 'Applied'),
@@ -81,6 +93,12 @@ class AutotagStub(object):
             length=1
         )
 
+    def album_for_id(self, mbid):
+        return None
+
+    def track_for_id(self, mbid):
+        return None
+
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
             title=u'Applied Title %d' % number,
@@ -89,7 +107,7 @@ class AutotagStub(object):
             length=1
         )
 
-    def _make_album_match(self, artist, album, tracks, distance=0):
+    def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
         if distance:
             id = ' ' + 'M' * distance
         else:
@@ -101,7 +119,7 @@ class AutotagStub(object):
         album = album.replace('Tag', 'Applied') + id
 
         trackInfos = []
-        for i in range(tracks):
+        for i in range(tracks - missing):
             trackInfos.append(self._make_track_match(artist, album, i + 1))
 
         return AlbumInfo(
@@ -536,6 +554,13 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         self.assertEqual(len(self.lib.albums()), 1)
 
+    def test_unmatched_tracks_not_added(self):
+        self._create_import_dir(2)
+        self.matcher.matching = self.matcher.MISSING
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 1)
+
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
     """Test TRACKS and APPLY choice.
@@ -875,11 +900,10 @@ class InferAlbumDataTest(_common.TestCase):
 
         self.task = importer.ImportTask(paths=['a path'], toppath='top path',
                                         items=self.items)
-        self.task.set_null_candidates()
 
     def test_asis_homogenous_single_artist(self):
         self.task.set_choice(importer.action.ASIS)
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
         self.assertFalse(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
@@ -888,7 +912,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[1].artist = 'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertTrue(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, 'Various Artists')
@@ -898,7 +922,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[1].artist = 'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         for item in self.items:
             self.assertTrue(item.comp)
@@ -908,7 +932,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[0].artist = 'another artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertFalse(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
@@ -921,7 +945,7 @@ class InferAlbumDataTest(_common.TestCase):
             item.mb_albumartistid = 'some album artist id'
         self.task.set_choice(importer.action.ASIS)
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist,
                          'some album artist')
@@ -931,7 +955,7 @@ class InferAlbumDataTest(_common.TestCase):
     def test_apply_gets_artist_and_id(self):
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist, self.items[0].artist)
         self.assertEqual(self.items[0].mb_albumartistid,
@@ -943,7 +967,7 @@ class InferAlbumDataTest(_common.TestCase):
             item.mb_albumartistid = 'some album artist id'
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist,
                          'some album artist')
@@ -954,8 +978,25 @@ class InferAlbumDataTest(_common.TestCase):
         self.items = [self.items[0]]
         self.task.items = self.items
         self.task.set_choice(importer.action.ASIS)
-        self.task.infer_album_fields()
+        self.task.align_album_level_fields()
         self.assertFalse(self.items[0].comp)
+
+
+def test_album_info():
+    """Create an AlbumInfo object for testing.
+    """
+    track_info = TrackInfo(
+        title=u'new title',
+        track_id=u'trackid',
+    )
+    album_info = AlbumInfo(
+        artist=u'artist',
+        album=u'album',
+        tracks=[track_info],
+        album_id=u'albumid',
+        artist_id=u'artistid',
+    )
+    return album_info
 
 
 class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
@@ -969,18 +1010,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         # Create duplicate through autotagger
         self.match_album_patcher = patch('beets.autotag.mb.match_album')
         self.match_album = self.match_album_patcher.start()
-        track_info = TrackInfo(
-            title=u'new title',
-            track_id=u'trackid',
-        )
-        album_info = AlbumInfo(
-            artist=u'artist',
-            album=u'album',
-            tracks=[track_info],
-            album_id=u'albumid',
-            artist_id=u'artistid',
-        )
-        self.match_album.return_value = iter([album_info])
+        self.match_album.return_value = iter([test_album_info()])
 
         # Create import session
         self.importer = self.create_importer()
@@ -1003,6 +1033,29 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.title, u'new title')
+
+    def test_no_autotag_keeps_duplicate_album(self):
+        config['import']['autotag'] = False
+        item = self.lib.items().get()
+        self.assertEqual(item.title, u't\xeftle 0')
+        self.assertTrue(os.path.isfile(item.path))
+
+        # Imported item has the same artist and album as the one in the
+        # library.
+        import_file = os.path.join(self.importer.paths[0],
+                                   'album 0', 'track 0.mp3')
+        import_file = MediaFile(import_file)
+        import_file.artist = item['artist']
+        import_file.albumartist = item['artist']
+        import_file.album = item['album']
+        import_file.title = 'new title'
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        self.assertTrue(os.path.isfile(item.path))
+        self.assertEqual(len(self.lib.albums()), 2)
+        self.assertEqual(len(self.lib.items()), 2)
 
     def test_keep_duplicate_album(self):
         self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
@@ -1335,6 +1388,89 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
             os.remove(path)
         albums = list(albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
+
+
+class ReimportTest(unittest.TestCase, ImportHelper):
+    """Test "re-imports", in which the autotagging machinery is used for
+    music that's already in the library.
+
+    This works by importing new database entries for the same files and
+    replacing the old data with the new data. We also copy over flexible
+    attributes and the added date.
+    """
+
+    def setUp(self):
+        self.setup_beets()
+
+        # The existing album.
+        album = self.add_album_fixture()
+        album.added = 4242.0
+        album.foo = u'bar'  # Some flexible attribute.
+        album.store()
+        item = album.items().get()
+        item.baz = u'qux'
+        item.added = 4747.0
+        item.store()
+
+        # Set up an import pipeline with a "good" match.
+        self.matcher = AutotagStub().install()
+        self.matcher.matching = AutotagStub.GOOD
+
+    def tearDown(self):
+        self.teardown_beets()
+        self.matcher.restore()
+
+    def _setup_session(self, singletons=False):
+        self._setup_import_session(self._album().path, singletons=singletons)
+        self.importer.add_choice(importer.action.APPLY)
+
+    def _album(self):
+        return self.lib.albums().get()
+
+    def _item(self):
+        return self.lib.items().get()
+
+    def test_reimported_album_gets_new_metadata(self):
+        self._setup_session()
+        self.assertEqual(self._album().album, u'\xe4lbum')
+        self.importer.run()
+        self.assertEqual(self._album().album, u'the album')
+
+    def test_reimported_album_preserves_flexattr(self):
+        self._setup_session()
+        self.importer.run()
+        self.assertEqual(self._album().foo, u'bar')
+
+    def test_reimported_album_preserves_added(self):
+        self._setup_session()
+        self.importer.run()
+        self.assertEqual(self._album().added, 4242.0)
+
+    def test_reimported_album_preserves_item_flexattr(self):
+        self._setup_session()
+        self.importer.run()
+        self.assertEqual(self._item().baz, u'qux')
+
+    def test_reimported_album_preserves_item_added(self):
+        self._setup_session()
+        self.importer.run()
+        self.assertEqual(self._item().added, 4747.0)
+
+    def test_reimported_item_gets_new_metadata(self):
+        self._setup_session(True)
+        self.assertEqual(self._item().title, u't\xeftle 0')
+        self.importer.run()
+        self.assertEqual(self._item().title, u'full')
+
+    def test_reimported_item_preserves_flexattr(self):
+        self._setup_session(True)
+        self.importer.run()
+        self.assertEqual(self._item().baz, u'qux')
+
+    def test_reimported_item_preserves_added(self):
+        self._setup_session(True)
+        self.importer.run()
+        self.assertEqual(self._item().added, 4747.0)
 
 
 def suite():

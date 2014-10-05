@@ -78,19 +78,18 @@ class ZeroPlugin(BeetsPlugin):
                 return True
         return False
 
-    def write_event(self, item):
+    def write_event(self, item, path, tags):
         """Listen for write event."""
         if not self.patterns:
             log.warn(u'[zero] no fields, nothing to do')
             return
 
         for field, patterns in self.patterns.items():
-            try:
-                value = getattr(item, field)
-            except AttributeError:
+            if field not in tags:
                 log.error(u'[zero] no such field: {0}'.format(field))
                 continue
 
+            value = tags[field]
             if self.match_patterns(value, patterns):
                 log.debug(u'[zero] {0}: {1} -> None'.format(field, value))
-                setattr(item, field, None)
+                tags[field] = None

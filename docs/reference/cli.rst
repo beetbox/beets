@@ -132,6 +132,8 @@ Optional command flags:
 
 .. only:: html
 
+    .. _reimport:
+
     Reimporting
     ^^^^^^^^^^^
 

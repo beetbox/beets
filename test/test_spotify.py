@@ -7,6 +7,7 @@ from beets import config
 from beets.library import Item
 from beetsplug import spotify
 from helper import TestHelper
+import urlparse
 
 
 class ArgumentsMock(object):
@@ -14,6 +15,11 @@ class ArgumentsMock(object):
         self.mode = mode
         self.show_failures = show_failures
         self.verbose = True
+
+
+def _params(url):
+    """Get the query parameters from a URL."""
+    return urlparse.parse_qs(urlparse.urlparse(url).query)
 
 
 class SpotifyPluginTest(_common.TestCase, TestHelper):
@@ -37,6 +43,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
     def test_empty_query(self):
         self.assertEqual(None, self.spotify.query_spotify(self.lib, "1=2"))
 
+    @responses.activate
     def test_missing_request(self):
         response_body = str(
             '{'
@@ -52,9 +59,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             '}'
             '}'
         )
-        responses.add(responses.GET,
-                      'https://api.spotify.com/v1/search?q=duifhjslkef+album'
-                      '%3Alkajsdflakjsd+artist%3A&type=track',
+        responses.add(responses.GET, 'https://api.spotify.com/v1/search',
                       body=response_body, status=200,
                       content_type='application/json')
         item = Item(
@@ -67,6 +72,14 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         item.add(self.lib)
         self.assertEquals([], self.spotify.query_spotify(self.lib, ""))
 
+        params = _params(responses.calls[0].request.url)
+        self.assertEquals(
+            params['q'],
+            ['duifhjslkef album:lkajsdflakjsd artist:ujydfsuihse'],
+        )
+        self.assertEquals(params['type'], ['track'])
+
+    @responses.activate
     def test_track_request(self):
         response_body = str(
             '{'
@@ -164,10 +177,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             '}'
             '}'
         )
-        responses.add(responses.GET,
-                      'https://api.spotify.com/v1/search?q=Happy+album%3A'
-                      'Despicable%20Me%202+artist%3APharrell%20'
-                      'Williams&type=track',
+        responses.add(responses.GET, 'https://api.spotify.com/v1/search',
                       body=response_body, status=200,
                       content_type='application/json')
         item = Item(
@@ -182,6 +192,13 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.assertEquals(1, len(results))
         self.assertEquals("6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
         self.spotify.output_results(results)
+
+        params = _params(responses.calls[0].request.url)
+        self.assertEquals(
+            params['q'],
+            ['Happy album:Despicable Me 2 artist:Pharrell Williams'],
+        )
+        self.assertEquals(params['type'], ['track'])
 
 
 def suite():

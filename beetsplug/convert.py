@@ -151,8 +151,12 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
         if keep_new:
             original = dest
             converted = item.path
+            if should_transcode(item, format):
+                converted = replace_ext(converted, ext)
         else:
             original = item.path
+            if should_transcode(item, format):
+                dest = replace_ext(dest, ext)
             converted = dest
 
         # Ensure that only one thread tries to create directories at a
@@ -181,7 +185,6 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                 util.move(item.path, original)
 
         if should_transcode(item, format):
-            converted = replace_ext(converted, ext)
             try:
                 encode(command, original, converted, pretend)
             except subprocess.CalledProcessError:
@@ -232,7 +235,7 @@ def convert_on_import(lib, item):
     format = config['convert']['format'].get(unicode).lower()
     if should_transcode(item, format):
         command, ext = get_format()
-        fd, dest = tempfile.mkstemp(ext)
+        fd, dest = tempfile.mkstemp('.' + ext)
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         try:
@@ -338,7 +341,7 @@ class ConvertPlugin(BeetsPlugin):
                               help='set the destination directory')
         cmd.parser.add_option('-f', '--format', action='store', dest='format',
                               help='set the destination directory')
-        cmd.parser.add_option('-y', '--yes', action='store', dest='yes',
+        cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help='do not ask for confirmation')
         cmd.func = convert_func
         return [cmd]

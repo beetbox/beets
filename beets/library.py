@@ -60,13 +60,10 @@ class PathQuery(dbcore.FieldQuery):
 
 # Library-specific field types.
 
-
-class DateType(types.Type):
+class DateType(types.Float):
     # TODO representation should be `datetime` object
     # TODO distinguish beetween date and time types
-    sql = u'REAL'
     query = dbcore.query.DateQuery
-    null = 0.0
 
     def format(self, value):
         return time.strftime(beets.config['time_format'].get(unicode),
@@ -89,6 +86,7 @@ class DateType(types.Type):
 class PathType(types.Type):
     sql = u'BLOB'
     query = PathQuery
+    model_type = bytes
 
     def format(self, value):
         return util.displayable_path(value)
@@ -108,6 +106,14 @@ class PathType(types.Type):
 
         else:
             return value
+
+    def from_sql(self, sql_value):
+        return self.normalize(sql_value)
+
+    def to_sql(self, value):
+        if isinstance(value, str):
+            value = buffer(value)
+        return value
 
 
 class MusicalKey(types.String):
@@ -135,6 +141,34 @@ class MusicalKey(types.String):
             return None
         else:
             return self.parse(key)
+
+
+# Library-specific sort types.
+
+class SmartArtistSort(dbcore.query.Sort):
+    """Sort by artist (either album artist or track artist),
+    prioritizing the sort field over the raw field.
+    """
+    def __init__(self, model_cls, ascending=True):
+        self.album = model_cls is Album
+        self.ascending = ascending
+
+    def order_clause(self):
+        order = "ASC" if self.ascending else "DESC"
+        if self.album:
+            field = 'albumartist'
+        else:
+            field = 'artist'
+        return ('(CASE {0}_sort WHEN NULL THEN {0} '
+                'WHEN "" THEN {0} '
+                'ELSE {0}_sort END) {1}').format(field, order)
+
+    def sort(self, objs):
+        if self.album:
+            key = lambda a: a.albumartist_sort or a.albumartist
+        else:
+            key = lambda i: i.artist_sort or i.artist
+        return sorted(objs, key=key, reverse=not self.ascending)
 
 
 # Special path format key.
@@ -188,7 +222,6 @@ class WriteError(FileOperationError):
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
-    _bytes_keys = ('path', 'artpath')
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
@@ -341,6 +374,8 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
+    _sorts = {'artist': SmartArtistSort}
+
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
@@ -438,7 +473,8 @@ class Item(LibModel):
         else:
             path = normpath(path)
 
-        plugins.send('write', item=self, path=path)
+        tags = dict(self)
+        plugins.send('write', item=self, path=path, tags=tags)
 
         try:
             mediafile = MediaFile(syspath(path),
@@ -446,7 +482,7 @@ class Item(LibModel):
         except (OSError, IOError, UnreadableFileError) as exc:
             raise ReadError(self.path, exc)
 
-        mediafile.update(self)
+        mediafile.update(tags)
         try:
             mediafile.save()
         except (OSError, IOError, MutagenError) as exc:
@@ -469,6 +505,22 @@ class Item(LibModel):
         except FileOperationError as exc:
             log.error(exc)
             return False
+
+    def try_sync(self, write=None):
+        """Synchronize the item with the database and the media file
+        tags, updating them with this object's current state.
+
+        By default, the current `path` for the item is used to write
+        tags. If `write` is `False`, no tags are written. If `write` is
+        a path, tags are written to that file instead.
+
+        Similar to calling :meth:`write` and :meth:`store`.
+        """
+        if write is True:
+            write = None
+        if write is not False:
+            self.try_write(path=write)
+        self.store()
 
     # Files themselves.
 
@@ -591,7 +643,7 @@ class Item(LibModel):
         for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
-            (query, _) = get_query_sort(query, type(self))
+            query, _ = parse_query_string(query, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
@@ -692,6 +744,11 @@ class Album(LibModel):
 
     _search_fields = ('album', 'albumartist', 'genre')
 
+    _sorts = {
+        'albumartist': SmartArtistSort,
+        'artist': SmartArtistSort,
+    }
+
     item_keys = [
         'added',
         'albumartist',
@@ -774,7 +831,9 @@ class Album(LibModel):
             return
 
         new_art = util.unique_path(new_art)
-        log.debug('moving album art %s to %s' % (old_art, new_art))
+        log.debug(u'moving album art {0} to {1}'
+                  .format(util.displayable_path(old_art),
+                          util.displayable_path(new_art)))
         if copy:
             util.copy(old_art, new_art)
         elif link:
@@ -888,71 +947,68 @@ class Album(LibModel):
                         item[key] = value
                     item.store()
 
+    def try_sync(self, write=True):
+        """Synchronize the album and its items with the database and
+        their files by updating them with this object's current state.
 
-# Query construction and parsing helpers.
+        `write` indicates whether to write tags to the item files.
+        """
+        self.store()
+        for item in self.items():
+            item.try_sync(bool(write))
 
-def get_query_sort(val, model_cls):
-    """Take a value which may be None, a query string, a query string
-    list, or a Query object, and return a suitable Query object and Sort
-    object.
 
-    `model_cls` is the subclass of Model indicating which entity this
-    is a query for (i.e., Album or Item) and is used to determine which
-    fields are searched.
+# Query construction helpers.
+
+def parse_query_parts(parts, model_cls):
+    """Given a beets query string as a list of components, return the
+    `Query` and `Sort` they represent.
+
+    Like `dbcore.parse_sorted_query`, with beets query prefixes and
+    special path query detection.
     """
     # Get query types and their prefix characters.
     prefixes = {':': dbcore.query.RegexpQuery}
     prefixes.update(plugins.queries())
 
-    # Convert a single string into a list of space-separated
-    # criteria.
-    if isinstance(val, basestring):
-        # A bug in Python < 2.7.3 prevents correct shlex splitting of
-        # Unicode strings.
-        # http://bugs.python.org/issue6988
-        if isinstance(val, unicode):
-            val = val.encode('utf8')
-        val = [s.decode('utf8') for s in shlex.split(val)]
-
-    if val is None:
-        return (dbcore.query.TrueQuery(), None)
-
-    elif isinstance(val, list) or isinstance(val, tuple):
-        # Special-case path-like queries, which are non-field queries
-        # containing path separators (/).
-        if 'path' in model_cls._fields:
-            path_parts = []
-            non_path_parts = []
-            for s in val:
-                if s.find(os.sep, 0, s.find(':')) != -1:
-                    # Separator precedes colon.
-                    path_parts.append(s)
-                else:
-                    non_path_parts.append(s)
-        else:
-            path_parts = ()
-            non_path_parts = val
-
-        # separate query token and sort token
-        query_val = [s for s in non_path_parts if not s.endswith(('+', '-'))]
-        sort_val = [s for s in non_path_parts if s.endswith(('+', '-'))]
-
-        # Parse remaining parts and construct an AndQuery.
-        query = dbcore.query_from_strings(
-            dbcore.AndQuery, model_cls, prefixes, query_val
-        )
-        sort = dbcore.sort_from_strings(model_cls, sort_val)
-
-        # Add path queries to aggregate query.
-        if path_parts:
-            query.subqueries += [PathQuery('path', s) for s in path_parts]
-        return query, sort
-
-    elif isinstance(val, dbcore.Query):
-        return val, None
-
+    # Special-case path-like queries, which are non-field queries
+    # containing path separators (/).
+    if 'path' in model_cls._fields:
+        path_parts = []
+        non_path_parts = []
+        for s in parts:
+            if s.find(os.sep, 0, s.find(':')) != -1:
+                # Separator precedes colon.
+                path_parts.append(s)
+            else:
+                non_path_parts.append(s)
     else:
-        raise ValueError('query must be None or have type Query or str')
+        path_parts = ()
+        non_path_parts = parts
+
+    query, sort = dbcore.parse_sorted_query(
+        model_cls, non_path_parts, prefixes
+    )
+
+    # Add path queries to aggregate query.
+    if path_parts:
+        query.subqueries += [PathQuery('path', s) for s in path_parts]
+    return query, sort
+
+
+def parse_query_string(s, model_cls):
+    """Given a beets query string, return the `Query` and `Sort` they
+    represent.
+
+    The string is split into components using shell-like syntax.
+    """
+    # A bug in Python < 2.7.3 prevents correct shlex splitting of
+    # Unicode strings.
+    # http://bugs.python.org/issue6988
+    if isinstance(s, unicode):
+        s = s.encode('utf8')
+    parts = [p.decode('utf8') for p in shlex.split(s)]
+    return parse_query_parts(parts, model_cls)
 
 
 # The Library: interface to the database.
@@ -1016,30 +1072,41 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort_order=None):
-        """Parse a query and fetch. If a order specification is present in the
-        query string the sort_order argument is ignored.
-          """
-        query, sort = get_query_sort(query, model_cls)
-        sort = sort or sort_order
+    def _fetch(self, model_cls, query, sort=None):
+        """Parse a query and fetch. If a order specification is present
+        in the query string the `sort` argument is ignored.
+        """
+        # Parse the query, if necessary.
+        parsed_sort = None
+        if isinstance(query, basestring):
+            query, parsed_sort = parse_query_string(query, model_cls)
+        elif isinstance(query, (list, tuple)):
+            query, parsed_sort = parse_query_parts(query, model_cls)
+
+        # Any non-null sort specified by the parsed query overrides the
+        # provided sort.
+        if parsed_sort and not isinstance(parsed_sort, dbcore.query.NullSort):
+            sort = parsed_sort
 
         return super(Library, self)._fetch(
             model_cls, query, sort
         )
 
-    def albums(self, query=None, sort_order=None):
-        """Get a sorted list of :class:`Album` objects matching the
-        given sort order. If a order specification is present in the query
-        string the sort_order argument is ignored.
+    def albums(self, query=None, sort=None):
+        """Get :class:`Album` objects matching the query.
         """
-        return self._fetch(Album, query, sort_order)
+        sort = sort or dbcore.sort_from_strings(
+            Album, beets.config['sort_album'].as_str_seq()
+        )
+        return self._fetch(Album, query, sort)
 
-    def items(self, query=None, sort_order=None):
-        """Get a sorted list of :class:`Item` objects matching the given
-        given sort order. If a order specification is present in the query
-        string the sort_order argument is ignored.
+    def items(self, query=None, sort=None):
+        """Get :class:`Item` objects matching the query.
         """
-        return self._fetch(Item, query, sort_order)
+        sort = sort or dbcore.sort_from_strings(
+            Item, beets.config['sort_item'].as_str_seq()
+        )
+        return self._fetch(Item, query, sort)
 
     # Convenience accessors.
 
