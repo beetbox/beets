@@ -34,11 +34,14 @@ reimported_item_ids = None
 # album.path for old albums that were replaced by a new reimported album
 replaced_album_paths = None
 
+
 def reimported_item(item):
     return item.id in reimported_item_ids
 
+
 def reimported_album(album):
     return album.path in replaced_album_paths
+
 
 @ImportAddedPlugin.listen('import_task_files')
 def record_reimported(task, session):
