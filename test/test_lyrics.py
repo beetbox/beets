@@ -312,6 +312,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
         self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
                          artist), False, url)
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
