@@ -163,8 +163,7 @@ class MockFetchUrl(object):
         url = url.replace('http://', '').replace('www.', '')
         fn = "".join(x for x in url if (x.isalnum() or x == '/'))
         fn = fn.split('/')
-        fn = os.path.join('rsrc', 'lyrics', fn[0], fn[-1]) + '.txt'
-
+        fn = os.path.join(_common.RSRC, 'lyrics', fn[0], fn[-1]) + '.txt'
         with open(fn, 'r') as f:
             content = f.read()
         return content
