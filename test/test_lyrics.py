@@ -186,7 +186,7 @@ def is_lyrics_content_ok(title, text):
 class LyricsGooglePluginTest(unittest.TestCase):
     # Every source entered in default beets google custom search engine
     # must be listed below.
-    # Use default query when possible, or override artist and title field
+    # Use default query when possible, or override artist and title fields
     # if website don't have lyrics for default query.
     sourcesOk = [
         dict(definfo,
@@ -227,6 +227,10 @@ class LyricsGooglePluginTest(unittest.TestCase):
         dict(definfo,
              url='http://www.metrolyrics.com/',
              path='lady-madonna-lyrics-beatles.html'),
+        dict(definfo,
+             url=u'http://www.onelyrics.net/',
+             artist=u'Ben & Ellen Harper', title=u'City of dreams',
+             path='ben-ellen-harper-city-of-dreams-lyrics'),
         dict(definfo,
              url=u'http://www.paroles.net/',
              artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
@@ -280,7 +284,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
             self.assertTrue(lyrics.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
-    def test_is_page_candidate(self):
+    def test_is_page_candidate_exact_match(self):
         from bs4 import SoupStrainer, BeautifulSoup
 
         for s in self.sourcesOk:
@@ -292,6 +296,22 @@ class LyricsGooglePluginTest(unittest.TestCase):
                                                       s['title'], s['artist']),
                              True, url)
 
+    def test_is_page_candidate_fuzzy_match(self):
+        url = u'http://www.example.com/lazy_madonna_beatles'
+        urlTitle = u'example.com | lazy madonna lyrics by the beatles'
+        title = u'Lady Madonna'
+        artist = u'The Beatles'
+        # very small diffs (typo) are ok
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
+                         artist), True, url)
+        # reject different title
+        urlTitle = u'example.com | busy madonna lyrics by the beatles'
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
+                         artist), False, url)
+        # (title, artist) != (artist, title)
+        urlTitle = u'example.com | the beatles lyrics by Lazy Madonna'
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
+                         artist), False, url)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
