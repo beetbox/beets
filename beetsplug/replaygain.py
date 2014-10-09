@@ -273,19 +273,25 @@ class GStreamerBackend(object):
 
         try:
             import gi
-            gi.require_version('Gst', '1.0')
-
-            from gi.repository import GObject, Gst, GLib
-            # Calling GObject.threads_init() is not needed for
-            # PyGObject 3.10.2+
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                GObject.threads_init()
-            Gst.init([sys.argv[0]])
-        except:
+        except ImportError:
             raise FatalReplayGainError(
-                "Failed to load GStreamer; check that python-gi is installed"
+                "Failed to load GStreamer: python-gi not found"
             )
+
+        try:
+            gi.require_version('Gst', '1.0')
+        except ValueError as e:
+            raise FatalReplayGainError(
+                "Failed to load GStreamer 1.0: {0}".format(e)
+            )
+
+        from gi.repository import GObject, Gst, GLib
+        # Calling GObject.threads_init() is not needed for
+        # PyGObject 3.10.2+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            GObject.threads_init()
+        Gst.init([sys.argv[0]])
 
         self.GObject = GObject
         self.GLib = GLib
@@ -498,7 +504,7 @@ class ReplayGainPlugin(BeetsPlugin):
             )
         except (ReplayGainError, FatalReplayGainError) as e:
             raise ui.UserError(
-                'An error occurred in backend initialization: {0}'.format(e)
+                'replaygain initialization failed: {0}'.format(e)
             )
 
     def track_requires_gain(self, item):
