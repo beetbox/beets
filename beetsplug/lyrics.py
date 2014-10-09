@@ -23,6 +23,7 @@ import json
 import unicodedata
 import difflib
 import itertools
+from HTMLParser import HTMLParseError
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -365,8 +366,12 @@ def scrape_lyrics_from_html(html):
     html = _scrape_merge_paragraphs(html)
 
     # extract all long text blocks that are not code
-    soup = BeautifulSoup(html, "html.parser",
-                         parse_only=SoupStrainer(text=is_text_notcode))
+    try:
+        soup = BeautifulSoup(html, "html.parser",
+                             parse_only=SoupStrainer(text=is_text_notcode))
+    except HTMLParseError:
+        return None
+
     soup = sorted(soup.stripped_strings, key=len)[-1]
 
     return soup
