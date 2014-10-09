@@ -17,6 +17,7 @@
 
 import os
 import _common
+import sys
 from _common import unittest
 from beetsplug import lyrics
 from beets.library import Item
@@ -163,8 +164,7 @@ class MockFetchUrl(object):
         url = url.replace('http://', '').replace('www.', '')
         fn = "".join(x for x in url if (x.isalnum() or x == '/'))
         fn = fn.split('/')
-        fn = os.path.join('rsrc', 'lyrics', fn[0], fn[-1]) + '.txt'
-
+        fn = os.path.join(_common.RSRC, 'lyrics', fn[0], fn[-1]) + '.txt'
         with open(fn, 'r') as f:
             content = f.read()
         return content
@@ -186,7 +186,7 @@ def is_lyrics_content_ok(title, text):
 class LyricsGooglePluginTest(unittest.TestCase):
     # Every source entered in default beets google custom search engine
     # must be listed below.
-    # Use default query when possible, or override artist and title field
+    # Use default query when possible, or override artist and title fields
     # if website don't have lyrics for default query.
     sourcesOk = [
         dict(definfo,
@@ -228,6 +228,10 @@ class LyricsGooglePluginTest(unittest.TestCase):
              url='http://www.metrolyrics.com/',
              path='lady-madonna-lyrics-beatles.html'),
         dict(definfo,
+             url=u'http://www.onelyrics.net/',
+             artist=u'Ben & Ellen Harper', title=u'City of dreams',
+             path='ben-ellen-harper-city-of-dreams-lyrics'),
+        dict(definfo,
              url=u'http://www.paroles.net/',
              artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
              path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
@@ -258,7 +262,8 @@ class LyricsGooglePluginTest(unittest.TestCase):
             __import__('bs4')
         except ImportError:
             self.skipTest('Beautiful Soup 4 not available')
-
+        if sys.version_info[:3] < (2, 7, 3):
+            self.skipTest("Python’s built-in HTML parser is not good enough")
         lyrics.LyricsPlugin()
         lyrics.fetch_url = MockFetchUrl()
 
@@ -280,7 +285,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
             self.assertTrue(lyrics.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
-    def test_is_page_candidate(self):
+    def test_is_page_candidate_exact_match(self):
         from bs4 import SoupStrainer, BeautifulSoup
 
         for s in self.sourcesOk:
@@ -291,6 +296,23 @@ class LyricsGooglePluginTest(unittest.TestCase):
             self.assertEqual(lyrics.is_page_candidate(url, soup.title.string,
                                                       s['title'], s['artist']),
                              True, url)
+
+    def test_is_page_candidate_fuzzy_match(self):
+        url = u'http://www.example.com/lazy_madonna_beatles'
+        urlTitle = u'example.com | lazy madonna lyrics by the beatles'
+        title = u'Lady Madonna'
+        artist = u'The Beatles'
+        # very small diffs (typo) are ok
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
+                         artist), True, url)
+        # reject different title
+        urlTitle = u'example.com | busy madonna lyrics by the beatles'
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
+                         artist), False, url)
+        # (title, artist) != (artist, title)
+        urlTitle = u'example.com | the beatles lyrics by Lazy Madonna'
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
+                         artist), False, url)
 
 
 def suite():

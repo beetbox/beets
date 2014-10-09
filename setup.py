@@ -85,12 +85,13 @@ setup(
     + (['ordereddict'] if sys.version_info < (2, 7, 0) else []),
 
     tests_require=[
-        'responses',
-        'pyechonest',
-        'mock',
+        'beautifulsoup4',
         'flask',
-        'rarfile',
+        'mock',
+        'pyechonest',
         'pylast',
+        'rarfile',
+        'responses',
     ],
 
     # Plugin (optional) dependencies:

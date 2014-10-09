@@ -23,6 +23,7 @@ import json
 import unicodedata
 import difflib
 import itertools
+from HTMLParser import HTMLParseError
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -271,8 +272,9 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     tokens = [by + '_' + artist for by in BY_TRANS] + \
              [artist, sitename, sitename.replace('www.', '')] + LYRICS_TRANS
     songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
+    songTitle = songTitle.strip('_|')
+    typoRatio = .9
 
-    typoRatio = .8
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
 
 
@@ -364,8 +366,12 @@ def scrape_lyrics_from_html(html):
     html = _scrape_merge_paragraphs(html)
 
     # extract all long text blocks that are not code
-    soup = BeautifulSoup(html, "html.parser",
-                         parse_only=SoupStrainer(text=is_text_notcode))
+    try:
+        soup = BeautifulSoup(html, "html.parser",
+                             parse_only=SoupStrainer(text=is_text_notcode))
+    except HTMLParseError:
+        return None
+
     soup = sorted(soup.stripped_strings, key=len)[-1]
 
     return soup
