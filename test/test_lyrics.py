@@ -17,6 +17,7 @@
 
 import os
 import _common
+import sys
 from _common import unittest
 from beetsplug import lyrics
 from beets.library import Item
@@ -261,7 +262,8 @@ class LyricsGooglePluginTest(unittest.TestCase):
             __import__('bs4')
         except ImportError:
             self.skipTest('Beautiful Soup 4 not available')
-
+        if sys.version_info[:3] < (2, 7, 3):
+            self.skipTest("Python’s built-in HTML parser is not good enough")
         lyrics.LyricsPlugin()
         lyrics.fetch_url = MockFetchUrl()
 
