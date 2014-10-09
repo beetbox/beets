@@ -16,6 +16,7 @@
 
 from mock import Mock
 
+import _common
 from _common import unittest
 from beetsplug import lastgenre
 from beets import config
@@ -179,32 +180,32 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
 
         self._setup_config(whitelist=False)
-        item_mock = Mock(spec=library.Item)
-        item_mock.genre = MOCK_GENRES['track']
+        item = _common.item()
+        item.genre = MOCK_GENRES['track']
 
         config['lastgenre'] = {'force': False}
-        res = self.plugin._get_genre(item_mock)
-        self.assertEqual(res, (item_mock.genre, 'keep'))
+        res = self.plugin._get_genre(item)
+        self.assertEqual(res, (item.genre, 'keep'))
 
         config['lastgenre'] = {'force': True, 'source': 'track'}
-        res = self.plugin._get_genre(item_mock)
+        res = self.plugin._get_genre(item)
         self.assertEqual(res, (MOCK_GENRES['track'], 'track'))
 
         config['lastgenre'] = {'source': 'album'}
-        res = self.plugin._get_genre(item_mock)
+        res = self.plugin._get_genre(item)
         self.assertEqual(res, (MOCK_GENRES['album'], 'album'))
 
         config['lastgenre'] = {'source': 'artist'}
-        res = self.plugin._get_genre(item_mock)
+        res = self.plugin._get_genre(item)
         self.assertEqual(res, (MOCK_GENRES['artist'], 'artist'))
 
         MOCK_GENRES['artist'] = None
-        res = self.plugin._get_genre(item_mock)
-        self.assertEqual(res, (item_mock.genre, 'original'))
+        res = self.plugin._get_genre(item)
+        self.assertEqual(res, (item.genre, 'original'))
 
         config['lastgenre'] = {'fallback': 'rap'}
-        item_mock.genre = None
-        res = self.plugin._get_genre(item_mock)
+        item.genre = None
+        res = self.plugin._get_genre(item)
         self.assertEqual(res, (config['lastgenre']['fallback'].get(),
                          'fallback'))
 
