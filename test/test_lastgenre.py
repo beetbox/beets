@@ -20,7 +20,6 @@ import _common
 from _common import unittest
 from beetsplug import lastgenre
 from beets import config
-from beets import library
 
 from helper import TestHelper
 
