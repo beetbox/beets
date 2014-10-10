@@ -65,7 +65,7 @@ def write_item_mtime(item, mtime):
     item's file.
     """
     if mtime is None:
-        log.warn(u"No mtime to be preserved for item {0}"
+        log.warn(u"No mtime to be preserved for item '{0}'"
                  .format(util.displayable_path(item.path)))
         return
 
@@ -94,8 +94,9 @@ def record_import_mtime(item, source, destination):
 @ImportAddedPlugin.listen('album_imported')
 def update_album_times(lib, album):
     if reimported_album(album):
-        log.debug(u"Album {0} is reimported, skipping import of added "
-                  u"dates for the album and its items.".format(album.path))
+        log.debug(u"Album '{0}' is reimported, skipping import of added dates"
+                  u" for the album and its items."
+                  .format(util.displayable_path(album.path)))
         return
 
     album_mtimes = []
@@ -107,7 +108,7 @@ def update_album_times(lib, album):
                 write_item_mtime(item, mtime)
                 item.store()
     album.added = min(album_mtimes)
-    log.debug(u"Import of album {0}, selected album.added={1} from item"
+    log.debug(u"Import of album '{0}', selected album.added={1} from item"
               u" file mtimes.".format(album.album, album.added))
     album.store()
 
@@ -115,7 +116,7 @@ def update_album_times(lib, album):
 @ImportAddedPlugin.listen('item_imported')
 def update_item_times(lib, item):
     if reimported_item(item):
-        log.debug(u"Item {0} is reimported, skipping import of added "
+        log.debug(u"Item '{0}' is reimported, skipping import of added "
                   u"date.".format(util.displayable_path(item.path)))
         return
     mtime = item_mtime.pop(item.path, None)
@@ -123,6 +124,6 @@ def update_item_times(lib, item):
         item.added = mtime
         if config['importadded']['preserve_mtimes'].get(bool):
             write_item_mtime(item, mtime)
-        log.debug(u"Import of item {0}, selected item.added={1}".format(
-                  util.displayable_path(item.path), item.added))
+        log.debug(u"Import of item '{0}', selected item.added={1}"
+                  .format(util.displayable_path(item.path), item.added))
         item.store()
