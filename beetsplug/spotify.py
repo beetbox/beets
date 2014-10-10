@@ -49,7 +49,7 @@ class SpotifyPlugin(BeetsPlugin):
         )
         spotify_cmd.parser.add_option(
             '-f', '--show-failures', action='store_true',
-            help='list tracks that did not match a Sptoify ID',
+            help='list tracks that did not match a Spotify ID',
             dest='show_failures',
         )
         spotify_cmd.func = queries
