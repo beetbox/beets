@@ -265,8 +265,10 @@ def types(model_cls):
             if field in types:
                 raise PluginConflictException(
                     u'Plugin {0} defines flexible field {1} '
-                    'which has already been defined.'
-                    .format(plugin.name,))
+                    'which has already been defined.'.format(
+                        plugin.name, field
+                    )
+                )
         types.update(plugin_types)
     return types
 
