@@ -30,6 +30,8 @@ Fixes:
   beets and instead fail silently.
 * Slow queries, such as those over flexible attributes, should now be much
   faster when used with certain commands---notably, the :doc:`/plugins/play`.
+* :doc:`/plugins/duplicates`: Emit an error when the ``checksum`` config
+  option is set incorrectly.
 
 
 1.3.8 (September 17, 2014)

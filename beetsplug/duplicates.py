@@ -209,6 +209,10 @@ class DuplicatesPlugin(BeetsPlugin):
                 fmt += ': {0}'
 
             if checksum:
+                if not isinstance(checksum, basestring):
+                    raise UserError(
+                        'duplicates: "checksum" option must be a command'
+                    )
                 for i in items:
                     k, _ = _checksum(i, checksum)
                 keys = [k]
