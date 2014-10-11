@@ -474,28 +474,30 @@ class Results(object):
         self.query = query
         self.sort = sort
 
+    def _get_objects(self):
+        """Construct and generate Model objects for they query. The
+        objects are returned in the order emitted from the database; no
+        slow sort is applied.
+        """
+        for row in self.rows:
+            obj = self._make_model(row)
+            # If there is a slow-query predicate, ensurer that the
+            # object passes it.
+            if not self.query or self.query.match(obj):
+                yield obj
+
     def __iter__(self):
-        """Construct Python objects for all rows that pass the query
-        predicate.
+        """Construct and generate Model objects for all matching
+        objects, in sorted order.
         """
         if self.sort:
             # Slow sort. Must build the full list first.
-            objects = []
-            for row in self.rows:
-                obj = self._make_model(row)
-                # check the predicate if any
-                if not self.query or self.query.match(obj):
-                    objects.append(obj)
-            # Now that we have the full list, we can sort it
-            objects = self.sort.sort(objects)
-            for o in objects:
-                yield o
+            objects = self.sort.sort(list(self._get_objects()))
+            return iter(objects)
+
         else:
-            for row in self.rows:
-                obj = self._make_model(row)
-                # check the predicate if any
-                if not self.query or self.query.match(obj):
-                    yield obj
+            # Objects are pre-sorted (i.e., by the database).
+            return self._get_objects()
 
     def _make_model(self, row):
         # Get the flexible attributes for the object.
