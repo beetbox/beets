@@ -459,14 +459,18 @@ class Results(object):
     """
     def __init__(self, model_class, rows, db, query=None, sort=None):
         """Create a result set that will construct objects of type
-        `model_class`, which should be a subclass of `LibModel`, out of
-        the query result mapping in `rows`. The new objects are
-        associated with the database `db`.
-        If `query` is provided, it is used as a predicate to filter the results
-        for a "slow query" that cannot be evaluated by the database directly.
-        If `sort` is provided, it is used to sort the full list of results
-        before returning. This means it is a "slow sort" and all objects must
-        be built before returning the first one.
+        `model_class`.
+
+        `model_class` is a subclass of `LibModel` that will be
+        constructed. `rows` is a query result: a list of mappings. The
+        new objects will be associated with the database `db`.
+
+        If `query` is provided, it is used as a predicate to filter the
+        results for a "slow query" that cannot be evaluated by the
+        database directly. If `sort` is provided, it is used to sort the
+        full list of results before returning. This means it is a "slow
+        sort" and all objects must be built before returning the first
+        one.
         """
         self.model_class = model_class
         self.rows = rows
@@ -474,16 +478,31 @@ class Results(object):
         self.query = query
         self.sort = sort
 
+        self._objects = []  # Model objects materialized *so far*.
+        self._row_iter = iter(self.rows)  # Indicate next row to materialize.
+
     def _get_objects(self):
         """Construct and generate Model objects for they query. The
         objects are returned in the order emitted from the database; no
         slow sort is applied.
+
+        For performance, this generator caches materialized objects to
+        avoid constructing them more than once. This way, iterating over
+        a `Results` object a second time should be much faster than the
+        first.
         """
-        for row in self.rows:
+        # Get the previously-materialized objects.
+        for object in self._objects:
+            yield object
+
+        # Now, for the rows that have not yet been processed, materialize
+        # objects and add them to the list.
+        for row in self._row_iter:
             obj = self._make_model(row)
             # If there is a slow-query predicate, ensurer that the
             # object passes it.
             if not self.query or self.query.match(obj):
+                self._objects.append(obj)
                 yield obj
 
     def __iter__(self):
