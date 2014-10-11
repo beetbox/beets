@@ -480,6 +480,7 @@ class Results(object):
 
         self._objects = []  # Model objects materialized *so far*.
         self._row_iter = iter(self.rows)  # Indicate next row to materialize.
+        self._materialized = False  # All objects have been materialized.
 
     def _get_objects(self):
         """Construct and generate Model objects for they query. The
@@ -495,7 +496,7 @@ class Results(object):
         for object in self._objects:
             yield object
 
-        # Now, for the rows that have not yet been processed, materialize
+        # Next, for the rows that have not yet been processed, materialize
         # objects and add them to the list.
         for row in self._row_iter:
             obj = self._make_model(row)
@@ -504,6 +505,10 @@ class Results(object):
             if not self.query or self.query.match(obj):
                 self._objects.append(obj)
                 yield obj
+
+        # Now that all the rows have been materialized, set a flag so we
+        # can take a shortcut in certain other situations.
+        self._materialized = True
 
     def __iter__(self):
         """Construct and generate Model objects for all matching
@@ -540,6 +545,9 @@ class Results(object):
     def __len__(self):
         """Get the number of matching objects.
         """
+        if self._materialized:
+            return len(self._objects)
+
         if self.query:
             # A slow query. Fall back to testing every object.
             count = 0
@@ -560,6 +568,9 @@ class Results(object):
         """Get the nth item in this result set. This is inefficient: all
         items up to n are materialized and thrown away.
         """
+        if self._materialized and not self.sort:
+            return self._objects[n]
+
         it = iter(self)
         try:
             for i in range(n):
