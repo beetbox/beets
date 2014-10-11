@@ -143,7 +143,7 @@ class ArtResizer(object):
         temporary file. For WEBPROXY, returns `path_in` unmodified.
         """
         if self.local:
-            func = BACKEND_FUNCS[self.method]
+            func = BACKEND_FUNCS[self.method[0]]
             return func(maxwidth, path_in, path_out)
         else:
             return path_in
