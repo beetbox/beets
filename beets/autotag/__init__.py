@@ -122,10 +122,12 @@ def apply_metadata(album_info, mapping):
                       'language',
                       'country',
                       'albumstatus',
-                      'media',
                       'albumdisambig'):
             value = getattr(album_info, field)
             if value is not None:
                 item[field] = value
         if track_info.disctitle is not None:
             item.disctitle = track_info.disctitle
+
+        if track_info.media is not None:
+            item.media = track_info.media
