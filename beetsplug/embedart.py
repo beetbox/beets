@@ -113,15 +113,17 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
     """
     if compare_threshold:
         if not check_art_similarity(item, imagepath, compare_threshold):
-            log.warn('Image not similar, skipping it.')
+            log.warn(u'Image not similar; skipping.')
             return
     try:
-        log.info(u'embedart: writing %s', displayable_path(imagepath))
+        log.debug(u'embedart: embedding {0}'.format(
+            displayable_path(imagepath)
+        ))
         item['images'] = [_mediafile_image(imagepath, maxwidth)]
     except IOError as exc:
         log.error(u'embedart: could not read image file: {0}'.format(exc))
     else:
-        # We don't want to store the image in the database
+        # We don't want to store the image in the database.
         item.try_write(itempath)
         del item['images']
 
