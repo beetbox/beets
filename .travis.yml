@@ -9,7 +9,7 @@ matrix:
         - python: 2.6
           env: {TOX_ENV: py26}
         - python: 2.7
-          env: {TOX_ENV: py27, COVERAGE: 1}
+          env: {TOX_ENV: py27cov, COVERAGE: 1}
         - python: pypy
           env: {TOX_ENV: pypy}
         - python: 2.7
