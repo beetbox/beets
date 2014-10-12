@@ -831,15 +831,10 @@ def _setup(options, lib=None):
 
     plugins = _load_plugins(config)
 
-    # Temporary: Migrate from 1.0-style configuration.
-    from beets.ui import migrate
-    migrate.automigrate()
-
     # Get the default subcommands.
     from beets.ui.commands import default_commands
 
     subcommands = list(default_commands)
-    subcommands.append(migrate.migrate_cmd)
     subcommands.extend(plugins.commands())
 
     if lib is None:
