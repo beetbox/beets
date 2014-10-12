@@ -467,6 +467,33 @@ class SortFromStringsTest(unittest.TestCase):
         self.assertIsInstance(s.sorts[0], TestSort)
 
 
+class ResultsIteratorTest(unittest.TestCase):
+    def setUp(self):
+        self.db = TestDatabase1(':memory:')
+        TestModel1().add(self.db)
+        TestModel1().add(self.db)
+
+    def tearDown(self):
+        self.db._connection().close()
+
+    def test_iterate_once(self):
+        objs = self.db._fetch(TestModel1)
+        self.assertEqual(len(list(objs)), 2)
+
+    def test_iterate_twice(self):
+        objs = self.db._fetch(TestModel1)
+        list(objs)
+        self.assertEqual(len(list(objs)), 2)
+
+    def test_concurrent_iterators(self):
+        results = self.db._fetch(TestModel1)
+        it1 = iter(results)
+        it2 = iter(results)
+        it1.next()
+        list(it2)
+        self.assertEqual(len(list(it1)), 1)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
