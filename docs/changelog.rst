@@ -35,6 +35,8 @@ Fixes:
 * The migration from pre-1.1, non-YAML configuration files has been removed.
   If you need to upgrade an old config file, use an older version of beets
   temporarily
+* :doc:`/plugins/discogs`: Recover from HTTP errors when communicating with
+  the Discogs servers. Thanks to Dustin Rodriguez.
 
 
 1.3.8 (September 17, 2014)
