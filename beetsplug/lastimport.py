@@ -1,6 +1,16 @@
-# coding=utf-8
+# This file is part of beets.
 # Copyright 2014, Rafael Bodill http://github.com/rafi
-#  vim: set ts=8 sw=4 tw=80 et :
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
 import logging
 import requests
@@ -10,7 +20,7 @@ from beets import dbcore
 from beets import config
 
 log = logging.getLogger('beets')
-api_url = 'http://ws.audioscrobbler.com/2.0/?method=library.gettracks&user=%s&api_key=%s&format=json&page=%s&limit=%s'
+API_URL = 'http://ws.audioscrobbler.com/2.0/'
 
 class LastImportPlugin(BeetsPlugin):
     def __init__(self):
@@ -91,7 +101,14 @@ def import_lastfm(lib):
     log.info('lastimport: {0} play-counts imported'.format(found_total))
 
 def fetch_tracks(user, api_key, page, limit):
-    return requests.get(api_url % (user, api_key, page, limit)).json()
+    return requests.get(API_URL, params={
+        'method': 'library.gettracks',
+        'user': user,
+        'api_key': api_key,
+        'page': str(page),
+        'limit': str(limit),
+        'format': 'json',
+    }).json()
 
 def process_tracks(lib, tracks):
     total = len(tracks)
@@ -138,7 +155,7 @@ def process_tracks(lib, tracks):
 
         # Last resort, try just replacing to utf-8 quote
         if (not song):
-            title = title.replace('\'', u'’')
+            title = title.replace("'", u'\u2019')
 #            log.debug(u'lastimport: no title match, trying utf-8 single quote')
             query = dbcore.AndQuery([
                 dbcore.query.SubstringQuery('artist', artist),
