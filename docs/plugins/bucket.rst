@@ -3,8 +3,8 @@ Bucket Plugin
 
 The ``bucket`` plugin groups your files into buckets folders representing
 *ranges*. This kind of organization can classify your music by periods of time
-(e.g,. *1960s*, *1970s*, etc.), or to divide overwhelmingly large folders into
-smaller subfolders by grouping albums or artists alphabetically (e.g., *A-F*,
+(e.g,. *1960s*, *1970s*, etc.), or divide overwhelmingly large folders into
+smaller subfolders by grouping albums or artists alphabetically (e.g. *A-F*,
 *G-M*, *N-Z*).
 
 To use the plugin, enable ``bucket`` in your configuration file (see
