@@ -140,7 +140,9 @@ def process_tracks(lib, tracks):
 
         # First try to query by musicbrainz's trackid
         if trackid:
-            song = lib.items('mb_trackid:' + trackid).get()
+            song = lib.items(
+                dbcore.query.MatchQuery('mb_trackid', trackid)
+            ).get()
 
         # Otherwise try artist/title/album
         if not song:
