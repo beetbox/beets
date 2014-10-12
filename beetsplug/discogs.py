@@ -19,6 +19,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
 from discogs_client import Release, Client
 from discogs_client.exceptions import DiscogsAPIError
+from requests.exceptions import ConnectionError
 import beets
 import logging
 import re
@@ -62,6 +63,9 @@ class DiscogsPlugin(BeetsPlugin):
         except DiscogsAPIError as e:
             log.debug(u'Discogs API Error: {0} (query: {1})'.format(e, query))
             return []
+        except ConnectionError as e:
+            log.debug(u'HTTP Connection Error: {0}'.format(e))
+            return []
 
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
@@ -84,6 +88,9 @@ class DiscogsPlugin(BeetsPlugin):
             if e.message != '404 Not Found':
                 log.debug(u'Discogs API Error: {0} (query: {1})'
                           .format(e, result._uri))
+            return None
+        except ConnectionError as e:
+            log.debug(u'HTTP Connection Error: {0}'.format(e))
             return None
         return self.get_album_info(result)
 
