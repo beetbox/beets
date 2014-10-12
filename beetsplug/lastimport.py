@@ -14,16 +14,16 @@
 
 import logging
 import requests
-from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import dbcore
 from beets import config
+from beets import plugins
 
 log = logging.getLogger('beets')
 API_URL = 'http://ws.audioscrobbler.com/2.0/'
 
 
-class LastImportPlugin(BeetsPlugin):
+class LastImportPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LastImportPlugin, self).__init__()
         config['lastfm'].add({
@@ -47,13 +47,10 @@ class LastImportPlugin(BeetsPlugin):
 
 def import_lastfm(lib):
     user = config['lastfm']['user']
-    api_key = config['lastfm']['api_key']
     per_page = config['lastimport']['per_page']
 
     if not user:
         raise ui.UserError('You must specify a user name for lastimport')
-    if not api_key:
-        raise ui.UserError('You must specify an api_key for lastimport')
 
     log.info('Fetching last.fm library for @{0}'.format(user))
 
@@ -66,11 +63,11 @@ def import_lastfm(lib):
     while page_current < page_total:
         log.info('lastimport: Querying page #{0}{1}...'.format(
             page_current + 1,
-            '/' + str(page_total) if page_total else ''
+            '/' + str(page_total) if page_total > 1 else ''
         ))
 
         for retry in range(0, retry_limit):
-            page = fetch_tracks(user, api_key, page_current + 1, per_page)
+            page = fetch_tracks(user, page_current + 1, per_page)
             if 'tracks' in page:
                 # Let us the reveal the holy total pages!
                 page_total = int(page['tracks']['@attr']['totalPages'])
@@ -106,11 +103,11 @@ def import_lastfm(lib):
     log.info('lastimport: {0} play-counts imported'.format(found_total))
 
 
-def fetch_tracks(user, api_key, page, limit):
+def fetch_tracks(user, page, limit):
     return requests.get(API_URL, params={
         'method': 'library.gettracks',
         'user': user,
-        'api_key': api_key,
+        'api_key': plugins.LASTFM_KEY,
         'page': str(page),
         'limit': str(limit),
         'format': 'json',
