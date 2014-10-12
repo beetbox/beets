@@ -121,9 +121,6 @@ def str2fmt(s):
                        "(?P<toyear>\d*)(?P<after>\D*)")
     m = re.match(regex, s)
 
-    def year_format(year):
-        return '%%0%dd' % len(year)
-
     res = {'fromnchars': len(m.group('fromyear')),
            'tonchars': len(m.group('toyear'))}
     res['fmt'] = "%s%%s%s%s%s" % (m.group('bef'),

@@ -8,3 +8,4 @@ exclude_lines =
     assert False
     raise NotImplementedError
     if __name__ == .__main__.:
+    def __repr__

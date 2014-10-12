@@ -431,6 +431,10 @@ class QueryFromStringsTest(unittest.TestCase):
         q = self.qfs(['some_float_field:2..3'])
         self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
 
+    def test_empty_query_part(self):
+        q = self.qfs([''])
+        self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
+
 
 class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):
