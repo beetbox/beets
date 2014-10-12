@@ -13,6 +13,11 @@ Features:
   added date and flexible attributes. Thanks to Stig Inge Lea Bjørnsen.
 * :doc:`/plugins/bpd`: Add a new configuration option for setting the default
   volume. Thanks to IndiGit.
+* The ``media`` attribute is now a *track-level field* instead of an
+  album-level one. This field stores the delivery mechanism for the music, so
+  in its album-level incarnation, it could not represent heterogeneous
+  releases---for example, an album consisting of a CD and a DVD. Now, tracks
+  accurately indicate the media they appear on. Thanks to Heinz Wiesinger.
 
 Fixes:
 
@@ -37,7 +42,6 @@ Fixes:
   temporarily
 * :doc:`/plugins/discogs`: Recover from HTTP errors when communicating with
   the Discogs servers. Thanks to Dustin Rodriguez.
-* Fix storing media types for albums consisting of different media.
 
 
 1.3.8 (September 17, 2014)
