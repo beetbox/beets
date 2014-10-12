@@ -20,8 +20,8 @@ matrix:
 install:
     - travis_retry sudo apt-get update
     - travis_retry sudo apt-get install -qq bash-completion mp3gain
-    - travis_retry pip install tox sphinx
-    - "[ ! -z $COVERAGE ] && pip install coveralls || true"
+    - travis_retry pip install tox
+    - "[ ! -z $COVERAGE ] && travis_retry pip install coveralls || true"
 
 script: tox -e $TOX_ENV
 
