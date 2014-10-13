@@ -180,8 +180,7 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-check`_ automatically checksums your files to detect corruption.
 
-* `beets-alternatives`_ manage external files.
-
+* `beets-alternatives`_ manages external files.
 
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
