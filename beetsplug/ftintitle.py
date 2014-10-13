@@ -119,7 +119,7 @@ def ft_in_title(item, drop_feat):
 class FtInTitlePlugin(BeetsPlugin):
     def __init__(self):
         super(FtInTitlePlugin, self).__init__()
-        self.import_stages = [self.imported]
+
         self.config.add({
             'auto': True,
             'drop': False
@@ -133,6 +133,9 @@ class FtInTitlePlugin(BeetsPlugin):
             '-d', '--drop', dest='drop',
             action='store_true', default=False,
             help='drop featuring from artists and ignore title update')
+
+        if self.config['auto']:
+            self.import_stages = [self.imported]
 
     def commands(self):
 
@@ -152,6 +155,6 @@ class FtInTitlePlugin(BeetsPlugin):
         """
         drop_feat = self.config['drop'].get(bool)
         write = config['import']['write'].get(bool)
-        if self.config['auto'].get(bool):
-            for item in task.imported_items():
-                ft_in_title(item, drop_feat, write)
+
+        for item in task.imported_items():
+            ft_in_title(item, drop_feat, write)
