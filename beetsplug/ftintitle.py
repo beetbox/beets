@@ -16,6 +16,7 @@
 """
 from beets.plugins import BeetsPlugin
 from beets import ui
+from beets.util import displayable_path
 from beets import config
 import logging
 import re
@@ -71,22 +72,48 @@ def update_metadata(item, feat_part, drop_feat):
         item.title = new_title
 
 
-def ft_in_title(item, drop_feat, write):
+def ft_in_title(item, drop_feat):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
     artist = item.artist.strip()
+    albumartist = item.albumartist.strip()
 
-    _, feat_part = split_on_feat(artist)
+    # Check whether there is a featured artist on this track and the
+    # artist field does not exactly match the album artist field. In
+    # that case, we attempt to move the featured artist to the title.
+    _, featured = split_on_feat(artist)
+    if featured and albumartist != artist and albumartist:
+        ui.print_(displayable_path(item.path))
+        feat_part = None
 
-    if feat_part:
-        update_metadata(item, feat_part, drop_feat)
-    else:
-        ui.print_(u'no featuring artists found')
+        # Look for the album artist in the artist field. If it's not
+        # present, give up.
+        albumartist_split = artist.split(albumartist)
+        if len(albumartist_split) <= 1:
+            ui.print_('album artist not present in artist')
 
-    if write:
-        item.try_write()
-    item.store()
+        # If the last element of the split (the right-hand side of the
+        # album artist) is nonempty, then it probably contains the
+        # featured artist.
+        elif albumartist_split[-1] != '':
+            # Extract the featured artist from the right-hand side.
+            _, feat_part = split_on_feat(albumartist_split[-1])
+
+        # Otherwise, if there's nothing on the right-hand side, look for a
+        # featuring artist on the left-hand side.
+        else:
+            lhs, rhs = split_on_feat(albumartist_split[0])
+            if rhs:
+                feat_part = lhs
+
+        # If we have a featuring artist, move it to the title.
+        if feat_part:
+            update_metadata(item, feat_part, drop_feat)
+        else:
+            ui.print_(u'no featuring artists found')
+
+        ui.print_()
 
 
 class FtInTitlePlugin(BeetsPlugin):
