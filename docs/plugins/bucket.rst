@@ -32,17 +32,12 @@ The definition of a range is somewhat loose, and multiple formats are allowed:
 Configuration
 -------------
 
-Available options :
+Available options:
 
-- **bucket_alpha** defines ranges to use for all substitutions occuring on
-textual fields
-- **bucket_alpha_regex** allows to define a regex to override a `bucket_alpha`
-range definition
-- **bucket_year** defines ranges to use for all substitutions occuring on the
-``$year`` field
-- **extrapolate**, to activate when you want to group your files into multiple
-year ranges without enumerating them all. This option will generate year bucket
-names by reproducing characteristics of declared buckets::
+- **bucket_alpha** defines ranges to use for all substitutions occuring on textual fields
+- **bucket_alpha_regex** allows to define a regex to override a `bucket_alpha` range definition
+- **bucket_year** defines ranges to use for all substitutions occuring on the ``$year`` field
+- **extrapolate**, to activate when you want to group your files into multiple year ranges without enumerating them all. This option will generate year bucket names by reproducing characteristics of declared buckets::
 
 Here's an example::
 
@@ -53,5 +48,6 @@ Here's an example::
          bucket_alpha_regex:
            'A - D': ^[0-9a-dA-D…äÄ]
 
-The above configuration creates five-year ranges for any input year.
+The above configuration creates five-year ranges for any input year. 
+
 The *A - D* bucket now matches also all artists starting with ä or Ä and 0 to 9 and … (three dots). The other alpha buckets work as ranges.
