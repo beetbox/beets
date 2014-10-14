@@ -72,7 +72,7 @@ def update_metadata(item, feat_part, drop_feat):
         item.title = new_title
 
 
-def ft_in_title(item, drop_feat):
+def ft_in_title(item, drop_feat, write):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
@@ -114,7 +114,9 @@ def ft_in_title(item, drop_feat):
             ui.print_(u'no featuring artists found')
 
         ui.print_()
-
+        if write:
+            item.try_write()
+        item.store()
 
 class FtInTitlePlugin(BeetsPlugin):
     def __init__(self):
