@@ -104,7 +104,7 @@ def album_imported(lib, album):
     """Automatically embed art into imported albums.
     """
     if album.artpath and config['embedart']['auto']:
-        embed_album(album, config['embedart']['maxwidth'].get(int))
+        embed_album(album, config['embedart']['maxwidth'].get(int), True)
 
 
 def embed_item(item, imagepath, maxwidth=None, itempath=None,
@@ -128,7 +128,7 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
         del item['images']
 
 
-def embed_album(album, maxwidth=None):
+def embed_album(album, maxwidth=None, quiet=False):
     """Embed album art into all of the album's items.
     """
     imagepath = album.artpath
@@ -141,8 +141,10 @@ def embed_album(album, maxwidth=None):
                   .format(displayable_path(imagepath)))
         return
 
-    log.info(u'Embedding album art into {0.albumartist} - {0.album}.'
-             .format(album))
+    log.log(
+        logging.DEBUG if quiet else logging.INFO,
+        u'Embedding album art into {0.albumartist} - {0.album}.'.format(album),
+    )
 
     for item in album.items():
         embed_item(item, imagepath, maxwidth, None,

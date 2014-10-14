@@ -42,6 +42,8 @@ Fixes:
   temporarily
 * :doc:`/plugins/discogs`: Recover from HTTP errors when communicating with
   the Discogs servers. Thanks to Dustin Rodriguez.
+* :doc:`/plugins/embedart`: Do not log "embedding album art into..." messages
+  during the import process.
 
 
 1.3.8 (September 17, 2014)
