@@ -33,6 +33,7 @@ Configuration
 -------------
 
 Available options :
+
 - **bucket_alpha** defines ranges to use for all substitutions occuring on
 textual fields
 - **bucket_alpha_regex** allows to define a regex to override a `bucket_alpha`
