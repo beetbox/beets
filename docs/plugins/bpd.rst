@@ -38,11 +38,10 @@ installing GStreamer plugins.
 .. _GStreamer WinBuilds: http://www.gstreamer-winbuild.ylatuya.es/
 .. _Homebrew: http://mxcl.github.com/homebrew/
 
-Using and Configuring
----------------------
+Usage
+-----
 
-BPD is a plugin for beets. It comes with beets, but it's disabled by default.
-To enable it, you'll need to edit your :doc:`configuration file
+To enable the plugin, you'll need to edit your :doc:`configuration file
 </reference/config>` and add ``bpd`` to your ``plugins:`` line.
 
 Then, you can run BPD by invoking::
@@ -69,10 +68,17 @@ the client can just as easily on a different computer from the server as it can
 be run locally. Control your music from your laptop (or phone!) while it plays
 on your headless server box. Rad!
 
-To configure the BPD server, add a ``bpd:`` section to your ``config.yaml``
-file. The configuration values, which are pretty self-explanatory, are ``host``,
-``port``, ``password`` and ``volume``. The volume option sets the initial 
-volume (in percent, default: 100). Here's an example::
+Configuration
+-------------
+
+Available options are pretty self-explanatory :
+
+- **host**
+- **port**
+- **password**
+- **volume** sets the initial volume (in percent, default: 100)
+
+Here's an example::
 
     bpd:
         host: 127.0.0.1
