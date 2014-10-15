@@ -53,7 +53,7 @@ Configuring
 Beets includes its own Echo Nest API key, but you can `apply for your own`_ for
 free from the Echo Nest.  To specify your own API key, add the key to your
 :doc:`configuration file </reference/config>` as the value for ``apikey`` under
-the key ``echonest_tempo`` like so::
+the key ``echonest`` like so::
 
     echonest:
         apikey: YOUR_API_KEY
