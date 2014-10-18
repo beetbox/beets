@@ -114,9 +114,7 @@ def ft_in_title(item, drop_feat, write):
             ui.print_(u'no featuring artists found')
 
         ui.print_()
-        if write:
-            item.try_write()
-        item.store()
+
 
 class FtInTitlePlugin(BeetsPlugin):
     def __init__(self):
@@ -147,7 +145,10 @@ class FtInTitlePlugin(BeetsPlugin):
             write = config['import']['write'].get(bool)
 
             for item in lib.items(ui.decargs(args)):
-                ft_in_title(item, drop_feat, write)
+                ft_in_title(item, drop_feat)
+                item.store()
+                if write:
+                    item.try_write()
 
         self._command.func = func
         return [self._command]
@@ -156,7 +157,6 @@ class FtInTitlePlugin(BeetsPlugin):
         """Import hook for moving featuring artist automatically.
         """
         drop_feat = self.config['drop'].get(bool)
-        write = config['import']['write'].get(bool)
 
         for item in task.imported_items():
-            ft_in_title(item, drop_feat, write)
+            ft_in_title(item, drop_feat)
