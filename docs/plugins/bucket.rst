@@ -50,7 +50,7 @@ Here's an example::
          extrapolate: true
          bucket_alpha: ['A - D', 'E - L', 'M - R', 'S - Z']
          bucket_alpha_regex:
-           'A - D': ^[0-9a-dA-D‚Ä¶√§√Ñ]
+           'A - D': ^[0-9a-dA-D…äÄ]
 
 The above configuration creates five-year ranges for any input year.
-The *A - D* bucket now matches also all artists starting with √§ or √Ñ and 0 to 9 and ‚Ä¶ (three dots). The other alpha buckets work as ranges.
+The *A - D* bucket now matches also all artists starting with ä or Ä and 0 to 9 and … (three dots). The other alpha buckets work as ranges.
