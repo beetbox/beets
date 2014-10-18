@@ -41,9 +41,8 @@ installing GStreamer plugins.
 Usage
 -----
 
-To enable the plugin, you'll need to edit your :doc:`configuration file
-</reference/config>` and add ``bpd`` to your ``plugins:`` line.
-
+To use the plugin, first enable it in your configuration (see
+:ref:`using-plugins`).
 Then, you can run BPD by invoking::
 
     $ beet bpd
@@ -72,11 +71,10 @@ Configuration
 -------------
 
 Available options are pretty self-explanatory :
-
-- **host**
-- **port**
-- **password**
-- **volume** sets the initial volume (in percent, default: 100)
+- ``host``
+- ``port`` (default: 6600)
+- ``password``
+- ``volume`` sets the initial volume in percent (default: 100)
 
 Here's an example::
 

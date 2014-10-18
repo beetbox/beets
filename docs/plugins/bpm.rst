@@ -6,8 +6,8 @@ This ``bpm`` plugin lets you to get the tempo (beats per minute) of a song by ta
 Usage
 -----
 
-To enable the plugin, you'll need to edit your :doc:`configuration file
-</reference/config>` and add ``bpm`` to your ``plugins:`` line.
+To use the plugin, first enable it in your configuration (see
+:ref:`using-plugins`).
 
 Then, play a song you want to measure in your favorite media player and type::
 
