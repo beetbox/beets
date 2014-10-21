@@ -112,7 +112,7 @@ Store any data you like
 The beets database keeps track of a long list of :ref:`built-in fields
 <itemfields>`, but you're not limited to just that list. Say, for example,
 that you like to categorize your music by the setting where it should be
-played. You can invent a new ``context`` attribute store this. Set the field
+played. You can invent a new ``context`` attribute to store this. Set the field
 using the :ref:`modify-cmd` command::
 
     beet modify context=party artist:'beastie boys'
