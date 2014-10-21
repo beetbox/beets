@@ -94,10 +94,16 @@ def encode(command, source, dest, pretend=False):
     if not quiet and not pretend:
         log.info(u'Encoding {0}'.format(util.displayable_path(source)))
 
-    command = Template(command).safe_substitute({
-        'source': pipes.quote(source),
-        'dest':   pipes.quote(dest),
-    })
+    if os.name == 'nt':
+		command = Template(command).safe_substitute({
+			'source': '"' + source + '"',
+			'dest':   '"' + dest + '"',
+		})
+	else:
+		command = Template(command).safe_substitute({
+			'source': pipes.quote(source),
+			'dest':   pipes.quote(dest),
+		})
 
     log.debug(u'convert: executing: {0}'
               .format(util.displayable_path(command)))
