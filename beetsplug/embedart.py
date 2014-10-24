@@ -41,6 +41,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             'maxwidth': 0,
             'auto': True,
             'compare_threshold': 0,
+            'ifempty': False
         })
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
@@ -63,13 +64,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
         maxwidth = config['embedart']['maxwidth'].get(int)
         compare_threshold = config['embedart']['compare_threshold'].get(int)
+        ifempty = config['embedart']['ifempty'].get()
 
         def embed_func(lib, opts, args):
             if opts.file:
                 imagepath = normpath(opts.file)
                 for item in lib.items(decargs(args)):
                     embed_item(item, imagepath, maxwidth, None,
-                               compare_threshold)
+                               compare_threshold, ifempty)
             else:
                 for album in lib.albums(decargs(args)):
                     embed_album(album, maxwidth)
@@ -108,13 +110,25 @@ def album_imported(lib, album):
 
 
 def embed_item(item, imagepath, maxwidth=None, itempath=None,
-               compare_threshold=0):
+               compare_threshold=0, ifempty=False, asalbum=False):
     """Embed an image into the item's media file.
     """
     if compare_threshold:
         if not check_art_similarity(item, imagepath, compare_threshold):
             log.warn(u'Image not similar; skipping.')
             return
+    if ifempty:
+        art = get_art(item)
+        if not art:
+            pass
+        else:
+            log.debug(u'embedart: media file contained art already {0}'.format(
+                displayable_path(imagepath)
+            ))
+            return
+    if not asalbum:
+        imagepath = resize_image(imagepath, maxwidth)
+
     try:
         log.debug(u'embedart: embedding {0}'.format(
             displayable_path(imagepath)
@@ -140,6 +154,8 @@ def embed_album(album, maxwidth=None, quiet=False):
         log.error(u'Album art not found at {0}'
                   .format(displayable_path(imagepath)))
         return
+    if maxwidth:
+        imagepath = resize_image(imagepath, maxwidth)
 
     log.log(
         logging.DEBUG if quiet else logging.INFO,
@@ -148,7 +164,17 @@ def embed_album(album, maxwidth=None, quiet=False):
 
     for item in album.items():
         embed_item(item, imagepath, maxwidth, None,
-                   config['embedart']['compare_threshold'].get(int))
+                   config['embedart']['compare_threshold'].get(int),
+                   config['embedart']['ifempty'], asalbum=True)
+
+
+def resize_image(imagepath, maxwidth):
+    """Returns path to an image resized to maxwidth.
+    """
+    log.info(u'Resizing album art to {0} pixels wide'
+             .format(maxwidth))
+    imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath))
+    return imagepath
 
 
 def check_art_similarity(item, imagepath, compare_threshold):
@@ -188,24 +214,14 @@ def check_art_similarity(item, imagepath, compare_threshold):
 
 def _mediafile_image(image_path, maxwidth=None):
     """Return a `mediafile.Image` object for the path.
-
-    If maxwidth is set the image is resized if necessary.
     """
-    if maxwidth:
-        image_path = ArtResizer.shared.resize(maxwidth, syspath(image_path))
 
     with open(syspath(image_path), 'rb') as f:
         data = f.read()
     return mediafile.Image(data, type=mediafile.ImageType.front)
 
 
-# 'extractart' command.
-
-def extract(outpath, item):
-    if not item:
-        log.error(u'No item matches query.')
-        return
-
+def get_art(item):
     # Extract the art.
     try:
         mf = mediafile.MediaFile(syspath(item.path))
@@ -215,7 +231,18 @@ def extract(outpath, item):
         ))
         return
 
-    art = mf.art
+    return mf.art
+
+# 'extractart' command.
+
+
+def extract(outpath, item):
+    if not item:
+        log.error(u'No item matches query.')
+        return
+
+    art = get_art(item)
+
     if not art:
         log.error(u'No album art present in {0} - {1}.'
                   .format(item.artist, item.title))
