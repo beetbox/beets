@@ -120,8 +120,9 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
     if ifempty:
         with NamedTemporaryFile(delete=True) as f:
             art = extract(f.name, item)
-        if not art: pass
-        else: 
+        if not art: 
+            pass
+        else:
             log.debug(u'embedart: media file contained art already {0}'.format(
                 displayable_path(imagepath)
             ))
