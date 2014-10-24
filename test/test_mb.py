@@ -18,6 +18,7 @@ import _common
 from _common import unittest
 from beets.autotag import mb
 from beets import config
+import mock
 
 
 class MBAlbumInfoTest(_common.TestCase):
@@ -405,6 +406,78 @@ class ArtistFlatteningTest(_common.TestCase):
         config['import']['languages'] = ['pt_BR', 'fr']
         flat = mb._flatten_artist_credit([credit_dict])
         self.assertEqual(flat, ('ALIASfr_P', 'ALIASSORTfr_P', 'CREDIT'))
+
+
+class MBLibraryTest(unittest.TestCase):
+    def test_match_track(self):
+        with mock.patch('musicbrainzngs.search_recordings') as p:
+            p.return_value = {
+                'recording-list': [{
+                    'title': 'foo',
+                    'id': 'bar',
+                    'length': 42,
+                }],
+            }
+            ti = list(mb.match_track('hello', 'there'))[0]
+
+            p.assert_called_with(artist='hello', recording='there', limit=5)
+            self.assertEqual(ti.title, 'foo')
+            self.assertEqual(ti.track_id, 'bar')
+
+    def test_match_album(self):
+        mbid = 'd2a6f856-b553-40a0-ac54-a321e8e2da99'
+        with mock.patch('musicbrainzngs.search_releases') as sp:
+            sp.return_value = {
+                'release-list': [{
+                    'id': mbid,
+                }],
+            }
+            with mock.patch('musicbrainzngs.get_release_by_id') as gp:
+                gp.return_value = {
+                    'release': {
+                        'title': 'hi',
+                        'id': mbid,
+                        'medium-list': [{
+                            'track-list': [{
+                                'recording': {
+                                    'title': 'foo',
+                                    'id': 'bar',
+                                    'length': 42,
+                                },
+                                'position': 9,
+                            }],
+                            'position': 5,
+                        }],
+                        'artist-credit': [{
+                            'artist': {
+                                'name': 'some-artist',
+                                'id': 'some-id',
+                            },
+                        }],
+                        'release-group': {
+                            'id': 'another-id',
+                        }
+                    }
+                }
+
+                ai = list(mb.match_album('hello', 'there'))[0]
+
+                sp.assert_called_with(artist='hello', release='there', limit=5)
+                gp.assert_calledwith(mbid)
+                self.assertEqual(ai.tracks[0].title, 'foo')
+                self.assertEqual(ai.album, 'hi')
+
+    def test_match_track_empty(self):
+        with mock.patch('musicbrainzngs.search_recordings') as p:
+            til = list(mb.match_track(' ', ' '))
+            self.assertFalse(p.called)
+            self.assertEqual(til, [])
+
+    def test_match_album_empty(self):
+        with mock.patch('musicbrainzngs.search_releases') as p:
+            ail = list(mb.match_album(' ', ' '))
+            self.assertFalse(p.called)
+            self.assertEqual(ail, [])
 
 
 def suite():
