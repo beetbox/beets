@@ -44,6 +44,8 @@ Fixes:
   the Discogs servers. Thanks to Dustin Rodriguez.
 * :doc:`/plugins/embedart`: Do not log "embedding album art into..." messages
   during the import process.
+* Fix a crash in the autotagger when files had only whitespace in their
+  metadata.
 
 
 1.3.8 (September 17, 2014)
