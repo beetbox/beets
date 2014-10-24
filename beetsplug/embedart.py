@@ -118,8 +118,7 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
             log.warn(u'Image not similar; skipping.')
             return
     if ifempty:
-        with NamedTemporaryFile(delete=True) as f:
-            art = extract(f.name, item)
+        art = get_art(item)
         if not art:
             pass
         else:
@@ -213,13 +212,7 @@ def _mediafile_image(image_path, maxwidth=None):
     return mediafile.Image(data, type=mediafile.ImageType.front)
 
 
-# 'extractart' command.
-
-def extract(outpath, item):
-    if not item:
-        log.error(u'No item matches query.')
-        return
-
+def get_art(item):
     # Extract the art.
     try:
         mf = mediafile.MediaFile(syspath(item.path))
@@ -229,7 +222,18 @@ def extract(outpath, item):
         ))
         return
 
-    art = mf.art
+    return mf.art
+
+# 'extractart' command.
+
+
+def extract(outpath, item):
+    if not item:
+        log.error(u'No item matches query.')
+        return
+
+    art = get_art(item)
+
     if not art:
         log.error(u'No album art present in {0} - {1}.'
                   .format(item.artist, item.title))
