@@ -18,6 +18,8 @@ Features:
   in its album-level incarnation, it could not represent heterogeneous
   releases---for example, an album consisting of a CD and a DVD. Now, tracks
   accurately indicate the media they appear on. Thanks to Heinz Wiesinger.
+* :doc:`/plugins/embedart`: A new ``ifempty`` config option lets you only
+  embed album art when no album art is present. Thanks to kerobaros.
 
 Fixes:
 

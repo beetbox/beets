@@ -111,7 +111,6 @@ your config file::
 
     fetchart:
         google_search: true
-        
 
 Embedding Album Art
 -------------------
