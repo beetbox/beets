@@ -23,7 +23,7 @@ Install the library from `pip`_, like so::
 
 .. _pip: http://www.pip-installer.org/
 
-Configuring
+Configuration
 -----------
 
 To use it, enable it in your ``config.yaml`` by putting ``mpdstats`` on your

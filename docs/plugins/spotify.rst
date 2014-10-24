@@ -37,7 +37,7 @@ Command-line options include:
 * ``--show-failures`` or ``-f``: List the tracks that did not match a Spotify
   ID.
 
-Configuring
+Configuration
 -----------
 
 The default options should work as-is, but there are some options you can put in config.yaml:

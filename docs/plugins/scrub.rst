@@ -31,7 +31,7 @@ The ``-W`` (or ``--nowrite``) option causes the command to just remove tags but
 not restore any information. This will leave the files with no metadata
 whatsoever.
 
-Configuring
+Configuration
 -----------
 
 The plugin has one configuration option, ``auto``, which lets you disable
