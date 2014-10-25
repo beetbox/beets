@@ -165,7 +165,6 @@ def embed_album(album, maxwidth=None, quiet=False):
     for item in album.items():
         embed_item(item, imagepath, maxwidth, None,
                    config['embedart']['compare_threshold'].get(int),
-<<<<<<< HEAD
                    config['embedart']['ifempty'], asalbum=True)
 
 
@@ -176,9 +175,6 @@ def resize_image(imagepath, maxwidth):
              .format(maxwidth))
     imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath))
     return imagepath
-=======
-                   config['embedart']['ifempty'].get(bool))
->>>>>>> upstream/master
 
 
 def check_art_similarity(item, imagepath, compare_threshold):
