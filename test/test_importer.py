@@ -65,7 +65,7 @@ class AutotagStub(object):
 
     def restore(self):
         autotag.mb.match_album = self.mb_match_album
-        autotag.mb.match_track = self.mb_match_album
+        autotag.mb.match_track = self.mb_match_track
         autotag.mb.album_for_id = self.mb_album_for_id
         autotag.mb.track_for_id = self.mb_track_for_id
 
