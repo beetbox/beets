@@ -20,6 +20,8 @@ Features:
   accurately indicate the media they appear on. Thanks to Heinz Wiesinger.
 * :doc:`/plugins/embedart`: A new ``ifempty`` config option lets you only
   embed album art when no album art is present. Thanks to kerobaros.
+* :doc:`/plugins/ftintitle`: The plugin now runs automatically on import. To
+  disable this, unset the ``auto`` config flag.
 
 Fixes:
 
