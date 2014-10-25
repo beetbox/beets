@@ -72,7 +72,7 @@ def update_metadata(item, feat_part, drop_feat):
         item.title = new_title
 
 
-def ft_in_title(item, drop_feat, write):
+def ft_in_title(item, drop_feat):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
