@@ -148,6 +148,11 @@ class LyricsPluginTest(unittest.TestCase):
         self.assertEqual(lyrics._scrape_strip_cruft(text, True),
                          "foobaz")
 
+    def test_scrape_strip_tag_in_comment(self):
+        text = u"""foo<!--<bar>-->qux"""
+        self.assertEqual(lyrics._scrape_strip_cruft(text, True),
+                         "fooqux")
+
     def test_scrape_merge_paragraphs(self):
         text = u"one</p>   <p class='myclass'>two</p><p>three"
         self.assertEqual(lyrics._scrape_merge_paragraphs(text),

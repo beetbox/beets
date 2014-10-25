@@ -335,8 +335,8 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = re.sub(r'<(script).*?</\1>(?s)', '', html)  # Strip script tags.
 
     if plain_text_out:  # Strip remaining HTML tags
-        html = TAG_RE.sub('', html)
         html = COMMENT_RE.sub('', html)
+        html = TAG_RE.sub('', html)
 
     # Strip lines
     html = '\n'.join([x.strip() for x in html.strip().split('\n')])
