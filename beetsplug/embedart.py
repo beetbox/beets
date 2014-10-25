@@ -41,7 +41,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             'maxwidth': 0,
             'auto': True,
             'compare_threshold': 0,
-            'ifempty': False
+            'ifempty': False,
         })
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
@@ -64,7 +64,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
         maxwidth = config['embedart']['maxwidth'].get(int)
         compare_threshold = config['embedart']['compare_threshold'].get(int)
-        ifempty = config['embedart']['ifempty'].get()
+        ifempty = config['embedart']['ifempty'].get(bool)
 
         def embed_func(lib, opts, args):
             if opts.file:
@@ -165,6 +165,7 @@ def embed_album(album, maxwidth=None, quiet=False):
     for item in album.items():
         embed_item(item, imagepath, maxwidth, None,
                    config['embedart']['compare_threshold'].get(int),
+<<<<<<< HEAD
                    config['embedart']['ifempty'], asalbum=True)
 
 
@@ -175,6 +176,9 @@ def resize_image(imagepath, maxwidth):
              .format(maxwidth))
     imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath))
     return imagepath
+=======
+                   config['embedart']['ifempty'].get(bool))
+>>>>>>> upstream/master
 
 
 def check_art_similarity(item, imagepath, compare_threshold):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2014, Fabrice Laporte.
 #
@@ -131,7 +130,7 @@ class LyricsPluginTest(unittest.TestCase):
             self.assertFalse(lyrics.is_lyrics(t))
 
     def test_slugify(self):
-        text = u"http://site.com/çafe-au_lait(boisson)"
+        text = u"http://site.com/\xe7afe-au_lait(boisson)"
         self.assertEqual(lyrics.slugify(text), 'http://site.com/cafe_au_lait')
 
     def test_scrape_strip_cruft(self):
@@ -143,6 +142,11 @@ class LyricsPluginTest(unittest.TestCase):
                   <blink>four</blink>"""
         self.assertEqual(lyrics._scrape_strip_cruft(text, True),
                          "one\ntwo !\n\nfour")
+
+    def test_scrape_strip_scripts(self):
+        text = u"""foo<script>bar</script>baz"""
+        self.assertEqual(lyrics._scrape_strip_cruft(text, True),
+                         "foobaz")
 
     def test_scrape_merge_paragraphs(self):
         text = u"one</p>   <p class='myclass'>two</p><p>three"
@@ -263,7 +267,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
         except ImportError:
             self.skipTest('Beautiful Soup 4 not available')
         if sys.version_info[:3] < (2, 7, 3):
-            self.skipTest("Python’s built-in HTML parser is not good enough")
+            self.skipTest("Python's built-in HTML parser is not good enough")
         lyrics.LyricsPlugin()
         lyrics.fetch_url = MockFetchUrl()
 

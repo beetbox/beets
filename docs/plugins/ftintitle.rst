@@ -21,4 +21,6 @@ If you prefer to remove featured artists entirely instead of adding them to
 the title field, either use the ``-d`` flag to the command or set the
 ``ftintitle.drop`` config option.
 
+To disable this plugin on import, set the ``auto`` config option to false.
+
 .. _MusicBrainz style: http://musicbrainz.org/doc/Style

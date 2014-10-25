@@ -310,9 +310,9 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     optionally, a number of tracks on the album.
     """
     # Build search criteria.
-    criteria = {'release': album.lower()}
+    criteria = {'release': album.lower().strip()}
     if artist is not None:
-        criteria['artist'] = artist.lower()
+        criteria['artist'] = artist.lower().strip()
     else:
         # Various Artists search.
         criteria['arid'] = VARIOUS_ARTISTS_ID
@@ -341,8 +341,8 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     objects. May raise a MusicBrainzAPIError.
     """
     criteria = {
-        'artist': artist.lower(),
-        'recording': title.lower(),
+        'artist': artist.lower().strip(),
+        'recording': title.lower().strip(),
     }
 
     if not any(criteria.itervalues()):

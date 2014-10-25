@@ -18,6 +18,10 @@ Features:
   in its album-level incarnation, it could not represent heterogeneous
   releases---for example, an album consisting of a CD and a DVD. Now, tracks
   accurately indicate the media they appear on. Thanks to Heinz Wiesinger.
+* :doc:`/plugins/embedart`: A new ``ifempty`` config option lets you only
+  embed album art when no album art is present. Thanks to kerobaros.
+* :doc:`/plugins/ftintitle`: The plugin now runs automatically on import. To
+  disable this, unset the ``auto`` config flag.
 
 Fixes:
 
@@ -44,6 +48,8 @@ Fixes:
   the Discogs servers. Thanks to Dustin Rodriguez.
 * :doc:`/plugins/embedart`: Do not log "embedding album art into..." messages
   during the import process.
+* Fix a crash in the autotagger when files had only whitespace in their
+  metadata.
 
 
 1.3.8 (September 17, 2014)

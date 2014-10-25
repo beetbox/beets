@@ -18,7 +18,10 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.util import displayable_path
 from beets import config
+import logging
 import re
+
+log = logging.getLogger('beets')
 
 
 def split_on_feat(artist):
@@ -69,7 +72,7 @@ def update_metadata(item, feat_part, drop_feat):
         item.title = new_title
 
 
-def ft_in_title(item, drop_feat):
+def ft_in_title(item, drop_feat, write):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
@@ -118,6 +121,7 @@ class FtInTitlePlugin(BeetsPlugin):
         super(FtInTitlePlugin, self).__init__()
 
         self.config.add({
+            'auto': True,
             'drop': False
         })
 
@@ -129,6 +133,9 @@ class FtInTitlePlugin(BeetsPlugin):
             '-d', '--drop', dest='drop',
             action='store_true', default=False,
             help='drop featuring from artists and ignore title update')
+
+        if self.config['auto']:
+            self.import_stages = [self.imported]
 
     def commands(self):
 
@@ -145,3 +152,11 @@ class FtInTitlePlugin(BeetsPlugin):
 
         self._command.func = func
         return [self._command]
+
+    def imported(self, session, task):
+        """Import hook for moving featuring artist automatically.
+        """
+        drop_feat = self.config['drop'].get(bool)
+
+        for item in task.imported_items():
+            ft_in_title(item, drop_feat)
