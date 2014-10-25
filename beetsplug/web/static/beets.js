@@ -146,7 +146,7 @@ var BeetsRouter = Backbone.Router.extend({
         "item/query/:query": "itemQuery",
     },
     itemQuery: function(query) {
-        $.getJSON('/item/query/' + query, function(data) {
+        $.getJSON('item/query/' + query, function(data) {
             var models = _.map(
                 data['results'],
                 function(d) { return new Item(d); }
@@ -160,7 +160,7 @@ var router = new BeetsRouter();
 
 // Model.
 var Item = Backbone.Model.extend({
-    urlRoot: '/item'
+    urlRoot: 'item'
 });
 var Items = Backbone.Collection.extend({
     model: Item
@@ -263,7 +263,7 @@ var AppView = Backbone.View.extend({
         $('#extra-detail').empty().append(extraDetailView.render().el);
     },
     playItem: function(item) {
-        var url = '/item/' + item.get('id') + '/file';
+        var url = 'item/' + item.get('id') + '/file';
         $('#player audio').attr('src', url);
         $('#player audio').get(0).play();
 
