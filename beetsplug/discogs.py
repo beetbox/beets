@@ -36,11 +36,34 @@ class DiscogsPlugin(BeetsPlugin):
 
     def __init__(self):
         super(DiscogsPlugin, self).__init__()
+        try:
+            c_key = beets.config['discogs']['consumer_key'].get(unicode)
+            c_secret = beets.config['discogs']['consumer_secret'].get(unicode)
+        except beets.confit.NotFoundError:
+            raise beets.ui.UserError('discogs API keys not configured.')
+        try:
+            token = beets.config['discogs']['token'].get(unicode)
+            secret = beets.config['discogs']['secret'].get(unicode)
+        except beets.confit.NotFoundError:
+            token, secret = self.authenticate(c_key, c_secret)
+
         self.config.add({
             'source_weight': 0.5,
         })
         self.discogs_client = Client('beets/%s +http://beets.radbox.org/' %
-                                     beets.__version__)
+                                     beets.__version__, c_key, c_secret,
+                                     token, secret)
+
+    def authenticate(self, c_key, c_secret):
+        auth_client = Client('beets/%s +http://beets.radbox.org/' %
+                             beets.__version__, c_key, c_secret)
+        _, _, url = auth_client.get_authorize_url()
+        beets.ui.print_("To authenticate to discogs please visit %s" % url)
+        code = beets.ui.input_("Enter the code: ")
+        token, secret = auth_client.get_access_token(code)
+        beets.ui.print_("token: %s\nsecret: %s" % (token, secret))
+        beets.ui.print_("Add the above to beets config!")
+        return token, secret
 
     def album_distance(self, items, album_info, mapping):
         """Returns the album distance.
