@@ -16,10 +16,8 @@ The ``item.added`` field is populated as follows:
   set to the oldest mtime of the files in the album before they were imported.
   The mtime of album directories is ignored.
 
-This plugin can optionally be configured to also preserve mtimes::
-
-    importadded:
-        preserve_mtimes: yes # default: no
+This plugin can optionally be configured to also preserve mtimes using the
+``preserve_mtimes`` option.
 
 File modification times are preserved as follows:
 
@@ -32,7 +30,15 @@ File modification times are preserved as follows:
 Note that there is no ``album.mtime`` field in the database and that the mtime
 of album directories on disk aren't preserved.
 
+Configuration
+-------------
+
+Available option:
+
+- ``preserve_mtimes``: Default: ``no``
+
 Reimport
 --------
 
-This plugin will skip reimported singleton items and reimported albums and all of their items.
+This plugin will skip reimported singleton items and reimported albums and all
+of their items.
