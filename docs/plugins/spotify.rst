@@ -37,26 +37,39 @@ Command-line options include:
 * ``--show-failures`` or ``-f``: List the tracks that did not match a Spotify
   ID.
 
-Configuring
------------
+Configuration
+-------------
 
 The default options should work as-is, but there are some options you can put in config.yaml:
 
-* ``mode``: See the section below on modes.
-* ``region_filter``: Use the 2-character country abbreviation to limit results
+* ``mode``: one of the following :
+
+      - "list": the default mode is to print out the playlist as a list of links.
+        This list can then be pasted in to a new or existing Spotify playlist.
+      - "open": This mode actually sends a link to your default browser with
+        instructions to open Spotify with the playlist you created.  Until this
+        has been tested on all platforms, it will remain optional.
+
+  Default: ``list``.
+* ``region_filter``: use the 2-character country abbreviation to limit results
   to that market.
-* ``show_failures``: Show the artist/album/track for each lookup that does not
+  Default: ``None``
+* ``show_failures``: qhow the artist/album/track for each lookup that does not
   return a Spotify ID (and therefore cannot be added to a playlist).
-* ``tiebreak``: How to choose the track if there is more than one identical
+  Default: ``no``
+* ``tiebreak``: how to choose the track if there is more than one identical
   result.  For example, there might be multiple releases of the same album.
   Currently, this defaults to "popularity", "first" simply chooses the first
   in the list returned by Spotify.
-* ``regex``: An array of regex transformations to perform on the
+  Default: ``popularity``
+* ``regex``: an array of regex transformations to perform on the
   track/album/artist fields before sending them to Spotify.  Can be useful for
   changing certain abbreviations, like ft. -> feat.  See the examples below.
-* ``artist_field`` / ``album_field`` / ``track_field``: These allow the user
+  Default: ``[]``
+* ``artist_field`` / ``album_field`` / ``track_field``: these allow the user
   to choose a different field to send to Spotify when looking up the track,
   album and artist.  Most users will not want to change this.
+
 
 Example Configuration
 ---------------------
@@ -95,13 +108,4 @@ Example Configuration
                 replace: "AlsoReplaced"
             }
         ]
-
-Spotify Plugin Modes
----------------------
-
-* ``list``: The default mode is to print out the playlist as a list of links.
-  This list can then be pasted in to a new or existing Spotify playlist.
-* ``open``: This mode actually sends a link to your default browser with
-  instructions to open Spotify with the playlist you created.  Until this has
-  been tested on all platforms, it will remain optional.
 

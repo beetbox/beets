@@ -20,8 +20,7 @@ flask``.
 
 .. _Flask: http://flask.pocoo.org/
 
-Put ``web`` on your ``plugins`` line in your configuration file to enable the
-plugin.
+Finally, enable the plugin in your configuration (see :ref:`using-plugins`).
 
 Run the Server
 --------------
@@ -49,6 +48,16 @@ Type queries into the little search box. Double-click a track to play it with
 `HTML5 Audio`_.
 
 .. _HTML5 Audio: http://www.w3.org/TR/html-markup/audio.html
+
+Configuration
+-------------
+
+Available options :
+
+- ``host``: server hostname
+  Default: ``u''``
+- ``port``: server port
+  Default: `8337`
 
 Implementation
 --------------
