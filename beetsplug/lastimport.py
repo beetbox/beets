@@ -18,6 +18,7 @@ from beets import ui
 from beets import dbcore
 from beets import config
 from beets import plugins
+from beets.dbcore import types
 
 log = logging.getLogger('beets')
 API_URL = 'http://ws.audioscrobbler.com/2.0/'
@@ -34,6 +35,9 @@ class LastImportPlugin(plugins.BeetsPlugin):
             'per_page': 500,
             'retry_limit': 3,
         })
+        self.item_types = {
+            'play_count':  types.INTEGER,
+        }
 
     def commands(self):
         cmd = ui.Subcommand('lastimport', help='import last.fm play-count')
