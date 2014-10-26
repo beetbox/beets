@@ -63,6 +63,7 @@ by typing ``beet version``.
    bpm
    spotify
    types
+   lastimport
 
 Autotagger Extensions
 ---------------------
@@ -97,7 +98,8 @@ Metadata
   key from the audio.
 * :doc:`importadded`: Use file modification times for guessing the value for
   the `added` field in the database.
-* :doc:`bpm`: Determine bpm from keystrokes
+* :doc:`bpm`: Measure tempo using keystrokes.
+* :doc:`lastimport`: Collect play counts from Last.fm.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _the Echo Nest: http://www.echonest.com
