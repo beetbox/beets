@@ -87,12 +87,11 @@ standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
 ``gstreamer0.10-plugins-good``, ``gstreamer0.10-plugins-bad``, and
 ``gstreamer0.10-plugins-ugly``.
 
-Using
+Usage
 -----
 
-Once you have all the dependencies sorted out, you can enable fingerprinting by
-editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
-your ``plugins:`` line. With that, beets will use fingerprinting the next time
+Once you have all the dependencies sorted out, enable the plugin in your configuration (see
+:ref:`using-plugins`) to benefit from fingerprinting the next time
 you run ``beet import``.
 
 You can also use the ``beet fingerprint`` command to generate fingerprints for
@@ -101,16 +100,15 @@ library.) The generated fingerprints will be stored in the library database.
 If you have the ``import.write`` config option enabled, they will also be
 written to files' metadata.
 
-You can disable fingerprinting on import by setting the ``auto`` option to
-false, like so::
-
-    chroma:
-        auto: no
-
 .. _submitfp:
 
+Configuration
+-------------
+
+The only option is **auto*, set it to 'no' to disable fingerprinting on import.
+
 Submitting Fingerprints
-'''''''''''''''''''''''
+-----------------------
 
 You can help expand the `Acoustid`_ database by submitting fingerprints for the
 music in your collection. To do this, first `get an API key`_ from the Acoustid

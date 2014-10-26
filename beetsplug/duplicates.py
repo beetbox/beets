@@ -13,6 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 """List duplicate tracks or albums.
+
+   Todo:
+    - better duplicate disambiguation strategies (eg, based on bitrate, etc)
 """
 import shlex
 import logging
