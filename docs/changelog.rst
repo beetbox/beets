@@ -50,6 +50,9 @@ Fixes:
   during the import process.
 * Fix a crash in the autotagger when files had only whitespace in their
   metadata.
+* :doc:`/plugins/discogs`: Authenticate with the Discogs server. The plugin
+  now requires a Discogs account due to new API restrictions. Thanks to
+  multikatt.
 
 
 1.3.8 (September 17, 2014)
