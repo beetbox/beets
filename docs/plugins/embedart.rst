@@ -47,6 +47,9 @@ Available options :
 - ``compare_threshold``: how similar must candidate art be regarding to
   embedded art to be written to the file (see :ref:`image-similarity-check`).
   Default: ``0`` (disabled).
+- ``ifempty``: set to 'yes' to avoid embedding album art for files that already
+  have one.
+  Default: ``no``.
 - ``maxwidth`` defines a maximum width to downscale images before embedding
   them (the original image file is not altered). The resize operation reduces
   image width to ``maxwidth`` pixels. The height is recomputed so that the
