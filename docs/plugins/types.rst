@@ -15,3 +15,12 @@ Here's an example::
 
     types:
         rating: int
+
+Now you can assign numeric ratings to tracks and albums and use :ref:`range
+queries <numericquery>` to filter them.::
+
+    beet modify "My favorite track" rating=5
+    beet ls rating:4..5
+
+    beet modify --album "My favorite album" rating=5
+    beet modify --album rating:4..5
