@@ -53,6 +53,8 @@ Fixes:
 * :doc:`/plugins/discogs`: Authenticate with the Discogs server. The plugin
   now requires a Discogs account due to new API restrictions. Thanks to
   :user:`multikatt`. :bug:`1027`, :bug:`1040`
+* :doc:`/plugins/play`: Fix a potential crash when the command outputs special
+  characters. :bug:`1041`
 
 
 1.3.8 (September 17, 2014)
