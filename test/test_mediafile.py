@@ -822,7 +822,8 @@ class FlacTest(ReadWriteTestBase, PartialTestMixin,
     }
 
 
-class ApeTest(ReadWriteTestBase, unittest.TestCase):
+class ApeTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'ape'
     audio_properties = {
         'length': 1.0,
