@@ -1088,11 +1088,11 @@ class DateField(MediaField):
         year, month, and day number. Each number is either an integer or
         None.
         """
-        # Get the underlying data and split on hyphens.
+        # Get the underlying data and split on hyphens and slashes.
         datestring = super(DateField, self).__get__(mediafile, None)
         if isinstance(datestring, basestring):
             datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
-            items = unicode(datestring).split('-')
+            items = re.split('-|/', unicode(datestring))
         else:
             items = []
 
