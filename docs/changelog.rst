@@ -59,6 +59,10 @@ Fixes:
   characters. :bug:`1041`
 * :doc:`/plugins/web`: Typed queries are now treated as separate query
   components. :bug:`1045`
+* Date tags that use slashes instead of dashes as separators are now
+  interpreted correctly. And WMA (ASF) files now map the ``comments`` field to
+  the "Description" tag (in addition to "WM/Comments"). Thanks to Matthias
+  Kiefer. :bug:`1043`
 
 
 1.3.8 (September 17, 2014)
