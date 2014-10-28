@@ -1488,7 +1488,7 @@ class MediaFile(object):
         StorageStyle('DESCRIPTION'),
         StorageStyle('COMMENT'),
         ASFStorageStyle('WM/Comments'),
-        StorageStyle('Description')
+        ASFStorageStyle('Description')
     )
     bpm = MediaField(
         MP3StorageStyle('TBPM'),

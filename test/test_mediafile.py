@@ -770,6 +770,12 @@ class WMATest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile = MediaFile(mediafile.path)
         self.assertIn(mediafile.genre, [u'one', u'two'])
 
+    def test_read_pure_tags(self):
+        mediafile = self._mediafile_fixture('pure')
+        self.assertEqual(mediafile.comments, 'the comments')
+        self.assertEqual(mediafile.title, 'the title')
+        self.assertEqual(mediafile.artist, 'the artist')
+
 
 class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
               unittest.TestCase):
