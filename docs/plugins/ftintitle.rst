@@ -1,7 +1,7 @@
 FtInTitle Plugin
 ================
 
-The ``ftintitle`` plugin automatically move "featured" artists from the
+The ``ftintitle`` plugin automatically moves "featured" artists from the
 ``artist`` field to the ``title`` field.
 
 According to `MusicBrainz style`_, featured artists are part of the artist

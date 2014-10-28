@@ -1,7 +1,7 @@
 Fuzzy Search Plugin
 ===================
 
-The ``fuzzy`` plugin provides a prefixed query that searches you library using
+The ``fuzzy`` plugin provides a prefixed query that searches your library using
 fuzzy pattern matching. This can be useful if you want to find a track with
 complicated characters in the title.
 
