@@ -807,6 +807,12 @@ class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile = MediaFile(mediafile.path)
         self.assertFalse('coverart' in mediafile.mgfile)
 
+    def test_date_tag_with_slashes(self):
+        mediafile = self._mediafile_fixture('date_with_slashes')
+        self.assertEqual(mediafile.year, 2005)
+        self.assertEqual(mediafile.month, 6)
+        self.assertEqual(mediafile.day, 5)
+
 
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
                ExtendedImageStructureTestMixin,

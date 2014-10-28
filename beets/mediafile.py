@@ -1092,7 +1092,7 @@ class DateField(MediaField):
         datestring = super(DateField, self).__get__(mediafile, None)
         if isinstance(datestring, basestring):
             datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
-            items = re.split('-|/', unicode(datestring))
+            items = re.split('[-/]', unicode(datestring))
         else:
             items = []
 
