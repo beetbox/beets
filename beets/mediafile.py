@@ -1156,11 +1156,11 @@ class DateField(MediaField):
         year, month, and day number. Each number is either an integer or
         None.
         """
-        # Get the underlying data and split on hyphens.
+        # Get the underlying data and split on hyphens and slashes.
         datestring = super(DateField, self).__get__(mediafile, None)
         if isinstance(datestring, basestring):
             datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
-            items = unicode(datestring).split('-')
+            items = re.split('[-/]', unicode(datestring))
         else:
             items = []
 
@@ -1550,10 +1550,14 @@ class MediaFile(object):
     )
     comments = MediaField(
         MP3DescStorageStyle(key='COMM'),
+        MP3DescStorageStyle(key='COMM', desc=u'ID3v1 Comment'),
+        MP3DescStorageStyle(key='COMM', desc=u'Comment'),
+        MP3DescStorageStyle(key='COMM', desc=u'Track:Comments'),
         MP4StorageStyle("\xa9cmt"),
         StorageStyle('DESCRIPTION'),
         StorageStyle('COMMENT'),
         ASFStorageStyle('WM/Comments'),
+        ASFStorageStyle('Description')
     )
     bpm = MediaField(
         MP3StorageStyle('TBPM'),
