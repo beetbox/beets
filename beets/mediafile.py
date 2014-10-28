@@ -1550,9 +1550,6 @@ class MediaFile(object):
     )
     comments = MediaField(
         MP3DescStorageStyle(key='COMM'),
-        MP3DescStorageStyle(key='COMM', desc=u'ID3v1 Comment'),
-        MP3DescStorageStyle(key='COMM', desc=u'Comment'),
-        MP3DescStorageStyle(key='COMM', desc=u'Track:Comments'),
         MP4StorageStyle("\xa9cmt"),
         StorageStyle('DESCRIPTION'),
         StorageStyle('COMMENT'),
