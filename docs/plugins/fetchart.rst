@@ -26,7 +26,7 @@ the :ref:`art-filename` config option.
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``auto``: set it to ``no`` to disable automatic album art fetching during
   import.

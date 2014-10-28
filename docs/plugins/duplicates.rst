@@ -36,7 +36,7 @@ duplicates themselves via command-line switches ::
 Configuration
 -------------
 
-Available options (mirroring the CLI ones) :
+Available options (mirroring the CLI ones):
 
 - ``album`` lists duplicate albums instead of tracks.
   Default: ``no``.

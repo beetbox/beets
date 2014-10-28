@@ -16,7 +16,7 @@ To use the ``ftintitle`` plugin, enable it in your configuration
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``auto``: set it to ``no`` to disable plugin during import.
   Default: ``yes``.

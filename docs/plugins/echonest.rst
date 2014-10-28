@@ -53,7 +53,7 @@ Finally, enable the ``echonest`` plugin in your configuration (see
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``apikey``: set this option to specify your own EchoNest API key.
   You can `apply for your own`_ for free from the EchoNest.

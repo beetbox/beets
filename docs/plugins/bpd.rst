@@ -70,7 +70,7 @@ on your headless server box. Rad!
 Configuration
 -------------
 
-Available options are pretty self-explanatory :
+Available options are pretty self-explanatory:
 
 - ``host``
   Default: ``u''``

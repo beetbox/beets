@@ -50,7 +50,7 @@ them.
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``auto`` gives you the option to import transcoded versions of your files
   automatically during the ``import`` command. With this option enabled, the

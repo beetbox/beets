@@ -23,7 +23,7 @@ the files' tags.
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``auto``: set it to ``no`` to disable automatic lyrics fetching during import.
   Default: ``yes``.

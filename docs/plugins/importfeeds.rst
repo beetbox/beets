@@ -1,8 +1,7 @@
 ImportFeeds Plugin
 ==================
 
-The ``importfeeds`` plugin helps you keep track of newly imported music in your
-library.
+This plugin helps you keep track of newly imported music in your library.
 
 To use the ``importfeeds`` plugin, enable it in your configuration
 (see :ref:`using-plugins`).
@@ -10,7 +9,7 @@ To use the ``importfeeds`` plugin, enable it in your configuration
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``absolute_path`` option can be set to use absolute paths instead of relative
   paths. Some applications may need this to work properly.

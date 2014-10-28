@@ -69,7 +69,7 @@ plugin.
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``auto``: set it to ``no`` to tell beets to stop regenerate the playlist
   after every database change.

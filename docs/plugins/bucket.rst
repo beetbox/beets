@@ -38,7 +38,7 @@ The definition of a range is somewhat loose, and multiple formats are allowed:
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``bucket_alpha`` defines ranges to use for all substitutions occuring on
   textual fields.

@@ -12,7 +12,7 @@ To use the ``ihate`` plugin, enable it in your configuration (see
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``skip``: never import matches. Default: ``[]``
 - ``warn``: print a warning message for matches. Default: ``[]``

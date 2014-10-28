@@ -4,6 +4,12 @@ ImportAdded Plugin
 This plugin is useful when an existing collection is imported
 and the time when albums and items were added should be preserved.
 
+To use the ``importadded`` plugin, enable it in your configuration (see
+:ref:`using-plugins`).
+
+Usage
+-----
+
 The :abbr:`mtime (modification time)` of files that are imported into the
 library are assumed to represent the time when the items were originally
 added.

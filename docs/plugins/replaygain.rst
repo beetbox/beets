@@ -65,7 +65,7 @@ you can configure the path explicitly like so::
 Configuration
 -------------
 
-Available options :
+Available options:
 
 
 - ``auto``: set it to ``no`` to disable replaygain analysis during import.

@@ -39,7 +39,7 @@ This feature requires `ImageMagick`_.
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``auto`` option lets you disable automatic album art embedding when set to
   ``no``.

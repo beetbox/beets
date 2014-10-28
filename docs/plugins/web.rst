@@ -53,7 +53,7 @@ Type queries into the little search box. Double-click a track to play it with
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``host``: server hostname
   Default: ``u''``
