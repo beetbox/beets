@@ -955,7 +955,7 @@ class APEv2ImageStorageStyle(ListStorageStyle):
     """
     formats = ['APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio', 'OptimFROG']
 
-    _APE_COVER_TAG_NAMES = {
+    TAG_NAMES = {
         ImageType.other: 'Cover Art (other)',
         ImageType.icon: 'Cover Art (icon)',
         ImageType.other_icon: 'Cover Art (other icon)',
@@ -976,15 +976,15 @@ class APEv2ImageStorageStyle(ListStorageStyle):
         ImageType.fish: 'Cover Art (colored fish)',
         ImageType.illustration: 'Cover Art (illustration)',
         ImageType.artist_logo: 'Cover Art (band logo)',
-        ImageType.publisher_logo: 'Cover Art (publisher logo)'}
+        ImageType.publisher_logo: 'Cover Art (publisher logo)',
+    }
 
     def __init__(self):
         super(APEv2ImageStorageStyle, self).__init__(key='')
 
     def fetch(self, mutagen_file):
         images = []
-        for cover_type, cover_tag in \
-                APEv2ImageStorageStyle._APE_COVER_TAG_NAMES.iteritems():
+        for cover_type, cover_tag in self.TAG_NAMES.items():
             try:
                 frame = mutagen_file[cover_tag]
                 text_delimiter_index = frame.value.find('\x00')
@@ -1005,14 +1005,13 @@ class APEv2ImageStorageStyle(ListStorageStyle):
             image_type = image.type or ImageType.other
             comment = image.desc or ''
             image_data = comment + "\x00" + image.data
-            cover_tag = APEv2ImageStorageStyle._APE_COVER_TAG_NAMES[image_type]
+            cover_tag = self.TAG_NAMES[image_type]
             mutagen_file[cover_tag] = image_data
 
     def delete(self, mutagen_file):
         """Remove all images from the file.
         """
-        for cover_tag in \
-                APEv2ImageStorageStyle._APE_COVER_TAG_NAMES.itervalues():
+        for cover_tag in self.TAG_NAMES.values():
             try:
                 del mutagen_file[cover_tag]
             except KeyError:
