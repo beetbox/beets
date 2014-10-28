@@ -17,6 +17,7 @@ discogs-client library.
 """
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
+from beets.util import confit
 from discogs_client import Release, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
@@ -24,6 +25,7 @@ import beets
 import logging
 import re
 import time
+import json
 
 log = logging.getLogger('beets')
 
@@ -31,16 +33,62 @@ log = logging.getLogger('beets')
 urllib3_logger = logging.getLogger('requests.packages.urllib3')
 urllib3_logger.setLevel(logging.CRITICAL)
 
+USER_AGENT = 'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
+
 
 class DiscogsPlugin(BeetsPlugin):
 
     def __init__(self):
         super(DiscogsPlugin, self).__init__()
         self.config.add({
+            'apikey': 'rAzVUQYRaoFjeBjyWuWZ',
+            'apisecret': 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy',
+            'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
         })
-        self.discogs_client = Client('beets/%s +http://beets.radbox.org/' %
-                                     beets.__version__)
+
+        c_key = self.config['apikey'].get(unicode)
+        c_secret = self.config['apisecret'].get(unicode)
+
+        # Get the OAuth token from a file or log in.
+        try:
+            with open(self._tokenfile()) as f:
+                tokendata = json.load(f)
+        except IOError:
+            # No token yet. Generate one.
+            token, secret = self.authenticate(c_key, c_secret)
+        else:
+            token = tokendata['token']
+            secret = tokendata['secret']
+
+        self.discogs_client = Client(USER_AGENT, c_key, c_secret,
+                                     token, secret)
+
+    def _tokenfile(self):
+        """Get the path to the JSON file for storing the OAuth token.
+        """
+        return self.config['tokenfile'].get(confit.Filename(in_app_dir=True))
+
+    def authenticate(self, c_key, c_secret):
+        # Get the link for the OAuth page.
+        auth_client = Client(USER_AGENT, c_key, c_secret)
+        _, _, url = auth_client.get_authorize_url()
+        beets.ui.print_("To authenticate with Discogs, visit:")
+        beets.ui.print_(url)
+
+        # Ask for the code and validate it.
+        code = beets.ui.input_("Enter the code:")
+        try:
+            token, secret = auth_client.get_access_token(code)
+        except DiscogsAPIError:
+            raise beets.ui.UserError('Discogs authorization failed')
+
+        # Save the token for later use.
+        log.debug('Discogs token {0}, secret {1}'.format(token, secret))
+        with open(self._tokenfile(), 'w') as f:
+            json.dump({'token': token, 'secret': secret}, f)
+
+        return token, secret
 
     def album_distance(self, items, album_info, mapping):
         """Returns the album distance.

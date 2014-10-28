@@ -14,8 +14,13 @@ install the `discogs-client`_ library by typing::
 
     pip install discogs-client
 
-That's it! Matches from Discogs will now show up during import alongside
-matches from MusicBrainz.
+You will also need to register for a `Discogs`_ account. The first time you
+run beets after enabling the plugin, it will ask you to authorize with Discogs
+by visiting the site in a browser. Subsequent runs will not require
+re-authorization.
+
+Matches from Discogs will now show up during import alongside matches from
+MusicBrainz.
 
 If you have a Discogs ID for an album you want to tag, you can also enter it
 at the "enter Id" prompt in the importer.

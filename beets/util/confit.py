@@ -1105,12 +1105,19 @@ class Filename(Template):
     they are relative to the current working directory. This helps
     attain the expected behavior when using command-line options.
     """
-    def __init__(self, default=REQUIRED, cwd=None, relative_to=None):
+    def __init__(self, default=REQUIRED, cwd=None, relative_to=None,
+                 in_app_dir=False):
         """ `relative_to` is the name of a sibling value that is
         being validated at the same time.
+
+        `in_app_dir` indicates whether the path should be resolved
+        inside the application's config directory (even when the setting
+        does not come from a file).
         """
         super(Filename, self).__init__(default)
-        self.cwd, self.relative_to = cwd, relative_to
+        self.cwd = cwd
+        self.relative_to = relative_to
+        self.in_app_dir = in_app_dir
 
     def __repr__(self):
         args = []
@@ -1123,6 +1130,9 @@ class Filename(Template):
 
         if self.relative_to is not None:
             args.append('relative_to=' + repr(self.relative_to))
+
+        if self.in_app_dir:
+            args.append('in_app_dir=True')
 
         return 'Filename({0})'.format(', '.join(args))
 
@@ -1198,7 +1208,7 @@ class Filename(Template):
                     path,
                 )
 
-            elif source.filename:
+            elif source.filename or self.in_app_dir:
                 # From defaults: relative to the app's directory.
                 path = os.path.join(view.root().config_dir(), path)
 

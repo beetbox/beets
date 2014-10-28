@@ -1272,11 +1272,11 @@ class MediaFile(object):
         elif (type(self.mgfile).__name__ == 'M4A' or
               type(self.mgfile).__name__ == 'MP4'):
             # This hack differentiates AAC and ALAC until we find a more
-            # deterministic approach. Mutagen only sets the sample rate
+            # deterministic approach. Mutagen only sets the bitrate
             # for AAC files. See:
             # https://github.com/sampsyo/beets/pull/295
-            if hasattr(self.mgfile.info, 'sample_rate') and \
-               self.mgfile.info.sample_rate > 0:
+            if hasattr(self.mgfile.info, 'bitrate') and \
+               self.mgfile.info.bitrate > 0:
                 self.type = 'aac'
             else:
                 self.type = 'alac'

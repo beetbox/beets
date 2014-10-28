@@ -22,6 +22,13 @@ class TypesPlugin(BeetsPlugin):
 
     @property
     def item_types(self):
+        return self._types()
+
+    @property
+    def album_types(self):
+        return self._types()
+
+    def _types(self):
         if not self.config.exists():
             return {}
 
