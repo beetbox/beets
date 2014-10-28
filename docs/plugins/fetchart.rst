@@ -13,8 +13,8 @@ The plugin uses `requests`_ to fetch album art from the Web.
 
 .. _requests: http://docs.python-requests.org/en/latest/
 
-Usage
------
+Fetching Album Art During Import
+--------------------------------
 
 When the plugin is enabled, it automatically gets album art for every album
 you import.
