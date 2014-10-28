@@ -146,7 +146,8 @@ var BeetsRouter = Backbone.Router.extend({
         "item/query/:query": "itemQuery",
     },
     itemQuery: function(query) {
-        $.getJSON('/item/query/' + query, function(data) {
+        var queryURL = query.split(/\s+/).map(encodeURIComponent).join('/');
+        $.getJSON('/item/query/' + queryURL, function(data) {
             var models = _.map(
                 data['results'],
                 function(d) { return new Item(d); }
