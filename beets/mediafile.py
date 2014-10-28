@@ -955,41 +955,44 @@ class APEv2ImageStorageStyle(ListStorageStyle):
     """
     formats = ['APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio', 'OptimFROG']
 
-    _APE_COVER_TAG_NAMES = {ImageType.other: 'Cover Art (other)',
-                            ImageType.icon: 'Cover Art (icon)',
-                            ImageType.other_icon: 'Cover Art (other icon)',
-                            ImageType.front: 'Cover Art (front)',
-                            ImageType.back: 'Cover Art (back)',
-                            ImageType.leaflet: 'Cover Art (leaflet)',
-                            ImageType.media: 'Cover Art (media)',
-                            ImageType.lead_artist: 'Cover Art (lead)',
-                            ImageType.artist: 'Cover Art (artist)',
-                            ImageType.conductor: 'Cover Art (conductor)',
-                            ImageType.group: 'Cover Art (band)',
-                            ImageType.composer: 'Cover Art (composer)',
-                            ImageType.lyricist: 'Cover Art (lyricist)',
-                            ImageType.recording_location: 'Cover Art (studio)',
-                            ImageType.recording_session: 'Cover Art (recording)',
-                            ImageType.performance: 'Cover Art (performance)',
-                            ImageType.screen_capture: 'Cover Art (movie scene)',
-                            ImageType.fish: 'Cover Art (colored fish)',
-                            ImageType.illustration: 'Cover Art (illustration)',
-                            ImageType.artist_logo: 'Cover Art (band logo)',
-                            ImageType.publisher_logo: 'Cover Art (publisher logo)'
-                            }
+    _APE_COVER_TAG_NAMES = {
+        ImageType.other: 'Cover Art (other)',
+        ImageType.icon: 'Cover Art (icon)',
+        ImageType.other_icon: 'Cover Art (other icon)',
+        ImageType.front: 'Cover Art (front)',
+        ImageType.back: 'Cover Art (back)',
+        ImageType.leaflet: 'Cover Art (leaflet)',
+        ImageType.media: 'Cover Art (media)',
+        ImageType.lead_artist: 'Cover Art (lead)',
+        ImageType.artist: 'Cover Art (artist)',
+        ImageType.conductor: 'Cover Art (conductor)',
+        ImageType.group: 'Cover Art (band)',
+        ImageType.composer: 'Cover Art (composer)',
+        ImageType.lyricist: 'Cover Art (lyricist)',
+        ImageType.recording_location: 'Cover Art (studio)',
+        ImageType.recording_session: 'Cover Art (recording)',
+        ImageType.performance: 'Cover Art (performance)',
+        ImageType.screen_capture: 'Cover Art (movie scene)',
+        ImageType.fish: 'Cover Art (colored fish)',
+        ImageType.illustration: 'Cover Art (illustration)',
+        ImageType.artist_logo: 'Cover Art (band logo)',
+        ImageType.publisher_logo: 'Cover Art (publisher logo)'}
 
     def __init__(self):
         super(APEv2ImageStorageStyle, self).__init__(key='')
 
     def fetch(self, mutagen_file):
         images = []
-        for cover_type, cover_tag in APEv2ImageStorageStyle._APE_COVER_TAG_NAMES.iteritems():
+        for cover_type, cover_tag in \
+                APEv2ImageStorageStyle._APE_COVER_TAG_NAMES.iteritems():
             try:
                 frame = mutagen_file[cover_tag]
                 text_delimiter_index = frame.value.find('\x00')
-                comment = frame.value[0:text_delimiter_index] if text_delimiter_index > 0 else None
-                image_data = frame.value[text_delimiter_index+1:]
-                images.append(Image(data=image_data, type=cover_type, desc=comment))
+                comment = frame.value[0:text_delimiter_index] \
+                    if text_delimiter_index > 0 else None
+                image_data = frame.value[text_delimiter_index + 1:]
+                images.append(Image(data=image_data, type=cover_type,
+                                    desc=comment))
             except KeyError:
                 pass
 
@@ -999,8 +1002,8 @@ class APEv2ImageStorageStyle(ListStorageStyle):
         self.delete(mutagen_file)
 
         for image in values:
-            image_type = image.type if image.type is not None else ImageType.other
-            comment = image.desc if image.desc else ''
+            image_type = image.type or ImageType.other
+            comment = image.desc or ''
             image_data = comment + "\x00" + image.data
             cover_tag = APEv2ImageStorageStyle._APE_COVER_TAG_NAMES[image_type]
             mutagen_file[cover_tag] = image_data
@@ -1008,11 +1011,13 @@ class APEv2ImageStorageStyle(ListStorageStyle):
     def delete(self, mutagen_file):
         """Remove all images from the file.
         """
-        for cover_tag in APEv2ImageStorageStyle._APE_COVER_TAG_NAMES.itervalues():
+        for cover_tag in \
+                APEv2ImageStorageStyle._APE_COVER_TAG_NAMES.itervalues():
             try:
                 del mutagen_file[cover_tag]
             except KeyError:
                 pass
+
 
 # MediaField is a descriptor that represents a single logical field. It
 # aggregates several StorageStyles describing how to access the data for
