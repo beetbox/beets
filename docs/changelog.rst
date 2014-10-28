@@ -63,6 +63,9 @@ Fixes:
   interpreted correctly. And WMA (ASF) files now map the ``comments`` field to
   the "Description" tag (in addition to "WM/Comments"). Thanks to Matthias
   Kiefer. :bug:`1043`
+* :doc:`/plugins/embedart`: Avoid resizing the image multiple times when
+  embedding into an album. Thanks to :user:`kerobaros`. :bug:`1028`,
+  :bug:`1036`
 
 
 1.3.8 (September 17, 2014)
