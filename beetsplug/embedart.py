@@ -126,7 +126,7 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
                 displayable_path(imagepath)
             ))
             return
-    if not asalbum:
+    if maxwidth and not asalbum:
         imagepath = resize_image(imagepath, maxwidth)
 
     try:
@@ -165,7 +165,7 @@ def embed_album(album, maxwidth=None, quiet=False):
     for item in album.items():
         embed_item(item, imagepath, maxwidth, None,
                    config['embedart']['compare_threshold'].get(int),
-                   config['embedart']['ifempty'], asalbum=True)
+                   config['embedart']['ifempty'].get(bool), asalbum=True)
 
 
 def resize_image(imagepath, maxwidth):
