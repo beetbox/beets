@@ -41,7 +41,7 @@ installing GStreamer plugins.
 Usage
 -----
 
-To use the plugin, first enable it in your configuration (see
+To use the ``bpd`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`).
 Then, you can run BPD by invoking::
 

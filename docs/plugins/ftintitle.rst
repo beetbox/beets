@@ -10,7 +10,8 @@ tracks in your library like "Tellin' Me Things" by the artist "Blakroc feat.
 RZA". If you prefer to tag this as "Tellin' Me Things feat. RZA" by "Blakroc",
 then this plugin is for you.
 
-To use the plugin, enable it in your configuration (see :ref:`using-plugins`).
+To use the ``ftintitle`` plugin, enable it in your configuration
+(see :ref:`using-plugins`).
 
 Configuration
 -------------

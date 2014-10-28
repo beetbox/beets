@@ -4,7 +4,8 @@ ImportFeeds Plugin
 The ``importfeeds`` plugin helps you keep track of newly imported music in your
 library.
 
-To use the plugin, enable it in your configuration (see :ref:`using-plugins`).
+To use the ``importfeeds`` plugin, enable it in your configuration
+(see :ref:`using-plugins`).
 
 Configuration
 -------------

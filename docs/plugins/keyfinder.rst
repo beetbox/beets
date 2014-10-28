@@ -7,7 +7,7 @@ musical key of track from its audio data and store it in the
 automatically when importing music or through the ``beet keyfinder
 [QUERY]`` command.
 
-To use the plugin, enable it in your configuration (see
+To use the ``keyfinder`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
 
 Configuration

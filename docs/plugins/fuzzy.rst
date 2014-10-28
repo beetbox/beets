@@ -14,7 +14,7 @@ You'll then be able to use the ``~`` prefix to use fuzzy matching::
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``threshold``: a value of 1.0 will show only perfect matches and a value of
   0.0 will match everything.

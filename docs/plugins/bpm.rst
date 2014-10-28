@@ -7,7 +7,7 @@ tapping out the beat on your keyboard.
 Usage
 -----
 
-To use the plugin, first enable it in your configuration (see
+To use the ``bpm`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`).
 
 Then, play a song you want to measure in your favorite media player and type::

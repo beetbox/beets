@@ -20,7 +20,8 @@ flask``.
 
 .. _Flask: http://flask.pocoo.org/
 
-Finally, enable the plugin in your configuration (see :ref:`using-plugins`).
+Finally, enable the ``web`` plugin in your configuration
+(see :ref:`using-plugins`).
 
 Run the Server
 --------------

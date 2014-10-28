@@ -17,8 +17,8 @@ The plugin requires `pylast`_, which you can install using `pip`_ by typing::
 
     pip install pylast
 
-After you have pylast installed, nable the plugin in your configuration (see
-:ref:`using-plugins`).
+After you have pylast installed, enable the ``lastgenre`` plugin in your
+configuration (see :ref:`using-plugins`).
 
 Usage
 -----

@@ -7,7 +7,7 @@ The ``bucket`` plugin groups your files into buckets folders representing
 smaller subfolders by grouping albums or artists alphabetically (e.g. *A-F*,
 *G-M*, *N-Z*).
 
-To use the plugin, first enable it in your configuration (see
+To use the ``bucket`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`).
 The plugin provides a :ref:`template function
 <template-functions>` called ``%bucket`` for use in path format expressions::

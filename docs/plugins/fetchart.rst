@@ -4,7 +4,7 @@ FetchArt Plugin
 The ``fetchart`` plugin retrieves album art images from various sources on the
 Web and stores them as image files.
 
-To use the plugin, first enable it in your configuration (see
+To use the ``fetchart`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install the `requests`_ library by typing::
 
     pip install requests

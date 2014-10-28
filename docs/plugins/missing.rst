@@ -27,7 +27,7 @@ tracks over your whole library, using command-line switches ::
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``count`` prints a count of missing tracks per album, with ``format``
   defaulting to ``$albumartist - $album: $missing``.

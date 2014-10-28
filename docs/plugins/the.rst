@@ -11,8 +11,8 @@ regexp patterns can be added by user. How it works::
     A Band -> Band, A
     An Orchestra -> Orchestra, An
 
-Enable the plugin (see :doc:`/plugins/index`) and then make use of a template
-function called ``%the`` for use in path format expressions::
+Enable the ``the`` plugin (see :doc:`/plugins/index`) and then make use of a
+template function called ``%the`` for use in path format expressions::
 
     paths:
         default: %the{$albumartist}/($year) $album/$track $title

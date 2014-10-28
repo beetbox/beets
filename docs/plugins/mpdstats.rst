@@ -35,7 +35,7 @@ Use the ``mpdstats`` command to fire it up::
 Configuration
 -------------
 
-Available options :
+Available options:
 
 - ``host``: mpd server name.
   Default: ``localhost``.

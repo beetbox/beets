@@ -6,7 +6,7 @@ import or warn you about them. You specify queries (see
 :doc:`/reference/query`) and the plugin skips (or warns about) albums or items
 that match any query.
 
-To use the plugin, enable it in your configuration (see
+To use the ``ihate`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
 
 Configuration

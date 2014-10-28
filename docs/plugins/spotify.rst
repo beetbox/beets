@@ -16,8 +16,8 @@ Why Use This Plugin?
 Basic Usage
 -----------
 
-First, enable the plugin (see :ref:`using-plugins`). Then, use the ``spotify``
-command with a beets query::
+First, enable the ``spotify`` plugin (see :ref:`using-plugins`).
+Then, use the ``spotify`` command with a beets query::
 
     beet spotify [OPTIONS...] QUERY
 

@@ -9,7 +9,7 @@ include matches from the `Discogs`_ database.
 Installation
 ------------
 
-To use the plugin, first enable it in your configuration (see
+To use the ``discogs`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install the `discogs-client`_ library by typing::
 
     pip install discogs-client

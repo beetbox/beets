@@ -41,7 +41,7 @@ algorithms supported by the Echo Nest. Please note that fingerprinting is not
 required if ``upload`` and ``convert`` is enabled, which is the default (but
 it can be faster than uploading).
 
-Finally, to use the plugin, enable it in your configuration (see
+Finally, enable the ``echonest`` plugin in your configuration (see
 :ref:`using-plugins`).
 
 .. _pip: http://pip.openplans.org/

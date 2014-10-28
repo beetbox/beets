@@ -90,9 +90,9 @@ standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
 Usage
 -----
 
-Once you have all the dependencies sorted out, enable the plugin in your
-configuration (see :ref:`using-plugins`) to benefit from fingerprinting the
-next time you run ``beet import``.
+Once you have all the dependencies sorted out, enable the ``chroma`` plugin in
+your configuration (see :ref:`using-plugins`) to benefit from fingerprinting
+the next time you run ``beet import``.
 
 You can also use the ``beet fingerprint`` command to generate fingerprints for
 items already in your library. (Provide a query to fingerprint a subset of your

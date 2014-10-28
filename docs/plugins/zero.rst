@@ -6,7 +6,8 @@ can be nulled unconditionally or conditioned on a pattern match. For example,
 the plugin can strip useless comments like "ripped by MyGreatRipper." This
 plugin only affects files' tags ; the beets database is left unchanged.
 
-To use the plugin, enable the plugin in your configuration (see :ref:`using-plugins`).
+To use the ``zero`` plugin, enable the plugin in your configuration
+(see :ref:`using-plugins`).
 
 Configuration
 -------------

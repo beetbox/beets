@@ -6,7 +6,8 @@ path formats. Specifically, it is intended to let you *canonicalize* names
 such as artists: for example, perhaps you want albums from The Jimi Hendrix
 Experience to be sorted into the same folder as solo Hendrix albums.
 
-To use field rewriting, first enable the plugin (see :ref:`using-plugins`).
+To use field rewriting, first enable the ``rewrite`` plugin
+(see :ref:`using-plugins`).
 Then, make a ``rewrite:`` section in your config file to contain your rewrite
 rules. Each rule consists of a field name, a regular expression pattern, and a
 replacement value. Rules are written ``fieldname regex: replacement``.

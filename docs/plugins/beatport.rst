@@ -18,7 +18,7 @@ both MusicBrainz and (to a lesser degree) Discogs show no matches.
 Installation
 ------------
 
-To use the plugin, first enable it in your configuration (see
+To use the ``beatport`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install the `requests`_
 library (which we need for querying the Beatport API) by typing::
 

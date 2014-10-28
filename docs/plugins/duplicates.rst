@@ -7,7 +7,7 @@ and lists duplicate tracks or albums in your collection.
 Usage
 -----
 
-To use the plugin, first enable it in your configuration (see
+To use the ``duplicates`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`).
 
 By default, the ``beet duplicates`` command lists the names of tracks
