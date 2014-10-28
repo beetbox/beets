@@ -22,6 +22,8 @@ Features:
   embed album art when no album art is present. Thanks to kerobaros.
 * :doc:`/plugins/ftintitle`: The plugin now runs automatically on import. To
   disable this, unset the ``auto`` config flag.
+* Standard cover art in APEv2 metadata is now supported. Thanks to Matthias
+  Kiefer. :bug:`1042`
 
 Fixes:
 
