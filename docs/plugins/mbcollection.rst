@@ -6,7 +6,8 @@ maintain your `music collection`_ list there.
 
 .. _music collection: http://musicbrainz.org/doc/Collections
 
-To begin, just enable the ``mbcollection`` plugin (see :doc:`/plugins/index`).
+To begin, just enable the ``mbcollection`` plugin in your
+configuration (see :ref:`using-plugins`).
 Then, add your MusicBrainz username and password to your
 :doc:`configuration file </reference/config>` under a ``musicbrainz`` section::
 
@@ -19,16 +20,12 @@ command automatically adds all of your albums to the first collection it finds.
 If you don't have a MusicBrainz collection yet, you may need to add one to your
 profile first.
 
+Configuration
+-------------
+
+
 Automatically Update on Import
 ------------------------------
 
-You can also configure the plugin to automatically amend your MusicBrainz
-collection whenever you import a new album. To do this, first enable the
-plugin and add your MusicBrainz account as above.  Then, add ``mbcollection``
-section and enable the enable ``auto`` flag therein::
-
-    mbcollection:
-        auto: yes
-
-During future imports, your default collection will be updated with each
-imported album.
+mbcollection: if set to ``yes``, the plugin will automatically amend your
+MusicBrainz collection whenever you import a new album. Default: ``false``

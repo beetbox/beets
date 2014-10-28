@@ -10,8 +10,8 @@ line.
 Installation
 ------------
 
-Enable the ``convert`` plugin in your configuration (see
-:doc:`/plugins/index`).  By default, the plugin depends on `FFmpeg`_ to
+To use the plugin, first enable it in your configuration (see
+:ref:`using-plugins`). By default, the plugin depends on `FFmpeg`_ to
 transcode the audio, so you might want to install it.
 
 .. _FFmpeg: http://ffmpeg.org
@@ -50,35 +50,37 @@ them.
 Configuration
 -------------
 
-The plugin offers several configuration options, all of which live under the
-``convert:`` section:
+Available options :
 
-* ``dest`` sets the directory the files will be converted (or copied) to.
-  A destination is required---you either have to provide it in the config file
-  or on the command-line using the ``-d`` flag.
-* ``embed`` indicates whether or not to embed album art in converted items.
-  Default: true.
-* If you set ``max_bitrate``, all lossy files with a higher bitrate will be
-  transcoded and those with a lower bitrate will simply be copied. Note that
-  this does not guarantee that all converted files will have a lower
-  bitrate---that depends on the encoder and its configuration.
-* ``auto`` gives you the option to import transcoded versions of your files
+- ``auto`` gives you the option to import transcoded versions of your files
   automatically during the ``import`` command. With this option enabled, the
   importer will transcode all non-MP3 files over the maximum bitrate before
   adding them to your library.
-* ``quiet`` mode prevents the plugin from announcing every file it processes.
-  Default: false.
-* ``never_convert_lossy_files`` means that lossy codecs, such as mp3, ogg vorbis,
-  etc, are never converted, as converting lossy files to other lossy codecs will
-  decrease quality further. If set to true, lossy files are always copied.
-  Default: false
-* ``paths`` lets you specify the directory structure and naming scheme for the
+  Default: ``no``.
+- ``dest`` sets the directory the files will be converted (or copied) to.
+  A destination is required---you either have to provide it in the config file
+  or on the command-line using the ``-d`` flag.
+- ``embed`` indicates whether or not to embed album art in converted items.
+  Default: ``yes``.
+- ``max_bitrate``: all lossy files with a higher bitrate will be
+  transcoded and those with a lower bitrate will simply be copied. Note that
+  this does not guarantee that all converted files will have a lower
+  bitrate---that depends on the encoder and its configuration.
+- ``never_convert_lossy_files`` means that lossy codecs, such as mp3, ogg
+  vorbis, etc, are never converted, as converting lossy files to other lossy
+  codecs will decrease quality further. If set to ``yes``, lossy files are
+  always copied.
+  Default: ``no``
+- ``paths`` lets you specify the directory structure and naming scheme for the
   converted files. Use the same format as the top-level ``paths`` section (see
-  :ref:`path-format-config`). By default, the plugin reuses your top-level
-  path format settings.
-* Finally, ``threads`` determines the number of threads to use for parallel
-  encoding. By default, the plugin will detect the number of processors
-  available and use them all.
+  :ref:`path-format-config`).
+  By default, the plugin reuses your top-level path format settings.
+- ``quiet`` mode prevents the plugin from announcing every file it processes.
+  Default: ``false``.
+- ``threads`` determines the number of threads to use for parallel
+  encoding.
+  By default, the plugin will detect the number of processors available and use
+  them all.
 
 .. _convert-format-config:
 
@@ -114,7 +116,7 @@ formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wmv`. For
 details have a look at the output of ``beet config -d``.
 
 For a one-command-fits-all solution use the ``convert.command`` and
-``convert.extension`` options. If these are set the formats are ignored
+``convert.extension`` options. If these are set, the formats are ignored
 and the given command is used for all conversions.::
 
     convert:

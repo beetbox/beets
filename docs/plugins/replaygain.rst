@@ -65,31 +65,35 @@ you can configure the path explicitly like so::
 Configuration
 -------------
 
-Available configuration options for the ``replaygain`` section in your
-configuration file include:
+Available options :
 
-* **overwrite**: By default, files that already have ReplayGain tags will not
-  be re-analyzed. If you want to analyze *every* file on import, you can set
-  the ``overwrite`` option for the plugin in your :doc:`configuration file
-  </reference/config>`, like so::
 
-      replaygain:
-          overwrite: yes
+- ``auto``: set it to ``no`` to disable replaygain analysis during import.
+  Default: ``yes``.
+- ``backend``: which backend to use for ReplayGain analysis.
+  Must be one of ``gstreamer`` or ``command``.
+  Default: ``command``
+- ``overwrite``: by default, files that already have ReplayGain tags will not
+  be re-analyzed. Set to ``yes`` if you want to analyze *every* file on import.
+  Default: ``no``.
+- ``targetlevel``: specify a number of decibels for the target loudness level
+  Default: ``89``
 
-* **targetlevel**: The target loudness level can be modified to any number of
-  decibels with the ``targetlevel`` option (default: 89 dB).
+  These options only work with the "command" backend:
 
-These options only work with the "command" backend:
-
-* **apply**: If you use a player that does not support ReplayGain
+- ``apply``: if you use a player that does not support ReplayGain
   specifications, you can force the volume normalization by applying the gain
   to the file via the ``apply`` option. This is a lossless and reversible
   operation with no transcoding involved.
-* **noclip**: The use of ReplayGain can cause clipping if the average volume
+- ``command``: use it to explicitely enter path to ``mp3gain`` or ``aacgain``
+  executable, if beets cannot find it by itself.
+  For example: '/Applications/MacMP3Gain.app/Contents/Resources/aacgain'
+  Default: ``u''``
+- ``noclip``: the use of ReplayGain can cause clipping if the average volume
   of a song is below the target level. By default, a "prevent clipping" option
   named ``noclip`` is enabled to reduce the amount of ReplayGain adjustment to
   whatever amount would keep clipping from occurring.
-
+  Default: ``yes``.
 
 Manual Analysis
 ---------------
