@@ -40,14 +40,15 @@ Configuration
 
 Available options:
 
-- ``bucket_alpha`` defines ranges to use for all substitutions occuring on
-  textual fields.
+- ``bucket_alpha``: ranges to use for all substitutions occuring on textual
+  fields.
   Default: ``[]``
-- ``bucket_alpha_regex`` allows to define a regex to override a `bucket_alpha`
-  range definition
+- ``bucket_alpha_regex``: list of ``key: value`` (one per line) with 'key'
+  being one of the `bucket_alpha` range and 'value' a regex that override
+  original range definition.
   Default: ``{}``
-- ``bucket_year`` defines ranges to use for all substitutions occuring on the
-  `$year` field
+- ``bucket_year``: ranges to use for all substitutions occuring on the
+  `$year` field.
   Default: ``[]``
 - ``extrapolate`` : activate it when you want to group your files into multiple
   year ranges without enumerating them all. This option will generate year

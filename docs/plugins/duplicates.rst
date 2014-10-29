@@ -38,43 +38,43 @@ Configuration
 
 Available options (mirroring the CLI ones):
 
-- ``album`` lists duplicate albums instead of tracks.
+- ``album``: lists duplicate albums instead of tracks.
   Default: ``no``.
-- ``checksum`` enables the use of any arbitrary command to compute a checksum
+- ``checksum``: enables the use of any arbitrary command to compute a checksum
   of items. It overrides the ``keys`` option the first time it is run; however,
   because it caches the resulting checksum as ``flexattrs`` in the database,
   you can use ``--keys=name_of_the_checksumming_program any_other_keys`` (or
   set configuration ``keys``option) the second time around.
   Default: ``ffmpeg -i {file} -f crc -``.
-- ``copy`` takes a destination base directory into which it will copy matched
+- ``copy``: takes a destination base directory into which it will copy matched
   items.
   Default: ``no``.
-- `count` prints a count of duplicate tracks or albums, with ``format``
+- ``count``: prints a count of duplicate tracks or albums, with ``format``
   hard-coded to ``$albumartist - $album - $title: $count`` or ``$albumartist -
   $album: $count`` (for the ``-a`` option).
   Default: ``no``.
-- ``delete`` removes matched items from the library and from the disk.
+- ``delete``: removes matched items from the library and from the disk.
   Default: ``no``
-- `format` lets you specify a specific format with which to print every track
+- ``format``: lets you specify a specific format with which to print every track
   or album. This uses the same template syntax as beets
   ’:doc:`path formats</reference/pathformat>`.  The usage is inspired by, and
   therefore similar to, the :ref:`list <list-cmd>` command.
   Default: :ref:`list_format_item`
-- ``full`` lists every track or album that has duplicates, not just the
+- ``full``:lists every track or album that has duplicates, not just the
   duplicates themselves.
   Default: ``no``.
-- ``keys`` defines in which track or album fields duplicates are to be
+- ``keys``: defines in which track or album fields duplicates are to be
   searched. By default, the plugin uses the musicbrainz track and album IDs for
   this purpose. Using the ``keys`` option (as a YAML list in the configuration
   file, or as space-delimited strings in the command-line), you can extend this
   behavior to consider other attributes.
   Default: ``[mb_trackid, mb_albumid]``
-- ``move`` takes a destination base directory into which it will move matched
+- ``move``: takes a destination base directory into which it will move matched
   items.
   Default: ``no``.
-- `path` is a convenience wrapper for ``-f \$path``.
+- ``path``: convenience wrapper for ``-f \$path``.
   Default: ``no``.
-- ``tag`` takes a ``key=value`` string, and adds a new ``key`` attribute with
+- ``tag``: takes a ``key=value`` string, and adds a new ``key`` attribute with
   ``value`` value as a flexattr to the database.
   Default: ``no``.
 

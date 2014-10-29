@@ -54,7 +54,7 @@ The default options should work as-is, but there are some options you can put in
 * ``region_filter``: use the 2-character country abbreviation to limit results
   to that market.
   Default: ``None``
-* ``show_failures``: qhow the artist/album/track for each lookup that does not
+* ``show_failures``: show the artist/album/track for each lookup that does not
   return a Spotify ID (and therefore cannot be added to a playlist).
   Default: ``no``
 * ``tiebreak``: how to choose the track if there is more than one identical

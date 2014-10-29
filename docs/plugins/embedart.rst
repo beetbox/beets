@@ -41,7 +41,7 @@ Configuration
 
 Available options:
 
-- ``auto`` option lets you disable automatic album art embedding when set to
+- ``auto``: lets you disable automatic album art embedding when set to
   ``no``.
   Default: ``true``
 - ``compare_threshold``: how similar must candidate art be regarding to
@@ -50,7 +50,7 @@ Available options:
 - ``ifempty``: set to 'yes' to avoid embedding album art for files that already
   have one.
   Default: ``no``.
-- ``maxwidth`` defines a maximum width to downscale images before embedding
+- ``maxwidth``: defines a maximum width to downscale images before embedding
   them (the original image file is not altered). The resize operation reduces
   image width to ``maxwidth`` pixels. The height is recomputed so that the
   aspect ratio is preserved. See also :ref:`image-resizing` for further caveats

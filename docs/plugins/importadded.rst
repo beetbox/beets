@@ -41,7 +41,8 @@ Configuration
 
 Available option:
 
-- ``preserve_mtimes``: Default: ``no``
+- ``preserve_mtimes``
+  Default: ``no``
 
 Reimport
 --------

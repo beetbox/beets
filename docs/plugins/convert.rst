@@ -52,33 +52,30 @@ Configuration
 
 Available options:
 
-- ``auto`` gives you the option to import transcoded versions of your files
+- ``auto``: set it to ``yes`` to import transcoded versions of your files
   automatically during the ``import`` command. With this option enabled, the
   importer will transcode all non-MP3 files over the maximum bitrate before
   adding them to your library.
   Default: ``no``.
-- ``dest`` sets the directory the files will be converted (or copied) to.
-  A destination is required---you either have to provide it in the config file
-  or on the command-line using the ``-d`` flag.
+- ``dest``: the directory where the files will be converted (or copied) to.
+  Default: ``None``
 - ``embed`` indicates whether or not to embed album art in converted items.
   Default: ``yes``.
 - ``max_bitrate``: all lossy files with a higher bitrate will be
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration.
-- ``never_convert_lossy_files`` means that lossy codecs, such as mp3, ogg
-  vorbis, etc, are never converted, as converting lossy files to other lossy
-  codecs will decrease quality further. If set to ``yes``, lossy files are
-  always copied.
+- ``never_convert_lossy_files``: cross-conversions between lossy codecs---such
+  as mp3, ogg vorbis, etc,---makes little sense as they will decrease quality
+  even further. If set to ``yes``, lossy files are always copied.
   Default: ``no``
-- ``paths`` lets you specify the directory structure and naming scheme for the
+- ``paths``: lets you specify the directory structure and naming scheme for the
   converted files. Use the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`).
   By default, the plugin reuses your top-level path format settings.
-- ``quiet`` mode prevents the plugin from announcing every file it processes.
+- ``quiet``: prevents the plugin from announcing every file it processes.
   Default: ``false``.
-- ``threads`` determines the number of threads to use for parallel
-  encoding.
+- ``threads``: number of threads to use for parallel encoding.
   By default, the plugin will detect the number of processors available and use
   them all.
 

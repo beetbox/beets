@@ -76,8 +76,9 @@ Available options are pretty self-explanatory:
   Default: ``u''``
 - ``port``
   Default: ``6600``
-- ``password``: ``u'``
-- ``volume`` sets the initial volume in percent
+- ``password``
+  Default: ``u''``
+- ``volume``: initial volume in percent
   Default: ``100``
 
 Here's an example::

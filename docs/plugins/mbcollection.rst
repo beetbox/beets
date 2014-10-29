@@ -23,9 +23,8 @@ profile first.
 Configuration
 -------------
 
+Available option:
 
-Automatically Update on Import
-------------------------------
-
-mbcollection: if set to ``yes``, the plugin will automatically amend your
-MusicBrainz collection whenever you import a new album. Default: ``false``
+- ``auto``: if set to ``yes``, the plugin will automatically amend your
+  MusicBrainz collection whenever you import a new album.
+  Default: ``false``
