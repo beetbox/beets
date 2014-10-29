@@ -22,6 +22,8 @@ Features:
   embed album art when no album art is present. Thanks to kerobaros.
 * :doc:`/plugins/ftintitle`: The plugin now runs automatically on import. To
   disable this, unset the ``auto`` config flag.
+* Standard cover art in APEv2 metadata is now supported. Thanks to Matthias
+  Kiefer. :bug:`1042`
 
 Fixes:
 
@@ -55,6 +57,15 @@ Fixes:
   :user:`multikatt`. :bug:`1027`, :bug:`1040`
 * :doc:`/plugins/play`: Fix a potential crash when the command outputs special
   characters. :bug:`1041`
+* :doc:`/plugins/web`: Typed queries are now treated as separate query
+  components. :bug:`1045`
+* Date tags that use slashes instead of dashes as separators are now
+  interpreted correctly. And WMA (ASF) files now map the ``comments`` field to
+  the "Description" tag (in addition to "WM/Comments"). Thanks to Matthias
+  Kiefer. :bug:`1043`
+* :doc:`/plugins/embedart`: Avoid resizing the image multiple times when
+  embedding into an album. Thanks to :user:`kerobaros`. :bug:`1028`,
+  :bug:`1036`
 
 
 1.3.8 (September 17, 2014)

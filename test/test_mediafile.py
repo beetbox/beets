@@ -770,6 +770,12 @@ class WMATest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile = MediaFile(mediafile.path)
         self.assertIn(mediafile.genre, [u'one', u'two'])
 
+    def test_read_pure_tags(self):
+        mediafile = self._mediafile_fixture('pure')
+        self.assertEqual(mediafile.comments, 'the comments')
+        self.assertEqual(mediafile.title, 'the title')
+        self.assertEqual(mediafile.artist, 'the artist')
+
 
 class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
               unittest.TestCase):
@@ -807,6 +813,12 @@ class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile = MediaFile(mediafile.path)
         self.assertFalse('coverart' in mediafile.mgfile)
 
+    def test_date_tag_with_slashes(self):
+        mediafile = self._mediafile_fixture('date_with_slashes')
+        self.assertEqual(mediafile.year, 2005)
+        self.assertEqual(mediafile.month, 6)
+        self.assertEqual(mediafile.day, 5)
+
 
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
                ExtendedImageStructureTestMixin,
@@ -822,7 +834,8 @@ class FlacTest(ReadWriteTestBase, PartialTestMixin,
     }
 
 
-class ApeTest(ReadWriteTestBase, unittest.TestCase):
+class ApeTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'ape'
     audio_properties = {
         'length': 1.0,

@@ -110,7 +110,7 @@ def album_imported(lib, album):
 
 
 def embed_item(item, imagepath, maxwidth=None, itempath=None,
-               compare_threshold=0, ifempty=False, asalbum=False):
+               compare_threshold=0, ifempty=False, as_album=False):
     """Embed an image into the item's media file.
     """
     if compare_threshold:
@@ -126,7 +126,7 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
                 displayable_path(imagepath)
             ))
             return
-    if maxwidth and not asalbum:
+    if maxwidth and not as_album:
         imagepath = resize_image(imagepath, maxwidth)
 
     try:
@@ -165,7 +165,7 @@ def embed_album(album, maxwidth=None, quiet=False):
     for item in album.items():
         embed_item(item, imagepath, maxwidth, None,
                    config['embedart']['compare_threshold'].get(int),
-                   config['embedart']['ifempty'].get(bool), asalbum=True)
+                   config['embedart']['ifempty'].get(bool), as_album=True)
 
 
 def resize_image(imagepath, maxwidth):

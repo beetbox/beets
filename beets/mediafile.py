@@ -868,7 +868,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
     base64-encoded. Values are `Image` objects.
     """
     formats = ['OggOpus', 'OggTheora', 'OggSpeex', 'OggVorbis',
-               'OggFlac', 'APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio']
+               'OggFlac']
 
     def __init__(self):
         super(VorbisImageStorageStyle, self).__init__(
@@ -948,6 +948,74 @@ class FlacImageStorageStyle(ListStorageStyle):
         """Remove all images from the file.
         """
         mutagen_file.clear_pictures()
+
+
+class APEv2ImageStorageStyle(ListStorageStyle):
+    """Store images in APEv2 tags. Values are `Image` objects.
+    """
+    formats = ['APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio', 'OptimFROG']
+
+    TAG_NAMES = {
+        ImageType.other: 'Cover Art (other)',
+        ImageType.icon: 'Cover Art (icon)',
+        ImageType.other_icon: 'Cover Art (other icon)',
+        ImageType.front: 'Cover Art (front)',
+        ImageType.back: 'Cover Art (back)',
+        ImageType.leaflet: 'Cover Art (leaflet)',
+        ImageType.media: 'Cover Art (media)',
+        ImageType.lead_artist: 'Cover Art (lead)',
+        ImageType.artist: 'Cover Art (artist)',
+        ImageType.conductor: 'Cover Art (conductor)',
+        ImageType.group: 'Cover Art (band)',
+        ImageType.composer: 'Cover Art (composer)',
+        ImageType.lyricist: 'Cover Art (lyricist)',
+        ImageType.recording_location: 'Cover Art (studio)',
+        ImageType.recording_session: 'Cover Art (recording)',
+        ImageType.performance: 'Cover Art (performance)',
+        ImageType.screen_capture: 'Cover Art (movie scene)',
+        ImageType.fish: 'Cover Art (colored fish)',
+        ImageType.illustration: 'Cover Art (illustration)',
+        ImageType.artist_logo: 'Cover Art (band logo)',
+        ImageType.publisher_logo: 'Cover Art (publisher logo)',
+    }
+
+    def __init__(self):
+        super(APEv2ImageStorageStyle, self).__init__(key='')
+
+    def fetch(self, mutagen_file):
+        images = []
+        for cover_type, cover_tag in self.TAG_NAMES.items():
+            try:
+                frame = mutagen_file[cover_tag]
+                text_delimiter_index = frame.value.find('\x00')
+                comment = frame.value[0:text_delimiter_index] \
+                    if text_delimiter_index > 0 else None
+                image_data = frame.value[text_delimiter_index + 1:]
+                images.append(Image(data=image_data, type=cover_type,
+                                    desc=comment))
+            except KeyError:
+                pass
+
+        return images
+
+    def set_list(self, mutagen_file, values):
+        self.delete(mutagen_file)
+
+        for image in values:
+            image_type = image.type or ImageType.other
+            comment = image.desc or ''
+            image_data = comment + "\x00" + image.data
+            cover_tag = self.TAG_NAMES[image_type]
+            mutagen_file[cover_tag] = image_data
+
+    def delete(self, mutagen_file):
+        """Remove all images from the file.
+        """
+        for cover_tag in self.TAG_NAMES.values():
+            try:
+                del mutagen_file[cover_tag]
+            except KeyError:
+                pass
 
 
 # MediaField is a descriptor that represents a single logical field. It
@@ -1088,11 +1156,11 @@ class DateField(MediaField):
         year, month, and day number. Each number is either an integer or
         None.
         """
-        # Get the underlying data and split on hyphens.
+        # Get the underlying data and split on hyphens and slashes.
         datestring = super(DateField, self).__get__(mediafile, None)
         if isinstance(datestring, basestring):
             datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
-            items = unicode(datestring).split('-')
+            items = re.split('[-/]', unicode(datestring))
         else:
             items = []
 
@@ -1206,6 +1274,7 @@ class ImageListField(MediaField):
             ASFImageStorageStyle(),
             VorbisImageStorageStyle(),
             FlacImageStorageStyle(),
+            APEv2ImageStorageStyle(),
         )
 
     def __get__(self, mediafile, _):
@@ -1485,6 +1554,7 @@ class MediaFile(object):
         StorageStyle('DESCRIPTION'),
         StorageStyle('COMMENT'),
         ASFStorageStyle('WM/Comments'),
+        ASFStorageStyle('Description')
     )
     bpm = MediaField(
         MP3StorageStyle('TBPM'),
