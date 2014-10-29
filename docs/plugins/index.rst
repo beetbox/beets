@@ -33,7 +33,6 @@ Each plugin has its own set of options that can be defined in a section bearing 
 
    chroma
    lyrics
-   echonest_tempo
    echonest
    bpd
    mpdupdate
