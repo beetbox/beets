@@ -109,7 +109,7 @@ Each entry in the ``formats`` map consists of a key (the name of the
 format) as well as the command and the possibly the file extension.
 ``extension`` is the filename extension to be used for newly transcoded
 files.  If only the command is given as a string, the file extension
-defaults to the format’s name. ``command`` is the command-line to use
+defaults to the format's name. ``command`` is the command-line to use
 to transcode audio. The tokens ``$source`` and ``$dest`` in the command
 are replaced with the paths to the existing and new file.
 
@@ -119,7 +119,9 @@ details have a look at the output of ``beet config -d``.
 
 For a one-command-fits-all solution use the ``convert.command`` and
 ``convert.extension`` options. If these are set, the formats are ignored
-and the given command is used for all conversions.::
+and the given command is used for all conversions.
+
+::
 
     convert:
         command: ffmpeg -i $source -y -vn -aq 2 $dest

@@ -40,7 +40,7 @@ help:
 
 # My magical rebuilding, Safari-reloading auto target.
 auto:
-	watchmedo shell-command --patterns='*.rst' --ignore-pattern='_build/*' --recursive --command='make html ; osascript -l JavaScript refresh_safari.js' --wait
+	watchmedo shell-command --patterns='*.rst' --ignore-pattern='_build/*' --recursive --command='if [ "$${watch_event_type}" == "created" -o "$${watch_event_type}" == "modified" ]; then make html ; osascript -l JavaScript refresh_safari.js; fi' --wait
 
 clean:
 	-rm -rf $(BUILDDIR)/*
