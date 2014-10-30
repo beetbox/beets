@@ -1,6 +1,4 @@
 var safari = Application('com.apple.Safari');
-safari.strictPropertyScope = true;
-safari.strictCommandScope = true;
 
 for (var i = 0; i < safari.windows.length; ++i) {
   var win = safari.windows[i];
@@ -11,8 +9,8 @@ for (var i = 0; i < safari.windows.length; ++i) {
       var url = tab.url();
       if (url.indexOf("file:") == 0) {
         // A local file URL.
+        safari.doJavaScript("location.reload();", { in: tab });
         console.log(url);
-        tab.url = url;  // Refresh.
       }
     }
   }

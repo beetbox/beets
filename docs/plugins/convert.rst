@@ -60,14 +60,14 @@ file. The available options are:
   Default: ``no``.
 - ``dest``: The directory where the files will be converted (or copied) to.
   Default: none.
-- ``embed`` Embed album art in converted items. Default: ``yes``.
+- ``embed``: Embed album art in converted items. Default: ``yes``.
 - ``max_bitrate``: All lossy files with a higher bitrate will be
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration.
   Default: none.
 - ``never_convert_lossy_files``: Cross-conversions between lossy codecs---such
-  as mp3, ogg vorbis, etc,---makes little sense as they will decrease quality
+  as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied.
   Default: ``no``.
 - ``paths``: Lets you specify the directory structure and naming scheme for the
@@ -89,7 +89,9 @@ Configuring the transcoding command
 
 You can customize the transcoding command through the ``formats`` map
 and select a command with the ``--format`` command-line option or the
-``format`` configuration.::
+``format`` configuration.
+
+::
 
     convert:
         format: speex
