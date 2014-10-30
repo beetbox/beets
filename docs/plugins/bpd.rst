@@ -70,16 +70,17 @@ on your headless server box. Rad!
 Configuration
 -------------
 
-Available options are pretty self-explanatory:
+To configure the plugin, make a ``bpd:`` section in your configuration file.
+The available options are:
 
-- ``host``
-  Default: ``u''``
-- ``port``
-  Default: ``6600``
-- ``password``
-  Default: ``u''``
-- ``volume``: initial volume in percent
-  Default: ``100``
+- ``host``:
+  Default: Bind to all interfaces.
+- ``port``:
+  Default: 6600
+- ``password``:
+  Default: No password.
+- ``volume``: Initial volume, as a percentage.
+  Default: 100
 
 Here's an example::
 

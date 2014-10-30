@@ -50,34 +50,37 @@ them.
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``convert:`` section in your configuration
+file. The available options are:
 
-- ``auto``: set it to ``yes`` to import transcoded versions of your files
-  automatically during the ``import`` command. With this option enabled, the
-  importer will transcode all non-MP3 files over the maximum bitrate before
-  adding them to your library.
+- ``auto``: Import transcoded versions of your files automatically during
+  imports. With this option enabled, the importer will transcode all (in the
+  default configuration) non-MP3 files over the maximum bitrate before adding
+  them to your library.
   Default: ``no``.
-- ``dest``: the directory where the files will be converted (or copied) to.
-  Default: ``None``
-- ``embed`` indicates whether or not to embed album art in converted items.
-  Default: ``yes``.
-- ``max_bitrate``: all lossy files with a higher bitrate will be
+- ``dest``: The directory where the files will be converted (or copied) to.
+  Default: none.
+- ``embed`` Embed album art in converted items. Default: ``yes``.
+- ``max_bitrate``: All lossy files with a higher bitrate will be
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration.
-- ``never_convert_lossy_files``: cross-conversions between lossy codecs---such
+  Default: none.
+- ``never_convert_lossy_files``: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc,---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied.
-  Default: ``no``
-- ``paths``: lets you specify the directory structure and naming scheme for the
+  Default: ``no``.
+- ``paths``: Lets you specify the directory structure and naming scheme for the
   converted files. Use the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`).
   By default, the plugin reuses your top-level path format settings.
-- ``quiet``: prevents the plugin from announcing every file it processes.
+- ``quiet``: Prevent the plugin from announcing every file it processes.
   Default: ``false``.
-- ``threads``: number of threads to use for parallel encoding.
+- ``threads``: The number of threads to use for parallel encoding.
   By default, the plugin will detect the number of processors available and use
   them all.
+
+You can also configure the format to use for transcoding.
 
 .. _convert-format-config:
 

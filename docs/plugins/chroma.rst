@@ -105,8 +105,12 @@ written to files' metadata.
 Configuration
 -------------
 
-The only option is **auto**, set it to 'no' to disable fingerprinting on
-import.
+There is one configuration option in the ``chroma:`` section, ``auto``, which
+controls whether to fingerprint files during the import process. To disable
+fingerprint-based autotagging, set it to ``no``, like so::
+
+    chroma:
+        auto: no
 
 Submitting Fingerprints
 -----------------------

@@ -1,5 +1,5 @@
 Bucket Plugin
-==============
+=============
 
 The ``bucket`` plugin groups your files into buckets folders representing
 *ranges*. This kind of organization can classify your music by periods of time
@@ -38,19 +38,20 @@ The definition of a range is somewhat loose, and multiple formats are allowed:
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``bucket:`` section in your configuration file.
+The available options are:
 
-- ``bucket_alpha``: ranges to use for all substitutions occuring on textual
+- ``bucket_alpha``: Ranges to use for all substitutions occurring on textual
   fields.
-  Default: ``[]``
-- ``bucket_alpha_regex``: list of ``key: value`` (one per line) with 'key'
-  being one of the `bucket_alpha` range and 'value' a regex that override
-  original range definition.
-  Default: ``{}``
-- ``bucket_year``: ranges to use for all substitutions occuring on the
+  Default: none.
+- ``bucket_alpha_regex``: A ``range: regex`` mapping (one per line) where
+  ``range`` is one of the `bucket_alpha` range and ``value`` is  a regex that
+  override original range definition.
+  Default: none.
+- ``bucket_year``: Ranges to use for all substitutions occurring on the
   `$year` field.
-  Default: ``[]``
-- ``extrapolate`` : activate it when you want to group your files into multiple
+  Default: none.
+- ``extrapolate``: Enable this if you want to group your files into multiple
   year ranges without enumerating them all. This option will generate year
   bucket names by reproducing characteristics of declared buckets.
   Default: ``no``
@@ -64,6 +65,6 @@ Here's an example::
          bucket_alpha_regex:
            'A - D': ^[0-9a-dA-D…äÄ]
 
-The above configuration creates five-year ranges for any input year.
+THis configuration creates five-year ranges for any input year.
 The *A - D* bucket now matches also all artists starting with ä or Ä and 0 to 9
-and … (three dots). The other alpha buckets work as ranges.
+and … (ellipsis). The other alpha buckets work as ranges.
