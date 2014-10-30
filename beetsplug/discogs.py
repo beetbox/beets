@@ -196,7 +196,7 @@ class DiscogsPlugin(BeetsPlugin):
         """
         artist_id = None
         bits = []
-        for artist in artists:
+        for i, artist in enumerate(artists):
             if not artist_id:
                 artist_id = artist['id']
             name = artist['name']
@@ -205,7 +205,7 @@ class DiscogsPlugin(BeetsPlugin):
             # Move articles to the front.
             name = re.sub(r'(?i)^(.*?), (a|an|the)$', r'\2 \1', name)
             bits.append(name)
-            if artist['join']:
+            if artist['join'] and i < len(artists) - 1:
                 bits.append(artist['join'])
         artist = ' '.join(bits).replace(' ,', ',') or None
         return artist, artist_id

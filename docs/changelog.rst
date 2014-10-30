@@ -66,6 +66,8 @@ Fixes:
 * :doc:`/plugins/embedart`: Avoid resizing the image multiple times when
   embedding into an album. Thanks to :user:`kerobaros`. :bug:`1028`,
   :bug:`1036`
+* :doc:`/plugins/discogs`: Avoid a situation where a trailing comma could be
+  appended to some artist names. :bug:`1049`
 
 
 1.3.8 (September 17, 2014)
