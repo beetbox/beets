@@ -16,15 +16,16 @@ To use the ``ftintitle`` plugin, enable it in your configuration
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``ftintitle:`` section in your configuration
+file. The available options are:
 
-- ``auto``: set it to ``no`` to disable plugin during import.
+- ``auto``: Enable metadata rewriting during import.
   Default: ``yes``.
-- ``drop``: remove featured artists entirely instead of adding them to the
+- ``drop``: Remove featured artists entirely instead of adding them to the
   title field.
-  Default: ``no``
+  Default: ``no``.
 
-Running manually
+Running Manually
 ----------------
 
 From the command line, type::
@@ -34,7 +35,7 @@ From the command line, type::
 The query is optional; if it's left off, the transformation will be applied to
 your entire collection.
 
-Use the ``-d``flag to remove featured artists (equivalent of the ``drop``
-option).
+Use the ``-d`` flag to remove featured artists (equivalent of the ``drop``
+config option).
 
 .. _MusicBrainz style: http://musicbrainz.org/doc/Style

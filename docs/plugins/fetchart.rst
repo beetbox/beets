@@ -26,25 +26,24 @@ the :ref:`art-filename` config option.
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``fetchart:`` section in your configuration
+file. The available options are:
 
-- ``auto``: set it to ``no`` to disable automatic album art fetching during
-  import.
+- ``auto``: Enable automatic album art fetching during import.
   Default: ``yes``.
-- ``cautious``: pick only trusted album arts by ignoring filenames that do not
-  contain one of ``cover_names`` keywords.
+- ``cautious``: Pick only trusted album art by ignoring filenames that do not
+  contain one of the keywords in ``cover_names``.
   Default: ``no``.
-- ``cover_names``: image filenames that contain word(s) of this list will be
-  picked primarily.
+- ``cover_names``: Prioritize images containing words in this list.
   Default: ``['cover', 'front', 'art', 'album', 'folder']``.
-- ``google_search``: set it to `yes` gather images from Google Images search.
+- ``google_search``: Gather images from Google Image Search.
   Default: ``no``.
-- ``maxwidth``: maximum image width to downscale fetched images if they are
-  too big. The resize operation reduces image width to ``maxwidth`` pixels. The
-  height is recomputed so that the aspect ratio is preserved.
-- ``remote_priority``: query remote sources every time and use local image only
+- ``maxwidth``: A maximum image width to downscale fetched images if they are
+  too big. The resize operation reduces image width to at most ``maxwidth``
+  pixels. The height is recomputed so that the aspect ratio is preserved.
+- ``remote_priority``: Query remote sources every time and use local image only
   as fallback.
-  Default: ``no``, remote (Web) art sources are only queried if no local art is
+  Default: ``no``; remote (Web) art sources are only queried if no local art is
   found in the filesystem.
 
 Here's an example that makes plugin select only images that contain *front* or
@@ -53,7 +52,6 @@ Here's an example that makes plugin select only images that contain *front* or
     fetchart:
         cautious: true
         cover_names: front back
-
 
 
 Manually Fetching Album Art

@@ -7,13 +7,15 @@ You might want to embed the album art directly into each file's metadata. While
 this will take more space than the external-file approach, it is necessary for
 displaying album art in some media players (iPods, for example).
 
-Usage
------
+Embedding Art Automatically
+---------------------------
 
 To automatically embed discovered album art into imported files, just enable
 the ``embedart`` plugin (see :doc:`/plugins/index`). You'll also want to enable the
 :doc:`/plugins/fetchart` to obtain the images to be embedded. Art will be
 embedded after each album is added to the library.
+
+This behavior can be disabled with the ``auto`` config option (see below).
 
 .. _image-similarity-check:
 
@@ -39,26 +41,26 @@ This feature requires `ImageMagick`_.
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make an ``embedart:`` section in your configuration
+file. The available options are:
 
-- ``auto``: lets you disable automatic album art embedding when set to
-  ``no``.
-  Default: ``true``
-- ``compare_threshold``: how similar must candidate art be regarding to
-  embedded art to be written to the file (see :ref:`image-similarity-check`).
-  Default: ``0`` (disabled).
-- ``ifempty``: set to 'yes' to avoid embedding album art for files that already
-  have one.
+- ``auto``: Enable automatic album art embedding.
+  Default: ``yes``.
+- ``compare_threshold``: How similar candidate art must be to
+  existing art to be written to the file (see :ref:`image-similarity-check`).
+  Default: 0 (disabled).
+- ``ifempty``: Avoid embedding album art for files that already have art
+  embedded.
   Default: ``no``.
-- ``maxwidth``: defines a maximum width to downscale images before embedding
+- ``maxwidth``: A maximum width to downscale images before embedding
   them (the original image file is not altered). The resize operation reduces
-  image width to ``maxwidth`` pixels. The height is recomputed so that the
-  aspect ratio is preserved. See also :ref:`image-resizing` for further caveats
-  about image resizing.
-  Default: ``0`` (disabled).
+  image width to at most ``maxwidth`` pixels. The height is recomputed so that
+  the aspect ratio is preserved. See also :ref:`image-resizing` for further
+  caveats about image resizing.
+  Default: 0 (disabled).
 
-Note: ``compare_threshold`` option requires `ImageMagick`_ , ``maxwidth``
-requires `ImageMagick`_ or `PIL`_
+Note: ``compare_threshold`` option requires `ImageMagick`_, and ``maxwidth``
+requires either `ImageMagick`_ or `PIL`_.
 
 .. _PIL: http://www.pythonware.com/products/pil/
 .. _ImageMagick: http://www.imagemagick.org/

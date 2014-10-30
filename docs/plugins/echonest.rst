@@ -53,28 +53,29 @@ Finally, enable the ``echonest`` plugin in your configuration (see
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make an ``echonest:`` section in your configuration
+file. The available options are:
 
-- ``apikey``: set this option to specify your own EchoNest API key.
-  You can `apply for your own`_ for free from the EchoNest.
-  Default: beets includes its own Echo Nest API key.
-- ``auto``: set it to ``no`` to disable automatic metadata fetching during
-  import.
+- ``apikey``: A custom EchoNest API key. You can `apply for your own`_ for
+  free from the EchoNest.
+  Default: beets' own Echo Nest API key.
+- ``auto``: Enable automatic metadata fetching during import.
   Default: ``yes``.
 - ``codegen``: Echoprint or ENMFP codegen binary path.
-  Default: ``None``
-- ``convert``: because the Echo Nest server only supports a limited range of
+  Default: look for the executable in your ``$PATH``.
+- ``upload``: Send files to the Echo Nest server if they can not be identified
+  by other means.
+  Default: ``yes``.
+- ``convert``: Because the Echo Nest server only supports a limited range of
   file formats, the plugin automatically converts unsupported files to ``ogg``.
   Default: ``yes``.
-- ``truncate``: automatically truncates large files to their first 5 minutes
+- ``truncate``: Automatically truncate large files to their first 5 minutes
   before uploading them to The Echo Nest server (as files with sizes greater
   than 50MB are rejected).
   Default: ``yes``.
-- ``upload``: send files to the Echo Nest server if it can not be identified by
-  other means.
-  Default: ``yes``.
 
 .. _apply for your own: http://developer.echonest.com/account/register
+
 
 Running Manually
 ----------------
