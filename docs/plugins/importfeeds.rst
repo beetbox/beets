@@ -26,6 +26,7 @@ configuration file. The available options are:
      just drag and drop the ``dir`` folder on the iTunes dock icon.
    - ``echo``: Do not write a playlist file at all, but echo a list of new
      file paths to the terminal.
+
   Default: None.
 - ``m3u_name``: Playlist name used by the ``m3u`` format.
   Default: ``imported.m3u``.

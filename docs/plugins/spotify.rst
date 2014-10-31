@@ -49,6 +49,7 @@ in config.yaml under the ``spotify:`` section:
    - ``open``: This mode actually sends a link to your default browser with
      instructions to open Spotify with the playlist you created.  Until this
      has been tested on all platforms, it will remain optional.
+
   Default: ``list``.
 * ``region_filter``: A two-character country abbreviation, to limit results
   to that market.
