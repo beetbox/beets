@@ -45,8 +45,8 @@ The available options are:
   fields.
   Default: none.
 - ``bucket_alpha_regex``: A ``range: regex`` mapping (one per line) where
-  ``range`` is one of the `bucket_alpha` range and ``value`` is  a regex that
-  override original range definition.
+  ``range`` is one of the `bucket_alpha` ranges and ``value`` is  a regex that
+  overrides original range definition.
   Default: none.
 - ``bucket_year``: Ranges to use for all substitutions occurring on the
   `$year` field.
