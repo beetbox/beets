@@ -15,9 +15,9 @@ configuration.
 Usage
 -----
 
-Enable the plugin and then run ``beet mbsync QUERY`` to fetch updated metadata
-for a part of your collection (or omit the query to run over your whole
-library).
+Enable the ``mbsync`` plugin in your configuration (see :ref:`using-plugins`)
+and then run ``beet mbsync QUERY`` to fetch updated metadata for a part of your
+collection (or omit the query to run over your whole library).
 
 This plugin treats albums and singletons (non-album tracks) separately. It
 first processes all matching singletons and then proceeds on to full albums.

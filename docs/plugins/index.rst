@@ -15,18 +15,24 @@ Using Plugins
 To use one of the plugins included with beets (see the rest of this page for a
 list), just use the `plugins` option in your :doc:`config.yaml </reference/config>`: file, like so::
 
-    plugins: inline discogs web
+    plugins: inline convert web
 
 The value for `plugins` can be a space-separated list of plugin names or a
 YAML list like ``[foo, bar]``. You can see which plugins are currently enabled
 by typing ``beet version``.
+
+Each plugin has its own set of options that can be defined in a section bearing its name::
+
+    plugins: inline convert web
+
+    convert:
+        auto: true
 
 .. toctree::
    :hidden:
 
    chroma
    lyrics
-   echonest_tempo
    echonest
    bpd
    mpdupdate

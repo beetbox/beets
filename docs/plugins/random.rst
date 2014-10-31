@@ -5,8 +5,8 @@ The ``random`` plugin provides a command that randomly selects tracks or albums
 from your library. This can be helpful if you need some help deciding what to
 listen to.
 
-First, enable the plugin named ``random`` (see :doc:`/plugins/index`). You'll then
-be able to use the ``beet random`` command::
+First, enable the plugin named ``random`` (see :ref:`using-plugins`). You'll
+then be able to use the ``beet random`` command::
 
     $ beet random
     Aesop Rock - None Shall Pass - The Harbor Is Yours

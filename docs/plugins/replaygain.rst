@@ -28,8 +28,8 @@ You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. python-gi).
 .. _PyGObject 3.x: https://wiki.gnome.org/action/show/Projects/PyGObject
 .. _GStreamer: http://gstreamer.freedesktop.org/
 
-Then, enable the plugin (see :ref:`using-plugins`) and specify the GStreamer
-backend by adding this to your configuration file::
+Then, enable the ``replaygain`` plugin (see :ref:`using-plugins`) and specify
+the GStreamer backend by adding this to your configuration file::
 
     replaygain:
         backend: gstreamer
@@ -65,31 +65,32 @@ you can configure the path explicitly like so::
 Configuration
 -------------
 
-Available configuration options for the ``replaygain`` section in your
-configuration file include:
+To configure the plugin, make a ``replaygain:`` section in your
+configuration file. The available options are:
 
-* **overwrite**: By default, files that already have ReplayGain tags will not
-  be re-analyzed. If you want to analyze *every* file on import, you can set
-  the ``overwrite`` option for the plugin in your :doc:`configuration file
-  </reference/config>`, like so::
-
-      replaygain:
-          overwrite: yes
-
-* **targetlevel**: The target loudness level can be modified to any number of
-  decibels with the ``targetlevel`` option (default: 89 dB).
+- ``auto``: Enable ReplayGain analysis during import.
+  Default: ``yes``.
+- ``backend``: The analysis backend; either ``gstreamer`` or ``command``.
+  Default: ``command``.
+- ``overwrite``: Re-analyze files that already have ReplayGain tags.
+  Default: ``no``.
+- ``targetlevel``: A number of decibels for the target loudness level.
+  Default: 89.
 
 These options only work with the "command" backend:
 
-* **apply**: If you use a player that does not support ReplayGain
+- ``apply``: If you use a player that does not support ReplayGain
   specifications, you can force the volume normalization by applying the gain
   to the file via the ``apply`` option. This is a lossless and reversible
   operation with no transcoding involved.
-* **noclip**: The use of ReplayGain can cause clipping if the average volume
-  of a song is below the target level. By default, a "prevent clipping" option
-  named ``noclip`` is enabled to reduce the amount of ReplayGain adjustment to
-  whatever amount would keep clipping from occurring.
-
+  Default: ``no``.
+- ``command``: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
+  cannot find it by itself).
+  For example: ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``.
+  Default: Search in your ``$PATH``.
+- ``noclip``: Reduce the amount of ReplayGain adjustment to whatever amount
+  would keep clipping from occurring.
+  Default: ``yes``.
 
 Manual Analysis
 ---------------

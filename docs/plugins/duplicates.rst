@@ -4,43 +4,20 @@ Duplicates Plugin
 This plugin adds a new command, ``duplicates`` or ``dup``, which finds
 and lists duplicate tracks or albums in your collection.
 
-Installation
-------------
+Usage
+-----
 
-Enable the plugin by putting ``duplicates`` on your ``plugins`` line in
-your :doc:`config file </reference/config>`::
-
-    plugins: duplicates
-
-Configuration
--------------
+To use the ``duplicates`` plugin, first enable it in your configuration (see
+:ref:`using-plugins`).
 
 By default, the ``beet duplicates`` command lists the names of tracks
 in your library that are duplicates. It assumes that Musicbrainz track
 and album ids are unique to each track or album. That is, it lists
 every track or album with an ID that has been seen before in the
 library.
-
 You can customize the output format, count the number of duplicate
 tracks or albums, and list all tracks that have duplicates or just the
-duplicates themselves. These options can either be specified in the
-config file::
-
-    duplicates:
-	checksum: no
-	copy: no
-	keys: mb_trackid album
-        album: no
-        count: no
-        delete: no
-        format: "$albumartist - $album - $title"
-        full: no
-        move: no
-        path: no
-        tag: no
-	
-	
-or on the command-line::
+duplicates themselves via command-line switches ::
 
   -h, --help            show this help message and exit
   -f FMT, --format=FMT  print with custom format
@@ -56,83 +33,52 @@ or on the command-line::
   -p, --path            print paths for matched items or albums
   -t TAG, --tag=TAG     tag matched items with 'k=v' attribute
 
+Configuration
+-------------
 
-format
-~~~~~~
+To configure the plugin, make a ``duplicates:`` section in your configuration
+file. The available options mirror the command-line options:
 
-The ``format`` option (default: :ref:`list_format_item`) lets you
-specify a specific format with which to print every track or
-album. This uses the same template syntax as beets’ :doc:`path formats
-</reference/pathformat>`.  The usage is inspired by, and therefore
-similar to, the :ref:`list <list-cmd>` command.
-
-path
-~~~~
-
-Convenience wrapper for ``-f \$path``.
-
-count
-~~~~~
-
-The ``count`` option (default: false) prints a count of duplicate
-tracks or albums, with ``format`` hard-coded to ``$albumartist -
-$album - $title: $count`` or ``$albumartist - $album: $count`` (for
-the ``-a`` option).
-
-album
-~~~~~
-
-The ``album`` option (default: false) lists duplicate albums instead
-of tracks.
-
-full
-~~~~
-
-The ``full`` option (default: false) lists every track or album that
-has duplicates, not just the duplicates themselves.
-
-keys
-~~~~
-
-The ``keys`` option (default: ``[mb_trackid, mb_albumid]``) defines in which track
-or album fields duplicates are to be searched. By default, the plugin
-uses the musicbrainz track and album IDs for this purpose. Using the
-``keys`` option (as a YAML list in the configuration file, or as
-space-delimited strings in the command-line), you can extend this behavior
-to consider other attributes.
-
-checksum
-~~~~~~~~
-
-The ``checksum`` option (default: ``ffmpeg -i {file} -f crc -``) enables the use of
-any arbitrary command to compute a checksum of items. It overrides the ``keys``
-option the first time it is run; however, because it caches the resulting checksums
-as ``flexattrs`` in the database, you can use
-``--keys=name_of_the_checksumming_program any_other_keys`` the second time around.
-
-copy
-~~~~
-
-The ``copy`` option (default: ``no``) takes a destination base directory into which
-it will copy matched items.
-
-move
-~~~~
-
-The ``move`` option (default: ``no``) takes a destination base directory into which
-it will move matched items.
-
-delete
-~~~~~~
-
-The ``delete`` option (default: ``no``) removes matched items from the library
-and from the disk.
-
-tag
-~~~
-
-The ``tag`` option (default: ``no``) takes a ``key=value`` string, and adds a new
-``key`` attribute with ``value`` value as a flexattr to the database.
+- ``album``: List duplicate albums instead of tracks.
+  Default: ``no``.
+- ``checksum``: Use an arbitrary command to compute a checksum
+  of items. This overrides the ``keys`` option the first time it is run;
+  however, because it caches the resulting checksum as ``flexattrs`` in the
+  database, you can use ``--keys=name_of_the_checksumming_program
+  any_other_keys`` (or set configuration ``keys`` option) the second time
+  around.
+  Default: ``ffmpeg -i {file} -f crc -``.
+- ``copy``: A destination base directory into which to copy matched
+  items.
+  Default: none (disabled).
+- ``count``: Print a count of duplicate tracks or albums in the format
+  ``$albumartist - $album - $title: $count`` (for tracks) or ``$albumartist -
+  $album: $count`` (for albums).
+  Default: ``no``.
+- ``delete``: Removes matched items from the library and from the disk.
+  Default: ``no``
+- ``format``: A specific format with which to print every track
+  or album. This uses the same template syntax as beets'
+  :doc:`path formats</reference/pathformat>`.  The usage is inspired by, and
+  therefore similar to, the :ref:`list <list-cmd>` command.
+  Default: :ref:`list_format_item`
+- ``full``: List every track or album that has duplicates, not just the
+  duplicates themselves.
+  Default: ``no``.
+- ``keys``: Define in which track or album fields duplicates are to be
+  searched. By default, the plugin uses the musicbrainz track and album IDs for
+  this purpose. Using the ``keys`` option (as a YAML list in the configuration
+  file, or as space-delimited strings in the command-line), you can extend this
+  behavior to consider other attributes.
+  Default: ``[mb_trackid, mb_albumid]``
+- ``move``: A destination base directory into which it will move matched
+  items.
+  Default: none (disabled).
+- ``path``: Output the path instead of metadata when listing duplicates.
+  Default: ``no``.
+- ``tag``: A ``key=value`` pair. The plugin will add a new ``key`` attribute
+  with ``value`` value as a flexattr to the database for duplicate items.
+  Default: ``no``.
 
 Examples
 --------
@@ -150,7 +96,8 @@ Print out a unicode histogram of duplicate track years using `spark`_::
   beet duplicates -f '$year' | spark
   ▆▁▆█▄▇▇▄▇▇▁█▇▆▇▂▄█▁██▂█▁▁██▁█▂▇▆▂▇█▇▇█▆▆▇█▇█▇▆██▂▇
 
-Print out a listing of all albums with duplicate tracks, and respective counts::
+Print out a listing of all albums with duplicate tracks, and respective
+counts::
 
   beet duplicates -ac
 
@@ -162,8 +109,8 @@ Get tracks with the same title, artist, and album::
 
   beet duplicates -k title albumartist album
 
-Compute Adler CRC32 or MD5 checksums, storing them as flexattrs, and report back
-duplicates based on those values::
+Compute Adler CRC32 or MD5 checksums, storing them as flexattrs, and report
+back duplicates based on those values::
 
   beet dup -C 'ffmpeg -i {file} -f crc -'
   beet dup -C 'md5sum {file}'
@@ -181,12 +128,8 @@ Delete items (careful!), if they're Nickelback::
   beet duplicates --delete --keys albumartist albumartist:nickelback
 
 Tag duplicate items with some flag::
-  
+
   beet duplicates --tag dup=1
 
-TODO
-----
-
-- better duplicate disambiaguation strategies (eg, based on bitrate, etc)
 
 .. _spark: https://github.com/holman/spark

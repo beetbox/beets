@@ -20,8 +20,8 @@ flask``.
 
 .. _Flask: http://flask.pocoo.org/
 
-Put ``web`` on your ``plugins`` line in your configuration file to enable the
-plugin.
+Finally, enable the ``web`` plugin in your configuration
+(see :ref:`using-plugins`).
 
 Run the Server
 --------------
@@ -35,12 +35,8 @@ You can also specify the hostname and port number used by the Web server. These
 can be specified on the command line or in the ``[web]`` section of your
 :doc:`configuration file </reference/config>`.
 
-On the command line, use ``beet web [HOSTNAME] [PORT]``. In the config file, use
-something like this::
-
-    web:
-        host: 127.0.0.1
-        port: 8888
+On the command line, use ``beet web [HOSTNAME] [PORT]``. Or the configuration
+options below.
 
 Usage
 -----
@@ -49,6 +45,17 @@ Type queries into the little search box. Double-click a track to play it with
 `HTML5 Audio`_.
 
 .. _HTML5 Audio: http://www.w3.org/TR/html-markup/audio.html
+
+Configuration
+-------------
+
+To configure the plugin, make a ``web:`` section in your
+configuration file. The available options are:
+
+- ``host``: The server hostname.
+  Default: Bind to all interfaces.
+- ``port``: The server port.
+  Default: 8337.
 
 Implementation
 --------------

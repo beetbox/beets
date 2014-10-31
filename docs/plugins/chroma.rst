@@ -65,10 +65,10 @@ You will also need a mechanism for decoding audio files supported by the
   need to install anything.
 
 * On Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_ and
-  `pymad`_. How you install these will depend on your distribution. For example,
-  on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch Linux, you want
-  ``pacman -S gstreamer0.10-python``. If you use GStreamer, be sure to install
-  its codec plugins also.
+  `pymad`_. How you install these will depend on your distribution.
+  For example, on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch
+  Linux, you want ``pacman -S gstreamer0.10-python``. If you use GStreamer, be
+  sure to install its codec plugins also.
 
 * On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
@@ -87,13 +87,12 @@ standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
 ``gstreamer0.10-plugins-good``, ``gstreamer0.10-plugins-bad``, and
 ``gstreamer0.10-plugins-ugly``.
 
-Using
+Usage
 -----
 
-Once you have all the dependencies sorted out, you can enable fingerprinting by
-editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
-your ``plugins:`` line. With that, beets will use fingerprinting the next time
-you run ``beet import``.
+Once you have all the dependencies sorted out, enable the ``chroma`` plugin in
+your configuration (see :ref:`using-plugins`) to benefit from fingerprinting
+the next time you run ``beet import``.
 
 You can also use the ``beet fingerprint`` command to generate fingerprints for
 items already in your library. (Provide a query to fingerprint a subset of your
@@ -101,16 +100,20 @@ library.) The generated fingerprints will be stored in the library database.
 If you have the ``import.write`` config option enabled, they will also be
 written to files' metadata.
 
-You can disable fingerprinting on import by setting the ``auto`` option to
-false, like so::
+.. _submitfp:
+
+Configuration
+-------------
+
+There is one configuration option in the ``chroma:`` section, ``auto``, which
+controls whether to fingerprint files during the import process. To disable
+fingerprint-based autotagging, set it to ``no``, like so::
 
     chroma:
         auto: no
 
-.. _submitfp:
-
 Submitting Fingerprints
-'''''''''''''''''''''''
+-----------------------
 
 You can help expand the `Acoustid`_ database by submitting fingerprints for the
 music in your collection. To do this, first `get an API key`_ from the Acoustid

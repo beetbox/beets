@@ -5,7 +5,8 @@ The ``info`` plugin provides a command that dumps the current tag values for
 any file format supported by beets. It works like a supercharged version of
 `mp3info`_ or `id3v2`_.
 
-Enable the plugin and then type::
+Enable the ``info`` plugin in your configuration (see :ref:`using-plugins`) and
+then type::
 
     $ beet info /path/to/music.flac
 

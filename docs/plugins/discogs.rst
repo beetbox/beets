@@ -9,8 +9,8 @@ include matches from the `Discogs`_ database.
 Installation
 ------------
 
-First, enable the ``discogs`` plugin (see :doc:`/plugins/index`). Then,
-install the `discogs-client`_ library by typing::
+To use the ``discogs`` plugin, first enable it in your configuration (see
+:ref:`using-plugins`). Then, install the `discogs-client`_ library by typing::
 
     pip install discogs-client
 
