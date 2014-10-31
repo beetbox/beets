@@ -6,6 +6,8 @@ Changelog
 
 Features:
 
+* A new :doc:`/plugins/lastimport` lets you download your play count data from
+  Last.fm. Thanks to Rafael Bodill.
 * :doc:`/plugins/embedart`: You can now automatically check that new art looks
   similar to existing art---ensuring that you only get a better "version" of
   the art you already have. See :ref:`image-similarity-check`.
