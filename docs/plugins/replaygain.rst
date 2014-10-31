@@ -65,34 +65,31 @@ you can configure the path explicitly like so::
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``replaygain:`` section in your
+configuration file. The available options are:
 
-
-- ``auto``: set it to ``no`` to disable replaygain analysis during import.
+- ``auto``: Enable ReplayGain analysis during import.
   Default: ``yes``.
-- ``backend``: which backend to use for ReplayGain analysis.
-  Must be one of ``gstreamer`` or ``command``.
-  Default: ``command``
-- ``overwrite``: by default, files that already have ReplayGain tags will not
-  be re-analyzed. Set to ``yes`` if you want to analyze *every* file on import.
+- ``backend``: The analysis backend; either ``gstreamer`` or ``command``.
+  Default: ``command``.
+- ``overwrite``: Re-analyze files that already have ReplayGain tags.
   Default: ``no``.
-- ``targetlevel``: specify a number of decibels for the target loudness level
-  Default: ``89``
+- ``targetlevel``: A number of decibels for the target loudness level.
+  Default: 89.
 
-  These options only work with the "command" backend:
+These options only work with the "command" backend:
 
-- ``apply``: if you use a player that does not support ReplayGain
+- ``apply``: If you use a player that does not support ReplayGain
   specifications, you can force the volume normalization by applying the gain
   to the file via the ``apply`` option. This is a lossless and reversible
   operation with no transcoding involved.
-- ``command``: use it to explicitely enter path to ``mp3gain`` or ``aacgain``
-  executable, if beets cannot find it by itself.
-  For example: '/Applications/MacMP3Gain.app/Contents/Resources/aacgain'
-  Default: ``u''``
-- ``noclip``: the use of ReplayGain can cause clipping if the average volume
-  of a song is below the target level. By default, a "prevent clipping" option
-  named ``noclip`` is enabled to reduce the amount of ReplayGain adjustment to
-  whatever amount would keep clipping from occurring.
+  Default: ``no``.
+- ``command``: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
+  cannot find it by itself).
+  For example: ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``.
+  Default: Search in your ``$PATH``.
+- ``noclip``: Reduce the amount of ReplayGain adjustment to whatever amount
+  would keep clipping from occurring.
   Default: ``yes``.
 
 Manual Analysis

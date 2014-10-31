@@ -1,7 +1,7 @@
 ImportAdded Plugin
 ==================
 
-This plugin is useful when an existing collection is imported
+The ``importadded`` plugin is useful when an existing collection is imported
 and the time when albums and items were added should be preserved.
 
 To use the ``importadded`` plugin, enable it in your configuration (see
@@ -39,10 +39,12 @@ of album directories on disk aren't preserved.
 Configuration
 -------------
 
-Available option:
+To configure the plugin, make an ``importadded:`` section in your
+configuration file. There is one option available:
 
-- ``preserve_mtimes``
-  Default: ``no``
+- ``preserve_mtimes``: After writing files, re-set their mtimes to their
+  original value.
+  Default: ``no``.
 
 Reimport
 --------

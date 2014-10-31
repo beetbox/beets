@@ -6,39 +6,39 @@ and lists, for every album in your collection, which or how many
 tracks are missing. Listing missing files requires one network call to
 MusicBrainz. Merely counting missing files avoids any network calls.
 
-
 Usage
-------
+-----
 
 Add the ``missing`` plugin to your configuration (see :ref:`using-plugins`).
 By default, the ``beet missing`` command lists the names of tracks that your
 library is missing from each album.
 You can customize the output format, count
 the number of missing tracks per album, or total up the number of missing
-tracks over your whole library, using command-line switches ::
+tracks over your whole library, using command-line switches::
 
       -f FORMAT, --format=FORMAT
                             print with custom FORMAT
       -c, --count           count missing tracks per album
       -t, --total           count total of missing tracks
 
- ... or by editing corresponding options.
+…or by editing corresponding options.
 
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``missing:`` section in your
+configuration file. The available options are:
 
-- ``count`` prints a count of missing tracks per album, with ``format``
+- ``count``: Print a count of missing tracks per album, with ``format``
   defaulting to ``$albumartist - $album: $missing``.
   Default: ``no``.
-- ``format`` lets you specify a specific format with which to print every
-  track. This uses the same template syntax as beets’
+- ``format``: A specific format with which to print every
+  track. This uses the same template syntax as beets'
   :doc:`path formats </reference/pathformat>`. The usage is inspired by, and
   therefore similar to, the :ref:`list <list-cmd>` command.
   Default: :ref:`list_format_item`.
-- ``total` prints a single count of missing tracks in all albums.
-  Default: ``false``.
+- ``total``: Print a single count of missing tracks in all albums.
+  Default: ``no``.
 
 Here's an example ::
 

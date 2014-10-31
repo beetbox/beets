@@ -32,13 +32,15 @@ debug.
 Configuration
 -------------
 
-- ``command``: command used to open the playlist.
+To configure the plugin, make a ``play:`` section in your
+configuration file. The available options are:
+
+- ``command``: The command used to open the playlist.
   Default: ``open`` on OS X, ``xdg-open`` on other Unixes and ``start`` on
   Windows.
-- ``relative_to``: set that option if you want to emit relative paths by giving
-  the refefence folder (eg '/my/music/folder')
-  Default: ``None``
-- ``use_folders``: when using the ``-a`` option, the m3u will have the paths to
-  each track on the matched albums. Set it to ``yes`` to store paths to folders
-  instead.
-  Default: ``no``
+- ``relative_to``: Emit paths relative to base directory.
+  Default: None.
+- ``use_folders``: When using the ``-a`` option, the m3u will contain the
+  paths to each track on the matched albums. Enable this option to
+  store paths to folders instead.
+  Default: ``no``.

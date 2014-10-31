@@ -23,18 +23,20 @@ the files' tags.
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``lyrics:`` section in your
+configuration file. The available options are:
 
-- ``auto``: set it to ``no`` to disable automatic lyrics fetching during import.
+- ``auto``: Fetch lyrics automatically during import.
   Default: ``yes``.
-- ``fallback``: by default, the file will be left unchanged when no lyrics are
-  found. Use the empty string ``''`` to reset the genre in such a case.
-  Default: ``None``;
-- ``google_API_key``: your Google API key.
-  Default: ``None``;
-- ``google_engine_ID``: custom search engine to use.
-  Default: ``009217259823014548361:lndtuqkycfu``, beets custom search engine
-  that gathers list of sources known to be scrapeable.
+- ``fallback``: By default, the file will be left unchanged when no lyrics are
+  found. Use the empty string ``''`` to reset the lyrics in such a case.
+  Default: None.
+- ``google_API_key``: Your Google API key (to enable the Google Custom Search
+  backend).
+  Default: None.
+- ``google_engine_ID``: The custom search engine to use.
+  Default: The beets custom search engine, which gathers a list of sources
+  known to be scrapeable.
 
 Here's an example of ``config.yaml``::
 

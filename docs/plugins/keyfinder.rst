@@ -3,7 +3,7 @@ Key Finder Plugin
 
 The `keyfinder` plugin uses the `KeyFinder`_ program to detect the
 musical key of track from its audio data and store it in the
-'initial_key' field of you database.  It does so
+`initial_key` field of your database.  It does so
 automatically when importing music or through the ``beet keyfinder
 [QUERY]`` command.
 
@@ -13,18 +13,20 @@ To use the ``keyfinder`` plugin, enable it in your configuration (see
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``keyfinder:`` section in your
+configuration file. The available options are:
 
-- ``bin``: the name of the `KeyFinder` program on your system or
-  a path to the binary. If you installed the `KeyFinder`_ GUI on a Mac, for
+- ``bin``: The name of the `KeyFinder`_ program on your system or
+  a path to the binary. If you installed the KeyFinder GUI on a Mac, for
   example, you want something like
   ``/Applications/KeyFinder.app/Contents/MacOS/KeyFinder``.
-  Default: ``KeyFinder``.
-- ``auto``: if set to `yes`, the plugin will analyze every file on
+  Default: ``KeyFinder`` (i.e., search for the program in your ``$PATH``).
+- ``auto``: Analyze every file on
   import. Otherwise, you need to use the ``beet keyfinder`` command
-  explicitly. Default: ``yes``.
-- ``overwrite``: if set to ``no``, the import hook and the command will skip
-  any file that already has an 'initial_key' in the database.
+  explicitly.
+  Default: ``yes``.
+- ``overwrite``: Calculate a key even for files that already have an
+  `initial_key` value.
   Default: ``no``.
 
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/

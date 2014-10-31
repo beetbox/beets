@@ -9,33 +9,31 @@ To use the ``importfeeds`` plugin, enable it in your configuration
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make an ``importfeeds:`` section in your
+configuration file. The available options are:
 
-- ``absolute_path`` option can be set to use absolute paths instead of relative
-  paths. Some applications may need this to work properly.
+- ``absolute_path``: Use absolute paths instead of relative paths. Some
+  applications may need this to work properly.
   Default: ``no``.
-- ``dir`` option can be set to specify another output folder than the default
-  library directory.
-  Default: ``None``.
-- ``formats`` option can be set to select desired output type(s):
-
-    - ``m3u``: catalog the imports in a centralized playlist.
-    - ``m3u_multi``: create a new playlist for each import (uniquely named by
-      appending the date and track/album name).
-    - ``link``: create a symlink for each imported item. This is the
-      recommended setting to propagate beets imports to your iTunes library: just
-      drag and drop the ``dir`` folder on the iTunes dock icon.
-    - ``echo``: do not write a playlist file at all, but echo a list of new
-      file paths to the terminal.
-
-  Default: ``[]``.
-- ``m3u_name``: playlist name used by ``m3u`` format.
+- ``dir``: The output directory.
+  Default: Your beets library directory.
+- ``formats``: Select the kind of output. Use one or more of:
+   - ``m3u``: Catalog the imports in a centralized playlist.
+   - ``m3u_multi``: Create a new playlist for each import (uniquely named by
+     appending the date and track/album name).
+   - ``link``: Create a symlink for each imported item. This is the
+     recommended setting to propagate beets imports to your iTunes library:
+     just drag and drop the ``dir`` folder on the iTunes dock icon.
+   - ``echo``: Do not write a playlist file at all, but echo a list of new
+     file paths to the terminal.
+  Default: None.
+- ``m3u_name``: Playlist name used by the ``m3u`` format.
   Default: ``imported.m3u``.
-- ``relative_to`` option can be set to make the m3u paths relative to another
+- ``relative_to``: Make the m3u paths relative to another
   folder than where the playlist is being written. If you're using importfeeds
   to generate a playlist for MPD, you should set this to the root of your music
   library.
-  Default: ``None``.
+  Default: None.
 
 Here's an example configuration for this plugin::
 

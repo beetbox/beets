@@ -12,13 +12,15 @@ To use the ``ihate`` plugin, enable it in your configuration (see
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make an ``ihate:`` section in your configuration
+file. The available options are:
 
-- ``skip``: never import matches. Default: ``[]``
-- ``warn``: print a warning message for matches. Default: ``[]``
+- ``skip``: Never import items and albums that match a query in this list.
+  Default: ``[]`` (empty list).
+- ``warn``: Print a warning message for matches in this list of queries.
+  Default: ``[]``.
 
-
-Here's an example ::
+Here's an example::
 
     ihate:
         warn:

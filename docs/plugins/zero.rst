@@ -12,11 +12,13 @@ To use the ``zero`` plugin, enable the plugin in your configuration
 Configuration
 -------------
 
-Available option :
+Make a ``zero:`` section in your configuration file. You can specify the
+fields to nullify and the conditions for nullifying them:
 
-- ``fields``: whitespace-separated list of fields to change. You can get the
-  list of available fields by running ``beet fields``.  To conditionally filter
-  a field, use ``field: [regexp, regexp]`` to specify regular expressions.
+* Set ``fields`` to a whitespace-separated list of fields to change. You can
+  get the list of all available fields by running ``beet fields``.
+* To conditionally filter a field, use ``field: [regexp, regexp]`` to specify
+  regular expressions.
 
 For example::
 

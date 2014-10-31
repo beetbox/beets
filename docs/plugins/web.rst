@@ -35,12 +35,8 @@ You can also specify the hostname and port number used by the Web server. These
 can be specified on the command line or in the ``[web]`` section of your
 :doc:`configuration file </reference/config>`.
 
-On the command line, use ``beet web [HOSTNAME] [PORT]``. In the config file, use
-something like this::
-
-    web:
-        host: 127.0.0.1
-        port: 8888
+On the command line, use ``beet web [HOSTNAME] [PORT]``. Or the configuration
+options below.
 
 Usage
 -----
@@ -53,12 +49,13 @@ Type queries into the little search box. Double-click a track to play it with
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``web:`` section in your
+configuration file. The available options are:
 
-- ``host``: server hostname
-  Default: ``u''``
-- ``port``: server port
-  Default: `8337`
+- ``host``: The server hostname.
+  Default: Bind to all interfaces.
+- ``port``: The server port.
+  Default: 8337.
 
 Implementation
 --------------

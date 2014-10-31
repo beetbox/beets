@@ -69,14 +69,15 @@ plugin.
 Configuration
 -------------
 
-Available options:
+To configure the plugin, make a ``smartplaylist:`` section in your
+configuration file. In addition to the ``playlists`` described above, the
+other configuration options are:
 
-- ``auto``: set it to ``no`` to tell beets to stop regenerate the playlist
-  after every database change.
-  Default: ``yes``
-- ``playlist_dir``: where the generated playlist files will be put.
-  Default: ``u'.'``
-- ``relative_to``: if you intend to use this plugin to generate playlists for
-  MPD, make it points to your MPD music directory.
-  Default: ``None``, which means that absolute paths to your music files will
-  be generated.
+- ``auto``: Regenerate the playlist after every database change.
+  Default: ``yes``.
+- ``playlist_dir``: Where to put the generated playlist files.
+  Default: The current working directory (i.e., ``'.'``).
+- ``relative_to``: Generate paths in the playlist files relative to a base
+  directory. If you intend to use this plugin to generate playlists for MPD,
+  point this to your MPD music directory.
+  Default: Use absolute paths.

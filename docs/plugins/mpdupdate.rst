@@ -28,11 +28,11 @@ socket.)
 Configuration
 -------------
 
-Available options:
+The available options under teh ``mpd:`` section are:
 
-- ``host``: mpd server name.
+- ``host``: The MPD server name.
   Default: ``localhost``.
-- ``password``: mpd server password.
-  Default: ``u''``
-- ``port``: mpd server port.
-  Default: ``6600``.
+- ``password``: The MPD server password.
+  Default: None.
+- ``port``: The MPD server port.
+  Default: 6600.
