@@ -70,10 +70,10 @@ file. The available options are:
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied.
   Default: ``no``.
-- ``paths``: Lets you specify the directory structure and naming scheme for the
-  converted files. Use the same format as the top-level ``paths`` section (see
+- ``paths``: The directory structure and naming scheme for the converted
+  files. Uses the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`).
-  By default, the plugin reuses your top-level path format settings.
+  Default: Reuse your top-level path format settings.
 - ``quiet``: Prevent the plugin from announcing every file it processes.
   Default: ``false``.
 - ``threads``: The number of threads to use for parallel encoding.

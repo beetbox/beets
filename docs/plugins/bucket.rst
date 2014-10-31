@@ -65,6 +65,6 @@ Here's an example::
          bucket_alpha_regex:
            'A - D': ^[0-9a-dA-D…äÄ]
 
-THis configuration creates five-year ranges for any input year.
+This configuration creates five-year ranges for any input year.
 The *A - D* bucket now matches also all artists starting with ä or Ä and 0 to 9
 and … (ellipsis). The other alpha buckets work as ranges.

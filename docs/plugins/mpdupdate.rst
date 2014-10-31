@@ -28,7 +28,7 @@ socket.)
 Configuration
 -------------
 
-The available options under teh ``mpd:`` section are:
+The available options under the ``mpd:`` section are:
 
 - ``host``: The MPD server name.
   Default: ``localhost``.
