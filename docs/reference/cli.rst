@@ -315,8 +315,9 @@ stats
 Show some statistics on your entire library (if you don't provide a
 :doc:`query <query>`) or the matched items (if you do).
 
-The ``-e`` (``--exact``) option makes the calculation of total file size more
-accurate but slower.
+By default, the command calculates file sizes using their bitrate and
+duration. The ``-e`` (``--exact``) option reads the exact sizes of each file
+(but is slower). The exact mode also outputs the exact duration in seconds.
 
 .. _fields-cmd:
 

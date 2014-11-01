@@ -47,7 +47,7 @@ Fixes:
   option is set incorrectly.
 * The migration from pre-1.1, non-YAML configuration files has been removed.
   If you need to upgrade an old config file, use an older version of beets
-  temporarily
+  temporarily.
 * :doc:`/plugins/discogs`: Recover from HTTP errors when communicating with
   the Discogs servers. Thanks to Dustin Rodriguez.
 * :doc:`/plugins/embedart`: Do not log "embedding album art into..." messages
@@ -70,6 +70,9 @@ Fixes:
   :bug:`1036`
 * :doc:`/plugins/discogs`: Avoid a situation where a trailing comma could be
   appended to some artist names. :bug:`1049`
+* The output of the :ref:`stats-cmd` command is slightly different: the
+  approximate size is now marked as such, and the total number of seconds only
+  appears in exact mode.
 
 
 1.3.8 (September 17, 2014)
