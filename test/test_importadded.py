@@ -74,8 +74,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
 
     def assertEqualTimes(self, first, second, msg=None):
         """For comparing file modification times at a sufficient precision"""
-        assert round(first, 4) == round(second, 4), \
-            "{:f} != {:f}{}".format(first, second, ": " + msg if msg else "")
+        self.assertAlmostEqual(first, second, places=4, msg=msg)
 
     def test_import_album_with_added_dates(self):
         self.importer.run()
