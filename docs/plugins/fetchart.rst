@@ -4,7 +4,7 @@ FetchArt Plugin
 The ``fetchart`` plugin retrieves album art images from various sources on the
 Web and stores them as image files.
 
-To use the plugin, first enable it in your configuration (see
+To use the ``fetchart`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install the `requests`_ library by typing::
 
     pip install requests
@@ -23,11 +23,36 @@ By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
 the :ref:`art-filename` config option.
 
-To disable automatic art downloading, just put this in your configuration
-file::
+Configuration
+-------------
+
+To configure the plugin, make a ``fetchart:`` section in your configuration
+file. The available options are:
+
+- ``auto``: Enable automatic album art fetching during import.
+  Default: ``yes``.
+- ``cautious``: Pick only trusted album art by ignoring filenames that do not
+  contain one of the keywords in ``cover_names``.
+  Default: ``no``.
+- ``cover_names``: Prioritize images containing words in this list.
+  Default: ``['cover', 'front', 'art', 'album', 'folder']``.
+- ``google_search``: Gather images from Google Image Search.
+  Default: ``no``.
+- ``maxwidth``: A maximum image width to downscale fetched images if they are
+  too big. The resize operation reduces image width to at most ``maxwidth``
+  pixels. The height is recomputed so that the aspect ratio is preserved.
+- ``remote_priority``: Query remote sources every time and use local image only
+  as fallback.
+  Default: ``no``; remote (Web) art sources are only queried if no local art is
+  found in the filesystem.
+
+Here's an example that makes plugin select only images that contain *front* or
+*back* keywords in their filenames::
 
     fetchart:
-        auto: no
+        cautious: true
+        cover_names: front back
+
 
 Manually Fetching Album Art
 ---------------------------
@@ -46,11 +71,6 @@ be processed; otherwise, the command processes every album in your library.
 
 Image Resizing
 --------------
-
-A maximum image width can be configured as ``maxwidth`` to downscale fetched
-images if they are too big. The resize operation reduces image width to
-``maxwidth`` pixels. The height is recomputed so that the aspect ratio is
-preserved.
 
 Beets can resize images using `PIL`_, `ImageMagick`_, or a server-side resizing
 proxy. If either PIL or ImageMagick is installed, beets will use those;
@@ -79,19 +99,6 @@ file whose name contains "cover", "front", "art", "album" or "folder", but in
 the absence of well-known names, it will use any image file in the same folder
 as your music files.
 
-You can change the list of filename keywords using the ``cover_names`` config
-option. Or, to use *only* filenames containing the keywords and not fall back
-to any image, set ``cautious`` to true. For example::
-
-    fetchart:
-        cautious: true
-        cover_names: front back
-
-By default, remote (Web) art sources are only queried if no local art is found
-in the filesystem. To query remote sources every time, set the
-``remote_priority`` configuration option to true, which will cause beets to
-prefer remote cover art over any local image files.
-
 When you choose to apply changes during an import, beets will search for art as
 described above.  For "as-is" imports (and non-autotagged imports using the
 ``-A`` flag), beets only looks for art on the local filesystem.
@@ -106,11 +113,6 @@ unlikely).
 
 .. _Google Images: http://images.google.com/
 
-To enable gathering art from Google, enable the ``google_search`` option in
-your config file::
-
-    fetchart:
-        google_search: true
 
 Embedding Album Art
 -------------------

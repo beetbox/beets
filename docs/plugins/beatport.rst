@@ -18,8 +18,8 @@ both MusicBrainz and (to a lesser degree) Discogs show no matches.
 Installation
 ------------
 
-To see matches from the ``beatport`` plugin, you first have to enable it in
-your configuration (see :doc:`/plugins/index`). Then, install the `requests`_
+To use the ``beatport`` plugin, first enable it in your configuration (see
+:ref:`using-plugins`). Then, install the `requests`_
 library (which we need for querying the Beatport API) by typing::
 
     pip install requests

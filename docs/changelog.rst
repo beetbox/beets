@@ -6,6 +6,8 @@ Changelog
 
 Features:
 
+* A new :doc:`/plugins/lastimport` lets you download your play count data from
+  Last.fm. Thanks to Rafael Bodill.
 * :doc:`/plugins/embedart`: You can now automatically check that new art looks
   similar to existing art---ensuring that you only get a better "version" of
   the art you already have. See :ref:`image-similarity-check`.
@@ -45,7 +47,7 @@ Fixes:
   option is set incorrectly.
 * The migration from pre-1.1, non-YAML configuration files has been removed.
   If you need to upgrade an old config file, use an older version of beets
-  temporarily
+  temporarily.
 * :doc:`/plugins/discogs`: Recover from HTTP errors when communicating with
   the Discogs servers. Thanks to Dustin Rodriguez.
 * :doc:`/plugins/embedart`: Do not log "embedding album art into..." messages
@@ -68,6 +70,9 @@ Fixes:
   :bug:`1036`
 * :doc:`/plugins/discogs`: Avoid a situation where a trailing comma could be
   appended to some artist names. :bug:`1049`
+* The output of the :ref:`stats-cmd` command is slightly different: the
+  approximate size is now marked as such, and the total number of seconds only
+  appears in exact mode.
 
 
 1.3.8 (September 17, 2014)
@@ -591,7 +596,7 @@ As usual, there are also innumerable little fixes and improvements:
 * :doc:`/plugins/missing`: Avoid a possible error when an album's
   ``tracktotal`` field is missing.
 * :doc:`/plugins/ftintitle`: Fix an error when the sort artist is missing.
-* :doc:`/plugins/echonest_tempo`: The plugin should now match songs more
+* ``echonest_tempo``: The plugin should now match songs more
   reliably (i.e., fewer "no tempo found" messages). Thanks to Peter Schnebel.
 * :doc:`/plugins/convert`: Fix an "Item has no library" error when using the
   ``auto`` config option.
@@ -657,7 +662,7 @@ And some fixes:
   (instead of failing with an API error).
 * :doc:`/plugins/info`: Fail gracefully when used erroneously with a
   directory.
-* :doc:`/plugins/echonest_tempo`: Fix an issue where the plugin could use the
+* ``echonest_tempo``: Fix an issue where the plugin could use the
   tempo from the wrong song when the API did not contain the requested song.
 * Fix a crash when a file's metadata included a very large number (one wider
   than 64 bits). These huge numbers are now replaced with zeroes in the
@@ -1013,7 +1018,7 @@ Other stuff:
 * :doc:`/plugins/chroma`: A new ``fingerprint`` command lets you generate and
   store fingerprints for items that don't yet have them. One more round of
   applause for Lucas Duailibe.
-* :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
+* ``echonest_tempo``: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
 * When the importer encounters an error (insufficient permissions, for
@@ -1037,7 +1042,7 @@ Other stuff:
   import command. Thanks to Lucas Duailibe.
 * :doc:`/plugins/mbcollection`: Show friendly, human-readable errors when
   MusicBrainz exceptions occur.
-* :doc:`/plugins/echonest_tempo`: Catch socket errors that are not handled by
+* ``echonest_tempo``: Catch socket errors that are not handled by
   the Echo Nest library.
 * :doc:`/plugins/chroma`: Catch Acoustid Web service errors when submitting
   fingerprints.
@@ -1136,7 +1141,7 @@ Other new stuff:
   Dang Mai Hai.
 * :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
   Thanks to Steinþór Pálsson.
-* :doc:`/plugins/echonest_tempo`: Don't attempt a lookup when the artist or
+* ``echonest_tempo``: Don't attempt a lookup when the artist or
   track title is missing.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 * A nicer error message is now given when the configuration file contains tabs.
@@ -1202,7 +1207,7 @@ This second release candidate follows quickly after rc1 and fixes a few small
 bugs found since that release. There were a couple of regressions and some bugs
 in a newly added plugin.
 
-* :doc:`/plugins/echonest_tempo`: If the Echo Nest API limit is exceeded or a
+* ``echonest_tempo``: If the Echo Nest API limit is exceeded or a
   communication error occurs, the plugin now waits and tries again instead of
   crashing. Thanks to Zach Denton.
 * :doc:`/plugins/fetchart`: Fix a regression that caused crashes when art was
@@ -1232,7 +1237,7 @@ begins today on features for version 1.1.
 * New plugin: :doc:`/plugins/fuzzy` lets you find albums and tracks
   using **fuzzy string matching** so you don't have to type (or even remember)
   their exact names. Thanks to Philippe Mongeau.
-* New plugin: :doc:`/plugins/echonest_tempo` fetches **tempo** (BPM) information
+* New plugin: ``echonest_tempo`` fetches **tempo** (BPM) information
   from `The Echo Nest`_. Thanks to David Brenner.
 * New plugin: :doc:`/plugins/the` adds a template function that helps format
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.

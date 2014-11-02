@@ -6,9 +6,9 @@ it, you can define template fields in your beets configuration file and refer
 to them from your template strings in the ``paths:`` section (see
 :doc:`/reference/config/`).
 
-To use inline field definitions, first enable the plugin by putting ``inline``
-on your ``plugins`` line in your configuration file. Then, make a
-``item_fields:`` block in your config file. Under this key, every line defines a
+To use the `ìnline`` plugin, enable it in your configuration
+(see :ref:`using-plugins`).
+Then, make a `item_fields:`` block in your config file. Under this key, every line defines a
 new template field; the key is the name of the field (you'll use the name to
 refer to the field in your templates) and the value is a Python expression or
 function body. The Python code has all of a track's fields in scope, so you can
@@ -42,7 +42,7 @@ a result for the value of the path field, like so::
     item_fields:
         filename: |
             import os
-            from beets.util import bytestring_path 
+            from beets.util import bytestring_path
             return bytestring_path(os.path.basename(path))
 
 You might want to use the YAML syntax for "block literals," in which a leading

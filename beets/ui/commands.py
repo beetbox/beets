@@ -1185,13 +1185,20 @@ def show_stats(lib, query, exact):
         size_str += ' ({0} bytes)'.format(total_size)
 
     print_("""Tracks: {0}
-Total time: {1} ({2:.2f} seconds)
-Total size: {3}
-Artists: {4}
-Albums: {5}
-Album artists: {6}""".format(total_items, ui.human_seconds(total_time),
-                             total_time, size_str, len(artists), len(albums),
-                             len(album_artists)))
+Total time: {1}{2}
+{3}: {4}
+Artists: {5}
+Albums: {6}
+Album artists: {7}""".format(
+        total_items,
+        ui.human_seconds(total_time),
+        ' ({0:.2f} seconds)'.format(total_time) if exact else '',
+        'Total size' if exact else 'Approximate total size',
+        size_str,
+        len(artists),
+        len(albums),
+        len(album_artists)),
+    )
 
 
 def stats_func(lib, opts, args):
@@ -1203,7 +1210,7 @@ stats_cmd = ui.Subcommand(
 )
 stats_cmd.parser.add_option(
     '-e', '--exact', action='store_true',
-    help='get exact file sizes'
+    help='exact size and time'
 )
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)

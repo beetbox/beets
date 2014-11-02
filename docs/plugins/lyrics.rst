@@ -12,14 +12,38 @@ and, optionally, the Google custom search API.
 Fetch Lyrics During Import
 --------------------------
 
-To automatically fetch lyrics for songs you import, just enable the plugin by
-putting ``lyrics`` on your config file's ``plugins`` line (see
-:doc:`/plugins/index`).  When importing new files, beets will now fetch lyrics
-for files that don't already have them. The lyrics will be stored in the beets
-database. If the ``import.write`` config option is on, then the lyrics will also
-be written to the files' tags.
+To automatically fetch lyrics for songs you import, enable the ``lyrics``
+plugin in your configuration (see :ref:`using-plugins`).
+When importing new files, beets will now fetch lyrics for files that don't
+already have them. The lyrics will be stored in the beets database. If the
+``import.write`` config option is on, then the lyrics will also be written to
+the files' tags.
 
-This behavior can be disabled with the ``auto`` config option (see below).
+
+Configuration
+-------------
+
+To configure the plugin, make a ``lyrics:`` section in your
+configuration file. The available options are:
+
+- ``auto``: Fetch lyrics automatically during import.
+  Default: ``yes``.
+- ``fallback``: By default, the file will be left unchanged when no lyrics are
+  found. Use the empty string ``''`` to reset the lyrics in such a case.
+  Default: None.
+- ``google_API_key``: Your Google API key (to enable the Google Custom Search
+  backend).
+  Default: None.
+- ``google_engine_ID``: The custom search engine to use.
+  Default: The beets custom search engine, which gathers a list of sources
+  known to be scrapeable.
+
+Here's an example of ``config.yaml``::
+
+    lyrics:
+      fallback: ''
+      google_API_key: AZERTYUIOPQSDFGHJKLMWXCVBN1234567890_ab
+      google_engine_ID: 009217259823014548361:lndtuqkycfu
 
 
 Fetching Lyrics Manually
@@ -39,25 +63,7 @@ console so you can view the fetched (or previously-stored) lyrics.
 The ``-f`` option forces the command to fetch lyrics, even for tracks that
 already have lyrics.
 
-
-Configuring
------------
-
-To disable automatic lyric fetching during import, set the ``auto`` option to
-false, like so::
-
-    lyrics:
-        auto: no
-
-By default, if no lyrics are found, the file will be left unchanged. To
-specify a placeholder for the lyrics tag when none are found, use the
-``fallback`` configuration option::
-
-    lyrics:
-        fallback: 'No lyrics found'
-
 .. _activate-google-custom-search:
-
 
 Activate Google custom search
 ------------------------------
@@ -77,12 +83,6 @@ token and use it for your ``google_engine_ID`` configuration option. By
 default, beets use a list of sources known to be scrapeable.
 
 .. _define a custom search engine: http://www.google.com/cse/all
-
-Here's an example of ``config.yaml``::
-
-    lyrics:
-      google_API_key: AZERTYUIOPQSDFGHJKLMWXCVBN1234567890_ab
-      google_engine_ID: 009217259823014548361:lndtuqkycfu
 
 Note that the Google custom search API is limited to 100 queries per day.
 After that, the lyrics plugin will fall back on its other data sources.
