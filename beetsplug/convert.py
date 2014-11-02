@@ -369,7 +369,7 @@ class ConvertPlugin(BeetsPlugin):
             u'embed': True,
             u'paths': {},
             u'never_convert_lossy_files': False,
-            u'copy_album_art': False
+            u'copy_album_art': False,
         })
         self.import_stages = [self.auto_convert]
 
