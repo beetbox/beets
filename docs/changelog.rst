@@ -8,6 +8,9 @@ Features:
 
 * A new :doc:`/plugins/lastimport` lets you download your play count data from
   Last.fm. Thanks to Rafael Bodill.
+* A new :doc:`/plugins/freedesktop` creates metadata files for
+  Freedesktop.org--compliant file managers. Thanks to :user:`kerobaros`.
+  :bug:`1056`, :bug:`707`
 * :doc:`/plugins/embedart`: You can now automatically check that new art looks
   similar to existing art---ensuring that you only get a better "version" of
   the art you already have. See :ref:`image-similarity-check`.
