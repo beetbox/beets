@@ -70,6 +70,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    spotify
    types
    lastimport
+   freedesktop
 
 Autotagger Extensions
 ---------------------
