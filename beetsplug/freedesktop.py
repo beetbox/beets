@@ -17,17 +17,12 @@
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-
 from beets.ui import decargs
 
-from beets import config
-
-import os.path
+import os
 import logging
 
 log = logging.getLogger('beets.freedesktop')
-
-freedesktop_command = Subcommand("freedesktop", help="Create .directory files")
 
 
 def process_query(lib, opts, args):
@@ -53,10 +48,6 @@ def create_file(albumpath, artfile):
         file = open(outfilename, 'w')
         file.write(file_contents)
         file.close()
-    pass
-
-
-freedesktop_command.func = process_query
 
 
 class FreedesktopPlugin(BeetsPlugin):
@@ -65,14 +56,16 @@ class FreedesktopPlugin(BeetsPlugin):
         self.config.add({
             'auto': False
         })
+        self.register_listener('album_imported', self.imported)
 
     def commands(self):
+        freedesktop_command = Subcommand("freedesktop",
+                                         help="Create .directory files")
+        freedesktop_command.func = process_query
         return [freedesktop_command]
 
-
-@FreedesktopPlugin.listen('album_imported')
-def imported(lib, album):
-    automatic = config['auto'].get(bool)
-    if not automatic:
-        return
-    process_album(album)
+    def imported(self, lib, album):
+        automatic = self.config['auto'].get(bool)
+        if not automatic:
+            return
+        process_album(album)

@@ -1,9 +1,9 @@
 Freedesktop Plugin
 ==================
 
-The ``freedesktop`` plugin creates .directory files in your album folders. This 
-allows, when using a freedesktop.org compliant file manager, such as
-Dolphin or Nautilus, an album to have its cover art as the folder's thumbnail.
+The ``freedesktop`` plugin creates .directory files in your album folders.
+This lets Freedesktop.org compliant file managers such as Dolphin or Nautilus
+to use an album's cover art as the folder's thumbnail.
 
 To use the ``freedesktop`` plugin, enable it (see :doc:`/plugins/index`).
 
@@ -13,8 +13,8 @@ Configuration
 To configure the plugin, make a ``freedesktop:`` section in your configuration
 file. The only available option is:
 
-- ``auto``: Create .directory files automatically during import. 
-  Default: ``no``
+- ``auto``: Create .directory files automatically during import.
+  Default: ``no``.
 
 Creating .directory Files Manually
 ----------------------------------
