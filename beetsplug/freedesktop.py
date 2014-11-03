@@ -3,6 +3,8 @@ from beets.ui import Subcommand
 
 from beets.ui import decargs
 
+from beets import config
+
 import os.path
 import logging
 
@@ -48,8 +50,6 @@ class FreedesktopPlugin(BeetsPlugin):
         self.config.add({
             'auto': False
         })
-        global automatic
-        automatic = self.config['auto'].get(bool)
 
     def commands(self):
         return [freedesktop_command]
@@ -57,6 +57,7 @@ class FreedesktopPlugin(BeetsPlugin):
 
 @FreedesktopPlugin.listen('album_imported')
 def imported(lib, album):
+    automatic = config['auto'].get(bool)
     if not automatic:
         return
     process_album(album)
