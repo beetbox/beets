@@ -1,3 +1,20 @@
+# This file is part of beets.
+# Copyright 2014, Matt Lichtenberg.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Creates freedesktop.org-compliant .directory files on an album level.
+"""
+
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
@@ -43,8 +60,6 @@ freedesktop_command.func = process_query
 
 
 class FreedesktopPlugin(BeetsPlugin):
-    """Creates freedesktop.org-compliant .directory files on an album level.
-    """
     def __init__(self):
         super(FreedesktopPlugin, self).__init__()
         self.config.add({
