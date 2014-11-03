@@ -70,6 +70,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    spotify
    types
    lastimport
+   freedesktop
 
 Autotagger Extensions
 ---------------------
@@ -129,6 +130,7 @@ Interoperability
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 * :doc:`play`: Play beets queries in your music player.
+* :doc:`freedesktop`: Create .directory files in album folders.
 
 Miscellaneous
 -------------
