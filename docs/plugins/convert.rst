@@ -79,6 +79,8 @@ file. The available options are:
 - ``threads``: The number of threads to use for parallel encoding.
   By default, the plugin will detect the number of processors available and use
   them all.
+- ``copy_album_art``: Copy album art when copying or transcoding albums matched
+  using the ``-a`` option. Default: ``no``.
 
 You can also configure the format to use for transcoding.
 

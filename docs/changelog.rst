@@ -73,6 +73,8 @@ Fixes:
 * The output of the :ref:`stats-cmd` command is slightly different: the
   approximate size is now marked as such, and the total number of seconds only
   appears in exact mode.
+* :doc:`/plugins/convert`: A new ``copy_album_art`` option puts images
+  alongside converted files. Thanks to Ángel Alonso. :bug:`1050`, :bug:`1055`
 
 
 1.3.8 (September 17, 2014)

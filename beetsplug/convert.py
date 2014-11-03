@@ -248,6 +248,49 @@ def convert_on_import(lib, item):
         item.store()
 
 
+def copy_album_art(album, dest_dir, path_formats, pretend=False):
+    """Copies the associated cover art of the album. Album must have at least
+    one track.
+    """
+    if not album or not album.artpath:
+        return
+
+    album_item = album.items().get()
+    # Album shouldn't be empty.
+    if not album_item:
+        return
+
+    # Get the destination of the first item (track) of the album, we use this
+    # function to format the path accordingly to path_formats.
+    dest = album_item.destination(basedir=dest_dir, path_formats=path_formats)
+
+    # Remove item from the path.
+    dest = os.path.join(*util.components(dest)[:-1])
+
+    dest = album.art_destination(album.artpath, item_dir=dest)
+    if album.artpath == dest:
+        return
+
+    if not pretend:
+        util.mkdirall(dest)
+
+    if os.path.exists(util.syspath(dest)):
+        log.info(u'Skipping {0} (target file exists)'.format(
+            util.displayable_path(album.artpath)
+        ))
+        return
+
+    if pretend:
+        log.info(u'cp {0} {1}'.format(
+            util.displayable_path(album.artpath),
+            util.displayable_path(dest),
+        ))
+    else:
+        log.info(u'Copying cover art to {0}'.format(
+                 util.displayable_path(dest)))
+        util.copy(album.artpath, dest)
+
+
 def convert_func(lib, opts, args):
     if not opts.dest:
         opts.dest = config['convert']['dest'].get()
@@ -276,7 +319,11 @@ def convert_func(lib, opts, args):
             return
 
     if opts.album:
-        items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
+        albums = lib.albums(ui.decargs(args))
+        items = (i for a in albums for i in a.items())
+        if config['convert']['copy_album_art']:
+            for album in albums:
+                copy_album_art(album, opts.dest, path_formats, pretend)
     else:
         items = iter(lib.items(ui.decargs(args)))
     convert = [convert_item(opts.dest,
@@ -322,6 +369,7 @@ class ConvertPlugin(BeetsPlugin):
             u'embed': True,
             u'paths': {},
             u'never_convert_lossy_files': False,
+            u'copy_album_art': False,
         })
         self.import_stages = [self.auto_convert]
 
