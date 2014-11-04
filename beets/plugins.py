@@ -262,12 +262,11 @@ def types(model_cls):
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
         for field in plugin_types:
-            if field in types:
+            if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictException(
                     u'Plugin {0} defines flexible field {1} '
-                    'which has already been defined.'.format(
-                        plugin.name, field
-                    )
+                    'which has already been defined with '
+                    'another type.'.format(plugin.name, field)
                 )
         types.update(plugin_types)
     return types
