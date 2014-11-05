@@ -29,6 +29,18 @@ from beets import ui
 from beets import util
 from beets import config
 
+try:
+    import itunes
+    itunes_available = True
+except ImportError:
+    itunes_available = False
+
+try:
+    from PIL import Image
+    pil_available = True
+except ImportError:
+    pil_available = False
+
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg',)
 DOWNLOAD_EXTENSION = '.jpg'
@@ -39,7 +51,7 @@ requests_session = requests.Session()
 requests_session.headers = {'User-Agent': 'beets'}
 
 
-def _fetch_image(url):
+def _fetch_image(url, minwidth=None):
     """Downloads an image from a URL and checks whether it seems to
     actually be an image. If so, returns a path to the downloaded image.
     Otherwise, returns None.
@@ -60,7 +72,14 @@ def _fetch_image(url):
             log.debug(u'fetchart: downloaded art to: {0}'.format(
                 util.displayable_path(fh.name)
             ))
-            return fh.name
+            if minwidth:
+                im = Image.open(fh.name)
+                if im.size[0] > (minwidth - 1):
+                    return fh.name
+                else:
+                    log.debug(u'fetchart: fetched art too small')
+            else:
+                return fh.name
     except (IOError, requests.RequestException):
         log.debug(u'fetchart: error fetching art')
 
@@ -151,6 +170,24 @@ def google_art(album):
         return
 
 
+# Art from the iTunes Store.
+
+def itunes_art(album):
+    """Return art URL from iTunes Store given an album title.
+    """
+    search_string = (album.albumartist + ' ' + album.album).encode('utf-8')
+    try:
+        itunes_album = itunes.search_album(search_string)[0]
+        if itunes_album.get_artwork()['100']:
+            small_url = itunes_album.get_artwork()['100']
+            big_url = small_url.replace('100x100', '1200x1200')
+            return big_url
+        else:
+            log.debug(u'fetchart: album has no artwork in iTunes Store')
+    except IndexError:
+        log.debug(u'fetchart: album not found in iTunes Store')
+
+
 # Art from the filesystem.
 
 def filename_priority(filename, cover_names):
@@ -217,18 +254,24 @@ def _source_urls(album):
         if url:
             yield url
 
+    # iTunes Store.
+    if itunes_available:
+        yield itunes_art(album)
+
     if config['fetchart']['google_search']:
         url = google_art(album)
         if url:
             yield url
 
 
-def art_for_album(album, paths, maxwidth=None, local_only=False):
+def art_for_album(album, paths, maxwidth=None, minwidth=None,
+                  local_only=False):
     """Given an Album object, returns a path to downloaded art for the
     album (or None if no art is found). If `maxwidth`, then images are
-    resized to this maximum pixel size. If `local_only`, then only local
-    image files from the filesystem are returned; no network requests
-    are made.
+    resized to this maximum pixel size. If `minwidth`, then images are
+    rejected if smaller than this pixel size. If `local_only`, then only
+    local image files from the filesystem are returned; no network
+    requests are made.
     """
     out = None
 
@@ -248,7 +291,7 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
         for url in _source_urls(album):
             if maxwidth:
                 url = ArtResizer.shared.proxy_url(maxwidth, url)
-            candidate = _fetch_image(url)
+            candidate = _fetch_image(url, minwidth)
             if candidate:
                 out = candidate
                 break
@@ -261,7 +304,7 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
 # PLUGIN LOGIC ###############################################################
 
 
-def batch_fetch_art(lib, albums, force, maxwidth=None):
+def batch_fetch_art(lib, albums, force, maxwidth=None, minwidth=None):
     """Fetch album art for each of the albums. This implements the manual
     fetchart CLI command.
     """
@@ -274,7 +317,7 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
             # sources.
             local_paths = None if force else [album.path]
 
-            path = art_for_album(album, local_paths, maxwidth)
+            path = art_for_album(album, local_paths, maxwidth, minwidth)
             if path:
                 album.set_art(path, False)
                 album.store()
@@ -293,6 +336,7 @@ class FetchArtPlugin(BeetsPlugin):
         self.config.add({
             'auto': True,
             'maxwidth': 0,
+            'minwidth': 0,
             'remote_priority': False,
             'cautious': False,
             'google_search': False,
@@ -304,6 +348,7 @@ class FetchArtPlugin(BeetsPlugin):
         self.art_paths = {}
 
         self.maxwidth = self.config['maxwidth'].get(int)
+        self.minwidth = self.config['minwidth'].get(int)
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
@@ -323,7 +368,8 @@ class FetchArtPlugin(BeetsPlugin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            path = art_for_album(task.album, task.paths, self.maxwidth, local)
+            path = art_for_album(task.album, task.paths, self.maxwidth,
+                                 self.minwidth, local)
 
             if path:
                 self.art_paths[task] = path
@@ -351,6 +397,6 @@ class FetchArtPlugin(BeetsPlugin):
 
         def func(lib, opts, args):
             batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
-                            self.maxwidth)
+                            self.maxwidth, self.minwidth)
         cmd.func = func
         return [cmd]
