@@ -13,15 +13,29 @@
 # included in all copies or substantial portions of the Software.
 
 import logging
+import musicbrainzngs
+import traceback
 import requests
+from beets import __version__
 from beets import ui
 from beets import dbcore
 from beets import config
 from beets import plugins
 from beets.dbcore import types
+from beets.autotag.mb import MusicBrainzAPIError
 
 log = logging.getLogger('beets')
 API_URL = 'http://ws.audioscrobbler.com/2.0/'
+
+musicbrainzngs.set_useragent('beets', __version__,
+                             'http://beets.radbox.org/')
+
+# FIXME: is this to early for setup
+musicbrainzngs.set_hostname(config['musicbrainz']['host'].get(unicode))
+musicbrainzngs.set_rate_limit(
+    config['musicbrainz']['ratelimit_interval'].as_number(),
+    config['musicbrainz']['ratelimit'].get(int),
+)
 
 
 class LastImportPlugin(plugins.BeetsPlugin):
@@ -47,6 +61,50 @@ class LastImportPlugin(plugins.BeetsPlugin):
 
         cmd.func = func
         return [cmd]
+
+
+def get_mb_artistname(artist):
+    try:
+        res = musicbrainzngs.search_artists(artist=artist)
+    except musicbrainzngs.MusicBrainzError as exc:
+        raise MusicBrainzAPIError(exc, 'artist search', artist,
+                                  traceback.format_exc())
+    if 'artist-list' in res:
+        # FIXME: can this be empty?
+        return res['artist-list'][0]['name']
+    return artist
+
+
+def get_mb_title(artist, title):
+    try:
+        res = musicbrainzngs.search_works(artist=artist, work=title,
+                                          type='Song')
+    except musicbrainzngs.MusicBrainzError as exc:
+        raise MusicBrainzAPIError(exc, 'work search', artist, title,
+                                  traceback.format_exc())
+    if 'work-list' in res:
+        # FIXME: can this be empty?
+        return res['work-list'][0]['title']
+    return title
+
+
+def get_song_from_db(lib, **args):
+    return lib.items(dbcore.AndQuery(map(lambda (k, v):
+                                         dbcore.query.SubstringQuery(k, v),
+                                         args.iteritems()))).get()
+
+
+def get_song(lib, artist, title, album):
+    # Try artist/title/album
+    log.debug(u'lastimport: trying by artist/title/album')
+    song = get_song_from_db(lib, artist=artist, title=title, album=album)
+
+    if not song:
+        # If not, try just artist/title
+        log.debug(u'lastimport: no album match, trying by artist/title')
+        song = get_song_from_db(lib, artist=artist, title=title)
+
+    return song
 
 
 def import_lastfm(lib):
@@ -136,44 +194,40 @@ def process_tracks(lib, tracks):
         if 'album' in tracks[num]:
             album = tracks[num]['album'].get('name', '').strip()
 
-        log.debug(u'lastimport: query: {0} - {1} ({2})'
-                  .format(artist, title, album))
+        log.debug(u'lastimport: query: {0} - {1} ({2}) [{3}]'
+                  .format(artist, title, album, trackid))
 
         # First try to query by musicbrainz's trackid
         if trackid:
-            song = lib.items(
-                dbcore.query.MatchQuery('mb_trackid', trackid)
-            ).get()
+            song = get_song_from_db(lib, mb_trackid=trackid)
 
-        # Otherwise try artist/title/album
         if not song:
-            log.debug(u'lastimport: no match for mb_trackid {0}, trying by '
-                      u'artist/title/album'.format(trackid))
-            query = dbcore.AndQuery([
-                dbcore.query.SubstringQuery('artist', artist),
-                dbcore.query.SubstringQuery('title', title),
-                dbcore.query.SubstringQuery('album', album)
-            ])
-            song = lib.items(query).get()
+            song = get_song(lib, artist, title, album)
 
-        # If not, try just artist/title
         if not song:
-            log.debug(u'lastimport: no album match, trying by artist/title')
-            query = dbcore.AndQuery([
-                dbcore.query.SubstringQuery('artist', artist),
-                dbcore.query.SubstringQuery('title', title)
-            ])
-            song = lib.items(query).get()
+            # Try looking up the artist in MusicBrainz
+            mb_artist = get_mb_artistname(artist)
+            if mb_artist != artist:
+                artist = mb_artist
+                log.debug(u'lastimport: using artist name from '
+                          u'MusicBrainz: {0}'.format(mb_artist))
+                song = get_song(lib, artist, title, album)
 
-        # Last resort, try just replacing to utf-8 quote
         if not song:
-            title = title.replace("'", u'\u2019')
-            log.debug(u'lastimport: no title match, trying utf-8 single quote')
-            query = dbcore.AndQuery([
-                dbcore.query.SubstringQuery('artist', artist),
-                dbcore.query.SubstringQuery('title', title)
-            ])
-            song = lib.items(query).get()
+            # Try looking up the title in MusicBrainz
+            mb_title = get_mb_title(artist, title)
+            if mb_title != title:
+                title = mb_title
+                log.debug(u'lastimport: using title from '
+                          u'MusicBrainz: {0}'.format(mb_title))
+                song = get_song(lib, artist, title, album)
+
+        if not song:
+            # Try replacing utf-8 quote
+            fixed_title = title.replace("'", u'\u2019')
+            if fixed_title != title:
+                log.debug(u'lastimport: trying utf-8 single quote')
+                song = get_song(lib, artist, fixed_title, album)
 
         if song:
             count = int(song.get('play_count', 0))
