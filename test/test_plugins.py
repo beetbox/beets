@@ -112,6 +112,45 @@ class ItemWriteTest(unittest.TestCase, TestHelper):
         self.event_listener_plugin.register_listener(event, func)
 
 
+class ItemTypeConflictTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_plugin_loader()
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_plugin_loader()
+        self.teardown_beets()
+
+    def test_mismatch(self):
+        class EventListenerPlugin(plugins.BeetsPlugin):
+            item_types = {'duplicate': types.INTEGER}
+
+        class AdventListenerPlugin(plugins.BeetsPlugin):
+            item_types = {'duplicate': types.FLOAT}
+
+        self.event_listener_plugin = EventListenerPlugin
+        self.advent_listener_plugin = AdventListenerPlugin
+        self.register_plugin(EventListenerPlugin)
+        self.register_plugin(AdventListenerPlugin)
+        self.assertRaises(plugins.PluginConflictException,
+                          plugins.types, Item
+                          )
+
+    def test_match(self):
+        class EventListenerPlugin(plugins.BeetsPlugin):
+            item_types = {'duplicate': types.INTEGER}
+
+        class AdventListenerPlugin(plugins.BeetsPlugin):
+            item_types = {'duplicate': types.INTEGER}
+
+        self.event_listener_plugin = EventListenerPlugin
+        self.advent_listener_plugin = AdventListenerPlugin
+        self.register_plugin(EventListenerPlugin)
+        self.register_plugin(AdventListenerPlugin)
+        self.assertNotEqual(None, plugins.types(Item))
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
