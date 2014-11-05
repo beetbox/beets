@@ -28,6 +28,11 @@ from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import config
 
+try:
+    from PIL import Image
+    pil_available = True
+except ImportError:
+    pil_available = False
 
 log = logging.getLogger('beets')
 
@@ -39,6 +44,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         super(EmbedCoverArtPlugin, self).__init__()
         self.config.add({
             'maxwidth': 0,
+            'minwidth': 0,
             'auto': True,
             'compare_threshold': 0,
             'ifempty': False,
@@ -53,6 +59,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             self.config['compare_threshold'] = 0
             log.warn(u"embedart: ImageMagick 6.8.7 or higher not installed; "
                      u"'compare_threshold' option ignored")
+        if self.config['minwidth'].get(int) and not pil_available:
+            self.config['minwidth'] = 0
+            log.warn(u"embedart: PIL not found; "
+                     u"'minwidth' option ignored")
 
     def commands(self):
         # Embed command.
@@ -63,6 +73,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             '-f', '--file', metavar='PATH', help='the image file to embed'
         )
         maxwidth = config['embedart']['maxwidth'].get(int)
+        minwidth = config['embedart']['minwidth'].get(int)
         compare_threshold = config['embedart']['compare_threshold'].get(int)
         ifempty = config['embedart']['ifempty'].get(bool)
 
@@ -74,7 +85,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                compare_threshold, ifempty)
             else:
                 for album in lib.albums(decargs(args)):
-                    embed_album(album, maxwidth)
+                    embed_album(album, maxwidth, minwidth)
 
         embed_cmd.func = embed_func
 
@@ -106,13 +117,19 @@ def album_imported(lib, album):
     """Automatically embed art into imported albums.
     """
     if album.artpath and config['embedart']['auto']:
-        embed_album(album, config['embedart']['maxwidth'].get(int), True)
+        embed_album(album, config['embedart']['maxwidth'].get(int),
+                    config['embedart']['minwidth'].get(int), True)
 
 
-def embed_item(item, imagepath, maxwidth=None, itempath=None,
+def embed_item(item, imagepath, maxwidth=None, minwidth=None, itempath=None,
                compare_threshold=0, ifempty=False, as_album=False):
     """Embed an image into the item's media file.
     """
+    if minwidth:
+        im = Image.open(imagepath)
+        if im.size[0] < minwidth:
+            log.debug(u'embedart: art too small to embed')
+            return
     if compare_threshold:
         if not check_art_similarity(item, imagepath, compare_threshold):
             log.warn(u'Image not similar; skipping.')
@@ -142,7 +159,7 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
         del item['images']
 
 
-def embed_album(album, maxwidth=None, quiet=False):
+def embed_album(album, maxwidth=None, minwidth=None, quiet=False):
     """Embed album art into all of the album's items.
     """
     imagepath = album.artpath
@@ -163,7 +180,7 @@ def embed_album(album, maxwidth=None, quiet=False):
     )
 
     for item in album.items():
-        embed_item(item, imagepath, maxwidth, None,
+        embed_item(item, imagepath, maxwidth, minwidth, None,
                    config['embedart']['compare_threshold'].get(int),
                    config['embedart']['ifempty'].get(bool), as_album=True)
 

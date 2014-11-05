@@ -348,7 +348,14 @@ class FetchArtPlugin(BeetsPlugin):
         self.art_paths = {}
 
         self.maxwidth = self.config['maxwidth'].get(int)
-        self.minwidth = self.config['minwidth'].get(int)
+
+        if self.config['minwidth'].get(int) and not pil_available:
+            self.config['minwidth'] = 0
+            log.warn(u"embedart: PIL not found; "
+                     u"'minwidth' option ignored")
+        else:
+            self.minwidth = self.config['minwidth'].get(int)
+
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
