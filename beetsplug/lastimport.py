@@ -69,7 +69,7 @@ def get_mb_artistname(artist):
         raise MusicBrainzAPIError(exc, 'artist search', artist,
                                   traceback.format_exc())
     if 'artist-list' in res:
-        if len(res['artist-list'])>0 and 'name' in res['artist-list'][0]:
+        if len(res['artist-list']) > 0 and 'name' in res['artist-list'][0]:
             return res['artist-list'][0]['name']
     return artist
 
@@ -82,7 +82,7 @@ def get_mb_title(artist, title):
         raise MusicBrainzAPIError(exc, 'work search', artist, title,
                                   traceback.format_exc())
     if 'work-list' in res:
-        if len(res['work-list'])>0 and 'title' in res['work-list'][0]:
+        if len(res['work-list']) > 0 and 'title' in res['work-list'][0]:
             return res['work-list'][0]['title']
     return title
 
