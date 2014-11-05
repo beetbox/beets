@@ -41,6 +41,9 @@ file. The available options are:
 - ``maxwidth``: A maximum image width to downscale fetched images if they are
   too big. The resize operation reduces image width to at most ``maxwidth``
   pixels. The height is recomputed so that the aspect ratio is preserved.
+  Default: 0 (disabled).
+- ``minwidth``: A minimum image width to require from fetched images.
+  Default: 0 (disabled).
 - ``remote_priority``: Query remote sources every time and use local image only
   as fallback.
   Default: ``no``; remote (Web) art sources are only queried if no local art is
@@ -113,6 +116,14 @@ unlikely).
 
 .. _Google Images: http://images.google.com/
 
+iTunes Store Search
+'''''''''''''''''''
+
+You can also search for cover art on the `iTunes Store`_. This option uses the
+first hit for a search query consisting of the artist and album name. It is,
+like the Google Image Search functionality, "approximate".
+
+.. _iTunes Store: http://itunes.apple.com/
 
 Embedding Album Art
 -------------------

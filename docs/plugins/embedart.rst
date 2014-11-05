@@ -58,9 +58,12 @@ file. The available options are:
   the aspect ratio is preserved. See also :ref:`image-resizing` for further
   caveats about image resizing.
   Default: 0 (disabled).
+- ``minwidth``: A minimum width for images to be embedded into files. If the
+  image is smaller than minwidth, the image is not embedded into the file.
+  Default: 0 (disabled).
 
-Note: ``compare_threshold`` option requires `ImageMagick`_, and ``maxwidth``
-requires either `ImageMagick`_ or `PIL`_.
+Note: ``compare_threshold`` option requires `ImageMagick`_. ``maxwidth``
+requires either `ImageMagick`_ or `PIL`_. ``minwidth`` requires `PIL`_.
 
 .. _PIL: http://www.pythonware.com/products/pil/
 .. _ImageMagick: http://www.imagemagick.org/
