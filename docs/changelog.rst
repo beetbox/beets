@@ -29,6 +29,8 @@ Features:
   disable this, unset the ``auto`` config flag.
 * Standard cover art in APEv2 metadata is now supported. Thanks to Matthias
   Kiefer. :bug:`1042`
+* :doc:`/plugins/fetchart`: Art can now be searched for on the iTunes Store,
+  using the python-itunes library.
 
 Fixes:
 

@@ -91,7 +91,16 @@ Album Art Sources
 -----------------
 
 Currently, this plugin searches for art in the local filesystem as well as on
-the Cover Art Archive, Amazon, and AlbumArt.org (in that order).
+the iTunes Store, the Cover Art Archive, Amazon, and AlbumArt.org (in that
+order).
+
+To use the iTunes Store as an art source, you must install the `python-itunes`_
+library. You can do this using `pip`_, like so::
+
+    $ pip install python-itunes
+
+.. _python-itunes: https://github.com/ocelma/python-itunes
+.. _pip: http://pip.openplans.org/
 
 When looking for local album art, beets checks for image files located in the
 same folder as the music files you're importing. Beets prefers to use an image
