@@ -62,16 +62,22 @@ class LastImportPlugin(plugins.BeetsPlugin):
         return [cmd]
 
 
+mb_artistname_cache = {}
+
+
 def get_mb_artistname(artist):
+    if artist in mb_artistname_cache:
+        return mb_artistname_cache[artist]
     try:
         res = musicbrainzngs.search_artists(artist=artist)
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'artist search', artist,
                                   traceback.format_exc())
+    mb_artistname_cache[artist] = artist
     if 'artist-list' in res:
         if len(res['artist-list']) > 0 and 'name' in res['artist-list'][0]:
-            return res['artist-list'][0]['name']
-    return artist
+            mb_artistname_cache[artist] = res['artist-list'][0]['name']
+    return mb_artistname_cache[artist]
 
 
 def get_mb_title(artist, title):
