@@ -16,7 +16,6 @@ import os.path
 import _common
 from _common import unittest
 from helper import TestHelper, capture_log
-from nose.plugins.skip import SkipTest
 
 from beets.mediafile import MediaFile
 from beets import config
@@ -28,7 +27,7 @@ def require_artresizer_compare(test):
 
     def wrapper(*args, **kwargs):
         if not ArtResizer.shared.can_compare:
-            raise SkipTest()
+            raise unittest.SkipTest()
         else:
             return test(*args, **kwargs)
 
