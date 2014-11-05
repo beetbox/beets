@@ -78,6 +78,8 @@ Fixes:
   appears in exact mode.
 * :doc:`/plugins/convert`: A new ``copy_album_art`` option puts images
   alongside converted files. Thanks to Ángel Alonso. :bug:`1050`, :bug:`1055`
+* There is no longer a "conflict" between two plugins that declare the same
+  field with the same type. Thanks to Peter Schnebel. :bug:`1059` :bug:`1061`
 
 
 1.3.8 (September 17, 2014)
