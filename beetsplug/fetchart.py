@@ -264,12 +264,10 @@ def _source_urls(album):
             yield url
 
 
-def art_for_album(album, paths, maxwidth=None, minwidth=None,
-                  local_only=False):
+def art_for_album(album, paths, maxwidth=None, local_only=False):
     """Given an Album object, returns a path to downloaded art for the
     album (or None if no art is found). If `maxwidth`, then images are
-    resized to this maximum pixel size. If `minwidth`, then images are
-    rejected if smaller than this pixel size. If `local_only`, then only
+    resized to this maximum pixel size. If `local_only`, then only
     local image files from the filesystem are returned; no network
     requests are made.
     """
@@ -351,8 +349,7 @@ class FetchArtPlugin(BeetsPlugin):
 
         if self.config['minwidth'].get(int) and not pil_available:
             self.config['minwidth'] = 0
-            log.warn(u"embedart: PIL not found; "
-                     u"'minwidth' option ignored")
+            log.warn(u"fetchart: PIL not found; 'minwidth' option ignored")
         else:
             self.minwidth = self.config['minwidth'].get(int)
 
@@ -375,8 +372,7 @@ class FetchArtPlugin(BeetsPlugin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            path = art_for_album(task.album, task.paths, self.maxwidth,
-                                 self.minwidth, local)
+            path = art_for_album(task.album, task.paths, self.maxwidth, local)
 
             if path:
                 self.art_paths[task] = path
