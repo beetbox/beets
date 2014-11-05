@@ -18,6 +18,7 @@ configuration file. The available options are:
 - ``dir``: The output directory.
   Default: Your beets library directory.
 - ``formats``: Select the kind of output. Use one or more of:
+
    - ``m3u``: Catalog the imports in a centralized playlist.
    - ``m3u_multi``: Create a new playlist for each import (uniquely named by
      appending the date and track/album name).
