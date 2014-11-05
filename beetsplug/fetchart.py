@@ -29,6 +29,12 @@ from beets import ui
 from beets import util
 from beets import config
 
+try:
+    import itunes
+    itunes_available = True
+except ImportError:
+    itunes_available = False
+
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg',)
 DOWNLOAD_EXTENSION = '.jpg'
@@ -151,6 +157,24 @@ def google_art(album):
         return
 
 
+# Art from the iTunes Store.
+
+def itunes_art(album):
+    """Return art URL from iTunes Store given an album title.
+    """
+    search_string = (album.albumartist + ' ' + album.album).encode('utf-8')
+    try:
+        itunes_album = itunes.search_album(search_string)[0]
+        if itunes_album.get_artwork()['100']:
+            small_url = itunes_album.get_artwork()['100']
+            big_url = small_url.replace('100x100', '1200x1200')
+            return big_url
+        else:
+            log.debug(u'fetchart: album has no artwork in iTunes Store')
+    except IndexError:
+        log.debug(u'fetchart: album not found in iTunes Store')
+
+
 # Art from the filesystem.
 
 def filename_priority(filename, cover_names):
@@ -203,6 +227,10 @@ def _source_urls(album):
     through this sequence early to avoid the cost of scraping when not
     necessary.
     """
+    # iTunes Store.
+    if itunes_available:
+        yield itunes_art(album)
+
     # Cover Art Archive.
     if album.mb_albumid:
         yield caa_art(album.mb_albumid)
