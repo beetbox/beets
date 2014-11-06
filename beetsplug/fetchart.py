@@ -31,9 +31,9 @@ from beets import config
 
 try:
     import itunes
-    itunes_available = True
+    HAVE_ITUNES = True
 except ImportError:
-    itunes_available = False
+    HAVE_ITUNES = False
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg',)
@@ -227,15 +227,15 @@ def _source_urls(album):
     through this sequence early to avoid the cost of scraping when not
     necessary.
     """
-    # iTunes Store.
-    if itunes_available:
-        yield itunes_art(album)
-
     # Cover Art Archive.
     if album.mb_albumid:
         yield caa_art(album.mb_albumid)
     if album.mb_releasegroupid:
         yield caa_group_art(album.mb_releasegroupid)
+
+    # iTunes Store.
+    if HAVE_ITUNES:
+        yield itunes_art(album)
 
     # Amazon and AlbumArt.org.
     if album.asin:
