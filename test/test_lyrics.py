@@ -160,14 +160,6 @@ class LyricsPluginTest(unittest.TestCase):
         self.assertEqual(lyrics._scrape_merge_paragraphs(text),
                          "one\ntwo\nthree")
 
-    def test_default_ok(self):
-        """Test each lyrics engine with the default query"""
-
-        for f in (lyrics.fetch_lyricswiki, lyrics.fetch_lyricscom):
-            res = f(DEFAULT_SONG['artist'], DEFAULT_SONG['title'])
-            self.assertTrue(lyrics.is_lyrics(res))
-            self.assertTrue(is_lyrics_content_ok(DEFAULT_SONG['title'], res))
-
     def test_missing_lyrics(self):
         self.assertFalse(lyrics.is_lyrics(LYRICS_TEXTS['missing_texts']))
 
@@ -300,7 +292,7 @@ def download_source_sample(url):
 
 class LyricsGooglePluginTest(unittest.TestCase):
     """Test scraping heuristics on a fake html page.
-    Use `nosetests -s test_lyrics.py -a speed=slow` to check that beets google
+    Use `nosetests -s test_lyrics.py -a '!slow'` to check that beets google
     custom search engine sources are correctly scraped.
     """
     source = dict(url=u'http://www.example.com', artist=u'John Doe',
@@ -317,7 +309,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
         lyrics.LyricsPlugin()
         lyrics.fetch_url = MockFetchUrl()
 
-    @attr(speed='slow')
+    @attr('slow')
     def test_sources_ok(self):
         for s in SOURCES:
             url = s['url'] + s['path']
@@ -325,6 +317,15 @@ class LyricsGooglePluginTest(unittest.TestCase):
             res = lyrics.scrape_lyrics_from_html(lyrics.fetch_url(url))
             self.assertTrue(lyrics.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
+
+    @attr('slow')
+    def test_default_ok(self):
+        """Test each lyrics engine with the default query"""
+
+        for f in (lyrics.fetch_lyricswiki, lyrics.fetch_lyricscom):
+            res = f(DEFAULT_SONG['artist'], DEFAULT_SONG['title'])
+            self.assertTrue(lyrics.is_lyrics(res))
+            self.assertTrue(is_lyrics_content_ok(DEFAULT_SONG['title'], res))
 
     def test_is_page_candidate_exact_match(self):
         from bs4 import SoupStrainer, BeautifulSoup
