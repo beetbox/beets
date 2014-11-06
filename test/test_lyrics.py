@@ -17,10 +17,12 @@
 import os
 import _common
 import sys
+import requests
 from _common import unittest
 from beetsplug import lyrics
 from beets.library import Item
 from beets.util import confit
+from nose.plugins.attrib import attr
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -158,9 +160,41 @@ class LyricsPluginTest(unittest.TestCase):
         self.assertEqual(lyrics._scrape_merge_paragraphs(text),
                          "one\ntwo\nthree")
 
+    def test_default_ok(self):
+        """Test each lyrics engine with the default query"""
 
-LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, 'lyricstext.yaml'))
-definfo = dict(artist=u'The Beatles', title=u'Lady Madonna')  # default query
+        for f in (lyrics.fetch_lyricswiki, lyrics.fetch_lyricscom):
+            res = f(DEFAULT_SONG['artist'], DEFAULT_SONG['title'])
+            self.assertTrue(lyrics.is_lyrics(res))
+            self.assertTrue(is_lyrics_content_ok(DEFAULT_SONG['title'], res))
+
+    def test_missing_lyrics(self):
+        self.assertFalse(lyrics.is_lyrics(LYRICS_TEXTS['missing_texts']))
+
+
+def url_to_filename(url):
+    url = url.replace('http://', '').replace('www.', '')
+    fn = "".join(x for x in url if (x.isalnum() or x == '/'))
+    fn = fn.split('/')
+    fn = os.path.join(_common.RSRC, 'lyrics', fn[0], fn[-1]) + '.txt'
+    return fn
+
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError:
+        if os.path.isdir(path):
+            pass
+        else:
+            raise
+
+
+def safe_open_w(path):
+    ''' Open "path" for writing, creating any parent directories as needed.
+    '''
+    mkdir_p(os.path.dirname(path))
+    return open(path, 'w')
 
 
 class MockFetchUrl(object):
@@ -170,10 +204,7 @@ class MockFetchUrl(object):
 
     def __call__(self, url, filename=None):
         self.fetched = url
-        url = url.replace('http://', '').replace('www.', '')
-        fn = "".join(x for x in url if (x.isalnum() or x == '/'))
-        fn = fn.split('/')
-        fn = os.path.join(_common.RSRC, 'lyrics', fn[0], fn[-1]) + '.txt'
+        fn = url_to_filename(url)
         with open(fn, 'r') as f:
             content = f.read()
         return content
@@ -191,82 +222,92 @@ def is_lyrics_content_ok(title, text):
         return (ratio > .5 and ratio < 2.5)
     return False
 
+LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, 'lyricstext.yaml'))
+DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
+
+# Every source entered in default beets google custom search engine
+# must be listed below.
+# Use default query when possible, or override artist and title fields
+# if website don't have lyrics for default query.
+SOURCES = [
+    dict(DEFAULT_SONG,
+         url=u'http://www.absolutelyrics.com',
+         path=u'/lyrics/view/the_beatles/lady_madonna'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.azlyrics.com',
+         path=u'/lyrics/beatles/ladymadonna.html'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.chartlyrics.com',
+         path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.elyricsworld.com',
+         path=u'/lady_madonna_lyrics_beatles.html'),
+    dict(url=u'http://www.lacoccinelle.net',
+         artist=u'Jacques Brel', title=u"Amsterdam",
+         path=u'/paroles-officielles/275679.html'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.lyrics007.com',
+         path=u'/The%20Beatles%20Lyrics/Lady%20Madonna%20Lyrics.html'),
+    dict(DEFAULT_SONG,
+         url='http://www.lyrics.com/',
+         path=u'lady-madonna-lyrics-the-beatles.html'),
+    dict(DEFAULT_SONG,
+         url='http://www.lyricsmania.com/',
+         path='lady_madonna_lyrics_the_beatles.html'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.lyrics.net',
+         path=u'/lyric/17547916'),
+    dict(url=u'http://www.lyricsontop.com',
+         artist=u'Amy Winehouse', title=u"Jazz'n'blues",
+         path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
+    dict(DEFAULT_SONG,
+         url=u'http://lyrics.wikia.com/',
+         path=u'The_Beatles:Lady_Madonna'),
+    dict(DEFAULT_SONG,
+         url='http://www.metrolyrics.com/',
+         path='lady-madonna-lyrics-beatles.html'),
+    dict(url=u'http://www.onelyrics.net/',
+         artist=u'Ben & Ellen Harper', title=u'City of dreams',
+         path='ben-ellen-harper-city-of-dreams-lyrics'),
+    dict(url=u'http://www.paroles.net/',
+         artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
+         path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
+    dict(DEFAULT_SONG,
+         url='http://www.releaselyrics.com',
+         path=u'/346e/the-beatles-lady-madonna-(love-version)/'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.smartlyrics.com',
+         path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
+    dict(DEFAULT_SONG,
+         url='http://www.songlyrics.com',
+         path=u'/the-beatles/lady-madonna-lyrics'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.stlyrics.com',
+         path=u'/songs/r/richiehavens48961/ladymadonna2069109.html'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.sweetslyrics.com',
+         path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html')
+]
+
+
+def download_source_sample(url):
+    fn = url_to_filename(url)
+    if not os.path.isfile(fn):
+        html = requests.get(url).text
+        with safe_open_w(fn) as f:
+            f.write(html.encode('utf8'))
+
 
 class LyricsGooglePluginTest(unittest.TestCase):
-    # Every source entered in default beets google custom search engine
-    # must be listed below.
-    # Use default query when possible, or override artist and title fields
-    # if website don't have lyrics for default query.
-    sourcesOk = [
-        dict(definfo,
-             url=u'http://www.absolutelyrics.com',
-             path=u'/lyrics/view/the_beatles/lady_madonna'),
-        dict(definfo,
-             url=u'http://www.azlyrics.com',
-             path=u'/lyrics/beatles/ladymadonna.html'),
-        dict(definfo,
-             url=u'http://www.chartlyrics.com',
-             path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
-        dict(definfo,
-             url=u'http://www.elyricsworld.com',
-             path=u'/lady_madonna_lyrics_beatles.html'),
-        dict(definfo,
-             url=u'http://www.lacoccinelle.net',
-             artist=u'Jacques Brel', title=u"Amsterdam",
-             path=u'/paroles-officielles/275679.html'),
-        dict(definfo,
-             url=u'http://www.lyrics007.com',
-             path=u'/The%20Beatles%20Lyrics/Lady%20Madonna%20Lyrics.html'),
-        dict(definfo,
-             url='http://www.lyrics.com/',
-             path=u'lady-madonna-lyrics-the-beatles.html'),
-        dict(definfo,
-             url='http://www.lyricsmania.com/',
-             path='lady_madonna_lyrics_the_beatles.html'),
-        dict(definfo,
-             url=u'http://www.lyrics.net',
-             path=u'/lyric/17547916'),
-        dict(definfo,
-             url=u'http://www.lyricsontop.com',
-             artist=u'Amy Winehouse', title=u"Jazz'n'blues",
-             path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
-        dict(definfo,
-             url=u'http://lyrics.wikia.com/',
-             path=u'The_Beatles:Lady_Madonna'),
-        dict(definfo,
-             url='http://www.metrolyrics.com/',
-             path='lady-madonna-lyrics-beatles.html'),
-        dict(definfo,
-             url=u'http://www.onelyrics.net/',
-             artist=u'Ben & Ellen Harper', title=u'City of dreams',
-             path='ben-ellen-harper-city-of-dreams-lyrics'),
-        dict(definfo,
-             url=u'http://www.paroles.net/',
-             artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
-             path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
-        dict(definfo,
-             url=u'http://www.reggaelyrics.info',
-             artist=u'Beres Hammond', title=u'I could beat myself',
-             path=u'/beres-hammond/i-could-beat-myself'),
-        dict(definfo,
-             url='http://www.releaselyrics.com',
-             path=u'/e35f/the-beatles-lady-madonna'),
-        dict(definfo,
-             url=u'http://www.smartlyrics.com',
-             path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
-        dict(definfo,
-             url='http://www.songlyrics.com',
-             path=u'/the-beatles/lady-madonna-lyrics'),
-        dict(definfo,
-             url=u'http://www.stlyrics.com',
-             path=u'/songs/r/richiehavens48961/ladymadonna2069109.html'),
-        dict(definfo,
-             url=u'http://www.sweetslyrics.com',
-             path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html')]
+    """Test scraping heuristics on a fake html page.
+    Use `nosetests -s test_lyrics.py -a speed=slow` to check that beets google
+    custom search engine sources are correctly scraped.
+    """
+    source = dict(url=u'http://www.example.com', artist=u'John Doe',
+                  title=u'Beets song', path=u'/lyrics/beetssong')
 
     def setUp(self):
         """Set up configuration"""
-
         try:
             __import__('bs4')
         except ImportError:
@@ -276,52 +317,38 @@ class LyricsGooglePluginTest(unittest.TestCase):
         lyrics.LyricsPlugin()
         lyrics.fetch_url = MockFetchUrl()
 
-    def test_default_ok(self):
-        """Test each lyrics engine with the default query"""
-
-        for f in (lyrics.fetch_lyricswiki, lyrics.fetch_lyricscom):
-            res = f(definfo['artist'], definfo['title'])
-            self.assertTrue(lyrics.is_lyrics(res))
-            self.assertTrue(is_lyrics_content_ok(definfo['title'], res))
-
-    def test_missing_lyrics(self):
-        self.assertFalse(lyrics.is_lyrics(LYRICS_TEXTS['missing_texts']))
-
+    @attr(speed='slow')
     def test_sources_ok(self):
-        for s in self.sourcesOk:
+        for s in SOURCES:
             url = s['url'] + s['path']
+            download_source_sample(url)
             res = lyrics.scrape_lyrics_from_html(lyrics.fetch_url(url))
             self.assertTrue(lyrics.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
     def test_is_page_candidate_exact_match(self):
         from bs4 import SoupStrainer, BeautifulSoup
-
-        for s in self.sourcesOk:
-            url = unicode(s['url'] + s['path'])
-            html = lyrics.fetch_url(url)
-            soup = BeautifulSoup(html, "html.parser",
-                                 parse_only=SoupStrainer('title'))
-            self.assertEqual(lyrics.is_page_candidate(url, soup.title.string,
-                                                      s['title'], s['artist']),
-                             True, url)
+        s = self.source
+        url = unicode(s['url'] + s['path'])
+        html = lyrics.fetch_url(url)
+        soup = BeautifulSoup(html, "html.parser",
+                             parse_only=SoupStrainer('title'))
+        self.assertEqual(lyrics.is_page_candidate(url, soup.title.string,
+                                                  s['title'], s['artist']),
+                         True, url)
 
     def test_is_page_candidate_fuzzy_match(self):
-        url = u'http://www.example.com/lazy_madonna_beatles'
-        urlTitle = u'example.com | lazy madonna lyrics by the beatles'
-        title = u'Lady Madonna'
-        artist = u'The Beatles'
-        # very small diffs (typo) are ok
-        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
-                         artist), True, url)
+        s = self.source
+        url = s['url'] + s['path']
+        urlTitle = u'example.com | Beats song by John doe'
+
+        # very small diffs (typo) are ok eg 'beats' vs 'beets' with same artist
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, s['title'],
+                         s['artist']), True, url)
         # reject different title
-        urlTitle = u'example.com | busy madonna lyrics by the beatles'
-        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
-                         artist), False, url)
-        # (title, artist) != (artist, title)
-        urlTitle = u'example.com | the beatles lyrics by Lazy Madonna'
-        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, title,
-                         artist), False, url)
+        urlTitle = u'example.com | seets bong lyrics by John doe'
+        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, s['title'],
+                         s['artist']), False, url)
 
 
 def suite():
