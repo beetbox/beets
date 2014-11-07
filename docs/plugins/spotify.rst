@@ -44,9 +44,9 @@ The default options should work as-is, but there are some options you can put
 in config.yaml under the ``spotify:`` section:
 
 * ``mode``: One of the following:
-   - ``list``: Print out the playlist as a list of links. This list can then
+   - **list**: Print out the playlist as a list of links. This list can then
      be pasted in to a new or existing Spotify playlist.
-   - ``open``: This mode actually sends a link to your default browser with
+   - **open**: This mode actually sends a link to your default browser with
      instructions to open Spotify with the playlist you created.  Until this
      has been tested on all platforms, it will remain optional.
 

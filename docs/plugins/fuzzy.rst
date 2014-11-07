@@ -17,8 +17,8 @@ Configuration
 To configure the plugin, make a ``fuzzy:`` section in your configuration
 file. The available options are:
 
-- ``threshold``: The "sensitivity" of the fuzzy match. A value of 1.0 will
+- **threshold**: The "sensitivity" of the fuzzy match. A value of 1.0 will
   show only perfect matches and a value of 0.0 will match everything.
   Default: 0.7.
-- ``prefix``: The character used to designate fuzzy queries.
+- **prefix**: The character used to designate fuzzy queries.
   Default: ``~``, which may need to be escaped in some shells.

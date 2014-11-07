@@ -15,9 +15,9 @@ Configuration
 To configure the plugin, make an ``ihate:`` section in your configuration
 file. The available options are:
 
-- ``skip``: Never import items and albums that match a query in this list.
+- **skip**: Never import items and albums that match a query in this list.
   Default: ``[]`` (empty list).
-- ``warn``: Print a warning message for matches in this list of queries.
+- **warn**: Print a warning message for matches in this list of queries.
   Default: ``[]``.
 
 Here's an example::

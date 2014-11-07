@@ -44,15 +44,15 @@ Configuration
 To configure the plugin, make an ``embedart:`` section in your configuration
 file. The available options are:
 
-- ``auto``: Enable automatic album art embedding.
+- **auto**: Enable automatic album art embedding.
   Default: ``yes``.
-- ``compare_threshold``: How similar candidate art must be to
+- **compare_threshold**: How similar candidate art must be to
   existing art to be written to the file (see :ref:`image-similarity-check`).
   Default: 0 (disabled).
-- ``ifempty``: Avoid embedding album art for files that already have art
+- **ifempty**: Avoid embedding album art for files that already have art
   embedded.
   Default: ``no``.
-- ``maxwidth``: A maximum width to downscale images before embedding
+- **maxwidth**: A maximum width to downscale images before embedding
   them (the original image file is not altered). The resize operation reduces
   image width to at most ``maxwidth`` pixels. The height is recomputed so that
   the aspect ratio is preserved. See also :ref:`image-resizing` for further

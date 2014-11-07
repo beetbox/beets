@@ -73,13 +73,13 @@ Configuration
 To configure the plugin, make a ``bpd:`` section in your configuration file.
 The available options are:
 
-- ``host``:
+- **host**:
   Default: Bind to all interfaces.
-- ``port``:
+- **port**:
   Default: 6600
-- ``password``:
+- **password**:
   Default: No password.
-- ``volume``: Initial volume, as a percentage.
+- **volume**: Initial volume, as a percentage.
   Default: 100
 
 Here's an example::
