@@ -87,26 +87,26 @@ Autotagger Extensions
 Metadata
 --------
 
-* :doc:`lyrics`: Automatically fetch song lyrics.
+* :doc:`bpm`: Measure tempo using keystrokes.
 * :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
   `the Echo Nest`_ (tempo, energy, danceability, ...).
-* :doc:`lastgenre`: Fetch genres based on Last.fm tags.
-* :doc:`mbsync`: Fetch updated metadata from MusicBrainz
-* :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`embedart`: Embed album art images into files' metadata.
-* :doc:`replaygain`: Calculate volume normalization for players that support it.
-* :doc:`scrub`: Clean extraneous metadata from music files.
-* :doc:`zero`: Nullify fields by pattern or unconditionally.
+* :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`ftintitle`: Move "featured" artists from the artist field to the title
   field.
-* :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
-  statistics (last_played, play_count, skip_count, rating).
 * :doc:`keyfinder`: Use the `KeyFinder`_ program to detect the musical
   key from the audio.
 * :doc:`importadded`: Use file modification times for guessing the value for
   the `added` field in the database.
-* :doc:`bpm`: Measure tempo using keystrokes.
+* :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`lastimport`: Collect play counts from Last.fm.
+* :doc:`lyrics`: Automatically fetch song lyrics.
+* :doc:`mbsync`: Fetch updated metadata from MusicBrainz
+* :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
+  statistics (last_played, play_count, skip_count, rating).
+* :doc:`replaygain`: Calculate volume normalization for players that support it.
+* :doc:`scrub`: Clean extraneous metadata from music files.
+* :doc:`zero`: Nullify fields by pattern or unconditionally.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _the Echo Nest: http://www.echonest.com
@@ -115,40 +115,40 @@ Metadata
 Path Formats
 ------------
 
+* :doc:`bucket`: Group your files into bucket directories that cover different
+  field values ranges.
 * :doc:`inline`: Use Python snippets to customize path format strings.
 * :doc:`rewrite`: Substitute values in path formats.
 * :doc:`the`: Move patterns in path formats (i.e., move "a" and "the" to the
   end).
-* :doc:`bucket`: Group your files into bucket directories that cover different
-  field values ranges.
 
 Interoperability
 ----------------
 
+* :doc:`freedesktop`: Create .directory files in album folders.
+* :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
-* :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
-* :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 * :doc:`play`: Play beets queries in your music player.
-* :doc:`freedesktop`: Create .directory files in album folders.
+* :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 
 Miscellaneous
 -------------
 
-* :doc:`web`: An experimental Web-based GUI for beets.
-* :doc:`random`: Randomly choose albums and tracks from your library.
-* :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
-* :doc:`mbcollection`: Maintain your MusicBrainz collection list.
-* :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 * :doc:`convert`: Transcode music and embed album art while exporting to
   a different directory.
-* :doc:`info`: Print music files' tags to the console.
-* :doc:`missing`: List missing tracks.
 * :doc:`duplicates`: List duplicate tracks or albums.
+* :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
+* :doc:`ihate`: Automatically skip albums and tracks during the import process.
+* :doc:`info`: Print music files' tags to the console.
+* :doc:`mbcollection`: Maintain your MusicBrainz collection list.
+* :doc:`missing`: List missing tracks.
+* :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
+* :doc:`web`: An experimental Web-based GUI for beets.
 
 .. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
