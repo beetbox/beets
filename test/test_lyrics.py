@@ -172,22 +172,6 @@ def url_to_filename(url):
     return fn
 
 
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError:
-        if os.path.isdir(path):
-            pass
-        else:
-            raise
-
-
-def safe_open_w(path):
-    ''' Open "path" for writing, creating any parent directories as needed.
-    '''
-    mkdir_p(os.path.dirname(path))
-    return open(path, 'w')
-
 
 class MockFetchUrl(object):
     def __init__(self, pathval='fetched_path'):
@@ -280,14 +264,6 @@ SOURCES = [
          url=u'http://www.sweetslyrics.com',
          path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html')
 ]
-
-
-def download_source_sample(url):
-    fn = url_to_filename(url)
-    if not os.path.isfile(fn):
-        html = requests.get(url).text
-        with safe_open_w(fn) as f:
-            f.write(html.encode('utf8'))
 
 
 class LyricsGooglePluginTest(unittest.TestCase):
