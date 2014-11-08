@@ -31,46 +31,46 @@ Each plugin has its own set of options that can be defined in a section bearing 
 .. toctree::
    :hidden:
 
-   chroma
-   lyrics
-   echonest
-   bpd
-   mpdupdate
-   mpdstats
-   fetchart
-   embedart
-   web
-   lastgenre
-   replaygain
-   inline
-   scrub
-   rewrite
-   random
-   mbcollection
-   importfeeds
-   the
-   fuzzy
-   zero
-   ihate
-   convert
-   info
-   play
-   smartplaylist
-   mbsync
-   missing
-   duplicates
-   discogs
    beatport
+   bpd
+   bpm
+   bucket
+   chroma
+   convert
+   discogs
+   duplicates
+   echonest
+   embedart
+   fetchart
+   freedesktop
    fromfilename
    ftintitle
-   keyfinder
-   bucket
+   fuzzy
+   ihate
    importadded
-   bpm
-   spotify
-   types
+   importfeeds
+   info
+   inline
+   keyfinder
+   lastgenre
    lastimport
-   freedesktop
+   lyrics
+   mbcollection
+   mbsync
+   missing
+   mpdstats
+   mpdupdate
+   play
+   random
+   replaygain
+   rewrite
+   scrub
+   smartplaylist
+   spotify
+   the
+   types
+   web
+   zero
 
 Autotagger Extensions
 ---------------------
