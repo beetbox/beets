@@ -30,24 +30,25 @@ def mkdir_p(path):
 
 
 def safe_open_w(path):
-    ''' Open "path" for writing, creating any parent directories as needed.
-    '''
+    """Open "path" for writing, creating any parent directories as needed.
+    """
     mkdir_p(os.path.dirname(path))
     return open(path, 'w')
 
 
 def main(argv=None):
-    """download"""
-
+    """Download one lyrics sample page per referenced source.
+    """
     if argv is None:
         argv = sys.argv
 
-    for s in test_lyrics.SOURCES:
+    for s in test_lyrics.GOOGLE_SOURCES + test_lyrics.DEFAULT_SOURCES:
         url = s['url'] + s['path']
         fn = test_lyrics.url_to_filename(url)
         if not os.path.isfile(fn):
             html = requests.get(url).text
             with safe_open_w(fn) as f:
+                print 'Writing %s' % fn
                 f.write(html.encode('utf8'))
 
 if __name__ == "__main__":
