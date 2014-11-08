@@ -348,7 +348,6 @@ class FetchArtPlugin(BeetsPlugin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
-        # Remove unknown and duplicate sources
         self.config['sources'] = sanitize_sources(
             self.config['sources'].as_str_seq())
 
