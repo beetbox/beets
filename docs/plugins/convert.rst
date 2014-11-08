@@ -58,6 +58,8 @@ file. The available options are:
   default configuration) non-MP3 files over the maximum bitrate before adding
   them to your library.
   Default: ``no``.
+- **copy_album_art**: Copy album art when copying or transcoding albums matched
+  using the ``-a`` option. Default: ``no``.
 - **dest**: The directory where the files will be converted (or copied) to.
   Default: none.
 - **embed**: Embed album art in converted items. Default: ``yes``.
@@ -79,8 +81,6 @@ file. The available options are:
 - **threads**: The number of threads to use for parallel encoding.
   By default, the plugin will detect the number of processors available and use
   them all.
-- **copy_album_art**: Copy album art when copying or transcoding albums matched
-  using the ``-a`` option. Default: ``no``.
 
 You can also configure the format to use for transcoding.
 
