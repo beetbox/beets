@@ -41,17 +41,17 @@ Configuration
 To configure the plugin, make a ``bucket:`` section in your configuration file.
 The available options are:
 
-- ``bucket_alpha``: Ranges to use for all substitutions occurring on textual
+- **bucket_alpha**: Ranges to use for all substitutions occurring on textual
   fields.
   Default: none.
-- ``bucket_alpha_regex``: A ``range: regex`` mapping (one per line) where
+- **bucket_alpha_regex**: A ``range: regex`` mapping (one per line) where
   ``range`` is one of the `bucket_alpha` ranges and ``value`` is  a regex that
   overrides original range definition.
   Default: none.
-- ``bucket_year``: Ranges to use for all substitutions occurring on the
+- **bucket_year**: Ranges to use for all substitutions occurring on the
   `$year` field.
   Default: none.
-- ``extrapolate``: Enable this if you want to group your files into multiple
+- **extrapolate**: Enable this if you want to group your files into multiple
   year ranges without enumerating them all. This option will generate year
   bucket names by reproducing characteristics of declared buckets.
   Default: ``no``

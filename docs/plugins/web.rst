@@ -52,9 +52,9 @@ Configuration
 To configure the plugin, make a ``web:`` section in your
 configuration file. The available options are:
 
-- ``host``: The server hostname.
+- **host**: The server hostname.
   Default: Bind to all interfaces.
-- ``port``: The server port.
+- **port**: The server port.
   Default: 8337.
 
 Implementation

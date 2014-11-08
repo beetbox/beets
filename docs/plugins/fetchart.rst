@@ -29,19 +29,19 @@ Configuration
 To configure the plugin, make a ``fetchart:`` section in your configuration
 file. The available options are:
 
-- ``auto``: Enable automatic album art fetching during import.
+- **auto**: Enable automatic album art fetching during import.
   Default: ``yes``.
-- ``cautious``: Pick only trusted album art by ignoring filenames that do not
+- **cautious**: Pick only trusted album art by ignoring filenames that do not
   contain one of the keywords in ``cover_names``.
   Default: ``no``.
-- ``cover_names``: Prioritize images containing words in this list.
+- **cover_names**: Prioritize images containing words in this list.
   Default: ``['cover', 'front', 'art', 'album', 'folder']``.
-- ``google_search``: Gather images from Google Image Search.
+- **google_search**: Gather images from Google Image Search.
   Default: ``no``.
-- ``maxwidth``: A maximum image width to downscale fetched images if they are
+- **maxwidth**: A maximum image width to downscale fetched images if they are
   too big. The resize operation reduces image width to at most ``maxwidth``
   pixels. The height is recomputed so that the aspect ratio is preserved.
-- ``remote_priority``: Query remote sources every time and use local image only
+- **remote_priority**: Query remote sources every time and use local image only
   as fallback.
   Default: ``no``; remote (Web) art sources are only queried if no local art is
   found in the filesystem.

@@ -19,9 +19,9 @@ Configuration
 To configure the plugin, make a ``ftintitle:`` section in your configuration
 file. The available options are:
 
-- ``auto``: Enable metadata rewriting during import.
+- **auto**: Enable metadata rewriting during import.
   Default: ``yes``.
-- ``drop``: Remove featured artists entirely instead of adding them to the
+- **drop**: Remove featured artists entirely instead of adding them to the
   title field.
   Default: ``no``.
 

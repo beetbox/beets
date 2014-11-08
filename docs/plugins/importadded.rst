@@ -42,7 +42,7 @@ Configuration
 To configure the plugin, make an ``importadded:`` section in your
 configuration file. There is one option available:
 
-- ``preserve_mtimes``: After writing files, re-set their mtimes to their
+- **preserve_mtimes**: After writing files, re-set their mtimes to their
   original value.
   Default: ``no``.
 

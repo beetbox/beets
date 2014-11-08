@@ -37,5 +37,5 @@ Configuration
 To configure the plugin, make a ``scrub:`` section in your
 configuration file. There is one option:
 
-- ``auto``: Enable metadata stripping during import.
+- **auto**: Enable metadata stripping during import.
   Default: ``yes``.
