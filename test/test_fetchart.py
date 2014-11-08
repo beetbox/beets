@@ -12,6 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from beetsplug import fetchart
+
 import os.path
 from _common import unittest
 from helper import TestHelper
@@ -40,6 +42,17 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(album['artpath'], cover_path)
         with open(cover_path, 'r') as f:
             self.assertEqual(f.read(), 'IMAGE')
+
+    def test_sanitize_sources(self):
+        self.assertEqual(fetchart.sanitize_sources(['google', 'unknown']),
+                         ['google'])
+        self.assertEqual(fetchart.sanitize_sources(['google', 'google']),
+                         ['google'])
+        res = fetchart.sanitize_sources(['google', '*', 'amazon'])
+        # don't check strict egality on lengths as itunes source may be removed
+        # by plugin
+        self.assertTrue(len(res) >= len(fetchart.SOURCES_ALL)-1 and
+                        res[0] == 'google' and res[-1] == 'amazon')
 
 
 def suite():

@@ -45,6 +45,8 @@ file. The available options are:
   as fallback.
   Default: ``no``; remote (Web) art sources are only queried if no local art is
   found in the filesystem.
+- **sources**: List of websites sources to query when searching arts.
+Default : ['coverart', 'itunes', 'albumart', 'amazon', 'google'] ie all sources
 
 Here's an example that makes plugin select only images that contain *front* or
 *back* keywords in their filenames::

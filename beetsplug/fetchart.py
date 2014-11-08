@@ -79,17 +79,14 @@ CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
 CAA_GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front-500.jpg'
 
 
-def caa_art(release_id):
-    """Return the Cover Art Archive URL given a MusicBrainz release ID.
+def caa_art(album):
+    """Return the Cover Art Archive and Cover Art Archive release group URLs
+    using album MusicBrainz release ID and release group ID.
     """
-    return CAA_URL.format(mbid=release_id)
-
-
-def caa_group_art(release_group_id):
-    """Return the Cover Art Archive release group URL given a MusicBrainz
-    release group ID.
-    """
-    return CAA_GROUP_URL.format(mbid=release_group_id)
+    if album.mb_albumid:
+        yield CAA_URL.format(mbid=album.mb_albumid)
+    if album.release_group_id:
+        yield CAA_GROUP_URL.format(mbid=album.release_group_id)
 
 
 # Art from Amazon.
@@ -98,10 +95,12 @@ AMAZON_URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
 AMAZON_INDICES = (1, 2)
 
 
-def art_for_asin(asin):
-    """Generate URLs for an Amazon ID (ASIN) string."""
-    for index in AMAZON_INDICES:
-        yield AMAZON_URL % (asin, index)
+def art_for_asin(album):
+    """Generate URLs using Amazon ID (ASIN) string.
+    """
+    if album.asin:
+        for index in AMAZON_INDICES:
+            yield AMAZON_URL % (album.asin, index)
 
 
 # AlbumArt.org scraper.
@@ -110,11 +109,14 @@ AAO_URL = 'http://www.albumart.org/index_detail.php'
 AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
 
-def aao_art(asin):
-    """Return art URL from AlbumArt.org given an ASIN."""
+def aao_art(album):
+    """Return art URL from AlbumArt.org using album ASIN.
+    """
+    if not album.asin:
+        return
     # Get the page from albumart.org.
     try:
-        resp = requests_session.get(AAO_URL, params={'asin': asin})
+        resp = requests_session.get(AAO_URL, params={'asin': album.asin})
         log.debug(u'fetchart: scraped art URL: {0}'.format(resp.url))
     except requests.RequestException:
         log.debug(u'fetchart: error scraping art page')
@@ -188,7 +190,8 @@ def filename_priority(filename, cover_names):
 
 
 def art_in_path(path, cover_names, cautious):
-    """Look for album art files in a specified directory."""
+    """Look for album art files in a specified directory.
+    """
     if not os.path.isdir(path):
         return
 
@@ -219,6 +222,14 @@ def art_in_path(path, cover_names, cautious):
 
 # Try each source in turn.
 
+ART_FUNCS = {
+    'coverart': caa_art,
+    'itunes': itunes_art,
+    'albumart': aao_art,
+    'amazon': art_for_asin,
+    'google': google_art,
+}
+
 
 def _source_urls(album):
     """Generate possible source URLs for an album's art. The URLs are
@@ -227,28 +238,11 @@ def _source_urls(album):
     through this sequence early to avoid the cost of scraping when not
     necessary.
     """
-    # Cover Art Archive.
-    if album.mb_albumid:
-        yield caa_art(album.mb_albumid)
-    if album.mb_releasegroupid:
-        yield caa_group_art(album.mb_releasegroupid)
-
-    # iTunes Store.
-    if HAVE_ITUNES:
-        yield itunes_art(album)
-
-    # Amazon and AlbumArt.org.
-    if album.asin:
-        for url in art_for_asin(album.asin):
-            yield url
-        url = aao_art(album.asin)
-        if url:
-            yield url
-
-    if config['fetchart']['google_search']:
-        url = google_art(album)
-        if url:
-            yield url
+    for s in config['fetchart']['sources']:
+        fun = ART_FUNCS[s]
+        for url in fun(album):
+            if url:
+                yield url
 
 
 def art_for_album(album, paths, maxwidth=None, local_only=False):
@@ -285,6 +279,22 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
         out = ArtResizer.shared.resize(maxwidth, out)
     return out
 
+SOURCES_ALL = ['coverart', 'itunes', 'albumart', 'amazon', 'google']
+
+
+def sanitize_sources(sources):
+    """Remove unknown or duplicate sources while keeping original order.
+    """
+    seen = set()
+    others_sources = set(SOURCES_ALL) - set(sources)
+    res = []
+    for s in sources:
+        if s in SOURCES_ALL + ['*']:
+            if not (s in seen or seen.add(s)):
+                res.extend(list(others_sources) if s == '*' else [s])
+    if not HAVE_ITUNES and 'itunes' in res:
+        res.remove('itunes')
+    return res
 
 # PLUGIN LOGIC ###############################################################
 
@@ -325,6 +335,7 @@ class FetchArtPlugin(BeetsPlugin):
             'cautious': False,
             'google_search': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
+            'sources': SOURCES_ALL,
         })
 
         # Holds paths to downloaded images between fetching them and
@@ -336,6 +347,10 @@ class FetchArtPlugin(BeetsPlugin):
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
+
+        # Remove unknown and duplicate sources
+        self.config['sources'] = sanitize_sources(
+            self.config['sources'].as_str_seq())
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
