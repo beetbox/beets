@@ -29,6 +29,8 @@ API_KEY = '1vOwZtEn'
 SCORE_THRESH = 0.5
 TRACK_ID_WEIGHT = 10.0
 COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
+MAX_RECORDINGS = 5
+MAX_RELEASES = 5
 
 log = logging.getLogger('beets')
 
@@ -44,6 +46,15 @@ _matches = {}
 # autotagging.
 _fingerprints = {}
 _acoustids = {}
+
+
+def prefix(it, count):
+    """Truncate an iterable to at most `count` items.
+    """
+    for i, v in enumerate(it):
+        if i >= count:
+            break
+        yield v
 
 
 def acoustid_match(path):
@@ -88,7 +99,9 @@ def acoustid_match(path):
         if 'releases' in recording:
             release_ids += [rel['id'] for rel in recording['releases']]
 
-    log.debug(u'chroma: matched recordings {0}'.format(recording_ids))
+    log.debug(u'chroma: matched recordings {0} on releases {1}'.format(
+        recording_ids, release_ids,
+    ))
     _matches[path] = recording_ids, release_ids
 
 
@@ -137,7 +150,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
     def candidates(self, items, artist, album, va_likely):
         albums = []
-        for relid in _all_releases(items):
+        for relid in prefix(_all_releases(items), MAX_RELEASES):
             album = hooks.album_for_mbid(relid)
             if album:
                 albums.append(album)
@@ -151,7 +164,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
         recording_ids, _ = _matches[item.path]
         tracks = []
-        for recording_id in recording_ids:
+        for recording_id in prefix(recording_ids, MAX_RECORDINGS):
             track = hooks.track_for_mbid(recording_id)
             if track:
                 tracks.append(track)
