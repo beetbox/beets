@@ -47,7 +47,7 @@ file. The available options are:
   found in the filesystem.
 - **sources**: List of websites sources to query when searching arts. Star char
   `*` expands to all available sources.
-Default : ['coverart', 'itunes', 'albumart', 'amazon', 'google'] ie all sources
+  Default : ['coverart', 'itunes', 'albumart', 'amazon', 'google'] ie all sources
 
 Here's an example that makes plugin select only images that contain *front* or
 *back* keywords in their filenames and prioritize 'itunes' over others
