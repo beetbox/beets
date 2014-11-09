@@ -514,7 +514,7 @@ class AudioToolsBackend(Backend):
         rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
 
         log.info(
-            u'ReplayGain for track {0} - {1}: gain {2:.2f} peak {3:.2f}'.format(
+            u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
                 item.artist,
                 item.title,
                 rg_track_gain,
@@ -547,7 +547,7 @@ class AudioToolsBackend(Backend):
                 Gain(gain=rg_track_gain, peak=rg_track_peak)
             )
             log.info(
-                u'ReplayGain for track {0} - {1}: gain {2:.2f} peak {3:.2f}'.format(
+                u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
                     item.artist,
                     item.title,
                     rg_track_gain,
@@ -560,7 +560,7 @@ class AudioToolsBackend(Backend):
         log.info('-' * 100)
 
         log.info(
-            u'ReplayGain for Album {0} - {1}: gain {2:.2f} peak {3:.2f}'.format(
+            u'ReplayGain for Album {0} - {1}: {2:.2f}, {3:.2f}'.format(
                 album.albumartist,
                 album.album,
                 rg_album_gain,

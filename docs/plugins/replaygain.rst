@@ -76,7 +76,7 @@ configuration file. The available options are:
 
 - ``auto``: Enable ReplayGain analysis during import.
   Default: ``yes``.
-- ``backend``: The analysis backend; either ``gstreamer``, ``command`` or ``audtiotools`.
+- ``backend``: The analysis backend; either ``gstreamer``, ``command`` or ``audiotools`.
   Default: ``command``.
 - ``overwrite``: Re-analyze files that already have ReplayGain tags.
   Default: ``no``.
