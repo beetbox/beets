@@ -82,6 +82,9 @@ Fixes:
   alongside converted files. Thanks to Ángel Alonso. :bug:`1050`, :bug:`1055`
 * There is no longer a "conflict" between two plugins that declare the same
   field with the same type. Thanks to Peter Schnebel. :bug:`1059` :bug:`1061`
+* :doc:`/plugins/chroma`: Limit the number of releases and recordings fetched
+  as the result of an Acoustid match to avoid extremely long processing times
+  for very popular music. :bug:`1068`
 
 
 1.3.8 (September 17, 2014)

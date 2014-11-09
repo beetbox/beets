@@ -74,27 +74,27 @@ Configuration
 To configure the plugin, make a ``replaygain:`` section in your
 configuration file. The available options are:
 
-- ``auto``: Enable ReplayGain analysis during import.
+- **auto**: Enable ReplayGain analysis during import.
   Default: ``yes``.
 - ``backend``: The analysis backend; either ``gstreamer``, ``command`` or ``audiotools`.
   Default: ``command``.
-- ``overwrite``: Re-analyze files that already have ReplayGain tags.
+- **overwrite**: Re-analyze files that already have ReplayGain tags.
   Default: ``no``.
-- ``targetlevel``: A number of decibels for the target loudness level.
+- **targetlevel**: A number of decibels for the target loudness level.
   Default: 89.
 
 These options only work with the "command" backend:
 
-- ``apply``: If you use a player that does not support ReplayGain
+- **apply**: If you use a player that does not support ReplayGain
   specifications, you can force the volume normalization by applying the gain
   to the file via the ``apply`` option. This is a lossless and reversible
   operation with no transcoding involved.
   Default: ``no``.
-- ``command``: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
+- **command**: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
   cannot find it by itself).
   For example: ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``.
   Default: Search in your ``$PATH``.
-- ``noclip``: Reduce the amount of ReplayGain adjustment to whatever amount
+- **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
   would keep clipping from occurring.
   Default: ``yes``.
 

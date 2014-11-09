@@ -83,29 +83,29 @@ Configuration
 To configure the plugin, make a ``lastgenre:`` section in your
 configuration file. The available options are:
 
-- ``auto``: Fetch genres automatically during import.
+- **auto**: Fetch genres automatically during import.
   Default: ``yes``.
-- ``canonical``: Use a canonicalization tree. Setting this to ``yes`` will use
+- **canonical**: Use a canonicalization tree. Setting this to ``yes`` will use
   a built-in tree. You can also set it to a path, like the ``whitelist``
   config value, to use your own tree.
   Default: ``no`` (disabled).
-- ``count``: Number of genres to fetch.
+- **count**: Number of genres to fetch.
   Default: 1
-- ``fallback``: A string if to use a fallback genre when no genre is found.
+- **fallback**: A string if to use a fallback genre when no genre is found.
   You can use the empty string ``''`` to reset the genre.
   Default: None.
-- ``force``: By default, beets will always fetch new genres, even if the files
+- **force**: By default, beets will always fetch new genres, even if the files
   already have one. To instead leave genres in place in when they pass the
   whitelist, set the ``force`` option to ``no``.
   Default: ``yes``.
-- ``min_weight``: Minimum popularity factor below which genres are discarded.
+- **min_weight**: Minimum popularity factor below which genres are discarded.
   Default: 10.
-- ``source``: Which entity to look up in Last.fm. Can be
+- **source**: Which entity to look up in Last.fm. Can be
   either ``artist``, ``album`` or ``track``.
   Default: ``album``.
-- ``separator``: A separator for multiple genres.
+- **separator**: A separator for multiple genres.
   Default: ``', '``.
-- ``whitelist``: The filename of a custom genre list, ``yes`` to use
+- **whitelist**: The filename of a custom genre list, ``yes`` to use
   the internal whitelist, or ``no`` to consider all genres valid.
   Default: ``yes``.
 

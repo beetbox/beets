@@ -13,7 +13,7 @@ Configuration
 To configure the plugin, make a ``freedesktop:`` section in your configuration
 file. The only available option is:
 
-- ``auto``: Create .directory files automatically during import.
+- **auto**: Create .directory files automatically during import.
   Default: ``no``.
 
 Creating .directory Files Manually

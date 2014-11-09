@@ -26,18 +26,18 @@ Configuration
 To configure the plugin, make a ``the:`` section in your
 configuration file. The available options are:
 
-- ``a``: Handle "A/An" moves.
+- **a**: Handle "A/An" moves.
   Default: ``yes``.
-- ``the``: handle "The" moves.
+- **the**: handle "The" moves.
   Default: ``yes``.
-- ``patterns``: Custom regexp patterns, space-separated. Custom patterns are
+- **patterns**: Custom regexp patterns, space-separated. Custom patterns are
   case-insensitive regular expressions. Patterns can be matched anywhere in the
   string (not just the beginning), so use ``^`` if you intend to match leading
   words.
   Default: ``[]``.
-- ``strip``: Remove the article altogether instead of moving it to the end.
+- **strip**: Remove the article altogether instead of moving it to the end.
   Default: ``no``.
-- ``format``: A Python format string for the output. Use ``{0}`` to indicate
+- **format**: A Python format string for the output. Use ``{0}`` to indicate
   the part without the article and ``{1}`` for the article.
   Spaces are already trimmed from ends of both parts.
   Default: ``'{0}, {1}'``.

@@ -44,8 +44,8 @@ Configuration
 Aside from the required ``lastfm.user`` field, this plugin has some specific
 options under the ``lastimport:`` section:
 
-* ``per_page``: The number of tracks to request from the API at once.
+* **per_page**: The number of tracks to request from the API at once.
   Default: 500.
-* ``retry_limit``: How many times should we re-send requests to Last.fm on
+* **retry_limit**: How many times should we re-send requests to Last.fm on
   failure?
   Default: 3.

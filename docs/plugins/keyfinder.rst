@@ -16,16 +16,16 @@ Configuration
 To configure the plugin, make a ``keyfinder:`` section in your
 configuration file. The available options are:
 
-- ``bin``: The name of the `KeyFinder`_ program on your system or
+- **auto**: Analyze every file on
+  import. Otherwise, you need to use the ``beet keyfinder`` command
+  explicitly.
+  Default: ``yes``
+- **bin**: The name of the `KeyFinder`_ program on your system or
   a path to the binary. If you installed the KeyFinder GUI on a Mac, for
   example, you want something like
   ``/Applications/KeyFinder.app/Contents/MacOS/KeyFinder``.
-  Default: ``KeyFinder`` (i.e., search for the program in your ``$PATH``).
-- ``auto``: Analyze every file on
-  import. Otherwise, you need to use the ``beet keyfinder`` command
-  explicitly.
-  Default: ``yes``.
-- ``overwrite``: Calculate a key even for files that already have an
+  Default: ``KeyFinder`` (i.e., search for the program in your ``$PATH``)..
+- **overwrite**: Calculate a key even for files that already have an
   `initial_key` value.
   Default: ``no``.
 

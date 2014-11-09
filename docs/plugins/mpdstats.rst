@@ -38,19 +38,19 @@ Configuration
 To configure the plugin, make an ``mpd:`` section in your
 configuration file. The available options are:
 
-- ``host``: The MPD server hostname.
+- **host**: The MPD server hostname.
   Default: ``localhost``.
-- ``port``: The MPD server port.
+- **port**: The MPD server port.
   Default: 6600.
-- ``password``: The MPD server password.
+- **password**: The MPD server password.
   Default: None.
-- ``music_directory``: If your MPD library is at a different location from the
+- **music_directory**: If your MPD library is at a different location from the
   beets library (e.g., because one is mounted on a NFS share), specify the path
   here.
   Default: The beets library directory.
-- ``rating``: Enable rating updates.
+- **rating**: Enable rating updates.
   Default: ``yes``.
-- ``rating_mix``: Tune the way rating is calculated (see below).
+- **rating_mix**: Tune the way rating is calculated (see below).
   Default: 0.75.
 
 A Word on Ratings

@@ -73,11 +73,11 @@ To configure the plugin, make a ``smartplaylist:`` section in your
 configuration file. In addition to the ``playlists`` described above, the
 other configuration options are:
 
-- ``auto``: Regenerate the playlist after every database change.
+- **auto**: Regenerate the playlist after every database change.
   Default: ``yes``.
-- ``playlist_dir``: Where to put the generated playlist files.
+- **playlist_dir**: Where to put the generated playlist files.
   Default: The current working directory (i.e., ``'.'``).
-- ``relative_to``: Generate paths in the playlist files relative to a base
+- **relative_to**: Generate paths in the playlist files relative to a base
   directory. If you intend to use this plugin to generate playlists for MPD,
   point this to your MPD music directory.
   Default: Use absolute paths.

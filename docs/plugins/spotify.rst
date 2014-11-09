@@ -43,7 +43,8 @@ Configuration
 The default options should work as-is, but there are some options you can put
 in config.yaml under the ``spotify:`` section:
 
-* ``mode``: One of the following:
+- **mode**: One of the following:  
+
    - ``list``: Print out the playlist as a list of links. This list can then
      be pasted in to a new or existing Spotify playlist.
    - ``open``: This mode actually sends a link to your default browser with
@@ -51,18 +52,18 @@ in config.yaml under the ``spotify:`` section:
      has been tested on all platforms, it will remain optional.
 
   Default: ``list``.
-* ``region_filter``: A two-character country abbreviation, to limit results
+- **region_filter**: A two-character country abbreviation, to limit results
   to that market.
   Default: None.
-* ``show_failures``: List each lookup that does not return a Spotify ID (and
+- **show_failures**: List each lookup that does not return a Spotify ID (and
   therefore cannot be added to a playlist).
   Default: ``no``.
-* ``tiebreak``: How to choose the track if there is more than one identical
+- **tiebreak**: How to choose the track if there is more than one identical
   result. For example, there might be multiple releases of the same album.
   The options are ``popularity`` and ``first`` (to just choose the first match
   returned).
   Default: ``popularity``.
-* ``regex``: An array of regex transformations to perform on the
+- **regex**: An array of regex transformations to perform on the
   track/album/artist fields before sending them to Spotify.  Can be useful for
   changing certain abbreviations, like ft. -> feat.  See the examples below.
   Default: None.

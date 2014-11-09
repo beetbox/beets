@@ -26,6 +26,6 @@ Configuration
 To configure the plugin, make a ``mbcollection:`` section in your
 configuration file. There is one option available:
 
-- ``auto``: Automatically amend your MusicBrainz collection whenever you
+- **auto**: Automatically amend your MusicBrainz collection whenever you
   import a new album.
   Default: ``no``.
