@@ -135,6 +135,8 @@ def google_art(album):
     """Return art URL from google.org given an album title and
     interpreter.
     """
+    if not (album.albumartist and album.album):
+        return
     search_string = (album.albumartist + ',' + album.album).encode('utf-8')
     response = requests_session.get(GOOGLE_URL, params={
         'v': '1.0',
@@ -217,26 +219,28 @@ def art_in_path(path, cover_names, cautious):
 
 # Try each source in turn.
 
+SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart', u'google']
+
 ART_FUNCS = {
-    'coverart': caa_art,
-    'itunes': itunes_art,
-    'albumart': aao_art,
-    'amazon': art_for_asin,
-    'google': google_art,
+    u'coverart': caa_art,
+    u'itunes': itunes_art,
+    u'albumart': aao_art,
+    u'amazon': art_for_asin,
+    u'google': google_art,
 }
 
 
-def _source_urls(album):
+def _source_urls(album, sources=SOURCES_ALL):
     """Generate possible source URLs for an album's art. The URLs are
     not guaranteed to work so they each need to be attempted in turn.
     This allows the main `art_for_album` function to abort iteration
     through this sequence early to avoid the cost of scraping when not
     necessary.
     """
-    for s in config['fetchart']['sources']:
-        fun = ART_FUNCS[s]
-        for url in fun(album):
-            if url:
+    for s in sources:
+        urls = ART_FUNCS[s](album)
+        if urls:
+            for url in urls:
                 yield url
 
 
@@ -262,7 +266,8 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
     # Web art sources.
     remote_priority = config['fetchart']['remote_priority'].get(bool)
     if not local_only and (remote_priority or not out):
-        for url in _source_urls(album):
+        for url in _source_urls(album,
+                                config['fetchart']['sources'].as_str_seq()):
             if maxwidth:
                 url = ArtResizer.shared.proxy_url(maxwidth, url)
             candidate = _fetch_image(url)
@@ -273,8 +278,6 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
     if maxwidth and out:
         out = ArtResizer.shared.resize(maxwidth, out)
     return out
-
-SOURCES_ALL = ['coverart', 'itunes', 'albumart', 'amazon', 'google']
 
 
 def sanitize_sources(sources):

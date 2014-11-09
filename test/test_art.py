@@ -104,7 +104,7 @@ class CombinedTest(_common.TestCase):
         os.mkdir(self.dpath)
 
         # Set up configuration.
-        fetchart.FetchArtPlugin()
+        self.plugin = fetchart.FetchArtPlugin()
 
     @responses.activate
     def run(self, *args, **kwargs):
@@ -161,7 +161,8 @@ class CombinedTest(_common.TestCase):
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
-        artpath = fetchart.art_for_album(album, [self.dpath], local_only=True)
+        artpath = fetchart.art_for_album(album, [self.dpath],
+                                         local_only=True)
         self.assertEqual(artpath, None)
         self.assertEqual(len(responses.calls), 0)
 
@@ -195,12 +196,14 @@ class AAOTest(_common.TestCase):
              alt="View larger image" width="17" height="15"  border="0"/></a>
         """
         self.mock_response(self.AAO_URL, body)
-        res = fetchart.aao_art(self.ASIN)
+        album = _common.Bag(asin=self.ASIN)
+        res = fetchart.aao_art(album)
         self.assertEqual(res, 'TARGET_URL')
 
     def test_aao_scraper_returns_none_when_no_image_present(self):
         self.mock_response(self.AAO_URL, 'blah blah')
-        res = fetchart.aao_art(self.ASIN)
+        album = _common.Bag(asin=self.ASIN)
+        res = fetchart.aao_art(album)
         self.assertEqual(res, None)
 
 
