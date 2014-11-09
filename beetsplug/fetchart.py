@@ -29,11 +29,6 @@ from beets import ui
 from beets import util
 from beets import config
 
-try:
-    import itunes
-    HAVE_ITUNES = True
-except ImportError:
-    HAVE_ITUNES = False
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg',)
@@ -292,8 +287,11 @@ def sanitize_sources(sources):
         if s in SOURCES_ALL + ['*']:
             if not (s in seen or seen.add(s)):
                 res.extend(list(others_sources) if s == '*' else [s])
-    if not HAVE_ITUNES and 'itunes' in res:
-        res.remove('itunes')
+    if 'itunes' in res:
+        try:
+            import itunes
+        except ImportError:
+            res.remove('itunes')
     return res
 
 # PLUGIN LOGIC ###############################################################
