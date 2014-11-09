@@ -10,7 +10,7 @@ line.
 Installation
 ------------
 
-To use the ``chroma`` plugin, first enable it in your configuration (see
+To use the ``convert`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). By default, the plugin depends on `FFmpeg`_ to
 transcode the audio, so you might want to install it.
 
