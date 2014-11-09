@@ -51,7 +51,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
         res = fetchart.sanitize_sources(['google', '*', 'amazon'])
         # don't check strict egality on lengths as itunes source may be removed
         # by plugin
-        self.assertTrue(len(res) >= len(fetchart.SOURCES_ALL)-1 and
+        self.assertTrue(len(res) >= len(fetchart.SOURCES_ALL) - 1 and
                         res[0] == 'google' and res[-1] == 'amazon')
 
 
