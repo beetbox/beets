@@ -160,3 +160,4 @@ class FtInTitlePlugin(BeetsPlugin):
 
         for item in task.imported_items():
             ft_in_title(item, drop_feat)
+            item.store()
