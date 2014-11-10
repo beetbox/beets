@@ -35,7 +35,7 @@ file. The available options are:
   contain one of the keywords in ``cover_names``.
   Default: ``no``.
 - **cover_names**: Prioritize images containing words in this list.
-  Default: ``['cover', 'front', 'art', 'album', 'folder']``.
+  Default: ``cover front art album folder``.
 - **google_search**: Gather images from Google Image Search.
   Default: ``no``.
 - **maxwidth**: A maximum image width to downscale fetched images if they are
@@ -47,7 +47,7 @@ file. The available options are:
   found in the filesystem.
 - **sources**: List of websites sources to query when searching arts. Star char
   `*` expands to all available sources.
-  Default : ['coverart', 'itunes', 'albumart', 'amazon', 'google'] ie all sources
+  Default : ``coverart itunes albumart amazon google`` ie all sources
 
 Here's an example that makes plugin select only images that contain *front* or
 *back* keywords in their filenames and prioritize 'itunes' over others
@@ -56,7 +56,7 @@ sources::
     fetchart:
         cautious: true
         cover_names: front back
-        sources: ['itunes', '*']
+        sources: itunes *
 
 
 Manually Fetching Album Art
@@ -95,9 +95,10 @@ environment variable so that ImageMagick comes first or use PIL instead.
 Album Art Sources
 -----------------
 
-Currently, this plugin searches for art in the local filesystem as well as on
-the Cover Art Archive, the iTunes Store (optionally), Amazon, AlbumArt.org,
-and Google Image Search, in that order.
+By default, this plugin searches for art in the local filesystem as well as on
+the Cover Art Archive, the iTunes Store, Amazon, AlbumArt.org,
+and Google Image Search, in that order. You can remove sources to speed up the
+process, or reorder them using the ``sources``configuration option.
 
 When looking for local album art, beets checks for image files located in the
 same folder as the music files you're importing. Beets prefers to use an image
