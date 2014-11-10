@@ -61,6 +61,12 @@ you can configure the path explicitly like so::
     replaygain:
         command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
+Python Audio Tools
+``````````````````
+
+This backend uses the `audiotools`_ module to compute ReplayGain, in a range of different file formats. Installation of the module is not available through PyPI. The requirements for most of its dependencies can be installed on Mac OS X via `Homebrew`_: ``brew install mpg123 mp3gain vorbisgain faad2 libvorbis``
+
+.. _audiotools: http://audiotools.sourceforge.net
 
 Configuration
 -------------
@@ -70,7 +76,7 @@ configuration file. The available options are:
 
 - **auto**: Enable ReplayGain analysis during import.
   Default: ``yes``.
-- **backend**: The analysis backend; either ``gstreamer`` or ``command``.
+- **backend**: The analysis backend; either ``gstreamer``, ``command`` or ``audiotools`.
   Default: ``command``.
 - **overwrite**: Re-analyze files that already have ReplayGain tags.
   Default: ``no``.

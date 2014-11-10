@@ -463,6 +463,119 @@ class GStreamerBackend(object):
         assert(peer is None)
 
 
+class AudioToolsBackend(Backend):
+    def __init__(self, config):
+        self._import_audiotools()
+
+    def _import_audiotools(self):
+        try:
+            import audiotools
+            import audiotools.replaygain
+        except ImportError:
+            raise FatalReplayGainError(
+                "Failed to load audiotools: audiotools not found"
+            )
+        self._mod_audiotools = audiotools
+        self._mod_replaygain = audiotools.replaygain
+
+    def open_audio_file(self, item):
+        try:
+            audiofile = self._mod_audiotools.open(item.path)
+        except IOError:
+            raise ReplayGainError(
+                "File {} was not found".format(item.path)
+            )
+        except self._mod_audiotools.UnsupportedFile:
+            raise ReplayGainError(
+                "Unsupported file type {}".format(item.format)
+            )
+
+        return audiofile
+
+    def init_replaygain(self, audiofile, item):
+        try:
+            rg = self._mod_replaygain.ReplayGain(audiofile.sample_rate())
+        except ValueError:
+            raise ReplayGainError(
+                "Unsupported sample rate {}".format(item.samplerate)
+            )
+            return
+        return rg
+
+    def compute_track_gain(self, items):
+        return [self._compute_track_gain(item) for item in items]
+
+    def _compute_track_gain(self, item):
+
+        audiofile = self.open_audio_file(item)
+
+        rg = self.init_replaygain(audiofile, item)
+
+        rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
+
+        log.info(
+            u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
+                item.artist,
+                item.title,
+                rg_track_gain,
+                rg_track_peak
+            )
+        )
+
+        return Gain(gain=rg_track_gain, peak=rg_track_peak)
+
+    def compute_album_gain(self, album):
+
+        log.info(
+            u'Analysing album {0} - {1}'.format(
+                album.albumartist,
+                album.album
+            )
+        )
+
+        item = list(album.items())[0]
+
+        audiofile = self.open_audio_file(item)
+        rg = self.init_replaygain(audiofile, item)
+
+        track_gains = []
+
+        for item in album.items():
+            audiofile = self.open_audio_file(item)
+            rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
+            track_gains.append(
+                Gain(gain=rg_track_gain, peak=rg_track_peak)
+            )
+            log.info(
+                u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
+                    item.artist,
+                    item.title,
+                    rg_track_gain,
+                    rg_track_peak
+                )
+            )
+
+        rg_album_gain, rg_album_peak = rg.album_gain()
+
+        log.info('-' * 100)
+
+        log.info(
+            u'ReplayGain for Album {0} - {1}: {2:.2f}, {3:.2f}'.format(
+                album.albumartist,
+                album.album,
+                rg_album_gain,
+                rg_album_peak
+            )
+        )
+
+        log.info('=' * 100)
+
+        return AlbumGain(
+            Gain(gain=rg_album_gain, peak=rg_album_peak),
+            track_gains=track_gains
+        )
+
+
 # Main plugin logic.
 
 class ReplayGainPlugin(BeetsPlugin):
@@ -472,6 +585,7 @@ class ReplayGainPlugin(BeetsPlugin):
     backends = {
         "command":   CommandBackend,
         "gstreamer": GStreamerBackend,
+        "audiotools": AudioToolsBackend
     }
 
     def __init__(self):
