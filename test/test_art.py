@@ -225,14 +225,14 @@ class GoogleImageTest(_common.TestCase):
             [{"unescapedUrl": "url_to_the_image"}]}}"""
         self.mock_response(self._google_url, json)
         result_url = fetchart.google_art(album)
-        self.assertEqual(result_url, 'url_to_the_image')
+        self.assertEqual(list(result_url)[0], 'url_to_the_image')
 
     def test_google_art_dont_finds_image(self):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = """bla blup"""
         self.mock_response(self._google_url, json)
         result_url = fetchart.google_art(album)
-        self.assertEqual(result_url, None)
+        self.assertEqual(list(result_url), [])
 
 
 class ArtImporterTest(_common.TestCase):
