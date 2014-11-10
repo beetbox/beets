@@ -506,14 +506,11 @@ class AudioToolsBackend(Backend):
         return [self._compute_track_gain(item) for item in items]
 
     def _compute_track_gain(self, item):
-
         audiofile = self.open_audio_file(item)
-
         rg = self.init_replaygain(audiofile, item)
-
         rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
 
-        log.info(
+        log.debug(
             u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
                 item.artist,
                 item.title,
@@ -521,12 +518,10 @@ class AudioToolsBackend(Backend):
                 rg_track_peak
             )
         )
-
         return Gain(gain=rg_track_gain, peak=rg_track_peak)
 
     def compute_album_gain(self, album):
-
-        log.info(
+        log.debug(
             u'Analysing album {0} - {1}'.format(
                 album.albumartist,
                 album.album
@@ -534,19 +529,17 @@ class AudioToolsBackend(Backend):
         )
 
         item = list(album.items())[0]
-
         audiofile = self.open_audio_file(item)
         rg = self.init_replaygain(audiofile, item)
 
         track_gains = []
-
         for item in album.items():
             audiofile = self.open_audio_file(item)
             rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
             track_gains.append(
                 Gain(gain=rg_track_gain, peak=rg_track_peak)
             )
-            log.info(
+            log.debug(
                 u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
                     item.artist,
                     item.title,
@@ -556,10 +549,7 @@ class AudioToolsBackend(Backend):
             )
 
         rg_album_gain, rg_album_peak = rg.album_gain()
-
-        log.info('-' * 100)
-
-        log.info(
+        log.debug(
             u'ReplayGain for Album {0} - {1}: {2:.2f}, {3:.2f}'.format(
                 album.albumartist,
                 album.album,
@@ -567,8 +557,6 @@ class AudioToolsBackend(Backend):
                 rg_album_peak
             )
         )
-
-        log.info('=' * 100)
 
         return AlbumGain(
             Gain(gain=rg_album_gain, peak=rg_album_peak),

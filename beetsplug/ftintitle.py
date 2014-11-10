@@ -122,7 +122,7 @@ class FtInTitlePlugin(BeetsPlugin):
 
         self.config.add({
             'auto': True,
-            'drop': False
+            'drop': False,
         })
 
         self._command = ui.Subcommand(
