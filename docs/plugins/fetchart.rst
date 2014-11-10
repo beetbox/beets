@@ -98,7 +98,7 @@ Album Art Sources
 By default, this plugin searches for art in the local filesystem as well as on
 the Cover Art Archive, the iTunes Store, Amazon, AlbumArt.org,
 and Google Image Search, in that order. You can remove sources to speed up the
-process, or reorder them using the ``sources``configuration option.
+process, or reorder them using the ``sources`` configuration option.
 
 When looking for local album art, beets checks for image files located in the
 same folder as the music files you're importing. Beets prefers to use an image
