@@ -729,11 +729,11 @@ class AlacTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'alac.m4a'
     audio_properties = {
         'length': 1.0,
-        'bitrate': 55072,
-        'format': 'ALAC',
-        'samplerate': 0,
-        'bitdepth': 0,
-        'channels': 0,
+        'bitrate': 21830,
+        # 'format': 'ALAC',
+        'samplerate': 44100,
+        'bitdepth': 16,
+        'channels': 1,
     }
 
 
