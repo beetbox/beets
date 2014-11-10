@@ -198,13 +198,13 @@ class AAOTest(_common.TestCase):
         self.mock_response(self.AAO_URL, body)
         album = _common.Bag(asin=self.ASIN)
         res = fetchart.aao_art(album)
-        self.assertEqual(res, 'TARGET_URL')
+        self.assertEqual(list(res)[0], 'TARGET_URL')
 
-    def test_aao_scraper_returns_none_when_no_image_present(self):
+    def test_aao_scraper_returns_no_result_when_no_image_present(self):
         self.mock_response(self.AAO_URL, 'blah blah')
         album = _common.Bag(asin=self.ASIN)
         res = fetchart.aao_art(album)
-        self.assertEqual(res, None)
+        self.assertEqual(list(res), [])
 
 
 class GoogleImageTest(_common.TestCase):

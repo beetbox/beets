@@ -126,7 +126,7 @@ def aao_art(album):
     m = re.search(AAO_PAT, resp.text)
     if m:
         image_url = m.group(1)
-        return image_url
+        yield image_url
     else:
         log.debug(u'fetchart: no image found on page')
 
@@ -155,7 +155,7 @@ def google_art(album):
         data = results['responseData']
         dataInfo = data['results']
         for myUrl in dataInfo:
-            return myUrl['unescapedUrl']
+            yield myUrl['unescapedUrl']
     except:
         log.debug(u'fetchart: error scraping art page')
         return
@@ -172,7 +172,7 @@ def itunes_art(album):
         if itunes_album.get_artwork()['100']:
             small_url = itunes_album.get_artwork()['100']
             big_url = small_url.replace('100x100', '1200x1200')
-            return big_url
+            yield big_url
         else:
             log.debug(u'fetchart: album has no artwork in iTunes Store')
     except IndexError:
@@ -180,6 +180,7 @@ def itunes_art(album):
 
 
 # Art from the filesystem.
+
 
 def filename_priority(filename, cover_names):
     """Sort order for image names.
@@ -244,9 +245,8 @@ def _source_urls(album, sources=SOURCES_ALL):
     """
     for s in sources:
         urls = ART_FUNCS[s](album)
-        if urls:
-            for url in urls:
-                yield url
+        for url in urls:
+            yield url
 
 
 def art_for_album(album, paths, maxwidth=None, local_only=False):
