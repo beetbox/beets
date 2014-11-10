@@ -31,6 +31,8 @@ Features:
   Kiefer. :bug:`1042`
 * :doc:`/plugins/fetchart`: Art can now be searched for on the iTunes Store,
   using the python-itunes library.
+* :doc:`/plugins/replaygain`: A new Python Audio Tools backend was added.
+  Thanks to Laurent Perrinet. :bug:`1070`
 
 Fixes:
 

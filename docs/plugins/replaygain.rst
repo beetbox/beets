@@ -10,9 +10,10 @@ playback levels.
 Installation
 ------------
 
-This plugin can use one of two backends to compute the ReplayGain values:
-GStreamer and mp3gain (and its cousin, aacgain). mp3gain can be easier to
-install but GStreamer support more audio formats.
+This plugin can use one of three backends to compute the ReplayGain values:
+GStreamer, mp3gain (and its cousin, aacgain), and Python Audio Tools. mp3gain
+can be easier to install but GStreamer and Audio Tools support more audio
+formats.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -64,9 +65,15 @@ you can configure the path explicitly like so::
 Python Audio Tools
 ``````````````````
 
-This backend uses the `audiotools`_ module to compute ReplayGain, in a range of different file formats. Installation of the module is not available through PyPI. The requirements for most of its dependencies can be installed on Mac OS X via `Homebrew`_: ``brew install mpg123 mp3gain vorbisgain faad2 libvorbis``
+This backend uses the `Python Audio Tools`_ package to compute ReplayGain for
+a range of different file formats. The package is not available via PyPI; it
+must be installed manually.
 
-.. _audiotools: http://audiotools.sourceforge.net
+On OS X, most of the dependencies can be installed with `Homebrew`_::
+
+    brew install mpg123 mp3gain vorbisgain faad2 libvorbis
+
+.. _Python Audio Tools: http://audiotools.sourceforge.net
 
 Configuration
 -------------
@@ -76,7 +83,7 @@ configuration file. The available options are:
 
 - **auto**: Enable ReplayGain analysis during import.
   Default: ``yes``.
-- **backend**: The analysis backend; either ``gstreamer``, ``command`` or ``audiotools`.
+- **backend**: The analysis backend; either ``gstreamer``, ``command``, or ``audiotools``.
   Default: ``command``.
 - **overwrite**: Re-analyze files that already have ReplayGain tags.
   Default: ``no``.
