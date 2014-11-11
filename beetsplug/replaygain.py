@@ -472,8 +472,8 @@ class AudioToolsBackend(Backend):
         self._import_audiotools()
 
     def _import_audiotools(self):
-        """Checks if it's possible the necessary modules. There is no check on the
-        file formats at runtime.
+        """Check whether it's possible to import the necessary modules.
+        There is no check on the file formats at runtime.
 
         :raises :exc:`ReplayGainError`: if the modules cannot be imported
         """
@@ -488,12 +488,13 @@ class AudioToolsBackend(Backend):
         self._mod_replaygain = audiotools.replaygain
 
     def open_audio_file(self, item):
-        """Open the file to read the PCM stream from the using ``item.path``
+        """Open the file to read the PCM stream from the using
+        ``item.path``.
 
         :return: the audiofile instance
         :rtype: :class:`audiotools.AudioFile`
-        :raises :exc:`ReplayGainError`: if the file is not found or the file format is
-            not supported
+        :raises :exc:`ReplayGainError`: if the file is not found or the
+        file format is not supported
         """
         try:
             audiofile = self._mod_audiotools.open(item.path)
@@ -509,7 +510,7 @@ class AudioToolsBackend(Backend):
         return audiofile
 
     def init_replaygain(self, audiofile, item):
-        """Returns an initialized :class:`audiotools.replaygain.ReplayGain`
+        """Return an initialized :class:`audiotools.replaygain.ReplayGain`
         instance, which requires the sample rate of the song(s) on which
         the ReplayGain values will be computed. The item is passed in case
         the sample rate is invalid to log the stored item sample rate.
@@ -593,7 +594,7 @@ class AudioToolsBackend(Backend):
             )
 
         # After getting the values for all tracks, it's possible to get the
-        # album values
+        # album values.
         rg_album_gain, rg_album_peak = rg.album_gain()
         log.debug(
             u'ReplayGain for Album {0} - {1}: {2:.2f}, {3:.2f}'.format(
