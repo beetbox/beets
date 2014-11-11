@@ -104,7 +104,7 @@ class CombinedTest(_common.TestCase):
         os.mkdir(self.dpath)
 
         # Set up configuration.
-        fetchart.FetchArtPlugin()
+        self.plugin = fetchart.FetchArtPlugin()
 
     @responses.activate
     def run(self, *args, **kwargs):
@@ -161,7 +161,8 @@ class CombinedTest(_common.TestCase):
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
-        artpath = fetchart.art_for_album(album, [self.dpath], local_only=True)
+        artpath = fetchart.art_for_album(album, [self.dpath],
+                                         local_only=True)
         self.assertEqual(artpath, None)
         self.assertEqual(len(responses.calls), 0)
 
@@ -195,13 +196,15 @@ class AAOTest(_common.TestCase):
              alt="View larger image" width="17" height="15"  border="0"/></a>
         """
         self.mock_response(self.AAO_URL, body)
-        res = fetchart.aao_art(self.ASIN)
-        self.assertEqual(res, 'TARGET_URL')
+        album = _common.Bag(asin=self.ASIN)
+        res = fetchart.aao_art(album)
+        self.assertEqual(list(res)[0], 'TARGET_URL')
 
-    def test_aao_scraper_returns_none_when_no_image_present(self):
+    def test_aao_scraper_returns_no_result_when_no_image_present(self):
         self.mock_response(self.AAO_URL, 'blah blah')
-        res = fetchart.aao_art(self.ASIN)
-        self.assertEqual(res, None)
+        album = _common.Bag(asin=self.ASIN)
+        res = fetchart.aao_art(album)
+        self.assertEqual(list(res), [])
 
 
 class GoogleImageTest(_common.TestCase):
@@ -222,14 +225,14 @@ class GoogleImageTest(_common.TestCase):
             [{"unescapedUrl": "url_to_the_image"}]}}"""
         self.mock_response(self._google_url, json)
         result_url = fetchart.google_art(album)
-        self.assertEqual(result_url, 'url_to_the_image')
+        self.assertEqual(list(result_url)[0], 'url_to_the_image')
 
     def test_google_art_dont_finds_image(self):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = """bla blup"""
         self.mock_response(self._google_url, json)
         result_url = fetchart.google_art(album)
-        self.assertEqual(result_url, None)
+        self.assertEqual(list(result_url), [])
 
 
 class ArtImporterTest(_common.TestCase):
