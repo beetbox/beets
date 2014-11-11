@@ -195,14 +195,8 @@ class MockFetchUrl(object):
 def is_lyrics_content_ok(title, text):
     """Compare lyrics text to expected lyrics for given title"""
 
-    setexpected = set(LYRICS_TEXTS[lyrics.slugify(title)].split())
-    settext = set(text.split())
-    setinter = setexpected.intersection(settext)
-    # consider lyrics ok if they share 50% or more with the reference
-    if len(setinter):
-        ratio = 1.0 * max(len(setexpected), len(settext)) / len(setinter)
-        return (ratio > .5 and ratio < 2.5)
-    return False
+    keywords = LYRICS_TEXTS[lyrics.slugify(title)]
+    return all(x in text.lower() for x in keywords)
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, 'lyrics')
 LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, 'lyricstext.yaml'))
@@ -215,6 +209,7 @@ DEFAULT_SOURCES = [
          path=u'lady-madonna-lyrics-the-beatles.html')
 
 ]
+
 # Every source entered in default beets google custom search engine
 # must be listed below.
 # Use default query when possible, or override artist and title fields
@@ -235,9 +230,6 @@ GOOGLE_SOURCES = [
     dict(url=u'http://www.lacoccinelle.net',
          artist=u'Jacques Brel', title=u"Amsterdam",
          path=u'/paroles-officielles/275679.html'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.lyrics007.com',
-         path=u'/The%20Beatles%20Lyrics/Lady%20Madonna%20Lyrics.html'),
     dict(DEFAULT_SONG,
          url='http://www.lyricsmania.com/',
          path='lady_madonna_lyrics_the_beatles.html'),
@@ -276,7 +268,7 @@ GOOGLE_SOURCES = [
 
 class LyricsGooglePluginTest(unittest.TestCase):
     """Test scraping heuristics on a fake html page.
-    Use `nosetests -s test_lyrics.py -a '!slow'` to check that beets google
+    Or run lyrics_download_samples.py first to check that beets google
     custom search engine sources are correctly scraped.
     """
     source = dict(url=u'http://www.example.com', artist=u'John Doe',
