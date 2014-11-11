@@ -285,20 +285,6 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
     return out
 
 
-def sanitize_sources(sources):
-    """Remove unknown or duplicate sources while keeping original order.
-    """
-    seen = set()
-    others_sources = set(SOURCES_ALL) - set(sources)
-    res = []
-    for s in sources:
-        if s in SOURCES_ALL + ['*']:
-            if not (s in seen or seen.add(s)):
-                res.extend(list(others_sources) if s == '*' else [s])
-    if not HAVE_ITUNES and 'itunes' in res:
-        res.remove('itunes')
-    return res
-
 # PLUGIN LOGIC ###############################################################
 
 
@@ -325,6 +311,22 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
 
         log.info(u'{0} - {1}: {2}'.format(album.albumartist, album.album,
                                           message))
+
+
+def sanitize_sources(sources):
+    """Clean up the user's configured source list. Remove unknown or
+    duplicate sources while keeping original order.
+    """
+    seen = set()
+    others = set(SOURCES_ALL) - set(sources)
+    res = []
+    for s in sources:
+        if s in SOURCES_ALL + ['*']:
+            if not (s in seen or seen.add(s)):
+                res.extend(list(others) if s == '*' else [s])
+    if not HAVE_ITUNES and 'itunes' in res:
+        res.remove('itunes')
+    return res
 
 
 class FetchArtPlugin(BeetsPlugin):

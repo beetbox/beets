@@ -29,8 +29,9 @@ Features:
   disable this, unset the ``auto`` config flag.
 * Standard cover art in APEv2 metadata is now supported. Thanks to Matthias
   Kiefer. :bug:`1042`
-* :doc:`/plugins/fetchart`: Art can now be searched for on the iTunes Store,
-  using the python-itunes library.
+* :doc:`/plugins/fetchart`: Art can now be searched for on the iTunes Store.
+  There's also a new ``sources`` config option that lets you choose exactly
+  where to look for images and in which order.
 * :doc:`/plugins/replaygain`: A new Python Audio Tools backend was added.
   Thanks to Francesco Rubino. :bug:`1070`
 
