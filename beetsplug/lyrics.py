@@ -263,7 +263,6 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     artist = slugify(artist.lower())
     sitename = re.search(u"//([^/]+)/.*", slugify(urlLink.lower())).group(1)
     urlTitle = slugify(urlTitle.lower())
-
     # Check if URL title contains song title (exact match)
     if urlTitle.find(title) != -1:
         return True
@@ -274,7 +273,6 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
     songTitle = songTitle.strip('_|')
     typoRatio = .9
-
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
 
 
@@ -356,12 +354,11 @@ def scrape_lyrics_from_html(html):
     if not html:
         return None
 
-    def is_text_notcode(string):
-        length = len(string)
+    def is_text_notcode(text):
+        length = len(text)
         return (length > 20 and
-                string.count(' ') > length / 25
-                and (string.find('=') == -1 or string.find(';') == 1))
-
+                text.count(' ') > length / 25 and
+                (text.find('{') == -1 or text.find(';') == -1))
     html = _scrape_strip_cruft(html)
     html = _scrape_merge_paragraphs(html)
 
