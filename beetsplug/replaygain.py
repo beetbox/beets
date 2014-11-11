@@ -464,8 +464,7 @@ class GStreamerBackend(object):
 
 
 class AudioToolsBackend(Backend):
-    """
-    ReplayGain backend that uses `Python Audio Tools
+    """ReplayGain backend that uses `Python Audio Tools
     <http://audiotools.sourceforge.net/>`_ and its capabilities to read more
     file formats and compute ReplayGain values using it replaygain module.
     """
@@ -473,8 +472,7 @@ class AudioToolsBackend(Backend):
         self._import_audiotools()
 
     def _import_audiotools(self):
-        """
-        Checks if it's possible the necessary modules. There is no check on the
+        """Checks if it's possible the necessary modules. There is no check on the
         file formats at runtime.
 
         :raises :exc:`ReplayGainError`: if the modules cannot be imported
@@ -490,8 +488,7 @@ class AudioToolsBackend(Backend):
         self._mod_replaygain = audiotools.replaygain
 
     def open_audio_file(self, item):
-        """
-        Open the file to read the PCM stream from the using ``item.path``
+        """Open the file to read the PCM stream from the using ``item.path``
 
         :return: the audiofile instance
         :rtype: :class:`audiotools.AudioFile`
@@ -512,8 +509,7 @@ class AudioToolsBackend(Backend):
         return audiofile
 
     def init_replaygain(self, audiofile, item):
-        """
-        Returns an initialized :class:`audiotools.replaygain.ReplayGain`
+        """Returns an initialized :class:`audiotools.replaygain.ReplayGain`
         instance, which requires the sample rate of the song(s) on which
         the ReplayGain values will be computed. The item is passed in case
         the sample rate is invalid to log the stored item sample rate.
@@ -532,24 +528,23 @@ class AudioToolsBackend(Backend):
         return rg
 
     def compute_track_gain(self, items):
-        """
-        Compute ReplayGain values for the requested items.
+        """Compute ReplayGain values for the requested items.
 
         :return list: list of :class:`Gain` objects
         """
         return [self._compute_track_gain(item) for item in items]
 
     def _compute_track_gain(self, item):
-        """
-        Compute ReplayGain value for the requested item.
+        """Compute ReplayGain value for the requested item.
 
         :rtype: :class:`Gain`
         """
         audiofile = self.open_audio_file(item)
         rg = self.init_replaygain(audiofile, item)
-        #each call to title_gain on a replaygain object return peak and gain of
-        #the track. Note that the method need an audiotools.PCMReader instance
-        #that can be obtained from an audiofile instance
+        # Each call to title_gain on a replaygain object return peak and gain
+        # of the track.
+        # Note that the method needs an audiotools.PCMReader instance that can
+        # be obtained from an audiofile instance.
         rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
 
         log.debug(
@@ -563,8 +558,7 @@ class AudioToolsBackend(Backend):
         return Gain(gain=rg_track_gain, peak=rg_track_peak)
 
     def compute_album_gain(self, album):
-        """
-        Compute ReplayGain values for the requested album and its items.
+        """Compute ReplayGain values for the requested album and its items.
 
         :rtype: :class:`AlbumGain`
         """
@@ -575,9 +569,9 @@ class AudioToolsBackend(Backend):
             )
         )
 
-        #the first item is taken and opened to get the sample rate to
-        #initialize the replaygain object. The object is used for all the
-        #tracks in the album to get the album values.
+        # The first item is taken and opened to get the sample rate to
+        # initialize the replaygain object. The object is used for all the
+        # tracks in the album to get the album values.
         item = list(album.items())[0]
         audiofile = self.open_audio_file(item)
         rg = self.init_replaygain(audiofile, item)
@@ -598,8 +592,8 @@ class AudioToolsBackend(Backend):
                 )
             )
 
-        #after getting the values for all tracks, it's possible to get the
-        #album values
+        # After getting the values for all tracks, it's possible to get the
+        # album values
         rg_album_gain, rg_album_peak = rg.album_gain()
         log.debug(
             u'ReplayGain for Album {0} - {1}: {2:.2f}, {3:.2f}'.format(
