@@ -32,7 +32,7 @@ The available options under the ``mpd:`` section are:
 
 - **host**: The MPD server name.
   Default: ``localhost``.
-- **password**: The MPD server password.
-  Default: None.
 - **port**: The MPD server port.
   Default: 6600.
+- **password**: The MPD server password.
+  Default: None.
