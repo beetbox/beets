@@ -18,7 +18,7 @@ import os
 import sqlite3
 
 from _common import unittest
-from beets import dbcore
+from beets import dbcore, plugins
 from tempfile import mkstemp
 
 
@@ -110,6 +110,18 @@ class AnotherTestModel(TestModel1):
 class TestDatabaseTwoModels(dbcore.Database):
     _models = (TestModel2, AnotherTestModel)
     pass
+
+
+class TestPluginSort(dbcore.query.Sort):
+    def __init__(self, model_cls, field, ascending, value):
+        self.model_cls = model_cls
+        self.field = field
+        self.ascending = ascending
+        self.value = value
+
+class TestPlugin(plugins.BeetsPlugin):
+    def sorts(self):
+        return {'~': TestPluginSort}
 
 
 class MigrationTest(unittest.TestCase):
@@ -437,6 +449,12 @@ class QueryFromStringsTest(unittest.TestCase):
 
 
 class SortFromStringsTest(unittest.TestCase):
+    def setUp(self):
+        plugins._classes.add(TestPlugin)
+
+    def tearDown(self):
+        plugins._classes.remove(TestPlugin)
+
     def sfs(self, strings):
         return dbcore.queryparse.sort_from_strings(
             TestModel1,
@@ -470,6 +488,17 @@ class SortFromStringsTest(unittest.TestCase):
         s = self.sfs(['some_sort+'])
         self.assertIsInstance(s.sorts[0], TestSort)
 
+    def test_parts_with_postfix(self):
+        s = self.sfs(['fieldname+~parameters', 'other-~params'])
+        self.assertIsInstance(s, dbcore.query.MultipleSort)
+
+        self.assertIsInstance(s.sorts[0], TestPluginSort)
+        self.assertEqual(s.sorts[0].model_cls, TestModel1)
+        self.assertEqual(s.sorts[0].field, 'fieldname')
+        self.assertEqual(s.sorts[0].ascending, True)
+        self.assertEqual(s.sorts[0].value, 'parameters')
+
+        self.assertEqual(s.sorts[1].ascending, False)
 
 class ResultsIteratorTest(unittest.TestCase):
     def setUp(self):

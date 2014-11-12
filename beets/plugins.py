@@ -70,6 +70,11 @@ class BeetsPlugin(object):
         """
         return {}
 
+    def sorts(self):
+        """Should return a dict mapping prefixes to Sort subclasses.
+        """
+        return {}
+
     def track_distance(self, item, info):
         """Should return a Distance object to be added to the
         distance for every track comparison.
@@ -254,6 +259,14 @@ def queries():
         out.update(plugin.queries())
     return out
 
+def sorts():
+    """Returns a dict mapping prefix strings to Sort subclasses for all loaded
+    plugins.
+    """
+    out = {}
+    for plugin in find_plugins():
+        out.update(plugin.sorts())
+    return out
 
 def types(model_cls):
     # Gives us `item_types` and `album_types`

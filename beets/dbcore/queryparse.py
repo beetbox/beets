@@ -17,6 +17,7 @@
 import re
 import itertools
 from . import query
+from beets import plugins
 
 
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -127,14 +128,22 @@ def construct_sort_part(model_cls, part):
     """Create a `Sort` from a single string criterion.
 
     `model_cls` is the `Model` being queried. `part` is a single string
-    ending in ``+`` or ``-`` indicating the sort.
+    with field name, ``+`` or ``-`` indicating the sort
+    and an optional plugin prefix with parameters.
     """
-    assert part, "part must be a field name and + or -"
-    field = part[:-1]
+
+    assert part, ("part is missing")
+    (field, direction, tail) = re.split("([\+\-])", part)
     assert field, "field is missing"
-    direction = part[-1]
-    assert direction in ('+', '-'), "part must end with + or -"
+    assert direction in ('+', '-'), "direction must be + or -"
     is_ascending = direction == '+'
+
+    # Match the sort tail against the list of plugin defined prefixes.
+    if tail:
+        for prefix, sort_class in plugins.sorts().items():
+            if tail.startswith(prefix):
+                return sort_class(model_cls, field, \
+                                  is_ascending, tail[len(prefix):])
 
     if field in model_cls._sorts:
         sort = model_cls._sorts[field](model_cls, is_ascending)
@@ -167,7 +176,7 @@ def parse_sorted_query(model_cls, parts, prefixes={},
     query_parts = []
     sort_parts = []
     for part in parts:
-        if part.endswith((u'+', u'-')) and u':' not in part:
+        if (u'+' in part or u'-' in part) and u':' not in part:
             sort_parts.append(part)
         else:
             query_parts.append(part)
