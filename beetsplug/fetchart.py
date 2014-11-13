@@ -85,8 +85,8 @@ def caa_art(album):
     """
     if album.mb_albumid:
         yield CAA_URL.format(mbid=album.mb_albumid)
-    if album.release_group_id:
-        yield CAA_GROUP_URL.format(mbid=album.release_group_id)
+    if album.mb_releasegroupid:
+        yield CAA_GROUP_URL.format(mbid=album.mb_releasegroupid)
 
 
 # Art from Amazon.
