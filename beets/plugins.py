@@ -259,6 +259,7 @@ def queries():
         out.update(plugin.queries())
     return out
 
+
 def sorts():
     """Returns a dict mapping prefix strings to Sort subclasses for all loaded
     plugins.
@@ -267,6 +268,7 @@ def sorts():
     for plugin in find_plugins():
         out.update(plugin.sorts())
     return out
+
 
 def types(model_cls):
     # Gives us `item_types` and `album_types`

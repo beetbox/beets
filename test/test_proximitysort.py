@@ -16,6 +16,7 @@
 """
 
 import _common
+from _common import unittest
 import beets.library
 from beets import plugins
 from beets.dbcore import types

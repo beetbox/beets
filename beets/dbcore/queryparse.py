@@ -142,8 +142,8 @@ def construct_sort_part(model_cls, part):
     if tail:
         for prefix, sort_class in plugins.sorts().items():
             if tail.startswith(prefix):
-                return sort_class(model_cls, field, \
-                                  is_ascending, tail[len(prefix):])
+                return (sort_class(model_cls, field,
+                        is_ascending, tail[len(prefix):]))
 
     if field in model_cls._sorts:
         sort = model_cls._sorts[field](model_cls, is_ascending)

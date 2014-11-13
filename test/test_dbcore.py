@@ -119,6 +119,7 @@ class TestPluginSort(dbcore.query.Sort):
         self.ascending = ascending
         self.value = value
 
+
 class TestPlugin(plugins.BeetsPlugin):
     def sorts(self):
         return {'~': TestPluginSort}
@@ -499,6 +500,7 @@ class SortFromStringsTest(unittest.TestCase):
         self.assertEqual(s.sorts[0].value, 'parameters')
 
         self.assertEqual(s.sorts[1].ascending, False)
+
 
 class ResultsIteratorTest(unittest.TestCase):
     def setUp(self):

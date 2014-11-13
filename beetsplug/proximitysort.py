@@ -39,7 +39,10 @@ class ProximitySort(Sort):
 
     def sort(self, objs):
         fieldgetter = attrgetter(self.field)
-        def key(o): return abs(fieldgetter(o)-self.value)
+
+        def key(o):
+            return abs(fieldgetter(o) - self.value)
+
         return sorted(objs, key=key)
 
     def is_slow(self):
