@@ -702,6 +702,7 @@ class Album(LibModel):
     """
     _table = 'albums'
     _flex_table = 'album_attributes'
+    _always_dirty = True
     _fields = {
         'id':      types.PRIMARY_ID,
         'artpath': PathType(),

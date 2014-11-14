@@ -836,6 +836,16 @@ class AlbumInfoTest(_common.TestCase):
         self.i.remove()
         self.assertEqual(len(self.lib.albums()), 0)
 
+    def test_noop_albuminfo_changes_affect_items(self):
+        i = self.lib.items()[0]
+        i.album = 'foobar'
+        i.store()
+        ai = self.lib.get_album(self.i)
+        ai.album = ai.album
+        ai.store()
+        i = self.lib.items()[0]
+        self.assertEqual(i.album, ai.album)
+
 
 class ArtDestinationTest(_common.TestCase):
     def setUp(self):

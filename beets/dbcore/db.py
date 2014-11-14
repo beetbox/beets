@@ -129,6 +129,12 @@ class Model(object):
     are subclasses of `Sort`.
     """
 
+    _always_dirty = False
+    """By default, fields only become "dirty" when their value actually
+    changes. Enabling this flag marks fields as dirty even when the new
+    value is the same as the old value (e.g., `o.f = o.f`).
+    """
+
     @classmethod
     def _getters(cls):
         """Return a mapping from field names to getter functions.
@@ -235,7 +241,7 @@ class Model(object):
         # Assign value and possibly mark as dirty.
         old_value = source.get(key)
         source[key] = value
-        if old_value != value:
+        if self._always_dirty or old_value != value:
             self._dirty.add(key)
 
     def __delitem__(self, key):

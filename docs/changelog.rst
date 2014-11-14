@@ -88,6 +88,9 @@ Fixes:
 * :doc:`/plugins/chroma`: Limit the number of releases and recordings fetched
   as the result of an Acoustid match to avoid extremely long processing times
   for very popular music. :bug:`1068`
+* Fix an issue where modifying an album's field without actually changing it
+  would not update the corresponding tracks to bring differing tracks back in
+  line with the album. :bug:`856`
 
 
 1.3.8 (September 17, 2014)
