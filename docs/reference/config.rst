@@ -328,7 +328,8 @@ link
 ~~~~
 
 Either ``yes`` or ``no``, indicating whether to use symbolic links instead of
-moving or copying files. Defaults to ``no``.
+moving or copying files. (It conflicts with the ``move`` and ``copy``
+options.) Defaults to ``no``.
 
 This option only works on platforms that support symbolic links: i.e., Unixes.
 It will fail on Windows.

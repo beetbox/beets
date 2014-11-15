@@ -139,6 +139,10 @@ currently available are:
 * *item_moved*: called with an ``Item`` object whenever its file is moved.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
+* *item_linked*: called with an ``Item`` object whenever a symlink is created
+  for a file.
+  Parameters: ``item``, ``source`` path, ``destination`` path
+
 * *item_removed*: called with an ``Item`` object every time an item (singleton
   or album's part) is removed from the library (even when its file is not
   deleted from disk).
