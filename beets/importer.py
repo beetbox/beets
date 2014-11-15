@@ -504,6 +504,9 @@ class ImportTask(object):
                          move=session.config['move'])
             self._emit_imported(session.lib)
 
+        if isinstance(self, ArchiveImportTask):
+            self.cleanup()
+
     def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths.
         """
