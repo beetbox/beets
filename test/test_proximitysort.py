@@ -17,35 +17,28 @@
 
 import _common
 from _common import unittest
-import beets.library
 from beets import plugins
 from beets.dbcore import types
-from beets.library import Item
+from beets.library import Item, Library
 from beetsplug import proximitysort
 
 
-# A test case class providing a library with some dummy data and some
-# assertions involving that data.
+# A test case class providing a library with some dummy data.
 class ProximitySortTestCase(_common.TestCase):
     def setUp(self):
         super(ProximitySortTestCase, self).setUp()
-        self.lib = beets.library.Library(':memory:')
+        self.lib = Library(':memory:')
         plugins._classes.add(proximitysort.ProximitySortPlugin)
         Item._types['flex'] = types.FLOAT
 
         items = [_common.item() for _ in range(5)]
 
-        items[0].bpm = 100
-        items[1].bpm = 110
-        items[2].bpm = 120
-        items[3].bpm = 130
-        items[4].bpm = 0
+        for i, item in enumerate(items):
+            item.bpm = 100 + i * 10
+            item.flex = 1.1 + i * .2
 
-        items[0].flex = 1.1
-        items[1].flex = 1.3
-        items[2].flex = 1.5
-        items[3].flex = 1.7
-        items[4].flex = 0
+        items[4].bpm = 0    # [100, 110, 120, 130, 140, 0]
+        items[4].flex = 0   # [1.1, 1.3, 1.5, 1.7, 0]
 
         for item in items:
             self.lib.add(item)
@@ -55,43 +48,45 @@ class ProximitySortTestCase(_common.TestCase):
         super(ProximitySortTestCase, self).tearDown()
 
 
-class SortFixedFieldTest(ProximitySortTestCase):
-    def test_sort_fixed_middle(self):
+class FixedFieldTestCase(ProximitySortTestCase):
+    def test_in_the_middle(self):
         items = self.lib.items('bpm+^111')
         bpms = [o.bpm for o in items]
         self.assertEqual(bpms, [110, 120, 100, 130, 0])
 
-    def test_sort_fixed_right(self):
+    def test_on_the_right(self):
         items = self.lib.items('bpm+^200')
         bpms = [o.bpm for o in items]
         self.assertEqual(bpms, [130, 120, 110, 100, 0])
 
-    def test_sort_fixed_left(self):
+    def test_on_the_left(self):
         items = self.lib.items('bpm+^90')
         bpms = [o.bpm for o in items]
         self.assertEqual(bpms, [100, 110, 120, 130, 0])
 
-    def test_sort_fixed_near_to_0(self):
+    def test_near_0(self):
         items = self.lib.items('bpm+^1')
         bpms = [o.bpm for o in items]
         self.assertEqual(bpms, [0, 100, 110, 120, 130])
 
-    def test_sort_flex_middle(self):
+
+class FlexFieldTestCase(ProximitySortTestCase):
+    def test_in_the_middle(self):
         items = self.lib.items('flex+^1.49')
         flexes = [o.flex for o in items]
         self.assertEqual(flexes, [1.5, 1.3, 1.7, 1.1, 0])
 
-    def test_sort_flex_right(self):
+    def test_on_the_right(self):
         items = self.lib.items('flex+^1.8')
         flexes = [o.flex for o in items]
         self.assertEqual(flexes, [1.7, 1.5, 1.3, 1.1, 0])
 
-    def test_sort_flex_left(self):
+    def test_on_the_left(self):
         items = self.lib.items('flex+^1.0')
         flexes = [o.flex for o in items]
         self.assertEqual(flexes, [1.1, 1.3, 1.5, 1.7, 0])
 
-    def test_sort_flex_near_to_0(self):
+    def test_near_0(self):
         items = self.lib.items('flex+^0.1')
         flexes = [o.flex for o in items]
         self.assertEqual(flexes, [0, 1.1, 1.3, 1.5, 1.7])
