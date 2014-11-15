@@ -1096,6 +1096,15 @@ class ItemReadTest(unittest.TestCase):
             item.read('/thisfiledoesnotexist')
 
 
+class ParseQueryStringTest(unittest.TestCase):
+    def test_plus_and_minus_in_field_name(self):
+        for field in ['foo+bar:7', 'foo-bar:7']:
+            query, sort = beets.library.parse_query_string(field,
+                                                           beets.library.Item)
+            self.assertEqual(query.subqueries[0].field, field[:7])
+            self.assertEqual(type(sort).__name__, 'NullSort')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
