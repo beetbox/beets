@@ -524,7 +524,7 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move_file(self, dest, copy=False):
+    def move_file(self, dest, copy=False, link=False):
         """Moves or copies the item's file, updating the path value if
         the move succeeds. If a file exists at ``dest``, then it is
         slightly modified to be unique.
@@ -534,6 +534,10 @@ class Item(LibModel):
         if copy:
             util.copy(self.path, dest)
             plugins.send("item_copied", item=self, source=self.path,
+                         destination=dest)
+        elif link:
+            util.link(self.path, dest)
+            plugins.send("item_linked", item=self, source=self.path,
                          destination=dest)
         else:
             plugins.send("before_item_moved", item=self, source=self.path,
@@ -813,7 +817,7 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, copy=False):
+    def move_art(self, copy=False, link=False):
         """Move or copy any existing album art so that it remains in the
         same directory as the items.
         """
@@ -831,6 +835,8 @@ class Album(LibModel):
                           util.displayable_path(new_art)))
         if copy:
             util.copy(old_art, new_art)
+        elif link:
+            util.link(old_art, new_art)
         else:
             util.move(old_art, new_art)
         self.artpath = new_art
