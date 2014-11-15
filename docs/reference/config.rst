@@ -322,6 +322,20 @@ This option *overrides* ``copy``, so enabling it will always move
 (and not copy) files. The ``-c`` switch to the ``beet import`` command,
 however, still takes precedence.
 
+.. _link:
+
+link
+~~~~
+
+Either ``yes`` or ``no``, indicating whether to use symbolic links instead of
+moving or copying files. Defaults to ``no``.
+
+This option only works on platforms that support symbolic links: i.e., Unixes.
+It will fail on Windows.
+
+It's likely that you'll also want to set ``write`` to ``no`` if you use this
+option to preserve the metadata on the linked files.
+
 resume
 ~~~~~~
 

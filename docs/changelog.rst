@@ -16,6 +16,9 @@ The major new features are:
 * A new :doc:`/plugins/freedesktop` creates metadata files for
   Freedesktop.org--compliant file managers. Thanks to :user:`kerobaros`.
   :bug:`1056`, :bug:`707`
+* A new :ref:`link` option in the ``import`` section creates symbolic links
+  during import instead of moving or copying. Thanks to Rovanion Luckey.
+  :bug:`710`, :bug:`114`
 * :doc:`/plugins/fetchart`: You can now search for art on the iTunes Store.
   There's also a new ``sources`` config option that lets you choose exactly
   where to look for images and in which order.
