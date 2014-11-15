@@ -960,8 +960,11 @@ def parse_query_parts(parts, model_cls):
     special path query detection.
     """
     # Get query types and their prefix characters.
-    prefixes = {':': dbcore.query.RegexpQuery}
-    prefixes.update(plugins.queries())
+    query_prefixes = {':': dbcore.query.RegexpQuery}
+    query_prefixes.update(plugins.queries())
+
+    # Get sort types and their prefix characters.
+    sort_prefixes = plugins.sorts()
 
     # Special-case path-like queries, which are non-field queries
     # containing path separators (/).
@@ -979,7 +982,7 @@ def parse_query_parts(parts, model_cls):
         non_path_parts = parts
 
     query, sort = dbcore.parse_sorted_query(
-        model_cls, non_path_parts, prefixes
+        model_cls, non_path_parts, query_prefixes, sort_prefixes
     )
 
     # Add path queries to aggregate query.
@@ -1088,7 +1091,7 @@ class Library(dbcore.Database):
         """Get :class:`Album` objects matching the query.
         """
         sort = sort or dbcore.sort_from_strings(
-            Album, beets.config['sort_album'].as_str_seq()
+            Album, plugins.sorts(), beets.config['sort_album'].as_str_seq()
         )
         return self._fetch(Album, query, sort)
 
@@ -1096,7 +1099,7 @@ class Library(dbcore.Database):
         """Get :class:`Item` objects matching the query.
         """
         sort = sort or dbcore.sort_from_strings(
-            Item, beets.config['sort_item'].as_str_seq()
+            Item, plugins.sorts(), beets.config['sort_item'].as_str_seq()
         )
         return self._fetch(Item, query, sort)
 

@@ -17,7 +17,6 @@
 import re
 import itertools
 from . import query
-from beets import plugins
 
 
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -124,7 +123,7 @@ def query_from_strings(query_cls, model_cls, prefixes, query_parts):
     return query_cls(subqueries)
 
 
-def construct_sort_part(model_cls, part):
+def construct_sort_part(model_cls, prefixes, part):
     """Create a `Sort` from a single string criterion.
 
     `model_cls` is the `Model` being queried. `part` is a single string
@@ -138,12 +137,12 @@ def construct_sort_part(model_cls, part):
     assert direction in ('+', '-'), "direction must be + or -"
     is_ascending = direction == '+'
 
-    # Match the sort tail against the list of plugin defined prefixes.
+    # Match the sort tail against the list of prefixes.
     if tail:
-        for prefix, sort_class in plugins.sorts().items():
-            if tail.startswith(prefix):
+        for pre, sort_class in prefixes.items():
+            if tail.startswith(pre):
                 return (sort_class(model_cls, field,
-                        is_ascending, tail[len(prefix):]))
+                        is_ascending, tail[len(pre):]))
 
     if field in model_cls._sorts:
         sort = model_cls._sorts[field](model_cls, is_ascending)
@@ -155,7 +154,7 @@ def construct_sort_part(model_cls, part):
     return sort
 
 
-def sort_from_strings(model_cls, sort_parts):
+def sort_from_strings(model_cls, prefixes, sort_parts):
     """Create a `Sort` from a list of sort criteria (strings).
     """
     if not sort_parts:
@@ -163,11 +162,11 @@ def sort_from_strings(model_cls, sort_parts):
     else:
         sort = query.MultipleSort()
         for part in sort_parts:
-            sort.add_sort(construct_sort_part(model_cls, part))
+            sort.add_sort(construct_sort_part(model_cls, prefixes, part))
         return sort
 
 
-def parse_sorted_query(model_cls, parts, prefixes={},
+def parse_sorted_query(model_cls, parts, query_prefixes={}, sort_prefixes={},
                        query_cls=query.AndQuery):
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
@@ -183,7 +182,7 @@ def parse_sorted_query(model_cls, parts, prefixes={},
 
     # Parse each.
     q = query_from_strings(
-        query_cls, model_cls, prefixes, query_parts
+        query_cls, model_cls, query_prefixes, query_parts
     )
-    s = sort_from_strings(model_cls, sort_parts)
+    s = sort_from_strings(model_cls, sort_prefixes, sort_parts)
     return q, s

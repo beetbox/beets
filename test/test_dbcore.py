@@ -18,7 +18,7 @@ import os
 import sqlite3
 
 from _common import unittest
-from beets import dbcore, plugins
+from beets import dbcore
 from tempfile import mkstemp
 
 
@@ -110,19 +110,6 @@ class AnotherTestModel(TestModel1):
 class TestDatabaseTwoModels(dbcore.Database):
     _models = (TestModel2, AnotherTestModel)
     pass
-
-
-class TestPluginSort(dbcore.query.Sort):
-    def __init__(self, model_cls, field, ascending, value):
-        self.model_cls = model_cls
-        self.field = field
-        self.ascending = ascending
-        self.value = value
-
-
-class TestPlugin(plugins.BeetsPlugin):
-    def sorts(self):
-        return {'~': TestPluginSort}
 
 
 class MigrationTest(unittest.TestCase):
@@ -450,15 +437,17 @@ class QueryFromStringsTest(unittest.TestCase):
 
 
 class SortFromStringsTest(unittest.TestCase):
-    def setUp(self):
-        plugins._classes.add(TestPlugin)
-
-    def tearDown(self):
-        plugins._classes.remove(TestPlugin)
+    class CustomTestSort(dbcore.query.Sort):
+        def __init__(self, model_cls, field, ascending, value):
+            self.model_cls = model_cls
+            self.field = field
+            self.ascending = ascending
+            self.value = value
 
     def sfs(self, strings):
         return dbcore.queryparse.sort_from_strings(
             TestModel1,
+            {'~': SortFromStringsTest.CustomTestSort},
             strings,
         )
 
@@ -493,7 +482,7 @@ class SortFromStringsTest(unittest.TestCase):
         s = self.sfs(['fieldname+~parameters', 'other-~params'])
         self.assertIsInstance(s, dbcore.query.MultipleSort)
 
-        self.assertIsInstance(s.sorts[0], TestPluginSort)
+        self.assertIsInstance(s.sorts[0], SortFromStringsTest.CustomTestSort)
         self.assertEqual(s.sorts[0].model_cls, TestModel1)
         self.assertEqual(s.sorts[0].field, 'fieldname')
         self.assertEqual(s.sorts[0].ascending, True)
