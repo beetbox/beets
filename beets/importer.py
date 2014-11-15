@@ -210,9 +210,13 @@ class ImportSession(object):
             iconfig['resume'] = False
             iconfig['incremental'] = False
 
-        # Copy and move are mutually exclusive.
+        # Copy, move, and link are mutually exclusive.
         if iconfig['move']:
             iconfig['copy'] = False
+            iconfig['link'] = False
+        elif iconfig['link']:
+            iconfig['move'] = False
+            iconfig['link'] = False
 
         # Only delete when copying.
         if not iconfig['copy']:
@@ -601,36 +605,29 @@ class ImportTask(object):
             item.update(changes)
 
     def manipulate_files(self, move=False, copy=False, write=False,
-                         session=None):
+                         link=False, session=None):
         items = self.imported_items()
         # Save the original paths of all items for deletion and pruning
         # in the next step (finalization).
         self.old_paths = [item.path for item in items]
         for item in items:
-            if session.config['move']:
-                # Just move the file.
-                item.move(False)
-            elif session.config['copy']:
-                # If it's a reimport, move in-library files and copy
-                # out-of-library files. Otherwise, copy and keep track
-                # of the old path.
+            if move or copy or link:
+                # In copy and link modes, treat re-imports specially:
+                # move in-library files. (Out-of-library files are
+                # copied/moved as usual).
                 old_path = item.path
-                if self.replaced_items[item]:
-                    # This is a reimport. Move in-library files and copy
-                    # out-of-library files.
-                    if session.lib.directory in util.ancestry(old_path):
-                        item.move(False)
-                        # We moved the item, so remove the
-                        # now-nonexistent file from old_paths.
-                        self.old_paths.remove(old_path)
-                    else:
-                        item.move(True)
+                if (copy or link) and self.replaced_items[item] and \
+                   session.lib.directory in util.ancestry(old_path):
+                    item.move()
+                    # We moved the item, so remove the
+                    # now-nonexistent file from old_paths.
+                    self.old_paths.remove(old_path)
                 else:
                     # A normal import. Just copy files and keep track of
                     # old paths.
-                    item.move(True)
+                    item.move(copy, link)
 
-            if session.config['write'] and self.apply:
+            if write and self.apply:
                 item.try_write()
 
         with session.lib.transaction():
@@ -1280,6 +1277,7 @@ def manipulate_files(session, task):
             move=session.config['move'],
             copy=session.config['copy'],
             write=session.config['write'],
+            link=session.config['link'],
             session=session,
         )
 
