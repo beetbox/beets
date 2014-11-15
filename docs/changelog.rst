@@ -5,9 +5,10 @@ Changelog
 ----------------------
 
 This release adds two new standard plugins to beets: one for synchronizing
-Last.fm listening data and one for integrating with Linux desktops. We gained
-the ability to search for album art on the iTunes store and a new way to
-compute ReplayGain levels.
+Last.fm listening data and one for integrating with Linux desktops. At long
+last, imports can now create symlinks to music files. We also gained the
+ability to search for album art on the iTunes store and a new way to compute
+ReplayGain levels.
 
 The major new features are:
 
