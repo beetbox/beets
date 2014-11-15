@@ -4,39 +4,49 @@ Changelog
 1.3.9 (in development)
 ----------------------
 
-Features:
+This release adds two new standard plugins to beets: one for synchronizing
+Last.fm listening data and one for integrating with Linux desktops. We gained
+the ability to search for album art on the iTunes store and a new way to
+compute ReplayGain levels.
+
+The major new features are:
 
 * A new :doc:`/plugins/lastimport` lets you download your play count data from
-  Last.fm. Thanks to Rafael Bodill.
+  Last.fm into a flexible attribute. Thanks to Rafael Bodill.
 * A new :doc:`/plugins/freedesktop` creates metadata files for
   Freedesktop.org--compliant file managers. Thanks to :user:`kerobaros`.
   :bug:`1056`, :bug:`707`
+* :doc:`/plugins/fetchart`: You can now search for art on the iTunes Store.
+  There's also a new ``sources`` config option that lets you choose exactly
+  where to look for images and in which order.
+* :doc:`/plugins/replaygain`: A new Python Audio Tools backend was added.
+  Thanks to Francesco Rubino. :bug:`1070`
 * :doc:`/plugins/embedart`: You can now automatically check that new art looks
   similar to existing art---ensuring that you only get a better "version" of
   the art you already have. See :ref:`image-similarity-check`.
-* Re-imports of your existing music (see :ref:`reimport`) now preserve its
-  added date and flexible attributes. Thanks to Stig Inge Lea Bjørnsen.
-* :doc:`/plugins/bpd`: Add a new configuration option for setting the default
-  volume. Thanks to IndiGit.
+* :doc:`/plugins/ftintitle`: The plugin now runs automatically on import. To
+  disable this, unset the ``auto`` config flag.
+
+There are also core improvements and other substantial additions:
+
 * The ``media`` attribute is now a *track-level field* instead of an
   album-level one. This field stores the delivery mechanism for the music, so
   in its album-level incarnation, it could not represent heterogeneous
   releases---for example, an album consisting of a CD and a DVD. Now, tracks
   accurately indicate the media they appear on. Thanks to Heinz Wiesinger.
+* Re-imports of your existing music (see :ref:`reimport`) now preserve its
+  added date and flexible attributes. Thanks to Stig Inge Lea Bjørnsen.
+* Slow queries, such as those over flexible attributes, should now be much
+  faster when used with certain commands---notably, the :doc:`/plugins/play`.
+* :doc:`/plugins/bpd`: Add a new configuration option for setting the default
+  volume. Thanks to IndiGit.
 * :doc:`/plugins/embedart`: A new ``ifempty`` config option lets you only
   embed album art when no album art is present. Thanks to kerobaros.
-* :doc:`/plugins/ftintitle`: The plugin now runs automatically on import. To
-  disable this, unset the ``auto`` config flag.
+
+And countless little improvements and fixes:
+
 * Standard cover art in APEv2 metadata is now supported. Thanks to Matthias
   Kiefer. :bug:`1042`
-* :doc:`/plugins/fetchart`: Art can now be searched for on the iTunes Store.
-  There's also a new ``sources`` config option that lets you choose exactly
-  where to look for images and in which order.
-* :doc:`/plugins/replaygain`: A new Python Audio Tools backend was added.
-  Thanks to Francesco Rubino. :bug:`1070`
-
-Fixes:
-
 * :doc:`/plugins/convert`: Does not crash when embedding cover art
   fails.
 * :doc:`/plugins/mpdstats`: Fix an error on start (introduced in the previous
@@ -49,8 +59,6 @@ Fixes:
   quantities (track numbers and durations), which was often confusing.
 * Date-based queries that are malformed (not parse-able) no longer crash
   beets and instead fail silently.
-* Slow queries, such as those over flexible attributes, should now be much
-  faster when used with certain commands---notably, the :doc:`/plugins/play`.
 * :doc:`/plugins/duplicates`: Emit an error when the ``checksum`` config
   option is set incorrectly.
 * The migration from pre-1.1, non-YAML configuration files has been removed.
