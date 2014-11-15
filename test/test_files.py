@@ -121,6 +121,20 @@ class MoveTest(_common.TestCase):
         self.assertEqual(os.path.dirname(self.i.path),
                          os.path.dirname(dest))
 
+    def test_link_arrives(self):
+        self.i.move(link=True)
+        self.assertExists(self.dest)
+        self.assertTrue(os.path.islink(self.dest))
+        self.assertEqual(os.readlink(self.dest), self.path)
+
+    def test_link_does_not_depart(self):
+        self.i.move(link=True)
+        self.assertExists(self.path)
+
+    def test_link_changes_path(self):
+        self.i.move(link=True)
+        self.assertEqual(self.i.path, util.normpath(self.dest))
+
 
 class HelperTest(_common.TestCase):
     def test_ancestry_works_on_file(self):

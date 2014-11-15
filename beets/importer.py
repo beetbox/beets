@@ -215,8 +215,8 @@ class ImportSession(object):
             iconfig['copy'] = False
             iconfig['link'] = False
         elif iconfig['link']:
+            iconfig['copy'] = False
             iconfig['move'] = False
-            iconfig['link'] = False
 
         # Only delete when copying.
         if not iconfig['copy']:

@@ -39,10 +39,10 @@ class AutotagStub(object):
     autotagger returns.
     """
 
-    NONE    = 'NONE'
-    IDENT   = 'IDENT'
-    GOOD    = 'GOOD'
-    BAD     = 'BAD'
+    NONE = 'NONE'
+    IDENT = 'IDENT'
+    GOOD = 'GOOD'
+    BAD = 'BAD'
     MISSING = 'MISSING'
     """Generate an album match for all but one track
     """
@@ -196,7 +196,7 @@ class ImportHelper(TestHelper):
 
     def _setup_import_session(self, import_dir=None, delete=False,
                               threaded=False, copy=True, singletons=False,
-                              move=False, autotag=True):
+                              move=False, autotag=True, link=False):
         config['import']['copy'] = copy
         config['import']['delete'] = delete
         config['import']['timid'] = True
@@ -205,6 +205,7 @@ class ImportHelper(TestHelper):
         config['import']['move'] = move
         config['import']['autotag'] = autotag
         config['import']['resume'] = False
+        config['import']['link'] = link
 
         self.importer = TestImportSession(
             self.lib, logfile=None, query=None,
@@ -320,6 +321,18 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
         self.assertExists(os.path.join(self.import_dir, 'the_album'))
         self.importer.run()
         self.assertNotExists(os.path.join(self.import_dir, 'the_album'))
+
+    def test_import_link_arrives(self):
+        config['import']['link'] = True
+        self.importer.run()
+        for mediafile in self.import_media:
+            filename = os.path.join(
+                self.libdir,
+                'Tag Artist', 'Tag Album', '%s.mp3' % mediafile.title
+            )
+            self.assertExists(filename)
+            self.assertTrue(os.path.islink(filename))
+            self.assertEqual(os.readlink(filename), mediafile.path)
 
 
 class ImportZipTest(unittest.TestCase, ImportHelper):
@@ -806,7 +819,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
 
     def test_add_album_for_different_artist_and_different_album(self):
         self.import_media[0].artist = "Artist B"
-        self.import_media[0].album  = "Album B"
+        self.import_media[0].album = "Album B"
         self.import_media[0].save()
 
         self.importer.run()
@@ -826,7 +839,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(artists, set(['Album Artist', 'Tag Artist']))
 
     def test_add_album_for_same_artist_and_different_album(self):
-        self.import_media[0].album  = "Album B"
+        self.import_media[0].album = "Album B"
         self.import_media[0].save()
 
         self.importer.run()
@@ -834,7 +847,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(albums, set(['Album B', 'Tag Album']))
 
     def test_add_album_for_same_album_and_different_artist(self):
-        self.import_media[0].artist  = "Artist B"
+        self.import_media[0].artist = "Artist B"
         self.import_media[0].save()
 
         self.importer.run()
@@ -843,7 +856,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
 
     def test_incremental(self):
         config['import']['incremental'] = True
-        self.import_media[0].album  = "Album B"
+        self.import_media[0].album = "Album B"
         self.import_media[0].save()
 
         self.importer.run()

@@ -580,13 +580,14 @@ class Item(LibModel):
 
         self._db._memotable = {}
 
-    def move(self, copy=False, basedir=None, with_album=True):
+    def move(self, copy=False, link=False, basedir=None, with_album=True):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
         field is updated to reflect the new location.
 
-        If copy is True, moving the file is copied rather than moved.
+        If `copy` is true, moving the file is copied rather than moved.
+        Similarly, `link` creates a symlink instead.
 
         basedir overrides the library base directory for the
         destination.
@@ -608,7 +609,7 @@ class Item(LibModel):
 
         # Perform the move and store the change.
         old_path = self.path
-        self.move_file(dest, copy)
+        self.move_file(dest, copy, link)
         self.store()
 
         # If this item is in an album, move its art.
@@ -846,7 +847,7 @@ class Album(LibModel):
             util.prune_dirs(os.path.dirname(old_art),
                             self._db.directory)
 
-    def move(self, copy=False, basedir=None):
+    def move(self, copy=False, link=False, basedir=None):
         """Moves (or copies) all items to their destination. Any album
         art moves along with them. basedir overrides the library base
         directory for the destination. The album is stored to the
@@ -861,10 +862,10 @@ class Album(LibModel):
         # Move items.
         items = list(self.items())
         for item in items:
-            item.move(copy, basedir=basedir, with_album=False)
+            item.move(copy, link, basedir=basedir, with_album=False)
 
         # Move art.
-        self.move_art(copy)
+        self.move_art(copy, link)
         self.store()
 
     def item_dir(self):
