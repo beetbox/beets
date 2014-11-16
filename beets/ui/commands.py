@@ -1119,8 +1119,7 @@ def remove_items(lib, query, album, delete):
                  len(items)
 
     # Show all the items.
-    for item in items:
-        ui.print_obj(item, lib, fmt)
+    ui.print_objs(items, lib, fmt)
 
     # Confirm with user.
     if not ui.input_yn(prompt, True):

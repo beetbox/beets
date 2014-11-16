@@ -16,8 +16,7 @@
 """
 from __future__ import absolute_import
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_obj
-from beets.util.functemplate import Template
+from beets.ui import Subcommand, decargs, print_objs
 import random
 from operator import attrgetter
 from itertools import groupby
@@ -29,7 +28,6 @@ def random_item(lib, opts, args):
         fmt = '$path'
     else:
         fmt = opts.format
-    template = Template(fmt) if fmt else None
 
     if opts.album:
         objs = list(lib.albums(query))
@@ -65,8 +63,7 @@ def random_item(lib, opts, args):
         number = min(len(objs), opts.number)
         objs = random.sample(objs, number)
 
-    for item in objs:
-        print_obj(item, lib, template)
+    print_objs(objs, lib, fmt)
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')

@@ -501,10 +501,7 @@ def print_obj(obj, lib, fmt=None):
     """
     album = isinstance(obj, library.Album)
     fmt = _pick_format(album, fmt)
-    if isinstance(fmt, Template):
-        template = fmt
-    else:
-        template = Template(fmt)
+    template = Template(fmt)
     print_(obj.evaluate_template(template))
 
 
@@ -521,11 +518,7 @@ def print_objs(objs, lib, fmt=None):
 
     album = isinstance(objs[0], library.Album)
     fmt = _pick_format(album, fmt)
-    if isinstance(fmt, Template):
-        template = fmt
-    else:
-        template = Template(fmt)
-
+    template = Template(fmt)
     for obj in objs:
         print_(obj.evaluate_template(template))
 
