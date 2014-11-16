@@ -472,19 +472,32 @@ def get_replacements():
 
 def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
-    falling back to config options and defaults.
+    falling back to config options and defaults. Apply edge marker.
     """
-    if fmt:
-        return fmt
     if album:
-        return config['list_format_album'].get(unicode)
+        config_fmt = config['list_format_album'].get(unicode)
     else:
-        return config['list_format_item'].get(unicode)
+        config_fmt = config['list_format_item'].get(unicode)
+
+    if fmt:
+        marker = config['format_edge_marker'].get(unicode)
+        if fmt.startswith(marker):
+            return config_fmt + fmt[len(marker):]
+        elif fmt.endswith(marker):
+            return fmt[:-len(marker)] + config_fmt
+        else:
+            return fmt
+    else:
+        return config_fmt
 
 
 def print_obj(obj, lib, fmt=None):
     """Print an Album or Item object. If `fmt` is specified, use that
     format string. Otherwise, use the configured template.
+
+    If given `fmt` ends with special edge marker (`|` by default),
+    prepend it with configured template. Appent configured template
+    to the end of `fmt` that starts with marker.
     """
     album = isinstance(obj, library.Album)
     fmt = _pick_format(album, fmt)
@@ -493,6 +506,28 @@ def print_obj(obj, lib, fmt=None):
     else:
         template = Template(fmt)
     print_(obj.evaluate_template(template))
+
+
+def print_objs(objs, lib, fmt=None):
+    """Print Albums or Items. If `fmt` is specified, use that
+    format string. Otherwise, use the configured template.
+
+    If given `fmt` ends with special edge marker (`|` by default),
+    prepend it with configured template. Appent configured template
+    to the end of `fmt` that starts with marker.
+    """
+    if len(objs) == 0:
+        return
+
+    album = isinstance(objs[0], library.Album)
+    fmt = _pick_format(album, fmt)
+    if isinstance(fmt, Template):
+        template = fmt
+    else:
+        template = Template(fmt)
+
+    for obj in objs:
+        print_(obj.evaluate_template(template))
 
 
 def term_width():

@@ -997,6 +997,58 @@ class CompletionTest(_common.TestCase):
             self.fail('test/test_completion.sh did not execute properly')
 
 
+class PrintObjTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = library.Library(':memory:')
+        self.i = _common.item()
+        self.lib.add(self.i)
+
+        with capture_stdout() as stdout:
+            ui.print_obj(self.i, self.lib)
+        self.ref_out = stdout.getvalue()
+        self.edge_marker = config['format_edge_marker'].get(unicode)
+        self.meth = getattr(ui, 'print_obj')
+        self.arg1 = self.i
+
+    def test_empty_format(self):
+        with capture_stdout() as stdout:
+            self.meth(self.arg1, self.lib, '')
+        self.assertEqual(self.ref_out, stdout.getvalue())
+
+    def test_one_space_format(self):
+        with capture_stdout() as stdout:
+            self.meth(self.arg1, self.lib, ' ')
+        self.assertEqual(u' \n', stdout.getvalue())
+
+    def test_edge_marker_on_the_left(self):
+        with capture_stdout() as stdout:
+            self.meth(self.arg1, self.lib, u'test' + self.edge_marker)
+        self.assertEqual(u'test' + self.ref_out, stdout.getvalue())
+
+    def test_edge_marker_on_the_right(self):
+        with capture_stdout() as stdout:
+            self.meth(self.arg1, self.lib, self.edge_marker + u'test')
+        self.assertEqual(self.ref_out.strip() + u'test\n', stdout.getvalue())
+
+    def test_edge_marker_in_the_middle(self):
+        with capture_stdout() as stdout:
+            self.meth(self.arg1, self.lib, u'a' + self.edge_marker + u'b')
+        self.assertEqual(u'a' + self.edge_marker + u'b\n', stdout.getvalue())
+
+
+class PrintObjsTest(PrintObjTest):
+    def setUp(self):
+        super(PrintObjsTest, self).setUp()
+        self.meth = getattr(ui, 'print_objs')
+        self.arg1 = [self.i]
+        pass
+
+    def test_prints_many(self):
+        with capture_stdout() as stdout:
+            ui.print_objs([self.i, self.i], self.lib)
+        self.assertEqual(self.ref_out + self.ref_out, stdout.getvalue())
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

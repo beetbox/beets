@@ -34,7 +34,6 @@ from beets import plugins
 from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path
-from beets.util.functemplate import Template
 from beets import library
 from beets import config
 from beets.util.confit import _package_path
@@ -953,13 +952,10 @@ def list_items(lib, query, album, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
-    tmpl = Template(ui._pick_format(album, fmt))
     if album:
-        for album in lib.albums(query):
-            ui.print_obj(album, lib, tmpl)
+        ui.print_objs(lib.albums(query), lib, fmt)
     else:
-        for item in lib.items(query):
-            ui.print_obj(item, lib, tmpl)
+        ui.print_objs(lib.items(query), lib, fmt)
 
 
 def list_func(lib, opts, args):
