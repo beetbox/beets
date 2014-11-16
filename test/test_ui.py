@@ -1027,8 +1027,8 @@ class PrintObjTest(unittest.TestCase):
 
     def test_edge_marker_on_the_right(self):
         with capture_stdout() as stdout:
-            self.meth(self.arg1, self.lib, self.edge_marker + u'test')
-        self.assertEqual(self.ref_out.strip() + u'test\n', stdout.getvalue())
+            self.meth(self.arg1, self.lib, self.edge_marker + u' test')
+        self.assertEqual(self.ref_out.strip() + u' test\n', stdout.getvalue())
 
     def test_edge_marker_in_the_middle(self):
         with capture_stdout() as stdout:
