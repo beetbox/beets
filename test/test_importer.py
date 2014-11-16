@@ -382,7 +382,7 @@ class ImportRarTest(ImportZipTest):
         return os.path.join(_common.RSRC, 'archive.rar')
 
 
-@unittest.skip('Implment me!')
+@unittest.skip('Implement me!')
 class ImportPasswordRarTest(ImportZipTest):
 
     def create_archive(self):
