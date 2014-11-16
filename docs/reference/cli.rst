@@ -190,9 +190,11 @@ be useful for piping into other Unix commands (such as `xargs`_). Similarly, the
 ``-f`` option lets you specify a specific format with which to print every album
 or track. This uses the same template syntax as beets' :doc:`path formats
 <pathformat>`. For example, the command ``beet ls -af '$album: $tracktotal'
-beatles`` prints out the number of tracks on each Beatles album. In Unix shells,
-remember to enclose the template argument in single quotes to avoid environment
-variable expansion.
+beatles`` prints out the number of tracks on each Beatles album. The ``|``
+symbol at the edge of format string is a shortcut to your default format. For
+example, ``-f '$year |'`` will prepend familiar output lines with release year.
+In Unix shells, remember to enclose the template argument in single quotes to
+avoid environment variable expansion.
 
 .. _xargs: http://en.wikipedia.org/wiki/Xargs
 
