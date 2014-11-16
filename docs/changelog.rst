@@ -103,6 +103,8 @@ And countless little improvements and fixes:
 * Fix an issue where modifying an album's field without actually changing it
   would not update the corresponding tracks to bring differing tracks back in
   line with the album. :bug:`856`
+* :doc:`/plugins/echonest`: When communicating with the Echo Nest servers
+  fails repeatedly, log an error instead of exiting. :bug:`1096`
 
 
 1.3.8 (September 17, 2014)
