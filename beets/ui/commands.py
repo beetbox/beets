@@ -977,7 +977,7 @@ list_cmd.parser.add_option(
 )
 list_cmd.parser.add_option(
     '-f', '--format', action='store',
-    help='print with custom format', default=None
+    help='print with custom format (try -f \'$year |\')', default=None
 )
 list_cmd.func = list_func
 default_commands.append(list_cmd)
