@@ -480,10 +480,10 @@ def _pick_format(album, fmt=None):
         config_fmt = config['list_format_item'].get(unicode)
 
     if fmt:
-        marker = config['format_edge_marker'].get(unicode)
-        if fmt.startswith(marker):
+        marker = config['format_edge_marker'].get(unicode).strip()
+        if len(marker) and fmt.startswith(marker):
             return config_fmt + fmt[len(marker):]
-        elif fmt.endswith(marker):
+        elif len(marker) and fmt.endswith(marker):
             return fmt[:-len(marker)] + config_fmt
         else:
             return fmt

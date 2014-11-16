@@ -1003,12 +1003,20 @@ class PrintObjTest(unittest.TestCase):
         self.i = _common.item()
         self.lib.add(self.i)
 
+        self.marker = config['format_edge_marker'].get(unicode)
+
         with capture_stdout() as stdout:
             ui.print_obj(self.i, self.lib)
         self.ref_out = stdout.getvalue()
-        self.edge_marker = config['format_edge_marker'].get(unicode)
+        # self.edge_marker = config['format_edge_marker'].get(unicode)
         self.meth = getattr(ui, 'print_obj')
         self.arg1 = self.i
+
+    def tearDown(self):
+        config['format_edge_marker'] = self.marker
+
+    def edge_marker(self):
+        return self.marker
 
     def test_empty_format(self):
         with capture_stdout() as stdout:
@@ -1022,18 +1030,25 @@ class PrintObjTest(unittest.TestCase):
 
     def test_edge_marker_on_the_left(self):
         with capture_stdout() as stdout:
-            self.meth(self.arg1, self.lib, u'test' + self.edge_marker)
+            self.meth(self.arg1, self.lib, u'test' + self.edge_marker())
         self.assertEqual(u'test' + self.ref_out, stdout.getvalue())
 
     def test_edge_marker_on_the_right(self):
         with capture_stdout() as stdout:
-            self.meth(self.arg1, self.lib, self.edge_marker + u' test')
+            self.meth(self.arg1, self.lib, self.edge_marker() + u' test')
         self.assertEqual(self.ref_out.strip() + u' test\n', stdout.getvalue())
 
     def test_edge_marker_in_the_middle(self):
         with capture_stdout() as stdout:
-            self.meth(self.arg1, self.lib, u'a' + self.edge_marker + u'b')
-        self.assertEqual(u'a' + self.edge_marker + u'b\n', stdout.getvalue())
+            self.meth(self.arg1, self.lib, u'a' + self.edge_marker() + u'b')
+        self.assertEqual(u'a' + self.edge_marker() + u'b\n', stdout.getvalue())
+
+    def test_empty_strings_option_in_config(self):
+        for mark in ['', ' ', '\t', ' \t ']:
+            config['format_edge_marker'] = mark
+            with capture_stdout() as stdout:
+                self.meth(self.arg1, self.lib, u'a' + mark)
+            self.assertEqual(u'a' + mark + '\n', stdout.getvalue())
 
 
 class PrintObjsTest(PrintObjTest):
