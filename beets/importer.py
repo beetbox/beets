@@ -498,24 +498,22 @@ class ImportTask(object):
         if session.config['incremental']:
             self.save_history()
 
-        if not self.skip:
-            self.cleanup(copy=session.config['copy'],
-                         delete=session.config['delete'],
-                         move=session.config['move'])
-            self._emit_imported(session.lib)
+        self.cleanup(copy=session.config['copy'],
+                     delete=session.config['delete'],
+                     move=session.config['move'])
 
-        if isinstance(self, ArchiveImportTask):
-            self.cleanup()
+        if not self.skip:
+            self._emit_imported(session.lib)
 
     def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths.
         """
         # FIXME Maybe the keywords should be task properties.
 
-        # FIXME This shouldn't be here. Skipping should be handled in
-        # the stages.
+        # Do not delete any files or prune directories when skipping.
         if self.skip:
             return
+
         items = self.imported_items()
 
         # When copying and deleting originals, delete old files.
