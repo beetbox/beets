@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.9 (in development)
-----------------------
+1.3.9 (November 17, 2014)
+-------------------------
 
 This release adds two new standard plugins to beets: one for synchronizing
 Last.fm listening data and one for integrating with Linux desktops. And at
