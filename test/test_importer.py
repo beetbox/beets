@@ -334,6 +334,38 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
             self.assertTrue(os.path.islink(filename))
             self.assertEqual(os.readlink(filename), mediafile.path)
 
+class RmTempTest(unittest.TestCase, ImportHelper):
+    """Tests that temporarily extracted archives are properly removed
+    after usage.
+    """
+
+    def setUp(self):
+        self.setup_beets()
+        self.want_resume = False
+        self.config['incremental'] = False
+        self._old_home = None
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_rm(self):
+        zip_path = self.create_archive()
+        archive_task = importer.ArchiveImportTask(zip_path)
+        archive_task.extract()
+        tmp_path = archive_task.toppath
+        self._setup_import_session(autotag=False, import_dir=tmp_path)
+        self.assertTrue(os.path.exists(tmp_path))
+        archive_task.finalize(self)
+        self.assertFalse(os.path.exists(tmp_path))
+
+    def create_archive(self):
+        (handle, path) = mkstemp(dir=self.temp_dir)
+        os.close(handle)
+        archive = ZipFile(path, mode='w')
+        archive.write(os.path.join(_common.RSRC, 'full.mp3'),
+                      'full.mp3')
+        archive.close()
+        return path
 
 class ImportZipTest(unittest.TestCase, ImportHelper):
 
