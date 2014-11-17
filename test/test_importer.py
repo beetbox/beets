@@ -369,14 +369,6 @@ class RmTempTest(unittest.TestCase, ImportHelper):
         archive_task.finalize(self)
         self.assertFalse(os.path.exists(tmp_path))
 
-    def create_archive(self):
-        (handle, path) = mkstemp(dir=self.temp_dir)
-        os.close(handle)
-        archive = ZipFile(path, mode='w')
-        archive.write(os.path.join(_common.RSRC, 'full.mp3'),
-                      'full.mp3')
-        archive.close()
-        return path
 
 class ImportZipTest(unittest.TestCase, ImportHelper):
 
