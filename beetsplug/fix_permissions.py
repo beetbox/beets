@@ -4,9 +4,9 @@ Fixes file permissions after the file gets written on import.
 Put something like the following in your config.yaml to configure:
 
     fix_permissions:
-            file: 0644
+            file: '644'
 
-IMPORTANT: Write it exactly in this format. Else you could run into problems.
+IMPORTANT: Needs to be a string.
 '''
 
 import os
@@ -16,7 +16,7 @@ from beets.plugins import BeetsPlugin
 
 def check_permissions(path, permission):
     ''' checks the permissions on the written path '''
-    return oct(os.stat(path).st_mode & 0777) == oct(permission)
+    return oct(os.stat(path).st_mode & 0o777) == oct(permission)
 
 
 class FixPermissions(BeetsPlugin):
@@ -26,7 +26,10 @@ class FixPermissions(BeetsPlugin):
 
 @FixPermissions.listen('after_write')
 def fix_permissions(path):
-    file_perm = config['fix_permissions'].get()['file']
+    ''' running the permission fixer '''
+
+    # getting the config
+    file_perm = int(config['fix_permissions'].get()['file'], 8)
 
     # doing the permission magic
     os.chmod(path, file_perm)
