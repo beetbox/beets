@@ -177,7 +177,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         else:
             # If we exited the loop without breaking, then we used up all
             # our allotted retries.
-            raise ui.UserError(u'echonest request failed repeatedly')
+            log.error(u'echonest request failed repeatedly')
             return None
         return result
 

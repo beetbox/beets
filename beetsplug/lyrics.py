@@ -393,7 +393,7 @@ def fetch_google(artist, title):
     if 'items' in data.keys():
         for item in data['items']:
             urlLink = item['link']
-            urlTitle = item['title']
+            urlTitle = item.get('title', u'')
             if not is_page_candidate(urlLink, urlTitle, title, artist):
                 continue
 

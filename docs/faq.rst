@@ -250,11 +250,11 @@ to see which version added the plugin. (You can type ``beet version`` to
 check which version of beets you have installed.)
 
 If you want to live on the bleeding edge and use the latest source
-version of beets, you can check out the source (see the next question).
+version of beets, you can check out the source (see :ref:`the relevant
+question <src>`).
 
 To see the beets documentation for your version (and avoid confusion
-with new features in trunk), select your version from the
-left-hand sidebar (or the buttons at the bottom of the window).
+with new features in trunk), select your version from the menu in the sidebar.
 
 
 .. _kill:
