@@ -107,6 +107,8 @@ And countless little improvements and fixes:
   fails repeatedly, log an error instead of exiting. :bug:`1096`
 * :doc:`/plugins/lyrics`: Avoid an error when the Google source returns a
   result without a title. Thanks to Alberto Leal. :bug:`1097`
+* Importing an archive will no longer leave temporary files behind in
+  ``/tmp``. Thanks to :user`multikatt`. :bug:`1067`, :bug:`1091`
 
 
 1.3.8 (September 17, 2014)
