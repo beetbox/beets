@@ -175,7 +175,19 @@ def parse_sorted_query(model_cls, parts, query_prefixes={}, sort_prefixes={},
     query_parts = []
     sort_parts = []
     for part in parts:
-        if (u'+' in part or u'-' in part) and u':' not in part:
+        plusminus_index = (part.find(u'+') + 1 or part.find(u'-') + 1) - 1
+        if plusminus_index == -1:  # early query token desicion
+            query_parts.append(part)
+            continue
+
+        # Match term after plus or minus against sort prefixes
+        valid_sort_prefix = False
+        for prefix in sort_prefixes.keys():
+            if part[plusminus_index + 1:].startswith(prefix):
+                valid_sort_prefix = True
+                break
+
+        if valid_sort_prefix:
             sort_parts.append(part)
         else:
             query_parts.append(part)

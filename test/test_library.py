@@ -21,6 +21,7 @@ import shutil
 import re
 import unicodedata
 import sys
+from mock import patch
 
 import _common
 from _common import unittest
@@ -1097,12 +1098,37 @@ class ItemReadTest(unittest.TestCase):
 
 
 class ParseQueryStringTest(unittest.TestCase):
-    def test_plus_and_minus_in_field_name(self):
-        for field in ['foo+bar:7', 'foo-bar:7']:
-            query, sort = beets.library.parse_query_string(field,
-                                                           beets.library.Item)
-            self.assertEqual(query.subqueries[0].field, field[:7])
+    class CustomTestSort():
+        def __init__(self, model_cls, field, ascending, value):
+            self.model_cls = model_cls
+            self.field = field
+            self.ascending = ascending
+            self.value = value
+
+    def pqs(self, q, cls):
+        return beets.library.parse_query_string(q, cls)
+
+    def test_colon_token_is_query(self):
+        for token in ['foo:bar', 'foo::bar', 'foo+bar:baz', 'foo-bar:baz']:
+            query, sort = self.pqs(token, beets.library.Item)
+            self.assertNotEqual(type(query.subqueries[0]).__name__,
+                                'TrueQuery')
             self.assertEqual(type(sort).__name__, 'NullSort')
+
+    @patch('beets.plugins.sorts', return_value={'^': CustomTestSort})
+    def test_no_colon_token_is_query(self, s):
+        for token in ['foo', 'bar', 'foo-bar', 'foo-~bar']:
+            query, sort = self.pqs(token, beets.library.Item)
+            self.assertNotEqual(type(query.subqueries[0]).__name__,
+                                'TrueQuery')
+            self.assertEqual(type(sort).__name__, 'NullSort')
+
+    @patch('beets.plugins.sorts', return_value={'^': CustomTestSort})
+    def test_plus_or_minus_with_valid_prefix_is_sort_token(self, s):
+        for token in ['foo+^', 'foo+^bar', 'foo-^bar']:
+            query, sort = self.pqs(token, beets.library.Item)
+            self.assertEqual(type(query.subqueries[0]).__name__, 'TrueQuery')
+            self.assertNotEqual(type(sort).__name__, 'NullSort')
 
 
 def suite():
