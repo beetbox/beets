@@ -5,10 +5,10 @@ Changelog
 ----------------------
 
 This release adds two new standard plugins to beets: one for synchronizing
-Last.fm listening data and one for integrating with Linux desktops. At long
-last, imports can now create symlinks to music files. We also gained the
-ability to search for album art on the iTunes store and a new way to compute
-ReplayGain levels.
+Last.fm listening data and one for integrating with Linux desktops. And at
+long last, imports can now create symbolic links to music files instead of
+copying or moving them. We also gained the ability to search for album art on
+the iTunes Store and a new way to compute ReplayGain levels.
 
 The major new features are:
 
@@ -46,12 +46,15 @@ There are also core improvements and other substantial additions:
   volume. Thanks to IndiGit.
 * :doc:`/plugins/embedart`: A new ``ifempty`` config option lets you only
   embed album art when no album art is present. Thanks to kerobaros.
+* :doc:`/plugins/discogs`: Authenticate with the Discogs server. The plugin
+  now requires a Discogs account due to new API restrictions. Thanks to
+  :user:`multikatt`. :bug:`1027`, :bug:`1040`
 
 And countless little improvements and fixes:
 
 * Standard cover art in APEv2 metadata is now supported. Thanks to Matthias
   Kiefer. :bug:`1042`
-* :doc:`/plugins/convert`: Does not crash when embedding cover art
+* :doc:`/plugins/convert`: Avoid a crash when embedding cover art
   fails.
 * :doc:`/plugins/mpdstats`: Fix an error on start (introduced in the previous
   version). Thanks to Zach Denton.
@@ -74,13 +77,10 @@ And countless little improvements and fixes:
   during the import process.
 * Fix a crash in the autotagger when files had only whitespace in their
   metadata.
-* :doc:`/plugins/discogs`: Authenticate with the Discogs server. The plugin
-  now requires a Discogs account due to new API restrictions. Thanks to
-  :user:`multikatt`. :bug:`1027`, :bug:`1040`
 * :doc:`/plugins/play`: Fix a potential crash when the command outputs special
   characters. :bug:`1041`
-* :doc:`/plugins/web`: Typed queries are now treated as separate query
-  components. :bug:`1045`
+* :doc:`/plugins/web`: Queries typed into the search field are now treated as
+  separate query components. :bug:`1045`
 * Date tags that use slashes instead of dashes as separators are now
   interpreted correctly. And WMA (ASF) files now map the ``comments`` field to
   the "Description" tag (in addition to "WM/Comments"). Thanks to Matthias
@@ -108,7 +108,7 @@ And countless little improvements and fixes:
 * :doc:`/plugins/lyrics`: Avoid an error when the Google source returns a
   result without a title. Thanks to Alberto Leal. :bug:`1097`
 * Importing an archive will no longer leave temporary files behind in
-  ``/tmp``. Thanks to :user`multikatt`. :bug:`1067`, :bug:`1091`
+  ``/tmp``. Thanks to :user:`multikatt`. :bug:`1067`, :bug:`1091`
 
 
 1.3.8 (September 17, 2014)
