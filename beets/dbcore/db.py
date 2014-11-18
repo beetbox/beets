@@ -373,17 +373,20 @@ class Model(object):
                 )
 
         self.clear_dirty()
+        self._db._identity_maps[self.__class__.__name__][self.id] = self
 
     def load(self):
         """Refresh the object's metadata from the library database.
         """
         self._check_db()
+        self._db._identity_maps[self.__class__.__name__].pop(self.id, None)
         stored_obj = self._db._get(type(self), self.id)
         assert stored_obj is not None, "object {0} not in DB".format(self.id)
         self._values_fixed = {}
         self._values_flex = {}
         self.update(dict(stored_obj))
         self.clear_dirty()
+        self._db._identity_maps[self.__class__.__name__][self.id] = self
 
     def remove(self):
         """Remove the object's associated rows from the database.
@@ -398,6 +401,7 @@ class Model(object):
                 'DELETE FROM {0} WHERE entity_id=?'.format(self._flex_table),
                 (self.id,)
             )
+        self._db._identity_maps[self.__class__.__name__].pop(self.id, None)
 
     def add(self, db=None):
         """Add the object to the library database. This object must be
@@ -688,6 +692,11 @@ class Database(object):
         # is active at a time.
         self._db_lock = threading.Lock()
 
+        # Prepare empty identity maps for registered models.
+        self._identity_maps = {}
+        for model in self._models:
+            self._identity_maps[model.__name__] = {}
+
         # Set up database schema.
         for model_cls in self._models:
             self._make_table(model_cls._table, model_cls._fields)
@@ -817,4 +826,9 @@ class Database(object):
         """Get a Model object by its id or None if the id does not
         exist.
         """
-        return self._fetch(model_cls, MatchQuery('id', id)).get()
+        if id in self._identity_maps[model_cls.__name__]:
+            return self._identity_maps[model_cls.__name__][id]
+        else:
+            obj = self._fetch(model_cls, MatchQuery('id', id)).get()
+            self._identity_maps[model_cls.__name__][id] = obj
+            return obj

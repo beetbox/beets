@@ -954,7 +954,7 @@ class PathStringTest(_common.TestCase):
             "update albums set artpath=? where id=?",
             (u'somep\xe1th', alb.id)
         )
-        alb = self.lib.get_album(alb.id)
+        alb.load()
         self.assert_(isinstance(alb.artpath, str))
 
 
