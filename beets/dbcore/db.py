@@ -373,20 +373,20 @@ class Model(object):
                 )
 
         self.clear_dirty()
-        self._db._identity_maps[self.__class__.__name__][self.id] = self
+        self._identity_map()[self.id] = self
 
     def load(self):
         """Refresh the object's metadata from the library database.
         """
         self._check_db()
-        self._db._identity_maps[self.__class__.__name__].pop(self.id, None)
+        self._identity_map().pop(self.id, None)
         stored_obj = self._db._get(type(self), self.id)
         assert stored_obj is not None, "object {0} not in DB".format(self.id)
         self._values_fixed = {}
         self._values_flex = {}
         self.update(dict(stored_obj))
         self.clear_dirty()
-        self._db._identity_maps[self.__class__.__name__][self.id] = self
+        self._identity_map()[self.id] = self
 
     def remove(self):
         """Remove the object's associated rows from the database.
@@ -397,11 +397,11 @@ class Model(object):
                 'DELETE FROM {0} WHERE id=?'.format(self._table),
                 (self.id,)
             )
+            self._identity_map().pop(self.id, None)
             tx.mutate(
                 'DELETE FROM {0} WHERE entity_id=?'.format(self._flex_table),
                 (self.id,)
             )
-        self._db._identity_maps[self.__class__.__name__].pop(self.id, None)
 
     def add(self, db=None):
         """Add the object to the library database. This object must be
@@ -427,6 +427,13 @@ class Model(object):
                 if self[key] is not None:
                     self._dirty.add(key)
             self.store()
+
+    # Identity map accessor
+
+    def _identity_map(self):
+        """ Return identity map dict for this model class.
+        """
+        return self._db._identity_maps[self.__class__.__name__]
 
     # Formatting and templating.
 
@@ -824,11 +831,12 @@ class Database(object):
 
     def _get(self, model_cls, id):
         """Get a Model object by its id or None if the id does not
-        exist.
+        exist. Get object from identity_map if possible.
         """
-        if id in self._identity_maps[model_cls.__name__]:
-            return self._identity_maps[model_cls.__name__][id]
+        identity_map = self._identity_maps[model_cls.__name__]
+        if id in identity_map:
+            return identity_map[id]
         else:
             obj = self._fetch(model_cls, MatchQuery('id', id)).get()
-            self._identity_maps[model_cls.__name__][id] = obj
+            identity_map[id] = obj
             return obj
