@@ -60,6 +60,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    missing
    mpdstats
    mpdupdate
+   permissions
    play
    random
    replaygain
