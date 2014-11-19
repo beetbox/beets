@@ -43,12 +43,12 @@ def main(argv=None):
         argv = sys.argv
 
     for s in test_lyrics.GOOGLE_SOURCES + test_lyrics.DEFAULT_SOURCES:
+        print 'Fetching sample from %s' % s['url']
         url = s['url'] + s['path']
         fn = test_lyrics.url_to_filename(url)
         if not os.path.isfile(fn):
             html = requests.get(url).text
             with safe_open_w(fn) as f:
-                print 'Writing %s' % fn
                 f.write(html.encode('utf8'))
 
 if __name__ == "__main__":
