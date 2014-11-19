@@ -9,6 +9,16 @@ from beets import config, util
 from beets.plugins import BeetsPlugin
 
 
+def convert_perm(perm):
+    """If the perm is a int it will first convert it to a string and back
+    to an oct int. Else it just converts it to oct.
+    """
+    if isinstance(perm, int):
+        return int(str(perm), 8)
+    else:
+        return int(perm, 8)
+
+
 def check_permissions(path, permission):
     """Checks the permissions of a path.
     """
@@ -29,15 +39,11 @@ class Permissions(BeetsPlugin):
 def permissions(path):
     """Running the permission fixer.
     """
-    # Getting the config
+    # Getting the config.
     file_perm = config['permissions']['file'].get()
 
-    # If the config is a int it will first convert it to a string and back
-    # to an oct int. Else it just converts it to oct.
-    if isinstance(file_perm, int):
-        file_perm = int(str(file_perm), 8)
-    else:
-        file_perm = int(file_perm, 8)
+    # Converts file permissions to oct.
+    file_perm = convert_perm(file_perm)
 
     # Changing permissions on the path.
     os.chmod(util.bytestring_path(path), file_perm)
