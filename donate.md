@@ -18,6 +18,10 @@ organization software. They need support more than I do.
 
 ## Bitcoin
 
+<!-- coinbase tip button -->
+<div class="cb-tip-button" data-content-location="http://beets.radbox.org" data-href="//www.coinbase.com/tip_buttons/show_tip" data-to-user-id="532ce1f562812e11390002e8"></div>
+<script>!function(d,s,id) {var js,cjs=d.getElementsByTagName(s)[0],e=d.getElementById(id);if(e){return;}js=d.createElement(s);js.id=id;js.src="https://www.coinbase.com/assets/tips.js";cjs.parentNode.insertBefore(js,cjs);}(document, 'script', 'coinbase-tips');</script>
+
 You can send Bitcoin donations to [1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo](bitcoin:1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo). Or you might prefer to donate using [Coinbase][]:
 
 <a class="coinbase-button" data-code="6e3e345d83540da9fddb4473386af9b9" data-button-style="custom_large" href="https://coinbase.com/checkouts/6e3e345d83540da9fddb4473386af9b9">Donate Bitcoins</a><script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
