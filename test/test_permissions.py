@@ -1,3 +1,5 @@
+"""Tests for the 'permissions' plugin.
+"""
 from _common import unittest
 from helper import TestHelper
 from beetsplug.permissions import check_permissions, convert_perm
@@ -22,7 +24,7 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         config_perm = self.config['permissions']['file'].get()
         config_perm = convert_perm(config_perm)
 
-        assert check_permissions(item.path, config_perm)
+        self.assertTrue(check_permissions(item.path, config_perm))
 
 
 def suite():

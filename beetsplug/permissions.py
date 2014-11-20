@@ -35,8 +35,8 @@ class Permissions(BeetsPlugin):
         })
 
 
-@Permissions.listen('after_write')
-def permissions(path):
+@Permissions.listen('item_copied')
+def permissions(item, source, destination):
     """Running the permission fixer.
     """
     # Getting the config.
@@ -45,10 +45,11 @@ def permissions(path):
     # Converts file permissions to oct.
     file_perm = convert_perm(file_perm)
 
-    # Changing permissions on the path.
-    os.chmod(util.bytestring_path(path), file_perm)
+    # Changing permissions on the destination path.
+    os.chmod(util.bytestring_path(destination), file_perm)
 
-    # Checks if the path has the permissions configured.
-    if not check_permissions(util.bytestring_path(path), file_perm):
-        message = 'There was a problem setting permission on {}'.format(path)
+    # Checks if the destination path has the permissions configured.
+    if not check_permissions(util.bytestring_path(destination), file_perm):
+        message = 'There was a problem setting permission on {}'.format(
+            destination)
         print(message)
