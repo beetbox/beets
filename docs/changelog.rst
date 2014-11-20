@@ -4,7 +4,8 @@ Changelog
 1.3.10 (in development)
 -----------------------
 
-Changelog goes here!
+* A new :doc:`/plugins/permissions` makes it easy to fix permissions on music
+  files as they are imported. Thanks to :user:`xsteadfastx`. :bug:`1098`
 
 
 1.3.9 (November 17, 2014)
