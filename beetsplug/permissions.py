@@ -35,6 +35,7 @@ class Permissions(BeetsPlugin):
         })
 
 
+@Permissions.listen('item_moved')
 @Permissions.listen('item_copied')
 def permissions(item, source, destination):
     """Running the permission fixer.
