@@ -168,7 +168,13 @@ def itunes_art(album):
     """
     search_string = (album.albumartist + ' ' + album.album).encode('utf-8')
     try:
-        itunes_album = itunes.search_album(search_string)[0]
+        # Isolate bugs in the iTunes library while searching.
+        try:
+            itunes_album = itunes.search_album(search_string)[0]
+        except Exception as exc:
+            log.debug('fetchart: iTunes search failed: {0}'.format(exc))
+            return
+
         if itunes_album.get_artwork()['100']:
             small_url = itunes_album.get_artwork()['100']
             big_url = small_url.replace('100x100', '1200x1200')
