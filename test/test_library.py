@@ -459,6 +459,46 @@ class DestinationTest(_common.TestCase):
         self.i.title = u'\u201c\u00f6\u2014\u00cf\u201d'
         self.assertEqual(self.i.destination(), np('lib/qo--Iq'))
 
+    def test_destination_with_replacements(self):
+        self.lib.directory = 'base'
+        self.lib.replacements = [(re.compile(ur'a'), u'e')]
+        self.lib.path_formats = [('default', '$album/$title')]
+        self.i.title = 'foo'
+        self.i.album = 'bar'
+        self.assertEqual(self.i.destination(),
+                         np('base/ber/foo'))
+
+    @unittest.skip('unimplemented: #359')
+    def test_sanitize_empty_component(self):
+        with _common.platform_posix():
+            p = util.sanitize_path(u'foo//bar', [
+                (re.compile(ur'^$'), u'_'),
+            ])
+        self.assertEqual(p, u'foo/_/bar')
+
+    @unittest.skip('unimplemented: #359')
+    def test_destination_with_empty_component(self):
+        self.lib.directory = 'base'
+        self.lib.replacements = [(re.compile(ur'^$'), u'_')]
+        self.lib.path_formats = [('default', '$album/$artist/$title')]
+        self.i.title = 'three'
+        self.i.artist = ''
+        self.i.albumartist = ''
+        self.i.album = 'one'
+        self.assertEqual(self.i.destination(),
+                         np('base/one/_/three'))
+
+    @unittest.skip('unimplemented: #359')
+    def test_destination_with_empty_final_component(self):
+        self.lib.directory = 'base'
+        self.lib.replacements = [(re.compile(ur'^$'), u'_')]
+        self.lib.path_formats = [('default', '$album/$title')]
+        self.i.title = ''
+        self.i.album = 'one'
+        self.i.path = 'foo.mp3'
+        self.assertEqual(self.i.destination(),
+                         np('base/one/_.mp3'))
+
 
 class ItemFormattedMappingTest(_common.LibTestCase):
     def test_formatted_item_value(self):
