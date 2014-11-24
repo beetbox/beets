@@ -202,8 +202,6 @@ class TestHelper(object):
         """
         # FIXME this should eventually be handled by a plugin manager
         beets.config['plugins'] = []
-        for plugin in beets.plugins._classes:
-            plugin.listeners = None
         beets.plugins._classes = set()
         beets.plugins._instances = {}
         Item._types = {}

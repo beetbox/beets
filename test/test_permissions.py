@@ -15,6 +15,7 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
 
     def tearDown(self):
         self.teardown_beets()
+        self.unload_plugins()
 
     def test_permissions_on_album_imported(self):
         self.importer = self.create_importer()
