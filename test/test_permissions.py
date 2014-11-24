@@ -15,9 +15,8 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
 
     def tearDown(self):
         self.teardown_beets()
-        self.unload_plugins()
 
-    def test_perm(self):
+    def test_permissions_on_album_imported(self):
         self.importer = self.create_importer()
         self.importer.run()
         item = self.lib.items().get()
@@ -25,6 +24,18 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         config_perm = convert_perm(config_perm)
 
         self.assertTrue(check_permissions(item.path, config_perm))
+        self.assertFalse(check_permissions(item.path, convert_perm(644)))
+
+    def test_permissions_on_item_imported(self):
+        self.config['import']['singletons'] = True
+        self.importer = self.create_importer()
+        self.importer.run()
+        item = self.lib.items().get()
+        config_perm = self.config['permissions']['file'].get()
+        config_perm = convert_perm(config_perm)
+
+        self.assertTrue(check_permissions(item.path, config_perm))
+        self.assertFalse(check_permissions(item.path, convert_perm(644)))
 
 
 def suite():

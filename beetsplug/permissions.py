@@ -35,9 +35,9 @@ class Permissions(BeetsPlugin):
         })
 
 
-@Permissions.listen('item_moved')
-@Permissions.listen('item_copied')
-def permissions(item, source, destination):
+@Permissions.listen('item_imported')
+@Permissions.listen('album_imported')
+def permissions(lib, item=None, album=None):
     """Running the permission fixer.
     """
     # Getting the config.
@@ -46,11 +46,21 @@ def permissions(item, source, destination):
     # Converts file permissions to oct.
     file_perm = convert_perm(file_perm)
 
-    # Changing permissions on the destination path.
-    os.chmod(util.bytestring_path(destination), file_perm)
+    # Create chmod_queue.
+    chmod_queue = []
+    if item:
+        chmod_queue.append(item.path)
+    elif album:
+        for album_item in album.items():
+            chmod_queue.append(album_item.path)
 
-    # Checks if the destination path has the permissions configured.
-    if not check_permissions(util.bytestring_path(destination), file_perm):
-        message = 'There was a problem setting permission on {}'.format(
-            destination)
-        print(message)
+    # Setting permissions for every path in the queue.
+    for path in chmod_queue:
+        # Changing permissions on the destination path.
+        os.chmod(util.bytestring_path(path), file_perm)
+
+        # Checks if the destination path has the permissions configured.
+        if not check_permissions(util.bytestring_path(path), file_perm):
+            message = 'There was a problem setting permission on {}'.format(
+                path)
+            print(message)
