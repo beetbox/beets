@@ -1529,13 +1529,6 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         self.importer.run()
         self.assertEqual(self._item().added, 4747.0)
 
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
-
 class ImportEnumerateOnlyTest(_common.TestCase, ImportHelper):
     """ Test the enumerate only commandline option
     """
@@ -1574,4 +1567,11 @@ class ImportEnumerateOnlyTest(_common.TestCase, ImportHelper):
         self.assertEqual(len(lines), 2)
         self.assertEqual(lines[0], os.path.join(import_files[0], u'track_1.mp3'))
         self.assertEqual(lines[1], import_files[1])
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
 
