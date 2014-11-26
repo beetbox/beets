@@ -34,6 +34,7 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
+from beets.ui import print_
 from beets.util import pipeline, sorted_walk, ancestry
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
@@ -1068,6 +1069,7 @@ def read_tasks(session):
     import, yields single-item tasks instead.
     """
     skipped = 0
+    enumerate_only = session.config['enumerate_only'] if 'enumerate_only' in session.config else False
     for toppath in session.paths:
         # Determine if we want to resume import of the toppath
         session.ask_resume(toppath)
@@ -1101,10 +1103,11 @@ def read_tasks(session):
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
-        if archive_task is None:
-            yield task_factory.sentinel()
-        else:
-            yield archive_task
+        if not enumerate_only:
+            if archive_task is None:
+                yield task_factory.sentinel()
+            else:
+                yield archive_task
 
         if not imported:
             log.warn(u'No files imported from {0}'
