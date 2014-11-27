@@ -1340,8 +1340,9 @@ class MediaFile(object):
             raise FileTypeError(path)
         elif (type(self.mgfile).__name__ == 'M4A' or
               type(self.mgfile).__name__ == 'MP4'):
-            if hasattr(self.mgfile.info, 'codec'):
-                if self.mgfile.codec and self.mgfile.codec.startswith('alac'):
+            info = self.mgfile.info
+            if hasattr(info, 'codec'):
+                if info.codec and info.codec.startswith('alac'):
                     self.type = 'alac'
                 else:
                     self.type = 'aac'
