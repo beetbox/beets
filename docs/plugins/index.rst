@@ -62,6 +62,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    mpdupdate
    permissions
    play
+   plexupdate
    random
    replaygain
    rewrite
@@ -131,7 +132,12 @@ Interoperability
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
 * :doc:`play`: Play beets queries in your music player.
+* :doc:`plexupdate`: Automatically notifies `Plex`_ whenever the beets library
+  changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
+
+
+.. _Plex: http://plex.tv
 
 Miscellaneous
 -------------
