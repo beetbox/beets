@@ -442,3 +442,30 @@ Specifying types has several advantages:
   from the command line.
 
 * User input for flexible fields may be validated and converted.
+
+File Filter
+^^^^^^^^^^^
+
+A plugin may be also used to filter the files to import. To achieve this,
+all you have to do is to add a method called ``file_filter`` to your plugin.
+For example::
+
+    from beets.plugins import BeetsPlugin
+
+    class FileFilterPlugin(BeetsPlugin):
+        def file_filter(self, path, object_name):
+            return True
+
+This simple filter will import everything since it returns `True` for every
+file. For files which should not be imported, the filter have to return `False` instead.
+
+* *path*: The path to the file (or directory).
+
+* *object_name*: The name of the file or directory.
+
+If the plugin returns `False` for a directory, everything below this directory
+will also not be imported.
+
+To test your filter plugin you might want to use the ``-e`` option of the
+``import`` command to get a list of files which will be imported without this
+option.
