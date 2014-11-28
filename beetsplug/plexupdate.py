@@ -21,7 +21,7 @@ def get_music_section(host, port):
     """Getting the section key for the music library in Plex.
     """
     api_endpoint = 'library/sections'
-    url = urljoin('http://{}:{}'.format(host, port), api_endpoint)
+    url = urljoin('http://{0}:{1}'.format(host, port), api_endpoint)
 
     # Sends request.
     r = requests.get(url)
@@ -38,8 +38,8 @@ def update_plex(host, port):
     """
     # Getting section key and build url.
     section_key = get_music_section(host, port)
-    api_endpoint = 'library/sections/{}/refresh'.format(section_key)
-    url = urljoin('http://{}:{}'.format(host, port), api_endpoint)
+    api_endpoint = 'library/sections/{0}/refresh'.format(section_key)
+    url = urljoin('http://{0}:{1}'.format(host, port), api_endpoint)
 
     # Sends request and returns requests object.
     r = requests.get(url)
