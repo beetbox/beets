@@ -35,7 +35,7 @@ from beets import plugins
 from beets import util
 from beets import config
 from beets.ui import print_
-from beets.util import pipeline, sorted_walk, ancestry
+from beets.util import pipeline, sorted_walk, ancestry, filter_file
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
 from beets import mediafile
