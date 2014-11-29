@@ -8,6 +8,8 @@ New:
 
 * A new :doc:`/plugins/permissions` makes it easy to fix permissions on music
   files as they are imported. Thanks to :user:`xsteadfastx`. :bug:`1098`
+* A new :doc:`/plugins/plexupdate` lets you notify a `Plex`_ server when the
+  database changes. Thanks again to xsteadfastx. :bug:`1120`
 
 Fixed:
 
