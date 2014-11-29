@@ -15,6 +15,8 @@ Fixed:
 
 * Fix a new crash with the latest version of Mutagen (1.26).
 
+.. _Plex: https://plex.tv/
+
 
 1.3.9 (November 17, 2014)
 -------------------------
