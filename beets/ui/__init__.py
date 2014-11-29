@@ -888,7 +888,9 @@ def _open_library(config):
             get_path_formats(),
             get_replacements(),
         )
-    except sqlite3.OperationalError:
+        lib.get_item(0)  # Test database connection.
+    except (sqlite3.OperationalError, sqlite3.DatabaseError):
+        log.debug(traceback.format_exc())
         raise UserError(u"database file {0} could not be opened".format(
             util.displayable_path(dbpath)
         ))

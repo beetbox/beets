@@ -14,6 +14,7 @@ New:
 Fixed:
 
 * Fix a new crash with the latest version of Mutagen (1.26).
+* We now print a better error message when the database file is corrupted.
 
 .. _Plex: https://plex.tv/
 
