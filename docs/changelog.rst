@@ -19,7 +19,7 @@ Fixed:
   :ref:`import-cmd` command. :bug:`1123`
 * When deleting fields with the :ref:`modify-cmd` command, do not crash when
   the field cannot be removed (i.e., when it does not exist, when it is a
-  built-in field, or when it is a computed field). :ref:`1124`
+  built-in field, or when it is a computed field). :bug:`1124`
 
 .. _Plex: https://plex.tv/
 
