@@ -20,6 +20,8 @@ Fixed:
 * When deleting fields with the :ref:`modify-cmd` command, do not crash when
   the field cannot be removed (i.e., when it does not exist, when it is a
   built-in field, or when it is a computed field). :bug:`1124`
+* The deprecated ``echonest_tempo`` plugin has been removed. Please use the
+  :doc:`/plugins/echonest` instead.
 
 .. _Plex: https://plex.tv/
 

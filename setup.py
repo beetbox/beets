@@ -101,7 +101,6 @@ setup(
         'chroma': ['pyacoustid'],
         'discogs': ['discogs-client>=2.0.0'],
         'echonest': ['pyechonest'],
-        'echonest_tempo': ['pyechonest'],
         'lastgenre': ['pylast'],
         'mpdstats': ['python-mpd'],
         'web': ['flask'],
