@@ -17,6 +17,9 @@ Fixed:
 * We now print a better error message when the database file is corrupted.
 * :doc:`/plugins/discogs`: Only prompt for authentication when running the
   :ref:`import-cmd` command. :bug:`1123`
+* When deleting fields with the :ref:`modify-cmd` command, do not crash when
+  the field cannot be removed (i.e., when it does not exist, when it is a
+  built-in field, or when it is a computed field). :ref:`1124`
 
 .. _Plex: https://plex.tv/
 

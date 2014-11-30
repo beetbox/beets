@@ -1262,7 +1262,10 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     for obj in objs:
         obj.update(mods)
         for field in dels:
-            del obj[field]
+            try:
+                del obj[field]
+            except KeyError:
+                pass
         if ui.show_model_changes(obj):
             changed.add(obj)
 
