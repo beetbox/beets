@@ -400,7 +400,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                         method.__name__,
                         item.artist,
                         item.title,
-                        song['duration'],
+                        song.get('duration'),
                     )
                 )
                 return song
