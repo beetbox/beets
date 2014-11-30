@@ -22,7 +22,10 @@ Fixed:
   built-in field, or when it is a computed field). :bug:`1124`
 * The deprecated ``echonest_tempo`` plugin has been removed. Please use the
   :doc:`/plugins/echonest` instead.
+* :doc:`/plugins/echonest`: Fingerprint-based lookup has been removed in
+  accordance with `API changes`_. :bug:`1121`
 
+.. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
 
 

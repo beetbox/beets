@@ -125,7 +125,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         self.config.add({
             'auto':    True,
             'apikey':  u'NY2KTZHQ0QDSHBAP6',
-            'codegen': None,
             'upload':  True,
             'convert': True,
             'truncate': True,
@@ -134,10 +133,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         pyechonest.config.ECHO_NEST_API_KEY = \
             config['echonest']['apikey'].get(unicode)
-
-        if config['echonest']['codegen']:
-            pyechonest.config.CODEGEN_BINARY_OVERRIDE = \
-                config['echonest']['codegen'].get(unicode)
 
         if self.config['auto']:
             self.import_stages = [self.imported]
@@ -251,48 +246,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                               buckets=['id:musicbrainz', 'tracks',
                                        'audio_summary'])
         return self._flatten_song(self._pick_song(songs, item))
-
-    # "Identify" (fingerprinting) lookup.
-
-    def fingerprint(self, item):
-        """Get the fingerprint for this item from the EchoNest.  If we
-        already have a fingerprint, return it and don't calculate it
-        again.
-        """
-        if FINGERPRINT_KEY in item:
-            return item[FINGERPRINT_KEY]
-
-        try:
-            res = self._echofun(pyechonest.util.codegen,
-                                filename=item.path.decode('utf-8'))
-        except Exception as e:
-            # Frustratingly, the pyechonest library raises a plain Exception
-            # when the command is not found.
-            log.debug(u'echonest: codegen failed: {0}'.format(e))
-            return
-
-        if not res or 'code' not in res[0] or not res[0]['code']:
-            log.debug(u'echonest: no fingerprint returned')
-            return
-        code = res[0]['code']
-
-        log.debug(u'echonest: calculated fingerprint')
-        item[FINGERPRINT_KEY] = code
-        return code
-
-    def identify(self, item):
-        """Try to identify the song at the EchoNest.
-        """
-        code = self.fingerprint(item)
-        if not code:
-            return
-
-        songs = self._echofun(pyechonest.song.identify, code=code)
-        if not songs:
-            log.debug(u'echonest: no songs found for fingerprint')
-            return
-
-        return self._flatten_song(max(songs, key=lambda s: s.score))
 
     # "Analyze" (upload the audio itself) method.
 
@@ -435,8 +388,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         # There are four different ways to get a song. Each method is a
         # callable that takes the Item as an argument.
         methods = [self.profile, self.search]
-        if config['echonest']['codegen']:
-            methods.append(self.identify)
         if config['echonest']['upload']:
             methods.append(self.analyze)
 

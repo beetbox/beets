@@ -35,19 +35,11 @@ like so::
 To transcode music for server-side analysis (optional, of course), install
 the `ffmpeg`_ command-line tool.
 
-To get fingerprinting working, you'll need to install the command-line
-codegen tool for `ENMFP`_ or `Echoprint`_, the two fingerprinting
-algorithms supported by the Echo Nest. Please note that fingerprinting is not
-required if ``upload`` and ``convert`` is enabled, which is the default (but
-it can be faster than uploading).
-
 Finally, enable the ``echonest`` plugin in your configuration (see
 :ref:`using-plugins`).
 
 .. _pip: http://pip.openplans.org/
 .. _FFmpeg: http://ffmpeg.org
-.. _ENMFP: http://static.echonest.com/ENMFP_codegen.zip
-.. _Echoprint: http://echoprint.me
 
 
 Configuration
@@ -61,8 +53,6 @@ file. The available options are:
   Default: beets' own Echo Nest API key.
 - **auto**: Enable automatic metadata fetching during import.
   Default: ``yes``.
-- **codegen**: Echoprint or ENMFP codegen binary path.
-  Default: look for the executable in your ``$PATH``.
 - **upload**: Send files to the Echo Nest server if they can not be identified
   by other means.
   Default: ``yes``.
