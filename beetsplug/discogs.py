@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -46,7 +46,12 @@ class DiscogsPlugin(BeetsPlugin):
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
         })
+        self.discogs_client = None
+        self.register_listener('import_begin', self.setup)
 
+    def setup(self):
+        """Create the `discogs_client` field. Authenticate if necessary.
+        """
         c_key = self.config['apikey'].get(unicode)
         c_secret = self.config['apisecret'].get(unicode)
 
@@ -102,6 +107,9 @@ class DiscogsPlugin(BeetsPlugin):
         """Returns a list of AlbumInfo objects for discogs search results
         matching an album and artist (if not various).
         """
+        if not self.discogs_client:
+            return
+
         if va_likely:
             query = album
         else:
@@ -119,6 +127,9 @@ class DiscogsPlugin(BeetsPlugin):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
         """
+        if not self.discogs_client:
+            return
+
         log.debug(u'Searching Discogs for release {0}'.format(str(album_id)))
         # Discogs-IDs are simple integers. We only look for those at the end
         # of an input string as to avoid confusion with other metadata plugins.

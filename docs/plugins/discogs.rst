@@ -15,9 +15,9 @@ To use the ``discogs`` plugin, first enable it in your configuration (see
     pip install discogs-client
 
 You will also need to register for a `Discogs`_ account. The first time you
-run beets after enabling the plugin, it will ask you to authorize with Discogs
-by visiting the site in a browser. Subsequent runs will not require
-re-authorization.
+run the :ref:`import-cmd` command after enabling the plugin, it will ask you
+to authorize with Discogs by visiting the site in a browser. Subsequent runs
+will not require re-authorization.
 
 Matches from Discogs will now show up during import alongside matches from
 MusicBrainz.

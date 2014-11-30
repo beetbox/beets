@@ -294,6 +294,7 @@ class ImportSession(object):
         pl = pipeline.Pipeline(stages)
 
         # Run the pipeline.
+        plugins.send('import_begin', session=self)
         try:
             if config['threaded']:
                 pl.run_parallel(QUEUE_SIZE)

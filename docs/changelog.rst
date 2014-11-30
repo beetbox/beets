@@ -15,6 +15,8 @@ Fixed:
 
 * Fix a new crash with the latest version of Mutagen (1.26).
 * We now print a better error message when the database file is corrupted.
+* :doc:`/plugins/discogs`: Only prompt for authentication when running the
+  :ref:`import-cmd` command. :bug:`1123`
 
 .. _Plex: https://plex.tv/
 

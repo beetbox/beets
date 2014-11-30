@@ -183,6 +183,9 @@ currently available are:
 * *cli_exit*: called just before the ``beet`` command-line program exits.
   Parameter: ``lib``.
 
+* *import_begin*: called just before a ``beet import`` session starts up.
+  Parameter: ``session``.
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
