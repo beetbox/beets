@@ -12,7 +12,7 @@ New:
   database changes. Thanks again to xsteadfastx. :bug:`1120`
 * Add a warning when importing a directory that contains no music. :bug:`1116`
   :bug:`1127`
-* :doc:`/plugins/zero` can remove embedded images.
+* The :doc:`/plugins/zero` can remove embedded images. :bug:`1129` :bug:`1100`
 
 Fixed:
 
