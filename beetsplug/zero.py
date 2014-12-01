@@ -17,7 +17,7 @@
 import re
 import logging
 from beets.plugins import BeetsPlugin
-from beets.library import Item
+from beets.mediafile import MediaFile
 from beets.importer import action
 from beets.util import confit
 
@@ -51,7 +51,7 @@ class ZeroPlugin(BeetsPlugin):
                 log.warn(u'[zero] field \'{0}\' ignored, zeroing '
                          u'it would be dangerous'.format(field))
                 continue
-            if field not in Item._fields.keys():
+            if field not in MediaFile.fields():
                 log.error(u'[zero] invalid field: {0}'.format(field))
                 continue
 
@@ -59,7 +59,7 @@ class ZeroPlugin(BeetsPlugin):
                 self.patterns[field] = self.config[field].as_str_seq()
             except confit.NotFoundError:
                 # Matches everything
-                self.patterns[field] = [u'']
+                self.patterns[field] = True
 
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
@@ -73,23 +73,29 @@ class ZeroPlugin(BeetsPlugin):
         """Check if field (as string) is matching any of the patterns in
         the list.
         """
+        if patterns is True:
+            return True
         for p in patterns:
             if re.search(p, unicode(field), flags=re.IGNORECASE):
                 return True
         return False
 
     def write_event(self, item, path, tags):
-        """Listen for write event."""
+        """Set values in tags to `None` if the key and value are matched
+        by `self.patterns`.
+        """
         if not self.patterns:
             log.warn(u'[zero] no fields, nothing to do')
             return
 
         for field, patterns in self.patterns.items():
-            if field not in tags:
-                log.error(u'[zero] no such field: {0}'.format(field))
-                continue
+            if field in tags:
+                value = tags[field]
+                match = self.match_patterns(tags[field], patterns)
+            else:
+                value = ''
+                match = patterns is True
 
-            value = tags[field]
-            if self.match_patterns(value, patterns):
+            if match:
                 log.debug(u'[zero] {0}: {1} -> None'.format(field, value))
                 tags[field] = None

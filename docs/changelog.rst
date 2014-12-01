@@ -10,6 +10,7 @@ New:
   files as they are imported. Thanks to :user:`xsteadfastx`. :bug:`1098`
 * A new :doc:`/plugins/plexupdate` lets you notify a `Plex`_ server when the
   database changes. Thanks again to xsteadfastx. :bug:`1120`
+* :doc:`/plugins/zero` can remove embedded images.
 
 Fixed:
 

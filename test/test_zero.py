@@ -82,6 +82,20 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['year'], 2000)
         self.assertIsNone(mediafile.year)
 
+    def test_album_art(self):
+        path = self.create_mediafile_fixture(images=['jpg'])
+        item = Item.from_path(path)
+
+        mediafile = MediaFile(item.path)
+        self.assertNotEqual(0, len(mediafile.images))
+
+        config['zero'] = {'fields': ['images']}
+        self.load_plugins('zero')
+
+        item.write()
+        mediafile = MediaFile(item.path)
+        self.assertEqual(0, len(mediafile.images))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
