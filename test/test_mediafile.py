@@ -74,6 +74,20 @@ class ArtTestMixin(object):
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.art, self.jpg_data)
 
+    def test_delete_art(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.art = self.jpg_data
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertIsNotNone(mediafile.art)
+
+        del mediafile.art
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertIsNone(mediafile.art)
+
 
 class ImageStructureTestMixin(ArtTestMixin):
     """Test reading and writing multiple image tags.
@@ -133,6 +147,16 @@ class ImageStructureTestMixin(ArtTestMixin):
         self.assertExtendedImageAttributes(
             image, desc='the composer', type=ImageType.composer
         )
+
+    def test_delete_image_structures(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        del mediafile.images
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 0)
 
     def assertExtendedImageAttributes(self, image, **kwargs):
         """Ignore extended image attributes in the base tests.

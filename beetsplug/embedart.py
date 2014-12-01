@@ -276,5 +276,5 @@ def clear(lib, query):
                 displayable_path(item.path), exc
             ))
             continue
-        mf.art = None
+        del mf.art
         mf.save()

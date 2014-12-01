@@ -321,9 +321,10 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         # Get the file to upload (either by using the file directly or by
         # transcoding it first).
         source = item.path
+        tmp = None
         if item.format not in ALLOWED_FORMATS:
             if config['echonest']['convert']:
-                source = self.convert(item)
+                tmp = source = self.convert(item)
                 if not source:
                     log.debug(u'echonest: failed to convert file')
                     return
@@ -332,7 +333,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         if os.stat(item.path).st_size > UPLOAD_MAX_SIZE:
             if config['echonest']['truncate']:
-                source = self.truncate(item)
+                tmp = source = self.truncate(item)
                 if not source:
                     log.debug(u'echonest: failed to truncate file')
                     return
@@ -343,6 +344,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         log.info(u'echonest: uploading file, please be patient')
         track = self._echofun(pyechonest.track.track_from_filename,
                               filename=source)
+        if tmp is not None:
+            util.remove(tmp)
+
         if not track:
             log.debug(u'echonest: failed to upload file')
             return

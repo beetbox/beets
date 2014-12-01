@@ -821,6 +821,9 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
     def store(self, mutagen_file, frames):
         mutagen_file.tags.setall(self.key, frames)
 
+    def delete(self, mutagen_file):
+        mutagen_file.tags.delall(self.key)
+
     def serialize(self, image):
         """Return an APIC frame populated with data from ``image``.
         """
@@ -1257,7 +1260,7 @@ class CoverArtField(MediaField):
         delattr(mediafile, 'images')
 
 
-class ImageListField(MediaField):
+class ImageListField(ListMediaField):
     """Descriptor to access the list of images embedded in tags.
 
     The getter returns a list of `Image` instances obtained from
@@ -1275,17 +1278,8 @@ class ImageListField(MediaField):
             VorbisImageStorageStyle(),
             FlacImageStorageStyle(),
             APEv2ImageStorageStyle(),
+            out_type=Image,
         )
-
-    def __get__(self, mediafile, _):
-        images = []
-        for style in self.styles(mediafile.mgfile):
-            images.extend(style.get_list(mediafile.mgfile))
-        return images
-
-    def __set__(self, mediafile, images):
-        for style in self.styles(mediafile.mgfile):
-            style.set_list(mediafile.mgfile, images)
 
 
 # MediaFile is a collection of fields.
