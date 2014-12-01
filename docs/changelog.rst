@@ -10,6 +10,8 @@ New:
   files as they are imported. Thanks to :user:`xsteadfastx`. :bug:`1098`
 * A new :doc:`/plugins/plexupdate` lets you notify a `Plex`_ server when the
   database changes. Thanks again to xsteadfastx. :bug:`1120`
+* Add a warning when importing a directory that contains no music. :bug:`1116`
+  :bug:`1127`
 
 Fixed:
 
