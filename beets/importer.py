@@ -949,19 +949,51 @@ class ArchiveImportTask(SentinelImportTask):
 
 
 class ImportTaskFactory(object):
-    """Create album and singleton import tasks from paths for toppaths
-    in session.
+    """Create album and singleton import tasks for all media files in a
+    directory or path.
 
-    The `singleton()` and `album()` methods accept paths and return
-    instances of `SingletonImportTask` and `ImportTask`, respectively.
-    `None` is returned if either no media file items could be created
-    from the paths or if the paths have already been imported. In both
-    cases it logs messages.
+    Depending on the session's 'flat' and 'singleton' configuration, it
+    groups all media files contained in `toppath` into singleton or
+    album import tasks.
     """
     def __init__(self, toppath, session):
         self.toppath = toppath
         self.session = session
         self.skipped = 0
+
+    def tasks(self):
+        """Yield all import tasks for `self.toppath`.
+
+        The behavior is configured by the session's 'flat', and
+        'singleton' flags.
+        """
+        for dirs, paths in self.paths():
+            if self.session.config['singletons']:
+                for path in paths:
+                    task = self.singleton(path)
+                    if task:
+                        yield task
+                yield self.sentinel(dirs)
+
+            else:
+                task = self.album(paths, dirs)
+                if task:
+                    yield task
+
+    def paths(self):
+        """Walk `self.toppath` and yield pairs of directory lists and
+        path lists.
+        """
+        if not os.path.isdir(syspath(self.toppath)):
+            yield ([self.toppath], [self.toppath])
+        elif self.session.config['flat']:
+            paths = []
+            for dirs, paths_in_dir in albums_in_dir(self.toppath):
+                paths += paths_in_dir
+            yield ([self.toppath], paths)
+        else:
+            for dirs, paths in albums_in_dir(self.toppath):
+                yield (dirs, paths)
 
     def singleton(self, path):
         if self.session.already_imported(self.toppath, [path]):
@@ -976,17 +1008,16 @@ class ImportTaskFactory(object):
         else:
             return None
 
-    def album(self, paths, dir=None):
+    def album(self, paths, dirs=None):
         """Return `ImportTask` with all media files from paths.
 
-        `dir` is a common parent directory of all paths.
+        `dirs` is a list of parent directories used to record already
+        imported albums.
         """
         if not paths:
             return None
 
-        if dir:
-            dirs = [dir]
-        else:
+        if dirs is None:
             dirs = list(set(os.path.dirname(p) for p in paths))
 
         if self.session.already_imported(self.toppath, dirs):
@@ -1038,8 +1069,6 @@ def read_tasks(session):
     """
     skipped = 0
     for toppath in session.paths:
-        task_factory = ImportTaskFactory(toppath, session)
-
         # Determine if we want to resume import of the toppath
         session.ask_resume(toppath)
 
@@ -1063,42 +1092,9 @@ def read_tasks(session):
             # Continue reading albums from the extracted directory.
             toppath = archive_task.toppath
 
-        # Check whether the path is to a file.
-        if not os.path.isdir(syspath(toppath)):
-            if session.config['singletons']:
-                task = task_factory.singleton(toppath)
-            else:
-                task = task_factory.album([toppath], dir=toppath)
-
-            if task:
-                yield task
-                yield task_factory.sentinel()
-            continue
-
-        # A flat album import merges all items into one album.
-        if session.config['flat'] and not session.config['singletons']:
-            paths = []
-            for _, item_paths in albums_in_dir(toppath):
-                paths += item_paths
-            task = task_factory.album(paths)
-            if task:
-                yield task
-                yield task_factory.sentinel()
-            continue
-
-        # Produce paths under this directory.
-        for dirs, paths in albums_in_dir(toppath):
-            if session.config['singletons']:
-                for path in paths:
-                    task = task_factory.singleton(path)
-                    if task:
-                        yield task
-                yield task_factory.sentinel(dirs)
-
-            else:
-                task = task_factory.album(paths)
-                if task:
-                    yield task
+        task_factory = ImportTaskFactory(toppath, session)
+        for t in task_factory.tasks():
+            yield t
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
