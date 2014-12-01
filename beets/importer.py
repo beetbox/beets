@@ -1071,6 +1071,7 @@ def read_tasks(session):
     for toppath in session.paths:
         # Determine if we want to resume import of the toppath
         session.ask_resume(toppath)
+        user_toppath = toppath
 
         # Extract archives.
         archive_task = None
@@ -1093,7 +1094,9 @@ def read_tasks(session):
             toppath = archive_task.toppath
 
         task_factory = ImportTaskFactory(toppath, session)
+        imported = False
         for t in task_factory.tasks():
+            imported |= not t.skip
             yield t
 
         # Indicate the directory is finished.
@@ -1102,6 +1105,10 @@ def read_tasks(session):
             yield task_factory.sentinel()
         else:
             yield archive_task
+
+        if not imported:
+            log.warn(u'No files imported from {0}'
+                     .format(displayable_path(user_toppath)))
 
     # Show skipped directories.
     if skipped:
