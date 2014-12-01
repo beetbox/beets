@@ -47,7 +47,7 @@ import beets.plugins
 from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.mediafile import MediaFile
+from beets.mediafile import MediaFile, Image
 
 # TODO Move AutotagMock here
 import _common
@@ -346,17 +346,32 @@ class TestHelper(object):
             items.append(item)
         return self.lib.add_album(items)
 
-    def create_mediafile_fixture(self, ext='mp3'):
+    def create_mediafile_fixture(self, ext='mp3', images=[]):
         """Copies a fixture mediafile with the extension to a temporary
         location and returns the path.
 
         It keeps track of the created locations and will delete the with
         `remove_mediafile_fixtures()`
+
+        `images` is a subset of 'png', 'jpg', and 'tiff'. For each
+        specified extension a cover art image is added to the media
+        file.
         """
         src = os.path.join(_common.RSRC, 'full.' + ext)
         handle, path = mkstemp()
         os.close(handle)
         shutil.copyfile(src, path)
+
+        if images:
+            mediafile = MediaFile(path)
+            imgs = []
+            for img_ext in images:
+                img_path = os.path.join(_common.RSRC,
+                                        'image-2x3.{0}'.format(img_ext))
+                with open(img_path, 'rb') as f:
+                    imgs.append(Image(f.read()))
+            mediafile.images = imgs
+            mediafile.save()
 
         if not hasattr(self, '_mediafile_fixtures'):
             self._mediafile_fixtures = []
