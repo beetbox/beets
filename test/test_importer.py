@@ -25,7 +25,7 @@ from mock import patch
 
 import _common
 from _common import unittest
-from helper import TestImportSession, TestHelper, has_program
+from helper import TestImportSession, TestHelper, has_program, capture_log
 from beets import importer
 from beets.importer import albums_in_dir
 from beets.mediafile import MediaFile
@@ -599,6 +599,24 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
         self.assertEqual(len(self.lib.items()), 1)
+
+    def test_empty_directory_warning(self):
+        import_dir = os.path.join(self.temp_dir, 'empty')
+        self.touch('non-audio', dir=import_dir)
+        self._setup_import_session(import_dir=import_dir)
+        with capture_log() as logs:
+            self.importer.run()
+
+        self.assertIn('No files imported from {0}'.format(import_dir), logs)
+
+    def test_empty_directory_singleton_warning(self):
+        import_dir = os.path.join(self.temp_dir, 'empty')
+        self.touch('non-audio', dir=import_dir)
+        self._setup_import_session(import_dir=import_dir, singletons=True)
+        with capture_log() as logs:
+            self.importer.run()
+
+        self.assertIn('No files imported from {0}'.format(import_dir), logs)
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
