@@ -607,7 +607,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
-        self.assertIn('No files imported from {}'.format(import_dir), logs)
+        self.assertIn('No files imported from {0}'.format(import_dir), logs)
 
     def test_empty_directory_singleton_warning(self):
         import_dir = os.path.join(self.temp_dir, 'empty')
@@ -616,7 +616,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
-        self.assertIn('No files imported from {}'.format(import_dir), logs)
+        self.assertIn('No files imported from {0}'.format(import_dir), logs)
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
