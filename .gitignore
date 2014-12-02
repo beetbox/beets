@@ -7,6 +7,7 @@
 .tox
 .coverage
 .idea
+.ackrc
 
 # file patterns
 
@@ -32,4 +33,6 @@ beets.egg-info/*
 build/*
 docs/_build/*
 man
+htmlcov/*
+.noseids
 *.egg
