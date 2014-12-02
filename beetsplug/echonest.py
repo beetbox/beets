@@ -249,6 +249,33 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
     # "Analyze" (upload the audio itself) method.
 
+    def prepare_upload(self, item):
+        """Truncate and convert an item's audio file so it can be
+        uploaded to echonest.
+
+        Returns a ``(source, tmp)`` tuple where `source` is the path to
+        the file to be uploaded and `tmp` is a temporary file to be
+        deleted after the upload or `None`.
+        """
+        source = item.path
+        tmp = None
+        if item.format not in ALLOWED_FORMATS:
+            if config['echonest']['convert']:
+                tmp = source = self.convert(item)
+            else:
+                return
+
+        if os.stat(item.path).st_size > UPLOAD_MAX_SIZE:
+            if config['echonest']['truncate']:
+                source = self.truncate(item)
+                if tmp is not None:
+                    util.remove(tmp)
+                tmp = source
+            else:
+                return
+
+        return (source, tmp)
+
     def convert(self, item):
         """Converts an item in an unsupported media format to ogg.  Config
         pending.
@@ -318,29 +345,12 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         """Upload the item to the EchoNest for analysis. May require to
         convert the item to a supported media format.
         """
-        # Get the file to upload (either by using the file directly or by
-        # transcoding it first).
-        source = item.path
-        tmp = None
-        if item.format not in ALLOWED_FORMATS:
-            if config['echonest']['convert']:
-                tmp = source = self.convert(item)
-                if not source:
-                    log.debug(u'echonest: failed to convert file')
-                    return
-            else:
-                return
+        prepared = self.prepare_upload(item)
+        if not prepared:
+            log.debug(u'echonest: could not prepare file for upload')
+            return
 
-        if os.stat(item.path).st_size > UPLOAD_MAX_SIZE:
-            if config['echonest']['truncate']:
-                tmp = source = self.truncate(item)
-                if not source:
-                    log.debug(u'echonest: failed to truncate file')
-                    return
-            else:
-                return
-
-        # Upload the audio file.
+        (source, tmp) = prepared
         log.info(u'echonest: uploading file, please be patient')
         track = self._echofun(pyechonest.track.track_from_filename,
                               filename=source)
