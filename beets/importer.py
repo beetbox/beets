@@ -961,6 +961,7 @@ class ImportTaskFactory(object):
         self.toppath = toppath
         self.session = session
         self.skipped = 0
+        self.enumerate_only = session.config['enumerate_only'] if 'enumerate_only' in session.config else False
 
     def tasks(self):
         """Yield all import tasks for `self.toppath`.
@@ -971,22 +972,30 @@ class ImportTaskFactory(object):
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
-                    task = self.singleton(path)
-                    if task:
-                        yield task
+                    if self.enumerate_only:
+                        print_(displayable_path(path))
+                    else:
+                        task = self.singleton(path)
+                        if task:
+                            yield task
                 yield self.sentinel(dirs)
 
             else:
-                task = self.album(paths, dirs)
-                if task:
-                    yield task
+                if self.enumerate_only:
+                    for path in paths:
+                        print_(displayable_path(path))
+                else:
+                    task = self.album(paths, dirs)
+                    if task:
+                        yield task
 
     def paths(self):
         """Walk `self.toppath` and yield pairs of directory lists and
         path lists.
         """
         if not os.path.isdir(syspath(self.toppath)):
-            yield ([self.toppath], [self.toppath])
+            if filter_file(os.path.dirname(self.toppath), os.path.basename(self.toppath)):
+                yield ([self.toppath], [self.toppath])
         elif self.session.config['flat']:
             paths = []
             for dirs, paths_in_dir in albums_in_dir(self.toppath):
@@ -1069,7 +1078,6 @@ def read_tasks(session):
     import, yields single-item tasks instead.
     """
     skipped = 0
-    enumerate_only = session.config['enumerate_only'] if 'enumerate_only' in session.config else False
     for toppath in session.paths:
         # Determine if we want to resume import of the toppath
         session.ask_resume(toppath)
@@ -1103,13 +1111,13 @@ def read_tasks(session):
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
-        if not enumerate_only:
+        if not task_factory.enumerate_only:
             if archive_task is None:
                 yield task_factory.sentinel()
             else:
                 yield archive_task
 
-        if not imported:
+        if not imported and not task_factory.enumerate_only:
             log.warn(u'No files imported from {0}'
                      .format(displayable_path(user_toppath)))
 

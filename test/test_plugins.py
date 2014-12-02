@@ -164,7 +164,6 @@ class FileFilterPluginTest(_common.TestCase, ImportHelper):
         self._setup_import_session()
         config['import']['enumerate_only'] = True
         self.matcher = AutotagStub().install()
-#        self.io.install()
 
         plugins.file_filters = self.file_filters
 
@@ -186,7 +185,15 @@ class FileFilterPluginTest(_common.TestCase, ImportHelper):
         self.teardown_beets()
         self.matcher.restore()
 
-    def test_import(self):
+    def test_import_album(self):
+        self._setup_import_session(singletons=False)
+        self.__run_import_tests()
+
+    def test_import_singleton(self):
+        self._setup_import_session(singletons=True)
+        self.__run_import_tests()
+
+    def __run_import_tests(self):
         resource_path = os.path.join(_common.RSRC, u'empty.mp3')
         single_path = os.path.join(self.import_dir, u'track_2.mp3')
 
@@ -195,34 +202,28 @@ class FileFilterPluginTest(_common.TestCase, ImportHelper):
             os.path.join(self.import_dir, u'the_album'),
             single_path
         ]
-        self._setup_import_session(singletons=True)
         self.importer.paths = import_files
 
         # Filter will return False every time
         self.filters = [self.filter_nothing]
-        lines = self.run_import()
-        self.assertEqual(len(lines), 0)
+        self.__run([])
 
         # Filter will return True every time
         self.filters = [self.filter_all]
-        lines = self.run_import()
-        self.assertEqual(len(lines), 2)
-        self.assertEqual(lines[0], os.path.join(import_files[0], u'track_1.mp3'))
-        self.assertEqual(lines[1], import_files[1])
+        self.__run([os.path.join(import_files[0], u'track_1.mp3'), import_files[1]])
 
         # Filter will return True if the file contains '2'
         self.filters = [self.filter_two]
-        lines = self.run_import()
-        self.assertEqual(len(lines), 1)
-        self.assertEqual(lines[0], import_files[1])
+        self.__run([import_files[1]])
 
-    def run_import(self):
+    def __run(self, expected_lines):
         self.io.restore()
         self.io.install()
         self.importer.run()
         out = self.io.getoutput()
 
-        return out.splitlines()
+        lines = out.splitlines()
+        self.assertEqual(lines, expected_lines)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
