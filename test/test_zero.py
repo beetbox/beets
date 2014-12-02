@@ -73,12 +73,15 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
     def test_do_not_change_database(self):
         item = self.add_item_fixture(year=2000)
+        item.write()
         mediafile = MediaFile(item.path)
+        self.assertEqual(2000, mediafile.year)
 
         config['zero'] = {'fields': ['year']}
         self.load_plugins('zero')
 
         item.write()
+        mediafile = MediaFile(item.path)
         self.assertEqual(item['year'], 2000)
         self.assertIsNone(mediafile.year)
 
