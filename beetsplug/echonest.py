@@ -267,7 +267,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         if item.format not in ALLOWED_FORMATS:
             if config['echonest']['convert']:
                 tmp = source = self.convert(source)
-            else:
+            if not tmp:
                 return
 
         if os.stat(source).st_size > UPLOAD_MAX_SIZE:
@@ -279,7 +279,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             else:
                 return
 
-        return (source, tmp)
+        if source:
+            return (source, tmp)
 
     def convert(self, source):
         """Converts an item in an unsupported media format to ogg.  Config
