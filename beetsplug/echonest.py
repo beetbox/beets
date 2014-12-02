@@ -39,6 +39,11 @@ DEVNULL = open(os.devnull, 'wb')
 ALLOWED_FORMATS = ('MP3', 'OGG', 'AAC')
 UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
+# FIXME: use avconv?
+CONVERT_COMMAND = u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest'
+TRUNCATE_COMMAND = u'ffmpeg -t 300 -i $source'\
+                   u'-y -acodec libvorbis -vn -aq 2 $dest'
+
 # Maps attribute names from echonest to their field names in beets.
 # The attributes are retrieved from a songs `audio_summary`. See:
 # http://echonest.github.io/pyechonest/song.html#pyechonest.song.profile
@@ -289,11 +294,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             util.displayable_path(dest),
         ))
 
-        # Build up the FFmpeg command line.
-        # FIXME: use avconv?
-        command = u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest'
         opts = []
-        for arg in command.split():
+        for arg in CONVERT_COMMAND.split():
             arg = arg.encode('utf-8')
             opts.append(Template(arg).substitute(source=source, dest=dest))
 
@@ -320,10 +322,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             util.displayable_path(dest),
         ))
 
-        command = u'ffmpeg -t 300 -i $source '\
-                  u'-y -acodec libvorbis -vn -aq 2 $dest'
         opts = []
-        for arg in command.split():
+        for arg in TRUNCATE_COMMAND.split():
             arg = arg.encode('utf-8')
             opts.append(Template(arg).substitute(source=source, dest=dest))
 

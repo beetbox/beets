@@ -90,6 +90,7 @@ class EchonestCliTest(unittest.TestCase, TestHelper):
     @patch('pyechonest.song.profile')
     @patch('pyechonest.song.search')
     @patch('pyechonest.track.track_from_filename')
+    @patch('beetsplug.echonest.CONVERT_COMMAND', 'cp $source $dest')
     def test_analyze_convert(self, echonest_track, echonest_search,
                              echonest_profile):
         item = self.add_item(title='title', length=10, format='FLAC',
@@ -110,6 +111,7 @@ class EchonestCliTest(unittest.TestCase, TestHelper):
     @patch('pyechonest.track.track_from_filename')
     # Force truncation
     @patch('beetsplug.echonest.UPLOAD_MAX_SIZE', 0)
+    @patch('beetsplug.echonest.TRUNCATE_COMMAND', 'cp $source $dest')
     def test_analyze_truncate(self, echonest_track, echonest_search,
                               echonest_profile):
         item = self.add_item(title='title', length=10, format='MP3',
