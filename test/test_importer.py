@@ -1545,7 +1545,7 @@ class ImportEnumerateOnlyTest(_common.TestCase, ImportHelper):
         self.teardown_beets()
         self.matcher.restore()
 
-    def test_import_single_files_album(self):
+    def test_import_enumerate_only(self):
         resource_path = os.path.join(_common.RSRC, u'empty.mp3')
         single_path = os.path.join(self.import_dir, u'track_2.mp3')
 

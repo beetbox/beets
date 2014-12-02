@@ -149,7 +149,7 @@ def ancestry(path):
     return out
 
 
-def filter_file(base, path):
+def filter_file(path, object_name):
     """Takes a path and name of a file and asks all registered
     plugins if it should be imported. Returns True if the file should
     be imported, False otherwise.
@@ -157,7 +157,7 @@ def filter_file(base, path):
     from beets import plugins
 
     for filter_func in plugins.file_filters():
-        if not filter_func(path, base):
+        if not filter_func(path, object_name):
             return False
     return True
 
@@ -194,7 +194,7 @@ def sorted_walk(path, ignore=(), logger=None):
 
         # Ask the plugins if the file should be skipped
         if not skip:
-            skip = not filter_file(base, path)
+            skip = not filter_file(path, base)
 
         if skip:
             continue
