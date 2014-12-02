@@ -261,13 +261,13 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         tmp = None
         if item.format not in ALLOWED_FORMATS:
             if config['echonest']['convert']:
-                tmp = source = self.convert(item)
+                tmp = source = self.convert(source)
             else:
                 return
 
-        if os.stat(item.path).st_size > UPLOAD_MAX_SIZE:
+        if os.stat(source).st_size > UPLOAD_MAX_SIZE:
             if config['echonest']['truncate']:
-                source = self.truncate(item)
+                source = self.truncate(source)
                 if tmp is not None:
                     util.remove(tmp)
                 tmp = source
@@ -276,14 +276,13 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         return (source, tmp)
 
-    def convert(self, item):
+    def convert(self, source):
         """Converts an item in an unsupported media format to ogg.  Config
         pending.
         This is stolen from Jakob Schnitzers convert plugin.
         """
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
-        source = item.path
 
         log.info(u'echonest: encoding {0} to {1}'.format(
             util.displayable_path(source),
@@ -311,18 +310,18 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         )
         return dest
 
-    def truncate(self, item):
+    def truncate(self, source):
         """Truncates an item to a size less than UPLOAD_MAX_SIZE."""
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
-        source = item.path
 
         log.info(u'echonest: truncating {0} to {1}'.format(
             util.displayable_path(source),
             util.displayable_path(dest),
         ))
 
-        command = u'ffmpeg -t 300 -i $source -y -acodec copy $dest'
+        command = u'ffmpeg -t 300 -i $source '\
+                  u'-y -acodec libvorbis -vn -aq 2 $dest'
         opts = []
         for arg in command.split():
             arg = arg.encode('utf-8')
