@@ -1485,30 +1485,36 @@ def config_func(lib, opts, args):
 
     # Open in editor.
     elif opts.edit:
-        path = config.user_config_path()
-
-        if 'EDITOR' in os.environ:
-            editor = os.environ['EDITOR']
-            args = [editor, editor, path]
-        elif platform.system() == 'Darwin':
-            args = ['open', 'open', '-n', path]
-        elif platform.system() == 'Windows':
-            # On windows we can execute arbitrary files. The os will
-            # take care of starting an appropriate application
-            args = [path, path]
-        else:
-            # Assume Unix
-            args = ['xdg-open', 'xdg-open', path]
-
-        try:
-            os.execlp(*args)
-        except OSError:
-            raise ui.UserError("Could not edit configuration. Please"
-                               "set the EDITOR environment variable.")
+        config_edit()
 
     # Dump configuration.
     else:
         print(config.dump(full=opts.defaults))
+
+
+def config_edit():
+    """Open a program to edit the user configuration.
+    """
+    path = config.user_config_path()
+
+    if 'EDITOR' in os.environ:
+        editor = os.environ['EDITOR']
+        args = [editor, editor, path]
+    elif platform.system() == 'Darwin':
+        args = ['open', 'open', '-n', path]
+    elif platform.system() == 'Windows':
+        # On windows we can execute arbitrary files. The os will
+        # take care of starting an appropriate application
+        args = [path, path]
+    else:
+        # Assume Unix
+        args = ['xdg-open', 'xdg-open', path]
+
+    try:
+        os.execlp(*args)
+    except OSError:
+        raise ui.UserError("Could not edit configuration. Please"
+                           "set the EDITOR environment variable.")
 
 
 config_cmd = ui.Subcommand('config',

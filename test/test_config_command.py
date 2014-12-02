@@ -10,6 +10,7 @@ from beets import config
 import _common
 from _common import unittest
 from helper import TestHelper, capture_stdout
+from beets.library import Library
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):
@@ -104,6 +105,19 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
                       str(user_error.exception.args[0]))
+
+    def test_edit_invalid_config_file(self):
+        self.lib = Library(':memory:')
+        with open(self.config_path, 'w') as file:
+            file.write('invalid: [')
+        config.clear()
+        config._materialized = False
+
+        os.environ['EDITOR'] = 'myeditor'
+        with patch('os.execlp') as execlp:
+            self.run_command('config', '-e')
+        execlp.assert_called_once_with(
+            'myeditor', 'myeditor', self.config_path)
 
 
 def suite():

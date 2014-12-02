@@ -920,6 +920,13 @@ def _raw_main(args, lib=None):
                       help=optparse.SUPPRESS_HELP)
 
     options, subargs = parser.parse_global_options(args)
+
+    # Bypass _setup so that an invalid configuration does not prevent
+    # the editor from starting.
+    if subargs[0] == 'config' and ('-e' in subargs or '--edit' in subargs):
+        from beets.ui.commands import config_edit
+        return config_edit()
+
     subcommands, plugins, lib = _setup(options, lib)
     parser.add_subcommand(*subcommands)
 
