@@ -258,9 +258,11 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         """Truncate and convert an item's audio file so it can be
         uploaded to echonest.
 
-        Returns a ``(source, tmp)`` tuple where `source` is the path to
+        Return a ``(source, tmp)`` tuple where `source` is the path to
         the file to be uploaded and `tmp` is a temporary file to be
         deleted after the upload or `None`.
+
+        If conversion or truncation fails, return `None`.
         """
         source = item.path
         tmp = None
@@ -280,7 +282,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 return
 
         if source:
-            return (source, tmp)
+            return source, tmp
 
     def convert(self, source):
         """Converts an item in an unsupported media format to ogg.  Config
@@ -350,7 +352,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             log.debug(u'echonest: could not prepare file for upload')
             return
 
-        (source, tmp) = prepared
+        source, tmp = prepared
         log.info(u'echonest: uploading file, please be patient')
         track = self._echofun(pyechonest.track.track_from_filename,
                               filename=source)
