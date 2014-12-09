@@ -298,8 +298,7 @@ def is_lyrics(text, artist=None):
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
-        log.debug(u"Ignoring too short lyrics '{0}'".format(
-                  text.decode('utf8')))
+        log.debug(u"Ignoring too short lyrics '{0}'".format(text))
         return 0
     elif nbLines < 5:
         badTriggersOcc.append('too_short')
@@ -370,7 +369,8 @@ def scrape_lyrics_from_html(html):
         return None
 
     soup = sorted(soup.stripped_strings, key=len)[-1]
-
+    if isinstance(soup, str):
+        soup = soup.decode('utf8', 'ignore')
     return soup
 
 
@@ -501,8 +501,6 @@ class LyricsPlugin(BeetsPlugin):
         for backend in self.backends:
             lyrics = backend(artist, title)
             if lyrics:
-                if isinstance(lyrics, str):
-                    lyrics = lyrics.decode('utf8', 'ignore')
                 log.debug(u'got lyrics from backend: {0}'
                           .format(backend.__name__))
                 return lyrics.strip()
