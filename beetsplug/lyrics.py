@@ -18,9 +18,10 @@ from __future__ import print_function
 
 import re
 import logging
-import urllib
+import requests
 import json
 import unicodedata
+import urllib
 import difflib
 import itertools
 from HTMLParser import HTMLParseError
@@ -60,11 +61,12 @@ def fetch_url(url):
     """Retrieve the content at a given URL, or return None if the source
     is unreachable.
     """
-    try:
-        return urllib.urlopen(url).read()
-    except IOError as exc:
-        log.debug(u'failed to fetch: {0} ({1})'.format(url, unicode(exc)))
-        return None
+    r = requests.get(url)
+    if r.status_code == requests.codes.ok:
+        return r.text
+    else:
+        log.debug(u'failed to fetch: {0} ({1})'.format(url, r.status_code))
+    return None
 
 
 def unescape(text):
@@ -367,10 +369,7 @@ def scrape_lyrics_from_html(html):
                              parse_only=SoupStrainer(text=is_text_notcode))
     except HTMLParseError:
         return None
-
     soup = sorted(soup.stripped_strings, key=len)[-1]
-    if isinstance(soup, str):
-        soup = soup.decode('utf8', 'ignore')
     return soup
 
 
@@ -396,7 +395,6 @@ def fetch_google(artist, title):
             urlTitle = item.get('title', u'')
             if not is_page_candidate(urlLink, urlTitle, title, artist):
                 continue
-
             html = fetch_url(urlLink)
             lyrics = scrape_lyrics_from_html(html)
             if not lyrics:
