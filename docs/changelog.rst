@@ -31,6 +31,8 @@ Fixed:
   accordance with `API changes`_. :bug:`1121`
 * :doc:`/plugins/echonest`: Avoid a crash when the song has no duration
   information. :bug:`896`
+* :doc:`/plugins/lyrics`: Avoid a crash when retrieving non-ASCII lyrics from
+  the Google backend. :bug:`1135` :bug:`1136`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
