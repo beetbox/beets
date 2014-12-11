@@ -18,9 +18,10 @@ from __future__ import print_function
 
 import re
 import logging
-import urllib
+import requests
 import json
 import unicodedata
+import urllib
 import difflib
 import itertools
 from HTMLParser import HTMLParseError
@@ -60,11 +61,12 @@ def fetch_url(url):
     """Retrieve the content at a given URL, or return None if the source
     is unreachable.
     """
-    try:
-        return urllib.urlopen(url).read()
-    except IOError as exc:
-        log.debug(u'failed to fetch: {0} ({1})'.format(url, unicode(exc)))
-        return None
+    r = requests.get(url)
+    if r.status_code == requests.codes.ok:
+        return r.text
+    else:
+        log.debug(u'failed to fetch: {0} ({1})'.format(url, r.status_code))
+    return None
 
 
 def unescape(text):
@@ -298,8 +300,7 @@ def is_lyrics(text, artist=None):
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
-        log.debug(u"Ignoring too short lyrics '{0}'".format(
-                  text.decode('utf8')))
+        log.debug(u"Ignoring too short lyrics '{0}'".format(text))
         return 0
     elif nbLines < 5:
         badTriggersOcc.append('too_short')
@@ -368,9 +369,7 @@ def scrape_lyrics_from_html(html):
                              parse_only=SoupStrainer(text=is_text_notcode))
     except HTMLParseError:
         return None
-
     soup = sorted(soup.stripped_strings, key=len)[-1]
-
     return soup
 
 
@@ -396,7 +395,6 @@ def fetch_google(artist, title):
             urlTitle = item.get('title', u'')
             if not is_page_candidate(urlLink, urlTitle, title, artist):
                 continue
-
             html = fetch_url(urlLink)
             lyrics = scrape_lyrics_from_html(html)
             if not lyrics:
@@ -501,8 +499,6 @@ class LyricsPlugin(BeetsPlugin):
         for backend in self.backends:
             lyrics = backend(artist, title)
             if lyrics:
-                if isinstance(lyrics, str):
-                    lyrics = lyrics.decode('utf8', 'ignore')
                 log.debug(u'got lyrics from backend: {0}'
                           .format(backend.__name__))
                 return lyrics.strip()
