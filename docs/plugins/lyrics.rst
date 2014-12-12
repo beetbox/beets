@@ -14,10 +14,18 @@ Fetch Lyrics During Import
 
 To automatically fetch lyrics for songs you import, enable the ``lyrics``
 plugin in your configuration (see :ref:`using-plugins`).
+Then, install the `requests`_ library by typing::
+
+    pip install requests
+
+The plugin uses `requests`_ to download lyrics.
+
 When importing new files, beets will now fetch lyrics for files that don't
 already have them. The lyrics will be stored in the beets database. If the
 ``import.write`` config option is on, then the lyrics will also be written to
 the files' tags.
+
+.. _requests: http://docs.python-requests.org/en/latest/
 
 
 Configuration

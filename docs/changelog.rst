@@ -4,6 +4,10 @@ Changelog
 1.3.10 (in development)
 -----------------------
 
+One backwards-compatibility note: the :doc:`/plugins/lyrics` now requires the
+`requests`_ library. If you use this plugin, you will need to install the
+library by typing ``pip install requests`` or the equivalent for your OS.
+
 New:
 
 * A new :doc:`/plugins/permissions` makes it easy to fix permissions on music
