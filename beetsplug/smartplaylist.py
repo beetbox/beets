@@ -36,23 +36,21 @@ def _items_for_query(lib, playlist, album=False):
     if key not in playlist:
         return []
 
-    # Parse quer(ies). If it's a list, join the queries with OR.
+    # Parse quer(ies). If it's a list, perform the queries and manually
+    # concatenate the results
     query_strings = playlist[key]
     if not isinstance(query_strings, (list, tuple)):
         query_strings = [query_strings]
     model = library.Album if album else library.Item
-    query = dbcore.OrQuery(
-        [library.parse_query_string(q, model)[0] for q in query_strings]
-    )
-
-    # Execute query, depending on type.
-    if album:
-        result = []
-        for album in lib.albums(query):
-            result.extend(album.items())
-        return result
-    else:
-        return lib.items(query)
+    results = []
+    for q in query_strings:
+        querystr, sort = library.parse_query_string(q, model)
+        if album:
+            new = lib.albums(querystr, sort)
+        else:
+            new = lib.items(querystr, sort)
+        results.extend(new)
+    return results
 
 
 def update_playlists(lib):
