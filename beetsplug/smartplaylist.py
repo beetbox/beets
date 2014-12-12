@@ -43,11 +43,11 @@ def _items_for_query(lib, playlist, album=False):
     model = library.Album if album else library.Item
     results = []
     for q in query_strings:
-        querystr, sort = library.parse_query_string(q, model)
+        query, sort = library.parse_query_string(q, model)
         if album:
-            new = lib.albums(querystr, sort)
+            new = lib.albums(query, sort)
         else:
-            new = lib.items(querystr, sort)
+            new = lib.items(query, sort)
         results.extend(new)
     return results
 
