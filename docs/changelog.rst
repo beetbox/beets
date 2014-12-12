@@ -37,6 +37,8 @@ Fixed:
   information. :bug:`896`
 * :doc:`/plugins/lyrics`: Avoid a crash when retrieving non-ASCII lyrics from
   the Google backend. :bug:`1135` :bug:`1136`
+* :doc:`/plugins/smartplaylist`: Sort specifiers are now respected in queries.
+  Thanks to :user:`djl`. :bug:`1138` :bug:`1137`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
