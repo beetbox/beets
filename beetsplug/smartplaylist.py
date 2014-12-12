@@ -18,7 +18,6 @@ from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
 from beets import config, ui, library
-from beets import dbcore
 from beets.util import normpath, syspath
 import os
 
