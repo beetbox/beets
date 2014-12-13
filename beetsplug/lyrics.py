@@ -29,6 +29,7 @@ from HTMLParser import HTMLParseError
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import config
+from beets.util import feat_tokens
 
 
 # Global logger.
@@ -137,7 +138,7 @@ def search_pairs(item):
     artists = [artist]
 
     # Remove any featuring artists from the artists name
-    pattern = r"(.*?) (&|\b(and|ft|feat(uring)?\b))"
+    pattern = r"(.*?) %s" % feat_tokens(extended=True)
     match = re.search(pattern, artist, re.IGNORECASE)
     if match:
         artists.append(match.group(1))
@@ -150,8 +151,8 @@ def search_pairs(item):
         titles.append(match.group(1))
 
     # Remove any featuring artists from the title
-    pattern = r"(.*?) \b(ft|feat(uring)?)\b"
-    for title in titles:
+    pattern = r"(.*?) %s" % feat_tokens()
+    for title in titles[:]:
         match = re.search(pattern, title, re.IGNORECASE)
         if match:
             titles.append(match.group(1))
