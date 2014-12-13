@@ -15,12 +15,6 @@ Jazz_n_blues:
     - impatient
     - shoes
 
-I_could_beat_myself:
-    - funny
-    - reputation
-    - destroy
-    - shiver
-
 Hey_it_s_ok:
     - swear
     - forgive
@@ -32,6 +26,12 @@ City_of_dreams:
     - landmarks
     - twilight
     - freeways
+
+Black_magic_woman:
+    - devil
+    - sticks
+    - spell
+    - heart
 
 missing_texts: |
     Lyricsmania staff is working hard for you to add $TITLE lyrics as soon

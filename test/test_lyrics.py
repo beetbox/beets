@@ -207,7 +207,6 @@ DEFAULT_SOURCES = [
          path=u'The_Beatles:Lady_Madonna'),
     dict(DEFAULT_SONG, url='http://www.lyrics.com/',
          path=u'lady-madonna-lyrics-the-beatles.html')
-
 ]
 
 # Every source entered in default beets google custom search engine
@@ -231,18 +230,25 @@ GOOGLE_SOURCES = [
          artist=u'Jacques Brel', title=u"Amsterdam",
          path=u'/paroles-officielles/275679.html'),
     dict(DEFAULT_SONG,
+         url=u'http://letras.mus.br/', path=u'the-beatles/275/'),
+    dict(DEFAULT_SONG,
          url='http://www.lyricsmania.com/',
          path='lady_madonna_lyrics_the_beatles.html'),
     dict(DEFAULT_SONG,
-         url=u'http://www.lyrics.net',
-         path=u'/lyric/17547916'),
+         url=u'http://www.lyrics.net', path=u'/lyric/17547916'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.lyricsmode.com',
+         path=u'/lyrics/b/beatles/lady_madonna.html'),
     dict(url=u'http://www.lyricsontop.com',
          artist=u'Amy Winehouse', title=u"Jazz'n'blues",
          path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
     dict(DEFAULT_SONG,
          url='http://www.metrolyrics.com/',
          path='lady-madonna-lyrics-beatles.html'),
-    dict(url=u'http://www.onelyrics.net/',
+    dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
+         artist=u'Santana', title=u'Black magic woman'),
+    dict(DEFAULT_SONG,
+         url=u'http://www.onelyrics.net/',
          artist=u'Ben & Ellen Harper', title=u'City of dreams',
          path='ben-ellen-harper-city-of-dreams-lyrics'),
     dict(url=u'http://www.paroles.net/',
