@@ -31,11 +31,8 @@ def split_on_feat(artist):
     may be a string or None if none is present.
     """
     # split on the first "feat".
-    feat_tokens(extended=True).strip('()')
-    parts = re.split(
-        feat_tokens(extended=True).translate(None, '()'),
-        artist, 1, flags=re.IGNORECASE)
-    parts = [s.strip() for s in parts]
+    regex = re.compile(feat_tokens().translate(None, '()'), re.IGNORECASE)
+    parts = [s.strip() for s in regex.split(artist, 1)]
     if len(parts) == 1:
         return parts[0], None
     else:
@@ -45,10 +42,7 @@ def split_on_feat(artist):
 def contains_feat(title):
     """Determine whether the title contains a "featured" marker.
     """
-    return bool(re.search(
-        feat_tokens(extended=True),
-        title, flags=re.IGNORECASE
-    ))
+    return bool(re.search(feat_tokens(), title, flags=re.IGNORECASE))
 
 
 def update_metadata(item, feat_part, drop_feat):
