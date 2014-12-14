@@ -154,6 +154,7 @@ class ItemTypeConflictTest(unittest.TestCase, TestHelper):
         self.register_plugin(AdventListenerPlugin)
         self.assertNotEqual(None, plugins.types(Item))
 
+
 class FileFilterPluginTest(_common.TestCase, ImportHelper):
     """ Test the file filter plugin interface
     """
@@ -210,7 +211,8 @@ class FileFilterPluginTest(_common.TestCase, ImportHelper):
 
         # Filter will return True every time
         self.filters = [self.filter_all]
-        self.__run([os.path.join(import_files[0], u'track_1.mp3'), import_files[1]])
+        self.__run([os.path.join(import_files[0], u'track_1.mp3'),
+                    import_files[1]])
 
         # Filter will return True if the file contains '2'
         self.filters = [self.filter_two]
@@ -224,6 +226,7 @@ class FileFilterPluginTest(_common.TestCase, ImportHelper):
 
         lines = out.splitlines()
         self.assertEqual(lines, expected_lines)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
