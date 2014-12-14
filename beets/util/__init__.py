@@ -692,4 +692,3 @@ def feat_tokens(for_artist=True):
         regex = r'(%s|%s)' % \
             ('|'.join([re.escape(x) for x in FEAT_SPECIAL_CHARS]), regex)
     return regex
-
