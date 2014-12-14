@@ -961,7 +961,8 @@ class ImportTaskFactory(object):
         self.toppath = toppath
         self.session = session
         self.skipped = 0
-        self.enumerate_only = session.config['enumerate_only'] if 'enumerate_only' in session.config else False
+        self.enumerate_only = session.config[
+            'enumerate_only'] if 'enumerate_only' in session.config else False
 
     def tasks(self):
         """Yield all import tasks for `self.toppath`.
@@ -994,7 +995,8 @@ class ImportTaskFactory(object):
         path lists.
         """
         if not os.path.isdir(syspath(self.toppath)):
-            if filter_file(os.path.dirname(self.toppath), os.path.basename(self.toppath)):
+            if filter_file(os.path.dirname(self.toppath),
+                           os.path.basename(self.toppath)):
                 yield ([self.toppath], [self.toppath])
         elif self.session.config['flat']:
             paths = []

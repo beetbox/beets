@@ -51,47 +51,60 @@ class RegexFileFilterPlugin(BeetsPlugin):
         if 'album' in self.config:
             album_config = self.config['album']
             if 'invert_folder_result' in album_config:
-                self.invert_folder_album_result = album_config['invert_folder_result'].get()
+                self.invert_folder_album_result = album_config[
+                    'invert_folder_result'].get()
             if 'invert_file_result' in album_config:
-                self.invert_file_album_result = album_config['invert_file_result'].get()
+                self.invert_file_album_result = album_config[
+                    'invert_file_result'].get()
             if 'folder_name_regex' in album_config:
-                self.folder_name_album_regex = re.compile(album_config['folder_name_regex'].get(), flags)
+                self.folder_name_album_regex = re.compile(
+                    album_config['folder_name_regex'].get(), flags)
             if 'file_name_regex' in album_config:
-                self.file_name_album_regex = re.compile(album_config['file_name_regex'].get(), flags)
-                
+                self.file_name_album_regex = re.compile(
+                    album_config['file_name_regex'].get(), flags)
+
         if 'singleton' in self.config:
             singleton_config = self.config['singleton']
             if 'invert_folder_result' in singleton_config:
-                self.invert_folder_singleton_result = singleton_config['invert_folder_result'].get()
+                self.invert_folder_singleton_result = singleton_config[
+                    'invert_folder_result'].get()
             if 'invert_file_result' in singleton_config:
-                self.invert_file_singleton_result = singleton_config['invert_file_result'].get()
+                self.invert_file_singleton_result = singleton_config[
+                    'invert_file_result'].get()
             if 'folder_name_regex' in singleton_config:
-                self.folder_name_singleton_regex = re.compile(singleton_config['folder_name_regex'].get(), flags)
+                self.folder_name_singleton_regex = re.compile(
+                    singleton_config['folder_name_regex'].get(), flags)
             if 'file_name_regex' in singleton_config:
-                self.file_name_singleton_regex = re.compile(singleton_config['file_name_regex'].get(), flags)
+                self.file_name_singleton_regex = re.compile(
+                    singleton_config['file_name_regex'].get(), flags)
 
     def file_filter(self, path, object_name):
         full_path = os.path.join(path, object_name)
         import_config = dict(config['import'])
-        if not 'singletons' in import_config or not import_config['singletons']:
+        if 'singletons' not in import_config or not import_config[
+                'singletons']:
             if os.path.isdir(syspath(full_path)):
-                matched = self.folder_name_album_regex.match(object_name) is not None
+                matched = self.folder_name_album_regex.match(
+                    object_name) is not None
                 if self.invert_folder_album_result:
                     return not matched
                 return matched
             else:
-                matched = self.file_name_album_regex.match(object_name) is not None
+                matched = self.file_name_album_regex.match(
+                    object_name) is not None
                 if self.invert_file_album_result:
                     return not matched
                 return matched
         else:
             if os.path.isdir(syspath(full_path)):
-                matched = self.folder_name_singleton_regex.match(object_name) is not None
+                matched = self.folder_name_singleton_regex.match(
+                    object_name) is not None
                 if self.invert_folder_singleton_result:
                     return not matched
                 return matched
             else:
-                matched = self.file_name_singleton_regex.match(object_name) is not None
+                matched = self.file_name_singleton_regex.match(
+                    object_name) is not None
                 if self.invert_file_singleton_result:
                     return not matched
                 return matched

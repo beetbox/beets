@@ -30,7 +30,8 @@ class RegexFileFilterPluginTest(_common.TestCase, ImportHelper):
         self._setup_import_session()
         config['import']['enumerate_only'] = True
 
-        self.all_paths = [self.artist_paths[0], self.artist_paths[1], self.album_paths[0], self.album_paths[1],
+        self.all_paths = [self.artist_paths[0], self.artist_paths[1],
+                          self.album_paths[0], self.album_paths[1],
                           self.misc_paths[0], self.misc_paths[1]]
 
     def tearDown(self):
@@ -318,6 +319,7 @@ class RegexFileFilterPluginTest(_common.TestCase, ImportHelper):
                     self.artist_paths[1]])
         self.__run([self.misc_paths[0],
                     self.misc_paths[1]], singletons=True)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
