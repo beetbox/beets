@@ -10,6 +10,8 @@ library by typing ``pip install requests`` or the equivalent for your OS.
 
 New:
 
+* :doc:`/plugins/lyrics`: Add brazilian and hispanic sources to Google custom
+  search engine.
 * A new :doc:`/plugins/permissions` makes it easy to fix permissions on music
   files as they are imported. Thanks to :user:`xsteadfastx`. :bug:`1098`
 * A new :doc:`/plugins/plexupdate` lets you notify a `Plex`_ server when the

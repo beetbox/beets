@@ -36,3 +36,4 @@ man
 htmlcov/*
 .noseids
 *.egg
+test/rsrc/lyrics/*
