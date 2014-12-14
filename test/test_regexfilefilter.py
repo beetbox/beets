@@ -107,9 +107,6 @@ class RegexFileFilterPluginTest(_common.TestCase, ImportHelper):
 
         lines = out.splitlines()
 
-        for line in lines:
-            print line
-
         self.assertEqual(lines, expected_lines)
 
     def __reset_config(self):

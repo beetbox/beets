@@ -166,6 +166,7 @@ class FileFilterPluginTest(_common.TestCase, ImportHelper):
         config['import']['enumerate_only'] = True
         self.matcher = AutotagStub().install()
 
+        self.old_file_filters = plugins.file_filters
         plugins.file_filters = self.file_filters
 
         self.filters = []
@@ -185,6 +186,7 @@ class FileFilterPluginTest(_common.TestCase, ImportHelper):
     def tearDown(self):
         self.teardown_beets()
         self.matcher.restore()
+        plugins.file_filters = self.old_file_filters
 
     def test_import_album(self):
         self._setup_import_session(singletons=False)
