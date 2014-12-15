@@ -1015,8 +1015,7 @@ the new configuration system. The album art and lyrics plugins also got a
 little love.
 
 If you're upgrading from 1.0.0 or earlier, this release (like the 1.1 betas)
-will automatically migrate your configuration to the new system. See
-:doc:`/guides/migration`.
+will automatically migrate your configuration to the new system.
 
 * :doc:`/plugins/embedart`: The ``embedart`` command now embeds each album's
   associated art by default. The ``--file`` option invokes the old behavior,
@@ -1236,8 +1235,7 @@ Other new stuff:
 
 This release entirely revamps beets' configuration system. The configuration
 file is now a `YAML`_ document and is located, along with other support files,
-in a common directory (e.g., ``~/.config/beets`` on Unix-like systems). If
-you're upgrading from an earlier version, please see :doc:`/guides/migration`.
+in a common directory (e.g., ``~/.config/beets`` on Unix-like systems).
 
 .. _YAML: http://en.wikipedia.org/wiki/YAML
 
