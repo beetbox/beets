@@ -255,6 +255,9 @@ directory if it's empty. A directory is considered empty if it only contains
 files whose names match the glob patterns in `clutter`, which should be a list
 of strings. The default list consists of "Thumbs.DB" and ".DS_Store".
 
+The importer only removes recursively searched subdirectories---the top-level
+directory you specify on the command line is never deleted.
+
 .. _max_filename_length:
 
 max_filename_length
