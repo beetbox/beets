@@ -31,7 +31,7 @@ def split_on_feat(artist):
     may be a string or None if none is present.
     """
     # split on the first "feat".
-    regex = re.compile(feat_tokens().translate(None, '()'), re.IGNORECASE)
+    regex = re.compile(feat_tokens(), re.IGNORECASE)
     parts = [s.strip() for s in regex.split(artist, 1)]
     if len(parts) == 1:
         return parts[0], None
