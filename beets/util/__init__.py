@@ -678,3 +678,17 @@ def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
         return min(res[9], limit)
     else:
         return limit
+
+
+def feat_tokens(for_artist=True):
+    """Returns the tokens to use to detect featuring artists in strings."""
+
+    feat_special_chars = ['&', 'feat.', 'ft.']
+    feat_words = ['ft', 'featuring', 'feat']
+    if for_artist:  # appending to artist name enables more tokens
+        feat_words += ['with', 'vs', 'and', 'con']
+    regex = r'%s' % '|'.join(['\\b%s\\b' % re.escape(x) for x in feat_words])
+    if for_artist:
+        regex = r'%s|%s' % \
+            ('|'.join([re.escape(x) for x in feat_special_chars]), regex)
+    return regex

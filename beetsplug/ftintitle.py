@@ -16,7 +16,7 @@
 """
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.util import displayable_path
+from beets.util import displayable_path, feat_tokens
 from beets import config
 import logging
 import re
@@ -30,25 +30,19 @@ def split_on_feat(artist):
     artist, which is always a string, and the featuring artist, which
     may be a string or None if none is present.
     """
-    parts = re.split(
-        r'[fF]t\.|[fF]eaturing|[fF]eat\.|\b[wW]ith\b|&|vs\.|and',
-        artist,
-        1,  # Only split on the first "feat".
-    )
-    parts = [s.strip() for s in parts]
+    # split on the first "feat".
+    regex = re.compile(feat_tokens(), re.IGNORECASE)
+    parts = [s.strip() for s in regex.split(artist, 1)]
     if len(parts) == 1:
         return parts[0], None
     else:
-        return parts
+        return tuple(parts)
 
 
 def contains_feat(title):
     """Determine whether the title contains a "featured" marker.
     """
-    return bool(re.search(
-        r'[fF]t\.|[fF]eaturing|[fF]eat\.|\b[wW]ith\b|&',
-        title,
-    ))
+    return bool(re.search(feat_tokens(), title, flags=re.IGNORECASE))
 
 
 def update_metadata(item, feat_part, drop_feat):
