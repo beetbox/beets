@@ -41,6 +41,9 @@ Fixed:
   the Google backend. :bug:`1135` :bug:`1136`
 * :doc:`/plugins/smartplaylist`: Sort specifiers are now respected in queries.
   Thanks to :user:`djl`. :bug:`1138` :bug:`1137`
+* :doc:`/plugins/ftintitle` and :doc:`/plugins/lyrics`: Featuring artists can
+  now be detected when they use the Spanish word *con*. :bug:`1060`
+  :bug:`1143`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
