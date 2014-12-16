@@ -10,6 +10,7 @@ library by typing ``pip install requests`` or the equivalent for your OS.
 
 New:
 
+* :doc:`/plugins/lyrics`: Add musixmatch source.
 * :doc:`/plugins/lyrics`: Add brazilian and hispanic sources to Google custom
   search engine.
 * A new :doc:`/plugins/permissions` makes it easy to fix permissions on music

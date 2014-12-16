@@ -319,22 +319,6 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
                                           message))
 
 
-def sanitize_sources(sources):
-    """Clean up the user's configured source list. Remove unknown or
-    duplicate sources while keeping original order.
-    """
-    seen = set()
-    others = set(SOURCES_ALL) - set(sources)
-    res = []
-    for s in sources:
-        if s in SOURCES_ALL + ['*']:
-            if not (s in seen or seen.add(s)):
-                res.extend(list(others) if s == '*' else [s])
-    if not HAVE_ITUNES and 'itunes' in res:
-        res.remove('itunes')
-    return res
-
-
 class FetchArtPlugin(BeetsPlugin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
@@ -359,8 +343,10 @@ class FetchArtPlugin(BeetsPlugin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
-        self.config['sources'] = sanitize_sources(
-            self.config['sources'].as_str_seq())
+        if not HAVE_ITUNES and u'itunes' in SOURCES_ALL:
+            SOURCES_ALL.remove(u'itunes')
+        self.config['sources'] = util.sanitize_choices(
+            self.config['sources'].as_str_seq(), SOURCES_ALL)
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
