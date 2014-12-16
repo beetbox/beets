@@ -138,7 +138,7 @@ def search_pairs(item):
     artists = [artist]
 
     # Remove any featuring artists from the artists name
-    pattern = r"(.*?) (%s)" % feat_tokens()
+    pattern = r"(.*?) {0}".format(feat_tokens())
     match = re.search(pattern, artist, re.IGNORECASE)
     if match:
         artists.append(match.group(1))
@@ -151,7 +151,7 @@ def search_pairs(item):
         titles.append(match.group(1))
 
     # Remove any featuring artists from the title
-    pattern = r"(.*?) (%s)" % feat_tokens(for_artist=False)
+    pattern = r"(.*?) {0}".format(feat_tokens(for_artist=False))
     for title in titles[:]:
         match = re.search(pattern, title, re.IGNORECASE)
         if match:

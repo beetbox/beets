@@ -681,8 +681,11 @@ def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
 
 
 def feat_tokens(for_artist=True):
-    """Returns the tokens to use to detect featuring artists in strings."""
-
+    """Return a regular expression that matches phrases like "featuring"
+    that separate a main artist or a song title from secondary artists.
+    The `for_artist` option determines whether the regex should be
+    suitable for matching artist fields (the default) or title fields.
+    """
     feat_special_chars = ['&', 'feat.', 'ft.']
     feat_words = ['ft', 'featuring', 'feat']
     if for_artist:  # appending to artist name enables more tokens
@@ -691,4 +694,4 @@ def feat_tokens(for_artist=True):
     if for_artist:
         regex = r'%s|%s' % \
             ('|'.join([re.escape(x) for x in feat_special_chars]), regex)
-    return regex
+    return '(?:{0})'.format(regex)
