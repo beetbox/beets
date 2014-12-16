@@ -49,6 +49,7 @@ class BeetsPlugin(object):
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
+        self.file_filters = []
         self.import_stages = []
         self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
@@ -350,6 +351,15 @@ def import_stages():
         if hasattr(plugin, 'import_stages'):
             stages += plugin.import_stages
     return stages
+
+
+def file_filters():
+    """Get a list of file filter functions defined by plugins."""
+    filters = []
+    for plugin in find_plugins():
+        if hasattr(plugin, 'file_filters'):
+            filters += plugin.file_filters
+    return filters
 
 
 # New-style (lazy) plugin-provided fields.
