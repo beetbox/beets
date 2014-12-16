@@ -27,8 +27,7 @@ import itertools
 from HTMLParser import HTMLParseError
 
 from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import config
+from beets import config, ui, util
 from beets.util import feat_tokens
 
 
@@ -431,6 +430,11 @@ def fetch_google(artist, title):
 
 # Plugin logic.
 
+SOURCES_ALL = {'google': fetch_google,
+               'lyricwiki': fetch_lyricswiki,
+               'lyrics.com': fetch_lyricscom,
+               'musixmatch': fetch_musixmatch}
+
 
 class LyricsPlugin(BeetsPlugin):
     def __init__(self):
@@ -441,12 +445,16 @@ class LyricsPlugin(BeetsPlugin):
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
             'fallback': None,
+            'sources': SOURCES_ALL
         })
 
-        self.backends = [fetch_lyricswiki, fetch_lyricscom]
-
-        if self.config['google_API_key'].get():
-            self.backends.insert(0, fetch_google)
+        if not self.config['google_API_key'].get():
+            SOURCES_ALL.pop('google', None)
+        self.config['sources'] = util.sanitize_choices(
+            self.config['sources'].as_str_seq(), SOURCES_ALL.keys())
+        self.backends = []
+        for key in self.config['sources'].as_str_seq():
+            self.backends.append(SOURCES_ALL[key])
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
