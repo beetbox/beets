@@ -47,7 +47,7 @@ def main(argv=None):
         url = s['url'] + s['path']
         fn = test_lyrics.url_to_filename(url)
         if not os.path.isfile(fn):
-            html = requests.get(url).text
+            html = requests.get(url, verify=False).text
             with safe_open_w(fn) as f:
                 f.write(html.encode('utf8'))
 

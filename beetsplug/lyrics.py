@@ -86,10 +86,17 @@ def unescape(text):
     return out
 
 
-def extract_text(html, starttag):
+def extract_text_between(html, start_marker, end_marker):
+    _, html = html.split(start_marker, 1)
+    html, _ = html.split(end_marker, 1)
+    return _scrape_strip_cruft(html, True)
+
+
+def extract_text_in(html, starttag):
     """Extract the text from a <DIV> tag in the HTML starting with
     ``starttag``. Returns None if parsing fails.
     """
+
     # Strip off the leading text before opening tag.
     try:
         _, html = html.split(starttag, 1)
@@ -178,6 +185,19 @@ def _encode(s):
         s = s.encode('utf8', 'ignore')
     return urllib.quote(s)
 
+# Musixmatch
+
+MUSIXMATCH_URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+
+
+def fetch_musixmatch(artist, title):
+    url = MUSIXMATCH_URL_PATTERN % (_lw_encode(artist.title()),
+                                    _lw_encode(title.title()))
+    html = fetch_url(url)
+    if not html:
+        return
+    lyrics = extract_text_between(html, '"lyrics_body":', '"lyrics_language":')
+    return lyrics.strip(',"').replace('\\n', '\n')
 
 # LyricsWiki.
 
@@ -201,7 +221,7 @@ def fetch_lyricswiki(artist, title):
     if not html:
         return
 
-    lyrics = extract_text(html, "<div class='lyricbox'>")
+    lyrics = extract_text_in(html, "<div class='lyricbox'>")
     if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
         return lyrics
 
@@ -228,7 +248,7 @@ def fetch_lyricscom(artist, title):
     if not html:
         return
 
-    lyrics = extract_text(html, '<div id="lyric_space">')
+    lyrics = extract_text_in(html, '<div id="lyric_space">')
     if not lyrics:
         return
     for not_found_str in LYRICSCOM_NOT_FOUND:

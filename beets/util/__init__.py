@@ -692,3 +692,18 @@ def feat_tokens(for_artist=True):
     return '(?<=\s)(?:{0})(?=\s)'.format(
         '|'.join(re.escape(x) for x in feat_words)
     )
+
+
+def sanitize_choices(choices, choices_all):
+    """Clean up a stringlist configuration attribute by removing unknown or
+    duplicate string while keeping original order.
+    """
+    seen = set()
+    others = [x for x in choices_all if x not in choices]
+    print others
+    res = []
+    for s in choices:
+        if s in list(choices_all) + ['*']:
+            if not (s in seen or seen.add(s)):
+                res.extend(list(others) if s == '*' else [s])
+    return res
