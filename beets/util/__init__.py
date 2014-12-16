@@ -704,12 +704,9 @@ def feat_tokens(for_artist=True):
     The `for_artist` option determines whether the regex should be
     suitable for matching artist fields (the default) or title fields.
     """
-    feat_special_chars = ['&', 'feat.', 'ft.']
     feat_words = ['ft', 'featuring', 'feat']
-    if for_artist:  # appending to artist name enables more tokens
-        feat_words += ['with', 'vs', 'and', 'con']
-    regex = r'%s' % '|'.join(['\\b%s\\b' % re.escape(x) for x in feat_words])
     if for_artist:
-        regex = r'%s|%s' % \
-            ('|'.join([re.escape(x) for x in feat_special_chars]), regex)
-    return '(?:{0})'.format(regex)
+        feat_words += ['with', 'vs', 'and', 'con', '&', 'feat.', 'ft.']
+    return '(?<=\s)(?:{0})(?=\s)'.format(
+        '|'.join(re.escape(x) for x in feat_words)
+    )
