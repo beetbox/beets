@@ -43,8 +43,13 @@ configuration file. The available options are:
   backend).
   Default: None.
 - **google_engine_ID**: The custom search engine to use.
-  Default: The beets custom search engine, which gathers a list of sources
+  Default: The `beets custom search engine`_, which gathers a list of sources
   known to be scrapeable.
+- **sources**: List of sources to search for lyrics. An asterisk `*` expands
+  to all available sources.
+  Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all sources.
+  *google* source will be automatically deactivated if no `google_engine_ID` is
+  setup.
 
 Here's an example of ``config.yaml``::
 
@@ -53,6 +58,7 @@ Here's an example of ``config.yaml``::
       google_API_key: AZERTYUIOPQSDFGHJKLMWXCVBN1234567890_ab
       google_engine_ID: 009217259823014548361:lndtuqkycfu
 
+.. _beets custom search engine: https://www.google.com:443/cse/publicurl?cx=009217259823014548361:lndtuqkycfu
 
 Fetching Lyrics Manually
 ------------------------
@@ -93,7 +99,7 @@ default, beets use a list of sources known to be scrapeable.
 .. _define a custom search engine: http://www.google.com/cse/all
 
 Note that the Google custom search API is limited to 100 queries per day.
-After that, the lyrics plugin will fall back on its other data sources.
+After that, the lyrics plugin will fall back on other declared data sources.
 
 .. _pip: http://www.pip-installer.org/
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/
