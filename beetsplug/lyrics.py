@@ -26,9 +26,8 @@ import difflib
 import itertools
 from HTMLParser import HTMLParseError
 
-from beets.plugins import BeetsPlugin
-from beets import config, ui, util
-from beets.util import feat_tokens
+from beets import plugins
+from beets import config, ui
 
 
 # Global logger.
@@ -144,7 +143,7 @@ def search_pairs(item):
     artists = [artist]
 
     # Remove any featuring artists from the artists name
-    pattern = r"(.*?) {0}".format(feat_tokens())
+    pattern = r"(.*?) {0}".format(plugins.feat_tokens())
     match = re.search(pattern, artist, re.IGNORECASE)
     if match:
         artists.append(match.group(1))
@@ -157,7 +156,7 @@ def search_pairs(item):
         titles.append(match.group(1))
 
     # Remove any featuring artists from the title
-    pattern = r"(.*?) {0}".format(feat_tokens(for_artist=False))
+    pattern = r"(.*?) {0}".format(plugins.feat_tokens(for_artist=False))
     for title in titles[:]:
         match = re.search(pattern, title, re.IGNORECASE)
         if match:
@@ -437,7 +436,7 @@ SOURCES_ALL = {'google': fetch_google,
                'musixmatch': fetch_musixmatch}
 
 
-class LyricsPlugin(BeetsPlugin):
+class LyricsPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LyricsPlugin, self).__init__()
         self.import_stages = [self.imported]
@@ -452,7 +451,7 @@ class LyricsPlugin(BeetsPlugin):
         if not self.config['google_API_key'].get() and \
                 'google' in SOURCES_KEYS:
             SOURCES_KEYS.remove('google')
-        self.config['sources'] = util.sanitize_choices(
+        self.config['sources'] = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), SOURCES_KEYS)
         self.backends = []
         for key in self.config['sources'].as_str_seq():

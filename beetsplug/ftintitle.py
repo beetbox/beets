@@ -14,9 +14,9 @@
 
 """Moves "featured" artists to the title from the artist field.
 """
-from beets.plugins import BeetsPlugin
+from beets import plugins
 from beets import ui
-from beets.util import displayable_path, feat_tokens
+from beets.util import displayable_path
 from beets import config
 import logging
 import re
@@ -31,7 +31,7 @@ def split_on_feat(artist):
     may be a string or None if none is present.
     """
     # split on the first "feat".
-    regex = re.compile(feat_tokens(), re.IGNORECASE)
+    regex = re.compile(plugins.feat_tokens(), re.IGNORECASE)
     parts = [s.strip() for s in regex.split(artist, 1)]
     if len(parts) == 1:
         return parts[0], None
@@ -42,7 +42,7 @@ def split_on_feat(artist):
 def contains_feat(title):
     """Determine whether the title contains a "featured" marker.
     """
-    return bool(re.search(feat_tokens(), title, flags=re.IGNORECASE))
+    return bool(re.search(plugins.feat_tokens(), title, flags=re.IGNORECASE))
 
 
 def update_metadata(item, feat_part, drop_feat):
@@ -110,7 +110,7 @@ def ft_in_title(item, drop_feat):
         ui.print_()
 
 
-class FtInTitlePlugin(BeetsPlugin):
+class FtInTitlePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(FtInTitlePlugin, self).__init__()
 
