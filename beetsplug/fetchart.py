@@ -22,12 +22,12 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-from beets.plugins import BeetsPlugin
-from beets.util.artresizer import ArtResizer
+from beets import plugins
 from beets import importer
 from beets import ui
 from beets import util
 from beets import config
+from beets.util.artresizer import ArtResizer
 
 try:
     import itunes
@@ -319,7 +319,7 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
                                           message))
 
 
-class FetchArtPlugin(BeetsPlugin):
+class FetchArtPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
 
@@ -345,7 +345,7 @@ class FetchArtPlugin(BeetsPlugin):
 
         if not HAVE_ITUNES and u'itunes' in SOURCES_ALL:
             SOURCES_ALL.remove(u'itunes')
-        self.config['sources'] = util.sanitize_choices(
+        self.config['sources'] = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), SOURCES_ALL)
 
     # Asynchronous; after music is added to the library.
