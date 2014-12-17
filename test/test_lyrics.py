@@ -207,8 +207,9 @@ DEFAULT_SOURCES = [
     dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
          path=u'The_Beatles:Lady_Madonna'),
     dict(DEFAULT_SONG, url='http://www.lyrics.com/',
-         path=u'lady-madonna-lyrics-the-beatles.html')
-
+         path=u'lady-madonna-lyrics-the-beatles.html'),
+    dict(DEFAULT_SONG, url='https://www.musixmatch.com/',
+         path=u'lyrics/The-Beatles/Lady-Madonna'),
 ]
 
 # Every source entered in default beets google custom search engine
