@@ -437,7 +437,6 @@ def sanitize_choices(choices, choices_all):
     """
     seen = set()
     others = [x for x in choices_all if x not in choices]
-    print others
     res = []
     for s in choices:
         if s in list(choices_all) + ['*']:
