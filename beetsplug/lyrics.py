@@ -430,6 +430,7 @@ def fetch_google(artist, title):
 
 # Plugin logic.
 
+SOURCES_KEYS = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch']
 SOURCES_ALL = {'google': fetch_google,
                'lyricwiki': fetch_lyricswiki,
                'lyrics.com': fetch_lyricscom,
@@ -445,13 +446,14 @@ class LyricsPlugin(BeetsPlugin):
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
             'fallback': None,
-            'sources': SOURCES_ALL
+            'sources': SOURCES_KEYS
         })
 
-        if not self.config['google_API_key'].get():
-            SOURCES_ALL.pop('google', None)
+        if not self.config['google_API_key'].get() and \
+                'google' in SOURCES_KEYS:
+            SOURCES_KEYS.remove('google')
         self.config['sources'] = util.sanitize_choices(
-            self.config['sources'].as_str_seq(), SOURCES_ALL.keys())
+            self.config['sources'].as_str_seq(), SOURCES_KEYS)
         self.backends = []
         for key in self.config['sources'].as_str_seq():
             self.backends.append(SOURCES_ALL[key])
