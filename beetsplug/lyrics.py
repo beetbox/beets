@@ -421,6 +421,7 @@ class LyricsPlugin(BeetsPlugin):
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
             'fallback': None,
+            'force': False,
         })
 
         self.backends = [fetch_lyricswiki, fetch_lyricscom]
@@ -456,7 +457,7 @@ class LyricsPlugin(BeetsPlugin):
         if self.config['auto']:
             for item in task.imported_items():
                 self.fetch_item_lyrics(session.lib, logging.DEBUG, item,
-                                       False, False)
+                                       False, self.config['force'])
 
     def fetch_item_lyrics(self, lib, loglevel, item, write, force):
         """Fetch and store lyrics for a single item. If ``write``, then the
