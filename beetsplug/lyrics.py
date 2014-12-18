@@ -244,9 +244,8 @@ def fetch_lyricscom(artist, title):
     html = fetch_url(url)
     if not html:
         return
-    lyrics = extract_text_between(html,
-        '<div id="lyrics" class="SCREENONLY" itemprop="description">',
-        '</div>')
+    lyrics = extract_text_between(html, '<div id="lyrics" class="SCREENONLY" '
+                                  'itemprop="description">', '</div>')
     if not lyrics:
         return
     for not_found_str in LYRICSCOM_NOT_FOUND:
