@@ -151,6 +151,16 @@ class ItemTypeConflictTest(unittest.TestCase, TestHelper):
         self.assertNotEqual(None, plugins.types(Item))
 
 
+class HelpersTest(unittest.TestCase):
+
+    def test_sanitize_choices(self):
+        self.assertEqual(plugins.sanitize_choices(['A', 'Z'], ('A', 'B')),
+                         ['A'])
+        self.assertEqual(plugins.sanitize_choices(['A', 'A'], ('A')), ['A'])
+        self.assertEqual(plugins.sanitize_choices(['D', '*', 'A'],
+                         ('A', 'B', 'C', 'D')), ['D', 'B', 'C', 'A'])
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

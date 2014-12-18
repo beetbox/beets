@@ -16,8 +16,10 @@
 
 import logging
 import traceback
-from collections import defaultdict
 import inspect
+import re
+from collections import defaultdict
+
 
 import beets
 from beets import mediafile
@@ -402,3 +404,32 @@ def send(event, **arguments):
         argspec = inspect.getargspec(handler).args
         args = dict((k, v) for k, v in arguments.items() if k in argspec)
         handler(**args)
+
+
+def feat_tokens(for_artist=True):
+    """Return a regular expression that matches phrases like "featuring"
+    that separate a main artist or a song title from secondary artists.
+    The `for_artist` option determines whether the regex should be
+    suitable for matching artist fields (the default) or title fields.
+    """
+    feat_words = ['ft', 'featuring', 'feat', 'feat.', 'ft.']
+    if for_artist:
+        feat_words += ['with', 'vs', 'and', 'con', '&']
+    return '(?<=\s)(?:{0})(?=\s)'.format(
+        '|'.join(re.escape(x) for x in feat_words)
+    )
+
+
+def sanitize_choices(choices, choices_all):
+    """Clean up a stringlist configuration attribute: keep only choices
+    elements present in choices_all, remove duplicate elements, expand '*'
+    wildcard while keeping original stringlist order.
+    """
+    seen = set()
+    others = [x for x in choices_all if x not in choices]
+    res = []
+    for s in choices:
+        if s in list(choices_all) + ['*']:
+            if not (s in seen or seen.add(s)):
+                res.extend(list(others) if s == '*' else [s])
+    return res

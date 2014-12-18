@@ -26,10 +26,8 @@ import difflib
 import itertools
 from HTMLParser import HTMLParseError
 
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import config
-from beets.util import feat_tokens
+from beets import plugins
+from beets import config, ui
 
 
 # Global logger.
@@ -86,10 +84,17 @@ def unescape(text):
     return out
 
 
-def extract_text(html, starttag):
+def extract_text_between(html, start_marker, end_marker):
+    _, html = html.split(start_marker, 1)
+    html, _ = html.split(end_marker, 1)
+    return _scrape_strip_cruft(html, True)
+
+
+def extract_text_in(html, starttag):
     """Extract the text from a <DIV> tag in the HTML starting with
     ``starttag``. Returns None if parsing fails.
     """
+
     # Strip off the leading text before opening tag.
     try:
         _, html = html.split(starttag, 1)
@@ -138,7 +143,7 @@ def search_pairs(item):
     artists = [artist]
 
     # Remove any featuring artists from the artists name
-    pattern = r"(.*?) {0}".format(feat_tokens())
+    pattern = r"(.*?) {0}".format(plugins.feat_tokens())
     match = re.search(pattern, artist, re.IGNORECASE)
     if match:
         artists.append(match.group(1))
@@ -151,7 +156,7 @@ def search_pairs(item):
         titles.append(match.group(1))
 
     # Remove any featuring artists from the title
-    pattern = r"(.*?) {0}".format(feat_tokens(for_artist=False))
+    pattern = r"(.*?) {0}".format(plugins.feat_tokens(for_artist=False))
     for title in titles[:]:
         match = re.search(pattern, title, re.IGNORECASE)
         if match:
@@ -178,6 +183,19 @@ def _encode(s):
         s = s.encode('utf8', 'ignore')
     return urllib.quote(s)
 
+# Musixmatch
+
+MUSIXMATCH_URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+
+
+def fetch_musixmatch(artist, title):
+    url = MUSIXMATCH_URL_PATTERN % (_lw_encode(artist.title()),
+                                    _lw_encode(title.title()))
+    html = fetch_url(url)
+    if not html:
+        return
+    lyrics = extract_text_between(html, '"lyrics_body":', '"lyrics_language":')
+    return lyrics.strip(',"').replace('\\n', '\n')
 
 # LyricsWiki.
 
@@ -201,7 +219,7 @@ def fetch_lyricswiki(artist, title):
     if not html:
         return
 
-    lyrics = extract_text(html, "<div class='lyricbox'>")
+    lyrics = extract_text_in(html, "<div class='lyricbox'>")
     if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
         return lyrics
 
@@ -228,7 +246,7 @@ def fetch_lyricscom(artist, title):
     if not html:
         return
 
-    lyrics = extract_text(html, '<div id="lyric_space">')
+    lyrics = extract_text_in(html, '<div id="lyric_space">')
     if not lyrics:
         return
     for not_found_str in LYRICSCOM_NOT_FOUND:
@@ -411,8 +429,14 @@ def fetch_google(artist, title):
 
 # Plugin logic.
 
+SOURCES_KEYS = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch']
+SOURCES_ALL = {'google': fetch_google,
+               'lyricwiki': fetch_lyricswiki,
+               'lyrics.com': fetch_lyricscom,
+               'musixmatch': fetch_musixmatch}
 
-class LyricsPlugin(BeetsPlugin):
+
+class LyricsPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LyricsPlugin, self).__init__()
         self.import_stages = [self.imported]
@@ -422,12 +446,17 @@ class LyricsPlugin(BeetsPlugin):
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
             'fallback': None,
             'force': False,
+            'sources': SOURCES_KEYS,
         })
 
-        self.backends = [fetch_lyricswiki, fetch_lyricscom]
-
-        if self.config['google_API_key'].get():
-            self.backends.insert(0, fetch_google)
+        if not self.config['google_API_key'].get() and \
+                'google' in SOURCES_KEYS:
+            SOURCES_KEYS.remove('google')
+        self.config['sources'] = plugins.sanitize_choices(
+            self.config['sources'].as_str_seq(), SOURCES_KEYS)
+        self.backends = []
+        for key in self.config['sources'].as_str_seq():
+            self.backends.append(SOURCES_ALL[key])
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')

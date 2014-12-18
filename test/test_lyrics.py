@@ -17,6 +17,7 @@
 import os
 import _common
 import sys
+import re
 from _common import unittest
 from beetsplug import lyrics
 from beets.library import Item
@@ -163,7 +164,7 @@ class LyricsPluginTest(unittest.TestCase):
 
 
 def url_to_filename(url):
-    url = url.replace('http://', '').replace('www.', '')
+    url = re.sub(r'https?://|www.', '', url)
     fn = "".join(x for x in url if (x.isalnum() or x == '/'))
     fn = fn.split('/')
     fn = os.path.join(LYRICS_ROOT_DIR, fn[0], fn[-1]) + '.txt'
@@ -206,7 +207,9 @@ DEFAULT_SOURCES = [
     dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
          path=u'The_Beatles:Lady_Madonna'),
     dict(DEFAULT_SONG, url='http://www.lyrics.com/',
-         path=u'lady-madonna-lyrics-the-beatles.html')
+         path=u'lady-madonna-lyrics-the-beatles.html'),
+    dict(DEFAULT_SONG, url='https://www.musixmatch.com/',
+         path=u'lyrics/The-Beatles/Lady-Madonna'),
 ]
 
 # Every source entered in default beets google custom search engine
@@ -307,8 +310,9 @@ class LyricsGooglePluginTest(unittest.TestCase):
         """Test default engines with the default query"""
         if not check_lyrics_fetched():
             self.skipTest("Run lyrics_download_samples.py script first.")
-        for (fun, s) in zip((lyrics.fetch_lyricswiki, lyrics.fetch_lyricscom),
-                            DEFAULT_SOURCES):
+        for (fun, s) in zip([lyrics.fetch_lyricswiki,
+                             lyrics.fetch_lyricscom,
+                             lyrics.fetch_musixmatch], DEFAULT_SOURCES):
             if os.path.isfile(url_to_filename(
                               s['url'] + s['path'])):
                 res = fun(s['artist'], s['title'])
