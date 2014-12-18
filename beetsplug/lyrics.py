@@ -113,7 +113,6 @@ def extract_text_in(html, starttag):
         else:  # Opening tag.
             if level == 0:
                 parts.append(html[pos:match.start()])
-
             level += 1
 
         if level == -1:
@@ -245,8 +244,9 @@ def fetch_lyricscom(artist, title):
     html = fetch_url(url)
     if not html:
         return
-
-    lyrics = extract_text_in(html, '<div id="lyric_space">')
+    lyrics = extract_text_between(html,
+        '<div id="lyrics" class="SCREENONLY" itemprop="description">',
+        '</div>')
     if not lyrics:
         return
     for not_found_str in LYRICSCOM_NOT_FOUND:
@@ -318,12 +318,12 @@ def is_lyrics(text, artist=None):
     """Determine whether the text seems to be valid lyrics.
     """
     if not text:
-        return
+        return False
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
         log.debug(u"Ignoring too short lyrics '{0}'".format(text))
-        return 0
+        return False
     elif nbLines < 5:
         badTriggersOcc.append('too_short')
     else:
@@ -341,7 +341,6 @@ def is_lyrics(text, artist=None):
 
     if badTriggersOcc:
         log.debug(u'Bad triggers detected: {0}'.format(badTriggersOcc))
-
     return len(badTriggersOcc) < 2
 
 
