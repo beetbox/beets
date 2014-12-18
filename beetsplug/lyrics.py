@@ -443,8 +443,10 @@ class LyricsPlugin(BeetsPlugin):
             # import_write config value.
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                self.fetch_item_lyrics(lib, logging.INFO, item, write,
-                                       opts.force_refetch)
+                self.fetch_item_lyrics(
+                    lib, logging.INFO, item, write,
+                    opts.force_refetch or self.config['force'],
+                )
                 if opts.printlyr and item.lyrics:
                     ui.print_(item.lyrics)
 

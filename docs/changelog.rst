@@ -18,9 +18,10 @@ New:
   database changes. Thanks again to xsteadfastx. :bug:`1120`
 * Add a warning when importing a directory that contains no music. :bug:`1116`
   :bug:`1127`
-* The :doc:`/plugins/zero` can remove embedded images. :bug:`1129` :bug:`1100`
+* :doc:`/plugins/zero`: Can now remove embedded images. :bug:`1129` :bug:`1100`
 * The :ref:`config-cmd` command can now be used to edit the configuration even
   when it has syntax errors. :bug:`1123` :bug:`1128`
+* :doc:`/plugins/lyrics`: Added a new ``force`` config option. :bug:`1150`
 
 Fixed:
 
