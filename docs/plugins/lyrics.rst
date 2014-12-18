@@ -39,6 +39,9 @@ configuration file. The available options are:
 - **fallback**: By default, the file will be left unchanged when no lyrics are
   found. Use the empty string ``''`` to reset the lyrics in such a case.
   Default: None.
+- **force**: By default, beets won't fetch lyrics if the files already have
+  ones. To instead always fetch lyrics, set the ``force`` option to ``yes``.
+  Default: ``no``.
 - **google_API_key**: Your Google API key (to enable the Google Custom Search
   backend).
   Default: None.
