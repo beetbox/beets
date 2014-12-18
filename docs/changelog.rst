@@ -10,9 +10,9 @@ library by typing ``pip install requests`` or the equivalent for your OS.
 
 New:
 
-* :doc:`/plugins/lyrics`: Add `musixmatch`_ source and introduce a new ``sources``
-  config option that lets you choose exactly where to look for lyrics and in
-  which order.
+* :doc:`/plugins/lyrics`: Add `Musixmatch`_ source and introduce a new
+  ``sources`` config option that lets you choose exactly where to look for
+  lyrics and in which order.
 * :doc:`/plugins/lyrics`: Add brazilian and hispanic sources to Google custom
   search engine.
 * A new :doc:`/plugins/permissions` makes it easy to fix permissions on music
