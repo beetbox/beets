@@ -343,10 +343,11 @@ class FetchArtPlugin(plugins.BeetsPlugin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
-        if not HAVE_ITUNES and u'itunes' in SOURCES_ALL:
-            SOURCES_ALL.remove(u'itunes')
+        available_sources = list(SOURCES_ALL)
+        if not HAVE_ITUNES and u'itunes' in available_sources:
+            available_sources.remove(u'itunes')
         self.config['sources'] = plugins.sanitize_choices(
-            self.config['sources'].as_str_seq(), SOURCES_ALL)
+            self.config['sources'].as_str_seq(), available_sources)
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
