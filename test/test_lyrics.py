@@ -238,7 +238,7 @@ GOOGLE_SOURCES = [
          url='http://www.lyricsmania.com/',
          path='lady_madonna_lyrics_the_beatles.html'),
     dict(DEFAULT_SONG,
-         url=u'http://www.lyrics.net', path=u'/lyric/17547916'),
+         url=u'http://www.lyrics.net', path=u'/lyric/19110224'),
     dict(DEFAULT_SONG,
          url=u'http://www.lyricsmode.com',
          path=u'/lyrics/b/beatles/lady_madonna.html'),
