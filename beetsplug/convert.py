@@ -115,9 +115,10 @@ def encode(command, source, dest, pretend=False):
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
-        log.debug('Return code: ' + str(e.returncode))
-        log.debug('Command: ' + e.cmd)
-        log.debug(e.output)
+        with _fs_lock:
+            log.debug('Return code: ' + str(e.returncode))
+            log.debug('Command: ' + e.cmd)
+            log.debug(e.output)
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         raise
