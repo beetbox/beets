@@ -961,8 +961,8 @@ class ImportTaskFactory(object):
         self.toppath = toppath
         self.session = session
         self.skipped = 0
-        self.enumerate_only = session.config[
-            'enumerate_only'] if 'enumerate_only' in session.config else False
+        self.pretend = session.config[
+            'pretend'] if 'pretend' in session.config else False
 
     def tasks(self):
         """Yield all import tasks for `self.toppath`.
@@ -973,7 +973,7 @@ class ImportTaskFactory(object):
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
-                    if self.enumerate_only:
+                    if self.pretend:
                         print_(displayable_path(path))
                     else:
                         task = self.singleton(path)
@@ -982,7 +982,7 @@ class ImportTaskFactory(object):
                 yield self.sentinel(dirs)
 
             else:
-                if self.enumerate_only:
+                if self.pretend:
                     for path in paths:
                         print_(displayable_path(path))
                 else:
@@ -1113,13 +1113,13 @@ def read_tasks(session):
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
-        if not task_factory.enumerate_only:
+        if not task_factory.pretend:
             if archive_task is None:
                 yield task_factory.sentinel()
             else:
                 yield archive_task
 
-        if not imported and not task_factory.enumerate_only:
+        if not imported and not task_factory.pretend:
             log.warn(u'No files imported from {0}'
                      .format(displayable_path(user_toppath)))
 

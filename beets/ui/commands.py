@@ -944,7 +944,7 @@ import_cmd.parser.add_option(
     help='group tracks in a folder into separate albums'
 )
 import_cmd.parser.add_option(
-    '-e', '--enumerate-only', dest='enumerate_only', action='store_true',
+    '-e', '--pretend', dest='pretend', action='store_true',
     help='only print files to import, but don\'t import'
 )
 import_cmd.func = import_func

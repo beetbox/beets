@@ -129,7 +129,7 @@ Optional command flags:
   matching them as separate albums.
 
 * If you just want to know which files would be imported, you can use the ``-e``
-  (or ``--enumerate-only``) option. If set, beets will only print a list of file
+  (or ``--pretend``) option. If set, beets will only print a list of file
   it will import when the option is removed and won't do anything else.
 
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2

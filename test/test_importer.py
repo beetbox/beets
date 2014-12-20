@@ -1530,15 +1530,15 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         self.assertEqual(self._item().added, 4747.0)
 
 
-class ImportEnumerateOnlyTest(_common.TestCase, ImportHelper):
+class ImportPretendTest(_common.TestCase, ImportHelper):
     """ Test the enumerate only commandline option
     """
     def setUp(self):
-        super(ImportEnumerateOnlyTest, self).setUp()
+        super(ImportPretendTest, self).setUp()
         self.setup_beets()
         self._create_import_dir(1)
         self._setup_import_session()
-        config['import']['enumerate_only'] = True
+        config['import']['pretend'] = True
         self.matcher = AutotagStub().install()
         self.io.install()
 
