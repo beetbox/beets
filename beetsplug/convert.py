@@ -22,7 +22,6 @@ import tempfile
 from string import Template
 import pipes
 import platform
-import shlex
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -97,15 +96,13 @@ def encode(command, source, dest, pretend=False):
         log.info(u'Encoding {0}'.format(util.displayable_path(source)))
 
     if platform.system() == 'Windows':
-        source_sub = "\"" + source + "\""
-        dest_sub = "\"" + dest + "\""
+        escape = escape_arg_cmdexe
     else:
-        source_sub = pipes.quote(source)
-        dest_sub = pipes.quote(dest)
+        escape = escape_arg_posix
 
     command = Template(command).safe_substitute({
-        'source': source_sub,
-        'dest':   dest_sub,
+        'source': escape(source),
+        'dest': escape(dest),
     })
 
     if pretend:
@@ -133,6 +130,14 @@ def encode(command, source, dest, pretend=False):
         log.info(u'Finished encoding {0}'.format(
             util.displayable_path(source))
         )
+
+
+def escape_arg_cmdexe(arg):
+    return subprocess.list2cmdline([arg])
+
+
+def escape_arg_posix(arg):
+    return pipes.quote(arg)
 
 
 def should_transcode(item, format):
