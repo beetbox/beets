@@ -206,8 +206,9 @@ DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
 DEFAULT_SOURCES = [
     dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
          path=u'The_Beatles:Lady_Madonna'),
-    dict(DEFAULT_SONG, url='http://www.lyrics.com/',
-         path=u'lady-madonna-lyrics-the-beatles.html'),
+    dict(artist=u'Santana', title=u'Black magic woman',
+         url='http://www.lyrics.com/',
+         path=u'black-magic-woman-lyrics-santana.html'),
     dict(DEFAULT_SONG, url='https://www.musixmatch.com/',
          path=u'lyrics/The-Beatles/Lady-Madonna'),
 ]
@@ -237,8 +238,13 @@ GOOGLE_SOURCES = [
     dict(DEFAULT_SONG,
          url='http://www.lyricsmania.com/',
          path='lady_madonna_lyrics_the_beatles.html'),
+    dict(artist=u'Santana', title=u'Black magic woman',
+         url='http://www.lyrics.com/',
+         path=u'black-magic-woman-lyrics-santana.html'),
+    dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
+         path=u'The_Beatles:Lady_Madonna'),
     dict(DEFAULT_SONG,
-         url=u'http://www.lyrics.net', path=u'/lyric/17547916'),
+         url=u'http://www.lyrics.net', path=u'/lyric/19110224'),
     dict(DEFAULT_SONG,
          url=u'http://www.lyricsmode.com',
          path=u'/lyrics/b/beatles/lady_madonna.html'),
@@ -318,7 +324,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
                 res = fun(s['artist'], s['title'])
                 self.assertTrue(lyrics.is_lyrics(res))
                 self.assertTrue(is_lyrics_content_ok(
-                                DEFAULT_SONG['title'], res))
+                                s['title'], res))
 
     def test_is_page_candidate_exact_match(self):
         """Test matching html page title with song infos -- when song infos are
