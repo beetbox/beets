@@ -21,6 +21,8 @@ import subprocess
 import tempfile
 from string import Template
 import pipes
+import platform
+import shlex
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -94,9 +96,16 @@ def encode(command, source, dest, pretend=False):
     if not quiet and not pretend:
         log.info(u'Encoding {0}'.format(util.displayable_path(source)))
 
+    if platform.system() == 'Windows':
+        source_sub = "\"" + source + "\""
+        dest_sub = "\"" + dest + "\""
+    else:
+        source_sub = pipes.quote(source)
+        dest_sub = pipes.quote(dest)
+
     command = Template(command).safe_substitute({
-        'source': pipes.quote(source),
-        'dest':   pipes.quote(dest),
+        'source': source_sub,
+        'dest':   dest_sub,
     })
 
     if pretend:
