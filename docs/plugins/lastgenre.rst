@@ -108,6 +108,9 @@ configuration file. The available options are:
 - **whitelist**: The filename of a custom genre list, ``yes`` to use
   the internal whitelist, or ``no`` to consider all genres valid.
   Default: ``yes``.
+- **asciify**: Convert all non-ASCII characters to ASCII equivalents
+  when performing lookups.
+  Default: ``no``.
 
 Running Manually
 ----------------

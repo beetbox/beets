@@ -25,6 +25,8 @@ import pylast
 import os
 import yaml
 
+from unidecode import unidecode
+
 from beets import plugins
 from beets import ui
 from beets.util import normpath, plurality
@@ -133,6 +135,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'force': True,
             'auto': True,
             'separator': u', ',
+            'asciify': False,
         })
 
         self.setup()
@@ -243,6 +246,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
             return None
+
+        if self.config['asciify']:
+            args = [unidecode(arg) for arg in args]
 
         key = u'{0}.{1}'.format(entity, u'-'.join(unicode(a) for a in args))
         if key in self._genre_cache:
