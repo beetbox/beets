@@ -99,19 +99,19 @@ def encode(command, source, dest, pretend=False):
         'dest':   pipes.quote(dest),
     })
 
-    log.debug(u'convert: executing: {0}'
-              .format(util.displayable_path(command)))
-
     if pretend:
         log.info(command)
         return
 
     try:
         util.command_output(command, shell=True)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
+        log.debug('Return code: ' + str(e.returncode))
+        log.debug('Command: ' + e.cmd)
+        log.debug(e.output)
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         raise
