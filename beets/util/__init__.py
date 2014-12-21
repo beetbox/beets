@@ -665,7 +665,6 @@ def command_output(cmd, shell=False):
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
             cmd=' '.join(cmd),
-            output=stderr
         )
     return stdout
 

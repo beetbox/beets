@@ -112,10 +112,9 @@ def encode(command, source, dest, pretend=False):
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
-        log.debug(u'Command {0} exited with status {1}, output: {2}'.format(
+        log.debug(u'Command {0} exited with status {1}'.format(
             exc.cmd.decode('utf8', 'ignore'),
             exc.returncode,
-            exc.output.decode('utf8', 'ignore'),
         ))
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
