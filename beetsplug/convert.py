@@ -93,34 +93,36 @@ def encode(command, source, dest, pretend=False):
     if not quiet and not pretend:
         log.info(u'Encoding {0}'.format(util.displayable_path(source)))
 
-    cmd_list = shlex.split(command)
-    for i, arg in enumerate(cmd_list):
+    # Substitute $source and $dest in the argument list.
+    args = shlex.split(command)
+    for i, arg in enumerate(args):
         if arg == '$source':
-            cmd_list[i] = source
+            args[i] = source
         elif arg == '$dest':
-            cmd_list[i] = dest
+            args[i] = dest
 
     if pretend:
-        log.info(' '.join(cmd_list))
+        log.info(' '.join(args))
         return
 
     try:
-        util.command_output(cmd_list, shell=True)
+        util.command_output(args, shell=True)
     except subprocess.CalledProcessError as exc:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
-        with _fs_lock:
-            log.debug('Return code: ' + str(exc.returncode))
-            log.debug('Command: ' + exc.cmd)
-            log.debug(exc.output)
+        log.debug(u'Command {0} exited with status {1}, output: {2}'.format(
+            exc.cmd.decode('utf8', 'ignore'),
+            exc.returncode,
+            exc.output.decode('utf8', 'ignore'),
+        ))
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         raise
     except OSError as exc:
         raise ui.UserError(
             u"convert: could invoke '{0}': {1}".format(
-                ' '.join(cmd_list), exc
+                ' '.join(args), exc
             )
         )
 
