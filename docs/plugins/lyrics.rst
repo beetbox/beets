@@ -3,11 +3,11 @@ Lyrics Plugin
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses `Lyric Wiki`_, `Lyrics.com`_,
-and, optionally, the Google custom search API.
+`Musixmatch`_ and, optionally, the Google custom search API.
 
 .. _Lyric Wiki: http://lyrics.wikia.com/
 .. _Lyrics.com: http://www.lyrics.com/
-
+.. _Musixmatch: https://www.musixmatch.com/
 
 Fetch Lyrics During Import
 --------------------------
@@ -46,8 +46,8 @@ configuration file. The available options are:
   backend).
   Default: None.
 - **google_engine_ID**: The custom search engine to use.
-  Default: The `beets custom search engine`_, which gathers a list of sources
-  known to be scrapeable.
+  Default: The `beets custom search engine`_, which gathers an updated list of
+  sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk `*` expands
   to all available sources.
   Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all sources.
@@ -91,7 +91,11 @@ using `pip`_ by typing::
     pip install beautifulsoup4
 
 You also need to `register for a Google API key`_. Set the ``google_API_key``
-configuration option to your key. This enables the Google backend.
+configuration option to your key.
+Then add 'google' to the list of ``sources``(or use default list) to enable the
+Google backend : if you use default ``google_engine_ID``, we recommend limiting
+sources to ``musixmatch google`` as 'lyrics.com' and 'lyricwiki' pages are
+already included in 'google's results.
 
 .. _register for a Google API key: https://code.google.com/apis/console.
 
