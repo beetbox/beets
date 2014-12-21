@@ -19,8 +19,7 @@ import os
 import threading
 import subprocess
 import tempfile
-from string import Template
-import pipes
+import shlex
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -94,30 +93,35 @@ def encode(command, source, dest, pretend=False):
     if not quiet and not pretend:
         log.info(u'Encoding {0}'.format(util.displayable_path(source)))
 
-    command = Template(command).safe_substitute({
-        'source': pipes.quote(source),
-        'dest':   pipes.quote(dest),
-    })
-
-    log.debug(u'convert: executing: {0}'
-              .format(util.displayable_path(command)))
+    cmd_list = shlex.split(command)
+    for i, arg in enumerate(cmd_list):
+        if arg == '$source':
+            cmd_list[i] = source
+        elif arg == '$dest':
+            cmd_list[i] = dest
 
     if pretend:
-        log.info(command)
+        log.info(' '.join(cmd_list))
         return
 
     try:
-        util.command_output(command, shell=True)
-    except subprocess.CalledProcessError:
+        util.command_output(cmd_list, shell=True)
+    except subprocess.CalledProcessError as exc:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
+        with _fs_lock:
+            log.debug('Return code: ' + str(exc.returncode))
+            log.debug('Command: ' + exc.cmd)
+            log.debug(exc.output)
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         raise
     except OSError as exc:
         raise ui.UserError(
-            u"convert: could invoke '{0}': {0}".format(command, exc)
+            u"convert: could invoke '{0}': {1}".format(
+                ' '.join(cmd_list), exc
+            )
         )
 
     if not quiet and not pretend:
