@@ -1535,8 +1535,8 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
     """ Test the pretend commandline option
     """
 
-    def __init__(self):
-        super(ImportPretendTest, self).__init__()
+    def __init__(self, method_name='runTest'):
+        super(ImportPretendTest, self).__init__(method_name)
         self.matcher = None
 
     def setUp(self):
