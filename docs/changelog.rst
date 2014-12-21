@@ -48,6 +48,8 @@ Fixed:
 * :doc:`/plugins/ftintitle` and :doc:`/plugins/lyrics`: Featuring artists can
   now be detected when they use the Spanish word *con*. :bug:`1060`
   :bug:`1143`
+* :doc:`/plugins/mbcollection`: Fix an "HTTP 400" error caused by a change in
+  the MusicBrainz API. :bug:`1152`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/

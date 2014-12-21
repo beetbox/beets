@@ -36,7 +36,7 @@ def mb_call(func, *args, **kwargs):
         return func(*args, **kwargs)
     except musicbrainzngs.AuthenticationError:
         raise ui.UserError('authentication with MusicBrainz failed')
-    except musicbrainzngs.ResponseError as exc:
+    except (musicbrainzngs.ResponseError, musicbrainzngs.NetworkError) as exc:
         raise ui.UserError('MusicBrainz API error: {0}'.format(exc))
     except musicbrainzngs.UsageError:
         raise ui.UserError('MusicBrainz credentials missing')
@@ -57,11 +57,19 @@ def submit_albums(collection_id, release_ids):
 def update_album_list(album_list):
     """Update the MusicBrainz colleciton from a list of Beets albums
     """
-    # Get the collection to modify.
+    # Get the available collections.
     collections = mb_call(musicbrainzngs.get_collections)
     if not collections['collection-list']:
         raise ui.UserError('no collections exist for user')
-    collection_id = collections['collection-list'][0]['id']
+
+    # Get the first release collection. MusicBrainz also has event
+    # collections, so we need to avoid adding to those.
+    for collection in collections['collection-list']:
+        if 'release-count' in collection:
+            collection_id = collection['id']
+            break
+    else:
+        raise ui.UserError('No collection found.')
 
     # Get a list of all the album IDs.
     album_ids = []
