@@ -25,6 +25,7 @@ from mock import patch
 
 import _common
 from _common import unittest
+from beets.util import displayable_path
 from helper import TestImportSession, TestHelper, has_program, capture_log
 from beets import importer
 from beets.importer import albums_in_dir
@@ -1533,6 +1534,11 @@ class ReimportTest(unittest.TestCase, ImportHelper):
 class ImportPretendTest(_common.TestCase, ImportHelper):
     """ Test the pretend commandline option
     """
+
+    def __init__(self):
+        super(ImportPretendTest, self).__init__()
+        self.matcher = None
+
     def setUp(self):
         super(ImportPretendTest, self).setUp()
         self.setup_beets()
@@ -1546,7 +1552,7 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         self.teardown_beets()
         self.matcher.restore()
 
-    def test_import_enumerate_only(self):
+    def test_import_pretend(self):
         resource_path = os.path.join(_common.RSRC, u'empty.mp3')
         single_path = os.path.join(self.import_dir, u'track_2.mp3')
 
@@ -1558,17 +1564,33 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         self._setup_import_session(singletons=True)
         self.importer.paths = import_files
 
-        self.importer.run()
-        out = self.io.getoutput()
+        with capture_log() as logs:
+            self.importer.run()
 
         self.assertEqual(len(self.lib.items()), 0)
         self.assertEqual(len(self.lib.albums()), 0)
 
-        lines = out.splitlines()
-        self.assertEqual(len(lines), 2)
-        self.assertEqual(lines[0], os.path.join(import_files[0],
-                                                u'track_1.mp3'))
-        self.assertEqual(lines[1], import_files[1])
+        self.assertEqual(len(logs), 3)
+        self.assertEqual(logs[1], os.path.join(import_files[0],
+                                               u'track_1.mp3'))
+        self.assertEqual(logs[2], import_files[1])
+
+    def test_import_pretend_empty(self):
+        path = os.path.join(self.temp_dir, 'empty')
+        os.makedirs(path)
+
+        self._setup_import_session(singletons=True)
+        self.importer.paths = [path]
+
+        with capture_log() as logs:
+            self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 0)
+        self.assertEqual(len(self.lib.albums()), 0)
+
+        self.assertEqual(len(logs), 2)
+        self.assertEqual(logs[1], 'No files imported from {0}'
+                                  .format(displayable_path(path)))
 
 
 def suite():

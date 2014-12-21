@@ -34,7 +34,6 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
-from beets.ui import print_
 from beets.util import pipeline, sorted_walk, ancestry
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
@@ -961,8 +960,6 @@ class ImportTaskFactory(object):
         self.toppath = toppath
         self.session = session
         self.skipped = 0
-        self.pretend = session.config[
-            'pretend'] if 'pretend' in session.config else False
 
     def tasks(self):
         """Yield all import tasks for `self.toppath`.
@@ -973,22 +970,15 @@ class ImportTaskFactory(object):
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
-                    if self.pretend:
-                        print_(displayable_path(path))
-                    else:
-                        task = self.singleton(path)
-                        if task:
-                            yield task
+                    task = self.singleton(path)
+                    if task:
+                        yield task
                 yield self.sentinel(dirs)
 
             else:
-                if self.pretend:
-                    for path in paths:
-                        print_(displayable_path(path))
-                else:
-                    task = self.album(paths, dirs)
-                    if task:
-                        yield task
+                task = self.album(paths, dirs)
+                if task:
+                    yield task
 
     def paths(self):
         """Walk `self.toppath` and yield pairs of directory lists and
@@ -1106,18 +1096,26 @@ def read_tasks(session):
         task_factory = ImportTaskFactory(toppath, session)
         imported = False
         for t in task_factory.tasks():
-            imported |= not t.skip
-            yield t
+            if session.config['pretend']:
+                imported = True
+                if isinstance(t, SingletonImportTask):
+                    log.info(displayable_path(t.item['path']))
+                elif t.items:
+                    for item in t.items:
+                        log.info(displayable_path(item['path']))
+            else:
+                imported |= not t.skip
+                yield t
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
-        if not task_factory.pretend:
+        if not session.config['pretend']:
             if archive_task is None:
                 yield task_factory.sentinel()
             else:
                 yield archive_task
 
-        if not imported and not task_factory.pretend:
+        if not imported:
             log.warn(u'No files imported from {0}'
                      .format(displayable_path(user_toppath)))
 
