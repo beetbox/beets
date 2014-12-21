@@ -135,7 +135,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'force': True,
             'auto': True,
             'separator': u', ',
-            'asciify': False,
         })
 
         self.setup()
@@ -247,15 +246,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if any(not s for s in args):
             return None
 
-        if self.config['asciify']:
-            args = [unidecode(arg) for arg in args]
-
         key = u'{0}.{1}'.format(entity, u'-'.join(unicode(a) for a in args))
         if key in self._genre_cache:
             return self._genre_cache[key]
         else:
-            genre = self.fetch_genre(method(*args))
-            self._genre_cache[key] = genre
+            args_ascii = [unidecode(arg) for arg in args]
+            for arglist in [args, args_ascii]:
+                genre = self.fetch_genre(method(*arglist))
+                self._genre_cache[key] = genre
+                if genre:
+                    break
             return genre
 
     def fetch_album_genre(self, obj):
