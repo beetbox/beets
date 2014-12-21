@@ -19,8 +19,6 @@ import os
 import threading
 import subprocess
 import tempfile
-from string import Template
-import pipes
 import shlex
 
 from beets import ui, util, plugins, config
