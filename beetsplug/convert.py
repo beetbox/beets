@@ -106,7 +106,7 @@ def encode(command, source, dest, pretend=False):
         return
 
     try:
-        util.command_output(args, shell=True)
+        util.command_output(args)
     except subprocess.CalledProcessError as exc:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
