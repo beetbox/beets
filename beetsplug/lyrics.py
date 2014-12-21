@@ -61,7 +61,7 @@ def fetch_url(url):
     is unreachable.
     """
     try:
-        r = requests.get(url)
+        r = requests.get(url, verify=False)
     except requests.RequestException as exc:
         log.debug(u'lyrics request failed: {0}'.format(exc))
         return
@@ -85,8 +85,11 @@ def unescape(text):
 
 
 def extract_text_between(html, start_marker, end_marker):
-    _, html = html.split(start_marker, 1)
-    html, _ = html.split(end_marker, 1)
+    try:
+        _, html = html.split(start_marker, 1)
+        html, _ = html.split(end_marker, 1)
+    except ValueError:
+        return u''
     return _scrape_strip_cruft(html, True)
 
 
