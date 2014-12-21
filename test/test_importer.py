@@ -1530,6 +1530,47 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         self.assertEqual(self._item().added, 4747.0)
 
 
+class ImportPretendTest(_common.TestCase, ImportHelper):
+    """ Test the pretend commandline option
+    """
+    def setUp(self):
+        super(ImportPretendTest, self).setUp()
+        self.setup_beets()
+        self._create_import_dir(1)
+        self._setup_import_session()
+        config['import']['pretend'] = True
+        self.matcher = AutotagStub().install()
+        self.io.install()
+
+    def tearDown(self):
+        self.teardown_beets()
+        self.matcher.restore()
+
+    def test_import_enumerate_only(self):
+        resource_path = os.path.join(_common.RSRC, u'empty.mp3')
+        single_path = os.path.join(self.import_dir, u'track_2.mp3')
+
+        shutil.copy(resource_path, single_path)
+        import_files = [
+            os.path.join(self.import_dir, u'the_album'),
+            single_path
+        ]
+        self._setup_import_session(singletons=True)
+        self.importer.paths = import_files
+
+        self.importer.run()
+        out = self.io.getoutput()
+
+        self.assertEqual(len(self.lib.items()), 0)
+        self.assertEqual(len(self.lib.albums()), 0)
+
+        lines = out.splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(lines[0], os.path.join(import_files[0],
+                                                u'track_1.mp3'))
+        self.assertEqual(lines[1], import_files[1])
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

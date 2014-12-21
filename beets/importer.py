@@ -34,6 +34,7 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
+from beets.ui import print_
 from beets.util import pipeline, sorted_walk, ancestry
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
@@ -960,6 +961,8 @@ class ImportTaskFactory(object):
         self.toppath = toppath
         self.session = session
         self.skipped = 0
+        self.pretend = session.config[
+            'pretend'] if 'pretend' in session.config else False
 
     def tasks(self):
         """Yield all import tasks for `self.toppath`.
@@ -970,15 +973,22 @@ class ImportTaskFactory(object):
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
-                    task = self.singleton(path)
-                    if task:
-                        yield task
+                    if self.pretend:
+                        print_(displayable_path(path))
+                    else:
+                        task = self.singleton(path)
+                        if task:
+                            yield task
                 yield self.sentinel(dirs)
 
             else:
-                task = self.album(paths, dirs)
-                if task:
-                    yield task
+                if self.pretend:
+                    for path in paths:
+                        print_(displayable_path(path))
+                else:
+                    task = self.album(paths, dirs)
+                    if task:
+                        yield task
 
     def paths(self):
         """Walk `self.toppath` and yield pairs of directory lists and
@@ -1101,12 +1111,13 @@ def read_tasks(session):
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
-        if archive_task is None:
-            yield task_factory.sentinel()
-        else:
-            yield archive_task
+        if not task_factory.pretend:
+            if archive_task is None:
+                yield task_factory.sentinel()
+            else:
+                yield archive_task
 
-        if not imported:
+        if not imported and not task_factory.pretend:
             log.warn(u'No files imported from {0}'
                      .format(displayable_path(user_toppath)))
 
