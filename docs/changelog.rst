@@ -50,6 +50,8 @@ Fixed:
   :bug:`1143`
 * :doc:`/plugins/mbcollection`: Fix an "HTTP 400" error caused by a change in
   the MusicBrainz API. :bug:`1152`
+* The ``%`` and ``_`` characters in path queries do not invoke their
+  special SQL meaning anymore. :bug:`1146`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
