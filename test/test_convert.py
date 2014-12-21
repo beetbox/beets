@@ -33,7 +33,8 @@ class TestHelper(helper.TestHelper):
                              .format(tag))
         # FIXME This is not portable. For windows we need to use our own
         # python script that performs the same task.
-        return u'cp $source $dest; printf {0} >> $dest'.format(tag)
+        return u'sh -c "cp \'$source\' \'$dest\'; ' \
+               u'printf {0} >> \'$dest\'"'.format(tag)
 
     def assertFileTag(self, path, tag):
         """Assert that the path is a file and the files content ends with `tag`.
