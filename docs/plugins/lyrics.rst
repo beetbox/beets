@@ -3,11 +3,12 @@ Lyrics Plugin
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses `Lyric Wiki`_, `Lyrics.com`_,
-`Musixmatch`_ and, optionally, the Google custom search API.
+`Musixmatch`_, and, optionally, the Google custom search API.
 
 .. _Lyric Wiki: http://lyrics.wikia.com/
 .. _Lyrics.com: http://www.lyrics.com/
 .. _Musixmatch: https://www.musixmatch.com/
+
 
 Fetch Lyrics During Import
 --------------------------
@@ -92,10 +93,11 @@ using `pip`_ by typing::
 
 You also need to `register for a Google API key`_. Set the ``google_API_key``
 configuration option to your key.
-Then add 'google' to the list of ``sources``(or use default list) to enable the
-Google backend : if you use default ``google_engine_ID``, we recommend limiting
-sources to ``musixmatch google`` as 'lyrics.com' and 'lyricwiki' pages are
-already included in 'google's results.
+Then add ``google`` to the list of sources in your configuration (or use
+default list, which includes it as long as you have an API key).
+If you use default ``google_engine_ID``, we recommend limiting the sources to
+``musixmatch google`` as the other sources are already included in the Google
+results.
 
 .. _register for a Google API key: https://code.google.com/apis/console.
 
