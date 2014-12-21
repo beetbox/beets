@@ -22,6 +22,7 @@ import tempfile
 from string import Template
 import pipes
 import platform
+import shlex
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -95,50 +96,41 @@ def encode(command, source, dest, pretend=False):
     if not quiet and not pretend:
         log.info(u'Encoding {0}'.format(util.displayable_path(source)))
 
-    if platform.system() == 'Windows':
-        escape = escape_arg_cmdexe
-    else:
-        escape = escape_arg_posix
-
-    command = Template(command).safe_substitute({
-        'source': escape(source),
-        'dest': escape(dest),
-    })
+    cmd_list = shlex.split(command)
+    for i, arg in enumerate(cmd_list):
+        if arg == '$source':
+            cmd_list[i] = source
+        elif arg == '$dest':
+            cmd_list[i] = dest
 
     if pretend:
-        log.info(command)
+        log.info(' '.join(cmd_list))
         return
 
     try:
-        util.command_output(command, shell=True)
-    except subprocess.CalledProcessError as e:
+        util.command_output(cmd_list, shell=True)
+    except subprocess.CalledProcessError as exc:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
         with _fs_lock:
-            log.debug('Return code: ' + str(e.returncode))
-            log.debug('Command: ' + e.cmd)
-            log.debug(e.output)
+            log.debug('Return code: ' + str(exc.returncode))
+            log.debug('Command: ' + ' '.join(exc.cmd))
+            log.debug(exc.output)
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         raise
     except OSError as exc:
         raise ui.UserError(
-            u"convert: could invoke '{0}': {0}".format(command, exc)
+            u"convert: could invoke '{0}': {1}".format(
+                ' '.join(cmd_list), exc
+            )
         )
 
     if not quiet and not pretend:
         log.info(u'Finished encoding {0}'.format(
             util.displayable_path(source))
         )
-
-
-def escape_arg_cmdexe(arg):
-    return subprocess.list2cmdline([arg])
-
-
-def escape_arg_posix(arg):
-    return pipes.quote(arg)
 
 
 def should_transcode(item, format):
