@@ -61,7 +61,7 @@ def fetch_url(url):
     is unreachable.
     """
     try:
-        r = requests.get(url)
+        r = requests.get(url, verify=False)
     except requests.RequestException as exc:
         log.debug(u'lyrics request failed: {0}'.format(exc))
         return
