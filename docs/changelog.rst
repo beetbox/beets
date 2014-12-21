@@ -52,6 +52,8 @@ Fixed:
   the MusicBrainz API. :bug:`1152`
 * The ``%`` and ``_`` characters in path queries do not invoke their
   special SQL meaning anymore. :bug:`1146`
+* :doc:`/plugins/convert`: Command-line argument construction now works
+  on Windows. Thanks to :user:`mluds`. :bug:`1026` :bug:`1157` :bug:`1158`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
