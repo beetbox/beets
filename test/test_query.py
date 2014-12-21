@@ -332,7 +332,7 @@ class MatchTest(_common.TestCase):
         self.assertFalse(q.match(self.item))
 
 
-class PathQueryTest(_common.LibTestCase, AssertsMixin):
+class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
     def setUp(self):
         super(PathQueryTest, self).setUp()
         self.i.path = '/a/b/c.mp3'
@@ -388,6 +388,24 @@ class PathQueryTest(_common.LibTestCase, AssertsMixin):
         q = 'path::\\.mp3$'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
+
+    def test_escape_underscore(self):
+        self.add_item(path='/a/_/title.mp3', title='with underscore')
+        q = 'path:/a/_'
+        results = self.lib.items(q)
+        self.assert_matched(results, ['with underscore'])
+
+    def test_escape_percent(self):
+        self.add_item(path='/a/%/title.mp3', title='with percent')
+        q = 'path:/a/%'
+        results = self.lib.items(q)
+        self.assert_matched(results, ['with percent'])
+
+    def test_escape_backslash(self):
+        self.add_item(path=r'/a/\x/title.mp3', title='with backslash')
+        q = r'path:/a/\\x'
+        results = self.lib.items(q)
+        self.assert_matched(results, ['with backslash'])
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):

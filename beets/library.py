@@ -39,6 +39,10 @@ log = logging.getLogger('beets')
 
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path."""
+
+    escape_re = re.compile(r'[\\_%]')
+    escape_char = '\\'
+
     def __init__(self, field, pattern, fast=True):
         super(PathQuery, self).__init__(field, pattern, fast)
 
@@ -52,10 +56,12 @@ class PathQuery(dbcore.FieldQuery):
             item.path.startswith(self.dir_path)
 
     def clause(self):
-        dir_pat = buffer(self.dir_path + '%')
+        escape = lambda m: self.escape_char + m.group(0)
+        dir_pattern = self.escape_re.sub(escape, self.dir_path)
+        dir_pattern = buffer(dir_pattern + '%')
         file_blob = buffer(self.file_path)
-        return '({0} = ?) || ({0} LIKE ?)'.format(self.field), \
-               (file_blob, dir_pat)
+        return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
+               (file_blob, dir_pattern, self.escape_char)
 
 
 # Library-specific field types.
