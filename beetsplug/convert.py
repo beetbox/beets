@@ -21,7 +21,6 @@ import subprocess
 import tempfile
 from string import Template
 import pipes
-import platform
 import shlex
 
 from beets import ui, util, plugins, config
@@ -115,7 +114,7 @@ def encode(command, source, dest, pretend=False):
                  .format(util.displayable_path(source)))
         with _fs_lock:
             log.debug('Return code: ' + str(exc.returncode))
-            log.debug('Command: ' + ' '.join(exc.cmd))
+            log.debug('Command: ' + exc.cmd)
             log.debug(exc.output)
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
