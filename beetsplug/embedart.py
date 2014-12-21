@@ -150,7 +150,7 @@ def embed_album(album, maxwidth=None, quiet=False):
         log.info(u'No album art present: {0} - {1}'.
                  format(album.albumartist, album.album))
         return
-    if not os.path.isfile(imagepath):
+    if not os.path.isfile(syspath(imagepath)):
         log.error(u'Album art not found at {0}'
                   .format(displayable_path(imagepath)))
         return
