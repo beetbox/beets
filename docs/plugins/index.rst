@@ -199,6 +199,8 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-alternatives`_ manages external files.
 
+* `beets-follow`_ lets you check for new albums from artists you like.
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -211,3 +213,4 @@ Here are a few of the plugins written by the beets community:
 .. _cmus: http://cmus.sourceforge.net/
 .. _beet-amazon: https://github.com/jmwatte/beet-amazon
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
+.. _beets-follow: https://github.com/nolsto/beets-follow
