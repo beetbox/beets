@@ -64,8 +64,9 @@ def compile_inline(python_code, album):
         try:
             func = _compile_func(python_code)
         except SyntaxError:
-            log.error(u'syntax error in inline field definition:\n{0}',
-                      traceback.format_exc())
+            log.error(u'syntax error in inline field definition:\n{0}'.format(
+                traceback.format_exc()
+            ))
             return
         else:
             is_expr = False
