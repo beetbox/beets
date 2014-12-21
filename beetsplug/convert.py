@@ -20,6 +20,7 @@ import threading
 import subprocess
 import tempfile
 import shlex
+from string import Template
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -96,10 +97,10 @@ def encode(command, source, dest, pretend=False):
     # Substitute $source and $dest in the argument list.
     args = shlex.split(command)
     for i, arg in enumerate(args):
-        if arg == '$source':
-            args[i] = source
-        elif arg == '$dest':
-            args[i] = dest
+        args[i] = Template(arg).safe_substitute({
+            'source': source,
+            'dest': dest,
+        })
 
     if pretend:
         log.info(' '.join(args))
