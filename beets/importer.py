@@ -277,20 +277,25 @@ class ImportSession(object):
         else:
             stages = [query_tasks(self)]
 
-        if self.config['group_albums'] and \
-           not self.config['singletons']:
-            # Split directory tasks into one task for each album
-            stages += [group_albums(self)]
-        if self.config['autotag']:
-            # FIXME We should also resolve duplicates when not
-            # autotagging. This is currently handled in `user_query`
-            stages += [lookup_candidates(self), user_query(self)]
+        if self.config['pretend']:
+            # Only log the imported files and end the pipeline
+            stages += [log_files(self)]
         else:
-            stages += [import_asis(self)]
-        stages += [apply_choices(self)]
-        for stage_func in plugins.import_stages():
-            stages.append(plugin_stage(self, stage_func))
-        stages += [manipulate_files(self)]
+            if self.config['group_albums'] and \
+               not self.config['singletons']:
+                # Split directory tasks into one task for each album
+                stages += [group_albums(self)]
+            if self.config['autotag']:
+                # FIXME We should also resolve duplicates when not
+                # autotagging. This is currently handled in `user_query`
+                stages += [lookup_candidates(self), user_query(self)]
+            else:
+                stages += [import_asis(self)]
+            stages += [apply_choices(self)]
+
+            for stage_func in plugins.import_stages():
+                stages.append(plugin_stage(self, stage_func))
+            stages += [manipulate_files(self)]
         pl = pipeline.Pipeline(stages)
 
         # Run the pipeline.
@@ -1288,6 +1293,17 @@ def manipulate_files(session, task):
 
     # Progress, cleanup, and event.
     task.finalize(session)
+
+
+@pipeline.stage
+def log_files(session, task):
+    """A coroutine (pipeline stage) to log each file which will be imported
+    """
+    if isinstance(task, SingletonImportTask):
+        log.info(displayable_path(task.item['path']))
+    elif task.items:
+        for item in task.items:
+            log.info(displayable_path(item['path']))
 
 
 def group_albums(session):
