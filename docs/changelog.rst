@@ -25,6 +25,8 @@ New:
 * The :ref:`config-cmd` command can now be used to edit the configuration even
   when it has syntax errors. :bug:`1123` :bug:`1128`
 * :doc:`/plugins/lyrics`: Added a new ``force`` config option. :bug:`1150`
+* The :ref:`import-cmd` command now has a ``--pretend`` flag that lists the
+  files that will be imported. Thanks to :user:`mried`. :bug:`1162`
 
 Fixed:
 

@@ -945,7 +945,7 @@ import_cmd.parser.add_option(
 )
 import_cmd.parser.add_option(
     '--pretend', dest='pretend', action='store_true',
-    help='only print files to import, but don\'t import'
+    help='just print the files to import'
 )
 import_cmd.func = import_func
 default_commands.append(import_cmd)
