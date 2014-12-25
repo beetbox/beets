@@ -76,12 +76,21 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         """For comparing file modification times at a sufficient precision"""
         self.assertAlmostEqual(first, second, places=4, msg=msg)
 
-    def test_import_album_with_added_dates(self):
+    def assertAlbumImport(self):
         self.importer.run()
         album = self.lib.albums().get()
         self.assertEqual(album.added, self.min_mtime)
         for item in album.items():
             self.assertEqual(item.added, self.min_mtime)
+
+    def test_import_album_with_added_dates(self):
+        self.assertAlbumImport()
+
+    def test_import_album_inplace_with_added_dates(self):
+        self.config['import']['copy'] = False
+        self.config['import']['move'] = False
+        self.config['import']['link'] = False
+        self.assertAlbumImport()
 
     def test_import_album_with_preserved_mtimes(self):
         self.config['importadded']['preserve_mtimes'] = True

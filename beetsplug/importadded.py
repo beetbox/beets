@@ -43,6 +43,16 @@ def reimported_album(album):
     return album.path in replaced_album_paths
 
 
+@ImportAddedPlugin.listen('import_task_start')
+def record_if_inplace(task, session):
+    if not (session.config['copy'] or session.config['move'] or
+            session.config['link']):
+        log.debug(u"In place import detected, recording mtimes from source"
+                  u"paths")
+        for item in task.items:
+            record_import_mtime(item, item.path, item.path)
+
+
 @ImportAddedPlugin.listen('import_task_files')
 def record_reimported(task, session):
     global reimported_item_ids, replaced_album_paths
@@ -81,6 +91,7 @@ item_mtime = dict()
 
 @ImportAddedPlugin.listen('before_item_moved')
 @ImportAddedPlugin.listen('item_copied')
+@ImportAddedPlugin.listen('item_linked')
 def record_import_mtime(item, source, destination):
     """Record the file mtime of an item's path before its import.
     """
