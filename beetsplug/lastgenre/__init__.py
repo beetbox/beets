@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2013, Adrian Sampson.
 #
@@ -25,8 +26,6 @@ import pylast
 import os
 import yaml
 
-from unidecode import unidecode
-
 from beets import plugins
 from beets import ui
 from beets.util import normpath, plurality
@@ -42,6 +41,10 @@ PYLAST_EXCEPTIONS = (
     pylast.MalformedResponseError,
     pylast.NetworkError,
 )
+
+REPLACE = {
+   u'‐': '-',
+}
 
 
 def deduplicate(seq):
@@ -250,7 +253,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if key in self._genre_cache:
             return self._genre_cache[key]
         else:
-            args_ascii = [unidecode(arg) for arg in args]
+            args_ascii = []
+            for arg in args:
+                for k, v in REPLACE.items():
+                    arg = arg.replace(k, v)
+                args_ascii.append(arg)
+
             for arglist in [args, args_ascii]:
                 genre = self.fetch_genre(method(*arglist))
                 self._genre_cache[key] = genre
