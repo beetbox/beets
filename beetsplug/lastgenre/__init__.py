@@ -43,7 +43,7 @@ PYLAST_EXCEPTIONS = (
 )
 
 REPLACE = {
-   u'‐': '-',
+    u'‐': '-',
 }
 
 
