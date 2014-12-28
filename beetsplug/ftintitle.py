@@ -45,14 +45,15 @@ def contains_feat(title):
     return bool(re.search(plugins.feat_tokens(), title, flags=re.IGNORECASE))
 
 
-def update_metadata(item, feat_part, drop_feat):
+def update_metadata(item, feat_part, drop_feat, loglevel=logging.DEBUG):
     """Choose how to add new artists to the title and set the new
     metadata. Also, print out messages about any changes that are made.
     If `drop_feat` is set, then do not add the artist to the title; just
     remove it from the artist field.
     """
     # In all cases, update the artist fields.
-    ui.print_(u'artist: {0} -> {1}'.format(item.artist, item.albumartist))
+    log.log(loglevel, u'artist: {0} -> {1}'.format(
+        item.artist, item.albumartist))
     item.artist = item.albumartist
     if item.artist_sort:
         # Just strip the featured artist from the sort name.
@@ -62,11 +63,11 @@ def update_metadata(item, feat_part, drop_feat):
     # artist and if we do not drop featuring information.
     if not drop_feat and not contains_feat(item.title):
         new_title = u"{0} feat. {1}".format(item.title, feat_part)
-        ui.print_(u'title: {0} -> {1}'.format(item.title, new_title))
+        log.log(loglevel, u'title: {0} -> {1}'.format(item.title, new_title))
         item.title = new_title
 
 
-def ft_in_title(item, drop_feat):
+def ft_in_title(item, drop_feat, loglevel=logging.DEBUG):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
@@ -78,14 +79,14 @@ def ft_in_title(item, drop_feat):
     # that case, we attempt to move the featured artist to the title.
     _, featured = split_on_feat(artist)
     if featured and albumartist != artist and albumartist:
-        ui.print_(displayable_path(item.path))
+        log.log(loglevel, displayable_path(item.path))
         feat_part = None
 
         # Look for the album artist in the artist field. If it's not
         # present, give up.
         albumartist_split = artist.split(albumartist)
         if len(albumartist_split) <= 1:
-            ui.print_('album artist not present in artist')
+            log.log(loglevel, 'album artist not present in artist')
 
         # If the last element of the split (the right-hand side of the
         # album artist) is nonempty, then it probably contains the
@@ -103,11 +104,9 @@ def ft_in_title(item, drop_feat):
 
         # If we have a featuring artist, move it to the title.
         if feat_part:
-            update_metadata(item, feat_part, drop_feat)
+            update_metadata(item, feat_part, drop_feat, loglevel)
         else:
-            ui.print_(u'no featuring artists found')
-
-        ui.print_()
+            log.log(loglevel, u'no featuring artists found')
 
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
@@ -139,7 +138,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             write = config['import']['write'].get(bool)
 
             for item in lib.items(ui.decargs(args)):
-                ft_in_title(item, drop_feat)
+                ft_in_title(item, drop_feat, logging.INFO)
                 item.store()
                 if write:
                     item.try_write()
@@ -153,5 +152,5 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         drop_feat = self.config['drop'].get(bool)
 
         for item in task.imported_items():
-            ft_in_title(item, drop_feat)
+            ft_in_title(item, drop_feat, logging.DEBUG)
             item.store()
