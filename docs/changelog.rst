@@ -58,6 +58,8 @@ Fixed:
   on Windows. Thanks to :user:`mluds`. :bug:`1026` :bug:`1157` :bug:`1158`
 * :doc:`/plugins/embedart`: Fix an erroneous missing-art error on Windows.
   Thanks to :user:`mluds`. :bug:`1163`
+* :doc:`/plugins/importadded`: Now works with in-place and symlinked imports.
+  :bug:`1170`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
