@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2013, Adrian Sampson.
 #
@@ -43,7 +42,7 @@ PYLAST_EXCEPTIONS = (
 )
 
 REPLACE = {
-    u'‐': '-',
+    u'\u2010': '-',
 }
 
 
