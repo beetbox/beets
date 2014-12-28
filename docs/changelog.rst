@@ -61,7 +61,7 @@ Fixed:
 * :doc:`/plugins/importadded`: Now works with in-place and symlinked imports.
   :bug:`1170`
 * :doc:`/plugins/ftintitle`: The plugin is now quiet when it runs as part of
-  the import process. Thanks to :user:`Freso`. :bug:`1175` :bug:`1172`
+  the import process. Thanks to :user:`Freso`. :bug:`1176` :bug:`1172`
 * :doc:`/plugins/ftintitle`: Fix weird behavior when the same artist appears
   twice in the artist string. Thanks to Marc Addeo. :bug:`1179` :bug:`1181`
 
