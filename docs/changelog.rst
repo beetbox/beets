@@ -60,6 +60,8 @@ Fixed:
   Thanks to :user:`mluds`. :bug:`1163`
 * :doc:`/plugins/importadded`: Now works with in-place and symlinked imports.
   :bug:`1170`
+* :doc:`/plugins/ftintitle`: The plugin is now quiet when it runs as part of
+  the import process. Thanks to :user:`Freso`. :bug:`1175` :bug:`1176`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
