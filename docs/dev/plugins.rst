@@ -159,6 +159,9 @@ currently available are:
 * *after_write*: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).
 
+* *import_task_created*: called after an import task has been created.
+  Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
+
 * *import_task_start*: called when before an import task begins processing.
   Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
 

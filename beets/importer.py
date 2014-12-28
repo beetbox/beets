@@ -277,6 +277,8 @@ class ImportSession(object):
         else:
             stages = [query_tasks(self)]
 
+        stages += [send_import_task_created_event(self)]
+
         if self.config['pretend']:
             # Only log the imported files and end the pipeline
             stages += [log_files(self)]
@@ -1299,11 +1301,24 @@ def manipulate_files(session, task):
 def log_files(session, task):
     """A coroutine (pipeline stage) to log each file which will be imported
     """
+    if task.skip:
+        return
+
     if isinstance(task, SingletonImportTask):
         log.info(displayable_path(task.item['path']))
     elif task.items:
         for item in task.items:
             log.info(displayable_path(item['path']))
+
+
+@pipeline.mutator_stage
+def send_import_task_created_event(session, task):
+    """A coroutine (pipeline stage) to send the import_task_created event
+    """
+    if task.skip:
+        return
+
+    plugins.send('import_task_created', session=session, task=task)
 
 
 def group_albums(session):
