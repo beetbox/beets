@@ -107,8 +107,6 @@ def ft_in_title(item, drop_feat):
         else:
             ui.print_(u'no featuring artists found')
 
-        ui.print_()
-
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
     def __init__(self):
