@@ -84,7 +84,7 @@ def ft_in_title(item, drop_feat, loglevel=logging.DEBUG):
 
         # Look for the album artist in the artist field. If it's not
         # present, give up.
-        albumartist_split = artist.split(albumartist)
+        albumartist_split = artist.split(albumartist, 1)
         if len(albumartist_split) <= 1:
             log.log(loglevel, 'album artist not present in artist')
 
