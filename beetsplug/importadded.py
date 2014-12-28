@@ -48,7 +48,7 @@ def record_if_inplace(task, session):
     if not (session.config['copy'] or session.config['move'] or
             session.config['link']):
         log.debug(u"In place import detected, recording mtimes from source"
-                  u"paths")
+                  u" paths")
         for item in task.items:
             record_import_mtime(item, item.path, item.path)
 
