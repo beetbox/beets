@@ -25,19 +25,58 @@ class FtInTitlePluginTest(unittest.TestCase):
 
     def test_find_feat_part(self):
         test_cases = [
-            {'artist': 'Alice ft. Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
-            {'artist': 'Alice feat Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
-            {'artist': 'Alice featuring Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
-            {'artist': 'Alice & Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
-            {'artist': 'Alice and Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
-            {'artist': 'Alice With Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
-            {'artist': 'Alice defeat Bob', 'album_artist': 'Alice', 'feat_part': None},
-            {'artist': 'Alice & Bob', 'album_artist': 'Bob', 'feat_part': 'Alice'},
-            {'artist': 'Alice ft. Bob', 'album_artist': 'Bob', 'feat_part': 'Alice'},
+            {
+                'artist': 'Alice ft. Bob',
+                'album_artist': 'Alice',
+                'feat_part': 'Bob'
+            },
+            {
+                'artist': 'Alice feat Bob',
+                'album_artist': 'Alice',
+                'feat_part': 'Bob'
+            },
+            {
+                'artist': 'Alice featuring Bob',
+                'album_artist': 'Alice',
+                'feat_part': 'Bob'
+            },
+            {
+                'artist': 'Alice & Bob',
+                'album_artist': 'Alice',
+                'feat_part': 'Bob'
+            },
+            {
+                'artist': 'Alice and Bob',
+                'album_artist': 'Alice',
+                'feat_part': 'Bob'
+            },
+            {
+                'artist': 'Alice With Bob',
+                'album_artist': 'Alice',
+                'feat_part': 'Bob'
+            },
+            {
+                'artist': 'Alice defeat Bob',
+                'album_artist': 'Alice',
+                'feat_part': None
+            },
+            {
+                'artist': 'Alice & Bob',
+                'album_artist': 'Bob',
+                'feat_part': 'Alice'
+            },
+            {
+                'artist': 'Alice ft. Bob',
+                'album_artist': 'Bob',
+                'feat_part': 'Alice'
+            },
         ]
 
         for test_case in test_cases:
-            feat_part = ftintitle.find_feat_part(test_case['artist'], test_case['album_artist'])
+            feat_part = ftintitle.find_feat_part(
+                test_case['artist'],
+                test_case['album_artist']
+            )
             self.assertEqual(feat_part, test_case['feat_part'])
 
     def test_split_on_feat(self):
