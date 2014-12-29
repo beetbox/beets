@@ -1582,6 +1582,8 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
+        logs = [line for line in logs if not line.startswith('Sending event:')]
+
         self.assertEqual(len(self.lib.items()), 0)
         self.assertEqual(len(self.lib.albums()), 0)
 
@@ -1590,41 +1592,35 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
     def test_import_pretend(self):
         logs = self.__run(self.import_paths)
 
-        self.assertEqual(len(logs), 3)
-        self.assertEqual(logs[1], self.import_files[0])
-        self.assertEqual(logs[2], self.import_files[1])
+        self.assertEqual(logs, self.import_files)
 
     def test_import_pretend_empty(self):
         logs = self.__run([self.empty_path])
 
-        self.assertEqual(len(logs), 2)
-        self.assertEqual(logs[1], 'No files imported from {0}'
-                         .format(displayable_path(self.empty_path)))
+        self.assertEqual(logs, ['No files imported from {0}'
+                         .format(displayable_path(self.empty_path))])
 
     def test_import_singletons_pretend_detailed(self):
         logs = self.__run(self.import_paths, detailed=True)
 
-        self.assertEqual(len(logs), 3)
-        self.assertEqual(logs[1], 'Singleton: %s' % self.import_files[0])
-        self.assertEqual(logs[2], 'Singleton: %s' % self.import_paths[1])
+        self.assertEqual(logs, [
+            'Singleton: %s' % self.import_files[0],
+            'Singleton: %s' % self.import_paths[1]])
 
     def test_import_album_pretend_detailed(self):
         logs = self.__run(self.import_paths, singletons=False, detailed=True)
 
-        self.assertEqual(len(logs), 5)
-        self.assertEqual(logs[1],
-                         'Album %s' % displayable_path(self.import_paths[0]))
-        self.assertEqual(logs[2], self.import_files[0])
-        self.assertEqual(logs[3],
-                         'Album %s' % displayable_path(self.import_paths[1]))
-        self.assertEqual(logs[4], self.import_paths[1])
+        self.assertEqual(logs, [
+            'Album %s' % displayable_path(self.import_paths[0]),
+            self.import_files[0],
+            'Album %s' % displayable_path(self.import_paths[1]),
+            self.import_paths[1]])
 
     def test_import_pretend_empty_detailed(self):
         logs = self.__run([self.empty_path], detailed=True)
 
-        self.assertEqual(len(logs), 2)
-        self.assertEqual(logs[1], 'No files imported from {0}'
-                         .format(displayable_path(self.empty_path)))
+        self.assertEqual(logs, ['No files imported from {0}'
+                         .format(displayable_path(self.empty_path))])
 
 
 def suite():
