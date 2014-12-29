@@ -21,11 +21,11 @@ file. The available options are:
 
 - **auto**: Enable metadata rewriting during import.
   Default: ``yes``.
+- **broad**: Also work on similar strings, like "&", "with", etc.
+  Default: ``yes``
 - **drop**: Remove featured artists entirely instead of adding them to the
   title field.
   Default: ``no``.
-- **broad**: Also work on similar strings, like "&", "with", etc.
-  Default: ``yes``
 
 Running Manually
 ----------------
