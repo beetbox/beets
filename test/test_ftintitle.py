@@ -32,6 +32,8 @@ class FtInTitlePluginTest(unittest.TestCase):
             {'artist': 'Alice and Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
             {'artist': 'Alice With Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
             {'artist': 'Alice defeat Bob', 'album_artist': 'Alice', 'feat_part': None},
+            {'artist': 'Alice & Bob', 'album_artist': 'Bob', 'feat_part': 'Alice'},
+            {'artist': 'Alice ft. Bob', 'album_artist': 'Bob', 'feat_part': 'Alice'},
         ]
 
         for test_case in test_cases:

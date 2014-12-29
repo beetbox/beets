@@ -95,7 +95,7 @@ def find_feat_part(artist, albumartist):
     # featuring artist on the left-hand side.
     else:
         lhs, rhs = split_on_feat(albumartist_split[0])
-        if rhs:
+        if lhs:
             feat_part = lhs
 
     return feat_part
