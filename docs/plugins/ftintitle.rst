@@ -24,6 +24,8 @@ file. The available options are:
 - **drop**: Remove featured artists entirely instead of adding them to the
   title field.
   Default: ``no``.
+- **broad**: Also work on similar strings, like "&", "with", etc.
+  Default: ``yes``
 
 Running Manually
 ----------------
