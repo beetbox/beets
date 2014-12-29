@@ -23,6 +23,21 @@ class FtInTitlePluginTest(unittest.TestCase):
         """Set up configuration"""
         ftintitle.FtInTitlePlugin()
 
+    def test_find_feat_part(self):
+        test_cases = [
+            {'artist': 'Alice ft. Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
+            {'artist': 'Alice feat Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
+            {'artist': 'Alice featuring Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
+            {'artist': 'Alice & Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
+            {'artist': 'Alice and Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
+            {'artist': 'Alice With Bob', 'album_artist': 'Alice', 'feat_part': 'Bob'},
+            {'artist': 'Alice defeat Bob', 'album_artist': 'Alice', 'feat_part': None},
+        ]
+
+        for test_case in test_cases:
+            feat_part = ftintitle.find_feat_part(test_case['artist'], test_case['album_artist'])
+            self.assertEqual(feat_part, test_case['feat_part'])
+
     def test_split_on_feat(self):
         parts = ftintitle.split_on_feat('Alice ft. Bob')
         self.assertEqual(parts, ('Alice', 'Bob'))
