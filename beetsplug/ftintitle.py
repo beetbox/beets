@@ -118,6 +118,8 @@ def ft_in_title(item, drop_feat, loglevel=logging.DEBUG):
     if featured and albumartist != artist and albumartist:
         log.log(loglevel, displayable_path(item.path))
 
+        feat_part = None
+
         # Attempt to find the featured artist
         try:
             feat_part = find_feat_part(artist, albumartist)
