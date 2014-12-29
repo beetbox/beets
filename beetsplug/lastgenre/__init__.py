@@ -242,9 +242,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _cached_lookup(self, entity, method, *args):
         """Get a genre based on the named entity using the callable `method`
         whose arguments are given in the sequence `args`. The genre lookup
-        is cached based on the entity name and the arguments. Before the lookup,
-        each argument is has some Unicode characters replaced with rough ASCII
-        equivalents in order to return better results from the Last.fm database.
+        is cached based on the entity name and the arguments. Before the
+        lookup, each argument is has some Unicode characters replaced with
+        rough ASCII equivalents in order to return better results from the
+        Last.fm database.
         """
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
