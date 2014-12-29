@@ -120,6 +120,8 @@ def has_program(cmd, args=['--version']):
                                   stdout=devnull, stdin=devnull)
     except OSError:
         return False
+    except subprocess.CalledProcessError:
+        return False
     else:
         return True
 
