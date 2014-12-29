@@ -24,14 +24,6 @@ import re
 log = logging.getLogger('beets')
 
 
-class ArtistNotFoundException(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
 def split_on_feat(artist):
     """Given an artist string, split the "main" artist from any artist
     on the right-hand side of a string like "feat". Return the main
@@ -85,7 +77,7 @@ def find_feat_part(artist, albumartist):
     # present, give up.
     albumartist_split = artist.split(albumartist, 1)
     if len(albumartist_split) <= 1:
-        raise ArtistNotFoundException('album artist not present in artist')
+        return feat_part
 
     # If the last element of the split (the right-hand side of the
     # album artist) is nonempty, then it probably contains the
@@ -121,10 +113,7 @@ def ft_in_title(item, drop_feat, loglevel=logging.DEBUG):
         feat_part = None
 
         # Attempt to find the featured artist
-        try:
-            feat_part = find_feat_part(artist, albumartist)
-        except ArtistNotFoundException:
-            log.log(loglevel, 'album artist not present in artist')
+        feat_part = find_feat_part(artist, albumartist)
 
         # If we have a featuring artist, move it to the title.
         if feat_part:
