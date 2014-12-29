@@ -1567,13 +1567,15 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
+        logs = [line for line in logs if not line.startswith('Sending event:')]
+
         self.assertEqual(len(self.lib.items()), 0)
         self.assertEqual(len(self.lib.albums()), 0)
 
-        self.assertEqual(len(logs), 3)
-        self.assertEqual(logs[1], os.path.join(import_files[0],
+        self.assertEqual(len(logs), 2)
+        self.assertEqual(logs[0], os.path.join(import_files[0],
                                                u'track_1.mp3'))
-        self.assertEqual(logs[2], import_files[1])
+        self.assertEqual(logs[1], import_files[1])
 
     def test_import_pretend_empty(self):
         path = os.path.join(self.temp_dir, 'empty')
@@ -1585,11 +1587,13 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
+        logs = [line for line in logs if not line.startswith('Sending event:')]
+
         self.assertEqual(len(self.lib.items()), 0)
         self.assertEqual(len(self.lib.albums()), 0)
 
-        self.assertEqual(len(logs), 2)
-        self.assertEqual(logs[1], 'No files imported from {0}'
+        self.assertEqual(len(logs), 1)
+        self.assertEqual(logs[0], 'No files imported from {0}'
                                   .format(displayable_path(path)))
 
 
