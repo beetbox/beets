@@ -83,9 +83,6 @@ class IHatePluginTest(_common.TestCase, ImportHelper):
             self.misc_paths.append(dest_path)
 
     def __run(self, expected_lines, singletons=False):
-        import beetsplug
-        path = beetsplug.__path__
-        print path
         self.load_plugins('ihate')
 
         import_files = [self.import_dir]
