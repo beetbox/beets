@@ -12,7 +12,7 @@ from test.helper import capture_log
 from test.test_importer import ImportHelper
 
 
-class IHatePluginTest(ImportHelper):
+class IHatePluginTest(unittest.TestCase, ImportHelper):
     def setUp(self):
         self.setup_beets()
         self.__create_import_dir(2)
@@ -142,207 +142,42 @@ class IHatePluginTest(ImportHelper):
 
     def test_import_nothing(self):
         self.__reset_config()
-        config['ihate']['regex_invert_folder_result'] = True
-        config['ihate']['regex_invert_file_result'] = True
+        config['ihate']['path'] = 'not_there'
         self.__run([])
 
     # Global options
-    def test_import_global_match_folder(self):
+    def test_import_global(self):
         self.__reset_config()
-        config['ihate']['regex_folder_name'] = 'artist'
+        config['ihate']['path'] = '.*track_1.*\.mp3'
         self.__run([self.artist_paths[0],
-                    self.artist_paths[1]])
-
-    def test_import_global_invert_folder(self):
-        self.__reset_config()
-        config['ihate']['regex_folder_name'] = 'artist'
-        config['ihate']['regex_invert_folder_result'] = True
-        self.__run([self.misc_paths[0],
-                    self.misc_paths[1]])
-
-    def test_import_global_match_file(self):
-        self.__reset_config()
-        config['ihate']['regex_file_name'] = '.*2.*'
-        self.__run([self.artist_paths[1],
-                    self.album_paths[1],
-                    self.misc_paths[1]])
-
-    def test_import_global_invert_file(self):
-        self.__reset_config()
-        config['ihate']['regex_file_name'] = '.*2.*'
-        config['ihate']['regex_invert_file_result'] = True
-        self.__run([self.artist_paths[0],
-                    self.album_paths[0],
                     self.misc_paths[0]])
-
-    def test_import_global_match_folder_case_sensitive(self):
-        self.__reset_config()
-        config['ihate']['regex_folder_name'] = 'Artist'
-        self.__run([])
-
-    def test_import_global_match_folder_ignore_case(self):
-        self.__reset_config()
-        config['ihate']['regex_ignore_case'] = True
-        config['ihate']['regex_folder_name'] = 'Artist'
         self.__run([self.artist_paths[0],
-                    self.artist_paths[1]])
+                    self.misc_paths[0]], singletons=True)
 
     # Album options
-    def test_import_album_match_folder(self):
+    def test_import_album(self):
         self.__reset_config()
-        config['ihate']['album']['regex_folder_name'] = 'artist'
+        config['ihate']['album']['path'] = '.*track_1.*\.mp3'
         self.__run([self.artist_paths[0],
-                    self.artist_paths[1]])
-        self.__run(self.all_paths, singletons=True)
-
-    def test_import_album_invert_folder(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_folder_name'] = 'artist'
-        config['ihate']['album']['regex_invert_folder_result'] = True
-        self.__run([self.misc_paths[0],
-                    self.misc_paths[1]])
-        self.__run(self.all_paths, singletons=True)
-
-    def test_import_album_match_file(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_file_name'] = '.*2.*'
-        self.__run([self.artist_paths[1],
-                    self.album_paths[1],
-                    self.misc_paths[1]])
-        self.__run(self.all_paths, singletons=True)
-
-    def test_import_album_invert_file(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_file_name'] = '.*2.*'
-        config['ihate']['album']['regex_invert_file_result'] = True
-        self.__run([self.artist_paths[0],
-                    self.album_paths[0],
                     self.misc_paths[0]])
-        self.__run(self.all_paths, singletons=True)
-
-    def test_import_album_match_folder_case_sensitive(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_folder_name'] = 'Artist'
-        self.__run([])
-        self.__run(self.all_paths, singletons=True)
-
-    def test_import_album_match_folder_ignore_case(self):
-        self.__reset_config()
-        config['ihate']['regex_ignore_case'] = True
-        config['ihate']['album']['regex_folder_name'] = 'Artist'
-        self.__run([self.artist_paths[0],
-                    self.artist_paths[1]])
         self.__run(self.all_paths, singletons=True)
 
     # Singleton options
-    def test_import_singleton_match_folder(self):
+    def test_import_singleton(self):
         self.__reset_config()
-        config['ihate']['singleton']['regex_folder_name'] = 'artist'
+        config['ihate']['singleton']['path'] = '.*track_1.*\.mp3'
         self.__run([self.artist_paths[0],
-                    self.artist_paths[1]], singletons=True)
-        self.__run(self.all_paths)
-
-    def test_import_singleton_invert_folder(self):
-        self.__reset_config()
-        config['ihate']['singleton']['regex_folder_name'] = 'artist'
-        config['ihate']['singleton']['regex_invert_folder_result'] = True
-        self.__run([self.misc_paths[0],
-                    self.misc_paths[1]], singletons=True)
-        self.__run(self.all_paths)
-
-    def test_import_singleton_match_file(self):
-        self.__reset_config()
-        config['ihate']['singleton']['regex_file_name'] = '.*2.*'
-        self.__run([self.artist_paths[1],
-                    self.album_paths[1],
-                    self.misc_paths[1]], singletons=True)
-        self.__run(self.all_paths)
-
-    def test_import_singleton_invert_file(self):
-        self.__reset_config()
-        config['ihate']['singleton']['regex_file_name'] = '.*2.*'
-        config['ihate']['singleton']['regex_invert_file_result'] = True
-        self.__run([self.artist_paths[0],
-                    self.album_paths[0],
                     self.misc_paths[0]], singletons=True)
-        self.__run(self.all_paths)
-
-    def test_import_singleton_match_folder_case_sensitive(self):
-        self.__reset_config()
-        config['ihate']['singleton']['regex_folder_name'] = 'Artist'
-        self.__run([], singletons=True)
-        self.__run(self.all_paths)
-
-    def test_import_singleton_match_folder_ignore_case(self):
-        self.__reset_config()
-        config['ihate']['regex_ignore_case'] = True
-        config['ihate']['singleton']['regex_folder_name'] = 'Artist'
-        self.__run([self.artist_paths[0],
-                    self.artist_paths[1]], singletons=True)
         self.__run(self.all_paths)
 
     # Album and singleton options
-    def test_import_both_match_folder(self):
+    def test_import_both(self):
         self.__reset_config()
-        config['ihate']['album']['regex_folder_name'] = 'artist'
-        config['ihate']['singleton']['regex_folder_name'] = 'misc'
+        config['ihate']['album']['path'] = '.*track_1.*\.mp3'
+        config['ihate']['singleton']['path'] = '.*track_2.*\.mp3'
         self.__run([self.artist_paths[0],
-                    self.artist_paths[1]])
-        self.__run([self.misc_paths[0],
-                    self.misc_paths[1]], singletons=True)
-
-    def test_import_both_invert_folder(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_folder_name'] = 'artist'
-        config['ihate']['album']['regex_invert_folder_result'] = True
-        config['ihate']['singleton']['regex_folder_name'] = 'misc'
-        config['ihate']['singleton']['regex_invert_folder_result'] = True
-        self.__run([self.misc_paths[0],
-                    self.misc_paths[1]])
-        self.__run([self.artist_paths[0],
-                    self.artist_paths[1],
-                    self.album_paths[0],
-                    self.album_paths[1]], singletons=True)
-
-    def test_import_both_match_file(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_file_name'] = '.*2.*'
-        config['ihate']['singleton']['regex_file_name'] = '.*1.*'
-        self.__run([self.artist_paths[1],
-                    self.album_paths[1],
-                    self.misc_paths[1]])
-        self.__run([self.artist_paths[0],
-                    self.album_paths[0],
-                    self.misc_paths[0]], singletons=True)
-
-    def test_import_both_invert_file(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_file_name'] = '.*2.*'
-        config['ihate']['album']['regex_invert_file_result'] = True
-        config['ihate']['singleton']['regex_file_name'] = '.*1.*'
-        config['ihate']['singleton']['regex_invert_file_result'] = True
-        self.__run([self.artist_paths[0],
-                    self.album_paths[0],
                     self.misc_paths[0]])
         self.__run([self.artist_paths[1],
-                    self.album_paths[1],
-                    self.misc_paths[1]], singletons=True)
-
-    def test_import_both_match_folder_case_sensitive(self):
-        self.__reset_config()
-        config['ihate']['album']['regex_folder_name'] = 'Artist'
-        config['ihate']['singleton']['regex_folder_name'] = 'Misc'
-        self.__run([])
-        self.__run([], singletons=True)
-
-    def test_import_both_match_folder_ignore_case(self):
-        self.__reset_config()
-        config['ihate']['regex_ignore_case'] = True
-        config['ihate']['album']['regex_folder_name'] = 'Artist'
-        config['ihate']['singleton']['regex_folder_name'] = 'Misc'
-        self.__run([self.artist_paths[0],
-                    self.artist_paths[1]])
-        self.__run([self.misc_paths[0],
                     self.misc_paths[1]], singletons=True)
 
 

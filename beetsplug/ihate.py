@@ -15,7 +15,6 @@
 """Warns you about things you hate (or even blocks import)."""
 
 import logging
-import os
 import re
 from beets import config
 from beets.plugins import BeetsPlugin
@@ -51,57 +50,24 @@ class IHatePlugin(BeetsPlugin):
         self.config.add({
             'warn': [],
             'skip': [],
-            'regex_ignore_case': False,
-            'regex_invert_folder_result': False,
-            'regex_invert_file_result': False,
-            'regex_folder_name': '.*',
-            'regex_file_name': '.*'
+            'path': '.*'
         })
 
-        flags = re.IGNORECASE if self.config['regex_ignore_case'].get() else 0
-
-        self.invert_folder_album_result = \
-            self.invert_folder_singleton_result = \
-            self.config['regex_invert_folder_result'].get()
-        self.invert_file_album_result = \
-            self.invert_file_singleton_result = \
-            self.config['regex_invert_file_result'].get()
-        self.folder_name_album_regex = \
-            self.folder_name_singleton_regex = \
-            re.compile(self.config['regex_folder_name'].get(), flags)
-        self.file_name_album_regex = \
-            self.file_name_singleton_regex = \
-            re.compile(self.config['regex_file_name'].get(), flags)
+        self.path_album_regex = \
+            self.path_singleton_regex = \
+            re.compile(self.config['path'].get())
 
         if 'album' in self.config:
             album_config = self.config['album']
-            if 'regex_invert_folder_result' in album_config:
-                self.invert_folder_album_result = album_config[
-                    'regex_invert_folder_result'].get()
-            if 'regex_invert_file_result' in album_config:
-                self.invert_file_album_result = album_config[
-                    'regex_invert_file_result'].get()
-            if 'regex_folder_name' in album_config:
-                self.folder_name_album_regex = re.compile(
-                    album_config['regex_folder_name'].get(), flags)
-            if 'regex_file_name' in album_config:
-                self.file_name_album_regex = re.compile(
-                    album_config['regex_file_name'].get(), flags)
+            if 'path' in album_config:
+                self.path_album_regex = re.compile(
+                    album_config['path'].get())
 
         if 'singleton' in self.config:
             singleton_config = self.config['singleton']
-            if 'regex_invert_folder_result' in singleton_config:
-                self.invert_folder_singleton_result = singleton_config[
-                    'regex_invert_folder_result'].get()
-            if 'regex_invert_file_result' in singleton_config:
-                self.invert_file_singleton_result = singleton_config[
-                    'regex_invert_file_result'].get()
-            if 'regex_folder_name' in singleton_config:
-                self.folder_name_singleton_regex = re.compile(
-                    singleton_config['regex_folder_name'].get(), flags)
-            if 'regex_file_name' in singleton_config:
-                self.file_name_singleton_regex = re.compile(
-                    singleton_config['regex_file_name'].get(), flags)
+            if 'path' in singleton_config:
+                self.path_singleton_regex = re.compile(
+                    singleton_config['path'].get())
 
     @classmethod
     def do_i_hate_this(cls, task, action_patterns):
@@ -142,76 +108,25 @@ class IHatePlugin(BeetsPlugin):
         if task.items and len(task.items) > 0:
             items_to_import = []
             for item in task.items:
-                if self.file_filter(item['path'], session.paths):
+                if self.file_filter(item['path']):
                     items_to_import.append(item)
             if len(items_to_import) > 0:
                 task.items = items_to_import
             else:
                 task.choice_flag = action.SKIP
         elif isinstance(task, SingletonImportTask):
-            if not self.file_filter(task.item['path'], session.paths):
+            if not self.file_filter(task.item['path']):
                 task.choice_flag = action.SKIP
 
-    def file_filter(self, full_path, base_paths):
+    def file_filter(self, full_path):
         """Checks if the configured regular expressions allow the import of the
         file given in full_path.
         """
-        # The folder regex only checks the folder names starting from the
-        # longest base path. Find this folder.
-        matched_base_path = ''
-        for base_path in base_paths:
-            if full_path.startswith(base_path) and len(base_path) > len(
-                    matched_base_path):
-                matched_base_path = base_path
-        relative_path = full_path[len(matched_base_path):]
-
-        if os.path.isdir(full_path):
-            path = relative_path
-            file_name = None
-        else:
-            path, file_name = os.path.split(relative_path)
-        path, folder_name = os.path.split(path)
-
         import_config = dict(config['import'])
         if 'singletons' not in import_config or not import_config[
                 'singletons']:
             # Album
-
-            # Folder
-            while len(folder_name) > 0:
-                matched = self.folder_name_album_regex.match(
-                    folder_name) is not None
-                matched = not matched if self.invert_folder_album_result else \
-                    matched
-                if not matched:
-                    return False
-                path, folder_name = os.path.split(path)
-
-            # File
-            matched = self.file_name_album_regex.match(
-                file_name) is not None
-            matched = not matched if self.invert_file_album_result else matched
-            if not matched:
-                return False
-            return True
+            return self.path_album_regex.match(full_path) is not None
         else:
             # Singleton
-
-            # Folder
-            while len(folder_name) > 0:
-                matched = self.folder_name_singleton_regex.match(
-                    folder_name) is not None
-                matched = not matched if \
-                    self.invert_folder_singleton_result else matched
-                if not matched:
-                    return False
-                path, folder_name = os.path.split(path)
-
-            # File
-            matched = self.file_name_singleton_regex.match(
-                file_name) is not None
-            matched = not matched if self.invert_file_singleton_result else \
-                matched
-            if not matched:
-                return False
-            return True
+            return self.path_singleton_regex.match(full_path) is not None
