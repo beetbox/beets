@@ -319,12 +319,11 @@ class LyricsGooglePluginTest(unittest.TestCase):
         for (fun, s) in zip([lyrics.fetch_lyricswiki,
                              lyrics.fetch_lyricscom,
                              lyrics.fetch_musixmatch], DEFAULT_SOURCES):
-            if os.path.isfile(url_to_filename(
-                              s['url'] + s['path'])):
+            url = s['url'] + s['path']
+            if os.path.isfile(url_to_filename(url)):
                 res = fun(s['artist'], s['title'])
-                self.assertTrue(lyrics.is_lyrics(res))
-                self.assertTrue(is_lyrics_content_ok(
-                                s['title'], res))
+                self.assertTrue(lyrics.is_lyrics(res), url)
+                self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
     def test_is_page_candidate_exact_match(self):
         """Test matching html page title with song infos -- when song infos are
