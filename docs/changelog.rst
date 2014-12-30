@@ -64,6 +64,8 @@ Fixed:
   the import process. Thanks to :user:`Freso`. :bug:`1176` :bug:`1172`
 * :doc:`/plugins/ftintitle`: Fix weird behavior when the same artist appears
   twice in the artist string. Thanks to Marc Addeo. :bug:`1179` :bug:`1181`
+* :doc:`/plugins/lastgenre`: Match songs more robustly when they contain
+  dashes. Thanks to :user:`djl`. :bug:`1156`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/

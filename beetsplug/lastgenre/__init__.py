@@ -239,7 +239,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Cached entity lookups.
 
-    def _cached_lookup(self, entity, method, *args):
+    def _last_lookup(self, entity, method, *args):
         """Get a genre based on the named entity using the callable `method`
         whose arguments are given in the sequence `args`. The genre lookup
         is cached based on the entity name and the arguments. Before the
@@ -268,25 +268,25 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
-        return self._cached_lookup(u'album', LASTFM.get_album, obj.albumartist,
-                                   obj.album)
+        return self._last_lookup(u'album', LASTFM.get_album, obj.albumartist,
+                                 obj.album)
 
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album.
         """
-        return self._cached_lookup(u'artist', LASTFM.get_artist,
-                                   obj.albumartist)
+        return self._last_lookup(u'artist', LASTFM.get_artist,
+                                 obj.albumartist)
 
     def fetch_artist_genre(self, item):
         """Returns the track artist genre for this Item.
         """
-        return self._cached_lookup(u'artist', LASTFM.get_artist, item.artist)
+        return self._last_lookup(u'artist', LASTFM.get_artist, item.artist)
 
     def fetch_track_genre(self, obj):
         """Returns the track genre for this Item.
         """
-        return self._cached_lookup(u'track', LASTFM.get_track, obj.artist,
-                                   obj.title)
+        return self._last_lookup(u'track', LASTFM.get_track, obj.artist,
+                                 obj.title)
 
     def _get_genre(self, obj):
         """Get the genre string for an Album or Item object based on
