@@ -12,9 +12,8 @@ from test.helper import capture_log
 from test.test_importer import ImportHelper
 
 
-class IHatePluginTest(_common.TestCase, ImportHelper):
+class IHatePluginTest(ImportHelper):
     def setUp(self):
-        super(IHatePluginTest, self).setUp()
         self.setup_beets()
         self.__create_import_dir(2)
         self._setup_import_session()
