@@ -1305,7 +1305,7 @@ def log_files(session, task):
     elif task.items:
         log.info('Album {0}'.format(displayable_path(task.paths[0])))
         for item in task.items:
-            log.info(displayable_path(item['path']))
+            log.info('  {0}'.format(displayable_path(item['path'])))
 
 
 def group_albums(session):
