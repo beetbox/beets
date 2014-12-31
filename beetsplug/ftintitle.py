@@ -45,8 +45,7 @@ def contains_feat(title):
     """Determine whether the title contains a "featured" marker.
     """
     return bool(re.search(
-        plugins.feat_tokens(config['ftintitle']['broad'].get(bool)),
-        title, flags=re.IGNORECASE))
+        plugins.feat_tokens(for_artist=False), title, flags=re.IGNORECASE))
 
 
 def update_metadata(item, feat_part, drop_feat, loglevel=logging.DEBUG):
