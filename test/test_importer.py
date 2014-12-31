@@ -1542,7 +1542,8 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
     def setUp(self):
         super(ImportPretendTest, self).setUp()
         self.setup_beets()
-        self._create_import_dir(1)
+        self.__create_import_dir()
+        self.__create_empty_import_dir()
         self._setup_import_session()
         config['import']['pretend'] = True
         self.matcher = AutotagStub().install()
@@ -1552,45 +1553,61 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         self.teardown_beets()
         self.matcher.restore()
 
-    def test_import_pretend(self):
+    def __create_import_dir(self):
+        self._create_import_dir(1)
         resource_path = os.path.join(_common.RSRC, u'empty.mp3')
         single_path = os.path.join(self.import_dir, u'track_2.mp3')
-
         shutil.copy(resource_path, single_path)
-        import_files = [
+        self.import_paths = [
             os.path.join(self.import_dir, u'the_album'),
             single_path
         ]
-        self._setup_import_session(singletons=True)
-        self.importer.paths = import_files
+        self.import_files = [
+            displayable_path(
+                os.path.join(self.import_paths[0], u'track_1.mp3')),
+            displayable_path(single_path)
+        ]
 
-        with capture_log() as logs:
-            self.importer.run()
-
-        self.assertEqual(len(self.lib.items()), 0)
-        self.assertEqual(len(self.lib.albums()), 0)
-
-        self.assertEqual(len(logs), 3)
-        self.assertEqual(logs[1], os.path.join(import_files[0],
-                                               u'track_1.mp3'))
-        self.assertEqual(logs[2], import_files[1])
-
-    def test_import_pretend_empty(self):
+    def __create_empty_import_dir(self):
         path = os.path.join(self.temp_dir, 'empty')
         os.makedirs(path)
+        self.empty_path = path
 
-        self._setup_import_session(singletons=True)
-        self.importer.paths = [path]
+    def __run(self, import_paths, singletons=True):
+        self._setup_import_session(singletons=singletons)
+        self.importer.paths = import_paths
 
         with capture_log() as logs:
             self.importer.run()
 
+        logs = [line for line in logs if not line.startswith('Sending event:')]
+
         self.assertEqual(len(self.lib.items()), 0)
         self.assertEqual(len(self.lib.albums()), 0)
 
-        self.assertEqual(len(logs), 2)
-        self.assertEqual(logs[1], 'No files imported from {0}'
-                                  .format(displayable_path(path)))
+        return logs
+
+    def test_import_singletons_pretend(self):
+        logs = self.__run(self.import_paths)
+
+        self.assertEqual(logs, [
+            'Singleton: %s' % self.import_files[0],
+            'Singleton: %s' % self.import_paths[1]])
+
+    def test_import_album_pretend(self):
+        logs = self.__run(self.import_paths, singletons=False)
+
+        self.assertEqual(logs, [
+            'Album %s' % displayable_path(self.import_paths[0]),
+            '  %s' % self.import_files[0],
+            'Album %s' % displayable_path(self.import_paths[1]),
+            '  %s' % self.import_paths[1]])
+
+    def test_import_pretend_empty(self):
+        logs = self.__run([self.empty_path])
+
+        self.assertEqual(logs, ['No files imported from {0}'
+                         .format(displayable_path(self.empty_path))])
 
 
 def suite():
