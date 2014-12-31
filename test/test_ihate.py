@@ -6,6 +6,7 @@ from _common import unittest
 from beets import importer, config
 from beets.library import Item
 from beets.mediafile import MediaFile
+from beets.util import displayable_path
 from beetsplug.ihate import IHatePlugin
 from test import _common
 from test.helper import capture_log
@@ -18,10 +19,6 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
         self.__create_import_dir(2)
         self._setup_import_session()
         config['import']['pretend'] = True
-
-        self.all_paths = [self.artist_paths[0], self.artist_paths[1],
-                          self.album_paths[0], self.album_paths[1],
-                          self.misc_paths[0], self.misc_paths[1]]
 
     def tearDown(self):
         self.teardown_beets()
@@ -41,11 +38,11 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
         if os.path.isdir(self.import_dir):
             shutil.rmtree(self.import_dir)
 
-        artist_path = os.path.join(self.import_dir, 'artist')
-        album_path = os.path.join(artist_path, 'album')
-        misc_path = os.path.join(self.import_dir, 'misc')
-        os.makedirs(album_path)
-        os.makedirs(misc_path)
+        self.artist_path = os.path.join(self.import_dir, 'artist')
+        self.album_path = os.path.join(self.artist_path, 'album')
+        self.misc_path = os.path.join(self.import_dir, 'misc')
+        os.makedirs(self.album_path)
+        os.makedirs(self.misc_path)
 
         metadata = {
             'artist': 'Tag Artist',
@@ -59,7 +56,7 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
         for i in range(count):
             metadata['track'] = i + 1
             metadata['title'] = 'Tag Title Album %d' % (i + 1)
-            dest_path = os.path.join(album_path, '%02d - track.mp3' % (i + 1))
+            dest_path = os.path.join(self.album_path, '%02d - track.mp3' % (i + 1))
             self.__copy_file(dest_path, metadata)
             self.album_paths.append(dest_path)
 
@@ -68,7 +65,7 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
         for i in range(count):
             metadata['track'] = i + 10
             metadata['title'] = 'Tag Title Artist %d' % (i + 1)
-            dest_path = os.path.join(artist_path, 'track_%d.mp3' % (i + 1))
+            dest_path = os.path.join(self.artist_path, 'track_%d.mp3' % (i + 1))
             self.__copy_file(dest_path, metadata)
             self.artist_paths.append(dest_path)
 
@@ -77,7 +74,7 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
             metadata['artist'] = 'Artist %d' % (i + 42)
             metadata['track'] = i + 5
             metadata['title'] = 'Tag Title Misc %d' % (i + 1)
-            dest_path = os.path.join(misc_path, 'track_%d.mp3' % (i + 1))
+            dest_path = os.path.join(self.misc_path, 'track_%d.mp3' % (i + 1))
             self.__copy_file(dest_path, metadata)
             self.misc_paths.append(dest_path)
 
@@ -138,7 +135,17 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
         """ The default configuration should import everything.
         """
         self.__reset_config()
-        self.__run(self.all_paths)
+        self.__run([
+            'Album %s' % displayable_path(self.artist_path),
+            '  %s' % displayable_path(self.artist_paths[0]),
+            '  %s' % displayable_path(self.artist_paths[1]),
+            'Album %s' % displayable_path(self.album_path),
+            '  %s' % displayable_path(self.album_paths[0]),
+            '  %s' % displayable_path(self.album_paths[1]),
+            'Album %s' % displayable_path(self.misc_path),
+            '  %s' % displayable_path(self.misc_paths[0]),
+            '  %s' % displayable_path(self.misc_paths[1])
+        ])
 
     def test_import_nothing(self):
         self.__reset_config()
@@ -149,36 +156,71 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
     def test_import_global(self):
         self.__reset_config()
         config['ihate']['path'] = '.*track_1.*\.mp3'
-        self.__run([self.artist_paths[0],
-                    self.misc_paths[0]])
-        self.__run([self.artist_paths[0],
-                    self.misc_paths[0]], singletons=True)
+        self.__run([
+            'Album %s' % displayable_path(self.artist_path),
+            '  %s' % displayable_path(self.artist_paths[0]),
+            'Album %s' % displayable_path(self.misc_path),
+            '  %s' % displayable_path(self.misc_paths[0]),
+        ])
+        self.__run([
+            'Singleton: %s' % displayable_path(self.artist_paths[0]),
+            'Singleton: %s' % displayable_path(self.misc_paths[0])
+        ], singletons=True)
 
     # Album options
     def test_import_album(self):
         self.__reset_config()
         config['ihate']['album_path'] = '.*track_1.*\.mp3'
-        self.__run([self.artist_paths[0],
-                    self.misc_paths[0]])
-        self.__run(self.all_paths, singletons=True)
+        self.__run([
+            'Album %s' % displayable_path(self.artist_path),
+            '  %s' % displayable_path(self.artist_paths[0]),
+            'Album %s' % displayable_path(self.misc_path),
+            '  %s' % displayable_path(self.misc_paths[0]),
+        ])
+        self.__run([
+            'Singleton: %s' % displayable_path(self.artist_paths[0]),
+            'Singleton: %s' % displayable_path(self.artist_paths[1]),
+            'Singleton: %s' % displayable_path(self.album_paths[0]),
+            'Singleton: %s' % displayable_path(self.album_paths[1]),
+            'Singleton: %s' % displayable_path(self.misc_paths[0]),
+            'Singleton: %s' % displayable_path(self.misc_paths[1])
+        ], singletons=True)
 
     # Singleton options
     def test_import_singleton(self):
         self.__reset_config()
         config['ihate']['singleton_path'] = '.*track_1.*\.mp3'
-        self.__run([self.artist_paths[0],
-                    self.misc_paths[0]], singletons=True)
-        self.__run(self.all_paths)
+        self.__run([
+            'Singleton: %s' % displayable_path(self.artist_paths[0]),
+            'Singleton: %s' % displayable_path(self.misc_paths[0])
+        ], singletons=True)
+        self.__run([
+            'Album %s' % displayable_path(self.artist_path),
+            '  %s' % displayable_path(self.artist_paths[0]),
+            '  %s' % displayable_path(self.artist_paths[1]),
+            'Album %s' % displayable_path(self.album_path),
+            '  %s' % displayable_path(self.album_paths[0]),
+            '  %s' % displayable_path(self.album_paths[1]),
+            'Album %s' % displayable_path(self.misc_path),
+            '  %s' % displayable_path(self.misc_paths[0]),
+            '  %s' % displayable_path(self.misc_paths[1])
+        ])
 
     # Album and singleton options
     def test_import_both(self):
         self.__reset_config()
         config['ihate']['album_path'] = '.*track_1.*\.mp3'
         config['ihate']['singleton_path'] = '.*track_2.*\.mp3'
-        self.__run([self.artist_paths[0],
-                    self.misc_paths[0]])
-        self.__run([self.artist_paths[1],
-                    self.misc_paths[1]], singletons=True)
+        self.__run([
+            'Album %s' % displayable_path(self.artist_path),
+            '  %s' % displayable_path(self.artist_paths[0]),
+            'Album %s' % displayable_path(self.misc_path),
+            '  %s' % displayable_path(self.misc_paths[0]),
+        ])
+        self.__run([
+            'Singleton: %s' % displayable_path(self.artist_paths[1]),
+            'Singleton: %s' % displayable_path(self.misc_paths[1])
+        ], singletons=True)
 
 
 def suite():
