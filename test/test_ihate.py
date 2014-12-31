@@ -157,7 +157,7 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
     # Album options
     def test_import_album(self):
         self.__reset_config()
-        config['ihate']['album']['path'] = '.*track_1.*\.mp3'
+        config['ihate']['album_path'] = '.*track_1.*\.mp3'
         self.__run([self.artist_paths[0],
                     self.misc_paths[0]])
         self.__run(self.all_paths, singletons=True)
@@ -165,7 +165,7 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
     # Singleton options
     def test_import_singleton(self):
         self.__reset_config()
-        config['ihate']['singleton']['path'] = '.*track_1.*\.mp3'
+        config['ihate']['singleton_path'] = '.*track_1.*\.mp3'
         self.__run([self.artist_paths[0],
                     self.misc_paths[0]], singletons=True)
         self.__run(self.all_paths)
@@ -173,8 +173,8 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
     # Album and singleton options
     def test_import_both(self):
         self.__reset_config()
-        config['ihate']['album']['path'] = '.*track_1.*\.mp3'
-        config['ihate']['singleton']['path'] = '.*track_2.*\.mp3'
+        config['ihate']['album_path'] = '.*track_1.*\.mp3'
+        config['ihate']['singleton_path'] = '.*track_2.*\.mp3'
         self.__run([self.artist_paths[0],
                     self.misc_paths[0]])
         self.__run([self.artist_paths[1],

@@ -22,11 +22,11 @@ file. The available options are:
   Default: ``[]``.
 - **path**: A regular expression to filter files based on its path and name.
   Default: ``.*`` (everything)
-- **album** and **singleton**: You may specify different regular expressions
-  used for imports of albums and singletons. This way, you can automatically
-  skip singletons when importing albums if the names (and paths) of the files
-  are distinguishable via a regex. The path regex defined here take precedence
-  over the global ``path`` option.
+- **album_path** and **singleton_path**: You may specify different regular
+  expressions used for imports of albums and singletons. This way, you can
+  automatically skip singletons when importing albums if the names (and paths)
+  of the files are distinguishable via a regex. The path regex defined here
+  take precedence over the global ``path`` option.
 
 Here's an example::
 
@@ -43,10 +43,8 @@ Here's an example::
             - album:christmas
         path: .*\d\d[^/]+$
               # will only import files which names start with two digits
-        album:
-            path: .*\d\d[^/]+$
-        singleton:
-            path: .*/(?!\d\d)[^/]+$
+        album_path: .*\d\d[^/]+$
+        singleton_path: .*/(?!\d\d)[^/]+$
 
 The plugin trusts your decision in "as-is" imports.
 

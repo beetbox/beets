@@ -57,17 +57,12 @@ class IHatePlugin(BeetsPlugin):
             self.path_singleton_regex = \
             re.compile(self.config['path'].get())
 
-        if 'album' in self.config:
-            album_config = self.config['album']
-            if 'path' in album_config:
-                self.path_album_regex = re.compile(
-                    album_config['path'].get())
+        if 'album_path' in self.config:
+            self.path_album_regex = re.compile(self.config['album_path'].get())
 
-        if 'singleton' in self.config:
-            singleton_config = self.config['singleton']
-            if 'path' in singleton_config:
+        if 'singleton_path' in self.config:
                 self.path_singleton_regex = re.compile(
-                    singleton_config['path'].get())
+                    self.config['singleton_path'].get())
 
     @classmethod
     def do_i_hate_this(cls, task, action_patterns):
