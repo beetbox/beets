@@ -90,7 +90,7 @@ def extract_text_between(html, start_marker, end_marker):
         html, _ = html.split(end_marker, 1)
     except ValueError:
         return u''
-    return _scrape_strip_cruft(html, True)
+    return html
 
 
 def extract_text_in(html, starttag):
@@ -124,8 +124,7 @@ def extract_text_in(html, starttag):
     else:
         print('no closing tag found!')
         return
-    lyrics = ''.join(parts)
-    return _scrape_strip_cruft(lyrics, True)
+    return u''.join(parts)
 
 
 def search_pairs(item):
@@ -221,7 +220,7 @@ def fetch_lyricswiki(artist, title):
     if not html:
         return
 
-    lyrics = extract_text_in(html, "<div class='lyricbox'>")
+    lyrics = extract_text_in(html, u"<div class='lyricbox'>")
     if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
         return lyrics
 
@@ -360,13 +359,14 @@ def _scrape_strip_cruft(html, plain_text_out=False):
         html = COMMENT_RE.sub('', html)
         html = TAG_RE.sub('', html)
 
-    # Strip lines
     html = '\n'.join([x.strip() for x in html.strip().split('\n')])
+    html = re.sub(r'\n{3,}', r'\n\n', html)
     return html
 
 
 def _scrape_merge_paragraphs(html):
-    return re.sub(r'</p>\s*<p(\s*[^>]*)>', '\n', html)
+    html = re.sub(r'</p>\s*<p(\s*[^>]*)>', '\n', html)
+    return re.sub(r'<div .*>\s*</div>', '\n', html)
 
 
 def scrape_lyrics_from_html(html):
@@ -541,4 +541,4 @@ class LyricsPlugin(plugins.BeetsPlugin):
             if lyrics:
                 log.debug(u'got lyrics from backend: {0}'
                           .format(backend.__name__))
-                return lyrics.strip()
+                return _scrape_strip_cruft(lyrics, True)
