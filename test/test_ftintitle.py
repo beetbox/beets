@@ -41,18 +41,27 @@ class FtInTitlePluginTest(unittest.TestCase):
         parts = ftintitle.split_on_feat('Alice defeat Bob')
         self.assertEqual(parts, ('Alice defeat Bob', None))
 
-    def test_contains_feat(self):
+    def test_title_contains_feat(self):
         """Test for detecting "feat." in a given title.
         """
-        self.assertTrue(ftintitle.contains_feat('Lumberjack Song ft. Bob'))
-        self.assertTrue(ftintitle.contains_feat('Lumberjack Song feat. Bob'))
-        self.assertTrue(ftintitle.contains_feat('Lumberjack Song feat Bob'))
-        self.assertTrue(ftintitle.contains_feat('Lumberjack Song featuring Bob'))
-        self.assertFalse(ftintitle.contains_feat('All Things Dull & Ugly'))
-        self.assertFalse(ftintitle.contains_feat('All Things Dull and Ugly'))
-        self.assertFalse(ftintitle.contains_feat('Lumberjack Song With Bob'))
-        self.assertFalse(ftintitle.contains_feat('Alice defeat Bob'))
-        self.assertFalse(ftintitle.contains_feat('LumberjackSongft.Bob'))
+        self.assertTrue(
+            ftintitle.title_contains_feat('Lumberjack Song ft. Bob'))
+        self.assertTrue(
+            ftintitle.title_contains_feat('Lumberjack Song feat. Bob'))
+        self.assertTrue(
+            ftintitle.title_contains_feat('Lumberjack Song feat Bob'))
+        self.assertTrue(
+            ftintitle.title_contains_feat('Lumberjack Song featuring Bob'))
+        self.assertFalse(
+            ftintitle.title_contains_feat('All Things Dull & Ugly'))
+        self.assertFalse(
+            ftintitle.title_contains_feat('All Things Dull and Ugly'))
+        self.assertFalse(
+            ftintitle.title_contains_feat('Lumberjack Song With Bob'))
+        self.assertFalse(
+            ftintitle.title_contains_feat('Alice defeat Bob'))
+        self.assertFalse(
+            ftintitle.title_contains_feat('LumberjackSongft.Bob'))
 
 
 def suite():

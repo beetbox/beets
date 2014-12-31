@@ -41,7 +41,7 @@ def split_on_feat(artist):
         return tuple(parts)
 
 
-def contains_feat(title):
+def title_contains_feat(title):
     """Determine whether the title contains a "featured" marker.
     """
     return bool(re.search(
@@ -64,7 +64,7 @@ def update_metadata(item, feat_part, drop_feat, loglevel=logging.DEBUG):
 
     # Only update the title if it does not already contain a featured
     # artist and if we do not drop featuring information.
-    if not drop_feat and not contains_feat(item.title):
+    if not drop_feat and not title_contains_feat(item.title):
         new_title = u"{0} feat. {1}".format(item.title, feat_part)
         log.log(loglevel, u'title: {0} -> {1}'.format(item.title, new_title))
         item.title = new_title
