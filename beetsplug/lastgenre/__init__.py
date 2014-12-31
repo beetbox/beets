@@ -41,6 +41,10 @@ PYLAST_EXCEPTIONS = (
     pylast.NetworkError,
 )
 
+REPLACE = {
+    u'\u2010': '-',
+}
+
 
 def deduplicate(seq):
     """Remove duplicates from sequence wile preserving order.
@@ -235,10 +239,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Cached entity lookups.
 
-    def _cached_lookup(self, entity, method, *args):
+    def _last_lookup(self, entity, method, *args):
         """Get a genre based on the named entity using the callable `method`
         whose arguments are given in the sequence `args`. The genre lookup
-        is cached based on the entity name and the arguments.
+        is cached based on the entity name and the arguments. Before the
+        lookup, each argument is has some Unicode characters replaced with
+        rough ASCII equivalents in order to return better results from the
+        Last.fm database.
         """
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
@@ -248,32 +255,38 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if key in self._genre_cache:
             return self._genre_cache[key]
         else:
-            genre = self.fetch_genre(method(*args))
+            args_replaced = []
+            for arg in args:
+                for k, v in REPLACE.items():
+                    arg = arg.replace(k, v)
+                args_replaced.append(arg)
+
+            genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
             return genre
 
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
-        return self._cached_lookup(u'album', LASTFM.get_album, obj.albumartist,
-                                   obj.album)
+        return self._last_lookup(u'album', LASTFM.get_album, obj.albumartist,
+                                 obj.album)
 
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album.
         """
-        return self._cached_lookup(u'artist', LASTFM.get_artist,
-                                   obj.albumartist)
+        return self._last_lookup(u'artist', LASTFM.get_artist,
+                                 obj.albumartist)
 
     def fetch_artist_genre(self, item):
         """Returns the track artist genre for this Item.
         """
-        return self._cached_lookup(u'artist', LASTFM.get_artist, item.artist)
+        return self._last_lookup(u'artist', LASTFM.get_artist, item.artist)
 
     def fetch_track_genre(self, obj):
         """Returns the track genre for this Item.
         """
-        return self._cached_lookup(u'track', LASTFM.get_track, obj.artist,
-                                   obj.title)
+        return self._last_lookup(u'track', LASTFM.get_track, obj.artist,
+                                 obj.title)
 
     def _get_genre(self, obj):
         """Get the genre string for an Album or Item object based on

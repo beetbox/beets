@@ -30,6 +30,8 @@ New:
 
 Fixed:
 
+* :doc:`/plugins/lyrics`: Avoid fetching truncated lyrics from the Google
+  backed by merging text blocks separated by empty ``<div>`` before scraping.
 * Fix a new crash with the latest version of Mutagen (1.26).
 * We now print a better error message when the database file is corrupted.
 * :doc:`/plugins/discogs`: Only prompt for authentication when running the
@@ -64,6 +66,8 @@ Fixed:
   the import process. Thanks to :user:`Freso`. :bug:`1176` :bug:`1172`
 * :doc:`/plugins/ftintitle`: Fix weird behavior when the same artist appears
   twice in the artist string. Thanks to Marc Addeo. :bug:`1179` :bug:`1181`
+* :doc:`/plugins/lastgenre`: Match songs more robustly when they contain
+  dashes. Thanks to :user:`djl`. :bug:`1156`
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
