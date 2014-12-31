@@ -300,6 +300,15 @@ class LyricsGooglePluginTest(unittest.TestCase):
         lyrics.LyricsPlugin()
         lyrics.fetch_url = MockFetchUrl()
 
+    def test_mocked_source_ok(self):
+        """Test that lyrics of the mocked page are correctly scraped"""
+        url = self.source['url'] + self.source['path']
+        if os.path.isfile(url_to_filename(url)):
+            res = lyrics.scrape_lyrics_from_html(lyrics.fetch_url(url))
+            self.assertTrue(lyrics.is_lyrics(res), url)
+            self.assertTrue(is_lyrics_content_ok(self.source['title'], res),
+                            url)
+
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
         search engine are correctly scraped."""
