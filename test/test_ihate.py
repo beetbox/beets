@@ -143,7 +143,7 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
     def test_import_nothing(self):
         self.__reset_config()
         config['ihate']['path'] = 'not_there'
-        self.__run([])
+        self.__run(['No files imported from %s' % self.import_dir])
 
     # Global options
     def test_import_global(self):
