@@ -31,7 +31,7 @@ New:
 Fixed:
 
 * :doc:`/plugins/lyrics`: Avoid fetching truncated lyrics from the Google
-backed by merging text blocks separated by empty ``<div>`` before scraping.
+  backed by merging text blocks separated by empty ``<div>`` before scraping.
 * Fix a new crash with the latest version of Mutagen (1.26).
 * We now print a better error message when the database file is corrupted.
 * :doc:`/plugins/discogs`: Only prompt for authentication when running the
