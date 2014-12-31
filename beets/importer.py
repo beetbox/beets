@@ -1299,16 +1299,11 @@ def manipulate_files(session, task):
 def log_files(session, task):
     """A coroutine (pipeline stage) to log each file which will be imported
     """
-    detailed = config['import']['detailed'].get()
     if isinstance(task, SingletonImportTask):
-        if detailed:
-            log.info(
-                'Singleton: {0}'.format(displayable_path(task.item['path'])))
-        else:
-            log.info(displayable_path(task.item['path']))
+        log.info(
+            'Singleton: {0}'.format(displayable_path(task.item['path'])))
     elif task.items:
-        if detailed:
-            log.info('Album {0}'.format(displayable_path(task.paths[0])))
+        log.info('Album {0}'.format(displayable_path(task.paths[0])))
         for item in task.items:
             log.info(displayable_path(item['path']))
 

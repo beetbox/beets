@@ -22,7 +22,6 @@ import:
     flat: no
     group_albums: no
     pretend: false
-    detailed: false
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information"]

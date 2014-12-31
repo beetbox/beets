@@ -132,10 +132,6 @@ Optional command flags:
   option. If set, beets will just print a list of files that it would
   otherwise import.
 
-* To get a more detailed output with the ``--pretend`` option, you can use the
-  ``--detailed`` flag. This way you can see which tracks beets think should
-  belong to an album.
-
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
 
 .. only:: html

@@ -1573,9 +1573,7 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         os.makedirs(path)
         self.empty_path = path
 
-    def __run(self, import_paths, singletons=True, detailed=False):
-        config['import']['detailed'] = detailed
-
+    def __run(self, import_paths, singletons=True):
         self._setup_import_session(singletons=singletons)
         self.importer.paths = import_paths
 
@@ -1589,26 +1587,15 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
 
         return logs
 
-    def test_import_pretend(self):
+    def test_import_singletons_pretend(self):
         logs = self.__run(self.import_paths)
-
-        self.assertEqual(logs, self.import_files)
-
-    def test_import_pretend_empty(self):
-        logs = self.__run([self.empty_path])
-
-        self.assertEqual(logs, ['No files imported from {0}'
-                         .format(displayable_path(self.empty_path))])
-
-    def test_import_singletons_pretend_detailed(self):
-        logs = self.__run(self.import_paths, detailed=True)
 
         self.assertEqual(logs, [
             'Singleton: %s' % self.import_files[0],
             'Singleton: %s' % self.import_paths[1]])
 
-    def test_import_album_pretend_detailed(self):
-        logs = self.__run(self.import_paths, singletons=False, detailed=True)
+    def test_import_album_pretend(self):
+        logs = self.__run(self.import_paths, singletons=False)
 
         self.assertEqual(logs, [
             'Album %s' % displayable_path(self.import_paths[0]),
@@ -1616,8 +1603,8 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
             'Album %s' % displayable_path(self.import_paths[1]),
             self.import_paths[1]])
 
-    def test_import_pretend_empty_detailed(self):
-        logs = self.__run([self.empty_path], detailed=True)
+    def test_import_pretend_empty(self):
+        logs = self.__run([self.empty_path])
 
         self.assertEqual(logs, ['No files imported from {0}'
                          .format(displayable_path(self.empty_path))])
