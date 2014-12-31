@@ -56,7 +56,8 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
         for i in range(count):
             metadata['track'] = i + 1
             metadata['title'] = 'Tag Title Album %d' % (i + 1)
-            dest_path = os.path.join(self.album_path, '%02d - track.mp3' % (i + 1))
+            dest_path = os.path.join(self.album_path,
+                                     '%02d - track.mp3' % (i + 1))
             self.__copy_file(dest_path, metadata)
             self.album_paths.append(dest_path)
 
@@ -65,7 +66,8 @@ class IHatePluginTest(unittest.TestCase, ImportHelper):
         for i in range(count):
             metadata['track'] = i + 10
             metadata['title'] = 'Tag Title Artist %d' % (i + 1)
-            dest_path = os.path.join(self.artist_path, 'track_%d.mp3' % (i + 1))
+            dest_path = os.path.join(self.artist_path,
+                                     'track_%d.mp3' % (i + 1))
             self.__copy_file(dest_path, metadata)
             self.artist_paths.append(dest_path)
 
