@@ -975,15 +975,18 @@ class ImportTaskFactory(object):
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
-                    task = self.singleton(path)
-                    if task:
-                        yield task
-                yield self.sentinel(dirs)
+                    tasks = self.singleton(path)
+                    if tasks:
+                        for task in tasks:
+                            yield task
+                for task in self.sentinel(dirs):
+                    yield task
 
             else:
-                task = self.album(paths, dirs)
-                if task:
-                    yield task
+                tasks = self.album(paths, dirs)
+                if tasks:
+                    for task in tasks:
+                        yield task
 
     def paths(self):
         """Walk `self.toppath` and yield pairs of directory lists and
@@ -1050,10 +1053,11 @@ class ImportTaskFactory(object):
         return self.__handle_plugins(ArchiveImportTask(path))
 
     def __handle_plugins(self, task):
-        plugins.send('import_task_created', session=self.session,
-                     task=task)
-        # TODO: Use value(s) returned by plugins.
-        return task
+        tasks = plugins.send('import_task_created', session=self.session,
+                             task=task)
+        if not tasks:
+            tasks = [task]
+        return tasks
 
     def read_item(self, path):
         """Return an item created from the path.
@@ -1102,7 +1106,7 @@ def read_tasks(session):
 
             log.debug(u'extracting archive {0}'
                       .format(displayable_path(toppath)))
-            archive_task = task_factory.archive(toppath)
+            archive_task = task_factory.archive(toppath)[0]
             try:
                 archive_task.extract()
             except Exception as exc:
@@ -1121,7 +1125,8 @@ def read_tasks(session):
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
         if archive_task is None:
-            yield task_factory.sentinel()
+            for task in task_factory.sentinel():
+                yield task
         else:
             yield archive_task
 
@@ -1143,7 +1148,10 @@ def query_tasks(session):
     if session.config['singletons']:
         # Search for items.
         for item in session.lib.items(session.query):
-            yield task_factory.singleton(None, item)
+            tasks = task_factory.singleton(None, item)
+            if tasks:
+                for task in tasks:
+                    yield task
 
     else:
         # Search for albums.
@@ -1158,7 +1166,10 @@ def query_tasks(session):
                 item.id = None
                 item.album_id = None
 
-            yield task_factory.album(None, [album.item_dir()], items)
+            tasks = task_factory.album(None, [album.item_dir()], items)
+            if tasks:
+                for task in tasks:
+                    yield task
 
 
 @pipeline.mutator_stage
@@ -1205,8 +1216,12 @@ def user_query(session, task):
         def emitter(task):
             task_factory = ImportTaskFactory(task.toppath, session)
             for item in task.items:
-                yield task_factory.singleton(None, item)
-            yield task_factory.sentinel(task.paths)
+                new_tasks = task_factory.singleton(None, item)
+                if new_tasks:
+                    for t in new_tasks:
+                        yield t
+            for t in task_factory.sentinel(task.paths):
+                yield t
 
         ipl = pipeline.Pipeline([
             emitter(task),
@@ -1342,8 +1357,12 @@ def group_albums(session):
         tasks = []
         task_factory = ImportTaskFactory(task.toppath, session)
         for _, items in itertools.groupby(task.items, group):
-            tasks.append(task_factory.album(None, None, list(items)))
-        tasks.append(task_factory.sentinel(task.paths))
+            new_tasks = task_factory.album(None, None, list(items))
+            if new_tasks:
+                for t in new_tasks:
+                    tasks.append(t)
+        for t in task_factory.sentinel(task.paths):
+            tasks.append(t)
 
         task = pipeline.multiple(tasks)
 
