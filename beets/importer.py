@@ -978,7 +978,8 @@ class ImportTaskFactory(object):
                     tasks = self.singleton(path)
                     if tasks:
                         for task in tasks:
-                            yield task
+                            if task:
+                                yield task
                 for task in self.sentinel(dirs):
                     yield task
 
@@ -986,7 +987,8 @@ class ImportTaskFactory(object):
                 tasks = self.album(paths, dirs)
                 if tasks:
                     for task in tasks:
-                        yield task
+                        if task:
+                            yield task
 
     def paths(self):
         """Walk `self.toppath` and yield pairs of directory lists and
@@ -1151,7 +1153,8 @@ def query_tasks(session):
             tasks = task_factory.singleton(None, item)
             if tasks:
                 for task in tasks:
-                    yield task
+                    if task:
+                        yield task
 
     else:
         # Search for albums.
@@ -1169,7 +1172,8 @@ def query_tasks(session):
             tasks = task_factory.album(None, [album.item_dir()], items)
             if tasks:
                 for task in tasks:
-                    yield task
+                    if task:
+                        yield task
 
 
 @pipeline.mutator_stage
@@ -1219,7 +1223,8 @@ def user_query(session, task):
                 new_tasks = task_factory.singleton(None, item)
                 if new_tasks:
                     for t in new_tasks:
-                        yield t
+                        if t:
+                            yield t
             for t in task_factory.sentinel(task.paths):
                 yield t
 
@@ -1360,7 +1365,8 @@ def group_albums(session):
             new_tasks = task_factory.album(None, None, list(items))
             if new_tasks:
                 for t in new_tasks:
-                    tasks.append(t)
+                    if task:
+                        tasks.append(t)
         for t in task_factory.sentinel(task.paths):
             tasks.append(t)
 
