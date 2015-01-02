@@ -1000,47 +1000,60 @@ class ImportTaskFactory(object):
             for dirs, paths in albums_in_dir(self.toppath):
                 yield (dirs, paths)
 
-    def singleton(self, path):
-        if self.session.already_imported(self.toppath, [path]):
-            log.debug(u'Skipping previously-imported path: {0}'
-                      .format(displayable_path(path)))
-            self.skipped += 1
-            return None
+    def singleton(self, path, item=None):
+        if not item:
+            if self.session.already_imported(self.toppath, [path]):
+                log.debug(u'Skipping previously-imported path: {0}'
+                          .format(displayable_path(path)))
+                self.skipped += 1
+                return None
 
-        item = self.read_item(path)
+            item = self.read_item(path)
+
         if item:
-            return SingletonImportTask(self.toppath, item)
+            return self.__handle_plugins(SingletonImportTask(self.toppath,
+                                                             item))
         else:
             return None
 
-    def album(self, paths, dirs=None):
+    def album(self, paths, dirs=None, items=None):
         """Return `ImportTask` with all media files from paths.
 
         `dirs` is a list of parent directories used to record already
         imported albums.
         """
-        if not paths:
-            return None
+        if not items:
+            if not paths:
+                return None
 
-        if dirs is None:
-            dirs = list(set(os.path.dirname(p) for p in paths))
+            if dirs is None:
+                dirs = list(set(os.path.dirname(p) for p in paths))
 
-        if self.session.already_imported(self.toppath, dirs):
-            log.debug(u'Skipping previously-imported path: {0}'
-                      .format(displayable_path(dirs)))
-            self.skipped += 1
-            return None
+            if self.session.already_imported(self.toppath, dirs):
+                log.debug(u'Skipping previously-imported path: {0}'
+                          .format(displayable_path(dirs)))
+                self.skipped += 1
+                return None
 
-        items = map(self.read_item, paths)
-        items = [item for item in items if item]
+            items = map(self.read_item, paths)
+            items = [item for item in items if item]
 
         if items:
-            return ImportTask(self.toppath, dirs, items)
+            return self.__handle_plugins(ImportTask(self.toppath, dirs, items))
         else:
             return None
 
     def sentinel(self, paths=None):
-        return SentinelImportTask(self.toppath, paths)
+        return self.__handle_plugins(SentinelImportTask(self.toppath, paths))
+
+    def archive(self, path):
+        return self.__handle_plugins(ArchiveImportTask(path))
+
+    def __handle_plugins(self, task):
+        plugins.send('import_task_created', session=self.session,
+                     task=task)
+        # TODO: Use value(s) returned by plugins.
+        return task
 
     def read_item(self, path):
         """Return an item created from the path.
@@ -1077,6 +1090,7 @@ def read_tasks(session):
         # Determine if we want to resume import of the toppath
         session.ask_resume(toppath)
         user_toppath = toppath
+        task_factory = ImportTaskFactory(toppath, session)
 
         # Extract archives.
         archive_task = None
@@ -1088,9 +1102,7 @@ def read_tasks(session):
 
             log.debug(u'extracting archive {0}'
                       .format(displayable_path(toppath)))
-            archive_task = ArchiveImportTask(toppath)
-            plugins.send('import_task_created', session=session,
-                         task=archive_task)
+            archive_task = task_factory.archive(toppath)
             try:
                 archive_task.extract()
             except Exception as exc:
@@ -1099,11 +1111,10 @@ def read_tasks(session):
 
             # Continue reading albums from the extracted directory.
             toppath = archive_task.toppath
+            task_factory.toppath = toppath
 
-        task_factory = ImportTaskFactory(toppath, session)
         imported = False
         for t in task_factory.tasks():
-            plugins.send('import_task_created', session=session, task=t)
             imported |= not t.skip
             yield t
 
@@ -1128,12 +1139,11 @@ def query_tasks(session):
     Instead of finding files from the filesystem, a query is used to
     match items from the library.
     """
+    task_factory = ImportTaskFactory(None)
     if session.config['singletons']:
         # Search for items.
         for item in session.lib.items(session.query):
-            task = SingletonImportTask(None, item)
-            plugins.send('import_task_created', session=session, task=task)
-            yield task
+            yield task_factory.singleton(None, item)
 
     else:
         # Search for albums.
@@ -1148,9 +1158,7 @@ def query_tasks(session):
                 item.id = None
                 item.album_id = None
 
-            task = ImportTask(None, [album.item_dir()], items)
-            plugins.send('import_task_created', session=session, task=task)
-            yield task
+            yield task_factory.album(None, [album.item_dir()], items)
 
 
 @pipeline.mutator_stage
@@ -1195,12 +1203,10 @@ def user_query(session, task):
     if task.choice_flag is action.TRACKS:
         # Set up a little pipeline for dealing with the singletons.
         def emitter(task):
+            task_factory = ImportTaskFactory(task.toppath, session)
             for item in task.items:
-                new_task = SingletonImportTask(task.toppath, item)
-                plugins.send('import_task_created', session=session,
-                             task=new_task)
-                yield new_task
-            yield SentinelImportTask(task.toppath, task.paths)
+                yield task_factory.singleton(None, item)
+            yield task_factory.sentinel(task.paths)
 
         ipl = pipeline.Pipeline([
             emitter(task),
@@ -1334,11 +1340,10 @@ def group_albums(session):
         if task.skip:
             continue
         tasks = []
+        task_factory = ImportTaskFactory(task.toppath, session)
         for _, items in itertools.groupby(task.items, group):
-            new_task = ImportTask(items=list(items))
-            plugins.send('import_task_created', session=session, task=new_task)
-            tasks.append(new_task)
-        tasks.append(SentinelImportTask(task.toppath, task.paths))
+            tasks.append(task_factory.album(None, None, list(items)))
+        tasks.append(task_factory.sentinel(task.paths))
 
         task = pipeline.multiple(tasks)
 
