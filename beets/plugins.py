@@ -204,7 +204,7 @@ def load_plugins(names=()):
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
-                    log.warn(u'** plugin {0} not found'.format(name))
+                    log.warn(u'** plugin {0} not found', name)
                 else:
                     raise
             else:
@@ -214,7 +214,7 @@ def load_plugins(names=()):
                         _classes.add(obj)
 
         except:
-            log.warn(u'** error loading plugin {0}'.format(name))
+            log.warn(u'** error loading plugin {0}', name)
             log.warn(traceback.format_exc())
 
 
@@ -398,7 +398,7 @@ def send(event, **arguments):
 
     Returns a list of return values from the handlers.
     """
-    log.debug(u'Sending event: {0}'.format(event))
+    log.debug(u'Sending event: {0}', event)
     for handler in event_handlers()[event]:
         # Don't break legacy plugins if we want to pass more arguments
         argspec = inspect.getargspec(handler).args

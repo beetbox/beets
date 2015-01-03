@@ -837,9 +837,9 @@ class Album(LibModel):
             return
 
         new_art = util.unique_path(new_art)
-        log.debug(u'moving album art {0} to {1}'
-                  .format(util.displayable_path(old_art),
-                          util.displayable_path(new_art)))
+        log.debug(u'moving album art {0} to {1}',
+                  util.displayable_path(old_art),
+                  util.displayable_path(new_art))
         if copy:
             util.copy(old_art, new_art)
         elif link:
