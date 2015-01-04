@@ -34,5 +34,9 @@ class LoggingTest(TestCase):
         self.assertTrue(stream.getvalue(), "foo oof baz")
 
 
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(defaultTest='suite')
