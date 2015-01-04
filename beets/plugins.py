@@ -405,9 +405,8 @@ def send(event, **arguments):
         argspec = inspect.getargspec(handler).args
         args = dict((k, v) for k, v in arguments.items() if k in argspec)
         result = handler(**args)
-        if isinstance(result, list):
-            return_values += result
-        else:
+        # Only append non None return values
+        if result:
             return_values.append(result)
 
     return return_values

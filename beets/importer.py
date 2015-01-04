@@ -1059,6 +1059,16 @@ class ImportTaskFactory(object):
                              task=task)
         if not tasks:
             tasks = [task]
+        else:
+            # The plugins gave us a list of lists of task. Flatten it.
+            flat_tasks = []
+            for inner in tasks:
+                if isinstance(inner, list):
+                    flat_tasks += inner
+                else:
+                    flat_tasks.append(inner)
+            tasks = flat_tasks
+
         return tasks
 
     def read_item(self, path):
