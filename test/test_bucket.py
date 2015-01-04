@@ -51,7 +51,7 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         year."""
         self._setup_config(bucket_year=['1950', '1970'])
         self.assertEqual(self.plugin._tmpl_bucket('2014'), '1970')
-        self.assertEqual(self.plugin._tmpl_bucket('2015'), '2015')
+        self.assertEqual(self.plugin._tmpl_bucket('2025'), '2025')
 
     def test_year_two_years(self):
         """Buckets can be named with the 'from-to' syntax."""
