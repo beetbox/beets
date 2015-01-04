@@ -15,7 +15,7 @@
 """Fetches album art.
 """
 from contextlib import closing
-import logging
+from beets import logging
 import os
 import re
 from tempfile import NamedTemporaryFile

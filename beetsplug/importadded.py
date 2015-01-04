@@ -6,7 +6,7 @@ Reimported albums and items are skipped.
 
 from __future__ import unicode_literals, absolute_import, print_function
 
-import logging
+from beets import logging
 import os
 
 from beets import config

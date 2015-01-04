@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import os
 import re
-import logging
+from beets import logging
 import pickle
 import itertools
 from collections import defaultdict

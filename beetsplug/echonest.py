@@ -15,7 +15,7 @@
 """Fetch a variety of acoustic metrics from The Echo Nest.
 """
 import time
-import logging
+from beets import logging
 import socket
 import os
 import tempfile

@@ -14,7 +14,7 @@
 
 """Searches for albums in the MusicBrainz database.
 """
-import logging
+from beets import logging
 import musicbrainzngs
 import re
 import traceback

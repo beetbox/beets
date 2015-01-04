@@ -23,7 +23,7 @@ import optparse
 import textwrap
 import sys
 from difflib import SequenceMatcher
-import logging
+from beets import logging
 import sqlite3
 import errno
 import re

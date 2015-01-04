@@ -35,7 +35,7 @@ import os
 import os.path
 import shutil
 import subprocess
-import logging
+from beets import logging
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
 from StringIO import StringIO

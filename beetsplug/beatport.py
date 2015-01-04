@@ -14,7 +14,7 @@
 
 """Adds Beatport release and track search support to the autotagger
 """
-import logging
+from beets import logging
 import re
 from datetime import datetime, timedelta
 

@@ -15,7 +15,7 @@
 """Determine BPM by pressing a key to the rhythm."""
 
 import time
-import logging
+from beets import logging
 
 from beets import ui
 from beets.plugins import BeetsPlugin

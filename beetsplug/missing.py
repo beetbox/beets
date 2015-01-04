@@ -14,7 +14,7 @@
 
 """List missing tracks.
 """
-import logging
+from beets import logging
 
 from beets.autotag import hooks
 from beets.library import Item

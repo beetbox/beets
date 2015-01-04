@@ -14,7 +14,7 @@
 
 """Warns you about things you hate (or even blocks import)."""
 
-import logging
+from beets import logging
 from beets.plugins import BeetsPlugin
 from beets.importer import action
 from beets.library import parse_query_string

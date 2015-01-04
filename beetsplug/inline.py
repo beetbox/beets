@@ -14,7 +14,7 @@
 
 """Allows inline path template customization code in the config file.
 """
-import logging
+from beets import logging
 import traceback
 import itertools
 

@@ -14,7 +14,7 @@
 
 """Allows beets to embed album art into file metadata."""
 import os.path
-import logging
+from beets import logging
 import imghdr
 import subprocess
 import platform

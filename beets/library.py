@@ -16,7 +16,7 @@
 """
 import os
 import sys
-import logging
+from beets import logging
 import shlex
 import unicodedata
 import time

@@ -14,7 +14,7 @@
 
 """Update library's tags using MusicBrainz.
 """
-import logging
+from beets import logging
 
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util

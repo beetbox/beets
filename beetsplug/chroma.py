@@ -22,7 +22,7 @@ from beets import config
 from beets.util import confit
 from beets.autotag import hooks
 import acoustid
-import logging
+from beets import logging
 from collections import defaultdict
 
 API_KEY = '1vOwZtEn'

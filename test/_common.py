@@ -16,7 +16,7 @@
 import time
 import sys
 import os
-import logging
+from beets import logging
 import tempfile
 import shutil
 from contextlib import contextmanager

@@ -18,7 +18,7 @@ releases and tracks.
 from __future__ import division
 
 import datetime
-import logging
+from beets import logging
 import re
 from munkres import Munkres
 

@@ -19,7 +19,7 @@ one wants to manually add music to a player by its path.
 import datetime
 import os
 import re
-import logging
+from beets import logging
 
 from beets.plugins import BeetsPlugin
 from beets.util import normpath, syspath, bytestring_path

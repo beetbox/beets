@@ -21,7 +21,7 @@ from beets import ui
 from beets import util
 from os.path import relpath
 import platform
-import logging
+from beets import logging
 import shlex
 from tempfile import NamedTemporaryFile
 

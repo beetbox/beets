@@ -17,7 +17,7 @@
 from __future__ import print_function
 
 import re
-import logging
+from beets import logging
 import requests
 import json
 import unicodedata

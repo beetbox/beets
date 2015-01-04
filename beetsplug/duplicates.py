@@ -15,7 +15,7 @@
 """List duplicate tracks or albums.
 """
 import shlex
-import logging
+from beets import logging
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, vararg_callback, Subcommand, UserError

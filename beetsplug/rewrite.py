@@ -16,7 +16,7 @@
 formats.
 """
 import re
-import logging
+from beets import logging
 from collections import defaultdict
 
 from beets.plugins import BeetsPlugin

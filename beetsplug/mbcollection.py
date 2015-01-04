@@ -21,7 +21,7 @@ from beets import config
 import musicbrainzngs
 
 import re
-import logging
+from beets import logging
 
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'

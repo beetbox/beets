@@ -14,7 +14,7 @@
 
 """Facilities for automatically determining files' correct metadata.
 """
-import logging
+from beets import logging
 
 from beets import config
 

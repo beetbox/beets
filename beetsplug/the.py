@@ -15,7 +15,7 @@
 """Moves patterns in path formats (suitable for moving articles)."""
 
 import re
-import logging
+from beets import logging
 from beets.plugins import BeetsPlugin
 
 __author__ = 'baobab@heresiarch.info'

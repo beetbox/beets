@@ -18,7 +18,7 @@ from beets import plugins
 from beets import ui
 from beets.util import displayable_path
 from beets import config
-import logging
+from beets import logging
 import re
 
 log = logging.getLogger('beets')

@@ -20,7 +20,7 @@ import subprocess
 import os
 import re
 from tempfile import NamedTemporaryFile
-import logging
+from beets import logging
 from beets import util
 
 # Resizing methods

@@ -16,7 +16,7 @@
 """
 
 import os
-import logging
+from beets import logging
 
 from beets.plugins import BeetsPlugin
 from beets import ui

@@ -21,7 +21,7 @@ from __future__ import print_function
 import re
 from string import Template
 import traceback
-import logging
+from beets import logging
 import random
 import time
 

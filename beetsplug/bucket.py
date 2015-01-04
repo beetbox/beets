@@ -16,7 +16,7 @@
 """
 
 from datetime import datetime
-import logging
+from beets import logging
 import re
 import string
 from itertools import tee, izip

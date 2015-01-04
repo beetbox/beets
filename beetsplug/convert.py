@@ -14,7 +14,7 @@
 
 """Converts tracks or albums to external directory
 """
-import logging
+from beets import logging
 import os
 import threading
 import subprocess

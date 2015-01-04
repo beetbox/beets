@@ -14,7 +14,7 @@
 
 """Support for beets plugins."""
 
-import logging
+from beets import logging
 import traceback
 import inspect
 import re

@@ -48,7 +48,7 @@ import math
 import struct
 import imghdr
 import os
-import logging
+from beets import logging
 import traceback
 import enum
 

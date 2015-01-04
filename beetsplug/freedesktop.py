@@ -20,7 +20,7 @@ from beets.ui import Subcommand
 from beets.ui import decargs
 
 import os
-import logging
+from beets import logging
 
 log = logging.getLogger('beets.freedesktop')
 

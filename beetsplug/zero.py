@@ -15,7 +15,7 @@
 """ Clears tag fields in media files."""
 
 import re
-import logging
+from beets import logging
 from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action

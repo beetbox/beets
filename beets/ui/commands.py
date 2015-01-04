@@ -17,7 +17,7 @@ interface.
 """
 from __future__ import print_function
 
-import logging
+from beets import logging
 import os
 import time
 import codecs

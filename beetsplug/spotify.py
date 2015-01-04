@@ -2,7 +2,7 @@ from __future__ import print_function
 import re
 import webbrowser
 import requests
-import logging
+from beets import logging
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs
 from beets import ui

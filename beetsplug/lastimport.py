@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-import logging
+from beets import logging
 import requests
 from beets import ui
 from beets import dbcore

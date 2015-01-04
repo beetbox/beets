@@ -20,7 +20,7 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-import logging
+from beets import logging
 import pylast
 import os
 import yaml

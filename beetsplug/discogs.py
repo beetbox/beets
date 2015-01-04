@@ -22,7 +22,7 @@ from discogs_client import Release, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
 import beets
-import logging
+from beets import logging
 import re
 import time
 import json
