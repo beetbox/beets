@@ -62,7 +62,7 @@ def _checksum(item, prog):
             checksum = command_output(args)
             setattr(item, key, checksum)
             item.store()
-            log.debug(u'{)}: computed checksum for {1} using {2}',
+            log.debug(u'{0}: computed checksum for {1} using {2}',
                       PLUGIN, item.title, key)
         except subprocess.CalledProcessError as e:
             log.debug(u'{0}: failed to checksum {1}: {2}',
