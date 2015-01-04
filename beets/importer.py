@@ -976,19 +976,15 @@ class ImportTaskFactory(object):
             if self.session.config['singletons']:
                 for path in paths:
                     tasks = self.singleton(path)
-                    if tasks:
-                        for task in tasks:
-                            if task:
-                                yield task
+                    for task in tasks:
+                        yield task
                 for task in self.sentinel(dirs):
                     yield task
 
             else:
                 tasks = self.album(paths, dirs)
-                if tasks:
-                    for task in tasks:
-                        if task:
-                            yield task
+                for task in tasks:
+                    yield task
 
     def paths(self):
         """Walk `self.toppath` and yield pairs of directory lists and
@@ -1011,7 +1007,7 @@ class ImportTaskFactory(object):
                 log.debug(u'Skipping previously-imported path: {0}'
                           .format(displayable_path(path)))
                 self.skipped += 1
-                return None
+                return []
 
             item = self.read_item(path)
 
@@ -1019,7 +1015,7 @@ class ImportTaskFactory(object):
             return self.__handle_plugins(SingletonImportTask(self.toppath,
                                                              item))
         else:
-            return None
+            return []
 
     def album(self, paths, dirs=None, items=None):
         """Return `ImportTask` with all media files from paths.
@@ -1029,7 +1025,7 @@ class ImportTaskFactory(object):
         """
         if not items:
             if not paths:
-                return None
+                return []
 
             if dirs is None:
                 dirs = list(set(os.path.dirname(p) for p in paths))
@@ -1038,7 +1034,7 @@ class ImportTaskFactory(object):
                 log.debug(u'Skipping previously-imported path: {0}'
                           .format(displayable_path(dirs)))
                 self.skipped += 1
-                return None
+                return []
 
             items = map(self.read_item, paths)
             items = [item for item in items if item]
@@ -1046,7 +1042,7 @@ class ImportTaskFactory(object):
         if items:
             return self.__handle_plugins(ImportTask(self.toppath, dirs, items))
         else:
-            return None
+            return []
 
     def sentinel(self, paths=None):
         return self.__handle_plugins(SentinelImportTask(self.toppath, paths))
@@ -1055,6 +1051,17 @@ class ImportTaskFactory(object):
         return self.__handle_plugins(ArchiveImportTask(path))
 
     def __handle_plugins(self, task):
+        """
+        Sends the 'import_task_created' event to all plugins. Plugins may
+        return a list of tasks to use instead of the given task. If no plugin
+        is configured for the event or no plugin returns any value, a list
+        containing the original task as the only element is returned.
+
+        :param task: The which is intended to create.
+        :return: A flat list of tasks to create instead of the original task.
+                 The list contains the tasks returned by all plugins. There
+                 will by no None value present at the list.
+        """
         tasks = plugins.send('import_task_created', session=self.session,
                              task=task)
         if not tasks:
@@ -1067,7 +1074,7 @@ class ImportTaskFactory(object):
                     flat_tasks += inner
                 else:
                     flat_tasks.append(inner)
-            tasks = flat_tasks
+            tasks = [t for t in flat_tasks if t]
 
         return tasks
 
@@ -1161,10 +1168,8 @@ def query_tasks(session):
         # Search for items.
         for item in session.lib.items(session.query):
             tasks = task_factory.singleton(None, item)
-            if tasks:
-                for task in tasks:
-                    if task:
-                        yield task
+            for task in tasks:
+                yield task
 
     else:
         # Search for albums.
@@ -1180,10 +1185,8 @@ def query_tasks(session):
                 item.album_id = None
 
             tasks = task_factory.album(None, [album.item_dir()], items)
-            if tasks:
-                for task in tasks:
-                    if task:
-                        yield task
+            for task in tasks:
+                yield task
 
 
 @pipeline.mutator_stage
@@ -1231,10 +1234,8 @@ def user_query(session, task):
             task_factory = ImportTaskFactory(task.toppath, session)
             for item in task.items:
                 new_tasks = task_factory.singleton(None, item)
-                if new_tasks:
-                    for t in new_tasks:
-                        if t:
-                            yield t
+                for t in new_tasks:
+                    yield t
             for t in task_factory.sentinel(task.paths):
                 yield t
 
@@ -1373,10 +1374,8 @@ def group_albums(session):
         task_factory = ImportTaskFactory(task.toppath, session)
         for _, items in itertools.groupby(task.items, group):
             new_tasks = task_factory.album(None, None, list(items))
-            if new_tasks:
-                for t in new_tasks:
-                    if task:
-                        tasks.append(t)
+            for t in new_tasks:
+                tasks.append(t)
         for t in task_factory.sentinel(task.paths):
             tasks.append(t)
 
