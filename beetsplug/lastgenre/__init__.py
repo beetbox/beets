@@ -71,7 +71,7 @@ def _tags_for(obj, min_weight=None):
         else:
             res = obj.get_top_tags()
     except PYLAST_EXCEPTIONS as exc:
-        log.debug(u'last.fm error: {0}'.format(exc))
+        log.debug(u'last.fm error: {0}', exc)
         return []
 
     # Filter by weight (optionally).
@@ -371,9 +371,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             for album in lib.albums(ui.decargs(args)):
                 album.genre, src = self._get_genre(album)
-                log.info(u'genre for album {0} - {1} ({2}): {3}'.format(
-                    album.albumartist, album.album, src, album.genre
-                ))
+                log.info(u'genre for album {0} - {1} ({2}): {3}',
+                         album.albumartist, album.album, src, album.genre)
                 album.store()
 
                 for item in album.items():
@@ -382,9 +381,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
                         item.store()
-                        log.info(u'genre for track {0} - {1} ({2}): {3}'
-                                 .format(item.artist, item.title, src,
-                                         item.genre))
+                        log.info(u'genre for track {0} - {1} ({2}): {3}',
+                                 item.artist, item.title, src, item.genre)
 
                     if write:
                         item.try_write()
@@ -397,20 +395,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if task.is_album:
             album = task.album
             album.genre, src = self._get_genre(album)
-            log.debug(u'added last.fm album genre ({0}): {1}'.format(
-                src, album.genre))
+            log.debug(u'added last.fm album genre ({0}): {1}',
+                      src, album.genre)
             album.store()
 
             if 'track' in self.sources:
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
-                    log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                        src, item.genre))
+                    log.debug(u'added last.fm item genre ({0}): {1}',
+                              src, item.genre)
                     item.store()
 
         else:
             item = task.item
             item.genre, src = self._get_genre(item)
-            log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                src, item.genre))
+            log.debug(u'added last.fm item genre ({0}): {1}',
+                      src, item.genre)
             item.store()

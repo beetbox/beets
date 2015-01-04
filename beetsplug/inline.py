@@ -64,9 +64,8 @@ def compile_inline(python_code, album):
         try:
             func = _compile_func(python_code)
         except SyntaxError:
-            log.error(u'syntax error in inline field definition:\n{0}'.format(
-                traceback.format_exc()
-            ))
+            log.error(u'syntax error in inline field definition:\n{0}',
+                      traceback.format_exc())
             return
         else:
             is_expr = False
@@ -113,14 +112,14 @@ class InlinePlugin(BeetsPlugin):
         # Item fields.
         for key, view in itertools.chain(config['item_fields'].items(),
                                          config['pathfields'].items()):
-            log.debug(u'inline: adding item field {0}'.format(key))
+            log.debug(u'inline: adding item field {0}', key)
             func = compile_inline(view.get(unicode), False)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config['album_fields'].items():
-            log.debug(u'inline: adding album field {0}'.format(key))
+            log.debug(u'inline: adding album field {0}', key)
             func = compile_inline(view.get(unicode), True)
             if func is not None:
                 self.album_template_fields[key] = func

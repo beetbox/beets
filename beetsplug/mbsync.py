@@ -31,14 +31,13 @@ def mbsync_singletons(lib, query, move, pretend, write):
     """
     for item in lib.items(query + ['singleton:true']):
         if not item.mb_trackid:
-            log.info(u'Skipping singleton {0}: has no mb_trackid'
-                     .format(item.title))
+            log.info(u'Skipping singleton {0}: has no mb_trackid', item.title)
             continue
 
         # Get the MusicBrainz recording info.
         track_info = hooks.track_for_mbid(item.mb_trackid)
         if not track_info:
-            log.info(u'Recording ID not found: {0}'.format(item.mb_trackid))
+            log.info(u'Recording ID not found: {0}', item.mb_trackid)
             continue
 
         # Apply.
@@ -54,7 +53,7 @@ def mbsync_albums(lib, query, move, pretend, write):
     # Process matching albums.
     for a in lib.albums(query):
         if not a.mb_albumid:
-            log.info(u'Skipping album {0}: has no mb_albumid'.format(a.id))
+            log.info(u'Skipping album {0}: has no mb_albumid', a.id)
             continue
 
         items = list(a.items())
@@ -62,7 +61,7 @@ def mbsync_albums(lib, query, move, pretend, write):
         # Get the MusicBrainz album information.
         album_info = hooks.album_for_mbid(a.mb_albumid)
         if not album_info:
-            log.info(u'Release ID not found: {0}'.format(a.mb_albumid))
+            log.info(u'Release ID not found: {0}', a.mb_albumid)
             continue
 
         # Map recording MBIDs to their information. Recordings can appear
@@ -109,7 +108,7 @@ def mbsync_albums(lib, query, move, pretend, write):
 
                 # Move album art (and any inconsistent items).
                 if move and lib.directory in util.ancestry(items[0].path):
-                    log.debug(u'moving album {0}'.format(a.id))
+                    log.debug(u'moving album {0}', a.id)
                     a.move()
 
 

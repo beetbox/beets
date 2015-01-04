@@ -50,7 +50,7 @@ def _fetch_image(url):
     actually be an image. If so, returns a path to the downloaded image.
     Otherwise, returns None.
     """
-    log.debug(u'fetchart: downloading art: {0}'.format(url))
+    log.debug(u'fetchart: downloading art: {0}', url)
     try:
         with closing(requests_session.get(url, stream=True)) as resp:
             if 'Content-Type' not in resp.headers \
@@ -63,9 +63,8 @@ def _fetch_image(url):
                     as fh:
                 for chunk in resp.iter_content():
                     fh.write(chunk)
-            log.debug(u'fetchart: downloaded art to: {0}'.format(
-                util.displayable_path(fh.name)
-            ))
+            log.debug(u'fetchart: downloaded art to: {0}',
+                      util.displayable_path(fh.name))
             return fh.name
     except (IOError, requests.RequestException):
         log.debug(u'fetchart: error fetching art')
@@ -117,7 +116,7 @@ def aao_art(album):
     # Get the page from albumart.org.
     try:
         resp = requests_session.get(AAO_URL, params={'asin': album.asin})
-        log.debug(u'fetchart: scraped art URL: {0}'.format(resp.url))
+        log.debug(u'fetchart: scraped art URL: {0}', resp.url)
     except requests.RequestException:
         log.debug(u'fetchart: error scraping art page')
         return
@@ -172,7 +171,7 @@ def itunes_art(album):
         try:
             itunes_album = itunes.search_album(search_string)[0]
         except Exception as exc:
-            log.debug('fetchart: iTunes search failed: {0}'.format(exc))
+            log.debug('fetchart: iTunes search failed: {0}', exc)
             return
 
         if itunes_album.get_artwork()['100']:
@@ -216,16 +215,14 @@ def art_in_path(path, cover_names, cautious):
     cover_pat = r"(\b|_)({0})(\b|_)".format('|'.join(cover_names))
     for fn in images:
         if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
-            log.debug(u'fetchart: using well-named art file {0}'.format(
-                util.displayable_path(fn)
-            ))
+            log.debug(u'fetchart: using well-named art file {0}',
+                      util.displayable_path(fn))
             return os.path.join(path, fn)
 
     # Fall back to any image in the folder.
     if images and not cautious:
-        log.debug(u'fetchart: using fallback art file {0}'.format(
-            util.displayable_path(images[0])
-        ))
+        log.debug(u'fetchart: using fallback art file {0}',
+                  util.displayable_path(images[0]))
         return os.path.join(path, images[0])
 
 
@@ -315,8 +312,7 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
             else:
                 message = ui.colorize('red', 'no art found')
 
-        log.info(u'{0} - {1}: {2}'.format(album.albumartist, album.album,
-                                          message))
+        log.info(u'{0} - {1}: {2}', album.albumartist, album.album, message)
 
 
 class FetchArtPlugin(plugins.BeetsPlugin):

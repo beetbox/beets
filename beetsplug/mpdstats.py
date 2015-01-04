@@ -71,7 +71,7 @@ class MPDClientWrapper(object):
         if host[0] in ['/', '~']:
             host = os.path.expanduser(host)
 
-        log.info(u'mpdstats: connecting to {0}:{1}'.format(host, port))
+        log.info(u'mpdstats: connecting to {0}:{1}', host, port)
         try:
             self.client.connect(host, port)
         except socket.error as e:
@@ -99,7 +99,7 @@ class MPDClientWrapper(object):
         try:
             return getattr(self.client, command)()
         except (select.error, mpd.ConnectionError) as err:
-            log.error(u'mpdstats: {0}'.format(err))
+            log.error(u'mpdstats: {0}', err)
 
         if retries <= 0:
             # if we exited without breaking, we couldn't reconnect in time :(
@@ -171,9 +171,7 @@ class MPDStats(object):
         if item:
             return item
         else:
-            log.info(u'mpdstats: item not found: {0}'.format(
-                displayable_path(path)
-            ))
+            log.info(u'mpdstats: item not found: {0}', displayable_path(path))
 
     @staticmethod
     def update_item(item, attribute, value=None, increment=None):
@@ -192,11 +190,11 @@ class MPDStats(object):
             item[attribute] = value
             item.store()
 
-            log.debug(u'mpdstats: updated: {0} = {1} [{2}]'.format(
-                attribute,
-                item[attribute],
-                displayable_path(item.path),
-            ))
+            log.debug(u'mpdstats: updated: {0} = {1} [{2}]',
+                      attribute,
+                      item[attribute],
+                      displayable_path(item.path),
+            )
 
     def update_rating(self, item, skipped):
         """Update the rating for a beets item.
@@ -232,17 +230,13 @@ class MPDStats(object):
         """Updates the play count of a song.
         """
         self.update_item(song['beets_item'], 'play_count', increment=1)
-        log.info(u'mpdstats: played {0}'.format(
-            displayable_path(song['path'])
-        ))
+        log.info(u'mpdstats: played {0}', displayable_path(song['path']))
 
     def handle_skipped(self, song):
         """Updates the skip count of a song.
         """
         self.update_item(song['beets_item'], 'skip_count', increment=1)
-        log.info(u'mpdstats: skipped {0}'.format(
-            displayable_path(song['path'])
-        ))
+        log.info(u'mpdstats: skipped {0}', displayable_path(song['path']))
 
     def on_stop(self, status):
         log.info(u'mpdstats: stop')
@@ -264,9 +258,7 @@ class MPDStats(object):
             return
 
         if is_url(path):
-            log.info(u'mpdstats: playing stream {0}'.format(
-                displayable_path(path)
-            ))
+            log.info(u'mpdstats: playing stream {0}', displayable_path(path))
             return
 
         played, duration = map(int, status['time'].split(':', 1))
@@ -275,9 +267,7 @@ class MPDStats(object):
         if self.now_playing and self.now_playing['path'] != path:
             self.handle_song_change(self.now_playing)
 
-        log.info(u'mpdstats: playing {0}'.format(
-            displayable_path(path)
-        ))
+        log.info(u'mpdstats: playing {0}', displayable_path(path))
 
         self.now_playing = {
             'started':    time.time(),
@@ -302,8 +292,7 @@ class MPDStats(object):
                 if handler:
                     handler(status)
                 else:
-                    log.debug(u'mpdstats: unhandled status "{0}"'.
-                              format(status))
+                    log.debug(u'mpdstats: unhandled status "{0}"', status)
 
             events = self.mpd.events()
 

@@ -101,10 +101,10 @@ def play_music(lib, opts, args):
     # Invoke the command and log the output.
     output = util.command_output(command)
     if output:
-        log.debug(u'Output of {0}: {1}'.format(
-            util.displayable_path(command[0]),
-            output.decode('utf8', 'ignore'),
-        ))
+        log.debug(u'Output of {0}: {1}',
+                  util.displayable_path(command[0]),
+                  output.decode('utf8', 'ignore'),
+        )
     else:
         log.debug(u'play: no output')
 

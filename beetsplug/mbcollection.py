@@ -79,7 +79,7 @@ def update_album_list(album_list):
             if re.match(UUID_REGEX, aid):
                 album_ids.append(aid)
             else:
-                log.info(u'skipping invalid MBID: {0}'.format(aid))
+                log.info(u'skipping invalid MBID: {0}', aid)
 
     # Submit to MusicBrainz.
     print('Updating MusicBrainz collection {0}...'.format(collection_id))

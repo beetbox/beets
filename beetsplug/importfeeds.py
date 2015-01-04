@@ -132,7 +132,7 @@ def _record_items(lib, basename, items):
     if 'echo' in formats:
         log.info("Location of imported music:")
         for path in paths:
-            log.info("  " + path)
+            log.info("  {0}", path)
 
 
 @ImportFeedsPlugin.listen('library_opened')

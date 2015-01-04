@@ -194,7 +194,7 @@ class BeatportPlugin(BeetsPlugin):
         try:
             return self._get_releases(query)
         except BeatportAPIError as e:
-            log.debug(u'Beatport API Error: {0} (query: {1})'.format(e, query))
+            log.debug(u'Beatport API Error: {0} (query: {1})', e, query)
             return []
 
     def item_candidates(self, item, artist, title):
@@ -205,14 +205,14 @@ class BeatportPlugin(BeetsPlugin):
         try:
             return self._get_tracks(query)
         except BeatportAPIError as e:
-            log.debug(u'Beatport API Error: {0} (query: {1})'.format(e, query))
+            log.debug(u'Beatport API Error: {0} (query: {1})', e, query)
             return []
 
     def album_for_id(self, release_id):
         """Fetches a release by its Beatport ID and returns an AlbumInfo object
         or None if the release is not found.
         """
-        log.debug(u'Searching Beatport for release {0}'.format(release_id))
+        log.debug(u'Searching Beatport for release {0}', release_id)
         match = re.search(r'(^|beatport\.com/release/.+/)(\d+)$', release_id)
         if not match:
             return None
@@ -224,7 +224,7 @@ class BeatportPlugin(BeetsPlugin):
         """Fetches a track by its Beatport ID and returns a TrackInfo object
         or None if the track is not found.
         """
-        log.debug(u'Searching Beatport for track {0}'.format(str(track_id)))
+        log.debug(u'Searching Beatport for track {0}', track_id)
         match = re.search(r'(^|beatport\.com/track/.+/)(\d+)$', track_id)
         if not match:
             return None

@@ -52,8 +52,7 @@ def update_metadata(item, feat_part, drop_feat, loglevel=logging.DEBUG):
     remove it from the artist field.
     """
     # In all cases, update the artist fields.
-    log.log(loglevel, u'artist: {0} -> {1}'.format(
-        item.artist, item.albumartist))
+    log.log(loglevel, u'artist: {0} -> {1}', item.artist, item.albumartist)
     item.artist = item.albumartist
     if item.artist_sort:
         # Just strip the featured artist from the sort name.
@@ -63,7 +62,7 @@ def update_metadata(item, feat_part, drop_feat, loglevel=logging.DEBUG):
     # artist and if we do not drop featuring information.
     if not drop_feat and not contains_feat(item.title):
         new_title = u"{0} feat. {1}".format(item.title, feat_part)
-        log.log(loglevel, u'title: {0} -> {1}'.format(item.title, new_title))
+        log.log(loglevel, u'title: {0} -> {1}', item.title, new_title)
         item.title = new_title
 
 

@@ -89,7 +89,7 @@ class DiscogsPlugin(BeetsPlugin):
             raise beets.ui.UserError('Discogs authorization failed')
 
         # Save the token for later use.
-        log.debug('Discogs token {0}, secret {1}'.format(token, secret))
+        log.debug('Discogs token {0}, secret {1}', token, secret)
         with open(self._tokenfile(), 'w') as f:
             json.dump({'token': token, 'secret': secret}, f)
 
@@ -117,10 +117,10 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             return self.get_albums(query)
         except DiscogsAPIError as e:
-            log.debug(u'Discogs API Error: {0} (query: {1})'.format(e, query))
+            log.debug(u'Discogs API Error: {0} (query: {1})', e, query)
             return []
         except ConnectionError as e:
-            log.debug(u'HTTP Connection Error: {0}'.format(e))
+            log.debug(u'HTTP Connection Error: {0}', e)
             return []
 
     def album_for_id(self, album_id):
@@ -130,7 +130,7 @@ class DiscogsPlugin(BeetsPlugin):
         if not self.discogs_client:
             return
 
-        log.debug(u'Searching Discogs for release {0}'.format(str(album_id)))
+        log.debug(u'Searching Discogs for release {0}', album_id)
         # Discogs-IDs are simple integers. We only look for those at the end
         # of an input string as to avoid confusion with other metadata plugins.
         # An optional bracket can follow the integer, as this is how discogs
@@ -145,11 +145,11 @@ class DiscogsPlugin(BeetsPlugin):
             getattr(result, 'title')
         except DiscogsAPIError as e:
             if e.message != '404 Not Found':
-                log.debug(u'Discogs API Error: {0} (query: {1})'
-                          .format(e, result._uri))
+                log.debug(u'Discogs API Error: {0} (query: {1})',
+                          e, result._uri)
             return None
         except ConnectionError as e:
-            log.debug(u'HTTP Connection Error: {0}'.format(e))
+            log.debug(u'HTTP Connection Error: {0}', e)
             return None
         return self.get_album_info(result)
 
@@ -294,7 +294,7 @@ class DiscogsPlugin(BeetsPlugin):
         if match:
             medium, index = match.groups()
         else:
-            log.debug(u'Invalid Discogs position: {0}'.format(position))
+            log.debug(u'Invalid Discogs position: {0}', position)
             medium = index = None
         return medium or None, index or None
 

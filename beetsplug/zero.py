@@ -49,10 +49,10 @@ class ZeroPlugin(BeetsPlugin):
         for field in self.config['fields'].as_str_seq():
             if field in ('id', 'path', 'album_id'):
                 log.warn(u'[zero] field \'{0}\' ignored, zeroing '
-                         u'it would be dangerous'.format(field))
+                         u'it would be dangerous', field)
                 continue
             if field not in MediaFile.fields():
-                log.error(u'[zero] invalid field: {0}'.format(field))
+                log.error(u'[zero] invalid field: {0}', field)
                 continue
 
             try:
@@ -97,5 +97,5 @@ class ZeroPlugin(BeetsPlugin):
                 match = patterns is True
 
             if match:
-                log.debug(u'[zero] {0}: {1} -> None'.format(field, value))
+                log.debug(u'[zero] {0}: {1} -> None', field, value)
                 tags[field] = None

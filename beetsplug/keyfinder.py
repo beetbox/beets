@@ -62,11 +62,11 @@ class KeyFinderPlugin(BeetsPlugin):
             try:
                 key = util.command_output([bin, '-f', item.path])
             except (subprocess.CalledProcessError, OSError) as exc:
-                log.error(u'KeyFinder execution failed: {0}'.format(exc))
+                log.error(u'KeyFinder execution failed: {0}', exc)
                 continue
 
             item['initial_key'] = key
-            log.debug(u'added computed initial key {0} for {1}'
-                      .format(key, util.displayable_path(item.path)))
+            log.debug(u'added computed initial key {0} for {1}',
+                      key, util.displayable_path(item.path))
             item.try_write()
             item.store()

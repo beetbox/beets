@@ -56,20 +56,20 @@ def _checksum(item, prog):
     key = args[0]
     checksum = getattr(item, key, False)
     if not checksum:
-        log.debug(u'{0}: key {1} on item {2} not cached: computing checksum'
-                  .format(PLUGIN, key, displayable_path(item.path)))
+        log.debug(u'{0}: key {1} on item {2} not cached: computing checksum',
+                  PLUGIN, key, displayable_path(item.path))
         try:
             checksum = command_output(args)
             setattr(item, key, checksum)
             item.store()
-            log.debug(u'{)}: computed checksum for {1} using {2}'
-                      .format(PLUGIN, item.title, key))
+            log.debug(u'{)}: computed checksum for {1} using {2}',
+                      PLUGIN, item.title, key)
         except subprocess.CalledProcessError as e:
-            log.debug(u'{0}: failed to checksum {1}: {2}'
-                      .format(PLUGIN, displayable_path(item.path), e))
+            log.debug(u'{0}: failed to checksum {1}: {2}',
+                      PLUGIN, displayable_path(item.path), e)
     else:
-        log.debug(u'{0}: key {1} on item {2} cached: not computing checksum'
-                  .format(PLUGIN, key, displayable_path(item.path)))
+        log.debug(u'{0}: key {1} on item {2} cached: not computing checksum',
+                  PLUGIN, key, displayable_path(item.path))
     return key, checksum
 
 
@@ -86,8 +86,8 @@ def _group_by(objs, keys):
             key = '\001'.join(values)
             counts[key].append(obj)
         else:
-            log.debug(u'{0}: all keys {1} on item {2} are null: skipping'
-                      .format(PLUGIN, str(keys), displayable_path(obj.path)))
+            log.debug(u'{0}: all keys {1} on item {2} are null: skipping',
+                      PLUGIN, str(keys), displayable_path(obj.path))
 
     return counts
 
