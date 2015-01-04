@@ -509,7 +509,7 @@ class Item(LibModel):
             self.write(path)
             return True
         except FileOperationError as exc:
-            log.error(exc)
+            log.error(str(exc))
             return False
 
     def try_sync(self, write=None):
