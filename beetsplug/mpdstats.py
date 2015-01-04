@@ -193,8 +193,7 @@ class MPDStats(object):
             log.debug(u'mpdstats: updated: {0} = {1} [{2}]',
                       attribute,
                       item[attribute],
-                      displayable_path(item.path),
-            )
+                      displayable_path(item.path))
 
     def update_rating(self, item, skipped):
         """Update the rating for a beets item.

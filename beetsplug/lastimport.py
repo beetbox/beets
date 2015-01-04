@@ -67,8 +67,7 @@ def import_lastfm(lib):
     while page_current < page_total:
         log.info('lastimport: Querying page #{0}{1}...',
                  page_current + 1,
-                 '/{}'.format(page_total) if page_total > 1 else ''
-        )
+                 '/{}'.format(page_total) if page_total > 1 else '')
 
         for retry in range(0, retry_limit):
             page = fetch_tracks(user, page_current + 1, per_page)
@@ -172,8 +171,7 @@ def process_tracks(lib, tracks):
             new_count = int(tracks[num]['playcount'])
             log.debug(u'lastimport: match: {0} - {1} ({2}) '
                       u'updating: play_count {3} => {4}',
-                      song.artist, song.title, song.album, count, new_count
-            )
+                      song.artist, song.title, song.album, count, new_count)
             song['play_count'] = new_count
             song.store()
             total_found += 1

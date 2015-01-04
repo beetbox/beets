@@ -412,7 +412,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                           item.artist,
                           item.title,
                           song.get('duration'),
-                )
+                          )
                 return song
 
     def apply_metadata(self, item, values, write=False):

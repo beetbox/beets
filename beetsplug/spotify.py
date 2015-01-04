@@ -132,7 +132,8 @@ class SpotifyPlugin(BeetsPlugin):
                 chosen_result = r_data[0]
             elif len(r_data) > 1:
                 # Use the popularity filter
-                log.debug(u'Most popular track chosen, count: {0}', len(r_data))
+                log.debug(u'Most popular track chosen, count: {0}',
+                          len(r_data))
                 chosen_result = max(r_data, key=lambda x: x['popularity'])
 
             if chosen_result:
@@ -144,7 +145,8 @@ class SpotifyPlugin(BeetsPlugin):
         failure_count = len(failures)
         if failure_count > 0:
             if self.config['show_failures'].get():
-                log.info(u'{0} track(s) did not match a Spotify ID:', failure_count)
+                log.info(u'{0} track(s) did not match a Spotify ID:',
+                         failure_count)
                 for track in failures:
                     log.info(u'track: {0}', track)
                 log.info(u'')

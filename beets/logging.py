@@ -22,8 +22,8 @@ class StrFormatLogger(Logger):
 
     def _log(self, level, msg, args, exc_info=None, extra=None, **kwargs):
         """Log msg.format(*args, **kwargs)"""
-        msg = self._LogMessage(msg, args, kwargs)
-        return super(StrFormatLogger, self)._log(level, msg, (), exc_info, extra)
+        m = self._LogMessage(msg, args, kwargs)
+        return super(StrFormatLogger, self)._log(level, m, (), exc_info, extra)
 
 
 my_manager = copy(Logger.manager)

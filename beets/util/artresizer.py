@@ -69,7 +69,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
         return path_out
     except IOError:
         log.error(u"PIL cannot create thumbnail for '{0}'",
-            util.displayable_path(path_in))
+                  util.displayable_path(path_in))
         return path_in
 
 
