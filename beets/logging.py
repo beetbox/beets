@@ -6,7 +6,7 @@ getLogger(name) instantiates a logger that logger uses {}-style formatting.
 
 from __future__ import absolute_import
 from copy import copy
-from logging import *
+from logging import *  # noqa
 
 
 # create a str.format-based logger
