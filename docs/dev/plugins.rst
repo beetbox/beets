@@ -161,6 +161,9 @@ currently available are:
 
 * *import_task_created*: called after an import task has been created.
   Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
+  Return: The event handler may return a single `ImportTask` object or a list
+  of `ImportTask` objects. The original task will be replaced by the returned
+  task(s). If nothing is returned, the original task will be created.
 
 * *import_task_start*: called when before an import task begins processing.
   Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
