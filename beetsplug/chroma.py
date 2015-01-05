@@ -19,11 +19,11 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets import config
-from beets import logging
 from beets.util import confit
 from beets.autotag import hooks
 import acoustid
 from collections import defaultdict
+from functools import partial
 
 API_KEY = '1vOwZtEn'
 SCORE_THRESH = 0.5
@@ -31,8 +31,6 @@ TRACK_ID_WEIGHT = 10.0
 COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 MAX_RECORDINGS = 5
 MAX_RELEASES = 5
-
-log = logging.getLogger(__name__)
 
 # Stores the Acoustid match information for each track. This is
 # populated when an import task begins and then used when searching for
@@ -57,7 +55,7 @@ def prefix(it, count):
         yield v
 
 
-def acoustid_match(path):
+def acoustid_match(log, path):
     """Gets metadata for a file from Acoustid and populates the
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
@@ -135,7 +133,8 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         })
 
         if self.config['auto']:
-            self.register_listener('import_task_start', fingerprint_task)
+            self.register_listener('import_task_start',
+                                   partial(fingerprint_task, self._log))
 
     def track_distance(self, item, info):
         dist = hooks.Distance()
@@ -154,7 +153,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             if album:
                 albums.append(album)
 
-        log.debug(u'acoustid album candidates: {0}', len(albums))
+        self._log.debug(u'acoustid album candidates: {0}', len(albums))
         return albums
 
     def item_candidates(self, item, artist, title):
@@ -167,7 +166,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             track = hooks.track_for_mbid(recording_id)
             if track:
                 tracks.append(track)
-        log.debug(u'acoustid item candidates: {0}', len(tracks))
+        self._log.debug(u'acoustid item candidates: {0}', len(tracks))
         return tracks
 
     def commands(self):
@@ -179,7 +178,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
                 apikey = config['acoustid']['apikey'].get(unicode)
             except confit.NotFoundError:
                 raise ui.UserError('no Acoustid user API key provided')
-            submit_items(apikey, lib.items(ui.decargs(args)))
+            submit_items(self._log, apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
 
         fingerprint_cmd = ui.Subcommand(
@@ -189,7 +188,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
         def fingerprint_cmd_func(lib, opts, args):
             for item in lib.items(ui.decargs(args)):
-                fingerprint_item(item,
+                fingerprint_item(self._log, item,
                                  write=config['import']['write'].get(bool))
         fingerprint_cmd.func = fingerprint_cmd_func
 
@@ -199,13 +198,13 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 # Hooks into import process.
 
 
-def fingerprint_task(task, session):
+def fingerprint_task(log, task, session):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
     items = task.items if task.is_album else [task.item]
     for item in items:
-        acoustid_match(item.path)
+        acoustid_match(log, item.path)
 
 
 @AcoustidPlugin.listen('import_task_apply')
@@ -222,7 +221,7 @@ def apply_acoustid_metadata(task, session):
 # UI commands.
 
 
-def submit_items(userkey, items, chunksize=64):
+def submit_items(log, userkey, items, chunksize=64):
     """Submit fingerprints for the items to the Acoustid server.
     """
     data = []  # The running list of dictionaries to submit.
@@ -269,7 +268,7 @@ def submit_items(userkey, items, chunksize=64):
         submit_chunk()
 
 
-def fingerprint_item(item, write=False):
+def fingerprint_item(log, item, write=False):
     """Get the fingerprint for an Item. If the item already has a
     fingerprint, it is not regenerated. If fingerprint generation fails,
     return None. If the items are associated with a library, they are
