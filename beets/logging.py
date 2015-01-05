@@ -1,4 +1,4 @@
-"""Allow {}-style formatting on python 2 and 3
+"""Allow {}-style logging on python 2 and 3
 
 Provide everything the "logging" module does, the only difference is that when
 getLogger(name) instantiates a logger that logger uses {}-style formatting.
