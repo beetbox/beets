@@ -20,7 +20,7 @@ import sys
 import re
 import shutil
 import fnmatch
-from collections import defaultdict
+from collections import defaultdict, Counter
 import traceback
 import subprocess
 import platform
@@ -588,27 +588,14 @@ def levenshtein(s1, s2):
 
 
 def plurality(objs):
-    """Given a sequence of comparable objects, returns the object that
-    is most common in the set and the frequency of that object. The
+    """Given a sequence of hashble objects, returns the object that
+    is most common in the set and the its number of appearance. The
     sequence must contain at least one object.
     """
-    # Calculate frequencies.
-    freqs = defaultdict(int)
-    for obj in objs:
-        freqs[obj] += 1
-
-    if not freqs:
+    c = Counter(objs)
+    if not c:
         raise ValueError('sequence must be non-empty')
-
-    # Find object with maximum frequency.
-    max_freq = 0
-    res = None
-    for obj, freq in freqs.items():
-        if freq > max_freq:
-            max_freq = freq
-            res = obj
-
-    return res, max_freq
+    return c.most_common(1)[0]
 
 
 def cpu_count():
