@@ -51,7 +51,7 @@ def getLogger(name=None):
     if name:
         return my_manager.getLogger(name)
     else:
-        return root
+        return Logger.root
 
 
 if sys.version_info[:2] == (2, 6):
