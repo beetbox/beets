@@ -20,7 +20,7 @@ import sys
 import re
 import shutil
 import fnmatch
-from collections import defaultdict, Counter
+from collections import Counter
 import traceback
 import subprocess
 import platform
