@@ -192,7 +192,7 @@ def check_art_similarity(item, imagepath, compare_threshold):
             stdout, stderr = proc.communicate()
             if proc.returncode:
                 if proc.returncode != 1:
-                    log.warn(u'embedart: IM hashes compare failed for '
+                    log.warn(u'embedart: IM phashes compare failed for '
                              u'{0}, {1}', displayable_path(imagepath),
                              displayable_path(art))
                     return
