@@ -15,7 +15,6 @@
 """Moves patterns in path formats (suitable for moving articles)."""
 
 import re
-from beets import logging
 from beets.plugins import BeetsPlugin
 
 __author__ = 'baobab@heresiarch.info'
@@ -29,7 +28,6 @@ FORMAT = u'{0}, {1}'
 class ThePlugin(BeetsPlugin):
 
     _instance = None
-    _log = logging.getLogger(__name__)
 
     the = True
     a = True

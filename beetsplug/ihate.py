@@ -14,7 +14,6 @@
 
 """Warns you about things you hate (or even blocks import)."""
 
-from beets import logging
 from beets.plugins import BeetsPlugin
 from beets.importer import action
 from beets.library import parse_query_string
@@ -37,8 +36,6 @@ def summary(task):
 
 
 class IHatePlugin(BeetsPlugin):
-    _log = logging.getLogger(__name__)
-
     def __init__(self):
         super(IHatePlugin, self).__init__()
         self.register_listener('import_task_choice',
@@ -75,8 +72,7 @@ class IHatePlugin(BeetsPlugin):
                     self._log.info(u'skipped: {0}', summary(task))
                     return
                 if self.do_i_hate_this(task, warn_queries):
-                    self._log.info(u'you may hate this: {0}',
-                                   summary(task))
+                    self._log.info(u'you may hate this: {0}', summary(task))
             else:
                 self._log.debug(u'nothing to do')
         else:
