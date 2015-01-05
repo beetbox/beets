@@ -1517,7 +1517,7 @@ def config_edit():
     try:
         os.execlp(*args)
     except OSError:
-        raise ui.UserError("Could not edit configuration. Please"
+        raise ui.UserError("Could not edit configuration. Please "
                            "set the EDITOR environment variable.")
 
 
