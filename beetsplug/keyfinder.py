@@ -17,13 +17,9 @@
 
 import subprocess
 
-from beets import logging
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
-
-
-log = logging.getLogger(__name__)
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -62,11 +58,11 @@ class KeyFinderPlugin(BeetsPlugin):
             try:
                 key = util.command_output([bin, '-f', item.path])
             except (subprocess.CalledProcessError, OSError) as exc:
-                log.error(u'execution failed: {0}', exc)
+                self._log.error(u'execution failed: {0}', exc)
                 continue
 
             item['initial_key'] = key
-            log.debug(u'added computed initial key {0} for {1}',
-                      key, util.displayable_path(item.path))
+            self._log.debug(u'added computed initial key {0} for {1}',
+                            key, util.displayable_path(item.path))
             item.try_write()
             item.store()
