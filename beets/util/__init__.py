@@ -544,10 +544,7 @@ def truncate_path(path, length=MAX_FILENAME_LENGTH):
 
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
-    if value.lower() in ('yes', '1', 'true', 't', 'y'):
-        return True
-    else:
-        return False
+    return value.lower() in ('yes', '1', 'true', 't', 'y')
 
 
 def as_string(value):
