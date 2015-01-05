@@ -35,13 +35,13 @@ import os
 import os.path
 import shutil
 import subprocess
-from beets import logging
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
 from StringIO import StringIO
 from enum import Enum
 
 import beets
+from beets import logging
 from beets import config
 import beets.plugins
 from beets.library import Library, Item, Album

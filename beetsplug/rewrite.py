@@ -16,10 +16,10 @@
 formats.
 """
 import re
-from beets import logging
 from collections import defaultdict
 
 from beets.plugins import BeetsPlugin
+from beets import logging
 from beets import ui
 from beets import library
 

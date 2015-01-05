@@ -48,10 +48,10 @@ import math
 import struct
 import imghdr
 import os
-from beets import logging
 import traceback
 import enum
 
+from beets import logging
 from beets.util import displayable_path
 
 

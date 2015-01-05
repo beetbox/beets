@@ -16,12 +16,12 @@
 """
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
+from beets import logging
 from beets import config
 from beets import ui
 from beets import util
 from os.path import relpath
 import platform
-from beets import logging
 import shlex
 from tempfile import NamedTemporaryFile
 

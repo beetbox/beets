@@ -15,9 +15,9 @@
 """Uses the `KeyFinder` program to add the `initial_key` field.
 """
 
-from beets import logging
 import subprocess
 
+from beets import logging
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin

@@ -16,7 +16,6 @@
 import time
 import sys
 import os
-from beets import logging
 import tempfile
 import shutil
 from contextlib import contextmanager
@@ -30,7 +29,7 @@ except ImportError:
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
 import beets.library
-from beets import importer
+from beets import importer, logging
 from beets.ui import commands
 import beets
 

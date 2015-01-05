@@ -15,13 +15,13 @@
 """Fetches album art.
 """
 from contextlib import closing
-from beets import logging
 import os
 import re
 from tempfile import NamedTemporaryFile
 
 import requests
 
+from beets import logging
 from beets import plugins
 from beets import importer
 from beets import ui

@@ -18,10 +18,10 @@ releases and tracks.
 from __future__ import division
 
 import datetime
-from beets import logging
 import re
 from munkres import Munkres
 
+from beets import logging
 from beets import plugins
 from beets import config
 from beets.util import plurality

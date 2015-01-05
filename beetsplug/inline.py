@@ -14,12 +14,11 @@
 
 """Allows inline path template customization code in the config file.
 """
-from beets import logging
 import traceback
 import itertools
 
 from beets.plugins import BeetsPlugin
-from beets import config
+from beets import config, logging
 
 log = logging.getLogger('beets')
 

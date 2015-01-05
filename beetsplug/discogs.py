@@ -15,6 +15,7 @@
 """Adds Discogs album search support to the autotagger. Requires the
 discogs-client library.
 """
+from beets import logging
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
 from beets.util import confit
@@ -22,7 +23,6 @@ from discogs_client import Release, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
 import beets
-from beets import logging
 import re
 import time
 import json

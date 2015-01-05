@@ -14,12 +14,12 @@
 
 """Allows beets to embed album art into file metadata."""
 import os.path
-from beets import logging
 import imghdr
 import subprocess
 import platform
 from tempfile import NamedTemporaryFile
 
+from beets import logging
 from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui

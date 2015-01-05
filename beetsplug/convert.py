@@ -14,7 +14,6 @@
 
 """Converts tracks or albums to external directory
 """
-from beets import logging
 import os
 import threading
 import subprocess
@@ -22,7 +21,7 @@ import tempfile
 import shlex
 from string import Template
 
-from beets import ui, util, plugins, config
+from beets import logging, ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from beetsplug.embedart import embed_item
 from beets.util.confit import ConfigTypeError

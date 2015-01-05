@@ -21,13 +21,13 @@ from __future__ import print_function
 import re
 from string import Template
 import traceback
-from beets import logging
 import random
 import time
 
 import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
+from beets import logging
 from beets import vfs
 from beets.util import bluelet
 from beets.library import Item

@@ -12,12 +12,12 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from beets import logging
 import requests
 from beets import ui
 from beets import dbcore
 from beets import config
 from beets import plugins
+from beets import logging
 from beets.dbcore import types
 
 log = logging.getLogger('beets')

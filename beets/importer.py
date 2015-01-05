@@ -19,7 +19,6 @@ from __future__ import print_function
 
 import os
 import re
-from beets import logging
 import pickle
 import itertools
 from collections import defaultdict
@@ -28,6 +27,7 @@ from bisect import insort, bisect_left
 from contextlib import contextmanager
 import shutil
 
+from beets import logging
 from beets import autotag
 from beets import library
 from beets import dbcore

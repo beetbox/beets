@@ -16,12 +16,12 @@ from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
+from beets import logging
 from beets import ui
 from beets import config
 import musicbrainzngs
 
 import re
-from beets import logging
 
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'

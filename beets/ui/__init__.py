@@ -23,7 +23,6 @@ import optparse
 import textwrap
 import sys
 from difflib import SequenceMatcher
-from beets import logging
 import sqlite3
 import errno
 import re
@@ -31,6 +30,7 @@ import struct
 import traceback
 import os.path
 
+from beets import logging
 from beets import library
 from beets import plugins
 from beets import util

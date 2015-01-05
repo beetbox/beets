@@ -14,12 +14,12 @@
 
 """Adds Beatport release and track search support to the autotagger
 """
-from beets import logging
 import re
 from datetime import datetime, timedelta
 
 import requests
 
+from beets import logging
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
 

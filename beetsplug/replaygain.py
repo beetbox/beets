@@ -12,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from beets import logging
 import subprocess
 import os
 import collections
@@ -20,6 +19,7 @@ import itertools
 import sys
 import warnings
 
+from beets import logging
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output, displayable_path

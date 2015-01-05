@@ -16,12 +16,13 @@
 """
 import os
 import sys
-from beets import logging
 import shlex
 import unicodedata
 import time
 import re
 from unidecode import unidecode
+
+from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
 from beets import plugins
 from beets import util

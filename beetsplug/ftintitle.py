@@ -14,12 +14,13 @@
 
 """Moves "featured" artists to the title from the artist field.
 """
+import re
+
 from beets import plugins
 from beets import ui
 from beets.util import displayable_path
 from beets import config
 from beets import logging
-import re
 
 log = logging.getLogger('beets')
 

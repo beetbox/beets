@@ -14,12 +14,12 @@
 
 """Searches for albums in the MusicBrainz database.
 """
-from beets import logging
 import musicbrainzngs
 import re
 import traceback
 from urlparse import urljoin
 
+from beets import logging
 import beets.autotag.hooks
 import beets
 from beets import util

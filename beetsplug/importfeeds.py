@@ -19,11 +19,10 @@ one wants to manually add music to a player by its path.
 import datetime
 import os
 import re
-from beets import logging
 
 from beets.plugins import BeetsPlugin
 from beets.util import normpath, syspath, bytestring_path
-from beets import config
+from beets import config, logging
 
 M3U_DEFAULT_NAME = 'imported.m3u'
 log = logging.getLogger('beets')

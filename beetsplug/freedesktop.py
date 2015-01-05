@@ -15,12 +15,12 @@
 """Creates freedesktop.org-compliant .directory files on an album level.
 """
 
+from beets import logging
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.ui import decargs
 
 import os
-from beets import logging
 
 log = logging.getLogger('beets.freedesktop')
 

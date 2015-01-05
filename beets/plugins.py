@@ -14,7 +14,6 @@
 
 """Support for beets plugins."""
 
-from beets import logging
 import traceback
 import inspect
 import re
@@ -22,6 +21,7 @@ from collections import defaultdict
 
 
 import beets
+from beets import logging
 from beets import mediafile
 
 PLUGIN_NAMESPACE = 'beetsplug'

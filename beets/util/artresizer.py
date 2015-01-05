@@ -20,6 +20,7 @@ import subprocess
 import os
 import re
 from tempfile import NamedTemporaryFile
+
 from beets import logging
 from beets import util
 

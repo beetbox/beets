@@ -15,14 +15,13 @@
 """Fetch a variety of acoustic metrics from The Echo Nest.
 """
 import time
-from beets import logging
 import socket
 import os
 import tempfile
 from string import Template
 import subprocess
 
-from beets import util, config, plugins, ui
+from beets import util, config, plugins, ui, logging
 from beets.dbcore import types
 import pyechonest
 import pyechonest.song

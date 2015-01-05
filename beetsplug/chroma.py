@@ -19,10 +19,10 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets import config
+from beets import logging
 from beets.util import confit
 from beets.autotag import hooks
 import acoustid
-from beets import logging
 from collections import defaultdict
 
 API_KEY = '1vOwZtEn'

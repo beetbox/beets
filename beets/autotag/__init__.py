@@ -14,8 +14,8 @@
 
 """Facilities for automatically determining files' correct metadata.
 """
-from beets import logging
 
+from beets import logging
 from beets import config
 
 # Parts of external interface.

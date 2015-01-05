@@ -17,7 +17,6 @@
 from __future__ import print_function
 
 import re
-from beets import logging
 import requests
 import json
 import unicodedata
@@ -26,6 +25,7 @@ import difflib
 import itertools
 from HTMLParser import HTMLParseError
 
+from beets import logging
 from beets import plugins
 from beets import config, ui
 
