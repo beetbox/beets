@@ -23,6 +23,7 @@ import time
 import codecs
 import platform
 import re
+import shlex
 
 import beets
 from beets import ui
@@ -1503,7 +1504,12 @@ def config_edit():
 
     if 'EDITOR' in os.environ:
         editor = os.environ['EDITOR']
-        args = [editor, editor, path]
+        try:
+            editor = shlex.split(editor)
+        except ValueError:  # Malformed shell tokens.
+            editor = [editor]
+        args = editor + [path]
+        args.insert(1, args[0])
     elif platform.system() == 'Darwin':
         args = ['open', 'open', '-n', path]
     elif platform.system() == 'Windows':

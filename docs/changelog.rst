@@ -68,6 +68,8 @@ Fixed:
   twice in the artist string. Thanks to Marc Addeo. :bug:`1179` :bug:`1181`
 * :doc:`/plugins/lastgenre`: Match songs more robustly when they contain
   dashes. Thanks to :user:`djl`. :bug:`1156`
+* The :ref:`config-cmd` command can now use ``$EDITOR`` variables with
+  arguments.
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
