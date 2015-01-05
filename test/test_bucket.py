@@ -15,7 +15,6 @@
 
 """Tests for the 'bucket' plugin."""
 
-from nose.tools import raises
 from _common import unittest
 from beetsplug import bucket
 from beets import config, ui
@@ -129,26 +128,24 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(self.plugin._tmpl_bucket('…and Oceans'), 'A - D')
         self.assertEqual(self.plugin._tmpl_bucket('Eagles'), 'E - L')
 
-    @raises(ui.UserError)
     def test_bad_alpha_range_def(self):
-        """If bad alpha range definition, a UserError is raised"""
-        self._setup_config(bucket_alpha=['$%'])
-        self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
+        """If bad alpha range definition, a UserError is raised."""
+        with self.assertRaises(ui.UserError):
+            self._setup_config(bucket_alpha=['$%'])
 
-    @raises(ui.UserError)
     def test_bad_year_range_def_no4digits(self):
         """If bad year range definition, a UserError is raised.
-        Range origin must be expressed on 4 digits."""
-        self._setup_config(bucket_year=['62-64'])
-        # from year must be expressed on 4 digits
-        self.assertEqual(self.plugin._tmpl_bucket('1963'), '62-64')
+        Range origin must be expressed on 4 digits.
+        """
+        with self.assertRaises(ui.UserError):
+            self._setup_config(bucket_year=['62-64'])
 
-    @raises(ui.UserError)
     def test_bad_year_range_def_nodigits(self):
         """If bad year range definition, a UserError is raised.
-        At least the range origin must be declared."""
-        self._setup_config(bucket_year=['nodigits'])
-        self.assertEqual(self.plugin._tmpl_bucket('1963'), '62-64')
+        At least the range origin must be declared.
+        """
+        with self.assertRaises(ui.UserError):
+            self._setup_config(bucket_year=['nodigits'])
 
 
 def suite():
