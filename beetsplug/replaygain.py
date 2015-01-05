@@ -601,7 +601,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
-        self.import_stages = [self.imported]
+        self._import_stages = [self.imported]
 
         # default backend is 'command' for backward-compatibility.
         self.config.add({

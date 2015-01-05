@@ -36,7 +36,7 @@ class KeyFinderPlugin(BeetsPlugin):
             u'overwrite': False,
         })
         self.config['auto'].get(bool)
-        self.import_stages = [self.imported]
+        self._import_stages = [self.imported]
 
     def commands(self):
         cmd = ui.Subcommand('keyfinder',

@@ -336,7 +336,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         self.maxwidth = self.config['maxwidth'].get(int)
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
-            self.import_stages = [self.fetch_art]
+            self._import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
         available_sources = list(SOURCES_ALL)
