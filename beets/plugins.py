@@ -61,6 +61,10 @@ class BeetsPlugin(object):
         if not self.album_template_fields:
             self.album_template_fields = {}
 
+        logger_name = '{0}.{1}'.format('beets', self.name)
+        self._log = logging.getLogger(logger_name)
+        self._log.setLevel(logging.WARNING)
+
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
