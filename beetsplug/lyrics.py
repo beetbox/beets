@@ -477,7 +477,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
                 self.fetch_item_lyrics(
-                    lib, logging.INFO, item, write,
+                    lib, item, write,
                     opts.force_refetch or self.config['force'],
                 )
                 if opts.printlyr and item.lyrics:
@@ -491,19 +491,15 @@ class LyricsPlugin(plugins.BeetsPlugin):
         """
         if self.config['auto']:
             for item in task.imported_items():
-                self.fetch_item_lyrics(session.lib, logging.DEBUG, item,
+                self.fetch_item_lyrics(session.lib, item,
                                        False, self.config['force'])
 
-    def fetch_item_lyrics(self, lib, loglevel, item, write, force):
+    def fetch_item_lyrics(self, lib, item, write, force):
         """Fetch and store lyrics for a single item. If ``write``, then the
-        lyrics will also be written to the file itself. The ``loglevel``
-        parameter controls the visibility of the function's status log
-        messages.
-        """
+        lyrics will also be written to the file itself."""
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
-            log.log(loglevel, u'lyrics already present: {0} - {1}',
-                    item.artist, item.title)
+            log.info(u'lyrics already present: {0.artist} - {0.title}', item)
             return
 
         lyrics = None
@@ -515,11 +511,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
 
         if lyrics:
-            log.log(loglevel, u'fetched lyrics: {0} - {1}',
-                              item.artist, item.title)
+            log.info(u'fetched lyrics: {0} - {1}', item.artist, item.title)
         else:
-            log.log(loglevel, u'lyrics not found: {0} - {1}',
-                              item.artist, item.title)
+            log.info(u'lyrics not found: {0} - {1}', item.artist, item.title)
             fallback = self.config['fallback'].get()
             if fallback:
                 lyrics = fallback
