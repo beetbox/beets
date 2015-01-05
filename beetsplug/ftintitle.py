@@ -22,7 +22,7 @@ from beets.util import displayable_path
 from beets import config
 from beets import logging
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 def split_on_feat(artist):

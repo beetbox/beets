@@ -32,7 +32,7 @@ COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 MAX_RECORDINGS = 5
 MAX_RELEASES = 5
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 # Stores the Acoustid match information for each track. This is
 # populated when an import task begins and then used when searching for
@@ -80,17 +80,17 @@ def acoustid_match(path):
 
     # Ensure the response is usable and parse it.
     if res['status'] != 'ok' or not res.get('results'):
-        log.debug(u'chroma: no match found')
+        log.debug(u'no match found')
         return None
     result = res['results'][0]  # Best match.
     if result['score'] < SCORE_THRESH:
-        log.debug(u'chroma: no results above threshold')
+        log.debug(u'no results above threshold')
         return None
     _acoustids[path] = result['id']
 
     # Get recording and releases from the result.
     if not result.get('recordings'):
-        log.debug(u'chroma: no recordings found')
+        log.debug(u'no recordings found')
         return None
     recording_ids = []
     release_ids = []
@@ -99,7 +99,7 @@ def acoustid_match(path):
         if 'releases' in recording:
             release_ids += [rel['id'] for rel in recording['releases']]
 
-    log.debug(u'chroma: matched recordings {0} on releases {1}',
+    log.debug(u'matched recordings {0} on releases {1}',
               recording_ids, release_ids)
     _matches[path] = recording_ids, release_ids
 

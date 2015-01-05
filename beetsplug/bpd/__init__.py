@@ -71,7 +71,7 @@ SAFE_COMMANDS = (
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
 
 # Loggers.
-log = logging.getLogger('beets.bpd')
+log = logging.getLogger(__name__)
 global_log = logging.getLogger('beets')
 
 

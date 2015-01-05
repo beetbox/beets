@@ -23,7 +23,7 @@ from beets import util
 from beets.plugins import BeetsPlugin
 
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -62,7 +62,7 @@ class KeyFinderPlugin(BeetsPlugin):
             try:
                 key = util.command_output([bin, '-f', item.path])
             except (subprocess.CalledProcessError, OSError) as exc:
-                log.error(u'KeyFinder execution failed: {0}', exc)
+                log.error(u'execution failed: {0}', exc)
                 continue
 
             item['initial_key'] = key

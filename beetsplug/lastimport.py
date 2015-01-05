@@ -20,7 +20,7 @@ from beets import plugins
 from beets import logging
 from beets.dbcore import types
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 API_URL = 'http://ws.audioscrobbler.com/2.0/'
 
 
@@ -65,7 +65,7 @@ def import_lastfm(lib):
     retry_limit = config['lastimport']['retry_limit'].get(int)
     # Iterate through a yet to be known page total count
     while page_current < page_total:
-        log.info('lastimport: Querying page #{0}{1}...',
+        log.info('Querying page #{0}{1}...',
                  page_current + 1,
                  '/{}'.format(page_total) if page_total > 1 else '')
 
@@ -83,22 +83,22 @@ def import_lastfm(lib):
                 unknown_total += unknown
                 break
             else:
-                log.error('lastimport: ERROR: unable to read page #{0}',
+                log.error('ERROR: unable to read page #{0}',
                           page_current + 1)
                 if retry < retry_limit:
                     log.info(
-                        'lastimport: Retrying page #{0}... ({1}/{2} retry)',
+                        'Retrying page #{0}... ({1}/{2} retry)',
                         page_current + 1, retry + 1, retry_limit
                     )
                 else:
-                    log.error('lastimport: FAIL: unable to fetch page #{0}, ',
+                    log.error('FAIL: unable to fetch page #{0}, ',
                               'tried {1} times', page_current, retry + 1)
         page_current += 1
 
-    log.info('lastimport: ... done!')
-    log.info('lastimport: finished processing {0} song pages', page_total)
-    log.info('lastimport: {0} unknown play-counts', unknown_total)
-    log.info('lastimport: {0} play-counts imported', found_total)
+    log.info('... done!')
+    log.info('finished processing {0} song pages', page_total)
+    log.info('{0} unknown play-counts', unknown_total)
+    log.info('{0} play-counts imported', found_total)
 
 
 def fetch_tracks(user, page, limit):
@@ -116,8 +116,7 @@ def process_tracks(lib, tracks):
     total = len(tracks)
     total_found = 0
     total_fails = 0
-    log.info('lastimport: Received {0} tracks in this page, processing...',
-             total)
+    log.info('Received {0} tracks in this page, processing...', total)
 
     for num in xrange(0, total):
         song = ''
@@ -128,7 +127,7 @@ def process_tracks(lib, tracks):
         if 'album' in tracks[num]:
             album = tracks[num]['album'].get('name', '').strip()
 
-        log.debug(u'lastimport: query: {0} - {1} ({2})', artist, title, album)
+        log.debug(u'query: {0} - {1} ({2})', artist, title, album)
 
         # First try to query by musicbrainz's trackid
         if trackid:
@@ -138,7 +137,7 @@ def process_tracks(lib, tracks):
 
         # Otherwise try artist/title/album
         if not song:
-            log.debug(u'lastimport: no match for mb_trackid {0}, trying by '
+            log.debug(u'no match for mb_trackid {0}, trying by '
                       u'artist/title/album', trackid)
             query = dbcore.AndQuery([
                 dbcore.query.SubstringQuery('artist', artist),
@@ -149,7 +148,7 @@ def process_tracks(lib, tracks):
 
         # If not, try just artist/title
         if not song:
-            log.debug(u'lastimport: no album match, trying by artist/title')
+            log.debug(u'no album match, trying by artist/title')
             query = dbcore.AndQuery([
                 dbcore.query.SubstringQuery('artist', artist),
                 dbcore.query.SubstringQuery('title', title)
@@ -159,7 +158,7 @@ def process_tracks(lib, tracks):
         # Last resort, try just replacing to utf-8 quote
         if not song:
             title = title.replace("'", u'\u2019')
-            log.debug(u'lastimport: no title match, trying utf-8 single quote')
+            log.debug(u'no title match, trying utf-8 single quote')
             query = dbcore.AndQuery([
                 dbcore.query.SubstringQuery('artist', artist),
                 dbcore.query.SubstringQuery('title', title)
@@ -169,7 +168,7 @@ def process_tracks(lib, tracks):
         if song:
             count = int(song.get('play_count', 0))
             new_count = int(tracks[num]['playcount'])
-            log.debug(u'lastimport: match: {0} - {1} ({2}) '
+            log.debug(u'match: {0} - {1} ({2}) '
                       u'updating: play_count {3} => {4}',
                       song.artist, song.title, song.album, count, new_count)
             song['play_count'] = new_count
@@ -177,11 +176,11 @@ def process_tracks(lib, tracks):
             total_found += 1
         else:
             total_fails += 1
-            log.info(u'lastimport:   - No match: {0} - {1} ({2})',
+            log.info(u'  - No match: {0} - {1} ({2})',
                      artist, title, album)
 
     if total_fails > 0:
-        log.info('lastimport: Acquired {0}/{1} play-counts ({2} unknown)',
+        log.info('Acquired {0}/{1} play-counts ({2} unknown)',
                  total_found, total, total_fails)
 
     return total_found, total_fails

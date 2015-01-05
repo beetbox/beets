@@ -31,7 +31,7 @@ from beets.util import normpath, plurality
 from beets import config
 from beets import library
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 

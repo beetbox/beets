@@ -26,7 +26,7 @@ import re
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
 
-log = logging.getLogger('beets.bpd')
+log = logging.getLogger(__name__)
 
 
 def mb_call(func, *args, **kwargs):

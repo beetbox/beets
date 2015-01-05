@@ -24,7 +24,7 @@ from beets import mediafile
 from beets.util import displayable_path, normpath, syspath
 
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 def run(lib, opts, args):

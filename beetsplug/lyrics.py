@@ -32,7 +32,7 @@ from beets import config, ui
 
 # Global logger.
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)

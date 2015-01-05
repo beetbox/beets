@@ -39,7 +39,7 @@ IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg',)
 DOWNLOAD_EXTENSION = '.jpg'
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 requests_session = requests.Session()
 requests_session.headers = {'User-Agent': 'beets'}
@@ -50,12 +50,12 @@ def _fetch_image(url):
     actually be an image. If so, returns a path to the downloaded image.
     Otherwise, returns None.
     """
-    log.debug(u'fetchart: downloading art: {0}', url)
+    log.debug(u'downloading art: {0}', url)
     try:
         with closing(requests_session.get(url, stream=True)) as resp:
             if 'Content-Type' not in resp.headers \
                     or resp.headers['Content-Type'] not in CONTENT_TYPES:
-                log.debug(u'fetchart: not an image')
+                log.debug(u'not an image')
                 return
 
             # Generate a temporary file with the correct extension.
@@ -63,11 +63,11 @@ def _fetch_image(url):
                     as fh:
                 for chunk in resp.iter_content():
                     fh.write(chunk)
-            log.debug(u'fetchart: downloaded art to: {0}',
+            log.debug(u'downloaded art to: {0}',
                       util.displayable_path(fh.name))
             return fh.name
     except (IOError, requests.RequestException):
-        log.debug(u'fetchart: error fetching art')
+        log.debug(u'error fetching art')
 
 
 # ART SOURCES ################################################################
@@ -116,9 +116,9 @@ def aao_art(album):
     # Get the page from albumart.org.
     try:
         resp = requests_session.get(AAO_URL, params={'asin': album.asin})
-        log.debug(u'fetchart: scraped art URL: {0}', resp.url)
+        log.debug(u'scraped art URL: {0}', resp.url)
     except requests.RequestException:
-        log.debug(u'fetchart: error scraping art page')
+        log.debug(u'error scraping art page')
         return
 
     # Search the page for the image URL.
@@ -127,7 +127,7 @@ def aao_art(album):
         image_url = m.group(1)
         yield image_url
     else:
-        log.debug(u'fetchart: no image found on page')
+        log.debug(u'no image found on page')
 
 
 # Google Images scraper.
@@ -156,7 +156,7 @@ def google_art(album):
         for myUrl in dataInfo:
             yield myUrl['unescapedUrl']
     except:
-        log.debug(u'fetchart: error scraping art page')
+        log.debug(u'error scraping art page')
         return
 
 
@@ -171,7 +171,7 @@ def itunes_art(album):
         try:
             itunes_album = itunes.search_album(search_string)[0]
         except Exception as exc:
-            log.debug('fetchart: iTunes search failed: {0}', exc)
+            log.debug('iTunes search failed: {0}', exc)
             return
 
         if itunes_album.get_artwork()['100']:
@@ -179,9 +179,9 @@ def itunes_art(album):
             big_url = small_url.replace('100x100', '1200x1200')
             yield big_url
         else:
-            log.debug(u'fetchart: album has no artwork in iTunes Store')
+            log.debug(u'album has no artwork in iTunes Store')
     except IndexError:
-        log.debug(u'fetchart: album not found in iTunes Store')
+        log.debug(u'album not found in iTunes Store')
 
 
 # Art from the filesystem.
@@ -215,13 +215,13 @@ def art_in_path(path, cover_names, cautious):
     cover_pat = r"(\b|_)({0})(\b|_)".format('|'.join(cover_names))
     for fn in images:
         if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
-            log.debug(u'fetchart: using well-named art file {0}',
+            log.debug(u'using well-named art file {0}',
                       util.displayable_path(fn))
             return os.path.join(path, fn)
 
     # Fall back to any image in the folder.
     if images and not cautious:
-        log.debug(u'fetchart: using fallback art file {0}',
+        log.debug(u'using fallback art file {0}',
                   util.displayable_path(images[0]))
         return os.path.join(path, images[0])
 

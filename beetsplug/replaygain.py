@@ -25,7 +25,7 @@ from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output, displayable_path
 from beets import config
 
-log = logging.getLogger('beets.replaygain')
+log = logging.getLogger(__name__)
 
 
 # Utilities.
@@ -135,7 +135,7 @@ class CommandBackend(Backend):
 
         supported_items = filter(self.format_supported, album.items())
         if len(supported_items) != len(album.items()):
-            log.debug(u'replaygain: tracks are of unsupported format')
+            log.debug(u'tracks are of unsupported format')
             return AlbumGain(None, [])
 
         output = self.compute_gain(supported_items, True)
@@ -180,11 +180,10 @@ class CommandBackend(Backend):
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
-        log.debug(u'replaygain: analyzing {0} files', len(items))
-        log.debug(u"replaygain: executing {0}",
-                  " ".join(map(displayable_path, cmd)))
+        log.debug(u'analyzing {0} files', len(items))
+        log.debug(u"executing {0}", " ".join(map(displayable_path, cmd)))
         output = call(cmd)
-        log.debug(u'replaygain: analysis finished')
+        log.debug(u'analysis finished')
         results = self.parse_tool_output(output,
                                          len(items) + (1 if is_album else 0))
 
@@ -199,7 +198,7 @@ class CommandBackend(Backend):
         for line in text.split('\n')[1:num_lines + 1]:
             parts = line.split('\t')
             if len(parts) != 6 or parts[0] == 'File':
-                log.debug(u'replaygain: bad tool output: {0}', text)
+                log.debug(u'bad tool output: {0}', text)
                 raise ReplayGainError('mp3gain failed')
             d = {
                 'file': parts[0],
@@ -651,7 +650,7 @@ class ReplayGainPlugin(BeetsPlugin):
         item.rg_track_peak = track_gain.peak
         item.store()
 
-        log.debug(u'replaygain: applied track gain {0}, peak {1}',
+        log.debug(u'applied track gain {0}, peak {1}',
                   item.rg_track_gain, item.rg_track_peak)
 
     def store_album_gain(self, album, album_gain):
@@ -659,7 +658,7 @@ class ReplayGainPlugin(BeetsPlugin):
         album.rg_album_peak = album_gain.peak
         album.store()
 
-        log.debug(u'replaygain: applied album gain {0}, peak {1}',
+        log.debug(u'applied album gain {0}, peak {1}',
                   album.rg_album_gain, album.rg_album_peak)
 
     def handle_album(self, album, write):

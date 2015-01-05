@@ -13,7 +13,7 @@ from beets import config
 from beets import util
 from beets.plugins import BeetsPlugin
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 class ImportAddedPlugin(BeetsPlugin):

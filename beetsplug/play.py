@@ -25,7 +25,7 @@ import platform
 import shlex
 from tempfile import NamedTemporaryFile
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 def play_music(lib, opts, args):
@@ -105,7 +105,7 @@ def play_music(lib, opts, args):
                   util.displayable_path(command[0]),
                   output.decode('utf8', 'ignore'))
     else:
-        log.debug(u'play: no output')
+        log.debug(u'no output')
 
     ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
 

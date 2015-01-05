@@ -26,7 +26,7 @@ from beets.plugins import BeetsPlugin
 from beetsplug.embedart import embed_item
 from beets.util.confit import ConfigTypeError
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
 

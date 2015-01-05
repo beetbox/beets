@@ -22,7 +22,7 @@ from beets.ui import decargs, print_obj, vararg_callback, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess
 
 PLUGIN = 'duplicates'
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 def _process_item(item, lib, copy=False, move=False, delete=False,

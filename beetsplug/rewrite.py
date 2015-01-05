@@ -23,7 +23,7 @@ from beets import logging
 from beets import ui
 from beets import library
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 def rewriter(field, rules):

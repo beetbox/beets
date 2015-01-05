@@ -19,7 +19,7 @@ import time
 from beets import ui, logging
 from beets.plugins import BeetsPlugin
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 def bpm(max_strokes):

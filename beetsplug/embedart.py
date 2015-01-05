@@ -29,7 +29,7 @@ from beets.util.artresizer import ArtResizer
 from beets import config
 
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
@@ -46,12 +46,12 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
             self.config['maxwidth'] = 0
-            log.warn(u"embedart: ImageMagick or PIL not found; "
+            log.warn(u"ImageMagick or PIL not found; "
                      u"'maxwidth' option ignored")
         if self.config['compare_threshold'].get(int) and not \
                 ArtResizer.shared.can_compare:
             self.config['compare_threshold'] = 0
-            log.warn(u"embedart: ImageMagick 6.8.7 or higher not installed; "
+            log.warn(u"ImageMagick 6.8.7 or higher not installed; "
                      u"'compare_threshold' option ignored")
 
     def commands(self):
@@ -122,17 +122,17 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
         if not art:
             pass
         else:
-            log.debug(u'embedart: media file contained art already {0}',
+            log.debug(u'media file contained art already {0}',
                       displayable_path(imagepath))
             return
     if maxwidth and not as_album:
         imagepath = resize_image(imagepath, maxwidth)
 
     try:
-        log.debug(u'embedart: embedding {0}', displayable_path(imagepath))
+        log.debug(u'embedding {0}', displayable_path(imagepath))
         item['images'] = [_mediafile_image(imagepath, maxwidth)]
     except IOError as exc:
-        log.error(u'embedart: could not read image file: {0}', exc)
+        log.error(u'could not read image file: {0}', exc)
     else:
         # We don't want to store the image in the database.
         item.try_write(itempath)
@@ -192,15 +192,15 @@ def check_art_similarity(item, imagepath, compare_threshold):
             stdout, stderr = proc.communicate()
             if proc.returncode:
                 if proc.returncode != 1:
-                    log.warn(u'embedart: IM phashes compare failed for '
-                             u'{0}, {1}', displayable_path(imagepath),
+                    log.warn(u'IM phashes compare failed for {0}, {1}',
+                             displayable_path(imagepath),
                              displayable_path(art))
                     return
                 phashDiff = float(stderr)
             else:
                 phashDiff = float(stdout)
 
-            log.info(u'embedart: compare PHASH score is {0}', phashDiff)
+            log.info(u'compare PHASH score is {0}', phashDiff)
             if phashDiff > compare_threshold:
                 return False
 

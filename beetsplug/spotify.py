@@ -7,7 +7,7 @@ from beets.ui import decargs
 from beets import ui, logging
 from requests.exceptions import HTTPError
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 class SpotifyPlugin(BeetsPlugin):

@@ -20,7 +20,7 @@ from beets.autotag import hooks
 from beets import config
 from collections import defaultdict
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 def mbsync_singletons(lib, query, move, pretend, write):

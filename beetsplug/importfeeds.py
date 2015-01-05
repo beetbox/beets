@@ -25,7 +25,7 @@ from beets.util import normpath, syspath, bytestring_path
 from beets import config, logging
 
 M3U_DEFAULT_NAME = 'imported.m3u'
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 
 class ImportFeedsPlugin(BeetsPlugin):

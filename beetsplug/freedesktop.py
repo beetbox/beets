@@ -22,7 +22,7 @@ from beets.ui import decargs
 
 import os
 
-log = logging.getLogger('beets.freedesktop')
+log = logging.getLogger(__name__)
 
 
 def process_query(lib, opts, args):
@@ -37,7 +37,7 @@ def process_album(album):
         artfile = os.path.split(fullartpath)[1]
         create_file(albumpath, artfile)
     else:
-        log.debug(u'freedesktop: album has no art')
+        log.debug(u'album has no art')
 
 
 def create_file(albumpath, artfile):

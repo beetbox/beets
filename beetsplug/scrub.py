@@ -23,7 +23,7 @@ from beets import util
 from beets import config
 from beets import mediafile
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 _MUTAGEN_FORMATS = {
     'asf': 'ASF',
