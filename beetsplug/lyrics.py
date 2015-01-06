@@ -23,6 +23,7 @@ import unicodedata
 import urllib
 import difflib
 import itertools
+import warnings
 from HTMLParser import HTMLParseError
 
 from beets import plugins
@@ -50,6 +51,7 @@ URL_CHARACTERS = {
 
 
 # Utilities.
+
 
 def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
@@ -176,7 +178,13 @@ class Backend(object):
         is unreachable.
         """
         try:
-            r = requests.get(url, verify=False)
+            # Disable the InsecureRequestWarning that comes from using
+            # `verify=false`.
+            # https://github.com/kennethreitz/requests/issues/2214
+            # We're not overly worried about the NSA MITMing our lyrics scraper
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                r = requests.get(url, verify=False)
         except requests.RequestException as exc:
             self._log.debug(u'lyrics request failed: {0}', exc)
             return

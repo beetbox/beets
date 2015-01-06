@@ -275,6 +275,7 @@ coimbra fado
 coladeira
 colombianas
 combined rhythm
+comedy
 comedy rap
 comedy rock
 comic opera
@@ -647,6 +648,7 @@ hua'er
 huasteco
 huayno
 hula
+humor
 humppa
 hunguhungu
 hyangak
@@ -1352,6 +1354,7 @@ sprechgesang
 square dance
 squee
 st. louis blues
+stand-up
 steelband
 stoner metal
 stoner rock
