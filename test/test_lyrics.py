@@ -323,7 +323,8 @@ class LyricsGooglePluginTest(unittest.TestCase):
         for s in GOOGLE_SOURCES:
             url = s['url'] + s['path']
             if os.path.isfile(url_to_filename(url)):
-                res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
+                res = lyrics.scrape_lyrics_from_html(
+                    raw_backend.fetch_url(url))
                 self.assertTrue(google.is_lyrics(res), url)
                 self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
