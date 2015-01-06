@@ -16,8 +16,8 @@
 """
 
 import os
-import logging
 
+from beets import logging
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import mediafile
@@ -52,7 +52,7 @@ def run(lib, opts, args):
         try:
             data = data_emitter()
         except mediafile.UnreadableFileError as ex:
-            log.error(u'cannot read file: {0}'.format(ex.message))
+            log.error(u'cannot read file: {0}', ex.message)
             continue
 
         if opts.summarize:

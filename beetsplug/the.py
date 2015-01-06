@@ -15,7 +15,7 @@
 """Moves patterns in path formats (suitable for moving articles)."""
 
 import re
-import logging
+from beets import logging
 from beets.plugins import BeetsPlugin
 
 __author__ = 'baobab@heresiarch.info'
@@ -56,11 +56,11 @@ class ThePlugin(BeetsPlugin):
                 try:
                     re.compile(p)
                 except re.error:
-                    self._log.error(u'[the] invalid pattern: {0}'.format(p))
+                    self._log.error(u'[the] invalid pattern: {0}', p)
                 else:
                     if not (p.startswith('^') or p.endswith('$')):
                         self._log.warn(u'[the] warning: \"{0}\" will not '
-                                       'match string start/end'.format(p))
+                                       'match string start/end', p)
         if self.config['a']:
             self.patterns = [PATTERN_A] + self.patterns
         if self.config['the']:
@@ -99,7 +99,7 @@ class ThePlugin(BeetsPlugin):
                 r = self.unthe(text, p)
                 if r != text:
                     break
-            self._log.debug(u'[the] \"{0}\" -> \"{1}\"'.format(text, r))
+            self._log.debug(u'[the] \"{0}\" -> \"{1}\"', text, r)
             return r
         else:
             return u''

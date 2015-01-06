@@ -14,7 +14,6 @@
 
 """Converts tracks or albums to external directory
 """
-import logging
 import os
 import threading
 import subprocess
@@ -22,7 +21,7 @@ import tempfile
 import shlex
 from string import Template
 
-from beets import ui, util, plugins, config
+from beets import logging, ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from beetsplug.embedart import embed_item
 from beets.util.confit import ConfigTypeError
@@ -92,7 +91,7 @@ def encode(command, source, dest, pretend=False):
     quiet = config['convert']['quiet'].get()
 
     if not quiet and not pretend:
-        log.info(u'Encoding {0}'.format(util.displayable_path(source)))
+        log.info(u'Encoding {0}', util.displayable_path(source))
 
     # Substitute $source and $dest in the argument list.
     args = shlex.split(command)
@@ -110,12 +109,11 @@ def encode(command, source, dest, pretend=False):
         util.command_output(args)
     except subprocess.CalledProcessError as exc:
         # Something went wrong (probably Ctrl+C), remove temporary files
-        log.info(u'Encoding {0} failed. Cleaning up...'
-                 .format(util.displayable_path(source)))
-        log.debug(u'Command {0} exited with status {1}'.format(
-            exc.cmd.decode('utf8', 'ignore'),
-            exc.returncode,
-        ))
+        log.info(u'Encoding {0} failed. Cleaning up...',
+                 util.displayable_path(source))
+        log.debug(u'Command {0} exited with status {1}',
+                  exc.cmd.decode('utf8', 'ignore'),
+                  exc.returncode)
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         raise
@@ -127,9 +125,8 @@ def encode(command, source, dest, pretend=False):
         )
 
     if not quiet and not pretend:
-        log.info(u'Finished encoding {0}'.format(
-            util.displayable_path(source))
-        )
+        log.info(u'Finished encoding {0}',
+                 util.displayable_path(source))
 
 
 def should_transcode(item, format):
@@ -173,21 +170,17 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                 util.mkdirall(dest)
 
         if os.path.exists(util.syspath(dest)):
-            log.info(u'Skipping {0} (target file exists)'.format(
-                util.displayable_path(item.path)
-            ))
+            log.info(u'Skipping {0} (target file exists)',
+                     util.displayable_path(item.path))
             continue
 
         if keep_new:
             if pretend:
-                log.info(u'mv {0} {1}'.format(
-                    util.displayable_path(item.path),
-                    util.displayable_path(original),
-                ))
+                log.info(u'mv {0} {1}',
+                         util.displayable_path(item.path),
+                         util.displayable_path(original))
             else:
-                log.info(u'Moving to {0}'.format(
-                    util.displayable_path(original))
-                )
+                log.info(u'Moving to {0}', util.displayable_path(original))
                 util.move(item.path, original)
 
         if should_transcode(item, format):
@@ -197,15 +190,12 @@ def convert_item(dest_dir, keep_new, path_formats, format, pretend=False):
                 continue
         else:
             if pretend:
-                log.info(u'cp {0} {1}'.format(
-                    util.displayable_path(original),
-                    util.displayable_path(converted),
-                ))
+                log.info(u'cp {0} {1}',
+                         util.displayable_path(original),
+                         util.displayable_path(converted))
             else:
                 # No transcoding necessary.
-                log.info(u'Copying {0}'.format(
-                    util.displayable_path(item.path))
-                )
+                log.info(u'Copying {0}', util.displayable_path(item.path))
                 util.copy(original, converted)
 
         if pretend:
@@ -281,19 +271,17 @@ def copy_album_art(album, dest_dir, path_formats, pretend=False):
         util.mkdirall(dest)
 
     if os.path.exists(util.syspath(dest)):
-        log.info(u'Skipping {0} (target file exists)'.format(
-            util.displayable_path(album.artpath)
-        ))
+        log.info(u'Skipping {0} (target file exists)',
+                 util.displayable_path(album.artpath))
         return
 
     if pretend:
-        log.info(u'cp {0} {1}'.format(
-            util.displayable_path(album.artpath),
-            util.displayable_path(dest),
-        ))
+        log.info(u'cp {0} {1}',
+                 util.displayable_path(album.artpath),
+                 util.displayable_path(dest))
     else:
-        log.info(u'Copying cover art to {0}'.format(
-                 util.displayable_path(dest)))
+        log.info(u'Copying cover art to {0}',
+                 util.displayable_path(dest))
         util.copy(album.artpath, dest)
 
 

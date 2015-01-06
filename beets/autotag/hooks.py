@@ -13,10 +13,10 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-import logging
 from collections import namedtuple
 import re
 
+from beets import logging
 from beets import plugins
 from beets import config
 from beets.autotag import mb

@@ -16,12 +16,12 @@
 """
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
+from beets import logging
 from beets import config
 from beets import ui
 from beets import util
 from os.path import relpath
 import platform
-import logging
 import shlex
 from tempfile import NamedTemporaryFile
 
@@ -101,10 +101,9 @@ def play_music(lib, opts, args):
     # Invoke the command and log the output.
     output = util.command_output(command)
     if output:
-        log.debug(u'Output of {0}: {1}'.format(
-            util.displayable_path(command[0]),
-            output.decode('utf8', 'ignore'),
-        ))
+        log.debug(u'Output of {0}: {1}',
+                  util.displayable_path(command[0]),
+                  output.decode('utf8', 'ignore'))
     else:
         log.debug(u'play: no output')
 

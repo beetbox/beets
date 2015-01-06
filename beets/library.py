@@ -16,12 +16,13 @@
 """
 import os
 import sys
-import logging
 import shlex
 import unicodedata
 import time
 import re
 from unidecode import unidecode
+
+from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
 from beets import plugins
 from beets import util
@@ -509,7 +510,7 @@ class Item(LibModel):
             self.write(path)
             return True
         except FileOperationError as exc:
-            log.error(exc)
+            log.error(str(exc))
             return False
 
     def try_sync(self, write=None):
@@ -837,9 +838,9 @@ class Album(LibModel):
             return
 
         new_art = util.unique_path(new_art)
-        log.debug(u'moving album art {0} to {1}'
-                  .format(util.displayable_path(old_art),
-                          util.displayable_path(new_art)))
+        log.debug(u'moving album art {0} to {1}',
+                  util.displayable_path(old_art),
+                  util.displayable_path(new_art))
         if copy:
             util.copy(old_art, new_art)
         elif link:

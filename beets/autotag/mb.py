@@ -14,12 +14,12 @@
 
 """Searches for albums in the MusicBrainz database.
 """
-import logging
 import musicbrainzngs
 import re
 import traceback
 from urlparse import urljoin
 
+from beets import logging
 import beets.autotag.hooks
 import beets
 from beets import util
@@ -374,7 +374,7 @@ def album_for_id(releaseid):
     """
     albumid = _parse_id(releaseid)
     if not albumid:
-        log.debug(u'Invalid MBID ({0}).'.format(releaseid))
+        log.debug(u'Invalid MBID ({0}).', releaseid)
         return
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
@@ -394,7 +394,7 @@ def track_for_id(releaseid):
     """
     trackid = _parse_id(releaseid)
     if not trackid:
-        log.debug(u'Invalid MBID ({0}).'.format(releaseid))
+        log.debug(u'Invalid MBID ({0}).', releaseid)
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)

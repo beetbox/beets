@@ -16,12 +16,12 @@ from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
+from beets import logging
 from beets import ui
 from beets import config
 import musicbrainzngs
 
 import re
-import logging
 
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
@@ -79,7 +79,7 @@ def update_album_list(album_list):
             if re.match(UUID_REGEX, aid):
                 album_ids.append(aid)
             else:
-                log.info(u'skipping invalid MBID: {0}'.format(aid))
+                log.info(u'skipping invalid MBID: {0}', aid)
 
     # Submit to MusicBrainz.
     print('Updating MusicBrainz collection {0}...'.format(collection_id))

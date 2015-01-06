@@ -16,10 +16,11 @@
 """
 
 from datetime import datetime
-import logging
 import re
 import string
 from itertools import tee, izip
+
+from beets import logging
 from beets import plugins, ui
 
 log = logging.getLogger('beets')

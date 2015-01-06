@@ -19,7 +19,6 @@ from __future__ import print_function
 
 import os
 import re
-import logging
 import pickle
 import itertools
 from collections import defaultdict
@@ -28,6 +27,7 @@ from bisect import insort, bisect_left
 from contextlib import contextmanager
 import shutil
 
+from beets import logging
 from beets import autotag
 from beets import library
 from beets import dbcore
@@ -71,7 +71,7 @@ def _open_state():
         # unpickling, including ImportError. We use a catch-all
         # exception to avoid enumerating them all (the docs don't even have a
         # full list!).
-        log.debug(u'state file could not be read: {0}'.format(exc))
+        log.debug(u'state file could not be read: {0}', exc)
         return {}
 
 
@@ -81,7 +81,7 @@ def _save_state(state):
         with open(config['statefile'].as_filename(), 'w') as f:
             pickle.dump(state, f)
     except IOError as exc:
-        log.error(u'state file could not be written: {0}'.format(exc))
+        log.error(u'state file could not be written: {0}', exc)
 
 
 # Utilities for reading and writing the beets progress file, which
@@ -347,8 +347,8 @@ class ImportSession(object):
             # Either accept immediately or prompt for input to decide.
             if self.want_resume is True or \
                self.should_resume(toppath):
-                log.warn(u'Resuming interrupted import of {0}'.format(
-                    util.displayable_path(toppath)))
+                log.warn(u'Resuming interrupted import of {0}',
+                         util.displayable_path(toppath))
                 self._is_resuming[toppath] = True
             else:
                 # Clear progress; we're starting from the top.
@@ -481,13 +481,12 @@ class ImportTask(object):
 
     def remove_duplicates(self, lib):
         duplicate_items = self.duplicate_items(lib)
-        log.debug(u'removing {0} old duplicated items'
-                  .format(len(duplicate_items)))
+        log.debug(u'removing {0} old duplicated items', len(duplicate_items))
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
-                log.debug(u'deleting duplicate {0}'
-                          .format(util.displayable_path(item.path)))
+                log.debug(u'deleting duplicate {0}',
+                          util.displayable_path(item.path))
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
@@ -686,12 +685,11 @@ class ImportTask(object):
                 self.album.store()
                 log.debug(
                     u'Reimported album: added {0}, flexible '
-                    u'attributes {1} from album {2} for {3}'.format(
-                        self.album.added,
-                        replaced_album._values_flex.keys(),
-                        replaced_album.id,
-                        displayable_path(self.album.path),
-                    )
+                    u'attributes {1} from album {2} for {3}',
+                    self.album.added,
+                    replaced_album._values_flex.keys(),
+                    replaced_album.id,
+                    displayable_path(self.album.path)
                 )
 
         for item in self.imported_items():
@@ -701,20 +699,18 @@ class ImportTask(object):
                     item.added = dup_item.added
                     log.debug(
                         u'Reimported item added {0} '
-                        u'from item {1} for {2}'.format(
-                            item.added,
-                            dup_item.id,
-                            displayable_path(item.path),
-                        )
+                        u'from item {1} for {2}',
+                        item.added,
+                        dup_item.id,
+                        displayable_path(item.path)
                     )
                 item.update(dup_item._values_flex)
                 log.debug(
                     u'Reimported item flexible attributes {0} '
-                    u'from item {1} for {2}'.format(
-                        dup_item._values_flex.keys(),
-                        dup_item.id,
-                        displayable_path(item.path),
-                    )
+                    u'from item {1} for {2}',
+                    dup_item._values_flex.keys(),
+                    dup_item.id,
+                    displayable_path(item.path)
                 )
                 item.store()
 
@@ -724,13 +720,12 @@ class ImportTask(object):
         """
         for item in self.imported_items():
             for dup_item in self.replaced_items[item]:
-                log.debug(u'Replacing item {0}: {1}'
-                          .format(dup_item.id,
-                                  displayable_path(item.path)))
+                log.debug(u'Replacing item {0}: {1}',
+                          dup_item.id, displayable_path(item.path))
                 dup_item.remove()
-        log.debug(u'{0} of {1} items replaced'
-                  .format(sum(bool(l) for l in self.replaced_items.values()),
-                          len(self.imported_items())))
+        log.debug(u'{0} of {1} items replaced',
+                  sum(bool(l) for l in self.replaced_items.values()),
+                  len(self.imported_items()))
 
     def choose_match(self, session):
         """Ask the session which match should apply and apply it.
@@ -1002,8 +997,8 @@ class ImportTaskFactory(object):
 
     def singleton(self, path):
         if self.session.already_imported(self.toppath, [path]):
-            log.debug(u'Skipping previously-imported path: {0}'
-                      .format(displayable_path(path)))
+            log.debug(u'Skipping previously-imported path: {0}',
+                      displayable_path(path))
             self.skipped += 1
             return None
 
@@ -1026,8 +1021,8 @@ class ImportTaskFactory(object):
             dirs = list(set(os.path.dirname(p) for p in paths))
 
         if self.session.already_imported(self.toppath, dirs):
-            log.debug(u'Skipping previously-imported path: {0}'
-                      .format(displayable_path(dirs)))
+            log.debug(u'Skipping previously-imported path: {0}',
+                      displayable_path(dirs))
             self.skipped += 1
             return None
 
@@ -1055,14 +1050,10 @@ class ImportTaskFactory(object):
                 # Silently ignore non-music files.
                 pass
             elif isinstance(exc.reason, mediafile.UnreadableFileError):
-                log.warn(u'unreadable file: {0}'.format(
-                    displayable_path(path))
-                )
+                log.warn(u'unreadable file: {0}', displayable_path(path))
             else:
-                log.error(u'error reading {0}: {1}'.format(
-                    displayable_path(path),
-                    exc,
-                ))
+                log.error(u'error reading {0}: {1}',
+                          displayable_path(path), exc)
 
 
 # Full-album pipeline stages.
@@ -1086,13 +1077,13 @@ def read_tasks(session):
                          "'copy' or 'move' to be enabled.")
                 continue
 
-            log.debug(u'extracting archive {0}'
-                      .format(displayable_path(toppath)))
+            log.debug(u'extracting archive {0}',
+                      displayable_path(toppath))
             archive_task = ArchiveImportTask(toppath)
             try:
                 archive_task.extract()
             except Exception as exc:
-                log.error(u'extraction failed: {0}'.format(exc))
+                log.error(u'extraction failed: {0}', exc)
                 continue
 
             # Continue reading albums from the extracted directory.
@@ -1112,12 +1103,12 @@ def read_tasks(session):
             yield archive_task
 
         if not imported:
-            log.warn(u'No files imported from {0}'
-                     .format(displayable_path(user_toppath)))
+            log.warn(u'No files imported from {0}',
+                     displayable_path(user_toppath))
 
     # Show skipped directories.
     if skipped:
-        log.info(u'Skipped {0} directories.'.format(skipped))
+        log.info(u'Skipped {0} directories.', skipped)
 
 
 def query_tasks(session):
@@ -1133,8 +1124,8 @@ def query_tasks(session):
     else:
         # Search for albums.
         for album in session.lib.albums(session.query):
-            log.debug(u'yielding album {0}: {1} - {2}'
-                      .format(album.id, album.albumartist, album.album))
+            log.debug(u'yielding album {0}: {1} - {2}',
+                      album.id, album.albumartist, album.album)
             items = list(album.items())
 
             # Clear IDs from re-tagged items so they appear "fresh" when
@@ -1159,7 +1150,7 @@ def lookup_candidates(session, task):
         return
 
     plugins.send('import_task_start', session=session, task=task)
-    log.debug(u'Looking up: {0}'.format(displayable_path(task.paths)))
+    log.debug(u'Looking up: {0}', displayable_path(task.paths))
     task.lookup_candidates()
 
 
@@ -1300,12 +1291,11 @@ def log_files(session, task):
     """A coroutine (pipeline stage) to log each file which will be imported
     """
     if isinstance(task, SingletonImportTask):
-        log.info(
-            'Singleton: {0}'.format(displayable_path(task.item['path'])))
+        log.info('Singleton: {0}', displayable_path(task.item['path']))
     elif task.items:
-        log.info('Album {0}'.format(displayable_path(task.paths[0])))
+        log.info('Album {0}', displayable_path(task.paths[0]))
         for item in task.items:
-            log.info('  {0}'.format(displayable_path(item['path'])))
+            log.info('  {0}', displayable_path(item['path']))
 
 
 def group_albums(session):

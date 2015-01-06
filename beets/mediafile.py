@@ -48,10 +48,10 @@ import math
 import struct
 import imghdr
 import os
-import logging
 import traceback
 import enum
 
+from beets import logging
 from beets.util import displayable_path
 
 
@@ -1313,7 +1313,7 @@ class MediaFile(object):
         try:
             self.mgfile = mutagen.File(path)
         except unreadable_exc as exc:
-            log.debug(u'header parsing failed: {0}'.format(unicode(exc)))
+            log.debug(u'header parsing failed: {0}', unicode(exc))
             raise UnreadableFileError(path)
         except IOError as exc:
             if type(exc) == IOError:
@@ -1326,7 +1326,7 @@ class MediaFile(object):
         except Exception as exc:
             # Isolate bugs in Mutagen.
             log.debug(traceback.format_exc())
-            log.error(u'uncaught Mutagen exception in open: {0}'.format(exc))
+            log.error(u'uncaught Mutagen exception in open: {0}', exc)
             raise MutagenError(path, exc)
 
         if self.mgfile is None:
@@ -1399,7 +1399,7 @@ class MediaFile(object):
             raise
         except Exception as exc:
             log.debug(traceback.format_exc())
-            log.error(u'uncaught Mutagen exception in save: {0}'.format(exc))
+            log.error(u'uncaught Mutagen exception in save: {0}', exc)
             raise MutagenError(self.path, exc)
 
     def delete(self):

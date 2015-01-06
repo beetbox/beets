@@ -20,7 +20,8 @@ import subprocess
 import os
 import re
 from tempfile import NamedTemporaryFile
-import logging
+
+from beets import logging
 from beets import util
 
 # Resizing methods
@@ -58,9 +59,8 @@ def pil_resize(maxwidth, path_in, path_out=None):
     """
     path_out = path_out or temp_file_for(path_in)
     from PIL import Image
-    log.debug(u'artresizer: PIL resizing {0} to {1}'.format(
-        util.displayable_path(path_in), util.displayable_path(path_out)
-    ))
+    log.debug(u'artresizer: PIL resizing {0} to {1}',
+              util.displayable_path(path_in), util.displayable_path(path_out))
 
     try:
         im = Image.open(util.syspath(path_in))
@@ -69,9 +69,8 @@ def pil_resize(maxwidth, path_in, path_out=None):
         im.save(path_out)
         return path_out
     except IOError:
-        log.error(u"PIL cannot create thumbnail for '{0}'".format(
-            util.displayable_path(path_in)
-        ))
+        log.error(u"PIL cannot create thumbnail for '{0}'",
+                  util.displayable_path(path_in))
         return path_in
 
 
@@ -80,9 +79,8 @@ def im_resize(maxwidth, path_in, path_out=None):
     Return the output path of resized image.
     """
     path_out = path_out or temp_file_for(path_in)
-    log.debug(u'artresizer: ImageMagick resizing {0} to {1}'.format(
-        util.displayable_path(path_in), util.displayable_path(path_out)
-    ))
+    log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
+              util.displayable_path(path_in), util.displayable_path(path_out))
 
     # "-resize widthxheight>" shrinks images with dimension(s) larger
     # than the corresponding width and/or height dimension(s). The >
@@ -94,9 +92,8 @@ def im_resize(maxwidth, path_in, path_out=None):
             '-resize', '{0}x^>'.format(maxwidth), path_out
         ])
     except subprocess.CalledProcessError:
-        log.warn(u'artresizer: IM convert failed for {0}'.format(
-            util.displayable_path(path_in)
-        ))
+        log.warn(u'artresizer: IM convert failed for {0}',
+                 util.displayable_path(path_in))
         return path_in
     return path_out
 
@@ -134,7 +131,7 @@ class ArtResizer(object):
         specified, with an inferred method.
         """
         self.method = self._check_method(method)
-        log.debug(u"artresizer: method is {0}".format(self.method))
+        log.debug(u"artresizer: method is {0}", self.method)
         self.can_compare = self._can_compare()
 
     def resize(self, maxwidth, path_in, path_out=None):

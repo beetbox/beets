@@ -15,14 +15,13 @@
 """Fetch a variety of acoustic metrics from The Echo Nest.
 """
 import time
-import logging
 import socket
 import os
 import tempfile
 from string import Template
 import subprocess
 
-from beets import util, config, plugins, ui
+from beets import util, config, plugins, ui, logging
 from beets.dbcore import types
 import pyechonest
 import pyechonest.song
@@ -154,23 +153,23 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 if e.code == 3:
                     # reached access limit per minute
                     log.debug(u'echonest: rate-limited on try {0}; '
-                              u'waiting {1} seconds'
-                              .format(i + 1, RETRY_INTERVAL))
+                              u'waiting {1} seconds',
+                              i + 1, RETRY_INTERVAL)
                     time.sleep(RETRY_INTERVAL)
                 elif e.code == 5:
                     # specified identifier does not exist
                     # no use in trying again.
-                    log.debug(u'echonest: {0}'.format(e))
+                    log.debug(u'echonest: {0}', e)
                     return None
                 else:
-                    log.error(u'echonest: {0}'.format(e.args[0][0]))
+                    log.error(u'echonest: {0}', e.args[0][0])
                     return None
             except (pyechonest.util.EchoNestIOError, socket.error) as e:
-                log.warn(u'echonest: IO error: {0}'.format(e))
+                log.warn(u'echonest: IO error: {0}', e)
                 time.sleep(RETRY_INTERVAL)
             except Exception as e:
                 # there was an error analyzing the track, status: error
-                log.debug(u'echonest: {0}'.format(e))
+                log.debug(u'echonest: {0}', e)
                 return None
             else:
                 break
@@ -292,10 +291,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
 
-        log.info(u'echonest: encoding {0} to {1}'.format(
-            util.displayable_path(source),
-            util.displayable_path(dest),
-        ))
+        log.info(u'echonest: encoding {0} to {1}',
+                 util.displayable_path(source),
+                 util.displayable_path(dest))
 
         opts = []
         for arg in CONVERT_COMMAND.split():
@@ -306,13 +304,12 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         try:
             util.command_output(opts)
         except (OSError, subprocess.CalledProcessError) as exc:
-            log.debug(u'echonest: encode failed: {0}'.format(exc))
+            log.debug(u'echonest: encode failed: {0}', exc)
             util.remove(dest)
             return
 
-        log.info(u'echonest: finished encoding {0}'.format(
-            util.displayable_path(source))
-        )
+        log.info(u'echonest: finished encoding {0}',
+                 util.displayable_path(source))
         return dest
 
     def truncate(self, source):
@@ -320,10 +317,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
 
-        log.info(u'echonest: truncating {0} to {1}'.format(
-            util.displayable_path(source),
-            util.displayable_path(dest),
-        ))
+        log.info(u'echonest: truncating {0} to {1}',
+                 util.displayable_path(source),
+                 util.displayable_path(dest))
 
         opts = []
         for arg in TRUNCATE_COMMAND.split():
@@ -334,13 +330,12 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         try:
             util.command_output(opts)
         except (OSError, subprocess.CalledProcessError) as exc:
-            log.debug(u'echonest: truncate failed: {0}'.format(exc))
+            log.debug(u'echonest: truncate failed: {0}', exc)
             util.remove(dest)
             return
 
-        log.info(u'echonest: truncate encoding {0}'.format(
-            util.displayable_path(source))
-        )
+        log.info(u'echonest: truncate encoding {0}',
+                 util.displayable_path(source))
         return dest
 
     def analyze(self, item):
@@ -411,14 +406,12 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         for method in methods:
             song = method(item)
             if song:
-                log.debug(
-                    u'echonest: got song through {0}: {1} - {2} [{3}]'.format(
-                        method.__name__,
-                        item.artist,
-                        item.title,
-                        song.get('duration'),
-                    )
-                )
+                log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]',
+                          method.__name__,
+                          item.artist,
+                          item.title,
+                          song.get('duration'),
+                          )
                 return song
 
     def apply_metadata(self, item, values, write=False):
@@ -429,7 +422,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         for k, v in values.iteritems():
             if k in ATTRIBUTES:
                 field = ATTRIBUTES[k]
-                log.debug(u'echonest: metadata: {0} = {1}'.format(field, v))
+                log.debug(u'echonest: metadata: {0} = {1}', field, v)
                 if field == 'bpm':
                     item[field] = int(v)
                 else:
@@ -441,7 +434,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             item['initial_key'] = key
         if 'id' in values:
             enid = values['id']
-            log.debug(u'echonest: metadata: {0} = {1}'.format(ID_KEY, enid))
+            log.debug(u'echonest: metadata: {0} = {1}', ID_KEY, enid)
             item[ID_KEY] = enid
 
         # Write and save.
@@ -483,8 +476,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                log.info(u'echonest: {0} - {1}'.format(item.artist,
-                                                       item.title))
+                log.info(u'echonest: {0} - {1}', item.artist, item.title)
                 if self.config['force'] or self.requires_update(item):
                     song = self.fetch_song(item)
                     if song:
