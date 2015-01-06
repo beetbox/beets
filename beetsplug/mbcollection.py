@@ -16,7 +16,6 @@ from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets import logging
 from beets import ui
 from beets import config
 import musicbrainzngs
@@ -25,8 +24,6 @@ import re
 
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
-
-log = logging.getLogger(__name__)
 
 
 def mb_call(func, *args, **kwargs):
@@ -54,48 +51,6 @@ def submit_albums(collection_id, release_ids):
         )
 
 
-def update_album_list(album_list):
-    """Update the MusicBrainz colleciton from a list of Beets albums
-    """
-    # Get the available collections.
-    collections = mb_call(musicbrainzngs.get_collections)
-    if not collections['collection-list']:
-        raise ui.UserError('no collections exist for user')
-
-    # Get the first release collection. MusicBrainz also has event
-    # collections, so we need to avoid adding to those.
-    for collection in collections['collection-list']:
-        if 'release-count' in collection:
-            collection_id = collection['id']
-            break
-    else:
-        raise ui.UserError('No collection found.')
-
-    # Get a list of all the album IDs.
-    album_ids = []
-    for album in album_list:
-        aid = album.mb_albumid
-        if aid:
-            if re.match(UUID_REGEX, aid):
-                album_ids.append(aid)
-            else:
-                log.info(u'skipping invalid MBID: {0}', aid)
-
-    # Submit to MusicBrainz.
-    print('Updating MusicBrainz collection {0}...'.format(collection_id))
-    submit_albums(collection_id, album_ids)
-    print('...MusicBrainz collection updated.')
-
-
-def update_collection(lib, opts, args):
-    update_album_list(lib.albums())
-
-
-update_mb_collection_cmd = Subcommand('mbupdate',
-                                      help='Update MusicBrainz collection')
-update_mb_collection_cmd.func = update_collection
-
-
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self):
         super(MusicBrainzCollectionPlugin, self).__init__()
@@ -108,10 +63,47 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             self._import_stages = [self.imported]
 
     def commands(self):
-        return [update_mb_collection_cmd]
+        mbupdate = Subcommand('mbupdate', help='Update MusicBrainz collection')
+        mbupdate.func = self.update_collection
+        return [mbupdate]
+
+    def update_collection(self, lib, opts, args):
+        self.update_album_list(lib.albums())
 
     def imported(self, session, task):
         """Add each imported album to the collection.
         """
         if task.is_album:
-            update_album_list([task.album])
+            self.update_album_list([task.album])
+
+    def update_album_list(self, album_list):
+        """Update the MusicBrainz colleciton from a list of Beets albums
+        """
+        # Get the available collections.
+        collections = mb_call(musicbrainzngs.get_collections)
+        if not collections['collection-list']:
+            raise ui.UserError('no collections exist for user')
+
+        # Get the first release collection. MusicBrainz also has event
+        # collections, so we need to avoid adding to those.
+        for collection in collections['collection-list']:
+            if 'release-count' in collection:
+                collection_id = collection['id']
+                break
+        else:
+            raise ui.UserError('No collection found.')
+
+        # Get a list of all the album IDs.
+        album_ids = []
+        for album in album_list:
+            aid = album.mb_albumid
+            if aid:
+                if re.match(UUID_REGEX, aid):
+                    album_ids.append(aid)
+                else:
+                    self._log.info(u'skipping invalid MBID: {0}', aid)
+
+        # Submit to MusicBrainz.
+        print('Updating MusicBrainz collection {0}...'.format(collection_id))
+        submit_albums(collection_id, album_ids)
+        print('...MusicBrainz collection updated.')

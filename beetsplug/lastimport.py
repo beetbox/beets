@@ -17,10 +17,8 @@ from beets import ui
 from beets import dbcore
 from beets import config
 from beets import plugins
-from beets import logging
 from beets.dbcore import types
 
-log = logging.getLogger(__name__)
 API_URL = 'http://ws.audioscrobbler.com/2.0/'
 
 
@@ -43,13 +41,13 @@ class LastImportPlugin(plugins.BeetsPlugin):
         cmd = ui.Subcommand('lastimport', help='import last.fm play-count')
 
         def func(lib, opts, args):
-            import_lastfm(lib)
+            import_lastfm(lib, self._log)
 
         cmd.func = func
         return [cmd]
 
 
-def import_lastfm(lib):
+def import_lastfm(lib, log):
     user = config['lastfm']['user']
     per_page = config['lastimport']['per_page']
 
@@ -78,7 +76,8 @@ def import_lastfm(lib):
                     # It means nothing to us!
                     raise ui.UserError('Last.fm reported no data.')
 
-                found, unknown = process_tracks(lib, page['tracks']['track'])
+                track = page['tracks']['track']
+                found, unknown = process_tracks(lib, track, log)
                 found_total += found
                 unknown_total += unknown
                 break
@@ -112,7 +111,7 @@ def fetch_tracks(user, page, limit):
     }).json()
 
 
-def process_tracks(lib, tracks):
+def process_tracks(lib, tracks, log):
     total = len(tracks)
     total_found = 0
     total_fails = 0

@@ -14,9 +14,10 @@
 
 """Send the results of a query to the configured music player as a playlist.
 """
+from functools import partial
+
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets import logging
 from beets import config
 from beets import ui
 from beets import util
@@ -25,10 +26,8 @@ import platform
 import shlex
 from tempfile import NamedTemporaryFile
 
-log = logging.getLogger(__name__)
 
-
-def play_music(lib, opts, args):
+def play_music(lib, opts, args, log):
     """Execute query, create temporary playlist and execute player
     command passing that playlist.
     """
@@ -133,5 +132,5 @@ class PlayPlugin(BeetsPlugin):
             action='store_true', default=False,
             help='query and load albums rather than tracks'
         )
-        play_command.func = play_music
+        play_command.func = partial(play_music, log=self._log)
         return [play_command]
