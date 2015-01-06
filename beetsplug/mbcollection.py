@@ -12,8 +12,6 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from __future__ import print_function
-
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets import ui
@@ -104,6 +102,6 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                     self._log.info(u'skipping invalid MBID: {0}', aid)
 
         # Submit to MusicBrainz.
-        print('Updating MusicBrainz collection {0}...'.format(collection_id))
+        self._log.info('Updating MusicBrainz collection {0}...', collection_id)
         submit_albums(collection_id, album_ids)
-        print('...MusicBrainz collection updated.')
+        self._log.info('...MusicBrainz collection updated.')
