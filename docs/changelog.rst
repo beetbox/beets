@@ -4,7 +4,10 @@ Changelog
 1.3.11 (in development)
 -----------------------
 
-Changelog goes here!
+Fixes:
+
+* :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
+  MusixMatch backend. :bug:`1204`
 
 
 1.3.10 (January 5, 2015)
