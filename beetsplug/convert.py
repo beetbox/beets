@@ -23,7 +23,7 @@ from string import Template
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from beetsplug.embedart import embed_item
+from beetsplug.embedart import EmbedCoverArtPlugin
 from beets.util.confit import ConfigTypeError
 
 _fs_lock = threading.Lock()
@@ -283,7 +283,8 @@ class ConvertPlugin(BeetsPlugin):
             if config['convert']['embed']:
                 album = item.get_album()
                 if album and album.artpath:
-                    embed_item(item, album.artpath, itempath=converted)
+                    EmbedCoverArtPlugin().embed_item(item, album.artpath,
+                                                     itempath=converted)
 
             if keep_new:
                 plugins.send('after_convert', item=item,
