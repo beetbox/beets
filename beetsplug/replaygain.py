@@ -628,7 +628,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         try:
             self.backend_instance = self.backends[backend_name](
-                self.config
+                self.config, self._log
             )
         except (ReplayGainError, FatalReplayGainError) as e:
             raise ui.UserError(
