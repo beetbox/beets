@@ -20,10 +20,7 @@ import re
 import string
 from itertools import tee, izip
 
-from beets import logging
 from beets import plugins, ui
-
-log = logging.getLogger(__name__)
 
 
 class BucketError(Exception):
