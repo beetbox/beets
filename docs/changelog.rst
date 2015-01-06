@@ -8,6 +8,8 @@ Fixes:
 
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
+* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* to the
+  built-in whitelist/canonicalization tree. :bug:`1206`
 
 
 1.3.10 (January 5, 2015)
