@@ -71,6 +71,7 @@ SAFE_COMMANDS = (
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
 
 # Loggers.
+log = logging.getLogger('beets.bpd')
 global_log = logging.getLogger('beets')
 
 
@@ -553,18 +554,12 @@ class Connection(object):
     """A connection between a client and the server. Handles input and
     output from and to the client.
     """
-    _log = None
-
     def __init__(self, server, sock):
         """Create a new connection for the accepted socket `client`.
         """
         self.server = server
         self.sock = sock
         self.authenticated = False
-
-    @classmethod
-    def set_logger(cls, logger):
-        cls._log = logger
 
     def send(self, lines):
         """Send lines, which which is either a single string or an
@@ -575,7 +570,7 @@ class Connection(object):
         if isinstance(lines, basestring):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
-        self._log.debug(out[:-1])  # Don't log trailing newline.
+        log.debug(out[:-1])  # Don't log trailing newline.
         if isinstance(out, unicode):
             out = out.encode('utf8')
         return self.sock.sendall(out)
@@ -606,7 +601,7 @@ class Connection(object):
             line = line.strip()
             if not line:
                 break
-            self._log.debug(line)
+            log.debug(line)
 
             if clist is not None:
                 # Command list already opened.
@@ -644,7 +639,6 @@ class Command(object):
 
     command_re = re.compile(r'^([^ \t]+)[ \t]*')
     arg_re = re.compile(r'"((?:\\"|[^"])+)"|([^ \t"]+)')
-    _log = None
 
     def __init__(self, s):
         """Creates a new `Command` from the given string, `s`, parsing
@@ -665,10 +659,6 @@ class Command(object):
                 arg = match[1]
             arg = arg.decode('utf8')
             self.args.append(arg)
-
-    @classmethod
-    def set_logger(cls, logger):
-        cls._log = logger
 
     def run(self, conn):
         """A coroutine that executes the command on the given
@@ -706,7 +696,7 @@ class Command(object):
 
         except Exception as e:
             # An "unintentional" error. Hide it from the client.
-            self._log.error(traceback.format_exc(e))
+            log.error(traceback.format_exc(e))
             raise BPDError(ERROR_SYSTEM, u'server error', self.name)
 
 
@@ -1161,8 +1151,6 @@ class BPDPlugin(BeetsPlugin):
             'password': u'',
             'volume': VOLUME_MAX,
         })
-        Connection.set_logger(self._log)
-        Server.set_logger(self._log)
 
     def start_bpd(self, lib, host, port, password, volume, debug):
         """Starts a BPD server."""
