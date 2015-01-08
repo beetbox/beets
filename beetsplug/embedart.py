@@ -61,9 +61,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd.parser.add_option(
             '-f', '--file', metavar='PATH', help='the image file to embed'
         )
-        maxwidth = config['embedart']['maxwidth'].get(int)
-        compare_threshold = config['embedart']['compare_threshold'].get(int)
-        ifempty = config['embedart']['ifempty'].get(bool)
+        maxwidth = self.config['maxwidth'].get(int)
+        compare_threshold = self.config['compare_threshold'].get(int)
+        ifempty = self.config['ifempty'].get(bool)
 
         def embed_func(lib, opts, args):
             if opts.file:
@@ -102,8 +102,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def album_imported(self, lib, album):
         """Automatically embed art into imported albums.
         """
-        if album.artpath and config['embedart']['auto']:
-            max_width = config['embedart']['maxwidth'].get(int)
+        if album.artpath and self.config['auto']:
+            max_width = self.config['maxwidth'].get(int)
             self.embed_album(album, max_width, True)
 
     def embed_item(self, item, imagepath, maxwidth=None, itempath=None,
@@ -157,8 +157,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
 
         for item in album.items():
-            thresh = config['embedart']['compare_threshold'].get(int)
-            ifempty = config['embedart']['ifempty'].get(bool)
+            thresh = self.config['compare_threshold'].get(int)
+            ifempty = self.config['ifempty'].get(bool)
             self.embed_item(item, imagepath, maxwidth, None,
                             thresh, ifempty, as_album=True)
 
