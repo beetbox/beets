@@ -23,7 +23,6 @@ from beets.util import confit
 from beets.autotag import hooks
 import acoustid
 from collections import defaultdict
-from functools import partial
 
 API_KEY = '1vOwZtEn'
 SCORE_THRESH = 0.5
@@ -133,8 +132,10 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         })
 
         if self.config['auto']:
-            self.register_listener('import_task_start',
-                                   partial(fingerprint_task, self._log))
+            self.register_listener('import_task_start', self.fingerprint_task)
+
+    def fingerprint_task(self, task, session):
+        return fingerprint_task(self._log, task, session)
 
     def track_distance(self, item, info):
         dist = hooks.Distance()
