@@ -207,7 +207,8 @@ def art_in_path(path, cover_names, cautious):
     images = []
     for fn in os.listdir(path):
         for ext in IMAGE_EXTENSIONS:
-            if fn.lower().endswith('.' + ext):
+            if fn.lower().endswith('.' + ext) and \
+               os.path.isfile(os.path.join(path, fn)):
                 images.append(fn)
 
     # Look for "preferred" filenames.
