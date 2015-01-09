@@ -112,8 +112,23 @@ an example::
     def loaded():
         print 'Plugin loaded!'
 
-Pass the name of the event in question to the ``listen`` decorator. The events
-currently available are:
+Pass the name of the event in question to the ``listen`` decorator.
+
+Note that if you want to access an attribute of your plugin (e.g. ``config`` or
+``log``) you'll have to define a method and not a function. Here is the usual
+registration process in this case::
+
+    from beets.plugins import BeetsPlugin
+
+    class SomePlugin(BeetsPlugin):
+      def __init__(self):
+        super(SomePlugin, self).__init__()
+        self.register_listener('pluginload', self.loaded)
+
+      def loaded(self):
+        self._log.info('Plugin loaded!')
+
+The events currently available are:
 
 * *pluginload*: called after all the plugins have been loaded after the ``beet``
   command starts
@@ -328,11 +343,11 @@ method.
 
 Here's an example plugin that provides a meaningless new field "foo"::
 
-    class FooPlugin(BeetsPlugin):
+    class fooplugin(beetsplugin):
         def __init__(self):
-            field = mediafile.MediaField(
-                mediafile.MP3DescStorageStyle(u'foo')
-                mediafile.StorageStyle(u'foo')
+            field = mediafile.mediafield(
+                mediafile.mp3descstoragestyle(u'foo')
+                mediafile.storagestyle(u'foo')
             )
             self.add_media_field('foo', field)
 
@@ -442,3 +457,21 @@ Specifying types has several advantages:
   from the command line.
 
 * User input for flexible fields may be validated and converted.
+
+
+Log stuff
+^^^^^^^^^
+
+A plugin has a ``_log`` attribute which is a ``Logger`` instance. A plugin in
+``beetsplug/myplugin.py`` will have a logger named ``beets.myplugin``.
+
+Logging uses {}-style formatting. Also note that logging should be lazy and not
+eager, for example::
+
+    from beets import logging
+
+    log = logging.getLogger('foo.bar')
+    log.info("I use the {0} syntax", "new")
+    log.info("I like the album {0.title} by {0.albumartist}, it is {1}", album, "great")
+
+You should use ``beets.logging`` and never ``logging``.
