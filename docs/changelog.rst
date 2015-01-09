@@ -12,6 +12,10 @@ Fixes:
   built-in whitelist/canonicalization tree. :bug:`1206`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
   :bug:`1207`
+* :doc:`/plugins/fetchart`: Do not attempt to import directories as album art.
+  :bug:`1177` :bug:`1211`
+* :doc:`/plugins/mpdstats`: Avoid double-counting some play events. :bug:`773`
+  :bug:`1212`
 
 
 1.3.10 (January 5, 2015)

@@ -1,6 +1,6 @@
 # coding=utf-8
 # This file is part of beets.
-# Copyright 2013, Peter Schnebel and Johann Klähn.
+# Copyright 2015, Peter Schnebel and Johann Klähn.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -211,6 +211,8 @@ class MPDStats(object):
         To this end the difference between the song's supposed end time
         and the current time is calculated. If it's greater than a threshold,
         the song is considered skipped.
+
+        Returns whether the change was manual (skipped previous song or not)
         """
         diff = abs(song['remaining'] - (time.time() - song['started']))
 
@@ -223,6 +225,8 @@ class MPDStats(object):
 
         if self.do_rating:
             self.update_rating(song['beets_item'], skipped)
+
+        return skipped
 
     def handle_played(self, song):
         """Updates the play count of a song.
@@ -263,19 +267,24 @@ class MPDStats(object):
         remaining = duration - played
 
         if self.now_playing and self.now_playing['path'] != path:
-            self.handle_song_change(self.now_playing)
+            skipped = self.handle_song_change(self.now_playing)
+            # mpd responds twice on a natural new song start
+            going_to_happen_twice = not skipped
+        else:
+            going_to_happen_twice = False
 
-        self._log.info(u'playing {0}', displayable_path(path))
+        if not going_to_happen_twice:
+            self._log.info(u'playing {0}', displayable_path(path))
 
-        self.now_playing = {
-            'started':    time.time(),
-            'remaining':  remaining,
-            'path':       path,
-            'beets_item': self.get_item(path),
-        }
+            self.now_playing = {
+                'started':    time.time(),
+                'remaining':  remaining,
+                'path':       path,
+                'beets_item': self.get_item(path),
+            }
 
-        self.update_item(self.now_playing['beets_item'],
-                         'last_played', value=int(time.time()))
+            self.update_item(self.now_playing['beets_item'],
+                             'last_played', value=int(time.time()))
 
     def run(self):
         self.mpd.connect()

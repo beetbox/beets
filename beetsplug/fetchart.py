@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -180,7 +180,8 @@ class FileSystem(ArtSource):
         images = []
         for fn in os.listdir(path):
             for ext in IMAGE_EXTENSIONS:
-                if fn.lower().endswith('.' + ext):
+                if fn.lower().endswith('.' + ext) and \
+                   os.path.isfile(os.path.join(path, fn)):
                     images.append(fn)
 
         # Look for "preferred" filenames.
