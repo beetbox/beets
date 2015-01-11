@@ -14,37 +14,16 @@
 
 """List missing tracks.
 """
-from beets import logging
 from beets.autotag import hooks
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, Subcommand
-
-PLUGIN = 'missing'
-log = logging.getLogger('beets')
 
 
 def _missing_count(album):
     """Return number of missing items in `album`.
     """
     return (album.tracktotal or 0) - len(album.items())
-
-
-def _missing(album):
-    """Query MusicBrainz to determine items missing from `album`.
-    """
-    item_mbids = map(lambda x: x.mb_trackid, album.items())
-
-    if len([i for i in album.items()]) < album.tracktotal:
-        # fetch missing items
-        # TODO: Implement caching that without breaking other stuff
-        album_info = hooks.album_for_mbid(album.mb_albumid)
-        for track_info in getattr(album_info, 'tracks', []):
-            if track_info.track_id not in item_mbids:
-                item = _item(track_info, album_info, album.id)
-                log.debug(u'{0}: track {1} in album {2}',
-                          PLUGIN, track_info.track_id, album_info.album_id)
-                yield item
 
 
 def _item(track_info, album_info, album_id):
@@ -149,8 +128,24 @@ class MissingPlugin(BeetsPlugin):
                         print_obj(album, lib, fmt=fmt)
 
                 else:
-                    for item in _missing(album):
+                    for item in self._missing(album):
                         print_obj(item, lib, fmt=fmt)
 
         self._command.func = _miss
         return [self._command]
+
+    def _missing(self, album):
+        """Query MusicBrainz to determine items missing from `album`.
+        """
+        item_mbids = map(lambda x: x.mb_trackid, album.items())
+
+        if len([i for i in album.items()]) < album.tracktotal:
+            # fetch missing items
+            # TODO: Implement caching that without breaking other stuff
+            album_info = hooks.album_for_mbid(album.mb_albumid)
+            for track_info in getattr(album_info, 'tracks', []):
+                if track_info.track_id not in item_mbids:
+                    item = _item(track_info, album_info, album.id)
+                    self._log.debug(u'track {1} in album {2}',
+                                    track_info.track_id, album_info.album_id)
+                    yield item

@@ -22,6 +22,11 @@ from _common import unittest
 from beetsplug import lyrics
 from beets.library import Item
 from beets.util import confit
+from beets import logging
+
+log = logging.getLogger('beets.test_lyrics')
+raw_backend = lyrics.Backend(log)
+google = lyrics.Google(log)
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -128,11 +133,12 @@ class LyricsPluginTest(unittest.TestCase):
         texts += ["""All material found on this site is property\n
                      of mywickedsongtext brand"""]
         for t in texts:
-            self.assertFalse(lyrics.is_lyrics(t))
+            self.assertFalse(google.is_lyrics(t))
 
     def test_slugify(self):
         text = u"http://site.com/\xe7afe-au_lait(boisson)"
-        self.assertEqual(lyrics.slugify(text), 'http://site.com/cafe_au_lait')
+        self.assertEqual(google.slugify(text),
+                         'http://site.com/cafe_au_lait')
 
     def test_scrape_strip_cruft(self):
         text = u"""<!--lyrics below-->
@@ -160,7 +166,7 @@ class LyricsPluginTest(unittest.TestCase):
                          "one\ntwo\nthree")
 
     def test_missing_lyrics(self):
-        self.assertFalse(lyrics.is_lyrics(LYRICS_TEXTS['missing_texts']))
+        self.assertFalse(google.is_lyrics(LYRICS_TEXTS['missing_texts']))
 
 
 def url_to_filename(url):
@@ -196,7 +202,7 @@ class MockFetchUrl(object):
 def is_lyrics_content_ok(title, text):
     """Compare lyrics text to expected lyrics for given title"""
 
-    keywords = LYRICS_TEXTS[lyrics.slugify(title)]
+    keywords = LYRICS_TEXTS[google.slugify(title)]
     return all(x in text.lower() for x in keywords)
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, 'lyrics')
@@ -298,14 +304,14 @@ class LyricsGooglePluginTest(unittest.TestCase):
         if sys.version_info[:3] < (2, 7, 3):
             self.skipTest("Python's built-in HTML parser is not good enough")
         lyrics.LyricsPlugin()
-        lyrics.fetch_url = MockFetchUrl()
+        raw_backend.fetch_url = MockFetchUrl()
 
     def test_mocked_source_ok(self):
         """Test that lyrics of the mocked page are correctly scraped"""
         url = self.source['url'] + self.source['path']
         if os.path.isfile(url_to_filename(url)):
-            res = lyrics.scrape_lyrics_from_html(lyrics.fetch_url(url))
-            self.assertTrue(lyrics.is_lyrics(res), url)
+            res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
+            self.assertTrue(google.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(self.source['title'], res),
                             url)
 
@@ -317,21 +323,22 @@ class LyricsGooglePluginTest(unittest.TestCase):
         for s in GOOGLE_SOURCES:
             url = s['url'] + s['path']
             if os.path.isfile(url_to_filename(url)):
-                res = lyrics.scrape_lyrics_from_html(lyrics.fetch_url(url))
-                self.assertTrue(lyrics.is_lyrics(res), url)
+                res = lyrics.scrape_lyrics_from_html(
+                    raw_backend.fetch_url(url))
+                self.assertTrue(google.is_lyrics(res), url)
                 self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
     def test_default_ok(self):
         """Test default engines with the default query"""
         if not check_lyrics_fetched():
             self.skipTest("Run lyrics_download_samples.py script first.")
-        for (fun, s) in zip([lyrics.fetch_lyricswiki,
-                             lyrics.fetch_lyricscom,
-                             lyrics.fetch_musixmatch], DEFAULT_SOURCES):
+        for (source, s) in zip([lyrics.LyricsWiki,
+                                lyrics.LyricsCom,
+                                lyrics.MusiXmatch], DEFAULT_SOURCES):
             url = s['url'] + s['path']
             if os.path.isfile(url_to_filename(url)):
-                res = fun(s['artist'], s['title'])
-                self.assertTrue(lyrics.is_lyrics(res), url)
+                res = source(log).fetch(s['artist'], s['title'])
+                self.assertTrue(google.is_lyrics(res), url)
                 self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
     def test_is_page_candidate_exact_match(self):
@@ -340,10 +347,10 @@ class LyricsGooglePluginTest(unittest.TestCase):
         from bs4 import SoupStrainer, BeautifulSoup
         s = self.source
         url = unicode(s['url'] + s['path'])
-        html = lyrics.fetch_url(url)
+        html = raw_backend.fetch_url(url)
         soup = BeautifulSoup(html, "html.parser",
                              parse_only=SoupStrainer('title'))
-        self.assertEqual(lyrics.is_page_candidate(url, soup.title.string,
+        self.assertEqual(google.is_page_candidate(url, soup.title.string,
                                                   s['title'], s['artist']),
                          True, url)
 
@@ -355,11 +362,11 @@ class LyricsGooglePluginTest(unittest.TestCase):
         urlTitle = u'example.com | Beats song by John doe'
 
         # very small diffs (typo) are ok eg 'beats' vs 'beets' with same artist
-        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, s['title'],
+        self.assertEqual(google.is_page_candidate(url, urlTitle, s['title'],
                          s['artist']), True, url)
         # reject different title
         urlTitle = u'example.com | seets bong lyrics by John doe'
-        self.assertEqual(lyrics.is_page_candidate(url, urlTitle, s['title'],
+        self.assertEqual(google.is_page_candidate(url, urlTitle, s['title'],
                          s['artist']), False, url)
 
 

@@ -26,14 +26,9 @@ import itertools
 import warnings
 from HTMLParser import HTMLParseError
 
-from beets import logging
 from beets import plugins
 from beets import config, ui
 
-
-# Global logger.
-
-log = logging.getLogger('beets')
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
@@ -56,26 +51,6 @@ URL_CHARACTERS = {
 
 
 # Utilities.
-
-def fetch_url(url):
-    """Retrieve the content at a given URL, or return None if the source
-    is unreachable.
-    """
-    try:
-        # Disable the InsecureRequestWarning that comes from using
-        # `verify=false`.
-        # https://github.com/kennethreitz/requests/issues/2214
-        # We're not overly worried about the NSA MITMing our lyrics scraper.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            r = requests.get(url, verify=False)
-    except requests.RequestException as exc:
-        log.debug(u'lyrics request failed: {0}', exc)
-        return
-    if r.status_code == requests.codes.ok:
-        return r.text
-    else:
-        log.debug(u'failed to fetch: {0} ({1})', url, r.status_code)
 
 
 def unescape(text):
@@ -181,131 +156,116 @@ def search_pairs(item):
     return itertools.product(artists, multi_titles)
 
 
-def _encode(s):
-    """Encode the string for inclusion in a URL (common to both
-    LyricsWiki and Lyrics.com).
-    """
-    if isinstance(s, unicode):
-        for char, repl in URL_CHARACTERS.items():
-            s = s.replace(char, repl)
-        s = s.encode('utf8', 'ignore')
-    return urllib.quote(s)
+class Backend(object):
+    def __init__(self, log):
+        self._log = log
 
-# Musixmatch
+    @staticmethod
+    def _encode(s):
+        """Encode the string for inclusion in a URL"""
+        if isinstance(s, unicode):
+            for char, repl in URL_CHARACTERS.items():
+                s = s.replace(char, repl)
+            s = s.encode('utf8', 'ignore')
+        return urllib.quote(s)
 
-MUSIXMATCH_URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+    def build_url(self, artist, title):
+        return self.URL_PATTERN % (self._encode(artist.title()),
+                                   self._encode(title.title()))
 
-
-def fetch_musixmatch(artist, title):
-    url = MUSIXMATCH_URL_PATTERN % (_lw_encode(artist.title()),
-                                    _lw_encode(title.title()))
-    html = fetch_url(url)
-    if not html:
-        return
-    lyrics = extract_text_between(html, '"lyrics_body":', '"lyrics_language":')
-    return lyrics.strip(',"').replace('\\n', '\n')
-
-# LyricsWiki.
-
-LYRICSWIKI_URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
-
-
-def _lw_encode(s):
-    s = re.sub(r'\s+', '_', s)
-    s = s.replace("<", "Less_Than")
-    s = s.replace(">", "Greater_Than")
-    s = s.replace("#", "Number_")
-    s = re.sub(r'[\[\{]', '(', s)
-    s = re.sub(r'[\]\}]', ')', s)
-    return _encode(s)
-
-
-def fetch_lyricswiki(artist, title):
-    """Fetch lyrics from LyricsWiki."""
-    url = LYRICSWIKI_URL_PATTERN % (_lw_encode(artist), _lw_encode(title))
-    html = fetch_url(url)
-    if not html:
-        return
-
-    lyrics = extract_text_in(html, u"<div class='lyricbox'>")
-    if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
-        return lyrics
-
-
-# Lyrics.com.
-
-LYRICSCOM_URL_PATTERN = 'http://www.lyrics.com/%s-lyrics-%s.html'
-LYRICSCOM_NOT_FOUND = (
-    'Sorry, we do not have the lyric',
-    'Submit Lyrics',
-)
-
-
-def _lc_encode(s):
-    s = re.sub(r'[^\w\s-]', '', s)
-    s = re.sub(r'\s+', '-', s)
-    return _encode(s).lower()
-
-
-def fetch_lyricscom(artist, title):
-    """Fetch lyrics from Lyrics.com."""
-    url = LYRICSCOM_URL_PATTERN % (_lc_encode(title), _lc_encode(artist))
-    html = fetch_url(url)
-    if not html:
-        return
-    lyrics = extract_text_between(html, '<div id="lyrics" class="SCREENONLY" '
-                                  'itemprop="description">', '</div>')
-    if not lyrics:
-        return
-    for not_found_str in LYRICSCOM_NOT_FOUND:
-        if not_found_str in lyrics:
+    def fetch_url(self, url):
+        """Retrieve the content at a given URL, or return None if the source
+        is unreachable.
+        """
+        try:
+            # Disable the InsecureRequestWarning that comes from using
+            # `verify=false`.
+            # https://github.com/kennethreitz/requests/issues/2214
+            # We're not overly worried about the NSA MITMing our lyrics scraper
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                r = requests.get(url, verify=False)
+        except requests.RequestException as exc:
+            self._log.debug(u'lyrics request failed: {0}', exc)
             return
+        if r.status_code == requests.codes.ok:
+            return r.text
+        else:
+            self._log.debug(u'failed to fetch: {0} ({1})', url, r.status_code)
 
-    parts = lyrics.split('\n---\nLyrics powered by', 1)
-    if parts:
-        return parts[0]
-
-
-# Optional Google custom search API backend.
-
-def slugify(text):
-    """Normalize a string and remove non-alphanumeric characters.
-    """
-    text = re.sub(r"[-'_\s]", '_', text)
-    text = re.sub(r"_+", '_', text).strip('_')
-    pat = "([^,\(]*)\((.*?)\)"  # Remove content within parentheses
-    text = re.sub(pat, '\g<1>', text).strip()
-    try:
-        text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
-        text = unicode(re.sub('[-\s]+', ' ', text))
-    except UnicodeDecodeError:
-        log.exception(u"Failing to normalize '{0}'", text)
-    return text
+    def fetch(self, artist, title):
+        raise NotImplementedError()
 
 
-BY_TRANS = ['by', 'par', 'de', 'von']
-LYRICS_TRANS = ['lyrics', 'paroles', 'letras', 'liedtexte']
+class SymbolsReplaced(Backend):
+    @classmethod
+    def _encode(cls, s):
+        s = re.sub(r'\s+', '_', s)
+        s = s.replace("<", "Less_Than")
+        s = s.replace(">", "Greater_Than")
+        s = s.replace("#", "Number_")
+        s = re.sub(r'[\[\{]', '(', s)
+        s = re.sub(r'[\]\}]', ')', s)
+        return super(SymbolsReplaced, cls)._encode(s)
 
 
-def is_page_candidate(urlLink, urlTitle, title, artist):
-    """Return True if the URL title makes it a good candidate to be a
-    page that contains lyrics of title by artist.
-    """
-    title = slugify(title.lower())
-    artist = slugify(artist.lower())
-    sitename = re.search(u"//([^/]+)/.*", slugify(urlLink.lower())).group(1)
-    urlTitle = slugify(urlTitle.lower())
-    # Check if URL title contains song title (exact match)
-    if urlTitle.find(title) != -1:
-        return True
-    # or try extracting song title from URL title and check if
-    # they are close enough
-    tokens = [by + '_' + artist for by in BY_TRANS] + \
-             [artist, sitename, sitename.replace('www.', '')] + LYRICS_TRANS
-    songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
-    songTitle = songTitle.strip('_|')
-    typoRatio = .9
-    return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
+class MusiXmatch(SymbolsReplaced):
+    URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+
+    def fetch(self, artist, title):
+        url = self.build_url(artist, title)
+        html = self.fetch_url(url)
+        if not html:
+            return
+        lyrics = extract_text_between(html,
+                                      '"lyrics_body":', '"lyrics_language":')
+        return lyrics.strip(',"').replace('\\n', '\n')
+
+
+class LyricsWiki(SymbolsReplaced):
+    """Fetch lyrics from LyricsWiki."""
+    URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
+
+    def fetch(self, artist, title):
+        url = self.build_url(artist, title)
+        html = self.fetch_url(url)
+        if not html:
+            return
+        lyrics = extract_text_in(html, u"<div class='lyricbox'>")
+        if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
+            return lyrics
+
+
+class LyricsCom(Backend):
+    """Fetch lyrics from Lyrics.com."""
+    URL_PATTERN = 'http://www.lyrics.com/%s-lyrics-%s.html'
+    NOT_FOUND = (
+        'Sorry, we do not have the lyric',
+        'Submit Lyrics',
+    )
+
+    @classmethod
+    def _encode(cls, s):
+        s = re.sub(r'[^\w\s-]', '', s)
+        s = re.sub(r'\s+', '-', s)
+        return super(LyricsCom, cls)._encode(s).lower()
+
+    def fetch(self, artist, title):
+        url = self.build_url(artist, title)
+        html = self.fetch_url(url)
+        if not html:
+            return
+        lyrics = extract_text_between(html, '<div id="lyrics" class="SCREENO'
+                                      'NLY" itemprop="description">', '</div>')
+        if not lyrics:
+            return
+        for not_found_str in self.NOT_FOUND:
+            if not_found_str in lyrics:
+                return
+
+        parts = lyrics.split('\n---\nLyrics powered by', 1)
+        if parts:
+            return parts[0]
 
 
 def remove_credits(text):
@@ -320,36 +280,6 @@ def remove_credits(text):
     if credits:
         text = '\n'.join(textlines)
     return text
-
-
-def is_lyrics(text, artist=None):
-    """Determine whether the text seems to be valid lyrics.
-    """
-    if not text:
-        return False
-    badTriggersOcc = []
-    nbLines = text.count('\n')
-    if nbLines <= 1:
-        log.debug(u"Ignoring too short lyrics '{0}'", text)
-        return False
-    elif nbLines < 5:
-        badTriggersOcc.append('too_short')
-    else:
-        # Lyrics look legit, remove credits to avoid being penalized further
-        # down
-        text = remove_credits(text)
-
-    badTriggers = ['lyrics', 'copyright', 'property', 'links']
-    if artist:
-        badTriggersOcc += [artist]
-
-    for item in badTriggers:
-        badTriggersOcc += [item] * len(re.findall(r'\W%s\W' % item,
-                                                  text, re.I))
-
-    if badTriggersOcc:
-        log.debug(u'Bad triggers detected: {0}', badTriggersOcc)
-    return len(badTriggersOcc) < 2
 
 
 def _scrape_strip_cruft(html, plain_text_out=False):
@@ -403,71 +333,140 @@ def scrape_lyrics_from_html(html):
     return soup
 
 
-def fetch_google(artist, title):
-    """Fetch lyrics from Google search results.
-    """
-    query = u"%s %s" % (artist, title)
-    api_key = config['lyrics']['google_API_key'].get(unicode)
-    engine_id = config['lyrics']['google_engine_ID'].get(unicode)
-    url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
-          (api_key, engine_id, urllib.quote(query.encode('utf8')))
+class Google(Backend):
+    """Fetch lyrics from Google search results."""
+    def is_lyrics(self, text, artist=None):
+        """Determine whether the text seems to be valid lyrics.
+        """
+        if not text:
+            return False
+        badTriggersOcc = []
+        nbLines = text.count('\n')
+        if nbLines <= 1:
+            self._log.debug(u"Ignoring too short lyrics '{0}'", text)
+            return False
+        elif nbLines < 5:
+            badTriggersOcc.append('too_short')
+        else:
+            # Lyrics look legit, remove credits to avoid being penalized
+            # further down
+            text = remove_credits(text)
 
-    data = urllib.urlopen(url)
-    data = json.load(data)
-    if 'error' in data:
-        reason = data['error']['errors'][0]['reason']
-        log.debug(u'google lyrics backend error: {0}', reason)
-        return
+        badTriggers = ['lyrics', 'copyright', 'property', 'links']
+        if artist:
+            badTriggersOcc += [artist]
 
-    if 'items' in data.keys():
-        for item in data['items']:
-            urlLink = item['link']
-            urlTitle = item.get('title', u'')
-            if not is_page_candidate(urlLink, urlTitle, title, artist):
-                continue
-            html = fetch_url(urlLink)
-            lyrics = scrape_lyrics_from_html(html)
-            if not lyrics:
-                continue
+        for item in badTriggers:
+            badTriggersOcc += [item] * len(re.findall(r'\W%s\W' % item,
+                                                      text, re.I))
 
-            if is_lyrics(lyrics, artist):
-                log.debug(u'got lyrics from {0}', item['displayLink'])
-                return lyrics
+        if badTriggersOcc:
+            self._log.debug(u'Bad triggers detected: {0}', badTriggersOcc)
+        return len(badTriggersOcc) < 2
 
+    def slugify(self, text):
+        """Normalize a string and remove non-alphanumeric characters.
+        """
+        text = re.sub(r"[-'_\s]", '_', text)
+        text = re.sub(r"_+", '_', text).strip('_')
+        pat = "([^,\(]*)\((.*?)\)"  # Remove content within parentheses
+        text = re.sub(pat, '\g<1>', text).strip()
+        try:
+            text = unicodedata.normalize('NFKD', text).encode('ascii',
+                                                              'ignore')
+            text = unicode(re.sub('[-\s]+', ' ', text))
+        except UnicodeDecodeError:
+            self._log.exception(u"Failing to normalize '{0}'", text)
+        return text
 
-# Plugin logic.
+    BY_TRANS = ['by', 'par', 'de', 'von']
+    LYRICS_TRANS = ['lyrics', 'paroles', 'letras', 'liedtexte']
 
-SOURCES = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch']
-SOURCE_BACKENDS = {
-    'google': fetch_google,
-    'lyricwiki': fetch_lyricswiki,
-    'lyrics.com': fetch_lyricscom,
-    'musixmatch': fetch_musixmatch,
-}
+    def is_page_candidate(self, urlLink, urlTitle, title, artist):
+        """Return True if the URL title makes it a good candidate to be a
+        page that contains lyrics of title by artist.
+        """
+        title = self.slugify(title.lower())
+        artist = self.slugify(artist.lower())
+        sitename = re.search(u"//([^/]+)/.*",
+                             self.slugify(urlLink.lower())).group(1)
+        urlTitle = self.slugify(urlTitle.lower())
+        # Check if URL title contains song title (exact match)
+        if urlTitle.find(title) != -1:
+            return True
+        # or try extracting song title from URL title and check if
+        # they are close enough
+        tokens = [by + '_' + artist for by in self.BY_TRANS] + \
+                 [artist, sitename, sitename.replace('www.', '')] + \
+            self.LYRICS_TRANS
+        songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
+        songTitle = songTitle.strip('_|')
+        typoRatio = .9
+        ratio = difflib.SequenceMatcher(None, songTitle, title).ratio()
+        return ratio >= typoRatio
+
+    def fetch(self, artist, title):
+        query = u"%s %s" % (artist, title)
+        api_key = config['lyrics']['google_API_key'].get(unicode)
+        engine_id = config['lyrics']['google_engine_ID'].get(unicode)
+        url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
+            (api_key, engine_id, urllib.quote(query.encode('utf8')))
+
+        data = urllib.urlopen(url)
+        data = json.load(data)
+        if 'error' in data:
+            reason = data['error']['errors'][0]['reason']
+            self._log.debug(u'google lyrics backend error: {0}', reason)
+            return
+
+        if 'items' in data.keys():
+            for item in data['items']:
+                urlLink = item['link']
+                urlTitle = item.get('title', u'')
+                if not self.is_page_candidate(urlLink, urlTitle,
+                                              title, artist):
+                    continue
+                html = self.fetch_url(urlLink)
+                lyrics = scrape_lyrics_from_html(html)
+                if not lyrics:
+                    continue
+
+                if self.is_lyrics(lyrics, artist):
+                    self._log.debug(u'got lyrics from {0}',
+                                    item['displayLink'])
+                    return lyrics
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
+    SOURCES = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch']
+    SOURCE_BACKENDS = {
+        'google': Google,
+        'lyricwiki': LyricsWiki,
+        'lyrics.com': LyricsCom,
+        'musixmatch': MusiXmatch,
+    }
+
     def __init__(self):
         super(LyricsPlugin, self).__init__()
-        self.import_stages = [self.imported]
+        self._import_stages = [self.imported]
         self.config.add({
             'auto': True,
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
             'fallback': None,
             'force': False,
-            'sources': SOURCES,
+            'sources': self.SOURCES,
         })
 
-        available_sources = list(SOURCES)
+        available_sources = list(self.SOURCES)
         if not self.config['google_API_key'].get() and \
-                'google' in SOURCES:
+                'google' in self.SOURCES:
             available_sources.remove('google')
         self.config['sources'] = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
         self.backends = []
         for key in self.config['sources'].as_str_seq():
-            self.backends.append(SOURCE_BACKENDS[key])
+            self.backends.append(self.SOURCE_BACKENDS[key](self._log))
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
@@ -484,7 +483,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
                 self.fetch_item_lyrics(
-                    lib, logging.INFO, item, write,
+                    lib, item, write,
                     opts.force_refetch or self.config['force'],
                 )
                 if opts.printlyr and item.lyrics:
@@ -498,19 +497,16 @@ class LyricsPlugin(plugins.BeetsPlugin):
         """
         if self.config['auto']:
             for item in task.imported_items():
-                self.fetch_item_lyrics(session.lib, logging.DEBUG, item,
+                self.fetch_item_lyrics(session.lib, item,
                                        False, self.config['force'])
 
-    def fetch_item_lyrics(self, lib, loglevel, item, write, force):
+    def fetch_item_lyrics(self, lib, item, write, force):
         """Fetch and store lyrics for a single item. If ``write``, then the
-        lyrics will also be written to the file itself. The ``loglevel``
-        parameter controls the visibility of the function's status log
-        messages.
-        """
+        lyrics will also be written to the file itself."""
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
-            log.log(loglevel, u'lyrics already present: {0} - {1}',
-                    item.artist, item.title)
+            self._log.info(u'lyrics already present: {0.artist} - {0.title}',
+                           item)
             return
 
         lyrics = None
@@ -522,11 +518,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
 
         if lyrics:
-            log.log(loglevel, u'fetched lyrics: {0} - {1}',
-                              item.artist, item.title)
+            self._log.info(u'fetched lyrics: {0.artist} - {0.title}', item)
         else:
-            log.log(loglevel, u'lyrics not found: {0} - {1}',
-                              item.artist, item.title)
+            self._log.info(u'lyrics not found: {0.artist} - {0.title}', item)
             fallback = self.config['fallback'].get()
             if fallback:
                 lyrics = fallback
@@ -544,7 +538,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
         None if no lyrics were found.
         """
         for backend in self.backends:
-            lyrics = backend(artist, title)
+            lyrics = backend.fetch(artist, title)
             if lyrics:
-                log.debug(u'got lyrics from backend: {0}', backend.__name__)
+                self._log.debug(u'got lyrics from backend: {0}',
+                                backend.__class__.__name__)
                 return _scrape_strip_cruft(lyrics, True)

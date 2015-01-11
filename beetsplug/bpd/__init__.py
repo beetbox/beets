@@ -1154,10 +1154,10 @@ class BPDPlugin(BeetsPlugin):
 
     def start_bpd(self, lib, host, port, password, volume, debug):
         """Starts a BPD server."""
-        if debug:
-            log.setLevel(logging.DEBUG)
+        if debug:  # FIXME this should be managed by BeetsPlugin
+            self._log.setLevel(logging.DEBUG)
         else:
-            log.setLevel(logging.WARNING)
+            self._log.setLevel(logging.WARNING)
         try:
             server = Server(lib, host, port, password)
             server.cmd_setvol(None, volume)

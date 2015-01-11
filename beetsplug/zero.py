@@ -15,7 +15,6 @@
 """ Clears tag fields in media files."""
 
 import re
-from beets import logging
 from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action
@@ -23,8 +22,6 @@ from beets.util import confit
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '0.10'
-
-log = logging.getLogger('beets')
 
 
 class ZeroPlugin(BeetsPlugin):
@@ -48,11 +45,11 @@ class ZeroPlugin(BeetsPlugin):
 
         for field in self.config['fields'].as_str_seq():
             if field in ('id', 'path', 'album_id'):
-                log.warn(u'[zero] field \'{0}\' ignored, zeroing '
-                         u'it would be dangerous', field)
+                self._log.warn(u'field \'{0}\' ignored, zeroing '
+                               u'it would be dangerous', field)
                 continue
             if field not in MediaFile.fields():
-                log.error(u'[zero] invalid field: {0}', field)
+                self._log.error(u'invalid field: {0}', field)
                 continue
 
             try:
@@ -64,7 +61,7 @@ class ZeroPlugin(BeetsPlugin):
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
         if task.choice_flag == action.ASIS and not self.warned:
-            log.warn(u'[zero] cannot zero in \"as-is\" mode')
+            self._log.warn(u'cannot zero in \"as-is\" mode')
             self.warned = True
         # TODO request write in as-is mode
 
@@ -85,7 +82,7 @@ class ZeroPlugin(BeetsPlugin):
         by `self.patterns`.
         """
         if not self.patterns:
-            log.warn(u'[zero] no fields, nothing to do')
+            self._log.warn(u'no fields, nothing to do')
             return
 
         for field, patterns in self.patterns.items():
@@ -97,5 +94,5 @@ class ZeroPlugin(BeetsPlugin):
                 match = patterns is True
 
             if match:
-                log.debug(u'[zero] {0}: {1} -> None', field, value)
+                self._log.debug(u'{0}: {1} -> None', field, value)
                 tags[field] = None

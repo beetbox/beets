@@ -18,6 +18,7 @@ import traceback
 import inspect
 import re
 from collections import defaultdict
+from functools import wraps
 
 
 import beets
@@ -51,7 +52,7 @@ class BeetsPlugin(object):
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
-        self.import_stages = []
+        self._import_stages = []
         self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
         if not self.template_funcs:
@@ -61,11 +62,29 @@ class BeetsPlugin(object):
         if not self.album_template_fields:
             self.album_template_fields = {}
 
+        logger_name = '{0}.{1}'.format('beets', self.name)
+        self._log = logging.getLogger(logger_name)
+        self._log.setLevel(logging.INFO)
+
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
         """
         return ()
+
+    def import_stages(self):
+        return [self._set_log_level(logging.WARNING, import_stage)
+                for import_stage in self._import_stages]
+
+    def _set_log_level(self, log_level, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            old_log_level = self._log.getEffectiveLevel()
+            self._log.setLevel(log_level)
+            result = func(*args, **kwargs)
+            self._log.setLevel(old_log_level)
+            return result
+        return wrapper
 
     def queries(self):
         """Should return a dict mapping prefixes to Query subclasses.
@@ -349,8 +368,7 @@ def import_stages():
     """Get a list of import stage functions defined by plugins."""
     stages = []
     for plugin in find_plugins():
-        if hasattr(plugin, 'import_stages'):
-            stages += plugin.import_stages
+        stages += plugin.import_stages()
     return stages
 
 

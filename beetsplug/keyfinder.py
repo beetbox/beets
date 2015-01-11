@@ -17,13 +17,9 @@
 
 import subprocess
 
-from beets import logging
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
-
-
-log = logging.getLogger('beets')
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -36,7 +32,7 @@ class KeyFinderPlugin(BeetsPlugin):
             u'overwrite': False,
         })
         self.config['auto'].get(bool)
-        self.import_stages = [self.imported]
+        self._import_stages = [self.imported]
 
     def commands(self):
         cmd = ui.Subcommand('keyfinder',
@@ -62,11 +58,11 @@ class KeyFinderPlugin(BeetsPlugin):
             try:
                 key = util.command_output([bin, '-f', item.path])
             except (subprocess.CalledProcessError, OSError) as exc:
-                log.error(u'KeyFinder execution failed: {0}', exc)
+                self._log.error(u'execution failed: {0}', exc)
                 continue
 
             item['initial_key'] = key
-            log.debug(u'added computed initial key {0} for {1}',
-                      key, util.displayable_path(item.path))
+            self._log.debug(u'added computed initial key {0} for {1}',
+                            key, util.displayable_path(item.path))
             item.try_write()
             item.store()

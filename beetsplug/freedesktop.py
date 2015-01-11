@@ -15,29 +15,11 @@
 """Creates freedesktop.org-compliant .directory files on an album level.
 """
 
-from beets import logging
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.ui import decargs
 
 import os
-
-log = logging.getLogger('beets.freedesktop')
-
-
-def process_query(lib, opts, args):
-    for album in lib.albums(decargs(args)):
-        process_album(album)
-
-
-def process_album(album):
-    albumpath = album.item_dir()
-    if album.artpath:
-        fullartpath = album.artpath
-        artfile = os.path.split(fullartpath)[1]
-        create_file(albumpath, artfile)
-    else:
-        log.debug(u'freedesktop: album has no art')
 
 
 def create_file(albumpath, artfile):
@@ -61,11 +43,24 @@ class FreedesktopPlugin(BeetsPlugin):
     def commands(self):
         freedesktop_command = Subcommand("freedesktop",
                                          help="Create .directory files")
-        freedesktop_command.func = process_query
+        freedesktop_command.func = self.process_query
         return [freedesktop_command]
 
     def imported(self, lib, album):
         automatic = self.config['auto'].get(bool)
         if not automatic:
             return
-        process_album(album)
+        self.process_album(album)
+
+    def process_query(self, lib, opts, args):
+        for album in lib.albums(decargs(args)):
+            self.process_album(album)
+
+    def process_album(self, album):
+        albumpath = album.item_dir()
+        if album.artpath:
+            fullartpath = album.artpath
+            artfile = os.path.split(fullartpath)[1]
+            create_file(albumpath, artfile)
+        else:
+            self._log.debug(u'album has no art')
