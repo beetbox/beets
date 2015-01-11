@@ -62,7 +62,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             help='drop featuring from artists and ignore title update')
 
         if self.config['auto']:
-            self._import_stages = [self.imported]
+            self.import_stages = [self.imported]
 
     def commands(self):
 

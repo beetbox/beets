@@ -58,7 +58,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         )
         self.config.add({'auto': False})
         if self.config['auto']:
-            self._import_stages = [self.imported]
+            self.import_stages = [self.imported]
 
     def commands(self):
         mbupdate = Subcommand('mbupdate', help='Update MusicBrainz collection')

@@ -128,7 +128,7 @@ class ConvertPlugin(BeetsPlugin):
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
         })
-        self._import_stages = [self.auto_convert]
+        self.import_stages = [self.auto_convert]
 
         self.register_listener('import_task_files', self._cleanup)
 

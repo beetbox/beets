@@ -448,7 +448,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
     def __init__(self):
         super(LyricsPlugin, self).__init__()
-        self._import_stages = [self.imported]
+        self.import_stages = [self.imported]
         self.config.add({
             'auto': True,
             'google_API_key': None,

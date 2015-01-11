@@ -137,7 +137,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             config['echonest']['apikey'].get(unicode)
 
         if self.config['auto']:
-            self._import_stages = [self.imported]
+            self.import_stages = [self.imported]
 
     def _echofun(self, func, **kwargs):
         """Wrapper for requests to the EchoNest API.  Will retry up to

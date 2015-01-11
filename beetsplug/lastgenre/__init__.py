@@ -111,7 +111,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Setup plugin from config options
         """
         if self.config['auto']:
-            self._import_stages = [self.imported]
+            self.import_stages = [self.imported]
 
         self._genre_cache = {}
 

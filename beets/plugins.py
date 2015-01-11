@@ -52,7 +52,6 @@ class BeetsPlugin(object):
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
-        self._import_stages = []
         self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
         if not self.template_funcs:
@@ -61,6 +60,7 @@ class BeetsPlugin(object):
             self.template_fields = {}
         if not self.album_template_fields:
             self.album_template_fields = {}
+        self.import_stages = []
 
         logger_name = '{0}.{1}'.format('beets', self.name)
         self._log = logging.getLogger(logger_name)
@@ -72,9 +72,16 @@ class BeetsPlugin(object):
         """
         return ()
 
-    def import_stages(self):
+    def get_import_stages(self):
+        """Return a list of functions that should be called as importer
+        pipelines stages.
+
+        The callables are wrapped versions of the functions in
+        `self.import_stages`. Wrapping provides some bookkeeping for the
+        plugin: specifically, the logging level is adjusted to WARNING.
+        """
         return [self._set_log_level(logging.WARNING, import_stage)
-                for import_stage in self._import_stages]
+                for import_stage in self.import_stages]
 
     def _set_log_level(self, log_level, func):
         @wraps(func)
@@ -368,7 +375,7 @@ def import_stages():
     """Get a list of import stage functions defined by plugins."""
     stages = []
     for plugin in find_plugins():
-        stages += plugin.import_stages()
+        stages += plugin.get_import_stages()
     return stages
 
 
