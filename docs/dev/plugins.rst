@@ -459,6 +459,8 @@ Specifying types has several advantages:
 * User input for flexible fields may be validated and converted.
 
 
+.. _plugin-logging:
+
 Logging
 ^^^^^^^
 

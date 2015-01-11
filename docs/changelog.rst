@@ -19,6 +19,12 @@ Fixes:
 * Fix a crash when the importer deals with Unicode metadata in ``--pretend``
   mode. :bug:`1214`
 
+For developers: The logging system in beets has been overhauled. Plugins now
+each have their own logger, which helps by automatically adjusting the
+verbosity level in import mode and by prefixing the plugin's name. Also,
+logging calls can (and should!) use modern ``{}``-style string formatting
+lazily. See :ref:`plugin-logging` in the plugin API docs.
+
 
 1.3.10 (January 5, 2015)
 ------------------------
