@@ -16,6 +16,8 @@ Fixes:
   :bug:`1177` :bug:`1211`
 * :doc:`/plugins/mpdstats`: Avoid double-counting some play events. :bug:`773`
   :bug:`1212`
+* Fix a crash when the importer deals with Unicode metadata in ``--pretend``
+  mode. :bug:`1214`
 
 
 1.3.10 (January 5, 2015)
