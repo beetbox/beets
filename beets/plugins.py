@@ -62,8 +62,7 @@ class BeetsPlugin(object):
             self.album_template_fields = {}
         self.import_stages = []
 
-        logger_name = '{0}.{1}'.format('beets', self.name)
-        self._log = logging.getLogger(logger_name)
+        self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
 
     def commands(self):
