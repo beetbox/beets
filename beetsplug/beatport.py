@@ -191,7 +191,7 @@ class BeatportPlugin(BeetsPlugin):
         try:
             return self._get_releases(query)
         except BeatportAPIError as e:
-            self._log.debug(u'Beatport API Error: {0} (query: {1})', e, query)
+            self._log.debug(u'API Error: {0} (query: {1})', e, query)
             return []
 
     def item_candidates(self, item, artist, title):

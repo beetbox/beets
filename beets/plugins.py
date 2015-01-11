@@ -64,7 +64,7 @@ class BeetsPlugin(object):
 
         logger_name = '{0}.{1}'.format('beets', self.name)
         self._log = logging.getLogger(logger_name)
-        self._log.setLevel(logging.INFO)
+        self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -84,12 +84,21 @@ class BeetsPlugin(object):
                 for import_stage in self.import_stages]
 
     def _set_log_level(self, log_level, func):
+        """Wrap `func` to temporarily set this plugin's logger level to
+        `log_level` (and restore it after the function returns).
+
+        The level is *not* adjusted when beets is in verbose
+        mode---i.e., the plugin logger continues to delegate to the base
+        beets logger.
+        """
         @wraps(func)
         def wrapper(*args, **kwargs):
-            old_log_level = self._log.getEffectiveLevel()
-            self._log.setLevel(log_level)
+            if not beets.config['verbose']:
+                old_log_level = self._log.level
+                self._log.setLevel(log_level)
             result = func(*args, **kwargs)
-            self._log.setLevel(old_log_level)
+            if not beets.config['verbose']:
+                self._log.setLevel(old_log_level)
             return result
         return wrapper
 

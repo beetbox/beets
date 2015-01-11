@@ -131,7 +131,7 @@ class InfoPlugin(BeetsPlugin):
             try:
                 data = data_emitter()
             except mediafile.UnreadableFileError as ex:
-                self._log.error(u'cannot read file: {0}', ex.message)
+                self._log.error(u'cannot read file: {0}', ex)
                 continue
 
             if opts.summarize:
