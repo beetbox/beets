@@ -459,19 +459,26 @@ Specifying types has several advantages:
 * User input for flexible fields may be validated and converted.
 
 
-Log stuff
-^^^^^^^^^
+Logging
+^^^^^^^
 
-A plugin has a ``_log`` attribute which is a ``Logger`` instance. A plugin in
-``beetsplug/myplugin.py`` will have a logger named ``beets.myplugin``.
+Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
+`standard Python logging module`_. The logger is set up to `PEP 3101`_,
+str.format-style string formatting. So you can write logging calls like this::
 
-Logging uses {}-style formatting. Also note that logging should be lazy and not
-eager, for example::
+    self._log.debug(u'Processing {0.title} by {0.artist}', item)
 
-    from beets import logging
+.. _PEP 3101: https://www.python.org/dev/peps/pep-3101/
+.. _standard Python logging module: https://docs.python.org/2/library/logging.html
 
-    log = logging.getLogger('foo.bar')
-    log.info("I use the {0} syntax", "new")
-    log.info("I like the album {0.title} by {0.albumartist}, it is {1}", album, "great")
+The per-plugin loggers have two convenient features:
 
-You should use ``beets.logging`` and never ``logging``.
+* When beets is in verbose mode, messages are prefixed with the plugin name to
+  make them easier to see.
+* Messages at the ``INFO`` logging level are hidden when the plugin is running
+  in an importer stage (see above). This addresses a common pattern where
+  plugins need to use the same code for a command and an import stage, but the
+  command needs to print more messages than the import stage. (For example,
+  you'll want to log "found lyrics for this song" when you're run explicitly
+  as a command, but you don't want to noisily interrupt the importer interface
+  when running automatically.)

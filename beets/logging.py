@@ -31,8 +31,11 @@ import sys
 PY26 = sys.version_info[:2] == (2, 6)
 
 
-# Create a `str.format`-based logger.
 class StrFormatLogger(Logger):
+    """A version of `Logger` that uses `str.format`-style formatting
+    instead of %-style formatting.
+    """
+
     class _LogMessage(object):
         def __init__(self, msg, args, kwargs):
             self.msg = msg
