@@ -407,8 +407,8 @@ class Google(Backend):
 
     def fetch(self, artist, title):
         query = u"%s %s" % (artist, title)
-        api_key = config['lyrics']['google_API_key'].get(unicode)
-        engine_id = config['lyrics']['google_engine_ID'].get(unicode)
+        api_key = self.config['google_API_key'].get(unicode)
+        engine_id = self.config['google_engine_ID'].get(unicode)
         url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
             (api_key, engine_id, urllib.quote(query.encode('utf8')))
 

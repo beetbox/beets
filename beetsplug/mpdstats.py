@@ -57,7 +57,7 @@ class MPDClientWrapper(object):
         self._log = log
 
         self.music_directory = (
-            config['mpdstats']['music_directory'].get(unicode))
+            self.config['music_directory'].get(unicode))
 
         self.client = MPDClient()
 
@@ -144,8 +144,8 @@ class MPDStats(object):
         self.lib = lib
         self._log = log
 
-        self.do_rating = config['mpdstats']['rating'].get(bool)
-        self.rating_mix = config['mpdstats']['rating_mix'].get(float)
+        self.do_rating = self.config['rating'].get(bool)
+        self.rating_mix = self.config['rating_mix'].get(float)
         self.time_threshold = 10.0  # TODO: maybe add config option?
 
         self.now_playing = None

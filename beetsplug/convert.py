@@ -166,7 +166,7 @@ class ConvertPlugin(BeetsPlugin):
         Raises `subprocess.CalledProcessError` if the command exited with a
         non-zero status code.
         """
-        quiet = config['convert']['quiet'].get()
+        quiet = self.config['quiet'].get()
 
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
@@ -280,7 +280,7 @@ class ConvertPlugin(BeetsPlugin):
                 item.read()
                 item.store()  # Store new path and audio data.
 
-            if config['convert']['embed']:
+            if self.config['embed']:
                 album = item.get_album()
                 if album and album.artpath:
                     EmbedCoverArtPlugin().embed_item(item, album.artpath,
@@ -336,24 +336,24 @@ class ConvertPlugin(BeetsPlugin):
 
     def convert_func(self, lib, opts, args):
         if not opts.dest:
-            opts.dest = config['convert']['dest'].get()
+            opts.dest = self.config['dest'].get()
         if not opts.dest:
             raise ui.UserError('no convert destination set')
         opts.dest = util.bytestring_path(opts.dest)
 
         if not opts.threads:
-            opts.threads = config['convert']['threads'].get(int)
+            opts.threads = self.config['threads'].get(int)
 
-        if config['convert']['paths']:
-            path_formats = ui.get_path_formats(config['convert']['paths'])
+        if self.config['paths']:
+            path_formats = ui.get_path_formats(self.config['paths'])
         else:
             path_formats = ui.get_path_formats()
 
         if not opts.format:
-            opts.format = config['convert']['format'].get(unicode).lower()
+            opts.format = self.config['format'].get(unicode).lower()
 
         pretend = opts.pretend if opts.pretend is not None else \
-            config['convert']['pretend'].get(bool)
+            self.config['pretend'].get(bool)
 
         if not pretend:
             ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
@@ -364,7 +364,7 @@ class ConvertPlugin(BeetsPlugin):
         if opts.album:
             albums = lib.albums(ui.decargs(args))
             items = (i for a in albums for i in a.items())
-            if config['convert']['copy_album_art']:
+            if self.config['copy_album_art']:
                 for album in albums:
                     self.copy_album_art(album, opts.dest, path_formats,
                                         pretend)
@@ -383,7 +383,7 @@ class ConvertPlugin(BeetsPlugin):
         """Transcode a file automatically after it is imported into the
         library.
         """
-        format = config['convert']['format'].get(unicode).lower()
+        format = self.config['format'].get(unicode).lower()
         if should_transcode(item, format):
             command, ext = get_format()
             fd, dest = tempfile.mkstemp('.' + ext)

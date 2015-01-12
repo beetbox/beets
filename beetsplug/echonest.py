@@ -134,7 +134,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         self.config.add(ATTRIBUTES)
 
         pyechonest.config.ECHO_NEST_API_KEY = \
-            config['echonest']['apikey'].get(unicode)
+            self.config['apikey'].get(unicode)
 
         if self.config['auto']:
             self.import_stages = [self.imported]
@@ -263,13 +263,13 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         source = item.path
         tmp = None
         if item.format not in ALLOWED_FORMATS:
-            if config['echonest']['convert']:
+            if self.config['convert']:
                 tmp = source = self.convert(source)
             if not tmp:
                 return
 
         if os.stat(source).st_size > UPLOAD_MAX_SIZE:
-            if config['echonest']['truncate']:
+            if self.config['truncate']:
                 source = self.truncate(source)
                 if tmp is not None:
                     util.remove(tmp)
@@ -394,7 +394,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         # There are four different ways to get a song. Each method is a
         # callable that takes the Item as an argument.
         methods = [self.profile, self.search]
-        if config['echonest']['upload']:
+        if self.config['upload']:
             methods.append(self.analyze)
 
         # Try each method in turn.

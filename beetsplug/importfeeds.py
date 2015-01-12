@@ -94,15 +94,15 @@ class ImportFeedsPlugin(BeetsPlugin):
     def _record_items(self, lib, basename, items):
         """Records relative paths to the given items for each feed format
         """
-        feedsdir = bytestring_path(config['importfeeds']['dir'].as_filename())
-        formats = config['importfeeds']['formats'].as_str_seq()
-        relative_to = config['importfeeds']['relative_to'].get() \
-            or config['importfeeds']['dir'].as_filename()
+        feedsdir = bytestring_path(self.config['dir'].as_filename())
+        formats = self.config['formats'].as_str_seq()
+        relative_to = self.config['relative_to'].get() \
+            or self.config['dir'].as_filename()
         relative_to = bytestring_path(relative_to)
 
         paths = []
         for item in items:
-            if config['importfeeds']['absolute_path']:
+            if self.config['absolute_path']:
                 paths.append(item.path)
             else:
                 try:
@@ -115,7 +115,7 @@ class ImportFeedsPlugin(BeetsPlugin):
 
         if 'm3u' in formats:
             basename = bytestring_path(
-                config['importfeeds']['m3u_name'].get(unicode)
+                self.config['m3u_name'].get(unicode)
             )
             m3u_path = os.path.join(feedsdir, basename)
             _write_m3u(m3u_path, paths)

@@ -329,9 +329,9 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         out = None
 
         # Local art.
-        cover_names = config['fetchart']['cover_names'].as_str_seq()
+        cover_names = self.config['cover_names'].as_str_seq()
         cover_names = map(util.bytestring_path, cover_names)
-        cautious = config['fetchart']['cautious'].get(bool)
+        cautious = self.config['cautious'].get(bool)
         if paths:
             for path in paths:
                 # FIXME
@@ -340,7 +340,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                     break
 
         # Web art sources.
-        remote_priority = config['fetchart']['remote_priority'].get(bool)
+        remote_priority = self.config['remote_priority'].get(bool)
         if not local_only and (remote_priority or not out):
             for url in self._source_urls(album):
                 if self.maxwidth:

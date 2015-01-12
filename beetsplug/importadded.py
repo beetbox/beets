@@ -8,7 +8,6 @@ from __future__ import unicode_literals, absolute_import, print_function
 
 import os
 
-from beets import config
 from beets import util
 from beets.plugins import BeetsPlugin
 
@@ -100,7 +99,7 @@ class ImportAddedPlugin(BeetsPlugin):
             mtime = self.item_mtime.pop(item.path, None)
             if mtime:
                 album_mtimes.append(mtime)
-                if config['importadded']['preserve_mtimes'].get(bool):
+                if self.config['preserve_mtimes'].get(bool):
                     self.write_item_mtime(item, mtime)
                     item.store()
         album.added = min(album_mtimes)
@@ -116,7 +115,7 @@ class ImportAddedPlugin(BeetsPlugin):
         mtime = self.item_mtime.pop(item.path, None)
         if mtime:
             item.added = mtime
-            if config['importadded']['preserve_mtimes'].get(bool):
+            if self.config['preserve_mtimes'].get(bool):
                 self.write_item_mtime(item, mtime)
             self._log.debug(u"Import of item '{0}', selected item.added={1}",
                             util.displayable_path(item.path), item.added)
