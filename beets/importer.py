@@ -26,6 +26,7 @@ from tempfile import mkdtemp
 from bisect import insort, bisect_left
 from contextlib import contextmanager
 import shutil
+import time
 
 from beets import logging
 from beets import autotag
@@ -174,14 +175,13 @@ class ImportSession(object):
     """Controls an import action. Subclasses should implement methods to
     communicate with the user or otherwise make decisions.
     """
-    def __init__(self, lib, logfile, paths, query):
-        """Create a session. `lib` is a Library object. `logfile` is a
-        file-like object open for writing or None if no logging is to be
-        performed. Either `paths` or `query` is non-null and indicates
+    def __init__(self, lib, loghandler, paths, query):
+        """Create a session. `lib` is a Library object. `loghandler` is a
+        logging.Handler. Either `paths` or `query` is non-null and indicates
         the source of files to be imported.
         """
         self.lib = lib
-        self.logfile = logfile
+        self.logger = self._setup_logging(loghandler)
         self.paths = paths
         self.query = query
         self.seen_idents = set()
@@ -190,6 +190,15 @@ class ImportSession(object):
         # Normalize the paths.
         if self.paths:
             self.paths = map(normpath, self.paths)
+
+    def _setup_logging(self, loghandler):
+        logger = logging.getLogger(__name__)
+        logger.propagate = False
+        if not loghandler:
+            log.info(u"Importer progress won't be logged")
+            loghandler = logging.NullHandler()
+        logger.handlers = [loghandler]
+        return logger
 
     def set_config(self, config):
         """Set `config` property from global import config and make
@@ -225,13 +234,10 @@ class ImportSession(object):
         self.want_resume = config['resume'].as_choice([True, False, 'ask'])
 
     def tag_log(self, status, paths):
-        """Log a message about a given album to logfile. The status should
+        """Log a message about a given album to the log file. The status should
         reflect the reason the album couldn't be tagged.
         """
-        if self.logfile:
-            print(u'{0} {1}'.format(status, displayable_path(paths)),
-                  file=self.logfile)
-            self.logfile.flush()
+        self.logger.info(u'{0} {1}', status, displayable_path(paths))
 
     def log_choice(self, task, duplicate=False):
         """Logs the task's current choice if it should be logged. If
@@ -269,6 +275,7 @@ class ImportSession(object):
     def run(self):
         """Run the import task.
         """
+        self.logger.info(u'import started {0}', time.asctime())
         self.set_config(config['import'])
 
         # Set up the pipeline.

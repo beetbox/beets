@@ -91,7 +91,7 @@ class TerminalImportSessionSetup(object):
             self.io = DummyIO()
         self.io.install()
         self.importer = TestTerminalImportSession(
-            self.lib, logfile=None, query=None, io=self.io,
+            self.lib, loghandler=None, query=None, io=self.io,
             paths=[import_dir or self.import_dir],
         )
 

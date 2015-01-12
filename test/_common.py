@@ -115,9 +115,9 @@ def album(lib=None):
 
 
 # Dummy import session.
-def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
+def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     cls = commands.TerminalImportSession if cli else importer.ImportSession
-    return cls(lib, logfile, paths, query)
+    return cls(lib, loghandler, paths, query)
 
 
 # A test harness for all beets tests.

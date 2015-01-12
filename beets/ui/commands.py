@@ -18,8 +18,6 @@ interface.
 from __future__ import print_function
 
 import os
-import time
-import codecs
 import platform
 import re
 import shlex
@@ -825,29 +823,22 @@ def import_files(lib, paths, query):
 
     # Open the log.
     if config['import']['log'].get() is not None:
-        logpath = config['import']['log'].as_filename()
+        logpath = syspath(config['import']['log'].as_filename())
         try:
-            logfile = codecs.open(syspath(logpath), 'a', 'utf8')
+            loghandler = logging.FileHandler(logpath)
         except IOError:
-            raise ui.UserError(u"could not open log file for writing: %s" %
-                               displayable_path(logpath))
-        print(u'import started', time.asctime(), file=logfile)
+            raise ui.UserError(u"could not open log file for writing: "
+                               u"{0}".format(displayable_path(loghandler)))
     else:
-        logfile = None
+        loghandler = None
 
     # Never ask for input in quiet mode.
     if config['import']['resume'].get() == 'ask' and \
             config['import']['quiet']:
         config['import']['resume'] = False
 
-    session = TerminalImportSession(lib, logfile, paths, query)
-    try:
-        session.run()
-    finally:
-        # If we were logging, close the file.
-        if logfile:
-            print(u'', file=logfile)
-            logfile.close()
+    session = TerminalImportSession(lib, loghandler, paths, query)
+    session.run()
 
     # Emit event.
     plugins.send('import', lib=lib, paths=paths)
