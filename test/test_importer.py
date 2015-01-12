@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -1223,14 +1224,14 @@ class TagLogTest(_common.TestCase):
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
         session.tag_log('status', 'path')
-        assert 'status path' in sio.getvalue()
+        self.assertIn('status path', sio.getvalue())
 
     def test_tag_log_unicode(self):
         sio = StringIO.StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
-        session.tag_log('status', 'caf\xc3\xa9')
-        assert 'status caf' in sio.getvalue()
+        session.tag_log('status', u'café')  # send unicode
+        self.assertIn(u'status café', sio.getvalue())
 
 
 class ResumeImportTest(unittest.TestCase, TestHelper):
