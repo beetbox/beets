@@ -48,41 +48,6 @@ def _items_for_query(lib, playlist, album=False):
     return results
 
 
-def update_playlists(lib):
-    ui.print_("Updating smart playlists...")
-    playlists = config['smartplaylist']['playlists'].get(list)
-    playlist_dir = config['smartplaylist']['playlist_dir'].as_filename()
-    relative_to = config['smartplaylist']['relative_to'].get()
-    if relative_to:
-        relative_to = normpath(relative_to)
-
-    for playlist in playlists:
-        items = []
-        items.extend(_items_for_query(lib, playlist, True))
-        items.extend(_items_for_query(lib, playlist, False))
-
-        m3us = {}
-        basename = playlist['name'].encode('utf8')
-        # As we allow tags in the m3u names, we'll need to iterate through
-        # the items and generate the correct m3u file names.
-        for item in items:
-            m3u_name = item.evaluate_template(basename, True)
-            if not (m3u_name in m3us):
-                m3us[m3u_name] = []
-            item_path = item.path
-            if relative_to:
-                item_path = os.path.relpath(item.path, relative_to)
-            if item_path not in m3us[m3u_name]:
-                m3us[m3u_name].append(item_path)
-        # Now iterate through the m3us that we need to generate
-        for m3u in m3us:
-            m3u_path = normpath(os.path.join(playlist_dir, m3u))
-            with open(syspath(m3u_path), 'w') as f:
-                for path in m3us[m3u]:
-                    f.write(path + '\n')
-    ui.print_("... Done")
-
-
 class SmartPlaylistPlugin(BeetsPlugin):
     def __init__(self):
         super(SmartPlaylistPlugin, self).__init__()
@@ -98,14 +63,47 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
     def commands(self):
         def update(lib, opts, args):
-            update_playlists(lib)
+            self.update_playlists(lib)
         spl_update = ui.Subcommand('splupdate',
                                    help='update the smart playlists')
         spl_update.func = update
         return [spl_update]
 
     def db_change(self, lib):
-        self.register_listener('cli_exit', self.update)
+        self.register_listener('cli_exit', self.update_playlists)
 
-    def update(self, lib):
-        update_playlists(lib)
+    def update_playlists(self, lib):
+        self._log.info("Updating smart playlists...")
+        playlists = self.config['playlists'].get(list)
+        playlist_dir = self.config['playlist_dir'].as_filename()
+        relative_to = self.config['relative_to'].get()
+        if relative_to:
+            relative_to = normpath(relative_to)
+
+        for playlist in playlists:
+            items = []
+            items.extend(_items_for_query(lib, playlist, True))
+            items.extend(_items_for_query(lib, playlist, False))
+
+            m3us = {}
+            basename = playlist['name'].encode('utf8')
+            # As we allow tags in the m3u names, we'll need to iterate through
+            # the items and generate the correct m3u file names.
+            for item in items:
+                m3u_name = item.evaluate_template(basename, True)
+                if not (m3u_name in m3us):
+                    m3us[m3u_name] = []
+                item_path = item.path
+                if relative_to:
+                    item_path = os.path.relpath(item.path, relative_to)
+                if item_path not in m3us[m3u_name]:
+                    m3us[m3u_name].append(item_path)
+            # Now iterate through the m3us that we need to generate
+            for m3u in m3us:
+                m3u_path = normpath(os.path.join(playlist_dir, m3u))
+                with open(syspath(m3u_path), 'w') as f:
+                    for path in m3us[m3u]:
+                        f.write(path + '\n')
+        self._log.info("... Done")
+
+
