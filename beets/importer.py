@@ -234,8 +234,8 @@ class ImportSession(object):
         self.want_resume = config['resume'].as_choice([True, False, 'ask'])
 
     def tag_log(self, status, paths):
-        """Log a message about a given album to the log file. The status should
-        reflect the reason the album couldn't be tagged.
+        """Log a message about a given album to the importer log. The status
+        should reflect the reason the album couldn't be tagged.
         """
         self.logger.info(u'{0} {1}', status, displayable_path(paths))
 
