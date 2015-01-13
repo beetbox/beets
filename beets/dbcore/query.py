@@ -20,6 +20,14 @@ from beets import util
 from datetime import datetime, timedelta
 
 
+class InvalidQuery(ValueError):
+    def __init__(self, what, expected, detail=None):
+        message = "{0!r} is not {1}".format(what, expected)
+        if detail:
+            message = "{0}: {1}".format(message, detail)
+        super(InvalidQuery, self).__init__(message)
+
+
 class Query(object):
     """An abstract class representing a query into the item database.
     """
@@ -140,14 +148,17 @@ class RegexpQuery(StringFieldQuery):
     """A query that matches a regular expression in a specific item
     field.
     """
+    def __init__(self, field, pattern, false=True):
+        super(RegexpQuery, self).__init__(field, pattern, false)
+        try:
+            self.pattern = re.compile(self.pattern)
+        except re.error as exc:
+            # Invalid regular expression.
+            raise InvalidQuery(pattern, "a regular expression", format(exc))
+
     @classmethod
     def string_match(cls, pattern, value):
-        try:
-            res = re.search(pattern, value)
-        except re.error:
-            # Invalid regular expression.
-            return False
-        return res is not None
+        return pattern.search(value) is not None
 
 
 class BooleanQuery(MatchQuery):
@@ -203,7 +214,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                return None
+                raise InvalidQuery(s, "an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)

@@ -21,7 +21,7 @@ import helper
 import beets.library
 from beets import dbcore
 from beets.dbcore import types
-from beets.dbcore.query import NoneQuery
+from beets.dbcore.query import NoneQuery, InvalidQuery
 from beets.library import Library, Item
 
 
@@ -218,11 +218,6 @@ class GetTest(DummyDataTestCase):
             'baz qux',
         ])
 
-    def test_bad_year(self):
-        q = 'year:delete from items'
-        results = self.lib.items(q)
-        self.assert_matched(results, [])
-
     def test_singleton_true(self):
         q = 'singleton:true'
         results = self.lib.items(q)
@@ -280,10 +275,15 @@ class GetTest(DummyDataTestCase):
         results = self.lib.items(q)
         self.assertFalse(results)
 
-    def test_numeric_empty(self):
-        q = dbcore.query.NumericQuery('year', '')
-        results = self.lib.items(q)
-        self.assertTrue(results)
+    def test_invalid_query(self):
+        with self.assertRaises(InvalidQuery) as raised:
+            dbcore.query.NumericQuery('year', '199a')
+        self.assertIn('not an int', str(raised.exception))
+
+        with self.assertRaises(InvalidQuery) as raised:
+            dbcore.query.RegexpQuery('year', '199(')
+        self.assertIn('not a regular expression', str(raised.exception))
+        self.assertIn('unbalanced parenthesis', str(raised.exception))
 
 
 class MatchTest(_common.TestCase):
