@@ -255,7 +255,7 @@ class TestHelper(object):
         config['import']['autotag'] = False
         config['import']['resume'] = False
 
-        return TestImportSession(self.lib, logfile=None, query=None,
+        return TestImportSession(self.lib, loghandler=None, query=None,
                                  paths=[import_dir])
 
     # Library fixtures methods
