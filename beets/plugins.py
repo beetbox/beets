@@ -185,7 +185,8 @@ class BeetsPlugin(object):
         """
         if cls.listeners is None:
             cls.listeners = defaultdict(list)
-        cls.listeners[event].append(func)
+        if func not in cls.listeners[event]:
+            cls.listeners[event].append(func)
 
     @classmethod
     def listen(cls, event):
