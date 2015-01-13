@@ -15,37 +15,22 @@
 """Generates smart playlists based on beets queries.
 """
 from __future__ import print_function
+from itertools import chain
 
 from beets.plugins import BeetsPlugin
-from beets import config, ui, library
+from beets import ui
 from beets.util import normpath, syspath
 import os
 
 
-def _items_for_query(lib, playlist, album=False):
-    """Get the matching items for a playlist's configured queries.
-    `album` indicates whether to process the item-level query or the
-    album-level query (if any).
-    """
-    key = 'album_query' if album else 'query'
-    if key not in playlist:
-        return []
-
-    # Parse quer(ies). If it's a list, perform the queries and manually
-    # concatenate the results
-    query_strings = playlist[key]
-    if not isinstance(query_strings, (list, tuple)):
-        query_strings = [query_strings]
-    model = library.Album if album else library.Item
-    results = []
-    for q in query_strings:
-        query, sort = library.parse_query_string(q, model)
-        if album:
-            new = lib.albums(query, sort)
-        else:
-            new = lib.items(query, sort)
-        results.extend(new)
-    return results
+def _items_for_query(lib, queries, album):
+    """Get the matching items for a query.
+    `album` indicates whether the queries are item-level or album-level"""
+    request = lib.albums if album else lib.items
+    if isinstance(queries, basestring):
+        return request(queries)
+    else:
+        return chain.from_iterable(map(request, queries))
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
@@ -81,9 +66,13 @@ class SmartPlaylistPlugin(BeetsPlugin):
             relative_to = normpath(relative_to)
 
         for playlist in playlists:
+            self._log.debug(u"Creating playlist {0.name}", playlist)
             items = []
-            items.extend(_items_for_query(lib, playlist, True))
-            items.extend(_items_for_query(lib, playlist, False))
+            if 'album_query' in playlist:
+                items.extend(_items_for_query(lib, playlist['album_query'],
+                                              True))
+            if 'query' in playlist:
+                items.extend(_items_for_query(lib, playlist['query'], False))
 
             m3us = {}
             basename = playlist['name'].encode('utf8')
@@ -91,7 +80,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             # the items and generate the correct m3u file names.
             for item in items:
                 m3u_name = item.evaluate_template(basename, True)
-                if not (m3u_name in m3us):
+                if m3u_name not in m3us:
                     m3us[m3u_name] = []
                 item_path = item.path
                 if relative_to:
@@ -104,6 +93,4 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 with open(syspath(m3u_path), 'w') as f:
                     for path in m3us[m3u]:
                         f.write(path + '\n')
-        self._log.info("... Done")
-
-
+        self._log.info("{0} playlists updated", len(playlists))
