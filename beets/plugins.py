@@ -202,9 +202,7 @@ class BeetsPlugin(object):
             ...     pass
         """
         def helper(func):
-            if cls.listeners is None:
-                cls.listeners = defaultdict(list)
-            cls.listeners[event].append(func)
+            cls.register_listener(event, func)
             return func
         return helper
 
