@@ -81,11 +81,11 @@ class MPDUpdatePlugin(BeetsPlugin):
         self.register_listener('cli_exit', self.update)
 
     def update(self, lib):
-            self.update_mpd(
-                config['mpd']['host'].get(unicode),
-                config['mpd']['port'].get(int),
-                config['mpd']['password'].get(unicode),
-            )
+        self.update_mpd(
+            config['mpd']['host'].get(unicode),
+            config['mpd']['port'].get(int),
+            config['mpd']['password'].get(unicode),
+        )
 
     def update_mpd(self, host='localhost', port=6600, password=None):
         """Sends the "update" command to the MPD server indicated,
