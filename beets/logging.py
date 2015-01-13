@@ -92,3 +92,16 @@ if PY26:
         return logger
 
     my_manager.getLogger = new_getLogger
+
+
+# Offer NullHandler in Python 2.6 to reduce the difference with never versions
+if PY26:
+    class NullHandler(Handler):
+        def handle(self, record):
+            pass
+
+        def emit(self, record):
+            pass
+
+        def createLock(self):
+            self.lock = None
