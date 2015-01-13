@@ -21,10 +21,6 @@ from beets import config, ui, library
 from beets.util import normpath, syspath
 import os
 
-# Global variable so that smartplaylist can detect database changes and run
-# only once before beets exits.
-database_changed = False
-
 
 def _items_for_query(lib, playlist, album=False):
     """Get the matching items for a playlist's configured queries.
@@ -97,6 +93,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
             'playlists': []
         })
 
+        if self.config['auto']:
+            self.register_listener('database_change', self.db_change)
+
     def commands(self):
         def update(lib, opts, args):
             update_playlists(lib)
@@ -105,15 +104,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         spl_update.func = update
         return [spl_update]
 
+    def db_change(self, lib):
+        self.register_listener('cli_exit', self.update)
 
-@SmartPlaylistPlugin.listen('database_change')
-def handle_change(lib):
-    global database_changed
-    database_changed = True
-
-
-@SmartPlaylistPlugin.listen('cli_exit')
-def update(lib):
-    auto = config['smartplaylist']['auto']
-    if database_changed and auto:
+    def update(self, lib):
         update_playlists(lib)
