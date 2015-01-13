@@ -195,7 +195,6 @@ class ImportSession(object):
         logger = logging.getLogger(__name__)
         logger.propagate = False
         if not loghandler:
-            log.info(u"Importer progress won't be logged")
             loghandler = logging.NullHandler()
         logger.handlers = [loghandler]
         return logger
