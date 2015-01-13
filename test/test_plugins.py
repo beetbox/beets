@@ -161,6 +161,41 @@ class HelpersTest(unittest.TestCase):
                          ('A', 'B', 'C', 'D')), ['D', 'B', 'C', 'A'])
 
 
+class ListenersTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_plugin_loader()
+
+    def tearDown(self):
+        self.teardown_plugin_loader()
+        self.teardown_beets()
+
+    def test_register(self):
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.register_listener('cli_exit', self.dummy)
+                self.register_listener('cli_exit', self.dummy)
+
+            def dummy(self):
+                pass
+
+        d = DummyPlugin()
+        self.assertEqual(DummyPlugin.listeners['cli_exit'], [d.dummy])
+
+        d2 = DummyPlugin()
+        DummyPlugin.register_listener('cli_exit', d.dummy)
+        self.assertEqual(DummyPlugin.listeners['cli_exit'],
+                         [d.dummy, d2.dummy])
+
+        @DummyPlugin.listen('cli_exit')
+        def dummy(lib):
+            pass
+
+        self.assertEqual(DummyPlugin.listeners['cli_exit'],
+                         [d.dummy, d2.dummy, dummy])
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

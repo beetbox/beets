@@ -12,11 +12,6 @@ from beets import config
 from beets.plugins import BeetsPlugin
 
 
-# Global variable to detect if database is changed that the update
-# is only run once before beets exists.
-database_changed = False
-
-
 def get_music_section(host, port):
     """Getting the section key for the music library in Plex.
     """
@@ -55,30 +50,23 @@ class PlexUpdate(BeetsPlugin):
             u'host': u'localhost',
             u'port': 32400})
 
+        self.register_listener('database_change', self.listen_for_db_change)
 
-@PlexUpdate.listen('database_change')
-def listen_for_db_change(lib=None):
-    """Listens for beets db change and set global database_changed
-    variable to True.
-    """
-    global database_changed
-    database_changed = True
+    def listen_for_db_change(self, lib):
+        """Listens for beets db change and register the update for the end"""
+        self.register_listener('cli_exit', self.update)
 
-
-@PlexUpdate.listen('cli_exit')
-def update(lib=None):
-    """When the client exists and the database_changed variable is True
-    trying to send refresh request to Plex server.
-    """
-    if database_changed:
-        print('Updating Plex library...')
+    def update(self, lib):
+        """When the client exists try to send refresh request to Plex server.
+        """
+        self._log.info('Updating Plex library...')
 
         # Try to send update request.
         try:
             update_plex(
                 config['plex']['host'].get(),
                 config['plex']['port'].get())
-            print('... started.')
+            self._log.info('... started.')
 
         except requests.exceptions.RequestException:
-            print('Update failed.')
+            self._log.warning('Update failed.')
