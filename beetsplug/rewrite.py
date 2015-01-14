@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,14 +16,11 @@
 formats.
 """
 import re
-import logging
 from collections import defaultdict
 
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import library
-
-log = logging.getLogger('beets')
 
 
 def rewriter(field, rules):
@@ -59,7 +56,7 @@ class RewritePlugin(BeetsPlugin):
             if fieldname not in library.Item._fields:
                 raise ui.UserError("invalid field name (%s) in rewriter" %
                                    fieldname)
-            log.debug(u'adding template field {0}'.format(key))
+            self._log.debug(u'adding template field {0}', key)
             pattern = re.compile(pattern.lower())
             rules[fieldname].append((pattern, value))
             if fieldname == 'artist':

@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -23,7 +23,6 @@ import optparse
 import textwrap
 import sys
 from difflib import SequenceMatcher
-import logging
 import sqlite3
 import errno
 import re
@@ -31,6 +30,7 @@ import struct
 import traceback
 import os.path
 
+from beets import logging
 from beets import library
 from beets import plugins
 from beets import util
@@ -866,14 +866,14 @@ def _configure(options):
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
-        log.debug(u'user configuration: {0}'.format(
-            util.displayable_path(config_path)))
+        log.debug(u'user configuration: {0}',
+                  util.displayable_path(config_path))
     else:
-        log.debug(u'no user configuration found at {0}'.format(
-            util.displayable_path(config_path)))
+        log.debug(u'no user configuration found at {0}',
+                  util.displayable_path(config_path))
 
-    log.debug(u'data directory: {0}'
-              .format(util.displayable_path(config.config_dir())))
+    log.debug(u'data directory: {0}',
+              util.displayable_path(config.config_dir()))
     return config
 
 
@@ -895,9 +895,9 @@ def _open_library(config):
             util.displayable_path(dbpath)
         ))
     log.debug(u'library database: {0}\n'
-              u'library directory: {1}'
-              .format(util.displayable_path(lib.path),
-                      util.displayable_path(lib.directory)))
+              u'library directory: {1}',
+              util.displayable_path(lib.path),
+              util.displayable_path(lib.directory))
     return lib
 
 
@@ -924,7 +924,8 @@ def _raw_main(args, lib=None):
     # Special case for the `config --edit` command: bypass _setup so
     # that an invalid configuration does not prevent the editor from
     # starting.
-    if subargs[0] == 'config' and ('-e' in subargs or '--edit' in subargs):
+    if subargs and subargs[0] == 'config' \
+       and ('-e' in subargs or '--edit' in subargs):
         from beets.ui.commands import config_edit
         return config_edit()
 
@@ -945,7 +946,7 @@ def main(args=None):
         _raw_main(args)
     except UserError as exc:
         message = exc.args[0] if exc.args else None
-        log.error(u'error: {0}'.format(message))
+        log.error(u'error: {0}', message)
         sys.exit(1)
     except util.HumanReadableException as exc:
         exc.log(log)
@@ -957,7 +958,7 @@ def main(args=None):
         log.error(exc)
         sys.exit(1)
     except confit.ConfigError as exc:
-        log.error(u'configuration error: {0}'.format(exc))
+        log.error(u'configuration error: {0}', exc)
         sys.exit(1)
     except IOError as exc:
         if exc.errno == errno.EPIPE:

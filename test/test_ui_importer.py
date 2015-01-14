@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -91,7 +91,7 @@ class TerminalImportSessionSetup(object):
             self.io = DummyIO()
         self.io.install()
         self.importer = TestTerminalImportSession(
-            self.lib, logfile=None, query=None, io=self.io,
+            self.lib, loghandler=None, query=None, io=self.io,
             paths=[import_dir or self.import_dir],
         )
 

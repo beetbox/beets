@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -33,6 +34,7 @@ from beets.mediafile import MediaFile
 from beets import autotag
 from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch
 from beets import config
+from beets import logging
 
 
 class AutotagStub(object):
@@ -209,7 +211,7 @@ class ImportHelper(TestHelper):
         config['import']['link'] = link
 
         self.importer = TestImportSession(
-            self.lib, logfile=None, query=None,
+            self.lib, loghandler=None, query=None,
             paths=[import_dir or self.import_dir]
         )
 
@@ -1219,15 +1221,17 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
 class TagLogTest(_common.TestCase):
     def test_tag_log_line(self):
         sio = StringIO.StringIO()
-        session = _common.import_session(logfile=sio)
+        handler = logging.StreamHandler(sio)
+        session = _common.import_session(loghandler=handler)
         session.tag_log('status', 'path')
-        assert 'status path' in sio.getvalue()
+        self.assertIn('status path', sio.getvalue())
 
     def test_tag_log_unicode(self):
         sio = StringIO.StringIO()
-        session = _common.import_session(logfile=sio)
-        session.tag_log('status', 'caf\xc3\xa9')
-        assert 'status caf' in sio.getvalue()
+        handler = logging.StreamHandler(sio)
+        session = _common.import_session(loghandler=handler)
+        session.tag_log('status', u'café')  # send unicode
+        self.assertIn(u'status café', sio.getvalue())
 
 
 class ResumeImportTest(unittest.TestCase, TestHelper):

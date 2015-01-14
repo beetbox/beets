@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Thomas Scholtes.
+# Copyright 2015, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -35,13 +35,13 @@ import os
 import os.path
 import shutil
 import subprocess
-import logging
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
 from StringIO import StringIO
 from enum import Enum
 
 import beets
+from beets import logging
 from beets import config
 import beets.plugins
 from beets.library import Library, Item, Album
@@ -255,7 +255,7 @@ class TestHelper(object):
         config['import']['autotag'] = False
         config['import']['resume'] = False
 
-        return TestImportSession(self.lib, logfile=None, query=None,
+        return TestImportSession(self.lib, loghandler=None, query=None,
                                  paths=[import_dir])
 
     # Library fixtures methods

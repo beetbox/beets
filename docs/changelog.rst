@@ -1,38 +1,73 @@
 Changelog
 =========
 
-1.3.10 (in development)
+1.3.11 (in development)
 -----------------------
+
+Fixes:
+
+* :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
+  MusixMatch backend. :bug:`1204`
+* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* to the
+  built-in whitelist/canonicalization tree. :bug:`1206`
+* Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
+  :bug:`1207`
+* :doc:`/plugins/fetchart`: Do not attempt to import directories as album art.
+  :bug:`1177` :bug:`1211`
+* :doc:`/plugins/mpdstats`: Avoid double-counting some play events. :bug:`773`
+  :bug:`1212`
+* Fix a crash when the importer deals with Unicode metadata in ``--pretend``
+  mode. :bug:`1214`
+
+For developers: The logging system in beets has been overhauled. Plugins now
+each have their own logger, which helps by automatically adjusting the
+verbosity level in import mode and by prefixing the plugin's name. Also,
+logging calls can (and should!) use modern ``{}``-style string formatting
+lazily. See :ref:`plugin-logging` in the plugin API docs.
+
+
+1.3.10 (January 5, 2015)
+------------------------
+
+This version adds a healthy helping of new features and fixes a critical
+MPEG-4--related bug. There are more lyrics sources, there new plugins for
+managing permissions and integrating with `Plex`_, and the importer has a new
+``--pretend`` flag that shows which music *would* be imported.
 
 One backwards-compatibility note: the :doc:`/plugins/lyrics` now requires the
 `requests`_ library. If you use this plugin, you will need to install the
 library by typing ``pip install requests`` or the equivalent for your OS.
 
-New:
+Also, as an advance warning, this will be one of the last releases to support
+Python 2.6. If you have a system that cannot run Python 2.7, please consider
+upgrading soon.
 
-* :doc:`/plugins/lyrics`: Add `Musixmatch`_ source and introduce a new
-  ``sources`` config option that lets you choose exactly where to look for
-  lyrics and in which order.
-* :doc:`/plugins/lyrics`: Add brazilian and hispanic sources to Google custom
-  search engine.
+The new features are:
+
 * A new :doc:`/plugins/permissions` makes it easy to fix permissions on music
   files as they are imported. Thanks to :user:`xsteadfastx`. :bug:`1098`
 * A new :doc:`/plugins/plexupdate` lets you notify a `Plex`_ server when the
   database changes. Thanks again to xsteadfastx. :bug:`1120`
+* The :ref:`import-cmd` command now has a ``--pretend`` flag that lists the
+  files that will be imported. Thanks to :user:`mried`. :bug:`1162`
+* :doc:`/plugins/lyrics`: Add `Musixmatch`_ source and introduce a new
+  ``sources`` config option that lets you choose exactly where to look for
+  lyrics and in which order.
+* :doc:`/plugins/lyrics`: Add Brazilian and Spanish sources to Google custom
+  search engine.
 * Add a warning when importing a directory that contains no music. :bug:`1116`
   :bug:`1127`
 * :doc:`/plugins/zero`: Can now remove embedded images. :bug:`1129` :bug:`1100`
 * The :ref:`config-cmd` command can now be used to edit the configuration even
   when it has syntax errors. :bug:`1123` :bug:`1128`
 * :doc:`/plugins/lyrics`: Added a new ``force`` config option. :bug:`1150`
-* The :ref:`import-cmd` command now has a ``--pretend`` flag that lists the
-  files that will be imported. Thanks to :user:`mried`. :bug:`1162`
 
-Fixed:
+As usual, there are loads of little fixes and improvements:
 
-* :doc:`/plugins/lyrics`: Avoid fetching truncated lyrics from the Google
-  backed by merging text blocks separated by empty ``<div>`` before scraping.
 * Fix a new crash with the latest version of Mutagen (1.26).
+* :doc:`/plugins/lyrics`: Avoid fetching truncated lyrics from the Google
+  backed by merging text blocks separated by empty ``<div>`` tags before
+  scraping.
 * We now print a better error message when the database file is corrupted.
 * :doc:`/plugins/discogs`: Only prompt for authentication when running the
   :ref:`import-cmd` command. :bug:`1123`
@@ -68,6 +103,8 @@ Fixed:
   twice in the artist string. Thanks to Marc Addeo. :bug:`1179` :bug:`1181`
 * :doc:`/plugins/lastgenre`: Match songs more robustly when they contain
   dashes. Thanks to :user:`djl`. :bug:`1156`
+* The :ref:`config-cmd` command can now use ``$EDITOR`` variables with
+  arguments.
 
 .. _API changes: http://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/

@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Fabrice Laporte.
+# Copyright 2015, Fabrice Laporte.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,13 +16,11 @@
 """
 
 from datetime import datetime
-import logging
 import re
 import string
 from itertools import tee, izip
-from beets import plugins, ui
 
-log = logging.getLogger('beets')
+from beets import plugins, ui
 
 
 class BucketError(Exception):

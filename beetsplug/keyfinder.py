@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Thomas Scholtes.
+# Copyright 2015, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,15 +15,11 @@
 """Uses the `KeyFinder` program to add the `initial_key` field.
 """
 
-import logging
 import subprocess
 
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
-
-
-log = logging.getLogger('beets')
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -62,11 +58,11 @@ class KeyFinderPlugin(BeetsPlugin):
             try:
                 key = util.command_output([bin, '-f', item.path])
             except (subprocess.CalledProcessError, OSError) as exc:
-                log.error(u'KeyFinder execution failed: {0}'.format(exc))
+                self._log.error(u'execution failed: {0}', exc)
                 continue
 
             item['initial_key'] = key
-            log.debug(u'added computed initial key {0} for {1}'
-                      .format(key, util.displayable_path(item.path)))
+            self._log.debug(u'added computed initial key {0} for {1}',
+                            key, util.displayable_path(item.path))
             item.try_write()
             item.store()

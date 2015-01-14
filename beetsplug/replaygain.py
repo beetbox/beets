@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Fabrice Laporte, Yevgeny Bezman, and Adrian Sampson.
+# Copyright 2015, Fabrice Laporte, Yevgeny Bezman, and Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-import logging
 import subprocess
 import os
 import collections
@@ -20,12 +19,11 @@ import itertools
 import sys
 import warnings
 
+from beets import logging
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output, displayable_path
 from beets import config
-
-log = logging.getLogger('beets.replaygain')
 
 
 # Utilities.
@@ -67,10 +65,11 @@ AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 class Backend(object):
     """An abstract class representing engine for calculating RG values.
     """
-    def __init__(self, config):
+    def __init__(self, config, log):
         """Initialize the backend with the configuration view for the
         plugin.
         """
+        self._log = log
 
     def compute_track_gain(self, items):
         raise NotImplementedError()
@@ -85,7 +84,8 @@ class Backend(object):
 
 
 class CommandBackend(Backend):
-    def __init__(self, config):
+    def __init__(self, config, log):
+        super(CommandBackend, self).__init__(config, log)
         config.add({
             'command': u"",
             'noclip': True,
@@ -135,7 +135,7 @@ class CommandBackend(Backend):
 
         supported_items = filter(self.format_supported, album.items())
         if len(supported_items) != len(album.items()):
-            log.debug(u'replaygain: tracks are of unsupported format')
+            self._log.debug(u'tracks are of unsupported format')
             return AlbumGain(None, [])
 
         output = self.compute_gain(supported_items, True)
@@ -180,11 +180,10 @@ class CommandBackend(Backend):
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
-        log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
-        log.debug(u"replaygain: executing {0}"
-                  .format(" ".join(map(displayable_path, cmd))))
+        self._log.debug(u'analyzing {0} files', len(items))
+        self._log.debug(u"executing {0}", " ".join(map(displayable_path, cmd)))
         output = call(cmd)
-        log.debug(u'replaygain: analysis finished')
+        self._log.debug(u'analysis finished')
         results = self.parse_tool_output(output,
                                          len(items) + (1 if is_album else 0))
 
@@ -199,7 +198,7 @@ class CommandBackend(Backend):
         for line in text.split('\n')[1:num_lines + 1]:
             parts = line.split('\t')
             if len(parts) != 6 or parts[0] == 'File':
-                log.debug(u'replaygain: bad tool output: {0}'.format(text))
+                self._log.debug(u'bad tool output: {0}', text)
                 raise ReplayGainError('mp3gain failed')
             d = {
                 'file': parts[0],
@@ -468,7 +467,8 @@ class AudioToolsBackend(Backend):
     <http://audiotools.sourceforge.net/>`_ and its capabilities to read more
     file formats and compute ReplayGain values using it replaygain module.
     """
-    def __init__(self, config):
+    def __init__(self, config, log):
+        super(CommandBackend, self).__init__(config, log)
         self._import_audiotools()
 
     def _import_audiotools(self):
@@ -548,14 +548,8 @@ class AudioToolsBackend(Backend):
         # be obtained from an audiofile instance.
         rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
 
-        log.debug(
-            u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
-                item.artist,
-                item.title,
-                rg_track_gain,
-                rg_track_peak
-            )
-        )
+        self._log.debug(u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}',
+                        item.artist, item.title, rg_track_gain, rg_track_peak)
         return Gain(gain=rg_track_gain, peak=rg_track_peak)
 
     def compute_album_gain(self, album):
@@ -563,12 +557,7 @@ class AudioToolsBackend(Backend):
 
         :rtype: :class:`AlbumGain`
         """
-        log.debug(
-            u'Analysing album {0} - {1}'.format(
-                album.albumartist,
-                album.album
-            )
-        )
+        self._log.debug(u'Analysing album {0.albumartist} - {0.album}', album)
 
         # The first item is taken and opened to get the sample rate to
         # initialize the replaygain object. The object is used for all the
@@ -584,26 +573,16 @@ class AudioToolsBackend(Backend):
             track_gains.append(
                 Gain(gain=rg_track_gain, peak=rg_track_peak)
             )
-            log.debug(
-                u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}'.format(
-                    item.artist,
-                    item.title,
-                    rg_track_gain,
-                    rg_track_peak
-                )
-            )
+            self._log.debug(u'ReplayGain for track {0.artist} - {0.title}: '
+                            u'{1:.2f}, {2:.2f}',
+                            item, rg_track_gain, rg_track_peak)
 
         # After getting the values for all tracks, it's possible to get the
         # album values.
         rg_album_gain, rg_album_peak = rg.album_gain()
-        log.debug(
-            u'ReplayGain for Album {0} - {1}: {2:.2f}, {3:.2f}'.format(
-                album.albumartist,
-                album.album,
-                rg_album_gain,
-                rg_album_peak
-            )
-        )
+        self._log.debug(u'ReplayGain for album {0.albumartist} - {0.album}: '
+                        u'{1:.2f}, {2:.2f}',
+                        album, rg_album_gain, rg_album_peak)
 
         return AlbumGain(
             Gain(gain=rg_album_gain, peak=rg_album_peak),
@@ -649,7 +628,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         try:
             self.backend_instance = self.backends[backend_name](
-                self.config
+                self.config, self._log
             )
         except (ReplayGainError, FatalReplayGainError) as e:
             raise ui.UserError(
@@ -674,19 +653,16 @@ class ReplayGainPlugin(BeetsPlugin):
         item.rg_track_peak = track_gain.peak
         item.store()
 
-        log.debug(u'replaygain: applied track gain {0}, peak {1}'.format(
-            item.rg_track_gain,
-            item.rg_track_peak
-        ))
+        self._log.debug(u'applied track gain {0}, peak {1}',
+                        item.rg_track_gain, item.rg_track_peak)
 
     def store_album_gain(self, album, album_gain):
         album.rg_album_gain = album_gain.gain
         album.rg_album_peak = album_gain.peak
         album.store()
 
-        log.debug(u'replaygain: applied album gain {0}, peak {1}'.format(
-            album.rg_album_gain,
-            album.rg_album_peak))
+        self._log.debug(u'applied album gain {0}, peak {1}',
+                        album.rg_album_gain, album.rg_album_peak)
 
     def handle_album(self, album, write):
         """Compute album and track replay gain store it in all of the
@@ -697,12 +673,11 @@ class ReplayGainPlugin(BeetsPlugin):
         items, nothing is done.
         """
         if not self.album_requires_gain(album):
-            log.info(u'Skipping album {0} - {1}'.format(album.albumartist,
-                                                        album.album))
+            self._log.info(u'Skipping album {0} - {1}',
+                           album.albumartist, album.album)
             return
 
-        log.info(u'analyzing {0} - {1}'.format(album.albumartist,
-                                               album.album))
+        self._log.info(u'analyzing {0} - {1}', album.albumartist, album.album)
 
         try:
             album_gain = self.backend_instance.compute_album_gain(album)
@@ -721,7 +696,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 if write:
                     item.try_write()
         except ReplayGainError as e:
-            log.info(u"ReplayGain error: {0}".format(e))
+            self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e)
@@ -735,12 +710,10 @@ class ReplayGainPlugin(BeetsPlugin):
         in the item, nothing is done.
         """
         if not self.track_requires_gain(item):
-            log.info(u'Skipping track {0} - {1}'
-                     .format(item.artist, item.title))
+            self._log.info(u'Skipping track {0.artist} - {0.title}', item)
             return
 
-        log.info(u'analyzing {0} - {1}'
-                 .format(item.artist, item.title))
+        self._log.info(u'analyzing {0} - {1}', item.artist, item.title)
 
         try:
             track_gains = self.backend_instance.compute_track_gain([item])
@@ -755,7 +728,7 @@ class ReplayGainPlugin(BeetsPlugin):
             if write:
                 item.try_write()
         except ReplayGainError as e:
-            log.info(u"ReplayGain error: {0}".format(e))
+            self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e)
@@ -767,7 +740,7 @@ class ReplayGainPlugin(BeetsPlugin):
         if not self.automatic:
             return
 
-        log.setLevel(logging.WARN)
+        self._log.setLevel(logging.WARN)
 
         if task.is_album:
             self.handle_album(task.album, False)
@@ -778,7 +751,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Return the "replaygain" ui subcommand.
         """
         def func(lib, opts, args):
-            log.setLevel(logging.INFO)
+            self._log.setLevel(logging.INFO)
 
             write = config['import']['write'].get(bool)
 

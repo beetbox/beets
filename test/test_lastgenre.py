@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Fabrice Laporte.
+# Copyright 2015, Fabrice Laporte.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -157,9 +157,10 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
                 tag2.item = MockPylastElem(u'Rap')
                 return [tag1, tag2]
 
-        res = lastgenre._tags_for(MockPylastObj())
+        plugin = lastgenre.LastGenrePlugin()
+        res = plugin._tags_for(MockPylastObj())
         self.assertEqual(res, [u'pop', u'rap'])
-        res = lastgenre._tags_for(MockPylastObj(), min_weight=50)
+        res = plugin._tags_for(MockPylastObj(), min_weight=50)
         self.assertEqual(res, [u'pop'])
 
     def test_get_genre(self):

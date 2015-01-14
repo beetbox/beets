@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -20,7 +20,6 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-import logging
 import pylast
 import os
 import yaml
@@ -31,7 +30,6 @@ from beets.util import normpath, plurality
 from beets import config
 from beets import library
 
-log = logging.getLogger('beets')
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -53,39 +51,7 @@ def deduplicate(seq):
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 
-# Core genre identification routine.
-
-def _tags_for(obj, min_weight=None):
-    """Given a pylast entity (album or track), return a list of
-    tag names for that entity. Return an empty list if the entity is
-    not found or another error occurs.
-
-    If `min_weight` is specified, tags are filtered by weight.
-    """
-    try:
-        # Work around an inconsistency in pylast where
-        # Album.get_top_tags() does not return TopItem instances.
-        # https://code.google.com/p/pylast/issues/detail?id=85
-        if isinstance(obj, pylast.Album):
-            res = super(pylast.Album, obj).get_top_tags()
-        else:
-            res = obj.get_top_tags()
-    except PYLAST_EXCEPTIONS as exc:
-        log.debug(u'last.fm error: {0}'.format(exc))
-        return []
-
-    # Filter by weight (optionally).
-    if min_weight:
-        res = [el for el in res if (el.weight or 0) >= min_weight]
-
-    # Get strings from tags.
-    res = [el.item.get_name().lower() for el in res]
-
-    return res
-
-
 # Canonicalization tree processing.
-
 
 def flatten_tree(elem, path, branches):
     """Flatten nested lists/dictionaries into lists of strings
@@ -225,7 +191,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         can be found. Ex. 'Electronic, House, Dance'
         """
         min_weight = self.config['min_weight'].get(int)
-        return self._resolve_genres(_tags_for(lastfm_obj, min_weight))
+        return self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
 
     def _is_allowed(self, genre):
         """Determine whether the genre is present in the whitelist,
@@ -371,9 +337,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             for album in lib.albums(ui.decargs(args)):
                 album.genre, src = self._get_genre(album)
-                log.info(u'genre for album {0} - {1} ({2}): {3}'.format(
-                    album.albumartist, album.album, src, album.genre
-                ))
+                self._log.info(u'genre for album {0.albumartist} - {0.album} '
+                               u'({1}): {0.genre}', album, src)
                 album.store()
 
                 for item in album.items():
@@ -382,9 +347,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
                         item.store()
-                        log.info(u'genre for track {0} - {1} ({2}): {3}'
-                                 .format(item.artist, item.title, src,
-                                         item.genre))
+                        self._log.info(u'genre for track {0.artist} - {0.tit'
+                                       u'le} ({1}): {0.genre}', item, src)
 
                     if write:
                         item.try_write()
@@ -397,20 +361,50 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if task.is_album:
             album = task.album
             album.genre, src = self._get_genre(album)
-            log.debug(u'added last.fm album genre ({0}): {1}'.format(
-                src, album.genre))
+            self._log.debug(u'added last.fm album genre ({0}): {1}',
+                            src, album.genre)
             album.store()
 
             if 'track' in self.sources:
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
-                    log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                        src, item.genre))
+                    self._log.debug(u'added last.fm item genre ({0}): {1}',
+                                    src, item.genre)
                     item.store()
 
         else:
             item = task.item
             item.genre, src = self._get_genre(item)
-            log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                src, item.genre))
+            self._log.debug(u'added last.fm item genre ({0}): {1}',
+                            src, item.genre)
             item.store()
+
+    def _tags_for(self, obj, min_weight=None):
+        """Core genre identification routine.
+
+        Given a pylast entity (album or track), return a list of
+        tag names for that entity. Return an empty list if the entity is
+        not found or another error occurs.
+
+        If `min_weight` is specified, tags are filtered by weight.
+        """
+        try:
+            # Work around an inconsistency in pylast where
+            # Album.get_top_tags() does not return TopItem instances.
+            # https://code.google.com/p/pylast/issues/detail?id=85
+            if isinstance(obj, pylast.Album):
+                res = super(pylast.Album, obj).get_top_tags()
+            else:
+                res = obj.get_top_tags()
+        except PYLAST_EXCEPTIONS as exc:
+            self._log.debug(u'last.fm error: {0}', exc)
+            return []
+
+        # Filter by weight (optionally).
+        if min_weight:
+            res = [el for el in res if (el.weight or 0) >= min_weight]
+
+        # Get strings from tags.
+        res = [el.item.get_name().lower() for el in res]
+
+        return res

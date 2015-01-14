@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,14 +14,15 @@
 
 """Support for beets plugins."""
 
-import logging
 import traceback
 import inspect
 import re
 from collections import defaultdict
+from functools import wraps
 
 
 import beets
+from beets import logging
 from beets import mediafile
 
 PLUGIN_NAMESPACE = 'beetsplug'
@@ -41,6 +42,23 @@ class PluginConflictException(Exception):
     """
 
 
+class PluginLogFilter(logging.Filter):
+    """A logging filter that identifies the plugin that emitted a log
+    message.
+    """
+    def __init__(self, plugin):
+        self.prefix = u'{0}: '.format(plugin.name)
+
+    def filter(self, record):
+        if hasattr(record.msg, 'msg') and isinstance(record.msg.msg,
+                                                     basestring):
+            # A _LogMessage from our hacked-up Logging replacement.
+            record.msg.msg = self.prefix + record.msg.msg
+        elif isinstance(record.msg, basestring):
+            record.msg = self.prefix + record.msg
+        return True
+
+
 # Managing the plugins themselves.
 
 class BeetsPlugin(object):
@@ -51,7 +69,6 @@ class BeetsPlugin(object):
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
-        self.import_stages = []
         self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
         if not self.template_funcs:
@@ -60,12 +77,48 @@ class BeetsPlugin(object):
             self.template_fields = {}
         if not self.album_template_fields:
             self.album_template_fields = {}
+        self.import_stages = []
+
+        self._log = log.getChild(self.name)
+        self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
+        if beets.config['verbose']:
+            self._log.addFilter(PluginLogFilter(self))
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
         """
         return ()
+
+    def get_import_stages(self):
+        """Return a list of functions that should be called as importer
+        pipelines stages.
+
+        The callables are wrapped versions of the functions in
+        `self.import_stages`. Wrapping provides some bookkeeping for the
+        plugin: specifically, the logging level is adjusted to WARNING.
+        """
+        return [self._set_log_level(logging.WARNING, import_stage)
+                for import_stage in self.import_stages]
+
+    def _set_log_level(self, log_level, func):
+        """Wrap `func` to temporarily set this plugin's logger level to
+        `log_level` (and restore it after the function returns).
+
+        The level is *not* adjusted when beets is in verbose
+        mode---i.e., the plugin logger continues to delegate to the base
+        beets logger.
+        """
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not beets.config['verbose']:
+                old_log_level = self._log.level
+                self._log.setLevel(log_level)
+            result = func(*args, **kwargs)
+            if not beets.config['verbose']:
+                self._log.setLevel(old_log_level)
+            return result
+        return wrapper
 
     def queries(self):
         """Should return a dict mapping prefixes to Query subclasses.
@@ -132,7 +185,8 @@ class BeetsPlugin(object):
         """
         if cls.listeners is None:
             cls.listeners = defaultdict(list)
-        cls.listeners[event].append(func)
+        if func not in cls.listeners[event]:
+            cls.listeners[event].append(func)
 
     @classmethod
     def listen(cls, event):
@@ -149,9 +203,7 @@ class BeetsPlugin(object):
             ...     pass
         """
         def helper(func):
-            if cls.listeners is None:
-                cls.listeners = defaultdict(list)
-            cls.listeners[event].append(func)
+            cls.register_listener(event, func)
             return func
         return helper
 
@@ -204,7 +256,7 @@ def load_plugins(names=()):
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
-                    log.warn(u'** plugin {0} not found'.format(name))
+                    log.warn(u'** plugin {0} not found', name)
                 else:
                     raise
             else:
@@ -214,7 +266,7 @@ def load_plugins(names=()):
                         _classes.add(obj)
 
         except:
-            log.warn(u'** error loading plugin {0}'.format(name))
+            log.warn(u'** error loading plugin {0}', name)
             log.warn(traceback.format_exc())
 
 
@@ -349,8 +401,7 @@ def import_stages():
     """Get a list of import stage functions defined by plugins."""
     stages = []
     for plugin in find_plugins():
-        if hasattr(plugin, 'import_stages'):
-            stages += plugin.import_stages
+        stages += plugin.get_import_stages()
     return stages
 
 
@@ -398,7 +449,7 @@ def send(event, **arguments):
 
     Returns a list of return values from the handlers.
     """
-    log.debug(u'Sending event: {0}'.format(event))
+    log.debug(u'Sending event: {0}', event)
     return_values = []
     for handler in event_handlers()[event]:
         # Don't break legacy plugins if we want to pass more arguments

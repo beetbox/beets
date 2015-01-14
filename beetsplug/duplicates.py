@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Pedro Silva.
+# Copyright 2015, Pedro Silva.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,14 +15,12 @@
 """List duplicate tracks or albums.
 """
 import shlex
-import logging
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, vararg_callback, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess
 
 PLUGIN = 'duplicates'
-log = logging.getLogger('beets')
 
 
 def _process_item(item, lib, copy=False, move=False, delete=False,
@@ -47,7 +45,7 @@ def _process_item(item, lib, copy=False, move=False, delete=False,
     print_obj(item, lib, fmt=format)
 
 
-def _checksum(item, prog):
+def _checksum(item, prog, log):
     """Run external `prog` on file path associated with `item`, cache
     output as flexattr on a key that is the name of the program, and
     return the key, checksum tuple.
@@ -56,24 +54,24 @@ def _checksum(item, prog):
     key = args[0]
     checksum = getattr(item, key, False)
     if not checksum:
-        log.debug(u'{0}: key {1} on item {2} not cached: computing checksum'
-                  .format(PLUGIN, key, displayable_path(item.path)))
+        log.debug(u'{0}: key {1} on item {2} not cached: computing checksum',
+                  PLUGIN, key, displayable_path(item.path))
         try:
             checksum = command_output(args)
             setattr(item, key, checksum)
             item.store()
-            log.debug(u'{)}: computed checksum for {1} using {2}'
-                      .format(PLUGIN, item.title, key))
+            log.debug(u'{0}: computed checksum for {1} using {2}',
+                      PLUGIN, item.title, key)
         except subprocess.CalledProcessError as e:
-            log.debug(u'{0}: failed to checksum {1}: {2}'
-                      .format(PLUGIN, displayable_path(item.path), e))
+            log.debug(u'{0}: failed to checksum {1}: {2}',
+                      PLUGIN, displayable_path(item.path), e)
     else:
-        log.debug(u'{0}: key {1} on item {2} cached: not computing checksum'
-                  .format(PLUGIN, key, displayable_path(item.path)))
+        log.debug(u'{0}: key {1} on item {2} cached: not computing checksum',
+                  PLUGIN, key, displayable_path(item.path))
     return key, checksum
 
 
-def _group_by(objs, keys):
+def _group_by(objs, keys, log):
     """Return a dictionary with keys arbitrary concatenations of attributes and
     values lists of objects (Albums or Items) with those keys.
     """
@@ -86,17 +84,17 @@ def _group_by(objs, keys):
             key = '\001'.join(values)
             counts[key].append(obj)
         else:
-            log.debug(u'{0}: all keys {1} on item {2} are null: skipping'
-                      .format(PLUGIN, str(keys), displayable_path(obj.path)))
+            log.debug(u'{0}: all keys {1} on item {2} are null: skipping',
+                      PLUGIN, str(keys), displayable_path(obj.path))
 
     return counts
 
 
-def _duplicates(objs, keys, full):
+def _duplicates(objs, keys, full, log):
     """Generate triples of keys, duplicate counts, and constituent objects.
     """
     offset = 0 if full else 1
-    for k, objs in _group_by(objs, keys).iteritems():
+    for k, objs in _group_by(objs, keys, log).iteritems():
         if len(objs) > 1:
             yield (k, len(objs) - offset, objs[offset:])
 
@@ -214,12 +212,13 @@ class DuplicatesPlugin(BeetsPlugin):
                         'duplicates: "checksum" option must be a command'
                     )
                 for i in items:
-                    k, _ = _checksum(i, checksum)
+                    k, _ = self._checksum(i, checksum, self._log)
                 keys = [k]
 
             for obj_id, obj_count, objs in _duplicates(items,
                                                        keys=keys,
-                                                       full=full):
+                                                       full=full,
+                                                       log=self._log):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
                         _process_item(o, lib,

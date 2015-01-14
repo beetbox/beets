@@ -112,8 +112,23 @@ an example::
     def loaded():
         print 'Plugin loaded!'
 
-Pass the name of the event in question to the ``listen`` decorator. The events
-currently available are:
+Pass the name of the event in question to the ``listen`` decorator.
+
+Note that if you want to access an attribute of your plugin (e.g. ``config`` or
+``log``) you'll have to define a method and not a function. Here is the usual
+registration process in this case::
+
+    from beets.plugins import BeetsPlugin
+
+    class SomePlugin(BeetsPlugin):
+      def __init__(self):
+        super(SomePlugin, self).__init__()
+        self.register_listener('pluginload', self.loaded)
+
+      def loaded(self):
+        self._log.info('Plugin loaded!')
+
+The events currently available are:
 
 * *pluginload*: called after all the plugins have been loaded after the ``beet``
   command starts
@@ -334,11 +349,11 @@ method.
 
 Here's an example plugin that provides a meaningless new field "foo"::
 
-    class FooPlugin(BeetsPlugin):
+    class fooplugin(beetsplugin):
         def __init__(self):
-            field = mediafile.MediaField(
-                mediafile.MP3DescStorageStyle(u'foo')
-                mediafile.StorageStyle(u'foo')
+            field = mediafile.mediafield(
+                mediafile.mp3descstoragestyle(u'foo')
+                mediafile.storagestyle(u'foo')
             )
             self.add_media_field('foo', field)
 
@@ -448,3 +463,30 @@ Specifying types has several advantages:
   from the command line.
 
 * User input for flexible fields may be validated and converted.
+
+
+.. _plugin-logging:
+
+Logging
+^^^^^^^
+
+Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
+`standard Python logging module`_. The logger is set up to `PEP 3101`_,
+str.format-style string formatting. So you can write logging calls like this::
+
+    self._log.debug(u'Processing {0.title} by {0.artist}', item)
+
+.. _PEP 3101: https://www.python.org/dev/peps/pep-3101/
+.. _standard Python logging module: https://docs.python.org/2/library/logging.html
+
+The per-plugin loggers have two convenient features:
+
+* When beets is in verbose mode, messages are prefixed with the plugin name to
+  make them easier to see.
+* Messages at the ``INFO`` logging level are hidden when the plugin is running
+  in an importer stage (see above). This addresses a common pattern where
+  plugins need to use the same code for a command and an import stage, but the
+  command needs to print more messages than the import stage. (For example,
+  you'll want to log "found lyrics for this song" when you're run explicitly
+  as a command, but you don't want to noisily interrupt the importer interface
+  when running automatically.)

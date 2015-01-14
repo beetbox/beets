@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -21,13 +21,13 @@ from __future__ import print_function
 import re
 from string import Template
 import traceback
-import logging
 import random
 import time
 
 import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
+from beets import logging
 from beets import vfs
 from beets.util import bluelet
 from beets.library import Item
@@ -1154,10 +1154,10 @@ class BPDPlugin(BeetsPlugin):
 
     def start_bpd(self, lib, host, port, password, volume, debug):
         """Starts a BPD server."""
-        if debug:
-            log.setLevel(logging.DEBUG)
+        if debug:  # FIXME this should be managed by BeetsPlugin
+            self._log.setLevel(logging.DEBUG)
         else:
-            log.setLevel(logging.WARNING)
+            self._log.setLevel(logging.WARNING)
         try:
             server = Server(lib, host, port, password)
             server.cmd_setvol(None, volume)

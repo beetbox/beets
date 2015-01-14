@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, aroquen
+# Copyright 2015, aroquen
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,12 +15,9 @@
 """Determine BPM by pressing a key to the rhythm."""
 
 import time
-import logging
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-
-log = logging.getLogger('beets')
 
 
 def bpm(max_strokes):
@@ -73,15 +70,15 @@ class BPMPlugin(BeetsPlugin):
 
         item = items[0]
         if item['bpm']:
-            log.info(u'Found bpm {0}'.format(item['bpm']))
+            self._log.info(u'Found bpm {0}', item['bpm'])
             if not overwrite:
                 return
 
-        log.info(u'Press Enter {0} times to the rhythm or Ctrl-D '
-                 u'to exit'.format(self.config['max_strokes'].get(int)))
+        self._log.info(u'Press Enter {0} times to the rhythm or Ctrl-D '
+                       u'to exit', self.config['max_strokes'].get(int))
         new_bpm = bpm(self.config['max_strokes'].get(int))
         item['bpm'] = int(new_bpm)
         if write:
             item.try_write()
         item.store()
-        log.info(u'Added new bpm {0}'.format(item['bpm']))
+        self._log.info(u'Added new bpm {0}', item['bpm'])

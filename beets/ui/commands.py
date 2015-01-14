@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -17,12 +17,10 @@ interface.
 """
 from __future__ import print_function
 
-import logging
 import os
-import time
-import codecs
 import platform
 import re
+import shlex
 
 import beets
 from beets import ui
@@ -37,6 +35,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
 from beets import config
+from beets import logging
 from beets.util.confit import _package_path
 
 VARIOUS_ARTISTS = u'Various Artists'
@@ -764,8 +763,8 @@ class TerminalImportSession(importer.ImportSession):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
-        log.warn(u"This {0} is already in the library!"
-                 .format("album" if task.is_album else "item"))
+        log.warn(u"This {0} is already in the library!",
+                 ("album" if task.is_album else "item"))
 
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
@@ -824,29 +823,22 @@ def import_files(lib, paths, query):
 
     # Open the log.
     if config['import']['log'].get() is not None:
-        logpath = config['import']['log'].as_filename()
+        logpath = syspath(config['import']['log'].as_filename())
         try:
-            logfile = codecs.open(syspath(logpath), 'a', 'utf8')
+            loghandler = logging.FileHandler(logpath)
         except IOError:
-            raise ui.UserError(u"could not open log file for writing: %s" %
-                               displayable_path(logpath))
-        print(u'import started', time.asctime(), file=logfile)
+            raise ui.UserError(u"could not open log file for writing: "
+                               u"{0}".format(displayable_path(loghandler)))
     else:
-        logfile = None
+        loghandler = None
 
     # Never ask for input in quiet mode.
     if config['import']['resume'].get() == 'ask' and \
             config['import']['quiet']:
         config['import']['resume'] = False
 
-    session = TerminalImportSession(lib, logfile, paths, query)
-    try:
-        session.run()
-    finally:
-        # If we were logging, close the file.
-        if logfile:
-            print(u'', file=logfile)
-            logfile.close()
+    session = TerminalImportSession(lib, loghandler, paths, query)
+    session.run()
 
     # Emit event.
     plugins.send('import', lib=lib, paths=paths)
@@ -1014,16 +1006,16 @@ def update_items(lib, query, album, move, pretend):
 
             # Did the item change since last checked?
             if item.current_mtime() <= item.mtime:
-                log.debug(u'skipping {0} because mtime is up to date ({1})'
-                          .format(displayable_path(item.path), item.mtime))
+                log.debug(u'skipping {0} because mtime is up to date ({1})',
+                          displayable_path(item.path), item.mtime)
                 continue
 
             # Read new data.
             try:
                 item.read()
             except library.ReadError as exc:
-                log.error(u'error reading {0}: {1}'.format(
-                    displayable_path(item.path), exc))
+                log.error(u'error reading {0}: {1}',
+                          displayable_path(item.path), exc)
                 continue
 
             # Special-case album artist when it matches track artist. (Hacky
@@ -1065,7 +1057,7 @@ def update_items(lib, query, album, move, pretend):
                 continue
             album = lib.get_album(album_id)
             if not album:  # Empty albums have already been removed.
-                log.debug(u'emptied album {0}'.format(album_id))
+                log.debug(u'emptied album {0}', album_id)
                 continue
             first_item = album.items().get()
 
@@ -1076,7 +1068,7 @@ def update_items(lib, query, album, move, pretend):
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
-                log.debug(u'moving album {0}'.format(album_id))
+                log.debug(u'moving album {0}', album_id)
                 album.move()
 
 
@@ -1298,8 +1290,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
             if move:
                 cur_path = obj.path
                 if lib.directory in ancestry(cur_path):  # In library?
-                    log.debug(u'moving object {0}'
-                              .format(displayable_path(cur_path)))
+                    log.debug(u'moving object {0}', displayable_path(cur_path))
                     obj.move()
 
             obj.try_sync(write)
@@ -1377,9 +1368,9 @@ def move_items(lib, dest, query, copy, album):
 
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
-    log.info(u'{0} {1} {2}s.'.format(action, len(objs), entity))
+    log.info(u'{0} {1} {2}s.', action, len(objs), entity)
     for obj in objs:
-        log.debug(u'moving: {0}'.format(util.displayable_path(obj.path)))
+        log.debug(u'moving: {0}', util.displayable_path(obj.path))
 
         obj.move(copy, basedir=dest)
         obj.store()
@@ -1425,18 +1416,15 @@ def write_items(lib, query, pretend, force):
     for item in items:
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
-            log.info(u'missing file: {0}'.format(
-                util.displayable_path(item.path)
-            ))
+            log.info(u'missing file: {0}', util.displayable_path(item.path))
             continue
 
         # Get an Item object reflecting the "clean" (on-disk) state.
         try:
             clean_item = library.Item.from_path(item.path)
         except library.ReadError as exc:
-            log.error(u'error reading {0}: {1}'.format(
-                displayable_path(item.path), exc
-            ))
+            log.error(u'error reading {0}: {1}',
+                      displayable_path(item.path), exc)
             continue
 
         # Check for and display changes.
@@ -1503,7 +1491,12 @@ def config_edit():
 
     if 'EDITOR' in os.environ:
         editor = os.environ['EDITOR']
-        args = [editor, editor, path]
+        try:
+            editor = shlex.split(editor)
+        except ValueError:  # Malformed shell tokens.
+            editor = [editor]
+        args = editor + [path]
+        args.insert(1, args[0])
     elif platform.system() == 'Darwin':
         args = ['open', 'open', '-n', path]
     elif platform.system() == 'Windows':
@@ -1517,7 +1510,7 @@ def config_edit():
     try:
         os.execlp(*args)
     except OSError:
-        raise ui.UserError("Could not edit configuration. Please"
+        raise ui.UserError("Could not edit configuration. Please "
                            "set the EDITOR environment variable.")
 
 

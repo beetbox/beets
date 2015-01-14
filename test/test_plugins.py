@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Thomas Scholtes.
+# Copyright 2015, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -254,6 +254,41 @@ class HelpersTest(unittest.TestCase):
         self.assertEqual(plugins.sanitize_choices(['A', 'A'], ('A')), ['A'])
         self.assertEqual(plugins.sanitize_choices(['D', '*', 'A'],
                          ('A', 'B', 'C', 'D')), ['D', 'B', 'C', 'A'])
+
+
+class ListenersTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_plugin_loader()
+
+    def tearDown(self):
+        self.teardown_plugin_loader()
+        self.teardown_beets()
+
+    def test_register(self):
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.register_listener('cli_exit', self.dummy)
+                self.register_listener('cli_exit', self.dummy)
+
+            def dummy(self):
+                pass
+
+        d = DummyPlugin()
+        self.assertEqual(DummyPlugin.listeners['cli_exit'], [d.dummy])
+
+        d2 = DummyPlugin()
+        DummyPlugin.register_listener('cli_exit', d.dummy)
+        self.assertEqual(DummyPlugin.listeners['cli_exit'],
+                         [d.dummy, d2.dummy])
+
+        @DummyPlugin.listen('cli_exit')
+        def dummy(lib):
+            pass
+
+        self.assertEqual(DummyPlugin.listeners['cli_exit'],
+                         [d.dummy, d2.dummy, dummy])
 
 
 def suite():

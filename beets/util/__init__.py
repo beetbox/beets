@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -544,10 +544,7 @@ def truncate_path(path, length=MAX_FILENAME_LENGTH):
 
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
-    if value.lower() in ('yes', '1', 'true', 't', 'y'):
-        return True
-    else:
-        return False
+    return value.lower() in ('yes', '1', 'true', 't', 'y')
 
 
 def as_string(value):

@@ -6,7 +6,7 @@ import shutil
 from _common import unittest
 from beets import config
 from beets.library import Item, Album, Library
-from beetsplug.importfeeds import album_imported, ImportFeedsPlugin
+from beetsplug.importfeeds import ImportFeedsPlugin
 
 
 class ImportfeedsTestTest(unittest.TestCase):
@@ -30,7 +30,7 @@ class ImportfeedsTestTest(unittest.TestCase):
         self.lib.add(album)
         self.lib.add(item)
 
-        album_imported(self.lib, album)
+        self.importfeeds.album_imported(self.lib, album)
         playlist_path = os.path.join(self.feeds_dir,
                                      os.listdir(self.feeds_dir)[0])
         self.assertTrue(playlist_path.endswith('album_name.m3u'))
