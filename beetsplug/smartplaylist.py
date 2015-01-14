@@ -76,11 +76,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 items.extend(_items_for_query(lib, playlist['query'], False))
 
             m3us = {}
-            basename = playlist['name'].encode('utf8')
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
             for item in items:
-                m3u_name = item.evaluate_template(basename, True)
+                m3u_name = item.evaluate_template(playlist['name'], True)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
                 item_path = item.path
