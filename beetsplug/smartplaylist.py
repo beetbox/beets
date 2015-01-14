@@ -67,7 +67,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             relative_to = normpath(relative_to)
 
         for playlist in playlists:
-            self._log.debug(u"Creating playlist {0.name}", playlist)
+            self._log.debug(u"Creating playlist {0[name]}", playlist)
             items = []
             if 'album_query' in playlist:
                 items.extend(_items_for_query(lib, playlist['album_query'],
