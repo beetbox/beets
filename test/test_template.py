@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -14,6 +15,8 @@
 
 """Tests for template engine.
 """
+import warnings
+
 from _common import unittest
 from beets.util import functemplate
 
@@ -206,6 +209,13 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(len(arg_parts), 1)
         self._assert_call(arg_parts[0], u"bar", 1)
         self.assertEqual(list(_normexpr(arg_parts[0].args[0])), [u'baz'])
+
+    def test_fail_on_utf8(self):
+        parts = u'é'.encode('utf8')
+        warnings.simplefilter("ignore")
+        with self.assertRaises(UnicodeDecodeError):
+            functemplate._parse(parts)
+        warnings.simplefilter("default")
 
 
 class EvalTest(unittest.TestCase):
