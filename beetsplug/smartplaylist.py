@@ -24,8 +24,11 @@ import os
 
 
 def _items_for_query(lib, queries, album):
-    """Get the matching items for a query.
-    `album` indicates whether the queries are item-level or album-level.
+    """Get the matching items for a list of queries.
+
+    `queries` can either be a single string or a list of strings. In the
+    latter case, the results from each query are concatenated. `album`
+    indicates whether the queries are item-level or album-level.
     """
     request = lib.albums if album else lib.items
     if isinstance(queries, basestring):
