@@ -20,6 +20,14 @@ from beets import util
 from datetime import datetime, timedelta
 
 
+class InvalidQueryError(ValueError):
+    def __init__(self, what, expected, detail=None):
+        message = "{0!r} is not {1}".format(what, expected)
+        if detail:
+            message = "{0}: {1}".format(message, detail)
+        super(InvalidQueryError, self).__init__(message)
+
+
 class Query(object):
     """An abstract class representing a query into the item database.
     """
@@ -139,15 +147,22 @@ class SubstringQuery(StringFieldQuery):
 class RegexpQuery(StringFieldQuery):
     """A query that matches a regular expression in a specific item
     field.
+
+    Raises InvalidQueryError when the pattern is not a valid regular
+    expression.
     """
+    def __init__(self, field, pattern, false=True):
+        super(RegexpQuery, self).__init__(field, pattern, false)
+        try:
+            self.pattern = re.compile(self.pattern)
+        except re.error as exc:
+            # Invalid regular expression.
+            raise InvalidQueryError(pattern, "a regular expression",
+                                    format(exc))
+
     @classmethod
     def string_match(cls, pattern, value):
-        try:
-            res = re.search(pattern, value)
-        except re.error:
-            # Invalid regular expression.
-            return False
-        return res is not None
+        return pattern.search(value) is not None
 
 
 class BooleanQuery(MatchQuery):
@@ -191,6 +206,9 @@ class NumericQuery(FieldQuery):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
+
+    Raises InvalidQueryError when the pattern does not represent an int or
+    a float.
     """
     def _convert(self, s):
         """Convert a string to a numeric type (float or int). If the
@@ -203,7 +221,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                return None
+                raise InvalidQueryError(s, "an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
