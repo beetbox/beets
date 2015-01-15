@@ -157,7 +157,7 @@ def search_pairs(item):
 
 
 class Backend(object):
-    def __init__(self, log):
+    def __init__(self, config, log):
         self._log = log
 
     @staticmethod
@@ -335,6 +335,11 @@ def scrape_lyrics_from_html(html):
 
 class Google(Backend):
     """Fetch lyrics from Google search results."""
+    def __init__(self, config, log):
+        super(Google, self).__init__(config, log)
+        self.api_key = config['google_API_key'].get(unicode)
+        self.engine_id = config['google_engine_ID'].get(unicode)
+
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics.
         """
@@ -407,10 +412,8 @@ class Google(Backend):
 
     def fetch(self, artist, title):
         query = u"%s %s" % (artist, title)
-        api_key = self.config['google_API_key'].get(unicode)
-        engine_id = self.config['google_engine_ID'].get(unicode)
         url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
-            (api_key, engine_id, urllib.quote(query.encode('utf8')))
+            (self.api_key, self.engine_id, urllib.quote(query.encode('utf8')))
 
         data = urllib.urlopen(url)
         data = json.load(data)
@@ -464,9 +467,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             available_sources.remove('google')
         self.config['sources'] = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
-        self.backends = []
-        for key in self.config['sources'].as_str_seq():
-            self.backends.append(self.SOURCE_BACKENDS[key](self._log))
+
+        self.backends = [self.SOURCE_BACKENDS[key](self.config, self._log)
+                         for key in self.config['sources'].as_str_seq()]
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
