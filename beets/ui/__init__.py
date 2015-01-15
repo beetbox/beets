@@ -961,7 +961,7 @@ def main(args=None):
     except confit.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
         sys.exit(1)
-    except db_query.InvalidQuery as exc:
+    except db_query.InvalidQueryError as exc:
         log.error(u'invalid query: {0}', exc)
         sys.exit(1)
     except IOError as exc:

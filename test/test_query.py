@@ -21,7 +21,7 @@ import helper
 import beets.library
 from beets import dbcore
 from beets.dbcore import types
-from beets.dbcore.query import NoneQuery, InvalidQuery
+from beets.dbcore.query import NoneQuery, InvalidQueryError
 from beets.library import Library, Item
 
 
@@ -276,11 +276,11 @@ class GetTest(DummyDataTestCase):
         self.assertFalse(results)
 
     def test_invalid_query(self):
-        with self.assertRaises(InvalidQuery) as raised:
+        with self.assertRaises(InvalidQueryError) as raised:
             dbcore.query.NumericQuery('year', '199a')
         self.assertIn('not an int', str(raised.exception))
 
-        with self.assertRaises(InvalidQuery) as raised:
+        with self.assertRaises(InvalidQueryError) as raised:
             dbcore.query.RegexpQuery('year', '199(')
         self.assertIn('not a regular expression', str(raised.exception))
         self.assertIn('unbalanced parenthesis', str(raised.exception))

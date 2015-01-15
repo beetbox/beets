@@ -20,12 +20,12 @@ from beets import util
 from datetime import datetime, timedelta
 
 
-class InvalidQuery(ValueError):
+class InvalidQueryError(ValueError):
     def __init__(self, what, expected, detail=None):
         message = "{0!r} is not {1}".format(what, expected)
         if detail:
             message = "{0}: {1}".format(message, detail)
-        super(InvalidQuery, self).__init__(message)
+        super(InvalidQueryError, self).__init__(message)
 
 
 class Query(object):
@@ -154,7 +154,8 @@ class RegexpQuery(StringFieldQuery):
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
             # Invalid regular expression.
-            raise InvalidQuery(pattern, "a regular expression", format(exc))
+            raise InvalidQueryError(pattern, "a regular expression",
+                                    format(exc))
 
     @classmethod
     def string_match(cls, pattern, value):
@@ -214,7 +215,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQuery(s, "an int or a float")
+                raise InvalidQueryError(s, "an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
