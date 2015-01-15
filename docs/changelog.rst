@@ -18,6 +18,8 @@ Fixes:
   :bug:`1212`
 * Fix a crash when the importer deals with Unicode metadata in ``--pretend``
   mode. :bug:`1214`
+* :doc:`/plugins/smartplaylist`: Fix ``album_query`` so that individual files
+  are added to the playlist instead of directories. :bug:`1225`
 
 For developers: The logging system in beets has been overhauled. Plugins now
 each have their own logger, which helps by automatically adjusting the

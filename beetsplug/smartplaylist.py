@@ -15,7 +15,6 @@
 """Generates smart playlists based on beets queries.
 """
 from __future__ import print_function
-from itertools import chain
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -30,11 +29,17 @@ def _items_for_query(lib, queries, album):
     latter case, the results from each query are concatenated. `album`
     indicates whether the queries are item-level or album-level.
     """
-    request = lib.albums if album else lib.items
     if isinstance(queries, basestring):
-        return request(queries)
+        queries = [queries]
+    if album:
+        for query in queries:
+            for album in lib.albums(query):
+                for item in album.items():
+                    yield item
     else:
-        return chain.from_iterable(map(request, queries))
+        for query in queries:
+            for item in lib.items(query):
+                yield item
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
