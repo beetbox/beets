@@ -147,6 +147,9 @@ class SubstringQuery(StringFieldQuery):
 class RegexpQuery(StringFieldQuery):
     """A query that matches a regular expression in a specific item
     field.
+
+    Raises InvalidQueryError when the pattern is not a valid regular
+    expression.
     """
     def __init__(self, field, pattern, false=True):
         super(RegexpQuery, self).__init__(field, pattern, false)
@@ -203,6 +206,9 @@ class NumericQuery(FieldQuery):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
+
+    Raises InvalidQueryError when the pattern does not represent an int or
+    a float.
     """
     def _convert(self, s):
         """Convert a string to a numeric type (float or int). If the
