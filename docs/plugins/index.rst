@@ -31,7 +31,6 @@ Each plugin has its own set of options that can be defined in a section bearing 
 .. toctree::
    :hidden:
 
-   beatport
    bpd
    bpm
    bucket
@@ -83,7 +82,6 @@ Autotagger Extensions
 * :doc:`fromfilename`: Guess metadata for untagged tracks from their
   filenames.
 
-.. _Beatport: http://www.beatport.com/
 .. _Discogs: http://www.discogs.com/
 
 Metadata

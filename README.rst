@@ -31,7 +31,7 @@ imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 - Fetch or calculate all the metadata you could possibly need: `album art`_,
   `lyrics`_, `genres`_, `tempos`_, `ReplayGain`_ levels, or `acoustic
   fingerprints`_.
-- Get metadata from `MusicBrainz`_, `Discogs`_, or `Beatport`_. Or guess
+- Get metadata from `MusicBrainz`_ or `Discogs`_. Or guess
   metadata using songs' filenames or their acoustic fingerprints.
 - `Transcode audio`_ to any format you like.
 - Check your library for `duplicate tracks and albums`_ or for `albums that
@@ -60,7 +60,6 @@ shockingly simple if you know a little Python.
     http://beets.readthedocs.org/page/plugins/duplicates.html
 .. _Transcode audio:
     http://beets.readthedocs.org/page/plugins/convert.html
-.. _Beatport: http://www.beatport.com/
 .. _Discogs: http://www.discogs.com/
 .. _acoustic fingerprints:
     http://beets.readthedocs.org/page/plugins/chroma.html
