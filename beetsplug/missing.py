@@ -23,7 +23,7 @@ from beets.ui import decargs, print_obj, Subcommand
 def _missing_count(album):
     """Return number of missing items in `album`.
     """
-    return (album.tracktotal or 0) - len(album.items())
+    return (album.albumtotal or 0) - len(album.items())
 
 
 def _item(track_info, album_info, album_id):
@@ -139,7 +139,7 @@ class MissingPlugin(BeetsPlugin):
         """
         item_mbids = map(lambda x: x.mb_trackid, album.items())
 
-        if len([i for i in album.items()]) < album.tracktotal:
+        if len([i for i in album.items()]) < album.albumtotal:
             # fetch missing items
             # TODO: Implement caching that without breaking other stuff
             album_info = hooks.album_for_mbid(album.mb_albumid)

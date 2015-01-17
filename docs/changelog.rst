@@ -11,6 +11,21 @@ Features:
   search results you wish to see when looking up releases at MusicBrainz
   during import. :bug:`1245`
 
+Core improvements:
+
+* The ``tracktotal`` attribute is now a *track-level field* instead of an
+  album-level one. This field stores the total number of tracks on the
+  album, or if the ``per_disc_numbering`` config option is set, the total
+  number of tracks on a particular medium. With the latter option the
+  album-level incarnation of this field could not represent releases where
+  the total number of tracks differs per medium ---for example 20 tracks
+  on medium 1 and 21 tracks on medium 2. Now, tracktotal is correctly
+  handled also when ``per_disc_numbering`` is set.
+* Complimentary to the change for ``tracktotal`` there is now an album-level
+  ``albumtotal`` attribute. This field always provides the total numbers of
+  tracks on the album. The ``per_disc_numbering`` config option has no
+  influence on this field.
+
 Fixes:
 
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
