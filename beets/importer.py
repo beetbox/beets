@@ -464,9 +464,6 @@ class ImportTask(object):
         """
         if self.choice_flag == action.ASIS:
             return list(self.items)
-        # FIXME this should be a simple attribute. There should be no
-        # need to retrieve the keys of `match.mapping`. This requires
-        # that we remove unmatched items from the list.
         elif self.choice_flag == action.APPLY:
             return self.match.mapping.keys()
         else:
@@ -475,8 +472,6 @@ class ImportTask(object):
     def apply_metadata(self):
         """Copy metadata from match info to the items.
         """
-        # TODO call should be more descriptive like
-        # apply_metadata(self.match, self.items)
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
     def duplicate_items(self, lib):
