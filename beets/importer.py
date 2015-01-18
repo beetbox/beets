@@ -1117,7 +1117,7 @@ def read_tasks(session):
 
             log.debug(u'extracting archive {0}',
                       displayable_path(toppath))
-            archive_tasks = task_factory.archive(toppath)[0]
+            archive_tasks = task_factory.archive(toppath)
             for archive_task in archive_tasks:
                 try:
                     archive_task.extract()
