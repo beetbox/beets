@@ -283,25 +283,28 @@ class ImportSession(object):
         else:
             stages = [query_tasks(self)]
 
+        # In pretend mode, just log what would otherwise be imported.
         if self.config['pretend']:
-            # Only log the imported files and end the pipeline
             stages += [log_files(self)]
         else:
             if self.config['group_albums'] and \
                not self.config['singletons']:
-                # Split directory tasks into one task for each album
+                # Split directory tasks into one task for each album.
                 stages += [group_albums(self)]
+
             if self.config['autotag']:
-                # FIXME We should also resolve duplicates when not
-                # autotagging. This is currently handled in `user_query`
                 stages += [lookup_candidates(self), user_query(self)]
             else:
                 stages += [import_asis(self)]
+
             stages += [apply_choices(self)]
 
+            # Plugin stages.
             for stage_func in plugins.import_stages():
                 stages.append(plugin_stage(self, stage_func))
+
             stages += [manipulate_files(self)]
+
         pl = pipeline.Pipeline(stages)
 
         # Run the pipeline.
@@ -514,8 +517,6 @@ class ImportTask(object):
     def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths.
         """
-        # FIXME Maybe the keywords should be task properties.
-
         # Do not delete any files or prune directories when skipping.
         if self.skip:
             return
