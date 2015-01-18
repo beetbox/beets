@@ -1289,7 +1289,7 @@ def manipulate_files(session, task):
 
 @pipeline.stage
 def log_files(session, task):
-    """A coroutine (pipeline stage) to log each file which will be imported
+    """A coroutine (pipeline stage) to log each file to be imported.
     """
     if isinstance(task, SingletonImportTask):
         log.info(u'Singleton: {0}', displayable_path(task.item['path']))
@@ -1300,8 +1300,11 @@ def log_files(session, task):
 
 
 def group_albums(session):
-    """Group the items of a task by albumartist and album name and create a new
-    task for each album. Yield the tasks as a multi message.
+    """A pipeline stage that groups the items of each task into albums
+    using their metadata.
+
+    Groups are identified using their artist and album fields. The
+    pipeline stage emits new album tasks for each discovered group.
     """
     def group(item):
         return (item.albumartist or item.artist, item.album)
