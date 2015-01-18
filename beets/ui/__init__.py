@@ -38,6 +38,7 @@ from beets.util.functemplate import Template
 from beets import config
 from beets.util import confit
 from beets.autotag import mb
+from beets.dbcore import query as db_query
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == 'win32':
@@ -959,6 +960,9 @@ def main(args=None):
         sys.exit(1)
     except confit.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
+        sys.exit(1)
+    except db_query.InvalidQueryError as exc:
+        log.error(u'invalid query: {0}', exc)
         sys.exit(1)
     except IOError as exc:
         if exc.errno == errno.EPIPE:

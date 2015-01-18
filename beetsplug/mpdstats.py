@@ -32,6 +32,9 @@ RETRIES = 10
 RETRY_INTERVAL = 5
 
 
+mpd_config = config['mpd']
+
+
 def is_url(path):
     """Try to determine if the path is an URL.
     """
@@ -57,15 +60,15 @@ class MPDClientWrapper(object):
         self._log = log
 
         self.music_directory = (
-            self.config['music_directory'].get(unicode))
+            mpd_config['music_directory'].get(unicode))
 
         self.client = MPDClient()
 
     def connect(self):
         """Connect to the MPD.
         """
-        host = config['mpd']['host'].get(unicode)
-        port = config['mpd']['port'].get(int)
+        host = mpd_config['host'].get(unicode)
+        port = mpd_config['port'].get(int)
 
         if host[0] in ['/', '~']:
             host = os.path.expanduser(host)
@@ -76,7 +79,7 @@ class MPDClientWrapper(object):
         except socket.error as e:
             raise ui.UserError('could not connect to MPD: {0}'.format(e))
 
-        password = config['mpd']['password'].get(unicode)
+        password = mpd_config['password'].get(unicode)
         if password:
             try:
                 self.client.password(password)
@@ -144,8 +147,8 @@ class MPDStats(object):
         self.lib = lib
         self._log = log
 
-        self.do_rating = self.config['rating'].get(bool)
-        self.rating_mix = self.config['rating_mix'].get(float)
+        self.do_rating = mpd_config['rating'].get(bool)
+        self.rating_mix = mpd_config['rating_mix'].get(float)
         self.time_threshold = 10.0  # TODO: maybe add config option?
 
         self.now_playing = None
@@ -315,12 +318,10 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
 
     def __init__(self):
         super(MPDStatsPlugin, self).__init__()
-        self.config.add({
+        mpd_config.add({
             'music_directory': config['directory'].as_filename(),
             'rating':          True,
             'rating_mix':      0.75,
-        })
-        config['mpd'].add({
             'host':            u'localhost',
             'port':            6600,
             'password':        u'',
@@ -341,15 +342,15 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             help='set the password of the MPD server to connect to')
 
         def func(lib, opts, args):
-            self.config.set_args(opts)
+            mpd_config.set_args(opts)
 
             # Overrides for MPD settings.
             if opts.host:
-                config['mpd']['host'] = opts.host.decode('utf8')
+                mpd_config['host'] = opts.host.decode('utf8')
             if opts.port:
-                config['mpd']['host'] = int(opts.port)
+                mpd_config['host'] = int(opts.port)
             if opts.password:
-                config['mpd']['password'] = opts.password.decode('utf8')
+                mpd_config['password'] = opts.password.decode('utf8')
 
             try:
                 MPDStats(lib, self._log).run()

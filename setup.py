@@ -96,7 +96,6 @@ setup(
 
     # Plugin (optional) dependencies:
     extras_require={
-        'beatport': ['requests'],
         'fetchart': ['requests'],
         'chroma': ['pyacoustid'],
         'discogs': ['discogs-client>=2.0.0'],

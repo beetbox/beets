@@ -4,6 +4,10 @@ Changelog
 1.3.11 (in development)
 -----------------------
 
+Features:
+
+* Stop on invalid queries instead of ignoring the invalid part.
+
 Fixes:
 
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
@@ -18,6 +22,11 @@ Fixes:
   :bug:`1212`
 * Fix a crash when the importer deals with Unicode metadata in ``--pretend``
   mode. :bug:`1214`
+* :doc:`/plugins/smartplaylist`: Fix ``album_query`` so that individual files
+  are added to the playlist instead of directories. :bug:`1225`
+* Remove the ``beatport`` plugin. `Beatport`_ has shut off public access to
+  their API and denied our request for an account. We have not heard from the
+  company since 2013, so we are assuming access will not be restored.
 
 For developers: The logging system in beets has been overhauled. Plugins now
 each have their own logger, which helps by automatically adjusting the
@@ -941,12 +950,12 @@ And some little enhancements and bug fixes:
   Thanks to John Hawthorn.
 * :doc:`/plugins/web`: Item and album counts are now exposed through the API
   for use with the Tomahawk resolver. Thanks to Uwe L. Korn.
-* Python 2.6 compatibility for :doc:`/plugins/beatport`,
+* Python 2.6 compatibility for ``beatport``,
   :doc:`/plugins/missing`, and :doc:`/plugins/duplicates`. Thanks to Wesley
   Bitter and Pedro Silva.
 * Don't move the config file during a null migration. Thanks to Theofilos
   Intzoglou.
-* Fix an occasional crash in the :doc:`/plugins/beatport` when a length
+* Fix an occasional crash in the ``beatport`` when a length
   field was missing from the API response. Thanks to Timothy Appnel.
 * :doc:`/plugins/scrub`: Handle and log I/O errors.
 * :doc:`/plugins/lyrics`: The Google backend should now turn up more results.
@@ -971,7 +980,7 @@ these plugins, the importer will start showing you new kinds of matches:
 
 * New :doc:`/plugins/discogs`: Get matches from the `Discogs`_ database.
   Thanks to Artem Ponomarenko and Tai Lee.
-* New :doc:`/plugins/beatport`: Get matches from the `Beatport`_ database.
+* New ``beatport`` plugin: Get matches from the `Beatport`_ database.
   Thanks to Johannes Baiter.
 
 We also have two other new plugins that can scan your library to check for

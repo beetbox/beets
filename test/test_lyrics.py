@@ -18,6 +18,9 @@ import os
 import _common
 import sys
 import re
+
+from mock import MagicMock
+
 from _common import unittest
 from beetsplug import lyrics
 from beets.library import Item
@@ -25,8 +28,8 @@ from beets.util import confit
 from beets import logging
 
 log = logging.getLogger('beets.test_lyrics')
-raw_backend = lyrics.Backend(log)
-google = lyrics.Google(log)
+raw_backend = lyrics.Backend({}, log)
+google = lyrics.Google(MagicMock(), log)
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -337,7 +340,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
                                 lyrics.MusiXmatch], DEFAULT_SOURCES):
             url = s['url'] + s['path']
             if os.path.isfile(url_to_filename(url)):
-                res = source(log).fetch(s['artist'], s['title'])
+                res = source({}, log).fetch(s['artist'], s['title'])
                 self.assertTrue(google.is_lyrics(res), url)
                 self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 

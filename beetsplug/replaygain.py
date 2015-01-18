@@ -215,8 +215,9 @@ class CommandBackend(Backend):
 
 # GStreamer-based backend.
 
-class GStreamerBackend(object):
-    def __init__(self, config):
+class GStreamerBackend(Backend):
+    def __init__(self, config, log):
+        super(GStreamerBackend, self).__init__(config, log)
         self._import_gst()
 
         # Initialized a GStreamer pipeline of the form filesrc ->

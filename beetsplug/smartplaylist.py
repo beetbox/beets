@@ -15,7 +15,6 @@
 """Generates smart playlists based on beets queries.
 """
 from __future__ import print_function
-from itertools import chain
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -24,14 +23,23 @@ import os
 
 
 def _items_for_query(lib, queries, album):
-    """Get the matching items for a query.
-    `album` indicates whether the queries are item-level or album-level.
+    """Get the matching items for a list of queries.
+
+    `queries` can either be a single string or a list of strings. In the
+    latter case, the results from each query are concatenated. `album`
+    indicates whether the queries are item-level or album-level.
     """
-    request = lib.albums if album else lib.items
     if isinstance(queries, basestring):
-        return request(queries)
+        queries = [queries]
+    if album:
+        for query in queries:
+            for album in lib.albums(query):
+                for item in album.items():
+                    yield item
     else:
-        return chain.from_iterable(map(request, queries))
+        for query in queries:
+            for item in lib.items(query):
+                yield item
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
@@ -67,7 +75,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             relative_to = normpath(relative_to)
 
         for playlist in playlists:
-            self._log.debug(u"Creating playlist {0.name}", playlist)
+            self._log.debug(u"Creating playlist {0[name]}", playlist)
             items = []
             if 'album_query' in playlist:
                 items.extend(_items_for_query(lib, playlist['album_query'],
@@ -76,11 +84,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 items.extend(_items_for_query(lib, playlist['query'], False))
 
             m3us = {}
-            basename = playlist['name'].encode('utf8')
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
             for item in items:
-                m3u_name = item.evaluate_template(basename, True)
+                m3u_name = item.evaluate_template(playlist['name'], True)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
                 item_path = item.path
