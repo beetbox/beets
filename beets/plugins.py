@@ -443,18 +443,23 @@ def event_handlers():
 
 
 def send(event, **arguments):
-    """Sends an event to all assigned event listeners. Event is the
-    name of  the event to send, all other named arguments go to the
-    event handler(s).
+    """Send an event to all assigned event listeners.
 
-    Returns a list of return values from the handlers.
+    `event` is the name of  the event to send, all other named arguments
+    are passed along to the handlers.
+
+    Return a list of non-None values returned from the handlers.
     """
     log.debug(u'Sending event: {0}', event)
+    results = []
     for handler in event_handlers()[event]:
         # Don't break legacy plugins if we want to pass more arguments
         argspec = inspect.getargspec(handler).args
         args = dict((k, v) for k, v in arguments.items() if k in argspec)
-        handler(**args)
+        result = handler(**args)
+        if result is not None:
+            results.append(result)
+    return results
 
 
 def feat_tokens(for_artist=True):

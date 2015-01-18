@@ -29,6 +29,7 @@ Fixes:
   company since 2013, so we are assuming access will not be restored.
 * :doc:`/plugins/lastgenre`: Add classical music to the built-in whitelist and
   canonicalization tree. :bug:`1239` :bug:`1240`
+* Incremental imports now (once again) show a "skipped N directories" message.
 
 For developers: The logging system in beets has been overhauled. Plugins now
 each have their own logger, which helps by automatically adjusting the
