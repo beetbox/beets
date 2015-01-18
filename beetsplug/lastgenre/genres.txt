@@ -74,6 +74,7 @@ bangsawan
 bantowbol
 barbershop music
 barndance
+baroque
 baroque music
 baroque pop
 bass music
@@ -265,6 +266,7 @@ classic
 classic country
 classic female blues
 classic rock
+classical
 classical music
 classical music era
 clicks n cuts
@@ -289,6 +291,7 @@ congo
 conjunto
 contemporary christian
 contemporary christian music
+contemporary classical
 contemporary r&b
 contonbley
 contradanza
@@ -966,6 +969,7 @@ minstrel show
 minuet
 mirolóyia
 modal jazz
+modern classical
 modern classical music
 modern laika
 modern rock
@@ -1081,6 +1085,7 @@ opera
 operatic pop
 oratorio
 orchestra
+orchestral
 organ trio
 organic ambient
 organum
@@ -1253,6 +1258,7 @@ russian pop
 rímur
 sabar
 sacred harp
+sacred music
 sadcore
 saibara
 sakara
@@ -1380,6 +1386,7 @@ swing
 swing music
 swingbeat
 sygyt
+symphonic
 symphonic black metal
 symphonic metal
 symphonic poem
