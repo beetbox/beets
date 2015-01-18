@@ -156,6 +156,30 @@
     - timba
     - twoubadou
     - zouk
+- classical:
+    - ballet
+    - baroque:
+        - baroque music
+    - cantata
+    - chamber music:
+        - string quartet
+    - classical music
+    - concerto:
+        - concerto grosso
+    - contemporary classical
+    - modern classical
+    - opera
+    - oratorio
+    - orchestra:
+        - orchestral
+        - symphonic
+        - symphony
+    - organum
+    - requiem
+    - sacred music:
+        - cantique
+        - gregorian chant
+    - sonata
 - comedy:
     - comedy music
     - comedy rock
