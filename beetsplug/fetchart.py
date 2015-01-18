@@ -158,6 +158,77 @@ class ITunesStore(ArtSource):
             self._log.debug(u'album not found in iTunes Store')
 
 
+class Wikipedia(ArtSource):
+    # Art from Wikipedia (queried through DBpedia)
+    DBPEDIA_URL = 'http://dbpedia.org/sparql'
+    WIKIPEDIA_URL = 'http://en.wikipedia.org/w/api.php'
+    SPARQL_QUERY = '''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                 PREFIX dbpprop: <http://dbpedia.org/property/>
+                 PREFIX owl: <http://dbpedia.org/ontology/>
+                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                 SELECT DISTINCT ?coverFilename WHERE {{
+                   ?subject dbpprop:name ?name .
+                   ?subject rdfs:label ?label .
+                   {{ ?subject dbpprop:artist ?artist }}
+                     UNION
+                   {{ ?subject owl:artist ?artist }}
+                   {{ ?artist rdfs:label "{artist}"@en }}
+                     UNION
+                   {{ ?artist dbpprop:name "{artist}"@en }}
+                   ?subject rdf:type <http://dbpedia.org/ontology/Album> .
+                   ?subject dbpprop:cover ?coverFilename .
+                   FILTER ( regex(?name, "{album}", "i") )
+                  }}
+                 Limit 1'''
+
+    def get(self, album):
+        if not (album.albumartist and album.album):
+            return
+
+        # Find the name of the cover art filename on DBpedia
+        cover_filename = None
+        dbpedia_response = requests.get(
+            self.DBPEDIA_URL,
+            params={
+                'format': 'application/sparql-results+json',
+                'timeout': 2500,
+                'query': self.SPARQL_QUERY.format(artist=album.albumartist,
+                                                  album=album.album)
+            }, headers={'content-type': 'application/json'})
+        try:
+            data = dbpedia_response.json()
+            results = data['results']['bindings']
+            if results:
+                cover_filename = results[0]['coverFilename']['value']
+            else:
+                self._log.debug(u'album not found on dbpedia')
+        except:
+            self._log.debug(u'error scraping dbpedia album page')
+
+        # Ensure we have a filename before attempting to query wikipedia
+        if not cover_filename:
+            return
+
+        # Find the absolute url of the cover art on Wikipedia
+        wikipedia_response = requests.get(self.WIKIPEDIA_URL, params={
+            'format': 'json',
+            'action': 'query',
+            'continue': '',
+            'prop': 'imageinfo',
+            'iiprop': 'url',
+            'titles': ('File:' + cover_filename).encode('utf-8')},
+            headers={'content-type': 'application/json'})
+        try:
+            data = wikipedia_response.json()
+            results = data['query']['pages']
+            for _, result in results.iteritems():
+                image_url = result['imageinfo'][0]['url']
+                yield image_url
+        except:
+            self._log.debug(u'error scraping wikipedia imageinfo')
+            return
+
+
 class FileSystem(ArtSource):
     """Art from the filesystem"""
     @staticmethod
@@ -203,7 +274,8 @@ class FileSystem(ArtSource):
 
 # Try each source in turn.
 
-SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart', u'google']
+SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart', u'google',
+               u'wikipedia']
 
 ART_FUNCS = {
     u'coverart': CoverArtArchive,
@@ -211,6 +283,7 @@ ART_FUNCS = {
     u'albumart': AlbumArtOrg,
     u'amazon': Amazon,
     u'google': GoogleImages,
+    u'wikipedia': Wikipedia,
 }
 
 # PLUGIN LOGIC ###############################################################
