@@ -837,11 +837,11 @@ class SingletonImportTask(ImportTask):
 # are so many methods which pass. We should introduce a new
 # BaseImportTask class.
 class SentinelImportTask(ImportTask):
-    """This class marks the progress of an import and does not import
-    any items itself.
+    """A sentinel task marks the progress of an import and does not
+    import any items itself.
 
-    If only `toppath` is set the task indicats the end of a top-level
-    directory import. If the `paths` argument is givent, too, the task
+    If only `toppath` is set the task indicates the end of a top-level
+    directory import. If the `paths` argument is also given, the task
     indicates the progress in the `toppath` import.
     """
 
@@ -879,9 +879,16 @@ class SentinelImportTask(ImportTask):
 
 
 class ArchiveImportTask(SentinelImportTask):
-    """Additional methods for handling archives.
+    """An import task that represents the processing of an archive.
 
-    Use when `toppath` points to a `zip`, `tar`, or `rar` archive.
+    `toppath` must be a `zip`, `tar`, or `rar` archive. Archive tasks
+    serve two purposes:
+    - First, it will unarchive the files to a temporary directory and
+      return it. The client should read tasks from the resulting
+      directory and send them through the pipeline.
+    - Second, it will clean up the temporary directory when it proceeds
+      through the pipeline. The client should send the archive task
+      after sending the rest of the music tasks to make this work.
     """
 
     def __init__(self, toppath):
@@ -960,7 +967,8 @@ class ImportTaskFactory(object):
     def __init__(self, toppath, session):
         self.toppath = toppath
         self.session = session
-        self.skipped = 0
+        self.skipped = 0  # Skipped due to incremental mode.
+        self.imported = 0  # "Real" tasks created.
 
     def tasks(self):
         """Yield all import tasks for music found in the user-specified
@@ -971,12 +979,14 @@ class ImportTaskFactory(object):
                 for path in paths:
                     task = self.singleton(path)
                     if task:
+                        self.imported += 1
                         yield task
                 yield self.sentinel(dirs)
 
             else:
                 task = self.album(paths, dirs)
                 if task:
+                    self.imported += 1
                     yield task
 
     def paths(self):
@@ -1099,9 +1109,7 @@ def read_tasks(session):
             toppath = archive_task.toppath
 
         task_factory = ImportTaskFactory(toppath, session)
-        imported = False
         for t in task_factory.tasks():
-            imported |= not t.skip
             yield t
         skipped += task_factory.skipped
 
@@ -1112,7 +1120,7 @@ def read_tasks(session):
         else:
             yield archive_task
 
-        if not imported:
+        if not task_factory.imported:
             log.warn(u'No files imported from {0}',
                      displayable_path(user_toppath))
 
