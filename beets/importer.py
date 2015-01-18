@@ -1103,6 +1103,7 @@ def read_tasks(session):
         for t in task_factory.tasks():
             imported |= not t.skip
             yield t
+        skipped += task_factory.skipped
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
@@ -1117,7 +1118,7 @@ def read_tasks(session):
 
     # Show skipped directories.
     if skipped:
-        log.info(u'Skipped {0} directories.', skipped)
+        log.info(u'Skipped {0} paths.', skipped)
 
 
 def query_tasks(session):

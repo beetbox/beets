@@ -27,6 +27,7 @@ Fixes:
 * Remove the ``beatport`` plugin. `Beatport`_ has shut off public access to
   their API and denied our request for an account. We have not heard from the
   company since 2013, so we are assuming access will not be restored.
+* Incremental imports now (once again) show a "skipped N directories" message.
 
 For developers: The logging system in beets has been overhauled. Plugins now
 each have their own logger, which helps by automatically adjusting the
