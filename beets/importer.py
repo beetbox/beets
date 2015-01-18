@@ -1108,7 +1108,7 @@ def read_tasks(session):
         task_factory = ImportTaskFactory(toppath, session)
 
         # Extract archives.
-        archive_task = None
+        archive_tasks = None
         if ArchiveImportTask.is_archive(syspath(toppath)):
             if not (session.config['move'] or session.config['copy']):
                 log.warn(u"Archive importing requires either "
@@ -1117,16 +1117,17 @@ def read_tasks(session):
 
             log.debug(u'extracting archive {0}',
                       displayable_path(toppath))
-            archive_task = task_factory.archive(toppath)[0]
-            try:
-                archive_task.extract()
-            except Exception as exc:
-                log.error(u'extraction failed: {0}', exc)
-                continue
+            archive_tasks = task_factory.archive(toppath)[0]
+            for archive_task in archive_tasks:
+                try:
+                    archive_task.extract()
+                except Exception as exc:
+                    log.error(u'extraction failed: {0}', exc)
+                    continue
 
-            # Continue reading albums from the extracted directory.
-            toppath = archive_task.toppath
-            task_factory.toppath = toppath
+                # Continue reading albums from the extracted directory.
+                toppath = archive_task.toppath
+                task_factory.toppath = toppath
 
         imported = False
         for t in task_factory.tasks():
@@ -1135,11 +1136,12 @@ def read_tasks(session):
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
-        if archive_task is None:
+        if archive_tasks is None or len(archive_tasks) == 0:
             for task in task_factory.sentinel():
                 yield task
         else:
-            yield archive_task
+            for archive_task in archive_tasks:
+                yield archive_task
 
         if not imported:
             log.warn(u'No files imported from {0}',
