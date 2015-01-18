@@ -936,6 +936,8 @@ class ArchiveImportTask(SentinelImportTask):
         """Removes the temporary directory the archive was extracted to.
         """
         if self.extracted:
+            log.debug(u'Removing extracted directory: {0}',
+                      displayable_path(self.toppath))
             shutil.rmtree(self.toppath)
 
     def extract(self):
@@ -957,23 +959,42 @@ class ArchiveImportTask(SentinelImportTask):
 
 
 class ImportTaskFactory(object):
-    """Create album and singleton import tasks for all media files in a
-    directory or path.
-
-    Depending on the session's 'flat' and 'singleton' configuration, it
-    groups all media files contained in `toppath` into singleton or
-    album import tasks.
+    """Generate album and singleton import tasks for all media files
+    indicated by a path.
     """
     def __init__(self, toppath, session):
+        """Create a new task factory.
+
+        `toppath` is the user-specified path to search for music to
+        import. `session` is the `ImportSession`, which controls how
+        tasks are read from the directory.
+        """
         self.toppath = toppath
         self.session = session
-        self.skipped = 0  # Skipped due to incremental mode.
+        self.skipped = 0  # Skipped due to incremental/resume.
         self.imported = 0  # "Real" tasks created.
+        self.is_archive = ArchiveImportTask.is_archive(syspath(toppath))
 
     def tasks(self):
         """Yield all import tasks for music found in the user-specified
-        path `self.toppath`.
+        path `self.toppath`. Any necessary sentinel tasks are also
+        produced.
+
+        During generation, update `self.skipped` and `self.imported`
+        with the number of tasks that were not produced (due to
+        incremental mode or resumed imports) and the number of concrete
+        tasks actually produced, respectively.
+
+        If `self.toppath` is an archive, it is adjusted to point to the
+        extracted data.
         """
+        # Check whether this is an archive.
+        if self.is_archive:
+            archive_task = self.unarchive()
+            if not archive_task:
+                return
+
+        # Search for music in the directory.
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
@@ -988,6 +1009,15 @@ class ImportTaskFactory(object):
                 if task:
                     self.imported += 1
                     yield task
+
+        # Produce the final sentinel for this toppath to indicate that
+        # it is finished. This is usually just a SentinelImportTask, but
+        # for archive imports, send the archive task instead (to remove
+        # the extracted directory).
+        if self.is_archive:
+            yield archive_task
+        else:
+            yield self.sentinel()
 
     def paths(self):
         """Walk `self.toppath` and yield `(dirs, files)` pairs where
@@ -1056,6 +1086,35 @@ class ImportTaskFactory(object):
         """
         return SentinelImportTask(self.toppath, paths)
 
+    def unarchive(self):
+        """Extract the archive for this `toppath`.
+
+        Extract the archive to a new directory, adjust `toppath` to
+        point to the extracted directory, and return an
+        `ArchiveImportTask`. If extraction fails, return None.
+        """
+        assert self.is_archive
+
+        if not (self.session.config['move'] or
+                self.session.config['copy']):
+            log.warn(u"Archive importing requires either "
+                     "'copy' or 'move' to be enabled.")
+            return
+
+        log.debug(u'Extracting archive: {0}',
+                  displayable_path(self.toppath))
+        archive_task = ArchiveImportTask(self.toppath)
+        try:
+            archive_task.extract()
+        except Exception as exc:
+            log.error(u'extraction failed: {0}', exc)
+            return
+
+        # Now read albums from the extracted directory.
+        self.toppath = archive_task.toppath
+        log.debug(u'Archive extracted to: {0}', self.toppath)
+        return archive_task
+
     def read_item(self, path):
         """Return an `Item` read from the path.
 
@@ -1084,47 +1143,20 @@ def read_tasks(session):
     """
     skipped = 0
     for toppath in session.paths:
-        # Determine if we want to resume import of the toppath
+        # Check whether we need to resume the import.
         session.ask_resume(toppath)
-        user_toppath = toppath
 
-        # Extract archives.
-        archive_task = None
-        if ArchiveImportTask.is_archive(syspath(toppath)):
-            if not (session.config['move'] or session.config['copy']):
-                log.warn(u"Archive importing requires either "
-                         "'copy' or 'move' to be enabled.")
-                continue
-
-            log.debug(u'extracting archive {0}',
-                      displayable_path(toppath))
-            archive_task = ArchiveImportTask(toppath)
-            try:
-                archive_task.extract()
-            except Exception as exc:
-                log.error(u'extraction failed: {0}', exc)
-                continue
-
-            # Continue reading albums from the extracted directory.
-            toppath = archive_task.toppath
-
+        # Generate tasks.
         task_factory = ImportTaskFactory(toppath, session)
         for t in task_factory.tasks():
             yield t
         skipped += task_factory.skipped
 
-        # Indicate the directory is finished.
-        # FIXME hack to delete extracted archives
-        if archive_task is None:
-            yield task_factory.sentinel()
-        else:
-            yield archive_task
-
         if not task_factory.imported:
             log.warn(u'No files imported from {0}',
-                     displayable_path(user_toppath))
+                     displayable_path(toppath))
 
-    # Show skipped directories.
+    # Show skipped directories (due to incremental/resume).
     if skipped:
         log.info(u'Skipped {0} paths.', skipped)
 
