@@ -544,6 +544,11 @@ class ImportTask(object):
             return
         plugins.send('album_imported', lib=lib, album=self.album)
 
+    def emit_created(self, session):
+        """Send the `import_task_created` event for this task.
+        """
+        plugins.send('import_task_created', session=session, task=self)
+
     def lookup_candidates(self):
         """Retrieve and store candidates for this album.
         """
@@ -1150,6 +1155,7 @@ def read_tasks(session):
         # Generate tasks.
         task_factory = ImportTaskFactory(toppath, session)
         for t in task_factory.tasks():
+            t.emit_created(session)
             yield t
         skipped += task_factory.skipped
 
@@ -1170,7 +1176,9 @@ def query_tasks(session):
     if session.config['singletons']:
         # Search for items.
         for item in session.lib.items(session.query):
-            yield SingletonImportTask(None, item)
+            task = SingletonImportTask(None, item)
+            task.emit_created(session)
+            yield task
 
     else:
         # Search for albums.
@@ -1185,7 +1193,9 @@ def query_tasks(session):
                 item.id = None
                 item.album_id = None
 
-            yield ImportTask(None, [album.item_dir()], items)
+            task = ImportTask(None, [album.item_dir()], items)
+            task.emit_created(session)
+            yield task
 
 
 @pipeline.mutator_stage
@@ -1231,7 +1241,9 @@ def user_query(session, task):
         # Set up a little pipeline for dealing with the singletons.
         def emitter(task):
             for item in task.items:
-                yield SingletonImportTask(task.toppath, item)
+                task = SingletonImportTask(task.toppath, item)
+                task.emit_created(session)
+                yield task
             yield SentinelImportTask(task.toppath, task.paths)
 
         ipl = pipeline.Pipeline([
@@ -1341,10 +1353,13 @@ def manipulate_files(session, task):
 def log_files(session, task):
     """A coroutine (pipeline stage) to log each file to be imported.
     """
+    if task.skip:
+        return
+
     if isinstance(task, SingletonImportTask):
         log.info(u'Singleton: {0}', displayable_path(task.item['path']))
     elif task.items:
-        log.info(u'Album {0}', displayable_path(task.paths[0]))
+        log.info(u'Album: {0}', displayable_path(task.paths[0]))
         for item in task.items:
             log.info(u'  {0}', displayable_path(item['path']))
 
@@ -1366,7 +1381,9 @@ def group_albums(session):
             continue
         tasks = []
         for _, items in itertools.groupby(task.items, group):
-            tasks.append(ImportTask(items=list(items)))
+            task = ImportTask(items=list(items))
+            task.emit_created(session)
+            tasks.append(task)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
         task = pipeline.multiple(tasks)

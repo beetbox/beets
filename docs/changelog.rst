@@ -31,11 +31,15 @@ Fixes:
   canonicalization tree. :bug:`1239` :bug:`1240`
 * Incremental imports now (once again) show a "skipped N directories" message.
 
-For developers: The logging system in beets has been overhauled. Plugins now
-each have their own logger, which helps by automatically adjusting the
-verbosity level in import mode and by prefixing the plugin's name. Also,
-logging calls can (and should!) use modern ``{}``-style string formatting
-lazily. See :ref:`plugin-logging` in the plugin API docs.
+For developers:
+
+* The logging system in beets has been overhauled. Plugins now each have their
+  own logger, which helps by automatically adjusting the verbosity level in
+  import mode and by prefixing the plugin's name. Also, logging calls can (and
+  should!) use modern ``{}``-style string formatting lazily. See
+  :ref:`plugin-logging` in the plugin API docs.
+* A new ``import_task_created`` event lets you manipulate import tasks
+  immediately after they are initialized.
 
 
 1.3.10 (January 5, 2015)

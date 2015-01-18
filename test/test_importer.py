@@ -1602,9 +1602,9 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         logs = self.__run(self.import_paths, singletons=False)
 
         self.assertEqual(logs, [
-            'Album %s' % displayable_path(self.import_paths[0]),
+            'Album: %s' % displayable_path(self.import_paths[0]),
             '  %s' % self.import_files[0],
-            'Album %s' % displayable_path(self.import_paths[1]),
+            'Album: %s' % displayable_path(self.import_paths[1]),
             '  %s' % self.import_paths[1]])
 
     def test_import_pretend_empty(self):
