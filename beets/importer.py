@@ -963,10 +963,8 @@ class ImportTaskFactory(object):
         self.skipped = 0
 
     def tasks(self):
-        """Yield all import tasks for `self.toppath`.
-
-        The behavior is configured by the session's 'flat', and
-        'singleton' flags.
+        """Yield all import tasks for music found in the user-specified
+        path `self.toppath`.
         """
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
@@ -982,21 +980,28 @@ class ImportTaskFactory(object):
                     yield task
 
     def paths(self):
-        """Walk `self.toppath` and yield pairs of directory lists and
-        path lists.
+        """Walk `self.toppath` and yield `(dirs, files)` pairs where
+        `files` are individual music files and `dirs` the set of
+        containing directories where the music was found.
+
+        This can either be a recursive search in the ordinary case, a
+        single track when `toppath` is a file, a single directory in
+        `flat` mode.
         """
         if not os.path.isdir(syspath(self.toppath)):
-            yield ([self.toppath], [self.toppath])
+            yield [self.toppath], [self.toppath]
         elif self.session.config['flat']:
             paths = []
             for dirs, paths_in_dir in albums_in_dir(self.toppath):
                 paths += paths_in_dir
-            yield ([self.toppath], paths)
+            yield [self.toppath], paths
         else:
             for dirs, paths in albums_in_dir(self.toppath):
-                yield (dirs, paths)
+                yield dirs, paths
 
     def singleton(self, path):
+        """Return a `SingletonImportTask` for the music file.
+        """
         if self.session.already_imported(self.toppath, [path]):
             log.debug(u'Skipping previously-imported path: {0}',
                       displayable_path(path))
@@ -1010,7 +1015,7 @@ class ImportTaskFactory(object):
             return None
 
     def album(self, paths, dirs=None):
-        """Return `ImportTask` with all media files from paths.
+        """Return a `ImportTask` with all media files from paths.
 
         `dirs` is a list of parent directories used to record already
         imported albums.
@@ -1036,14 +1041,17 @@ class ImportTaskFactory(object):
             return None
 
     def sentinel(self, paths=None):
+        """Return a `SentinelImportTask` indicating the end of a
+        top-level directory import.
+        """
         return SentinelImportTask(self.toppath, paths)
 
     def read_item(self, path):
-        """Return an item created from the path.
+        """Return an `Item` read from the path.
 
-        If an item could not be read it returns None and logs an error.
+        If an item cannot be read, return `None` instead and log an
+        error.
         """
-        # TODO remove this method. Should be handled in ImportTask creation.
         try:
             return library.Item.from_path(path)
         except library.ReadError as exc:
