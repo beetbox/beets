@@ -10,13 +10,15 @@ Features:
 * A new :ref:`searchlimit` configuration option allows you to specify how many
   search results you wish to see when looking up releases at MusicBrainz
   during import. :bug:`1245`
+* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* to the
+  built-in whitelist/canonicalization tree. :bug:`1206`
+* :doc:`/plugins/lastgenre`: Add classical music to the built-in whitelist and
+  canonicalization tree. :bug:`1239` :bug:`1240`
 
 Fixes:
 
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
-* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* to the
-  built-in whitelist/canonicalization tree. :bug:`1206`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
   :bug:`1207`
 * :doc:`/plugins/fetchart`: Do not attempt to import directories as album art.
@@ -30,8 +32,6 @@ Fixes:
 * Remove the ``beatport`` plugin. `Beatport`_ has shut off public access to
   their API and denied our request for an account. We have not heard from the
   company since 2013, so we are assuming access will not be restored.
-* :doc:`/plugins/lastgenre`: Add classical music to the built-in whitelist and
-  canonicalization tree. :bug:`1239` :bug:`1240`
 * Incremental imports now (once again) show a "skipped N directories" message.
 * :doc:`/plugins/embedart`: Handle errors in ImageMagick's output. :bug:`1241`
 
