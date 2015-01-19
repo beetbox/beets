@@ -17,7 +17,8 @@ interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import locale
 import optparse
@@ -514,7 +515,7 @@ def term_width():
     except IOError:
         return fallback
     try:
-        height, width = struct.unpack('hh', buf)
+        height, width = struct.unpack(b'hh', buf)
     except struct.error:
         return fallback
     return width
