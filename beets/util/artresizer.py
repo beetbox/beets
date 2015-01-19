@@ -15,6 +15,8 @@
 """Abstraction layer to resize images using PIL, ImageMagick, or a
 public resizing proxy if neither is available.
 """
+from __future__ import division, absolute_import, print_function
+
 import urllib
 import subprocess
 import os

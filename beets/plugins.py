@@ -14,6 +14,8 @@
 
 """Support for beets plugins."""
 
+from __future__ import division, absolute_import, print_function
+
 import traceback
 import inspect
 import re

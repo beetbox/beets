@@ -13,6 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests for the virtual filesystem builder.."""
+from __future__ import division, absolute_import, print_function
+
 from test import _common
 from test._common import unittest
 from beets import library

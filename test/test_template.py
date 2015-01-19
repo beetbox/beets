@@ -15,6 +15,8 @@
 
 """Tests for template engine.
 """
+from __future__ import division, absolute_import, print_function
+
 import warnings
 
 from test._common import unittest

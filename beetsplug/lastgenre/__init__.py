@@ -12,6 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import division, absolute_import, print_function
+
 """Gets genres for imported music based on Last.fm tags.
 
 Uses a provided whitelist file to determine which tags are valid genres.

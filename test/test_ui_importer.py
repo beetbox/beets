@@ -13,6 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests the TerminalImportSession. The tests are the same as in the
+from __future__ import division, absolute_import, print_function
+
 test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """

@@ -12,10 +12,11 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import division, absolute_import, print_function
+
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
 """
-from __future__ import print_function
 
 import os
 import re

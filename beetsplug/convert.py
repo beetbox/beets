@@ -14,6 +14,8 @@
 
 """Converts tracks or albums to external directory
 """
+from __future__ import division, absolute_import, print_function
+
 import os
 import threading
 import subprocess

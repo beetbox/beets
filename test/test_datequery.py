@@ -14,6 +14,8 @@
 
 """Test for dbcore's date-based queries.
 """
+from __future__ import division, absolute_import, print_function
+
 from test import _common
 from test._common import unittest
 from datetime import datetime

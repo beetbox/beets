@@ -13,7 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Miscellaneous utility functions."""
-from __future__ import division
+
+from __future__ import division, absolute_import, print_function
 
 import os
 import sys

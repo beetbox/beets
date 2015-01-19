@@ -14,7 +14,9 @@
 
 """Worry-free YAML configuration files.
 """
-from __future__ import unicode_literals
+from __future__ import (unicode_literals, absolute_import, print_function,
+                        division)
+
 import platform
 import os
 import pkgutil

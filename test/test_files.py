@@ -14,6 +14,8 @@
 
 """Test file manipulation functionality of Item.
 """
+from __future__ import division, absolute_import, print_function
+
 import shutil
 import os
 import stat

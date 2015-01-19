@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """A utility script for automating the beets release process.
 """
+from __future__ import division, absolute_import, print_function
+
 import click
 import os
 import re

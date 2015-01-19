@@ -15,7 +15,8 @@
 """Matches existing metadata with canonical information to identify
 releases and tracks.
 """
-from __future__ import division
+
+from __future__ import division, absolute_import, print_function
 
 import datetime
 import re

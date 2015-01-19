@@ -5,6 +5,8 @@ Put something like the following in your config.yaml to configure:
         host: localhost
         port: 32400
 """
+from __future__ import division, absolute_import, print_function
+
 import requests
 from urlparse import urljoin
 import xml.etree.ElementTree as ET

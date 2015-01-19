@@ -14,6 +14,8 @@
 
 """Tests for MusicBrainz API wrapper.
 """
+from __future__ import division, absolute_import, print_function
+
 from test import _common
 from test._common import unittest
 from beets.autotag import mb

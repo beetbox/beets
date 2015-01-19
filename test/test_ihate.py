@@ -1,5 +1,7 @@
 """Tests for the 'ihate' plugin"""
 
+from __future__ import division, absolute_import, print_function
+
 from test._common import unittest
 from beets import importer
 from beets.library import Item

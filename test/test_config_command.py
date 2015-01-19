@@ -1,3 +1,5 @@
+from __future__ import division, absolute_import, print_function
+
 import os
 import yaml
 from mock import patch

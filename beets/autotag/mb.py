@@ -14,6 +14,8 @@
 
 """Searches for albums in the MusicBrainz database.
 """
+from __future__ import division, absolute_import, print_function
+
 import musicbrainzngs
 import re
 import traceback

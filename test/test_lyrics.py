@@ -14,6 +14,8 @@
 
 """Tests for the 'lyrics' plugin."""
 
+from __future__ import division, absolute_import, print_function
+
 import os
 from test import _common
 import sys

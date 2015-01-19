@@ -15,7 +15,8 @@
 """This module provides the default commands for beets' command-line
 interface.
 """
-from __future__ import print_function
+
+from __future__ import division, absolute_import, print_function
 
 import os
 import platform

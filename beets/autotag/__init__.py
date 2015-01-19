@@ -15,6 +15,8 @@
 """Facilities for automatically determining files' correct metadata.
 """
 
+from __future__ import division, absolute_import, print_function
+
 from beets import logging
 from beets import config
 

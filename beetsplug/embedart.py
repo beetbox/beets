@@ -13,6 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Allows beets to embed album art into file metadata."""
+from __future__ import division, absolute_import, print_function
+
 import os.path
 import imghdr
 import subprocess

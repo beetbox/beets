@@ -15,7 +15,8 @@
 """A wrapper for the GStreamer Python bindings that exposes a simple
 music player.
 """
-from __future__ import print_function
+
+from __future__ import division, absolute_import, print_function
 
 import sys
 import time

@@ -1,5 +1,7 @@
 """Tests for the 'permissions' plugin.
 """
+from __future__ import division, absolute_import, print_function
+
 from test._common import unittest
 from test.helper import TestHelper
 from beetsplug.permissions import check_permissions, convert_perm

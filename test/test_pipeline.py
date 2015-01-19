@@ -14,6 +14,8 @@
 
 """Test the "pipeline.py" restricted parallel programming library.
 """
+from __future__ import division, absolute_import, print_function
+
 from test._common import unittest
 from beets.util import pipeline
 

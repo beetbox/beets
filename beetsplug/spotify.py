@@ -1,4 +1,5 @@
-from __future__ import print_function
+from __future__ import division, absolute_import, print_function
+
 import re
 import webbrowser
 import requests
