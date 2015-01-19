@@ -10,10 +10,9 @@ Features:
 * A new :ref:`searchlimit` configuration option allows you to specify how many
   search results you wish to see when looking up releases at MusicBrainz
   during import. :bug:`1245`
-* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* to the
-  built-in whitelist/canonicalization tree. :bug:`1206`
-* :doc:`/plugins/lastgenre`: Add classical music to the built-in whitelist and
-  canonicalization tree. :bug:`1239` :bug:`1240`
+* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* as well as
+  a longer list of classical music genre tags to the built-in whitelist and
+  canonicalization tree. :bug:`1206` :bug:`1239` :bug:`1240`
 
 Fixes:
 
