@@ -211,6 +211,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 except ValueError:
                     self._log.debug(u'IM output is not a number: {0!r}',
                                     out_str)
+                    return
 
                 self._log.info(u'compare PHASH score is {0}', phash_diff)
                 if phash_diff > compare_threshold:
