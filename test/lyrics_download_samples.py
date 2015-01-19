@@ -43,9 +43,9 @@ def main(argv=None):
     """
     if argv is None:
         argv = sys.argv
-    print 'Fetching samples from:'
+    print('Fetching samples from:')
     for s in test_lyrics.GOOGLE_SOURCES + test_lyrics.DEFAULT_SOURCES:
-        print s['url']
+        print(s['url'])
         url = s['url'] + s['path']
         fn = test_lyrics.url_to_filename(url)
         if not os.path.isfile(fn):
