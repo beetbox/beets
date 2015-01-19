@@ -480,6 +480,16 @@ to one request per second.
 .. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _MusicBrainz: http://musicbrainz.org/
 
+.. _searchlimit:
+
+searchlimit
+~~~~~~~~~~~
+
+The number of matches returned when sending search queries to the
+MusicBrainz server.
+
+Default: ``5``.
+
 .. _match-config:
 
 Autotagger Matching Options

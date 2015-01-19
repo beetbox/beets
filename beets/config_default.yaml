@@ -71,6 +71,7 @@ musicbrainz:
     host: musicbrainz.org
     ratelimit: 1
     ratelimit_interval: 1.0
+    searchlimit: 5
 
 match:
     strong_rec_thresh: 0.04

@@ -25,7 +25,6 @@ import beets
 from beets import util
 from beets import config
 
-SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 BASE_URL = 'http://musicbrainz.org/'
 
@@ -301,7 +300,7 @@ def album_info(release):
     return info
 
 
-def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
+def match_album(artist, album, tracks=None):
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
     MusicBrainzAPIError.
@@ -324,7 +323,8 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
         return
 
     try:
-        res = musicbrainzngs.search_releases(limit=limit, **criteria)
+        res = musicbrainzngs.search_releases(
+            limit=config['musicbrainz']['searchlimit'].get(int), **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'release search', criteria,
                                   traceback.format_exc())
@@ -336,7 +336,7 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
             yield albuminfo
 
 
-def match_track(artist, title, limit=SEARCH_LIMIT):
+def match_track(artist, title):
     """Searches for a single track and returns an iterable of TrackInfo
     objects. May raise a MusicBrainzAPIError.
     """
@@ -349,7 +349,8 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
         return
 
     try:
-        res = musicbrainzngs.search_recordings(limit=limit, **criteria)
+        res = musicbrainzngs.search_recordings(
+            limit=config['musicbrainz']['searchlimit'].get(int), **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'recording search', criteria,
                                   traceback.format_exc())
