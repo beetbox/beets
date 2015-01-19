@@ -176,20 +176,28 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             art = self.extract(f.name, item)
 
             if art:
-                # Converting images to grayscale tends to minimize the weight
-                # of colors in the diff score
-                cmd = 'convert {0} {1} -colorspace gray MIFF:- | ' \
-                      'compare -metric PHASH - null:' \
-                      .format(syspath(imagepath), syspath(art))
+                is_windows = platform.system() == "Windows"
 
-                is_windows = platform.system() != "Windows"
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        close_fds=is_windows,
-                                        shell=True)
-                stdout, stderr = proc.communicate()
-                if proc.returncode:
-                    if proc.returncode != 1:
+                # Converting images to grayscale tends to minimize the weight
+                # of colors in the diff score.
+                convert_proc = subprocess.Popen(
+                    ['convert', syspath(imagepath), syspath(art),
+                     '-colorspace', 'gray', 'MIFF:-'],
+                    stdout=subprocess.PIPE,
+                    close_fds=not is_windows,
+                )
+                compare_proc = subprocess.Popen(
+                    ['compare', '-metric', 'PHASH', '-', 'null:'],
+                    stdin=convert_proc.stdout,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    close_fds=not is_windows,
+                )
+                convert_proc.stdout.close()
+
+                stdout, stderr = compare_proc.communicate()
+                if compare_proc.returncode:
+                    if compare_proc.returncode != 1:
                         self._log.debug(u'IM phashes compare failed for {0}, '
                                         u'{1}', displayable_path(imagepath),
                                         displayable_path(art))
