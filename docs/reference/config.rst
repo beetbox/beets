@@ -482,6 +482,14 @@ to one request per second.
 
 .. _match-config:
 
+searchlimit
+~~~~~~~~~~~
+
+The number of matches returned when sending search queries to the
+MusicBrainz server.
+
+Default: ``5``.
+
 Autotagger Matching Options
 ---------------------------
 
