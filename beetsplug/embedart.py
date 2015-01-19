@@ -190,16 +190,22 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 stdout, stderr = proc.communicate()
                 if proc.returncode:
                     if proc.returncode != 1:
-                        self._log.warn(u'IM phashes compare failed for {0}, '
-                                       u'{1}', displayable_path(imagepath),
-                                       displayable_path(art))
+                        self._log.debug(u'IM phashes compare failed for {0}, '
+                                        u'{1}', displayable_path(imagepath),
+                                        displayable_path(art))
                         return
-                    phashDiff = float(stderr)
+                    out_str = stderr
                 else:
-                    phashDiff = float(stdout)
+                    out_str = stdout
 
-                self._log.info(u'compare PHASH score is {0}', phashDiff)
-                if phashDiff > compare_threshold:
+                try:
+                    phash_diff = float(out_str)
+                except ValueError:
+                    self._log.debug(u'IM output is not a number: {0!r}',
+                                    out_str)
+
+                self._log.info(u'compare PHASH score is {0}', phash_diff)
+                if phash_diff > compare_threshold:
                     return False
 
         return True

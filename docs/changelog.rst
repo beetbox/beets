@@ -30,6 +30,7 @@ Fixes:
 * :doc:`/plugins/lastgenre`: Add classical music to the built-in whitelist and
   canonicalization tree. :bug:`1239` :bug:`1240`
 * Incremental imports now (once again) show a "skipped N directories" message.
+* :doc:`/plugins/embedart`: Handle errors in ImageMagick's output. :bug:`1241`
 
 For developers:
 
