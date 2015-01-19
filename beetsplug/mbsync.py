@@ -18,6 +18,7 @@ from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from beets import config
+from beets.util.functemplate import Template
 from collections import defaultdict
 
 
@@ -49,6 +50,8 @@ class MBSyncPlugin(BeetsPlugin):
         cmd.parser.add_option('-W', '--nowrite', action='store_false',
                               default=config['import']['write'], dest='write',
                               help="don't write updated metadata to files")
+        cmd.parser.add_option('-f', '--format', action='store', default=None,
+                              help='print with custom format')
         cmd.func = self.func
         return [cmd]
 
@@ -59,24 +62,28 @@ class MBSyncPlugin(BeetsPlugin):
         pretend = opts.pretend
         write = opts.write
         query = ui.decargs(args)
+        tmpl = Template(ui._pick_format(True, opts.format))
 
-        self.singletons(lib, query, move, pretend, write)
-        self.albums(lib, query, move, pretend, write)
+        self.singletons(lib, query, move, pretend, write, tmpl)
+        self.albums(lib, query, move, pretend, write, tmpl)
 
-    def singletons(self, lib, query, move, pretend, write):
+    def singletons(self, lib, query, move, pretend, write, tmpl):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
         for item in lib.items(query + ['singleton:true']):
+            item_formatted = item.evaluate_template(tmpl)
             if not item.mb_trackid:
-                self._log.info(u'Skipping singleton {0}: has no mb_trackid',
-                               item.title)
+                self._log.info(u'Skipping singleton with no mb_trackid: {0}',
+                               item_formatted)
                 continue
 
             # Get the MusicBrainz recording info.
             track_info = hooks.track_for_mbid(item.mb_trackid)
             if not track_info:
-                self._log.info(u'Recording ID not found: {0}', item.mb_trackid)
+                self._log.info(u'Recording ID not found: {0} for track {0}',
+                               item.mb_trackid,
+                               item_formatted)
                 continue
 
             # Apply.
@@ -84,14 +91,16 @@ class MBSyncPlugin(BeetsPlugin):
                 autotag.apply_item_metadata(item, track_info)
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib, query, move, pretend, write):
+    def albums(self, lib, query, move, pretend, write, tmpl):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
         # Process matching albums.
         for a in lib.albums(query):
+            album_formatted = a.evaluate_template(tmpl)
             if not a.mb_albumid:
-                self._log.info(u'Skipping album {0}: has no mb_albumid', a.id)
+                self._log.info(u'Skipping album with no mb_albumid: {0}',
+                               album_formatted)
                 continue
 
             items = list(a.items())
@@ -99,7 +108,9 @@ class MBSyncPlugin(BeetsPlugin):
             # Get the MusicBrainz album information.
             album_info = hooks.album_for_mbid(a.mb_albumid)
             if not album_info:
-                self._log.info(u'Release ID not found: {0}', a.mb_albumid)
+                self._log.info(u'Release ID {0} not found for album {1}',
+                               a.mb_albumid,
+                               album_formatted)
                 continue
 
             # Map recording MBIDs to their information. Recordings can appear
@@ -147,5 +158,5 @@ class MBSyncPlugin(BeetsPlugin):
 
                     # Move album art (and any inconsistent items).
                     if move and lib.directory in util.ancestry(items[0].path):
-                        self._log.debug(u'moving album {0}', a.id)
+                        self._log.debug(u'moving album {0}', album_formatted)
                         a.move()
