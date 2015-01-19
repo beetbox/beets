@@ -7,6 +7,9 @@ Changelog
 Features:
 
 * Stop on invalid queries instead of ignoring the invalid part.
+* A new :ref:`searchlimit` configuration option allows you to specify how many
+  search results you wish to see when looking up releases at MusicBrainz
+  during import. :bug:`1245`
 
 Fixes:
 
