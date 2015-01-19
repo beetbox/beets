@@ -14,7 +14,8 @@
 
 """Tests for the DBCore database abstraction.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import sqlite3
@@ -189,7 +190,7 @@ class ModelTest(unittest.TestCase):
         model.field_one = 123
         model.store()
         row = self.db._connection().execute('select * from test').fetchone()
-        self.assertEqual(row['field_one'], 123)
+        self.assertEqual(row[b'field_one'], 123)
 
     def test_retrieve_by_id(self):
         model = TestModel1()

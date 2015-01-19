@@ -14,7 +14,8 @@
 
 """Representation of type information for DBCore model fields.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from . import query
 from beets.util import str2bool

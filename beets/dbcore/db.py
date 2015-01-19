@@ -14,7 +14,8 @@
 
 """The central Model and Database constructs for DBCore.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import time
 import os
@@ -547,13 +548,13 @@ class Results(object):
                 'SELECT * FROM {0} WHERE entity_id=?'.format(
                     self.model_class._flex_table
                 ),
-                (row['id'],)
+                (row[b'id'],)
             )
 
         cols = dict(row)
         values = dict((k, v) for (k, v) in cols.items()
                       if not k[:4] == 'flex')
-        flex_values = dict((row['key'], row['value']) for row in flex_rows)
+        flex_values = dict((row[b'key'], row[b'value']) for row in flex_rows)
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
