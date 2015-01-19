@@ -208,7 +208,7 @@ class ConfigView(object):
         raise NotImplementedError
 
     def __repr__(self):
-        return '<ConfigView: %s>' % self.name
+        return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
     def __iter__(self):
         """Prevent list(config) from using __getitem__ and never halting"""
