@@ -14,7 +14,8 @@
 
 """Specific, edge-case tests for the MediaFile metadata layer.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import shutil

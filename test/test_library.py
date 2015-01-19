@@ -14,7 +14,8 @@
 
 """Tests for non-query database functions of Item.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import os.path
@@ -58,7 +59,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_year = self.lib._connection().execute(
             'select year from items where '
-            'title="the title"').fetchone()['year']
+            'title="the title"').fetchone()[b'year']
         self.assertEqual(new_year, 1987)
 
     def test_store_only_writes_dirty_fields(self):
@@ -67,7 +68,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
-            'title="the title"').fetchone()['genre']
+            'title="the title"').fetchone()[b'genre']
         self.assertEqual(new_genre, original_genre)
 
     def test_store_clears_dirty_flags(self):
@@ -86,7 +87,7 @@ class AddTest(_common.TestCase):
         self.lib.add(self.i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()['grouping']
+            'where composer="the composer"').fetchone()[b'grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
     def test_library_add_path_inserts_row(self):
@@ -96,7 +97,7 @@ class AddTest(_common.TestCase):
         self.lib.add(i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()['grouping']
+            'where composer="the composer"').fetchone()[b'grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
 
@@ -441,7 +442,7 @@ class DestinationTest(_common.TestCase):
             self.i.title = u'h\u0259d'
             self.lib.path_formats = [('default', '$title')]
             p = self.i.destination()
-            self.assertFalse('?' in p)
+            self.assertFalse(b'?' in p)
             # We use UTF-8 to encode Windows paths now.
             self.assertTrue(u'h\u0259d'.encode('utf8') in p)
         finally:
@@ -941,7 +942,7 @@ class PathStringTest(_common.TestCase):
         self.assert_(isinstance(i.path, str))
 
     def test_special_chars_preserved_in_database(self):
-        path = 'b\xe1r'
+        path = 'b\xe1r'.encode('utf8')
         self.i.path = path
         self.i.store()
         i = list(self.lib.items())[0]
@@ -949,7 +950,7 @@ class PathStringTest(_common.TestCase):
 
     def test_special_char_path_added_to_database(self):
         self.i.remove()
-        path = 'b\xe1r'
+        path = 'b\xe1r'.encode('utf8')
         i = item()
         i.path = path
         self.lib.add(i)

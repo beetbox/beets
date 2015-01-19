@@ -14,7 +14,8 @@
 
 """The core data store and collection logic for beets.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import sys
@@ -44,7 +45,7 @@ class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path."""
 
     escape_re = re.compile(r'[\\_%]')
-    escape_char = '\\'
+    escape_char = b'\\'
 
     def __init__(self, field, pattern, fast=True):
         super(PathQuery, self).__init__(field, pattern, fast)
@@ -52,7 +53,7 @@ class PathQuery(dbcore.FieldQuery):
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
         # As a directory (prefix).
-        self.dir_path = util.bytestring_path(os.path.join(self.file_path, ''))
+        self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
 
     def match(self, item):
         return (item.path == self.file_path) or \
@@ -61,7 +62,7 @@ class PathQuery(dbcore.FieldQuery):
     def clause(self):
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
-        dir_pattern = buffer(dir_pattern + '%')
+        dir_pattern = buffer(dir_pattern + b'%')
         file_blob = buffer(self.file_path)
         return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
                (file_blob, dir_pattern, self.escape_char)

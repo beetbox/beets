@@ -1,5 +1,6 @@
 """Stupid tests that ensure logging works as expected"""
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import logging as log
 from StringIO import StringIO

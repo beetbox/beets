@@ -15,7 +15,8 @@
 """Automatically-generated blanket testing for the MediaFile metadata
 layer.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import shutil
@@ -285,10 +286,10 @@ class GenreListTestMixin(object):
 
 
 field_extension = MediaField(
-    MP3DescStorageStyle('customtag'),
-    MP4StorageStyle('----:com.apple.iTunes:customtag'),
-    StorageStyle('customtag'),
-    ASFStorageStyle('customtag'),
+    MP3DescStorageStyle(b'customtag'),
+    MP4StorageStyle(b'----:com.apple.iTunes:customtag'),
+    StorageStyle(b'customtag'),
+    ASFStorageStyle(b'customtag'),
 )
 
 
@@ -681,7 +682,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
                 # ReplayGain is float
                 tags[key] = 1.0
             else:
-                tags[key] = 'value\u2010%s' % key
+                tags[key] = b'value\u2010%s' % key
 
         for key in ['disc', 'disctotal', 'track', 'tracktotal', 'bpm']:
             tags[key] = 1
@@ -700,6 +701,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         tags['original_year'] = original_date.year
         tags['original_month'] = original_date.month
         tags['original_day'] = original_date.day
+
         return tags
 
 
