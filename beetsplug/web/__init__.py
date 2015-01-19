@@ -26,6 +26,7 @@ from crossdomaindec import crossdomain, set_cors_origin
 
 # Utilities.
 
+
 def _rep(obj, expand=False):
     """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
     Album object. For Albums, `expand` dictates whether tracks are

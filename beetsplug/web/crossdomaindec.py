@@ -21,14 +21,17 @@ from datetime import timedelta
 from flask import make_response, request, current_app
 from functools import update_wrapper
 
-cors_origin = 'http://127.0.0.1' 
+cors_origin = 'http://127.0.0.1'
+
 
 def set_cors_origin(origin):
     global cors_origin
     cors_origin = origin
 
+
 def get_cors_origin():
     return cors_origin
+
 
 def crossdomain(methods=None, headers=None,
                 max_age=21600, attach_to_all=True,
