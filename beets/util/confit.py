@@ -210,6 +210,11 @@ class ConfigView(object):
     def __repr__(self):
         return '<ConfigView: %s>' % self.name
 
+    def __iter__(self):
+        """Prevent list(config) from using __getitem__ and never halting"""
+        raise TypeError(u"{!r} object is not "
+                        u"iterable".format(self.__class__.__name__))
+
     def __getitem__(self, key):
         """Get a subview of this view."""
         return Subview(self, key)
