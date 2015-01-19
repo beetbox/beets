@@ -31,14 +31,15 @@ To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import Queue
 from threading import Thread, Lock
 import sys
 
-BUBBLE = '__PIPELINE_BUBBLE__'
-POISON = '__PIPELINE_POISON__'
+BUBBLE = b'__PIPELINE_BUBBLE__'
+POISON = b'__PIPELINE_POISON__'
 
 DEFAULT_QUEUE_SIZE = 16
 
