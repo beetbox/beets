@@ -14,7 +14,7 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-from _common import unittest
+from test._common import unittest
 from beetsplug import ftintitle
 
 

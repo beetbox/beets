@@ -21,8 +21,8 @@ import tempfile
 import datetime
 import time
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
     MP3DescStorageStyle, StorageStyle, MP4StorageStyle, \
     ASFStorageStyle, ImageType

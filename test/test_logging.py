@@ -3,7 +3,7 @@ import logging as log
 from StringIO import StringIO
 
 import beets.logging as blog
-from _common import unittest, TestCase
+from test._common import unittest, TestCase
 
 
 class LoggingTest(TestCase):

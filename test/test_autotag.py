@@ -17,8 +17,8 @@
 import re
 import copy
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets import autotag
 from beets.autotag import match
 from beets.autotag.hooks import Distance, string_dist

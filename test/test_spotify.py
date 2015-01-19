@@ -1,12 +1,12 @@
 """Tests for the 'spotify' plugin"""
 
-import _common
+from test import _common
 import responses
-from _common import unittest
+from test._common import unittest
 from beets import config
 from beets.library import Item
 from beetsplug import spotify
-from helper import TestHelper
+from test.helper import TestHelper
 import urlparse
 
 

@@ -16,12 +16,12 @@
 
 from mock import Mock
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beetsplug import lastgenre
 from beets import config
 
-from helper import TestHelper
+from test.helper import TestHelper
 
 
 class LastGenrePluginTest(unittest.TestCase, TestHelper):

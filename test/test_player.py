@@ -14,7 +14,7 @@
 
 """Tests for BPD and music playing.
 """
-from _common import unittest
+from test._common import unittest
 from beetsplug import bpd
 
 

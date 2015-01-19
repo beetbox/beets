@@ -15,11 +15,11 @@
 
 """Tests for the 'bucket' plugin."""
 
-from _common import unittest
+from test._common import unittest
 from beetsplug import bucket
 from beets import config, ui
 
-from helper import TestHelper
+from test.helper import TestHelper
 
 
 class BucketPluginTest(unittest.TestCase, TestHelper):

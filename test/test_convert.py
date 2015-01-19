@@ -14,10 +14,10 @@
 
 import re
 import os.path
-import _common
-from _common import unittest
-import helper
-from helper import control_stdin
+from test import _common
+from test._common import unittest
+from test import helper
+from test.helper import control_stdin
 
 from beets.mediafile import MediaFile
 

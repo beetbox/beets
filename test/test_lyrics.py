@@ -15,13 +15,13 @@
 """Tests for the 'lyrics' plugin."""
 
 import os
-import _common
+from test import _common
 import sys
 import re
 
 from mock import MagicMock
 
-from _common import unittest
+from test._common import unittest
 from beetsplug import lyrics
 from beets.library import Item
 from beets.util import confit

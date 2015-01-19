@@ -7,9 +7,9 @@ from shutil import rmtree
 from beets import ui
 from beets import config
 
-import _common
-from _common import unittest
-from helper import TestHelper, capture_stdout
+from test import _common
+from test._common import unittest
+from test.helper import TestHelper, capture_stdout
 from beets.library import Library
 
 

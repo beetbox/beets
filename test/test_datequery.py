@@ -14,8 +14,8 @@
 
 """Test for dbcore's date-based queries.
 """
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from datetime import datetime
 import time
 from beets.dbcore.query import _parse_periods, DateInterval, DateQuery

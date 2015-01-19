@@ -1,7 +1,7 @@
 """Tests for the 'zero' plugin"""
 
-from _common import unittest
-from helper import TestHelper
+from test._common import unittest
+from test.helper import TestHelper
 
 from beets.library import Item
 from beets import config

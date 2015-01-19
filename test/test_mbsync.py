@@ -14,8 +14,8 @@
 
 from mock import patch
 
-from _common import unittest
-from helper import TestHelper,\
+from test._common import unittest
+from test.helper import TestHelper,\
     generate_album_info, \
     generate_track_info
 

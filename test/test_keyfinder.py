@@ -13,8 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 from mock import patch
-from _common import unittest
-from helper import TestHelper
+from test._common import unittest
+from test.helper import TestHelper
 
 from beets.library import Item
 

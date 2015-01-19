@@ -16,8 +16,8 @@
 import os.path
 from mock import Mock, patch
 
-from _common import unittest, RSRC
-from helper import TestHelper
+from test._common import unittest, RSRC
+from test.helper import TestHelper
 
 from beets.library import Item
 

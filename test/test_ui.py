@@ -20,9 +20,9 @@ import re
 import subprocess
 import platform
 
-import _common
-from _common import unittest
-from helper import capture_stdout, has_program, TestHelper, control_stdin
+from test import _common
+from test._common import unittest
+from test.helper import capture_stdout, has_program, TestHelper, control_stdin
 
 from beets import library
 from beets import ui

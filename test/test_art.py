@@ -19,8 +19,8 @@ import shutil
 
 import responses
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import library

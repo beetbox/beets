@@ -24,10 +24,10 @@ from zipfile import ZipFile
 from tarfile import TarFile
 from mock import patch
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets.util import displayable_path
-from helper import TestImportSession, TestHelper, has_program, capture_log
+from test.helper import TestImportSession, TestHelper, has_program, capture_log
 from beets import importer
 from beets.importer import albums_in_dir
 from beets.mediafile import MediaFile

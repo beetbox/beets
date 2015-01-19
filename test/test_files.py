@@ -19,9 +19,9 @@ import os
 import stat
 from os.path import join
 
-import _common
-from _common import unittest
-from _common import item, touch
+from test import _common
+from test._common import unittest
+from test._common import item, touch
 import beets.library
 from beets import util
 

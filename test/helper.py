@@ -50,7 +50,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
 
 # TODO Move AutotagMock here
-import _common
+from test import _common
 
 
 class LogCapture(logging.Handler):

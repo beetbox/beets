@@ -15,8 +15,8 @@
 import time
 from datetime import datetime
 
-from _common import unittest
-from helper import TestHelper
+from test._common import unittest
+from test.helper import TestHelper
 
 from beets.util.confit import ConfigValueError
 

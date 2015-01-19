@@ -3,7 +3,7 @@ import os.path
 import tempfile
 import shutil
 
-from _common import unittest
+from test._common import unittest
 from beets import config
 from beets.library import Item, Album, Library
 from beetsplug.importfeeds import ImportFeedsPlugin

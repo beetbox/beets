@@ -17,7 +17,7 @@
 import os
 import sqlite3
 
-from _common import unittest
+from test._common import unittest
 from beets import dbcore
 from tempfile import mkstemp
 

@@ -1,7 +1,7 @@
 """Tests for the 'web' plugin"""
 
-from _common import unittest
-import _common
+from test._common import unittest
+from test import _common
 import json
 import beetsplug
 from beets.library import Item, Album

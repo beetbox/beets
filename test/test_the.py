@@ -1,7 +1,7 @@
 """Tests for the 'the' plugin"""
 
-from _common import unittest
-import _common
+from test._common import unittest
+from test import _common
 from beets import config
 from beetsplug.the import ThePlugin, PATTERN_A, PATTERN_THE, FORMAT
 

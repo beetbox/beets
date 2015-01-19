@@ -1,6 +1,6 @@
 """Tests for the 'ihate' plugin"""
 
-from _common import unittest
+from test._common import unittest
 from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin

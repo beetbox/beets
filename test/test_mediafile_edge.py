@@ -17,9 +17,9 @@
 import os
 import shutil
 
-import _common
-from _common import unittest
-from helper import TestHelper
+from test import _common
+from test._common import unittest
+from test.helper import TestHelper
 import beets.mediafile
 
 

@@ -22,9 +22,9 @@ import re
 import unicodedata
 import sys
 
-import _common
-from _common import unittest
-from _common import item
+from test import _common
+from test._common import unittest
+from test._common import item
 import beets.library
 import beets.mediafile
 from beets import util

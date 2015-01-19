@@ -13,8 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 
-from _common import unittest
-from helper import TestHelper, has_program
+from test._common import unittest
+from test.helper import TestHelper, has_program
 
 from beets.mediafile import MediaFile
 

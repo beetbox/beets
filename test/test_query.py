@@ -14,9 +14,9 @@
 
 """Various tests for querying the library database.
 """
-import _common
-from _common import unittest
-import helper
+from test import _common
+from test._common import unittest
+from test import helper
 
 import beets.library
 from beets import dbcore

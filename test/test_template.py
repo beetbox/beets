@@ -17,7 +17,7 @@
 """
 import warnings
 
-from _common import unittest
+from test._common import unittest
 from beets.util import functemplate
 
 

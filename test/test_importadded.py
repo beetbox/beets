@@ -16,7 +16,7 @@
 
 import os
 
-from _common import unittest
+from test._common import unittest
 from test.test_importer import ImportHelper, AutotagStub
 from beets import importer
 from beets import util

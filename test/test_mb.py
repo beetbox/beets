@@ -14,8 +14,8 @@
 
 """Tests for MusicBrainz API wrapper.
 """
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets.autotag import mb
 from beets import config
 import mock
