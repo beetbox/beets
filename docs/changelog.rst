@@ -39,6 +39,8 @@ Fixes:
   company since 2013, so we are assuming access will not be restored.
 * Incremental imports now (once again) show a "skipped N directories" message.
 * :doc:`/plugins/embedart`: Handle errors in ImageMagick's output. :bug:`1241`
+* :doc:`/plugins/keyfinder`: Parse the underlying tool's output more robustly.
+  :bug:`1248`
 
 For developers:
 

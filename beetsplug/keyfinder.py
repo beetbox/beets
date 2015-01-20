@@ -58,9 +58,16 @@ class KeyFinderPlugin(BeetsPlugin):
                 continue
 
             try:
-                key = util.command_output([bin, '-f', item.path])
+                output = util.command_output([bin, '-f', item.path])
             except (subprocess.CalledProcessError, OSError) as exc:
                 self._log.error(u'execution failed: {0}', exc)
+                continue
+
+            key_raw = output.rsplit(None, 1)[-1]
+            try:
+                key = key_raw.decode('utf8')
+            except UnicodeDecodeError:
+                self._log.error(u'output is invalid UTF-8')
                 continue
 
             item['initial_key'] = key
