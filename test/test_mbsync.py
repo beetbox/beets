@@ -43,11 +43,11 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
                                 {'title': 'singleton info'})
 
         # test album with no mb_albumid
-        album_invalid_item = Item(
+        album_invalid = Item(
             album='album info',
             path=''
         )
-        album_invalid = self.lib.add_album([album_invalid_item])
+        self.lib.add_album([album_invalid])
 
         with capture_log('beets.mbsync') as logs:
             self.run_command('mbsync', '-f', "'$album'")
