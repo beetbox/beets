@@ -62,16 +62,16 @@ class MBSyncPlugin(BeetsPlugin):
         pretend = opts.pretend
         write = opts.write
         query = ui.decargs(args)
-        format = opts.format
+        fmt = opts.format
 
-        self.singletons(lib, query, move, pretend, write, format)
-        self.albums(lib, query, move, pretend, write, format)
+        self.singletons(lib, query, move, pretend, write, fmt)
+        self.albums(lib, query, move, pretend, write, fmt)
 
-    def singletons(self, lib, query, move, pretend, write, format):
+    def singletons(self, lib, query, move, pretend, write, fmt):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        template = Template(ui._pick_format(False, format))
+        template = Template(ui._pick_format(False, fmt))
 
         for item in lib.items(query + ['singleton:true']):
             item_formatted = item.evaluate_template(template)
@@ -93,11 +93,11 @@ class MBSyncPlugin(BeetsPlugin):
                 autotag.apply_item_metadata(item, track_info)
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib, query, move, pretend, write, format):
+    def albums(self, lib, query, move, pretend, write, fmt):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
-        template = Template(ui._pick_format(True, format))
+        template = Template(ui._pick_format(True, fmt))
 
         # Process matching albums.
         for a in lib.albums(query):
