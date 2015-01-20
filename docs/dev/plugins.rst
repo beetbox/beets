@@ -174,12 +174,6 @@ The events currently available are:
 * *after_write*: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).
 
-* *import_task_created*: called after an import task has been created.
-  Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
-  Return: The event handler may return a single `ImportTask` object or a list
-  of `ImportTask` objects. The original task will be replaced by the returned
-  task(s). If nothing is returned, the original task will be created.
-
 * *import_task_start*: called when before an import task begins processing.
   Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
 
