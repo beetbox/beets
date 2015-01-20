@@ -14,10 +14,8 @@
 
 """Warns you about things you hate (or even blocks import)."""
 
-import re
-from beets import config
 from beets.plugins import BeetsPlugin
-from beets.importer import action, SingletonImportTask
+from beets.importer import action
 from beets.library import parse_query_string
 from beets.library import Item
 from beets.library import Album
@@ -42,24 +40,10 @@ class IHatePlugin(BeetsPlugin):
         super(IHatePlugin, self).__init__()
         self.register_listener('import_task_choice',
                                self.import_task_choice_event)
-        self.register_listener('import_task_created',
-                               self.import_task_created_event)
         self.config.add({
             'warn': [],
             'skip': [],
-            'path': '.*'
         })
-
-        self.path_album_regex = \
-            self.path_singleton_regex = \
-            re.compile(self.config['path'].get())
-
-        if 'album_path' in self.config:
-            self.path_album_regex = re.compile(self.config['album_path'].get())
-
-        if 'singleton_path' in self.config:
-                self.path_singleton_regex = re.compile(
-                    self.config['singleton_path'].get())
 
     @classmethod
     def do_i_hate_this(cls, task, action_patterns):
@@ -93,30 +77,3 @@ class IHatePlugin(BeetsPlugin):
                 self._log.debug(u'nothing to do')
         else:
             self._log.debug(u'user made a decision, nothing to do')
-
-    def import_task_created_event(self, session, task):
-        if task.items and len(task.items) > 0:
-            items_to_import = []
-            for item in task.items:
-                if self.file_filter(item['path']):
-                    items_to_import.append(item)
-            if len(items_to_import) > 0:
-                task.items = items_to_import
-            else:
-                task.choice_flag = action.SKIP
-        elif isinstance(task, SingletonImportTask):
-            if not self.file_filter(task.item['path']):
-                task.choice_flag = action.SKIP
-
-    def file_filter(self, full_path):
-        """Checks if the configured regular expressions allow the import of the
-        file given in full_path.
-        """
-        import_config = dict(config['import'])
-        if 'singletons' not in import_config or not import_config[
-                'singletons']:
-            # Album
-            return self.path_album_regex.match(full_path) is not None
-        else:
-            # Singleton
-            return self.path_singleton_regex.match(full_path) is not None
