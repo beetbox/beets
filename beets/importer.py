@@ -1004,16 +1004,14 @@ class ImportTaskFactory(object):
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
-                    task = self.singleton(path)
+                    task = self._create(self.singleton(path))
                     if task:
-                        self.imported += 1
                         yield task
                 yield self.sentinel(dirs)
 
             else:
-                task = self.album(paths, dirs)
+                task = self._create(self.album(paths, dirs))
                 if task:
-                    self.imported += 1
                     yield task
 
         # Produce the final sentinel for this toppath to indicate that
@@ -1024,6 +1022,19 @@ class ImportTaskFactory(object):
             yield archive_task
         else:
             yield self.sentinel()
+
+    def _create(self, task):
+        """Handle a new task to be emitted by the factory.
+
+        Emit the `import_task_created` event and increment the
+        `imported` count if the task is not skipped. Return the same
+        task. If `task` is None, do nothing.
+        """
+        if task:
+            task.emit_created(self.session)
+            if not task.skip:
+                self.imported += 1
+            return task
 
     def paths(self):
         """Walk `self.toppath` and yield `(dirs, files)` pairs where
@@ -1155,7 +1166,6 @@ def read_tasks(session):
         # Generate tasks.
         task_factory = ImportTaskFactory(toppath, session)
         for t in task_factory.tasks():
-            t.emit_created(session)
             yield t
         skipped += task_factory.skipped
 
