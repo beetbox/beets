@@ -18,7 +18,7 @@ configuration file. The available options are:
 - **album_path** and **singleton_path**: You may specify different regular
   expressions used for imports of albums and singletons. This way, you can
   automatically skip singletons when importing albums if the names (and paths)
-  of the files are distinguishable via a regex. The path regex defined here
+  of the files are distinguishable via a regex. The regexes defined here
   take precedence over the global ``path`` option.
 
 Here's an example::
@@ -28,5 +28,3 @@ Here's an example::
               # will only import files which names start with two digits
         album_path: .*\d\d[^/]+$
         singleton_path: .*/(?!\d\d)[^/]+$
-
-
