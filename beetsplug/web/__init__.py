@@ -22,7 +22,6 @@ from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
 import os
 import json
-from crossdomaindec import crossdomain, set_cors_origin
 
 # Utilities.
 
@@ -165,7 +164,6 @@ def before_request():
 # Items.
 
 @app.route('/item/<idlist:ids>')
-@crossdomain()
 @resource('items')
 def get_item(id):
     return g.lib.get_item(id)
@@ -173,14 +171,12 @@ def get_item(id):
 
 @app.route('/item/')
 @app.route('/item/query/')
-@crossdomain()
 @resource_list('items')
 def all_items():
     return g.lib.items()
 
 
 @app.route('/item/<int:item_id>/file')
-@crossdomain()
 def item_file(item_id):
     item = g.lib.get_item(item_id)
     response = flask.send_file(item.path, as_attachment=True,
@@ -190,7 +186,6 @@ def item_file(item_id):
 
 
 @app.route('/item/query/<query:queries>')
-@crossdomain()
 @resource_query('items')
 def item_query(queries):
     return g.lib.items(queries)
@@ -199,7 +194,6 @@ def item_query(queries):
 # Albums.
 
 @app.route('/album/<idlist:ids>')
-@crossdomain()
 @resource('albums')
 def get_album(id):
     return g.lib.get_album(id)
@@ -207,21 +201,18 @@ def get_album(id):
 
 @app.route('/album/')
 @app.route('/album/query/')
-@crossdomain()
 @resource_list('albums')
 def all_albums():
     return g.lib.albums()
 
 
 @app.route('/album/query/<query:queries>')
-@crossdomain()
 @resource_query('albums')
 def album_query(queries):
     return g.lib.albums(queries)
 
 
 @app.route('/album/<int:album_id>/art')
-@crossdomain()
 def album_art(album_id):
     album = g.lib.get_album(album_id)
     return flask.send_file(album.artpath)
@@ -230,7 +221,6 @@ def album_art(album_id):
 # Artists.
 
 @app.route('/artist/')
-@crossdomain()
 def all_artists():
     with g.lib.transaction() as tx:
         rows = tx.query("SELECT DISTINCT albumartist FROM albums")
@@ -241,7 +231,6 @@ def all_artists():
 # Library information.
 
 @app.route('/stats')
-@crossdomain()
 def stats():
     with g.lib.transaction() as tx:
         item_rows = tx.query("SELECT COUNT(*) FROM items")
@@ -267,7 +256,8 @@ class WebPlugin(BeetsPlugin):
         self.config.add({
             'host': u'127.0.0.1',
             'port': 8337,
-            'cors_origin': 'http://127.0.0.1',
+            'cors': False,
+            'cors_origin': '*',
         })
 
     def commands(self):
@@ -282,9 +272,16 @@ class WebPlugin(BeetsPlugin):
             if args:
                 self.config['port'] = int(args.pop(0))
 
-            set_cors_origin(self.config['cors_origin'])
-
             app.config['lib'] = lib
+
+            ## Enable CORS if required
+            if self.config['cors']:
+                from flask.ext.cors import CORS
+                app.config['CORS_ALLOW_HEADERS'] = "Content-Type"
+                app.config['CORS_RESOURCES'] = {
+                    r"/*": {"origins": self.config['cors_origin'].get(str)}
+                }
+                cors = CORS(app)
             app.run(host=self.config['host'].get(unicode),
                     port=self.config['port'].get(int),
                     debug=opts.debug, threaded=True)
