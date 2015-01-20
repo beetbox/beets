@@ -235,14 +235,15 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
             self.importer.run()
         self.unload_plugins()
 
-        self.assertEqual(logs.count('Sending event: import_task_created'), 2,
-                         'Only two import_task_created events (one for the '
-                         'album and one for the sentinel)')
-        logs = [line for line in logs if not line.startswith('Sending event:')]
+        # Exactly one event should have been imported (for the album).
+        # Sentinels do not get emitted.
+        self.assertEqual(logs.count('Sending event: import_task_created'), 1)
 
+        logs = [line for line in logs if not line.startswith('Sending event:')]
         self.assertEqual(logs, [
-            'Singleton: %s' % self.file_paths[0],
-            'Singleton: %s' % self.file_paths[1]
+            'Album: {0}/album'.format(self.import_dir),
+            '  {0}'.format(self.file_paths[0]),
+            '  {0}'.format(self.file_paths[1]),
         ])
 
 
