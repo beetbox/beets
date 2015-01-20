@@ -82,7 +82,9 @@ class BeetsPlugin(object):
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
         if beets.config['verbose']:
-            self._log.addFilter(PluginLogFilter(self))
+            if not any(isinstance(f, PluginLogFilter)
+                       for f in self._log.filters):
+                self._log.addFilter(PluginLogFilter(self))
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
