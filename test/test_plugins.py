@@ -11,15 +11,21 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
+import os
 
 from mock import patch
+import shutil
 from _common import unittest
+from beets.importer import SingletonImportTask, SentinelImportTask, \
+    ArchiveImportTask
 import helper
 
-from beets import plugins
+from beets import plugins, config
 from beets.library import Item
 from beets.dbcore import types
 from beets.mediafile import MediaFile
+from test import _common
+from test.test_importer import ImportHelper
 
 
 class TestHelper(helper.TestHelper):
@@ -149,6 +155,95 @@ class ItemTypeConflictTest(unittest.TestCase, TestHelper):
         self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
         self.assertNotEqual(None, plugins.types(Item))
+
+
+class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
+
+    def setUp(self):
+        self.setup_plugin_loader()
+        self.setup_beets()
+        self.__create_import_dir(2)
+        config['import']['pretend'] = True
+
+    def tearDown(self):
+        self.teardown_plugin_loader()
+        self.teardown_beets()
+
+    def __copy_file(self, dest_path, metadata):
+        # Copy files
+        resource_path = os.path.join(_common.RSRC, 'full.mp3')
+        shutil.copy(resource_path, dest_path)
+        medium = MediaFile(dest_path)
+        # Set metadata
+        for attr in metadata:
+            setattr(medium, attr, metadata[attr])
+        medium.save()
+
+    def __create_import_dir(self, count):
+        self.import_dir = os.path.join(self.temp_dir, 'testsrcdir')
+        if os.path.isdir(self.import_dir):
+            shutil.rmtree(self.import_dir)
+
+        self.album_path = os.path.join(self.import_dir, 'album')
+        os.makedirs(self.album_path)
+
+        metadata = {
+            'artist': 'Tag Artist',
+            'album':  'Tag Album',
+            'albumartist':  None,
+            'mb_trackid': None,
+            'mb_albumid': None,
+            'comp': None
+        }
+        self.file_paths = []
+        for i in range(count):
+            metadata['track'] = i + 1
+            metadata['title'] = 'Tag Title Album %d' % (i + 1)
+            dest_path = os.path.join(self.album_path,
+                                     '%02d - track.mp3' % (i + 1))
+            self.__copy_file(dest_path, metadata)
+            self.file_paths.append(dest_path)
+
+    def test_import_task_created(self):
+        class ToSingletonPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(ToSingletonPlugin, self).__init__()
+
+                self.register_listener('import_task_created',
+                                       self.import_task_created_event)
+
+            def import_task_created_event(self, session, task):
+                if isinstance(task, SingletonImportTask) \
+                        or isinstance(task, SentinelImportTask)\
+                        or isinstance(task, ArchiveImportTask):
+                    return task
+
+                new_tasks = []
+                for item in task.items:
+                    new_tasks.append(SingletonImportTask(task.toppath, item))
+
+                return new_tasks
+
+        to_singleton_plugin = ToSingletonPlugin
+        self.register_plugin(to_singleton_plugin)
+
+        import_files = [self.import_dir]
+        self._setup_import_session(singletons=False)
+        self.importer.paths = import_files
+
+        with helper.capture_log() as logs:
+            self.importer.run()
+        self.unload_plugins()
+
+        self.assertEqual(logs.count('Sending event: import_task_created'), 2,
+                         'Only two import_task_created events (one for the '
+                         'album and one for the sentinel)')
+        logs = [line for line in logs if not line.startswith('Sending event:')]
+
+        self.assertEqual(logs, [
+            'Singleton: %s' % self.file_paths[0],
+            'Singleton: %s' % self.file_paths[1]
+        ])
 
 
 class HelpersTest(unittest.TestCase):
