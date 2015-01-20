@@ -1494,9 +1494,9 @@ def config_edit():
     path = config.user_config_path()
 
     if 'EDITOR' in os.environ:
-        editor = os.environ['EDITOR']
+        editor = os.environ['EDITOR'].encode('utf8')
         try:
-            editor = shlex.split(editor)
+            editor = [e.decode('utf8') for e in shlex.split(editor)]
         except ValueError:  # Malformed shell tokens.
             editor = [editor]
         args = editor + [path]
