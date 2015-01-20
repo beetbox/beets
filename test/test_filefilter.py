@@ -110,13 +110,9 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
         self.assertEqual(logs, expected_lines)
 
-    def __reset_config(self):
-        config['filefilter'] = {}
-
     def test_import_default(self):
         """ The default configuration should import everything.
         """
-        self.__reset_config()
         self.__run([
             'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
@@ -130,13 +126,11 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         ])
 
     def test_import_nothing(self):
-        self.__reset_config()
         config['filefilter']['path'] = 'not_there'
         self.__run(['No files imported from %s' % self.import_dir])
 
     # Global options
     def test_import_global(self):
-        self.__reset_config()
         config['filefilter']['path'] = '.*track_1.*\.mp3'
         self.__run([
             'Album: %s' % displayable_path(self.artist_path),
@@ -151,7 +145,6 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     # Album options
     def test_import_album(self):
-        self.__reset_config()
         config['filefilter']['album_path'] = '.*track_1.*\.mp3'
         self.__run([
             'Album: %s' % displayable_path(self.artist_path),
@@ -170,7 +163,6 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     # Singleton options
     def test_import_singleton(self):
-        self.__reset_config()
         config['filefilter']['singleton_path'] = '.*track_1.*\.mp3'
         self.__run([
             'Singleton: %s' % displayable_path(self.artist_paths[0]),
@@ -190,7 +182,6 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     # Album and singleton options
     def test_import_both(self):
-        self.__reset_config()
         config['filefilter']['album_path'] = '.*track_1.*\.mp3'
         config['filefilter']['singleton_path'] = '.*track_2.*\.mp3'
         self.__run([
