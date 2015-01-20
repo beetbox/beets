@@ -106,7 +106,7 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
                 execlp.side_effect = OSError()
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
-                      str(user_error.exception.args[0]))
+                      unicode(user_error.exception.args[0]))
 
     def test_edit_invalid_config_file(self):
         self.lib = Library(':memory:')

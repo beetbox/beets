@@ -67,7 +67,7 @@ class TestTerminalImportSession(TerminalImportSession):
             self.io.addinput('S')
         elif isinstance(choice, int):
             self.io.addinput('M')
-            self.io.addinput(str(choice))
+            self.io.addinput(unicode(choice))
             self._add_choice_input()
         else:
             raise Exception('Unknown choice %s' % choice)

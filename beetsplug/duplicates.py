@@ -87,7 +87,7 @@ def _group_by(objs, keys, log):
             counts[key].append(obj)
         else:
             log.debug(u'{0}: all keys {1} on item {2} are null: skipping',
-                      PLUGIN, str(keys), displayable_path(obj.path))
+                      PLUGIN, keys, displayable_path(obj.path))
 
     return counts
 

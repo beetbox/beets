@@ -292,7 +292,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
             mf.year = 2013
             mf.save()
             frame = mf.mgfile['TDRC']
-            self.assertTrue('2013' in str(frame))
+            self.assertTrue('2013' in unicode(frame))
             self.assertTrue('TYER' not in mf.mgfile)
         finally:
             self._delete_test()
@@ -303,7 +303,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
             mf.year = 2013
             mf.save()
             frame = mf.mgfile['TYER']
-            self.assertTrue('2013' in str(frame))
+            self.assertTrue('2013' in unicode(frame))
             self.assertTrue('TDRC' not in mf.mgfile)
         finally:
             self._delete_test()

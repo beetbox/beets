@@ -121,7 +121,7 @@ class PathType(types.Type):
         return self.normalize(sql_value)
 
     def to_sql(self, value):
-        if isinstance(value, str):
+        if isinstance(value, bytes):
             value = buffer(value)
         return value
 
@@ -410,7 +410,7 @@ class Item(LibModel):
             if isinstance(value, unicode):
                 value = bytestring_path(value)
             elif isinstance(value, buffer):
-                value = str(value)
+                value = bytes(value)
 
         if key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
@@ -513,7 +513,7 @@ class Item(LibModel):
             self.write(path)
             return True
         except FileOperationError as exc:
-            log.error(str(exc))
+            log.error("{0}", exc)
             return False
 
     def try_sync(self, write=None):

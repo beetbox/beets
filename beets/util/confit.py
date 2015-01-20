@@ -247,7 +247,7 @@ class ConfigView(object):
 
     def __str__(self):
         """Gets the value for this view as a byte string."""
-        return str(self.get())
+        return bytes(self.get())
 
     def __unicode__(self):
         """Gets the value for this view as a unicode string. (Python 2

@@ -179,7 +179,7 @@ class CommandBackend(Backend):
             # Disable clipping warning.
             cmd = cmd + ['-c']
         cmd = cmd + ['-a' if is_album else '-r']
-        cmd = cmd + ['-d', str(self.gain_offset)]
+        cmd = cmd + ['-d', bytes(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug(u'analyzing {0} files', len(items))

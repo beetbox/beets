@@ -340,12 +340,14 @@ class ExtendedFieldTestMixin(object):
     def test_invalid_descriptor(self):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('somekey', True)
-        self.assertIn('must be an instance of MediaField', str(cm.exception))
+        self.assertIn('must be an instance of MediaField',
+                      unicode(cm.exception))
 
     def test_overwrite_property(self):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('artist', MediaField())
-        self.assertIn('property "artist" already exists', str(cm.exception))
+        self.assertIn('property "artist" already exists',
+                      unicode(cm.exception))
 
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,

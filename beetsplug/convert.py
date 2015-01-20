@@ -65,7 +65,7 @@ def get_format(format=None):
             .format(format)
         )
     except ConfigTypeError:
-        command = config['convert']['formats'][format].get(str)
+        command = config['convert']['formats'][format].get(bytes)
         extension = format
 
     # Convenience and backwards-compatibility shortcuts.

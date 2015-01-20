@@ -281,12 +281,12 @@ class GetTest(DummyDataTestCase):
     def test_invalid_query(self):
         with self.assertRaises(InvalidQueryError) as raised:
             dbcore.query.NumericQuery('year', '199a')
-        self.assertIn('not an int', str(raised.exception))
+        self.assertIn('not an int', unicode(raised.exception))
 
         with self.assertRaises(InvalidQueryError) as raised:
             dbcore.query.RegexpQuery('year', '199(')
-        self.assertIn('not a regular expression', str(raised.exception))
-        self.assertIn('unbalanced parenthesis', str(raised.exception))
+        self.assertIn('not a regular expression', unicode(raised.exception))
+        self.assertIn('unbalanced parenthesis', unicode(raised.exception))
 
 
 class MatchTest(_common.TestCase):

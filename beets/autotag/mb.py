@@ -319,7 +319,7 @@ def match_album(artist, album, tracks=None):
         # Various Artists search.
         criteria['arid'] = VARIOUS_ARTISTS_ID
     if tracks is not None:
-        criteria['tracks'] = str(tracks)
+        criteria['tracks'] = bytes(tracks)
 
     # Abort if we have no search terms.
     if not any(criteria.itervalues()):

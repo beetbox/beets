@@ -16,7 +16,7 @@ def convert_perm(perm):
     to an oct int. Else it just converts it to oct.
     """
     if isinstance(perm, int):
-        return int(str(perm), 8)
+        return int(bytes(perm), 8)
     else:
         return int(perm, 8)
 

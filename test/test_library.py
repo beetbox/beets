@@ -924,22 +924,22 @@ class PathStringTest(_common.TestCase):
         self.i = item(self.lib)
 
     def test_item_path_is_bytestring(self):
-        self.assert_(isinstance(self.i.path, str))
+        self.assert_(isinstance(self.i.path, bytes))
 
     def test_fetched_item_path_is_bytestring(self):
         i = list(self.lib.items())[0]
-        self.assert_(isinstance(i.path, str))
+        self.assert_(isinstance(i.path, bytes))
 
     def test_unicode_path_becomes_bytestring(self):
         self.i.path = u'unicodepath'
-        self.assert_(isinstance(self.i.path, str))
+        self.assert_(isinstance(self.i.path, bytes))
 
     def test_unicode_in_database_becomes_bytestring(self):
         self.lib._connection().execute("""
         update items set path=? where id=?
         """, (self.i.id, u'somepath'))
         i = list(self.lib.items())[0]
-        self.assert_(isinstance(i.path, str))
+        self.assert_(isinstance(i.path, bytes))
 
     def test_special_chars_preserved_in_database(self):
         path = 'b\xe1r'.encode('utf8')
@@ -960,13 +960,13 @@ class PathStringTest(_common.TestCase):
     def test_destination_returns_bytestring(self):
         self.i.artist = u'b\xe1r'
         dest = self.i.destination()
-        self.assert_(isinstance(dest, str))
+        self.assert_(isinstance(dest, bytes))
 
     def test_art_destination_returns_bytestring(self):
         self.i.artist = u'b\xe1r'
         alb = self.lib.add_album([self.i])
         dest = alb.art_destination(u'image.jpg')
-        self.assert_(isinstance(dest, str))
+        self.assert_(isinstance(dest, bytes))
 
     def test_artpath_stores_special_chars(self):
         path = b'b\xe1r'
@@ -989,7 +989,7 @@ class PathStringTest(_common.TestCase):
     def test_unicode_artpath_becomes_bytestring(self):
         alb = self.lib.add_album([self.i])
         alb.artpath = u'somep\xe1th'
-        self.assert_(isinstance(alb.artpath, str))
+        self.assert_(isinstance(alb.artpath, bytes))
 
     def test_unicode_artpath_in_database_decoded(self):
         alb = self.lib.add_album([self.i])
@@ -998,7 +998,7 @@ class PathStringTest(_common.TestCase):
             (u'somep\xe1th', alb.id)
         )
         alb = self.lib.get_album(alb.id)
-        self.assert_(isinstance(alb.artpath, str))
+        self.assert_(isinstance(alb.artpath, bytes))
 
 
 class PathTruncationTest(_common.TestCase):

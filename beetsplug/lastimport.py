@@ -107,8 +107,8 @@ def fetch_tracks(user, page, limit):
         'method': 'library.gettracks',
         'user': user,
         'api_key': plugins.LASTFM_KEY,
-        'page': str(page),
-        'limit': str(limit),
+        'page': bytes(page),
+        'limit': bytes(limit),
         'format': 'json',
     }).json()
 

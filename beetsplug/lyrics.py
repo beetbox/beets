@@ -56,7 +56,7 @@ URL_CHARACTERS = {
 
 def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
-    if isinstance(text, str):
+    if isinstance(text, bytes):
         text = text.decode('utf8', 'ignore')
     out = text.replace(u'&nbsp;', u' ')
 

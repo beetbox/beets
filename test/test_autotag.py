@@ -572,7 +572,7 @@ class AssignmentTest(unittest.TestCase):
             return Item(
                 artist=u'ben harper',
                 album=u'burn to shine',
-                title=u'ben harper - Burn to Shine ' + str(i),
+                title=u'ben harper - Burn to Shine {0}'.format(i),
                 track=i,
                 length=length,
                 mb_trackid='', mb_albumid='', mb_artistid='',

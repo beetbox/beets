@@ -64,7 +64,7 @@ def acoustid_match(log, path):
         duration, fp = acoustid.fingerprint_file(util.syspath(path))
     except acoustid.FingerprintGenerationError as exc:
         log.error(u'fingerprinting of {0} failed: {1}',
-                  util.displayable_path(repr(path)), str(exc))
+                  util.displayable_path(repr(path)), exc)
         return None
     _fingerprints[path] = fp
     try:

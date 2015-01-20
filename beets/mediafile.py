@@ -144,7 +144,7 @@ def _safe_cast(out_type, val):
             return False
 
     elif out_type == unicode:
-        if isinstance(val, str):
+        if isinstance(val, bytes):
             return val.decode('utf8', 'ignore')
         elif isinstance(val, unicode):
             return val
@@ -450,7 +450,7 @@ class StorageStyle(object):
             if isinstance(value, bool):
                 # Store bools as 1/0 instead of True/False.
                 value = unicode(int(bool(value)))
-            elif isinstance(value, str):
+            elif isinstance(value, bytes):
                 value = value.decode('utf8', 'ignore')
             else:
                 value = unicode(value)
@@ -738,7 +738,7 @@ class MP3DescStorageStyle(MP3StorageStyle):
         # need to make a new frame?
         if not found:
             frame = mutagen.id3.Frames[self.key](
-                desc=str(self.description),
+                desc=bytes(self.description),
                 text=value,
                 encoding=3
             )
@@ -811,7 +811,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
     """
     def __init__(self):
         super(MP3ImageStorageStyle, self).__init__(key='APIC')
-        self.as_type = str
+        self.as_type = bytes
 
     def deserialize(self, apic_frame):
         """Convert APIC frame into Image."""
@@ -880,7 +880,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
         super(VorbisImageStorageStyle, self).__init__(
             key='metadata_block_picture'
         )
-        self.as_type = str
+        self.as_type = bytes
 
     def fetch(self, mutagen_file):
         images = []

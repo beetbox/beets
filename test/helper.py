@@ -62,7 +62,7 @@ class LogCapture(logging.Handler):
         self.messages = []
 
     def emit(self, record):
-        self.messages.append(str(record.msg))
+        self.messages.append(unicode(record.msg))
 
 
 @contextmanager
@@ -326,7 +326,7 @@ class TestHelper(object):
         items = []
         path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(count):
-            item = Item.from_path(str(path))
+            item = Item.from_path(bytes(path))
             item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
@@ -341,7 +341,7 @@ class TestHelper(object):
         items = []
         path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(track_count):
-            item = Item.from_path(str(path))
+            item = Item.from_path(bytes(path))
             item.album = u'\u00e4lbum'  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)

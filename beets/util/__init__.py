@@ -312,7 +312,7 @@ def _fsencoding():
 
 
 def bytestring_path(path):
-    """Given a path, which is either a str or a unicode, returns a str
+    """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames).
     """
     # Pass through bytestrings.

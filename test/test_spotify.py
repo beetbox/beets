@@ -47,7 +47,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     @responses.activate
     def test_missing_request(self):
-        response_body = str(
+        response_body = bytes(
             '{'
             '"tracks" : {'
             '"href" : "https://api.spotify.com/v1/search?query=duifhjslkef'
@@ -83,7 +83,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     @responses.activate
     def test_track_request(self):
-        response_body = str(
+        response_body = bytes(
             '{'
             '"tracks" : {'
             '"href" : "https://api.spotify.com/v1/search?query=Happy+album%3A'
