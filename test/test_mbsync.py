@@ -68,15 +68,7 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         album.load()
         self.assertEqual(album.album, 'album info')
 
-    @patch('beets.autotag.hooks.album_for_mbid')
-    @patch('beets.autotag.hooks.track_for_mbid')
-    def test_message_when_skipping(self, track_for_mbid, album_for_mbid):
-        album_for_mbid.return_value = \
-            generate_album_info('album id', ['track id'])
-        track_for_mbid.return_value = \
-            generate_track_info('singleton track id',
-                                {'title': 'singleton info'})
-
+    def test_message_when_skipping(self):
         # Test album with no mb_albumid.
         # The default format for an album include $albumartist so
         # set that here, too.
