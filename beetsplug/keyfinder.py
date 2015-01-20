@@ -20,6 +20,7 @@ import subprocess
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
+from beets import config
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -31,8 +32,9 @@ class KeyFinderPlugin(BeetsPlugin):
             u'auto': True,
             u'overwrite': False,
         })
-        self.config['auto'].get(bool)
-        self.import_stages = [self.imported]
+
+        if self.config['auto'].get(bool):
+            self.import_stages = [self.imported]
 
     def commands(self):
         cmd = ui.Subcommand('keyfinder',
@@ -41,13 +43,13 @@ class KeyFinderPlugin(BeetsPlugin):
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.find_key(lib.items(ui.decargs(args)))
+        self.find_key(lib.items(ui.decargs(args)),
+                      write=config['import']['write'].get(bool))
 
     def imported(self, session, task):
-        if self.config['auto'].get(bool):
-            self.find_key(task.items)
+        self.find_key(task.items)
 
-    def find_key(self, items):
+    def find_key(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
         bin = util.bytestring_path(self.config['bin'].get(unicode))
 
@@ -64,5 +66,7 @@ class KeyFinderPlugin(BeetsPlugin):
             item['initial_key'] = key
             self._log.debug(u'added computed initial key {0} for {1}',
                             key, util.displayable_path(item.path))
-            item.try_write()
+
+            if write:
+                item.try_write()
             item.store()
