@@ -64,7 +64,7 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
             'albumartist':  None,
             'mb_trackid': None,
             'mb_albumid': None,
-            'comp': None
+            'comp': None,
         }
         self.album_paths = []
         for i in range(count):
@@ -118,13 +118,13 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         """
         self.__reset_config()
         self.__run([
-            'Album %s' % displayable_path(self.artist_path),
+            'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
             '  %s' % displayable_path(self.artist_paths[1]),
-            'Album %s' % displayable_path(self.album_path),
+            'Album: %s' % displayable_path(self.album_path),
             '  %s' % displayable_path(self.album_paths[0]),
             '  %s' % displayable_path(self.album_paths[1]),
-            'Album %s' % displayable_path(self.misc_path),
+            'Album: %s' % displayable_path(self.misc_path),
             '  %s' % displayable_path(self.misc_paths[0]),
             '  %s' % displayable_path(self.misc_paths[1])
         ])
@@ -139,9 +139,9 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         self.__reset_config()
         config['filefilter']['path'] = '.*track_1.*\.mp3'
         self.__run([
-            'Album %s' % displayable_path(self.artist_path),
+            'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
-            'Album %s' % displayable_path(self.misc_path),
+            'Album: %s' % displayable_path(self.misc_path),
             '  %s' % displayable_path(self.misc_paths[0]),
         ])
         self.__run([
@@ -154,9 +154,9 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         self.__reset_config()
         config['filefilter']['album_path'] = '.*track_1.*\.mp3'
         self.__run([
-            'Album %s' % displayable_path(self.artist_path),
+            'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
-            'Album %s' % displayable_path(self.misc_path),
+            'Album: %s' % displayable_path(self.misc_path),
             '  %s' % displayable_path(self.misc_paths[0]),
         ])
         self.__run([
@@ -177,13 +177,13 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
             'Singleton: %s' % displayable_path(self.misc_paths[0])
         ], singletons=True)
         self.__run([
-            'Album %s' % displayable_path(self.artist_path),
+            'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
             '  %s' % displayable_path(self.artist_paths[1]),
-            'Album %s' % displayable_path(self.album_path),
+            'Album: %s' % displayable_path(self.album_path),
             '  %s' % displayable_path(self.album_paths[0]),
             '  %s' % displayable_path(self.album_paths[1]),
-            'Album %s' % displayable_path(self.misc_path),
+            'Album: %s' % displayable_path(self.misc_path),
             '  %s' % displayable_path(self.misc_paths[0]),
             '  %s' % displayable_path(self.misc_paths[1])
         ])
@@ -194,9 +194,9 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         config['filefilter']['album_path'] = '.*track_1.*\.mp3'
         config['filefilter']['singleton_path'] = '.*track_2.*\.mp3'
         self.__run([
-            'Album %s' % displayable_path(self.artist_path),
+            'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
-            'Album %s' % displayable_path(self.misc_path),
+            'Album: %s' % displayable_path(self.misc_path),
             '  %s' % displayable_path(self.misc_paths[0]),
         ])
         self.__run([

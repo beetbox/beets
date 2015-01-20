@@ -12,7 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Filters the imported files using a regular expression"""
+"""Filter imported files using a regular expression.
+"""
 
 import re
 from beets import config
@@ -55,8 +56,8 @@ class FileFilterPlugin(BeetsPlugin):
                 task.choice_flag = action.SKIP
 
     def file_filter(self, full_path):
-        """Checks if the configured regular expressions allow the import of the
-        file given in full_path.
+        """Checks if the configured regular expressions allow the import
+        of the file given in full_path.
         """
         import_config = dict(config['import'])
         if 'singletons' not in import_config or not import_config[
