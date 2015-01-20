@@ -17,7 +17,8 @@ from mock import patch
 from _common import unittest
 from helper import TestHelper,\
     generate_album_info, \
-    generate_track_info
+    generate_track_info, \
+    capture_log
 
 from beets.library import Item
 
@@ -41,8 +42,32 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
             generate_track_info('singleton track id',
                                 {'title': 'singleton info'})
 
-        album_item = Item(
+        # test album with no mb_albumid
+        album_invalid_item = Item(
+            album='album info',
+            path=''
+        )
+        album_invalid = self.lib.add_album([album_invalid_item])
+
+        with capture_log('beets.mbsync') as logs:
+            self.run_command('mbsync', '-f', "'$album'")
+        e = "mbsync: Skipping album with no mb_albumid: 'album info'"
+        self.assertEqual(e, logs[0])
+
+        # test singleton with no mb_trackid
+        item_invalid = Item(
             title='old title',
+            path='',
+        )
+        self.lib.add(item_invalid)
+
+        with capture_log('beets.mbsync') as logs:
+            self.run_command('mbsync', '-f', "'$title'")
+        e = "mbsync: Skipping singleton with no mb_trackid: 'old title'"
+        self.assertEqual(e, logs[0])
+
+        album_item = Item(
+            album='old title',
             mb_albumid='album id',
             mb_trackid='track id',
             path=''
