@@ -102,7 +102,7 @@ setup(
         'echonest': ['pyechonest'],
         'lastgenre': ['pylast'],
         'mpdstats': ['python-mpd'],
-        'web': ['flask'],
+        'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
     },
     # Non-Python/non-PyPI plugin dependencies:

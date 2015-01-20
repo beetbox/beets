@@ -20,6 +20,12 @@ flask``.
 
 .. _Flask: http://flask.pocoo.org/
 
+If you require `CORS`_ (Cross-origin resource sharing), then you also
+need `flask-cors`_. This can be installed by running ``pip install flask-cors``.
+
+.. _flask-cors: https://github.com/CoryDolphin/flask-cors
+.. _CORS: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+
 Finally, enable the ``web`` plugin in your configuration
 (see :ref:`using-plugins`).
 
@@ -52,10 +58,12 @@ Configuration
 To configure the plugin, make a ``web:`` section in your
 configuration file. The available options are:
 
-- **host**: The server hostname.
-  Default: Bind to all interfaces.
+- **host**: The server hostname. Set this to 0.0.0.0 to bind to all interfaces.
+  Default: Bind to 127.0.0.1.
 - **port**: The server port.
   Default: 8337.
+- **cors**: The CORS origin. See below.
+  Default: CORS is disabled.
 
 Implementation
 --------------
@@ -77,6 +85,28 @@ for unsupported formats/browsers. There are a number of options for this:
 .. _audio.js: http://kolber.github.com/audiojs/
 .. _html5media: http://html5media.info/
 .. _MediaElement.js: http://mediaelementjs.com/
+
+Cross-origin resource sharing (CORS)
+------------------------------------
+
+This is only required if you intend to access the API from a browser using JavaScript and
+the JavaScript is not hosted by the beets web server.
+
+The browser will check if the resources the JavaScript is trying to access is coming from the
+same source as the the Script and give an error similar to the following:
+
+``XMLHttpRequest cannot load http://beets:8337/item/xx. No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'http://webserver' is therefore not allowed access.``
+
+To prevent this, `CORS`_ is used. To enable CORS, set the ``cors`` configuration option to the origin
+of your JavaScript or set it to ``'*'`` to enable access from all origins. Note that there are
+security implications if you set the origin to ``'*'``, please research this before enabling it.
+
+For example::
+
+    web:
+        host: 0.0.0.0
+        cors: 'http://webserver'
+
 
 JSON API
 --------
