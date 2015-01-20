@@ -13,6 +13,9 @@ Features:
 * :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* as well as
   a longer list of classical music genre tags to the built-in whitelist and
   canonicalization tree. :bug:`1206` :bug:`1239` :bug:`1240`
+* :doc:`/plugins/web`: Add support for *cross-origin resource sharing* for
+  more flexible in-browser clients. Thanks to Andre Miller. :bug:`1236`
+  :bug:`1237`
 
 Fixes:
 

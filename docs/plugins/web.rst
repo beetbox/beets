@@ -62,7 +62,7 @@ configuration file. The available options are:
   Default: Bind to 127.0.0.1.
 - **port**: The server port.
   Default: 8337.
-- **cors**: The CORS origin. See below.
+- **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
 
 Implementation
@@ -86,26 +86,28 @@ for unsupported formats/browsers. There are a number of options for this:
 .. _html5media: http://html5media.info/
 .. _MediaElement.js: http://mediaelementjs.com/
 
-Cross-origin resource sharing (CORS)
+.. _web-cors:
+
+Cross-Origin Resource Sharing (CORS)
 ------------------------------------
 
-This is only required if you intend to access the API from a browser using JavaScript and
-the JavaScript is not hosted by the beets web server.
+The ``web`` plugin's API can be used as a backend for an in-browser client. By
+default, browsers will only allow access from clients running on the same
+server as the API. (You will get an arcane error about ``XMLHttpRequest``
+otherwise.) A technology called `CORS`_ lets you relax this restriction.
 
-The browser will check if the resources the JavaScript is trying to access is coming from the
-same source as the the Script and give an error similar to the following:
-
-``XMLHttpRequest cannot load http://beets:8337/item/xx. No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'http://webserver' is therefore not allowed access.``
-
-To prevent this, `CORS`_ is used. To enable CORS, set the ``cors`` configuration option to the origin
-of your JavaScript or set it to ``'*'`` to enable access from all origins. Note that there are
-security implications if you set the origin to ``'*'``, please research this before enabling it.
+If you want to use an in-browser client hosted elsewhere (or running from
+a different server on your machine), set the ``cors`` configuration option to
+the "origin" (protocol, host, and optional port number) where the client is
+served. Or set it to ``'*'`` to enable access from all origins. Note that
+there are security implications if you set the origin to ``'*'``, so please
+research this before using it.
 
 For example::
 
     web:
         host: 0.0.0.0
-        cors: 'http://webserver'
+        cors: 'http://example.com'
 
 
 JSON API
