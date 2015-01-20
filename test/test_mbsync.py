@@ -20,6 +20,7 @@ from helper import TestHelper,\
     generate_track_info, \
     capture_log
 
+from beets import config
 from beets.library import Item
 
 
@@ -69,6 +70,9 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(album.album, 'album info')
 
     def test_message_when_skipping(self):
+        config['list_format_item'] = '$artist - $album - $title'
+        config['list_format_album'] = '$albumartist - $album'
+
         # Test album with no mb_albumid.
         # The default format for an album include $albumartist so
         # set that here, too.
