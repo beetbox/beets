@@ -114,7 +114,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     func_def = ast.FunctionDef(
         name.encode('utf8'),
         ast.arguments(
-            [ast.Name(n.encode('utf8'), ast.Param()) for n in arg_names],
+            [ast.Name(n, ast.Param()) for n in arg_names],
             None, None,
             [ex_literal(None) for _ in arg_names],
         ),
@@ -124,7 +124,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     mod = ast.Module([func_def])
     ast.fix_missing_locations(mod)
 
-    prog = compile(mod, '<generated>', 'exec')
+    prog = compile(mod, b'<generated>', b'exec')
 
     # Debug: show bytecode.
     if debug:

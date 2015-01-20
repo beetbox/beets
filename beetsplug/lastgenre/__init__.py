@@ -125,7 +125,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             wl_filename = WHITELIST
         if wl_filename:
             wl_filename = normpath(wl_filename)
-            with open(wl_filename, 'r') as f:
+            with open(wl_filename, b'r') as f:
                 for line in f:
                     line = line.decode('utf8').strip().lower()
                     if line and not line.startswith(u'#'):

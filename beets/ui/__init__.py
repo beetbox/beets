@@ -635,8 +635,8 @@ class Subcommand(object):
     @root_parser.setter
     def root_parser(self, root_parser):
         self._root_parser = root_parser
-        self.parser.prog = '{0} {1}'.format(root_parser.get_prog_name(),
-                                            self.name)
+        self.parser.prog = '{0} {1}'.format(
+            root_parser.get_prog_name().decode('utf8'), self.name)
 
 
 class SubcommandsOptionParser(optparse.OptionParser):

@@ -1045,7 +1045,7 @@ class MediaField(object):
                          getting this property.
 
         """
-        self.out_type = kwargs.get('out_type', unicode)
+        self.out_type = kwargs.get(b'out_type', unicode)
         self._styles = styles
 
     def styles(self, mutagen_file):
@@ -1109,7 +1109,7 @@ class ListMediaField(MediaField):
         """Returns a ``MediaField`` descriptor that gets and sets the
         first item.
         """
-        options = {'out_type': self.out_type}
+        options = {b'out_type': self.out_type}
         return MediaField(*self._styles, **options)
 
 
@@ -1130,7 +1130,7 @@ class DateField(MediaField):
         storage styles do not return a value.
         """
         super(DateField, self).__init__(*date_styles)
-        year_style = kwargs.get('year', None)
+        year_style = kwargs.get(b'year', None)
         if year_style:
             self._year_field = MediaField(*year_style)
 
