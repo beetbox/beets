@@ -13,7 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Some common functionality for beets' test cases."""
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import time
 import sys
@@ -237,7 +238,7 @@ class DummyOut(object):
         self.buf.append(s)
 
     def get(self):
-        return ''.join(self.buf)
+        return b''.join(self.buf)
 
     def clear(self):
         self.buf = []
@@ -252,7 +253,7 @@ class DummyIn(object):
         self.out = out
 
     def add(self, s):
-        self.buf.append(s + '\n')
+        self.buf.append(s + b'\n')
 
     def readline(self):
         if not self.buf:
