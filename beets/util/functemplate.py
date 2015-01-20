@@ -124,11 +124,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     mod = ast.Module([func_def])
     ast.fix_missing_locations(mod)
 
-    try:
-        prog = compile(mod, '<generated>', 'exec')
-    except:
-        print(ast.dump(mod))
-        raise
+    prog = compile(mod, '<generated>', 'exec')
 
     # Debug: show bytecode.
     if debug:
