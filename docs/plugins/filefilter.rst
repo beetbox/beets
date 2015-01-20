@@ -10,7 +10,7 @@ To use the ``filefilter`` plugin, enable it in your configuration (see
 Configuration
 -------------
 
-To configure the plugin, make an ``filefilter:`` section in your
+To configure the plugin, make a ``filefilter:`` section in your
 configuration file. The available options are:
 
 - **path**: A regular expression to filter files based on its path and name.
