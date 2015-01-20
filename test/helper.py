@@ -23,14 +23,14 @@ information or mock the environment.
 - The `generate_album_info` and `generate_track_info` functions return
   fixtures to be used when mocking the autotagger.
 
-from __future__ import division, absolute_import, print_function
-
 - The `TestImportSession` allows one to run importer code while
   controlling the interactions through code.
 
 - The `TestHelper` class encapsulates various fixtures that can be set up.
 """
 
+
+from __future__ import division, absolute_import, print_function
 
 import sys
 import os
