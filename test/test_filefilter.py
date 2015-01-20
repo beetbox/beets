@@ -1,4 +1,19 @@
-"""Tests for the 'regexfilefilter' plugin"""
+# This file is part of beets.
+# Copyright 2015, Malte Ried.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Tests for the `filefilter` plugin.
+"""
 import os
 import shutil
 
@@ -6,13 +21,13 @@ from _common import unittest
 from beets import config
 from beets.mediafile import MediaFile
 from beets.util import displayable_path
-from beetsplug.regexfilefilter import RegexFileFilterPlugin
+from beetsplug.filefilter import FileFilterPlugin
 from test import _common
 from test.helper import capture_log
 from test.test_importer import ImportHelper
 
 
-class RegexFileFilterPluginTest(unittest.TestCase, ImportHelper):
+class FileFilterPluginTest(unittest.TestCase, ImportHelper):
     def setUp(self):
         self.setup_beets()
         self.__create_import_dir(2)
@@ -80,7 +95,7 @@ class RegexFileFilterPluginTest(unittest.TestCase, ImportHelper):
             self.misc_paths.append(dest_path)
 
     def __run(self, expected_lines, singletons=False):
-        self.load_plugins('regexfilefilter')
+        self.load_plugins('filefilter')
 
         import_files = [self.import_dir]
         self._setup_import_session(singletons=singletons)
@@ -89,14 +104,14 @@ class RegexFileFilterPluginTest(unittest.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
         self.unload_plugins()
-        RegexFileFilterPlugin.listeners = None
+        FileFilterPlugin.listeners = None
 
         logs = [line for line in logs if not line.startswith('Sending event:')]
 
         self.assertEqual(logs, expected_lines)
 
     def __reset_config(self):
-        config['regexfilefilter'] = {}
+        config['filefilter'] = {}
 
     def test_import_default(self):
         """ The default configuration should import everything.
@@ -116,13 +131,13 @@ class RegexFileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     def test_import_nothing(self):
         self.__reset_config()
-        config['regexfilefilter']['path'] = 'not_there'
+        config['filefilter']['path'] = 'not_there'
         self.__run(['No files imported from %s' % self.import_dir])
 
     # Global options
     def test_import_global(self):
         self.__reset_config()
-        config['regexfilefilter']['path'] = '.*track_1.*\.mp3'
+        config['filefilter']['path'] = '.*track_1.*\.mp3'
         self.__run([
             'Album %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
@@ -137,7 +152,7 @@ class RegexFileFilterPluginTest(unittest.TestCase, ImportHelper):
     # Album options
     def test_import_album(self):
         self.__reset_config()
-        config['regexfilefilter']['album_path'] = '.*track_1.*\.mp3'
+        config['filefilter']['album_path'] = '.*track_1.*\.mp3'
         self.__run([
             'Album %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
@@ -156,7 +171,7 @@ class RegexFileFilterPluginTest(unittest.TestCase, ImportHelper):
     # Singleton options
     def test_import_singleton(self):
         self.__reset_config()
-        config['regexfilefilter']['singleton_path'] = '.*track_1.*\.mp3'
+        config['filefilter']['singleton_path'] = '.*track_1.*\.mp3'
         self.__run([
             'Singleton: %s' % displayable_path(self.artist_paths[0]),
             'Singleton: %s' % displayable_path(self.misc_paths[0])
@@ -176,8 +191,8 @@ class RegexFileFilterPluginTest(unittest.TestCase, ImportHelper):
     # Album and singleton options
     def test_import_both(self):
         self.__reset_config()
-        config['regexfilefilter']['album_path'] = '.*track_1.*\.mp3'
-        config['regexfilefilter']['singleton_path'] = '.*track_2.*\.mp3'
+        config['filefilter']['album_path'] = '.*track_1.*\.mp3'
+        config['filefilter']['singleton_path'] = '.*track_2.*\.mp3'
         self.__run([
             'Album %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),

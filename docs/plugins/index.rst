@@ -63,7 +63,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    play
    plexupdate
    random
-   regexfilefilter
+   filefilter
    replaygain
    rewrite
    scrub
@@ -152,7 +152,8 @@ Miscellaneous
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`missing`: List missing tracks.
 * :doc:`random`: Randomly choose albums and tracks from your library.
-* :doc:`regexfilefilter`: Automatically skip files during the import process based on regular expressions.
+* :doc:`filefilter`: Automatically skip files during the import process based
+  on regular expressions.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.

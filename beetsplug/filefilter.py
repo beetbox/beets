@@ -20,9 +20,9 @@ from beets.plugins import BeetsPlugin
 from beets.importer import action, SingletonImportTask
 
 
-class RegexFileFilterPlugin(BeetsPlugin):
+class FileFilterPlugin(BeetsPlugin):
     def __init__(self):
-        super(RegexFileFilterPlugin, self).__init__()
+        super(FileFilterPlugin, self).__init__()
         self.register_listener('import_task_created',
                                self.import_task_created_event)
         self.config.add({

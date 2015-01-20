@@ -1,5 +1,5 @@
-RegexFileFilter Plugin
-======================
+FileFilter Plugin
+=================
 
 The ``regexfilefilter`` plugin allows you to skip files during import using
 regular expressions.
