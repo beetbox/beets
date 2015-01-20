@@ -373,7 +373,7 @@ class Item(LibModel):
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
 
-    _media_fields = set(MediaFile.readable_fields()) \
+    _media_fields = set(f.decode('utf8') for f in MediaFile.readable_fields()) \
         .intersection(_fields.keys())
     """Set of item fields that are backed by `MediaFile` fields.
 
@@ -1155,7 +1155,7 @@ class DefaultTemplateFunctions(object):
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
-    _prefix = 'tmpl_'
+    _prefix = b'tmpl_'
 
     def __init__(self, item=None, lib=None):
         """Paramaterize the functions. If `item` or `lib` is None, then

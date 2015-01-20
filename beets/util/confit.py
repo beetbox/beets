@@ -423,7 +423,7 @@ class Subview(ConfigView):
         if isinstance(self.key, int):
             self.name += '#{0}'.format(self.key)
         elif isinstance(self.key, BASESTRING):
-            self.name += '{0}'.format(self.key)
+            self.name += '{0}'.format(self.key.decode('utf8'))
         else:
             self.name += '{0}'.format(repr(self.key))
 
@@ -469,7 +469,7 @@ def _package_path(name):
     if loader is None or name == b'__main__':
         return None
 
-    if hasattr(loader, 'get_filename'):
+    if hasattr(loader, b'get_filename'):
         filepath = loader.get_filename(name)
     else:
         # Fall back to importing the specified module.
@@ -489,13 +489,13 @@ def config_dirs():
     """
     paths = []
 
-    if platform.system() == 'Darwin':
+    if platform.system() == b'Darwin':
         paths.append(MAC_DIR)
         paths.append(UNIX_DIR_FALLBACK)
         if UNIX_DIR_VAR in os.environ:
             paths.append(os.environ[UNIX_DIR_VAR])
 
-    elif platform.system() == 'Windows':
+    elif platform.system() == b'Windows':
         paths.append(WINDOWS_DIR_FALLBACK)
         if WINDOWS_DIR_VAR in os.environ:
             paths.append(os.environ[WINDOWS_DIR_VAR])
@@ -578,7 +578,7 @@ def load_yaml(filename):
     parsed, a ConfigReadError is raised.
     """
     try:
-        with open(filename, 'r') as f:
+        with open(filename, b'r') as f:
             return yaml.load(f, Loader=Loader)
     except (IOError, yaml.error.YAMLError) as exc:
         raise ConfigReadError(filename, exc)

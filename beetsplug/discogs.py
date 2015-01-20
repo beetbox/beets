@@ -35,7 +35,7 @@ import json
 urllib3_logger = logging.getLogger('requests.packages.urllib3')
 urllib3_logger.setLevel(logging.CRITICAL)
 
-USER_AGENT = 'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
+USER_AGENT = u'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
 
 
 class DiscogsPlugin(BeetsPlugin):

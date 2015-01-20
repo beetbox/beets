@@ -398,8 +398,9 @@ class StorageStyle(object):
         self.float_places = float_places
 
         # Convert suffix to correct string type.
-        if self.suffix and self.as_type is unicode:
-            self.suffix = self.as_type(self.suffix)
+        if self.suffix and self.as_type is unicode \
+           and not isinstance(self.suffix, unicode):
+            self.suffix = self.suffix.decode('utf8')
 
     # Getter.
 
