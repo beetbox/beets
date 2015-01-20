@@ -53,5 +53,5 @@ def main(argv=None):
             with safe_open_w(fn) as f:
                 f.write(html.encode('utf8'))
 
-if __name__ == "__main__":
+if __name__ == b'__main__':
     sys.exit(main())

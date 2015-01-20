@@ -299,5 +299,5 @@ def publish():
     subprocess.check_call(['twine', 'upload', path])
 
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     release()

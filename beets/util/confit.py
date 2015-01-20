@@ -466,7 +466,7 @@ def _package_path(name):
     ``name == "__main__"``).
     """
     loader = pkgutil.get_loader(name)
-    if loader is None or name == '__main__':
+    if loader is None or name == b'__main__':
         return None
 
     if hasattr(loader, 'get_filename'):

@@ -557,7 +557,7 @@ class Template(object):
 
 # Performance tests.
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     import timeit
     _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
     _vars = {'bar': 'qux'}

@@ -459,7 +459,7 @@ class Pipeline(object):
                 yield msg
 
 # Smoke test.
-if __name__ == '__main__':
+if __name__ == b'__main__':
     import time
 
     # Test a normally-terminating pipeline both in sequence and
