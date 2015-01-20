@@ -14,7 +14,8 @@
 
 """Determine BPM by pressing a key to the rhythm."""
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import time
 

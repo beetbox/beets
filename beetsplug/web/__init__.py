@@ -13,7 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """A Web interface to beets."""
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -89,7 +90,7 @@ def resource(name):
                 )
             else:
                 return flask.abort(404)
-        responder.__name__ = 'get_%s' % name
+        responder.__name__ = b'get_%s' % name.encode('utf8')
         return responder
     return make_responder
 
@@ -103,7 +104,7 @@ def resource_query(name):
                 json_generator(query_func(queries), root='results'),
                 mimetype='application/json'
             )
-        responder.__name__ = 'query_%s' % name
+        responder.__name__ = b'query_%s' % name.encode('utf8')
         return responder
     return make_responder
 
@@ -118,7 +119,7 @@ def resource_list(name):
                 json_generator(list_all(), root=name),
                 mimetype='application/json'
             )
-        responder.__name__ = 'all_%s' % name
+        responder.__name__ = b'all_%s' % name.encode('utf8')
         return responder
     return make_responder
 

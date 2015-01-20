@@ -14,7 +14,8 @@
 
 """List missing tracks.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from beets.autotag import hooks
 from beets.library import Item

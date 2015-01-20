@@ -12,7 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import subprocess
 import os
@@ -197,9 +198,9 @@ class CommandBackend(Backend):
         containing information about each analyzed file.
         """
         out = []
-        for line in text.split('\n')[1:num_lines + 1]:
-            parts = line.split('\t')
-            if len(parts) != 6 or parts[0] == 'File':
+        for line in text.split(b'\n')[1:num_lines + 1]:
+            parts = line.split(b'\t')
+            if len(parts) != 6 or parts[0] == b'File':
                 self._log.debug(u'bad tool output: {0}', text)
                 raise ReplayGainError('mp3gain failed')
             d = {

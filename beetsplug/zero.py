@@ -14,7 +14,8 @@
 
 """ Clears tag fields in media files."""
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import re
 from beets.plugins import BeetsPlugin

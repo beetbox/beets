@@ -14,7 +14,8 @@
 
 """Converts tracks or albums to external directory
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import threading
@@ -45,7 +46,7 @@ def replace_ext(path, ext):
 
     The new extension must not contain a leading dot.
     """
-    return os.path.splitext(path)[0] + '.' + ext
+    return os.path.splitext(path)[0] + b'.' + ext
 
 
 def get_format(format=None):
@@ -177,8 +178,8 @@ class ConvertPlugin(BeetsPlugin):
         args = shlex.split(command)
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
-                'source': source,
-                'dest': dest,
+                'source': source.decode('utf8'),
+                'dest': dest.decode('utf8'),
             })
 
         if pretend:

@@ -14,7 +14,8 @@
 
 """Fetch a variety of acoustic metrics from The Echo Nest.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import time
 import socket

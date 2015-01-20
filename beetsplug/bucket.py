@@ -15,7 +15,8 @@
 """Provides the %bucket{} function for path formatting.
 """
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from datetime import datetime
 import re
