@@ -12,7 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import time
 from datetime import datetime
@@ -47,7 +48,7 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
         # Match in range
         out = self.list('myint:1..3')
-        self.assertIn('aaa', out)
+        self.assertIn(b'aaa', out)
 
     def test_album_integer_modify_and_query(self):
         self.config['types'] = {'myint': 'int'}
@@ -63,7 +64,7 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
         # Match in range
         out = self.list_album('myint:1..3')
-        self.assertIn('aaa', out)
+        self.assertIn(b'aaa', out)
 
     def test_float_modify_and_query(self):
         self.config['types'] = {'myfloat': 'float'}
@@ -75,7 +76,7 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
         # Match in range
         out = self.list('myfloat:-10..0')
-        self.assertIn('aaa', out)
+        self.assertIn(b'aaa', out)
 
     def test_bool_modify_and_query(self):
         self.config['types'] = {'mybool': 'bool'}

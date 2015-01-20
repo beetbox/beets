@@ -14,7 +14,8 @@
 
 """Various tests for querying the library database.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from test import _common
 from test._common import unittest

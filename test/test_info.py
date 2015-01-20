@@ -12,7 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from test._common import unittest
 from test.helper import TestHelper
@@ -59,7 +60,7 @@ class InfoTest(unittest.TestCase, TestHelper):
 
         out = self.run_with_output('album:yyyy')
         self.assertIn(items[0].path, out)
-        self.assertIn('album: xxxx', out)
+        self.assertIn(b'album: xxxx', out)
 
         self.assertNotIn(items[1].path, out)
 
@@ -70,7 +71,7 @@ class InfoTest(unittest.TestCase, TestHelper):
 
         out = self.run_with_output('--library', 'album:xxxx')
         self.assertIn(item.path, out)
-        self.assertIn('album: xxxx', out)
+        self.assertIn(b'album: xxxx', out)
 
     def test_collect_item_and_path(self):
         path = self.create_mediafile_fixture()

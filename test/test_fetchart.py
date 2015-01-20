@@ -12,7 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 from test._common import unittest
@@ -24,7 +25,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
         self.load_plugins('fetchart')
-        self.config['fetchart']['cover_names'] = 'c\xc3\xb6ver.jpg'
+        self.config['fetchart']['cover_names'] = b'c\xc3\xb6ver.jpg'
         self.config['art_filename'] = 'mycover'
         self.album = self.add_album()
 
@@ -33,10 +34,10 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def test_set_art_from_folder(self):
-        self.touch('c\xc3\xb6ver.jpg', dir=self.album.path, content='IMAGE')
+        self.touch(b'c\xc3\xb6ver.jpg', dir=self.album.path, content='IMAGE')
 
         self.run_command('fetchart')
-        cover_path = os.path.join(self.album.path, 'mycover.jpg')
+        cover_path = os.path.join(self.album.path, b'mycover.jpg')
 
         self.album.load()
         self.assertEqual(self.album['artpath'], cover_path)
@@ -44,7 +45,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
             self.assertEqual(f.read(), 'IMAGE')
 
     def test_filesystem_does_not_pick_up_folder(self):
-        os.makedirs(os.path.join(self.album.path, 'mycover.jpg'))
+        os.makedirs(os.path.join(self.album.path, b'mycover.jpg'))
         self.run_command('fetchart')
         self.album.load()
         self.assertEqual(self.album['artpath'], None)

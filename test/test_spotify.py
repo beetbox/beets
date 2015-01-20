@@ -1,6 +1,7 @@
 """Tests for the 'spotify' plugin"""
 
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from test import _common
 import responses

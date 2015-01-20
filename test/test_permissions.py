@@ -1,6 +1,7 @@
 """Tests for the 'permissions' plugin.
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from test._common import unittest
 from test.helper import TestHelper

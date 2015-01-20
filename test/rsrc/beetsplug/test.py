@@ -1,4 +1,5 @@
-from __future__ import division, absolute_import, print_function
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from beets.plugins import BeetsPlugin
 from beets import ui
