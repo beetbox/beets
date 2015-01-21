@@ -60,7 +60,7 @@ class LogCapture(logging.Handler):
         self.messages = []
 
     def emit(self, record):
-        self.messages.append(str(record.msg))
+        self.messages.append(unicode(record.msg))
 
 
 @contextmanager
