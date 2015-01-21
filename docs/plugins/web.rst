@@ -16,18 +16,17 @@ Install
 -------
 
 The Web interface depends on `Flask`_. To get it, just run ``pip install
-flask``.
+flask``. Then enable the ``web`` plugin in your configuration (see
+:ref:`using-plugins`).
 
 .. _Flask: http://flask.pocoo.org/
 
-If you require `CORS`_ (Cross-origin resource sharing), then you also
-need `flask-cors`_. This can be installed by running ``pip install flask-cors``.
+If you need CORS (it's disabled by default---see :ref:`web-cors`, below), then
+you also need `flask-cors`_. Just type ``pip install flask-cors``.
 
 .. _flask-cors: https://github.com/CoryDolphin/flask-cors
 .. _CORS: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
 
-Finally, enable the ``web`` plugin in your configuration
-(see :ref:`using-plugins`).
 
 Run the Server
 --------------
@@ -97,8 +96,9 @@ server as the API. (You will get an arcane error about ``XMLHttpRequest``
 otherwise.) A technology called `CORS`_ lets you relax this restriction.
 
 If you want to use an in-browser client hosted elsewhere (or running from
-a different server on your machine), set the ``cors`` configuration option to
-the "origin" (protocol, host, and optional port number) where the client is
+a different server on your machine), first install the `flask-cors`_ plugin by
+typing ``pip install flask-cors``. Then set the ``cors`` configuration option
+to the "origin" (protocol, host, and optional port number) where the client is
 served. Or set it to ``'*'`` to enable access from all origins. Note that
 there are security implications if you set the origin to ``'*'``, so please
 research this before using it.
