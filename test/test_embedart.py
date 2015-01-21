@@ -17,7 +17,7 @@ from mock import Mock, patch
 
 import _common
 from _common import unittest
-from helper import TestHelper, capture_log
+from helper import TestHelper
 
 from beets.mediafile import MediaFile
 from beets import config, logging, ui
