@@ -20,7 +20,7 @@ from _common import unittest
 from helper import TestHelper, capture_log
 
 from beets.mediafile import MediaFile
-from beets import config, logging
+from beets import config, logging, ui
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug.embedart import EmbedCoverArtPlugin
@@ -80,9 +80,8 @@ class EmbedartCliTest(unittest.TestCase, TestHelper):
     def test_art_file_missing(self):
         self.add_album_fixture()
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
-        with capture_log('beets.embedart') as logs:
+        with self.assertRaises(ui.UserError):
             self.run_command('embedart', '-f', '/doesnotexist')
-        self.assertIn(u'could not read image file:', ''.join(logs))
 
     @require_artresizer_compare
     def test_reject_different_art(self):
