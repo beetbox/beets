@@ -69,6 +69,9 @@ You will also need a mechanism for decoding audio files supported by the
   For example, on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch
   Linux, you want ``pacman -S gstreamer0.10-python``. If you use GStreamer, be
   sure to install its codec plugins also.
+  
+  Note that if you install beets in a virtualenv, you'll need it to have
+  ``--system-site-packages`` enabled for python to see the gstreamer bindings.
 
 * On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
