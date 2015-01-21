@@ -31,6 +31,34 @@ import sys
 PY26 = sys.version_info[:2] == (2, 6)
 
 
+def as_unicode(val):
+    """Coerce a value to Unicode for displaying in a log message.
+
+    This works around a number of pitfalls when logging objects in
+    Python 2:
+    - Logging path names, which must be byte strings, requires
+      conversion for output.
+    - Some objects, including some exceptions, will crash when you call
+      `unicode(v)` while `str(v)` works fine. CalledProcessError is an
+      example.
+    """
+    if isinstance(val, unicode):
+        return val
+    elif isinstance(val, bytes):
+        # Blindly convert with UTF-8. Eventually, it would be nice to
+        # (a) only do this for paths, if they can be given a distinct
+        # type, and (b) warn the developer if they do this for other
+        # bytestrings.
+        return val.decode('utf8', 'replace')
+    else:
+        try:
+            return unicode(val)
+        except UnicodeDecodeError:
+            # An object with a broken __unicode__ formatter. Use __str__
+            # instead.
+            return str(val).decode('utf8', 'replace')
+
+
 class StrFormatLogger(Logger):
     """A version of `Logger` that uses `str.format`-style formatting
     instead of %-style formatting.
@@ -43,7 +71,9 @@ class StrFormatLogger(Logger):
             self.kwargs = kwargs
 
         def __str__(self):
-            return self.msg.format(*self.args, **self.kwargs)
+            args = [as_unicode(a) for a in self.args]
+            kwargs = dict((k, as_unicode(v)) for (k, v) in self.kwargs.items())
+            return self.msg.format(*args, **kwargs)
 
     def _log(self, level, msg, args, exc_info=None, extra=None, **kwargs):
         """Log msg.format(*args, **kwargs)"""
