@@ -277,7 +277,7 @@ class WebPlugin(BeetsPlugin):
             app.config['lib'] = lib
             # Enable CORS if required.
             if self.config['cors']:
-                print "Enabling cors"
+                self._log.debug("Enabling cors")
                 from flask.ext.cors import CORS
                 app.config['CORS_ALLOW_HEADERS'] = "Content-Type"
                 app.config['CORS_RESOURCES'] = {
