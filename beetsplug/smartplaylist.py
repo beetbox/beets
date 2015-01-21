@@ -102,5 +102,5 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 m3u_path = normpath(os.path.join(playlist_dir, m3u))
                 with open(syspath(m3u_path), 'w') as f:
                     for path in m3us[m3u]:
-                        f.write(path + '\n')
+                        f.write(path + b'\n')
         self._log.info("{0} playlists updated", len(playlists))
