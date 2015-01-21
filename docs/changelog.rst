@@ -6,17 +6,26 @@ Changelog
 
 Features:
 
+* A new :doc:`/plugins/filefilter` lets you write regular expressions to
+  automatically avoid importing certain files. Thanks to :user:`mried`.
+  :bug:`1186`
 * Stop on invalid queries instead of ignoring the invalid part.
 * A new :ref:`searchlimit` configuration option allows you to specify how many
   search results you wish to see when looking up releases at MusicBrainz
   during import. :bug:`1245`
+* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* as well as
+  a longer list of classical music genre tags to the built-in whitelist and
+  canonicalization tree. :bug:`1206` :bug:`1239` :bug:`1240`
+* :doc:`/plugins/web`: Add support for *cross-origin resource sharing* for
+  more flexible in-browser clients. Thanks to Andre Miller. :bug:`1236`
+  :bug:`1237`
+* :doc:`plugins/mbsync`: Add ``-f/--format`` option for controlling
+  the output format for unrecognized items.
 
 Fixes:
 
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
-* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* to the
-  built-in whitelist/canonicalization tree. :bug:`1206`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
   :bug:`1207`
 * :doc:`/plugins/fetchart`: Do not attempt to import directories as album art.
@@ -30,10 +39,10 @@ Fixes:
 * Remove the ``beatport`` plugin. `Beatport`_ has shut off public access to
   their API and denied our request for an account. We have not heard from the
   company since 2013, so we are assuming access will not be restored.
-* :doc:`/plugins/lastgenre`: Add classical music to the built-in whitelist and
-  canonicalization tree. :bug:`1239` :bug:`1240`
 * Incremental imports now (once again) show a "skipped N directories" message.
 * :doc:`/plugins/embedart`: Handle errors in ImageMagick's output. :bug:`1241`
+* :doc:`/plugins/keyfinder`: Parse the underlying tool's output more robustly.
+  :bug:`1248`
 
 For developers:
 

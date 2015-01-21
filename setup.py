@@ -77,7 +77,7 @@ setup(
 
     install_requires=[
         'enum34',
-        'mutagen>=1.23',
+        'mutagen>=1.27',
         'munkres',
         'unidecode',
         'musicbrainzngs>=0.4',
@@ -104,7 +104,7 @@ setup(
         'echonest': ['pyechonest'],
         'lastgenre': ['pylast'],
         'mpdstats': ['python-mpd'],
-        'web': ['flask'],
+        'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
     },
     # Non-Python/non-PyPI plugin dependencies:

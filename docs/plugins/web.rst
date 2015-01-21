@@ -20,6 +20,12 @@ flask``.
 
 .. _Flask: http://flask.pocoo.org/
 
+If you require `CORS`_ (Cross-origin resource sharing), then you also
+need `flask-cors`_. This can be installed by running ``pip install flask-cors``.
+
+.. _flask-cors: https://github.com/CoryDolphin/flask-cors
+.. _CORS: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+
 Finally, enable the ``web`` plugin in your configuration
 (see :ref:`using-plugins`).
 
@@ -52,10 +58,12 @@ Configuration
 To configure the plugin, make a ``web:`` section in your
 configuration file. The available options are:
 
-- **host**: The server hostname.
-  Default: Bind to all interfaces.
+- **host**: The server hostname. Set this to 0.0.0.0 to bind to all interfaces.
+  Default: Bind to 127.0.0.1.
 - **port**: The server port.
   Default: 8337.
+- **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
+  Default: CORS is disabled.
 
 Implementation
 --------------
@@ -77,6 +85,30 @@ for unsupported formats/browsers. There are a number of options for this:
 .. _audio.js: http://kolber.github.com/audiojs/
 .. _html5media: http://html5media.info/
 .. _MediaElement.js: http://mediaelementjs.com/
+
+.. _web-cors:
+
+Cross-Origin Resource Sharing (CORS)
+------------------------------------
+
+The ``web`` plugin's API can be used as a backend for an in-browser client. By
+default, browsers will only allow access from clients running on the same
+server as the API. (You will get an arcane error about ``XMLHttpRequest``
+otherwise.) A technology called `CORS`_ lets you relax this restriction.
+
+If you want to use an in-browser client hosted elsewhere (or running from
+a different server on your machine), set the ``cors`` configuration option to
+the "origin" (protocol, host, and optional port number) where the client is
+served. Or set it to ``'*'`` to enable access from all origins. Note that
+there are security implications if you set the origin to ``'*'``, so please
+research this before using it.
+
+For example::
+
+    web:
+        host: 0.0.0.0
+        cors: 'http://example.com'
+
 
 JSON API
 --------
