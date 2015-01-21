@@ -68,6 +68,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         def embed_func(lib, opts, args):
             if opts.file:
                 imagepath = normpath(opts.file)
+                if not os.path.isfile(syspath(imagepath)):
+                    raise ui.UserError(u'image file {0} not found'.format(
+                        displayable_path(imagepath)
+                    ))
                 for item in lib.items(decargs(args)):
                     self.embed_item(item, imagepath, maxwidth, None,
                                     compare_threshold, ifempty)

@@ -44,6 +44,8 @@ Fixes:
 * :doc:`/plugins/embedart`: Handle errors in ImageMagick's output. :bug:`1241`
 * :doc:`/plugins/keyfinder`: Parse the underlying tool's output more robustly.
   :bug:`1248`
+* :doc:`/plugins/embedart`: We now show a comprehensible error message when
+  ``beet embedart -f FILE`` is given a non-existent path. :bug:`1252`
 
 For developers:
 
