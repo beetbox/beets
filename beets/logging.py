@@ -24,6 +24,7 @@ from __future__ import absolute_import
 from copy import copy
 from logging import *  # noqa
 import sys
+import subprocess
 
 
 # We need special hacks for Python 2.6 due to logging.Logger being an
@@ -31,8 +32,9 @@ import sys
 PY26 = sys.version_info[:2] == (2, 6)
 
 
-def as_unicode(val):
-    """Coerce a value to Unicode for displaying in a log message.
+def logsafe(val):
+    """Coerce a potentially "problematic" value so it can be formatted
+    in a Unicode log string.
 
     This works around a number of pitfalls when logging objects in
     Python 2:
@@ -42,21 +44,31 @@ def as_unicode(val):
       `unicode(v)` while `str(v)` works fine. CalledProcessError is an
       example.
     """
+    # Already Unicode.
     if isinstance(val, unicode):
         return val
+
+    # Bytestring: needs decoding.
     elif isinstance(val, bytes):
         # Blindly convert with UTF-8. Eventually, it would be nice to
         # (a) only do this for paths, if they can be given a distinct
         # type, and (b) warn the developer if they do this for other
         # bytestrings.
         return val.decode('utf8', 'replace')
-    else:
+
+    # A "problem" object: needs a workaround.
+    elif isinstance(val, subprocess.CalledProcessError):
         try:
             return unicode(val)
         except UnicodeDecodeError:
             # An object with a broken __unicode__ formatter. Use __str__
             # instead.
             return str(val).decode('utf8', 'replace')
+
+    # Other objects are used as-is so field access, etc., still works in
+    # the format string.
+    else:
+        return val
 
 
 class StrFormatLogger(Logger):
@@ -71,8 +83,8 @@ class StrFormatLogger(Logger):
             self.kwargs = kwargs
 
         def __str__(self):
-            args = [as_unicode(a) for a in self.args]
-            kwargs = dict((k, as_unicode(v)) for (k, v) in self.kwargs.items())
+            args = [logsafe(a) for a in self.args]
+            kwargs = dict((k, logsafe(v)) for (k, v) in self.kwargs.items())
             return self.msg.format(*args, **kwargs)
 
     def _log(self, level, msg, args, exc_info=None, extra=None, **kwargs):
