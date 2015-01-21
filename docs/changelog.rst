@@ -19,6 +19,8 @@ Features:
 * :doc:`/plugins/web`: Add support for *cross-origin resource sharing* for
   more flexible in-browser clients. Thanks to Andre Miller. :bug:`1236`
   :bug:`1237`
+* :doc:`plugins/mbsync`: Add ``-f/--format`` option for controlling
+  the output format for unrecognized items.
 
 Fixes:
 
