@@ -88,7 +88,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                       help='image output file')
 
         def extract_func(lib, opts, args):
-            outpath = normpath(opts.outpath or 'cover')
+            outpath = normpath(opts.outpath or (config['art_filename'].get()
+                                                or 'cover'))
             item = lib.items(decargs(args)).get()
             self.extract(outpath, item)
         extract_cmd.func = extract_func
