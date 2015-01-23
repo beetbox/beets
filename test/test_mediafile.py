@@ -730,6 +730,10 @@ class MP3Test(ReadWriteTestBase, PartialTestMixin,
         'channels': 1,
     }
 
+    def test_unknown_apic_type(self):
+        mediafile = self._mediafile_fixture('image_unknown_type')
+        self.assertEqual(mediafile.images[0].type, ImageType.other)
+
 
 class MP4Test(ReadWriteTestBase, PartialTestMixin,
               ImageStructureTestMixin, unittest.TestCase):
