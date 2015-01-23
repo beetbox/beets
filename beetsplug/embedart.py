@@ -19,7 +19,6 @@ import subprocess
 import platform
 from tempfile import NamedTemporaryFile
 
-from beets import logging
 from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
@@ -27,6 +26,12 @@ from beets.ui import decargs
 from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import config
+from beets.util.functemplate import Template
+
+__item_template = Template(ui._pick_format(False))
+fmt_item = lambda item: item.evaluate_template(__item_template)
+__album_template = Template(ui._pick_format(True))
+fmt_album = lambda item: item.evaluate_template(__album_template)
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
@@ -43,13 +48,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
             self.config['maxwidth'] = 0
-            self._log.warn(u"ImageMagick or PIL not found; "
-                           u"'maxwidth' option ignored")
+            self._log.warning(u"ImageMagick or PIL not found; "
+                              u"'maxwidth' option ignored")
         if self.config['compare_threshold'].get(int) and not \
                 ArtResizer.shared.can_compare:
             self.config['compare_threshold'] = 0
-            self._log.warn(u"ImageMagick 6.8.7 or higher not installed; "
-                           u"'compare_threshold' option ignored")
+            self._log.warning(u"ImageMagick 6.8.7 or higher not installed; "
+                              u"'compare_threshold' option ignored")
 
         self.register_listener('album_imported', self.album_imported)
 
@@ -90,7 +95,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         def extract_func(lib, opts, args):
             outpath = normpath(opts.outpath or 'cover')
             item = lib.items(decargs(args)).get()
-            self.extract(outpath, item)
+            if item:
+                self.extract(outpath, item)
         extract_cmd.func = extract_func
 
         # Clear command.
@@ -117,15 +123,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         if compare_threshold:
             if not self.check_art_similarity(item, imagepath,
                                              compare_threshold):
-                self._log.warn(u'Image not similar; skipping.')
+                self._log.debug(u'Image not similar; skipping.')
                 return
-        if ifempty:
-            art = self.get_art(item)
-            if not art:
-                pass
-            else:
-                self._log.debug(u'media file contained art already {0}',
-                                displayable_path(imagepath))
+        if ifempty and self.get_art(item):
+                self._log.debug(u'media file already contained art')
                 return
         if maxwidth and not as_album:
             imagepath = self.resize_image(imagepath, maxwidth)
@@ -134,7 +135,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             self._log.debug(u'embedding {0}', displayable_path(imagepath))
             item['images'] = [self._mediafile_image(imagepath, maxwidth)]
         except IOError as exc:
-            self._log.error(u'could not read image file: {0}', exc)
+            self._log.warning(u'could not read image file: {0}', exc)
         else:
             # We don't want to store the image in the database.
             item.try_write(itempath)
@@ -145,20 +146,16 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         imagepath = album.artpath
         if not imagepath:
-            self._log.info(u'No album art present: {0} - {1}',
-                           album.albumartist, album.album)
+            self._log.info(u'No album art present for {0}', fmt_album(album))
             return
         if not os.path.isfile(syspath(imagepath)):
-            self._log.error(u'Album art not found at {0}',
-                            displayable_path(imagepath))
+            self._log.info(u'Album art not found at {0} for {1}',
+                           displayable_path(imagepath), fmt_album(album))
             return
         if maxwidth:
             imagepath = self.resize_image(imagepath, maxwidth)
 
-        self._log.log(
-            logging.DEBUG if quiet else logging.INFO,
-            u'Embedding album art into {0.albumartist} - {0.album}.', album
-        )
+        self._log.info(u'Embedding album art into {0}', fmt_album(album))
 
         for item in album.items():
             thresh = self.config['compare_threshold'].get(int)
@@ -169,7 +166,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def resize_image(self, imagepath, maxwidth):
         """Returns path to an image resized to maxwidth.
         """
-        self._log.info(u'Resizing album art to {0} pixels wide', maxwidth)
+        self._log.debug(u'Resizing album art to {0} pixels wide', maxwidth)
         imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath))
         return imagepath
 
@@ -217,9 +214,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                     out_str)
                     return
 
-                self._log.info(u'compare PHASH score is {0}', phash_diff)
-                if phash_diff > compare_threshold:
-                    return False
+                self._log.debug(u'compare PHASH score is {0}', phash_diff)
+                return phash_diff <= compare_threshold
 
         return True
 
@@ -236,8 +232,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         try:
             mf = mediafile.MediaFile(syspath(item.path))
         except mediafile.UnreadableFileError as exc:
-            self._log.error(u'Could not extract art from {0}: {1}',
-                            displayable_path(item.path), exc)
+            self._log.warning(u'Could not extract art from {0}: {1}',
+                              displayable_path(item.path), exc)
             return
 
         return mf.art
@@ -245,41 +241,40 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     # 'extractart' command.
 
     def extract(self, outpath, item):
-        if not item:
-            self._log.error(u'No item matches query.')
-            return
-
         art = self.get_art(item)
 
         if not art:
-            self._log.error(u'No album art present in {0} - {1}.',
-                            item.artist, item.title)
+            self._log.info(u'No album art present in {0}, skipping.',
+                           fmt_item(item))
             return
 
         # Add an extension to the filename.
         ext = imghdr.what(None, h=art)
         if not ext:
-            self._log.error(u'Unknown image type.')
+            self._log.warning(u'Unknown image type in {0}.',
+                              displayable_path(item.path))
             return
         outpath += '.' + ext
 
-        self._log.info(u'Extracting album art from: {0.artist} - {0.title} '
-                       u'to: {1}', item, displayable_path(outpath))
+        self._log.info(u'Extracting album art from: {0} to: {1}',
+                       fmt_item(item), displayable_path(outpath))
         with open(syspath(outpath), 'wb') as f:
             f.write(art)
         return outpath
 
     # 'clearart' command.
     def clear(self, lib, query):
-        self._log.info(u'Clearing album art from items:')
-        for item in lib.items(query):
-            self._log.info(u'{0} - {1}', item.artist, item.title)
+        id3v23 = config['id3v23'].get(bool)
+
+        items = lib.items(query)
+        self._log.info(u'Clearing album art from {0} items', len(items))
+        for item in items:
+            self._log.debug(u'Clearing art for {0}', fmt_item(item))
             try:
-                mf = mediafile.MediaFile(syspath(item.path),
-                                         config['id3v23'].get(bool))
+                mf = mediafile.MediaFile(syspath(item.path), id3v23)
             except mediafile.UnreadableFileError as exc:
-                self._log.error(u'Could not clear art from {0}: {1}',
-                                displayable_path(item.path), exc)
-                continue
-            del mf.art
-            mf.save()
+                self._log.warning(u'Could not read file {0}: {1}',
+                                  displayable_path(item.path), exc)
+            else:
+                del mf.art
+                mf.save()
