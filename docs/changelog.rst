@@ -46,6 +46,8 @@ Fixes:
   :bug:`1248`
 * :doc:`/plugins/embedart`: We now show a comprehensible error message when
   ``beet embedart -f FILE`` is given a non-existent path. :bug:`1252`
+* Fix a crash when a file has an unrecognized image type tag. Thanks to
+  Matthias Kiefer. :bug:`1260`
 
 For developers:
 

@@ -329,7 +329,7 @@ class Image(object):
             try:
                 type = list(ImageType)[type]
             except IndexError:
-                log.warn("ignoring unknown image type index {}", type)
+                log.debug(u"ignoring unknown image type index {0}", type)
                 type = ImageType.other
         self.type = type
 
