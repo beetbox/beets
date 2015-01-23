@@ -326,7 +326,11 @@ class Image(object):
         self.data = data
         self.desc = desc
         if isinstance(type, int):
-            type = list(ImageType)[type]
+            try:
+                type = list(ImageType)[type]
+            except IndexError:
+                log.warn("ignoring unknown image type index {}", type)
+                type = ImageType.other
         self.type = type
 
     @property
