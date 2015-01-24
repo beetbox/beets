@@ -50,6 +50,9 @@ Fixes:
   ``beet embedart -f FILE`` is given a non-existent path. :bug:`1252`
 * Fix a crash when a file has an unrecognized image type tag. Thanks to
   Matthias Kiefer. :bug:`1260`
+* :doc:`/plugins/importfeeds` and :doc:`/plugins/smartplaylist`: Automatically
+  create parent directories for playlist files (instead of crashing when the
+  parent directory does not exist). :bug:`1266`
 
 For developers:
 
