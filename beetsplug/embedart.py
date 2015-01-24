@@ -87,25 +87,22 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         extract_cmd.parser.add_option('-o', dest='outpath',
                                       help='image output file')
         extract_cmd.parser.add_option('-a', dest='albums', action='store_true',
-                                      help='extract the art of all matching albums')
+                                      help='extract the art of all matching '
+                                           'albums')
 
         def extract_func(lib, opts, args):
+            outpath = opts.outpath or config['art_filename'].get()
             if opts.albums:
-                if opts.outpath and os.path.sep in normpath(opts.outpath):
-                    self._log.error(u"When using -a, only specify a filename instead"
-                                    u" of a full path for -o")
+                if opts.outpath and '/' in opts.outpath.replace('\\', '/'):
+                    self._log.error(u"When using -a, only specify a filename "
+                                    u"instead of a full path for -o")
                     return
                 for album in lib.albums(decargs(args)):
-                    outpath = normpath(os.path.join(album.path, opts.outpath
-                                                    or config['art_filename'].get()))
-                    for item in album.items():
-                        if self.extract(outpath, item):
-                            return
+                    artpath = normpath(os.path.join(album.path, outpath))
+                    self.extract_first(artpath, album.items())
             else:
-                outpath = normpath(opts.outpath or config['art_filename'].get())
-                for item in lib.items(decargs(args)):
-                    if self.extract(outpath, item):
-                        return
+                outpath = normpath(outpath)
+                self.extract_first(outpath, lib.items(decargs(args)))
         extract_cmd.func = extract_func
 
         # Clear command.
@@ -258,7 +255,6 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         return mf.art
 
     # 'extractart' command.
-
     def extract(self, outpath, item):
         if not item:
             self._log.error(u'No item matches query.')
@@ -283,6 +279,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         with open(syspath(outpath), 'wb') as f:
             f.write(art)
         return outpath
+
+    def extract_first(self, outpath, items):
+        for item in items:
+            if self.extract(outpath, item):
+                return outpath
 
     # 'clearart' command.
     def clear(self, lib, query):
