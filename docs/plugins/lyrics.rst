@@ -49,8 +49,8 @@ configuration file. The available options are:
 - **google_engine_ID**: The custom search engine to use.
   Default: The `beets custom search engine`_, which gathers an updated list of
   sources known to be scrapeable.
-- **sources**: List of sources to search for lyrics. An asterisk `*` expands
-  to all available sources.
+- **sources**: List of sources to search for lyrics. A quoted asterisk `'*'`
+  expands to all available sources.
   Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all sources.
   *google* source will be automatically deactivated if no `google_engine_ID` is
   setup.
