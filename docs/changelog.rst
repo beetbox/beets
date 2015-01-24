@@ -24,6 +24,8 @@ Features:
   by default. :bug:`1246`
 * :doc:`/plugins/fetchart`: Names of extracted image art is taken from the
   ``art_filename`` configuration option. :bug:`1258`
+* :doc:`/plugins/fetchart`: New option ``-a`` to extract the cover art of all
+  matched albums into its directory. :bug:`1261`
 
 Fixes:
 
