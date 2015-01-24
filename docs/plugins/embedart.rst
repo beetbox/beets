@@ -80,8 +80,9 @@ embedded album art:
 * ``beet extractart [-o FILE] QUERY``: extracts the image from an item matching
   the query and stores it in a file. You can specify the destination file using
   the ``-o`` option, but leave off the extension: it will be chosen
-  automatically. The destination filename defaults to ``cover`` if it's not
-  specified.
+  automatically. The destination filename is specified using the
+  ``art_filename`` configuration option. It defaults to ``cover`` if it's not
+  specified via ``-o`` nor the config.
 
 * ``beet clearart QUERY``: removes all embedded images from all items matching
   the query. (Use with caution!)
