@@ -22,6 +22,8 @@ Features:
 * :doc:`plugins/mbsync`: A new ``-f/--format`` option controls the output
   format when listing unrecognized items. The output is also now more helpful
   by default. :bug:`1246`
+* :doc:`/plugins/fetchart`: Names of extracted image art is taken from the
+  ``art_filename`` configuration option. :bug:`1258`
 
 Fixes:
 
