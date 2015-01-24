@@ -37,6 +37,22 @@ class ImportfeedsTestTest(unittest.TestCase):
         with open(playlist_path) as playlist:
             self.assertIn(item_path, playlist.read())
 
+    def test_playlist_in_subdir(self):
+        config['importfeeds']['formats'] = 'm3u'
+        config['importfeeds']['m3u_name'] = 'subdir/imported.m3u'
+        album = Album(album='album/name', id=1)
+        item_path = os.path.join('path', 'to', 'item')
+        item = Item(title='song', album_id=1, path=item_path)
+        self.lib.add(album)
+        self.lib.add(item)
+
+        self.importfeeds.album_imported(self.lib, album)
+        playlist = os.path.join(self.feeds_dir,
+                                config['importfeeds']['m3u_name'].get())
+        playlist_subdir = os.path.dirname(playlist)
+        self.assertTrue(os.path.isdir(playlist_subdir))
+        self.assertTrue(os.path.isfile(playlist))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
