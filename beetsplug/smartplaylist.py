@@ -18,7 +18,7 @@ from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.util import normpath, syspath
+from beets.util import mkdirall, normpath, syspath
 import os
 
 
@@ -98,6 +98,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             # Now iterate through the m3us that we need to generate
             for m3u in m3us:
                 m3u_path = normpath(os.path.join(playlist_dir, m3u))
+                mkdirall(m3u_path)
                 with open(syspath(m3u_path), 'w') as f:
                     for path in m3us[m3u]:
                         f.write(path + '\n')

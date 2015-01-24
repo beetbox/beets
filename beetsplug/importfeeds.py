@@ -21,7 +21,7 @@ import os
 import re
 
 from beets.plugins import BeetsPlugin
-from beets.util import normpath, syspath, bytestring_path
+from beets.util import mkdirall, normpath, syspath, bytestring_path
 from beets import config
 
 M3U_DEFAULT_NAME = 'imported.m3u'
@@ -57,6 +57,7 @@ def _build_m3u_filename(basename):
 def _write_m3u(m3u_path, items_paths):
     """Append relative paths to items into m3u file.
     """
+    mkdirall(m3u_path)
     with open(syspath(m3u_path), 'a') as f:
         for path in items_paths:
             f.write(path + '\n')
