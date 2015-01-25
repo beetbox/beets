@@ -123,10 +123,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         if compare_threshold:
             if not self.check_art_similarity(item, imagepath,
                                              compare_threshold):
-                self._log.debug(u'Image not similar; skipping.')
+                self._log.info(u'Image not similar; skipping.')
                 return
         if ifempty and self.get_art(item):
-                self._log.debug(u'media file already contained art')
+                self._log.info(u'media file already contained art')
                 return
         if maxwidth and not as_album:
             imagepath = self.resize_image(imagepath, maxwidth)
