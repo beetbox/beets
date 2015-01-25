@@ -795,7 +795,7 @@ class Album(LibModel):
         # the album's directory as `path`.
         getters = plugins.album_field_getters()
         getters['path'] = Album.item_dir
-        getters['albumtotal'] = Album.tracktotal
+        getters['albumtotal'] = Album._tracktotal
         return getters
 
     def items(self):
@@ -883,7 +883,7 @@ class Album(LibModel):
             raise ValueError('empty album')
         return os.path.dirname(item.path)
 
-    def tracktotal(self):
+    def _albumtotal(self):
         """Return the total number of tracks on all discs on the album
         """
         if self.disctotal == 1 or not beets.config['per_disc_numbering']:
