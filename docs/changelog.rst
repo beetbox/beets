@@ -9,7 +9,9 @@ Features:
 * A new :doc:`/plugins/filefilter` lets you write regular expressions to
   automatically avoid importing certain files. Thanks to :user:`mried`.
   :bug:`1186`
-* Stop on invalid queries instead of ignoring the invalid part.
+* When there's a parse error in a query (for example, when you type a
+  malformed date in a :ref:`date query <datequery>`), beets now stops with an
+  error instead of silently ignoring the query component.
 * A new :ref:`searchlimit` configuration option allows you to specify how many
   search results you wish to see when looking up releases at MusicBrainz
   during import. :bug:`1245`
@@ -27,20 +29,19 @@ Features:
 * :doc:`/plugins/fetchart`: There's a new Wikipedia image source that uses
   DBpedia to find albums. Thanks to Tom Jaspers. :bug:`1194`
 
-Core improvements:
+Core changes:
 
 * The ``tracktotal`` attribute is now a *track-level field* instead of an
   album-level one. This field stores the total number of tracks on the
-  album, or if the ``per_disc_numbering`` config option is set, the total
-  number of tracks on a particular medium. With the latter option the
-  album-level incarnation of this field could not represent releases where
-  the total number of tracks differs per medium ---for example 20 tracks
-  on medium 1 and 21 tracks on medium 2. Now, tracktotal is correctly
-  handled also when ``per_disc_numbering`` is set.
-* Complimentary to the change for ``tracktotal`` there is now an album-level
-  ``albumtotal`` attribute. This field always provides the total numbers of
-  tracks on the album. The ``per_disc_numbering`` config option has no
-  influence on this field.
+  album, or if the :ref:`per_disc_numbering` config option is set, the total
+  number of tracks on a particular medium (i.e., disc). The field was causing
+  problems with that :ref:`per_disc_numbering` mode: different discs on the
+  same album needed different track totals. The field can now work correctly
+  in either mode.
+* To replace ``tracktotal`` as an album-level field, there is a new
+  ``albumtotal`` computed attribute that provides the total number of tracks
+  on the album. (The :ref:`per_disc_numbering` option has no influence on this
+  field.)
 
 Fixes:
 
