@@ -146,8 +146,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         imagepath = album.artpath
         if not imagepath:
-            self._log.info(u'No album art present: {0} - {1}',
-                           album.albumartist, album.album)
+            self._log.info(u'No album art present: {0}', album)
             return
         if not os.path.isfile(syspath(imagepath)):
             self._log.error(u'Album art not found at {0}',
@@ -158,7 +157,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         self._log.log(
             logging.DEBUG if quiet else logging.INFO,
-            u'Embedding album art into {0.albumartist} - {0.album}.', album
+            u'Embedding album art into {0}.', album
         )
 
         for item in album.items():
@@ -253,8 +252,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         art = self.get_art(item)
 
         if not art:
-            self._log.error(u'No album art present in {0} - {1}.',
-                            item.artist, item.title)
+            self._log.error(u'No album art present in {0}.', item)
             return
 
         # Add an extension to the filename.
@@ -264,8 +262,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             return
         outpath += '.' + ext
 
-        self._log.info(u'Extracting album art from: {0.artist} - {0.title} '
-                       u'to: {1}', item, displayable_path(outpath))
+        self._log.info(u'Extracting album art from: {0} to: {1}',
+                       item, displayable_path(outpath))
         with open(syspath(outpath), 'wb') as f:
             f.write(art)
         return outpath
@@ -274,7 +272,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def clear(self, lib, query):
         self._log.info(u'Clearing album art from items:')
         for item in lib.items(query):
-            self._log.info(u'{0} - {1}', item.artist, item.title)
+            self._log.info(u'{0}', item)
             try:
                 mf = mediafile.MediaFile(syspath(item.path),
                                          config['id3v23'].get(bool))

@@ -251,7 +251,7 @@ def show_change(cur_artist, cur_album, match):
         print_("To:")
         show_album(artist_r, album_r)
     else:
-        print_(u"Tagging:\n    {0.artist} - {0.album}".format(match.info))
+        print_(u"Tagging:\n    {0}".format(match.info))
 
     # Data URL.
     if match.info.data_url:
