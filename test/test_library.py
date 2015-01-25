@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -1086,6 +1087,23 @@ class TemplateTest(_common.LibTestCase):
         self.album.foo = 'baz'
         self.album.store()
         self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
+
+    def test_album_and_item_format(self):
+        config['list_format_album'] = u'foö $foo'
+        album = beets.library.Album()
+        album.foo = 'bar'
+        album.tagada = 'togodo'
+        self.assertEqual(u"{0}".format(album), u"foö bar")
+        self.assertEqual(u"{0:$tagada}".format(album), u"togodo")
+        self.assertEqual(unicode(album), u"foö bar")
+        self.assertEqual(str(album), b"fo\xc3\xb6 bar")
+
+        config['list_format_item'] = 'bar $foo'
+        item = beets.library.Item()
+        item.foo = 'bar'
+        item.tagada = 'togodo'
+        self.assertEqual("{0}".format(item), "bar bar")
+        self.assertEqual("{0:$tagada}".format(item), "togodo")
 
 
 class UnicodePathTest(_common.LibTestCase):

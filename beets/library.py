@@ -247,6 +247,21 @@ class LibModel(dbcore.Model):
         super(LibModel, self).add(lib)
         plugins.send('database_change', lib=self._db)
 
+    def __format__(self, spec):
+        if not spec:
+            spec = beets.config[self._format_config_key].get(unicode)
+        result = self.evaluate_template(spec)
+        if isinstance(spec, bytes):
+            return result.encode('utf8')
+        else:
+            return result
+
+    def __str__(self):
+        return format(self).encode('utf8')
+
+    def __unicode__(self):
+        return format(self)
+
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
     """Add lookup for album-level fields.
@@ -382,6 +397,8 @@ class Item(LibModel):
     _formatter = FormattedItemMapping
 
     _sorts = {'artist': SmartArtistSort}
+
+    _format_config_key = 'list_format_item'
 
     @classmethod
     def _getters(cls):
@@ -790,6 +807,8 @@ class Album(LibModel):
     ]
     """List of keys that are set on an album's items.
     """
+
+    _format_config_key = 'list_format_album'
 
     @classmethod
     def _getters(cls):
