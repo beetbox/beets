@@ -728,7 +728,6 @@ class Album(LibModel):
         'year':               types.PaddedInt(4),
         'month':              types.PaddedInt(2),
         'day':                types.PaddedInt(2),
-        'tracktotal':         types.PaddedInt(2),
         'disctotal':          types.PaddedInt(2),
         'comp':               types.BOOLEAN,
         'mb_albumid':         types.STRING,
@@ -767,7 +766,6 @@ class Album(LibModel):
         'year',
         'month',
         'day',
-        'tracktotal',
         'disctotal',
         'comp',
         'mb_albumid',
@@ -797,6 +795,7 @@ class Album(LibModel):
         # the album's directory as `path`.
         getters = plugins.album_field_getters()
         getters['path'] = Album.item_dir
+        getters['albumtotal'] = Album.tracktotal
         return getters
 
     def items(self):
@@ -883,6 +882,27 @@ class Album(LibModel):
         if not item:
             raise ValueError('empty album')
         return os.path.dirname(item.path)
+
+    def tracktotal(self):
+        """Return the total number of tracks on all discs on the album
+        """
+        if self.disctotal == 1 or not beets.config['per_disc_numbering']:
+            return self.items()[0].tracktotal
+
+        counted = []
+        total = 0
+
+        for item in self.items():
+            if item.disc in counted:
+                continue
+
+            total += item.tracktotal
+            counted.append(item.disc)
+
+            if len(counted) == self.disctotal:
+                break
+
+        return total
 
     def art_destination(self, image, item_dir=None):
         """Returns a path to the destination for the album art image
