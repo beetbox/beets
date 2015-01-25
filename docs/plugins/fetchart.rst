@@ -47,7 +47,8 @@ file. The available options are:
   found in the filesystem.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``coverart itunes albumart amazon google wikipedia``, i.e., all sources
+  Default: ``coverart itunes albumart amazon google wikipedia``, i.e.,
+  all sources.
 
 Here's an example that makes plugin select only images that contain *front* or
 *back* keywords in their filenames and prioritizes the iTunes source over

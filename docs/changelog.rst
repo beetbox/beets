@@ -24,6 +24,8 @@ Features:
   by default. :bug:`1246`
 * :doc:`/plugins/fetchart`: Names of extracted image art is taken from the
   ``art_filename`` configuration option. :bug:`1258`
+* :doc:`/plugins/fetchart`: There's a new Wikipedia image source that uses
+  DBpedia to find albums. Thanks to Tom Jaspers. :bug:`1194`
 
 Fixes:
 
