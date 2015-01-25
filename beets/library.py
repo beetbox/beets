@@ -795,7 +795,7 @@ class Album(LibModel):
         # the album's directory as `path`.
         getters = plugins.album_field_getters()
         getters['path'] = Album.item_dir
-        getters['albumtotal'] = Album._tracktotal
+        getters['albumtotal'] = Album._albumtotal
         return getters
 
     def items(self):
