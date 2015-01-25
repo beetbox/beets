@@ -47,7 +47,7 @@ file. The available options are:
   found in the filesystem.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``coverart itunes albumart amazon google``, i.e., all sources
+  Default: ``coverart itunes albumart amazon google wikipedia``, i.e., all sources
 
 Here's an example that makes plugin select only images that contain *front* or
 *back* keywords in their filenames and prioritizes the iTunes source over
@@ -97,7 +97,7 @@ Album Art Sources
 
 By default, this plugin searches for art in the local filesystem as well as on
 the Cover Art Archive, the iTunes Store, Amazon, AlbumArt.org,
-and Google Image Search, in that order. You can reorder the sources or remove
+and Google Image Search, and Wikipedia, in that order. You can reorder the sources or remove
 some to speed up the process using the ``sources`` configuration option.
 
 When looking for local album art, beets checks for image files located in the
