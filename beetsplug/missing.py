@@ -125,11 +125,11 @@ class MissingPlugin(BeetsPlugin):
                 if count:
                     missing = _missing_count(album)
                     if missing:
-                        print_obj(album, lib, fmt=fmt)
+                        print_obj(album, fmt)
 
                 else:
                     for item in self._missing(album):
-                        print_obj(item, lib, fmt=fmt)
+                        print_obj(item, fmt)
 
         self._command.func = _miss
         return [self._command]

@@ -99,6 +99,12 @@ def print_(*strings):
     replaces it.
     """
     if strings:
+        if not isinstance(strings[0], basestring):
+            try:
+                strings = map(unicode, strings)
+            except UnicodeError:
+                strings = map(bytes, strings)
+
         if isinstance(strings[0], unicode):
             txt = u' '.join(strings)
         else:
@@ -471,29 +477,23 @@ def get_replacements():
     return replacements
 
 
-def _pick_format(album, fmt=None):
-    """Pick a format string for printing Album or Item objects,
-    falling back to config options and defaults.
-    """
+def format_(obj, fmt):
+    """Print a object, intended for Album and Item
+
+    This is equivalent to `format`, but the spec can be None
+    `fmt` is mandatory for otherwise one can just call `format(my_object)`"""
     if fmt:
-        return fmt
-    if album:
-        return config['list_format_album'].get(unicode)
+        return format(obj, fmt)
     else:
-        return config['list_format_item'].get(unicode)
+        return format(obj)
 
 
-def print_obj(obj, lib, fmt=None):
-    """Print an Album or Item object. If `fmt` is specified, use that
-    format string. Otherwise, use the configured template.
-    """
-    album = isinstance(obj, library.Album)
-    fmt = _pick_format(album, fmt)
-    if isinstance(fmt, Template):
-        template = fmt
-    else:
-        template = Template(fmt)
-    print_(obj.evaluate_template(template))
+def print_obj(obj, fmt):
+    """Print a object, intended for Album and Item
+
+    This is equivalent to `print_ o format`, but the spec can be None
+    `fmt` is mandatory for otherwise one can just call `print_(my_object)`"""
+    return print_(format_(obj, fmt))
 
 
 def term_width():
@@ -587,7 +587,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
     # Print changes.
     if changes or always:
-        print_obj(old, old._db)
+        print_(old)
     if changes:
         print_(u'\n'.join(changes))
 

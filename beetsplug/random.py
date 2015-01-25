@@ -66,7 +66,7 @@ def random_item(lib, opts, args):
         objs = random.sample(objs, number)
 
     for item in objs:
-        print_obj(item, lib, template)
+        print_obj(item, template)
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')

@@ -42,7 +42,7 @@ def _process_item(item, lib, copy=False, move=False, delete=False,
             raise UserError('%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
         setattr(k, v)
         item.store()
-    print_obj(item, lib, fmt=format)
+    print_obj(item, format)
 
 
 def _checksum(item, prog, log):

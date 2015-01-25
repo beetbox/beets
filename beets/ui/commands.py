@@ -32,7 +32,6 @@ from beets import plugins
 from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path
-from beets.util.functemplate import Template
 from beets import library
 from beets import config
 from beets import logging
@@ -951,13 +950,12 @@ def list_items(lib, query, album, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
-    tmpl = Template(ui._pick_format(album, fmt))
     if album:
         for album in lib.albums(query):
-            ui.print_obj(album, lib, tmpl)
+            ui.print_obj(album, fmt)
     else:
         for item in lib.items(query):
-            ui.print_obj(item, lib, tmpl)
+            ui.print_obj(item, fmt)
 
 
 def list_func(lib, opts, args):
@@ -999,7 +997,7 @@ def update_items(lib, query, album, move, pretend):
         for item in items:
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
-                ui.print_obj(item, lib)
+                ui.print_(item)
                 ui.print_(ui.colorize('red', u'  deleted'))
                 if not pretend:
                     item.remove(True)
@@ -1122,7 +1120,7 @@ def remove_items(lib, query, album, delete):
 
     # Show all the items.
     for item in items:
-        ui.print_obj(item, lib, fmt)
+        ui.print_obj(item, fmt)
 
     # Confirm with user.
     if not ui.input_yn(prompt, True):

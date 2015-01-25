@@ -18,7 +18,6 @@ from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from beets import config
-from beets.util.functemplate import Template
 from collections import defaultdict
 
 
@@ -71,10 +70,8 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        template = Template(ui._pick_format(False, fmt))
-
         for item in lib.items(query + ['singleton:true']):
-            item_formatted = item.evaluate_template(template)
+            item_formatted = ui.format_(item, fmt)
             if not item.mb_trackid:
                 self._log.info(u'Skipping singleton with no mb_trackid: {0}',
                                item_formatted)
@@ -97,11 +94,9 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
-        template = Template(ui._pick_format(True, fmt))
-
         # Process matching albums.
         for a in lib.albums(query):
-            album_formatted = a.evaluate_template(template)
+            album_formatted = ui.format_(a, fmt)
             if not a.mb_albumid:
                 self._log.info(u'Skipping album with no mb_albumid: {0}',
                                album_formatted)
