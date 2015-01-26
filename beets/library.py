@@ -229,8 +229,10 @@ class WriteError(FileOperationError):
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
+
     _format_config_key = None
-    """Config key that specifies how an instance should be formatted"""
+    """Config key that specifies how an instance should be formatted.
+    """
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
