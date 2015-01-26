@@ -32,7 +32,6 @@ from beets import plugins
 from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path
-from beets.util.functemplate import Template
 from beets import library
 from beets import config
 from beets import logging
@@ -951,20 +950,16 @@ def list_items(lib, query, album, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
-    tmpl = Template(ui._pick_format(album, fmt))
     if album:
         for album in lib.albums(query):
-            ui.print_obj(album, lib, tmpl)
+            ui.print_(format(album, fmt))
     else:
         for item in lib.items(query):
-            ui.print_obj(item, lib, tmpl)
+            ui.print_(format(item, fmt))
 
 
 def list_func(lib, opts, args):
-    if opts.path:
-        fmt = '$path'
-    else:
-        fmt = opts.format
+    fmt = '$path' if opts.path else opts.format
     list_items(lib, decargs(args), opts.album, fmt)
 
 
@@ -979,7 +974,7 @@ list_cmd.parser.add_option(
 )
 list_cmd.parser.add_option(
     '-f', '--format', action='store',
-    help='print with custom format', default=None
+    help='print with custom format', default=''
 )
 list_cmd.func = list_func
 default_commands.append(list_cmd)
@@ -999,7 +994,7 @@ def update_items(lib, query, album, move, pretend):
         for item in items:
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
-                ui.print_obj(item, lib)
+                ui.print_(format(item))
                 ui.print_(ui.colorize('red', u'  deleted'))
                 if not pretend:
                     item.remove(True)
@@ -1095,7 +1090,7 @@ update_cmd.parser.add_option(
 )
 update_cmd.parser.add_option(
     '-f', '--format', action='store',
-    help='print with custom format', default=None
+    help='print with custom format', default=''
 )
 update_cmd.func = update_func
 default_commands.append(update_cmd)
@@ -1116,13 +1111,13 @@ def remove_items(lib, query, album, delete):
         fmt = u'$path - $title'
         prompt = 'Really DELETE %i files (y/n)?' % len(items)
     else:
-        fmt = None
+        fmt = ''
         prompt = 'Really remove %i items from the library (y/n)?' % \
                  len(items)
 
     # Show all the items.
     for item in items:
-        ui.print_obj(item, lib, fmt)
+        ui.print_(format(item, fmt))
 
     # Confirm with user.
     if not ui.input_yn(prompt, True):
@@ -1352,7 +1347,7 @@ modify_cmd.parser.add_option(
 )
 modify_cmd.parser.add_option(
     '-f', '--format', action='store',
-    help='print with custom format', default=None
+    help='print with custom format', default=''
 )
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)

@@ -508,8 +508,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         lyrics will also be written to the file itself."""
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
-            self._log.info(u'lyrics already present: {0.artist} - {0.title}',
-                           item)
+            self._log.info(u'lyrics already present: {0}', item)
             return
 
         lyrics = None
@@ -521,9 +520,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
 
         if lyrics:
-            self._log.info(u'fetched lyrics: {0.artist} - {0.title}', item)
+            self._log.info(u'fetched lyrics: {0}', item)
         else:
-            self._log.info(u'lyrics not found: {0.artist} - {0.title}', item)
+            self._log.info(u'lyrics not found: {0}', item)
             fallback = self.config['fallback'].get()
             if fallback:
                 lyrics = fallback

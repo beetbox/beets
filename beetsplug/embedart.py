@@ -26,12 +26,6 @@ from beets.ui import decargs
 from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import config
-from beets.util.functemplate import Template
-
-__item_template = Template(ui._pick_format(False))
-fmt_item = lambda item: item.evaluate_template(__item_template)
-__album_template = Template(ui._pick_format(True))
-fmt_album = lambda item: item.evaluate_template(__album_template)
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
@@ -146,16 +140,16 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         imagepath = album.artpath
         if not imagepath:
-            self._log.info(u'No album art present for {0}', fmt_album(album))
+            self._log.info(u'No album art present for {0}', album)
             return
         if not os.path.isfile(syspath(imagepath)):
             self._log.info(u'Album art not found at {0} for {1}',
-                           displayable_path(imagepath), fmt_album(album))
+                           displayable_path(imagepath), album)
             return
         if maxwidth:
             imagepath = self.resize_image(imagepath, maxwidth)
 
-        self._log.info(u'Embedding album art into {0}', fmt_album(album))
+        self._log.info(u'Embedding album art into {0}', album)
 
         for item in album.items():
             thresh = self.config['compare_threshold'].get(int)
@@ -244,8 +238,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         art = self.get_art(item)
 
         if not art:
-            self._log.info(u'No album art present in {0}, skipping.',
-                           fmt_item(item))
+            self._log.info(u'No album art present in {0}, skipping.', item)
             return
 
         # Add an extension to the filename.
@@ -257,7 +250,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         outpath += '.' + ext
 
         self._log.info(u'Extracting album art from: {0} to: {1}',
-                       fmt_item(item), displayable_path(outpath))
+                       item, displayable_path(outpath))
         with open(syspath(outpath), 'wb') as f:
             f.write(art)
         return outpath
@@ -269,7 +262,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         items = lib.items(query)
         self._log.info(u'Clearing album art from {0} items', len(items))
         for item in items:
-            self._log.debug(u'Clearing art for {0}', fmt_item(item))
+            self._log.debug(u'Clearing art for {0}', item)
             try:
                 mf = mediafile.MediaFile(syspath(item.path), id3v23)
             except mediafile.UnreadableFileError as exc:

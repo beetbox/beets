@@ -356,7 +356,7 @@ class ConvertPlugin(BeetsPlugin):
             self.config['pretend'].get(bool)
 
         if not pretend:
-            ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
+            ui.commands.list_items(lib, ui.decargs(args), opts.album, '')
 
             if not (opts.yes or ui.input_yn("Convert? (Y/n)")):
                 return

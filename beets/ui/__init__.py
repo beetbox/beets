@@ -97,6 +97,9 @@ def print_(*strings):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
+
+    If the arguments are strings then they're expected to share the same type:
+    either bytes or unicode.
     """
     if strings:
         if isinstance(strings[0], unicode):
@@ -471,31 +474,6 @@ def get_replacements():
     return replacements
 
 
-def _pick_format(album, fmt=None):
-    """Pick a format string for printing Album or Item objects,
-    falling back to config options and defaults.
-    """
-    if fmt:
-        return fmt
-    if album:
-        return config['list_format_album'].get(unicode)
-    else:
-        return config['list_format_item'].get(unicode)
-
-
-def print_obj(obj, lib, fmt=None):
-    """Print an Album or Item object. If `fmt` is specified, use that
-    format string. Otherwise, use the configured template.
-    """
-    album = isinstance(obj, library.Album)
-    fmt = _pick_format(album, fmt)
-    if isinstance(fmt, Template):
-        template = fmt
-    else:
-        template = Template(fmt)
-    print_(obj.evaluate_template(template))
-
-
 def term_width():
     """Get the width (columns) of the terminal."""
     fallback = config['ui']['terminal_width'].get(int)
@@ -587,7 +565,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
     # Print changes.
     if changes or always:
-        print_obj(old, old._db)
+        print_(format(old))
     if changes:
         print_(u'\n'.join(changes))
 

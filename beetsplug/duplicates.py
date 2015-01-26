@@ -17,14 +17,14 @@
 import shlex
 
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_obj, vararg_callback, Subcommand, UserError
+from beets.ui import decargs, print_, vararg_callback, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess
 
 PLUGIN = 'duplicates'
 
 
 def _process_item(item, lib, copy=False, move=False, delete=False,
-                  tag=False, format=None):
+                  tag=False, format=''):
     """Process Item `item` in `lib`.
     """
     if copy:
@@ -42,7 +42,7 @@ def _process_item(item, lib, copy=False, move=False, delete=False,
             raise UserError('%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
         setattr(k, v)
         item.store()
-    print_obj(item, lib, fmt=format)
+    print_(format(item, format))
 
 
 def _checksum(item, prog, log):
@@ -126,7 +126,7 @@ class DuplicatesPlugin(BeetsPlugin):
         self._command.parser.add_option('-f', '--format', dest='format',
                                         action='store', type='string',
                                         help='print with custom format',
-                                        metavar='FMT')
+                                        metavar='FMT', default='')
 
         self._command.parser.add_option('-a', '--album', dest='album',
                                         action='store_true',

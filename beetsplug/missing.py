@@ -17,7 +17,7 @@
 from beets.autotag import hooks
 from beets.library import Item
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_obj, Subcommand
+from beets.ui import decargs, print_, Subcommand
 
 
 def _missing_count(album):
@@ -95,7 +95,7 @@ class MissingPlugin(BeetsPlugin):
         self._command.parser.add_option('-f', '--format', dest='format',
                                         action='store', type='string',
                                         help='print with custom FORMAT',
-                                        metavar='FORMAT')
+                                        metavar='FORMAT', default='')
 
         self._command.parser.add_option('-c', '--count', dest='count',
                                         action='store_true',
@@ -123,13 +123,12 @@ class MissingPlugin(BeetsPlugin):
 
             for album in albums:
                 if count:
-                    missing = _missing_count(album)
-                    if missing:
-                        print_obj(album, lib, fmt=fmt)
+                    if _missing_count(album):
+                        print_(format(album, fmt))
 
                 else:
                     for item in self._missing(album):
-                        print_obj(item, lib, fmt=fmt)
+                        print_(format(item, fmt))
 
         self._command.func = _miss
         return [self._command]
