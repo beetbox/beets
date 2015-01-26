@@ -17,11 +17,17 @@ matrix:
         - python: 2.7
           env: {TOX_ENV: flake8}
 
-install:
+# Get the infrastructure for running tests, and the non-Python deps.
+before_install:
     - travis_retry sudo apt-get update
     - travis_retry sudo apt-get install -qq bash-completion mp3gain
     - travis_retry pip install tox sphinx
     - "[ ! -z $COVERAGE ] && travis_retry pip install coveralls || true"
+
+# To install dependencies, tell tox to do everything but actually running the
+# test.
+install:
+    - travis_retry tox -e $TOX_ENV --notest
 
 script: tox -e $TOX_ENV
 
