@@ -994,7 +994,7 @@ def update_items(lib, query, album, move, pretend):
         for item in items:
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
-                ui.print_(item)
+                ui.print_(format(item))
                 ui.print_(ui.colorize('red', u'  deleted'))
                 if not pretend:
                     item.remove(True)

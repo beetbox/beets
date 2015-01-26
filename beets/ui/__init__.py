@@ -102,12 +102,6 @@ def print_(*strings):
     either bytes or unicode.
     """
     if strings:
-        if not isinstance(strings[0], basestring):
-            try:
-                strings = map(unicode, strings)
-            except UnicodeError:
-                strings = map(bytes, strings)
-
         if isinstance(strings[0], unicode):
             txt = u' '.join(strings)
         else:
@@ -571,7 +565,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
     # Print changes.
     if changes or always:
-        print_(old)
+        print_(format(old))
     if changes:
         print_(u'\n'.join(changes))
 
