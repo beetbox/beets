@@ -97,6 +97,9 @@ def print_(*strings):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
+
+    If the arguments are strings then they're expected to share the same type:
+    either bytes or unicode.
     """
     if strings:
         if not isinstance(strings[0], basestring):

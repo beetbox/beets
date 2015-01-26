@@ -229,6 +229,8 @@ class WriteError(FileOperationError):
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
+    _format_config_key = None
+    """Config key that specifies how an instance should be formatted"""
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
@@ -252,6 +254,7 @@ class LibModel(dbcore.Model):
             spec = beets.config[self._format_config_key].get(unicode)
         result = self.evaluate_template(spec)
         if isinstance(spec, bytes):
+            # if spec is a byte string then we must return a one as well
             return result.encode('utf8')
         else:
             return result
