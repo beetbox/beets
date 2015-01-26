@@ -115,7 +115,7 @@ def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
             d = diff(item, src_item)
             if d < threshold:
                 s = fmt.replace('${difference}', '{:2.2f}'.format(d))
-                ui.print_obj(item, s)
+                ui.print_(format(item, s))
 
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):

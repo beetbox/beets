@@ -43,7 +43,7 @@ class ListTest(unittest.TestCase):
         self.lib.add(self.item)
         self.lib.add_album([self.item])
 
-    def _run_list(self, query='', album=False, path=False, fmt=None):
+    def _run_list(self, query='', album=False, path=False, fmt=''):
         commands.list_items(self.lib, query, album, fmt)
 
     def test_list_outputs_item(self):

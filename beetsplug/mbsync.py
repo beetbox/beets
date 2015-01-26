@@ -49,7 +49,7 @@ class MBSyncPlugin(BeetsPlugin):
         cmd.parser.add_option('-W', '--nowrite', action='store_false',
                               default=config['import']['write'], dest='write',
                               help="don't write updated metadata to files")
-        cmd.parser.add_option('-f', '--format', action='store', default=None,
+        cmd.parser.add_option('-f', '--format', action='store', default='',
                               help='print with custom format')
         cmd.func = self.func
         return [cmd]
@@ -71,7 +71,7 @@ class MBSyncPlugin(BeetsPlugin):
         query.
         """
         for item in lib.items(query + ['singleton:true']):
-            item_formatted = ui.format_(item, fmt)
+            item_formatted = format(item, fmt)
             if not item.mb_trackid:
                 self._log.info(u'Skipping singleton with no mb_trackid: {0}',
                                item_formatted)
@@ -96,7 +96,7 @@ class MBSyncPlugin(BeetsPlugin):
         """
         # Process matching albums.
         for a in lib.albums(query):
-            album_formatted = ui.format_(a, fmt)
+            album_formatted = format(a, fmt)
             if not a.mb_albumid:
                 self._log.info(u'Skipping album with no mb_albumid: {0}',
                                album_formatted)

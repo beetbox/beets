@@ -480,25 +480,6 @@ def get_replacements():
     return replacements
 
 
-def format_(obj, fmt):
-    """Print a object, intended for Album and Item
-
-    This is equivalent to `format`, but the spec can be None
-    `fmt` is mandatory for otherwise one can just call `format(my_object)`"""
-    if fmt:
-        return format(obj, fmt)
-    else:
-        return format(obj)
-
-
-def print_obj(obj, fmt):
-    """Print a object, intended for Album and Item
-
-    This is equivalent to `print_ o format`, but the spec can be None
-    `fmt` is mandatory for otherwise one can just call `print_(my_object)`"""
-    return print_(format_(obj, fmt))
-
-
 def term_width():
     """Get the width (columns) of the terminal."""
     fallback = config['ui']['terminal_width'].get(int)
