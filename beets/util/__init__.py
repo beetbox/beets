@@ -83,7 +83,7 @@ class HumanReadableException(Exception):
         """
         if self.tb:
             logger.debug(self.tb)
-        logger.error(u'{0}: {1}'.format(self.error_kind, self.args[0]))
+        logger.error(u'{0}: {1}', self.error_kind, self.args[0])
 
 
 class FilesystemError(HumanReadableException):
