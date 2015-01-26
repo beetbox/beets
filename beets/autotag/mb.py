@@ -325,6 +325,11 @@ def match_album(artist, album, tracks=None):
     try:
         res = musicbrainzngs.search_releases(
             limit=config['musicbrainz']['searchlimit'].get(int), **criteria)
+    except musicbrainzngs.WebServiceError:
+        log.debug(u'MusicBrainz is unreachable.')
+        raise MusicBrainzAPIError('MusicBrainz not reachable',
+                                  'release search', criteria,
+                                  traceback.format_exc())
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'release search', criteria,
                                   traceback.format_exc())
@@ -351,6 +356,11 @@ def match_track(artist, title):
     try:
         res = musicbrainzngs.search_recordings(
             limit=config['musicbrainz']['searchlimit'].get(int), **criteria)
+    except musicbrainzngs.WebServiceError:
+        log.debug(u'MusicBrainz is unreachable.')
+        raise MusicBrainzAPIError('MusicBrainz not reachable',
+                                  'recording search', criteria,
+                                  traceback.format_exc())
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'recording search', criteria,
                                   traceback.format_exc())
@@ -383,6 +393,11 @@ def album_for_id(releaseid):
     except musicbrainzngs.ResponseError:
         log.debug(u'Album ID match failed.')
         return None
+    except musicbrainzngs.WebServiceError:
+        log.debug(u'MusicBrainz is unreachable.')
+        raise MusicBrainzAPIError('MusicBrainz not reachable',
+                                  'get release by ID', albumid,
+                                  traceback.format_exc())
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
                                   traceback.format_exc())
@@ -402,6 +417,11 @@ def track_for_id(releaseid):
     except musicbrainzngs.ResponseError:
         log.debug(u'Track ID match failed.')
         return None
+    except musicbrainzngs.WebServiceError:
+        log.debug(u'MusicBrainz is unreachable.')
+        raise MusicBrainzAPIError('MusicBrainz not reachable',
+                                  'get recording by ID', trackid,
+                                  traceback.format_exc())
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'get recording by ID', trackid,
                                   traceback.format_exc())
