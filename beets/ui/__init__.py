@@ -191,7 +191,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             is_default = False
 
         # Colorize the letter shortcut.
-        show_letter = colorize('turquoise' if is_default else 'blue',
+        show_letter = colorize(COLORS['action_default']
+                               if is_default
+                               else COLORS['action'],
                                show_letter)
 
         # Insert the highlighted letter back into the word.
@@ -218,7 +220,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         if numrange:
             if isinstance(default, int):
                 default_name = str(default)
-                default_name = colorize('turquoise', default_name)
+                default_name = colorize(COLORS['action_default'], default_name)
                 tmpl = '# selection (default %s)'
                 prompt_parts.append(tmpl % default_name)
                 prompt_part_lengths.append(len(tmpl % str(default)))
@@ -357,6 +359,13 @@ LIGHT_COLORS = ["darkgray", "red", "green", "yellow", "blue",
                 "fuchsia", "turquoise", "white"]
 RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
 
+# Map the color names to the configured colors in a dict
+COLOR_NAMES = ['text_success', 'text_warning', 'text_error', 'text_highlight',
+               'text_highlight_minor', 'action_default', 'action']
+COLORS = dict(zip(COLOR_NAMES,
+                  map(lambda x: config['ui']['colors'][x].get(str),
+                      COLOR_NAMES)))
+
 
 def _colorize(color, text):
     """Returns a string that prints the given text in the given color
@@ -376,13 +385,14 @@ def colorize(color, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if config['color']:
+    if config['ui']['color']:
         return _colorize(color, text)
     else:
         return text
 
 
-def _colordiff(a, b, highlight='red', minor_highlight='lightgray'):
+def _colordiff(a, b, highlight=COLORS['text_highlight'],
+               minor_highlight=COLORS['text_highlight_minor']):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -432,11 +442,11 @@ def _colordiff(a, b, highlight='red', minor_highlight='lightgray'):
     return u''.join(a_out), u''.join(b_out)
 
 
-def colordiff(a, b, highlight='red'):
+def colordiff(a, b, highlight=COLORS['text_highlight']):
     """Colorize differences between two values if color is enabled.
     (Like _colordiff but conditional.)
     """
-    if config['color']:
+    if config['ui']['color']:
         return _colordiff(a, b, highlight)
     else:
         return unicode(a), unicode(b)
@@ -546,7 +556,8 @@ def _field_diff(field, old, new):
     if isinstance(oldval, basestring):
         oldstr, newstr = colordiff(oldval, newstr)
     else:
-        oldstr, newstr = colorize('red', oldstr), colorize('red', newstr)
+        oldstr = colorize(COLORS['text_error'], oldstr)
+        newstr = colorize(COLORS['text_error'], newstr)
 
     return u'{0} -> {1}'.format(oldstr, newstr)
 
@@ -582,7 +593,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
         changes.append(u'  {0}: {1}'.format(
             field,
-            colorize('red', new.formatted()[field])
+            colorize(COLORS['text_highlight'], new.formatted()[field])
         ))
 
     # Print changes.
@@ -864,6 +875,14 @@ def _configure(options):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
+
+    # Ensure compatibility with old (top-level) color configuration.
+    # Deprecation msg to motivate user to switch to config['ui']['color].
+    if config['color'].exists():
+        log.warning(u'Warning: top-level configuration of `color` '
+                    u'is deprecated. Configure color use under `ui`. '
+                    u'See documentation for more info.')
+        config['ui']['color'].set(config['color'].get(bool))
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
