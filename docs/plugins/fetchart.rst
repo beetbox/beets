@@ -45,9 +45,9 @@ file. The available options are:
   as fallback.
   Default: ``no``; remote (Web) art sources are only queried if no local art is
   found in the filesystem.
-- **sources**: List of sources to search for images. A quoted asterisk `'*'`
+- **sources**: List of sources to search for images. An asterisk `*`
   expands to all available sources.
-  Default: ``coverart itunes albumart amazon google``, i.e., all sources
+  Default: ``'coverart itunes albumart amazon google'``, i.e., all sources
 
 Here's an example that makes plugin select only images that contain *front* or
 *back* keywords in their filenames and prioritizes the iTunes source over
@@ -56,7 +56,7 @@ others::
     fetchart:
         cautious: true
         cover_names: front back
-        sources: itunes '*'
+        sources: 'itunes *'
 
 
 Manually Fetching Album Art
