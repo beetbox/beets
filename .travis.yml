@@ -13,20 +13,22 @@ matrix:
 #        - python: pypy
 #          env: {TOX_ENV: pypy}
         - python: 2.7
-          env: {TOX_ENV: docs}
+          env: {TOX_ENV: docs, NONTEST: 1}
         - python: 2.7
-          env: {TOX_ENV: flake8}
+          env: {TOX_ENV: flake8, NONTEST: 1}
 
-# Get the infrastructure for running tests, and the non-Python deps.
+# Get the infrastructure for running tests, and the non-Python (and external)
+# deps. We only install dependencies from apt for actual test runs, not for
+# docs and style checkers.
 before_install:
-    - travis_retry sudo apt-get update
-    - travis_retry sudo apt-get install -qq bash-completion mp3gain
-    - travis_retry pip install tox sphinx
+    - "[ ! -z $NONTEST ] && travis_retry sudo apt-get update || true"
+    - "[ ! -z $NONTEST ] && travis_retry sudo apt-get install -qq bash-completion mp3gain || true"
     - "[ ! -z $COVERAGE ] && travis_retry pip install coveralls || true"
 
 # To install dependencies, tell tox to do everything but actually running the
 # test.
 install:
+    - travis_retry pip install tox sphinx
     - travis_retry tox -e $TOX_ENV --notest
 
 script: tox -e $TOX_ENV
