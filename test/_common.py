@@ -13,6 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 """Some common functionality for beets' test cases."""
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import time
 import sys
 import os
@@ -40,7 +43,7 @@ beetsplug.__path__ = [os.path.abspath(
 )]
 
 # Test resources path.
-RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
+RSRC = os.path.join(os.path.dirname(__file__), b'rsrc')
 
 # Propagate to root loger so nosetest can capture it
 log = logging.getLogger('beets')
@@ -73,7 +76,7 @@ def item(lib=None):
         comments=u'the comments',
         bpm=8,
         comp=True,
-        path='somepath' + str(_item_ident),
+        path='somepath{0}'.format(_item_ident),
         length=60.0,
         bitrate=128000,
         format='FLAC',
@@ -235,7 +238,7 @@ class DummyOut(object):
         self.buf.append(s)
 
     def get(self):
-        return ''.join(self.buf)
+        return b''.join(self.buf)
 
     def clear(self):
         self.buf = []
@@ -250,7 +253,7 @@ class DummyIn(object):
         self.out = out
 
     def add(self, s):
-        self.buf.append(s + '\n')
+        self.buf.append(s + b'\n')
 
     def readline(self):
         if not self.buf:

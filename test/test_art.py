@@ -14,13 +14,16 @@
 
 """Tests for the album art fetchers."""
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import shutil
 
 import responses
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import library
@@ -357,5 +360,5 @@ class ArtImporterTest(UseThePlugin):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

@@ -14,6 +14,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import division, absolute_import, print_function
+
 import os
 import sys
 import subprocess
@@ -74,7 +76,7 @@ setup(
     },
 
     install_requires=[
-        'enum34',
+        'enum34>=1.0.4',
         'mutagen>=1.27',
         'munkres',
         'unidecode',

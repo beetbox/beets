@@ -13,6 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from collections import namedtuple
 import re
 
@@ -109,7 +112,7 @@ class AlbumInfo(object):
                     'catalognum', 'script', 'language', 'country',
                     'albumstatus', 'albumdisambig', 'artist_credit', 'media']:
             value = getattr(self, fld)
-            if isinstance(value, str):
+            if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
         if self.tracks:
@@ -168,7 +171,7 @@ class TrackInfo(object):
         for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
                     'artist_credit', 'media']:
             value = getattr(self, fld)
-            if isinstance(value, str):
+            if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
 
@@ -357,6 +360,9 @@ class Distance(object):
 
     def __rsub__(self, other):
         return other - self.distance
+
+    def __unicode__(self):
+        return "{0:.2f}".format(self.distance)
 
     # Behave like a dict.
 

@@ -14,14 +14,17 @@
 
 """Tests for the 'lyrics' plugin."""
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
-import _common
+from test import _common
 import sys
 import re
 
 from mock import MagicMock
 
-from _common import unittest
+from test._common import unittest
 from beetsplug import lyrics
 from beets.library import Item
 from beets.util import confit
@@ -376,5 +379,5 @@ class LyricsGooglePluginTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

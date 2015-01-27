@@ -14,10 +14,13 @@
 
 """Tests for the DBCore database abstraction.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import sqlite3
 
-from _common import unittest
+from test._common import unittest
 from beets import dbcore
 from tempfile import mkstemp
 
@@ -187,7 +190,7 @@ class ModelTest(unittest.TestCase):
         model.field_one = 123
         model.store()
         row = self.db._connection().execute('select * from test').fetchone()
-        self.assertEqual(row['field_one'], 123)
+        self.assertEqual(row[b'field_one'], 123)
 
     def test_retrieve_by_id(self):
         model = TestModel1()
@@ -537,5 +540,5 @@ class ResultsIteratorTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

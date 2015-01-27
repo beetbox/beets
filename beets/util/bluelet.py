@@ -5,6 +5,9 @@ asyncore.
 
 Bluelet: easy concurrency without all the messy parallelism.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import socket
 import select
 import sys
@@ -550,7 +553,7 @@ def spawn(coro):
     and child coroutines run concurrently.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError('%s is not a coroutine' % str(coro))
+        raise ValueError('%s is not a coroutine' % coro)
     return SpawnEvent(coro)
 
 
@@ -560,7 +563,7 @@ def call(coro):
     returns a value using end(), then this event returns that value.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError('%s is not a coroutine' % str(coro))
+        raise ValueError('%s is not a coroutine' % coro)
     return DelegationEvent(coro)
 
 

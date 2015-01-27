@@ -1,7 +1,10 @@
 """Tests for the 'web' plugin"""
 
-from _common import unittest
-import _common
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest
+from test import _common
 import json
 import beetsplug
 from beets.library import Item, Album
@@ -104,5 +107,5 @@ class WebPluginTest(_common.LibTestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

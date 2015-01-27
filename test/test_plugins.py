@@ -11,21 +11,23 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-import os
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+import os
 from mock import patch
 import shutil
-from _common import unittest
+
 from beets.importer import SingletonImportTask, SentinelImportTask, \
     ArchiveImportTask
-import helper
-
 from beets import plugins, config
 from beets.library import Item
 from beets.dbcore import types
 from beets.mediafile import MediaFile
-from test import _common
 from test.test_importer import ImportHelper
+from test._common import unittest, RSRC
+from test import helper
 
 
 class TestHelper(helper.TestHelper):
@@ -171,7 +173,7 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
 
     def __copy_file(self, dest_path, metadata):
         # Copy files
-        resource_path = os.path.join(_common.RSRC, 'full.mp3')
+        resource_path = os.path.join(RSRC, 'full.mp3')
         shutil.copy(resource_path, dest_path)
         medium = MediaFile(dest_path)
         # Set metadata
@@ -295,5 +297,5 @@ class ListenersTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

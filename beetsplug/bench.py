@@ -14,7 +14,8 @@
 
 """Some simple performance benchmarks for beets.
 """
-from __future__ import print_function
+
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui

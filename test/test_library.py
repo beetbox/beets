@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -14,6 +15,9 @@
 
 """Tests for non-query database functions of Item.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import os.path
 import stat
@@ -22,9 +26,9 @@ import re
 import unicodedata
 import sys
 
-import _common
-from _common import unittest
-from _common import item
+from test import _common
+from test._common import unittest
+from test._common import item
 import beets.library
 import beets.mediafile
 from beets import util
@@ -56,7 +60,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_year = self.lib._connection().execute(
             'select year from items where '
-            'title="the title"').fetchone()['year']
+            'title="the title"').fetchone()[b'year']
         self.assertEqual(new_year, 1987)
 
     def test_store_only_writes_dirty_fields(self):
@@ -65,7 +69,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
-            'title="the title"').fetchone()['genre']
+            'title="the title"').fetchone()[b'genre']
         self.assertEqual(new_genre, original_genre)
 
     def test_store_clears_dirty_flags(self):
@@ -84,7 +88,7 @@ class AddTest(_common.TestCase):
         self.lib.add(self.i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()['grouping']
+            'where composer="the composer"').fetchone()[b'grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
     def test_library_add_path_inserts_row(self):
@@ -94,7 +98,7 @@ class AddTest(_common.TestCase):
         self.lib.add(i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()['grouping']
+            'where composer="the composer"').fetchone()[b'grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
 
@@ -409,14 +413,14 @@ class DestinationTest(_common.TestCase):
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'a/.?/b', [
-                (re.compile(ur'foo'), u'bar'),
+                (re.compile(r'foo'), u'bar'),
             ])
         self.assertEqual(p, u'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'foo/bar', [
-                (re.compile(ur'foo'), u'bar'),
+                (re.compile(r'foo'), u'bar'),
             ])
         self.assertEqual(p, u'bar/bar')
 
@@ -439,7 +443,7 @@ class DestinationTest(_common.TestCase):
             self.i.title = u'h\u0259d'
             self.lib.path_formats = [('default', '$title')]
             p = self.i.destination()
-            self.assertFalse('?' in p)
+            self.assertFalse(b'?' in p)
             # We use UTF-8 to encode Windows paths now.
             self.assertTrue(u'h\u0259d'.encode('utf8') in p)
         finally:
@@ -461,7 +465,7 @@ class DestinationTest(_common.TestCase):
 
     def test_destination_with_replacements(self):
         self.lib.directory = 'base'
-        self.lib.replacements = [(re.compile(ur'a'), u'e')]
+        self.lib.replacements = [(re.compile(r'a'), u'e')]
         self.lib.path_formats = [('default', '$album/$title')]
         self.i.title = 'foo'
         self.i.album = 'bar'
@@ -472,14 +476,14 @@ class DestinationTest(_common.TestCase):
     def test_sanitize_empty_component(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'foo//bar', [
-                (re.compile(ur'^$'), u'_'),
+                (re.compile(r'^$'), u'_'),
             ])
         self.assertEqual(p, u'foo/_/bar')
 
     @unittest.skip('unimplemented: #359')
     def test_destination_with_empty_component(self):
         self.lib.directory = 'base'
-        self.lib.replacements = [(re.compile(ur'^$'), u'_')]
+        self.lib.replacements = [(re.compile(r'^$'), u'_')]
         self.lib.path_formats = [('default', '$album/$artist/$title')]
         self.i.title = 'three'
         self.i.artist = ''
@@ -491,7 +495,7 @@ class DestinationTest(_common.TestCase):
     @unittest.skip('unimplemented: #359')
     def test_destination_with_empty_final_component(self):
         self.lib.directory = 'base'
-        self.lib.replacements = [(re.compile(ur'^$'), u'_')]
+        self.lib.replacements = [(re.compile(r'^$'), u'_')]
         self.lib.path_formats = [('default', '$album/$title')]
         self.i.title = ''
         self.i.album = 'one'
@@ -921,25 +925,25 @@ class PathStringTest(_common.TestCase):
         self.i = item(self.lib)
 
     def test_item_path_is_bytestring(self):
-        self.assert_(isinstance(self.i.path, str))
+        self.assert_(isinstance(self.i.path, bytes))
 
     def test_fetched_item_path_is_bytestring(self):
         i = list(self.lib.items())[0]
-        self.assert_(isinstance(i.path, str))
+        self.assert_(isinstance(i.path, bytes))
 
     def test_unicode_path_becomes_bytestring(self):
         self.i.path = u'unicodepath'
-        self.assert_(isinstance(self.i.path, str))
+        self.assert_(isinstance(self.i.path, bytes))
 
     def test_unicode_in_database_becomes_bytestring(self):
         self.lib._connection().execute("""
         update items set path=? where id=?
         """, (self.i.id, u'somepath'))
         i = list(self.lib.items())[0]
-        self.assert_(isinstance(i.path, str))
+        self.assert_(isinstance(i.path, bytes))
 
     def test_special_chars_preserved_in_database(self):
-        path = 'b\xe1r'
+        path = 'b\xe1r'.encode('utf8')
         self.i.path = path
         self.i.store()
         i = list(self.lib.items())[0]
@@ -947,7 +951,7 @@ class PathStringTest(_common.TestCase):
 
     def test_special_char_path_added_to_database(self):
         self.i.remove()
-        path = 'b\xe1r'
+        path = 'b\xe1r'.encode('utf8')
         i = item()
         i.path = path
         self.lib.add(i)
@@ -957,13 +961,13 @@ class PathStringTest(_common.TestCase):
     def test_destination_returns_bytestring(self):
         self.i.artist = u'b\xe1r'
         dest = self.i.destination()
-        self.assert_(isinstance(dest, str))
+        self.assert_(isinstance(dest, bytes))
 
     def test_art_destination_returns_bytestring(self):
         self.i.artist = u'b\xe1r'
         alb = self.lib.add_album([self.i])
         dest = alb.art_destination(u'image.jpg')
-        self.assert_(isinstance(dest, str))
+        self.assert_(isinstance(dest, bytes))
 
     def test_artpath_stores_special_chars(self):
         path = b'b\xe1r'
@@ -986,7 +990,7 @@ class PathStringTest(_common.TestCase):
     def test_unicode_artpath_becomes_bytestring(self):
         alb = self.lib.add_album([self.i])
         alb.artpath = u'somep\xe1th'
-        self.assert_(isinstance(alb.artpath, str))
+        self.assert_(isinstance(alb.artpath, bytes))
 
     def test_unicode_artpath_in_database_decoded(self):
         alb = self.lib.add_album([self.i])
@@ -995,7 +999,7 @@ class PathStringTest(_common.TestCase):
             (u'somep\xe1th', alb.id)
         )
         alb = self.lib.get_album(alb.id)
-        self.assert_(isinstance(alb.artpath, str))
+        self.assert_(isinstance(alb.artpath, bytes))
 
 
 class PathTruncationTest(_common.TestCase):
@@ -1067,15 +1071,6 @@ class ImportTimeTest(_common.TestCase):
 
 
 class TemplateTest(_common.LibTestCase):
-    def album_fields_override_item_values(self):
-        self.album = self.lib.add_album([self.i])
-        self.album.albumartist = 'album-level'
-        self.album.store()
-        self.i.albumartist = 'track-level'
-        self.i.store()
-        self.assertEqual(self.i.evaluate_template('$albumartist'),
-                         'album-level')
-
     def test_year_formatted_in_template(self):
         self.i.year = 123
         self.i.store()
@@ -1086,6 +1081,23 @@ class TemplateTest(_common.LibTestCase):
         self.album.foo = 'baz'
         self.album.store()
         self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
+
+    def test_album_and_item_format(self):
+        config['list_format_album'] = u'foö $foo'
+        album = beets.library.Album()
+        album.foo = 'bar'
+        album.tagada = 'togodo'
+        self.assertEqual(u"{0}".format(album), u"foö bar")
+        self.assertEqual(u"{0:$tagada}".format(album), u"togodo")
+        self.assertEqual(unicode(album), u"foö bar")
+        self.assertEqual(str(album), b"fo\xc3\xb6 bar")
+
+        config['list_format_item'] = 'bar $foo'
+        item = beets.library.Item()
+        item.foo = 'bar'
+        item.tagada = 'togodo'
+        self.assertEqual("{0}".format(item), "bar bar")
+        self.assertEqual("{0:$tagada}".format(item), "togodo")
 
 
 class UnicodePathTest(_common.LibTestCase):
@@ -1150,5 +1162,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

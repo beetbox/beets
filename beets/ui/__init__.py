@@ -16,7 +16,9 @@
 interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
-from __future__ import print_function
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import locale
 import optparse
@@ -41,7 +43,7 @@ from beets.autotag import mb
 from beets.dbcore import query as db_query
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
-if sys.platform == 'win32':
+if sys.platform == b'win32':
     try:
         import colorama
     except ImportError:
@@ -97,6 +99,9 @@ def print_(*strings):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
+
+    If the arguments are strings then they're expected to share the same type:
+    either bytes or unicode.
     """
     if strings:
         if isinstance(strings[0], unicode):
@@ -217,11 +222,11 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         prompt_part_lengths = []
         if numrange:
             if isinstance(default, int):
-                default_name = str(default)
+                default_name = unicode(default)
                 default_name = colorize('turquoise', default_name)
                 tmpl = '# selection (default %s)'
                 prompt_parts.append(tmpl % default_name)
-                prompt_part_lengths.append(len(tmpl % str(default)))
+                prompt_part_lengths.append(len(tmpl % unicode(default)))
             else:
                 prompt_parts.append('# selection')
                 prompt_part_lengths.append(len(prompt_parts[-1]))
@@ -471,31 +476,6 @@ def get_replacements():
     return replacements
 
 
-def _pick_format(album, fmt=None):
-    """Pick a format string for printing Album or Item objects,
-    falling back to config options and defaults.
-    """
-    if fmt:
-        return fmt
-    if album:
-        return config['list_format_album'].get(unicode)
-    else:
-        return config['list_format_item'].get(unicode)
-
-
-def print_obj(obj, lib, fmt=None):
-    """Print an Album or Item object. If `fmt` is specified, use that
-    format string. Otherwise, use the configured template.
-    """
-    album = isinstance(obj, library.Album)
-    fmt = _pick_format(album, fmt)
-    if isinstance(fmt, Template):
-        template = fmt
-    else:
-        template = Template(fmt)
-    print_(obj.evaluate_template(template))
-
-
 def term_width():
     """Get the width (columns) of the terminal."""
     fallback = config['ui']['terminal_width'].get(int)
@@ -513,7 +493,7 @@ def term_width():
     except IOError:
         return fallback
     try:
-        height, width = struct.unpack('hh', buf)
+        height, width = struct.unpack(b'hh', buf)
     except struct.error:
         return fallback
     return width
@@ -587,7 +567,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
     # Print changes.
     if changes or always:
-        print_obj(old, old._db)
+        print_(format(old))
     if changes:
         print_(u'\n'.join(changes))
 
@@ -633,8 +613,8 @@ class Subcommand(object):
     @root_parser.setter
     def root_parser(self, root_parser):
         self._root_parser = root_parser
-        self.parser.prog = '{0} {1}'.format(root_parser.get_prog_name(),
-                                            self.name)
+        self.parser.prog = '{0} {1}'.format(
+            root_parser.get_prog_name().decode('utf8'), self.name)
 
 
 class SubcommandsOptionParser(optparse.OptionParser):
@@ -853,7 +833,7 @@ def _configure(options):
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
-    if getattr(options, 'config', None) is not None:
+    if getattr(options, b'config', None) is not None:
         config_path = options.config
         del options.config
         config.set_file(config_path)

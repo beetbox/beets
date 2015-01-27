@@ -13,6 +13,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 """Tests for the general importer functionality.
 """
 import os
@@ -24,10 +27,10 @@ from zipfile import ZipFile
 from tarfile import TarFile
 from mock import patch
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets.util import displayable_path
-from helper import TestImportSession, TestHelper, has_program, capture_log
+from test.helper import TestImportSession, TestHelper, has_program, capture_log
 from beets import importer
 from beets.importer import albums_in_dir
 from beets.mediafile import MediaFile
@@ -1617,5 +1620,5 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

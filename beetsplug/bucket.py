@@ -15,6 +15,9 @@
 """Provides the %bucket{} function for path formatting.
 """
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from datetime import datetime
 import re
 import string
@@ -131,9 +134,9 @@ def str2fmt(s):
 def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
     """Return a span string representation.
     """
-    args = (str(yearfrom)[-fromnchars:])
+    args = (bytes(yearfrom)[-fromnchars:])
     if tonchars:
-        args = (str(yearfrom)[-fromnchars:], str(yearto)[-tonchars:])
+        args = (bytes(yearfrom)[-fromnchars:], bytes(yearto)[-tonchars:])
     return fmt % args
 
 

@@ -13,8 +13,8 @@ Configuration
 To configure the plugin, make a ``filefilter:`` section in your
 configuration file. The available options are:
 
-- **path**: A regular expression to filter files based on its path and name.
-  Default: ``.*`` (everything)
+- **path**: A regular expression to filter files based on their path and name.
+  Default: ``.*`` (import everything)
 - **album_path** and **singleton_path**: You may specify different regular
   expressions used for imports of albums and singletons. This way, you can
   automatically skip singletons when importing albums if the names (and paths)

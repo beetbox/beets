@@ -15,6 +15,9 @@
 """Adds Discogs album search support to the autotagger. Requires the
 discogs-client library.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import beets.ui
 from beets import logging
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
@@ -33,7 +36,7 @@ import json
 urllib3_logger = logging.getLogger('requests.packages.urllib3')
 urllib3_logger.setLevel(logging.CRITICAL)
 
-USER_AGENT = 'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
+USER_AGENT = u'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
 
 
 class DiscogsPlugin(BeetsPlugin):

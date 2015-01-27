@@ -1,7 +1,10 @@
 """Tests for the 'zero' plugin"""
 
-from _common import unittest
-from helper import TestHelper
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest
+from test.helper import TestHelper
 
 from beets.library import Item
 from beets import config
@@ -103,5 +106,5 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

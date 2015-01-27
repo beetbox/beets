@@ -1,3 +1,6 @@
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import yaml
 from mock import patch
@@ -7,9 +10,9 @@ from shutil import rmtree
 from beets import ui
 from beets import config
 
-import _common
-from _common import unittest
-from helper import TestHelper, capture_stdout
+from test import _common
+from test._common import unittest
+from test.helper import TestHelper, capture_stdout
 from beets.library import Library
 
 
@@ -104,7 +107,7 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
                 execlp.side_effect = OSError()
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
-                      str(user_error.exception.args[0]))
+                      unicode(user_error.exception.args[0]))
 
     def test_edit_invalid_config_file(self):
         self.lib = Library(':memory:')
@@ -123,5 +126,5 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

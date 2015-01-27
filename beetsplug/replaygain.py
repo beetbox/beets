@@ -12,6 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import subprocess
 import os
 import collections
@@ -177,7 +180,7 @@ class CommandBackend(Backend):
             # Disable clipping warning.
             cmd = cmd + ['-c']
         cmd = cmd + ['-a' if is_album else '-r']
-        cmd = cmd + ['-d', str(self.gain_offset)]
+        cmd = cmd + ['-d', bytes(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug(u'analyzing {0} files', len(items))
@@ -195,9 +198,9 @@ class CommandBackend(Backend):
         containing information about each analyzed file.
         """
         out = []
-        for line in text.split('\n')[1:num_lines + 1]:
-            parts = line.split('\t')
-            if len(parts) != 6 or parts[0] == 'File':
+        for line in text.split(b'\n')[1:num_lines + 1]:
+            parts = line.split(b'\t')
+            if len(parts) != 6 or parts[0] == b'File':
                 self._log.debug(u'bad tool output: {0}', text)
                 raise ReplayGainError('mp3gain failed')
             d = {
@@ -558,7 +561,7 @@ class AudioToolsBackend(Backend):
 
         :rtype: :class:`AlbumGain`
         """
-        self._log.debug(u'Analysing album {0.albumartist} - {0.album}', album)
+        self._log.debug(u'Analysing album {0}', album)
 
         # The first item is taken and opened to get the sample rate to
         # initialize the replaygain object. The object is used for all the
@@ -574,15 +577,13 @@ class AudioToolsBackend(Backend):
             track_gains.append(
                 Gain(gain=rg_track_gain, peak=rg_track_peak)
             )
-            self._log.debug(u'ReplayGain for track {0.artist} - {0.title}: '
-                            u'{1:.2f}, {2:.2f}',
+            self._log.debug(u'ReplayGain for track {0}: {1:.2f}, {2:.2f}',
                             item, rg_track_gain, rg_track_peak)
 
         # After getting the values for all tracks, it's possible to get the
         # album values.
         rg_album_gain, rg_album_peak = rg.album_gain()
-        self._log.debug(u'ReplayGain for album {0.albumartist} - {0.album}: '
-                        u'{1:.2f}, {2:.2f}',
+        self._log.debug(u'ReplayGain for album {0}: {1:.2f}, {2:.2f}',
                         album, rg_album_gain, rg_album_peak)
 
         return AlbumGain(
@@ -674,20 +675,17 @@ class ReplayGainPlugin(BeetsPlugin):
         items, nothing is done.
         """
         if not self.album_requires_gain(album):
-            self._log.info(u'Skipping album {0} - {1}',
-                           album.albumartist, album.album)
+            self._log.info(u'Skipping album {0}', album)
             return
 
-        self._log.info(u'analyzing {0} - {1}', album.albumartist, album.album)
+        self._log.info(u'analyzing {0}', album)
 
         try:
             album_gain = self.backend_instance.compute_album_gain(album)
             if len(album_gain.track_gains) != len(album.items()):
                 raise ReplayGainError(
                     u"ReplayGain backend failed "
-                    u"for some tracks in album {0} - {1}".format(
-                        album.albumartist, album.album
-                    )
+                    u"for some tracks in album {0}".format(album)
                 )
 
             self.store_album_gain(album, album_gain.album_gain)
@@ -711,18 +709,16 @@ class ReplayGainPlugin(BeetsPlugin):
         in the item, nothing is done.
         """
         if not self.track_requires_gain(item):
-            self._log.info(u'Skipping track {0.artist} - {0.title}', item)
+            self._log.info(u'Skipping track {0}', item)
             return
 
-        self._log.info(u'analyzing {0} - {1}', item.artist, item.title)
+        self._log.info(u'analyzing {0}', item)
 
         try:
             track_gains = self.backend_instance.compute_track_gain([item])
             if len(track_gains) != 1:
                 raise ReplayGainError(
-                    u"ReplayGain backend failed for track {0} - {1}".format(
-                        item.artist, item.title
-                    )
+                    u"ReplayGain backend failed for track {0}".format(item)
                 )
 
             self.store_track_gain(item, track_gains[0])

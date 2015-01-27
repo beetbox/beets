@@ -12,6 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 """Gets genres for imported music based on Last.fm tags.
 
 Uses a provided whitelist file to determine which tags are valid genres.
@@ -122,7 +125,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             wl_filename = WHITELIST
         if wl_filename:
             wl_filename = normpath(wl_filename)
-            with open(wl_filename, 'r') as f:
+            with open(wl_filename, b'r') as f:
                 for line in f:
                     line = line.decode('utf8').strip().lower()
                     if line and not line.startswith(u'#'):
@@ -337,8 +340,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             for album in lib.albums(ui.decargs(args)):
                 album.genre, src = self._get_genre(album)
-                self._log.info(u'genre for album {0.albumartist} - {0.album} '
-                               u'({1}): {0.genre}', album, src)
+                self._log.info(u'genre for album {0} ({1}): {0.genre}',
+                               album, src)
                 album.store()
 
                 for item in album.items():
@@ -347,8 +350,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
                         item.store()
-                        self._log.info(u'genre for track {0.artist} - {0.tit'
-                                       u'le} ({1}): {0.genre}', item, src)
+                        self._log.info(u'genre for track {0} ({1}): {0.genre}',
+                                       item, src)
 
                     if write:
                         item.try_write()

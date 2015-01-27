@@ -15,7 +15,9 @@
 """Matches existing metadata with canonical information to identify
 releases and tracks.
 """
-from __future__ import division
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import datetime
 import re
@@ -405,7 +407,7 @@ def tag_album(items, search_artist=None, search_album=None,
         if id_info:
             _add_candidate(items, candidates, id_info)
             rec = _recommendation(candidates.values())
-            log.debug(u'Album ID match recommendation is {0}', str(rec))
+            log.debug(u'Album ID match recommendation is {0}', rec)
             if candidates and not config['import']['timid']:
                 # If we have a very good MBID match, return immediately.
                 # Otherwise, this match will compete against metadata-based
@@ -424,7 +426,7 @@ def tag_album(items, search_artist=None, search_album=None,
         va_likely = ((not consensus['artist']) or
                      (search_artist.lower() in VA_ARTISTS) or
                      any(item.comp for item in items))
-        log.debug(u'Album might be VA: {0}', str(va_likely))
+        log.debug(u'Album might be VA: {0}', va_likely)
 
         # Get the results from the data sources.
         search_cands = hooks.album_candidates(items, search_artist,

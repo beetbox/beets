@@ -14,6 +14,9 @@
 
 """Converts tracks or albums to external directory
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import threading
 import subprocess
@@ -43,7 +46,7 @@ def replace_ext(path, ext):
 
     The new extension must not contain a leading dot.
     """
-    return os.path.splitext(path)[0] + '.' + ext
+    return os.path.splitext(path)[0] + b'.' + ext
 
 
 def get_format(format=None):
@@ -63,7 +66,7 @@ def get_format(format=None):
             .format(format)
         )
     except ConfigTypeError:
-        command = config['convert']['formats'][format].get(str)
+        command = config['convert']['formats'][format].get(bytes)
         extension = format
 
     # Convenience and backwards-compatibility shortcuts.
@@ -175,8 +178,8 @@ class ConvertPlugin(BeetsPlugin):
         args = shlex.split(command)
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
-                'source': source,
-                'dest': dest,
+                'source': source.decode('utf8'),
+                'dest': dest.decode('utf8'),
             })
 
         if pretend:
@@ -356,7 +359,7 @@ class ConvertPlugin(BeetsPlugin):
             self.config['pretend'].get(bool)
 
         if not pretend:
-            ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
+            ui.commands.list_items(lib, ui.decargs(args), opts.album, '')
 
             if not (opts.yes or ui.input_yn("Convert? (Y/n)")):
                 return

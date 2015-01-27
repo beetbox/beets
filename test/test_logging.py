@@ -1,9 +1,12 @@
 """Stupid tests that ensure logging works as expected"""
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import logging as log
 from StringIO import StringIO
 
 import beets.logging as blog
-from _common import unittest, TestCase
+from test._common import unittest, TestCase
 
 
 class LoggingTest(TestCase):
@@ -38,5 +41,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

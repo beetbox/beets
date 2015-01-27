@@ -14,10 +14,11 @@
 
 """Get a random song or album from the library.
 """
-from __future__ import absolute_import
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_obj
-from beets.util.functemplate import Template
+from beets.ui import Subcommand, decargs, print_
 import random
 from operator import attrgetter
 from itertools import groupby
@@ -25,11 +26,7 @@ from itertools import groupby
 
 def random_item(lib, opts, args):
     query = decargs(args)
-    if opts.path:
-        fmt = '$path'
-    else:
-        fmt = opts.format
-    template = Template(fmt) if fmt else None
+    fmt = '$path' if opts.path else opts.format
 
     if opts.album:
         objs = list(lib.albums(query))
@@ -66,7 +63,7 @@ def random_item(lib, opts, args):
         objs = random.sample(objs, number)
 
     for item in objs:
-        print_obj(item, lib, template)
+        print_(format(item, fmt))
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')
@@ -75,7 +72,7 @@ random_cmd.parser.add_option('-a', '--album', action='store_true',
 random_cmd.parser.add_option('-p', '--path', action='store_true',
                              help='print the path of the matched item')
 random_cmd.parser.add_option('-f', '--format', action='store',
-                             help='print with custom format', default=None)
+                             help='print with custom format', default='')
 random_cmd.parser.add_option('-n', '--number', action='store', type="int",
                              help='number of objects to choose', default=1)
 random_cmd.parser.add_option('-e', '--equal-chance', action='store_true',

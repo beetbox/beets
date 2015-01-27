@@ -1,6 +1,9 @@
 """Tests for the 'ihate' plugin"""
 
-from _common import unittest
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest
 from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin
@@ -46,5 +49,5 @@ class IHatePluginTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

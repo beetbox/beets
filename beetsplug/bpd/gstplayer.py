@@ -15,7 +15,9 @@
 """A wrapper for the GStreamer Python bindings that exposes a simple
 music player.
 """
-from __future__ import print_function
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import sys
 import time
@@ -88,7 +90,7 @@ class GstPlayer(object):
             # error
             self.player.set_state(gst.STATE_NULL)
             err, debug = message.parse_error()
-            print("Error: " + str(err))
+            print("Error: {0}".format(err))
             self.playing = False
 
     def _set_volume(self, volume):
@@ -212,7 +214,7 @@ def play_complicated(paths):
     while my_paths:
         time.sleep(1)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     # A very simple command-line player. Just give it names of audio
     # files on the command line; these are all played in sequence.
     paths = [os.path.abspath(os.path.expanduser(p))

@@ -13,8 +13,11 @@
 # included in all copies or substantial portions of the Software.
 
 
-from _common import unittest
-from helper import TestHelper, has_program
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest
+from test.helper import TestHelper, has_program
 
 from beets.mediafile import MediaFile
 
@@ -123,5 +126,5 @@ class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

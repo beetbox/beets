@@ -12,6 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import sys
 import requests
@@ -41,9 +44,9 @@ def main(argv=None):
     """
     if argv is None:
         argv = sys.argv
-    print 'Fetching samples from:'
+    print('Fetching samples from:')
     for s in test_lyrics.GOOGLE_SOURCES + test_lyrics.DEFAULT_SOURCES:
-        print s['url']
+        print(s['url'])
         url = s['url'] + s['path']
         fn = test_lyrics.url_to_filename(url)
         if not os.path.isfile(fn):
@@ -51,5 +54,5 @@ def main(argv=None):
             with safe_open_w(fn) as f:
                 f.write(html.encode('utf8'))
 
-if __name__ == "__main__":
+if __name__ == b'__main__':
     sys.exit(main())

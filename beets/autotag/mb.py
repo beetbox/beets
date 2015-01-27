@@ -14,6 +14,9 @@
 
 """Searches for albums in the MusicBrainz database.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import musicbrainzngs
 import re
 import traceback
@@ -316,7 +319,7 @@ def match_album(artist, album, tracks=None):
         # Various Artists search.
         criteria['arid'] = VARIOUS_ARTISTS_ID
     if tracks is not None:
-        criteria['tracks'] = str(tracks)
+        criteria['tracks'] = unicode(tracks)
 
     # Abort if we have no search terms.
     if not any(criteria.itervalues()):

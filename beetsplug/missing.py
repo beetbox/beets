@@ -14,16 +14,19 @@
 
 """List missing tracks.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from beets.autotag import hooks
 from beets.library import Item
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_obj, Subcommand
+from beets.ui import decargs, print_, Subcommand
 
 
 def _missing_count(album):
     """Return number of missing items in `album`.
     """
-    return (album.tracktotal or 0) - len(album.items())
+    return (album.albumtotal or 0) - len(album.items())
 
 
 def _item(track_info, album_info, album_id):
@@ -95,7 +98,7 @@ class MissingPlugin(BeetsPlugin):
         self._command.parser.add_option('-f', '--format', dest='format',
                                         action='store', type='string',
                                         help='print with custom FORMAT',
-                                        metavar='FORMAT')
+                                        metavar='FORMAT', default='')
 
         self._command.parser.add_option('-c', '--count', dest='count',
                                         action='store_true',
@@ -123,13 +126,12 @@ class MissingPlugin(BeetsPlugin):
 
             for album in albums:
                 if count:
-                    missing = _missing_count(album)
-                    if missing:
-                        print_obj(album, lib, fmt=fmt)
+                    if _missing_count(album):
+                        print_(format(album, fmt))
 
                 else:
                     for item in self._missing(album):
-                        print_obj(item, lib, fmt=fmt)
+                        print_(format(item, fmt))
 
         self._command.func = _miss
         return [self._command]
@@ -139,7 +141,7 @@ class MissingPlugin(BeetsPlugin):
         """
         item_mbids = map(lambda x: x.mb_trackid, album.items())
 
-        if len([i for i in album.items()]) < album.tracktotal:
+        if len([i for i in album.items()]) < album.albumtotal:
             # fetch missing items
             # TODO: Implement caching that without breaking other stuff
             album_info = hooks.album_for_mbid(album.mb_albumid)

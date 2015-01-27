@@ -14,11 +14,14 @@
 
 """Tests for autotagging functionality.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import re
 import copy
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets import autotag
 from beets.autotag import match
 from beets.autotag.hooks import Distance, string_dist
@@ -569,7 +572,7 @@ class AssignmentTest(unittest.TestCase):
             return Item(
                 artist=u'ben harper',
                 album=u'burn to shine',
-                title=u'ben harper - Burn to Shine ' + str(i),
+                title=u'ben harper - Burn to Shine {0}'.format(i),
                 track=i,
                 length=length,
                 mb_trackid='', mb_albumid='', mb_artistid='',
@@ -942,5 +945,5 @@ class EnumTest(_common.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

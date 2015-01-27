@@ -14,12 +14,15 @@
 
 """Specific, edge-case tests for the MediaFile metadata layer.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import shutil
 
-import _common
-from _common import unittest
-from helper import TestHelper
+from test import _common
+from test._common import unittest
+from test.helper import TestHelper
 import beets.mediafile
 
 
@@ -289,7 +292,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
             mf.year = 2013
             mf.save()
             frame = mf.mgfile['TDRC']
-            self.assertTrue('2013' in str(frame))
+            self.assertTrue('2013' in unicode(frame))
             self.assertTrue('TYER' not in mf.mgfile)
         finally:
             self._delete_test()
@@ -300,7 +303,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
             mf.year = 2013
             mf.save()
             frame = mf.mgfile['TYER']
-            self.assertTrue('2013' in str(frame))
+            self.assertTrue('2013' in unicode(frame))
             self.assertTrue('TDRC' not in mf.mgfile)
         finally:
             self._delete_test()
@@ -343,5 +346,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

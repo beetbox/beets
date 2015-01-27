@@ -14,6 +14,9 @@
 
 """Fetch a variety of acoustic metrics from The Echo Nest.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import time
 import socket
 import os
@@ -115,7 +118,7 @@ def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
             d = diff(item, src_item)
             if d < threshold:
                 s = fmt.replace('${difference}', '{:2.2f}'.format(d))
-                ui.print_obj(item, lib, s)
+                ui.print_(format(item, s))
 
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):
@@ -401,10 +404,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         for method in methods:
             song = method(item)
             if song:
-                self._log.debug(u'got song through {0}: {1} - {2} [{3}]',
+                self._log.debug(u'got song through {0}: {1} [{2}]',
                                 method.__name__,
-                                item.artist,
-                                item.title,
+                                item,
                                 song.get('duration'),
                                 )
                 return song
@@ -471,7 +473,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                self._log.info(u'{0} - {1}', item.artist, item.title)
+                self._log.info(u'{0}', item)
                 if self.config['force'] or self.requires_update(item):
                     song = self.fetch_song(item)
                     if song:

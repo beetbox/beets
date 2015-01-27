@@ -13,11 +13,15 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests the TerminalImportSession. The tests are the same as in the
+
 test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-from _common import unittest, DummyIO
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest, DummyIO
 from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer
@@ -65,7 +69,7 @@ class TestTerminalImportSession(TerminalImportSession):
             self.io.addinput('S')
         elif isinstance(choice, int):
             self.io.addinput('M')
-            self.io.addinput(str(choice))
+            self.io.addinput(unicode(choice))
             self._add_choice_input()
         else:
             raise Exception('Unknown choice %s' % choice)
@@ -144,5 +148,5 @@ class GlobalGroupAlbumsImportTest(TerminalImportSessionSetup,
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

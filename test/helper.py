@@ -30,6 +30,9 @@ information or mock the environment.
 """
 
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import sys
 import os
 import os.path
@@ -50,7 +53,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
 
 # TODO Move AutotagMock here
-import _common
+from test import _common
 
 
 class LogCapture(logging.Handler):
@@ -324,7 +327,7 @@ class TestHelper(object):
         items = []
         path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(count):
-            item = Item.from_path(str(path))
+            item = Item.from_path(bytes(path))
             item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
@@ -339,7 +342,7 @@ class TestHelper(object):
         items = []
         path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(track_count):
-            item = Item.from_path(str(path))
+            item = Item.from_path(bytes(path))
             item.album = u'\u00e4lbum'  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)

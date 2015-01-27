@@ -14,7 +14,9 @@
 
 """Generates smart playlists based on beets queries.
 """
-from __future__ import print_function
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -101,5 +103,5 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 mkdirall(m3u_path)
                 with open(syspath(m3u_path), 'w') as f:
                     for path in m3us[m3u]:
-                        f.write(path + '\n')
+                        f.write(path + b'\n')
         self._log.info("{0} playlists updated", len(playlists))

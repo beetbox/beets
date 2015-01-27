@@ -14,6 +14,9 @@
 
 """The core data store and collection logic for beets.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import sys
 import shlex
@@ -42,7 +45,7 @@ class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path."""
 
     escape_re = re.compile(r'[\\_%]')
-    escape_char = '\\'
+    escape_char = b'\\'
 
     def __init__(self, field, pattern, fast=True):
         super(PathQuery, self).__init__(field, pattern, fast)
@@ -50,7 +53,7 @@ class PathQuery(dbcore.FieldQuery):
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
         # As a directory (prefix).
-        self.dir_path = util.bytestring_path(os.path.join(self.file_path, ''))
+        self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
 
     def match(self, item):
         return (item.path == self.file_path) or \
@@ -59,7 +62,7 @@ class PathQuery(dbcore.FieldQuery):
     def clause(self):
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
-        dir_pattern = buffer(dir_pattern + '%')
+        dir_pattern = buffer(dir_pattern + b'%')
         file_blob = buffer(self.file_path)
         return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
                (file_blob, dir_pattern, self.escape_char)
@@ -118,7 +121,7 @@ class PathType(types.Type):
         return self.normalize(sql_value)
 
     def to_sql(self, value):
-        if isinstance(value, str):
+        if isinstance(value, bytes):
             value = buffer(value)
         return value
 
@@ -230,6 +233,10 @@ class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
 
+    _format_config_key = None
+    """Config key that specifies how an instance should be formatted.
+    """
+
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
@@ -246,6 +253,22 @@ class LibModel(dbcore.Model):
     def add(self, lib=None):
         super(LibModel, self).add(lib)
         plugins.send('database_change', lib=self._db)
+
+    def __format__(self, spec):
+        if not spec:
+            spec = beets.config[self._format_config_key].get(unicode)
+        result = self.evaluate_template(spec)
+        if isinstance(spec, bytes):
+            # if spec is a byte string then we must return a one as well
+            return result.encode('utf8')
+        else:
+            return result
+
+    def __str__(self):
+        return format(self).encode('utf8')
+
+    def __unicode__(self):
+        return format(self)
 
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
@@ -383,6 +406,8 @@ class Item(LibModel):
 
     _sorts = {'artist': SmartArtistSort}
 
+    _format_config_key = 'list_format_item'
+
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
@@ -407,7 +432,7 @@ class Item(LibModel):
             if isinstance(value, unicode):
                 value = bytestring_path(value)
             elif isinstance(value, buffer):
-                value = str(value)
+                value = bytes(value)
 
         if key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
@@ -510,7 +535,7 @@ class Item(LibModel):
             self.write(path)
             return True
         except FileOperationError as exc:
-            log.error(str(exc))
+            log.error("{0}", exc)
             return False
 
     def try_sync(self, write=None):
@@ -728,7 +753,6 @@ class Album(LibModel):
         'year':               types.PaddedInt(4),
         'month':              types.PaddedInt(2),
         'day':                types.PaddedInt(2),
-        'tracktotal':         types.PaddedInt(2),
         'disctotal':          types.PaddedInt(2),
         'comp':               types.BOOLEAN,
         'mb_albumid':         types.STRING,
@@ -767,7 +791,6 @@ class Album(LibModel):
         'year',
         'month',
         'day',
-        'tracktotal',
         'disctotal',
         'comp',
         'mb_albumid',
@@ -791,12 +814,15 @@ class Album(LibModel):
     """List of keys that are set on an album's items.
     """
 
+    _format_config_key = 'list_format_album'
+
     @classmethod
     def _getters(cls):
         # In addition to plugin-provided computed fields, also expose
         # the album's directory as `path`.
         getters = plugins.album_field_getters()
         getters['path'] = Album.item_dir
+        getters['albumtotal'] = Album._albumtotal
         return getters
 
     def items(self):
@@ -883,6 +909,27 @@ class Album(LibModel):
         if not item:
             raise ValueError('empty album')
         return os.path.dirname(item.path)
+
+    def _albumtotal(self):
+        """Return the total number of tracks on all discs on the album
+        """
+        if self.disctotal == 1 or not beets.config['per_disc_numbering']:
+            return self.items()[0].tracktotal
+
+        counted = []
+        total = 0
+
+        for item in self.items():
+            if item.disc in counted:
+                continue
+
+            total += item.tracktotal
+            counted.append(item.disc)
+
+            if len(counted) == self.disctotal:
+                break
+
+        return total
 
     def art_destination(self, image, item_dir=None):
         """Returns a path to the destination for the album art image
@@ -1152,7 +1199,7 @@ class DefaultTemplateFunctions(object):
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
-    _prefix = 'tmpl_'
+    _prefix = b'tmpl_'
 
     def __init__(self, item=None, lib=None):
         """Paramaterize the functions. If `item` or `lib` is None, then

@@ -20,7 +20,9 @@ that when getLogger(name) instantiates a logger that logger uses
 {}-style formatting.
 """
 
-from __future__ import absolute_import
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from copy import copy
 from logging import *  # noqa
 import sys

@@ -14,6 +14,9 @@
 
 """The Query type hierarchy for DBCore.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import re
 from operator import attrgetter
 from beets import util
@@ -178,7 +181,7 @@ class BooleanQuery(MatchQuery):
 
 class BytesQuery(MatchQuery):
     """Match a raw bytes field (i.e., a path). This is a necessary hack
-    to work around the `sqlite3` module's desire to treat `str` and
+    to work around the `sqlite3` module's desire to treat `bytes` and
     `unicode` equivalently in Python 2. Always use this query instead of
     `MatchQuery` when matching on BLOB values.
     """
@@ -423,7 +426,7 @@ class Period(object):
         precision (a string, one of "year", "month", or "day").
         """
         if precision not in Period.precisions:
-            raise ValueError('Invalid precision ' + str(precision))
+            raise ValueError('Invalid precision {0}'.format(precision))
         self.date = date
         self.precision = precision
 
@@ -463,7 +466,7 @@ class Period(object):
         elif 'day' == precision:
             return date + timedelta(days=1)
         else:
-            raise ValueError('unhandled precision ' + str(precision))
+            raise ValueError('unhandled precision {0}'.format(precision))
 
 
 class DateInterval(object):

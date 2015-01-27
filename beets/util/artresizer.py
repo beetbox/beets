@@ -15,6 +15,9 @@
 """Abstraction layer to resize images using PIL, ImageMagick, or a
 public resizing proxy if neither is available.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import urllib
 import subprocess
 import os
@@ -40,7 +43,7 @@ def resize_url(url, maxwidth):
     """
     return '{0}?{1}'.format(PROXY_URL, urllib.urlencode({
         'url': url.replace('http://', ''),
-        'w': str(maxwidth),
+        'w': bytes(maxwidth),
     }))
 
 
