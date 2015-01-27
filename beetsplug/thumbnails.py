@@ -31,6 +31,11 @@ from beets.util import syspath, displayable_path
 from beets.util.artresizer import ArtResizer
 
 
+BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
+NORMAL_DIR = os.path.join(BASE_DIR, "normal")
+LARGE_DIR = os.path.join(BASE_DIR, "large")
+
+
 class ThumbnailsPlugin(BeetsPlugin):
     def __init__(self):
         super(ThumbnailsPlugin, self).__init__()
@@ -56,6 +61,11 @@ class ThumbnailsPlugin(BeetsPlugin):
             self._log.warning("No local image resizing capabilities, "
                               "cannot generate thumbnails")
             return False
+
+        for dir in (NORMAL_DIR, LARGE_DIR):
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+
         return True
 
     def process_album(self, album):
@@ -67,8 +77,6 @@ class ThumbnailsPlugin(BeetsPlugin):
         if not album.artpath:
             self._log.info(u'album {0} has no art', album)
             return
-
-        # FIXME should create dirs if needed?
 
         # FIXME should handle covers smaller than 256x256
         # see http://standards.freedesktop.org/thumbnail-spec/latest/x122.html
