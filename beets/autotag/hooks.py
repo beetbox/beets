@@ -361,6 +361,9 @@ class Distance(object):
     def __rsub__(self, other):
         return other - self.distance
 
+    def __unicode__(self):
+        return "{0:.2f}".format(self.distance)
+
     # Behave like a dict.
 
     def __getitem__(self, key):
