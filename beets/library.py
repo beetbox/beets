@@ -402,6 +402,14 @@ class Item(LibModel):
     `write`.
     """
 
+    _media_tag_fields = set(MediaFile.fields()).intersection(_fields.keys())
+    """Set of item fields that are backed by *writable* `MediaFile` tag
+    fields.
+
+    This excludes fields that represent audio data, such as `bitrate` or
+    `length`.
+    """
+
     _formatter = FormattedItemMapping
 
     _sorts = {'artist': SmartArtistSort}
