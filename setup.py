@@ -76,7 +76,7 @@ setup(
     },
 
     install_requires=[
-        'enum34',
+        'enum34>=1.0.4',
         'mutagen>=1.27',
         'munkres',
         'unidecode',
