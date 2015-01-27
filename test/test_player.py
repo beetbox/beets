@@ -23,42 +23,42 @@ from beetsplug import bpd
 
 class CommandParseTest(unittest.TestCase):
     def test_no_args(self):
-        s = ur'command'
+        s = r'command'
         c = bpd.Command(s)
         self.assertEqual(c.name, u'command')
         self.assertEqual(c.args, [])
 
     def test_one_unquoted_arg(self):
-        s = ur'command hello'
+        s = r'command hello'
         c = bpd.Command(s)
         self.assertEqual(c.name, u'command')
         self.assertEqual(c.args, [u'hello'])
 
     def test_two_unquoted_args(self):
-        s = ur'command hello there'
+        s = r'command hello there'
         c = bpd.Command(s)
         self.assertEqual(c.name, u'command')
         self.assertEqual(c.args, [u'hello', u'there'])
 
     def test_one_quoted_arg(self):
-        s = ur'command "hello there"'
+        s = r'command "hello there"'
         c = bpd.Command(s)
         self.assertEqual(c.name, u'command')
         self.assertEqual(c.args, [u'hello there'])
 
     def test_heterogenous_args(self):
-        s = ur'command "hello there" sir'
+        s = r'command "hello there" sir'
         c = bpd.Command(s)
         self.assertEqual(c.name, u'command')
         self.assertEqual(c.args, [u'hello there', u'sir'])
 
     def test_quote_in_arg(self):
-        s = ur'command "hello \" there"'
+        s = r'command "hello \" there"'
         c = bpd.Command(s)
         self.assertEqual(c.args, [u'hello " there'])
 
     def test_backslash_in_arg(self):
-        s = ur'command "hello \\ there"'
+        s = r'command "hello \\ there"'
         c = bpd.Command(s)
         self.assertEqual(c.args, [u'hello \ there'])
 

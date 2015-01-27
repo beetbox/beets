@@ -413,14 +413,14 @@ class DestinationTest(_common.TestCase):
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'a/.?/b', [
-                (re.compile(ur'foo'), u'bar'),
+                (re.compile(r'foo'), u'bar'),
             ])
         self.assertEqual(p, u'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'foo/bar', [
-                (re.compile(ur'foo'), u'bar'),
+                (re.compile(r'foo'), u'bar'),
             ])
         self.assertEqual(p, u'bar/bar')
 
@@ -465,7 +465,7 @@ class DestinationTest(_common.TestCase):
 
     def test_destination_with_replacements(self):
         self.lib.directory = 'base'
-        self.lib.replacements = [(re.compile(ur'a'), u'e')]
+        self.lib.replacements = [(re.compile(r'a'), u'e')]
         self.lib.path_formats = [('default', '$album/$title')]
         self.i.title = 'foo'
         self.i.album = 'bar'
@@ -476,14 +476,14 @@ class DestinationTest(_common.TestCase):
     def test_sanitize_empty_component(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'foo//bar', [
-                (re.compile(ur'^$'), u'_'),
+                (re.compile(r'^$'), u'_'),
             ])
         self.assertEqual(p, u'foo/_/bar')
 
     @unittest.skip('unimplemented: #359')
     def test_destination_with_empty_component(self):
         self.lib.directory = 'base'
-        self.lib.replacements = [(re.compile(ur'^$'), u'_')]
+        self.lib.replacements = [(re.compile(r'^$'), u'_')]
         self.lib.path_formats = [('default', '$album/$artist/$title')]
         self.i.title = 'three'
         self.i.artist = ''
@@ -495,7 +495,7 @@ class DestinationTest(_common.TestCase):
     @unittest.skip('unimplemented: #359')
     def test_destination_with_empty_final_component(self):
         self.lib.directory = 'base'
-        self.lib.replacements = [(re.compile(ur'^$'), u'_')]
+        self.lib.replacements = [(re.compile(r'^$'), u'_')]
         self.lib.path_formats = [('default', '$album/$title')]
         self.i.title = ''
         self.i.album = 'one'

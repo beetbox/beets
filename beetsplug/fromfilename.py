@@ -27,29 +27,29 @@ import re
 # Filename field extraction patterns.
 PATTERNS = [
     # "01 - Track 01" and "01": do nothing
-    ur'^(\d+)\s*-\s*track\s*\d$',
-    ur'^\d+$',
+    r'^(\d+)\s*-\s*track\s*\d$',
+    r'^\d+$',
 
     # Useful patterns.
-    ur'^(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    ur'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    ur'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    ur'^(?P<artist>.+)-(?P<title>.+)$',
-    ur'^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$',
-    ur'^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$',
-    ur'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$',
-    ur'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$',
-    ur'^(?P<title>.+)$',
-    ur'^(?P<track>\d+)\.\s*(?P<title>.+)$',
-    ur'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
-    ur'^(?P<track>\d+)\s(?P<title>.+)$',
-    ur'^(?P<title>.+) by (?P<artist>.+)$',
+    r'^(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    r'^(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<title>.+)$',
+    r'^(?P<track>\d+)\.\s*(?P<title>.+)$',
+    r'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
+    r'^(?P<track>\d+)\s(?P<title>.+)$',
+    r'^(?P<title>.+) by (?P<artist>.+)$',
 ]
 
 # Titles considered "empty" and in need of replacement.
 BAD_TITLE_PATTERNS = [
-    ur'^$',
-    ur'\d+?\s?-?\s*track\s*\d+',
+    r'^$',
+    r'\d+?\s?-?\s*track\s*\d+',
 ]
 
 
