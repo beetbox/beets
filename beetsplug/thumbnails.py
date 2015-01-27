@@ -27,7 +27,7 @@ from xdg import BaseDirectory
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
-from beets.util import syspath, displayable_path
+from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 
 
@@ -69,32 +69,37 @@ class ThumbnailsPlugin(BeetsPlugin):
         return True
 
     def process_album(self, album):
-        """Produce a thumbnail for the album folder
-
-        The thumbnail is a PNG of resolution either 256x256 or lower than
-        128x128
+        """Produce thumbnails for the album folder.
         """
         if not album.artpath:
             self._log.info(u'album {0} has no art', album)
             return
 
-        # FIXME should handle covers smaller than 256x256
-        # see http://standards.freedesktop.org/thumbnail-spec/latest/x122.html
+        size = ArtResizer.shared.get_size(album.artpath)
+        if not size:
+            self._log.warning('Problem getting the picture size for {0}',
+                              album.artpath)
+            return
 
-        target = os.path.join(BaseDirectory.xdg_cache_home,
-                              "thumbnails", "large",
-                              self.thumbnail_file_name(album.path))
+        if max(size):
+            self.make_cover_thumbnail(album, 256, LARGE_DIR)
+        self.make_cover_thumbnail(album, 128, NORMAL_DIR)
 
-        resized = ArtResizer.shared.resize(256,
-                                           syspath(album.artpath),
+        self._log.info(u'wrote thumbnail for {0}', album)
+
+    def make_cover_thumbnail(self, album, size, target_dir):
+        """Make a thumbnail of given size for `album` and put it in
+        `target_dir`.
+        """
+        self._log.debug("Building thumbnail to put on {0}", album.path)
+        target = os.path.join(target_dir, self.thumbnail_file_name(album.path))
+        resized = ArtResizer.shared.resize(size, album.artpath,
                                            syspath(target))
 
         # FIXME should add tags
         # see http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
 
         shutil.move(resized, target)
-        self._log.info(u'wrote thumbnail for {0}', album)
-        self._log.debug(u'thumbnail is at {0}', displayable_path(target))
 
     @staticmethod
     def thumbnail_file_name(path):
