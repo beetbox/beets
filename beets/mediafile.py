@@ -1431,7 +1431,7 @@ class MediaFile(object):
         """
         for property, descriptor in cls.__dict__.items():
             if isinstance(descriptor, MediaField):
-                yield property
+                yield property.decode('utf8')
 
     @classmethod
     def readable_fields(cls):

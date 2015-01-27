@@ -393,7 +393,7 @@ class Item(LibModel):
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
 
-    _media_fields = set(f.decode('utf8') for f in MediaFile.readable_fields()) \
+    _media_fields = set(MediaFile.readable_fields()) \
         .intersection(_fields.keys())
     """Set of item fields that are backed by `MediaFile` fields.
 
