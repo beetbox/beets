@@ -97,8 +97,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                            'with the album')
 
         def extract_func(lib, opts, args):
-            if opts.filename:
-                filename = opts.filename
+            if opts.outpath:
+                self.extract_first(normpath(opts.outpath),
+                                   lib.items(decargs(args)))
+            else:
+                filename = opts.filename or config['art_filename'].get()
                 if os.path.dirname(filename) != '':
                     self._log.error(u"Only specify a name rather a path for "
                                     u"-n")
@@ -108,11 +111,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     artpath = self.extract_first(artpath, album.items())
                     if artpath and opts.associate:
                         album.set_art(artpath)
-
-            else:
-                outpath = normpath(opts.outpath
-                                   or config['art_filename'].get())
-                self.extract_first(outpath, lib.items(decargs(args)))
+                        album.store()
         extract_cmd.func = extract_func
 
         # Clear command.
