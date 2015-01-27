@@ -125,7 +125,7 @@ def im_getsize(path_in):
                  util.displayable_path(path_in))
         return
     try:
-        return out.split(' ')[-7].split('x')
+        return tuple(map(int, out.split(b' ')[-7].split(b'x')))
     except IndexError:
         log.warn(u'Could not understand IM output: {0!r}', out)
 
