@@ -107,6 +107,35 @@ BACKEND_FUNCS = {
 }
 
 
+def pil_getsize(path_in):
+    from PIL import Image
+    try:
+        im = Image.open(util.syspath(path_in))
+        return im.size
+    except IOError:
+        log.error(u"PIL cannot compute size of '{0}'",
+                  util.displayable_path(path_in))
+
+
+def im_getsize(path_in):
+    try:
+        out = util.command_output(['identify', util.syspath(path_in)])
+    except subprocess.CalledProcessError:
+        log.warn(u'IM cannot compute size of {0}',
+                 util.displayable_path(path_in))
+        return
+    try:
+        return out.split(' ')[-7].split('x')
+    except IndexError:
+        log.warn(u'Could not understand IM output: {0!r}', out)
+
+
+BACKEND_GET_SIZE = {
+    PIL: pil_getsize,
+    IMAGEMAGICK: im_getsize,
+}
+
+
 class Shareable(type):
     """A pseudo-singleton metaclass that allows both shared and
     non-shared instances. The ``MyClass.shared`` property holds a
@@ -164,6 +193,16 @@ class ArtResizer(object):
         locally (i.e., PIL or ImageMagick).
         """
         return self.method[0] in BACKEND_FUNCS
+
+    def get_size(self, path_in):
+        """Return the size of an image file as an int couple (width, height)
+        in pixels.
+
+        Only available locally
+        """
+        if self.local:
+            func = BACKEND_GET_SIZE[self.method[0]]
+            return func(path_in)
 
     def _can_compare(self):
         """A boolean indicating whether image comparison is available"""
