@@ -88,22 +88,30 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                     help='extract an image from file metadata')
         extract_cmd.parser.add_option('-o', dest='outpath',
                                       help='image output file')
-        extract_cmd.parser.add_option('-a', dest='albums', action='store_true',
-                                      help='extract the art of all matching '
-                                           'albums')
+        extract_cmd.parser.add_option('-n', dest='filename',
+                                      help='image filename to create for all '
+                                           'matched albums')
+        extract_cmd.parser.add_option('-a', dest='associate',
+                                      action='store_true',
+                                      help='associate the extracted images '
+                                           'with the album')
 
         def extract_func(lib, opts, args):
-            outpath = opts.outpath or config['art_filename'].get()
-            if opts.albums:
-                if opts.outpath and '/' in opts.outpath.replace('\\', '/'):
-                    self._log.error(u"When using -a, only specify a filename "
-                                    u"instead of a full path for -o")
+            if opts.filename:
+                filename = opts.filename
+                if os.path.dirname(filename) != '':
+                    self._log.error(u"Only specify a name rather a path for "
+                                    u"-n")
                     return
                 for album in lib.albums(decargs(args)):
-                    artpath = normpath(os.path.join(album.path, outpath))
-                    self.extract_first(artpath, album.items())
+                    artpath = normpath(os.path.join(album.path, filename))
+                    artpath = self.extract_first(artpath, album.items())
+                    if artpath and opts.associate:
+                        album.set_art(artpath)
+
             else:
-                outpath = normpath(outpath)
+                outpath = normpath(opts.outpath
+                                   or config['art_filename'].get())
                 self.extract_first(outpath, lib.items(decargs(args)))
         extract_cmd.func = extract_func
 
@@ -270,8 +278,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
     def extract_first(self, outpath, items):
         for item in items:
-            if self.extract(outpath, item):
-                return outpath
+            real_path = self.extract(outpath, item)
+            if real_path:
+                return real_path
 
     # 'clearart' command.
     def clear(self, lib, query):

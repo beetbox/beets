@@ -84,11 +84,11 @@ embedded album art:
   ``art_filename`` configuration option. It defaults to ``cover`` if it's not
   specified via ``-o`` nor the config.
 
-* ``beet extractart -a [-o FILE] QUERY``: extracts the images for all albums
+* ``beet extractart [-a] [-n FILE] QUERY``: extracts the images for all albums
   matching the query. The images are placed inside the album folder. The
-  destination filename is taken either from the ``-o`` option or the
-  ``art_filename`` configuration option. It defaults to ``cover`` if it's not
-  specified.
+  destination filename is taken either from the ``-n`` option. Using ``-a``,
+  the extracted image files are automatically associated with the corresponding
+  album.
 
 * ``beet clearart QUERY``: removes all embedded images from all items matching
   the query. (Use with caution!)
