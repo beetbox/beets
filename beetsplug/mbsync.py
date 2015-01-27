@@ -14,6 +14,9 @@
 
 """Update library's tags using MusicBrainz.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks

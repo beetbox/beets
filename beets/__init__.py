@@ -12,6 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import absolute_import, unicode_literals
+
 __version__ = '1.3.11'
 __author__ = 'Adrian Sampson <adrian@radbox.org>'
 

@@ -14,15 +14,18 @@
 
 """Tests for the command-line interface.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import shutil
 import re
 import subprocess
 import platform
 
-import _common
-from _common import unittest
-from helper import capture_stdout, has_program, TestHelper, control_stdin
+from test import _common
+from test._common import unittest
+from test.helper import capture_stdout, has_program, TestHelper, control_stdin
 
 from beets import library
 from beets import ui
@@ -177,12 +180,12 @@ class ModifyTest(unittest.TestCase, TestHelper):
     def test_move(self):
         self.modify("title=newTitle")
         item = self.lib.items().get()
-        self.assertIn('newTitle', item.path)
+        self.assertIn(b'newTitle', item.path)
 
     def test_not_move(self):
         self.modify("--nomove", "title=newTitle")
         item = self.lib.items().get()
-        self.assertNotIn('newTitle', item.path)
+        self.assertNotIn(b'newTitle', item.path)
 
     def test_update_mtime(self):
         item = self.item
@@ -223,13 +226,13 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertIn('newAlbum', item.path)
+        self.assertIn(b'newAlbum', item.path)
 
     def test_album_not_move(self):
         self.modify("--nomove", "--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertNotIn('newAlbum', item.path)
+        self.assertNotIn(b'newAlbum', item.path)
 
     # Misc
 
@@ -539,8 +542,8 @@ class InputTest(_common.TestCase):
         self.io.install()
 
     def test_manual_search_gets_unicode(self):
-        self.io.addinput('\xc3\x82me')
-        self.io.addinput('\xc3\x82me')
+        self.io.addinput(b'\xc3\x82me')
+        self.io.addinput(b'\xc3\x82me')
         artist, album = commands.manual_search(False)
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
@@ -647,7 +650,7 @@ class ConfigTest(unittest.TestCase, TestHelper):
 
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
-        self.assertEqual(replacements, [(re.compile(ur'[xy]'), u'z')])
+        self.assertEqual(replacements, [(re.compile(r'[xy]'), b'z')])
 
     def test_multiple_replacements_parsed(self):
         with self.write_config_file() as config:
@@ -656,8 +659,8 @@ class ConfigTest(unittest.TestCase, TestHelper):
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
         self.assertEqual(replacements, [
-            (re.compile(ur'[xy]'), u'z'),
-            (re.compile(ur'foo'), u'bar'),
+            (re.compile(r'[xy]'), 'z'),
+            (re.compile(r'foo'), 'bar'),
         ])
 
     def test_cli_config_option(self):
@@ -885,6 +888,7 @@ class ShowChangeTest(_common.TestCase):
     def _show_change(self, items=None, info=None,
                      cur_artist=u'the artist', cur_album=u'the album',
                      dist=0.1):
+        """Return an unicode string representing the changes"""
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
@@ -896,7 +900,8 @@ class ShowChangeTest(_common.TestCase):
             cur_album,
             autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
-        return self.io.getoutput().lower()
+        # FIXME decoding shouldn't be done here
+        return self.io.getoutput().lower().decode('utf8')
 
     def test_null_change(self):
         msg = self._show_change()
@@ -916,7 +921,7 @@ class ShowChangeTest(_common.TestCase):
     def test_item_data_change_with_unicode(self):
         self.items[0].title = u'caf\xe9'
         msg = self._show_change()
-        self.assertTrue(u'caf\xe9 -> the title' in msg.decode('utf8'))
+        self.assertTrue(u'caf\xe9 -> the title' in msg)
 
     def test_album_data_change_with_unicode(self):
         msg = self._show_change(cur_artist=u'caf\xe9',
@@ -931,7 +936,7 @@ class ShowChangeTest(_common.TestCase):
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = u''
         self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
-        msg = re.sub(r'  +', ' ', self._show_change().decode('utf8'))
+        msg = re.sub(r'  +', ' ', self._show_change())
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
                         or u'caf.mp3 ->' in msg)
 
@@ -1000,5 +1005,5 @@ class CompletionTest(_common.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

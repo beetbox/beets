@@ -14,14 +14,17 @@
 
 """Test file manipulation functionality of Item.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import shutil
 import os
 import stat
 from os.path import join
 
-import _common
-from _common import unittest
-from _common import item, touch
+from test import _common
+from test._common import unittest
+from test._common import item, touch
 import beets.library
 from beets import util
 
@@ -621,5 +624,5 @@ class MkDirAllTest(_common.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

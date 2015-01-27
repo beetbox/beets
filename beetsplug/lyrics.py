@@ -14,7 +14,9 @@
 
 """Fetches, embeds, and displays lyrics.
 """
-from __future__ import print_function
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import re
 import requests
@@ -55,7 +57,7 @@ URL_CHARACTERS = {
 
 def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
-    if isinstance(text, str):
+    if isinstance(text, bytes):
         text = text.decode('utf8', 'ignore')
     out = text.replace(u'&nbsp;', u' ')
 

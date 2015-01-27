@@ -15,9 +15,12 @@
 
 """Tests for template engine.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import warnings
 
-from _common import unittest
+from test._common import unittest
 from beets.util import functemplate
 
 
@@ -274,5 +277,5 @@ class EvalTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

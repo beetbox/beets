@@ -12,12 +12,15 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import re
 import os.path
-import _common
-from _common import unittest
-import helper
-from helper import control_stdin
+from test import _common
+from test._common import unittest
+from test import helper
+from test.helper import control_stdin
 
 from beets.mediafile import MediaFile
 
@@ -223,5 +226,5 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

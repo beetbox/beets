@@ -14,6 +14,9 @@
 
 """The core data store and collection logic for beets.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import sys
 import shlex
@@ -42,7 +45,7 @@ class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path."""
 
     escape_re = re.compile(r'[\\_%]')
-    escape_char = '\\'
+    escape_char = b'\\'
 
     def __init__(self, field, pattern, fast=True):
         super(PathQuery, self).__init__(field, pattern, fast)
@@ -50,7 +53,7 @@ class PathQuery(dbcore.FieldQuery):
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
         # As a directory (prefix).
-        self.dir_path = util.bytestring_path(os.path.join(self.file_path, ''))
+        self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
 
     def match(self, item):
         return (item.path == self.file_path) or \
@@ -59,7 +62,7 @@ class PathQuery(dbcore.FieldQuery):
     def clause(self):
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
-        dir_pattern = buffer(dir_pattern + '%')
+        dir_pattern = buffer(dir_pattern + b'%')
         file_blob = buffer(self.file_path)
         return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
                (file_blob, dir_pattern, self.escape_char)
@@ -118,7 +121,7 @@ class PathType(types.Type):
         return self.normalize(sql_value)
 
     def to_sql(self, value):
-        if isinstance(value, str):
+        if isinstance(value, bytes):
             value = buffer(value)
         return value
 
@@ -390,7 +393,7 @@ class Item(LibModel):
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
 
-    _media_fields = set(MediaFile.readable_fields()) \
+    _media_fields = set(f.decode('utf8') for f in MediaFile.readable_fields()) \
         .intersection(_fields.keys())
     """Set of item fields that are backed by `MediaFile` fields.
 
@@ -429,7 +432,7 @@ class Item(LibModel):
             if isinstance(value, unicode):
                 value = bytestring_path(value)
             elif isinstance(value, buffer):
-                value = str(value)
+                value = bytes(value)
 
         if key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
@@ -532,7 +535,7 @@ class Item(LibModel):
             self.write(path)
             return True
         except FileOperationError as exc:
-            log.error(str(exc))
+            log.error("{0}", exc)
             return False
 
     def try_sync(self, write=None):
@@ -1196,7 +1199,7 @@ class DefaultTemplateFunctions(object):
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
-    _prefix = 'tmpl_'
+    _prefix = b'tmpl_'
 
     def __init__(self, item=None, lib=None):
         """Paramaterize the functions. If `item` or `lib` is None, then

@@ -14,14 +14,17 @@
 
 """Tests for the 'lastgenre' plugin."""
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from mock import Mock
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beetsplug import lastgenre
 from beets import config
 
-from helper import TestHelper
+from test.helper import TestHelper
 
 
 class LastGenrePluginTest(unittest.TestCase, TestHelper):
@@ -213,5 +216,5 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

@@ -14,8 +14,11 @@
 
 """Test for dbcore's date-based queries.
 """
-import _common
-from _common import unittest
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test import _common
+from test._common import unittest
 from datetime import datetime
 import time
 from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
@@ -124,5 +127,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

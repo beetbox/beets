@@ -15,6 +15,8 @@
 """DBCore is an abstract database package that forms the basis for beets'
 Library.
 """
+from __future__ import absolute_import
+
 from .db import Model, Database
 from .query import Query, FieldQuery, MatchQuery, AndQuery, OrQuery
 from .types import Type

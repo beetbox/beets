@@ -1,9 +1,12 @@
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import os.path
 import tempfile
 import shutil
 
-from _common import unittest
+from test._common import unittest
 from beets import config
 from beets.library import Item, Album, Library
 from beetsplug.importfeeds import ImportFeedsPlugin
@@ -57,5 +60,5 @@ class ImportfeedsTestTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

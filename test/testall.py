@@ -14,11 +14,14 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import re
 import sys
 
-from _common import unittest
+from test._common import unittest
 
 pkgpath = os.path.dirname(__file__) or '.'
 sys.path.append(pkgpath)
@@ -43,5 +46,5 @@ def suite():
             s.addTest(__import__(modname).suite())
     return s
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

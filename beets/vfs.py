@@ -15,6 +15,9 @@
 """A simple utility for constructing filesystem-like trees from beets
 libraries.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from collections import namedtuple
 from beets import util
 

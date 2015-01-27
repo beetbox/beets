@@ -1,12 +1,15 @@
 """Tests for the 'spotify' plugin"""
 
-import _common
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test import _common
 import responses
-from _common import unittest
+from test._common import unittest
 from beets import config
 from beets.library import Item
 from beetsplug import spotify
-from helper import TestHelper
+from test.helper import TestHelper
 import urlparse
 
 
@@ -45,7 +48,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     @responses.activate
     def test_missing_request(self):
-        response_body = str(
+        response_body = bytes(
             '{'
             '"tracks" : {'
             '"href" : "https://api.spotify.com/v1/search?query=duifhjslkef'
@@ -81,7 +84,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     @responses.activate
     def test_track_request(self):
-        response_body = str(
+        response_body = bytes(
             '{'
             '"tracks" : {'
             '"href" : "https://api.spotify.com/v1/search?query=Happy+album%3A'
@@ -204,5 +207,5 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

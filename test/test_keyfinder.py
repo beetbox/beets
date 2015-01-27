@@ -12,9 +12,12 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from mock import patch
-from _common import unittest
-from helper import TestHelper
+from test._common import unittest
+from test.helper import TestHelper
 
 from beets.library import Item
 
@@ -78,5 +81,5 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

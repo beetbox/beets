@@ -12,11 +12,14 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 """Tests for the `importadded` plugin."""
 
 import os
 
-from _common import unittest
+from test._common import unittest
 from test.test_importer import ImportHelper, AutotagStub
 from beets import importer
 from beets import util
@@ -168,5 +171,5 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

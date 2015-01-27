@@ -14,6 +14,9 @@
 
 """Moves patterns in path formats (suitable for moving articles)."""
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import re
 from beets.plugins import BeetsPlugin
 

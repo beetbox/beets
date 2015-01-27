@@ -16,7 +16,9 @@
 interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
-from __future__ import print_function
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import locale
 import optparse
@@ -41,7 +43,7 @@ from beets.autotag import mb
 from beets.dbcore import query as db_query
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
-if sys.platform == 'win32':
+if sys.platform == b'win32':
     try:
         import colorama
     except ImportError:
@@ -220,11 +222,11 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         prompt_part_lengths = []
         if numrange:
             if isinstance(default, int):
-                default_name = str(default)
+                default_name = unicode(default)
                 default_name = colorize('turquoise', default_name)
                 tmpl = '# selection (default %s)'
                 prompt_parts.append(tmpl % default_name)
-                prompt_part_lengths.append(len(tmpl % str(default)))
+                prompt_part_lengths.append(len(tmpl % unicode(default)))
             else:
                 prompt_parts.append('# selection')
                 prompt_part_lengths.append(len(prompt_parts[-1]))
@@ -491,7 +493,7 @@ def term_width():
     except IOError:
         return fallback
     try:
-        height, width = struct.unpack('hh', buf)
+        height, width = struct.unpack(b'hh', buf)
     except struct.error:
         return fallback
     return width
@@ -611,8 +613,8 @@ class Subcommand(object):
     @root_parser.setter
     def root_parser(self, root_parser):
         self._root_parser = root_parser
-        self.parser.prog = '{0} {1}'.format(root_parser.get_prog_name(),
-                                            self.name)
+        self.parser.prog = '{0} {1}'.format(
+            root_parser.get_prog_name().decode('utf8'), self.name)
 
 
 class SubcommandsOptionParser(optparse.OptionParser):
@@ -831,7 +833,7 @@ def _configure(options):
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
-    if getattr(options, 'config', None) is not None:
+    if getattr(options, b'config', None) is not None:
         config_path = options.config
         del options.config
         config.set_file(config_path)

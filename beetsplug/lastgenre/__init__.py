@@ -12,6 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 """Gets genres for imported music based on Last.fm tags.
 
 Uses a provided whitelist file to determine which tags are valid genres.
@@ -122,7 +125,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             wl_filename = WHITELIST
         if wl_filename:
             wl_filename = normpath(wl_filename)
-            with open(wl_filename, 'r') as f:
+            with open(wl_filename, b'r') as f:
                 for line in f:
                     line = line.decode('utf8').strip().lower()
                     if line and not line.startswith(u'#'):

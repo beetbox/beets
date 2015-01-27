@@ -13,7 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 """Miscellaneous utility functions."""
-from __future__ import division
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import sys
@@ -299,28 +301,28 @@ def _fsencoding():
     UTF-8 (not MBCS).
     """
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    if encoding == 'mbcs':
+    if encoding == b'mbcs':
         # On Windows, a broken encoding known to Python as "MBCS" is
         # used for the filesystem. However, we only use the Unicode API
         # for Windows paths, so the encoding is actually immaterial so
         # we can avoid dealing with this nastiness. We arbitrarily
         # choose UTF-8.
-        encoding = 'utf8'
+        encoding = b'utf8'
     return encoding
 
 
 def bytestring_path(path):
-    """Given a path, which is either a str or a unicode, returns a str
+    """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames).
     """
     # Pass through bytestrings.
-    if isinstance(path, str):
+    if isinstance(path, bytes):
         return path
 
     # On Windows, remove the magic prefix added by `syspath`. This makes
     # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
     # round-trip through `syspath`.
-    if os.path.__name__ == 'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
+    if os.path.__name__ == b'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
         path = path[len(WINDOWS_MAGIC_PREFIX):]
 
     # Try to encode with default encodings, but fall back to UTF8.
@@ -339,7 +341,7 @@ def displayable_path(path, separator=u'; '):
         return separator.join(displayable_path(p) for p in path)
     elif isinstance(path, unicode):
         return path
-    elif not isinstance(path, str):
+    elif not isinstance(path, bytes):
         # A non-string object: just get its unicode representation.
         return unicode(path)
 
@@ -357,7 +359,7 @@ def syspath(path, prefix=True):
     *really* know what you're doing.
     """
     # Don't do anything if we're not on windows
-    if os.path.__name__ != 'ntpath':
+    if os.path.__name__ != b'ntpath':
         return path
 
     if not isinstance(path, unicode):
@@ -495,12 +497,12 @@ def unique_path(path):
 # shares, which are sufficiently common as to cause frequent problems.
 # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
 CHAR_REPLACE = [
-    (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
-    (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
-    (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
-    (re.compile(ur'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
-    (re.compile(ur'\.$'), u'_'),  # Trailing dots.
-    (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
+    (re.compile(r'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
+    (re.compile(r'^\.'), u'_'),  # Leading dot (hidden files on Unix).
+    (re.compile(r'[\x00-\x1f]'), u''),  # Control characters.
+    (re.compile(r'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
+    (re.compile(r'\.$'), u'_'),  # Trailing dots.
+    (re.compile(r'\s+$'), u''),  # Trailing whitespace.
 ]
 
 
@@ -554,8 +556,8 @@ def as_string(value):
     if value is None:
         return u''
     elif isinstance(value, buffer):
-        return str(value).decode('utf8', 'ignore')
-    elif isinstance(value, str):
+        return bytes(value).decode('utf8', 'ignore')
+    elif isinstance(value, bytes):
         return value.decode('utf8', 'ignore')
     else:
         return unicode(value)
@@ -614,19 +616,19 @@ def cpu_count():
     """
     # Adapted from the soundconverter project:
     # https://github.com/kassoulet/soundconverter
-    if sys.platform == 'win32':
+    if sys.platform == b'win32':
         try:
             num = int(os.environ['NUMBER_OF_PROCESSORS'])
         except (ValueError, KeyError):
             num = 0
-    elif sys.platform == 'darwin':
+    elif sys.platform == b'darwin':
         try:
             num = int(command_output(['sysctl', '-n', 'hw.ncpu']))
         except ValueError:
             num = 0
     else:
         try:
-            num = os.sysconf('SC_NPROCESSORS_ONLN')
+            num = os.sysconf(b'SC_NPROCESSORS_ONLN')
         except (ValueError, OSError, AttributeError):
             num = 0
     if num >= 1:
@@ -654,7 +656,7 @@ def command_output(cmd, shell=False):
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        close_fds=platform.system() != 'Windows',
+        close_fds=platform.system() != b'Windows',
         shell=shell
     )
     stdout, stderr = proc.communicate()
@@ -673,7 +675,7 @@ def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
     misreports its capacity). If it cannot be determined (e.g., on
     Windows), return `limit`.
     """
-    if hasattr(os, 'statvfs'):
+    if hasattr(os, b'statvfs'):
         try:
             res = os.statvfs(path)
         except OSError:

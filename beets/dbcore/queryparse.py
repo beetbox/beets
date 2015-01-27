@@ -14,6 +14,8 @@
 
 """Parsing of strings into DBCore queries.
 """
+from __future__ import division, absolute_import, print_function
+
 import re
 import itertools
 from . import query

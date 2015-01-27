@@ -12,12 +12,15 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os.path
 from mock import Mock, patch
 
-import _common
-from _common import unittest
-from helper import TestHelper
+from test import _common
+from test._common import unittest
+from test.helper import TestHelper
 
 from beets.mediafile import MediaFile
 from beets import config, logging, ui
@@ -147,5 +150,5 @@ class EmbedartTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

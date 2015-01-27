@@ -15,6 +15,9 @@
 """Uses the `KeyFinder` program to add the `initial_key` field.
 """
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import subprocess
 
 from beets import ui

@@ -14,6 +14,9 @@
 
 """Fetches album art.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from contextlib import closing
 import os
 import re
@@ -251,14 +254,14 @@ class FileSystem(ArtSource):
         images = []
         for fn in os.listdir(path):
             for ext in IMAGE_EXTENSIONS:
-                if fn.lower().endswith('.' + ext) and \
+                if fn.lower().endswith(b'.' + ext.encode('utf8')) and \
                    os.path.isfile(os.path.join(path, fn)):
                     images.append(fn)
 
         # Look for "preferred" filenames.
         images = sorted(images,
                         key=lambda x: self.filename_priority(x, cover_names))
-        cover_pat = r"(\b|_)({0})(\b|_)".format('|'.join(cover_names))
+        cover_pat = br"(\b|_)({0})(\b|_)".format(b'|'.join(cover_names))
         for fn in images:
             if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
                 self._log.debug(u'using well-named art file {0}',

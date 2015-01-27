@@ -25,7 +25,9 @@ library: unknown symbols are left intact.
 This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
-from __future__ import print_function
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import re
 import ast
@@ -39,8 +41,8 @@ GROUP_CLOSE = u'}'
 ARG_SEP = u','
 ESCAPE_CHAR = u'$'
 
-VARIABLE_PREFIX = '__var_'
-FUNCTION_PREFIX = '__func_'
+VARIABLE_PREFIX = b'__var_'
+FUNCTION_PREFIX = b'__func_'
 
 
 class Environment(object):
@@ -69,11 +71,11 @@ def ex_literal(val):
     value.
     """
     if val is None:
-        return ast.Name('None', ast.Load())
+        return ast.Name(b'None', ast.Load())
     elif isinstance(val, (int, float, long)):
         return ast.Num(val)
     elif isinstance(val, bool):
-        return ast.Name(str(val), ast.Load())
+        return ast.Name(bytes(val), ast.Load())
     elif isinstance(val, basestring):
         return ast.Str(val)
     raise TypeError('no literal for {0}'.format(type(val)))
@@ -110,7 +112,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     bytecode of the compiled function.
     """
     func_def = ast.FunctionDef(
-        name,
+        name.encode('utf8'),
         ast.arguments(
             [ast.Name(n, ast.Param()) for n in arg_names],
             None, None,
@@ -122,7 +124,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     mod = ast.Module([func_def])
     ast.fix_missing_locations(mod)
 
-    prog = compile(mod, '<generated>', 'exec')
+    prog = compile(mod, b'<generated>', b'exec')
 
     # Debug: show bytecode.
     if debug:
@@ -205,11 +207,11 @@ class Call(object):
             # Create a subexpression that joins the result components of
             # the arguments.
             arg_exprs.append(ex_call(
-                ast.Attribute(ex_literal(u''), 'join', ast.Load()),
+                ast.Attribute(ex_literal(u''), b'join', ast.Load()),
                 [ex_call(
-                    'map',
+                    b'map',
                     [
-                        ex_rvalue('unicode'),
+                        ex_rvalue(b'unicode'),
                         ast.List(subexprs, ast.Load()),
                     ]
                 )],
@@ -289,7 +291,7 @@ class Parser(object):
     # Common parsing resources.
     special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
                      ARG_SEP, ESCAPE_CHAR)
-    special_char_re = re.compile(ur'[%s]|$' %
+    special_char_re = re.compile(r'[%s]|$' %
                                  u''.join(re.escape(c) for c in special_chars))
 
     def parse_expression(self):
@@ -477,7 +479,7 @@ class Parser(object):
         Updates ``pos``.
         """
         remainder = self.string[self.pos:]
-        ident = re.match(ur'\w*', remainder).group(0)
+        ident = re.match(r'\w*', remainder).group(0)
         self.pos += len(ident)
         return ident
 
@@ -532,9 +534,9 @@ class Template(object):
 
         argnames = []
         for varname in varnames:
-            argnames.append(VARIABLE_PREFIX.encode('utf8') + varname)
+            argnames.append(VARIABLE_PREFIX + varname)
         for funcname in funcnames:
-            argnames.append(FUNCTION_PREFIX.encode('utf8') + funcname)
+            argnames.append(FUNCTION_PREFIX + funcname)
 
         func = compile_func(
             argnames,
@@ -555,7 +557,7 @@ class Template(object):
 
 # Performance tests.
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     import timeit
     _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
     _vars = {'bar': 'qux'}

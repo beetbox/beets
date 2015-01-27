@@ -15,11 +15,14 @@
 
 """Tests for the 'bucket' plugin."""
 
-from _common import unittest
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest
 from beetsplug import bucket
 from beets import config, ui
 
-from helper import TestHelper
+from test.helper import TestHelper
 
 
 class BucketPluginTest(unittest.TestCase, TestHelper):
@@ -151,5 +154,5 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

@@ -14,7 +14,9 @@
 
 """Get a random song or album from the library.
 """
-from __future__ import absolute_import
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
 import random

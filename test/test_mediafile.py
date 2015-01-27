@@ -15,14 +15,17 @@
 """Automatically-generated blanket testing for the MediaFile metadata
 layer.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import shutil
 import tempfile
 import datetime
 import time
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
     MP3DescStorageStyle, StorageStyle, MP4StorageStyle, \
     ASFStorageStyle, ImageType
@@ -283,10 +286,10 @@ class GenreListTestMixin(object):
 
 
 field_extension = MediaField(
-    MP3DescStorageStyle('customtag'),
-    MP4StorageStyle('----:com.apple.iTunes:customtag'),
-    StorageStyle('customtag'),
-    ASFStorageStyle('customtag'),
+    MP3DescStorageStyle(b'customtag'),
+    MP4StorageStyle(b'----:com.apple.iTunes:customtag'),
+    StorageStyle(b'customtag'),
+    ASFStorageStyle(b'customtag'),
 )
 
 
@@ -337,12 +340,14 @@ class ExtendedFieldTestMixin(object):
     def test_invalid_descriptor(self):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('somekey', True)
-        self.assertIn('must be an instance of MediaField', str(cm.exception))
+        self.assertIn('must be an instance of MediaField',
+                      unicode(cm.exception))
 
     def test_overwrite_property(self):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('artist', MediaField())
-        self.assertIn('property "artist" already exists', str(cm.exception))
+        self.assertIn('property "artist" already exists',
+                      unicode(cm.exception))
 
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
@@ -679,7 +684,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
                 # ReplayGain is float
                 tags[key] = 1.0
             else:
-                tags[key] = 'value\u2010%s' % key
+                tags[key] = b'value\u2010%s' % key
 
         for key in ['disc', 'disctotal', 'track', 'tracktotal', 'bpm']:
             tags[key] = 1
@@ -698,6 +703,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         tags['original_year'] = original_date.year
         tags['original_month'] = original_date.month
         tags['original_day'] = original_date.day
+
         return tags
 
 
@@ -939,5 +945,5 @@ class MediaFieldTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')
