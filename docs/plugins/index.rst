@@ -70,6 +70,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    smartplaylist
    spotify
    the
+   thumbnails
    types
    web
    zero
@@ -156,6 +157,7 @@ Miscellaneous
   on regular expressions.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
+* :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
 * :doc:`web`: An experimental Web-based GUI for beets.
 
 .. _MPD: http://www.musicpd.org/
