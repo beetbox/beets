@@ -13,7 +13,11 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Create freedesktop.org-compliant thumnails for album folders"""
+"""Create freedesktop.org-compliant thumnails for album folders
+
+This plugin is POSIX-only.
+Spec: standards.freedesktop.org/thumbnail-spec/latest/index.html
+"""
 
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
@@ -60,6 +64,11 @@ class ThumbnailsPlugin(BeetsPlugin):
                 self.process_album(album)
 
     def _check_local_ok(self):
+        """Check that's everythings ready:
+            - local capability to resize images
+            - thumbnail dirs exist (create them if needed)
+            - detect whether we'll use PIL or IM
+        """
         if not ArtResizer.local:
             self._log.warning("No local image resizing capabilities, "
                               "cannot generate thumbnails")
@@ -112,13 +121,17 @@ class ThumbnailsPlugin(BeetsPlugin):
 
     @staticmethod
     def thumbnail_file_name(path):
-        # http://standards.freedesktop.org/thumbnail-spec/latest/x227.html
+        """Compute the thumbnail file name
+        See http://standards.freedesktop.org/thumbnail-spec/latest/x227.html
+        """
         uri = PurePosixPath(path).as_uri()
         hash = md5(uri).hexdigest()
         return "{0}.png".format(hash)
 
     def add_tags(self, album, image_path):
-        # http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
+        """Write required metadata to the thumbnail
+        See http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
+        """
         metadata = {"Thumb::URI": PurePosixPath(album.artpath).as_uri(),
                     "Thumb::MTime": os.stat(album.artpath).st_mtime}
         try:
