@@ -45,11 +45,12 @@ class ThumbnailsPlugin(BeetsPlugin):
     def __init__(self):
         super(ThumbnailsPlugin, self).__init__()
         self.config.add({
+            'auto': True,
             'force': False,
         })
 
         self.write_metadata = None
-        if self._check_local_ok():
+        if self.config['auto'] and self._check_local_ok():
             self.register_listener('album_imported', self.imported)
 
     def commands(self):
