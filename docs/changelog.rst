@@ -80,6 +80,8 @@ Fixes:
   parent directory does not exist). :bug:`1266`
 * The :ref:`write-cmd` command no longer tries to "write" non-writable fields
   like the bitrate. :bug:`1268`
+* The error message when MusicBrainz is not reachable on the network is now
+  much clearer. Thanks to Tom Jaspers. :bug:`1190` :bug:`1272`
 
 For developers:
 
