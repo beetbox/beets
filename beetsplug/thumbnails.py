@@ -21,14 +21,15 @@ from __future__ import (division, absolute_import, print_function,
 from hashlib import md5
 import os
 import shutil
+from itertools import chain
 from pathlib import PurePosixPath
 
 from xdg import BaseDirectory
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
-from beets.util import syspath
-from beets.util.artresizer import ArtResizer
+from beets import util
+from beets.util.artresizer import ArtResizer, has_IM, has_PIL
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
@@ -39,6 +40,8 @@ LARGE_DIR = os.path.join(BASE_DIR, "large")
 class ThumbnailsPlugin(BeetsPlugin):
     def __init__(self):
         super(ThumbnailsPlugin, self).__init__()
+
+        self.write_metadata = None
         if self._check_local_ok():
             self.register_listener('album_imported', self.imported)
 
@@ -65,6 +68,12 @@ class ThumbnailsPlugin(BeetsPlugin):
         for dir in (NORMAL_DIR, LARGE_DIR):
             if not os.path.exists(dir):
                 os.makedirs(dir)
+
+        if has_IM():
+            self.write_metadata = write_metadata_im
+        else:
+            assert has_PIL()  # since we're local
+            self.write_metadata = write_metadata_pil
 
         return True
 
@@ -95,10 +104,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         self._log.debug("building thumbnail to put on {0}", album.path)
         target = os.path.join(target_dir, self.thumbnail_file_name(album.path))
         resized = ArtResizer.shared.resize(size, album.artpath,
-                                           syspath(target))
+                                           util.syspath(target))
 
-        # FIXME should add tags
-        # see http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
+        self.add_tags(album, util.syspath(resized))
 
         shutil.move(resized, target)
 
@@ -108,3 +116,33 @@ class ThumbnailsPlugin(BeetsPlugin):
         uri = PurePosixPath(path).as_uri()
         hash = md5(uri).hexdigest()
         return "{0}.png".format(hash)
+
+    def add_tags(self, album, image_path):
+        # http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
+        metadata = {"Thumb::URI": PurePosixPath(album.artpath).as_uri(),
+                    "Thumb::MTime": os.stat(album.artpath).st_mtime}
+        try:
+            self.write_metadata(image_path, metadata)
+        except Exception:
+            self._log.exception("could not write metadata to {0}",
+                                util.displayable_path(image_path))
+
+
+def write_metadata_im(file, metadata):
+    """Enrich the file metadata with `metadata` dict thanks to IM."""
+    command = ['convert', file] + \
+        list(chain.from_iterable(('-set', k, v) for k, v in metadata.items())) + \
+        [file]
+    util.command_output(command)
+    return True
+
+
+def write_metadata_pil(file, metadata):
+    """Enrich the file metadata with `metadata` dict thanks to PIL."""
+    from PIL import Image, PngImagePlugin
+    im = Image.open(file)
+    meta = PngImagePlugin.PngInfo()
+    for k, v in metadata.items():
+        meta.add_text(k, v, 0)
+    im.save(file, "PNG", pnginfo=meta)
+    return True
