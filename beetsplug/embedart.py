@@ -103,8 +103,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             else:
                 filename = opts.filename or config['art_filename'].get()
                 if os.path.dirname(filename) != '':
-                    self._log.error(u"Only specify a name rather a path for "
-                                    u"-n")
+                    self._log.error(u"Only specify a name rather than a path "
+                                    u"for -n")
                     return
                 for album in lib.albums(decargs(args)):
                     artpath = normpath(os.path.join(album.path, filename))

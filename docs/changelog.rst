@@ -26,7 +26,7 @@ Features:
   by default. :bug:`1246`
 * :doc:`/plugins/fetchart`: New option ``-n`` to extract the cover art of all
   matched albums into its directory. It's also possible to automatically
-  associate them with the album when adding ``-a`` :bug:`1261`
+  associate them with the album when adding ``-a``. :bug:`1261`
 * :doc:`/plugins/fetchart`: Names of extracted image art is taken from the
   ``art_filename`` configuration option. :bug:`1258`
 * :doc:`/plugins/fetchart`: There's a new Wikipedia image source that uses
