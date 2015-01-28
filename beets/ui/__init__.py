@@ -107,7 +107,7 @@ def print_(*strings):
         if isinstance(strings[0], unicode):
             txt = u' '.join(strings)
         else:
-            txt = ' '.join(strings)
+            txt = b' '.join(strings)
     else:
         txt = u''
     if isinstance(txt, unicode):

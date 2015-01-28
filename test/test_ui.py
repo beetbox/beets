@@ -318,6 +318,37 @@ class WriteTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertEqual(item.mtime, item.current_mtime())
 
+    def test_non_metadata_field_unchanged(self):
+        """Changing a non-"tag" field like `bitrate` and writing should
+        have no effect.
+        """
+        # An item that starts out "clean".
+        item = self.add_item_fixture()
+        item.read()
+
+        # ... but with a mismatched bitrate.
+        item.bitrate = 123
+        item.store()
+
+        with capture_stdout() as stdout:
+            self.write_cmd()
+
+        self.assertEqual(stdout.getvalue(), '')
+
+    def test_write_metadata_field(self):
+        item = self.add_item_fixture()
+        item.read()
+        old_title = item.title
+
+        item.title = 'new title'
+        item.store()
+
+        with capture_stdout() as stdout:
+            self.write_cmd()
+
+        self.assertTrue('{0} -> new title'.format(old_title)
+                        in stdout.getvalue())
+
 
 class MoveTest(_common.TestCase):
     def setUp(self):

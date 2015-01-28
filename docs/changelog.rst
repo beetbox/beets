@@ -78,6 +78,8 @@ Fixes:
 * :doc:`/plugins/importfeeds` and :doc:`/plugins/smartplaylist`: Automatically
   create parent directories for playlist files (instead of crashing when the
   parent directory does not exist). :bug:`1266`
+* The :ref:`write-cmd` command no longer tries to "write" non-writable fields
+  like the bitrate. :bug:`1268`
 
 For developers:
 

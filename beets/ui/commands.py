@@ -1428,7 +1428,7 @@ def write_items(lib, query, pretend, force):
 
         # Check for and display changes.
         changed = ui.show_model_changes(item, clean_item,
-                                        library.Item._media_fields, force)
+                                        library.Item._media_tag_fields, force)
         if (changed or force) and not pretend:
             item.try_sync()
 
