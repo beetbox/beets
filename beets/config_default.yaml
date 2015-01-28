@@ -108,3 +108,6 @@ match:
     required: []
     track_length_grace: 10
     track_length_max: 30
+
+thumbnails:
+    force: no

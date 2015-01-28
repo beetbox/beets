@@ -44,6 +44,9 @@ LARGE_DIR = os.path.join(BASE_DIR, "large")
 class ThumbnailsPlugin(BeetsPlugin):
     def __init__(self):
         super(ThumbnailsPlugin, self).__init__()
+        self.config.add({
+            'force': False,
+        })
 
         self.write_metadata = None
         if self._check_local_ok():
@@ -52,6 +55,10 @@ class ThumbnailsPlugin(BeetsPlugin):
     def commands(self):
         thumbnails_command = Subcommand("thumbnails",
                                         help="Create album thumbnails")
+        thumbnails_command.parser.add_option(
+            '-f', '--force', dest='force', action='store_true', default=False,
+            help='force regeneration of thumbnails deemed fine (existing & '
+                 'recent enough)')
         thumbnails_command.func = self.process_query
         return [thumbnails_command]
 
@@ -112,6 +119,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         """
         self._log.debug("building thumbnail to put on {0}", album.path)
         target = os.path.join(target_dir, self.thumbnail_file_name(album.path))
+
+        if os.path.exists(target) and \
+           os.stat(target).st_mtime > os.stat(album.artpath).st_mtime:
+            if self.force:
+                self._log.debug("found a suitable thumbnail for {0}, "
+                                "forcing regeneration", album)
+            else:
+                self._log.info("thumbnail for {0} exists and is recent enough",
+                               album)
+                return
         resized = ArtResizer.shared.resize(size, album.artpath,
                                            util.syspath(target))
 
