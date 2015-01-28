@@ -69,7 +69,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             - thumbnail dirs exist (create them if needed)
             - detect whether we'll use PIL or IM
         """
-        if not ArtResizer.local:
+        if not ArtResizer.shared.local:
             self._log.warning("No local image resizing capabilities, "
                               "cannot generate thumbnails")
             return False
