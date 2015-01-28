@@ -71,13 +71,14 @@ class ThumbnailsPlugin(BeetsPlugin):
     def process_album(self, album):
         """Produce thumbnails for the album folder.
         """
+        self._log.debug(u'generating thumbnail for {0}', album)
         if not album.artpath:
             self._log.info(u'album {0} has no art', album)
             return
 
         size = ArtResizer.shared.get_size(album.artpath)
         if not size:
-            self._log.warning('Problem getting the picture size for {0}',
+            self._log.warning('problem getting the picture size for {0}',
                               album.artpath)
             return
 
@@ -91,7 +92,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         """Make a thumbnail of given size for `album` and put it in
         `target_dir`.
         """
-        self._log.debug("Building thumbnail to put on {0}", album.path)
+        self._log.debug("building thumbnail to put on {0}", album.path)
         target = os.path.join(target_dir, self.thumbnail_file_name(album.path))
         resized = ArtResizer.shared.resize(size, album.artpath,
                                            syspath(target))
