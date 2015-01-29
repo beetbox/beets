@@ -94,6 +94,8 @@ setup(
         'pylast',
         'rarfile',
         'responses',
+        'pyxdg',
+        'pathlib',
     ],
 
     # Plugin (optional) dependencies:
