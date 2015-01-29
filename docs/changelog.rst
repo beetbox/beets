@@ -6,6 +6,10 @@ Changelog
 
 Features:
 
+* The colors used are now configurable via the new config option ``colors``,
+  nested under the option ``ui``. The `color` config option has been moved
+  from top-level to under ``ui``. Beets will respect the old color setting,
+  but will warn the user with a deprecation message. :bug:`1238`
 * A new :doc:`/plugins/filefilter` lets you write regular expressions to
   automatically avoid importing certain files. Thanks to :user:`mried`.
   :bug:`1186`

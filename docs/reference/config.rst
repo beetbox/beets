@@ -162,13 +162,6 @@ Either ``yes`` or ``no``, indicating whether the autotagger should use
 multiple threads. This makes things faster but may behave strangely.
 Defaults to ``yes``.
 
-color
-~~~~~
-
-Either ``yes`` or ``no``; whether to use color in console output (currently
-only in the ``import`` command). Turn this off if your terminal doesn't
-support ANSI colors.
-
 .. _list_format_item:
 
 list_format_item
@@ -275,6 +268,49 @@ id3v23
 By default, beets writes MP3 tags using the ID3v2.4 standard, the latest
 version of ID3. Enable this option to instead use the older ID3v2.3 standard,
 which is preferred by certain older software such as Windows Media Player.
+
+
+UI Options
+----------
+
+The options that allow for customization of the visual appearance
+of the console interface.
+
+These options are available in this section:
+
+color
+~~~~~
+
+Either ``yes`` or ``no``; whether to use color in console output (currently
+only in the ``import`` command). Turn this off if your terminal doesn't
+support ANSI colors.
+
+.. note::
+
+    The `color` option was previously a top-level configuration. This is
+    still respected, but a deprecation message will be shown until your
+    top-level `color` configuration has been nested under `ui`.
+
+colors
+~~~~~~
+
+The colors that are used throughout the user interface. These are only used if
+the ``color`` option is set to ``yes``. For example, you might have a section
+in your configuration file that looks like this::
+
+    ui:
+        color: yes
+        colors:
+            text_success: green
+            text_warning: yellow
+            text_error: red
+            text_highlight: red
+            text_highlight_minor: lightgray
+            action_default: turquoise
+            action: blue
+
+Available colors: black, darkred, darkgreen, brown, darkblue, purple, teal,
+lightgray, darkgray, red, green, yellow, blue, fuchsia, turquoise, white
 
 
 Importer Options
