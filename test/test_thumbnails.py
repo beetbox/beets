@@ -192,7 +192,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         get_size = mock_artresizer.shared.get_size
 
         plugin = ThumbnailsPlugin()
-        make_cover = plugin.make_cover_thumbnail = Mock()
+        make_cover = plugin.make_cover_thumbnail = Mock(return_value=True)
         make_dolphin = plugin.make_dolphin_cover_thumbnail = Mock()
 
         # no art

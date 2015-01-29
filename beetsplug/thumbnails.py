@@ -117,11 +117,15 @@ class ThumbnailsPlugin(BeetsPlugin):
                               album.artpath)
             return
 
+        wrote = True
         if max(size) >= 256:
-            self.make_cover_thumbnail(album, 256, LARGE_DIR)
-        self.make_cover_thumbnail(album, 128, NORMAL_DIR)
+            wrote &= self.make_cover_thumbnail(album, 256, LARGE_DIR)
+        wrote &= self.make_cover_thumbnail(album, 128, NORMAL_DIR)
 
-        self._log.info(u'wrote thumbnail for {0}', album)
+        if wrote:
+            self._log.info('wrote thumbnail for {0}', album)
+        else:
+            self._log.info('nothing to do for {0}', album)
 
     def make_cover_thumbnail(self, album, size, target_dir):
         """Make a thumbnail of given size for `album` and put it in
@@ -136,15 +140,14 @@ class ThumbnailsPlugin(BeetsPlugin):
                 self._log.debug("found a suitable thumbnail for {0}, "
                                 "forcing regeneration", album)
             else:
-                self._log.info("thumbnail for {0} exists and is recent enough",
-                               album)
-                return
+                self._log.debug("thumbnail for {0} exists and is recent "
+                                "enough", album)
+                return False
         resized = ArtResizer.shared.resize(size, album.artpath,
                                            util.syspath(target))
-
         self.add_tags(album, util.syspath(resized))
-
         shutil.move(resized, target)
+        return True
 
     @staticmethod
     def thumbnail_file_name(path):
