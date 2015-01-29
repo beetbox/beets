@@ -888,7 +888,7 @@ class ShowChangeTest(_common.TestCase):
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
-        config['color'] = False
+        config['ui']['color'] = False
         album_dist = distance(items, info, mapping)
         album_dist._penalties = {'album': [dist]}
         commands.show_change(
