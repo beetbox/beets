@@ -57,10 +57,12 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         plugin = ThumbnailsPlugin()
         plugin.write_metadata = Mock()
         album = Mock(artpath=b"/path/to/cover")
+        mock_stat.return_value.st_mtime = 12345
+
         plugin.add_tags(album, b"/path/to/thumbnail")
 
         metadata = {"Thumb::URI": b"file:///path/to/cover",
-                    "Thumb::MTime": mock_stat.return_value.st_mtime}
+                    "Thumb::MTime": "12345"}
         plugin.write_metadata.assert_called_once_with(b"/path/to/thumbnail",
                                                       metadata)
         mock_stat.assert_called_once_with(album.artpath)

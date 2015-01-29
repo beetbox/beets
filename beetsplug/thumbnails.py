@@ -163,7 +163,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         See http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
         """
         metadata = {"Thumb::URI": PurePosixPath(album.artpath).as_uri(),
-                    "Thumb::MTime": os.stat(album.artpath).st_mtime}
+                    "Thumb::MTime": unicode(os.stat(album.artpath).st_mtime)}
         try:
             self.write_metadata(image_path, metadata)
         except Exception:
