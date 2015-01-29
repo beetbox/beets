@@ -161,7 +161,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         self.assertEqual(resize.call_count, 0)
 
         # and with force
-        plugin.force = True
+        plugin.config['force'] = True
         plugin.make_cover_thumbnail(album, 12345, b"/thumbnail/dir")
         resize.assert_called_once_with(12345, b"/path/to/art",
                                        b"/thumbnail/dir/md5")
@@ -212,7 +212,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         lib = Mock()
         album2 = Mock()
         lib.albums.return_value = [album, album2]
-        plugin.process_query(lib, None, None)
+        plugin.process_query(lib, Mock(), None)
         lib.albums.assert_called_once_with(mock_decargs.return_value)
         plugin.process_album.has_calls([call(album), call(album2)],
                                        any_order=True)

@@ -67,6 +67,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         self.process_album(album)
 
     def process_query(self, lib, opts, args):
+        self.config['force'] = opts.force
         if self._check_local_ok():
             for album in lib.albums(decargs(args)):
                 self.process_album(album)
@@ -123,7 +124,7 @@ class ThumbnailsPlugin(BeetsPlugin):
 
         if os.path.exists(target) and \
            os.stat(target).st_mtime > os.stat(album.artpath).st_mtime:
-            if self.force:
+            if self.config['force']:
                 self._log.debug("found a suitable thumbnail for {0}, "
                                 "forcing regeneration", album)
             else:
