@@ -108,7 +108,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                               album.artpath)
             return
 
-        if max(size):
+        if max(size) >= 256:
             self.make_cover_thumbnail(album, 256, LARGE_DIR)
         self.make_cover_thumbnail(album, 128, NORMAL_DIR)
 
