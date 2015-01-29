@@ -29,7 +29,9 @@ Features:
 * :doc:`/plugins/fetchart`: There's a new Wikipedia image source that uses
   DBpedia to find albums. Thanks to Tom Jaspers. :bug:`1194`
 * A new :doc:`/plugins/thumbnails` generates thumbnails with cover art for
-  album folders for all freedesktop.org-compliant file managers.
+  album folders for all freedesktop.org-compliant file managers. This replaces
+  the :doc:`/plugins/freedesktop` which only worked with the Dolphin file
+  manager.
 
 Core changes:
 

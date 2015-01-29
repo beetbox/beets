@@ -47,6 +47,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         self.config.add({
             'auto': True,
             'force': False,
+            'dolphin': False,
         })
 
         self.write_metadata = None
@@ -60,14 +61,18 @@ class ThumbnailsPlugin(BeetsPlugin):
             '-f', '--force', dest='force', action='store_true', default=False,
             help='force regeneration of thumbnails deemed fine (existing & '
                  'recent enough)')
+        thumbnails_command.parser.add_option(
+            '--dolphin', dest='dolphin', action='store_true', default=False,
+            help="create Dolphin-compatible thumbnail information (for KDE)")
         thumbnails_command.func = self.process_query
+
         return [thumbnails_command]
 
     def imported(self, lib, album):
         self.process_album(album)
 
     def process_query(self, lib, opts, args):
-        self.config['force'] = opts.force
+        self.config.set_args(opts)
         if self._check_local_ok():
             for album in lib.albums(decargs(args)):
                 self.process_album(album)
@@ -102,6 +107,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         if not album.artpath:
             self._log.info(u'album {0} has no art', album)
             return
+
+        if self.config['dolphin']:
+            self.make_dolphin_cover_thumbnail(album)
 
         size = ArtResizer.shared.get_size(album.artpath)
         if not size:
@@ -158,6 +166,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         except Exception:
             self._log.exception("could not write metadata to {0}",
                                 util.displayable_path(image_path))
+
+    def make_dolphin_cover_thumbnail(self, album):
+        outfilename = os.path.join(album.path, b".directory")
+        if os.path.exists(outfilename):
+            return
+        artfile = os.path.split(album.artpath)[1]
+        with open(outfilename, 'w') as f:
+            f.write(b"[Desktop Entry]\nIcon=./{0}".format(artfile))
+            f.close()
+        self._log.debug("Wrote file {0}", util.displayable_path(outfilename))
 
 
 def write_metadata_im(file, metadata):

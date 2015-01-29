@@ -27,6 +27,10 @@ file. The available options are
 - **force**: Generate the thumbnail even when there's one that seems fine (more
   recent than the cover art).
   Default: ``no``.
+- **dolphin**: Generate dolphin-compatible thumbnails. Dolphin (KDE file
+  explorer) does not respect freedesktop.org's standard on thumbnails. This
+  functionality replaces the :doc:`/plugins/freedesktop`
+  Default: ``no``
 
 Usage
 -----

@@ -112,3 +112,4 @@ match:
 thumbnails:
     force: no
     auto: yes
+    dolphin: no

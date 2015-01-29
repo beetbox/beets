@@ -17,6 +17,8 @@ from __future__ import (division, absolute_import, print_function,
 
 import os.path
 from mock import Mock, patch, call
+from tempfile import mkdtemp
+from shutil import rmtree
 
 from test._common import unittest
 from test.helper import TestHelper
@@ -167,17 +169,37 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
                                        b"/thumbnail/dir/md5")
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
+    def test_make_dolphin_cover_thumbnail(self, _):
+        plugin = ThumbnailsPlugin()
+        tmp = mkdtemp()
+        album = Mock(path=tmp,
+                     artpath=os.path.join(tmp, b"cover.jpg"))
+        plugin.make_dolphin_cover_thumbnail(album)
+        with open(os.path.join(tmp, b".directory"), "rb") as f:
+            self.assertEqual(f.read(), b"[Desktop Entry]\nIcon=./cover.jpg")
+
+        # not rewritten when it already exists (yup that's a big limitation)
+        album.artpath = b"/my/awesome/art.tiff"
+        plugin.make_dolphin_cover_thumbnail(album)
+        with open(os.path.join(tmp, b".directory"), "rb") as f:
+            self.assertEqual(f.read(), b"[Desktop Entry]\nIcon=./cover.jpg")
+
+        rmtree(tmp)
+
+    @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     @patch('beetsplug.thumbnails.ArtResizer')
     def test_process_album(self, mock_artresizer, _):
         get_size = mock_artresizer.shared.get_size
 
         plugin = ThumbnailsPlugin()
         make_cover = plugin.make_cover_thumbnail = Mock()
+        make_dolphin = plugin.make_dolphin_cover_thumbnail = Mock()
 
         # no art
         album = Mock(artpath=None)
         plugin.process_album(album)
         self.assertEqual(get_size.call_count, 0)
+        self.assertEqual(make_dolphin.call_count, 0)
 
         # cannot get art size
         album.artpath = b"/path/to/art"
@@ -185,6 +207,15 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         plugin.process_album(album)
         get_size.assert_called_once_with(b"/path/to/art")
         self.assertEqual(make_cover.call_count, 0)
+
+        # dolphin tests
+        plugin.config['dolphin'] = False
+        plugin.process_album(album)
+        self.assertEqual(make_dolphin.call_count, 0)
+
+        plugin.config['dolphin'] = True
+        plugin.process_album(album)
+        make_dolphin.assert_called_once_with(album)
 
         # small art
         get_size.return_value = 200, 200
