@@ -191,9 +191,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             is_default = False
 
         # Colorize the letter shortcut.
-        show_letter = colorize(COLORS['action_default']
-                               if is_default
-                               else COLORS['action'],
+        show_letter = colorize('action_default' if is_default else 'action',
                                show_letter)
 
         # Insert the highlighted letter back into the word.
@@ -220,7 +218,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         if numrange:
             if isinstance(default, int):
                 default_name = str(default)
-                default_name = colorize(COLORS['action_default'], default_name)
+                default_name = colorize('action_default', default_name)
                 tmpl = '# selection (default %s)'
                 prompt_parts.append(tmpl % default_name)
                 prompt_part_lengths.append(len(tmpl % str(default)))
@@ -381,18 +379,24 @@ def _colorize(color, text):
     return escape + text + RESET_COLOR
 
 
-def colorize(color, text):
+def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
     if config['ui']['color']:
+        # In case a 3rd party plugin is still passing the actual color ('red')
+        # instead of the abstract color name ('text_error')
+        color = COLORS.get(color_name)
+        if not color:
+            log.debug(u'Invalid color_name: {0}', color_name)
+            color = color_name
         return _colorize(color, text)
     else:
         return text
 
 
-def _colordiff(a, b, highlight=COLORS['text_highlight'],
-               minor_highlight=COLORS['text_highlight_minor']):
+def _colordiff(a, b, highlight='text_highlight',
+               minor_highlight='text_highlight_minor'):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -442,7 +446,7 @@ def _colordiff(a, b, highlight=COLORS['text_highlight'],
     return u''.join(a_out), u''.join(b_out)
 
 
-def colordiff(a, b, highlight=COLORS['text_highlight']):
+def colordiff(a, b, highlight='text_highlight'):
     """Colorize differences between two values if color is enabled.
     (Like _colordiff but conditional.)
     """
@@ -556,8 +560,8 @@ def _field_diff(field, old, new):
     if isinstance(oldval, basestring):
         oldstr, newstr = colordiff(oldval, newstr)
     else:
-        oldstr = colorize(COLORS['text_error'], oldstr)
-        newstr = colorize(COLORS['text_error'], newstr)
+        oldstr = colorize('text_error', oldstr)
+        newstr = colorize('text_error', newstr)
 
     return u'{0} -> {1}'.format(oldstr, newstr)
 
@@ -593,7 +597,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
         changes.append(u'  {0}: {1}'.format(
             field,
-            colorize(COLORS['text_highlight'], new.formatted()[field])
+            colorize('text_highlight', new.formatted()[field])
         ))
 
     # Print changes.
