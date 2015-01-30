@@ -357,12 +357,11 @@ LIGHT_COLORS = ["darkgray", "red", "green", "yellow", "blue",
                 "fuchsia", "turquoise", "white"]
 RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
 
-# Map the color names to the configured colors in a dict
+# These abstract COLOR_NAMES are lazily mapped on to the actual color in COLORS
+# as they are defined in the configuration files, see function: colorize
 COLOR_NAMES = ['text_success', 'text_warning', 'text_error', 'text_highlight',
                'text_highlight_minor', 'action_default', 'action']
-COLORS = dict(zip(COLOR_NAMES,
-                  map(lambda x: config['ui']['colors'][x].get(str),
-                      COLOR_NAMES)))
+COLORS = None
 
 
 def _colorize(color, text):
@@ -384,6 +383,10 @@ def colorize(color_name, text):
     conditional.)
     """
     if config['ui']['color']:
+        global COLORS
+        if not COLORS:
+            COLORS = dict((name, config['ui']['colors'][name].get(unicode))
+                          for name in COLOR_NAMES)
         # In case a 3rd party plugin is still passing the actual color ('red')
         # instead of the abstract color name ('text_error')
         color = COLORS.get(color_name)
