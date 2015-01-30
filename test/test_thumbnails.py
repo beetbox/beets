@@ -236,10 +236,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def test_invokations(self, mock_decargs, _):
         plugin = ThumbnailsPlugin()
         plugin.process_album = Mock()
-
         album = Mock()
-        plugin.imported(None, album)
-        plugin.process_album.assert_called_once_with(album)
 
         plugin.process_album.reset_mock()
         lib = Mock()
