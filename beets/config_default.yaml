@@ -41,7 +41,6 @@ max_filename_length: 0
 plugins: []
 pluginpath: []
 threaded: yes
-color: yes
 timeout: 5.0
 per_disc_numbering: no
 verbose: no
@@ -52,6 +51,15 @@ id3v23: no
 ui:
     terminal_width: 80
     length_diff_thresh: 10.0
+    color: yes
+    colors:
+        text_success: green
+        text_warning: yellow
+        text_error: red
+        text_highlight: red
+        text_highlight_minor: lightgray
+        action_default: turquoise
+        action: blue
 
 list_format_item: $artist - $album - $title
 list_format_album: $albumartist - $album

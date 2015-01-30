@@ -447,9 +447,9 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                 if path:
                     album.set_art(path, False)
                     album.store()
-                    message = ui.colorize('green', 'found album art')
+                    message = ui.colorize('text_success', 'found album art')
                 else:
-                    message = ui.colorize('red', 'no art found')
+                    message = ui.colorize('text_error', 'no art found')
 
             self._log.info(u'{0}: {1}', album, message)
 

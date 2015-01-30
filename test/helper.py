@@ -168,7 +168,7 @@ class TestHelper(object):
 
         self.config['plugins'] = []
         self.config['verbose'] = True
-        self.config['color'] = False
+        self.config['ui']['color'] = False
         self.config['threaded'] = False
 
         self.libdir = os.path.join(self.temp_dir, 'libdir')
