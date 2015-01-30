@@ -44,6 +44,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    fromfilename
    ftintitle
    fuzzy
+   freedesktop
    ihate
    importadded
    importfeeds
