@@ -1380,11 +1380,18 @@ class AlbumsInDirTest(_common.TestCase):
 
 
 class MultiDiscAlbumsInDirTest(_common.TestCase):
-    def setUp(self):
-        super(MultiDiscAlbumsInDirTest, self).setUp()
+    def create_music(self, files=True, ascii=True):
+        """Create some music in multiple album directories.
 
+        `files` indicates whether to create the files (otherwise, only
+        directories are made). `ascii` indicates ACII-only filenames;
+        otherwise, we use Unicode names.
+        """
         self.base = os.path.abspath(os.path.join(self.temp_dir, b'tempdir'))
         os.mkdir(self.base)
+
+        name = b'CAT' if ascii else b'CÁT'
+        name_alt_case = b'CAt' if ascii else b'CÁt'
 
         self.dirs = [
             # Nested album, multiple subdirs.
@@ -1401,28 +1408,34 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
             # Flattened album, case typo.
             # Also, false positive marker in parent dir.
             os.path.join(self.base, b'artist [CD5]'),
-            os.path.join(self.base, b'artist [CD5]', b'CÀT disc 1'),
-            os.path.join(self.base, b'artist [CD5]', b'CÀt disc 2'),
+            os.path.join(self.base, b'artist [CD5]', name + b' disc 1'),
+            os.path.join(self.base, b'artist [CD5]',
+                         name_alt_case + b' disc 2'),
 
             # Single disc album, sorted between CAT discs.
-            os.path.join(self.base, b'artist [CD5]', b'CÀTS'),
+            os.path.join(self.base, b'artist [CD5]', name + b'S'),
         ]
         self.files = [
             os.path.join(self.base, b'ABCD1234', b'cd 1', b'song1.mp3'),
             os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus', b'song2.mp3'),
             os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus', b'song3.mp3'),
             os.path.join(self.base, b'album', b'cd _ 1', b'song4.mp3'),
-            os.path.join(self.base, b'artist [CD5]', b'CÀT disc 1', b'song5.mp3'),
-            os.path.join(self.base, b'artist [CD5]', b'CÀt disc 2', b'song6.mp3'),
-            os.path.join(self.base, b'artist [CD5]', b'CÀTS', b'song7.mp3'),
+            os.path.join(self.base, b'artist [CD5]', name + b' disc 1',
+                         b'song5.mp3'),
+            os.path.join(self.base, b'artist [CD5]',
+                         name_alt_case + b' disc 2', b'song6.mp3'),
+            os.path.join(self.base, b'artist [CD5]', name + b'S',
+                         b'song7.mp3'),
         ]
 
         for path in self.dirs:
             os.mkdir(path)
-        for path in self.files:
-            _mkmp3(path)
+        if files:
+            for path in self.files:
+                _mkmp3(path)
 
     def test_coalesce_nested_album_multiple_subdirs(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         self.assertEquals(len(albums), 4)
         root, items = albums[0]
@@ -1430,27 +1443,28 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         self.assertEquals(len(items), 3)
 
     def test_coalesce_nested_album_single_subdir(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[1]
         self.assertEquals(root, self.dirs[3:5])
         self.assertEquals(len(items), 1)
 
     def test_coalesce_flattened_album_case_typo(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[2]
         self.assertEquals(root, self.dirs[6:8])
         self.assertEquals(len(items), 2)
 
     def test_single_disc_album(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[3]
         self.assertEquals(root, self.dirs[8:])
         self.assertEquals(len(items), 1)
 
     def test_do_not_yield_empty_album(self):
-        # Remove all the MP3s.
-        for path in self.files:
-            os.remove(path)
+        self.create_music(files=False)
         albums = list(albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
 
