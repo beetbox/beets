@@ -595,6 +595,11 @@ class Item(LibModel):
         """
         return int(os.path.getmtime(syspath(self.path)))
 
+    def filesize(self):
+        """Returns the size, in bytes, of the file.
+        """
+        return os.path.getsize(syspath(self.path))
+
     # Model methods.
 
     def remove(self, delete=False, with_album=True):

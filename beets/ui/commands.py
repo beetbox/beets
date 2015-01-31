@@ -439,8 +439,10 @@ def summarize_items(items, singleton):
 
     average_bitrate = sum([item.bitrate for item in items]) / len(items)
     total_duration = sum([item.length for item in items])
+    total_filesize = sum([item.filesize() for item in items])
     summary_parts.append('{0}kbps'.format(int(average_bitrate / 1000)))
     summary_parts.append(ui.human_seconds_short(total_duration))
+    summary_parts.append(ui.human_bytes(total_filesize))
 
     return ', '.join(summary_parts)
 
