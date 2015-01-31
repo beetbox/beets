@@ -1457,7 +1457,7 @@ def albums_in_dir(path):
                         match = marker_pat.match(subdir)
                         if match:
                             subdir_pat = re.compile(
-                                r'^%s\d' % re.escape(match.group(1)), re.I
+                                b'^%s\d' % re.escape(match.group(1)), re.I
                             )
                         else:
                             start_collapsing = False
@@ -1478,8 +1478,9 @@ def albums_in_dir(path):
                 start_collapsing = True
                 # Set the current pattern to match directories with the same
                 # prefix as this one, followed by a digit.
+                print(repr(re.escape(match.group(1))))
                 collapse_pat = re.compile(
-                    r'^%s\d' % re.escape(match.group(1)), re.I
+                    b'^%s\d' % re.escape(match.group(1)), re.I
                 )
                 break
 

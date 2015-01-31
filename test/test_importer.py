@@ -1383,38 +1383,38 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
     def setUp(self):
         super(MultiDiscAlbumsInDirTest, self).setUp()
 
-        self.base = os.path.abspath(os.path.join(self.temp_dir, 'tempdir'))
+        self.base = os.path.abspath(os.path.join(self.temp_dir, b'tempdir'))
         os.mkdir(self.base)
 
         self.dirs = [
             # Nested album, multiple subdirs.
             # Also, false positive marker in root dir, and subtitle for disc 3.
-            os.path.join(self.base, 'ABCD1234'),
-            os.path.join(self.base, 'ABCD1234', 'cd 1'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus'),
+            os.path.join(self.base, b'ABCD1234'),
+            os.path.join(self.base, b'ABCD1234', b'cd 1'),
+            os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus'),
 
             # Nested album, single subdir.
             # Also, punctuation between marker and disc number.
-            os.path.join(self.base, 'album'),
-            os.path.join(self.base, 'album', 'cd _ 1'),
+            os.path.join(self.base, b'album'),
+            os.path.join(self.base, b'album', b'cd _ 1'),
 
             # Flattened album, case typo.
             # Also, false positive marker in parent dir.
-            os.path.join(self.base, 'artist [CD5]'),
-            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1'),
-            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2'),
+            os.path.join(self.base, b'artist [CD5]'),
+            os.path.join(self.base, b'artist [CD5]', b'CÀT disc 1'),
+            os.path.join(self.base, b'artist [CD5]', b'CÀt disc 2'),
 
             # Single disc album, sorted between CAT discs.
-            os.path.join(self.base, 'artist [CD5]', 'CATS'),
+            os.path.join(self.base, b'artist [CD5]', b'CÀTS'),
         ]
         self.files = [
-            os.path.join(self.base, 'ABCD1234', 'cd 1', 'song1.mp3'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song2.mp3'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song3.mp3'),
-            os.path.join(self.base, 'album', 'cd _ 1', 'song4.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1', 'song5.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2', 'song6.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CATS', 'song7.mp3'),
+            os.path.join(self.base, b'ABCD1234', b'cd 1', b'song1.mp3'),
+            os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus', b'song2.mp3'),
+            os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus', b'song3.mp3'),
+            os.path.join(self.base, b'album', b'cd _ 1', b'song4.mp3'),
+            os.path.join(self.base, b'artist [CD5]', b'CÀT disc 1', b'song5.mp3'),
+            os.path.join(self.base, b'artist [CD5]', b'CÀt disc 2', b'song6.mp3'),
+            os.path.join(self.base, b'artist [CD5]', b'CÀTS', b'song7.mp3'),
         ]
 
         for path in self.dirs:
