@@ -6,9 +6,8 @@ album cover. This works on freedesktop.org-compliant file managers such as
 Nautilus or Thunar, and is therefore POSIX-only.
 
 To use the ``thumbnails`` plugin, enable it (see :doc:`/plugins/index`) as well
-as the :doc:`/plugins/fetchart`. As with :doc:`/plugins/embedart`, be sure to
-put ``fetchart`` before ``thumbnails`` in the ``plugins`` section of your
-config. You'll need 2 additional python packages: `pyxdg` and `pathlib`.
+as the :doc:`/plugins/fetchart`.  You'll need 2 additional python packages:
+`pyxdg` and `pathlib`.
 
 ``thumbnails`` needs to resize the covers, and therefore requires either
 `ImageMagick`_ or `PIL`_.
