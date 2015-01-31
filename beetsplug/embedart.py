@@ -53,7 +53,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             self._log.warning(u"ImageMagick 6.8.7 or higher not installed; "
                               u"'compare_threshold' option ignored")
 
-        self.register_listener('album_imported', self.album_imported)
+        self.register_listener('art_set', self.process_album)
 
     def commands(self):
         # Embed command.
@@ -106,10 +106,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         return [embed_cmd, extract_cmd, clear_cmd]
 
-    def album_imported(self, lib, album):
-        """Automatically embed art into imported albums.
+    def process_album(self, album):
+        """Automatically embed art after art has been set
         """
-        if album.artpath and self.config['auto']:
+        if self.config['auto']:
             max_width = self.config['maxwidth'].get(int)
             self.embed_album(album, max_width, True)
 

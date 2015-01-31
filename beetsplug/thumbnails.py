@@ -52,7 +52,7 @@ class ThumbnailsPlugin(BeetsPlugin):
 
         self.write_metadata = None
         if self.config['auto'] and self._check_local_ok():
-            self.register_listener('album_imported', self.imported)
+            self.register_listener('art_set', self.process_album)
 
     def commands(self):
         thumbnails_command = Subcommand("thumbnails",
@@ -67,9 +67,6 @@ class ThumbnailsPlugin(BeetsPlugin):
         thumbnails_command.func = self.process_query
 
         return [thumbnails_command]
-
-    def imported(self, lib, album):
-        self.process_album(album)
 
     def process_query(self, lib, opts, args):
         self.config.set_args(opts)
