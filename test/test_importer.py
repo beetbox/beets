@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -22,6 +21,8 @@ import os
 import re
 import shutil
 import StringIO
+import unicodedata
+import sys
 from tempfile import mkstemp
 from zipfile import ZipFile
 from tarfile import TarFile
@@ -1233,8 +1234,8 @@ class TagLogTest(_common.TestCase):
         sio = StringIO.StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
-        session.tag_log('status', u'café')  # send unicode
-        self.assertIn(u'status café', sio.getvalue())
+        session.tag_log('status', u'caf\xe9')  # send unicode
+        self.assertIn(u'status caf\xe9', sio.getvalue())
 
 
 class ResumeImportTest(unittest.TestCase, TestHelper):
@@ -1390,8 +1391,8 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         self.base = os.path.abspath(os.path.join(self.temp_dir, b'tempdir'))
         os.mkdir(self.base)
 
-        name = b'CAT' if ascii else b'CÁT'
-        name_alt_case = b'CAt' if ascii else b'CÁt'
+        name = b'CAT' if ascii else u'C\xc1T'.encode('utf8')
+        name_alt_case = b'CAt' if ascii else u'C\xc1t'.encode('utf8')
 
         self.dirs = [
             # Nested album, multiple subdirs.
@@ -1417,8 +1418,10 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         ]
         self.files = [
             os.path.join(self.base, b'ABCD1234', b'cd 1', b'song1.mp3'),
-            os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus', b'song2.mp3'),
-            os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus', b'song3.mp3'),
+            os.path.join(self.base, b'ABCD1234',
+                         b'cd 3 - bonus', b'song2.mp3'),
+            os.path.join(self.base, b'ABCD1234',
+                         b'cd 3 - bonus', b'song3.mp3'),
             os.path.join(self.base, b'album', b'cd _ 1', b'song4.mp3'),
             os.path.join(self.base, b'artist [CD5]', name + b' disc 1',
                          b'song5.mp3'),
@@ -1428,11 +1431,24 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
                          b'song7.mp3'),
         ]
 
+        if not ascii:
+            self.dirs = [self._normalize_path(p) for p in self.dirs]
+            self.files = [self._normalize_path(p) for p in self.files]
+
         for path in self.dirs:
             os.mkdir(path)
         if files:
             for path in self.files:
                 _mkmp3(path)
+
+    def _normalize_path(self, path):
+        """Normalize a path's Unicode combining form according to the
+        platform.
+        """
+        path = path.decode('utf8')
+        norm_form = 'NFD' if sys.platform == 'darwin' else 'NFC'
+        path = unicodedata.normalize(norm_form, path)
+        return path.encode('utf8')
 
     def test_coalesce_nested_album_multiple_subdirs(self):
         self.create_music()
