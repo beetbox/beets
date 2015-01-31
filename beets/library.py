@@ -1069,7 +1069,10 @@ def parse_query_string(s, model_cls):
     # http://bugs.python.org/issue6988
     if isinstance(s, unicode):
         s = s.encode('utf8')
-    parts = [p.decode('utf8') for p in shlex.split(s)]
+    try:
+        parts = [p.decode('utf8') for p in shlex.split(s)]
+    except ValueError as exc:
+        raise ValueError("Cannot parse {0!r} (error was: {1})".format(s, exc))
     return parse_query_parts(parts, model_cls)
 
 
