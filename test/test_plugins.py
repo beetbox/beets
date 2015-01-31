@@ -243,9 +243,8 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
 
         logs = [line for line in logs if not line.startswith('Sending event:')]
         self.assertEqual(logs, [
-            'Album: {0}/album'.format(self.import_dir),
-            '  {0}'.format(self.file_paths[0]),
-            '  {0}'.format(self.file_paths[1]),
+            'Singleton: {0}'.format(self.file_paths[0]),
+            'Singleton: {0}'.format(self.file_paths[1]),
         ])
 
 
