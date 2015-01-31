@@ -1468,6 +1468,21 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         albums = list(albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
 
+    def test_single_disc_unicode(self):
+        self.create_music(ascii=False)
+        albums = list(albums_in_dir(self.base))
+        root, items = albums[3]
+        self.assertEquals(root, self.dirs[8:])
+        self.assertEquals(len(items), 1)
+
+    def test_coalesce_multiple_unicode(self):
+        self.create_music(ascii=False)
+        albums = list(albums_in_dir(self.base))
+        self.assertEquals(len(albums), 4)
+        root, items = albums[0]
+        self.assertEquals(root, self.dirs[0:3])
+        self.assertEquals(len(items), 3)
+
 
 class ReimportTest(unittest.TestCase, ImportHelper):
     """Test "re-imports", in which the autotagging machinery is used for
