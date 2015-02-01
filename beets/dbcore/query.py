@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 
 class InvalidQueryError(ValueError):
     def __init__(self, what, expected, detail=None):
-        message = "{0!r} is not {1}".format(what, expected)
+        message = "'{0}' is not {1}".format(what, expected)
         if detail:
             message = "{0}: {1}".format(message, detail)
         super(InvalidQueryError, self).__init__(message)
@@ -214,10 +214,14 @@ class NumericQuery(FieldQuery):
     a float.
     """
     def _convert(self, s):
-        """Convert a string to a numeric type (float or int). If the
-        string cannot be converted, return None.
+        """Convert a string to a numeric type (float or int).
+
+        Return None if `s` is empty.
+        Raise an InvalidQueryError if the string cannot be converted.
         """
         # This is really just a bit of fun premature optimization.
+        if not s:
+            return None
         try:
             return int(s)
         except ValueError:

@@ -334,6 +334,9 @@ class MatchTest(_common.TestCase):
         q = dbcore.query.NumericQuery('bitrate', '200000..300000')
         self.assertFalse(q.match(self.item))
 
+    def test_open_range(self):
+        dbcore.query.NumericQuery('bitrate', '100000..')
+
 
 class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
     def setUp(self):

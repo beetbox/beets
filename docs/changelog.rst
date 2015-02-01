@@ -86,6 +86,7 @@ Fixes:
   like the bitrate. :bug:`1268`
 * The error message when MusicBrainz is not reachable on the network is now
   much clearer. Thanks to Tom Jaspers. :bug:`1190` :bug:`1272`
+* Improve error messages when parsing query strings with shlex. :bug:`1290`
 
 For developers:
 
