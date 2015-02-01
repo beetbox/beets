@@ -6,6 +6,8 @@ Changelog
 
 Features:
 
+* The summary shown to compare duplicate albums during import now displays
+  the old and new filesizes. :bug:`1291`
 * The colors used are now configurable via the new config option ``colors``,
   nested under the option ``ui``. The `color` config option has been moved
   from top-level to under ``ui``. Beets will respect the old color setting,
