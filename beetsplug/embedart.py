@@ -148,13 +148,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         try:
             self._log.debug(u'embedding {0}', displayable_path(imagepath))
-            item['images'] = [self._mediafile_image(imagepath, maxwidth)]
+            image = self._mediafile_image(imagepath, maxwidth)
         except IOError as exc:
             self._log.warning(u'could not read image file: {0}', exc)
-        else:
-            # We don't want to store the image in the database.
-            item.try_write(itempath)
-            del item['images']
+            return
+        item.try_write(path=itempath, tags={'images': [image]})
 
     def embed_album(self, album, maxwidth=None, quiet=False):
         """Embed album art into all of the album's items.

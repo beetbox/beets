@@ -500,11 +500,17 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self, path=None):
+    def write(self, path=None, tags=None):
         """Write the item's metadata to a media file.
 
         All fields in `_media_fields` are written to disk according to
         the values on this object.
+
+        `path` is the path of the mediafile to wirte the data to. It
+        defaults to the item's path.
+
+        `tags` is a dictionary of additional metadata the should be
+        written to the file.
 
         Can raise either a `ReadError` or a `WriteError`.
         """
@@ -513,8 +519,10 @@ class Item(LibModel):
         else:
             path = normpath(path)
 
-        tags = dict(self)
-        plugins.send('write', item=self, path=path, tags=tags)
+        item_tags = dict(self)
+        if tags is not None:
+            item_tags.update(tags)
+        plugins.send('write', item=self, path=path, tags=item_tags)
 
         try:
             mediafile = MediaFile(syspath(path),
@@ -522,7 +530,7 @@ class Item(LibModel):
         except (OSError, IOError, UnreadableFileError) as exc:
             raise ReadError(self.path, exc)
 
-        mediafile.update(tags)
+        mediafile.update(item_tags)
         try:
             mediafile.save()
         except (OSError, IOError, MutagenError) as exc:
@@ -533,14 +541,14 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send('after_write', item=self, path=path)
 
-    def try_write(self, path=None):
+    def try_write(self, path=None, tags=None):
         """Calls `write()` but catches and logs `FileOperationError`
         exceptions.
 
         Returns `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(path)
+            self.write(path, tags)
             return True
         except FileOperationError as exc:
             log.error("{0}", exc)
