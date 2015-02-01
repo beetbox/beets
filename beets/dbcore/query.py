@@ -24,11 +24,17 @@ from datetime import datetime, timedelta
 
 
 class InvalidQueryError(ValueError):
+    def __init__(self, query, explanation):
+        message = "Invalid query '{0}': {1}".format(query, explanation)
+        super(InvalidQueryError, self).__init__(message)
+
+
+class InvalidQueryArgumentTypeError(InvalidQueryError, TypeError):
     def __init__(self, what, expected, detail=None):
         message = "'{0}' is not {1}".format(what, expected)
         if detail:
             message = "{0}: {1}".format(message, detail)
-        super(InvalidQueryError, self).__init__(message)
+        super(InvalidQueryArgumentTypeError, self).__init__(None, message)
 
 
 class Query(object):
@@ -160,8 +166,9 @@ class RegexpQuery(StringFieldQuery):
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
             # Invalid regular expression.
-            raise InvalidQueryError(pattern, "a regular expression",
-                                    format(exc))
+            raise InvalidQueryArgumentTypeError(pattern,
+                                                "a regular expression",
+                                                format(exc))
 
     @classmethod
     def string_match(cls, pattern, value):
@@ -228,7 +235,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryError(s, "an int or a float")
+                raise InvalidQueryArgumentTypeError(s, "an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)

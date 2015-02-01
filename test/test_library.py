@@ -31,6 +31,7 @@ from test._common import unittest
 from test._common import item
 import beets.library
 import beets.mediafile
+import beets.dbcore
 from beets import util
 from beets import plugins
 from beets import config
@@ -1169,6 +1170,12 @@ class ItemReadTest(unittest.TestCase):
         item = beets.library.Item()
         with self.assertRaises(beets.library.ReadError):
             item.read('/thisfiledoesnotexist')
+
+
+class ParseQueryTest(unittest.TestCase):
+    def test_parse_invalid_query_string(self):
+        with self.assertRaises(beets.dbcore.InvalidQueryError):
+            beets.library.parse_query_string('foo"', None)
 
 
 def suite():
