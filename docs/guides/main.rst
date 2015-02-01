@@ -40,6 +40,16 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
+* On **Fedora 21**, you there is a `copr`_ for beets, which you can install
+  using `DNF`_ like so::
+
+      $ yum install dnf dnf-plugins-core
+      $ dnf copr enable afreof/beets
+      $ yum update
+      $ yum install beets
+
+.. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
+.. _dnf: http://fedoraproject.org/wiki/Features/DNF
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
