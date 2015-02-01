@@ -407,7 +407,7 @@ class TestHelper(object):
     def run_with_output(self, *args):
         with capture_stdout() as out:
             self.run_command(*args)
-        return out.getvalue()
+        return out.getvalue().decode('utf-8')
 
     # Safe file operations
 
