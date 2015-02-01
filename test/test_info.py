@@ -19,6 +19,7 @@ from test._common import unittest
 from test.helper import TestHelper
 
 from beets.mediafile import MediaFile
+from beets.util import displayable_path
 
 
 class InfoTest(unittest.TestCase, TestHelper):
@@ -52,17 +53,17 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertNotIn('composer:', out)
 
     def test_item_query(self):
-        items = self.add_item_fixtures(count=2)
-        items[0].album = 'xxxx'
-        items[0].write()
-        items[0].album = 'yyyy'
-        items[0].store()
+        item1, item2 = self.add_item_fixtures(count=2)
+        item1.album = 'xxxx'
+        item1.write()
+        item1.album = 'yyyy'
+        item1.store()
 
         out = self.run_with_output('album:yyyy')
-        self.assertIn(items[0].path, out)
-        self.assertIn(b'album: xxxx', out)
+        self.assertIn(displayable_path(item1.path), out)
+        self.assertIn(u'album: xxxx', out)
 
-        self.assertNotIn(items[1].path, out)
+        self.assertNotIn(displayable_path(item2.path), out)
 
     def test_item_library_query(self):
         item, = self.add_item_fixtures()
@@ -70,8 +71,8 @@ class InfoTest(unittest.TestCase, TestHelper):
         item.store()
 
         out = self.run_with_output('--library', 'album:xxxx')
-        self.assertIn(item.path, out)
-        self.assertIn(b'album: xxxx', out)
+        self.assertIn(displayable_path(item.path), out)
+        self.assertIn(u'album: xxxx', out)
 
     def test_collect_item_and_path(self):
         path = self.create_mediafile_fixture()
@@ -88,9 +89,18 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile.save()
 
         out = self.run_with_output('--summarize', 'album:AAA', path)
-        self.assertIn('album: AAA', out)
-        self.assertIn('tracktotal: 5', out)
-        self.assertIn('title: [various]', out)
+        self.assertIn(u'album: AAA', out)
+        self.assertIn(u'tracktotal: 5', out)
+        self.assertIn(u'title: [various]', out)
+
+    def test_include_pattern(self):
+        item = self.add_item(album='xxxx')
+
+        out = self.run_with_output('--library', 'album:xxxx',
+                                   '--include-keys', '*lbu*')
+        self.assertIn(displayable_path(item.path), out)
+        self.assertNotIn(u'title:', out)
+        self.assertIn(u'album: xxxx', out)
 
 
 def suite():

@@ -37,6 +37,8 @@ Features:
   ``art_filename`` configuration option. :bug:`1258`
 * :doc:`/plugins/fetchart`: There's a new Wikipedia image source that uses
   DBpedia to find albums. Thanks to Tom Jaspers. :bug:`1194`
+* :doc:`/plugins/info`: New options ``-i`` to display only given
+  properties. :bug:`1287`
 
 Core changes:
 

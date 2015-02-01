@@ -18,7 +18,18 @@ your library::
 
     $ beet info beatles
 
-Command-line options include:
+If you just want to see specific properties you can use the
+``--include-keys`` option to filter them. The argument is a
+comma-separated list of simple glob patterns where ``*`` matches any
+string. For example::
+
+    $ beet info -i 'title,mb*' beatles
+
+Will only show the ``title`` property and all properties starting with
+``mb``. You can add the ``-i`` option multiple times to the command
+line.
+
+Additional command-line options include:
 
 * ``--library`` or ``-l``: Show data from the library database instead of the
   files' tags.
