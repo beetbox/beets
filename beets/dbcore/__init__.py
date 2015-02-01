@@ -23,5 +23,6 @@ from .types import Type
 from .queryparse import query_from_strings
 from .queryparse import sort_from_strings
 from .queryparse import parse_sorted_query
+from .query import InvalidQueryError
 
 # flake8: noqa

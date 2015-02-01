@@ -23,8 +23,8 @@ from test import helper
 
 import beets.library
 from beets import dbcore
-from beets.dbcore import types
-from beets.dbcore.query import NoneQuery, InvalidQueryError
+from beets.dbcore import types, InvalidQueryError
+from beets.dbcore.query import NoneQuery, InvalidQueryArgumentTypeError
 from beets.library import Library, Item
 
 
@@ -282,14 +282,15 @@ class GetTest(DummyDataTestCase):
         self.assertFalse(results)
 
     def test_invalid_query(self):
-        with self.assertRaises(InvalidQueryError) as raised:
+        with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
             dbcore.query.NumericQuery('year', '199a')
         self.assertIn('not an int', unicode(raised.exception))
 
-        with self.assertRaises(InvalidQueryError) as raised:
+        with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
             dbcore.query.RegexpQuery('year', '199(')
         self.assertIn('not a regular expression', unicode(raised.exception))
         self.assertIn('unbalanced parenthesis', unicode(raised.exception))
+        self.assertIsInstance(raised.exception, (InvalidQueryError, TypeError))
 
 
 class MatchTest(_common.TestCase):
