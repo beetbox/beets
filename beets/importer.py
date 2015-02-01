@@ -546,9 +546,11 @@ class ImportTask(object):
             return
         plugins.send('album_imported', lib=lib, album=self.album)
 
-    def emit_created(self, session):
-        """Send the `import_task_created` event for this task and return a list
-        of tasks which might be returned by plugins.
+    def handle_created(self, session):
+        """Send the `import_task_created` event for this task. Return a list of
+        tasks that should continue through the pipeline. By default, this is a
+        list containing only the task itself, but plugins can replace the task
+        with new ones.
         """
         tasks = plugins.send('import_task_created', session=session, task=self)
         if not tasks:
@@ -557,10 +559,7 @@ class ImportTask(object):
             # The plugins gave us a list of lists of task. Flatten it.
             flat_tasks = []
             for inner in tasks:
-                if isinstance(inner, list):
-                    flat_tasks += inner
-                else:
-                    flat_tasks.append(inner)
+                flat_tasks += inner
             tasks = [t for t in flat_tasks if t]
         return tasks
 
@@ -1020,16 +1019,14 @@ class ImportTaskFactory(object):
             if self.session.config['singletons']:
                 for path in paths:
                     tasks = self._create(self.singleton(path))
-                    if tasks:
-                        for task in tasks:
-                            yield task
+                    for task in tasks:
+                        yield task
                 yield self.sentinel(dirs)
 
             else:
                 tasks = self._create(self.album(paths, dirs))
-                if tasks:
-                    for task in tasks:
-                        yield task
+                for task in tasks:
+                    yield task
 
         # Produce the final sentinel for this toppath to indicate that
         # it is finished. This is usually just a SentinelImportTask, but
@@ -1048,11 +1045,10 @@ class ImportTaskFactory(object):
         task. If `task` is None, do nothing.
         """
         if task:
-            tasks = task.emit_created(self.session)
-            for task in tasks:
-                if not task.skip:
-                    self.imported += 1
+            tasks = task.handle_created(self.session)
+            self.imported += len(tasks)
             return tasks
+        return []
 
     def paths(self):
         """Walk `self.toppath` and yield `(dirs, files)` pairs where
@@ -1205,8 +1201,7 @@ def query_tasks(session):
         # Search for items.
         for item in session.lib.items(session.query):
             task = SingletonImportTask(None, item)
-            tasks = task.emit_created(session)
-            for task in tasks:
+            for task in task.handle_created(session):
                 yield task
 
     else:
@@ -1223,8 +1218,7 @@ def query_tasks(session):
                 item.album_id = None
 
             task = ImportTask(None, [album.item_dir()], items)
-            tasks = task.emit_created(session)
-            for task in tasks:
+            for task in task.handle_created(session):
                 yield task
 
 
@@ -1272,8 +1266,7 @@ def user_query(session, task):
         def emitter(task):
             for item in task.items:
                 task = SingletonImportTask(task.toppath, item)
-                tasks = task.emit_created(session)
-                for new_task in tasks:
+                for new_task in task.handle_created(session):
                     yield new_task
             yield SentinelImportTask(task.toppath, task.paths)
 
@@ -1384,9 +1377,6 @@ def manipulate_files(session, task):
 def log_files(session, task):
     """A coroutine (pipeline stage) to log each file to be imported.
     """
-    if task.skip:
-        return
-
     if isinstance(task, SingletonImportTask):
         log.info(u'Singleton: {0}', displayable_path(task.item['path']))
     elif task.items:
@@ -1413,7 +1403,7 @@ def group_albums(session):
         tasks = []
         for _, items in itertools.groupby(task.items, group):
             task = ImportTask(items=list(items))
-            tasks += task.emit_created(session)
+            tasks += task.handle_created(session)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
         task = pipeline.multiple(tasks)
