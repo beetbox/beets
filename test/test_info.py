@@ -94,7 +94,9 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn(u'title: [various]', out)
 
     def test_include_pattern(self):
-        item = self.add_item(album='xxxx')
+        item, = self.add_item_fixtures()
+        item.album = 'xxxx'
+        item.store()
 
         out = self.run_with_output('--library', 'album:xxxx',
                                    '--include-keys', '*lbu*')
