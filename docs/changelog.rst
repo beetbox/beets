@@ -93,6 +93,8 @@ Fixes:
 * Improve error messages when parsing query strings with shlex. :bug:`1290`
 * :doc:`/plugins/embedart`: Fix a crash that occured when used together
   with the *check* plugin. :bug:`1241`
+* :doc:`/plugins/scrub`: Log an error instead of stopping when the ``beet
+  scrub`` command cannot write a file. :bug:`1297`
 
 For developers:
 
