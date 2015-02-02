@@ -94,7 +94,8 @@ Fixes:
 * :doc:`/plugins/embedart`: Fix a crash that occured when used together
   with the *check* plugin. :bug:`1241`
 * :doc:`/plugins/scrub`: Log an error instead of stopping when the ``beet
-  scrub`` command cannot write a file. :bug:`1297`
+  scrub`` command cannot write a file. Also, avoid problems on Windows with
+  Unicode filenames. :bug:`1297`
 
 For developers:
 

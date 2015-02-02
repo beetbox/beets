@@ -71,10 +71,11 @@ class ScrubPlugin(BeetsPlugin):
                 # Get album art if we need to restore it.
                 if opts.write:
                     try:
-                        mf = mediafile.MediaFile(item.path,
+                        mf = mediafile.MediaFile(util.syspath(item.path),
                                                  config['id3v23'].get(bool))
                     except IOError as exc:
-                        self._log.error(u'scrubbing failed: {0}', exc)
+                        self._log.error(u'could not open file to scrub: {0}',
+                                        exc)
                     art = mf.art
 
                 # Remove all tags.
@@ -86,7 +87,7 @@ class ScrubPlugin(BeetsPlugin):
                     item.try_write()
                     if art:
                         self._log.info(u'restoring art')
-                        mf = mediafile.MediaFile(item.path)
+                        mf = mediafile.MediaFile(util.syspath(item.path))
                         mf.art = art
                         mf.save()
 
