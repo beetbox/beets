@@ -27,7 +27,7 @@ PLUGIN = 'duplicates'
 
 
 def _process_item(item, lib, copy=False, move=False, delete=False,
-                  tag=False, format=''):
+                  tag=False, fmt=''):
     """Process Item `item` in `lib`.
     """
     if copy:
@@ -45,7 +45,7 @@ def _process_item(item, lib, copy=False, move=False, delete=False,
             raise UserError('%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
         setattr(k, v)
         item.store()
-    print_(format(item, format))
+    print_(format(item, fmt))
 
 
 def _checksum(item, prog, log):
@@ -229,7 +229,7 @@ class DuplicatesPlugin(BeetsPlugin):
                                       move=move,
                                       delete=delete,
                                       tag=tag,
-                                      format=fmt.format(obj_count))
+                                      fmt=fmt.format(obj_count))
 
         self._command.func = _dup
         return [self._command]
