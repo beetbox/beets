@@ -175,9 +175,11 @@ The events currently available are:
   written to disk (i.e., just after the file on disk is closed).
 
 * *import_task_created*: called immediately after an import task is
-  initialized. Plugins can use this to, for example, cancel processing of a
-  task before anything else happens. ``task`` (an `ImportTask`) and
-  ``session`` (an `ImportSession`).
+  initialized. Plugins can use this to, for example, change imported files of a
+  task before anything else happens. It's also possible to replace the task
+  with another task by returning a list of tasks. This list can contain zero
+  or more `ImportTask`s. Returning an empty list will stop the task.
+  Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
 
 * *import_task_start*: called when before an import task begins processing.
   Parameters: ``task`` and ``session``.
