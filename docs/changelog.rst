@@ -110,7 +110,8 @@ For developers:
   should!) use modern ``{}``-style string formatting lazily. See
   :ref:`plugin-logging` in the plugin API docs.
 * A new ``import_task_created`` event lets you manipulate import tasks
-  immediately after they are initialized.
+  immediately after they are initialized. It's also possible to replace the
+  originally created tasks by returning new ones using this event.
 
 
 1.3.10 (January 5, 2015)
