@@ -556,11 +556,8 @@ class ImportTask(object):
         if not tasks:
             tasks = [self]
         else:
-            # The plugins gave us a list of lists of task. Flatten it.
-            flat_tasks = []
-            for inner in tasks:
-                flat_tasks += inner
-            tasks = [t for t in flat_tasks if t]
+            # The plugins gave us a list of lists of tasks. Flatten it.
+            tasks = [t for inner in tasks for t in inner]
         return tasks
 
     def lookup_candidates(self):
