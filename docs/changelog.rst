@@ -39,6 +39,8 @@ Features:
   DBpedia to find albums. Thanks to Tom Jaspers. :bug:`1194`
 * :doc:`/plugins/info`: New options ``-i`` to display only given
   properties. :bug:`1287`
+* A new ``filesize`` field on items indicates the number of bytes in the file.
+  :bug:`1291`
 
 Core changes:
 
