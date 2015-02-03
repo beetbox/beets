@@ -90,6 +90,9 @@ class DiscogsPlugin(BeetsPlugin):
             token, secret = auth_client.get_access_token(code)
         except DiscogsAPIError:
             raise beets.ui.UserError('Discogs authorization failed')
+        except (ConnectionError, socket.error) as e:
+            self._log.debug(u'connection error: {0}', e)
+            raise beets.ui.UserError('communication with Discogs failed')
 
         # Save the token for later use.
         self._log.debug('Discogs token {0}, secret {1}', token, secret)
@@ -122,7 +125,7 @@ class DiscogsPlugin(BeetsPlugin):
         except DiscogsAPIError as e:
             self._log.debug(u'API Error: {0} (query: {1})', e, query)
             return []
-        except ConnectionError as e:
+        except (ConnectionError, socket.error) as e:
             self._log.debug(u'HTTP Connection Error: {0}', e)
             return []
 

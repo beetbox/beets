@@ -96,6 +96,8 @@ Fixes:
 * :doc:`/plugins/scrub`: Log an error instead of stopping when the ``beet
   scrub`` command cannot write a file. Also, avoid problems on Windows with
   Unicode filenames. :bug:`1297`
+* :doc:`/plugins/discogs`: Handle and log more kinds of communication
+  errors. :bug:`1299`
 
 For developers:
 
