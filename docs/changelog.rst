@@ -41,6 +41,7 @@ Features:
   properties. :bug:`1287`
 * A new ``filesize`` field on items indicates the number of bytes in the file.
   :bug:`1291`
+* The number of missing/unmatched tracks is shown during import. :bug:`1088`
 
 Core changes:
 
