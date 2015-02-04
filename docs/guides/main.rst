@@ -12,7 +12,7 @@ Installing
 You will need Python. (Beets is written for `Python 2.7`_, but it works with
 2.6 as well. Python 3.x is not yet supported.)
 
-.. _Python 2.7: http://www.python.org/download/releases/2.7.2/
+.. _Python 2.7: http://www.python.org/download/
 
 * **Mac OS X** v10.7 (Lion) and 10.8 (Mountain Lion) include Python 2.7 out of
   the box; Snow Leopard ships with Python 2.6.
