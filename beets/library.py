@@ -59,7 +59,7 @@ class PathQuery(dbcore.FieldQuery):
         return (item.path == self.file_path) or \
             item.path.startswith(self.dir_path)
 
-    def clause(self):
+    def col_clause(self):
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
         dir_pattern = buffer(dir_pattern + b'%')
@@ -1045,26 +1045,24 @@ def parse_query_parts(parts, model_cls):
 
     # Special-case path-like queries, which are non-field queries
     # containing path separators (/).
-    if 'path' in model_cls._fields:
-        path_parts = []
-        non_path_parts = []
-        for s in parts:
-            if s.find(os.sep, 0, s.find(':')) != -1:
-                # Separator precedes colon.
-                path_parts.append(s)
-            else:
-                non_path_parts.append(s)
-    else:
-        path_parts = ()
-        non_path_parts = parts
+    path_parts = []
+    non_path_parts = []
+    for s in parts:
+        if s.find(os.sep, 0, s.find(':')) != -1:
+            # Separator precedes colon.
+            path_parts.append(s)
+        else:
+            non_path_parts.append(s)
 
     query, sort = dbcore.parse_sorted_query(
         model_cls, non_path_parts, prefixes
     )
 
     # Add path queries to aggregate query.
-    if path_parts:
-        query.subqueries += [PathQuery('path', s) for s in path_parts]
+    # Match field / flexattr depending on whether the model has the path field
+    fast_query = 'path' in model_cls._fields
+    query.subqueries += [PathQuery('path', s, fast_query) for s in path_parts]
+
     return query, sort
 
 
