@@ -41,7 +41,8 @@ urllib3_logger.setLevel(logging.CRITICAL)
 USER_AGENT = u'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
 
 # Exceptions that discogs_client should really handle but does not.
-CONNECTION_ERRORS = ConnectionError, socket.error, httplib.HTTPException
+CONNECTION_ERRORS = (ConnectionError, socket.error, httplib.HTTPException,
+                     ValueError)  # JSON decoding raises a ValueError.
 
 
 class DiscogsPlugin(BeetsPlugin):
