@@ -100,7 +100,7 @@ Fixes:
   scrub`` command cannot write a file. Also, avoid problems on Windows with
   Unicode filenames. :bug:`1297`
 * :doc:`/plugins/discogs`: Handle and log more kinds of communication
-  errors. :bug:`1299`
+  errors. :bug:`1299` :bug:`1305`
 
 For developers:
 
