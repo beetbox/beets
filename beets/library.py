@@ -1060,8 +1060,8 @@ def parse_query_parts(parts, model_cls):
 
     # Add path queries to aggregate query.
     # Match field / flexattr depending on whether the model has the path field
-    fast_query = 'path' in model_cls._fields
-    query.subqueries += [PathQuery('path', s, fast_query) for s in path_parts]
+    fast_path_query = 'path' in model_cls._fields
+    query.subqueries += [PathQuery('path', s, fast_path_query) for s in path_parts]
 
     return query, sort
 
