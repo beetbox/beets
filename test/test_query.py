@@ -60,7 +60,11 @@ class AnyFieldQueryTest(_common.LibTestCase):
 
 class AssertsMixin(object):
     def assert_matched(self, results, titles):
+        # TODO: refactor to "assert_items_matched" for clarity
         self.assertEqual([i.title for i in results], titles)
+
+    def assert_albums_matched(self, results, albums):
+        self.assertEqual([a.album for a in results], albums)
 
 
 # A test case class providing a library with some dummy data and some
@@ -343,75 +347,118 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         super(PathQueryTest, self).setUp()
         self.i.path = '/a/b/c.mp3'
         self.i.title = 'path item'
+        self.i.album = 'path album'
         self.i.store()
+        self.lib.add_album([self.i])
 
     def test_path_exact_match(self):
         q = 'path:/a/b/c.mp3'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
 
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, [])
+
     def test_parent_directory_no_slash(self):
         q = 'path:/a'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
+
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['path album'])
 
     def test_parent_directory_with_slash(self):
         q = 'path:/a/'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
 
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['path album'])
+
     def test_no_match(self):
         q = 'path:/xyzzy/'
         results = self.lib.items(q)
         self.assert_matched(results, [])
+
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, [])
 
     def test_fragment_no_match(self):
         q = 'path:/b/'
         results = self.lib.items(q)
         self.assert_matched(results, [])
 
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, [])
+
     def test_nonnorm_path(self):
         q = 'path:/x/../a/b'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
+
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['path album'])
 
     def test_slashed_query_matches_path(self):
         q = '/a/b'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
 
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['path album'])
+
     def test_non_slashed_does_not_match_path(self):
         q = 'c.mp3'
         results = self.lib.items(q)
         self.assert_matched(results, [])
+
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, [])
 
     def test_slashes_in_explicit_field_does_not_match_path(self):
         q = 'title:/a/b'
         results = self.lib.items(q)
         self.assert_matched(results, [])
 
-    def test_path_regex(self):
+    def test_path_item_regex(self):
         q = 'path::\\.mp3$'
         results = self.lib.items(q)
         self.assert_matched(results, ['path item'])
 
+    def test_path_album_regex(self):
+        q = 'path::b'
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['path album'])
+
     def test_escape_underscore(self):
-        self.add_item(path='/a/_/title.mp3', title='with underscore')
+        self.add_album(path='/a/_/title.mp3', title='with underscore',
+                       album='album with underscore')
         q = 'path:/a/_'
         results = self.lib.items(q)
         self.assert_matched(results, ['with underscore'])
 
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['album with underscore'])
+
     def test_escape_percent(self):
-        self.add_item(path='/a/%/title.mp3', title='with percent')
+        self.add_album(path='/a/%/title.mp3', title='with percent',
+                       album='album with percent')
         q = 'path:/a/%'
         results = self.lib.items(q)
         self.assert_matched(results, ['with percent'])
 
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['album with percent'])
+
     def test_escape_backslash(self):
-        self.add_item(path=r'/a/\x/title.mp3', title='with backslash')
+        self.add_album(path=r'/a/\x/title.mp3', title='with backslash',
+                       album='album with backslash')
         q = r'path:/a/\\x'
         results = self.lib.items(q)
         self.assert_matched(results, ['with backslash'])
+
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['album with backslash'])
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):
