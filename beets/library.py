@@ -794,6 +794,10 @@ class Album(LibModel):
 
     _search_fields = ('album', 'albumartist', 'genre')
 
+    _types = {
+        'path': PathType(),
+    }
+
     _sorts = {
         'albumartist': SmartArtistSort,
         'artist': SmartArtistSort,
