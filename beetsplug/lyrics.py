@@ -414,8 +414,9 @@ class Google(Backend):
 
     def fetch(self, artist, title):
         query = u"%s %s" % (artist, title)
-        url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
-            (self.api_key, self.engine_id, urllib.quote(query.encode('utf8')))
+        url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' \
+              % (self.api_key, self.engine_id,
+                 urllib.quote(query.encode('utf8')))
 
         data = urllib.urlopen(url)
         data = json.load(data)
