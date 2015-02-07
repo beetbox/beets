@@ -63,7 +63,7 @@ def _write_m3u(m3u_path, items_paths):
     mkdirall(m3u_path)
     with open(syspath(m3u_path), 'a') as f:
         for path in items_paths:
-            f.write(path + '\n')
+            f.write(path + b'\n')
 
 
 class ImportFeedsPlugin(BeetsPlugin):
