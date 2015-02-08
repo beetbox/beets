@@ -199,8 +199,11 @@ class TestHelper(object):
         beets.config['plugins'] = plugins
         beets.plugins.load_plugins(plugins)
         beets.plugins.find_plugins()
-        Item._types = beets.plugins.types(Item)
-        Album._types = beets.plugins.types(Album)
+        # Take a backup of the original _types to restore when unloading
+        Item._original_types = dict(Item._types)
+        Album._original_types = dict(Album._types)
+        Item._types.update(beets.plugins.types(Item))
+        Album._types.update(beets.plugins.types(Album))
 
     def unload_plugins(self):
         """Unload all plugins and remove the from the configuration.
@@ -209,8 +212,8 @@ class TestHelper(object):
         beets.config['plugins'] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}
-        Item._types = {}
-        Album._types = {}
+        Item._types = Item._original_types
+        Album._types = Album._original_types
 
     def create_importer(self, item_count=1, album_count=1):
         """Create files to import and return corresponding session.

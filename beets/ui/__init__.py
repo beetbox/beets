@@ -839,8 +839,8 @@ def _setup(options, lib=None):
     if lib is None:
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
-    library.Item._types = plugins.types(library.Item)
-    library.Album._types = plugins.types(library.Album)
+    library.Item._types.update(plugins.types(library.Item))
+    library.Album._types.update(plugins.types(library.Album))
 
     return subcommands, plugins, lib
 
