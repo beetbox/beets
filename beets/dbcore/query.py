@@ -24,17 +24,28 @@ from datetime import datetime, timedelta
 
 
 class InvalidQueryError(ValueError):
+    """Represent any kind of invalid query
+
+    The query should be a unicode string or a list, which will be space-joined.
+    """
     def __init__(self, query, explanation):
-        message = "Invalid query '{0}': {1}".format(query, explanation)
+        if isinstance(query, list):
+            query = " ".join(query)
+        message = "'{0}': {1}".format(query, explanation)
         super(InvalidQueryError, self).__init__(message)
 
 
-class InvalidQueryArgumentTypeError(InvalidQueryError, TypeError):
+class InvalidQueryArgumentTypeError(TypeError):
+    """Represent a query argument that could not be converted as expected.
+
+    It exists to be caught in upper stack levels so a meaningful (i.e. with the
+    query) InvalidQueryError can be raised.
+    """
     def __init__(self, what, expected, detail=None):
         message = "'{0}' is not {1}".format(what, expected)
         if detail:
             message = "{0}: {1}".format(message, detail)
-        super(InvalidQueryArgumentTypeError, self).__init__(None, message)
+        super(InvalidQueryArgumentTypeError, self).__init__(message)
 
 
 class Query(object):

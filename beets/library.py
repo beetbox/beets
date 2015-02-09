@@ -1155,11 +1155,14 @@ class Library(dbcore.Database):
         in the query string the `sort` argument is ignored.
         """
         # Parse the query, if necessary.
-        parsed_sort = None
-        if isinstance(query, basestring):
-            query, parsed_sort = parse_query_string(query, model_cls)
-        elif isinstance(query, (list, tuple)):
-            query, parsed_sort = parse_query_parts(query, model_cls)
+        try:
+            parsed_sort = None
+            if isinstance(query, basestring):
+                query, parsed_sort = parse_query_string(query, model_cls)
+            elif isinstance(query, (list, tuple)):
+                query, parsed_sort = parse_query_parts(query, model_cls)
+        except dbcore.query.InvalidQueryArgumentTypeError as exc:
+            raise dbcore.InvalidQueryError(query, exc)
 
         # Any non-null sort specified by the parsed query overrides the
         # provided sort.
