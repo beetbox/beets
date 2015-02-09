@@ -31,10 +31,12 @@ from test._common import unittest
 from test._common import item
 import beets.library
 import beets.mediafile
+import beets.dbcore
 from beets import util
 from beets import plugins
 from beets import config
 from beets.mediafile import MediaFile
+from test.helper import TestHelper
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -1109,37 +1111,49 @@ class UnicodePathTest(_common.LibTestCase):
         self.i.write()
 
 
-class WriteTest(_common.LibTestCase):
+class WriteTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
     def test_write_nonexistant(self):
-        self.i.path = '/path/does/not/exist'
-        self.assertRaises(beets.library.ReadError, self.i.write)
+        item = self.create_item()
+        item.path = '/path/does/not/exist'
+        with self.assertRaises(beets.library.ReadError):
+            item.write()
 
     def test_no_write_permission(self):
-        path = os.path.join(self.temp_dir, 'file.mp3')
-        shutil.copy(os.path.join(_common.RSRC, 'empty.mp3'), path)
+        item = self.add_item_fixture()
+        path = item.path
         os.chmod(path, stat.S_IRUSR)
 
         try:
-            self.i.path = path
-            self.assertRaises(beets.library.WriteError, self.i.write)
+            self.assertRaises(beets.library.WriteError, item.write)
 
         finally:
             # Restore write permissions so the file can be cleaned up.
             os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
 
     def test_write_with_custom_path(self):
-        custom_path = os.path.join(self.temp_dir, 'file.mp3')
-        self.i.path = os.path.join(self.temp_dir, 'item_file.mp3')
-        shutil.copy(os.path.join(_common.RSRC, 'empty.mp3'), custom_path)
-        shutil.copy(os.path.join(_common.RSRC, 'empty.mp3'), self.i.path)
+        item = self.add_item_fixture()
+        custom_path = os.path.join(self.temp_dir, 'custom.mp3')
+        shutil.copy(item.path, custom_path)
 
-        self.i['artist'] = 'new artist'
+        item['artist'] = 'new artist'
         self.assertNotEqual(MediaFile(custom_path).artist, 'new artist')
-        self.assertNotEqual(MediaFile(self.i.path).artist, 'new artist')
+        self.assertNotEqual(MediaFile(item.path).artist, 'new artist')
 
-        self.i.write(custom_path)
+        item.write(custom_path)
         self.assertEqual(MediaFile(custom_path).artist, 'new artist')
-        self.assertNotEqual(MediaFile(self.i.path).artist, 'new artist')
+        self.assertNotEqual(MediaFile(item.path).artist, 'new artist')
+
+    def test_write_custom_tags(self):
+        item = self.add_item_fixture(artist='old artist')
+        item.write(tags={'artist': 'new artist'})
+        self.assertNotEqual(item.artist, 'new artist')
+        self.assertEqual(MediaFile(item.path).artist, 'new artist')
 
 
 class ItemReadTest(unittest.TestCase):
@@ -1156,6 +1170,12 @@ class ItemReadTest(unittest.TestCase):
         item = beets.library.Item()
         with self.assertRaises(beets.library.ReadError):
             item.read('/thisfiledoesnotexist')
+
+
+class ParseQueryTest(unittest.TestCase):
+    def test_parse_invalid_query_string(self):
+        with self.assertRaises(beets.dbcore.InvalidQueryError):
+            beets.library.parse_query_string('foo"', None)
 
 
 def suite():

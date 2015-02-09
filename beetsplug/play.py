@@ -76,13 +76,14 @@ def play_music(lib, opts, args, log):
     item_type += 's' if len(selection) > 1 else ''
 
     if not selection:
-        ui.print_(ui.colorize('yellow', 'No {0} to play.'.format(item_type)))
+        ui.print_(ui.colorize('text_warning',
+                              'No {0} to play.'.format(item_type)))
         return
 
     # Warn user before playing any huge playlists.
     if len(selection) > 100:
         ui.print_(ui.colorize(
-            'yellow',
+            'text_warning',
             'You are about to queue {0} {1}.'.format(len(selection), item_type)
         ))
 

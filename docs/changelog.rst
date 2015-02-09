@@ -6,6 +6,12 @@ Changelog
 
 Features:
 
+* The summary shown to compare duplicate albums during import now displays
+  the old and new filesizes. :bug:`1291`
+* The colors used are now configurable via the new config option ``colors``,
+  nested under the option ``ui``. The `color` config option has been moved
+  from top-level to under ``ui``. Beets will respect the old color setting,
+  but will warn the user with a deprecation message. :bug:`1238`
 * A new :doc:`/plugins/filefilter` lets you write regular expressions to
   automatically avoid importing certain files. Thanks to :user:`mried`.
   :bug:`1186`
@@ -24,6 +30,9 @@ Features:
 * :doc:`plugins/mbsync`: A new ``-f/--format`` option controls the output
   format when listing unrecognized items. The output is also now more helpful
   by default. :bug:`1246`
+* :doc:`/plugins/fetchart`: New option ``-n`` to extract the cover art of all
+  matched albums into its directory. It's also possible to automatically
+  associate them with the album when adding ``-a``. :bug:`1261`
 * :doc:`/plugins/fetchart`: Names of extracted image art is taken from the
   ``art_filename`` configuration option. :bug:`1258`
 * :doc:`/plugins/fetchart`: There's a new Wikipedia image source that uses
@@ -32,6 +41,11 @@ Features:
   album folders for all freedesktop.org-compliant file managers. This replaces
   the :doc:`/plugins/freedesktop` which only worked with the Dolphin file
   manager.
+* :doc:`/plugins/info`: New options ``-i`` to display only given
+  properties. :bug:`1287`
+* A new ``filesize`` field on items indicates the number of bytes in the file.
+  :bug:`1291`
+* The number of missing/unmatched tracks is shown during import. :bug:`1088`
 
 Core changes:
 
@@ -79,6 +93,18 @@ Fixes:
 * :doc:`/plugins/importfeeds` and :doc:`/plugins/smartplaylist`: Automatically
   create parent directories for playlist files (instead of crashing when the
   parent directory does not exist). :bug:`1266`
+* The :ref:`write-cmd` command no longer tries to "write" non-writable fields
+  like the bitrate. :bug:`1268`
+* The error message when MusicBrainz is not reachable on the network is now
+  much clearer. Thanks to Tom Jaspers. :bug:`1190` :bug:`1272`
+* Improve error messages when parsing query strings with shlex. :bug:`1290`
+* :doc:`/plugins/embedart`: Fix a crash that occured when used together
+  with the *check* plugin. :bug:`1241`
+* :doc:`/plugins/scrub`: Log an error instead of stopping when the ``beet
+  scrub`` command cannot write a file. Also, avoid problems on Windows with
+  Unicode filenames. :bug:`1297`
+* :doc:`/plugins/discogs`: Handle and log more kinds of communication
+  errors. :bug:`1299` :bug:`1305`
 
 For developers:
 
@@ -88,7 +114,8 @@ For developers:
   should!) use modern ``{}``-style string formatting lazily. See
   :ref:`plugin-logging` in the plugin API docs.
 * A new ``import_task_created`` event lets you manipulate import tasks
-  immediately after they are initialized.
+  immediately after they are initialized. It's also possible to replace the
+  originally created tasks by returning new ones using this event.
 
 
 1.3.10 (January 5, 2015)

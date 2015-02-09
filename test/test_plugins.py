@@ -207,6 +207,26 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
             self.file_paths.append(dest_path)
 
     def test_import_task_created(self):
+        import_files = [self.import_dir]
+        self._setup_import_session(singletons=False)
+        self.importer.paths = import_files
+
+        with helper.capture_log() as logs:
+            self.importer.run()
+        self.unload_plugins()
+
+        # Exactly one event should have been imported (for the album).
+        # Sentinels do not get emitted.
+        self.assertEqual(logs.count('Sending event: import_task_created'), 1)
+
+        logs = [line for line in logs if not line.startswith('Sending event:')]
+        self.assertEqual(logs, [
+            'Album: {0}'.format(os.path.join(self.import_dir, 'album')),
+            '  {0}'.format(self.file_paths[0]),
+            '  {0}'.format(self.file_paths[1]),
+        ])
+
+    def test_import_task_created_with_plugin(self):
         class ToSingletonPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super(ToSingletonPlugin, self).__init__()
@@ -243,9 +263,8 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
 
         logs = [line for line in logs if not line.startswith('Sending event:')]
         self.assertEqual(logs, [
-            'Album: {0}/album'.format(self.import_dir),
-            '  {0}'.format(self.file_paths[0]),
-            '  {0}'.format(self.file_paths[1]),
+            'Singleton: {0}'.format(self.file_paths[0]),
+            'Singleton: {0}'.format(self.file_paths[1]),
         ])
 
 

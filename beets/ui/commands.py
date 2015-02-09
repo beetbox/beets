@@ -176,11 +176,11 @@ def dist_string(dist):
     """
     out = '%.1f%%' % ((1 - dist) * 100)
     if dist <= config['match']['strong_rec_thresh'].as_number():
-        out = ui.colorize('green', out)
+        out = ui.colorize('text_success', out)
     elif dist <= config['match']['medium_rec_thresh'].as_number():
-        out = ui.colorize('yellow', out)
+        out = ui.colorize('text_warning', out)
     else:
-        out = ui.colorize('red', out)
+        out = ui.colorize('text_error', out)
     return out
 
 
@@ -197,7 +197,7 @@ def penalty_string(distance, limit=None):
     if penalties:
         if limit and len(penalties) > limit:
             penalties = penalties[:limit] + ['...']
-        return ui.colorize('yellow', '(%s)' % ', '.join(penalties))
+        return ui.colorize('text_warning', '(%s)' % ', '.join(penalties))
 
 
 def show_change(cur_artist, cur_album, match):
@@ -270,7 +270,7 @@ def show_change(cur_artist, cur_album, match):
     # Disambiguation.
     disambig = disambig_string(match.info)
     if disambig:
-        info.append(ui.colorize('lightgray', '(%s)' % disambig))
+        info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
     print_(' '.join(info))
 
     # Tracks.
@@ -315,9 +315,9 @@ def show_change(cur_artist, cur_album, match):
         cur_track, new_track = format_index(item), format_index(track_info)
         if cur_track != new_track:
             if item.track in (track_info.index, track_info.medium_index):
-                color = 'lightgray'
+                color = 'text_highlight_minor'
             else:
-                color = 'red'
+                color = 'text_highlight'
             templ = ui.colorize(color, u' (#{0})')
             lhs += templ.format(cur_track)
             rhs += templ.format(new_track)
@@ -329,7 +329,7 @@ def show_change(cur_artist, cur_album, match):
                 config['ui']['length_diff_thresh'].as_number():
             cur_length = ui.human_seconds_short(item.length)
             new_length = ui.human_seconds_short(track_info.length)
-            templ = ui.colorize('red', u' ({0})')
+            templ = ui.colorize('text_highlight', u' ({0})')
             lhs += templ.format(cur_length)
             rhs += templ.format(new_length)
             lhs_width += len(cur_length) + 3
@@ -359,19 +359,23 @@ def show_change(cur_artist, cur_album, match):
 
     # Missing and unmatched tracks.
     if match.extra_tracks:
-        print_('Missing tracks:')
+        print_('Missing tracks ({0}/{1} - {2:.1%}):'.format(
+               len(match.extra_tracks),
+               len(match.info.tracks),
+               len(match.extra_tracks) / len(match.info.tracks)
+               ))
     for track_info in match.extra_tracks:
         line = ' ! %s (#%s)' % (track_info.title, format_index(track_info))
         if track_info.length:
             line += ' (%s)' % ui.human_seconds_short(track_info.length)
-        print_(ui.colorize('yellow', line))
+        print_(ui.colorize('text_warning', line))
     if match.extra_items:
-        print_('Unmatched tracks:')
+        print_('Unmatched tracks ({0}):'.format(len(match.extra_items)))
     for item in match.extra_items:
         line = ' ! %s (#%s)' % (item.title, format_index(item))
         if item.length:
             line += ' (%s)' % ui.human_seconds_short(item.length)
-        print_(ui.colorize('yellow', line))
+        print_(ui.colorize('text_warning', line))
 
 
 def show_item_change(item, match):
@@ -408,7 +412,7 @@ def show_item_change(item, match):
     # Disambiguation.
     disambig = disambig_string(match.info)
     if disambig:
-        info.append(ui.colorize('lightgray', '(%s)' % disambig))
+        info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
     print_(' '.join(info))
 
 
@@ -439,8 +443,10 @@ def summarize_items(items, singleton):
 
     average_bitrate = sum([item.bitrate for item in items]) / len(items)
     total_duration = sum([item.length for item in items])
+    total_filesize = sum([item.filesize for item in items])
     summary_parts.append('{0}kbps'.format(int(average_bitrate / 1000)))
     summary_parts.append(ui.human_seconds_short(total_duration))
+    summary_parts.append(ui.human_bytes(total_filesize))
 
     return ', '.join(summary_parts)
 
@@ -567,7 +573,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 # Disambiguation
                 disambig = disambig_string(match.info)
                 if disambig:
-                    line.append(ui.colorize('lightgray', '(%s)' % disambig))
+                    line.append(ui.colorize('text_highlight_minor',
+                                            '(%s)' % disambig))
 
                 print_(' '.join(line))
 
@@ -997,7 +1004,7 @@ def update_items(lib, query, album, move, pretend):
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
                 ui.print_(format(item))
-                ui.print_(ui.colorize('red', u'  deleted'))
+                ui.print_(ui.colorize('text_error', u'  deleted'))
                 if not pretend:
                     item.remove(True)
                 affected_albums.add(item.album_id)
@@ -1428,7 +1435,7 @@ def write_items(lib, query, pretend, force):
 
         # Check for and display changes.
         changed = ui.show_model_changes(item, clean_item,
-                                        library.Item._media_fields, force)
+                                        library.Item._media_tag_fields, force)
         if (changed or force) and not pretend:
             item.try_sync()
 

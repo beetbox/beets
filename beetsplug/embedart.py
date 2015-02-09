@@ -88,12 +88,30 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                     help='extract an image from file metadata')
         extract_cmd.parser.add_option('-o', dest='outpath',
                                       help='image output file')
+        extract_cmd.parser.add_option('-n', dest='filename',
+                                      help='image filename to create for all '
+                                           'matched albums')
+        extract_cmd.parser.add_option('-a', dest='associate',
+                                      action='store_true',
+                                      help='associate the extracted images '
+                                           'with the album')
 
         def extract_func(lib, opts, args):
-            outpath = normpath(opts.outpath or config['art_filename'].get())
-            for item in lib.items(decargs(args)):
-                if self.extract(outpath, item):
+            if opts.outpath:
+                self.extract_first(normpath(opts.outpath),
+                                   lib.items(decargs(args)))
+            else:
+                filename = opts.filename or config['art_filename'].get()
+                if os.path.dirname(filename) != '':
+                    self._log.error(u"Only specify a name rather than a path "
+                                    u"for -n")
                     return
+                for album in lib.albums(decargs(args)):
+                    artpath = normpath(os.path.join(album.path, filename))
+                    artpath = self.extract_first(artpath, album.items())
+                    if artpath and opts.associate:
+                        album.set_art(artpath)
+                        album.store()
         extract_cmd.func = extract_func
 
         # Clear command.
@@ -130,13 +148,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         try:
             self._log.debug(u'embedding {0}', displayable_path(imagepath))
-            item['images'] = [self._mediafile_image(imagepath, maxwidth)]
+            image = self._mediafile_image(imagepath, maxwidth)
         except IOError as exc:
             self._log.warning(u'could not read image file: {0}', exc)
-        else:
-            # We don't want to store the image in the database.
-            item.try_write(itempath)
-            del item['images']
+            return
+        item.try_write(path=itempath, tags={'images': [image]})
 
     def embed_album(self, album, maxwidth=None, quiet=False):
         """Embed album art into all of the album's items.
@@ -236,7 +252,6 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         return mf.art
 
     # 'extractart' command.
-
     def extract(self, outpath, item):
         art = self.get_art(item)
 
@@ -257,6 +272,12 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         with open(syspath(outpath), 'wb') as f:
             f.write(art)
         return outpath
+
+    def extract_first(self, outpath, items):
+        for item in items:
+            real_path = self.extract(outpath, item)
+            if real_path:
+                return real_path
 
     # 'clearart' command.
     def clear(self, lib, query):

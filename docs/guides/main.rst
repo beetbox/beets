@@ -12,7 +12,7 @@ Installing
 You will need Python. (Beets is written for `Python 2.7`_, but it works with
 2.6 as well. Python 3.x is not yet supported.)
 
-.. _Python 2.7: http://www.python.org/download/releases/2.7.2/
+.. _Python 2.7: http://www.python.org/download/
 
 * **Mac OS X** v10.7 (Lion) and 10.8 (Mountain Lion) include Python 2.7 out of
   the box; Snow Leopard ships with Python 2.6.
@@ -40,6 +40,16 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
+* On **Fedora 21**, you there is a `copr`_ for beets, which you can install
+  using `DNF`_ like so::
+
+      $ yum install dnf dnf-plugins-core
+      $ dnf copr enable afreof/beets
+      $ yum update
+      $ yum install beets
+
+.. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
+.. _dnf: http://fedoraproject.org/wiki/Features/DNF
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577

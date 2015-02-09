@@ -14,11 +14,11 @@
 
 from __future__ import absolute_import, unicode_literals
 
-__version__ = '1.3.11'
-__author__ = 'Adrian Sampson <adrian@radbox.org>'
-
 import beets.library
 from beets.util import confit
+
+__version__ = '1.3.11'
+__author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 Library = beets.library.Library
 

@@ -29,7 +29,7 @@ import urllib
 
 import pygst
 pygst.require('0.10')
-import gst
+import gst  # noqa
 
 
 class GstPlayer(object):

@@ -26,21 +26,21 @@ from beets import config
 from beets import mediafile
 
 _MUTAGEN_FORMATS = {
-    'asf': 'ASF',
-    'apev2': 'APEv2File',
-    'flac': 'FLAC',
-    'id3': 'ID3FileType',
-    'mp3': 'MP3',
-    'mp4': 'MP4',
-    'oggflac': 'OggFLAC',
-    'oggspeex': 'OggSpeex',
-    'oggtheora': 'OggTheora',
-    'oggvorbis': 'OggVorbis',
-    'oggopus': 'OggOpus',
-    'trueaudio': 'TrueAudio',
-    'wavpack': 'WavPack',
-    'monkeysaudio': 'MonkeysAudio',
-    'optimfrog': 'OptimFROG',
+    b'asf': b'ASF',
+    b'apev2': b'APEv2File',
+    b'flac': b'FLAC',
+    b'id3': b'ID3FileType',
+    b'mp3': b'MP3',
+    b'mp4': b'MP4',
+    b'oggflac': b'OggFLAC',
+    b'oggspeex': b'OggSpeex',
+    b'oggtheora': b'OggTheora',
+    b'oggvorbis': b'OggVorbis',
+    b'oggopus': b'OggOpus',
+    b'trueaudio': b'TrueAudio',
+    b'wavpack': b'WavPack',
+    b'monkeysaudio': b'MonkeysAudio',
+    b'optimfrog': b'OptimFROG',
 }
 
 
@@ -70,8 +70,12 @@ class ScrubPlugin(BeetsPlugin):
 
                 # Get album art if we need to restore it.
                 if opts.write:
-                    mf = mediafile.MediaFile(item.path,
-                                             config['id3v23'].get(bool))
+                    try:
+                        mf = mediafile.MediaFile(util.syspath(item.path),
+                                                 config['id3v23'].get(bool))
+                    except IOError as exc:
+                        self._log.error(u'could not open file to scrub: {0}',
+                                        exc)
                     art = mf.art
 
                 # Remove all tags.
@@ -83,7 +87,7 @@ class ScrubPlugin(BeetsPlugin):
                     item.try_write()
                     if art:
                         self._log.info(u'restoring art')
-                        mf = mediafile.MediaFile(item.path)
+                        mf = mediafile.MediaFile(util.syspath(item.path))
                         mf.art = art
                         mf.save()
 
@@ -103,7 +107,7 @@ class ScrubPlugin(BeetsPlugin):
         """
         classes = []
         for modname, clsname in _MUTAGEN_FORMATS.items():
-            mod = __import__('mutagen.{0}'.format(modname),
+            mod = __import__(b'mutagen.{0}'.format(modname),
                              fromlist=[clsname])
             classes.append(getattr(mod, clsname))
         return classes

@@ -19,6 +19,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import os
+import re
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -77,13 +78,16 @@ def update_summary(summary, tags):
 
 
 def print_data(data):
-    path = data.pop('path')
+    path = data.pop('path', None)
     formatted = {}
     for key, value in data.iteritems():
         if isinstance(value, list):
             formatted[key] = u'; '.join(value)
         if value is not None:
             formatted[key] = value
+
+    if len(formatted) == 0:
+        return
 
     maxwidth = max(len(key) for key in formatted)
     lineformat = u'{{0:>{0}}}: {{1}}'.format(maxwidth)
@@ -107,6 +111,9 @@ class InfoPlugin(BeetsPlugin):
                               help='show library fields instead of tags')
         cmd.parser.add_option('-s', '--summarize', action='store_true',
                               help='summarize the tags of all files')
+        cmd.parser.add_option('-i', '--include-keys', default=[],
+                              action='append', dest='included_keys',
+                              help='comma separated list of keys to show')
         return [cmd]
 
     def run(self, lib, opts, args):
@@ -128,6 +135,11 @@ class InfoPlugin(BeetsPlugin):
         else:
             data_collector = tag_data
 
+        included_keys = []
+        for keys in opts.included_keys:
+            included_keys.extend(keys.split(','))
+        key_filter = make_key_filter(included_keys)
+
         first = True
         summary = {}
         for data_emitter in data_collector(lib, ui.decargs(args)):
@@ -137,6 +149,9 @@ class InfoPlugin(BeetsPlugin):
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
 
+            path = data.get('path')
+            data = key_filter(data)
+            data['path'] = path  # always show path
             if opts.summarize:
                 update_summary(summary, data)
             else:
@@ -147,3 +162,33 @@ class InfoPlugin(BeetsPlugin):
 
         if opts.summarize:
             print_data(summary)
+
+
+def make_key_filter(include):
+    """Return a function that filters a dictionary.
+
+    The returned filter takes a dictionary and returns another
+    dictionary that only includes the key-value pairs where the key
+    glob-matches one of the keys in `include`.
+    """
+    if not include:
+        return identity
+
+    matchers = []
+    for key in include:
+        key = re.escape(key)
+        key = key.replace(r'\*', '.*')
+        matchers.append(re.compile(key + '$'))
+
+    def filter(data):
+        filtered = dict()
+        for key, value in data.items():
+            if any(map(lambda m: m.match(key), matchers)):
+                filtered[key] = value
+        return filtered
+
+    return filter
+
+
+def identity(val):
+    return val

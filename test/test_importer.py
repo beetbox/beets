@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -22,6 +21,8 @@ import os
 import re
 import shutil
 import StringIO
+import unicodedata
+import sys
 from tempfile import mkstemp
 from zipfile import ZipFile
 from tarfile import TarFile
@@ -1233,8 +1234,8 @@ class TagLogTest(_common.TestCase):
         sio = StringIO.StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
-        session.tag_log('status', u'café')  # send unicode
-        self.assertIn(u'status café', sio.getvalue())
+        session.tag_log('status', u'caf\xe9')  # send unicode
+        self.assertIn(u'status caf\xe9', sio.getvalue())
 
 
 class ResumeImportTest(unittest.TestCase, TestHelper):
@@ -1380,49 +1381,77 @@ class AlbumsInDirTest(_common.TestCase):
 
 
 class MultiDiscAlbumsInDirTest(_common.TestCase):
-    def setUp(self):
-        super(MultiDiscAlbumsInDirTest, self).setUp()
+    def create_music(self, files=True, ascii=True):
+        """Create some music in multiple album directories.
 
-        self.base = os.path.abspath(os.path.join(self.temp_dir, 'tempdir'))
+        `files` indicates whether to create the files (otherwise, only
+        directories are made). `ascii` indicates ACII-only filenames;
+        otherwise, we use Unicode names.
+        """
+        self.base = os.path.abspath(os.path.join(self.temp_dir, b'tempdir'))
         os.mkdir(self.base)
+
+        name = b'CAT' if ascii else u'C\xc1T'.encode('utf8')
+        name_alt_case = b'CAt' if ascii else u'C\xc1t'.encode('utf8')
 
         self.dirs = [
             # Nested album, multiple subdirs.
             # Also, false positive marker in root dir, and subtitle for disc 3.
-            os.path.join(self.base, 'ABCD1234'),
-            os.path.join(self.base, 'ABCD1234', 'cd 1'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus'),
+            os.path.join(self.base, b'ABCD1234'),
+            os.path.join(self.base, b'ABCD1234', b'cd 1'),
+            os.path.join(self.base, b'ABCD1234', b'cd 3 - bonus'),
 
             # Nested album, single subdir.
             # Also, punctuation between marker and disc number.
-            os.path.join(self.base, 'album'),
-            os.path.join(self.base, 'album', 'cd _ 1'),
+            os.path.join(self.base, b'album'),
+            os.path.join(self.base, b'album', b'cd _ 1'),
 
             # Flattened album, case typo.
             # Also, false positive marker in parent dir.
-            os.path.join(self.base, 'artist [CD5]'),
-            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1'),
-            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2'),
+            os.path.join(self.base, b'artist [CD5]'),
+            os.path.join(self.base, b'artist [CD5]', name + b' disc 1'),
+            os.path.join(self.base, b'artist [CD5]',
+                         name_alt_case + b' disc 2'),
 
             # Single disc album, sorted between CAT discs.
-            os.path.join(self.base, 'artist [CD5]', 'CATS'),
+            os.path.join(self.base, b'artist [CD5]', name + b'S'),
         ]
         self.files = [
-            os.path.join(self.base, 'ABCD1234', 'cd 1', 'song1.mp3'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song2.mp3'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song3.mp3'),
-            os.path.join(self.base, 'album', 'cd _ 1', 'song4.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1', 'song5.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2', 'song6.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CATS', 'song7.mp3'),
+            os.path.join(self.base, b'ABCD1234', b'cd 1', b'song1.mp3'),
+            os.path.join(self.base, b'ABCD1234',
+                         b'cd 3 - bonus', b'song2.mp3'),
+            os.path.join(self.base, b'ABCD1234',
+                         b'cd 3 - bonus', b'song3.mp3'),
+            os.path.join(self.base, b'album', b'cd _ 1', b'song4.mp3'),
+            os.path.join(self.base, b'artist [CD5]', name + b' disc 1',
+                         b'song5.mp3'),
+            os.path.join(self.base, b'artist [CD5]',
+                         name_alt_case + b' disc 2', b'song6.mp3'),
+            os.path.join(self.base, b'artist [CD5]', name + b'S',
+                         b'song7.mp3'),
         ]
+
+        if not ascii:
+            self.dirs = [self._normalize_path(p) for p in self.dirs]
+            self.files = [self._normalize_path(p) for p in self.files]
 
         for path in self.dirs:
             os.mkdir(path)
-        for path in self.files:
-            _mkmp3(path)
+        if files:
+            for path in self.files:
+                _mkmp3(path)
+
+    def _normalize_path(self, path):
+        """Normalize a path's Unicode combining form according to the
+        platform.
+        """
+        path = path.decode('utf8')
+        norm_form = 'NFD' if sys.platform == 'darwin' else 'NFC'
+        path = unicodedata.normalize(norm_form, path)
+        return path.encode('utf8')
 
     def test_coalesce_nested_album_multiple_subdirs(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         self.assertEquals(len(albums), 4)
         root, items = albums[0]
@@ -1430,29 +1459,45 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         self.assertEquals(len(items), 3)
 
     def test_coalesce_nested_album_single_subdir(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[1]
         self.assertEquals(root, self.dirs[3:5])
         self.assertEquals(len(items), 1)
 
     def test_coalesce_flattened_album_case_typo(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[2]
         self.assertEquals(root, self.dirs[6:8])
         self.assertEquals(len(items), 2)
 
     def test_single_disc_album(self):
+        self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[3]
         self.assertEquals(root, self.dirs[8:])
         self.assertEquals(len(items), 1)
 
     def test_do_not_yield_empty_album(self):
-        # Remove all the MP3s.
-        for path in self.files:
-            os.remove(path)
+        self.create_music(files=False)
         albums = list(albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
+
+    def test_single_disc_unicode(self):
+        self.create_music(ascii=False)
+        albums = list(albums_in_dir(self.base))
+        root, items = albums[3]
+        self.assertEquals(root, self.dirs[8:])
+        self.assertEquals(len(items), 1)
+
+    def test_coalesce_multiple_unicode(self):
+        self.create_music(ascii=False)
+        albums = list(albums_in_dir(self.base))
+        self.assertEquals(len(albums), 4)
+        root, items = albums[0]
+        self.assertEquals(root, self.dirs[0:3])
+        self.assertEquals(len(items), 3)
 
 
 class ReimportTest(unittest.TestCase, ImportHelper):

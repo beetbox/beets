@@ -41,6 +41,8 @@ class MusicBrainzAPIError(util.HumanReadableException):
     """
     def __init__(self, reason, verb, query, tb=None):
         self.query = query
+        if isinstance(reason, musicbrainzngs.WebServiceError):
+            reason = 'MusicBrainz not reachable'
         super(MusicBrainzAPIError, self).__init__(reason, verb, tb)
 
     def get_message(self):

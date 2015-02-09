@@ -18,7 +18,7 @@
 import re
 from beets import config
 from beets.plugins import BeetsPlugin
-from beets.importer import action, SingletonImportTask
+from beets.importer import SingletonImportTask
 
 
 class FileFilterPlugin(BeetsPlugin):
@@ -50,10 +50,16 @@ class FileFilterPlugin(BeetsPlugin):
             if len(items_to_import) > 0:
                 task.items = items_to_import
             else:
-                task.choice_flag = action.SKIP
+                # Returning an empty list of tasks from the handler
+                # drops the task from the rest of the importer pipeline.
+                return []
+
         elif isinstance(task, SingletonImportTask):
             if not self.file_filter(task.item['path']):
-                task.choice_flag = action.SKIP
+                return []
+
+        # If not filtered, return the original task unchanged.
+        return [task]
 
     def file_filter(self, full_path):
         """Checks if the configured regular expressions allow the import
