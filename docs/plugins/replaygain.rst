@@ -92,11 +92,6 @@ configuration file. The available options are:
 
 These options only work with the "command" backend:
 
-- **apply**: If you use a player that does not support ReplayGain
-  specifications, you can force the volume normalization by applying the gain
-  to the file via the ``apply`` option. This is a lossless and reversible
-  operation with no transcoding involved.
-  Default: ``no``.
 - **command**: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
   cannot find it by itself).
   For example: ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``.
