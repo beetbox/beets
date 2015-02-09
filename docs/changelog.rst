@@ -63,6 +63,8 @@ Core changes:
 
 Fixes:
 
+* :doc:`/plugins/replaygain`: Stop applying replaygain directly to source files
+  when using the mp3gain backend. :bug:`1316`
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
