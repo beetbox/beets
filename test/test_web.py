@@ -8,7 +8,7 @@ from test import _common
 import json
 import beetsplug
 from beets.library import Item, Album
-beetsplug.__path__ = ['./beetsplug', '../beetsplug']
+beetsplug.__path__ = ['./beetsplug', '../beetsplug']  # noqa
 from beetsplug import web
 
 

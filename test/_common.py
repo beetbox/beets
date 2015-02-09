@@ -30,7 +30,7 @@ except ImportError:
     import unittest
 
 # Mangle the search path to include the beets sources.
-sys.path.insert(0, '..')
+sys.path.insert(0, '..')  # noqa
 import beets.library
 from beets import importer, logging
 from beets.ui import commands

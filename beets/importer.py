@@ -546,10 +546,19 @@ class ImportTask(object):
             return
         plugins.send('album_imported', lib=lib, album=self.album)
 
-    def emit_created(self, session):
-        """Send the `import_task_created` event for this task.
+    def handle_created(self, session):
+        """Send the `import_task_created` event for this task. Return a list of
+        tasks that should continue through the pipeline. By default, this is a
+        list containing only the task itself, but plugins can replace the task
+        with new ones.
         """
-        plugins.send('import_task_created', session=session, task=self)
+        tasks = plugins.send('import_task_created', session=session, task=self)
+        if not tasks:
+            tasks = [self]
+        else:
+            # The plugins gave us a list of lists of tasks. Flatten it.
+            tasks = [t for inner in tasks for t in inner]
+        return tasks
 
     def lookup_candidates(self):
         """Retrieve and store candidates for this album.
@@ -1006,14 +1015,14 @@ class ImportTaskFactory(object):
         for dirs, paths in self.paths():
             if self.session.config['singletons']:
                 for path in paths:
-                    task = self._create(self.singleton(path))
-                    if task:
+                    tasks = self._create(self.singleton(path))
+                    for task in tasks:
                         yield task
                 yield self.sentinel(dirs)
 
             else:
-                task = self._create(self.album(paths, dirs))
-                if task:
+                tasks = self._create(self.album(paths, dirs))
+                for task in tasks:
                     yield task
 
         # Produce the final sentinel for this toppath to indicate that
@@ -1033,10 +1042,10 @@ class ImportTaskFactory(object):
         task. If `task` is None, do nothing.
         """
         if task:
-            task.emit_created(self.session)
-            if not task.skip:
-                self.imported += 1
-            return task
+            tasks = task.handle_created(self.session)
+            self.imported += len(tasks)
+            return tasks
+        return []
 
     def paths(self):
         """Walk `self.toppath` and yield `(dirs, files)` pairs where
@@ -1189,8 +1198,8 @@ def query_tasks(session):
         # Search for items.
         for item in session.lib.items(session.query):
             task = SingletonImportTask(None, item)
-            task.emit_created(session)
-            yield task
+            for task in task.handle_created(session):
+                yield task
 
     else:
         # Search for albums.
@@ -1206,8 +1215,8 @@ def query_tasks(session):
                 item.album_id = None
 
             task = ImportTask(None, [album.item_dir()], items)
-            task.emit_created(session)
-            yield task
+            for task in task.handle_created(session):
+                yield task
 
 
 @pipeline.mutator_stage
@@ -1254,8 +1263,8 @@ def user_query(session, task):
         def emitter(task):
             for item in task.items:
                 task = SingletonImportTask(task.toppath, item)
-                task.emit_created(session)
-                yield task
+                for new_task in task.handle_created(session):
+                    yield new_task
             yield SentinelImportTask(task.toppath, task.paths)
 
         ipl = pipeline.Pipeline([
@@ -1365,9 +1374,6 @@ def manipulate_files(session, task):
 def log_files(session, task):
     """A coroutine (pipeline stage) to log each file to be imported.
     """
-    if task.skip:
-        return
-
     if isinstance(task, SingletonImportTask):
         log.info(u'Singleton: {0}', displayable_path(task.item['path']))
     elif task.items:
@@ -1394,8 +1400,7 @@ def group_albums(session):
         tasks = []
         for _, items in itertools.groupby(task.items, group):
             task = ImportTask(items=list(items))
-            task.emit_created(session)
-            tasks.append(task)
+            tasks += task.handle_created(session)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
         task = pipeline.multiple(tasks)
@@ -1457,7 +1462,7 @@ def albums_in_dir(path):
                         match = marker_pat.match(subdir)
                         if match:
                             subdir_pat = re.compile(
-                                r'^%s\d' % re.escape(match.group(1)), re.I
+                                br'^%s\d' % re.escape(match.group(1)), re.I
                             )
                         else:
                             start_collapsing = False
@@ -1479,7 +1484,7 @@ def albums_in_dir(path):
                 # Set the current pattern to match directories with the same
                 # prefix as this one, followed by a digit.
                 collapse_pat = re.compile(
-                    r'^%s\d' % re.escape(match.group(1)), re.I
+                    br'^%s\d' % re.escape(match.group(1)), re.I
                 )
                 break
 

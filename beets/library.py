@@ -59,7 +59,7 @@ class PathQuery(dbcore.FieldQuery):
         return (item.path == self.file_path) or \
             item.path.startswith(self.dir_path)
 
-    def clause(self):
+    def col_clause(self):
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
         dir_pattern = buffer(dir_pattern + b'%')
@@ -402,6 +402,14 @@ class Item(LibModel):
     `write`.
     """
 
+    _media_tag_fields = set(MediaFile.fields()).intersection(_fields.keys())
+    """Set of item fields that are backed by *writable* `MediaFile` tag
+    fields.
+
+    This excludes fields that represent audio data, such as `bitrate` or
+    `length`.
+    """
+
     _formatter = FormattedItemMapping
 
     _sorts = {'artist': SmartArtistSort}
@@ -412,6 +420,8 @@ class Item(LibModel):
     def _getters(cls):
         getters = plugins.item_field_getters()
         getters['singleton'] = lambda i: i.album_id is None
+        # Filesize is given in bytes
+        getters['filesize'] = lambda i: os.path.getsize(syspath(i.path))
         return getters
 
     @classmethod
@@ -492,11 +502,17 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self, path=None):
+    def write(self, path=None, tags=None):
         """Write the item's metadata to a media file.
 
         All fields in `_media_fields` are written to disk according to
         the values on this object.
+
+        `path` is the path of the mediafile to wirte the data to. It
+        defaults to the item's path.
+
+        `tags` is a dictionary of additional metadata the should be
+        written to the file.
 
         Can raise either a `ReadError` or a `WriteError`.
         """
@@ -505,8 +521,10 @@ class Item(LibModel):
         else:
             path = normpath(path)
 
-        tags = dict(self)
-        plugins.send('write', item=self, path=path, tags=tags)
+        item_tags = dict(self)
+        if tags is not None:
+            item_tags.update(tags)
+        plugins.send('write', item=self, path=path, tags=item_tags)
 
         try:
             mediafile = MediaFile(syspath(path),
@@ -514,7 +532,7 @@ class Item(LibModel):
         except (OSError, IOError, UnreadableFileError) as exc:
             raise ReadError(self.path, exc)
 
-        mediafile.update(tags)
+        mediafile.update(item_tags)
         try:
             mediafile.save()
         except (OSError, IOError, MutagenError) as exc:
@@ -525,14 +543,14 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send('after_write', item=self, path=path)
 
-    def try_write(self, path=None):
+    def try_write(self, path=None, tags=None):
         """Calls `write()` but catches and logs `FileOperationError`
         exceptions.
 
         Returns `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(path)
+            self.write(path, tags)
             return True
         except FileOperationError as exc:
             log.error("{0}", exc)
@@ -775,6 +793,10 @@ class Album(LibModel):
     }
 
     _search_fields = ('album', 'albumartist', 'genre')
+
+    _types = {
+        'path': PathType(),
+    }
 
     _sorts = {
         'albumartist': SmartArtistSort,
@@ -1031,26 +1053,25 @@ def parse_query_parts(parts, model_cls):
 
     # Special-case path-like queries, which are non-field queries
     # containing path separators (/).
-    if 'path' in model_cls._fields:
-        path_parts = []
-        non_path_parts = []
-        for s in parts:
-            if s.find(os.sep, 0, s.find(':')) != -1:
-                # Separator precedes colon.
-                path_parts.append(s)
-            else:
-                non_path_parts.append(s)
-    else:
-        path_parts = ()
-        non_path_parts = parts
+    path_parts = []
+    non_path_parts = []
+    for s in parts:
+        if s.find(os.sep, 0, s.find(':')) != -1:
+            # Separator precedes colon.
+            path_parts.append(s)
+        else:
+            non_path_parts.append(s)
 
     query, sort = dbcore.parse_sorted_query(
         model_cls, non_path_parts, prefixes
     )
 
     # Add path queries to aggregate query.
-    if path_parts:
-        query.subqueries += [PathQuery('path', s) for s in path_parts]
+    # Match field / flexattr depending on whether the model has the path field
+    fast_path_query = 'path' in model_cls._fields
+    query.subqueries += [PathQuery('path', s, fast_path_query)
+                         for s in path_parts]
+
     return query, sort
 
 
@@ -1065,7 +1086,10 @@ def parse_query_string(s, model_cls):
     # http://bugs.python.org/issue6988
     if isinstance(s, unicode):
         s = s.encode('utf8')
-    parts = [p.decode('utf8') for p in shlex.split(s)]
+    try:
+        parts = [p.decode('utf8') for p in shlex.split(s)]
+    except ValueError as exc:
+        raise dbcore.InvalidQueryError(s, exc)
     return parse_query_parts(parts, model_cls)
 
 
@@ -1135,11 +1159,14 @@ class Library(dbcore.Database):
         in the query string the `sort` argument is ignored.
         """
         # Parse the query, if necessary.
-        parsed_sort = None
-        if isinstance(query, basestring):
-            query, parsed_sort = parse_query_string(query, model_cls)
-        elif isinstance(query, (list, tuple)):
-            query, parsed_sort = parse_query_parts(query, model_cls)
+        try:
+            parsed_sort = None
+            if isinstance(query, basestring):
+                query, parsed_sort = parse_query_string(query, model_cls)
+            elif isinstance(query, (list, tuple)):
+                query, parsed_sort = parse_query_parts(query, model_cls)
+        except dbcore.query.InvalidQueryArgumentTypeError as exc:
+            raise dbcore.InvalidQueryError(query, exc)
 
         # Any non-null sort specified by the parsed query overrides the
         # provided sort.
