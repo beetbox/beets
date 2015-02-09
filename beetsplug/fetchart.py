@@ -142,6 +142,8 @@ class ITunesStore(ArtSource):
     def get(self, album):
         """Return art URL from iTunes Store given an album title.
         """
+        if not (album.albumartist and album.album):
+            return
         search_string = (album.albumartist + ' ' + album.album).encode('utf-8')
         try:
             # Isolate bugs in the iTunes library while searching.
