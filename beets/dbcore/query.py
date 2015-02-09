@@ -23,8 +23,14 @@ from beets import util
 from datetime import datetime, timedelta
 
 
-class InvalidQueryError(ValueError):
-    """Represent any kind of invalid query
+class ParsingError(ValueError):
+    """Abstract class for any unparseable user-requested album/query
+    specification.
+    """
+
+
+class InvalidQueryError(ParsingError):
+    """Represent any kind of invalid query.
 
     The query should be a unicode string or a list, which will be space-joined.
     """
@@ -35,7 +41,7 @@ class InvalidQueryError(ValueError):
         super(InvalidQueryError, self).__init__(message)
 
 
-class InvalidQueryArgumentTypeError(TypeError):
+class InvalidQueryArgumentTypeError(ParsingError):
     """Represent a query argument that could not be converted as expected.
 
     It exists to be caught in upper stack levels so a meaningful (i.e. with the
