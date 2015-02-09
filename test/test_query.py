@@ -24,7 +24,8 @@ from test import helper
 import beets.library
 from beets import dbcore
 from beets.dbcore import types
-from beets.dbcore.query import NoneQuery, InvalidQueryArgumentTypeError
+from beets.dbcore.query import (NoneQuery, ParsingError,
+                                InvalidQueryArgumentTypeError)
 from beets.library import Library, Item
 
 
@@ -290,7 +291,7 @@ class GetTest(DummyDataTestCase):
             dbcore.query.RegexpQuery('year', '199(')
         self.assertIn('not a regular expression', unicode(raised.exception))
         self.assertIn('unbalanced parenthesis', unicode(raised.exception))
-        self.assertIsInstance(raised.exception, TypeError)
+        self.assertIsInstance(raised.exception, ParsingError)
 
 
 class MatchTest(_common.TestCase):
