@@ -23,12 +23,35 @@ from beets import util
 from datetime import datetime, timedelta
 
 
-class InvalidQueryError(ValueError):
+class ParsingError(ValueError):
+    """Abstract class for any unparseable user-requested album/query
+    specification.
+    """
+
+
+class InvalidQueryError(ParsingError):
+    """Represent any kind of invalid query.
+
+    The query should be a unicode string or a list, which will be space-joined.
+    """
+    def __init__(self, query, explanation):
+        if isinstance(query, list):
+            query = " ".join(query)
+        message = "'{0}': {1}".format(query, explanation)
+        super(InvalidQueryError, self).__init__(message)
+
+
+class InvalidQueryArgumentTypeError(ParsingError):
+    """Represent a query argument that could not be converted as expected.
+
+    It exists to be caught in upper stack levels so a meaningful (i.e. with the
+    query) InvalidQueryError can be raised.
+    """
     def __init__(self, what, expected, detail=None):
         message = "'{0}' is not {1}".format(what, expected)
         if detail:
             message = "{0}: {1}".format(message, detail)
-        super(InvalidQueryError, self).__init__(message)
+        super(InvalidQueryArgumentTypeError, self).__init__(message)
 
 
 class Query(object):
@@ -160,8 +183,9 @@ class RegexpQuery(StringFieldQuery):
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
             # Invalid regular expression.
-            raise InvalidQueryError(pattern, "a regular expression",
-                                    format(exc))
+            raise InvalidQueryArgumentTypeError(pattern,
+                                                "a regular expression",
+                                                format(exc))
 
     @classmethod
     def string_match(cls, pattern, value):
@@ -228,7 +252,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryError(s, "an int or a float")
+                raise InvalidQueryArgumentTypeError(s, "an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
