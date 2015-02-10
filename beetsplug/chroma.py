@@ -136,6 +136,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
         if self.config['auto']:
             self.register_listener('import_task_start', self.fingerprint_task)
+        self.register_listener('import_task_apply', apply_acoustid_metadata)
 
     def fingerprint_task(self, task, session):
         return fingerprint_task(self._log, task, session)
@@ -211,7 +212,6 @@ def fingerprint_task(log, task, session):
         acoustid_match(log, item.path)
 
 
-@AcoustidPlugin.listen('import_task_apply')
 def apply_acoustid_metadata(task, session):
     """Apply Acoustid metadata (fingerprint and ID) to the task's items.
     """
