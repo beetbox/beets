@@ -18,7 +18,6 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import traceback
-import inspect
 import re
 from collections import defaultdict
 from functools import wraps
@@ -180,17 +179,21 @@ class BeetsPlugin(object):
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
+    _raw_listeners = None
     listeners = None
 
     def register_listener(self, event, func):
         """Add a function as a listener for the specified event.
         """
-        func = self._set_log_level(logging.WARNING, func)
+        wrapped_func = self._set_log_level(logging.WARNING, func)
 
-        if self.listeners is None:
-            self.listeners = defaultdict(list)
-        if func not in self.listeners[event]:
-            self.listeners[event].append(func)
+        cls = self.__class__
+        if cls.listeners is None or cls._raw_listeners is None:
+            cls._raw_listeners = defaultdict(list)
+            cls.listeners = defaultdict(list)
+        if func not in cls._raw_listeners[event]:
+            cls._raw_listeners[event].append(func)
+            cls.listeners[event].append(wrapped_func)
 
     template_funcs = None
     template_fields = None
@@ -440,9 +443,7 @@ def send(event, **arguments):
     results = []
     for handler in event_handlers()[event]:
         # Don't break legacy plugins if we want to pass more arguments
-        argspec = inspect.getargspec(handler).args
-        args = dict((k, v) for k, v in arguments.items() if k in argspec)
-        result = handler(**args)
+        result = handler(**arguments)
         if result is not None:
             results.append(result)
     return results

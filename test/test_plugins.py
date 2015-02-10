@@ -35,6 +35,7 @@ class TestHelper(helper.TestHelper):
     def setup_plugin_loader(self):
         # FIXME the mocking code is horrific, but this is the lowest and
         # earliest level of the plugin mechanism we can hook into.
+        self.load_plugins()
         self._plugin_loader_patch = patch('beets.plugins.load_plugins')
         self._plugin_classes = set()
         load_plugins = self._plugin_loader_patch.start()
@@ -95,7 +96,7 @@ class ItemWriteTest(unittest.TestCase, TestHelper):
 
         class EventListenerPlugin(plugins.BeetsPlugin):
             pass
-        self.event_listener_plugin = EventListenerPlugin
+        self.event_listener_plugin = EventListenerPlugin()
         self.register_plugin(EventListenerPlugin)
 
     def tearDown(self):
@@ -298,19 +299,15 @@ class ListenersTest(unittest.TestCase, TestHelper):
                 pass
 
         d = DummyPlugin()
-        self.assertEqual(DummyPlugin.listeners['cli_exit'], [d.dummy])
+        self.assertEqual(DummyPlugin._raw_listeners['cli_exit'], [d.dummy])
 
         d2 = DummyPlugin()
-        DummyPlugin.register_listener('cli_exit', d.dummy)
-        self.assertEqual(DummyPlugin.listeners['cli_exit'],
+        self.assertEqual(DummyPlugin._raw_listeners['cli_exit'],
                          [d.dummy, d2.dummy])
 
-        @DummyPlugin.listen('cli_exit')
-        def dummy(lib):
-            pass
-
-        self.assertEqual(DummyPlugin.listeners['cli_exit'],
-                         [d.dummy, d2.dummy, dummy])
+        d.register_listener('cli_exit', d2.dummy)
+        self.assertEqual(DummyPlugin._raw_listeners['cli_exit'],
+                         [d.dummy, d2.dummy])
 
 
 def suite():
