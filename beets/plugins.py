@@ -112,9 +112,8 @@ class BeetsPlugin(object):
         def wrapper(*args, **kwargs):
             assert self._log.level == logging.NOTSET
 
-            log_level = base_log_level
-            if beets.config['verbose'].get(bool):
-                log_level -= 10
+            verbosity = beets.config['verbose'].get(int)
+            log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
 
             try:

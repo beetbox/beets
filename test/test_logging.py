@@ -78,37 +78,45 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
         sys.modules.pop('beetsplug.dummy')
 
     def test_command_logging(self):
-        self.config['verbose'] = False
+        self.config['verbose'] = 0
         with helper.capture_log() as logs:
             self.run_command('dummy')
         self.assertIn('dummy: warning cmd', logs)
         self.assertIn('dummy: info cmd', logs)
         self.assertNotIn('dummy: debug cmd', logs)
 
-        self.config['verbose'] = True
-        with helper.capture_log() as logs:
-            self.run_command('dummy')
-        self.assertIn('dummy: warning cmd', logs)
-        self.assertIn('dummy: info cmd', logs)
-        self.assertIn('dummy: debug cmd', logs)
+        for level in (1, 2):
+            self.config['verbose'] = level
+            with helper.capture_log() as logs:
+                self.run_command('dummy')
+            self.assertIn('dummy: warning cmd', logs)
+            self.assertIn('dummy: info cmd', logs)
+            self.assertIn('dummy: debug cmd', logs)
 
     def test_listener_logging(self):
-        self.config['verbose'] = False
+        self.config['verbose'] = 0
         with helper.capture_log() as logs:
             plugins.send('dummy_event')
         self.assertIn('dummy: warning listener', logs)
         self.assertNotIn('dummy: info listener', logs)
         self.assertNotIn('dummy: debug listener', logs)
 
-        self.config['verbose'] = True
+        self.config['verbose'] = 1
         with helper.capture_log() as logs:
             plugins.send('dummy_event')
         self.assertIn('dummy: warning listener', logs)
         self.assertIn('dummy: info listener', logs)
         self.assertNotIn('dummy: debug listener', logs)
 
+        self.config['verbose'] = 2
+        with helper.capture_log() as logs:
+            plugins.send('dummy_event')
+        self.assertIn('dummy: warning listener', logs)
+        self.assertIn('dummy: info listener', logs)
+        self.assertIn('dummy: debug listener', logs)
+
     def test_import_stage_logging(self):
-        self.config['verbose'] = False
+        self.config['verbose'] = 0
         with helper.capture_log() as logs:
             importer = self.create_importer()
             importer.run()
@@ -116,13 +124,21 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
         self.assertNotIn('dummy: info import_stage', logs)
         self.assertNotIn('dummy: debug import_stage', logs)
 
-        self.config['verbose'] = True
+        self.config['verbose'] = 1
         with helper.capture_log() as logs:
             importer = self.create_importer()
             importer.run()
         self.assertIn('dummy: warning import_stage', logs)
         self.assertIn('dummy: info import_stage', logs)
         self.assertNotIn('dummy: debug import_stage', logs)
+
+        self.config['verbose'] = 2
+        with helper.capture_log() as logs:
+            importer = self.create_importer()
+            importer.run()
+        self.assertIn('dummy: warning import_stage', logs)
+        self.assertIn('dummy: info import_stage', logs)
+        self.assertIn('dummy: debug import_stage', logs)
 
 
 def suite():
