@@ -6,6 +6,9 @@ Changelog
 
 Features:
 
+* Verbosity is now an integer in the configuration since multiple levels are
+  supported (like e.g. apt-get). On the CLI one can stack verbose flags (i.e.
+  `-vv`). :bug:`1244`
 * The summary shown to compare duplicate albums during import now displays
   the old and new filesizes. :bug:`1291`
 * The colors used are now configurable via the new config option ``colors``,
@@ -106,7 +109,9 @@ For developers:
 
 * The logging system in beets has been overhauled. Plugins now each have their
   own logger, which helps by automatically adjusting the verbosity level in
-  import mode and by prefixing the plugin's name. Also, logging calls can (and
+  import mode and by prefixing the plugin's name.  Logging levels are
+  dynamically set when a plugin is called, depending on how it is called
+  (import stage, event or direct command).  Finally, logging calls can (and
   should!) use modern ``{}``-style string formatting lazily. See
   :ref:`plugin-logging` in the plugin API docs.
 * A new ``import_task_created`` event lets you manipulate import tasks

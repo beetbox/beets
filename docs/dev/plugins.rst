@@ -480,14 +480,21 @@ str.format-style string formatting. So you can write logging calls like this::
 .. _PEP 3101: https://www.python.org/dev/peps/pep-3101/
 .. _standard Python logging module: https://docs.python.org/2/library/logging.html
 
-The per-plugin loggers have two convenient features:
+When beets is in verbose mode, plugin messages are prefixed with the plugin
+name to make them easier to see.
 
-* When beets is in verbose mode, messages are prefixed with the plugin name to
-  make them easier to see.
-* Messages at the ``INFO`` logging level are hidden when the plugin is running
-  in an importer stage (see above). This addresses a common pattern where
-  plugins need to use the same code for a command and an import stage, but the
-  command needs to print more messages than the import stage. (For example,
-  you'll want to log "found lyrics for this song" when you're run explicitly
-  as a command, but you don't want to noisily interrupt the importer interface
-  when running automatically.)
+What messages will be logged depends on the logging level and the action
+performed:
+
+* On import stages and event, the default is ``WARNING`` messages.
+* On direct actions, the default is ``INFO`` and ``WARNING`` message.
+
+The verbosity can be increased with ``--verbose`` flags: each flags lowers the
+level by a notch.
+
+This addresses a common pattern where plugins need to use the same code for a
+command and an import stage, but the command needs to print more messages than
+the import stage. (For example, you'll want to log "found lyrics for this song"
+when you're run explicitly as a command, but you don't want to noisily
+interrupt the importer interface when running automatically.)
+
