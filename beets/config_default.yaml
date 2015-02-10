@@ -43,7 +43,7 @@ pluginpath: []
 threaded: yes
 timeout: 5.0
 per_disc_numbering: no
-verbose: no
+verbose: 0
 terminal_encoding: utf8
 original_date: no
 id3v23: no

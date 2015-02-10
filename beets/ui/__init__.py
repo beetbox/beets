@@ -858,7 +858,7 @@ def _configure(options):
     config.set_args(options)
 
     # Configure the logger.
-    if config['verbose'].get(bool):
+    if config['verbose'].get(int):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
@@ -917,7 +917,7 @@ def _raw_main(args, lib=None):
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
                       help="destination music directory")
-    parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
+    parser.add_option('-v', '--verbose', dest='verbose', action='count',
                       help='print debugging information')
     parser.add_option('-c', '--config', dest='config',
                       help='path to configuration file')
