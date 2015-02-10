@@ -161,6 +161,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         medium=medium,
         medium_index=medium_index,
         medium_total=medium_total,
+        data_source='MusicBrainz',
         data_url=track_url(recording['id']),
     )
 

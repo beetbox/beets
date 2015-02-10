@@ -388,6 +388,8 @@ class Item(LibModel):
         'channels':    types.INTEGER,
         'mtime':       DateType(),
         'added':       DateType(),
+
+        'data_source': types.STRING,
     }
 
     _search_fields = ('artist', 'title', 'comments',
@@ -790,6 +792,8 @@ class Album(LibModel):
         'original_year':      types.PaddedInt(4),
         'original_month':     types.PaddedInt(2),
         'original_day':       types.PaddedInt(2),
+
+        'data_source':        types.STRING,
     }
 
     _search_fields = ('album', 'albumartist', 'genre')
@@ -832,6 +836,7 @@ class Album(LibModel):
         'original_year',
         'original_month',
         'original_day',
+        'data_source',
     ]
     """List of keys that are set on an album's items.
     """
