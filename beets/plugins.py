@@ -84,10 +84,8 @@ class BeetsPlugin(object):
 
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
-        if beets.config['verbose']:
-            if not any(isinstance(f, PluginLogFilter)
-                       for f in self._log.filters):
-                self._log.addFilter(PluginLogFilter(self))
+        if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
+            self._log.addFilter(PluginLogFilter(self))
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -106,23 +104,24 @@ class BeetsPlugin(object):
         return [self._set_log_level(logging.WARNING, import_stage)
                 for import_stage in self.import_stages]
 
-    def _set_log_level(self, log_level, func):
+    def _set_log_level(self, base_log_level, func):
         """Wrap `func` to temporarily set this plugin's logger level to
-        `log_level` (and restore it after the function returns).
-
-        The level is *not* adjusted when beets is in verbose
-        mode---i.e., the plugin logger continues to delegate to the base
-        beets logger.
+        `base_log_level` + config options (and restore it to NOTSET after the
+        function returns).
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if not beets.config['verbose']:
-                old_log_level = self._log.level
-                self._log.setLevel(log_level)
-            result = func(*args, **kwargs)
-            if not beets.config['verbose']:
-                self._log.setLevel(old_log_level)
-            return result
+            assert self._log.level == logging.NOTSET
+
+            log_level = base_log_level
+            if beets.config['verbose'].get(bool):
+                log_level -= 10
+            self._log.setLevel(log_level)
+
+            try:
+                return func(*args, **kwargs)
+            finally:
+                self._log.setLevel(logging.NOTSET)
         return wrapper
 
     def queries(self):
@@ -183,34 +182,15 @@ class BeetsPlugin(object):
 
     listeners = None
 
-    @classmethod
-    def register_listener(cls, event, func):
-        """Add a function as a listener for the specified event. (An
-        imperative alternative to the @listen decorator.)
+    def register_listener(self, event, func):
+        """Add a function as a listener for the specified event.
         """
-        if cls.listeners is None:
-            cls.listeners = defaultdict(list)
-        if func not in cls.listeners[event]:
-            cls.listeners[event].append(func)
+        func = self._set_log_level(logging.WARNING, func)
 
-    @classmethod
-    def listen(cls, event):
-        """Decorator that adds a function as an event handler for the
-        specified event (as a string). The parameters passed to function
-        will vary depending on what event occurred.
-
-        The function should respond to named parameters.
-        function(**kwargs) will trap all arguments in a dictionary.
-        Example:
-
-            >>> @MyPlugin.listen("imported")
-            >>> def importListener(**kwargs):
-            ...     pass
-        """
-        def helper(func):
-            cls.register_listener(event, func)
-            return func
-        return helper
+        if self.listeners is None:
+            self.listeners = defaultdict(list)
+        if func not in self.listeners[event]:
+            self.listeners[event].append(func)
 
     template_funcs = None
     template_fields = None
