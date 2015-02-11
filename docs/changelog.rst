@@ -42,6 +42,8 @@ Features:
 * A new ``filesize`` field on items indicates the number of bytes in the file.
   :bug:`1291`
 * The number of missing/unmatched tracks is shown during import. :bug:`1088`
+* The data source used during import (e.g., MusicBrainz) is now saved as a
+  track/album's field :bug:`1311`
 
 Core changes:
 
