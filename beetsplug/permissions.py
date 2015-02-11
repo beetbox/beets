@@ -9,7 +9,6 @@ like the following in your config.yaml to configure:
             dir: 755
 """
 import os
-from collections import OrderedDict
 from beets import config, util
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
@@ -114,15 +113,15 @@ def permissions(lib, item=None, album=None):
                        for dir_list in dir_chmod_queue
                        for directory in dir_list]
 
-    # Get rid of the duplicates.
-    dir_chmod_queue = list(OrderedDict.fromkeys(dir_chmod_queue))
+    # Get rid of duplicates.
+    dir_chmod_queue = list(set(dir_chmod_queue))
 
     # Change permissions for the directories.
     for path in dir_chmod_queue:
         # Chaning permissions on the destination directory.
         os.chmod(util.bytestring_path(path), dir_perm)
-        # Checks if the destination path has the permissions configured.
 
+        # Checks if the destination path has the permissions configured.
         if not check_permissions(util.bytestring_path(path), dir_perm):
             message = 'There was a problem setting permission on {}'.format(
                 path)
