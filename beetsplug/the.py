@@ -30,12 +30,6 @@ FORMAT = u'{0}, {1}'
 
 class ThePlugin(BeetsPlugin):
 
-    _instance = None
-
-    the = True
-    a = True
-    format = u''
-    strip = False
     patterns = []
 
     def __init__(self):
