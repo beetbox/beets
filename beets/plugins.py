@@ -105,13 +105,15 @@ class BeetsPlugin(object):
 
     def _set_log_level(self, base_log_level, func):
         """Wrap `func` to temporarily set this plugin's logger level to
-        `base_log_level` + config options (and restore it to NOTSET after the
-        function returns).
+        `base_log_level` + config options (and restore it to its previous
+        value after the function returns).
+
+        Note that that value may not be NOTSET, e.g. if a plugin import stage
+        triggers an event that is listened this very same plugin
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
-            assert self._log.level == logging.NOTSET
-
+            old_log_level = self._log.level
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
@@ -119,7 +121,7 @@ class BeetsPlugin(object):
             try:
                 return func(*args, **kwargs)
             finally:
-                self._log.setLevel(logging.NOTSET)
+                self._log.setLevel(old_log_level)
         return wrapper
 
     def queries(self):
