@@ -441,7 +441,6 @@ def send(event, **arguments):
     log.debug(u'Sending event: {0}', event)
     results = []
     for handler in event_handlers()[event]:
-        # Don't break legacy plugins if we want to pass more arguments
         result = handler(**arguments)
         if result is not None:
             results.append(result)
