@@ -625,6 +625,13 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.assertIn('No files imported from {0}'.format(import_dir), logs)
 
+    def test_asis_no_data_source(self):
+        self.assertEqual(self.lib.items().get(), None)
+
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().data_source, '')
+
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
     """Test TRACKS and APPLY choice.
