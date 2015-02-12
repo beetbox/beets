@@ -1007,8 +1007,8 @@ class PathStringTest(_common.TestCase):
 class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         with _common.platform_posix():
-            p = util.truncate_path('abcde/fgh', 4)
-        self.assertEqual(p, 'abcd/fgh')
+            p = util.truncate_path(b'abcde/fgh', 4)
+        self.assertEqual(p, b'abcd/fgh')
 
     def test_truncate_unicode(self):
         with _common.platform_posix():
