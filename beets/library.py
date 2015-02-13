@@ -421,7 +421,7 @@ class Item(LibModel):
         getters = plugins.item_field_getters()
         getters['singleton'] = lambda i: i.album_id is None
         # Filesize is given in bytes
-        getters['filesize'] = lambda i: os.path.getsize(syspath(i.path))
+        getters['filesize'] = lambda i: i.try_filesize()
         return getters
 
     @classmethod
@@ -604,6 +604,13 @@ class Item(LibModel):
         integer.
         """
         return int(os.path.getmtime(syspath(self.path)))
+
+    def try_filesize(self):
+        try:
+            return os.path.getsize(syspath(self.path))
+        except (OSError, Exception) as exc:
+            log.warning(u'could not get filesize: {0}', exc)
+            return 0
 
     # Model methods.
 
