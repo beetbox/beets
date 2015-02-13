@@ -1172,6 +1172,22 @@ class ItemReadTest(unittest.TestCase):
             item.read('/thisfiledoesnotexist')
 
 
+class FilesizeTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_filesize(self):
+        item = self.add_item_fixture()
+        self.assertNotEquals(item.filesize, 0)
+
+    def test_nonexistent_file(self):
+        item = beets.library.Item()
+        self.assertEqual(item.filesize, 0)
+
+
 class ParseQueryTest(unittest.TestCase):
     def test_parse_invalid_query_string(self):
         with self.assertRaises(beets.dbcore.InvalidQueryError) as raised:
