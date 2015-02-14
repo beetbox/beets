@@ -420,8 +420,7 @@ class Item(LibModel):
     def _getters(cls):
         getters = plugins.item_field_getters()
         getters['singleton'] = lambda i: i.album_id is None
-        # Filesize is given in bytes
-        getters['filesize'] = lambda i: i.try_filesize()
+        getters['filesize'] = Item.try_filesize  # In bytes.
         return getters
 
     @classmethod
@@ -606,6 +605,10 @@ class Item(LibModel):
         return int(os.path.getmtime(syspath(self.path)))
 
     def try_filesize(self):
+        """Get the size of the underlying file in bytes.
+
+        If the file is missing, return 0 (and log a warning).
+        """
         try:
             return os.path.getsize(syspath(self.path))
         except (OSError, Exception) as exc:
