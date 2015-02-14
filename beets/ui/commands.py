@@ -438,8 +438,8 @@ def summarize_items(items, singleton):
         summary_parts.append(items[0].format)
     else:
         # Enumerate all the formats.
-        for format, count in format_counts.iteritems():
-            summary_parts.append('{0} {1}'.format(format, count))
+        for fmt, count in format_counts.iteritems():
+            summary_parts.append('{0} {1}'.format(fmt, count))
 
     average_bitrate = sum([item.bitrate for item in items]) / len(items)
     total_duration = sum([item.length for item in items])
