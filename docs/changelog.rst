@@ -43,7 +43,7 @@ Features:
   :bug:`1291`
 * The number of missing/unmatched tracks is shown during import. :bug:`1088`
 * The data source used during import (e.g., MusicBrainz) is now saved as a
-  track/album's field :bug:`1311`
+  flexible attribute `data_source` of an Item/Album. :bug:`1311`
 
 Core changes:
 
