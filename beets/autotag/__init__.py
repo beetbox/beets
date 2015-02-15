@@ -42,6 +42,8 @@ def apply_item_metadata(item, track_info):
     item.mb_trackid = track_info.track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
+    if track_info.data_source:
+        item.data_source = track_info.data_source
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
 
@@ -125,7 +127,8 @@ def apply_metadata(album_info, mapping):
                       'language',
                       'country',
                       'albumstatus',
-                      'albumdisambig'):
+                      'albumdisambig',
+                      'data_source',):
             value = getattr(album_info, field)
             if value is not None:
                 item[field] = value
