@@ -116,7 +116,6 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
                          self.abbey_similarpath))
 
     def test_non_ascii_album_path(self):
-        import_dir = os.path.join(self.temp_dir, 'testsrcdir\xe4')
         resource_path = os.path.join(_common.RSRC, 'image.mp3')
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
