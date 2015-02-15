@@ -388,12 +388,14 @@ class Item(LibModel):
         'channels':    types.INTEGER,
         'mtime':       DateType(),
         'added':       DateType(),
-
-        'data_source': types.STRING,
     }
 
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
+
+    _types = {
+        'data_source': types.STRING,
+    }
 
     _media_fields = set(MediaFile.readable_fields()) \
         .intersection(_fields.keys())
@@ -792,14 +794,13 @@ class Album(LibModel):
         'original_year':      types.PaddedInt(4),
         'original_month':     types.PaddedInt(2),
         'original_day':       types.PaddedInt(2),
-
-        'data_source':        types.STRING,
     }
 
     _search_fields = ('album', 'albumartist', 'genre')
 
     _types = {
-        'path': PathType(),
+        'path':        PathType(),
+        'data_source': types.STRING,
     }
 
     _sorts = {
@@ -836,7 +837,6 @@ class Album(LibModel):
         'original_year',
         'original_month',
         'original_day',
-        'data_source',
     ]
     """List of keys that are set on an album's items.
     """

@@ -630,7 +630,9 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().data_source, '')
+
+        with self.assertRaises(AttributeError):
+            self.lib.items().get().data_source
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):

@@ -229,8 +229,6 @@ Library metadata:
 * mtime: The modification time of the audio file.
 * added: The date and time that the music was added to your library.
 * path: The item's filename.
-* data_source: The data source used during import to tag the item
-  (e.g., 'MusicBrainz')
 
 
 .. _templ_plugins:
