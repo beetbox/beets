@@ -107,7 +107,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                     u"for -n")
                     return
                 for album in lib.albums(decargs(args)):
-                    artpath = normpath(os.path.join(album.path, filename))
+                    albumpath = album.path.decode('utf-8')
+                    artpath = normpath(os.path.join(albumpath, filename))
                     artpath = self.extract_first(artpath, album.items())
                     if artpath and opts.associate:
                         album.set_art(artpath)
@@ -265,7 +266,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             self._log.warning(u'Unknown image type in {0}.',
                               displayable_path(item.path))
             return
-        outpath += '.' + ext
+        outpath = outpath.decode('utf-8') + '.' + ext
 
         self._log.info(u'Extracting album art from: {0} to: {1}',
                        item, displayable_path(outpath))
