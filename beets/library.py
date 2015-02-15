@@ -393,6 +393,10 @@ class Item(LibModel):
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
 
+    _types = {
+        'data_source': types.STRING,
+    }
+
     _media_fields = set(MediaFile.readable_fields()) \
         .intersection(_fields.keys())
     """Set of item fields that are backed by `MediaFile` fields.
@@ -805,7 +809,8 @@ class Album(LibModel):
     _search_fields = ('album', 'albumartist', 'genre')
 
     _types = {
-        'path': PathType(),
+        'path':        PathType(),
+        'data_source': types.STRING,
     }
 
     _sorts = {
