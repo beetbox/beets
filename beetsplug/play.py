@@ -60,23 +60,22 @@ class PlayPlugin(BeetsPlugin):
         if relative_to:
             relative_to = util.normpath(relative_to)
 
-        # Preform search by album and add folders rather than tracks to
+        # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
             selection = lib.albums(ui.decargs(args))
             paths = []
 
+            sort = lib.get_default_album_sort()
             for album in selection:
                 if use_folders:
                     paths.append(album.item_dir())
                 else:
-                    # TODO use core's sorting functionality
-                    paths.extend([item.path for item in sorted(
-                        album.items(),
-                        key=lambda item: (item.disc, item.track))])
+                    paths.extend(item.path
+                                 for item in sort.sort(album.items()))
             item_type = 'album'
 
-        # Preform item query and add tracks to playlist.
+        # Perform item query and add tracks to playlist.
         else:
             selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
