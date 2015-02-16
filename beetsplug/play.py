@@ -23,7 +23,6 @@ from beets import config
 from beets import ui
 from beets import util
 from os.path import relpath
-import shlex
 from tempfile import NamedTemporaryFile
 
 
@@ -60,10 +59,6 @@ class PlayPlugin(BeetsPlugin):
         relative_to = config['play']['relative_to'].get()
         if relative_to:
             relative_to = util.normpath(relative_to)
-        if command_str:
-            command = shlex.split(command_str)
-        else:
-            command = [util.open_anything()]
 
         # Preform search by album and add folders rather than tracks to
         # playlist.
@@ -114,17 +109,12 @@ class PlayPlugin(BeetsPlugin):
                 m3u.write(item + b'\n')
         m3u.close()
 
-        command.append(m3u.name)
-
-        # Invoke the command and log the output.
-        output = util.command_output(command)
-        if output:
-            self._log.debug(u'Output of {0}: {1}',
-                            util.displayable_path(command[0]),
-                            output.decode('utf8', 'ignore'))
-        else:
-            self._log.debug(u'no output')
-
         ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
 
-        util.remove(m3u.name)
+        try:
+            util.interactive_open(m3u.name, command_str)
+        except OSError as exc:
+            raise ui.UserError("Could not play the music playlist: "
+                               "{0}".format(exc))
+        finally:
+            util.remove(m3u.name)

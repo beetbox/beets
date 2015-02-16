@@ -92,10 +92,11 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
     def test_config_editor_not_found(self):
         with self.assertRaises(ui.UserError) as user_error:
             with patch('os.execlp') as execlp:
-                execlp.side_effect = OSError()
+                execlp.side_effect = OSError('here is problem')
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
-                      unicode(user_error.exception.args[0]))
+                      unicode(user_error.exception))
+        self.assertIn('here is problem', unicode(user_error.exception))
 
     def test_edit_invalid_config_file(self):
         self.lib = Library(':memory:')

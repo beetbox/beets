@@ -6,6 +6,8 @@ Changelog
 
 Features:
 
+* :doc:`/plugins/play` gives full interaction with the command invoked.
+  :bug:`1321`
 * The summary shown to compare duplicate albums during import now displays
   the old and new filesizes. :bug:`1291`
 * The colors used are now configurable via the new config option ``colors``,

@@ -26,6 +26,7 @@ from collections import defaultdict
 import traceback
 import subprocess
 import platform
+import shlex
 
 
 MAX_FILENAME_LENGTH = 200
@@ -697,3 +698,26 @@ def open_anything():
     else:  # Assume Unix
         base_cmd = 'xdg-open'
     return base_cmd
+
+
+def interactive_open(target, command=None):
+    """Open `target` file with `command` or, in not available, ask the OS to
+    deal with it.
+
+    The executed program will have stdin, stdout and stderr.
+    OSError may be raised, it is left to the caller to catch them.
+    """
+    if command:
+        command = command.encode('utf8')
+        try:
+            command = [c.decode('utf8')
+                       for c in shlex.split(command)]
+        except ValueError:  # Malformed shell tokens.
+            command = [command]
+        command.insert(0, command[0])  # for argv[0]
+    else:
+        base_cmd = open_anything()
+        command = [base_cmd, base_cmd]
+
+    command.append(target)
+    return os.execlp(*command)
