@@ -968,8 +968,8 @@ class ShowChangeTest(_common.TestCase):
         self.items[0].title = u''
         self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
         msg = re.sub(r'  +', ' ', self._show_change())
-        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
-                        or u'caf.mp3 ->' in msg)
+        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg or
+                        u'caf.mp3 ->' in msg)
 
 
 class PathFormatTest(_common.TestCase):
