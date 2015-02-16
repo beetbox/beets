@@ -96,11 +96,15 @@ def fields_func(lib, opts, args):
             _print_rows(plugin_fields)
 
     print("Item fields:")
-    _print_rows(library.Item._fields.keys())
+    _print_rows(library.Item._fields.keys() +
+                library.Item._getters().keys() +
+                library.Item._types.keys())
     _show_plugin_fields(False)
 
     print("\nAlbum fields:")
-    _print_rows(library.Album._fields.keys())
+    _print_rows(library.Album._fields.keys() +
+                library.Album._getters().keys() +
+                library.Album._types.keys())
     _show_plugin_fields(True)
 
 
