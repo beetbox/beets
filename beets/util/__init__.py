@@ -683,3 +683,17 @@ def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
         return min(res[9], limit)
     else:
         return limit
+
+
+def open_anything():
+    """Return the system command that dispatches execution to the correct
+    program.
+    """
+    sys_name = platform.system()
+    if sys_name == 'Darwin':
+        base_cmd = 'open'
+    elif sys_name == 'Windows':
+        base_cmd = 'start'
+    else:  # Assume Unix
+        base_cmd = 'xdg-open'
+    return base_cmd
