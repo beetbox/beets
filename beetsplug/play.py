@@ -23,7 +23,6 @@ from beets import config
 from beets import ui
 from beets import util
 from os.path import relpath
-import platform
 import shlex
 from tempfile import NamedTemporaryFile
 
@@ -64,16 +63,7 @@ class PlayPlugin(BeetsPlugin):
         if command_str:
             command = shlex.split(command_str)
         else:
-            # If a command isn't set, then let the OS decide how to open the
-            # playlist.
-            sys_name = platform.system()
-            if sys_name == 'Darwin':
-                command = ['open']
-            elif sys_name == 'Windows':
-                command = ['start']
-            else:
-                # If not Mac or Windows, then assume Unixy.
-                command = ['xdg-open']
+            command = [util.open_anything()]
 
         # Preform search by album and add folders rather than tracks to
         # playlist.

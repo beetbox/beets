@@ -81,25 +81,13 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         execlp.assert_called_once_with(
             'myeditor', 'myeditor', self.config_path)
 
-    def test_edit_config_with_open(self):
-        with _common.system_mock('Darwin'):
+    def test_edit_config_with_automatic_open(self):
+        with patch('beets.util.open_anything') as open:
+            open.return_value = 'please_open'
             with patch('os.execlp') as execlp:
                 self.run_command('config', '-e')
         execlp.assert_called_once_with(
-            'open', 'open', '-n', self.config_path)
-
-    def test_edit_config_with_xdg_open(self):
-        with _common.system_mock('Linux'):
-            with patch('os.execlp') as execlp:
-                self.run_command('config', '-e')
-        execlp.assert_called_once_with(
-            'xdg-open', 'xdg-open', self.config_path)
-
-    def test_edit_config_with_windows_exec(self):
-        with _common.system_mock('Windows'):
-            with patch('os.execlp') as execlp:
-                self.run_command('config', '-e')
-        execlp.assert_called_once_with(self.config_path, self.config_path)
+            'please_open', 'please_open', self.config_path)
 
     def test_config_editor_not_found(self):
         with self.assertRaises(ui.UserError) as user_error:

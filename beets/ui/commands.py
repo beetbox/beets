@@ -20,7 +20,6 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import os
-import platform
 import re
 import shlex
 
@@ -1503,15 +1502,9 @@ def config_edit():
             editor = [editor]
         args = editor + [path]
         args.insert(1, args[0])
-    elif platform.system() == 'Darwin':
-        args = ['open', 'open', '-n', path]
-    elif platform.system() == 'Windows':
-        # On windows we can execute arbitrary files. The os will
-        # take care of starting an appropriate application
-        args = [path, path]
     else:
-        # Assume Unix
-        args = ['xdg-open', 'xdg-open', path]
+        base = util.open_anything()
+        args = [base, base, path]
 
     try:
         os.execlp(*args)
