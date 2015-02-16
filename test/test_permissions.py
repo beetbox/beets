@@ -7,7 +7,7 @@ from test._common import unittest
 from test.helper import TestHelper
 from beetsplug.permissions import (check_permissions,
                                    convert_perm,
-                                   get_music_directories)
+                                   dirs_in_library)
 
 
 class PermissionsPluginTest(unittest.TestCase, TestHelper):
@@ -34,8 +34,8 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         dir_perm = self.config['permissions']['dir'].get()
         dir_perm = convert_perm(dir_perm)
 
-        music_dirs = get_music_directories(self.config['directory'].get(),
-                                           item.path)
+        music_dirs = dirs_in_library(self.config['directory'].get(),
+                                     item.path)
 
         self.assertTrue(check_permissions(item.path, file_perm))
         self.assertFalse(check_permissions(item.path, convert_perm(644)))
@@ -56,8 +56,8 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         dir_perm = self.config['permissions']['dir'].get()
         dir_perm = convert_perm(dir_perm)
 
-        music_dirs = get_music_directories(self.config['directory'].get(),
-                                           item.path)
+        music_dirs = dirs_in_library(self.config['directory'].get(),
+                                     item.path)
 
         self.assertTrue(check_permissions(item.path, file_perm))
         self.assertFalse(check_permissions(item.path, convert_perm(644)))
