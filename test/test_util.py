@@ -20,6 +20,8 @@ import sys
 import re
 import os
 
+from mock import patch
+
 from test._common import unittest
 from test import _common
 from beets import util
@@ -35,6 +37,17 @@ class UtilTest(unittest.TestCase):
 
         with _common.system_mock('Tagada'):
             self.assertEqual(util.open_anything(), 'xdg-open')
+
+    @patch('os.execlp')
+    @patch('beets.util.open_anything')
+    def test_interactive_open(self, mock_open, mock_execlp):
+        mock_open.return_value = 'tagada'
+        util.interactive_open('foo')
+        mock_execlp.assert_called_once_with('tagada', 'tagada', 'foo')
+        mock_execlp.reset_mock()
+
+        util.interactive_open('foo', 'bar')
+        mock_execlp.assert_called_once_with('bar', 'bar', 'foo')
 
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():

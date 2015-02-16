@@ -21,7 +21,6 @@ from __future__ import (division, absolute_import, print_function,
 
 import os
 import re
-import shlex
 
 import beets
 from beets import ui
@@ -1494,24 +1493,14 @@ def config_edit():
     """
     path = config.user_config_path()
 
-    if 'EDITOR' in os.environ:
-        editor = os.environ['EDITOR'].encode('utf8')
-        try:
-            editor = [e.decode('utf8') for e in shlex.split(editor)]
-        except ValueError:  # Malformed shell tokens.
-            editor = [editor]
-        args = editor + [path]
-        args.insert(1, args[0])
-    else:
-        base = util.open_anything()
-        args = [base, base, path]
-
+    editor = os.environ.get('EDITOR')
     try:
-        os.execlp(*args)
-    except OSError:
-        raise ui.UserError("Could not edit configuration. Please "
-                           "set the EDITOR environment variable.")
-
+        util.interactive_open(path, editor)
+    except OSError as exc:
+        message = "Could not edit configuration: {0}".format(exc)
+        if not editor:
+            message += ". Please set the EDITOR environment variable"
+        raise ui.UserError(message)
 
 config_cmd = ui.Subcommand('config',
                            help='show or edit the user configuration')
