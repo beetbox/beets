@@ -6,6 +6,8 @@ Changelog
 
 Features:
 
+* :doc:`/plugins/play` will sort items according to the configured option when
+  used in album mode.
 * :doc:`/plugins/play` gives full interaction with the command invoked.
   :bug:`1321`
 * The summary shown to compare duplicate albums during import now displays
