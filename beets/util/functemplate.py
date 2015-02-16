@@ -309,8 +309,8 @@ class Parser(object):
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
                 next_pos = (
-                    self.special_char_re.search(self.string[self.pos:]).start()
-                    + self.pos
+                    self.special_char_re.search(
+                        self.string[self.pos:]).start() + self.pos
                 )
                 text_parts.append(self.string[self.pos:next_pos])
                 self.pos = next_pos
