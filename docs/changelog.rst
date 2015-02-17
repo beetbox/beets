@@ -9,6 +9,10 @@ Features:
 * There are now multiple levels of verbosity. On the command line, you can
   make beets somewhat verbose with ``-v`` or very verbose with ``-vv``.
   :bug:`1244`
+* :doc:`/plugins/play` will sort items according to the configured option when
+  used in album mode.
+* :doc:`/plugins/play` gives full interaction with the command invoked.
+  :bug:`1321`
 * The summary shown to compare duplicate albums during import now displays
   the old and new filesizes. :bug:`1291`
 * The colors used are now configurable via the new config option ``colors``,
@@ -48,7 +52,7 @@ Features:
 * The data source used during import (e.g., MusicBrainz) is now saved as a
   flexible attribute `data_source` of an Item/Album. :bug:`1311`
 * :doc:`/plugins/permissions`: Now handles also the permissions of the
-  directories. :bug:`1308` bug:`1324`
+  directories. :bug:`1308` :bug:`1324`
 
 Core changes:
 

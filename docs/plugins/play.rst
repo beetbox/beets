@@ -26,8 +26,8 @@ would on the command-line)::
     play:
         command: /usr/bin/command --option1 --option2 some_other_option
 
-Enable beets' verbose logging to see the command's output if you need to
-debug.
+While playing you'll be able to interact with the player if it is a
+command-line oriented, and you'll get its output in real time.
 
 Configuration
 -------------
