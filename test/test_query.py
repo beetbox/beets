@@ -17,6 +17,8 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+from mock import patch
+
 from test import _common
 from test._common import unittest
 from test import helper
@@ -460,6 +462,17 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['album with backslash'])
+
+    def test_case_sensitivity(self):
+        self.add_album(path='/A/B/C2.mp3', title='caps path')
+        q = b'path:/A/B'
+        with patch('beets.library.PathQuery._is_windows', False):
+            results = self.lib.items(q)
+            self.assert_items_matched(results, ['caps path'])
+
+        with patch('beets.library.PathQuery._is_windows', True):
+            results = self.lib.items(q)
+            self.assert_items_matched(results, ['path item', 'caps path'])
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):
