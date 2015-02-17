@@ -65,6 +65,7 @@ Core changes:
 
 Fixes:
 
+* Path queries are case-sensitive on UNIX OSes. :bug:`1165`
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
