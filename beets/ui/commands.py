@@ -96,11 +96,15 @@ def fields_func(lib, opts, args):
             _print_rows(plugin_fields)
 
     print("Item fields:")
-    _print_rows(library.Item._fields.keys())
+    _print_rows(library.Item._fields.keys() +
+                library.Item._getters().keys() +
+                library.Item._types.keys())
     _show_plugin_fields(False)
 
     print("\nAlbum fields:")
-    _print_rows(library.Album._fields.keys())
+    _print_rows(library.Album._fields.keys() +
+                library.Album._getters().keys() +
+                library.Album._types.keys())
     _show_plugin_fields(True)
 
 
@@ -438,8 +442,8 @@ def summarize_items(items, singleton):
         summary_parts.append(items[0].format)
     else:
         # Enumerate all the formats.
-        for format, count in format_counts.iteritems():
-            summary_parts.append('{0} {1}'.format(format, count))
+        for fmt, count in format_counts.iteritems():
+            summary_parts.append('{0} {1}'.format(fmt, count))
 
     average_bitrate = sum([item.bitrate for item in items]) / len(items)
     total_duration = sum([item.length for item in items])

@@ -789,6 +789,13 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[0].month, 2)
         self.assertEqual(self.items[0].day, 3)
 
+    def test_data_source_applied(self):
+        my_info = copy.deepcopy(self.info)
+        my_info.data_source = 'MusicBrainz'
+        self._apply(info=my_info)
+
+        self.assertEqual(self.items[0].data_source, 'MusicBrainz')
+
 
 class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
     def setUp(self):
