@@ -24,6 +24,7 @@ import unicodedata
 import time
 import re
 from unidecode import unidecode
+import platform
 
 from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
@@ -42,13 +43,21 @@ log = logging.getLogger('beets')
 # Library-specific query types.
 
 class PathQuery(dbcore.FieldQuery):
-    """A query that matches all items under a given path."""
+    """A query that matches all items under a given path.
+
+    On Windows paths are case-insensitive, contratly to UNIX platforms.
+    """
 
     escape_re = re.compile(r'[\\_%]')
     escape_char = b'\\'
 
+    _is_windows = platform.system() == 'Windows'
+
     def __init__(self, field, pattern, fast=True):
         super(PathQuery, self).__init__(field, pattern, fast)
+
+        if self._is_windows:
+            pattern = pattern.lower()
 
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
@@ -56,16 +65,22 @@ class PathQuery(dbcore.FieldQuery):
         self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
 
     def match(self, item):
-        return (item.path == self.file_path) or \
-            item.path.startswith(self.dir_path)
+        path = item.path.lower() if self._is_windows else item.path
+        return (path == self.file_path) or path.startswith(self.dir_path)
 
     def col_clause(self):
+        file_blob = buffer(self.file_path)
+
+        if not self._is_windows:
+            dir_blob = buffer(self.dir_path)
+            return '({0} = ?) || (instr({0}, ?) = 1)'.format(self.field), \
+                   (file_blob, dir_blob)
+
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
-        dir_pattern = buffer(dir_pattern + b'%')
-        file_blob = buffer(self.file_path)
+        dir_blob = buffer(dir_pattern + b'%')
         return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
-               (file_blob, dir_pattern, self.escape_char)
+               (file_blob, dir_blob, self.escape_char)
 
 
 # Library-specific field types.
