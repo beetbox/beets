@@ -44,6 +44,8 @@ Features:
 * The number of missing/unmatched tracks is shown during import. :bug:`1088`
 * The data source used during import (e.g., MusicBrainz) is now saved as a
   flexible attribute `data_source` of an Item/Album. :bug:`1311`
+* :doc:`/plugins/permissions`: Now handles also the permissions of the
+  directories. :bug:`1308` bug:`1324`
 
 Core changes:
 
