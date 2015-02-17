@@ -393,6 +393,10 @@ class Item(LibModel):
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
 
+    _types = {
+        'data_source': types.STRING,
+    }
+
     _media_fields = set(MediaFile.readable_fields()) \
         .intersection(_fields.keys())
     """Set of item fields that are backed by `MediaFile` fields.
@@ -805,7 +809,8 @@ class Album(LibModel):
     _search_fields = ('album', 'albumartist', 'genre')
 
     _types = {
-        'path': PathType(),
+        'path':        PathType(),
+        'data_source': types.STRING,
     }
 
     _sorts = {
@@ -1306,11 +1311,11 @@ class DefaultTemplateFunctions(object):
         return unidecode(s)
 
     @staticmethod
-    def tmpl_time(s, format):
+    def tmpl_time(s, fmt):
         """Format a time value using `strftime`.
         """
         cur_fmt = beets.config['time_format'].get(unicode)
-        return time.strftime(format, time.strptime(s, cur_fmt))
+        return time.strftime(fmt, time.strptime(s, cur_fmt))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all

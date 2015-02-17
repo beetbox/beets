@@ -316,6 +316,11 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
+    def test_data_source(self):
+        release = self._make_release()
+        d = mb.album_info(release)
+        self.assertEqual(d.data_source, 'MusicBrainz')
+
 
 class ParseIDTest(_common.TestCase):
     def test_parse_id_correct(self):

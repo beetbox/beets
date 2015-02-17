@@ -137,6 +137,8 @@ class TrackInfo(object):
     - ``artist_sort``: name of the track artist for sorting
     - ``disctitle``: name of the individual medium (subtitle)
     - ``artist_credit``: Recording-specific artist name
+    - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
+    - ``data_url``: The data source release URL.
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
     may be None. The indices ``index``, ``medium``, and ``medium_index``

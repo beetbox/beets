@@ -44,7 +44,6 @@ class ThePluginTest(_common.TestCase):
 
     def test_template_function_with_defaults(self):
         ThePlugin().patterns = [PATTERN_THE, PATTERN_A]
-        ThePlugin().format = FORMAT
         self.assertEqual(ThePlugin().the_template_func('The The'), 'The, The')
         self.assertEqual(ThePlugin().the_template_func('An A'), 'A, An')
 
