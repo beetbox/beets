@@ -6,9 +6,9 @@ Changelog
 
 Features:
 
-* Verbosity is now an integer in the configuration since multiple levels are
-  supported (like e.g. apt-get). On the CLI one can stack verbose flags (i.e.
-  `-vv`). :bug:`1244`
+* There are now multiple levels of verbosity. On the command line, you can
+  make beets somewhat verbose with ``-v`` or very verbose with ``-vv``.
+  :bug:`1244`
 * The summary shown to compare duplicate albums during import now displays
   the old and new filesizes. :bug:`1291`
 * The colors used are now configurable via the new config option ``colors``,
