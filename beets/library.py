@@ -1188,21 +1188,27 @@ class Library(dbcore.Database):
             model_cls, query, sort
         )
 
+    def get_default_album_sort(self):
+        """Get a :class:`Sort` object for albums from the config option.
+        """
+        return dbcore.sort_from_strings(
+            Album, beets.config['sort_album'].as_str_seq())
+
+    def get_default_item_sort(self):
+        """Get a :class:`Sort` object for items from the config option.
+        """
+        return dbcore.sort_from_strings(
+            Item, beets.config['sort_item'].as_str_seq())
+
     def albums(self, query=None, sort=None):
         """Get :class:`Album` objects matching the query.
         """
-        sort = sort or dbcore.sort_from_strings(
-            Album, beets.config['sort_album'].as_str_seq()
-        )
-        return self._fetch(Album, query, sort)
+        return self._fetch(Album, query, sort or self.get_default_album_sort())
 
     def items(self, query=None, sort=None):
         """Get :class:`Item` objects matching the query.
         """
-        sort = sort or dbcore.sort_from_strings(
-            Item, beets.config['sort_item'].as_str_seq()
-        )
-        return self._fetch(Item, query, sort)
+        return self._fetch(Item, query, sort or self.get_default_item_sort())
 
     # Convenience accessors.
 
