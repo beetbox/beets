@@ -184,6 +184,8 @@ Note that this only matches items that are *already in your library*, so a path
 query won't necessarily find *all* the audio files in a directory---just the
 ones you've already added to your beets library.
 
+Such queries are case-sensitive on UNIX and case-insensitive on Microsoft
+Windows.
 
 .. _query-sort:
 
