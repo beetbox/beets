@@ -167,7 +167,7 @@ class TestHelper(object):
         self.config.read()
 
         self.config['plugins'] = []
-        self.config['verbose'] = True
+        self.config['verbose'] = 1
         self.config['ui']['color'] = False
         self.config['threaded'] = False
 

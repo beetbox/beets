@@ -48,9 +48,10 @@ class Permissions(BeetsPlugin):
             u'dir': 755
         })
 
+        self.register_listener('item_imported', permissions)
+        self.register_listener('album_imported', permissions)
 
-@Permissions.listen('item_imported')
-@Permissions.listen('album_imported')
+
 def permissions(lib, item=None, album=None):
     """Running the permission fixer.
     """
