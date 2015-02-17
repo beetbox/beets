@@ -35,7 +35,7 @@ def dirs_in_library(library, item):
     """
     return [ancestor
             for ancestor in ancestry(item)
-            if library in ancestor][1:]
+            if ancestor.startswith(library)][1:]
 
 
 class Permissions(BeetsPlugin):
