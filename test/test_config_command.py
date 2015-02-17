@@ -10,7 +10,6 @@ from shutil import rmtree
 from beets import ui
 from beets import config
 
-from test import _common
 from test._common import unittest
 from test.helper import TestHelper, capture_stdout
 from beets.library import Library
