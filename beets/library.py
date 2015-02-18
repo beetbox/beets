@@ -1188,13 +1188,15 @@ class Library(dbcore.Database):
             model_cls, query, sort
         )
 
-    def get_default_album_sort(self):
+    @staticmethod
+    def get_default_album_sort():
         """Get a :class:`Sort` object for albums from the config option.
         """
         return dbcore.sort_from_strings(
             Album, beets.config['sort_album'].as_str_seq())
 
-    def get_default_item_sort(self):
+    @staticmethod
+    def get_default_item_sort():
         """Get a :class:`Sort` object for items from the config option.
         """
         return dbcore.sort_from_strings(
