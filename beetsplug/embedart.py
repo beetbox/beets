@@ -26,7 +26,7 @@ from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
 from beets.ui import decargs
-from beets.util import syspath, normpath, displayable_path
+from beets.util import syspath, normpath, displayable_path, bytestring_path
 from beets.util.artresizer import ArtResizer
 from beets import config
 
@@ -101,7 +101,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 self.extract_first(normpath(opts.outpath),
                                    lib.items(decargs(args)))
             else:
-                filename = opts.filename or config['art_filename'].get()
+                filename = bytestring_path(opts.filename or
+                                           config['art_filename'].get())
                 if os.path.dirname(filename) != '':
                     self._log.error(u"Only specify a name rather than a path "
                                     u"for -n")
@@ -265,7 +266,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             self._log.warning(u'Unknown image type in {0}.',
                               displayable_path(item.path))
             return
-        outpath += '.' + ext
+        outpath = outpath + b'.' + ext
 
         self._log.info(u'Extracting album art from: {0} to: {1}',
                        item, displayable_path(outpath))
