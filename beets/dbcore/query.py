@@ -37,7 +37,13 @@ class InvalidQueryError(ParsingError):
     def __init__(self, query, explanation):
         if isinstance(query, list):
             query = " ".join(query)
-        message = "'{0}': {1}".format(query, explanation)
+        try:
+            message = "'{0}': {1}".format(query, explanation)
+        except UnicodeDecodeError:
+            # queries are unicode. however if for an unholy reason it's not
+            # the case, an InvalidQueryError may be raised -- and report it
+            # correctly than fail again here
+            message = "{0!r}: {1}".format(query, explanation)
         super(InvalidQueryError, self).__init__(message)
 
 
