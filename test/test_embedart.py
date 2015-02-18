@@ -16,6 +16,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import os.path
+import shutil
 from mock import Mock, patch
 
 from test import _common
@@ -41,7 +42,7 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(unittest.TestCase, TestHelper):
+class EmbedartCliTest(_common.TestCase, TestHelper):
 
     small_artpath = os.path.join(_common.RSRC, 'image-2x3.jpg')
     abbey_artpath = os.path.join(_common.RSRC, 'abbey.jpg')
@@ -113,6 +114,18 @@ class EmbedartCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(mediafile.images[0].data, self.image_data,
                          'Image written is not {0}'.format(
                          self.abbey_similarpath))
+
+    def test_non_ascii_album_path(self):
+        resource_path = os.path.join(_common.RSRC, 'image.mp3')
+        album = self.add_album_fixture()
+        trackpath = album.items()[0].path
+        albumpath = album.path
+        shutil.copy(resource_path, trackpath.decode('utf-8'))
+
+        self.run_command('extractart', '-n', 'extracted')
+
+        self.assertExists(os.path.join(albumpath.decode('utf-8'),
+                                       'extracted.png'))
 
 
 class EmbedartTest(unittest.TestCase):
