@@ -474,6 +474,12 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
             results = self.lib.items(q)
             self.assert_items_matched(results, ['path item', 'caps path'])
 
+    def test_utf8_bytes(self):
+        self.add_album(path=b'/\xc3\xa0/b/c.mp3', title='latin byte')
+        q = b'path:/\xc3\xa0/b/c.mp3'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['latin byte'])
+
 
 class IntQueryTest(unittest.TestCase, TestHelper):
 
