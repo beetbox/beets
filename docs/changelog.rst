@@ -101,8 +101,6 @@ Fixes:
   Unicode filenames. :bug:`1297`
 * :doc:`/plugins/discogs`: Handle and log more kinds of communication
   errors. :bug:`1299` :bug:`1305`
-* :doc:`/plugins/embedart`: Fix a crash that occured when the album path
-  contains non ascii characters.
 
 For developers:
 
