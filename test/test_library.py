@@ -1195,6 +1195,13 @@ class ParseQueryTest(unittest.TestCase):
         self.assertIsInstance(raised.exception,
                               beets.dbcore.query.ParsingError)
 
+    def test_parse_byte_string(self):
+        with self.assertRaises(beets.dbcore.InvalidQueryError) as raised:
+            beets.library.parse_query_string(b'f\xf2o', None)
+        self.assertIn("can't decode", unicode(raised.exception))
+        self.assertIsInstance(raised.exception,
+                              beets.dbcore.query.ParsingError)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
