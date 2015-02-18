@@ -73,8 +73,8 @@ class PathQuery(dbcore.FieldQuery):
 
         if not self._is_windows:
             dir_blob = buffer(self.dir_path)
-            return '({0} = ?) || (instr({0}, ?) = 1)'.format(self.field), \
-                   (file_blob, dir_blob)
+            return '({0} = ?) || (substr({0}, 1, ?) = ?)'.format(self.field), \
+                   (file_blob, len(dir_blob), dir_blob)
 
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
