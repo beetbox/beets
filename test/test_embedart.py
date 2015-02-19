@@ -124,8 +124,11 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         self.run_command('extractart', '-n', 'extracted')
 
-        self.assertExists(os.path.join(albumpath.decode('utf-8'),
-                                       'extracted.png'))
+        path = os.path.join(albumpath.decode('utf-8'), 'extracted.')
+        found = any(map(lambda ext: os.path.exists(path + ext),
+                        ['png', 'jpeg', 'jpg']))
+
+        self.assertTrue(found, 'Extracted image was not found!')
 
 
 class EmbedartTest(unittest.TestCase):

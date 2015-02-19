@@ -266,7 +266,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             self._log.warning(u'Unknown image type in {0}.',
                               displayable_path(item.path))
             return
-        outpath = outpath + b'.' + ext
+        outpath += b'.' + ext
 
         self._log.info(u'Extracting album art from: {0} to: {1}',
                        item, displayable_path(outpath))
