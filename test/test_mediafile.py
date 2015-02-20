@@ -28,7 +28,7 @@ from test import _common
 from test._common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
     MP3DescStorageStyle, StorageStyle, MP4StorageStyle, \
-    ASFStorageStyle, ImageType
+    ASFStorageStyle, ImageType, CoverArtField
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 
@@ -160,6 +160,13 @@ class ImageStructureTestMixin(ArtTestMixin):
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 0)
+
+    def test_guess_cover(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+        cover = CoverArtField.guess_cover_image(mediafile.images)
+        self.assertEqual(cover.desc, 'album cover')
+        self.assertEqual(mediafile.art, cover.data)
 
     def assertExtendedImageAttributes(self, image, **kwargs):
         """Ignore extended image attributes in the base tests.
@@ -757,6 +764,10 @@ class MP4Test(ReadWriteTestBase, PartialTestMixin,
         mediafile = self._mediafile_fixture('empty')
         with self.assertRaises(ValueError):
             mediafile.images = [Image(data=self.tiff_data)]
+
+    def test_guess_cover(self):
+        # There is no metadata associated with images, we pick one at random
+        pass
 
 
 class AlacTest(ReadWriteTestBase, unittest.TestCase):
