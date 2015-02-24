@@ -635,7 +635,7 @@ class Subcommand(object):
             root_parser.get_prog_name().decode('utf8'), self.name)
 
 
-class SubcommandsOptionParser(optparse.OptionParser):
+class SubcommandsOptionParser(optparse.OptionParser, object):
     """A variant of OptionParser that parses subcommands and their
     arguments.
     """
@@ -653,7 +653,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
         kwargs['add_help_option'] = False
 
         # Super constructor.
-        optparse.OptionParser.__init__(self, *args, **kwargs)
+        super(SubcommandsOptionParser, self).__init__(*args, **kwargs)
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -670,7 +670,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
     # Add the list of subcommands to the help message.
     def format_help(self, formatter=None):
         # Get the original help message, to which we will append.
-        out = optparse.OptionParser.format_help(self, formatter)
+        out = super(SubcommandsOptionParser, self).format_help(formatter)
         if formatter is None:
             formatter = self.formatter
 
