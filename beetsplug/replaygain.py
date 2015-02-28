@@ -21,6 +21,7 @@ import collections
 import itertools
 import sys
 import warnings
+import re
 
 from beets import logging
 from beets import ui
@@ -82,6 +83,109 @@ class Backend(object):
         # individual tracks which can be used for any backend.
         raise NotImplementedError()
 
+
+# BS1770GAIN CLI tool backend.
+class bs1770gainBackend(Backend):
+    def __init__(self, config, log):
+        super(bs1770gainBackend, self).__init__(config, log)
+        self.command = 'bs1770gain'
+        self.method = config["method"].get(unicode)
+        if self.command:
+            # Check whether the program is in $PATH.
+            for cmd in ('bs1770gain'):
+                try:
+                    call([cmd])
+                    self.command = cmd
+                except OSError:
+                    pass
+        if not self.command:
+            raise FatalReplayGainError(
+                'no bs1770gain command found: install bs1770gain'
+            )
+    def compute_track_gain(self, items):
+        """Computes the track gain of the given tracks, returns a list
+        of TrackGain objects.
+        """
+        #supported_items = filter(self.format_supported, items)
+        output = self.compute_gain(items, False)
+        return output
+
+    def compute_album_gain(self, album):
+        """Computes the album gain of the given album, returns an
+        AlbumGain object.
+        """
+        # TODO: What should be done when not all tracks in the album are
+        # supported?
+
+        supported_items = album.items()
+        output = self.compute_gain(supported_items, True)
+
+        return AlbumGain(output[-1], output[:-1])
+
+    def format_supported(self, item):
+        """Checks whether the given item is supported by the selected tool.
+        """
+        if 'mp3gain' in self.command and item.format != 'MP3':
+            return False
+        elif 'aacgain' in self.command and item.format not in ('MP3', 'AAC'):
+            return False
+        return True
+
+    def compute_gain(self, items, is_album):
+        """Computes the track or album gain of a list of items, returns
+        a list of TrackGain objects.
+        When computing album gain, the last TrackGain object returned is
+        the album gain
+        """
+
+        if len(items) == 0:
+            return []
+
+        """Compute ReplayGain values and return a list of results
+        dictionaries as given by `parse_tool_output`.
+        """
+        # Construct shell command.
+        cmd = [self.command]
+        cmd = cmd + [self.method]
+        cmd = cmd + ['-it']
+        cmd = cmd + [syspath(i.path) for i in items]
+
+        self._log.debug(u'analyzing {0} files', len(items))
+        self._log.debug(u"executing {0}", " ".join(map(displayable_path, cmd)))
+        output = call(cmd)
+        self._log.debug(u'analysis finished')
+        results = self.parse_tool_output(output,
+                                         len(items) + (1 if is_album else 0))
+        return results
+
+    def parse_tool_output(self, text, num_lines):
+        """Given the  output from bs1770gain, parse the text and
+        return a list of dictionaries
+        containing information about each analyzed file.
+        """
+        out = []
+        data = unicode(text,errors='ignore')
+        results=re.findall(r'(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)(?=\s{2,2}\[\d+\/\d+\]|\s{2,2}\[ALBUM\]:|done\.$)',data,re.S|re.M)
+
+        for ll in results[0:num_lines]:
+            parts = ll.split(b'\n')
+            if len(parts) == 0:
+                self._log.debug(u'bad tool output: {0}', text)
+                raise ReplayGainError('bs1770gain failed')
+
+            d = {
+                 'file': parts[0],
+                 'gain': float((parts[1].split('/'))[1].split('LU')[0]),
+                 'peak': float(parts[2].split('/')[1]),
+            }
+
+            self._log.info('analysed {}gain={};peak={}',
+            d['file'].rstrip(), d['gain'], d['peak'])
+            out.append(Gain(d['gain'], d['peak']))
+        return out
+
+
+# GStreamer-based backend.
 
 # mpgain/aacgain CLI tool backend.
 
@@ -179,6 +283,7 @@ class CommandBackend(Backend):
         else:
             # Disable clipping warning.
             cmd = cmd + ['-c']
+        cmd = cmd + ['-a' if is_album else '-r']
         cmd = cmd + ['-d', bytes(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
@@ -598,9 +703,10 @@ class ReplayGainPlugin(BeetsPlugin):
     """
 
     backends = {
-        "command":   CommandBackend,
+        "command": CommandBackend,
         "gstreamer": GStreamerBackend,
-        "audiotools": AudioToolsBackend
+        "audiotools": AudioToolsBackend,
+        "bs1770gain": bs1770gainBackend
     }
 
     def __init__(self):
@@ -688,6 +794,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 )
 
             self.store_album_gain(album, album_gain.album_gain)
+
             for item, track_gain in itertools.izip(album.items(),
                                                    album_gain.track_gains):
                 self.store_track_gain(item, track_gain)
