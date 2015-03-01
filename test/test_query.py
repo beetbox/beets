@@ -465,7 +465,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
     def test_case_sensitivity(self):
         self.add_album(path='/A/B/C2.mp3', title='caps path')
-        q = b'path:/A/B'
+        q = 'path:/A/B'
         with patch('beets.library.PathQuery._is_windows', False):
             results = self.lib.items(q)
             self.assert_items_matched(results, ['caps path'])
@@ -473,12 +473,6 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         with patch('beets.library.PathQuery._is_windows', True):
             results = self.lib.items(q)
             self.assert_items_matched(results, ['path item', 'caps path'])
-
-    def test_utf8_bytes(self):
-        self.add_album(path=b'/\xc3\xa0/b/c.mp3', title='latin byte')
-        q = b'path:/\xc3\xa0/b/c.mp3'
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ['latin byte'])
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):

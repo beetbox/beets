@@ -1195,6 +1195,10 @@ class ParseQueryTest(unittest.TestCase):
         self.assertIsInstance(raised.exception,
                               beets.dbcore.query.ParsingError)
 
+    def test_parse_bytes(self):
+        with self.assertRaises(AssertionError):
+            beets.library.parse_query_string(b"query", None)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
