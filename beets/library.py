@@ -1107,11 +1107,12 @@ def parse_query_string(s, model_cls):
 
     The string is split into components using shell-like syntax.
     """
+    assert isinstance(s, unicode), "Query is not unicode: {0!r}".format(s)
+
     # A bug in Python < 2.7.3 prevents correct shlex splitting of
     # Unicode strings.
     # http://bugs.python.org/issue6988
-    if isinstance(s, unicode):
-        s = s.encode('utf8')
+    s = s.encode('utf8')
     try:
         parts = [p.decode('utf8') for p in shlex.split(s)]
     except ValueError as exc:
