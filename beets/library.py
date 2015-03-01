@@ -45,7 +45,8 @@ log = logging.getLogger('beets')
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path.
 
-    On Windows paths are case-insensitive, contratly to UNIX platforms.
+    On Windows paths are case-insensitive by default, contrarly to UNIX
+    platforms.
     """
 
     escape_re = re.compile(r'[\\_%]')
@@ -53,11 +54,16 @@ class PathQuery(dbcore.FieldQuery):
 
     _is_windows = platform.system() == 'Windows'
 
-    def __init__(self, field, pattern, fast=True):
+    def __init__(self, field, pattern, fast=True, case_sensitive=None):
         super(PathQuery, self).__init__(field, pattern, fast)
 
-        if self._is_windows:
+        if case_sensitive is None:
+            # setting this value as the default one would make it un-patchable
+            # and therefore un-testable
+            case_sensitive = not self._is_windows
+        if not case_sensitive:
             pattern = pattern.lower()
+        self.case_sensitive = case_sensitive
 
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
@@ -65,13 +71,13 @@ class PathQuery(dbcore.FieldQuery):
         self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
 
     def match(self, item):
-        path = item.path.lower() if self._is_windows else item.path
+        path = item.path if self.case_sensitive else item.path.lower()
         return (path == self.file_path) or path.startswith(self.dir_path)
 
     def col_clause(self):
         file_blob = buffer(self.file_path)
 
-        if not self._is_windows:
+        if self.case_sensitive:
             dir_blob = buffer(self.dir_path)
             return '({0} = ?) || (substr({0}, 1, ?) = ?)'.format(self.field), \
                    (file_blob, len(dir_blob), dir_blob)
