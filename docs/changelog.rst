@@ -76,7 +76,7 @@ Fixes:
 
 * :doc:`/plugins/replaygain`: Stop applying replaygain directly to source files
   when using the mp3gain backend. :bug:`1316`
-* Path queries are case-sensitive on UNIX OSes. :bug:`1165`
+* Path queries are case-sensitive on non-Windows OSes. :bug:`1165`
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
