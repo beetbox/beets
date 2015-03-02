@@ -88,11 +88,13 @@ class Backend(object):
         raise NotImplementedError()
 
 
-
 # bsg1770gain backend
-
-
 class Bs1770gainBackend(Backend):
+
+    """bs1770gain is a loudness scanner compliant with ITU-R BS.1770 and its
+    flavors EBU R128,ATSC A/85 and Replaygain 2.0. It uses a special
+    designed algorithm to normalize audio to the same level.
+    """
 
     def __init__(self, config, log):
         super(Bs1770gainBackend, self).__init__(config, log)
@@ -107,18 +109,16 @@ class Bs1770gainBackend(Backend):
             call([cmd, self.method])
             self.command = cmd
         except OSError:
-                pass
+            pass
         if not self.command:
             raise FatalReplayGainError(
                 'no replaygain command found: install bs1770gain'
             )
 
-
     def compute_track_gain(self, items):
         """Computes the track gain of the given tracks, returns a list
         of TrackGain objects.
         """
-
 
         output = self.compute_gain(items, False)
         return output
@@ -135,8 +135,6 @@ class Bs1770gainBackend(Backend):
 
         return AlbumGain(output[-1], output[:-1])
 
-
-
     def compute_gain(self, items, is_album):
         """Computes the track or album gain of a list of items, returns
         a list of TrackGain objects.
@@ -146,7 +144,6 @@ class Bs1770gainBackend(Backend):
 
         if len(items) == 0:
             return []
-
 
         """Compute ReplayGain values and return a list of results
         dictionaries as given by `parse_tool_output`.
@@ -171,7 +168,7 @@ class Bs1770gainBackend(Backend):
         containing information about each analyzed file.
         """
         out = []
-        data = unicode(text, errors='ignore')
+        data = text.decode('utf8', errors='ignore')
         regex = ("(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)(?=\s{2,2}\[\d+\/\d+\]"
                  "|\s{2,2}\[ALBUM\]:|done\.$)")
 
@@ -179,7 +176,7 @@ class Bs1770gainBackend(Backend):
         for ll in results[0:num_lines]:
             parts = ll.split(b'\n')
             if len(parts) == 0:
-                self._log.debug(u'bad tool output: {0}', text)
+                self._log.debug(u'bad tool output: {0!r}', text)
                 raise ReplayGainError('bs1770gain failed')
 
             d = {
