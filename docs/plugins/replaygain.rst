@@ -118,11 +118,11 @@ These options only work with the "command" backend:
 
 This option only works with the "bs1770gain" backend:
 
-- **method**:either replaygain, ebu or atsc. Default: replaygain
+- **method**: The loudness scanning standard: either 'replaygain' for ReplayGain 2.0, 
+  'ebu' for EBU R128 or 'atsc' for ATSC A/85. 
+  This dictates the reference level: -18, -23, or -24 LUFS respectively. Default: replaygain
 
-    replaygain measures loudness with a reference level of -18 LUFS.
-    ebu measures loudness with a reference level of -23 LUFS.
-    atsc measures loudness with a reference level of -24 LUFS.
+
 
 
 Manual Analysis
