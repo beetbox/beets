@@ -17,6 +17,9 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+from functools import partial
+from mock import patch
+
 from test import _common
 from test._common import unittest
 from test import helper
@@ -460,6 +463,26 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['album with backslash'])
+
+    def test_case_sensitivity(self):
+        self.add_album(path='/A/B/C2.mp3', title='caps path')
+
+        makeq = partial(beets.library.PathQuery, 'path', '/A/B')
+
+        results = self.lib.items(makeq(case_sensitive=True))
+        self.assert_items_matched(results, ['caps path'])
+
+        results = self.lib.items(makeq(case_sensitive=False))
+        self.assert_items_matched(results, ['path item', 'caps path'])
+
+        # test platform-aware default sensitivity
+        with patch('beets.library.PathQuery._is_windows', False):
+            q = makeq()
+            self.assertEqual(q.case_sensitive, True)
+
+        with patch('beets.library.PathQuery._is_windows', True):
+            q = makeq()
+            self.assertEqual(q.case_sensitive, False)
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):
