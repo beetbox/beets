@@ -1246,17 +1246,30 @@ class DateItemField(MediaField):
 
 class CoverArtField(MediaField):
     """A descriptor that provides access to the *raw image data* for the
-    first image on a file. This is used for backwards compatibility: the
+    cover image on a file. This is used for backwards compatibility: the
     full `ImageListField` provides richer `Image` objects.
+
+    When there are multiple images we try to pick the most likely to be a front
+    cover.
     """
     def __init__(self):
         pass
 
     def __get__(self, mediafile, _):
-        try:
-            return mediafile.images[0].data
-        except IndexError:
+        candidates = mediafile.images
+        if candidates:
+            return self.guess_cover_image(candidates).data
+        else:
             return None
+
+    @staticmethod
+    def guess_cover_image(candidates):
+        if len(candidates) == 1:
+            return candidates[0]
+        try:
+            return next(c for c in candidates if c.type == ImageType.front)
+        except StopIteration:
+            return candidates[0]
 
     def __set__(self, mediafile, data):
         if data:
