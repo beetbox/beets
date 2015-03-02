@@ -21,6 +21,7 @@ import collections
 import itertools
 import sys
 import warnings
+import re
 
 from beets import logging
 from beets import ui
@@ -32,12 +33,14 @@ from beets import config
 # Utilities.
 
 class ReplayGainError(Exception):
+
     """Raised when a local (to a track or an album) error occurs in one
     of the backends.
     """
 
 
 class FatalReplayGainError(Exception):
+
     """Raised when a fatal error occurs in one of the backends.
     """
 
@@ -66,8 +69,10 @@ AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 
 
 class Backend(object):
+
     """An abstract class representing engine for calculating RG values.
     """
+
     def __init__(self, config, log):
         """Initialize the backend with the configuration view for the
         plugin.
@@ -83,10 +88,108 @@ class Backend(object):
         raise NotImplementedError()
 
 
+# bsg1770gain backend
+
+
+class Bs1770gainBackend(Backend):
+
+    def __init__(self, config, log):
+        super(Bs1770gainBackend, self).__init__(config, log)
+        cmd = 'bs1770gain'
+
+        try:
+            self.method = '--' + config['method'].get(unicode)
+        except:
+            self.method = '--replaygain'
+
+        try:
+            call([cmd, self.method])
+            self.command = cmd
+        except OSError:
+                pass
+        if not self.command:
+            raise FatalReplayGainError(
+                'no replaygain command found: install bs1770gain'
+            )
+
+    def compute_track_gain(self, items):
+        """Computes the track gain of the given tracks, returns a list
+        of TrackGain objects.
+        """
+        output = self.compute_gain(items, False)
+        return output
+
+    def compute_album_gain(self, album):
+        """Computes the album gain of the given album, returns an
+        AlbumGain object.
+        """
+        # TODO: What should be done when not all tracks in the album are
+        # supported?
+
+        supported_items = album.items()
+        output = self.compute_gain(supported_items, True)
+
+        return AlbumGain(output[-1], output[:-1])
+
+    def compute_gain(self, items, is_album):
+        """Computes the track or album gain of a list of items, returns
+        a list of TrackGain objects.
+        When computing album gain, the last TrackGain object returned is
+        the album gain
+        """
+
+        if len(items) == 0:
+            return []
+
+        """Compute ReplayGain values and return a list of results
+        dictionaries as given by `parse_tool_output`.
+        """
+        # Construct shell command.
+        cmd = [self.command]
+        cmd = cmd + [self.method]
+        cmd = cmd + ['-it']
+        cmd = cmd + [syspath(i.path) for i in items]
+
+        self._log.debug(u'analyzing {0} files', len(items))
+        self._log.debug(u"executing {0}", " ".join(map(displayable_path, cmd)))
+        output = call(cmd)
+        self._log.debug(u'analysis finished')
+        results = self.parse_tool_output(output,
+                                         len(items) + is_album)
+        return results
+
+    def parse_tool_output(self, text, num_lines):
+        """Given the  output from bs1770gain, parse the text and
+        return a list of dictionaries
+        containing information about each analyzed file.
+        """
+        out = []
+        data = unicode(text, errors='ignore')
+        regex = ("(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)(?=\s{2,2}\[\d+\/\d+\]"
+                 "|\s{2,2}\[ALBUM\]:|done\.$)")
+
+        results = re.findall(regex, data, re.S | re.M)
+        for ll in results[0:num_lines]:
+            parts = ll.split(b'\n')
+            if len(parts) == 0:
+                self._log.debug(u'bad tool output: {0}', text)
+                raise ReplayGainError('bs1770gain failed')
+
+            d = {
+                'file': parts[0],
+                'gain': float((parts[1].split('/'))[1].split('LU')[0]),
+                'peak': float(parts[2].split('/')[1]),
+            }
+
+            self._log.info('analysed {}gain={};peak={}',
+                           d['file'].rstrip(), d['gain'], d['peak'])
+            out.append(Gain(d['gain'], d['peak']))
+        return out
+
+
 # mpgain/aacgain CLI tool backend.
-
-
 class CommandBackend(Backend):
+
     def __init__(self, config, log):
         super(CommandBackend, self).__init__(config, log)
         config.add({
@@ -218,6 +321,7 @@ class CommandBackend(Backend):
 # GStreamer-based backend.
 
 class GStreamerBackend(Backend):
+
     def __init__(self, config, log):
         super(GStreamerBackend, self).__init__(config, log)
         self._import_gst()
@@ -466,10 +570,12 @@ class GStreamerBackend(Backend):
 
 
 class AudioToolsBackend(Backend):
+
     """ReplayGain backend that uses `Python Audio Tools
     <http://audiotools.sourceforge.net/>`_ and its capabilities to read more
     file formats and compute ReplayGain values using it replaygain module.
     """
+
     def __init__(self, config, log):
         super(CommandBackend, self).__init__(config, log)
         self._import_audiotools()
@@ -594,13 +700,15 @@ class AudioToolsBackend(Backend):
 # Main plugin logic.
 
 class ReplayGainPlugin(BeetsPlugin):
+
     """Provides ReplayGain analysis.
     """
 
     backends = {
         "command":   CommandBackend,
         "gstreamer": GStreamerBackend,
-        "audiotools": AudioToolsBackend
+        "audiotools": AudioToolsBackend,
+        "bs1770gain": Bs1770gainBackend
     }
 
     def __init__(self):
