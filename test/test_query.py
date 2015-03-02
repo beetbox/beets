@@ -18,7 +18,6 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 from functools import partial
-from mock import patch
 
 from test import _common
 from test._common import unittest
@@ -476,11 +475,11 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_items_matched(results, ['path item', 'caps path'])
 
         # test platform-aware default sensitivity
-        with patch('beets.library.PathQuery._is_windows', False):
+        with _common.platform_posix():
             q = makeq()
             self.assertEqual(q.case_sensitive, True)
 
-        with patch('beets.library.PathQuery._is_windows', True):
+        with _common.platform_windows():
             q = makeq()
             self.assertEqual(q.case_sensitive, False)
 

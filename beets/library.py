@@ -53,8 +53,6 @@ class PathQuery(dbcore.FieldQuery):
     escape_re = re.compile(r'[\\_%]')
     escape_char = b'\\'
 
-    _is_windows = platform.system() == 'Windows'
-
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
         """Create a path query.
 
@@ -65,7 +63,7 @@ class PathQuery(dbcore.FieldQuery):
 
         # By default, the case sensitivity depends on the platform.
         if case_sensitive is None:
-            case_sensitive = not self._is_windows
+            case_sensitive = platform.system() != 'Windows'
         self.case_sensitive = case_sensitive
 
         # Use a normalized-case pattern for case-insensitive matches.
