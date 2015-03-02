@@ -475,11 +475,11 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_items_matched(results, ['path item', 'caps path'])
 
         # test platform-aware default sensitivity
-        with _common.platform_posix():
+        with _common.system_mock('Darwin'):
             q = makeq()
             self.assertEqual(q.case_sensitive, True)
 
-        with _common.platform_windows():
+        with _common.system_mock('Windows'):
             q = makeq()
             self.assertEqual(q.case_sensitive, False)
 
