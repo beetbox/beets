@@ -45,8 +45,9 @@ log = logging.getLogger('beets')
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path.
 
-    On Windows paths are case-insensitive by default, contrarly to UNIX
-    platforms.
+    Matching can either base case-sensitive or case-sensitive. By
+    default, the behavior depends on the OS: case-insensitive on Windows
+    and case-sensitive otherwise.
     """
 
     escape_re = re.compile(r'[\\_%]')
@@ -55,15 +56,21 @@ class PathQuery(dbcore.FieldQuery):
     _is_windows = platform.system() == 'Windows'
 
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
+        """Create a path query.
+
+        `case_sensitive` can be a bool or `None`, indicating that the
+        behavior should depend on the platform (the default).
+        """
         super(PathQuery, self).__init__(field, pattern, fast)
 
+        # By default, the case sensitivity depends on the platform.
         if case_sensitive is None:
-            # setting this value as the default one would make it un-patchable
-            # and therefore un-testable
             case_sensitive = not self._is_windows
+        self.case_sensitive = case_sensitive
+
+        # Use a normalized-case pattern for case-insensitive matches.
         if not case_sensitive:
             pattern = pattern.lower()
-        self.case_sensitive = case_sensitive
 
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
