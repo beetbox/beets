@@ -45,7 +45,7 @@ log = logging.getLogger('beets')
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path.
 
-    Matching can either base case-sensitive or case-sensitive. By
+    Matching can either be case-insensitive or case-sensitive. By
     default, the behavior depends on the OS: case-insensitive on Windows
     and case-sensitive otherwise.
     """
