@@ -110,7 +110,7 @@ class Bs1770gainBackend(Backend):
             self.command = cmd
         except OSError:
             raise FatalReplayGainError(
-                'Is bs1770gain installed? Is your method in conifg correct?'
+                'Is bs1770gain installed? Is your method in config correct?'
             )
         if not self.command:
             raise FatalReplayGainError(
