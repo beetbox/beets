@@ -582,7 +582,7 @@ class AudioToolsBackend(Backend):
     """
 
     def __init__(self, config, log):
-        super(CommandBackend, self).__init__(config, log)
+        super(AudioToolsBackend, self).__init__(config, log)
         self._import_audiotools()
 
     def _import_audiotools(self):
