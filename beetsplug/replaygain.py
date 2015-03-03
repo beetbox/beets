@@ -33,14 +33,12 @@ from beets import config
 # Utilities.
 
 class ReplayGainError(Exception):
-
     """Raised when a local (to a track or an album) error occurs in one
     of the backends.
     """
 
 
 class FatalReplayGainError(Exception):
-
     """Raised when a fatal error occurs in one of the backends.
     """
 
@@ -69,7 +67,6 @@ AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 
 
 class Backend(object):
-
     """An abstract class representing engine for calculating RG values.
     """
 
@@ -90,10 +87,8 @@ class Backend(object):
 
 # bsg1770gain backend
 class Bs1770gainBackend(Backend):
-
-    """bs1770gain is a loudness scanner compliant with ITU-R BS.1770 and its
-    flavors EBU R128,ATSC A/85 and Replaygain 2.0. It uses a special
-    designed algorithm to normalize audio to the same level.
+    """bs1770gain is a loudness scanner compliant with ITU-R BS.1770 and
+    its flavors EBU R128, ATSC A/85 and Replaygain 2.0.
     """
 
     def __init__(self, config, log):
@@ -576,7 +571,6 @@ class GStreamerBackend(Backend):
 
 
 class AudioToolsBackend(Backend):
-
     """ReplayGain backend that uses `Python Audio Tools
     <http://audiotools.sourceforge.net/>`_ and its capabilities to read more
     file formats and compute ReplayGain values using it replaygain module.
@@ -706,7 +700,6 @@ class AudioToolsBackend(Backend):
 # Main plugin logic.
 
 class ReplayGainPlugin(BeetsPlugin):
-
     """Provides ReplayGain analysis.
     """
 
@@ -802,7 +795,6 @@ class ReplayGainPlugin(BeetsPlugin):
                 )
 
             self.store_album_gain(album, album_gain.album_gain)
-
             for item, track_gain in itertools.izip(album.items(),
                                                    album_gain.track_gains):
                 self.store_track_gain(item, track_gain)

@@ -90,7 +90,8 @@ backend in your configuration file::
 
     replaygain:
         backend: bs1770gain
-        
+
+
 Configuration
 -------------
 
@@ -118,11 +119,10 @@ These options only work with the "command" backend:
 
 This option only works with the "bs1770gain" backend:
 
-- **method**: The loudness scanning standard: either 'replaygain' for ReplayGain 2.0, 
-  'ebu' for EBU R128 or 'atsc' for ATSC A/85. 
-  This dictates the reference level: -18, -23, or -24 LUFS respectively. Default: replaygain
-
-
+- **method**: The loudness scanning standard: either `replaygain` for
+  ReplayGain 2.0, `ebu` for EBU R128, or `atsc` for ATSC A/85. This dictates
+  the reference level: -18, -23, or -24 LUFS respectively. Default:
+  `replaygain`
 
 
 Manual Analysis
