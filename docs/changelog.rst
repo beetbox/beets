@@ -6,6 +6,8 @@ Changelog
 
 Features:
 
+* :doc:`/plugins/replaygain`: There is a new backend for the `bs1770gain`_
+  tool. Thanks to :user:`jmwatte`. :bug:`1343`
 * There are now multiple levels of verbosity. On the command line, you can
   make beets somewhat verbose with ``-v`` or very verbose with ``-vv``.
   :bug:`1244`
@@ -128,6 +130,8 @@ For developers:
 * A new ``import_task_created`` event lets you manipulate import tasks
   immediately after they are initialized. It's also possible to replace the
   originally created tasks by returning new ones using this event.
+
+.. _bs1770gain: http://bs1770gain.sourceforge.net
 
 
 1.3.10 (January 5, 2015)
