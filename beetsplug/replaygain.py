@@ -109,7 +109,9 @@ class Bs1770gainBackend(Backend):
             call([cmd, self.method])
             self.command = cmd
         except OSError:
-            pass
+            raise FatalReplayGainError(
+                'Is bs1770gain installed? Is your method in conifg correct?'
+            )
         if not self.command:
             raise FatalReplayGainError(
                 'no replaygain command found: install bs1770gain'
