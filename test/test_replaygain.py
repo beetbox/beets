@@ -38,6 +38,7 @@ if has_program('bs1770gain', ['--replaygain']):
 else:
     LOUDNESS_PROG_AVAILABLE = False
 
+
 class ReplayGainCliTestBase(TestHelper):
 
     def setUp(self):
