@@ -93,12 +93,12 @@ class Bs1770gainBackend(Backend):
 
     def __init__(self, config, log):
         super(Bs1770gainBackend, self).__init__(config, log)
-        cmd = 'bs1770gain'
+        cmd = b'bs1770gain'
 
         try:
-            self.method = '--' + config['method'].get(unicode)
+            self.method = b'--' + config['method'].get(str)
         except:
-            self.method = '--replaygain'
+            self.method = b'--replaygain'
 
         try:
             call([cmd, self.method])
@@ -210,9 +210,9 @@ class CommandBackend(Backend):
                 )
         else:
             # Check whether the program is in $PATH.
-            for cmd in ('mp3gain', 'aacgain'):
+            for cmd in (b'mp3gain', b'aacgain'):
                 try:
-                    call([cmd, '-v'])
+                    call([cmd, b'-v'])
                     self.command = cmd
                 except OSError:
                     pass
@@ -276,14 +276,14 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd = [self.command, '-o', '-s', 's']
+        cmd = [self.command, b'-o', b'-s', b's']
         if self.noclip:
             # Adjust to avoid clipping.
-            cmd = cmd + ['-k']
+            cmd = cmd + [b'-k']
         else:
             # Disable clipping warning.
-            cmd = cmd + ['-c']
-        cmd = cmd + ['-d', bytes(self.gain_offset)]
+            cmd = cmd + [b'-c']
+        cmd = cmd + [b'-d', bytes(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug(u'analyzing {0} files', len(items))
