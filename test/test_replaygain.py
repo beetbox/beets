@@ -25,7 +25,7 @@ try:
     import gi
     gi.require_version('Gst', '1.0')
     GST_AVAILABLE = True
-except ImportError, ValueError:
+except (ImportError, ValueError):
     GST_AVAILABLE = False
 
 if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
