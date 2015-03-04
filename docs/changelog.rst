@@ -71,6 +71,9 @@ Core changes:
   now affect (almost) every place where objects are printed and logged.
   (Previously, they only controlled the :ref:`list-cmd` command and a few
   other scattered pieces.) :bug:`1269`
+* :ref:`list_format_album` and :ref:`list_format_album` have respectively been
+  renamed :ref:`format_album` and :ref:`format_item`. The old names still work
+  but each triggers a warning message. :bug:`1271`
 
 Fixes:
 

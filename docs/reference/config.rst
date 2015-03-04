@@ -167,19 +167,37 @@ Defaults to ``yes``.
 list_format_item
 ~~~~~~~~~~~~~~~~
 
-Format to use when listing *individual items* with the :ref:`list-cmd`
-command and other commands that need to print out items. Defaults to
-``$artist - $album - $title``. The ``-f`` command-line option overrides
-this setting.
+Deprecated option, replaced by :ref:`format_item`.
 
 .. _list_format_album:
 
 list_format_album
 ~~~~~~~~~~~~~~~~~
 
+Deprecated option, replaced by :ref:`format_album`.
+
+.. _format_item:
+
+format_item
+~~~~~~~~~~~
+
+Format to use when listing *individual items* with the :ref:`list-cmd`
+command and other commands that need to print out items. Defaults to
+``$artist - $album - $title``. The ``-f`` command-line option overrides
+this setting.
+
+It used to be named :ref:`list_format_item`.
+
+.. _format_album:
+
+format_album
+~~~~~~~~~~~~
+
 Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
+
+It used to be named :ref:`list_format_album`.
 
 .. _sort_item:
 
