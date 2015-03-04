@@ -42,9 +42,18 @@ class ReplayGainCliTestBase(TestHelper):
         try:
             self.load_plugins('replaygain')
         except:
-            self.teardown_beets()
-            self.unload_plugins()
-            raise
+            import sys
+            # store exception info so an error in teardown does not swallow it
+            exc_info = sys.exc_info()
+            try:
+                self.teardown_beets()
+                self.unload_plugins()
+            except:
+                # if load_plugins() failed then setup is incomplete and
+                # teardown operations may fail. In particular # {Item,Album}
+                # may not have the _original_types attribute in unload_plugins
+                pass
+            raise exc_info[1], None, exc_info[2]
 
         self.config['replaygain']['backend'] = self.backend
         album = self.add_album_fixture(2)
