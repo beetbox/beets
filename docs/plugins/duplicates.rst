@@ -61,7 +61,7 @@ file. The available options mirror the command-line options:
   or album. This uses the same template syntax as beets'
   :doc:`path formats</reference/pathformat>`.  The usage is inspired by, and
   therefore similar to, the :ref:`list <list-cmd>` command.
-  Default: :ref:`list_format_item`
+  Default: :ref:`format_item`
 - **full**: List every track or album that has duplicates, not just the
   duplicates themselves.
   Default: ``no``.

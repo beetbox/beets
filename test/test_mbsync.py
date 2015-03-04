@@ -73,8 +73,8 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(album.album, 'album info')
 
     def test_message_when_skipping(self):
-        config['list_format_item'] = '$artist - $album - $title'
-        config['list_format_album'] = '$albumartist - $album'
+        config['format_item'] = '$artist - $album - $title'
+        config['format_album'] = '$albumartist - $album'
 
         # Test album with no mb_albumid.
         # The default format for an album include $albumartist so
