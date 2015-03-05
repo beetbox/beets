@@ -6,6 +6,9 @@ Changelog
 
 Features:
 
+* Beets now accept top-level options ``--format-item`` and ``--format-album``
+  before any subcommand to control how items and albums are displayed.
+  :bug:`1271`:
 * There are now multiple levels of verbosity. On the command line, you can
   make beets somewhat verbose with ``-v`` or very verbose with ``-vv``.
   :bug:`1244`
@@ -120,6 +123,9 @@ Fixes:
 
 For developers:
 
+* the ``OptionParser`` is now a ``CommonOptionsParser`` that offers facilities
+  for adding usual options (``--album``, ``--path`` and ``--format``). See
+  :ref:`add_subcommands`. :bug:`1271`
 * The logging system in beets has been overhauled. Plugins now each have their
   own logger, which helps by automatically adjusting the verbosity level in
   import mode and by prefixing the plugin's name.  Logging levels are

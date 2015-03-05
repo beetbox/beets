@@ -87,8 +87,11 @@ The function should use any of the utility functions defined in ``beets.ui``.
 Try running ``pydoc beets.ui`` to see what's available.
 
 You can add command-line options to your new command using the ``parser`` member
-of the ``Subcommand`` class, which is an ``OptionParser`` instance. Just use it
-like you would a normal ``OptionParser`` in an independent script.
+of the ``Subcommand`` class, which is a ``CommonOptionParser`` instance. Just
+use it like you would a normal ``OptionParser`` in an independent script. Note
+that it offers several methods to add common options: ``--album``, ``--path``
+and ``--format``. This feature is versatile and extensively documented, try
+``pydoc beets.ui.CommonOptionParser`` for more information.
 
 .. _plugin_events:
 
