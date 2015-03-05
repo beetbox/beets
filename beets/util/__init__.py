@@ -624,7 +624,7 @@ def cpu_count():
             num = 0
     elif sys.platform == b'darwin':
         try:
-            num = int(command_output(['sysctl', '-n', 'hw.ncpu']))
+            num = int(command_output([b'sysctl', b'-n', b'hw.ncpu']))
         except ValueError:
             num = 0
     else:
@@ -641,8 +641,8 @@ def cpu_count():
 def command_output(cmd, shell=False):
     """Runs the command and returns its output after it has exited.
 
-    ``cmd`` is a list of arguments starting with the command names.  If
-    ``shell`` is true, ``cmd`` is assumed to be a string and passed to a
+    ``cmd`` is a list of byte string arguments starting with the command names.
+    If ``shell`` is true, ``cmd`` is assumed to be a string and passed to a
     shell to execute.
 
     If the process exits with a non-zero return code

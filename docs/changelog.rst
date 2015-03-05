@@ -9,6 +9,8 @@ Features:
 * Beets now accept top-level options ``--format-item`` and ``--format-album``
   before any subcommand to control how items and albums are displayed.
   :bug:`1271`:
+* :doc:`/plugins/replaygain`: There is a new backend for the `bs1770gain`_
+  tool. Thanks to :user:`jmwatte`. :bug:`1343`
 * There are now multiple levels of verbosity. On the command line, you can
   make beets somewhat verbose with ``-v`` or very verbose with ``-vv``.
   :bug:`1244`
@@ -82,6 +84,7 @@ Fixes:
 
 * :doc:`/plugins/replaygain`: Stop applying replaygain directly to source files
   when using the mp3gain backend. :bug:`1316`
+* Path queries are case-sensitive on non-Windows OSes. :bug:`1165`
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
@@ -136,6 +139,8 @@ For developers:
 * A new ``import_task_created`` event lets you manipulate import tasks
   immediately after they are initialized. It's also possible to replace the
   originally created tasks by returning new ones using this event.
+
+.. _bs1770gain: http://bs1770gain.sourceforge.net
 
 
 1.3.10 (January 5, 2015)
