@@ -957,7 +957,7 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, fmt):
+def list_items(lib, query, album, fmt=''):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
@@ -970,23 +970,11 @@ def list_items(lib, query, album, fmt):
 
 
 def list_func(lib, opts, args):
-    fmt = '$path' if opts.path else opts.format
-    list_items(lib, decargs(args), opts.album, fmt)
+    list_items(lib, decargs(args), opts.album)
 
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
-list_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='show matching albums instead of tracks'
-)
-list_cmd.parser.add_option(
-    '-p', '--path', action='store_true',
-    help='print paths for matched items or albums'
-)
-list_cmd.parser.add_option(
-    '-f', '--format', action='store',
-    help='print with custom format', default=''
-)
+list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
@@ -1087,10 +1075,8 @@ def update_func(lib, opts, args):
 update_cmd = ui.Subcommand(
     'update', help='update the library', aliases=('upd', 'up',)
 )
-update_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='match albums instead of tracks'
-)
+update_cmd.parser.add_album_option()
+update_cmd.parser.add_format_option()
 update_cmd.parser.add_option(
     '-M', '--nomove', action='store_false', default=True, dest='move',
     help="don't move files in library"
@@ -1098,10 +1084,6 @@ update_cmd.parser.add_option(
 update_cmd.parser.add_option(
     '-p', '--pretend', action='store_true',
     help="show all changes but do nothing"
-)
-update_cmd.parser.add_option(
-    '-f', '--format', action='store',
-    help='print with custom format', default=''
 )
 update_cmd.func = update_func
 default_commands.append(update_cmd)
@@ -1151,10 +1133,7 @@ remove_cmd.parser.add_option(
     "-d", "--delete", action="store_true",
     help="also remove files from disk"
 )
-remove_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='match albums instead of tracks'
-)
+remove_cmd.parser.add_album_option()
 remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
@@ -1348,17 +1327,11 @@ modify_cmd.parser.add_option(
     '-W', '--nowrite', action='store_false', dest='write',
     help="don't write metadata (opposite of -w)"
 )
-modify_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='modify whole albums instead of tracks'
-)
+modify_cmd.parser.add_album_option()
+modify_cmd.parser.add_format_option(target='item')
 modify_cmd.parser.add_option(
     '-y', '--yes', action='store_true',
     help='skip confirmation'
-)
-modify_cmd.parser.add_option(
-    '-f', '--format', action='store',
-    help='print with custom format', default=''
 )
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
@@ -1405,10 +1378,7 @@ move_cmd.parser.add_option(
     '-c', '--copy', default=False, action='store_true',
     help='copy instead of moving'
 )
-move_cmd.parser.add_option(
-    '-a', '--album', default=False, action='store_true',
-    help='match whole albums instead of tracks'
-)
+move_cmd.parser.add_album_option()
 move_cmd.func = move_func
 default_commands.append(move_cmd)
 
