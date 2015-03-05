@@ -139,8 +139,6 @@ class ConvertPlugin(BeetsPlugin):
         cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show actions but do nothing')
-        cmd.parser.add_option('-a', '--album', action='store_true',
-                              help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
                               defaults to maximum available processors')
@@ -149,10 +147,10 @@ class ConvertPlugin(BeetsPlugin):
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
                               help='set the destination directory')
-        cmd.parser.add_option('-f', '--format', action='store', dest='format',
-                              help='set the destination directory')
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help='do not ask for confirmation')
+        cmd.parser.add_album_option()
+        cmd.parser.add_format_option(target='item')
         cmd.func = self.convert_func
         return [cmd]
 

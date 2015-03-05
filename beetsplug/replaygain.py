@@ -760,7 +760,6 @@ class ReplayGainPlugin(BeetsPlugin):
                     self.handle_track(item, write)
 
         cmd = ui.Subcommand('replaygain', help='analyze for ReplayGain')
-        cmd.parser.add_option('-a', '--album', action='store_true',
-                              help='analyze albums instead of tracks')
+        cmd.parser.add_album_option()
         cmd.func = func
         return [cmd]
