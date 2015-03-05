@@ -146,11 +146,12 @@ class ConvertPlugin(BeetsPlugin):
                               dest='keep_new', help='keep only the converted \
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
+                              help='set the target format of the tracks')
+        cmd.parser.add_option('-f', '--format', action='store', dest='format',
                               help='set the destination directory')
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help='do not ask for confirmation')
         cmd.parser.add_album_option()
-        cmd.parser.add_format_option(target='item')
         cmd.func = self.convert_func
         return [cmd]
 
