@@ -1106,9 +1106,9 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         self.assertEqual(config['format_item'].get(unicode), u'$foo')
 
         self.assertEqual(parser.parse_args(['-p']),
-                         ({'path': None, 'format': '$path'}, []))
+                         ({'path': True, 'format': '$path'}, []))
         self.assertEqual(parser.parse_args(['--path']),
-                         ({'path': None, 'format': '$path'}, []))
+                         ({'path': True, 'format': '$path'}, []))
 
         self.assertEqual(config['format_item'].get(unicode), '$path')
         self.assertEqual(config['format_album'].get(unicode), '$path')
