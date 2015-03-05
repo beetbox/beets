@@ -91,8 +91,8 @@ def im_resize(maxwidth, path_in, path_out=None):
     # compatibility.
     try:
         util.command_output([
-            'convert', util.syspath(path_in),
-            '-resize', '{0}x^>'.format(maxwidth), path_out
+            b'convert', util.syspath(path_in),
+            b'-resize', b'{0}x^>'.format(maxwidth), path_out
         ])
     except subprocess.CalledProcessError:
         log.warn(u'artresizer: IM convert failed for {0}',
@@ -187,7 +187,7 @@ class ArtResizer(object):
 
             # Try invoking ImageMagick's "convert".
             try:
-                out = util.command_output(['identify', '--version'])
+                out = util.command_output([b'identify', b'--version'])
 
                 if 'imagemagick' in out.lower():
                     pattern = r".+ (\d+)\.(\d+)\.(\d+).*"

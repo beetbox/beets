@@ -385,7 +385,7 @@ Multiple stages run in parallel but each stage processes only one task at a time
 and each task is processed by only one stage at a time.
 
 Plugins provide stages as functions that take two arguments: ``config`` and
-``task``, which are ``ImportConfig`` and ``ImportTask`` objects (both defined in
+``task``, which are ``ImportSession`` and ``ImportTask`` objects (both defined in
 ``beets.importer``). Add such a function to the plugin's ``import_stages`` field
 to register it::
 
@@ -394,7 +394,7 @@ to register it::
         def __init__(self):
             super(ExamplePlugin, self).__init__()
             self.import_stages = [self.stage]
-        def stage(self, config, task):
+        def stage(self, session, task):
             print('Importing something!')
 
 .. _extend-query:
