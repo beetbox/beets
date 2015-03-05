@@ -26,7 +26,6 @@ from itertools import groupby
 
 def random_item(lib, opts, args):
     query = decargs(args)
-    fmt = '$path' if opts.path else opts.format
 
     if opts.album:
         objs = list(lib.albums(query))
@@ -63,7 +62,7 @@ def random_item(lib, opts, args):
         objs = random.sample(objs, number)
 
     for item in objs:
-        print_(format(item, fmt))
+        print_(format(item))
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')
