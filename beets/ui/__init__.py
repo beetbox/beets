@@ -627,10 +627,13 @@ class CommonOptionsParser(optparse.OptionParser, object):
         self._album_flags = set(flags)
 
     def _set_format(self, option, opt_str, value, parser, target=None,
-                    fmt=None):
+                    fmt=None, store_true=False):
         """Internal callback that sets the correct format while parsing CLI
         arguments.
         """
+        if store_true:
+            setattr(parser.values, option.dest, True)
+
         value = fmt or value and unicode(value) or ''
         parser.values.format = value
         if target:
@@ -662,7 +665,8 @@ class CommonOptionsParser(optparse.OptionParser, object):
         """
         path = optparse.Option(*flags, nargs=0, action='callback',
                                callback=self._set_format,
-                               callback_kwargs={'fmt': '$path'},
+                               callback_kwargs={'fmt': '$path',
+                                                'store_true': True},
                                help='print paths for matched items or albums')
         self.add_option(path)
 
