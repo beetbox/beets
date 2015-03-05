@@ -233,7 +233,7 @@ class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
 
-    _format_config_key = None
+    format_config_key = None
     """Config key that specifies how an instance should be formatted.
     """
 
@@ -256,7 +256,7 @@ class LibModel(dbcore.Model):
 
     def __format__(self, spec):
         if not spec:
-            spec = beets.config[self._format_config_key].get(unicode)
+            spec = beets.config[self.format_config_key].get(unicode)
         result = self.evaluate_template(spec)
         if isinstance(spec, bytes):
             # if spec is a byte string then we must return a one as well
@@ -418,7 +418,7 @@ class Item(LibModel):
 
     _sorts = {'artist': SmartArtistSort}
 
-    _format_config_key = 'format_item'
+    format_config_key = 'format_item'
 
     @classmethod
     def _getters(cls):
@@ -851,7 +851,7 @@ class Album(LibModel):
     """List of keys that are set on an album's items.
     """
 
-    _format_config_key = 'format_album'
+    format_config_key = 'format_album'
 
     @classmethod
     def _getters(cls):
