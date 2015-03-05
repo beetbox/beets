@@ -609,7 +609,10 @@ class CommonOptionsParser(optparse.OptionParser, object):
     """
     def __init__(self, *args, **kwargs):
         super(CommonOptionsParser, self).__init__(*args, **kwargs)
-        self._has_album = False
+        self._album_flags = False
+        # this serves both as an indicator that we offer the feature AND allows
+        # us to check whether it has been specified on the CLI - bypassing the
+        # fact that arguments may be in any order
 
     def add_album_option(self, flags=('-a', '--album')):
         """Add a -a/--album option to match albums instead of tracks.
@@ -621,7 +624,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         album = optparse.Option(*flags, action='store_true',
                                 help='match albums instead of tracks')
         self.add_option(album)
-        self._has_album = True
+        self._album_flags = set(flags)
 
     def _set_format(self, option, opt_str, value, parser, target=None,
                     fmt=None):
@@ -633,9 +636,18 @@ class CommonOptionsParser(optparse.OptionParser, object):
         if target:
             config[target.format_config_key].set(value)
         else:
-            if not self._has_album or not parser.values.album:
+            if self._album_flags:
+                if parser.values.album:
+                    target = library.Album
+                else:
+                    # the option is either missing either not parsed yet
+                    if self._album_flags & set(parser.rargs):
+                        target = library.Album
+                    else:
+                        target = library.Item
+                config[target.format_config_key].set(value)
+            else:
                 config[library.Item.format_config_key].set(value)
-            if not self._has_album or parser.values.album:
                 config[library.Album.format_config_key].set(value)
 
     def add_path_option(self, flags=('-p', '--path')):

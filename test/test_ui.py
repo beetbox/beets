@@ -1088,9 +1088,9 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
 
     def test_album_option(self):
         parser = ui.CommonOptionsParser()
-        self.assertFalse(parser._has_album)
+        self.assertFalse(parser._album_flags)
         parser.add_album_option()
-        self.assertTrue(parser._has_album)
+        self.assertTrue(bool(parser._album_flags))
 
         self.assertEqual(parser.parse_args([]), ({'album': None}, []))
         self.assertEqual(parser.parse_args(['-a']), ({'album': True}, []))
@@ -1099,7 +1099,7 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
     def test_path_option(self):
         parser = ui.CommonOptionsParser()
         parser.add_path_option()
-        self.assertFalse(parser._has_album)
+        self.assertFalse(parser._album_flags)
 
         config['format_item'].set('$foo')
         self.assertEqual(parser.parse_args([]), ({'path': None}, []))
@@ -1116,7 +1116,7 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
     def test_format_option(self):
         parser = ui.CommonOptionsParser()
         parser.add_format_option()
-        self.assertFalse(parser._has_album)
+        self.assertFalse(parser._album_flags)
 
         config['format_item'].set('$foo')
         self.assertEqual(parser.parse_args([]), ({'format': None}, []))
@@ -1161,6 +1161,9 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         parser.parse_args(['-a', '-f', '$foo'])
         self.assertEqual(config['format_item'].get(unicode), '$bar')
         self.assertEqual(config['format_album'].get(unicode), '$foo')
+
+        parser.parse_args(['-f', '$foo2', '-a'])
+        self.assertEqual(config['format_album'].get(unicode), '$foo2')
 
     def test_add_all_common_options(self):
         parser = ui.CommonOptionsParser()
