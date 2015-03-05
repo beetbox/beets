@@ -52,8 +52,7 @@ class MBSyncPlugin(BeetsPlugin):
         cmd.parser.add_option('-W', '--nowrite', action='store_false',
                               default=config['import']['write'], dest='write',
                               help="don't write updated metadata to files")
-        cmd.parser.add_option('-f', '--format', action='store', default='',
-                              help='print with custom format')
+        cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
 
@@ -64,17 +63,16 @@ class MBSyncPlugin(BeetsPlugin):
         pretend = opts.pretend
         write = opts.write
         query = ui.decargs(args)
-        fmt = opts.format
 
-        self.singletons(lib, query, move, pretend, write, fmt)
-        self.albums(lib, query, move, pretend, write, fmt)
+        self.singletons(lib, query, move, pretend, write)
+        self.albums(lib, query, move, pretend, write)
 
-    def singletons(self, lib, query, move, pretend, write, fmt):
+    def singletons(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
         for item in lib.items(query + ['singleton:true']):
-            item_formatted = format(item, fmt)
+            item_formatted = format(item)
             if not item.mb_trackid:
                 self._log.info(u'Skipping singleton with no mb_trackid: {0}',
                                item_formatted)
@@ -93,13 +91,13 @@ class MBSyncPlugin(BeetsPlugin):
                 autotag.apply_item_metadata(item, track_info)
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib, query, move, pretend, write, fmt):
+    def albums(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
         # Process matching albums.
         for a in lib.albums(query):
-            album_formatted = format(a, fmt)
+            album_formatted = format(a)
             if not a.mb_albumid:
                 self._log.info(u'Skipping album with no mb_albumid: {0}',
                                album_formatted)

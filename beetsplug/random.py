@@ -67,16 +67,11 @@ def random_item(lib, opts, args):
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')
-random_cmd.parser.add_option('-a', '--album', action='store_true',
-                             help='choose an album instead of track')
-random_cmd.parser.add_option('-p', '--path', action='store_true',
-                             help='print the path of the matched item')
-random_cmd.parser.add_option('-f', '--format', action='store',
-                             help='print with custom format', default='')
 random_cmd.parser.add_option('-n', '--number', action='store', type="int",
                              help='number of objects to choose', default=1)
 random_cmd.parser.add_option('-e', '--equal-chance', action='store_true',
                              help='each artist has the same chance')
+random_cmd.parser.add_all_common_options()
 random_cmd.func = random_item
 
 
