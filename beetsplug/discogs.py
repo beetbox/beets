@@ -195,8 +195,8 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             releases = self.discogs_client.search(query,
                                                   type='release').page(1)
-        except ValueError as exc:
-            self._log.debug("Problem whiile searching for {0!r}: "
+        except CONNECTION_ERRORS as exc:
+            self._log.debug("Communication error while searching for {0!r}: "
                             "{1}".format(query, exc))
             return []
         return [self.get_album_info(release) for release in releases[:5]]
