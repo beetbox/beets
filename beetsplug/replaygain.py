@@ -33,14 +33,12 @@ from beets import config
 # Utilities.
 
 class ReplayGainError(Exception):
-
     """Raised when a local (to a track or an album) error occurs in one
     of the backends.
     """
 
 
 class FatalReplayGainError(Exception):
-
     """Raised when a fatal error occurs in one of the backends.
     """
 
@@ -69,7 +67,6 @@ AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 
 
 class Backend(object):
-
     """An abstract class representing engine for calculating RG values.
     """
 
@@ -90,20 +87,18 @@ class Backend(object):
 
 # bsg1770gain backend
 class Bs1770gainBackend(Backend):
-
-    """bs1770gain is a loudness scanner compliant with ITU-R BS.1770 and its
-    flavors EBU R128,ATSC A/85 and Replaygain 2.0. It uses a special
-    designed algorithm to normalize audio to the same level.
+    """bs1770gain is a loudness scanner compliant with ITU-R BS.1770 and
+    its flavors EBU R128, ATSC A/85 and Replaygain 2.0.
     """
 
     def __init__(self, config, log):
         super(Bs1770gainBackend, self).__init__(config, log)
-        cmd = 'bs1770gain'
+        cmd = b'bs1770gain'
 
         try:
-            self.method = '--' + config['method'].get(unicode)
+            self.method = b'--' + config['method'].get(str)
         except:
-            self.method = '--replaygain'
+            self.method = b'--replaygain'
 
         try:
             call([cmd, self.method])
@@ -215,9 +210,9 @@ class CommandBackend(Backend):
                 )
         else:
             # Check whether the program is in $PATH.
-            for cmd in ('mp3gain', 'aacgain'):
+            for cmd in (b'mp3gain', b'aacgain'):
                 try:
-                    call([cmd, '-v'])
+                    call([cmd, b'-v'])
                     self.command = cmd
                 except OSError:
                     pass
@@ -281,14 +276,14 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd = [self.command, '-o', '-s', 's']
+        cmd = [self.command, b'-o', b'-s', b's']
         if self.noclip:
             # Adjust to avoid clipping.
-            cmd = cmd + ['-k']
+            cmd = cmd + [b'-k']
         else:
             # Disable clipping warning.
-            cmd = cmd + ['-c']
-        cmd = cmd + ['-d', bytes(self.gain_offset)]
+            cmd = cmd + [b'-c']
+        cmd = cmd + [b'-d', bytes(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug(u'analyzing {0} files', len(items))
@@ -576,7 +571,6 @@ class GStreamerBackend(Backend):
 
 
 class AudioToolsBackend(Backend):
-
     """ReplayGain backend that uses `Python Audio Tools
     <http://audiotools.sourceforge.net/>`_ and its capabilities to read more
     file formats and compute ReplayGain values using it replaygain module.
@@ -706,7 +700,6 @@ class AudioToolsBackend(Backend):
 # Main plugin logic.
 
 class ReplayGainPlugin(BeetsPlugin):
-
     """Provides ReplayGain analysis.
     """
 
@@ -802,7 +795,6 @@ class ReplayGainPlugin(BeetsPlugin):
                 )
 
             self.store_album_gain(album, album_gain.album_gain)
-
             for item, track_gain in itertools.izip(album.items(),
                                                    album_gain.track_gains):
                 self.store_track_gain(item, track_gain)
