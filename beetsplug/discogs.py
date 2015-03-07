@@ -59,7 +59,7 @@ class DiscogsPlugin(BeetsPlugin):
         self.discogs_client = None
         self.register_listener('import_begin', self.setup)
 
-    def setup(self, session):
+    def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary.
         """
         c_key = self.config['apikey'].get(unicode)
