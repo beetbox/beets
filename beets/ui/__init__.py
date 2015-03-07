@@ -592,6 +592,119 @@ def show_model_changes(new, old=None, fields=None, always=False):
     return bool(changes)
 
 
+class CommonOptionsParser(optparse.OptionParser, object):
+    """Offers a simple way to add common formatting options.
+
+    Options available include:
+        - matching albums instead of tracks: add_album_option()
+        - showing paths instead of items/albums: add_path_option()
+        - changing the format of displayed items/albums: add_format_option()
+
+    The last one can have several behaviors:
+        - against a special target
+        - with a certain format
+        - autodetected target with the album option
+
+    Each method is fully documented in the related method.
+    """
+    def __init__(self, *args, **kwargs):
+        super(CommonOptionsParser, self).__init__(*args, **kwargs)
+        self._album_flags = False
+        # this serves both as an indicator that we offer the feature AND allows
+        # us to check whether it has been specified on the CLI - bypassing the
+        # fact that arguments may be in any order
+
+    def add_album_option(self, flags=('-a', '--album')):
+        """Add a -a/--album option to match albums instead of tracks.
+
+        If used then the format option can auto-detect whether we're setting
+        the format for items or albums.
+        Sets the album property on the options extracted from the CLI.
+        """
+        album = optparse.Option(*flags, action='store_true',
+                                help='match albums instead of tracks')
+        self.add_option(album)
+        self._album_flags = set(flags)
+
+    def _set_format(self, option, opt_str, value, parser, target=None,
+                    fmt=None, store_true=False):
+        """Internal callback that sets the correct format while parsing CLI
+        arguments.
+        """
+        if store_true:
+            setattr(parser.values, option.dest, True)
+
+        value = fmt or value and unicode(value) or ''
+        parser.values.format = value
+        if target:
+            config[target._format_config_key].set(value)
+        else:
+            if self._album_flags:
+                if parser.values.album:
+                    target = library.Album
+                else:
+                    # the option is either missing either not parsed yet
+                    if self._album_flags & set(parser.rargs):
+                        target = library.Album
+                    else:
+                        target = library.Item
+                config[target._format_config_key].set(value)
+            else:
+                config[library.Item._format_config_key].set(value)
+                config[library.Album._format_config_key].set(value)
+
+    def add_path_option(self, flags=('-p', '--path')):
+        """Add a -p/--path option to display the path instead of the default
+        format.
+
+        By default this affects both items and albums. If add_album_option()
+        is used then the target will be autodetected.
+
+        Sets the format property to u'$path' on the options extracted from the
+        CLI.
+        """
+        path = optparse.Option(*flags, nargs=0, action='callback',
+                               callback=self._set_format,
+                               callback_kwargs={'fmt': '$path',
+                                                'store_true': True},
+                               help='print paths for matched items or albums')
+        self.add_option(path)
+
+    def add_format_option(self, flags=('-f', '--format'), target=None):
+        """Add -f/--format option to print some LibModel instances with a
+        custom format.
+
+        `target` is optional and can be one of ``library.Item``, 'item',
+        ``library.Album`` and 'album'.
+
+        Several behaviors are available:
+            - if `target` is given then the format is only applied to that
+            LibModel
+            - if the album option is used then the target will be autodetected
+            - otherwise the format is applied to both items and albums.
+
+        Sets the format property on the options extracted from the CLI.
+        """
+        kwargs = {}
+        if target:
+            if isinstance(target, basestring):
+                target = {'item': library.Item,
+                          'album': library.Album}[target]
+            kwargs['target'] = target
+
+        opt = optparse.Option(*flags, action='callback',
+                              callback=self._set_format,
+                              callback_kwargs=kwargs,
+                              help='print with custom format')
+        self.add_option(opt)
+
+    def add_all_common_options(self):
+        """Add album, path and format options.
+        """
+        self.add_album_option()
+        self.add_path_option()
+        self.add_format_option()
+
 # Subcommand parsing infrastructure.
 #
 # This is a fairly generic subcommand parser for optparse. It is
@@ -599,6 +712,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 # http://gist.github.com/462717
 # There you will also find a better description of the code and a more
 # succinct example program.
+
 
 class Subcommand(object):
     """A subcommand of a root command-line application that may be
@@ -609,10 +723,10 @@ class Subcommand(object):
         the subcommand; aliases are alternate names. parser is an
         OptionParser responsible for parsing the subcommand's options.
         help is a short description of the command. If no parser is
-        given, it defaults to a new, empty OptionParser.
+        given, it defaults to a new, empty CommonOptionsParser.
         """
         self.name = name
-        self.parser = parser or optparse.OptionParser()
+        self.parser = parser or CommonOptionsParser()
         self.aliases = aliases
         self.help = help
         self.hide = hide
@@ -635,7 +749,7 @@ class Subcommand(object):
             root_parser.get_prog_name().decode('utf8'), self.name)
 
 
-class SubcommandsOptionParser(optparse.OptionParser):
+class SubcommandsOptionParser(CommonOptionsParser):
     """A variant of OptionParser that parses subcommands and their
     arguments.
     """
@@ -653,7 +767,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
         kwargs['add_help_option'] = False
 
         # Super constructor.
-        optparse.OptionParser.__init__(self, *args, **kwargs)
+        super(SubcommandsOptionParser, self).__init__(*args, **kwargs)
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -670,7 +784,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
     # Add the list of subcommands to the help message.
     def format_help(self, formatter=None):
         # Get the original help message, to which we will append.
-        out = optparse.OptionParser.format_help(self, formatter)
+        out = super(SubcommandsOptionParser, self).format_help(formatter)
         if formatter is None:
             formatter = self.formatter
 
@@ -871,6 +985,17 @@ def _configure(options):
                     u'See documentation for more info.')
         config['ui']['color'].set(config['color'].get(bool))
 
+    # Compatibility from list_format_{item,album} to format_{item,album}
+    for elem in ('item', 'album'):
+        old_key = 'list_format_{0}'.format(elem)
+        if config[old_key].exists():
+            new_key = 'format_{0}'.format(elem)
+            log.warning('Warning: configuration uses "{0}" which is deprecated'
+                        ' in favor of "{1}" now that it affects all commands. '
+                        'See changelog & documentation.'.format(old_key,
+                                                                new_key))
+            config[new_key].set(config[old_key])
+
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
         log.debug(u'user configuration: {0}',
@@ -913,6 +1038,8 @@ def _raw_main(args, lib=None):
     handling.
     """
     parser = SubcommandsOptionParser()
+    parser.add_format_option(flags=('--format-item',), target=library.Item)
+    parser.add_format_option(flags=('--format-album',), target=library.Album)
     parser.add_option('-l', '--library', dest='library',
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',

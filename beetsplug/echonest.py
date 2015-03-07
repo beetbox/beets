@@ -486,10 +486,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             '-t', '--threshold', dest='threshold', action='store',
             type='float', default=0.15, help='Set difference threshold'
         )
-        sim_cmd.parser.add_option(
-            '-f', '--format', action='store', default='${difference}: ${path}',
-            help='print with custom format'
-        )
+        sim_cmd.parser.add_format_option()
 
         def sim_func(lib, opts, args):
             self.config.set_args(opts)

@@ -444,7 +444,7 @@ class Item(LibModel):
 
     _sorts = {'artist': SmartArtistSort}
 
-    _format_config_key = 'list_format_item'
+    _format_config_key = 'format_item'
 
     @classmethod
     def _getters(cls):
@@ -877,7 +877,7 @@ class Album(LibModel):
     """List of keys that are set on an album's items.
     """
 
-    _format_config_key = 'list_format_album'
+    _format_config_key = 'format_album'
 
     @classmethod
     def _getters(cls):
