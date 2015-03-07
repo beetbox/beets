@@ -637,7 +637,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         value = fmt or value and unicode(value) or ''
         parser.values.format = value
         if target:
-            config[target.format_config_key].set(value)
+            config[target._format_config_key].set(value)
         else:
             if self._album_flags:
                 if parser.values.album:
@@ -648,10 +648,10 @@ class CommonOptionsParser(optparse.OptionParser, object):
                         target = library.Album
                     else:
                         target = library.Item
-                config[target.format_config_key].set(value)
+                config[target._format_config_key].set(value)
             else:
-                config[library.Item.format_config_key].set(value)
-                config[library.Album.format_config_key].set(value)
+                config[library.Item._format_config_key].set(value)
+                config[library.Album._format_config_key].set(value)
 
     def add_path_option(self, flags=('-p', '--path')):
         """Add a -p/--path option to display the path instead of the default
