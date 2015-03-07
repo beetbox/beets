@@ -988,7 +988,7 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
 
     def test_album_and_item_format(self):
-        config['list_format_album'] = u'foö $foo'
+        config['format_album'] = u'foö $foo'
         album = beets.library.Album()
         album.foo = 'bar'
         album.tagada = 'togodo'
@@ -997,7 +997,7 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(unicode(album), u"foö bar")
         self.assertEqual(str(album), b"fo\xc3\xb6 bar")
 
-        config['list_format_item'] = 'bar $foo'
+        config['format_item'] = 'bar $foo'
         item = beets.library.Item()
         item.foo = 'bar'
         item.tagada = 'togodo'

@@ -1033,6 +1033,145 @@ class CompletionTest(_common.TestCase):
             self.fail('test/test_completion.sh did not execute properly')
 
 
+class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
+    """Test CommonOptionsParser and formatting LibModel formatting on 'list'
+    command.
+    """
+    def setUp(self):
+        self.setup_beets()
+        self.lib = library.Library(':memory:')
+        self.item = _common.item()
+        self.item.path = 'xxx/yyy'
+        self.lib.add(self.item)
+        self.lib.add_album([self.item])
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_base(self):
+        l = self.run_with_output('ls')
+        self.assertEqual(l, 'the artist - the album - the title\n')
+
+        l = self.run_with_output('ls', '-a')
+        self.assertEqual(l, 'the album artist - the album\n')
+
+    def test_path_option(self):
+        l = self.run_with_output('ls', '-p')
+        self.assertEqual(l, 'xxx/yyy\n')
+
+        l = self.run_with_output('ls', '-a', '-p')
+        self.assertEqual(l, 'xxx\n')
+
+    def test_format_option(self):
+        l = self.run_with_output('ls', '-f', '$artist')
+        self.assertEqual(l, 'the artist\n')
+
+        l = self.run_with_output('ls', '-a', '-f', '$albumartist')
+        self.assertEqual(l, 'the album artist\n')
+
+    def test_root_format_option(self):
+        l = self.run_with_output('--format-item', '$artist',
+                                 '--format-album', 'foo', 'ls')
+        self.assertEqual(l, 'the artist\n')
+
+        l = self.run_with_output('--format-item', 'foo',
+                                 '--format-album', '$albumartist', 'ls', '-a')
+        self.assertEqual(l, 'the album artist\n')
+
+
+class CommonOptionsParserTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_album_option(self):
+        parser = ui.CommonOptionsParser()
+        self.assertFalse(parser._album_flags)
+        parser.add_album_option()
+        self.assertTrue(bool(parser._album_flags))
+
+        self.assertEqual(parser.parse_args([]), ({'album': None}, []))
+        self.assertEqual(parser.parse_args(['-a']), ({'album': True}, []))
+        self.assertEqual(parser.parse_args(['--album']), ({'album': True}, []))
+
+    def test_path_option(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_path_option()
+        self.assertFalse(parser._album_flags)
+
+        config['format_item'].set('$foo')
+        self.assertEqual(parser.parse_args([]), ({'path': None}, []))
+        self.assertEqual(config['format_item'].get(unicode), u'$foo')
+
+        self.assertEqual(parser.parse_args(['-p']),
+                         ({'path': True, 'format': '$path'}, []))
+        self.assertEqual(parser.parse_args(['--path']),
+                         ({'path': True, 'format': '$path'}, []))
+
+        self.assertEqual(config['format_item'].get(unicode), '$path')
+        self.assertEqual(config['format_album'].get(unicode), '$path')
+
+    def test_format_option(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_format_option()
+        self.assertFalse(parser._album_flags)
+
+        config['format_item'].set('$foo')
+        self.assertEqual(parser.parse_args([]), ({'format': None}, []))
+        self.assertEqual(config['format_item'].get(unicode), u'$foo')
+
+        self.assertEqual(parser.parse_args(['-f', '$bar']),
+                         ({'format': '$bar'}, []))
+        self.assertEqual(parser.parse_args(['--format', '$baz']),
+                         ({'format': '$baz'}, []))
+
+        self.assertEqual(config['format_item'].get(unicode), '$baz')
+        self.assertEqual(config['format_album'].get(unicode), '$baz')
+
+    def test_format_option_with_target(self):
+        with self.assertRaises(KeyError):
+            ui.CommonOptionsParser().add_format_option(target='thingy')
+
+        parser = ui.CommonOptionsParser()
+        parser.add_format_option(target='item')
+
+        config['format_item'].set('$item')
+        config['format_album'].set('$album')
+
+        self.assertEqual(parser.parse_args(['-f', '$bar']),
+                         ({'format': '$bar'}, []))
+
+        self.assertEqual(config['format_item'].get(unicode), '$bar')
+        self.assertEqual(config['format_album'].get(unicode), '$album')
+
+    def test_format_option_with_album(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_album_option()
+        parser.add_format_option()
+
+        config['format_item'].set('$item')
+        config['format_album'].set('$album')
+
+        parser.parse_args(['-f', '$bar'])
+        self.assertEqual(config['format_item'].get(unicode), '$bar')
+        self.assertEqual(config['format_album'].get(unicode), '$album')
+
+        parser.parse_args(['-a', '-f', '$foo'])
+        self.assertEqual(config['format_item'].get(unicode), '$bar')
+        self.assertEqual(config['format_album'].get(unicode), '$foo')
+
+        parser.parse_args(['-f', '$foo2', '-a'])
+        self.assertEqual(config['format_album'].get(unicode), '$foo2')
+
+    def test_add_all_common_options(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_all_common_options()
+        self.assertEqual(parser.parse_args([]),
+                         ({'album': None, 'path': None, 'format': None}, []))
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

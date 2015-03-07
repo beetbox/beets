@@ -94,19 +94,13 @@ class MissingPlugin(BeetsPlugin):
         self._command = Subcommand('missing',
                                    help=__doc__,
                                    aliases=['miss'])
-
-        self._command.parser.add_option('-f', '--format', dest='format',
-                                        action='store', type='string',
-                                        help='print with custom FORMAT',
-                                        metavar='FORMAT', default='')
-
         self._command.parser.add_option('-c', '--count', dest='count',
                                         action='store_true',
                                         help='count missing tracks per album')
-
         self._command.parser.add_option('-t', '--total', dest='total',
                                         action='store_true',
                                         help='count total of missing tracks')
+        self._command.add_format_option()
 
     def commands(self):
         def _miss(lib, opts, args):

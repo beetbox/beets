@@ -42,11 +42,7 @@ class PlayPlugin(BeetsPlugin):
             'play',
             help='send music to a player as a playlist'
         )
-        play_command.parser.add_option(
-            '-a', '--album',
-            action='store_true', default=False,
-            help='query and load albums rather than tracks'
-        )
+        play_command.parser.add_album_option()
         play_command.func = self.play_music
         return [play_command]
 

@@ -139,8 +139,6 @@ class ConvertPlugin(BeetsPlugin):
         cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show actions but do nothing')
-        cmd.parser.add_option('-a', '--album', action='store_true',
-                              help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
                               defaults to maximum available processors')
@@ -148,11 +146,12 @@ class ConvertPlugin(BeetsPlugin):
                               dest='keep_new', help='keep only the converted \
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
-                              help='set the destination directory')
+                              help='set the target format of the tracks')
         cmd.parser.add_option('-f', '--format', action='store', dest='format',
                               help='set the destination directory')
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help='do not ask for confirmation')
+        cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
 
@@ -359,7 +358,7 @@ class ConvertPlugin(BeetsPlugin):
             self.config['pretend'].get(bool)
 
         if not pretend:
-            ui.commands.list_items(lib, ui.decargs(args), opts.album, '')
+            ui.commands.list_items(lib, ui.decargs(args), opts.album)
 
             if not (opts.yes or ui.input_yn("Convert? (Y/n)")):
                 return

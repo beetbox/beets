@@ -6,6 +6,9 @@ Changelog
 
 Features:
 
+* Beets now accept top-level options ``--format-item`` and ``--format-album``
+  before any subcommand to control how items and albums are displayed.
+  :bug:`1271`:
 * :doc:`/plugins/replaygain`: There is a new backend for the `bs1770gain`_
   tool. Thanks to :user:`jmwatte`. :bug:`1343`
 * There are now multiple levels of verbosity. On the command line, you can
@@ -69,10 +72,13 @@ Core changes:
   ``albumtotal`` computed attribute that provides the total number of tracks
   on the album. (The :ref:`per_disc_numbering` option has no influence on this
   field.)
-* The :ref:`list_format_album` and :ref:`list_format_item` configuration keys
+* The `list_format_album` and `list_format_item` configuration keys
   now affect (almost) every place where objects are printed and logged.
   (Previously, they only controlled the :ref:`list-cmd` command and a few
   other scattered pieces.) :bug:`1269`
+* `list_format_album` and `list_format_album` have respectively been
+  renamed :ref:`format_album` and :ref:`format_item`. The old names still work
+  but each triggers a warning message. :bug:`1271`
 
 Fixes:
 
@@ -120,6 +126,9 @@ Fixes:
 
 For developers:
 
+* the ``OptionParser`` is now a ``CommonOptionsParser`` that offers facilities
+  for adding usual options (``--album``, ``--path`` and ``--format``). See
+  :ref:`add_subcommands`. :bug:`1271`
 * The logging system in beets has been overhauled. Plugins now each have their
   own logger, which helps by automatically adjusting the verbosity level in
   import mode and by prefixing the plugin's name.  Logging levels are
