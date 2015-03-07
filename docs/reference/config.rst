@@ -162,20 +162,8 @@ Either ``yes`` or ``no``, indicating whether the autotagger should use
 multiple threads. This makes things faster but may behave strangely.
 Defaults to ``yes``.
 
+
 .. _list_format_item:
-
-list_format_item
-~~~~~~~~~~~~~~~~
-
-Deprecated option, replaced by :ref:`format_item`.
-
-.. _list_format_album:
-
-list_format_album
-~~~~~~~~~~~~~~~~~
-
-Deprecated option, replaced by :ref:`format_album`.
-
 .. _format_item:
 
 format_item
@@ -186,8 +174,9 @@ command and other commands that need to print out items. Defaults to
 ``$artist - $album - $title``. The ``-f`` command-line option overrides
 this setting.
 
-It used to be named :ref:`list_format_item`.
+It used to be named `list_format_item`.
 
+.. _list_format_album:
 .. _format_album:
 
 format_album
@@ -197,7 +186,7 @@ Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
 
-It used to be named :ref:`list_format_album`.
+It used to be named `list_format_album`.
 
 .. _sort_item:
 
