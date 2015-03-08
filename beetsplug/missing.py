@@ -100,7 +100,7 @@ class MissingPlugin(BeetsPlugin):
         self._command.parser.add_option('-t', '--total', dest='total',
                                         action='store_true',
                                         help='count total of missing tracks')
-        self._command.add_format_option()
+        self._command.parser.add_format_option()
 
     def commands(self):
         def _miss(lib, opts, args):
