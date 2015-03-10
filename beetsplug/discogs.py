@@ -126,25 +126,28 @@ class DiscogsPlugin(BeetsPlugin):
         """Returns a list of AlbumInfo objects for discogs search results
         matching an album and artist (if not various).
         """
+        results = []
         if not self.discogs_client:
             return
 
-        if va_likely:
+        if va_likely and album:
             query = album
         else:
             query = '%s %s' % (artist, album)
         try:
-            return self.get_albums(query)
+            if query:
+                results = self.get_albums(query)
+            else:
+                self._log.debug(u'Discogs query was empty (artist: {0}, album: {1}, va_likely: {2})', artist, album, va_likely)
         except DiscogsAPIError as e:
             self._log.debug(u'API Error: {0} (query: {1})', e, query)
             if e.status_code == 401:
                 self.reset_auth()
-                return self.candidates(items, artist, album, va_likely)
-            else:
-                return []
+                results = self.candidates(items, artist, album, va_likely)
         except CONNECTION_ERRORS as e:
             self._log.debug(u'HTTP Connection Error: {0}', e)
-            return []
+
+        return results
 
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
