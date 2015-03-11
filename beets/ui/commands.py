@@ -969,11 +969,42 @@ def list_items(lib, query, album, fmt=''):
             ui.print_(format(item, fmt))
 
 
+def _list_all_attrs(item_or_album):
+    all_keys = sorted(item_or_album.keys())
+    longest = max(len(_) for _ in all_keys)
+    for k in all_keys:
+        fmt = "{0:<%d} {1}" % (longest + 1)
+        ui.print_(fmt.format(k, item_or_album.get(k)))
+
+
+def list_items_extensive(lib, query, album, fmt=''):
+    """Print out items in lib matching query. If album, then search for
+    albums instead of single items.
+    """
+    if album:
+        for album in lib.albums(query):
+            ui.print_("-- Album: %s" % album)
+            _list_all_attrs(album)
+            items = list(album.items())
+            ui.print_("-- Has %d items:" % len(items))
+            for item in items:
+                item_fmt = "$track - $length - $samplerate - $title"
+                ui.print_(format(item, item_fmt))
+    else:
+        for item in lib.items(query):
+            _list_all_attrs(item)
+
+
 def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+    if opts.extensive:
+        list_items_extensive(lib, decargs(args), opts.album)
+    else:
+        list_items(lib, decargs(args), opts.album)
 
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
+list_cmd.parser.add_option('-e', '--extensive', action='store_true',
+                           help='list all attributes')
 list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
 default_commands.append(list_cmd)
