@@ -921,6 +921,7 @@ def _load_plugins(config):
     """
     paths = config['pluginpath'].get(confit.StrSeq(split=False))
     paths = map(util.normpath, paths)
+    log.debug('plugin paths: {0}', util.displayable_path(paths))
 
     import beetsplug
     beetsplug.__path__ = paths + beetsplug.__path__
