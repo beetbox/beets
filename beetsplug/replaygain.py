@@ -148,7 +148,7 @@ class Bs1770gainBackend(Backend):
         # Construct shell command.
         cmd = [self.command]
         cmd = cmd + [self.method]
-        cmd = cmd + ['-it']
+        cmd = cmd + [b'-it']
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug(u'analyzing {0} files', len(items))
