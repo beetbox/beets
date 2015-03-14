@@ -123,6 +123,8 @@ Fixes:
   Unicode filenames. :bug:`1297`
 * :doc:`/plugins/discogs`: Handle and log more kinds of communication
   errors. :bug:`1299` :bug:`1305`
+* :doc:`/plugins/lastgenre`: Bugs in the `pylast` library can no longer crash
+  beets.
 
 For developers:
 
