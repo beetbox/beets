@@ -65,7 +65,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         spl_update.func = update
         return [spl_update]
 
-    def db_change(self, lib):
+    def db_change(self, lib, model):
         self.register_listener('cli_exit', self.update_playlists)
 
     def update_playlists(self, lib):

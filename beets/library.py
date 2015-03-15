@@ -270,15 +270,15 @@ class LibModel(dbcore.Model):
 
     def store(self):
         super(LibModel, self).store()
-        plugins.send('database_change', lib=self._db)
+        plugins.send('database_change', lib=self._db, model=self)
 
     def remove(self):
         super(LibModel, self).remove()
-        plugins.send('database_change', lib=self._db)
+        plugins.send('database_change', lib=self._db, model=self)
 
     def add(self, lib=None):
         super(LibModel, self).add(lib)
-        plugins.send('database_change', lib=self._db)
+        plugins.send('database_change', lib=self._db, model=self)
 
     def __format__(self, spec):
         if not spec:
