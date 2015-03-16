@@ -22,7 +22,9 @@ import shutil
 import re
 import subprocess
 import platform
+from copy import deepcopy
 
+from mock import patch
 from test import _common
 from test._common import unittest
 from test.helper import capture_stdout, has_program, TestHelper, control_stdin
@@ -970,6 +972,40 @@ class ShowChangeTest(_common.TestCase):
         msg = re.sub(r'  +', ' ', self._show_change())
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg or
                         u'caf.mp3 ->' in msg)
+
+
+class SummarizeItemsTest(_common.TestCase):
+    def setUp(self):
+        super(SummarizeItemsTest, self).setUp()
+        item = library.Item()
+        item.bitrate = 4321
+        item.length = 10 * 60 + 54
+        item.format = "F"
+        self.item = item
+        fsize_mock = patch('beets.library.Item.try_filesize').start()
+        fsize_mock.return_value = 987
+
+    def test_summarize_item(self):
+        summary = commands.summarize_items([], True)
+        self.assertEqual(summary, "")
+
+        summary = commands.summarize_items([self.item], True)
+        self.assertEqual(summary, "F, 4kbps, 10:54, 987.0 B")
+
+    def test_summarize_items(self):
+        summary = commands.summarize_items([], False)
+        self.assertEqual(summary, "0 items")
+
+        summary = commands.summarize_items([self.item], False)
+        self.assertEqual(summary, "1 items, F, 4kbps, 10:54, 987.0 B")
+
+        i2 = deepcopy(self.item)
+        summary = commands.summarize_items([self.item, i2], False)
+        self.assertEqual(summary, "2 items, F, 4kbps, 21:48, 1.9 KB")
+
+        i2.format = "G"
+        summary = commands.summarize_items([self.item, i2], False)
+        self.assertEqual(summary, "2 items, G 1, F 1, 4kbps, 21:48, 1.9 KB")
 
 
 class PathFormatTest(_common.TestCase):
