@@ -96,6 +96,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     query = OrQuery([parse_query_string(q, Model)[0]
                                      for q in qs])
                     sort = None
+                del sort  # FIXME
                 playlist_data += (query,)
 
             self._unmatched_playlists.add(playlist_data)
