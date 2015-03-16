@@ -452,7 +452,6 @@ class DestinationTest(_common.TestCase):
         self.assertEqual(self.i.destination(),
                          np('base/one/_.mp3'))
 
-    @unittest.skip('unimplemented: #496')
     def test_truncation_does_not_conflict_with_replacement(self):
         # Use a replacement that should always replace the last X in any
         # path component with a Z.
