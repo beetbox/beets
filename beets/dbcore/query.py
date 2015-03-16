@@ -177,8 +177,8 @@ class RegexpQuery(StringFieldQuery):
     Raises InvalidQueryError when the pattern is not a valid regular
     expression.
     """
-    def __init__(self, field, pattern, false=True):
-        super(RegexpQuery, self).__init__(field, pattern, false)
+    def __init__(self, field, pattern, fast=True):
+        super(RegexpQuery, self).__init__(field, pattern, fast)
         try:
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
