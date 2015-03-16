@@ -6,6 +6,11 @@ Changelog
 
 Features:
 
+* :doc:`/plugins/smartplaylist`: detect for each playlist if it needs to be
+  regenated, instead of systematically regenerating all of them after a
+  database modification.
+* :doc:`/plugins/smartplaylist`: the ``splupdate`` command can now take
+  additinal parameters: names of the playlists to regenerate.
 * Beets now accept top-level options ``--format-item`` and ``--format-album``
   before any subcommand to control how items and albums are displayed.
   :bug:`1271`:
