@@ -16,9 +16,6 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 from test._common import unittest
-from beetsplug import smartplaylist
-from beets import config, ui
-
 from test.helper import TestHelper
 
 
