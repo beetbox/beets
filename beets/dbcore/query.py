@@ -18,7 +18,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import re
-from operator import attrgetter
+from operator import attrgetter, mul
 from beets import util
 from datetime import datetime, timedelta
 
@@ -76,6 +76,9 @@ class Query(object):
     def __eq__(self, other):
         return type(self) == type(other)
 
+    def __hash__(self):
+        return 0
+
 
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
@@ -112,6 +115,9 @@ class FieldQuery(Query):
     def __eq__(self, other):
         return super(FieldQuery, self).__eq__(other) and \
             self.field == other.field and self.pattern == other.pattern
+
+    def __hash__(self):
+        return hash((self.field, hash(self.pattern)))
 
 
 class MatchQuery(FieldQuery):
@@ -347,6 +353,12 @@ class CollectionQuery(Query):
         return super(CollectionQuery, self).__eq__(other) and \
             self.subqueries == other.subqueries
 
+    def __hash__(self):
+        """Since subqueries are mutable, this object should not be hashable.
+        However and for conveniencies purposes, it can be hashed.
+        """
+        return reduce(mul, map(hash, self.subqueries), 1)
+
 
 class AnyFieldQuery(CollectionQuery):
     """A query that matches if a given FieldQuery subclass matches in
@@ -375,6 +387,9 @@ class AnyFieldQuery(CollectionQuery):
     def __eq__(self, other):
         return super(AnyFieldQuery, self).__eq__(other) and \
             self.query_class == other.query_class
+
+    def __hash__(self):
+        return hash((self.pattern, tuple(self.fields), self.query_class))
 
 
 class MutableCollectionQuery(CollectionQuery):
