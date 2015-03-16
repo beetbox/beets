@@ -59,11 +59,11 @@ class SmartPlaylistTest(unittest.TestCase):
                            parse_query_string('BAR bar2', Album)[0]])
         baz_baz, _ = parse_query_string('BAZ baz', Item)
         baz_baz2, _ = parse_query_string('BAZ baz', Album)
-        self.assertEqual(spl._unmatched_playlists, {
+        self.assertEqual(spl._unmatched_playlists, set([
             ('foo', foo_foo, None),
             ('bar', None, bar_bar),
             ('baz', baz_baz, baz_baz2)
-        })
+        ]))
 
     def test_db_changes(self):
         spl = SmartPlaylistPlugin()
@@ -84,26 +84,26 @@ class SmartPlaylistTest(unittest.TestCase):
         pl2 = ('2', None, a_q1)
         pl3 = ('3', q2, None)
 
-        spl._unmatched_playlists = {pl1, pl2, pl3}
+        spl._unmatched_playlists = set([pl1, pl2, pl3])
         spl._matched_playlists = set()
         spl.db_change(None, i1)
-        self.assertEqual(spl._unmatched_playlists, {pl2})
-        self.assertEqual(spl._matched_playlists, {pl1, pl3})
+        self.assertEqual(spl._unmatched_playlists, set([pl2]))
+        self.assertEqual(spl._matched_playlists, set([pl1, pl3]))
 
-        spl._unmatched_playlists = {pl1, pl2, pl3}
+        spl._unmatched_playlists = set([pl1, pl2, pl3])
         spl._matched_playlists = set()
         spl.db_change(None, i2)
-        self.assertEqual(spl._unmatched_playlists, {pl2})
-        self.assertEqual(spl._matched_playlists, {pl1, pl3})
+        self.assertEqual(spl._unmatched_playlists, set([pl2]))
+        self.assertEqual(spl._matched_playlists, set([pl1, pl3]))
 
-        spl._unmatched_playlists = {pl1, pl2, pl3}
+        spl._unmatched_playlists = set([pl1, pl2, pl3])
         spl._matched_playlists = set()
         spl.db_change(None, a)
-        self.assertEqual(spl._unmatched_playlists, {pl3})
-        self.assertEqual(spl._matched_playlists, {pl1, pl2})
+        self.assertEqual(spl._unmatched_playlists, set([pl3]))
+        self.assertEqual(spl._matched_playlists, set([pl1, pl2]))
         spl.db_change(None, i2)
         self.assertEqual(spl._unmatched_playlists, set())
-        self.assertEqual(spl._matched_playlists, {pl1, pl2, pl3})
+        self.assertEqual(spl._matched_playlists, set([pl1, pl2, pl3]))
 
     def test_playlist_update(self):
         spl = SmartPlaylistPlugin()
@@ -116,7 +116,7 @@ class SmartPlaylistTest(unittest.TestCase):
         lib.items.return_value = [i]
         lib.albums.return_value = []
         pl = 'my_playlist.m3u', q, a_q
-        spl._matched_playlists = {pl}
+        spl._matched_playlists = [pl]
 
         dir = mkdtemp()
         config['smartplaylist']['relative_to'] = False
