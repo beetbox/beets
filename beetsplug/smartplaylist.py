@@ -21,7 +21,7 @@ from __future__ import (division, absolute_import, print_function,
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.util import mkdirall, normpath, syspath
-from beets.library import Item, Album, parse_query_parts
+from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 import os
 
@@ -91,9 +91,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     query = None
                     sort = None
                 elif isinstance(qs, basestring):
-                    query, sort = parse_query_parts(qs, Model)
+                    query, sort = parse_query_string(qs, Model)
                 else:
-                    query = OrQuery([parse_query_parts(q, Model)[0]
+                    query = OrQuery([parse_query_string(q, Model)[0]
                                      for q in qs])
                     sort = None
                 playlist_data += (query,)
