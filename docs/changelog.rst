@@ -13,7 +13,7 @@ Features:
   additinal parameters: names of the playlists to regenerate.
 * Beets now accept top-level options ``--format-item`` and ``--format-album``
   before any subcommand to control how items and albums are displayed.
-  :bug:`1271`:
+  :bug:`1271`
 * :doc:`/plugins/replaygain`: There is a new backend for the `bs1770gain`_
   tool. Thanks to :user:`jmwatte`. :bug:`1343`
 * There are now multiple levels of verbosity. On the command line, you can
