@@ -128,6 +128,8 @@ Fixes:
 
 For developers:
 
+* The ``database_change`` event now sends the item or album that is subject to
+  a change in the db.
 * the ``OptionParser`` is now a ``CommonOptionsParser`` that offers facilities
   for adding usual options (``--album``, ``--path`` and ``--format``). See
   :ref:`add_subcommands`. :bug:`1271`
