@@ -15,7 +15,7 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-from os import path
+from os import path, remove
 from tempfile import mkdtemp
 from shutil import rmtree
 
@@ -25,6 +25,7 @@ from beetsplug.smartplaylist import SmartPlaylistPlugin
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.util import syspath
+from beets.ui import UserError
 from beets import config
 
 from test._common import unittest
@@ -130,18 +131,49 @@ class SmartPlaylistTest(unittest.TestCase):
         lib.albums.assert_called_once_with(a_q)
 
         m3u_filepath = path.join(dir, pl[0])
-        self.assertTrue(path.exists(m3u_filepath), m3u_filepath)
-
+        self.assertTrue(path.exists(m3u_filepath))
         with open(syspath(m3u_filepath), 'r') as f:
-            content = f.readlines()
+            content = f.read()
         rmtree(dir)
 
-        self.assertEqual(content, ["/tagada.mp3\n"])
+        self.assertEqual(content, "/tagada.mp3\n")
 
 
 class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
-    def test_import(self):
-        pass
+    def setUp(self):
+        self.setup_beets()
+
+        self.item = self.add_item()
+        config['smartplaylist']['playlists'].set([
+            {'name': 'my_playlist.m3u',
+             'query': self.item.title},
+            {'name': 'all.m3u',
+             'query': ''}
+        ])
+        config['smartplaylist']['playlist_dir'].set(self.temp_dir)
+        self.load_plugins('smartplaylist')
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
 
     def test_splupdate(self):
-        pass
+        with self.assertRaises(UserError):
+            self.run_with_output('splupdate', 'tagada')
+
+        self.run_with_output('splupdate', 'my_playlist')
+        m3u_path = path.join(self.temp_dir, 'my_playlist.m3u')
+        self.assertTrue(path.exists(m3u_path))
+        with open(m3u_path, 'r') as f:
+            self.assertEqual(f.read(), self.item.path + b"\n")
+        remove(m3u_path)
+
+        self.run_with_output('splupdate', 'my_playlist.m3u')
+        with open(m3u_path, 'r') as f:
+            self.assertEqual(f.read(), self.item.path + b"\n")
+        remove(m3u_path)
+
+        self.run_with_output('splupdate')
+        for name in ('my_playlist.m3u', 'all.m3u'):
+            with open(path.join(self.temp_dir, name), 'r') as f:
+                self.assertEqual(f.read(), self.item.path + b"\n")
