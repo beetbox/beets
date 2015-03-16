@@ -437,8 +437,9 @@ def summarize_items(items, singleton):
         # A single format.
         summary_parts.append(items[0].format)
     else:
-        # Enumerate all the formats.
-        for fmt, count in format_counts.iteritems():
+        # Enumerate all the formats by decreasing frequencies:
+        for fmt, count in sorted(format_counts.items(),
+                                 key=lambda (f, c): (-c, f)):
             summary_parts.append('{0} {1}'.format(fmt, count))
 
     if items:
