@@ -53,13 +53,16 @@ to albums that have a ``for_travel`` extensible field set to 1::
       album_query: 'for_travel:1'
       query: 'for_travel:1'
 
-By default, all playlists are automatically regenerated at the end of the
-session if the library database was changed. To force regeneration, you can
-invoke it manually from the command line::
+By default, each playlist is automatically regenerated at the end of the
+session if an item or album it matches changed in the library database. To
+force regeneration, you can invoke it manually from the command line::
 
     $ beet splupdate
 
-which will generate your new smart playlists.
+This will regenerate all smart playlists. You can also specify which ones you
+want to regenerate::
+
+    $ beet splupdate BeatlesUniverse.m3u MyTravelPlaylist
 
 You can also use this plugin together with the :doc:`mpdupdate`, in order to
 automatically notify MPD of the playlist change, by adding ``mpdupdate`` to
