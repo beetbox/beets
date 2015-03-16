@@ -73,6 +73,9 @@ class Query(object):
         """
         raise NotImplementedError
 
+    def __eq__(self, other):
+        return type(self) == type(other)
+
 
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
@@ -106,6 +109,10 @@ class FieldQuery(Query):
     def match(self, item):
         return self.value_match(self.pattern, item.get(self.field))
 
+    def __eq__(self, other):
+        return super(FieldQuery, self).__eq__(other) and \
+               self.field == other.field and self.pattern == other.pattern
+
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
@@ -120,8 +127,7 @@ class MatchQuery(FieldQuery):
 class NoneQuery(FieldQuery):
 
     def __init__(self, field, fast=True):
-        self.field = field
-        self.fast = fast
+        super(NoneQuery, self).__init__(field, None, fast)
 
     def col_clause(self):
         return self.field + " IS NULL", ()
@@ -337,6 +343,10 @@ class CollectionQuery(Query):
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
 
+    def __eq__(self, other):
+        return super(CollectionQuery, self).__eq__(other) and \
+               self.subqueries == other.subqueries
+
 
 class AnyFieldQuery(CollectionQuery):
     """A query that matches if a given FieldQuery subclass matches in
@@ -361,6 +371,10 @@ class AnyFieldQuery(CollectionQuery):
             if subq.match(item):
                 return True
         return False
+
+    def __eq__(self, other):
+        return super(AnyFieldQuery, self).__eq__(other) and \
+               self.query_class == other.query_class
 
 
 class MutableCollectionQuery(CollectionQuery):
