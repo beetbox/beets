@@ -44,14 +44,32 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self.register_listener('database_change', self.db_change)
 
     def commands(self):
-        def update(lib, opts, args):
-            self.build_queries()
-            self._matched_playlists = self._unmatched_playlists
-            self.update_playlists(lib)
         spl_update = ui.Subcommand('splupdate',
-                                   help='update the smart playlists')
-        spl_update.func = update
+                                   help='update the smart playlists. Playlist '
+                                        'names may be passed as arguments.')
+        spl_update.func = self.update_cmd
         return [spl_update]
+
+    def update_cmd(self, lib, opts, args):
+        self.build_queries()
+        if args:
+            args = set(ui.decargs(args))
+            for a in list(args):
+                if not a.endswith(".m3u"):
+                    args.add("{0}.m3u".format(a))
+
+            playlists = {(name, q, a_q)
+                         for name, q, a_q in self._unmatched_playlists
+                         if name in args}
+            if not playlists:
+                # raise UserError
+                pass
+            self._matched_playlists = playlists
+            self._unmatched_playlists -= playlists
+        else:
+            self._matched_playlists = self._unmatched_playlists
+
+        self.update_playlists(lib)
 
     def build_queries(self):
         """
