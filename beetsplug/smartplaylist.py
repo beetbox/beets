@@ -62,8 +62,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
                          for name, q, a_q in self._unmatched_playlists
                          if name in args}
             if not playlists:
-                # raise UserError
-                pass
+                raise ui.UserError('No playlist matching any of {0} '
+                                   'found'.format([name for name, _, _ in
+                                                   self._unmatched_playlists]))
+
             self._matched_playlists = playlists
             self._unmatched_playlists -= playlists
         else:
