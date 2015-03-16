@@ -58,9 +58,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 if not a.endswith(".m3u"):
                     args.add("{0}.m3u".format(a))
 
-            playlists = {(name, q, a_q)
-                         for name, q, a_q in self._unmatched_playlists
-                         if name in args}
+            playlists = set((name, q, a_q)
+                            for name, q, a_q in self._unmatched_playlists
+                            if name in args)
             if not playlists:
                 raise ui.UserError('No playlist matching any of {0} '
                                    'found'.format([name for name, _, _ in
