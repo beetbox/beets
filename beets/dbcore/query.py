@@ -111,7 +111,7 @@ class FieldQuery(Query):
 
     def __eq__(self, other):
         return super(FieldQuery, self).__eq__(other) and \
-               self.field == other.field and self.pattern == other.pattern
+            self.field == other.field and self.pattern == other.pattern
 
 
 class MatchQuery(FieldQuery):
@@ -345,7 +345,7 @@ class CollectionQuery(Query):
 
     def __eq__(self, other):
         return super(CollectionQuery, self).__eq__(other) and \
-               self.subqueries == other.subqueries
+            self.subqueries == other.subqueries
 
 
 class AnyFieldQuery(CollectionQuery):
@@ -374,7 +374,7 @@ class AnyFieldQuery(CollectionQuery):
 
     def __eq__(self, other):
         return super(AnyFieldQuery, self).__eq__(other) and \
-               self.query_class == other.query_class
+            self.query_class == other.query_class
 
 
 class MutableCollectionQuery(CollectionQuery):
