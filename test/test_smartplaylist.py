@@ -24,6 +24,7 @@ from mock import Mock, MagicMock
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
+from beets.dbcore.query import NullSort
 from beets.util import syspath
 from beets.ui import UserError
 from beets import config
@@ -54,15 +55,15 @@ class SmartPlaylistTest(unittest.TestCase):
         ])
         spl.build_queries()
         self.assertEqual(spl._matched_playlists, set())
-        foo_foo, _ = parse_query_string('FOO foo', Item)
-        bar_bar = OrQuery([parse_query_string('BAR bar1', Album)[0],
-                           parse_query_string('BAR bar2', Album)[0]])
-        baz_baz, _ = parse_query_string('BAZ baz', Item)
-        baz_baz2, _ = parse_query_string('BAZ baz', Album)
+        foo_foo = parse_query_string('FOO foo', Item)
+        baz_baz = parse_query_string('BAZ baz', Item)
+        baz_baz2 = parse_query_string('BAZ baz', Album)
+        bar_bar = OrQuery((parse_query_string('BAR bar1', Album)[0],
+                           parse_query_string('BAR bar2', Album)[0]))
         self.assertEqual(spl._unmatched_playlists, set([
-            ('foo', foo_foo, None),
-            ('bar', None, bar_bar),
-            ('baz', baz_baz, baz_baz2)
+            ('foo', foo_foo, (None, None)),
+            ('baz', baz_baz, baz_baz2),
+            ('bar', (None, None), (bar_bar, None)),
         ]))
 
     def test_db_changes(self):
@@ -80,9 +81,9 @@ class SmartPlaylistTest(unittest.TestCase):
         q2 = Mock()
         q2.matches.side_effect = {i1: False, i2: True}.__getitem__
 
-        pl1 = ('1', q1, a_q1)
-        pl2 = ('2', None, a_q1)
-        pl3 = ('3', q2, None)
+        pl1 = '1', (q1, None), (a_q1, None)
+        pl2 = '2', (None, None), (a_q1, None)
+        pl3 = '3', (q2, None), (None, None)
 
         spl._unmatched_playlists = set([pl1, pl2, pl3])
         spl._matched_playlists = set()
@@ -115,7 +116,7 @@ class SmartPlaylistTest(unittest.TestCase):
         lib = Mock()
         lib.items.return_value = [i]
         lib.albums.return_value = []
-        pl = 'my_playlist.m3u', q, a_q
+        pl = 'my_playlist.m3u', (q, None), (a_q, None)
         spl._matched_playlists = [pl]
 
         dir = mkdtemp()
@@ -127,8 +128,8 @@ class SmartPlaylistTest(unittest.TestCase):
             rmtree(dir)
             raise
 
-        lib.items.assert_called_once_with(q)
-        lib.albums.assert_called_once_with(a_q)
+        lib.items.assert_called_once_with(q, None)
+        lib.albums.assert_called_once_with(a_q, None)
 
         m3u_filepath = path.join(dir, pl[0])
         self.assertTrue(path.exists(m3u_filepath))
@@ -177,3 +178,11 @@ class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
         for name in ('my_playlist.m3u', 'all.m3u'):
             with open(path.join(self.temp_dir, name), 'r') as f:
                 self.assertEqual(f.read(), self.item.path + b"\n")
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+
+if __name__ == b'__main__':
+    unittest.main(defaultTest='suite')
