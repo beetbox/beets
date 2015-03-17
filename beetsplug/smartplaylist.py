@@ -23,6 +23,7 @@ from beets import ui
 from beets.util import mkdirall, normpath, syspath
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
+from beets.dbcore.query import MultipleSort
 import os
 
 
@@ -77,9 +78,16 @@ class SmartPlaylistPlugin(BeetsPlugin):
         """
         Instanciate queries for the playlists.
 
-        Each playlist has 2 queries: one or items one for albums. We must also
-        remember its name. _unmatched_playlists is a set of tuples
-        (name, q, album_q).
+        Each playlist has 2 queries: one or items one for albums, each with a
+        sort. We must also remember its name. _unmatched_playlists is a set of
+        tuples (name, (q, q_sort), (album_q, album_q_sort)).
+
+        sort may be any sort, or NullSort, or None. None and NullSort are
+        equivalent and both eval to False.
+        More precisely
+        - it will be NullSort when a playlist query ('query' or 'album_query')
+          is a single item or a list with 1 element
+        - it will be None when there are multiple items i a query
         """
         self._unmatched_playlists = set()
         self._matched_playlists = set()
@@ -88,18 +96,28 @@ class SmartPlaylistPlugin(BeetsPlugin):
             playlist_data = (playlist['name'],)
             for key, Model in (('query', Item), ('album_query', Album)):
                 qs = playlist.get(key)
-                # FIXME sort mgmt
                 if qs is None:
-                    query = None
-                    sort = None
+                    query_and_sort = None, None
                 elif isinstance(qs, basestring):
-                    query, sort = parse_query_string(qs, Model)
+                    query_and_sort = parse_query_string(qs, Model)
+                elif len(qs) == 1:
+                    query_and_sort = parse_query_string(qs[0], Model)
                 else:
-                    query = OrQuery([parse_query_string(q, Model)[0]
-                                     for q in qs])
-                    sort = None
-                del sort  # FIXME
-                playlist_data += (query,)
+                    # multiple queries and sorts
+                    queries, sorts = zip(*(parse_query_string(q, Model)
+                                           for q in qs))
+                    query = OrQuery(queries)
+                    sort = MultipleSort()
+                    for s in sorts:
+                        if s:
+                            sort.add_sort(s)
+                    if not sort.sorts:
+                        sort = None
+                    elif len(sort.sorts) == 1:
+                        sort = sort.sorts[0]
+                    query_and_sort = query, sort
+
+                playlist_data += (query_and_sort,)
 
             self._unmatched_playlists.add(playlist_data)
 
@@ -108,7 +126,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self.build_queries()
 
         for playlist in self._unmatched_playlists:
-            n, q, a_q = playlist
+            n, (q, _), (a_q, _) = playlist
             if a_q and isinstance(model, Album):
                 matches = a_q.match(model)
             elif q and isinstance(model, Item):
@@ -133,14 +151,14 @@ class SmartPlaylistPlugin(BeetsPlugin):
             relative_to = normpath(relative_to)
 
         for playlist in self._matched_playlists:
-            name, query, album_query = playlist
+            name, (query, q_sort), (album_query, a_q_sort) = playlist
             self._log.debug(u"Creating playlist {0}", name)
             items = []
 
             if query:
-                items.extend(lib.items(query))
+                items.extend(lib.items(query, q_sort))
             if album_query:
-                for album in lib.albums(album_query):
+                for album in lib.albums(album_query, a_q_sort):
                     items.extend(album.items())
 
             m3us = {}

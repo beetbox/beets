@@ -730,3 +730,15 @@ class NullSort(Sort):
     """No sorting. Leave results unsorted."""
     def sort(items):
         return items
+
+    def __nonzero__(self):
+        return self.__bool__()
+
+    def __bool__(self):
+        return False
+
+    def __eq__(self, other):
+        return type(self) == type(other) or other is None
+
+    def __hash__(self):
+        return 0
