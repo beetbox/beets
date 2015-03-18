@@ -778,6 +778,16 @@ class TerminalImportSession(importer.ImportSession):
         log.warn(u"This {0} is already in the library!",
                  ("album" if task.is_album else "item"))
 
+        # skip empty albums (coming from a previous failed import session)
+        if task.is_album:
+            real_duplicates = filter(len, found_duplicates)
+            if not real_duplicates:
+                log.info("All duplicates are empty, we ignore them")
+                task.should_remove_duplicates = True
+                return
+        else:
+            real_duplicates = found_duplicates
+
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
             log.info(u'Skipping.')
@@ -785,11 +795,17 @@ class TerminalImportSession(importer.ImportSession):
         else:
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
-            for duplicate in found_duplicates:
+            for duplicate in real_duplicates:
                 print("Old: " + summarize_items(
                     list(duplicate.items()) if task.is_album else [duplicate],
                     not task.is_album,
                 ))
+
+            if real_duplicates != found_duplicates:  # there's empty albums
+                count = len(found_duplicates) - len(real_duplicates)
+                print("Old: {0} empty album{1}".format(
+                    count, "s" if count > 1 else ""))
+
             print("New: " + summarize_items(
                 task.imported_items(),
                 not task.is_album,
