@@ -625,6 +625,12 @@ class Sort(object):
         """
         return False
 
+    def __hash__(self):
+        return 0
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
 
 class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts.
@@ -686,6 +692,13 @@ class MultipleSort(Sort):
     def __repr__(self):
         return u'MultipleSort({0})'.format(repr(self.sorts))
 
+    def __hash__(self):
+        return hash(tuple(self.sorts))
+
+    def __eq__(self, other):
+        return super(MultipleSort, self).__eq__(other) and \
+               self.sorts == other.sorts
+
 
 class FieldSort(Sort):
     """An abstract sort criterion that orders by a specific field (of
@@ -708,6 +721,14 @@ class FieldSort(Sort):
             self.field,
             '+' if self.ascending else '-',
         )
+
+    def __hash__(self):
+        return hash((self.field, self.ascending))
+
+    def __eq__(self, other):
+        return super(FieldSort, self).__eq__(other) and \
+               self.field == other.field and \
+               self.ascending == other.ascending
 
 
 class FixedFieldSort(FieldSort):
