@@ -44,6 +44,18 @@ You can also gather the results of several queries by putting them in a list.
     - name: 'BeatlesUniverse.m3u'
       query: ['artist:beatles', 'genre:"beatles cover"']
 
+Note that since beets query syntax is in effect, you can also use sorting
+directives::
+
+    - name: 'Chronological Beatles'
+      query: 'artist:Beatles year+'
+    - name: 'Mixed Rock'
+      query: ['artist:Beatles year+', 'artist:"Led Zeppelin" bitrate+']
+
+The former case behaves as expected, however please note that in the latter the
+sorts will be merged: ``year+ bitrate+`` will apply to both the Beatles and Led
+Zeppelin. If that bothers you, please get in touch.
+
 For querying albums instead of items (mainly useful with extensible fields),
 use the ``album_query`` field. ``query`` and ``album_query`` can be used at the
 same time. The following example gathers single items but also items belonging
