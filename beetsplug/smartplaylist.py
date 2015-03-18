@@ -107,14 +107,19 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     queries, sorts = zip(*(parse_query_string(q, Model)
                                            for q in qs))
                     query = OrQuery(queries)
-                    sort = MultipleSort()
+                    final_sorts = []
                     for s in sorts:
                         if s:
-                            sort.add_sort(s)
-                    if not sort.sorts:
+                            if isinstance(s, MultipleSort):
+                                final_sorts += s.sorts
+                            else:
+                                final_sorts.append(s)
+                    if not final_sorts:
                         sort = None
-                    elif len(sort.sorts) == 1:
-                        sort = sort.sorts[0]
+                    elif len(final_sorts) == 1:
+                        sort, = final_sorts
+                    else:
+                        sort = MultipleSort(final_sorts)
                     query_and_sort = query, sort
 
                 playlist_data += (query_and_sort,)

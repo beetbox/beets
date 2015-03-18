@@ -24,7 +24,7 @@ from mock import Mock, MagicMock
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
-from beets.dbcore.query import NullSort
+from beets.dbcore.query import NullSort, MultipleSort, FixedFieldSort
 from beets.util import syspath
 from beets.ui import UserError
 from beets import config
@@ -65,6 +65,31 @@ class SmartPlaylistTest(unittest.TestCase):
             ('baz', baz_baz, baz_baz2),
             ('bar', (None, None), (bar_bar, None)),
         ]))
+
+    def test_build_queries_with_sorts(self):
+        spl = SmartPlaylistPlugin()
+        config['smartplaylist']['playlists'].set([
+            {'name': 'no_sort', 'query': 'foo'},
+            {'name': 'one_sort', 'query': 'foo year+'},
+            {'name': 'only_empty_sorts', 'query': ['foo', 'bar']},
+            {'name': 'one_non_empty_sort', 'query': ['foo year+', 'bar']},
+            {'name': 'multiple_sorts', 'query': ['foo year+', 'bar genre-']},
+            {'name': 'mixed', 'query': ['foo year+', 'bar', 'baz genre+ id-']}
+        ])
+
+        spl.build_queries()
+        sorts = {name: sort for name, (_, sort), _ in spl._unmatched_playlists}
+
+        asseq = self.assertEqual  # less cluttered code
+        S = FixedFieldSort  # short cut since we're only dealing with this
+        asseq(sorts["no_sort"], NullSort())
+        asseq(sorts["one_sort"], S('year'))
+        asseq(sorts["only_empty_sorts"], None)
+        asseq(sorts["one_non_empty_sort"], S('year'))
+        asseq(sorts["multiple_sorts"],
+              MultipleSort([S('year'), S('genre', False)]))
+        asseq(sorts["mixed"],
+              MultipleSort([S('year'), S('genre'), S('id', False)]))
 
     def test_db_changes(self):
         spl = SmartPlaylistPlugin()
