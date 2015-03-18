@@ -23,7 +23,7 @@ extlinks = {
 }
 
 # Options for HTML output
-html_theme = 'classic'
+html_theme = 'default'
 htmlhelp_basename = 'beetsdoc'
 
 # Options for LaTeX output
