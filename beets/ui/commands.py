@@ -426,8 +426,6 @@ def summarize_items(items, singleton):
     this is an album or single-item import (if the latter, them `items`
     should only have one element).
     """
-    assert items, "summarizing zero items"
-
     summary_parts = []
     if not singleton:
         summary_parts.append("{0} items".format(len(items)))
@@ -439,16 +437,18 @@ def summarize_items(items, singleton):
         # A single format.
         summary_parts.append(items[0].format)
     else:
-        # Enumerate all the formats.
-        for fmt, count in format_counts.iteritems():
+        # Enumerate all the formats by decreasing frequencies:
+        for fmt, count in sorted(format_counts.items(),
+                                 key=lambda (f, c): (-c, f)):
             summary_parts.append('{0} {1}'.format(fmt, count))
 
-    average_bitrate = sum([item.bitrate for item in items]) / len(items)
-    total_duration = sum([item.length for item in items])
-    total_filesize = sum([item.filesize for item in items])
-    summary_parts.append('{0}kbps'.format(int(average_bitrate / 1000)))
-    summary_parts.append(ui.human_seconds_short(total_duration))
-    summary_parts.append(ui.human_bytes(total_filesize))
+    if items:
+        average_bitrate = sum([item.bitrate for item in items]) / len(items)
+        total_duration = sum([item.length for item in items])
+        total_filesize = sum([item.filesize for item in items])
+        summary_parts.append('{0}kbps'.format(int(average_bitrate / 1000)))
+        summary_parts.append(ui.human_seconds_short(total_duration))
+        summary_parts.append(ui.human_bytes(total_filesize))
 
     return ', '.join(summary_parts)
 
@@ -778,6 +778,16 @@ class TerminalImportSession(importer.ImportSession):
         log.warn(u"This {0} is already in the library!",
                  ("album" if task.is_album else "item"))
 
+        # skip empty albums (coming from a previous failed import session)
+        if task.is_album:
+            real_duplicates = filter(len, found_duplicates)
+            if not real_duplicates:
+                log.info("All duplicates are empty, we ignore them")
+                task.should_remove_duplicates = True
+                return
+        else:
+            real_duplicates = found_duplicates
+
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
             log.info(u'Skipping.')
@@ -785,11 +795,17 @@ class TerminalImportSession(importer.ImportSession):
         else:
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
-            for duplicate in found_duplicates:
+            for duplicate in real_duplicates:
                 print("Old: " + summarize_items(
                     list(duplicate.items()) if task.is_album else [duplicate],
                     not task.is_album,
                 ))
+
+            if real_duplicates != found_duplicates:  # there's empty albums
+                count = len(found_duplicates) - len(real_duplicates)
+                print("Old: {0} empty album{1}".format(
+                    count, "s" if count > 1 else ""))
+
             print("New: " + summarize_items(
                 task.imported_items(),
                 not task.is_album,
