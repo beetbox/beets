@@ -203,7 +203,7 @@ The events currently available are:
   Library object. Parameter: ``lib``.
 
 * *database_change*: a modification has been made to the library database. The
-  change might not be committed yet. Parameter: ``lib``.
+  change might not be committed yet. Parameters: ``lib`` and ``model``.
 
 * *cli_exit*: called just before the ``beet`` command-line program exits.
   Parameter: ``lib``.
