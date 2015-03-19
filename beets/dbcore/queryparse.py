@@ -152,12 +152,14 @@ def sort_from_strings(model_cls, sort_parts):
     """Create a `Sort` from a list of sort criteria (strings).
     """
     if not sort_parts:
-        return query.NullSort()
+        sort = query.NullSort()
+    elif len(sort_parts) == 1:
+        sort = construct_sort_part(model_cls, sort_parts[0])
     else:
         sort = query.MultipleSort()
         for part in sort_parts:
             sort.add_sort(construct_sort_part(model_cls, part))
-        return sort
+    return sort
 
 
 def parse_sorted_query(model_cls, parts, prefixes={},

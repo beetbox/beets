@@ -6,9 +6,14 @@ Changelog
 
 Features:
 
+* :doc:`/plugins/smartplaylist`: detect for each playlist if it needs to be
+  regenated, instead of systematically regenerating all of them after a
+  database modification.
+* :doc:`/plugins/smartplaylist`: the ``splupdate`` command can now take
+  additinal parameters: names of the playlists to regenerate.
 * Beets now accept top-level options ``--format-item`` and ``--format-album``
   before any subcommand to control how items and albums are displayed.
-  :bug:`1271`:
+  :bug:`1271`
 * :doc:`/plugins/replaygain`: There is a new backend for the `bs1770gain`_
   tool. Thanks to :user:`jmwatte`. :bug:`1343`
 * There are now multiple levels of verbosity. On the command line, you can
@@ -128,6 +133,8 @@ Fixes:
 
 For developers:
 
+* The ``database_change`` event now sends the item or album that is subject to
+  a change in the db.
 * the ``OptionParser`` is now a ``CommonOptionsParser`` that offers facilities
   for adding usual options (``--album``, ``--path`` and ``--format``). See
   :ref:`add_subcommands`. :bug:`1271`

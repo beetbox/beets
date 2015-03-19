@@ -21,30 +21,14 @@ from __future__ import (division, absolute_import, print_function,
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.util import mkdirall, normpath, syspath
+from beets.library import Item, Album, parse_query_string
+from beets.dbcore import OrQuery
+from beets.dbcore.query import MultipleSort
 import os
 
 
-def _items_for_query(lib, queries, album):
-    """Get the matching items for a list of queries.
-
-    `queries` can either be a single string or a list of strings. In the
-    latter case, the results from each query are concatenated. `album`
-    indicates whether the queries are item-level or album-level.
-    """
-    if isinstance(queries, basestring):
-        queries = [queries]
-    if album:
-        for query in queries:
-            for album in lib.albums(query):
-                for item in album.items():
-                    yield item
-    else:
-        for query in queries:
-            for item in lib.items(query):
-                yield item
-
-
 class SmartPlaylistPlugin(BeetsPlugin):
+
     def __init__(self):
         super(SmartPlaylistPlugin, self).__init__()
         self.config.add({
@@ -54,42 +38,139 @@ class SmartPlaylistPlugin(BeetsPlugin):
             'playlists': []
         })
 
+        self._matched_playlists = None
+        self._unmatched_playlists = None
+
         if self.config['auto']:
             self.register_listener('database_change', self.db_change)
 
     def commands(self):
-        def update(lib, opts, args):
-            self.update_playlists(lib)
         spl_update = ui.Subcommand('splupdate',
-                                   help='update the smart playlists')
-        spl_update.func = update
+                                   help='update the smart playlists. Playlist '
+                                        'names may be passed as arguments.')
+        spl_update.func = self.update_cmd
         return [spl_update]
 
-    def db_change(self, lib):
-        self.register_listener('cli_exit', self.update_playlists)
+    def update_cmd(self, lib, opts, args):
+        self.build_queries()
+        if args:
+            args = set(ui.decargs(args))
+            for a in list(args):
+                if not a.endswith(".m3u"):
+                    args.add("{0}.m3u".format(a))
+
+            playlists = set((name, q, a_q)
+                            for name, q, a_q in self._unmatched_playlists
+                            if name in args)
+            if not playlists:
+                raise ui.UserError('No playlist matching any of {0} '
+                                   'found'.format([name for name, _, _ in
+                                                   self._unmatched_playlists]))
+
+            self._matched_playlists = playlists
+            self._unmatched_playlists -= playlists
+        else:
+            self._matched_playlists = self._unmatched_playlists
+
+        self.update_playlists(lib)
+
+    def build_queries(self):
+        """
+        Instanciate queries for the playlists.
+
+        Each playlist has 2 queries: one or items one for albums, each with a
+        sort. We must also remember its name. _unmatched_playlists is a set of
+        tuples (name, (q, q_sort), (album_q, album_q_sort)).
+
+        sort may be any sort, or NullSort, or None. None and NullSort are
+        equivalent and both eval to False.
+        More precisely
+        - it will be NullSort when a playlist query ('query' or 'album_query')
+          is a single item or a list with 1 element
+        - it will be None when there are multiple items i a query
+        """
+        self._unmatched_playlists = set()
+        self._matched_playlists = set()
+
+        for playlist in self.config['playlists'].get(list):
+            playlist_data = (playlist['name'],)
+            for key, Model in (('query', Item), ('album_query', Album)):
+                qs = playlist.get(key)
+                if qs is None:
+                    query_and_sort = None, None
+                elif isinstance(qs, basestring):
+                    query_and_sort = parse_query_string(qs, Model)
+                elif len(qs) == 1:
+                    query_and_sort = parse_query_string(qs[0], Model)
+                else:
+                    # multiple queries and sorts
+                    queries, sorts = zip(*(parse_query_string(q, Model)
+                                           for q in qs))
+                    query = OrQuery(queries)
+                    final_sorts = []
+                    for s in sorts:
+                        if s:
+                            if isinstance(s, MultipleSort):
+                                final_sorts += s.sorts
+                            else:
+                                final_sorts.append(s)
+                    if not final_sorts:
+                        sort = None
+                    elif len(final_sorts) == 1:
+                        sort, = final_sorts
+                    else:
+                        sort = MultipleSort(final_sorts)
+                    query_and_sort = query, sort
+
+                playlist_data += (query_and_sort,)
+
+            self._unmatched_playlists.add(playlist_data)
+
+    def db_change(self, lib, model):
+        if self._unmatched_playlists is None:
+            self.build_queries()
+
+        for playlist in self._unmatched_playlists:
+            n, (q, _), (a_q, _) = playlist
+            if a_q and isinstance(model, Album):
+                matches = a_q.match(model)
+            elif q and isinstance(model, Item):
+                matches = q.match(model) or q.match(model.get_album())
+            else:
+                matches = False
+
+            if matches:
+                self._log.debug("{0} will be updated because of {1}", n, model)
+                self._matched_playlists.add(playlist)
+                self.register_listener('cli_exit', self.update_playlists)
+
+        self._unmatched_playlists -= self._matched_playlists
 
     def update_playlists(self, lib):
-        self._log.info("Updating smart playlists...")
-        playlists = self.config['playlists'].get(list)
+        self._log.info("Updating {0} smart playlists...",
+                       len(self._matched_playlists))
+
         playlist_dir = self.config['playlist_dir'].as_filename()
         relative_to = self.config['relative_to'].get()
         if relative_to:
             relative_to = normpath(relative_to)
 
-        for playlist in playlists:
-            self._log.debug(u"Creating playlist {0[name]}", playlist)
+        for playlist in self._matched_playlists:
+            name, (query, q_sort), (album_query, a_q_sort) = playlist
+            self._log.debug(u"Creating playlist {0}", name)
             items = []
-            if 'album_query' in playlist:
-                items.extend(_items_for_query(lib, playlist['album_query'],
-                                              True))
-            if 'query' in playlist:
-                items.extend(_items_for_query(lib, playlist['query'], False))
+
+            if query:
+                items.extend(lib.items(query, q_sort))
+            if album_query:
+                for album in lib.albums(album_query, a_q_sort):
+                    items.extend(album.items())
 
             m3us = {}
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
             for item in items:
-                m3u_name = item.evaluate_template(playlist['name'], True)
+                m3u_name = item.evaluate_template(name, True)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
                 item_path = item.path
@@ -104,4 +185,4 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 with open(syspath(m3u_path), 'w') as f:
                     for path in m3us[m3u]:
                         f.write(path + b'\n')
-        self._log.info("{0} playlists updated", len(playlists))
+        self._log.info("{0} playlists updated", len(self._matched_playlists))

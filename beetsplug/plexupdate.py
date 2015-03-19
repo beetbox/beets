@@ -55,7 +55,7 @@ class PlexUpdate(BeetsPlugin):
 
         self.register_listener('database_change', self.listen_for_db_change)
 
-    def listen_for_db_change(self, lib):
+    def listen_for_db_change(self, lib, model):
         """Listens for beets db change and register the update for the end"""
         self.register_listener('cli_exit', self.update)
 

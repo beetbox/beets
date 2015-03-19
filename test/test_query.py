@@ -60,6 +60,16 @@ class AnyFieldQueryTest(_common.LibTestCase):
                                        dbcore.query.SubstringQuery)
         self.assertEqual(self.lib.items(q).get(), None)
 
+    def test_eq(self):
+        q1 = dbcore.query.AnyFieldQuery('foo', ['bar'],
+                                        dbcore.query.SubstringQuery)
+        q2 = dbcore.query.AnyFieldQuery('foo', ['bar'],
+                                        dbcore.query.SubstringQuery)
+        self.assertEqual(q1, q2)
+
+        q2.query_class = None
+        self.assertNotEqual(q1, q2)
+
 
 class AssertsMixin(object):
     def assert_items_matched(self, results, titles):
@@ -343,6 +353,16 @@ class MatchTest(_common.TestCase):
 
     def test_open_range(self):
         dbcore.query.NumericQuery('bitrate', '100000..')
+
+    def test_eq(self):
+        q1 = dbcore.query.MatchQuery('foo', 'bar')
+        q2 = dbcore.query.MatchQuery('foo', 'bar')
+        q3 = dbcore.query.MatchQuery('foo', 'baz')
+        q4 = dbcore.query.StringFieldQuery('foo', 'bar')
+        self.assertEqual(q1, q2)
+        self.assertNotEqual(q1, q3)
+        self.assertNotEqual(q1, q4)
+        self.assertNotEqual(q3, q4)
 
 
 class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
