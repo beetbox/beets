@@ -17,6 +17,7 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+import inspect
 import traceback
 import re
 from collections import defaultdict
@@ -100,26 +101,37 @@ class BeetsPlugin(object):
         `self.import_stages`. Wrapping provides some bookkeeping for the
         plugin: specifically, the logging level is adjusted to WARNING.
         """
-        return [self._set_log_level(logging.WARNING, import_stage)
+        return [self._set_log_level_and_params(logging.WARNING, import_stage)
                 for import_stage in self.import_stages]
 
-    def _set_log_level(self, base_log_level, func):
+    def _set_log_level_and_params(self, base_log_level, func):
         """Wrap `func` to temporarily set this plugin's logger level to
         `base_log_level` + config options (and restore it to its previous
-        value after the function returns).
+        value after the function returns). Also determines which params may not
+        be sent for backwards-compatibility.
 
-        Note that that value may not be NOTSET, e.g. if a plugin import stage
-        triggers an event that is listened this very same plugin
+        Note that the log level value may not be NOTSET, e.g. if a plugin
+        import stage triggers an event that is listened this very same plugin.
         """
+        argspec = inspect.getargspec(func)
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             old_log_level = self._log.level
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
-
             try:
-                return func(*args, **kwargs)
+                try:
+                    return func(*args, **kwargs)
+                except TypeError as exc:
+                    if exc.args[0].startswith(func.__name__):
+                        # caused by 'func' and not stuff internal to 'func'
+                        kwargs = dict((arg, val) for arg, val in kwargs.items()
+                                      if arg in argspec.args)
+                        return func(*args, **kwargs)
+                    else:
+                        raise
             finally:
                 self._log.setLevel(old_log_level)
         return wrapper
@@ -186,7 +198,7 @@ class BeetsPlugin(object):
     def register_listener(self, event, func):
         """Add a function as a listener for the specified event.
         """
-        wrapped_func = self._set_log_level(logging.WARNING, func)
+        wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
 
         cls = self.__class__
         if cls.listeners is None or cls._raw_listeners is None:
