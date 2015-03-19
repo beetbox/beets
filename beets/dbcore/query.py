@@ -697,7 +697,7 @@ class MultipleSort(Sort):
 
     def __eq__(self, other):
         return super(MultipleSort, self).__eq__(other) and \
-               self.sorts == other.sorts
+            self.sorts == other.sorts
 
 
 class FieldSort(Sort):
@@ -727,8 +727,8 @@ class FieldSort(Sort):
 
     def __eq__(self, other):
         return super(FieldSort, self).__eq__(other) and \
-               self.field == other.field and \
-               self.ascending == other.ascending
+            self.field == other.field and \
+            self.ascending == other.ascending
 
 
 class FixedFieldSort(FieldSort):
