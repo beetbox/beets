@@ -51,8 +51,8 @@ class LastImportPlugin(plugins.BeetsPlugin):
 
 
 def import_lastfm(lib, log):
-    user = config['lastfm']['user']
-    per_page = config['lastimport']['per_page']
+    user = config['lastfm']['user'].get(unicode)
+    per_page = config['lastimport']['per_page'].get(int)
 
     if not user:
         raise ui.UserError('You must specify a user name for lastimport')
