@@ -22,7 +22,7 @@ import traceback
 import re
 from collections import defaultdict
 from functools import wraps
-
+import threading
 
 import beets
 from beets import logging
@@ -87,6 +87,9 @@ class BeetsPlugin(object):
         if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
             self._log.addFilter(PluginLogFilter(self))
 
+        # Thread-local state.
+        self._local = threading.local()
+
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
@@ -101,40 +104,50 @@ class BeetsPlugin(object):
         `self.import_stages`. Wrapping provides some bookkeeping for the
         plugin: specifically, the logging level is adjusted to WARNING.
         """
-        return [self._set_log_level_and_params(logging.WARNING, import_stage)
+        return [self._wrap_handler(import_stage)
                 for import_stage in self.import_stages]
 
-    def _set_log_level_and_params(self, base_log_level, func):
-        """Wrap `func` to temporarily set this plugin's logger level to
-        `base_log_level` + config options (and restore it to its previous
-        value after the function returns). Also determines which params may not
-        be sent for backwards-compatibility.
+    def _wrap_handler(self, func):
+        """Wrap `func` to treat it as an event handler (or an import
+        stage), returning a new callable.
 
-        Note that the log level value may not be NOTSET, e.g. if a plugin
-        import stage triggers an event that is listened this very same plugin.
+        The wrapped function changes `self.report()` to reduce the level
+        of its log messages. It also tolerates mismatches in the
+        argument lists to allow some backwards-compatibility as event
+        interfaces are extended.
         """
         argspec = inspect.getargspec(func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            old_log_level = self._log.level
-            verbosity = beets.config['verbose'].get(int)
-            log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
-            self._log.setLevel(log_level)
+            self._local.in_handler = True
             try:
                 try:
                     return func(*args, **kwargs)
                 except TypeError as exc:
                     if exc.args[0].startswith(func.__name__):
-                        # caused by 'func' and not stuff internal to 'func'
+                        # Caused by calling `func`, not code inside the
+                        # function.
                         kwargs = dict((arg, val) for arg, val in kwargs.items()
                                       if arg in argspec.args)
                         return func(*args, **kwargs)
                     else:
                         raise
             finally:
-                self._log.setLevel(old_log_level)
+                self._local.in_handler = False
         return wrapper
+
+    def report(self, *args, **kwargs):
+        """Log an informational message from the plugin.
+
+        When called from an event handler or an import stage, this logs
+        as a debug message (to avoid interrupting the ordinary output in
+        non-verbose mode). Otherwise, i.e., in the context of an
+        explicit command, it is logged as an "info" message (and
+        displayed by default).
+        """
+        level = logging.DEBUG if self._local.in_handler else logging.INFO
+        self._log.log(level, *args, **kwargs)
 
     def queries(self):
         """Should return a dict mapping prefixes to Query subclasses.
@@ -198,7 +211,7 @@ class BeetsPlugin(object):
     def register_listener(self, event, func):
         """Add a function as a listener for the specified event.
         """
-        wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
+        wrapped_func = self._wrap_handler(func)
 
         cls = self.__class__
         if cls.listeners is None or cls._raw_listeners is None:
