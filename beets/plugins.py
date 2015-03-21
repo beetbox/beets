@@ -163,11 +163,6 @@ class BeetsPlugin(object):
                 self._local.in_handler = False
         return wrapper
 
-    def report(self, *args, **kwargs):
-        """TODO REMOVE THIS
-        """
-        self._log.log(logging.INFO, *args, **kwargs)
-
     def queries(self):
         """Should return a dict mapping prefixes to Query subclasses.
         """
