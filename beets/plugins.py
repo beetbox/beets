@@ -82,10 +82,16 @@ class BeetsPlugin(object):
             self.album_template_fields = {}
         self.import_stages = []
 
+        # Set up the plugin's logger.
         self._log = log.getChild(self.name)
-        self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
         if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
             self._log.addFilter(PluginLogFilter(self))
+        # Plugins become verbose in -vv mode (whereas the core does in
+        # -v mode).
+        if beets.config['verbose'].get(int) >= 2:
+            self._log.setLevel(logging.DEBUG)
+        else:
+            self._log.setLevel(logging.INFO)
 
         # Thread-local state.
         self._local = threading.local()
