@@ -76,7 +76,7 @@ class MPDClientWrapper(object):
         if host[0] in ['/', '~']:
             host = os.path.expanduser(host)
 
-        self.report(u'connecting to {0}:{1}', host, port)
+        self._log.info(u'connecting to {0}:{1}', host, port)
         try:
             self.client.connect(host, port)
         except socket.error as e:
@@ -177,7 +177,7 @@ class MPDStats(object):
         if item:
             return item
         else:
-            self.report(u'item not found: {0}', displayable_path(path))
+            self._log.info(u'item not found: {0}', displayable_path(path))
 
     def update_item(self, item, attribute, value=None, increment=None):
         """Update the beets item. Set attribute to value or increment the value
@@ -238,16 +238,16 @@ class MPDStats(object):
         """Updates the play count of a song.
         """
         self.update_item(song['beets_item'], 'play_count', increment=1)
-        self.report(u'played {0}', displayable_path(song['path']))
+        self._log.info(u'played {0}', displayable_path(song['path']))
 
     def handle_skipped(self, song):
         """Updates the skip count of a song.
         """
         self.update_item(song['beets_item'], 'skip_count', increment=1)
-        self.report(u'skipped {0}', displayable_path(song['path']))
+        self._log.info(u'skipped {0}', displayable_path(song['path']))
 
     def on_stop(self, status):
-        self.report(u'stop')
+        self._log.info(u'stop')
 
         if self.now_playing:
             self.handle_song_change(self.now_playing)
@@ -255,7 +255,7 @@ class MPDStats(object):
         self.now_playing = None
 
     def on_pause(self, status):
-        self.report(u'pause')
+        self._log.info(u'pause')
         self.now_playing = None
 
     def on_play(self, status):
@@ -266,7 +266,7 @@ class MPDStats(object):
             return
 
         if is_url(path):
-            self.report(u'playing stream {0}', displayable_path(path))
+            self._log.info(u'playing stream {0}', displayable_path(path))
             return
 
         played, duration = map(int, status['time'].split(':', 1))
@@ -280,7 +280,7 @@ class MPDStats(object):
             going_to_happen_twice = False
 
         if not going_to_happen_twice:
-            self.report(u'playing {0}', displayable_path(path))
+            self._log.info(u'playing {0}', displayable_path(path))
 
             self.now_playing = {
                 'started':    time.time(),

@@ -182,8 +182,8 @@ class Bs1770gainBackend(Backend):
                 'peak': float(parts[2].split('/')[1]),
             }
 
-            self.report('analysed {}gain={};peak={}',
-                        d['file'].rstrip(), d['gain'], d['peak'])
+            self._log.info('analysed {}gain={};peak={}',
+                           d['file'].rstrip(), d['gain'], d['peak'])
             out.append(Gain(d['gain'], d['peak']))
         return out
 
@@ -781,10 +781,10 @@ class ReplayGainPlugin(BeetsPlugin):
         items, nothing is done.
         """
         if not self.album_requires_gain(album):
-            self.report(u'Skipping album {0}', album)
+            self._log.info(u'Skipping album {0}', album)
             return
 
-        self.report(u'analyzing {0}', album)
+        self._log.info(u'analyzing {0}', album)
 
         try:
             album_gain = self.backend_instance.compute_album_gain(album)
@@ -801,7 +801,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 if write:
                     item.try_write()
         except ReplayGainError as e:
-            self.report(u"ReplayGain error: {0}", e)
+            self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e)
@@ -815,10 +815,10 @@ class ReplayGainPlugin(BeetsPlugin):
         in the item, nothing is done.
         """
         if not self.track_requires_gain(item):
-            self.report(u'Skipping track {0}', item)
+            self._log.info(u'Skipping track {0}', item)
             return
 
-        self.report(u'analyzing {0}', item)
+        self._log.info(u'analyzing {0}', item)
 
         try:
             track_gains = self.backend_instance.compute_track_gain([item])
@@ -831,7 +831,7 @@ class ReplayGainPlugin(BeetsPlugin):
             if write:
                 item.try_write()
         except ReplayGainError as e:
-            self.report(u"ReplayGain error: {0}", e)
+            self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e)

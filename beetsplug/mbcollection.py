@@ -102,9 +102,9 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                 if re.match(UUID_REGEX, aid):
                     album_ids.append(aid)
                 else:
-                    self.report(u'skipping invalid MBID: {0}', aid)
+                    self._log.info(u'skipping invalid MBID: {0}', aid)
 
         # Submit to MusicBrainz.
-        self.report('Updating MusicBrainz collection {0}...', collection_id)
+        self._log.info('Updating MusicBrainz collection {0}...', collection_id)
         submit_albums(collection_id, album_ids)
-        self.report('...MusicBrainz collection updated.')
+        self._log.info('...MusicBrainz collection updated.')

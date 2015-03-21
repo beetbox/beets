@@ -73,15 +73,15 @@ class BPMPlugin(BeetsPlugin):
 
         item = items[0]
         if item['bpm']:
-            self.report(u'Found bpm {0}', item['bpm'])
+            self._log.info(u'Found bpm {0}', item['bpm'])
             if not overwrite:
                 return
 
-        self.report(u'Press Enter {0} times to the rhythm or Ctrl-D '
-                    u'to exit', self.config['max_strokes'].get(int))
+        self._log.info(u'Press Enter {0} times to the rhythm or Ctrl-D '
+                       u'to exit', self.config['max_strokes'].get(int))
         new_bpm = bpm(self.config['max_strokes'].get(int))
         item['bpm'] = int(new_bpm)
         if write:
             item.try_write()
         item.store()
-        self.report(u'Added new bpm {0}', item['bpm'])
+        self._log.info(u'Added new bpm {0}', item['bpm'])

@@ -291,9 +291,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
 
-        self.report(u'encoding {0} to {1}',
-                    util.displayable_path(source),
-                    util.displayable_path(dest))
+        self._log.info(u'encoding {0} to {1}',
+                       util.displayable_path(source),
+                       util.displayable_path(dest))
 
         opts = []
         for arg in CONVERT_COMMAND.split():
@@ -308,7 +308,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             util.remove(dest)
             return
 
-        self.report(u'finished encoding {0}', util.displayable_path(source))
+        self._log.info(u'finished encoding {0}', util.displayable_path(source))
         return dest
 
     def truncate(self, source):
@@ -316,9 +316,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
 
-        self.report(u'truncating {0} to {1}',
-                    util.displayable_path(source),
-                    util.displayable_path(dest))
+        self._log.info(u'truncating {0} to {1}',
+                       util.displayable_path(source),
+                       util.displayable_path(dest))
 
         opts = []
         for arg in TRUNCATE_COMMAND.split():
@@ -333,7 +333,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             util.remove(dest)
             return
 
-        self.report(u'truncate encoding {0}', util.displayable_path(source))
+        self._log.info(u'truncate encoding {0}', util.displayable_path(source))
         return dest
 
     def analyze(self, item):
@@ -346,7 +346,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             return
 
         source, tmp = prepared
-        self.report(u'uploading file, please be patient')
+        self._log.info(u'uploading file, please be patient')
         track = self._echofun(pyechonest.track.track_from_filename,
                               filename=source)
         if tmp is not None:
@@ -458,7 +458,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         for field in ATTRIBUTES.values():
             if not item.get(field):
                 return True
-        self.report(u'no update required')
+        self._log.info(u'no update required')
         return False
 
     def commands(self):
@@ -473,7 +473,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                self.report(u'{0}', item)
+                self._log.info(u'{0}', item)
                 if self.config['force'] or self.requires_update(item):
                     song = self.fetch_song(item)
                     if song:

@@ -171,7 +171,7 @@ class ConvertPlugin(BeetsPlugin):
         quiet = self.config['quiet'].get()
 
         if not quiet and not pretend:
-            self.report(u'Encoding {0}', util.displayable_path(source))
+            self._log.info(u'Encoding {0}', util.displayable_path(source))
 
         # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
@@ -182,15 +182,15 @@ class ConvertPlugin(BeetsPlugin):
             })
 
         if pretend:
-            self.report(' '.join(args))
+            self._log.info(' '.join(args))
             return
 
         try:
             util.command_output(args)
         except subprocess.CalledProcessError as exc:
             # Something went wrong (probably Ctrl+C), remove temporary files
-            self.report(u'Encoding {0} failed. Cleaning up...',
-                        util.displayable_path(source))
+            self._log.info(u'Encoding {0} failed. Cleaning up...',
+                           util.displayable_path(source))
             self._log.debug(u'Command {0} exited with status {1}',
                             exc.cmd.decode('utf8', 'ignore'),
                             exc.returncode)
@@ -205,8 +205,8 @@ class ConvertPlugin(BeetsPlugin):
             )
 
         if not quiet and not pretend:
-            self.report(u'Finished encoding {0}',
-                        util.displayable_path(source))
+            self._log.info(u'Finished encoding {0}',
+                           util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
                      pretend=False):
@@ -239,18 +239,18 @@ class ConvertPlugin(BeetsPlugin):
                     util.mkdirall(dest)
 
             if os.path.exists(util.syspath(dest)):
-                self.report(u'Skipping {0} (target file exists)',
-                            util.displayable_path(item.path))
+                self._log.info(u'Skipping {0} (target file exists)',
+                               util.displayable_path(item.path))
                 continue
 
             if keep_new:
                 if pretend:
-                    self.report(u'mv {0} {1}',
-                                util.displayable_path(item.path),
-                                util.displayable_path(original))
+                    self._log.info(u'mv {0} {1}',
+                                   util.displayable_path(item.path),
+                                   util.displayable_path(original))
                 else:
-                    self.report(u'Moving to {0}',
-                                util.displayable_path(original))
+                    self._log.info(u'Moving to {0}',
+                                   util.displayable_path(original))
                     util.move(item.path, original)
 
             if should_transcode(item, fmt):
@@ -260,13 +260,13 @@ class ConvertPlugin(BeetsPlugin):
                     continue
             else:
                 if pretend:
-                    self.report(u'cp {0} {1}',
-                                util.displayable_path(original),
-                                util.displayable_path(converted))
+                    self._log.info(u'cp {0} {1}',
+                                   util.displayable_path(original),
+                                   util.displayable_path(converted))
                 else:
                     # No transcoding necessary.
-                    self.report(u'Copying {0}',
-                                util.displayable_path(item.path))
+                    self._log.info(u'Copying {0}',
+                                   util.displayable_path(item.path))
                     util.copy(original, converted)
 
             if pretend:
@@ -323,17 +323,17 @@ class ConvertPlugin(BeetsPlugin):
             util.mkdirall(dest)
 
         if os.path.exists(util.syspath(dest)):
-            self.report(u'Skipping {0} (target file exists)',
-                        util.displayable_path(album.artpath))
+            self._log.info(u'Skipping {0} (target file exists)',
+                           util.displayable_path(album.artpath))
             return
 
         if pretend:
-            self.report(u'cp {0} {1}',
-                        util.displayable_path(album.artpath),
-                        util.displayable_path(dest))
+            self._log.info(u'cp {0} {1}',
+                           util.displayable_path(album.artpath),
+                           util.displayable_path(dest))
         else:
-            self.report(u'Copying cover art to {0}',
-                        util.displayable_path(dest))
+            self._log.info(u'Copying cover art to {0}',
+                           util.displayable_path(dest))
             util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):

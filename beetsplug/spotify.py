@@ -81,7 +81,7 @@ class SpotifyPlugin(BeetsPlugin):
                             u'skipping spotify')
             return
 
-        self.report(u'Processing {0} tracks...', len(items))
+        self._log.info(u'Processing {0} tracks...', len(items))
 
         for item in items:
 
@@ -148,11 +148,11 @@ class SpotifyPlugin(BeetsPlugin):
         failure_count = len(failures)
         if failure_count > 0:
             if self.config['show_failures'].get():
-                self.report(u'{0} track(s) did not match a Spotify ID:',
-                            failure_count)
+                self._log.info(u'{0} track(s) did not match a Spotify ID:',
+                               failure_count)
                 for track in failures:
-                    self.report(u'track: {0}', track)
-                self.report(u'')
+                    self._log.info(u'track: {0}', track)
+                self._log.info(u'')
             else:
                 self._log.warn(u'{0} track(s) did not match a Spotify ID;\n'
                                u'use --show-failures to display',
@@ -164,7 +164,7 @@ class SpotifyPlugin(BeetsPlugin):
         if results:
             ids = map(lambda x: x['id'], results)
             if self.config['mode'].get() == "open":
-                self.report(u'Attempting to open Spotify with playlist')
+                self._log.info(u'Attempting to open Spotify with playlist')
                 spotify_url = self.playlist_partial + ",".join(ids)
                 webbrowser.open(spotify_url)
 

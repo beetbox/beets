@@ -341,8 +341,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             for album in lib.albums(ui.decargs(args)):
                 album.genre, src = self._get_genre(album)
-                self.report(u'genre for album {0} ({1}): {0.genre}',
-                            album, src)
+                self._log.info(u'genre for album {0} ({1}): {0.genre}',
+                               album, src)
                 album.store()
 
                 for item in album.items():
@@ -351,8 +351,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
                         item.store()
-                        self.report(u'genre for track {0} ({1}): {0.genre}',
-                                    item, src)
+                        self._log.info(u'genre for track {0} ({1}): {0.genre}',
+                                       item, src)
 
                     if write:
                         item.try_write()

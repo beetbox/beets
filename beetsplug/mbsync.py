@@ -74,16 +74,16 @@ class MBSyncPlugin(BeetsPlugin):
         for item in lib.items(query + ['singleton:true']):
             item_formatted = format(item)
             if not item.mb_trackid:
-                self.report(u'Skipping singleton with no mb_trackid: {0}',
-                            item_formatted)
+                self._log.info(u'Skipping singleton with no mb_trackid: {0}',
+                               item_formatted)
                 continue
 
             # Get the MusicBrainz recording info.
             track_info = hooks.track_for_mbid(item.mb_trackid)
             if not track_info:
-                self.report(u'Recording ID not found: {0} for track {0}',
-                            item.mb_trackid,
-                            item_formatted)
+                self._log.info(u'Recording ID not found: {0} for track {0}',
+                               item.mb_trackid,
+                               item_formatted)
                 continue
 
             # Apply.
@@ -99,8 +99,8 @@ class MBSyncPlugin(BeetsPlugin):
         for a in lib.albums(query):
             album_formatted = format(a)
             if not a.mb_albumid:
-                self.report(u'Skipping album with no mb_albumid: {0}',
-                            album_formatted)
+                self._log.info(u'Skipping album with no mb_albumid: {0}',
+                               album_formatted)
                 continue
 
             items = list(a.items())
@@ -108,9 +108,9 @@ class MBSyncPlugin(BeetsPlugin):
             # Get the MusicBrainz album information.
             album_info = hooks.album_for_mbid(a.mb_albumid)
             if not album_info:
-                self.report(u'Release ID {0} not found for album {1}',
-                            a.mb_albumid,
-                            album_formatted)
+                self._log.info(u'Release ID {0} not found for album {1}',
+                               a.mb_albumid,
+                               album_formatted)
                 continue
 
             # Map recording MBIDs to their information. Recordings can appear
