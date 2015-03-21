@@ -51,7 +51,7 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
 
             def log_all(self, name):
                 self._log.debug('debug ' + name)
-                self.report('report ' + name)
+                self._log.info('info ' + name)
                 self._log.warning('warning ' + name)
 
             def commands(self):
@@ -69,95 +69,89 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
         sys.modules['beetsplug.dummy'] = self.DummyModule
         beetsplug.dummy = self.DummyModule
         self.setup_beets()
+        self.load_plugins('dummy')
 
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
         del beetsplug.dummy
         sys.modules.pop('beetsplug.dummy')
+        self.DummyModule.DummyPlugin.listeners = None
+        self.DummyModule.DummyPlugin._raw_listeners = None
 
     def test_command_level0(self):
         self.config['verbose'] = 0
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             self.run_command('dummy')
         self.assertIn('dummy: warning cmd', logs)
-        self.assertIn('dummy: report cmd', logs)
+        self.assertIn('dummy: info cmd', logs)
         self.assertNotIn('dummy: debug cmd', logs)
 
     def test_command_level1(self):
         self.config['verbose'] = 1
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             self.run_command('dummy')
         self.assertIn('dummy: warning cmd', logs)
-        self.assertIn('dummy: report cmd', logs)
+        self.assertIn('dummy: info cmd', logs)
         self.assertIn('dummy: debug cmd', logs)
 
     def test_command_level2(self):
         self.config['verbose'] = 2
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             self.run_command('dummy')
         self.assertIn('dummy: warning cmd', logs)
-        self.assertIn('dummy: report cmd', logs)
+        self.assertIn('dummy: info cmd', logs)
         self.assertIn('dummy: debug cmd', logs)
 
     def test_listener_level0(self):
         self.config['verbose'] = 0
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             plugins.send('dummy_event')
         self.assertIn('dummy: warning listener', logs)
-        self.assertNotIn('dummy: report listener', logs)
+        self.assertNotIn('dummy: info listener', logs)
         self.assertNotIn('dummy: debug listener', logs)
 
     def test_listener_level1(self):
         self.config['verbose'] = 1
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             plugins.send('dummy_event')
         self.assertIn('dummy: warning listener', logs)
-        self.assertIn('dummy: report listener', logs)
+        self.assertIn('dummy: info listener', logs)
         self.assertNotIn('dummy: debug listener', logs)
 
     def test_listener_level2(self):
         self.config['verbose'] = 2
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             plugins.send('dummy_event')
         self.assertIn('dummy: warning listener', logs)
-        self.assertIn('dummy: report listener', logs)
+        self.assertIn('dummy: info listener', logs)
         self.assertIn('dummy: debug listener', logs)
 
     def test_import_stage_level0(self):
         self.config['verbose'] = 0
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             importer = self.create_importer()
             importer.run()
         self.assertIn('dummy: warning import_stage', logs)
-        self.assertNotIn('dummy: report import_stage', logs)
+        self.assertNotIn('dummy: info import_stage', logs)
         self.assertNotIn('dummy: debug import_stage', logs)
 
     def test_import_stage_level1(self):
         self.config['verbose'] = 1
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             importer = self.create_importer()
             importer.run()
         self.assertIn('dummy: warning import_stage', logs)
-        self.assertIn('dummy: report import_stage', logs)
+        self.assertIn('dummy: info import_stage', logs)
         self.assertNotIn('dummy: debug import_stage', logs)
 
     def test_import_stage_level2(self):
         self.config['verbose'] = 2
-        self.load_plugins('dummy')
         with helper.capture_log() as logs:
             importer = self.create_importer()
             importer.run()
         self.assertIn('dummy: warning import_stage', logs)
-        self.assertIn('dummy: report import_stage', logs)
+        self.assertIn('dummy: info import_stage', logs)
         self.assertIn('dummy: debug import_stage', logs)
 
 

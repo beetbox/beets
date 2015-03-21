@@ -50,15 +50,30 @@ class PluginLogFilter(logging.Filter):
     message.
     """
     def __init__(self, plugin):
+        self.plugin = plugin
         self.prefix = u'{0}: '.format(plugin.name)
 
     def filter(self, record):
+        # Add the prefix for the plugin.
         if hasattr(record.msg, 'msg') and isinstance(record.msg.msg,
                                                      basestring):
             # A _LogMessage from our hacked-up Logging replacement.
             record.msg.msg = self.prefix + record.msg.msg
         elif isinstance(record.msg, basestring):
+            # An ordinary string.
             record.msg = self.prefix + record.msg
+
+        # Adjust the level of the message.
+        if self.plugin._local.__dict__.get('in_handler'):
+            if beets.config['verbose'].get(int) >= 2:
+                threshold = 10
+            elif beets.config['verbose'].get(int) >= 1:
+                threshold = 20
+            else:
+                threshold = 30
+            if record.levelno < threshold:
+                return False
+
         return True
 
 
@@ -84,14 +99,18 @@ class BeetsPlugin(object):
 
         # Set up the plugin's logger.
         self._log = log.getChild(self.name)
-        if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
-            self._log.addFilter(PluginLogFilter(self))
-        # Plugins become verbose in -vv mode (whereas the core does in
-        # -v mode).
-        if beets.config['verbose'].get(int) >= 2:
-            self._log.setLevel(logging.DEBUG)
+        self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
+        filters = [f for f in self._log.filters
+                   if isinstance(f, PluginLogFilter)]
+        if filters:
+            # During testing, we need to instantiate the plugin multiple
+            # times and hook the logger's filter up to it. This is an
+            # ugly artifact of the logging manager's global state.
+            filters[0].plugin = self
         else:
-            self._log.setLevel(logging.INFO)
+            # Ordinary circumstances: we're creating the filter for the first
+            # time.
+            self._log.addFilter(PluginLogFilter(self))
 
         # Thread-local state.
         self._local = threading.local()
@@ -145,19 +164,9 @@ class BeetsPlugin(object):
         return wrapper
 
     def report(self, *args, **kwargs):
-        """Log an informational message from the plugin.
-
-        When called from an event handler or an import stage, this logs
-        as a debug message (to avoid interrupting the ordinary output in
-        non-verbose mode). Otherwise, i.e., in the context of an
-        explicit command, it is logged as an "info" message (and
-        displayed by default).
+        """TODO REMOVE THIS
         """
-        if self._local.__dict__.get('in_handler'):
-            level = logging.DEBUG
-        else:
-            level = logging.INFO
-        self._log.log(level, *args, **kwargs)
+        self._log.log(logging.INFO, *args, **kwargs)
 
     def queries(self):
         """Should return a dict mapping prefixes to Query subclasses.
