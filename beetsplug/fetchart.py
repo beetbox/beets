@@ -453,7 +453,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                 else:
                     message = ui.colorize('text_error', 'no art found')
 
-            self._log.info(u'{0}: {1}', album, message)
+            self.report(u'{0}: {1}', album, message)
 
     def _source_urls(self, album):
         """Generate possible source URLs for an album's art. The URLs are

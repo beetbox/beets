@@ -72,10 +72,10 @@ class IHatePlugin(BeetsPlugin):
                 self._log.debug(u'processing your hate')
                 if self.do_i_hate_this(task, skip_queries):
                     task.choice_flag = action.SKIP
-                    self._log.info(u'skipped: {0}', summary(task))
+                    self.report(u'skipped: {0}', summary(task))
                     return
                 if self.do_i_hate_this(task, warn_queries):
-                    self._log.info(u'you may hate this: {0}', summary(task))
+                    self.report(u'you may hate this: {0}', summary(task))
             else:
                 self._log.debug(u'nothing to do')
         else:

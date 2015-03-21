@@ -135,9 +135,9 @@ class ImportFeedsPlugin(BeetsPlugin):
                     os.symlink(syspath(path), syspath(dest))
 
         if 'echo' in formats:
-            self._log.info("Location of imported music:")
+            self.report("Location of imported music:")
             for path in paths:
-                self._log.info("  {0}", path)
+                self.report("  {0}", path)
 
     def library_opened(self, lib):
         if self.config['dir'].get() is None:

@@ -147,8 +147,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self._unmatched_playlists -= self._matched_playlists
 
     def update_playlists(self, lib):
-        self._log.info("Updating {0} smart playlists...",
-                       len(self._matched_playlists))
+        self.report("Updating {0} smart playlists...",
+                    len(self._matched_playlists))
 
         playlist_dir = self.config['playlist_dir'].as_filename()
         relative_to = self.config['relative_to'].get()
@@ -185,4 +185,4 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 with open(syspath(m3u_path), 'w') as f:
                     for path in m3us[m3u]:
                         f.write(path + b'\n')
-        self._log.info("{0} playlists updated", len(self._matched_playlists))
+        self.report("{0} playlists updated", len(self._matched_playlists))

@@ -94,7 +94,7 @@ class MPDUpdatePlugin(BeetsPlugin):
         """Sends the "update" command to the MPD server indicated,
         possibly authenticating with a password first.
         """
-        self._log.info('Updating MPD database...')
+        self.report('Updating MPD database...')
 
         s = BufferedSocket(host, port)
         resp = s.readline()
@@ -118,4 +118,4 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         s.send('close\n')
         s.close()
-        self._log.info('Database updated.')
+        self.report('Database updated.')

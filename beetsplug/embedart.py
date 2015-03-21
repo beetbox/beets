@@ -139,10 +139,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         if compare_threshold:
             if not self.check_art_similarity(item, imagepath,
                                              compare_threshold):
-                self._log.info(u'Image not similar; skipping.')
+                self.report(u'Image not similar; skipping.')
                 return
         if ifempty and self.get_art(item):
-                self._log.info(u'media file already contained art')
+                self.report(u'media file already contained art')
                 return
         if maxwidth and not as_album:
             imagepath = self.resize_image(imagepath, maxwidth)
@@ -160,16 +160,16 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         imagepath = album.artpath
         if not imagepath:
-            self._log.info(u'No album art present for {0}', album)
+            self.report(u'No album art present for {0}', album)
             return
         if not os.path.isfile(syspath(imagepath)):
-            self._log.info(u'Album art not found at {0} for {1}',
-                           displayable_path(imagepath), album)
+            self.report(u'Album art not found at {0} for {1}',
+                        displayable_path(imagepath), album)
             return
         if maxwidth:
             imagepath = self.resize_image(imagepath, maxwidth)
 
-        self._log.info(u'Embedding album art into {0}', album)
+        self.report(u'Embedding album art into {0}', album)
 
         for item in album.items():
             thresh = self.config['compare_threshold'].get(int)
@@ -257,7 +257,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         art = self.get_art(item)
 
         if not art:
-            self._log.info(u'No album art present in {0}, skipping.', item)
+            self.report(u'No album art present in {0}, skipping.', item)
             return
 
         # Add an extension to the filename.
@@ -268,8 +268,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             return
         outpath += b'.' + ext
 
-        self._log.info(u'Extracting album art from: {0} to: {1}',
-                       item, displayable_path(outpath))
+        self.report(u'Extracting album art from: {0} to: {1}',
+                    item, displayable_path(outpath))
         with open(syspath(outpath), 'wb') as f:
             f.write(art)
         return outpath
@@ -285,7 +285,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         id3v23 = config['id3v23'].get(bool)
 
         items = lib.items(query)
-        self._log.info(u'Clearing album art from {0} items', len(items))
+        self.report(u'Clearing album art from {0} items', len(items))
         for item in items:
             self._log.debug(u'Clearing art for {0}', item)
             try:

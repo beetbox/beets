@@ -62,14 +62,14 @@ class PlexUpdate(BeetsPlugin):
     def update(self, lib):
         """When the client exists try to send refresh request to Plex server.
         """
-        self._log.info('Updating Plex library...')
+        self.report('Updating Plex library...')
 
         # Try to send update request.
         try:
             update_plex(
                 config['plex']['host'].get(),
                 config['plex']['port'].get())
-            self._log.info('... started.')
+            self.report('... started.')
 
         except requests.exceptions.RequestException:
             self._log.warning('Update failed.')

@@ -128,7 +128,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         remove it from the artist field.
         """
         # In all cases, update the artist fields.
-        self._log.info(u'artist: {0} -> {1}', item.artist, item.albumartist)
+        self.report(u'artist: {0} -> {1}', item.artist, item.albumartist)
         item.artist = item.albumartist
         if item.artist_sort:
             # Just strip the featured artist from the sort name.
@@ -138,7 +138,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # artist and if we do not drop featuring information.
         if not drop_feat and not contains_feat(item.title):
             new_title = u"{0} feat. {1}".format(item.title, feat_part)
-            self._log.info(u'title: {0} -> {1}', item.title, new_title)
+            self.report(u'title: {0} -> {1}', item.title, new_title)
             item.title = new_title
 
     def ft_in_title(self, item, drop_feat):
@@ -153,7 +153,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # that case, we attempt to move the featured artist to the title.
         _, featured = split_on_feat(artist)
         if featured and albumartist != artist and albumartist:
-            self._log.info(displayable_path(item.path))
+            self.report(displayable_path(item.path))
 
             feat_part = None
 
@@ -164,4 +164,4 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             if feat_part:
                 self.update_metadata(item, feat_part, drop_feat)
             else:
-                self._log.info(u'no featuring artists found')
+                self.report(u'no featuring artists found')
