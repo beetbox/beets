@@ -89,6 +89,7 @@ class BeetsPlugin(object):
 
         # Thread-local state.
         self._local = threading.local()
+        self._local.in_handler = False
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -146,7 +147,10 @@ class BeetsPlugin(object):
         explicit command, it is logged as an "info" message (and
         displayed by default).
         """
-        level = logging.DEBUG if self._local.in_handler else logging.INFO
+        if self._local.__dict__.get('in_handler'):
+            level = logging.DEBUG
+        else:
+            level = logging.INFO
         self._log.log(level, *args, **kwargs)
 
     def queries(self):
