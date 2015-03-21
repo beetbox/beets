@@ -63,14 +63,17 @@ class PluginLogFilter(logging.Filter):
             # An ordinary string.
             record.msg = self.prefix + record.msg
 
-        # Adjust the level of the message.
+        # In plugin handlers, use an elevated level threshold according
+        # to the verbosity. We manually filter messages according to
+        # this new threshold.
         if self.plugin._local.__dict__.get('in_handler'):
-            if beets.config['verbose'].get(int) >= 2:
-                threshold = 10
-            elif beets.config['verbose'].get(int) >= 1:
-                threshold = 20
+            verbosity = beets.config['verbose'].get(int)
+            if verbosity >= 2:
+                threshold = logging.DEBUG
+            elif verbosity >= 1:
+                threshold = logging.INFO
             else:
-                threshold = 30
+                threshold = logging.WARNING
             if record.levelno < threshold:
                 return False
 
@@ -100,17 +103,13 @@ class BeetsPlugin(object):
         # Set up the plugin's logger.
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
-        filters = [f for f in self._log.filters
-                   if isinstance(f, PluginLogFilter)]
-        if filters:
-            # During testing, we need to instantiate the plugin multiple
-            # times and hook the logger's filter up to it. This is an
-            # ugly artifact of the logging manager's global state.
-            filters[0].plugin = self
-        else:
-            # Ordinary circumstances: we're creating the filter for the first
-            # time.
-            self._log.addFilter(PluginLogFilter(self))
+        # Remove any leftover plugin log filters before adding our new
+        # one. This can occur, for example, in testing, where the logging
+        # manager persists longer than the plugin objects. (Another ugly
+        # artifact of `logging`'s love for global state.)
+        self._log.filters = [f for f in self._log.filters
+                             if not isinstance(f, PluginLogFilter)]
+        self._log.addFilter(PluginLogFilter(self))
 
         # Thread-local state.
         self._local = threading.local()
