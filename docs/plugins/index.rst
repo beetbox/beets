@@ -202,6 +202,8 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-follow`_ lets you check for new albums from artists you like.
 
+* `beets-setlister`_ generate playlists from the setlists of a given artist
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -215,3 +217,4 @@ Here are a few of the plugins written by the beets community:
 .. _beet-amazon: https://github.com/jmwatte/beet-amazon
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 .. _beets-follow: https://github.com/nolsto/beets-follow
+.. _beets-setlister: https://github.com/tomjaspers/beets-setlister
