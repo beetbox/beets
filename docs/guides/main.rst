@@ -139,6 +139,8 @@ beets to behave many other ways:
 
         import:
             move: yes
+            
+  NOTE: This section must be indented, and it must be with spaces, not tabs.
 
 * Keep your current directory structure; importing should never move or copy
   files but instead just correct the tags on music. Put the line ``copy: no``
