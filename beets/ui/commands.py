@@ -780,7 +780,7 @@ class TerminalImportSession(importer.ImportSession):
 
         # skip empty albums (coming from a previous failed import session)
         if task.is_album:
-            real_duplicates = filter(len, found_duplicates)
+            real_duplicates = [dup for dup in found_duplicates if dup.items()]
             if not real_duplicates:
                 log.info("All duplicates are empty, we ignore them")
                 task.should_remove_duplicates = True
