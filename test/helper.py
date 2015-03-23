@@ -15,7 +15,7 @@
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
 
-- The `control_stdin` and `capture_output` context managers allow one to
+- The `control_stdin` and `capture_stdout` context managers allow one to
   interact with the user interface.
 
 - `has_program` checks the presence of a command on the system.
