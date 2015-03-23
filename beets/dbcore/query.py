@@ -330,10 +330,10 @@ class CollectionQuery(Query):
         for subq in self.subqueries:
             subq_clause, subq_subvals = subq.clause()
             if not subq_clause:
-                # Fall back to slow query.
-                return None, ()
-            clause_parts.append('(' + subq_clause + ')')
-            subvals += subq_subvals
+                pass
+            else:
+                clause_parts.append('(' + subq_clause + ')')
+                subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
 

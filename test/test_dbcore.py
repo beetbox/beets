@@ -438,6 +438,12 @@ class QueryFromStringsTest(unittest.TestCase):
         q = self.qfs([''])
         self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
 
+    def test_mixed_query(self):
+        q = self.qfs(['field_one:123', 'other_attr:bar'])
+        self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
+        self.assertIsInstance(q.subqueries[1], dbcore.query.SubstringQuery)
+        self.assertEqual(q.clause(), (u'(field_one=?)', [123]))
+
 
 class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):

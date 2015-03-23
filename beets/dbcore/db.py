@@ -28,7 +28,7 @@ import collections
 import beets
 from beets.util.functemplate import Template
 from beets.dbcore import types
-from .query import MatchQuery, NullSort, TrueQuery
+from .query import MatchQuery, NullSort, TrueQuery, NoneQuery
 
 
 class FormattedMapping(collections.Mapping):
@@ -485,6 +485,8 @@ class Results(object):
         self.rows = rows
         self.db = db
         self.query = query
+        if isinstance(query, NoneQuery):
+            self.query = None
         self.sort = sort
 
         # We keep a queue of rows we haven't yet consumed for
@@ -809,10 +811,9 @@ class Database(object):
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
-
         return Results(
             model_cls, rows, self,
-            None if where else query,  # Slow query component.
+            query,
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
