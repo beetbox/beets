@@ -387,6 +387,7 @@ class RootView(ConfigView):
         """
         self.sources = list(sources)
         self.name = ROOT_NAME
+        self.redacted_fields = set()
 
     def add(self, obj):
         self.sources.append(ConfigSource.of(obj))
@@ -403,6 +404,12 @@ class RootView(ConfigView):
 
     def root(self):
         return self
+
+    def add_redacted_fields(self, field_names):
+        if not isinstance(field_names, list):
+            field_names = [field_names]
+
+        self.redacted_fields = self.redacted_fields | set(field_names)
 
 
 class Subview(ConfigView):
@@ -454,6 +461,9 @@ class Subview(ConfigView):
 
     def root(self):
         return self.parent.root()
+
+    def add_redacted_fields(self, field_names):
+        self.parent.add_redacted_fields(field_names)
 
 
 # Config file paths, including platform-specific paths and in-package
@@ -585,11 +595,16 @@ def load_yaml(filename):
 
 
 # YAML dumping.
+REDACTED_FIELDS = ['password', 'username', 'userid', 'apikey',
+                   'apisecret', 'email', ]
+
 
 class Dumper(yaml.SafeDumper):
     """A PyYAML Dumper that represents OrderedDicts as ordinary mappings
     (in order, of course).
     """
+    redacted_fields = set(REDACTED_FIELDS)
+
     # From http://pyyaml.org/attachment/ticket/161/use_ordered_dict.py
     def represent_mapping(self, tag, mapping, flow_style=None):
         value = []
@@ -600,6 +615,8 @@ class Dumper(yaml.SafeDumper):
         if hasattr(mapping, 'items'):
             mapping = list(mapping.items())
         for item_key, item_value in mapping:
+            if item_key in Dumper.redacted_fields:
+                item_value = u'REDACTED'
             node_key = self.represent_data(item_key)
             node_value = self.represent_data(item_value)
             if not (isinstance(node_key, yaml.ScalarNode) and
@@ -783,7 +800,7 @@ class Configuration(RootView):
         filename = os.path.abspath(filename)
         self.set(ConfigSource(load_yaml(filename), filename))
 
-    def dump(self, full=True):
+    def dump(self, full=True, redact_fields=True):
         """Dump the Configuration object to a YAML file.
 
         The order of the keys is determined from the default
@@ -802,6 +819,12 @@ class Configuration(RootView):
             # Exclude defaults when flattening.
             sources = [s for s in self.sources if not s.default]
             out_dict = RootView(sources).flatten()
+
+        if redact_fields:
+            Dumper.redacted_fields = Dumper.redacted_fields | \
+                self.redacted_fields
+        else:
+            Dumper.redacted_fields = set()
 
         yaml_out = yaml.dump(out_dict, Dumper=Dumper,
                              default_flow_style=None, indent=4,
