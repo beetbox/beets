@@ -463,6 +463,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'force': False,
             'sources': self.SOURCES,
         })
+        self.config.add_redacted_fields(['google_API_key', 'google_engine_ID'])
 
         available_sources = list(self.SOURCES)
         if not self.config['google_API_key'].get() and \
