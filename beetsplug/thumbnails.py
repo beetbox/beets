@@ -94,13 +94,17 @@ class ThumbnailsPlugin(BeetsPlugin):
 
         if has_IM():
             self.write_metadata = write_metadata_im
+            tool = "IM"
         else:
             assert has_PIL()  # since we're local
             self.write_metadata = write_metadata_pil
+            tool = "PIL"
+        self._log.debug("using {0} to write metadata", tool)
 
         uri_getter = GioURI()
         if not uri_getter.available:
             uri_getter = PathlibURI()
+        self._log.debug("using {0.name} to compute URIs", uri_getter)
         self.get_uri = uri_getter.uri
 
         return True
@@ -207,6 +211,7 @@ def write_metadata_pil(file, metadata):
 
 class URIGetter(object):
     available = False
+    name = "Abstract base"
 
     def uri(self, path):
         raise NotImplementedError()
@@ -214,6 +219,7 @@ class URIGetter(object):
 
 class PathlibURI(URIGetter):
     available = True
+    name = "Python Pathlib"
 
     def uri(self, path):
         return PurePosixPath(path).as_uri()
@@ -222,6 +228,8 @@ class PathlibURI(URIGetter):
 class GioURI(URIGetter):
     """Use gio URI function g_file_get_uri. Paths must be utf-8 encoded.
     """
+    name = "GIO"
+
     def __init__(self):
         self.libgio = self.get_library()
         self.available = bool(self.libgio)
