@@ -24,7 +24,8 @@ from test._common import unittest
 from test.helper import TestHelper
 
 from beetsplug.thumbnails import (ThumbnailsPlugin, NORMAL_DIR, LARGE_DIR,
-                                  write_metadata_im, write_metadata_pil)
+                                  write_metadata_im, write_metadata_pil,
+                                  PathlibURI, GioURI)
 
 
 class ThumbnailsTest(unittest.TestCase, TestHelper):
@@ -37,8 +38,10 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     @patch('beetsplug.thumbnails.BaseDirectory')
     def test_thumbnail_filter_name(self, mock_basedir):
         filename = b"/home/jens/photos/me.png"
-        thumbnail = ThumbnailsPlugin.thumbnail_file_name(filename)
-        self.assertEqual(thumbnail, b"c6ee772d9e49320e97ec29a7eb5b1697.png")
+        plug = ThumbnailsPlugin()
+        plug.get_uri = PathlibURI().uri
+        self.assertEqual(plug.thumbnail_file_name(filename),
+                         b"c6ee772d9e49320e97ec29a7eb5b1697.png")
 
     @patch('beetsplug.thumbnails.util')
     def test_write_metadata_im(self, mock_util):
@@ -56,12 +59,14 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def test_add_tags(self, mock_stat, _):
         plugin = ThumbnailsPlugin()
         plugin.write_metadata = Mock()
+        plugin.get_uri = Mock(side_effect=
+                              {b"/path/to/cover": "COVER_URI"}.__getitem__)
         album = Mock(artpath=b"/path/to/cover")
         mock_stat.return_value.st_mtime = 12345
 
         plugin.add_tags(album, b"/path/to/thumbnail")
 
-        metadata = {"Thumb::URI": b"file:///path/to/cover",
+        metadata = {"Thumb::URI": b"COVER_URI",
                     "Thumb::MTime": "12345"}
         plugin.write_metadata.assert_called_once_with(b"/path/to/thumbnail",
                                                       metadata)
@@ -71,7 +76,9 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     @patch('beetsplug.thumbnails.ArtResizer')
     @patch('beetsplug.thumbnails.has_IM')
     @patch('beetsplug.thumbnails.has_PIL')
-    def test_check_local_ok(self, mock_pil, mock_im, mock_artresizer, mock_os):
+    @patch('beetsplug.thumbnails.GioURI')
+    def test_check_local_ok(self, mock_giouri, mock_pil, mock_im,
+                            mock_artresizer, mock_os):
         # test local resizing capability
         mock_artresizer.shared.local = False
         plugin = ThumbnailsPlugin()
@@ -108,6 +115,14 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         self.assertEqual(ThumbnailsPlugin().write_metadata, write_metadata_im)
 
         self.assertTrue(ThumbnailsPlugin()._check_local_ok())
+
+        # test URI getter function
+        giouri_inst = mock_giouri.return_value
+        giouri_inst.available = True
+        self.assertEqual(ThumbnailsPlugin().get_uri, giouri_inst.uri)
+
+        giouri_inst.available = False
+        self.assertEqual(ThumbnailsPlugin().get_uri.im_class, PathlibURI)
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     @patch('beetsplug.thumbnails.ArtResizer')
