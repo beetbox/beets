@@ -35,14 +35,6 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    @patch('beetsplug.thumbnails.BaseDirectory')
-    def test_thumbnail_filter_name(self, mock_basedir):
-        filename = b"/home/jens/photos/me.png"
-        plug = ThumbnailsPlugin()
-        plug.get_uri = PathlibURI().uri
-        self.assertEqual(plug.thumbnail_file_name(filename),
-                         b"c6ee772d9e49320e97ec29a7eb5b1697.png")
-
     @patch('beetsplug.thumbnails.util')
     def test_write_metadata_im(self, mock_util):
         metadata = {"a": "A", "b": "B"}
@@ -261,6 +253,30 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         lib.albums.assert_called_once_with(mock_decargs.return_value)
         plugin.process_album.has_calls([call(album), call(album2)],
                                        any_order=True)
+
+    @patch('beetsplug.thumbnails.BaseDirectory')
+    def test_thumbnail_file_name(self, mock_basedir):
+        plug = ThumbnailsPlugin()
+        plug.get_uri = Mock(return_value="file:///my/uri")
+        self.assertEqual(plug.thumbnail_file_name("idontcare"),
+                         b"9488f5797fbe12ffb316d607dfd93d04.png")
+
+    def test_uri(self):
+        gio = GioURI()
+        plib = PathlibURI()
+        if not gio.available:
+            self.skip("GIO library not found")
+
+        self.assertEqual(gio.uri("/foo"), b"file:///")  # silent fail
+        self.assertEqual(gio.uri(b"/foo"), b"file:///foo")
+        self.assertEqual(gio.uri(b"/foo!"), b"file:///foo!")
+        self.assertEqual(plib.uri(b"/foo!"), b"file:///foo%21")
+        self.assertEqual(
+            gio.uri(b'/music/\xec\x8b\xb8\xec\x9d\xb4'),
+            b'file:///music/%EC%8B%B8%EC%9D%B4')
+        self.assertEqual(
+            plib.uri(b'/music/\xec\x8b\xb8\xec\x9d\xb4'),
+            b'file:///music/%EC%8B%B8%EC%9D%B4')
 
 
 def suite():
