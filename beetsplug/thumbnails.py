@@ -27,6 +27,8 @@ import os
 import shutil
 from itertools import chain
 from pathlib import PurePosixPath
+import ctypes
+import ctypes.util
 
 from xdg import BaseDirectory
 
@@ -79,6 +81,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             - local capability to resize images
             - thumbnail dirs exist (create them if needed)
             - detect whether we'll use PIL or IM
+            - detect whether we'll use GIO or Python to get URIs
         """
         if not ArtResizer.shared.local:
             self._log.warning("No local image resizing capabilities, "
@@ -94,6 +97,11 @@ class ThumbnailsPlugin(BeetsPlugin):
         else:
             assert has_PIL()  # since we're local
             self.write_metadata = write_metadata_pil
+
+        uri_getter = GioURI()
+        if not uri_getter.available:
+            uri_getter = PathlibURI()
+        self.get_uri = uri_getter.uri
 
         return True
 
@@ -146,12 +154,11 @@ class ThumbnailsPlugin(BeetsPlugin):
         shutil.move(resized, target)
         return True
 
-    @staticmethod
-    def thumbnail_file_name(path):
+    def thumbnail_file_name(self, path):
         """Compute the thumbnail file name
         See http://standards.freedesktop.org/thumbnail-spec/latest/x227.html
         """
-        uri = PurePosixPath(path).as_uri()
+        uri = self.get_uri(path)
         hash = md5(uri).hexdigest()
         return "{0}.png".format(hash)
 
@@ -159,7 +166,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         """Write required metadata to the thumbnail
         See http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
         """
-        metadata = {"Thumb::URI": PurePosixPath(album.artpath).as_uri(),
+        metadata = {"Thumb::URI": self.get_uri(album.artpath),
                     "Thumb::MTime": unicode(os.stat(album.artpath).st_mtime)}
         try:
             self.write_metadata(image_path, metadata)
@@ -181,8 +188,8 @@ class ThumbnailsPlugin(BeetsPlugin):
 def write_metadata_im(file, metadata):
     """Enrich the file metadata with `metadata` dict thanks to IM."""
     command = ['convert', file] + \
-        list(chain.from_iterable(('-set', k, v) for k, v in metadata.items())) + \
-        [file]
+        list(chain.from_iterable(('-set', k, v)
+                                 for k, v in metadata.items())) + [file]
     util.command_output(command)
     return True
 
@@ -196,3 +203,57 @@ def write_metadata_pil(file, metadata):
         meta.add_text(k, v, 0)
     im.save(file, "PNG", pnginfo=meta)
     return True
+
+
+class URIGetter(object):
+    available = False
+
+    def uri(self, path):
+        raise NotImplementedError()
+
+
+class PathlibURI(URIGetter):
+    available = True
+
+    def uri(self, path):
+        return PurePosixPath(path).as_uri()
+
+
+class GioURI(URIGetter):
+    """Use gio URI function g_file_get_uri. Paths must be utf-8 encoded.
+    """
+    def __init__(self):
+        self.libgio = self.get_library()
+        self.available = bool(self.libgio)
+
+    def get_library(self):
+        lib_name = ctypes.util.find_library("gio-2")
+        try:
+            return ctypes.cdll.LoadLibrary(lib_name)
+        except OSError:
+            return False
+
+    def uri(self, path):
+        g_file_ptr = self.libgio.g_file_new_for_path(path)
+        if not g_file_ptr:
+            raise RuntimeError("No gfile pointer received for {0}".format(
+                util.displayable_path(path)))
+
+        try:
+            uri_ptr = self.libgio.g_file_get_uri(g_file_ptr)
+        except:
+            raise
+        finally:
+            self.libgio.g_object_unref(g_file_ptr)
+        if not uri_ptr:
+            self.libgio.g_free(uri_ptr)
+            raise RuntimeError("No URI received from the gfile pointer for "
+                               "{0}".format(util.displayable_path(path)))
+
+        try:
+            uri = ctypes.c_char_p(uri_ptr).value
+        except:
+            raise
+        finally:
+            self.libgio.g_free(uri_ptr)
+        return uri
