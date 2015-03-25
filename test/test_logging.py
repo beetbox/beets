@@ -23,10 +23,12 @@ class LoggingTest(TestCase):
         l3 = blog.getLogger("bar123")
         l4 = log.getLogger("bar123")
         self.assertEqual(l3, l4)
-        self.assertEqual(l3.__class__, blog.StrFormatLogger)
+        self.assertEqual(l3.__class__, blog.BeetsLogger)
+        self.assertIsInstance(l3, (blog.StrFormatLogger,
+                                   blog.ThreadLocalLevelLogger))
 
         l5 = l3.getChild("shalala")
-        self.assertEqual(l5.__class__, blog.StrFormatLogger)
+        self.assertEqual(l5.__class__, blog.BeetsLogger)
 
     def test_str_format_logging(self):
         l = blog.getLogger("baz123")
