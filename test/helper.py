@@ -15,7 +15,7 @@
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
 
-- The `control_stdin` and `capture_output` context managers allow one to
+- The `control_stdin` and `capture_stdout` context managers allow one to
   interact with the user interface.
 
 - `has_program` checks the presence of a command on the system.
@@ -51,6 +51,7 @@ from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
+from beets.ui import _encoding
 
 # TODO Move AutotagMock here
 from test import _common
@@ -117,9 +118,13 @@ def capture_stdout():
 def has_program(cmd, args=['--version']):
     """Returns `True` if `cmd` can be executed.
     """
+    full_cmd = [cmd] + args
+    for i, elem in enumerate(full_cmd):
+        if isinstance(elem, unicode):
+            full_cmd[i] = elem.encode(_encoding())
     try:
         with open(os.devnull, 'wb') as devnull:
-            subprocess.check_call([cmd] + args, stderr=devnull,
+            subprocess.check_call(full_cmd, stderr=devnull,
                                   stdout=devnull, stdin=devnull)
     except OSError:
         return False
@@ -167,7 +172,7 @@ class TestHelper(object):
         self.config.read()
 
         self.config['plugins'] = []
-        self.config['verbose'] = True
+        self.config['verbose'] = 1
         self.config['ui']['color'] = False
         self.config['threaded'] = False
 

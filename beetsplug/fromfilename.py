@@ -140,10 +140,11 @@ def apply_matches(d):
 # Plugin structure and hook into import process.
 
 class FromFilenamePlugin(plugins.BeetsPlugin):
-    pass
+    def __init__(self):
+        super(FromFilenamePlugin, self).__init__()
+        self.register_listener('import_task_start', filename_task)
 
 
-@FromFilenamePlugin.listen('import_task_start')
 def filename_task(task, session):
     """Examine each item in the task to see if we can extract a title
     from the filename. Try to match all filenames to a number of

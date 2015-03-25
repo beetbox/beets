@@ -73,8 +73,8 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(album.album, 'album info')
 
     def test_message_when_skipping(self):
-        config['list_format_item'] = '$artist - $album - $title'
-        config['list_format_album'] = '$albumartist - $album'
+        config['format_item'] = '$artist - $album - $title'
+        config['format_album'] = '$albumartist - $album'
 
         # Test album with no mb_albumid.
         # The default format for an album include $albumartist so
@@ -98,6 +98,10 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
             self.run_command('mbsync', '-f', "'$album'")
         e = "mbsync: Skipping album with no mb_albumid: 'album info'"
         self.assertEqual(e, logs[0])
+
+        # restore the config
+        config['format_item'] = '$artist - $album - $title'
+        config['format_album'] = '$albumartist - $album'
 
         # Test singleton with no mb_trackid.
         # The default singleton format includes $artist and $album

@@ -26,6 +26,7 @@ https://gist.github.com/1241307
 import pylast
 import os
 import yaml
+import traceback
 
 from beets import plugins
 from beets import ui
@@ -391,16 +392,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         If `min_weight` is specified, tags are filtered by weight.
         """
+        # Work around an inconsistency in pylast where
+        # Album.get_top_tags() does not return TopItem instances.
+        # https://code.google.com/p/pylast/issues/detail?id=85
+        if isinstance(obj, pylast.Album):
+            obj = super(pylast.Album, obj)
+
         try:
-            # Work around an inconsistency in pylast where
-            # Album.get_top_tags() does not return TopItem instances.
-            # https://code.google.com/p/pylast/issues/detail?id=85
-            if isinstance(obj, pylast.Album):
-                res = super(pylast.Album, obj).get_top_tags()
-            else:
-                res = obj.get_top_tags()
+            res = obj.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
             self._log.debug(u'last.fm error: {0}', exc)
+            return []
+        except Exception as exc:
+            # Isolate bugs in pylast.
+            self._log.debug(traceback.format_exc())
+            self._log.error('error in pylast library: {0}', exc)
             return []
 
         # Filter by weight (optionally).

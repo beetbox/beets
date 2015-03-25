@@ -6,6 +6,23 @@ Changelog
 
 Features:
 
+* :doc:`/plugins/smartplaylist`: detect for each playlist if it needs to be
+  regenated, instead of systematically regenerating all of them after a
+  database modification.
+* :doc:`/plugins/smartplaylist`: the ``splupdate`` command can now take
+  additinal parameters: names of the playlists to regenerate.
+* Beets now accept top-level options ``--format-item`` and ``--format-album``
+  before any subcommand to control how items and albums are displayed.
+  :bug:`1271`
+* :doc:`/plugins/replaygain`: There is a new backend for the `bs1770gain`_
+  tool. Thanks to :user:`jmwatte`. :bug:`1343`
+* There are now multiple levels of verbosity. On the command line, you can
+  make beets somewhat verbose with ``-v`` or very verbose with ``-vv``.
+  :bug:`1244`
+* :doc:`/plugins/play` will sort items according to the configured option when
+  used in album mode.
+* :doc:`/plugins/play` gives full interaction with the command invoked.
+  :bug:`1321`
 * The summary shown to compare duplicate albums during import now displays
   the old and new filesizes. :bug:`1291`
 * The colors used are now configurable via the new config option ``colors``,
@@ -46,6 +63,10 @@ Features:
 * A new ``filesize`` field on items indicates the number of bytes in the file.
   :bug:`1291`
 * The number of missing/unmatched tracks is shown during import. :bug:`1088`
+* The data source used during import (e.g., MusicBrainz) is now saved as a
+  flexible attribute `data_source` of an Item/Album. :bug:`1311`
+* :doc:`/plugins/permissions`: Now handles also the permissions of the
+  directories. :bug:`1308` :bug:`1324`
 
 Core changes:
 
@@ -60,13 +81,19 @@ Core changes:
   ``albumtotal`` computed attribute that provides the total number of tracks
   on the album. (The :ref:`per_disc_numbering` option has no influence on this
   field.)
-* The :ref:`list_format_album` and :ref:`list_format_item` configuration keys
+* The `list_format_album` and `list_format_item` configuration keys
   now affect (almost) every place where objects are printed and logged.
   (Previously, they only controlled the :ref:`list-cmd` command and a few
   other scattered pieces.) :bug:`1269`
+* `list_format_album` and `list_format_album` have respectively been
+  renamed :ref:`format_album` and :ref:`format_item`. The old names still work
+  but each triggers a warning message. :bug:`1271`
 
 Fixes:
 
+* :doc:`/plugins/replaygain`: Stop applying replaygain directly to source files
+  when using the mp3gain backend. :bug:`1316`
+* Path queries are case-sensitive on non-Windows OSes. :bug:`1165`
 * :doc:`/plugins/lyrics`: Silence a warning about insecure requests in the new
   MusixMatch backend. :bug:`1204`
 * Fix a crash when ``beet`` is invoked without arguments. :bug:`1205`
@@ -105,17 +132,28 @@ Fixes:
   Unicode filenames. :bug:`1297`
 * :doc:`/plugins/discogs`: Handle and log more kinds of communication
   errors. :bug:`1299` :bug:`1305`
+* :doc:`/plugins/lastgenre`: Bugs in the `pylast` library can no longer crash
+  beets.
 
 For developers:
 
+* The ``database_change`` event now sends the item or album that is subject to
+  a change in the db.
+* the ``OptionParser`` is now a ``CommonOptionsParser`` that offers facilities
+  for adding usual options (``--album``, ``--path`` and ``--format``). See
+  :ref:`add_subcommands`. :bug:`1271`
 * The logging system in beets has been overhauled. Plugins now each have their
   own logger, which helps by automatically adjusting the verbosity level in
-  import mode and by prefixing the plugin's name. Also, logging calls can (and
+  import mode and by prefixing the plugin's name.  Logging levels are
+  dynamically set when a plugin is called, depending on how it is called
+  (import stage, event or direct command).  Finally, logging calls can (and
   should!) use modern ``{}``-style string formatting lazily. See
   :ref:`plugin-logging` in the plugin API docs.
 * A new ``import_task_created`` event lets you manipulate import tasks
   immediately after they are initialized. It's also possible to replace the
   originally created tasks by returning new ones using this event.
+
+.. _bs1770gain: http://bs1770gain.sourceforge.net
 
 
 1.3.10 (January 5, 2015)

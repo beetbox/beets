@@ -369,7 +369,8 @@ import ...``.
 * ``-l LIBPATH``: specify the library database file to use.
 * ``-d DIRECTORY``: specify the library root directory.
 * ``-v``: verbose mode; prints out a deluge of debugging information. Please use
-  this flag when reporting bugs.
+  this flag when reporting bugs. You can use it twice, as in ``-vv``, to make
+  beets even more verbose.
 * ``-c FILE``: read a specified YAML :doc:`configuration file <config>`.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for

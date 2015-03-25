@@ -31,7 +31,7 @@ from test._common import unittest
 from test._common import item
 import beets.library
 import beets.mediafile
-import beets.dbcore
+import beets.dbcore.query
 from beets import util
 from beets import plugins
 from beets import config
@@ -240,27 +240,6 @@ class DestinationTest(_common.TestCase):
         self.assertFalse('two \\ three' in p)
         self.assertFalse('two / three' in p)
 
-    def test_sanitize_unix_replaces_leading_dot(self):
-        with _common.platform_posix():
-            p = util.sanitize_path(u'one/.two/three')
-        self.assertFalse('.' in p)
-
-    def test_sanitize_windows_replaces_trailing_dot(self):
-        with _common.platform_windows():
-            p = util.sanitize_path(u'one/two./three')
-        self.assertFalse('.' in p)
-
-    def test_sanitize_windows_replaces_illegal_chars(self):
-        with _common.platform_windows():
-            p = util.sanitize_path(u':*?"<>|')
-        self.assertFalse(':' in p)
-        self.assertFalse('*' in p)
-        self.assertFalse('?' in p)
-        self.assertFalse('"' in p)
-        self.assertFalse('<' in p)
-        self.assertFalse('>' in p)
-        self.assertFalse('|' in p)
-
     def test_path_with_format(self):
         self.lib.path_formats = [('default', '$artist/$album ($format)')]
         p = self.i.destination()
@@ -337,11 +316,6 @@ class DestinationTest(_common.TestCase):
         ]
         self.assertEqual(self.i.destination(), np('one/three'))
 
-    def test_sanitize_windows_replaces_trailing_space(self):
-        with _common.platform_windows():
-            p = util.sanitize_path(u'one/two /three')
-        self.assertFalse(' ' in p)
-
     def test_get_formatted_does_not_replace_separators(self):
         with _common.platform_posix():
             name = os.path.join('a', 'b')
@@ -407,25 +381,6 @@ class DestinationTest(_common.TestCase):
         p = self.i.destination()
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
-    def test_sanitize_path_works_on_empty_string(self):
-        with _common.platform_posix():
-            p = util.sanitize_path(u'')
-        self.assertEqual(p, u'')
-
-    def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
-        with _common.platform_posix():
-            p = util.sanitize_path(u'a/.?/b', [
-                (re.compile(r'foo'), u'bar'),
-            ])
-        self.assertEqual(p, u'a/.?/b')
-
-    def test_sanitize_with_custom_replace_adds_replacements(self):
-        with _common.platform_posix():
-            p = util.sanitize_path(u'foo/bar', [
-                (re.compile(r'foo'), u'bar'),
-            ])
-        self.assertEqual(p, u'bar/bar')
-
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize('NFC', u'caf\xe9')
         self.lib.path_formats = [('default', instr)]
@@ -475,14 +430,6 @@ class DestinationTest(_common.TestCase):
                          np('base/ber/foo'))
 
     @unittest.skip('unimplemented: #359')
-    def test_sanitize_empty_component(self):
-        with _common.platform_posix():
-            p = util.sanitize_path(u'foo//bar', [
-                (re.compile(r'^$'), u'_'),
-            ])
-        self.assertEqual(p, u'foo/_/bar')
-
-    @unittest.skip('unimplemented: #359')
     def test_destination_with_empty_component(self):
         self.lib.directory = 'base'
         self.lib.replacements = [(re.compile(r'^$'), u'_')]
@@ -504,6 +451,22 @@ class DestinationTest(_common.TestCase):
         self.i.path = 'foo.mp3'
         self.assertEqual(self.i.destination(),
                          np('base/one/_.mp3'))
+
+    @unittest.skip('unimplemented: #496')
+    def test_truncation_does_not_conflict_with_replacement(self):
+        # Use a replacement that should always replace the last X in any
+        # path component with a Z.
+        self.lib.replacements = [
+            (re.compile(r'X$'), u'Z'),
+        ]
+
+        # Construct an item whose untruncated path ends with a Y but whose
+        # truncated version ends with an X.
+        self.i.title = 'X' * 300 + 'Y'
+
+        # The final path should reflect the replacement.
+        dest = self.i.destination()
+        self.assertTrue('XZ' in dest)
 
 
 class ItemFormattedMappingTest(_common.LibTestCase):
@@ -698,49 +661,6 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         album1.store()
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
-
-
-class PathConversionTest(_common.TestCase):
-    def test_syspath_windows_format(self):
-        with _common.platform_windows():
-            path = os.path.join('a', 'b', 'c')
-            outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, unicode))
-        self.assertTrue(outpath.startswith(u'\\\\?\\'))
-
-    def test_syspath_windows_format_unc_path(self):
-        # The \\?\ prefix on Windows behaves differently with UNC
-        # (network share) paths.
-        path = '\\\\server\\share\\file.mp3'
-        with _common.platform_windows():
-            outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, unicode))
-        self.assertEqual(outpath, u'\\\\?\\UNC\\server\\share\\file.mp3')
-
-    def test_syspath_posix_unchanged(self):
-        with _common.platform_posix():
-            path = os.path.join('a', 'b', 'c')
-            outpath = util.syspath(path)
-        self.assertEqual(path, outpath)
-
-    def _windows_bytestring_path(self, path):
-        old_gfse = sys.getfilesystemencoding
-        sys.getfilesystemencoding = lambda: 'mbcs'
-        try:
-            with _common.platform_windows():
-                return util.bytestring_path(path)
-        finally:
-            sys.getfilesystemencoding = old_gfse
-
-    def test_bytestring_path_windows_encodes_utf8(self):
-        path = u'caf\xe9'
-        outpath = self._windows_bytestring_path(path)
-        self.assertEqual(path, outpath.decode('utf8'))
-
-    def test_bytesting_path_windows_removes_magic_prefix(self):
-        path = u'\\\\?\\C:\\caf\xe9'
-        outpath = self._windows_bytestring_path(path)
-        self.assertEqual(outpath, u'C:\\caf\xe9'.encode('utf8'))
 
 
 class PluginDestinationTest(_common.TestCase):
@@ -1004,23 +924,6 @@ class PathStringTest(_common.TestCase):
         self.assert_(isinstance(alb.artpath, bytes))
 
 
-class PathTruncationTest(_common.TestCase):
-    def test_truncate_bytestring(self):
-        with _common.platform_posix():
-            p = util.truncate_path('abcde/fgh', 4)
-        self.assertEqual(p, 'abcd/fgh')
-
-    def test_truncate_unicode(self):
-        with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh', 4)
-        self.assertEqual(p, u'abcd/fgh')
-
-    def test_truncate_preserves_extension(self):
-        with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh.ext', 5)
-        self.assertEqual(p, u'abcde/f.ext')
-
-
 class MtimeTest(_common.TestCase):
     def setUp(self):
         super(MtimeTest, self).setUp()
@@ -1085,7 +988,7 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
 
     def test_album_and_item_format(self):
-        config['list_format_album'] = u'foö $foo'
+        config['format_album'] = u'foö $foo'
         album = beets.library.Album()
         album.foo = 'bar'
         album.tagada = 'togodo'
@@ -1094,7 +997,7 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(unicode(album), u"foö bar")
         self.assertEqual(str(album), b"fo\xc3\xb6 bar")
 
-        config['list_format_item'] = 'bar $foo'
+        config['format_item'] = 'bar $foo'
         item = beets.library.Item()
         item.foo = 'bar'
         item.tagada = 'togodo'
@@ -1172,10 +1075,32 @@ class ItemReadTest(unittest.TestCase):
             item.read('/thisfiledoesnotexist')
 
 
+class FilesizeTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_filesize(self):
+        item = self.add_item_fixture()
+        self.assertNotEquals(item.filesize, 0)
+
+    def test_nonexistent_file(self):
+        item = beets.library.Item()
+        self.assertEqual(item.filesize, 0)
+
+
 class ParseQueryTest(unittest.TestCase):
     def test_parse_invalid_query_string(self):
-        with self.assertRaises(beets.dbcore.InvalidQueryError):
+        with self.assertRaises(beets.dbcore.InvalidQueryError) as raised:
             beets.library.parse_query_string('foo"', None)
+        self.assertIsInstance(raised.exception,
+                              beets.dbcore.query.ParsingError)
+
+    def test_parse_bytes(self):
+        with self.assertRaises(AssertionError):
+            beets.library.parse_query_string(b"query", None)
 
 
 def suite():

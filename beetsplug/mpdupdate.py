@@ -80,7 +80,7 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         self.register_listener('database_change', self.db_change)
 
-    def db_change(self, lib):
+    def db_change(self, lib, model):
         self.register_listener('cli_exit', self.update)
 
     def update(self, lib):

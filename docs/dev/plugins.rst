@@ -87,8 +87,11 @@ The function should use any of the utility functions defined in ``beets.ui``.
 Try running ``pydoc beets.ui`` to see what's available.
 
 You can add command-line options to your new command using the ``parser`` member
-of the ``Subcommand`` class, which is an ``OptionParser`` instance. Just use it
-like you would a normal ``OptionParser`` in an independent script.
+of the ``Subcommand`` class, which is a ``CommonOptionParser`` instance. Just
+use it like you would a normal ``OptionParser`` in an independent script. Note
+that it offers several methods to add common options: ``--album``, ``--path``
+and ``--format``. This feature is versatile and extensively documented, try
+``pydoc beets.ui.CommonOptionParser`` for more information.
 
 .. _plugin_events:
 
@@ -200,7 +203,7 @@ The events currently available are:
   Library object. Parameter: ``lib``.
 
 * *database_change*: a modification has been made to the library database. The
-  change might not be committed yet. Parameter: ``lib``.
+  change might not be committed yet. Parameters: ``lib`` and ``model``.
 
 * *cli_exit*: called just before the ``beet`` command-line program exits.
   Parameter: ``lib``.
@@ -382,7 +385,7 @@ Multiple stages run in parallel but each stage processes only one task at a time
 and each task is processed by only one stage at a time.
 
 Plugins provide stages as functions that take two arguments: ``config`` and
-``task``, which are ``ImportConfig`` and ``ImportTask`` objects (both defined in
+``task``, which are ``ImportSession`` and ``ImportTask`` objects (both defined in
 ``beets.importer``). Add such a function to the plugin's ``import_stages`` field
 to register it::
 
@@ -391,7 +394,7 @@ to register it::
         def __init__(self):
             super(ExamplePlugin, self).__init__()
             self.import_stages = [self.stage]
-        def stage(self, config, task):
+        def stage(self, session, task):
             print('Importing something!')
 
 .. _extend-query:
@@ -480,14 +483,21 @@ str.format-style string formatting. So you can write logging calls like this::
 .. _PEP 3101: https://www.python.org/dev/peps/pep-3101/
 .. _standard Python logging module: https://docs.python.org/2/library/logging.html
 
-The per-plugin loggers have two convenient features:
+When beets is in verbose mode, plugin messages are prefixed with the plugin
+name to make them easier to see.
 
-* When beets is in verbose mode, messages are prefixed with the plugin name to
-  make them easier to see.
-* Messages at the ``INFO`` logging level are hidden when the plugin is running
-  in an importer stage (see above). This addresses a common pattern where
-  plugins need to use the same code for a command and an import stage, but the
-  command needs to print more messages than the import stage. (For example,
-  you'll want to log "found lyrics for this song" when you're run explicitly
-  as a command, but you don't want to noisily interrupt the importer interface
-  when running automatically.)
+What messages will be logged depends on the logging level and the action
+performed:
+
+* On import stages and event, the default is ``WARNING`` messages.
+* On direct actions, the default is ``INFO`` and ``WARNING`` message.
+
+The verbosity can be increased with ``--verbose`` flags: each flags lowers the
+level by a notch.
+
+This addresses a common pattern where plugins need to use the same code for a
+command and an import stage, but the command needs to print more messages than
+the import stage. (For example, you'll want to log "found lyrics for this song"
+when you're run explicitly as a command, but you don't want to noisily
+interrupt the importer interface when running automatically.)
+

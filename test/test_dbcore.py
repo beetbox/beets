@@ -449,6 +449,7 @@ class SortFromStringsTest(unittest.TestCase):
     def test_zero_parts(self):
         s = self.sfs([])
         self.assertIsInstance(s, dbcore.query.NullSort)
+        self.assertEqual(s, dbcore.query.NullSort())
 
     def test_one_parts(self):
         s = self.sfs(['field+'])
@@ -461,17 +462,17 @@ class SortFromStringsTest(unittest.TestCase):
 
     def test_fixed_field_sort(self):
         s = self.sfs(['field_one+'])
-        self.assertIsInstance(s, dbcore.query.MultipleSort)
-        self.assertIsInstance(s.sorts[0], dbcore.query.FixedFieldSort)
+        self.assertIsInstance(s, dbcore.query.FixedFieldSort)
+        self.assertEqual(s, dbcore.query.FixedFieldSort('field_one'))
 
     def test_flex_field_sort(self):
         s = self.sfs(['flex_field+'])
-        self.assertIsInstance(s, dbcore.query.MultipleSort)
-        self.assertIsInstance(s.sorts[0], dbcore.query.SlowFieldSort)
+        self.assertIsInstance(s, dbcore.query.SlowFieldSort)
+        self.assertEqual(s, dbcore.query.SlowFieldSort('flex_field'))
 
     def test_special_sort(self):
         s = self.sfs(['some_sort+'])
-        self.assertIsInstance(s.sorts[0], TestSort)
+        self.assertIsInstance(s, TestSort)
 
 
 class ResultsIteratorTest(unittest.TestCase):

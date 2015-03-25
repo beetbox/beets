@@ -24,6 +24,7 @@ import unicodedata
 import time
 import re
 from unidecode import unidecode
+import platform
 
 from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
@@ -42,13 +43,32 @@ log = logging.getLogger('beets')
 # Library-specific query types.
 
 class PathQuery(dbcore.FieldQuery):
-    """A query that matches all items under a given path."""
+    """A query that matches all items under a given path.
+
+    Matching can either be case-insensitive or case-sensitive. By
+    default, the behavior depends on the OS: case-insensitive on Windows
+    and case-sensitive otherwise.
+    """
 
     escape_re = re.compile(r'[\\_%]')
     escape_char = b'\\'
 
-    def __init__(self, field, pattern, fast=True):
+    def __init__(self, field, pattern, fast=True, case_sensitive=None):
+        """Create a path query.
+
+        `case_sensitive` can be a bool or `None`, indicating that the
+        behavior should depend on the platform (the default).
+        """
         super(PathQuery, self).__init__(field, pattern, fast)
+
+        # By default, the case sensitivity depends on the platform.
+        if case_sensitive is None:
+            case_sensitive = platform.system() != 'Windows'
+        self.case_sensitive = case_sensitive
+
+        # Use a normalized-case pattern for case-insensitive matches.
+        if not case_sensitive:
+            pattern = pattern.lower()
 
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
@@ -56,16 +76,22 @@ class PathQuery(dbcore.FieldQuery):
         self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
 
     def match(self, item):
-        return (item.path == self.file_path) or \
-            item.path.startswith(self.dir_path)
+        path = item.path if self.case_sensitive else item.path.lower()
+        return (path == self.file_path) or path.startswith(self.dir_path)
 
     def col_clause(self):
+        file_blob = buffer(self.file_path)
+
+        if self.case_sensitive:
+            dir_blob = buffer(self.dir_path)
+            return '({0} = ?) || (substr({0}, 1, ?) = ?)'.format(self.field), \
+                   (file_blob, len(dir_blob), dir_blob)
+
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
-        dir_pattern = buffer(dir_pattern + b'%')
-        file_blob = buffer(self.file_path)
+        dir_blob = buffer(dir_pattern + b'%')
         return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
-               (file_blob, dir_pattern, self.escape_char)
+               (file_blob, dir_blob, self.escape_char)
 
 
 # Library-specific field types.
@@ -244,15 +270,15 @@ class LibModel(dbcore.Model):
 
     def store(self):
         super(LibModel, self).store()
-        plugins.send('database_change', lib=self._db)
+        plugins.send('database_change', lib=self._db, model=self)
 
     def remove(self):
         super(LibModel, self).remove()
-        plugins.send('database_change', lib=self._db)
+        plugins.send('database_change', lib=self._db, model=self)
 
     def add(self, lib=None):
         super(LibModel, self).add(lib)
-        plugins.send('database_change', lib=self._db)
+        plugins.send('database_change', lib=self._db, model=self)
 
     def __format__(self, spec):
         if not spec:
@@ -393,6 +419,10 @@ class Item(LibModel):
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
 
+    _types = {
+        'data_source': types.STRING,
+    }
+
     _media_fields = set(MediaFile.readable_fields()) \
         .intersection(_fields.keys())
     """Set of item fields that are backed by `MediaFile` fields.
@@ -414,14 +444,13 @@ class Item(LibModel):
 
     _sorts = {'artist': SmartArtistSort}
 
-    _format_config_key = 'list_format_item'
+    _format_config_key = 'format_item'
 
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
         getters['singleton'] = lambda i: i.album_id is None
-        # Filesize is given in bytes
-        getters['filesize'] = lambda i: os.path.getsize(syspath(i.path))
+        getters['filesize'] = Item.try_filesize  # In bytes.
         return getters
 
     @classmethod
@@ -604,6 +633,17 @@ class Item(LibModel):
         integer.
         """
         return int(os.path.getmtime(syspath(self.path)))
+
+    def try_filesize(self):
+        """Get the size of the underlying file in bytes.
+
+        If the file is missing, return 0 (and log a warning).
+        """
+        try:
+            return os.path.getsize(syspath(self.path))
+        except (OSError, Exception) as exc:
+            log.warning(u'could not get filesize: {0}', exc)
+            return 0
 
     # Model methods.
 
@@ -795,7 +835,8 @@ class Album(LibModel):
     _search_fields = ('album', 'albumartist', 'genre')
 
     _types = {
-        'path': PathType(),
+        'path':        PathType(),
+        'data_source': types.STRING,
     }
 
     _sorts = {
@@ -836,7 +877,7 @@ class Album(LibModel):
     """List of keys that are set on an album's items.
     """
 
-    _format_config_key = 'list_format_album'
+    _format_config_key = 'format_album'
 
     @classmethod
     def _getters(cls):
@@ -1081,11 +1122,12 @@ def parse_query_string(s, model_cls):
 
     The string is split into components using shell-like syntax.
     """
+    assert isinstance(s, unicode), "Query is not unicode: {0!r}".format(s)
+
     # A bug in Python < 2.7.3 prevents correct shlex splitting of
     # Unicode strings.
     # http://bugs.python.org/issue6988
-    if isinstance(s, unicode):
-        s = s.encode('utf8')
+    s = s.encode('utf8')
     try:
         parts = [p.decode('utf8') for p in shlex.split(s)]
     except ValueError as exc:
@@ -1177,21 +1219,29 @@ class Library(dbcore.Database):
             model_cls, query, sort
         )
 
+    @staticmethod
+    def get_default_album_sort():
+        """Get a :class:`Sort` object for albums from the config option.
+        """
+        return dbcore.sort_from_strings(
+            Album, beets.config['sort_album'].as_str_seq())
+
+    @staticmethod
+    def get_default_item_sort():
+        """Get a :class:`Sort` object for items from the config option.
+        """
+        return dbcore.sort_from_strings(
+            Item, beets.config['sort_item'].as_str_seq())
+
     def albums(self, query=None, sort=None):
         """Get :class:`Album` objects matching the query.
         """
-        sort = sort or dbcore.sort_from_strings(
-            Album, beets.config['sort_album'].as_str_seq()
-        )
-        return self._fetch(Album, query, sort)
+        return self._fetch(Album, query, sort or self.get_default_album_sort())
 
     def items(self, query=None, sort=None):
         """Get :class:`Item` objects matching the query.
         """
-        sort = sort or dbcore.sort_from_strings(
-            Item, beets.config['sort_item'].as_str_seq()
-        )
-        return self._fetch(Item, query, sort)
+        return self._fetch(Item, query, sort or self.get_default_item_sort())
 
     # Convenience accessors.
 
@@ -1300,11 +1350,11 @@ class DefaultTemplateFunctions(object):
         return unidecode(s)
 
     @staticmethod
-    def tmpl_time(s, format):
+    def tmpl_time(s, fmt):
         """Format a time value using `strftime`.
         """
         cur_fmt = beets.config['time_format'].get(unicode)
-        return time.strftime(format, time.strptime(s, cur_fmt))
+        return time.strftime(fmt, time.strptime(s, cur_fmt))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all

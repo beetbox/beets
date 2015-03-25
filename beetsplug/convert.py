@@ -49,25 +49,25 @@ def replace_ext(path, ext):
     return os.path.splitext(path)[0] + b'.' + ext
 
 
-def get_format(format=None):
+def get_format(fmt=None):
     """Return the command tempate and the extension from the config.
     """
-    if not format:
-        format = config['convert']['format'].get(unicode).lower()
-    format = ALIASES.get(format, format)
+    if not fmt:
+        fmt = config['convert']['format'].get(unicode).lower()
+    fmt = ALIASES.get(fmt, fmt)
 
     try:
-        format_info = config['convert']['formats'][format].get(dict)
+        format_info = config['convert']['formats'][fmt].get(dict)
         command = format_info['command']
         extension = format_info['extension']
     except KeyError:
         raise ui.UserError(
             u'convert: format {0} needs "command" and "extension" fields'
-            .format(format)
+            .format(fmt)
         )
     except ConfigTypeError:
-        command = config['convert']['formats'][format].get(bytes)
-        extension = format
+        command = config['convert']['formats'][fmt].get(bytes)
+        extension = fmt
 
     # Convenience and backwards-compatibility shortcuts.
     keys = config['convert'].keys()
@@ -84,7 +84,7 @@ def get_format(format=None):
     return (command.encode('utf8'), extension.encode('utf8'))
 
 
-def should_transcode(item, format):
+def should_transcode(item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
@@ -92,7 +92,7 @@ def should_transcode(item, format):
             not (item.format.lower() in LOSSLESS_FORMATS):
         return False
     maxbr = config['convert']['max_bitrate'].get(int)
-    return format.lower() != item.format.lower() or \
+    return fmt.lower() != item.format.lower() or \
         item.bitrate >= 1000 * maxbr
 
 
@@ -139,8 +139,6 @@ class ConvertPlugin(BeetsPlugin):
         cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show actions but do nothing')
-        cmd.parser.add_option('-a', '--album', action='store_true',
-                              help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
                               defaults to maximum available processors')
@@ -148,11 +146,12 @@ class ConvertPlugin(BeetsPlugin):
                               dest='keep_new', help='keep only the converted \
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
-                              help='set the destination directory')
+                              help='set the target format of the tracks')
         cmd.parser.add_option('-f', '--format', action='store', dest='format',
                               help='set the destination directory')
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help='do not ask for confirmation')
+        cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
 
@@ -209,9 +208,9 @@ class ConvertPlugin(BeetsPlugin):
             self._log.info(u'Finished encoding {0}',
                            util.displayable_path(source))
 
-    def convert_item(self, dest_dir, keep_new, path_formats, format,
+    def convert_item(self, dest_dir, keep_new, path_formats, fmt,
                      pretend=False):
-        command, ext = get_format(format)
+        command, ext = get_format(fmt)
         item, original, converted = None, None, None
         while True:
             item = yield (item, original, converted)
@@ -224,11 +223,11 @@ class ConvertPlugin(BeetsPlugin):
             if keep_new:
                 original = dest
                 converted = item.path
-                if should_transcode(item, format):
+                if should_transcode(item, fmt):
                     converted = replace_ext(converted, ext)
             else:
                 original = item.path
-                if should_transcode(item, format):
+                if should_transcode(item, fmt):
                     dest = replace_ext(dest, ext)
                 converted = dest
 
@@ -254,7 +253,7 @@ class ConvertPlugin(BeetsPlugin):
                                    util.displayable_path(original))
                     util.move(item.path, original)
 
-            if should_transcode(item, format):
+            if should_transcode(item, fmt):
                 try:
                     self.encode(command, original, converted, pretend)
                 except subprocess.CalledProcessError:
@@ -359,7 +358,7 @@ class ConvertPlugin(BeetsPlugin):
             self.config['pretend'].get(bool)
 
         if not pretend:
-            ui.commands.list_items(lib, ui.decargs(args), opts.album, '')
+            ui.commands.list_items(lib, ui.decargs(args), opts.album)
 
             if not (opts.yes or ui.input_yn("Convert? (Y/n)")):
                 return
@@ -386,8 +385,8 @@ class ConvertPlugin(BeetsPlugin):
         """Transcode a file automatically after it is imported into the
         library.
         """
-        format = self.config['format'].get(unicode).lower()
-        if should_transcode(item, format):
+        fmt = self.config['format'].get(unicode).lower()
+        if should_transcode(item, fmt):
             command, ext = get_format()
             fd, dest = tempfile.mkstemp('.' + ext)
             os.close(fd)
