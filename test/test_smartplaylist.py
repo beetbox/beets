@@ -92,45 +92,53 @@ class SmartPlaylistTest(unittest.TestCase):
         asseq(sorts["mixed"],
               MultipleSort([S('year'), S('genre'), S('id', False)]))
 
+    def test_matches(self):
+        spl = SmartPlaylistPlugin()
+
+        a = MagicMock(Album)
+        i = MagicMock(Item)
+
+        self.assertFalse(spl.matches(i, None, None))
+        self.assertFalse(spl.matches(a, None, None))
+
+        query = Mock()
+        query.match.side_effect = {i: True}.__getitem__
+        self.assertTrue(spl.matches(i, query, None))
+        self.assertFalse(spl.matches(a, query, None))
+
+        a_query = Mock()
+        a_query.match.side_effect = {a: True}.__getitem__
+        self.assertFalse(spl.matches(i, None, a_query))
+        self.assertTrue(spl.matches(a, None, a_query))
+
+        self.assertTrue(spl.matches(i, query, a_query))
+        self.assertTrue(spl.matches(a, query, a_query))
+
     def test_db_changes(self):
         spl = SmartPlaylistPlugin()
 
-        i1 = MagicMock(Item)
-        i2 = MagicMock(Item)
-        a = MagicMock(Album)
-        i1.get_album.return_value = a
-
-        q1 = Mock()
-        q1.matches.side_effect = {i1: False, i2: False}.__getitem__
-        a_q1 = Mock()
-        a_q1.matches.side_effect = {a: True}.__getitem__
-        q2 = Mock()
-        q2.matches.side_effect = {i1: False, i2: True}.__getitem__
-
-        pl1 = '1', (q1, None), (a_q1, None)
-        pl2 = '2', (None, None), (a_q1, None)
-        pl3 = '3', (q2, None), (None, None)
+        nones = None, None
+        pl1 = '1', ('q1', None), nones
+        pl2 = '2', ('q2', None), nones
+        pl3 = '3', ('q3', None), nones
 
         spl._unmatched_playlists = set([pl1, pl2, pl3])
         spl._matched_playlists = set()
-        spl.db_change(None, i1)
-        self.assertEqual(spl._unmatched_playlists, set([pl2]))
+
+        spl.matches = Mock(return_value=False)
+        spl.db_change(None, "nothing")
+        self.assertEqual(spl._unmatched_playlists, set([pl1, pl2, pl3]))
+        self.assertEqual(spl._matched_playlists, set())
+
+        spl.matches.side_effect = lambda _, q, __: q == 'q3'
+        spl.db_change(None, "matches 3")
+        self.assertEqual(spl._unmatched_playlists, set([pl1, pl2]))
+        self.assertEqual(spl._matched_playlists, set([pl3]))
+
+        spl.matches.side_effect = lambda _, q, __: q == 'q1'
+        spl.db_change(None, "matches 3")
         self.assertEqual(spl._matched_playlists, set([pl1, pl3]))
-
-        spl._unmatched_playlists = set([pl1, pl2, pl3])
-        spl._matched_playlists = set()
-        spl.db_change(None, i2)
         self.assertEqual(spl._unmatched_playlists, set([pl2]))
-        self.assertEqual(spl._matched_playlists, set([pl1, pl3]))
-
-        spl._unmatched_playlists = set([pl1, pl2, pl3])
-        spl._matched_playlists = set()
-        spl.db_change(None, a)
-        self.assertEqual(spl._unmatched_playlists, set([pl3]))
-        self.assertEqual(spl._matched_playlists, set([pl1, pl2]))
-        spl.db_change(None, i2)
-        self.assertEqual(spl._unmatched_playlists, set())
-        self.assertEqual(spl._matched_playlists, set([pl1, pl2, pl3]))
 
     def test_playlist_update(self):
         spl = SmartPlaylistPlugin()
