@@ -126,20 +126,20 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             self._unmatched_playlists.add(playlist_data)
 
+    def matches(self, model, query, album_query):
+        if album_query and isinstance(model, Album):
+            return album_query.match(model)
+        if query and isinstance(model, Item):
+            return query.match(model)
+        return False
+
     def db_change(self, lib, model):
         if self._unmatched_playlists is None:
             self.build_queries()
 
         for playlist in self._unmatched_playlists:
             n, (q, _), (a_q, _) = playlist
-            if a_q and isinstance(model, Album):
-                matches = a_q.match(model)
-            elif q and isinstance(model, Item):
-                matches = q.match(model) or q.match(model.get_album())
-            else:
-                matches = False
-
-            if matches:
+            if self.matches(model, q, a_q):
                 self._log.debug("{0} will be updated because of {1}", n, model)
                 self._matched_playlists.add(playlist)
                 self.register_listener('cli_exit', self.update_playlists)
