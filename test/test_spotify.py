@@ -17,7 +17,7 @@ class ArgumentsMock(object):
     def __init__(self, mode, show_failures):
         self.mode = mode
         self.show_failures = show_failures
-        self.verbose = True
+        self.verbose = 1
 
 
 def _params(url):

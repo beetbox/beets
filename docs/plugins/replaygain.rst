@@ -10,9 +10,9 @@ playback levels.
 Installation
 ------------
 
-This plugin can use one of three backends to compute the ReplayGain values:
-GStreamer, mp3gain (and its cousin, aacgain), and Python Audio Tools. mp3gain
-can be easier to install but GStreamer and Audio Tools support more audio
+This plugin can use one of four backends to compute the ReplayGain values:
+GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools and bs1770gain. mp3gain
+can be easier to install but GStreamer, Audio Tools and bs1770gain support more audio
 formats.
 
 Once installed, this plugin analyzes all files during the import process. This
@@ -75,6 +75,23 @@ On OS X, most of the dependencies can be installed with `Homebrew`_::
 
 .. _Python Audio Tools: http://audiotools.sourceforge.net
 
+bs1770gain
+``````````
+
+In order to use this backend, you will need to install the bs1770gain command-line tool. Here are some hints:
+
+* goto `bs1770gain`_ and follow the download instructions
+* make sure it is in your $PATH 
+
+.. _bs1770gain: http://bs1770gain.sourceforge.net/
+
+Then, enable the plugin (see :ref:`using-plugins`) and specify the
+backend in your configuration file::
+
+    replaygain:
+        backend: bs1770gain
+
+
 Configuration
 -------------
 
@@ -92,11 +109,6 @@ configuration file. The available options are:
 
 These options only work with the "command" backend:
 
-- **apply**: If you use a player that does not support ReplayGain
-  specifications, you can force the volume normalization by applying the gain
-  to the file via the ``apply`` option. This is a lossless and reversible
-  operation with no transcoding involved.
-  Default: ``no``.
 - **command**: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
   cannot find it by itself).
   For example: ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``.
@@ -104,6 +116,14 @@ These options only work with the "command" backend:
 - **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
   would keep clipping from occurring.
   Default: ``yes``.
+
+This option only works with the "bs1770gain" backend:
+
+- **method**: The loudness scanning standard: either `replaygain` for
+  ReplayGain 2.0, `ebu` for EBU R128, or `atsc` for ATSC A/85. This dictates
+  the reference level: -18, -23, or -24 LUFS respectively. Default:
+  `replaygain`
+
 
 Manual Analysis
 ---------------

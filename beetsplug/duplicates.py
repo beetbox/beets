@@ -125,17 +125,6 @@ class DuplicatesPlugin(BeetsPlugin):
         self._command = Subcommand('duplicates',
                                    help=__doc__,
                                    aliases=['dup'])
-
-        self._command.parser.add_option('-f', '--format', dest='format',
-                                        action='store', type='string',
-                                        help='print with custom format',
-                                        metavar='FMT', default='')
-
-        self._command.parser.add_option('-a', '--album', dest='album',
-                                        action='store_true',
-                                        help='show duplicate albums instead of'
-                                        ' tracks')
-
         self._command.parser.add_option('-c', '--count', dest='count',
                                         action='store_true',
                                         help='show duplicate counts')
@@ -168,15 +157,11 @@ class DuplicatesPlugin(BeetsPlugin):
                                         action='store', metavar='DEST',
                                         help='copy items to dest')
 
-        self._command.parser.add_option('-p', '--path', dest='path',
-                                        action='store_true',
-                                        help='print paths for matched items or'
-                                        ' albums')
-
         self._command.parser.add_option('-t', '--tag', dest='tag',
                                         action='store',
                                         help='tag matched items with \'k=v\''
                                         ' attribute')
+        self._command.parser.add_all_common_options()
 
     def commands(self):
 

@@ -602,11 +602,11 @@ class Dumper(yaml.SafeDumper):
         for item_key, item_value in mapping:
             node_key = self.represent_data(item_key)
             node_value = self.represent_data(item_value)
-            if not (isinstance(node_key, yaml.ScalarNode)
-                    and not node_key.style):
+            if not (isinstance(node_key, yaml.ScalarNode) and
+                    not node_key.style):
                 best_style = False
-            if not (isinstance(node_value, yaml.ScalarNode)
-                    and not node_value.style):
+            if not (isinstance(node_value, yaml.ScalarNode) and
+                    not node_value.style):
                 best_style = False
             value.append((node_key, node_value))
         if flow_style is None:

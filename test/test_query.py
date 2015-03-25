@@ -17,6 +17,8 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+from functools import partial
+
 from test import _common
 from test._common import unittest
 from test import helper
@@ -24,7 +26,8 @@ from test import helper
 import beets.library
 from beets import dbcore
 from beets.dbcore import types
-from beets.dbcore.query import NoneQuery, InvalidQueryArgumentTypeError
+from beets.dbcore.query import (NoneQuery, ParsingError,
+                                InvalidQueryArgumentTypeError)
 from beets.library import Library, Item
 
 
@@ -56,6 +59,16 @@ class AnyFieldQueryTest(_common.LibTestCase):
         q = dbcore.query.AnyFieldQuery('title', ['artist'],
                                        dbcore.query.SubstringQuery)
         self.assertEqual(self.lib.items(q).get(), None)
+
+    def test_eq(self):
+        q1 = dbcore.query.AnyFieldQuery('foo', ['bar'],
+                                        dbcore.query.SubstringQuery)
+        q2 = dbcore.query.AnyFieldQuery('foo', ['bar'],
+                                        dbcore.query.SubstringQuery)
+        self.assertEqual(q1, q2)
+
+        q2.query_class = None
+        self.assertNotEqual(q1, q2)
 
 
 class AssertsMixin(object):
@@ -290,7 +303,7 @@ class GetTest(DummyDataTestCase):
             dbcore.query.RegexpQuery('year', '199(')
         self.assertIn('not a regular expression', unicode(raised.exception))
         self.assertIn('unbalanced parenthesis', unicode(raised.exception))
-        self.assertIsInstance(raised.exception, TypeError)
+        self.assertIsInstance(raised.exception, ParsingError)
 
 
 class MatchTest(_common.TestCase):
@@ -340,6 +353,16 @@ class MatchTest(_common.TestCase):
 
     def test_open_range(self):
         dbcore.query.NumericQuery('bitrate', '100000..')
+
+    def test_eq(self):
+        q1 = dbcore.query.MatchQuery('foo', 'bar')
+        q2 = dbcore.query.MatchQuery('foo', 'bar')
+        q3 = dbcore.query.MatchQuery('foo', 'baz')
+        q4 = dbcore.query.StringFieldQuery('foo', 'bar')
+        self.assertEqual(q1, q2)
+        self.assertNotEqual(q1, q3)
+        self.assertNotEqual(q1, q4)
+        self.assertNotEqual(q3, q4)
 
 
 class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
@@ -459,6 +482,26 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['album with backslash'])
+
+    def test_case_sensitivity(self):
+        self.add_album(path='/A/B/C2.mp3', title='caps path')
+
+        makeq = partial(beets.library.PathQuery, 'path', '/A/B')
+
+        results = self.lib.items(makeq(case_sensitive=True))
+        self.assert_items_matched(results, ['caps path'])
+
+        results = self.lib.items(makeq(case_sensitive=False))
+        self.assert_items_matched(results, ['path item', 'caps path'])
+
+        # test platform-aware default sensitivity
+        with _common.system_mock('Darwin'):
+            q = makeq()
+            self.assertEqual(q.case_sensitive, True)
+
+        with _common.system_mock('Windows'):
+            q = makeq()
+            self.assertEqual(q.case_sensitive, False)
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):

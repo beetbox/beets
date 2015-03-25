@@ -34,5 +34,5 @@ The command has a few command-line options:
   plugin will write new metadata to files' tags. To disable this, use the
   ``-W`` (``--nowrite``) option.
 * To customize the output of unrecognized items, use the ``-f``
-  (``--format``) option. The default output is ``list_format_item`` or
-  ``list_format_album`` for items and albums, respectively.
+  (``--format``) option. The default output is ``format_item`` or
+  ``format_album`` for items and albums, respectively.

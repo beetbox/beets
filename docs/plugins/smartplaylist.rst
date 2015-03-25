@@ -44,6 +44,18 @@ You can also gather the results of several queries by putting them in a list.
     - name: 'BeatlesUniverse.m3u'
       query: ['artist:beatles', 'genre:"beatles cover"']
 
+Note that since beets query syntax is in effect, you can also use sorting
+directives::
+
+    - name: 'Chronological Beatles'
+      query: 'artist:Beatles year+'
+    - name: 'Mixed Rock'
+      query: ['artist:Beatles year+', 'artist:"Led Zeppelin" bitrate+']
+
+The former case behaves as expected, however please note that in the latter the
+sorts will be merged: ``year+ bitrate+`` will apply to both the Beatles and Led
+Zeppelin. If that bothers you, please get in touch.
+
 For querying albums instead of items (mainly useful with extensible fields),
 use the ``album_query`` field. ``query`` and ``album_query`` can be used at the
 same time. The following example gathers single items but also items belonging
@@ -53,13 +65,16 @@ to albums that have a ``for_travel`` extensible field set to 1::
       album_query: 'for_travel:1'
       query: 'for_travel:1'
 
-By default, all playlists are automatically regenerated at the end of the
-session if the library database was changed. To force regeneration, you can
-invoke it manually from the command line::
+By default, each playlist is automatically regenerated at the end of the
+session if an item or album it matches changed in the library database. To
+force regeneration, you can invoke it manually from the command line::
 
     $ beet splupdate
 
-which will generate your new smart playlists.
+This will regenerate all smart playlists. You can also specify which ones you
+want to regenerate::
+
+    $ beet splupdate BeatlesUniverse.m3u MyTravelPlaylist
 
 You can also use this plugin together with the :doc:`mpdupdate`, in order to
 automatically notify MPD of the playlist change, by adding ``mpdupdate`` to

@@ -17,8 +17,8 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-import traceback
 import inspect
+import traceback
 import re
 from collections import defaultdict
 from functools import wraps
@@ -84,10 +84,8 @@ class BeetsPlugin(object):
 
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
-        if beets.config['verbose']:
-            if not any(isinstance(f, PluginLogFilter)
-                       for f in self._log.filters):
-                self._log.addFilter(PluginLogFilter(self))
+        if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
+            self._log.addFilter(PluginLogFilter(self))
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -103,26 +101,39 @@ class BeetsPlugin(object):
         `self.import_stages`. Wrapping provides some bookkeeping for the
         plugin: specifically, the logging level is adjusted to WARNING.
         """
-        return [self._set_log_level(logging.WARNING, import_stage)
+        return [self._set_log_level_and_params(logging.WARNING, import_stage)
                 for import_stage in self.import_stages]
 
-    def _set_log_level(self, log_level, func):
+    def _set_log_level_and_params(self, base_log_level, func):
         """Wrap `func` to temporarily set this plugin's logger level to
-        `log_level` (and restore it after the function returns).
+        `base_log_level` + config options (and restore it to its previous
+        value after the function returns). Also determines which params may not
+        be sent for backwards-compatibility.
 
-        The level is *not* adjusted when beets is in verbose
-        mode---i.e., the plugin logger continues to delegate to the base
-        beets logger.
+        Note that the log level value may not be NOTSET, e.g. if a plugin
+        import stage triggers an event that is listened this very same plugin.
         """
+        argspec = inspect.getargspec(func)
+
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if not beets.config['verbose']:
-                old_log_level = self._log.level
-                self._log.setLevel(log_level)
-            result = func(*args, **kwargs)
-            if not beets.config['verbose']:
+            old_log_level = self._log.level
+            verbosity = beets.config['verbose'].get(int)
+            log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
+            self._log.setLevel(log_level)
+            try:
+                try:
+                    return func(*args, **kwargs)
+                except TypeError as exc:
+                    if exc.args[0].startswith(func.__name__):
+                        # caused by 'func' and not stuff internal to 'func'
+                        kwargs = dict((arg, val) for arg, val in kwargs.items()
+                                      if arg in argspec.args)
+                        return func(*args, **kwargs)
+                    else:
+                        raise
+            finally:
                 self._log.setLevel(old_log_level)
-            return result
         return wrapper
 
     def queries(self):
@@ -181,36 +192,21 @@ class BeetsPlugin(object):
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
+    _raw_listeners = None
     listeners = None
 
-    @classmethod
-    def register_listener(cls, event, func):
-        """Add a function as a listener for the specified event. (An
-        imperative alternative to the @listen decorator.)
+    def register_listener(self, event, func):
+        """Add a function as a listener for the specified event.
         """
-        if cls.listeners is None:
+        wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
+
+        cls = self.__class__
+        if cls.listeners is None or cls._raw_listeners is None:
+            cls._raw_listeners = defaultdict(list)
             cls.listeners = defaultdict(list)
-        if func not in cls.listeners[event]:
-            cls.listeners[event].append(func)
-
-    @classmethod
-    def listen(cls, event):
-        """Decorator that adds a function as an event handler for the
-        specified event (as a string). The parameters passed to function
-        will vary depending on what event occurred.
-
-        The function should respond to named parameters.
-        function(**kwargs) will trap all arguments in a dictionary.
-        Example:
-
-            >>> @MyPlugin.listen("imported")
-            >>> def importListener(**kwargs):
-            ...     pass
-        """
-        def helper(func):
-            cls.register_listener(event, func)
-            return func
-        return helper
+        if func not in cls._raw_listeners[event]:
+            cls._raw_listeners[event].append(func)
+            cls.listeners[event].append(wrapped_func)
 
     template_funcs = None
     template_fields = None
@@ -459,10 +455,7 @@ def send(event, **arguments):
     log.debug(u'Sending event: {0}', event)
     results = []
     for handler in event_handlers()[event]:
-        # Don't break legacy plugins if we want to pass more arguments
-        argspec = inspect.getargspec(handler).args
-        args = dict((k, v) for k, v in arguments.items() if k in argspec)
-        result = handler(**args)
+        result = handler(**arguments)
         if result is not None:
             results.append(result)
     return results

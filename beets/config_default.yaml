@@ -43,7 +43,7 @@ pluginpath: []
 threaded: yes
 timeout: 5.0
 per_disc_numbering: no
-verbose: no
+verbose: 0
 terminal_encoding: utf8
 original_date: no
 id3v23: no
@@ -61,8 +61,8 @@ ui:
         action_default: turquoise
         action: blue
 
-list_format_item: $artist - $album - $title
-list_format_album: $albumartist - $album
+format_item: $artist - $album - $title
+format_album: $albumartist - $album
 time_format: '%Y-%m-%d %H:%M:%S'
 
 sort_album: albumartist+ album+

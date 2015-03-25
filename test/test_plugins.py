@@ -16,8 +16,9 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import os
-from mock import patch
+from mock import patch, Mock
 import shutil
+import itertools
 
 from beets.importer import SingletonImportTask, SentinelImportTask, \
     ArchiveImportTask
@@ -35,6 +36,7 @@ class TestHelper(helper.TestHelper):
     def setup_plugin_loader(self):
         # FIXME the mocking code is horrific, but this is the lowest and
         # earliest level of the plugin mechanism we can hook into.
+        self.load_plugins()
         self._plugin_loader_patch = patch('beets.plugins.load_plugins')
         self._plugin_classes = set()
         load_plugins = self._plugin_loader_patch.start()
@@ -56,7 +58,6 @@ class ItemTypesTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_plugin_loader()
-        self.setup_beets()
 
     def tearDown(self):
         self.teardown_plugin_loader()
@@ -95,7 +96,7 @@ class ItemWriteTest(unittest.TestCase, TestHelper):
 
         class EventListenerPlugin(plugins.BeetsPlugin):
             pass
-        self.event_listener_plugin = EventListenerPlugin
+        self.event_listener_plugin = EventListenerPlugin()
         self.register_plugin(EventListenerPlugin)
 
     def tearDown(self):
@@ -298,19 +299,105 @@ class ListenersTest(unittest.TestCase, TestHelper):
                 pass
 
         d = DummyPlugin()
-        self.assertEqual(DummyPlugin.listeners['cli_exit'], [d.dummy])
+        self.assertEqual(DummyPlugin._raw_listeners['cli_exit'], [d.dummy])
 
         d2 = DummyPlugin()
-        DummyPlugin.register_listener('cli_exit', d.dummy)
-        self.assertEqual(DummyPlugin.listeners['cli_exit'],
+        self.assertEqual(DummyPlugin._raw_listeners['cli_exit'],
                          [d.dummy, d2.dummy])
 
-        @DummyPlugin.listen('cli_exit')
-        def dummy(lib):
-            pass
+        d.register_listener('cli_exit', d2.dummy)
+        self.assertEqual(DummyPlugin._raw_listeners['cli_exit'],
+                         [d.dummy, d2.dummy])
 
-        self.assertEqual(DummyPlugin.listeners['cli_exit'],
-                         [d.dummy, d2.dummy, dummy])
+    @patch('beets.plugins.find_plugins')
+    @patch('beets.plugins.inspect')
+    def test_events_called(self, mock_inspect, mock_find_plugins):
+        mock_inspect.getargspec.return_value = None
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.foo = Mock(__name__=b'foo')
+                self.register_listener('event_foo', self.foo)
+                self.bar = Mock(__name__=b'bar')
+                self.register_listener('event_bar', self.bar)
+
+        d = DummyPlugin()
+        mock_find_plugins.return_value = d,
+
+        plugins.send('event')
+        d.foo.assert_has_calls([])
+        d.bar.assert_has_calls([])
+
+        plugins.send('event_foo', var="tagada")
+        d.foo.assert_called_once_with(var="tagada")
+        d.bar.assert_has_calls([])
+
+    @patch('beets.plugins.find_plugins')
+    def test_listener_params(self, mock_find_plugins):
+        test = self
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                for i in itertools.count(1):
+                    try:
+                        meth = getattr(self, 'dummy{0}'.format(i))
+                    except AttributeError:
+                        break
+                    self.register_listener('event{0}'.format(i), meth)
+
+            def dummy1(self, foo):
+                test.assertEqual(foo, 5)
+
+            def dummy2(self, foo=None):
+                test.assertEqual(foo, 5)
+
+            def dummy3(self):
+                # argument cut off
+                pass
+
+            def dummy4(self, bar=None):
+                # argument cut off
+                pass
+
+            def dummy5(self, bar):
+                test.assertFalse(True)
+
+            # more complex exmaples
+
+            def dummy6(self, foo, bar=None):
+                test.assertEqual(foo, 5)
+                test.assertEqual(bar, None)
+
+            def dummy7(self, foo, **kwargs):
+                test.assertEqual(foo, 5)
+                test.assertEqual(kwargs, {})
+
+            def dummy8(self, foo, bar, **kwargs):
+                test.assertFalse(True)
+
+            def dummy9(self, **kwargs):
+                test.assertEqual(kwargs, {"foo": 5})
+
+        d = DummyPlugin()
+        mock_find_plugins.return_value = d,
+
+        plugins.send('event1', foo=5)
+        plugins.send('event2', foo=5)
+        plugins.send('event3', foo=5)
+        plugins.send('event4', foo=5)
+
+        with self.assertRaises(TypeError):
+            plugins.send('event5', foo=5)
+
+        plugins.send('event6', foo=5)
+        plugins.send('event7', foo=5)
+
+        with self.assertRaises(TypeError):
+            plugins.send('event8', foo=5)
+
+        plugins.send('event9', foo=5)
 
 
 def suite():

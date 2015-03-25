@@ -139,7 +139,7 @@ class ScrubPlugin(BeetsPlugin):
                 self._log.error(u'could not scrub {0}: {1}',
                                 util.displayable_path(path), exc)
 
-    def write_item(self, path):
+    def write_item(self, item, path, tags):
         """Automatically embed art into imported albums."""
         if not scrubbing and self.config['auto']:
             self._log.debug(u'auto-scrubbing {0}', util.displayable_path(path))

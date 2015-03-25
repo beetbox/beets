@@ -18,13 +18,19 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import re
-from operator import attrgetter
+from operator import attrgetter, mul
 from beets import util
 from datetime import datetime, timedelta
 
 
-class InvalidQueryError(ValueError):
-    """Represent any kind of invalid query
+class ParsingError(ValueError):
+    """Abstract class for any unparseable user-requested album/query
+    specification.
+    """
+
+
+class InvalidQueryError(ParsingError):
+    """Represent any kind of invalid query.
 
     The query should be a unicode string or a list, which will be space-joined.
     """
@@ -35,7 +41,7 @@ class InvalidQueryError(ValueError):
         super(InvalidQueryError, self).__init__(message)
 
 
-class InvalidQueryArgumentTypeError(TypeError):
+class InvalidQueryArgumentTypeError(ParsingError):
     """Represent a query argument that could not be converted as expected.
 
     It exists to be caught in upper stack levels so a meaningful (i.e. with the
@@ -66,6 +72,15 @@ class Query(object):
         perform queries on arbitrary sets of Items.
         """
         raise NotImplementedError
+
+    def __repr__(self):
+        return "{0.__class__.__name__}()".format(self)
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def __hash__(self):
+        return 0
 
 
 class FieldQuery(Query):
@@ -100,6 +115,17 @@ class FieldQuery(Query):
     def match(self, item):
         return self.value_match(self.pattern, item.get(self.field))
 
+    def __repr__(self):
+        return ("{0.__class__.__name__}({0.field!r}, {0.pattern!r}, "
+                "{0.fast})".format(self))
+
+    def __eq__(self, other):
+        return super(FieldQuery, self).__eq__(other) and \
+            self.field == other.field and self.pattern == other.pattern
+
+    def __hash__(self):
+        return hash((self.field, hash(self.pattern)))
+
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
@@ -114,8 +140,7 @@ class MatchQuery(FieldQuery):
 class NoneQuery(FieldQuery):
 
     def __init__(self, field, fast=True):
-        self.field = field
-        self.fast = fast
+        super(NoneQuery, self).__init__(field, None, fast)
 
     def col_clause(self):
         return self.field + " IS NULL", ()
@@ -126,6 +151,9 @@ class NoneQuery(FieldQuery):
             return item[self.field] is None
         except KeyError:
             return True
+
+    def __repr__(self):
+        return "{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
 
 
 class StringFieldQuery(FieldQuery):
@@ -171,8 +199,8 @@ class RegexpQuery(StringFieldQuery):
     Raises InvalidQueryError when the pattern is not a valid regular
     expression.
     """
-    def __init__(self, field, pattern, false=True):
-        super(RegexpQuery, self).__init__(field, pattern, false)
+    def __init__(self, field, pattern, fast=True):
+        super(RegexpQuery, self).__init__(field, pattern, fast)
         try:
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
@@ -331,6 +359,19 @@ class CollectionQuery(Query):
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
 
+    def __repr__(self):
+        return "{0.__class__.__name__}({0.subqueries})".format(self)
+
+    def __eq__(self, other):
+        return super(CollectionQuery, self).__eq__(other) and \
+            self.subqueries == other.subqueries
+
+    def __hash__(self):
+        """Since subqueries are mutable, this object should not be hashable.
+        However and for conveniencies purposes, it can be hashed.
+        """
+        return reduce(mul, map(hash, self.subqueries), 1)
+
 
 class AnyFieldQuery(CollectionQuery):
     """A query that matches if a given FieldQuery subclass matches in
@@ -355,6 +396,17 @@ class AnyFieldQuery(CollectionQuery):
             if subq.match(item):
                 return True
         return False
+
+    def __repr__(self):
+        return ("{0.__class__.__name__}({0.pattern!r}, {0.fields}, "
+                "{0.query_class.__name__})".format(self))
+
+    def __eq__(self, other):
+        return super(AnyFieldQuery, self).__eq__(other) and \
+            self.query_class == other.query_class
+
+    def __hash__(self):
+        return hash((self.pattern, tuple(self.fields), self.query_class))
 
 
 class MutableCollectionQuery(CollectionQuery):
@@ -590,6 +642,12 @@ class Sort(object):
         """
         return False
 
+    def __hash__(self):
+        return 0
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
 
 class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts.
@@ -651,6 +709,13 @@ class MultipleSort(Sort):
     def __repr__(self):
         return u'MultipleSort({0})'.format(repr(self.sorts))
 
+    def __hash__(self):
+        return hash(tuple(self.sorts))
+
+    def __eq__(self, other):
+        return super(MultipleSort, self).__eq__(other) and \
+            self.sorts == other.sorts
+
 
 class FieldSort(Sort):
     """An abstract sort criterion that orders by a specific field (of
@@ -674,6 +739,14 @@ class FieldSort(Sort):
             '+' if self.ascending else '-',
         )
 
+    def __hash__(self):
+        return hash((self.field, self.ascending))
+
+    def __eq__(self, other):
+        return super(FieldSort, self).__eq__(other) and \
+            self.field == other.field and \
+            self.ascending == other.ascending
+
 
 class FixedFieldSort(FieldSort):
     """Sort object to sort on a fixed field.
@@ -695,3 +768,15 @@ class NullSort(Sort):
     """No sorting. Leave results unsorted."""
     def sort(items):
         return items
+
+    def __nonzero__(self):
+        return self.__bool__()
+
+    def __bool__(self):
+        return False
+
+    def __eq__(self, other):
+        return type(self) == type(other) or other is None
+
+    def __hash__(self):
+        return 0

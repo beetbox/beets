@@ -20,9 +20,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import os
-import platform
 import re
-import shlex
 
 import beets
 from beets import ui
@@ -96,11 +94,15 @@ def fields_func(lib, opts, args):
             _print_rows(plugin_fields)
 
     print("Item fields:")
-    _print_rows(library.Item._fields.keys())
+    _print_rows(library.Item._fields.keys() +
+                library.Item._getters().keys() +
+                library.Item._types.keys())
     _show_plugin_fields(False)
 
     print("\nAlbum fields:")
-    _print_rows(library.Album._fields.keys())
+    _print_rows(library.Album._fields.keys() +
+                library.Album._getters().keys() +
+                library.Album._types.keys())
     _show_plugin_fields(True)
 
 
@@ -424,8 +426,6 @@ def summarize_items(items, singleton):
     this is an album or single-item import (if the latter, them `items`
     should only have one element).
     """
-    assert items, "summarizing zero items"
-
     summary_parts = []
     if not singleton:
         summary_parts.append("{0} items".format(len(items)))
@@ -437,16 +437,18 @@ def summarize_items(items, singleton):
         # A single format.
         summary_parts.append(items[0].format)
     else:
-        # Enumerate all the formats.
-        for format, count in format_counts.iteritems():
-            summary_parts.append('{0} {1}'.format(format, count))
+        # Enumerate all the formats by decreasing frequencies:
+        for fmt, count in sorted(format_counts.items(),
+                                 key=lambda (f, c): (-c, f)):
+            summary_parts.append('{0} {1}'.format(fmt, count))
 
-    average_bitrate = sum([item.bitrate for item in items]) / len(items)
-    total_duration = sum([item.length for item in items])
-    total_filesize = sum([item.filesize for item in items])
-    summary_parts.append('{0}kbps'.format(int(average_bitrate / 1000)))
-    summary_parts.append(ui.human_seconds_short(total_duration))
-    summary_parts.append(ui.human_bytes(total_filesize))
+    if items:
+        average_bitrate = sum([item.bitrate for item in items]) / len(items)
+        total_duration = sum([item.length for item in items])
+        total_filesize = sum([item.filesize for item in items])
+        summary_parts.append('{0}kbps'.format(int(average_bitrate / 1000)))
+        summary_parts.append(ui.human_seconds_short(total_duration))
+        summary_parts.append(ui.human_bytes(total_filesize))
 
     return ', '.join(summary_parts)
 
@@ -776,6 +778,16 @@ class TerminalImportSession(importer.ImportSession):
         log.warn(u"This {0} is already in the library!",
                  ("album" if task.is_album else "item"))
 
+        # skip empty albums (coming from a previous failed import session)
+        if task.is_album:
+            real_duplicates = [dup for dup in found_duplicates if dup.items()]
+            if not real_duplicates:
+                log.info("All duplicates are empty, we ignore them")
+                task.should_remove_duplicates = True
+                return
+        else:
+            real_duplicates = found_duplicates
+
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
             log.info(u'Skipping.')
@@ -783,11 +795,17 @@ class TerminalImportSession(importer.ImportSession):
         else:
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
-            for duplicate in found_duplicates:
+            for duplicate in real_duplicates:
                 print("Old: " + summarize_items(
                     list(duplicate.items()) if task.is_album else [duplicate],
                     not task.is_album,
                 ))
+
+            if real_duplicates != found_duplicates:  # there's empty albums
+                count = len(found_duplicates) - len(real_duplicates)
+                print("Old: {0} empty album{1}".format(
+                    count, "s" if count > 1 else ""))
+
             print("New: " + summarize_items(
                 task.imported_items(),
                 not task.is_album,
@@ -955,7 +973,7 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, fmt):
+def list_items(lib, query, album, fmt=''):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
@@ -968,23 +986,11 @@ def list_items(lib, query, album, fmt):
 
 
 def list_func(lib, opts, args):
-    fmt = '$path' if opts.path else opts.format
-    list_items(lib, decargs(args), opts.album, fmt)
+    list_items(lib, decargs(args), opts.album)
 
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
-list_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='show matching albums instead of tracks'
-)
-list_cmd.parser.add_option(
-    '-p', '--path', action='store_true',
-    help='print paths for matched items or albums'
-)
-list_cmd.parser.add_option(
-    '-f', '--format', action='store',
-    help='print with custom format', default=''
-)
+list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
@@ -1085,10 +1091,8 @@ def update_func(lib, opts, args):
 update_cmd = ui.Subcommand(
     'update', help='update the library', aliases=('upd', 'up',)
 )
-update_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='match albums instead of tracks'
-)
+update_cmd.parser.add_album_option()
+update_cmd.parser.add_format_option()
 update_cmd.parser.add_option(
     '-M', '--nomove', action='store_false', default=True, dest='move',
     help="don't move files in library"
@@ -1096,10 +1100,6 @@ update_cmd.parser.add_option(
 update_cmd.parser.add_option(
     '-p', '--pretend', action='store_true',
     help="show all changes but do nothing"
-)
-update_cmd.parser.add_option(
-    '-f', '--format', action='store',
-    help='print with custom format', default=''
 )
 update_cmd.func = update_func
 default_commands.append(update_cmd)
@@ -1149,10 +1149,7 @@ remove_cmd.parser.add_option(
     "-d", "--delete", action="store_true",
     help="also remove files from disk"
 )
-remove_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='match albums instead of tracks'
-)
+remove_cmd.parser.add_album_option()
 remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
@@ -1346,17 +1343,11 @@ modify_cmd.parser.add_option(
     '-W', '--nowrite', action='store_false', dest='write',
     help="don't write metadata (opposite of -w)"
 )
-modify_cmd.parser.add_option(
-    '-a', '--album', action='store_true',
-    help='modify whole albums instead of tracks'
-)
+modify_cmd.parser.add_album_option()
+modify_cmd.parser.add_format_option(target='item')
 modify_cmd.parser.add_option(
     '-y', '--yes', action='store_true',
     help='skip confirmation'
-)
-modify_cmd.parser.add_option(
-    '-f', '--format', action='store',
-    help='print with custom format', default=''
 )
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
@@ -1403,10 +1394,7 @@ move_cmd.parser.add_option(
     '-c', '--copy', default=False, action='store_true',
     help='copy instead of moving'
 )
-move_cmd.parser.add_option(
-    '-a', '--album', default=False, action='store_true',
-    help='match whole albums instead of tracks'
-)
+move_cmd.parser.add_album_option()
 move_cmd.func = move_func
 default_commands.append(move_cmd)
 
@@ -1495,30 +1483,14 @@ def config_edit():
     """
     path = config.user_config_path()
 
-    if 'EDITOR' in os.environ:
-        editor = os.environ['EDITOR'].encode('utf8')
-        try:
-            editor = [e.decode('utf8') for e in shlex.split(editor)]
-        except ValueError:  # Malformed shell tokens.
-            editor = [editor]
-        args = editor + [path]
-        args.insert(1, args[0])
-    elif platform.system() == 'Darwin':
-        args = ['open', 'open', '-n', path]
-    elif platform.system() == 'Windows':
-        # On windows we can execute arbitrary files. The os will
-        # take care of starting an appropriate application
-        args = [path, path]
-    else:
-        # Assume Unix
-        args = ['xdg-open', 'xdg-open', path]
-
+    editor = os.environ.get('EDITOR')
     try:
-        os.execlp(*args)
-    except OSError:
-        raise ui.UserError("Could not edit configuration. Please "
-                           "set the EDITOR environment variable.")
-
+        util.interactive_open(path, editor)
+    except OSError as exc:
+        message = "Could not edit configuration: {0}".format(exc)
+        if not editor:
+            message += ". Please set the EDITOR environment variable"
+        raise ui.UserError(message)
 
 config_cmd = ui.Subcommand('config',
                            help='show or edit the user configuration')
