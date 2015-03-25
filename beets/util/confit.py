@@ -405,11 +405,8 @@ class RootView(ConfigView):
     def root(self):
         return self
 
-    def add_redacted_fields(self, field_names):
-        if not isinstance(field_names, list):
-            field_names = [field_names]
-
-        self.redacted_fields = self.redacted_fields | set(field_names)
+    def add_redacted_fields(self, *field_names):
+        self.redacted_fields |= set(field_names)
 
 
 class Subview(ConfigView):
@@ -462,8 +459,8 @@ class Subview(ConfigView):
     def root(self):
         return self.parent.root()
 
-    def add_redacted_fields(self, field_names):
-        self.parent.add_redacted_fields(field_names)
+    def add_redacted_fields(self, *field_names):
+        self.parent.add_redacted_fields(*field_names)
 
 
 # Config file paths, including platform-specific paths and in-package
@@ -821,8 +818,7 @@ class Configuration(RootView):
             out_dict = RootView(sources).flatten()
 
         if redact_fields:
-            Dumper.redacted_fields = Dumper.redacted_fields | \
-                self.redacted_fields
+            Dumper.redacted_fields |= self.redacted_fields
         else:
             Dumper.redacted_fields = set()
 
