@@ -27,6 +27,7 @@ from copy import copy
 from logging import *  # noqa
 import sys
 import subprocess
+import threading
 
 
 # We need special hacks for Python 2.6 due to logging.Logger being an
@@ -108,8 +109,32 @@ class StrFormatLogger(Logger):
                 suffix = '.'.join((self.name, suffix))
             return self.manager.getLogger(suffix)
 
+class ThreadLocalLevelLogger(Logger):
+    """A version of `Logger` whose level is thread-local instead of shared.
+    """
+    def __init__(self, name, level=NOTSET):
+        self._thread_level = threading.local()
+        super(ThreadLocalLevelLogger, self).__init__(name, level)
+
+    @property
+    def level(self):
+        try:
+            return self._thread_level.level
+        except AttributeError:
+            self._thread_level.level = NOTSET
+            return self.level
+
+    @level.setter
+    def level(self, value):
+        self._thread_level.level = value
+
+
+class BeetsLogger(ThreadLocalLevelLogger, StrFormatLogger):
+    pass
+
+
 my_manager = copy(Logger.manager)
-my_manager.loggerClass = StrFormatLogger
+my_manager.loggerClass = BeetsLogger
 
 
 def getLogger(name=None):
@@ -132,7 +157,7 @@ if PY26:
         # it either does not exist or is a placeholder
         logger = old_getLogger(name)
         if change_its_type:
-            logger.__class__ = StrFormatLogger
+            logger.__class__ = BeetsLogger
         return logger
 
     my_manager.getLogger = new_getLogger
