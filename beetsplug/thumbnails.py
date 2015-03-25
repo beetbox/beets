@@ -140,17 +140,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         """Make a thumbnail of given size for `album` and put it in
         `target_dir`.
         """
-        self._log.debug("building thumbnail to put on {0}", album.path)
         target = os.path.join(target_dir, self.thumbnail_file_name(album.path))
 
         if os.path.exists(target) and \
            os.stat(target).st_mtime > os.stat(album.artpath).st_mtime:
             if self.config['force']:
-                self._log.debug("found a suitable thumbnail for {0}, "
-                                "forcing regeneration", album)
+                self._log.debug("found a suitable {1}x{1} thumbnail for {0}, "
+                                "forcing regeneration", album, size)
             else:
-                self._log.debug("thumbnail for {0} exists and is recent "
-                                "enough", album)
+                self._log.debug("{1}x{1} thumbnail for {0} exists and is "
+                                "recent enough", album, size)
                 return False
         resized = ArtResizer.shared.resize(size, album.artpath,
                                            util.syspath(target))
