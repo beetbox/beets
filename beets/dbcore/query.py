@@ -73,6 +73,9 @@ class Query(object):
         """
         raise NotImplementedError
 
+    def __repr__(self):
+        return "{0.__class__.__name__}()".format(self)
+
     def __eq__(self, other):
         return type(self) == type(other)
 
@@ -112,6 +115,10 @@ class FieldQuery(Query):
     def match(self, item):
         return self.value_match(self.pattern, item.get(self.field))
 
+    def __repr__(self):
+        return ("{0.__class__.__name__}({0.field!r}, {0.pattern!r}, "
+                "{0.fast})".format(self))
+
     def __eq__(self, other):
         return super(FieldQuery, self).__eq__(other) and \
             self.field == other.field and self.pattern == other.pattern
@@ -144,6 +151,9 @@ class NoneQuery(FieldQuery):
             return item[self.field] is None
         except KeyError:
             return True
+
+    def __repr__(self):
+        return "{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
 
 
 class StringFieldQuery(FieldQuery):
@@ -349,6 +359,9 @@ class CollectionQuery(Query):
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
 
+    def __repr__(self):
+        return "{0.__class__.__name__}({0.subqueries})".format(self)
+
     def __eq__(self, other):
         return super(CollectionQuery, self).__eq__(other) and \
             self.subqueries == other.subqueries
@@ -383,6 +396,10 @@ class AnyFieldQuery(CollectionQuery):
             if subq.match(item):
                 return True
         return False
+
+    def __repr__(self):
+        return ("{0.__class__.__name__}({0.pattern!r}, {0.fields}, "
+                "{0.query_class.__name__})".format(self))
 
     def __eq__(self, other):
         return super(AnyFieldQuery, self).__eq__(other) and \
