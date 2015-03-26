@@ -340,7 +340,7 @@ config
 ``````
 ::
 
-    beet config [-pd]
+    beet config [-pdr]
     beet config -e
 
 Show or edit the user configuration. This command does one of three things:
@@ -351,6 +351,9 @@ Show or edit the user configuration. This command does one of three things:
 * The ``--path`` option instead shows the path to your configuration file.
   This can be combined with the ``--default`` flag to show where beets keeps
   its internal defaults.
+* The ``--redacted`` option will automatically mask sensitive values (e.g.,
+  passwords) when printing the configuration. This makes it easier to
+  copy/paste your config when reporting bugs.
 * With the ``--edit`` option, beets attempts to open your config file for
   editing. It first tries the ``$EDITOR`` environment variable and then a
   fallback option depending on your platform: ``open`` on OS X, ``xdg-open``
