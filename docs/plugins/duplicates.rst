@@ -27,6 +27,7 @@ duplicates themselves via command-line switches ::
                         report duplicates based on arbitrary command
   -d, --delete          delete items from library and disk
   -F, --full            show all versions of duplicate tracks or albums
+  -s, --strict          report duplicates only if all attributes are set
   -k, --keys            report duplicates based on keys
   -m DEST, --move=DEST  move items to dest
   -o DEST, --copy=DEST  copy items to dest
@@ -64,7 +65,10 @@ file. The available options mirror the command-line options:
   Default: :ref:`format_item`
 - **full**: List every track or album that has duplicates, not just the
   duplicates themselves.
-  Default: ``no``.
+  Default: ``no``
+- **strict**: Do not report duplicate matches if some of the
+  attributes are not defined (ie. null or empty).
+  Default: ``no``
 - **keys**: Define in which track or album fields duplicates are to be
   searched. By default, the plugin uses the musicbrainz track and album IDs for
   this purpose. Using the ``keys`` option (as a YAML list in the configuration
@@ -131,5 +135,8 @@ Tag duplicate items with some flag::
 
   beet duplicates --tag dup=1
 
+Ignore items with undefined keys::
+
+  beet duplicates --strict
 
 .. _spark: https://github.com/holman/spark
