@@ -51,8 +51,8 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def test_add_tags(self, mock_stat, _):
         plugin = ThumbnailsPlugin()
         plugin.write_metadata = Mock()
-        plugin.get_uri = Mock(side_effect=
-                              {b"/path/to/cover": "COVER_URI"}.__getitem__)
+        plugin.get_uri = Mock(side_effect={b"/path/to/cover":
+                                           "COVER_URI"}.__getitem__)
         album = Mock(artpath=b"/path/to/cover")
         mock_stat.return_value.st_mtime = 12345
 
