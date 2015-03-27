@@ -125,6 +125,7 @@ class ConvertPlugin(BeetsPlugin):
             },
             u'max_bitrate': 500,
             u'auto': False,
+            u'tmpdir': None,
             u'quiet': False,
             u'embed': True,
             u'paths': {},
@@ -388,7 +389,8 @@ class ConvertPlugin(BeetsPlugin):
         fmt = self.config['format'].get(unicode).lower()
         if should_transcode(item, fmt):
             command, ext = get_format()
-            fd, dest = tempfile.mkstemp('.' + ext)
+            tmpdir = self.config['tmpdir'].get()
+            fd, dest = tempfile.mkstemp('.' + ext, dir=tmpdir)
             os.close(fd)
             _temp_files.append(dest)  # Delete the transcode later.
             try:
