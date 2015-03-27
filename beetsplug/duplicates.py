@@ -57,20 +57,20 @@ def _checksum(item, prog, log):
     key = args[0]
     checksum = getattr(item, key, False)
     if not checksum:
-        log.debug(u'{0}: key {1} on item {2} not cached: computing checksum',
-                  PLUGIN, key, displayable_path(item.path))
+        log.debug(u'key {0} on item {1} not cached: computing checksum',
+                  key, displayable_path(item.path))
         try:
             checksum = command_output(args)
             setattr(item, key, checksum)
             item.store()
-            log.debug(u'{0}: computed checksum for {1} using {2}',
-                      PLUGIN, item.title, key)
+            log.debug(u'computed checksum for {0} using {1}',
+                      item.title, key)
         except subprocess.CalledProcessError as e:
-            log.debug(u'{0}: failed to checksum {1}: {2}',
-                      PLUGIN, displayable_path(item.path), e)
+            log.debug(u'failed to checksum {0}: {1}',
+                      displayable_path(item.path), e)
     else:
-        log.debug(u'{0}: key {1} on item {2} cached: not computing checksum',
-                  PLUGIN, key, displayable_path(item.path))
+        log.debug(u'key {0} on item {1} cached: not computing checksum',
+                  key, displayable_path(item.path))
     return key, checksum
 
 
@@ -86,13 +86,13 @@ def _group_by(objs, keys, strict, log):
         values = [getattr(obj, k, None) for k in keys]
         values = [v for v in values if v not in (None, '')]
         if strict and len(values) < len(keys):
-            log.debug(u'{0}: some keys {1} on item {2} are null or empty: '
+            log.debug(u'some keys {0} on item {1} are null or empty: '
                       'skipping',
-                      PLUGIN, keys, displayable_path(obj.path))
+                      keys, displayable_path(obj.path))
         elif (not strict and not len(values)):
-            log.debug(u'{0}: all keys {1} on item {2} are null or empty: '
+            log.debug(u'all keys {0} on item {1} are null or empty: '
                       'skipping',
-                      PLUGIN, keys, displayable_path(obj.path))
+                      keys, displayable_path(obj.path))
         else:
             key = '\001'.join(values)
             counts[key].append(obj)
