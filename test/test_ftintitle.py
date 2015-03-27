@@ -32,13 +32,13 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def _ft_add_item(self,path, artist, title, aartist):
+    def _ft_add_item(self, path, artist, title, aartist):
         return self.add_item(path=path,
                              artist=artist,
                              title=title,
                              albumartist=aartist)
 
-    def _ft_set_config(self, ftformat, drop = False, auto = True):
+    def _ft_set_config(self, ftformat, drop=False, auto=True):
         self.config['ftintitle']['format'] = ftformat
         self.config['ftintitle']['drop'] = drop
         self.config['ftintitle']['auto'] = auto
@@ -50,32 +50,28 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
         self.assertEqual(item['artist'], u'Alice')
         self.assertEqual(item['title'], u'Song 1')
 
-    def test_functional_custom_format_1(self):
+    def test_functional_custom_format(self):
         self._ft_set_config('feat. {}')
-
         item = self._ft_add_item('/', u'Alice ft Bob', u'Song 1', u'Alice')
         self.run_command('ftintitle')
         item.load()
         self.assertEqual(item['artist'], u'Alice')
         self.assertEqual(item['title'], u'Song 1 feat. Bob')
 
-    def test_functional_custom_format_2(self):
         self._ft_set_config('featuring {}')
-
         item = self._ft_add_item('/', u'Alice feat. Bob', u'Song 1', u'Alice')
         self.run_command('ftintitle')
         item.load()
         self.assertEqual(item['artist'], u'Alice')
         self.assertEqual(item['title'], u'Song 1 featuring Bob')
 
-    def test_functional_custom_format_3(self):
         self._ft_set_config('with {}')
-
         item = self._ft_add_item('/', u'Alice feat Bob', u'Song 1', u'Alice')
         self.run_command('ftintitle')
         item.load()
         self.assertEqual(item['artist'], u'Alice')
         self.assertEqual(item['title'], u'Song 1 with Bob')
+
 
 class FtInTitlePluginTest(unittest.TestCase):
     def setUp(self):
