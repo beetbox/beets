@@ -117,13 +117,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         """Import hook for moving featuring artist automatically.
         """
         drop_feat = self.config['drop'].get(bool)
-        feat_format = self.config['format'].get(unicode)
 
         for item in task.imported_items():
-            self.ft_in_title(item, drop_feat, feat_format)
+            self.ft_in_title(item, drop_feat)
             item.store()
 
-    def update_metadata(self, item, feat_part, drop_feat, feat_format):
+    def update_metadata(self, item, feat_part, drop_feat):
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
         If `drop_feat` is set, then do not add the artist to the title; just
@@ -139,12 +138,13 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
         if not drop_feat and not contains_feat(item.title):
+            feat_format = self.config['format'].get(unicode)
             new_format = feat_format.format(feat_part)
             new_title = u"{0} {1}".format(item.title, new_format)
             self._log.info(u'title: {0} -> {1}', item.title, new_title)
             item.title = new_title
 
-    def ft_in_title(self, item, drop_feat, feat_format):
+    def ft_in_title(self, item, drop_feat):
         """Look for featured artists in the item's artist fields and move
         them to the title.
         """
@@ -165,6 +165,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
             # If we have a featuring artist, move it to the title.
             if feat_part:
-                self.update_metadata(item, feat_part, drop_feat, feat_format)
+                self.update_metadata(item, feat_part, drop_feat)
             else:
                 self._log.info(u'no featuring artists found')
