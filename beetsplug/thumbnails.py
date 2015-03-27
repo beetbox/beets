@@ -163,7 +163,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         """
         uri = self.get_uri(path)
         hash = md5(uri).hexdigest()
-        return "{0}.png".format(hash)
+        return b"{0}.png".format(hash)
 
     def add_tags(self, album, image_path):
         """Write required metadata to the thumbnail
