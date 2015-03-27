@@ -232,6 +232,10 @@ class GioURI(URIGetter):
     def __init__(self):
         self.libgio = self.get_library()
         self.available = bool(self.libgio)
+        if self.available:
+            self.libgio.g_file_new_for_path.restype = ctypes.c_void_p
+            self.libgio.g_file_get_uri.argtypes = [ctypes.c_void_p]
+            self.libgio.g_object_unref.argtypes = [ctypes.c_void_p]
 
     def get_library(self):
         lib_name = ctypes.util.find_library("gio-2")
