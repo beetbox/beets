@@ -25,8 +25,8 @@ file. The available options are:
   title field.
   Default: ``no``.
 - **format**: Defines the format for the feat part of the new title field.
-  In this format the ``{}`` is used to define where the featured artists are placed
-  Default: ``feat. {}``
+  In this format the ``{0}`` is used to define where the featured artists are placed
+  Default: ``feat. {0}``
 
 Running Manually
 ----------------

@@ -51,21 +51,21 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
         self.assertEqual(item['title'], u'Song 1')
 
     def test_functional_custom_format(self):
-        self._ft_set_config('feat. {}')
+        self._ft_set_config('feat. {0}')
         item = self._ft_add_item('/', u'Alice ft Bob', u'Song 1', u'Alice')
         self.run_command('ftintitle')
         item.load()
         self.assertEqual(item['artist'], u'Alice')
         self.assertEqual(item['title'], u'Song 1 feat. Bob')
 
-        self._ft_set_config('featuring {}')
+        self._ft_set_config('featuring {0}')
         item = self._ft_add_item('/', u'Alice feat. Bob', u'Song 1', u'Alice')
         self.run_command('ftintitle')
         item.load()
         self.assertEqual(item['artist'], u'Alice')
         self.assertEqual(item['title'], u'Song 1 featuring Bob')
 
-        self._ft_set_config('with {}')
+        self._ft_set_config('with {0}')
         item = self._ft_add_item('/', u'Alice feat Bob', u'Song 1', u'Alice')
         self.run_command('ftintitle')
         item.load()
