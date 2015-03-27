@@ -94,7 +94,7 @@ def _group_by(objs, keys, strict, log):
                       'skipping',
                       keys, displayable_path(obj.path))
         else:
-            key = '\001'.join(values)
+            key = tuple(values)
             counts[key].append(obj)
 
     return counts
