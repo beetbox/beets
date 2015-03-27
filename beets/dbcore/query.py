@@ -107,6 +107,15 @@ class FieldQuery(Query):
         return self.value_match(self.pattern, item.get(self.field))
 
 
+    def __repr__(self):
+        pattern = getattr(self.pattern, 'pattern', self.pattern)
+        return u'<{0}: {1} {2}>'.format(
+            type(self).__name__,
+            self.field,
+            repr(pattern),
+        )
+
+
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def col_clause(self):
@@ -330,7 +339,13 @@ class CollectionQuery(Query):
         for subq in self.subqueries:
             subq_clause, subq_subvals = subq.clause()
             if not subq_clause:
-                pass
+                if joiner == 'or':
+                    # No prefiltering clause if any subquery has no clause.
+                    # in 'or' query
+                    return None, ()
+                else:
+                    # Let other subqueries build a prefiltering clause, if any.
+                    pass
             else:
                 clause_parts.append('(' + subq_clause + ')')
                 subvals += subq_subvals
