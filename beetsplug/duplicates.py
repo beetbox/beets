@@ -74,30 +74,37 @@ def _checksum(item, prog, log):
     return key, checksum
 
 
-def _group_by(objs, keys, log):
+def _group_by(objs, keys, strict, log):
     """Return a dictionary with keys arbitrary concatenations of attributes and
     values lists of objects (Albums or Items) with those keys.
+
+    If strict, all attributes must be defined for a duplicate match.
     """
     import collections
     counts = collections.defaultdict(list)
     for obj in objs:
         values = [getattr(obj, k, None) for k in keys]
         values = [v for v in values if v not in (None, '')]
-        if values:
+        if strict and len(values) < len(keys):
+            log.debug(u'{0}: some keys {1} on item {2} are null or empty: '
+                      'skipping',
+                      PLUGIN, keys, displayable_path(obj.path))
+        elif (not strict and not len(values)):
+            log.debug(u'{0}: all keys {1} on item {2} are null or empty: '
+                      'skipping',
+                      PLUGIN, keys, displayable_path(obj.path))
+        else:
             key = '\001'.join(values)
             counts[key].append(obj)
-        else:
-            log.debug(u'{0}: all keys {1} on item {2} are null: skipping',
-                      PLUGIN, keys, displayable_path(obj.path))
 
     return counts
 
 
-def _duplicates(objs, keys, full, log):
+def _duplicates(objs, keys, full, strict, log):
     """Generate triples of keys, duplicate counts, and constituent objects.
     """
     offset = 0 if full else 1
-    for k, objs in _group_by(objs, keys, log).iteritems():
+    for k, objs in _group_by(objs, keys, strict, log).iteritems():
         if len(objs) > 1:
             yield (k, len(objs) - offset, objs[offset:])
 
@@ -113,6 +120,7 @@ class DuplicatesPlugin(BeetsPlugin):
             'count': False,
             'album': False,
             'full': False,
+            'strict': False,
             'path': False,
             'keys': ['mb_trackid', 'mb_albumid'],
             'checksum': None,
@@ -144,6 +152,11 @@ class DuplicatesPlugin(BeetsPlugin):
                                         help='show all versions of duplicate'
                                         ' tracks or albums')
 
+        self._command.parser.add_option('-s', '--strict', dest='strict',
+                                        action='store_true',
+                                        help='report duplicates only if all'
+                                        ' attributes are set')
+
         self._command.parser.add_option('-k', '--keys', dest='keys',
                                         action='callback', metavar='KEY1 KEY2',
                                         callback=vararg_callback,
@@ -170,6 +183,7 @@ class DuplicatesPlugin(BeetsPlugin):
             fmt = self.config['format'].get()
             album = self.config['album'].get(bool)
             full = self.config['full'].get(bool)
+            strict = self.config['strict'].get(bool)
             keys = self.config['keys'].get()
             checksum = self.config['checksum'].get()
             copy = self.config['copy'].get()
@@ -206,6 +220,7 @@ class DuplicatesPlugin(BeetsPlugin):
             for obj_id, obj_count, objs in _duplicates(items,
                                                        keys=keys,
                                                        full=full,
+                                                       strict=strict,
                                                        log=self._log):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
