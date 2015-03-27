@@ -233,6 +233,7 @@ class GioURI(URIGetter):
         self.libgio = self.get_library()
         self.available = bool(self.libgio)
         if self.available:
+            self.libgio.g_type_init()  # for glib < 2.36
             self.libgio.g_file_new_for_path.restype = ctypes.c_void_p
             self.libgio.g_file_get_uri.argtypes = [ctypes.c_void_p]
             self.libgio.g_object_unref.argtypes = [ctypes.c_void_p]
