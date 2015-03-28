@@ -21,6 +21,7 @@ from beets.autotag import hooks
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, Subcommand
+from beets import config
 
 
 def _missing_count(album):
@@ -84,7 +85,6 @@ class MissingPlugin(BeetsPlugin):
         super(MissingPlugin, self).__init__()
 
         self.config.add({
-            'format': None,
             'count': False,
             'total': False,
         })
@@ -105,9 +105,9 @@ class MissingPlugin(BeetsPlugin):
     def commands(self):
         def _miss(lib, opts, args):
             self.config.set_args(opts)
-            fmt = self.config['format'].get()
             count = self.config['count'].get()
             total = self.config['total'].get()
+            fmt = config['format_album' if count else 'format_item'].get()
 
             albums = lib.albums(decargs(args))
             if total:
@@ -115,8 +115,8 @@ class MissingPlugin(BeetsPlugin):
                 return
 
             # Default format string for count mode.
-            if count and not fmt:
-                fmt = '$albumartist - $album: $missing'
+            if count:
+                fmt += ': $missing'
 
             for album in albums:
                 if count:
@@ -134,7 +134,6 @@ class MissingPlugin(BeetsPlugin):
         """Query MusicBrainz to determine items missing from `album`.
         """
         item_mbids = map(lambda x: x.mb_trackid, album.items())
-
         if len([i for i in album.items()]) < album.albumtotal:
             # fetch missing items
             # TODO: Implement caching that without breaking other stuff
@@ -142,6 +141,6 @@ class MissingPlugin(BeetsPlugin):
             for track_info in getattr(album_info, 'tracks', []):
                 if track_info.track_id not in item_mbids:
                     item = _item(track_info, album_info, album.id)
-                    self._log.debug(u'track {1} in album {2}',
+                    self._log.debug(u'track {0} in album {1}',
                                     track_info.track_id, album_info.album_id)
                     yield item
