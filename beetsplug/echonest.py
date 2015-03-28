@@ -135,6 +135,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             'truncate': True,
         })
         self.config.add(ATTRIBUTES)
+        self.config['apikey'].redact = True
 
         pyechonest.config.ECHO_NEST_API_KEY = \
             self.config['apikey'].get(unicode)

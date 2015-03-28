@@ -56,6 +56,8 @@ class DiscogsPlugin(BeetsPlugin):
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
         })
+        self.config['apikey'].redact = True
+        self.config['apisecret'].redact = True
         self.discogs_client = None
         self.register_listener('import_begin', self.setup)
 

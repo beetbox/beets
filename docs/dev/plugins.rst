@@ -283,6 +283,14 @@ If you want to access configuration values *outside* of your plugin's section,
 import the `config` object from the `beets` module. That is, just put ``from
 beets import config`` at the top of your plugin and access values from there.
 
+If your plugin provides configuration values for sensitive data (e.g.,
+passwords, API keys, ...), you should add these to the config so they can be
+redacted automatically when users dump their config. This can be done by
+setting each value's `redact` flag, like so::
+
+    self.config['password'].redact = True
+
+
 Add Path Format Functions and Fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
