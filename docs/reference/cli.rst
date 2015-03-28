@@ -351,7 +351,7 @@ Show or edit the user configuration. This command does one of three things:
 * The ``--path`` option instead shows the path to your configuration file.
   This can be combined with the ``--default`` flag to show where beets keeps
   its internal defaults.
-* The ``--redacted`` option will automatically mask sensitive values (e.g.,
+* The ``--redact`` option will automatically mask sensitive values (e.g.,
   passwords) when printing the configuration. This makes it easier to
   copy/paste your config when reporting bugs.
 * With the ``--edit`` option, beets attempts to open your config file for
