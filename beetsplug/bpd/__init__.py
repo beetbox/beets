@@ -1153,6 +1153,7 @@ class BPDPlugin(BeetsPlugin):
             'password': u'',
             'volume': VOLUME_MAX,
         })
+        self.config['password'].redact = True
 
     def start_bpd(self, lib, host, port, password, volume, debug):
         """Starts a BPD server."""

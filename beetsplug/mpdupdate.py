@@ -71,6 +71,7 @@ class MPDUpdatePlugin(BeetsPlugin):
             'port':     6600,
             'password': u'',
         })
+        config['mpd']['password'].redact = True
 
         # For backwards compatibility, use any values from the
         # plugin-specific "mpdupdate" section.
