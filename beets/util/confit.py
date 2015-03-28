@@ -435,8 +435,11 @@ class RootView(ConfigView):
         return ((dict(s), s) for s in self.sources)
 
     def clear(self):
-        """Remove all sources from this configuration."""
+        """Remove all sources (and redactions) from this
+        configuration.
+        """
         del self.sources[:]
+        self.redactions.clear()
 
     def root(self):
         return self
@@ -918,7 +921,7 @@ class LazyConfig(Configuration):
 
     def clear(self):
         """Remove all sources from this configuration."""
-        del self.sources[:]
+        super(LazyConfig, self).clear()
         self._lazy_suffix = []
         self._lazy_prefix = []
 

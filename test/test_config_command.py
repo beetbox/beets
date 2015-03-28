@@ -34,6 +34,7 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
             file.write('option: cli overwrite')
 
         config.clear()
+        config['password'].redact = True
         config._materialized = False
 
     def tearDown(self):
