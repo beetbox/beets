@@ -82,7 +82,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         self.config.add({
             'auto': True,
             'drop': False,
-            'format': u'feat. {0}'
+            'format': u'feat. {0}',
         })
 
         self._command = ui.Subcommand(
