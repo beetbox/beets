@@ -63,7 +63,7 @@ Features:
   flexible attribute `data_source` of an Item/Album. :bug:`1311`
 * :doc:`/plugins/permissions`: Now handles also the permissions of the
   directories. :bug:`1308` :bug:`1324`
-* Config: A new option ``-r/--redacted`` will automatically redact sensitive
+* Config: A new option ``-r/--redact`` will automatically redact sensitive
   values (e.g., passwords) when printing the config. :bug:`1376`
 
 Core changes:

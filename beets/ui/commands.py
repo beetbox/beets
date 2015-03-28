@@ -1475,7 +1475,7 @@ def config_func(lib, opts, args):
 
     # Dump configuration.
     else:
-        print(config.dump(full=opts.defaults, redact=opts.redacted))
+        print(config.dump(full=opts.defaults, redact=opts.redact))
 
 
 def config_edit():
@@ -1507,7 +1507,7 @@ config_cmd.parser.add_option(
     help='include the default configuration'
 )
 config_cmd.parser.add_option(
-    '-r', '--redacted', action='store_true',
+    '-r', '--redact', action='store_true',
     help='redact sensitive fields'
 )
 config_cmd.func = config_func
