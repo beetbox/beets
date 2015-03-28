@@ -132,6 +132,8 @@ Fixes:
   errors. :bug:`1299` :bug:`1305`
 * :doc:`/plugins/lastgenre`: Bugs in the `pylast` library can no longer crash
   beets.
+* :doc:`/plugins/convert`: You can now configure the temporary directory for
+  conversions. Thanks to :user:`autochthe`. :bug:`1382` :bug:`1383`
 
 For developers:
 
