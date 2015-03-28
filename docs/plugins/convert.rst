@@ -58,6 +58,8 @@ file. The available options are:
   default configuration) non-MP3 files over the maximum bitrate before adding
   them to your library.
   Default: ``no``.
+- **tmpdir**: The directory where temporary files will be stored during import.
+  Default: none (system default),
 - **copy_album_art**: Copy album art when copying or transcoding albums matched
   using the ``-a`` option. Default: ``no``.
 - **dest**: The directory where the files will be converted (or copied) to.
