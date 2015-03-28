@@ -862,7 +862,9 @@ class Configuration(RootView):
         else:
             # Exclude defaults when flattening.
             sources = [s for s in self.sources if not s.default]
-            out_dict = RootView(sources).flatten(redact=redact)
+            temp_root = RootView(sources)
+            temp_root.redactions = self.redactions
+            out_dict = temp_root.flatten(redact=redact)
 
         yaml_out = yaml.dump(out_dict, Dumper=Dumper,
                              default_flow_style=None, indent=4,
@@ -874,7 +876,7 @@ class Configuration(RootView):
             if source.default:
                 default_source = source
                 break
-        if default_source:
+        if default_source and default_source.filename:
             with open(default_source.filename, 'r') as fp:
                 default_data = fp.read()
             yaml_out = restore_yaml_comments(yaml_out, default_data)
