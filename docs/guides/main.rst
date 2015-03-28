@@ -127,7 +127,9 @@ place to start::
 
 Change that first path to a directory where you'd like to keep your music. Then,
 for ``library``, choose a good place to keep a database file that keeps an index
-of your music.
+of your music. (The config's format is `YAML`_. You'll want to configure your
+text editor to use spaces, not real tabs, for indentation.)
+
 
 The default configuration assumes you want to start a new organized music folder
 (that ``directory`` above) and that you'll *copy* cleaned-up music into that
@@ -160,6 +162,8 @@ beets to behave many other ways:
 There are approximately six million other configuration options you can set
 here, including the directory and file naming scheme. See
 :doc:`/reference/config` for a full reference.
+
+.. _YAML: http://yaml.org/
 
 Importing Your Library
 ----------------------
