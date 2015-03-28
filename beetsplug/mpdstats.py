@@ -329,6 +329,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'port':            6600,
             'password':        u'',
         })
+        mpd_config['password'].redact = True
 
     def commands(self):
         cmd = ui.Subcommand(
