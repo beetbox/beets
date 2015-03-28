@@ -26,7 +26,8 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         self.config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(self.config_path, 'w') as file:
             file.write('library: lib\n')
-            file.write('option: value')
+            file.write('option: value\n')
+            file.write('password: password_value')
 
         self.cli_config_path = os.path.join(self.temp_dir, 'cli_config.yaml')
         with open(self.cli_config_path, 'w') as file:
@@ -43,12 +44,14 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
             self.run_command('config')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'password_value')
 
     def test_show_user_config_with_defaults(self):
         with capture_stdout() as output:
             self.run_command('config', '-d')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'password_value')
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['import']['timid'], False)
 
@@ -58,6 +61,21 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         output = yaml.load(output.getvalue())
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['option'], 'cli overwrite')
+
+    def test_show_redacted_user_config(self):
+        with capture_stdout() as output:
+            self.run_command('config', '-r')
+        output = yaml.load(output.getvalue())
+        self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'REDACTED')
+
+    def test_show_redacted_user_config_with_defaults(self):
+        with capture_stdout() as output:
+            self.run_command('config', '-rd')
+        output = yaml.load(output.getvalue())
+        self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'REDACTED')
+        self.assertEqual(output['import']['timid'], False)
 
     def test_config_paths(self):
         with capture_stdout() as output:
