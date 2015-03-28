@@ -6,6 +6,9 @@ Changelog
 
 Features:
 
+* :doc:`/plugins/duplicates` now accepts a ``--strict`` option that
+  will only report duplicates if all attributes are explicitly set.
+  :bug:`1000`
 * :doc:`/plugins/smartplaylist`: detect for each playlist if it needs to be
   regenated, instead of systematically regenerating all of them after a
   database modification.
