@@ -41,10 +41,10 @@ Each plugin has its own set of options that can be defined in a section bearing 
    echonest
    embedart
    fetchart
-   freedesktop
    fromfilename
    ftintitle
    fuzzy
+   freedesktop
    ihate
    importadded
    importfeeds
@@ -70,6 +70,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    smartplaylist
    spotify
    the
+   thumbnails
    types
    web
    zero
@@ -126,7 +127,6 @@ Path Formats
 Interoperability
 ----------------
 
-* :doc:`freedesktop`: Create .directory files in album folders.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
@@ -134,6 +134,7 @@ Interoperability
 * :doc:`plexupdate`: Automatically notifies `Plex`_ whenever the beets library
   changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
+* :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
 
 
 .. _Plex: http://plex.tv
