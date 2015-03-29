@@ -133,6 +133,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         self.config.add({
             'auto': True,
         })
+        config['acoustid']['apikey'].redact = True
 
         if self.config['auto']:
             self.register_listener('import_task_start', self.fingerprint_task)
