@@ -1023,6 +1023,8 @@ class Album(LibModel):
         """Sets the album's cover art to the image at the given path.
         The image is copied (or moved) into place, replacing any
         existing art.
+
+        Sends an 'art_set' event with `self` as the sole argument.
         """
         path = bytestring_path(path)
         oldart = self.artpath
@@ -1045,6 +1047,8 @@ class Album(LibModel):
         else:
             util.move(path, artdest)
         self.artpath = artdest
+
+        plugins.send('art_set', album=self)
 
     def store(self):
         """Update the database with the album information. The album's

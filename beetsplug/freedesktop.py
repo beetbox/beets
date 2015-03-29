@@ -19,51 +19,18 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand
-from beets.ui import decargs
-
-import os
-
-
-def create_file(albumpath, artfile):
-    file_contents = "[Desktop Entry]\nIcon=./" + artfile
-    outfilename = os.path.join(albumpath, ".directory")
-
-    if not os.path.exists(outfilename):
-        file = open(outfilename, 'w')
-        file.write(file_contents)
-        file.close()
+from beets import ui
 
 
 class FreedesktopPlugin(BeetsPlugin):
-    def __init__(self):
-        super(FreedesktopPlugin, self).__init__()
-        self.config.add({
-            'auto': False
-        })
-        self.register_listener('album_imported', self.imported)
-
     def commands(self):
-        freedesktop_command = Subcommand("freedesktop",
-                                         help="Create .directory files")
-        freedesktop_command.func = self.process_query
-        return [freedesktop_command]
+        deprecated = ui.Subcommand("freedesktop", help="Print a message to "
+                                   "redirect to thumbnails --dolphin")
+        deprecated.func = self.deprecation_message
+        return [deprecated]
 
-    def imported(self, lib, album):
-        automatic = self.config['auto'].get(bool)
-        if not automatic:
-            return
-        self.process_album(album)
-
-    def process_query(self, lib, opts, args):
-        for album in lib.albums(decargs(args)):
-            self.process_album(album)
-
-    def process_album(self, album):
-        albumpath = album.item_dir()
-        if album.artpath:
-            fullartpath = album.artpath
-            artfile = os.path.split(fullartpath)[1]
-            create_file(albumpath, artfile)
-        else:
-            self._log.debug(u'album has no art')
+    def deprecation_message(self, lib, opts, args):
+        ui.print_("This plugin is deprecated. Its functionality is superseded "
+                  "by the 'thumbnails' plugin")
+        ui.print_("'thumbnails --dolphin' replaces freedesktop. See doc & "
+                  "changelog for more information")
