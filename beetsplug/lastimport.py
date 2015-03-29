@@ -32,6 +32,7 @@ class LastImportPlugin(plugins.BeetsPlugin):
             'user':     '',
             'api_key':  '',
         })
+        config['lastfm']['api_key'].redact = True
         self.config.add({
             'per_page': 500,
             'retry_limit': 3,
