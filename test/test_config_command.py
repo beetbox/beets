@@ -42,14 +42,14 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
 
     def test_show_user_config(self):
         with capture_stdout() as output:
-            self.run_command('config')
+            self.run_command('config', '-c')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'password_value')
 
     def test_show_user_config_with_defaults(self):
         with capture_stdout() as output:
-            self.run_command('config', '-d')
+            self.run_command('config', '-dc')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'password_value')
@@ -65,14 +65,14 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
 
     def test_show_redacted_user_config(self):
         with capture_stdout() as output:
-            self.run_command('config', '-r')
+            self.run_command('config')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'REDACTED')
 
     def test_show_redacted_user_config_with_defaults(self):
         with capture_stdout() as output:
-            self.run_command('config', '-rd')
+            self.run_command('config', '-d')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'REDACTED')

@@ -1507,8 +1507,9 @@ config_cmd.parser.add_option(
     help='include the default configuration'
 )
 config_cmd.parser.add_option(
-    '-r', '--redact', action='store_true',
-    help='redact sensitive fields'
+    '-c', '--clear', action='store_false',
+    dest='redact', default=True,
+    help='do not redact sensitive fields'
 )
 config_cmd.func = config_func
 default_commands.append(config_cmd)
