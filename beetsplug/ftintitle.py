@@ -82,6 +82,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         self.config.add({
             'auto': True,
             'drop': False,
+            'format': u'feat. {0}',
         })
 
         self._command = ui.Subcommand(
@@ -137,7 +138,9 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
         if not drop_feat and not contains_feat(item.title):
-            new_title = u"{0} feat. {1}".format(item.title, feat_part)
+            feat_format = self.config['format'].get(unicode)
+            new_format = feat_format.format(feat_part)
+            new_title = u"{0} {1}".format(item.title, new_format)
             self._log.info(u'title: {0} -> {1}', item.title, new_title)
             item.title = new_title
 
