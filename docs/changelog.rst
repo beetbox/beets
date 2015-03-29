@@ -66,8 +66,11 @@ Features:
   flexible attribute `data_source` of an Item/Album. :bug:`1311`
 * :doc:`/plugins/permissions`: Now handles also the permissions of the
   directories. :bug:`1308` :bug:`1324`
-* Config: A new option ``-r/--redact`` will automatically redact sensitive
-  values (e.g., passwords) when printing the config. :bug:`1376`
+* In the :ref:`config-cmd` command, a new option ``-r/--redact`` will
+  automatically redact sensitive values (e.g., passwords) when printing the
+  config. :bug:`1376`
+* :doc:`/plugins/ftintitle`: You can now configure the format that the plugin
+  uses to add the artist to the title. Thanks to :user:`amishb`. :bug:`1377`
 
 Core changes:
 
