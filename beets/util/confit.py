@@ -353,7 +353,7 @@ class ConfigView(object):
                 od[key] = REDACTED_TOMBSTONE
             else:
                 try:
-                    od[key] = view.flatten(redact=True)
+                    od[key] = view.flatten(redact=redact)
                 except ConfigTypeError:
                     od[key] = view.get()
         return od
