@@ -107,6 +107,36 @@ BACKEND_FUNCS = {
 }
 
 
+def pil_getsize(path_in):
+    from PIL import Image
+    try:
+        im = Image.open(util.syspath(path_in))
+        return im.size
+    except IOError:
+        log.error(u"PIL cannot compute size of '{0}'",
+                  util.displayable_path(path_in))
+
+
+def im_getsize(path_in):
+    try:
+        out = util.command_output(['identify', '-format', '%w %h',
+                                   util.syspath(path_in)])
+    except subprocess.CalledProcessError:
+        log.warn(u'IM cannot compute size of {0}',
+                 util.displayable_path(path_in))
+        return
+    try:
+        return tuple(map(int, out.split(b' ')))
+    except IndexError:
+        log.warn(u'Could not understand IM output: {0!r}', out)
+
+
+BACKEND_GET_SIZE = {
+    PIL: pil_getsize,
+    IMAGEMAGICK: im_getsize,
+}
+
+
 class Shareable(type):
     """A pseudo-singleton metaclass that allows both shared and
     non-shared instances. The ``MyClass.shared`` property holds a
@@ -129,11 +159,10 @@ class ArtResizer(object):
     """
     __metaclass__ = Shareable
 
-    def __init__(self, method=None):
-        """Create a resizer object for the given method or, if none is
-        specified, with an inferred method.
+    def __init__(self):
+        """Create a resizer object with an inferred method.
         """
-        self.method = self._check_method(method)
+        self.method = self._check_method()
         log.debug(u"artresizer: method is {0}", self.method)
         self.can_compare = self._can_compare()
 
@@ -165,47 +194,59 @@ class ArtResizer(object):
         """
         return self.method[0] in BACKEND_FUNCS
 
+    def get_size(self, path_in):
+        """Return the size of an image file as an int couple (width, height)
+        in pixels.
+
+        Only available locally
+        """
+        if self.local:
+            func = BACKEND_GET_SIZE[self.method[0]]
+            return func(path_in)
+
     def _can_compare(self):
         """A boolean indicating whether image comparison is available"""
 
         return self.method[0] == IMAGEMAGICK and self.method[1] > (6, 8, 7)
 
     @staticmethod
-    def _check_method(method=None):
-        """A tuple indicating whether current method is available and its
-        version. If no method is given, it returns a supported one.
-        """
-        # Guess available method
-        if not method:
-            for m in [IMAGEMAGICK, PIL]:
-                _, version = ArtResizer._check_method(m)
-                if version:
-                    return (m, version)
-            return (WEBPROXY, (0))
+    def _check_method():
+        """Return a tuple indicating an available method and its version."""
+        version = has_IM()
+        if version:
+            return IMAGEMAGICK, version
 
-        if method == IMAGEMAGICK:
+        version = has_PIL()
+        if version:
+            return PIL, version
 
-            # Try invoking ImageMagick's "convert".
-            try:
-                out = util.command_output([b'identify', b'--version'])
+        return WEBPROXY, (0)
 
-                if 'imagemagick' in out.lower():
-                    pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
-                    match = re.search(pattern, out)
-                    if match:
-                        return (IMAGEMAGICK,
-                                (int(match.group(1)),
-                                 int(match.group(2)),
-                                 int(match.group(3))))
-                    return (IMAGEMAGICK, (0))
 
-            except (subprocess.CalledProcessError, OSError):
-                return (IMAGEMAGICK, None)
+def has_IM():
+    """Return Image Magick version or None if it is unavailable
+    Try invoking ImageMagick's "convert"."""
+    try:
+        out = util.command_output([b'identify', b'--version'])
 
-        if method == PIL:
-            # Try importing PIL.
-            try:
-                __import__('PIL', fromlist=['Image'])
-                return (PIL, (0))
-            except ImportError:
-                return (PIL, None)
+        if 'imagemagick' in out.lower():
+            pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
+            match = re.search(pattern, out)
+            if match:
+                return (int(match.group(1)),
+                        int(match.group(2)),
+                        int(match.group(3)))
+            return (0,)
+
+    except (subprocess.CalledProcessError, OSError):
+        return None
+
+
+def has_PIL():
+    """Return Image Magick version or None if it is unavailable
+    Try importing PIL."""
+    try:
+        __import__('PIL', fromlist=['Image'])
+        return (0,)
+    except ImportError:
+        return None
