@@ -93,6 +93,8 @@ setup(
         'pylast',
         'rarfile',
         'responses',
+        'pyxdg',
+        'pathlib',
     ],
 
     # Plugin (optional) dependencies:
@@ -105,6 +107,7 @@ setup(
         'mpdstats': ['python-mpd'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
+        'thumbnails': ['pathlib', 'pyxdg'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # replaygain: mp3gain || aacgain

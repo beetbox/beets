@@ -13,7 +13,7 @@ Embedding Art Automatically
 To automatically embed discovered album art into imported files, just enable
 the ``embedart`` plugin (see :doc:`/plugins/index`). You'll also want to enable the
 :doc:`/plugins/fetchart` to obtain the images to be embedded. Art will be
-embedded after each album is added to the library.
+embedded after each album has its cover art set.
 
 This behavior can be disabled with the ``auto`` config option (see below).
 
