@@ -241,6 +241,8 @@ class GioURI(URIGetter):
     def get_library(self):
         lib_name = ctypes.util.find_library("gio-2")
         try:
+            if not lib_name:
+                return False
             return ctypes.cdll.LoadLibrary(lib_name)
         except OSError:
             return False

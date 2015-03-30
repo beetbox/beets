@@ -265,7 +265,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         gio = GioURI()
         plib = PathlibURI()
         if not gio.available:
-            self.skip("GIO library not found")
+            self.skipTest("GIO library not found")
 
         self.assertEqual(gio.uri("/foo"), b"file:///")  # silent fail
         self.assertEqual(gio.uri(b"/foo"), b"file:///foo")
