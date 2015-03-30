@@ -6,6 +6,8 @@ Changelog
 
 Features:
 
+* :ref:`pathquery` are automatically triggered only if the
+  path targeted by the query exists.
 * :doc:`/plugins/duplicates` now accepts a ``--strict`` option that
   will only report duplicates if all attributes are explicitly set.
   :bug:`1000`
