@@ -23,7 +23,7 @@ from beets import logging
 from beets import plugins
 from beets import config
 from beets.autotag import mb
-from beets.util import levenshtein
+from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
 log = logging.getLogger('beets')
@@ -209,7 +209,7 @@ def _string_dist_basic(str1, str2):
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
     if not str1 and not str2:
         return 0.0
-    return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
+    return levenshtein_distance(str1, str2) / float(max(len(str1), len(str2)))
 
 
 def string_dist(str1, str2):
