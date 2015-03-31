@@ -18,6 +18,8 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 from functools import partial
+from mock import patch
+import os
 
 from test import _common
 from test._common import unittest
@@ -374,6 +376,13 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.i.store()
         self.lib.add_album([self.i])
 
+        self.patcher = patch('beets.library.os.path.exists')
+        self.patcher.start().return_value = True
+
+    def tearDown(self):
+        super(PathQueryTest, self).tearDown()
+        self.patcher.stop()
+
     def test_path_exact_match(self):
         q = 'path:/a/b/c.mp3'
         results = self.lib.items(q)
@@ -502,6 +511,42 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         with _common.system_mock('Windows'):
             q = makeq()
             self.assertEqual(q.case_sensitive, False)
+
+    @patch('beets.library.os')
+    def test_path_sep_detection(self, mock_os):
+        mock_os.sep = '/'
+        is_path = beets.library.PathQuery.is_path_query
+        self.assertTrue(is_path('/foo/bar'))
+        self.assertTrue(is_path('foo/bar'))
+        self.assertTrue(is_path('foo/'))
+        self.assertFalse(is_path('foo'))
+        self.assertTrue(is_path('foo/:bar'))
+        self.assertFalse(is_path('foo:bar/'))
+        self.assertFalse(is_path('foo:/bar'))
+
+    def test_path_detection(self):
+        # cover existence test
+        self.patcher.stop()
+        is_path = beets.library.PathQuery.is_path_query
+
+        try:
+            self.touch(b'foo/bar')
+            # test absolute
+            self.assertTrue(is_path(os.path.join(self.temp_dir, b'foo/bar')))
+            self.assertTrue(is_path(os.path.join(self.temp_dir, b'foo')))
+            self.assertFalse(is_path(b'foo/bar'))
+
+            cur_dir = os.getcwd()
+            try:
+                os.chdir(self.temp_dir)
+                self.assertTrue(is_path(b'foo/'))
+                self.assertTrue(is_path(b'foo/bar'))
+                self.assertTrue(is_path(b'foo/bar:tagada'))
+                self.assertFalse(is_path(b'bar'))
+            finally:
+                os.chdir(cur_dir)
+        finally:
+            self.patcher.start()
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):
