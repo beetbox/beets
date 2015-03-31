@@ -15,10 +15,15 @@
 """Synchronize information from music player libraries
 """
 
-from beets import ui
+from beets import ui, logging
 from beets.plugins import BeetsPlugin
 from beets.dbcore import types
 from beets.library import DateType
+from sys import modules
+import inspect
+
+# Loggers.
+log = logging.getLogger('beets.psync')
 
 
 class PSyncPlugin(BeetsPlugin):
@@ -57,12 +62,21 @@ class PSyncPlugin(BeetsPlugin):
         sources = {}
 
         for player in source:
-            if player == u'amarok':
-                from beetsplug.psync import amarok
+            __import__('beetsplug.psync', fromlist=[str(player)])
 
-                sources[u'amarok'] = amarok.Amarok()
-            else:
+            module = 'beetsplug.psync.' + player
+
+            if module not in modules.keys():
+                log.error(u'Unknown metadata source \'' + player + '\'')
                 continue
+
+            classes = inspect.getmembers(modules[module], inspect.isclass)
+
+            for entry in classes:
+                if entry[0].lower() == player:
+                    sources[player] = entry[1]()
+                else:
+                    continue
 
         for item in lib.items(query):
             for player in sources.values():
