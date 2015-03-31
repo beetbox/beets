@@ -600,7 +600,7 @@ class Connection(object):
             line = yield self.sock.readline()
             if not line:
                 break
-            line = line.decode('utf8') # try to decode early.
+            line = line.decode('utf8')
             line = line.strip()
             if not line:
                 break
