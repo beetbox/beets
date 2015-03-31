@@ -600,6 +600,7 @@ class Connection(object):
             line = yield self.sock.readline()
             if not line:
                 break
+            line = line.decode('utf8') # try to decode early.
             line = line.strip()
             if not line:
                 break
@@ -659,7 +660,6 @@ class Command(object):
             else:
                 # Unquoted argument.
                 arg = match[1]
-            arg = arg.decode('utf8')
             self.args.append(arg)
 
     def run(self, conn):
