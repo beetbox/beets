@@ -166,6 +166,8 @@ Find all items with a file modification time between 2008-12-01 and
     $ beet ls 'mtime:2008-12-01..2008-12-02'
 
 
+.. _pathquery:
+
 Path Queries
 ------------
 
@@ -175,8 +177,8 @@ Sometimes it's useful to find all the items in your library that are
     $ beet list path:/my/music/directory
 
 In fact, beets automatically recognizes any query term containing a path
-separator (``/`` on POSIX systems) as a path query, so this command is
-equivalent::
+separator (``/`` on POSIX systems) as a path query if that path exists, so this
+command is equivalent as long as ``/my/music/directory`` exist::
 
     $ beet list /my/music/directory
 

@@ -75,6 +75,17 @@ class PathQuery(dbcore.FieldQuery):
         # As a directory (prefix).
         self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
 
+    @classmethod
+    def is_path_query(cls, query_part):
+        """Try to guess whether a unicode query part is a path query.
+
+        Condition: separator precedes colon and the file exists.
+        """
+        colon = query_part.find(':')
+        if colon != -1:
+            query_part = query_part[:colon]
+        return os.sep in query_part and os.path.exists(query_part)
+
     def match(self, item):
         path = item.path if self.case_sensitive else item.path.lower()
         return (path == self.file_path) or path.startswith(self.dir_path)
@@ -1097,8 +1108,7 @@ def parse_query_parts(parts, model_cls):
     path_parts = []
     non_path_parts = []
     for s in parts:
-        if s.find(os.sep, 0, s.find(':')) != -1:
-            # Separator precedes colon.
+        if PathQuery.is_path_query(s):
             path_parts.append(s)
         else:
             non_path_parts.append(s)
