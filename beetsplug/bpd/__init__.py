@@ -639,8 +639,8 @@ class Command(object):
     """A command issued by the client for processing by the server.
     """
 
-    command_re = re.compile(r'^([^ \t]+)[ \t]*')
-    arg_re = re.compile(r'"((?:\\"|[^"])+)"|([^ \t"]+)')
+    command_re = re.compile(br'^([^ \t]+)[ \t]*')
+    arg_re = re.compile(br'"((?:\\"|[^"])+)"|([^ \t"]+)')
 
     def __init__(self, s):
         """Creates a new `Command` from the given string, `s`, parsing
@@ -655,7 +655,7 @@ class Command(object):
             if match[0]:
                 # Quoted argument.
                 arg = match[0]
-                arg = arg.replace('\\"', '"').replace('\\\\', '\\')
+                arg = arg.replace(b'\\"', b'"').replace(b'\\\\', b'\\')
             else:
                 # Unquoted argument.
                 arg = match[1]
