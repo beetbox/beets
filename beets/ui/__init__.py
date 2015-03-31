@@ -974,9 +974,9 @@ def _configure(options):
 
     # Configure the logger.
     if config['verbose'].get(int):
-        log.setLevel(logging.DEBUG)
+        log.set_global_level(logging.DEBUG)
     else:
-        log.setLevel(logging.INFO)
+        log.set_global_level(logging.INFO)
 
     # Ensure compatibility with old (top-level) color configuration.
     # Deprecation msg to motivate user to switch to config['ui']['color].
