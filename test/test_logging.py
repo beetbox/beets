@@ -167,7 +167,6 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
     class DummyPlugin(plugins.BeetsPlugin):
         def __init__(self, test_case):
             plugins.BeetsPlugin.__init__(self, 'dummy')
-            # self.import_stages = [self.import_stage]
             self.register_listener('dummy_event1', self.listener1)
             self.register_listener('dummy_event2', self.listener2)
             self.lock1 = threading.Lock()
@@ -190,7 +189,7 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
             self.test_case.assertEqual(self._log.level, log.DEBUG)
 
     def setUp(self):
-        self.setup_beets()
+        self.setup_beets(disk=True)
 
     def tearDown(self):
         self.teardown_beets()
@@ -232,6 +231,31 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
                 dp.lock2.release()
             print("Alive threads:", threading.enumerate())
             raise
+
+    def test_root_logger_levels(self):
+        """Root logger level should be shared between threads.
+        """
+        self.config['threaded'] = True
+
+        blog.getLogger('beets').set_global_level(blog.WARNING)
+        with helper.capture_log() as logs:
+            importer = self.create_importer()
+            importer.run()
+        self.assertEqual(logs, [])
+
+        blog.getLogger('beets').set_global_level(blog.INFO)
+        with helper.capture_log() as logs:
+            importer = self.create_importer()
+            importer.run()
+        for l in logs:
+            self.assertIn("import", l)
+            self.assertIn("album", l)
+
+        blog.getLogger('beets').set_global_level(blog.DEBUG)
+        with helper.capture_log() as logs:
+            importer = self.create_importer()
+            importer.run()
+        self.assertIn("Sending event: database_change", logs)
 
 
 def suite():

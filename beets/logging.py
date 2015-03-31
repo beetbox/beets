@@ -114,6 +114,7 @@ class ThreadLocalLevelLogger(Logger):
     """
     def __init__(self, name, level=NOTSET):
         self._thread_level = threading.local()
+        self.default_level = NOTSET
         super(ThreadLocalLevelLogger, self).__init__(name, level)
 
     @property
@@ -121,13 +122,19 @@ class ThreadLocalLevelLogger(Logger):
         try:
             return self._thread_level.level
         except AttributeError:
-            self._thread_level.level = NOTSET
+            self._thread_level.level = self.default_level
             return self.level
 
     @level.setter
     def level(self, value):
         self._thread_level.level = value
 
+    def set_global_level(self, level):
+        """Set the level on the current thread + the default value for all
+        threads.
+        """
+        self.default_level = level
+        self.setLevel(level)
 
 class BeetsLogger(ThreadLocalLevelLogger, StrFormatLogger):
     pass
