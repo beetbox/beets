@@ -84,7 +84,8 @@ class PathQuery(dbcore.FieldQuery):
         colon = query_part.find(':')
         if colon != -1:
             query_part = query_part[:colon]
-        return os.sep in query_part and os.path.exists(query_part)
+        return (os.sep in query_part
+                and os.path.exists(syspath(normpath(query_part))))
 
     def match(self, item):
         path = item.path if self.case_sensitive else item.path.lower()
