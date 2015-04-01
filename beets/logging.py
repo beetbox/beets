@@ -25,14 +25,8 @@ from __future__ import (division, absolute_import, print_function,
 
 from copy import copy
 from logging import *  # noqa
-import sys
 import subprocess
 import threading
-
-
-# We need special hacks for Python 2.6 due to logging.Logger being an
-# old- style class and having no loggerClass attribute.
-PY26 = sys.version_info[:2] == (2, 6)
 
 
 def logsafe(val):
@@ -93,21 +87,8 @@ class StrFormatLogger(Logger):
     def _log(self, level, msg, args, exc_info=None, extra=None, **kwargs):
         """Log msg.format(*args, **kwargs)"""
         m = self._LogMessage(msg, args, kwargs)
-        return Logger._log(self, level, m, (), exc_info, extra)
-        # We cannot call super(StrFormatLogger, self) because it is not
-        # allowed on old-style classes (py2), which Logger is in python 2.6.
-        # Moreover, we cannot make StrFormatLogger a new-style class (by
-        # declaring 'class StrFormatLogger(Logger, object)' because the class-
-        # patching stmt 'logger.__class__ = StrFormatLogger' would not work:
-        # both prev & new __class__ values must be either old- or new- style;
-        # no mixing allowed.
+        return super(StrFormatLogger, self)._log(level, m, (), exc_info, extra)
 
-    if PY26:
-        def getChild(self, suffix):
-            """Shameless copy from cpython's Lib/logging/__init__.py"""
-            if self.root is not self:
-                suffix = '.'.join((self.name, suffix))
-            return self.manager.getLogger(suffix)
 
 class ThreadLocalLevelLogger(Logger):
     """A version of `Logger` whose level is thread-local instead of shared.
@@ -136,6 +117,7 @@ class ThreadLocalLevelLogger(Logger):
         self.default_level = level
         self.setLevel(level)
 
+
 class BeetsLogger(ThreadLocalLevelLogger, StrFormatLogger):
     pass
 
@@ -149,35 +131,3 @@ def getLogger(name=None):
         return my_manager.getLogger(name)
     else:
         return Logger.root
-
-
-# On Python 2.6, there is no Manager.loggerClass so we dynamically
-# change the logger class. We must be careful to do that on new loggers
-# only to avoid side-effects.
-if PY26:
-    # Wrap Manager.getLogger.
-    old_getLogger = my_manager.getLogger
-
-    def new_getLogger(name):
-        change_its_type = not isinstance(my_manager.loggerDict.get(name),
-                                         Logger)
-        # it either does not exist or is a placeholder
-        logger = old_getLogger(name)
-        if change_its_type:
-            logger.__class__ = BeetsLogger
-        return logger
-
-    my_manager.getLogger = new_getLogger
-
-
-# Offer NullHandler in Python 2.6 to reduce the difference with never versions
-if PY26:
-    class NullHandler(Handler):
-        def handle(self, record):
-            pass
-
-        def emit(self, record):
-            pass
-
-        def createLock(self):
-            self.lock = None

@@ -464,11 +464,7 @@ def _to_epoch_time(date):
     """
     epoch = datetime.fromtimestamp(0)
     delta = date - epoch
-    try:
-        return int(delta.total_seconds())
-    except AttributeError:
-        # datetime.timedelta.total_seconds() is not available on Python 2.6
-        return delta.seconds + delta.days * 24 * 3600
+    return int(delta.total_seconds())
 
 
 def _parse_periods(pattern):
