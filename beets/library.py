@@ -530,10 +530,7 @@ class Item(LibModel):
         for key in self._media_fields:
             value = getattr(mediafile, key)
             if isinstance(value, (int, long)):
-                # Filter values wider than 64 bits (in signed representation).
-                # SQLite cannot store them. py26: Post transition, we can use:
-                # value.bit_length() > 63
-                if abs(value) >= 2 ** 63:
+                if value.bit_length() > 63:
                     value = 0
             self[key] = value
 
