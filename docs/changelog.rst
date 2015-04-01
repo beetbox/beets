@@ -80,6 +80,8 @@ Features:
 
 Core changes:
 
+* Python 2.6 support has been dropped. This was the occasion to remove several
+  hacks and workarounds.
 * The ``tracktotal`` attribute is now a *track-level field* instead of an
   album-level one. This field stores the total number of tracks on the
   album, or if the :ref:`per_disc_numbering` config option is set, the total
