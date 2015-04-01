@@ -14,8 +14,7 @@ dropped, and Python 3.x is not yet supported.)
 
 .. _Python 2.7: http://www.python.org/download/
 
-* **Mac OS X** v10.7 (Lion) and 10.8 (Mountain Lion) include Python 2.7 out of
-  the box; Snow Leopard ships with Python 2.6 so you will need to upgrade it.
+* **Mac OS X** v10.7 (Lion) and later include Python 2.7 out of the box.
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
