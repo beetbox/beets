@@ -1462,51 +1462,51 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
     def test_coalesce_nested_album_multiple_subdirs(self):
         self.create_music()
         albums = list(albums_in_dir(self.base))
-        self.assertEquals(len(albums), 4)
+        self.assertEqual(len(albums), 4)
         root, items = albums[0]
-        self.assertEquals(root, self.dirs[0:3])
-        self.assertEquals(len(items), 3)
+        self.assertEqual(root, self.dirs[0:3])
+        self.assertEqual(len(items), 3)
 
     def test_coalesce_nested_album_single_subdir(self):
         self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[1]
-        self.assertEquals(root, self.dirs[3:5])
-        self.assertEquals(len(items), 1)
+        self.assertEqual(root, self.dirs[3:5])
+        self.assertEqual(len(items), 1)
 
     def test_coalesce_flattened_album_case_typo(self):
         self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[2]
-        self.assertEquals(root, self.dirs[6:8])
-        self.assertEquals(len(items), 2)
+        self.assertEqual(root, self.dirs[6:8])
+        self.assertEqual(len(items), 2)
 
     def test_single_disc_album(self):
         self.create_music()
         albums = list(albums_in_dir(self.base))
         root, items = albums[3]
-        self.assertEquals(root, self.dirs[8:])
-        self.assertEquals(len(items), 1)
+        self.assertEqual(root, self.dirs[8:])
+        self.assertEqual(len(items), 1)
 
     def test_do_not_yield_empty_album(self):
         self.create_music(files=False)
         albums = list(albums_in_dir(self.base))
-        self.assertEquals(len(albums), 0)
+        self.assertEqual(len(albums), 0)
 
     def test_single_disc_unicode(self):
         self.create_music(ascii=False)
         albums = list(albums_in_dir(self.base))
         root, items = albums[3]
-        self.assertEquals(root, self.dirs[8:])
-        self.assertEquals(len(items), 1)
+        self.assertEqual(root, self.dirs[8:])
+        self.assertEqual(len(items), 1)
 
     def test_coalesce_multiple_unicode(self):
         self.create_music(ascii=False)
         albums = list(albums_in_dir(self.base))
-        self.assertEquals(len(albums), 4)
+        self.assertEqual(len(albums), 4)
         root, items = albums[0]
-        self.assertEquals(root, self.dirs[0:3])
-        self.assertEquals(len(items), 3)
+        self.assertEqual(root, self.dirs[0:3])
+        self.assertEqual(len(items), 3)
 
 
 class ReimportTest(unittest.TestCase, ImportHelper):
