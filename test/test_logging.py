@@ -3,7 +3,6 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import sys
-import time
 import threading
 import logging as log
 from StringIO import StringIO
@@ -173,6 +172,7 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
             self.lock2 = threading.Lock()
             self.test_case = test_case
             self.exc_info = None
+            self.t1_step = self.t2_step = 0
 
         def log_all(self, name):
             self._log.debug('debug ' + name)
@@ -182,8 +182,10 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
         def listener1(self):
             try:
                 self.test_case.assertEqual(self._log.level, log.INFO)
+                self.t1_step = 1
                 self.lock1.acquire()
                 self.test_case.assertEqual(self._log.level, log.INFO)
+                self.t1_step = 2
             except Exception:
                 import sys
                 self.exc_info = sys.exc_info()
@@ -191,8 +193,10 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
         def listener2(self):
             try:
                 self.test_case.assertEqual(self._log.level, log.DEBUG)
+                self.t2_step = 1
                 self.lock2.acquire()
                 self.test_case.assertEqual(self._log.level, log.DEBUG)
+                self.t2_step = 2
             except Exception:
                 import sys
                 self.exc_info = sys.exc_info()
@@ -215,29 +219,34 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
             dp.lock2.acquire()
             self.assertEqual(dp._log.level, log.NOTSET)
 
+            self.config['verbose'] = 1
             t1 = threading.Thread(target=dp.listeners['dummy_event1'][0])
             t1.start()  # blocked. t1 tested its log level
-            check_dp_exc()
+            while dp.t1_step != 1:
+                check_dp_exc()
             self.assertTrue(t1.is_alive())
             self.assertEqual(dp._log.level, log.NOTSET)
 
             self.config['verbose'] = 2
             t2 = threading.Thread(target=dp.listeners['dummy_event2'][0])
             t2.start()  # blocked. t2 tested its log level
-            check_dp_exc()
+            while dp.t2_step != 1:
+                check_dp_exc()
             self.assertTrue(t2.is_alive())
             self.assertEqual(dp._log.level, log.NOTSET)
 
-            dp.lock1.release()
-            time.sleep(.1)  # dummy_event1 tests its log level + finishes
-            check_dp_exc()
+            dp.lock1.release()  # dummy_event1 tests its log level + finishes
+            while dp.t1_step != 2:
+                check_dp_exc()
+            t1.join(.1)
             self.assertFalse(t1.is_alive())
             self.assertTrue(t2.is_alive())
             self.assertEqual(dp._log.level, log.NOTSET)
 
-            dp.lock2.release()
-            time.sleep(.1)  # dummy_event2 tests its log level + finishes
-            check_dp_exc()
+            dp.lock2.release()  # dummy_event2 tests its log level + finishes
+            while dp.t2_step != 2:
+                check_dp_exc()
+            t2.join(.1)
             self.assertFalse(t2.is_alive())
 
         except:
