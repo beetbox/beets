@@ -109,15 +109,12 @@ class BeetsPlugin(object):
         `base_log_level` + config options (and restore it to its previous
         value after the function returns). Also determines which params may not
         be sent for backwards-compatibility.
-
-        Note that the log level value may not be NOTSET, e.g. if a plugin
-        import stage triggers an event that is listened this very same plugin.
         """
         argspec = inspect.getargspec(func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            old_log_level = self._log.level
+            assert self._log.level == logging.NOTSET
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
@@ -133,7 +130,7 @@ class BeetsPlugin(object):
                     else:
                         raise
             finally:
-                self._log.setLevel(old_log_level)
+                self._log.setLevel(logging.NOTSET)
         return wrapper
 
     def queries(self):
