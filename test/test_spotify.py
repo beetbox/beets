@@ -73,14 +73,14 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             length=10
         )
         item.add(self.lib)
-        self.assertEquals([], self.spotify.query_spotify(self.lib, ""))
+        self.assertEqual([], self.spotify.query_spotify(self.lib, ""))
 
         params = _params(responses.calls[0].request.url)
-        self.assertEquals(
+        self.assertEqual(
             params['q'],
             ['duifhjslkef album:lkajsdflakjsd artist:ujydfsuihse'],
         )
-        self.assertEquals(params['type'], ['track'])
+        self.assertEqual(params['type'], ['track'])
 
     @responses.activate
     def test_track_request(self):
@@ -192,16 +192,16 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         )
         item.add(self.lib)
         results = self.spotify.query_spotify(self.lib, "Happy")
-        self.assertEquals(1, len(results))
-        self.assertEquals("6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
+        self.assertEqual(1, len(results))
+        self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
         self.spotify.output_results(results)
 
         params = _params(responses.calls[0].request.url)
-        self.assertEquals(
+        self.assertEqual(
             params['q'],
             ['Happy album:Despicable Me 2 artist:Pharrell Williams'],
         )
-        self.assertEquals(params['type'], ['track'])
+        self.assertEqual(params['type'], ['track'])
 
 
 def suite():

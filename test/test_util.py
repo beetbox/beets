@@ -113,8 +113,8 @@ class UtilTest(unittest.TestCase):
         mock_popen.side_effect = popen_fail
         with self.assertRaises(subprocess.CalledProcessError) as exc_context:
             util.command_output([b"taga", b"\xc3\xa9"])
-        self.assertEquals(exc_context.exception.returncode, 1)
-        self.assertEquals(exc_context.exception.cmd, b"taga \xc3\xa9")
+        self.assertEqual(exc_context.exception.returncode, 1)
+        self.assertEqual(exc_context.exception.cmd, b"taga \xc3\xa9")
 
 
 class PathConversionTest(_common.TestCase):
