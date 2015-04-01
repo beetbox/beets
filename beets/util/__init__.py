@@ -649,9 +649,8 @@ def command_output(cmd, shell=False):
     ``subprocess.CalledProcessError`` is raised. May also raise
     ``OSError``.
 
-    This replaces `subprocess.check_output`, which isn't available in
-    Python 2.6 and which can have problems if lots of output is sent to
-    stderr.
+    This replaces `subprocess.check_output` which can have problems if lots of
+    output is sent to stderr.
     """
     proc = subprocess.Popen(
         cmd,
