@@ -101,7 +101,7 @@ setup(
     extras_require={
         'fetchart': ['requests'],
         'chroma': ['pyacoustid'],
-        'discogs': ['discogs-client>=2.0.0'],
+        'discogs': ['discogs-client>=2.1.0'],
         'echonest': ['pyechonest'],
         'lastgenre': ['pylast'],
         'mpdstats': ['python-mpd'],
