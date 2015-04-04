@@ -300,7 +300,9 @@ class FetchArtPlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'auto': True,
+            'minwidth': 0,
             'maxwidth': 0,
+            'enforce_ratio': False,
             'remote_priority': False,
             'cautious': False,
             'google_search': False,
@@ -312,7 +314,10 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         # placing them in the filesystem.
         self.art_paths = {}
 
+        self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
+        self.enforce_ratio = self.config['enforce_ratio'].get(bool)
+
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
@@ -397,6 +402,17 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         except (IOError, requests.RequestException):
             self._log.debug(u'error fetching art')
 
+    def _is_valid_image_candidate(self, candidate):
+        if not candidate:
+            return False
+
+        if not (self.enforce_ratio or self.minwidth):
+            return True
+
+        size = ArtResizer.shared.get_size(candidate)
+        return size and size[0] >= self.minwidth and \
+            (not self.enforce_ratio or size[0] == size[1])
+
     def art_for_album(self, album, paths, local_only=False):
         """Given an Album object, returns a path to downloaded art for the
         album (or None if no art is found). If `maxwidth`, then images are
@@ -412,9 +428,9 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         cautious = self.config['cautious'].get(bool)
         if paths:
             for path in paths:
-                # FIXME
-                out = self.fs_source.get(path, cover_names, cautious)
-                if out:
+                candidate = self.fs_source.get(path, cover_names, cautious)
+                if self._is_valid_image_candidate(candidate):
+                    out = candidate
                     break
 
         # Web art sources.
@@ -424,7 +440,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                 if self.maxwidth:
                     url = ArtResizer.shared.proxy_url(self.maxwidth, url)
                 candidate = self._fetch_image(url)
-                if candidate:
+                if self._is_valid_image_candidate(candidate):
                     out = candidate
                     break
 
