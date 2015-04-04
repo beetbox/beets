@@ -148,6 +148,9 @@ Fixes:
   beets.
 * :doc:`/plugins/convert`: You can now configure the temporary directory for
   conversions. Thanks to :user:`autochthe`. :bug:`1382` :bug:`1383`
+* :doc:`/plugins/rewrite`: Fix a regression that prevented the plugin's
+  rewriting from applying to album-level fields like ``$albumartist``.
+  :bug:`1393`
 
 For developers:
 
