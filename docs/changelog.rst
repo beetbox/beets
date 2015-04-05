@@ -4,84 +4,47 @@ Changelog
 1.3.11 (in development)
 -----------------------
 
-Features:
+There's one big change with this release: **Python 2.6 is no longer
+supported**. You'll need Python 2.7. Please trust us when we say this let us
+remove a surprising number of ugly hacks throughout the code.
 
-* :ref:`pathquery` are automatically triggered only if the
-  path targeted by the query exists.
-* :doc:`/plugins/duplicates` now accepts a ``--strict`` option that
-  will only report duplicates if all attributes are explicitly set.
-  :bug:`1000`
-* :doc:`/plugins/smartplaylist`: detect for each playlist if it needs to be
-  regenated, instead of systematically regenerating all of them after a
-  database modification.
-* :doc:`/plugins/smartplaylist`: the ``splupdate`` command can now take
-  additinal parameters: names of the playlists to regenerate.
-* Beets now accept top-level options ``--format-item`` and ``--format-album``
-  before any subcommand to control how items and albums are displayed.
-  :bug:`1271`
-* :doc:`/plugins/replaygain`: There is a new backend for the `bs1770gain`_
-  tool. Thanks to :user:`jmwatte`. :bug:`1343`
-* There are now multiple levels of verbosity. On the command line, you can
-  make beets somewhat verbose with ``-v`` or very verbose with ``-vv``.
-  :bug:`1244`
-* :doc:`/plugins/play` will sort items according to the configured option when
-  used in album mode.
-* :doc:`/plugins/play` gives full interaction with the command invoked.
-  :bug:`1321`
-* The summary shown to compare duplicate albums during import now displays
-  the old and new filesizes. :bug:`1291`
-* The colors used are now configurable via the new config option ``colors``,
-  nested under the option ``ui``. The `color` config option has been moved
-  from top-level to under ``ui``. Beets will respect the old color setting,
-  but will warn the user with a deprecation message. :bug:`1238`
+Major new features and bigger changes:
+
+* There are now **multiple levels of output verbosity**. On the command line,
+  you can make beets somewhat verbose with ``-v`` or very verbose with
+  ``-vv``. For the importer especially, this makes the first verbose mode much
+  more manageable, while still preserving an option for overwhelmingly verbose
+  debug output. :bug:`1244`
 * A new :doc:`/plugins/filefilter` lets you write regular expressions to
-  automatically avoid importing certain files. Thanks to :user:`mried`.
+  automatically **avoid importing** certain files. Thanks to :user:`mried`.
   :bug:`1186`
-* When there's a parse error in a query (for example, when you type a
-  malformed date in a :ref:`date query <datequery>`), beets now stops with an
-  error instead of silently ignoring the query component.
+* A new :doc:`/plugins/thumbnails` generates cover-art **thumbnails for
+  album folders** for Freedesktop.org-compliant file managers. (This replaces
+  the :doc:`/plugins/freedesktop`, which only worked with the Dolphin file
+  manager.)
+* :doc:`/plugins/replaygain`: There is a new backend that uses the
+  `bs1770gain`_ analysis tool. Thanks to :user:`jmwatte`. :bug:`1343`
+* A new ``filesize`` field on items indicates the number of bytes in the file.
+  :bug:`1291`
 * A new :ref:`searchlimit` configuration option allows you to specify how many
   search results you wish to see when looking up releases at MusicBrainz
   during import. :bug:`1245`
-* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* as well as
-  a longer list of classical music genre tags to the built-in whitelist and
-  canonicalization tree. :bug:`1206` :bug:`1239` :bug:`1240`
-* :doc:`/plugins/web`: Add support for *cross-origin resource sharing* for
-  more flexible in-browser clients. Thanks to Andre Miller. :bug:`1236`
-  :bug:`1237`
-* :doc:`plugins/mbsync`: A new ``-f/--format`` option controls the output
-  format when listing unrecognized items. The output is also now more helpful
-  by default. :bug:`1246`
-* :doc:`/plugins/fetchart`: New option ``-n`` to extract the cover art of all
-  matched albums into its directory. It's also possible to automatically
-  associate them with the album when adding ``-a``. :bug:`1261`
-* :doc:`/plugins/fetchart`: Names of extracted image art is taken from the
-  ``art_filename`` configuration option. :bug:`1258`
+* The importer now records the data source for a match in a new
+  flexible attribute `data_source` on items and albums. :bug:`1311`
+* The colors used in the terminal interface are now configurable via the new
+  config option ``colors``, nested under the option ``ui``. (Also, the `color`
+  config option has been moved from top-level to under ``ui``. Beets will
+  respect the old color setting, but will warn the user with a deprecation
+  message.) :bug:`1238`
 * :doc:`/plugins/fetchart`: There's a new Wikipedia image source that uses
   DBpedia to find albums. Thanks to Tom Jaspers. :bug:`1194`
-* A new :doc:`/plugins/thumbnails` generates thumbnails with cover art for
-  album folders for all freedesktop.org-compliant file managers. This replaces
-  the :doc:`/plugins/freedesktop` which only worked with the Dolphin file
-  manager.
-* :doc:`/plugins/info`: New options ``-i`` to display only given
-  properties. :bug:`1287`
-* A new ``filesize`` field on items indicates the number of bytes in the file.
-  :bug:`1291`
-* The number of missing/unmatched tracks is shown during import. :bug:`1088`
-* The data source used during import (e.g., MusicBrainz) is now saved as a
-  flexible attribute `data_source` of an Item/Album. :bug:`1311`
-* :doc:`/plugins/permissions`: Now handles also the permissions of the
-  directories. :bug:`1308` :bug:`1324`
 * In the :ref:`config-cmd` command, the output is now redacted by default.
   Sensitive information like passwords and API keys is not included. The new
   ``--clear`` option disables redaction. :bug:`1376`
-* :doc:`/plugins/ftintitle`: You can now configure the format that the plugin
-  uses to add the artist to the title. Thanks to :user:`amishb`. :bug:`1377`
 
-Core changes:
+You should probably also know about these core changes to the way beets works:
 
-* Python 2.6 support has been dropped. This was the occasion to remove several
-  hacks and workarounds.
+* As mentioned above, Python 2.6 is no longer supported.
 * The ``tracktotal`` attribute is now a *track-level field* instead of an
   album-level one. This field stores the total number of tracks on the
   album, or if the :ref:`per_disc_numbering` config option is set, the total
@@ -97,11 +60,53 @@ Core changes:
   now affect (almost) every place where objects are printed and logged.
   (Previously, they only controlled the :ref:`list-cmd` command and a few
   other scattered pieces.) :bug:`1269`
+* Relatedly, the ``beet`` program now accept top-level options
+  ``--format-item`` and ``--format-album`` before any subcommand to control
+  how items and albums are displayed. :bug:`1271`
 * `list_format_album` and `list_format_album` have respectively been
   renamed :ref:`format_album` and :ref:`format_item`. The old names still work
   but each triggers a warning message. :bug:`1271`
+* :ref:`Path queries <pathquery>` are automatically triggered only if the
+  path targeted by the query exists. Previously, just having a slash somewhere
+  in the query was enough, so ``beet ls AC/DC`` wouldn't work to refer to the
+  artist.
 
-Fixes:
+There are also lots of medium-sized features in this update:
+
+* :doc:`/plugins/duplicates`: The command has a new ``--strict`` option
+  that will only report duplicates if all attributes are explicitly set.
+  :bug:`1000`
+* :doc:`/plugins/smartplaylist`: Playlist updating should now be faster: the
+  plugin detects, for each playlist, whether it needs to be regenerated,
+  instead of obliviously regenerating all of them. The ``splupdate`` command
+  can now also take additional parameters that indicate the names of the
+  playlists to regenerate.
+* :doc:`/plugins/play`: The command shows the output of the underlying player
+  command and lets you interact with it. :bug:`1321`
+* The summary shown to compare duplicate albums during import now displays
+  the old and new filesizes. :bug:`1291`
+* :doc:`/plugins/lastgenre`: Add *comedy*, *humor*, and *stand-up* as well as
+  a longer list of classical music genre tags to the built-in whitelist and
+  canonicalization tree. :bug:`1206` :bug:`1239` :bug:`1240`
+* :doc:`/plugins/web`: Add support for *cross-origin resource sharing* for
+  more flexible in-browser clients. Thanks to Andre Miller. :bug:`1236`
+  :bug:`1237`
+* :doc:`plugins/mbsync`: A new ``-f/--format`` option controls the output
+  format when listing unrecognized items. The output is also now more helpful
+  by default. :bug:`1246`
+* :doc:`/plugins/fetchart`: A new option, ``-n``, extracts the cover art of
+  all matched albums into their respective directories. Another new flag,
+  ``-a``, associates the extracted files with the albums in the database.
+  :bug:`1261`
+* :doc:`/plugins/info`: A new option, ``-i``, can display only a specified
+  subset of properties. :bug:`1287`
+* The number of missing/unmatched tracks is shown during import. :bug:`1088`
+* :doc:`/plugins/permissions`: The plugin now also adjusts the permissions of
+  the directories. (Previously, it only affected files.) :bug:`1308` :bug:`1324`
+* :doc:`/plugins/ftintitle`: You can now configure the format that the plugin
+  uses to add the artist to the title. Thanks to :user:`amishb`. :bug:`1377`
+
+And many little fixes and improvements:
 
 * :doc:`/plugins/replaygain`: Stop applying replaygain directly to source files
   when using the mp3gain backend. :bug:`1316`
@@ -132,8 +137,8 @@ Fixes:
 * :doc:`/plugins/importfeeds` and :doc:`/plugins/smartplaylist`: Automatically
   create parent directories for playlist files (instead of crashing when the
   parent directory does not exist). :bug:`1266`
-* The :ref:`write-cmd` command no longer tries to "write" non-writable fields
-  like the bitrate. :bug:`1268`
+* The :ref:`write-cmd` command no longer tries to "write" non-writable fields,
+  such as the bitrate. :bug:`1268`
 * The error message when MusicBrainz is not reachable on the network is now
   much clearer. Thanks to Tom Jaspers. :bug:`1190` :bug:`1272`
 * Improve error messages when parsing query strings with shlex. :bug:`1290`
@@ -151,12 +156,19 @@ Fixes:
 * :doc:`/plugins/rewrite`: Fix a regression that prevented the plugin's
   rewriting from applying to album-level fields like ``$albumartist``.
   :bug:`1393`
+* :doc:`/plugins/play`: The plugin now sorts items according to the
+  configuration in album mode.
+* :doc:`/plugins/fetchart`: The name for extracted art files is taken from the
+  ``art_filename`` configuration option. :bug:`1258`
+* When there's a parse error in a query (for example, when you type a
+  malformed date in a :ref:`date query <datequery>`), beets now stops with an
+  error instead of silently ignoring the query component.
 
 For developers:
 
 * The ``database_change`` event now sends the item or album that is subject to
-  a change in the db.
-* the ``OptionParser`` is now a ``CommonOptionsParser`` that offers facilities
+  a change.
+* The ``OptionParser`` is now a ``CommonOptionsParser`` that offers facilities
   for adding usual options (``--album``, ``--path`` and ``--format``). See
   :ref:`add_subcommands`. :bug:`1271`
 * The logging system in beets has been overhauled. Plugins now each have their
