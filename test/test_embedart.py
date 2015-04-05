@@ -27,7 +27,7 @@ from beets.mediafile import MediaFile
 from beets import config, logging, ui
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
-from beetsplug.embedart import EmbedCoverArtPlugin
+from beets import art
 
 
 def require_artresizer_compare(test):
@@ -129,35 +129,35 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
 
 class EmbedartTest(unittest.TestCase):
-    @patch('beetsplug.embedart.subprocess')
+    @patch('beets.art.subprocess')
     def test_imagemagick_response(self, mock_subprocess):
-        embed = EmbedCoverArtPlugin()
-        embed.extract = Mock(return_value=True)
+        art.extract = Mock(return_value=True)
         proc = mock_subprocess.Popen.return_value
+        log = logging.getLogger('beets.embedart')
 
         # everything is fine
         proc.returncode = 0
         proc.communicate.return_value = "10", "tagada"
-        self.assertTrue(embed.check_art_similarity(None, None, 20))
-        self.assertFalse(embed.check_art_similarity(None, None, 5))
+        self.assertTrue(art.check_art_similarity(log, None, None, 20))
+        self.assertFalse(art.check_art_similarity(log, None, None, 5))
 
         # small failure
         proc.returncode = 1
         proc.communicate.return_value = "tagada", "10"
-        self.assertTrue(embed.check_art_similarity(None, None, 20))
-        self.assertFalse(embed.check_art_similarity(None, None, 5))
+        self.assertTrue(art.check_art_similarity(log, None, None, 20))
+        self.assertFalse(art.check_art_similarity(log, None, None, 5))
 
         # bigger failure
         proc.returncode = 2
-        self.assertIsNone(embed.check_art_similarity(None, None, 20))
+        self.assertIsNone(art.check_art_similarity(log, None, None, 20))
 
         # IM result parsing problems
         proc.returncode = 0
         proc.communicate.return_value = "foo", "bar"
-        self.assertIsNone(embed.check_art_similarity(None, None, 20))
+        self.assertIsNone(art.check_art_similarity(log, None, None, 20))
 
         proc.returncode = 1
-        self.assertIsNone(embed.check_art_similarity(None, None, 20))
+        self.assertIsNone(art.check_art_similarity(log, None, None, 20))
 
 
 def suite():
