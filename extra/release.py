@@ -190,7 +190,19 @@ def changelog_as_markdown():
     # Command links with command names.
     rst = re.sub(r':ref:`(\w+)-cmd`', r'``\1``', rst)
 
-    return rst2md(rst)
+    # Bug numbers.
+    rst = re.sub(r':bug:`(\d+)`', r'#\1', rst)
+
+    # Users.
+    rst = re.sub(r':user:`(\w+)`', r'@\1', rst)
+
+    # Convert with Pandoc.
+    md = rst2md(rst)
+
+    # Restore escaped issue numbers.
+    md = re.sub(r'\\#(\d+)\b', r'#\1', md)
+
+    return md
 
 
 @release.command()
@@ -299,5 +311,5 @@ def publish():
     subprocess.check_call(['twine', 'upload', path])
 
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     release()
