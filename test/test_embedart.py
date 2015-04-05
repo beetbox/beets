@@ -17,7 +17,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import os.path
 import shutil
-from mock import Mock, patch
+from mock import patch
 
 from test import _common
 from test._common import unittest
@@ -128,10 +128,11 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
                                        'extracted.png'))
 
 
-class EmbedartTest(unittest.TestCase):
-    @patch('beets.art.subprocess')
-    def test_imagemagick_response(self, mock_subprocess):
-        art.extract = Mock(return_value=True)
+@patch('beets.art.subprocess')
+@patch('beets.art.extract')
+class ArtSimilarityTest(unittest.TestCase):
+    def test_imagemagick_response(self, mock_extract, mock_subprocess):
+        mock_extract.return_value = True
         proc = mock_subprocess.Popen.return_value
         log = logging.getLogger('beets.embedart')
 
