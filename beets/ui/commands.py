@@ -1220,7 +1220,7 @@ default_commands.append(stats_cmd)
 def show_version(lib, opts, args):
     print_('beets version %s' % beets.__version__)
     # Show plugins.
-    names = [p.name for p in plugins.find_plugins()]
+    names = sorted(p.name for p in plugins.find_plugins())
     if names:
         print_('plugins:', ', '.join(names))
     else:
