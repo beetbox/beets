@@ -26,8 +26,8 @@ from string import Template
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from beetsplug.embedart import EmbedCoverArtPlugin
 from beets.util.confit import ConfigTypeError
+from beets import art
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -286,8 +286,8 @@ class ConvertPlugin(BeetsPlugin):
             if self.config['embed']:
                 album = item.get_album()
                 if album and album.artpath:
-                    EmbedCoverArtPlugin().embed_item(item, album.artpath,
-                                                     itempath=converted)
+                    art.embed_item(self._log, item, album.artpath,
+                                   itempath=converted)
 
             if keep_new:
                 plugins.send('after_convert', item=item,
