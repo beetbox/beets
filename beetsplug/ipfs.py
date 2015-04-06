@@ -11,6 +11,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
+"""
 from beets import ui
 from beets.plugins import BeetsPlugin
 
