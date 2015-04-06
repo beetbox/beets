@@ -15,6 +15,7 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 from subprocess import call
+from os import rmdir
 
 
 class IPFSPlugin(BeetsPlugin):
@@ -57,3 +58,4 @@ def ipfs_get(lib, hash):
     imp = ui.commands.TerminalImportSession(lib, loghandler=None,
                                             query=None, paths=hash)
     imp.run()
+    rmdir(hash[0])
