@@ -44,7 +44,6 @@ class IPFSPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-
     def ipfs_add(self, lib):
         try:
             album_dir = lib.get().item_dir()
@@ -52,7 +51,6 @@ class IPFSPlugin(BeetsPlugin):
             return
         self._log.info('Adding {0} to ipfs', album_dir)
         call(["ipfs", "add", "-r", album_dir])
-
 
     def ipfs_get(self, lib, hash):
         call(["ipfs", "get", hash[0]])
