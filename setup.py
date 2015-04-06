@@ -82,6 +82,7 @@ setup(
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
+        'jellyfish',
     ] + (['colorama'] if (sys.platform == 'win32') else []) +
         (['ordereddict'] if sys.version_info < (2, 7, 0) else []),
 
