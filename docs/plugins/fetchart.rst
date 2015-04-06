@@ -38,9 +38,13 @@ file. The available options are:
   Default: ``cover front art album folder``.
 - **google_search**: Gather images from Google Image Search.
   Default: ``no``.
+- **minwidth**: Only images with a width bigger or equal to ``minwidth`` are
+  considered as valid album art candidates. Default: 0.
 - **maxwidth**: A maximum image width to downscale fetched images if they are
   too big. The resize operation reduces image width to at most ``maxwidth``
   pixels. The height is recomputed so that the aspect ratio is preserved.
+- **enforce_ratio**: Only images with a width:height ratio of 1:1 are
+  considered as valid album art candidates. Default: ``no``.
 - **remote_priority**: Query remote sources every time and use local image only
   as fallback.
   Default: ``no``; remote (Web) art sources are only queried if no local art is
