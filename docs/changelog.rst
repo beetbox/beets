@@ -1,18 +1,18 @@
 Changelog
 =========
 
-1.3.11 (in development)
------------------------
+1.3.11 (April 5, 2015)
+----------------------
 
 In this release, we refactored the logging system to be more flexible and more
 useful. There are more granular levels of verbosity, the output from plugins
 should be more consistent, and several kinds of logging bugs should be
-prevented in the future.
+impossible in the future.
 
 There are also two new plugins: one for filtering the files you import and an
 evolved plugin for using album art as directory thumbnails in file managers.
 There's a new source for album art, and the importer now records the source of
-match data. This is a particularly huge release: there's lots more below.
+match data. This is a particularly huge release---there's lots more below.
 
 There's one big change with this release: **Python 2.6 is no longer
 supported**. You'll need Python 2.7. Please trust us when we say this let us
