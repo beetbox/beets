@@ -16,7 +16,9 @@ from beets.plugins import BeetsPlugin
 
 from subprocess import call
 
+
 class IPFSPlugin(BeetsPlugin):
+
     def __init__(self):
         super(IPFSPlugin, self).__init__()
 
@@ -39,6 +41,7 @@ class IPFSPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
+
 def ipfs_add(lib):
     try:
         album_dir = lib.get().item_dir()
@@ -47,9 +50,10 @@ def ipfs_add(lib):
     ui.print_('Adding %s to ipfs' % album_dir)
     call(["ipfs", "add", "-r", album_dir])
 
+
 def ipfs_get(lib, hash):
     call(["ipfs", "get", hash[0]])
     ui.print_('Getting %s from ipfs' % hash[0])
-    imp = ui.commands.TerminalImportSession(lib,loghandler=None,
+    imp = ui.commands.TerminalImportSession(lib, loghandler=None,
                                             query=None, paths=hash)
     imp.run()
