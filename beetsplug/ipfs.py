@@ -13,7 +13,7 @@
 
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
 """
-from beets import ui
+from beets import ui, logging
 from beets.plugins import BeetsPlugin
 
 from subprocess import call
@@ -37,27 +37,27 @@ class IPFSPlugin(BeetsPlugin):
 
         def func(lib, opts, args):
             if opts.add:
-                ipfs_add(lib.albums(ui.decargs(args)))
+                self.ipfs_add(lib.albums(ui.decargs(args)))
             if opts.get:
-                ipfs_get(lib, ui.decargs(args))
+                self.ipfs_get(lib, ui.decargs(args))
 
         cmd.func = func
         return [cmd]
 
 
-def ipfs_add(lib):
-    try:
-        album_dir = lib.get().item_dir()
-    except AttributeError:
-        return
-    ui.print_('Adding %s to ipfs' % album_dir)
-    call(["ipfs", "add", "-r", album_dir])
+    def ipfs_add(self, lib):
+        try:
+            album_dir = lib.get().item_dir()
+        except AttributeError:
+            return
+        self._log.info('Adding {0} to ipfs', album_dir)
+        call(["ipfs", "add", "-r", album_dir])
 
 
-def ipfs_get(lib, hash):
-    call(["ipfs", "get", hash[0]])
-    ui.print_('Getting %s from ipfs' % hash[0])
-    imp = ui.commands.TerminalImportSession(lib, loghandler=None,
-                                            query=None, paths=hash)
-    imp.run()
-    rmdir(hash[0])
+    def ipfs_get(self, lib, hash):
+        call(["ipfs", "get", hash[0]])
+        self._log.info('Getting {0} from ipfs', hash[0])
+        imp = ui.commands.TerminalImportSession(lib, loghandler=None,
+                                                query=None, paths=hash)
+        imp.run()
+        rmdir(hash[0])
