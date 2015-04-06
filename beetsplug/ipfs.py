@@ -26,19 +26,30 @@ class IPFSPlugin(BeetsPlugin):
         cmd.parser.add_option('-a', '--add', dest='add',
                                     action='store_true',
                                     help='Add to ipfs')
+        cmd.parser.add_option('-g', '--get', dest='get',
+                                    action='store_true',
+                                    help='Get from ipfs')
 
         def func(lib, opts, args):
             if opts.add:
-                ipfs(lib.albums(ui.decargs(args)), action='add')
+                ipfs_add(lib.albums(ui.decargs(args)))
+            if opts.get:
+                ipfs_get(lib, ui.decargs(args))
 
         cmd.func = func
         return [cmd]
 
-def ipfs(lib, action):
+def ipfs_add(lib):
     try:
         album_dir = lib.get().item_dir()
     except AttributeError:
         return
-    if action == 'add':
-        ui.print_('Adding %s to ipfs' % album_dir)
-        call(["ipfs", "add", "-r", album_dir])
+    ui.print_('Adding %s to ipfs' % album_dir)
+    call(["ipfs", "add", "-r", album_dir])
+
+def ipfs_get(lib, hash):
+    call(["ipfs", "get", hash[0]])
+    ui.print_('Getting %s from ipfs' % hash[0])
+    imp = ui.commands.TerminalImportSession(lib,loghandler=None,
+                                            query=None, paths=hash)
+    imp.run()
