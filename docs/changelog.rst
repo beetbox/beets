@@ -6,6 +6,11 @@ Changelog
 
 Changelog goes here!
 
+* Use Levenshtein distance from the Jellyfish library, over previously
+  handrolled one. :bug:`1389`
+* :doc:`/plugins/fetchart`: new settings `minwidth` and `enforce_ratio`
+  to put restrictions (min width in pixels, and 1:1 image ratio, resp.)
+  for valid album art candidates. :bug:`1394`
 
 1.3.11 (April 5, 2015)
 ----------------------
