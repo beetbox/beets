@@ -13,7 +13,7 @@
 
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
 """
-from beets import ui, logging
+from beets import ui
 from beets.plugins import BeetsPlugin
 
 from subprocess import call
