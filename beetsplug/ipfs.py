@@ -16,7 +16,7 @@
 from beets import ui
 from beets.plugins import BeetsPlugin
 
-from subprocess import call
+import subprocess
 from os import rmdir
 
 
@@ -50,10 +50,17 @@ class IPFSPlugin(BeetsPlugin):
         except AttributeError:
             return
         self._log.info('Adding {0} to ipfs', album_dir)
-        call(["ipfs", "add", "-r", album_dir])
+        subprocess.call(["ipfs", "add", "-r", album_dir])
 
     def ipfs_get(self, lib, _hash):
-        call(["ipfs", "get", _hash[0]])
+        try:
+            subprocess.check_output(["ipfs", "get", _hash[0]],
+                                    stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            self._log.error('Failed to get {0} from ipfs.\n{1}',
+                            _hash[0], err.output)
+            return False
+
         self._log.info('Getting {0} from ipfs', _hash[0])
         imp = ui.commands.TerminalImportSession(lib, loghandler=None,
                                                 query=None, paths=_hash)
