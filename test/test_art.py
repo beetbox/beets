@@ -109,7 +109,7 @@ class CombinedTest(UseThePlugin):
                  .format(ASIN)
     AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}' \
               .format(ASIN)
-    CAA_URL = 'http://coverartarchive.org/release/{0}/front-500.jpg' \
+    CAA_URL = 'http://coverartarchive.org/release/{0}/front' \
               .format(MBID)
 
     def setUp(self):

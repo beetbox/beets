@@ -57,8 +57,8 @@ class ArtSource(object):
 
 class CoverArtArchive(ArtSource):
     """Cover Art Archive"""
-    URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
-    GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front-500.jpg'
+    URL = 'http://coverartarchive.org/release/{mbid}/front'
+    GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
     def get(self, album):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
