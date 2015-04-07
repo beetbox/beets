@@ -52,10 +52,10 @@ class IPFSPlugin(BeetsPlugin):
         self._log.info('Adding {0} to ipfs', album_dir)
         call(["ipfs", "add", "-r", album_dir])
 
-    def ipfs_get(self, lib, hash):
-        call(["ipfs", "get", hash[0]])
-        self._log.info('Getting {0} from ipfs', hash[0])
+    def ipfs_get(self, lib, _hash):
+        call(["ipfs", "get", _hash[0]])
+        self._log.info('Getting {0} from ipfs', _hash[0])
         imp = ui.commands.TerminalImportSession(lib, loghandler=None,
-                                                query=None, paths=hash)
+                                                query=None, paths=_hash)
         imp.run()
-        rmdir(hash[0])
+        rmdir(_hash[0])
