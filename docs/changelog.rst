@@ -4,15 +4,20 @@ Changelog
 1.3.12 (in development)
 -----------------------
 
-Changelog goes here!
+New features:
 
 * Use Levenshtein distance from the Jellyfish library, over previously
   handrolled one. :bug:`1389`
 * :doc:`/plugins/fetchart`: new settings `minwidth` and `enforce_ratio`
   to put restrictions (min width in pixels, and 1:1 image ratio, resp.)
   for valid album art candidates. :bug:`1394`
+
+Little fixes and improvements:
+
 * :doc:`/plugins/fetchart`: Remove hard size limit when fetching from the
   CoverArtArchive.
+* The output of the :ref:`fields-cmd` command is now sorted. Thanks to
+  :user:`multikatt`. :bug:`1402`
 
 1.3.11 (April 5, 2015)
 ----------------------
