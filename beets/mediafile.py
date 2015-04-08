@@ -1155,7 +1155,8 @@ class DateField(MediaField):
         if date is None:
             self._set_date_tuple(mediafile, None, None, None)
         else:
-            self._set_date_tuple(mediafile, date.year, date.month, date.day)
+            year, month, day = date.split("-")
+            self._set_date_tuple(mediafile, year, month, day)
 
     def __delete__(self, mediafile):
         super(DateField, self).__delete__(mediafile)
