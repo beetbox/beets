@@ -79,6 +79,7 @@ def _do_query(lib, query, album, also_items=True):
 
 def fields_func(lib, opts, args):
     def _print_rows(names):
+        names.sort()
         print("  " + "\n  ".join(names))
 
     def _show_plugin_fields(album):
@@ -94,15 +95,18 @@ def fields_func(lib, opts, args):
             _print_rows(plugin_fields)
 
     print("Item fields:")
-    _print_rows(library.Item._fields.keys() +
-                library.Item._getters().keys() +
-                library.Item._types.keys())
+    item_fields = (library.Item._fields.keys() +
+                   library.Item._getters().keys() +
+                   library.Item._types.keys())
+
+    _print_rows(item_fields)
     _show_plugin_fields(False)
 
     print("\nAlbum fields:")
-    _print_rows(library.Album._fields.keys() +
-                library.Album._getters().keys() +
-                library.Album._types.keys())
+    album_fields = (library.Album._fields.keys() +
+                    library.Album._getters().keys() +
+                    library.Album._types.keys())
+    _print_rows(album_fields)
     _show_plugin_fields(True)
 
 
