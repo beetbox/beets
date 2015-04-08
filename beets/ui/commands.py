@@ -92,7 +92,6 @@ def fields_func(lib, opts, args):
             plugin_fields += fdict.keys()
         if plugin_fields:
             print("Template fields from plugins:")
-            plugin_fields.sort()
             _print_rows(plugin_fields)
 
     print("Item fields:")
