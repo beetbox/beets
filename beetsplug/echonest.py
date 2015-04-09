@@ -289,7 +289,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         pending.
         This is stolen from Jakob Schnitzers convert plugin.
         """
-        fd, dest = tempfile.mkstemp(u'.ogg')
+        fd, dest = tempfile.mkstemp(b'.ogg')
         os.close(fd)
 
         self._log.info(u'encoding {0} to {1}',
