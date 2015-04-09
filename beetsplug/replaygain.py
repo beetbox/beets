@@ -94,7 +94,10 @@ class Bs1770gainBackend(Backend):
     def __init__(self, config, log):
         super(Bs1770gainBackend, self).__init__(config, log)
         cmd = b'bs1770gain'
-
+        try:
+            self.chunk_at = config['chunk_at'].as_number()
+        except:
+            self.chunk_at = 5000
         try:
             self.method = b'--' + config['method'].get(str)
         except:
@@ -132,6 +135,21 @@ class Bs1770gainBackend(Backend):
 
         return AlbumGain(output[-1], output[:-1])
 
+    def isplitter(self, items, chunk_at):
+        iterable = iter(items)
+        while True:
+            result = []
+            for i in range(chunk_at):
+                try:
+                    a = next(iterable)
+                except StopIteration:
+                    break
+                else:
+                    result.append(a)
+            if result:
+                yield result
+            else:
+                break
     def compute_gain(self, items, is_album):
         """Computes the track or album gain of a list of items, returns
         a list of TrackGain objects.
@@ -142,6 +160,24 @@ class Bs1770gainBackend(Backend):
         if len(items) == 0:
             return []
 
+        albumgaintot = 0.0
+        albumpeaktot = 0.0
+        returnchunks = []
+
+        if len(items) > self.chunk_at:
+            i = 0
+            for chunk in self.isplitter(items, self.chunk_at):
+                    i += 1
+                    returnchunk = self.compute_chunk_gain(chunk, is_album)
+                    albumgaintot += returnchunk[-1].gain
+                    albumpeaktot += returnchunk[-1].peak
+                    returnchunks = returnchunks + returnchunk[0:-1]
+            returnchunks.append(Gain(albumgaintot/i, albumpeaktot/i))
+            return returnchunks
+        else:
+            return self.compute_chunk_gain(items, is_album)
+
+    def compute_chunk_gain(self, items, is_album):
         """Compute ReplayGain values and return a list of results
         dictionaries as given by `parse_tool_output`.
         """
@@ -149,14 +185,18 @@ class Bs1770gainBackend(Backend):
         cmd = [self.command]
         cmd = cmd + [self.method]
         cmd = cmd + [b'-it']
-        cmd = cmd + [syspath(i.path) for i in items]
-
-        self._log.debug(u'analyzing {0} files', len(items))
-        self._log.debug(u"executing {0}", " ".join(map(displayable_path, cmd)))
-        output = call(cmd)
-        self._log.debug(u'analysis finished')
+        # workaround for windows MAX_PATH prefix, will get problems
+        # when path is too long on windows
+        try:
+            output = call(cmd + [syspath(i.path) for i in items])
+            if not output:
+                output = call(cmd + [syspath(i.path, prefix=False) for i in items])
+        except:
+            self._log.debug(u'bsgain1770 failed')
+        self._log.debug(u'analysis finished:{0}', output)
         results = self.parse_tool_output(output,
                                          len(items) + is_album)
+        self._log.debug(u'{0} items/ {1} results', len(items), len(results))
         return results
 
     def parse_tool_output(self, text, num_lines):
@@ -166,25 +206,23 @@ class Bs1770gainBackend(Backend):
         """
         out = []
         data = text.decode('utf8', errors='ignore')
-        regex = ("(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)(?=\s{2,2}\[\d+\/\d+\]"
-                 "|\s{2,2}\[ALBUM\]:|done\.$)")
-
-        results = re.findall(regex, data, re.S | re.M)
-        for ll in results[0:num_lines]:
-            parts = ll.split(b'\n')
-            if len(parts) == 0:
+        regex = re.compile(ur'(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)(?=\s{2,2}\[\d+\/\d+\]|\s{2,2}\[ALBUM\]:|done\.\s)', re.DOTALL | re.UNICODE)
+        results = re.findall(regex, data)
+        for parts in results[0:num_lines]:
+            part = parts.split(b'\n')
+            if len(part) == 0:
                 self._log.debug(u'bad tool output: {0!r}', text)
                 raise ReplayGainError('bs1770gain failed')
-
-            d = {
-                'file': parts[0],
-                'gain': float((parts[1].split('/'))[1].split('LU')[0]),
-                'peak': float(parts[2].split('/')[1]),
-            }
-
-            self._log.info('analysed {}gain={};peak={}',
-                           d['file'].rstrip(), d['gain'], d['peak'])
-            out.append(Gain(d['gain'], d['peak']))
+            try:
+                song = {
+                    'file': part[0],
+                    'gain': float((part[1].split('/'))[1].split('LU')[0]),
+                    'peak': float(part[2].split('/')[1]),
+                    }
+            except IndexError:
+                self._log.info(u'bs1770gain reports(faulty file?):{}', parts)
+            else:
+                out.append(Gain(song['gain'], song['peak']))
         return out
 
 
