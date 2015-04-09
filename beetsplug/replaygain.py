@@ -150,6 +150,7 @@ class Bs1770gainBackend(Backend):
                 yield result
             else:
                 break
+
     def compute_gain(self, items, is_album):
         """Computes the track or album gain of a list of items, returns
         a list of TrackGain objects.
@@ -172,7 +173,7 @@ class Bs1770gainBackend(Backend):
                     albumgaintot += returnchunk[-1].gain
                     albumpeaktot += returnchunk[-1].peak
                     returnchunks = returnchunks + returnchunk[0:-1]
-            returnchunks.append(Gain(albumgaintot/i, albumpeaktot/i))
+            returnchunks.append(Gain(albumgaintot / i, albumpeaktot / i))
             return returnchunks
         else:
             return self.compute_chunk_gain(items, is_album)
@@ -190,7 +191,8 @@ class Bs1770gainBackend(Backend):
         try:
             output = call(cmd + [syspath(i.path) for i in items])
             if not output:
-                output = call(cmd + [syspath(i.path, prefix=False) for i in items])
+                output = call(cmd +
+                              [syspath(i.path, prefix=False) for i in items])
         except:
             self._log.debug(u'bsgain1770 failed')
         self._log.debug(u'analysis finished:{0}', output)
@@ -206,7 +208,9 @@ class Bs1770gainBackend(Backend):
         """
         out = []
         data = text.decode('utf8', errors='ignore')
-        regex = re.compile(ur'(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)(?=\s{2,2}\[\d+\/\d+\]|\s{2,2}\[ALBUM\]:|done\.\s)', re.DOTALL | re.UNICODE)
+        regex = re.compile(ur'(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)'
+                           '(?=\s{2,2}\[\d+\/\d+\]|\s{2,2}\[ALBUM\]:|done\.\s)'
+                           ', re.DOTALL | re.UNICODE')
         results = re.findall(regex, data)
         for parts in results[0:num_lines]:
             part = parts.split(b'\n')
@@ -217,8 +221,8 @@ class Bs1770gainBackend(Backend):
                 song = {
                     'file': part[0],
                     'gain': float((part[1].split('/'))[1].split('LU')[0]),
-                    'peak': float(part[2].split('/')[1]),
-                    }
+                    'peak': float(part[2].split('/')[1]), }
+
             except IndexError:
                 self._log.info(u'bs1770gain reports(faulty file?):{}', parts)
             else:
