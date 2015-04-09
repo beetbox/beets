@@ -109,6 +109,12 @@ class EchonestCliTest(unittest.TestCase, TestHelper):
         self.assertNotEqual(item.path,
                             echonest_track.call_args[1]['filename'])
 
+    @patch('pyechonest.song.search')
+    @patch('beetsplug.echonest.CONVERT_COMMAND', 'cp $source $dest')
+    def test_analyze_convert2(self, echonest_search):
+        self.add_item(format='FLAC', path=b'm\xc3\xacn.flac')
+        self.run_command('echonest')
+
     @patch('pyechonest.song.profile')
     @patch('pyechonest.song.search')
     @patch('pyechonest.track.track_from_filename')
