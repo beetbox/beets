@@ -93,16 +93,14 @@ class Bs1770gainBackend(Backend):
 
     def __init__(self, config, log):
         super(Bs1770gainBackend, self).__init__(config, log)
-        cmd = b'bs1770gain'
-        try:
-            self.chunk_at = config['chunk_at'].as_number()
-        except:
-            self.chunk_at = 5000
-        try:
-            self.method = b'--' + config['method'].get(str)
-        except:
-            self.method = b'--replaygain'
+        config.add({
+            'chunk_at': 5000,
+            'method': 'replaygain',
+        })
+        self.chunk_at = config['chunk_at'].as_number()
+        self.method = b'--' + bytes(config['method'].get(unicode))
 
+        cmd = b'bs1770gain'
         try:
             call([cmd, self.method])
             self.command = cmd
