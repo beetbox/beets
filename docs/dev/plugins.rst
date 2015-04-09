@@ -328,7 +328,7 @@ Here's an example that adds a ``$disc_and_track`` field::
 
     def _tmpl_disc_and_track(item):
         """Expand to the disc number and track number if this is a
-        multi-disc release. Otherwise, just exapnds to the track
+        multi-disc release. Otherwise, just expands to the track
         number.
         """
         if item.disctotal > 1:
