@@ -190,13 +190,16 @@ class Bs1770gainBackend(Backend):
         cmd = [self.command]
         cmd = cmd + [self.method]
         cmd = cmd + [b'-it']
-        # workaround for windows MAX_PATH prefix, will get problems
-        # when path is too long on windows
+
         try:
+            # Workaround for Windows: the underlying tool fails on paths
+            # with the \\?\ prefix, so we don't use it here. This
+            # prevents the backend from working with long paths.
             output = call(cmd +
                           [syspath(i.path, prefix=False) for i in items])
         except:
             self._log.debug(u'bsgain1770 failed')
+
         self._log.debug(u'analysis finished:{0}', output)
         results = self.parse_tool_output(output,
                                          len(items) + is_album)
