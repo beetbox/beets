@@ -78,11 +78,9 @@ On OS X, most of the dependencies can be installed with `Homebrew`_::
 bs1770gain
 ``````````
 
-In order to use this backend, you will need to install the bs1770gain command-line tool.
-Here are some hints:
-
-* goto `bs1770gain`_ and follow the download instructions
-* make sure it is in your $PATH
+To use this backend, you will need to install the `bs1770gain`_ command-line
+tool. Follow the instructions at the `bs1770gain`_ Web site and ensure that
+the tool is on your ``$PATH``.
 
 .. _bs1770gain: http://bs1770gain.sourceforge.net/
 
@@ -92,14 +90,9 @@ backend in your configuration file::
     replaygain:
         backend: bs1770gain
 
-IMPORTANT for windows users:
-Untill bs1770gain accepts very long Paths, you will get problems if your
-Pathname exceeds the windows-limit.
-AND to avoid other problems with paths...untill further notice ...please use
-
-asciify_paths: true
-
-in your config.
+For Windows users: the tool currently has issues with long and non-ASCII path
+names. You may want to use the :ref:`asciify-paths` configuration option until
+this is resolved.
 
 Configuration
 -------------

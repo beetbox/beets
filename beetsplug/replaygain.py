@@ -134,6 +134,9 @@ class Bs1770gainBackend(Backend):
         return AlbumGain(output[-1], output[:-1])
 
     def isplitter(self, items, chunk_at):
+        """Break an iterable into chunks of at most size `chunk_at`,
+        generating lists for each chunk.
+        """
         iterable = iter(items)
         while True:
             result = []
@@ -163,14 +166,17 @@ class Bs1770gainBackend(Backend):
         albumpeaktot = 0.0
         returnchunks = []
 
+        # In the case of very large sets of music, we break the tracks
+        # into smaller chunks and process them one at a time. This
+        # avoids running out of memory.
         if len(items) > self.chunk_at:
             i = 0
             for chunk in self.isplitter(items, self.chunk_at):
-                    i += 1
-                    returnchunk = self.compute_chunk_gain(chunk, is_album)
-                    albumgaintot += returnchunk[-1].gain
-                    albumpeaktot += returnchunk[-1].peak
-                    returnchunks = returnchunks + returnchunk[0:-1]
+                i += 1
+                returnchunk = self.compute_chunk_gain(chunk, is_album)
+                albumgaintot += returnchunk[-1].gain
+                albumpeaktot += returnchunk[-1].peak
+                returnchunks = returnchunks + returnchunk[0:-1]
             returnchunks.append(Gain(albumgaintot / i, albumpeaktot / i))
             return returnchunks
         else:
