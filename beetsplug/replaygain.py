@@ -131,6 +131,8 @@ class Bs1770gainBackend(Backend):
         supported_items = album.items()
         output = self.compute_gain(supported_items, True)
 
+        if not output:
+            raise ReplayGainError('no output from bs1770gain')
         return AlbumGain(output[-1], output[:-1])
 
     def isplitter(self, items, chunk_at):
@@ -191,19 +193,16 @@ class Bs1770gainBackend(Backend):
         cmd = cmd + [self.method]
         cmd = cmd + [b'-it']
 
-        try:
-            # Workaround for Windows: the underlying tool fails on paths
-            # with the \\?\ prefix, so we don't use it here. This
-            # prevents the backend from working with long paths.
-            output = call(cmd +
-                          [syspath(i.path, prefix=False) for i in items])
-        except:
-            self._log.debug(u'bsgain1770 failed')
+        # Workaround for Windows: the underlying tool fails on paths
+        # with the \\?\ prefix, so we don't use it here. This
+        # prevents the backend from working with long paths.
+        output = call(cmd +
+                      [syspath(i.path, prefix=False) for i in items])
 
-        self._log.debug(u'analysis finished:{0}', output)
+        self._log.debug(u'analysis finished: {0}', output)
         results = self.parse_tool_output(output,
                                          len(items) + is_album)
-        self._log.debug(u'{0} items/ {1} results', len(items), len(results))
+        self._log.debug(u'{0} items, {1} results', len(items), len(results))
         return results
 
     def parse_tool_output(self, text, num_lines):
@@ -221,18 +220,20 @@ class Bs1770gainBackend(Backend):
         for parts in results[0:num_lines]:
             part = parts.split(b'\n')
             if len(part) == 0:
-                self._log.debug(u'bad tool output: {0!r}', text)
+                self._log.debug('bad tool output: {0!r}', text)
                 raise ReplayGainError('bs1770gain failed')
+
             try:
                 song = {
                     'file': part[0],
                     'gain': float((part[1].split('/'))[1].split('LU')[0]),
-                    'peak': float(part[2].split('/')[1]), }
-
+                    'peak': float(part[2].split('/')[1]),
+                }
             except IndexError:
-                self._log.info(u'bs1770gain reports(faulty file?):{}', parts)
-            else:
-                out.append(Gain(song['gain'], song['peak']))
+                self._log.info('bs1770gain reports (faulty file?): {}', parts)
+                continue
+
+            out.append(Gain(song['gain'], song['peak']))
         return out
 
 
@@ -338,10 +339,8 @@ class CommandBackend(Backend):
         self._log.debug(u"executing {0}", " ".join(map(displayable_path, cmd)))
         output = call(cmd)
         self._log.debug(u'analysis finished')
-        results = self.parse_tool_output(output,
-                                         len(items) + (1 if is_album else 0))
-
-        return results
+        return self.parse_tool_output(output,
+                                      len(items) + (1 if is_album else 0))
 
     def parse_tool_output(self, text, num_lines):
         """Given the tab-delimited output from an invocation of mp3gain
