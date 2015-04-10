@@ -193,10 +193,8 @@ class Bs1770gainBackend(Backend):
         # workaround for windows MAX_PATH prefix, will get problems
         # when path is too long on windows
         try:
-            output = call(cmd + [syspath(i.path) for i in items])
-            if not output:
-                output = call(cmd +
-                              [syspath(i.path, prefix=False) for i in items])
+            output = call(cmd +
+                          [syspath(i.path, prefix=False) for i in items])
         except:
             self._log.debug(u'bsgain1770 failed')
         self._log.debug(u'analysis finished:{0}', output)
