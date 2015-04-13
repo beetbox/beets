@@ -72,14 +72,23 @@ class UserError(Exception):
 
 # Utilities.
 
-def _encoding():
-    """Tries to guess the encoding used by the terminal."""
+def _out_encoding():
+    """Get the encoding to use for *outputting* strings to the console.
+    """
     # Configured override?
     encoding = config['terminal_encoding'].get()
     if encoding:
         return encoding
 
-    # Determine from locale settings.
+    # Python's guessed output stream encoding, or UTF-8 as a fallback
+    # (e.g., when piped to a file).
+    return sys.stdout.encoding or 'utf8'
+
+
+def _arg_encoding():
+    """Get the encoding for command-line arguments (and other OS
+    locale-sensitive strings).
+    """
     try:
         return locale.getdefaultlocale()[1] or 'utf8'
     except ValueError:
@@ -92,7 +101,7 @@ def decargs(arglist):
     """Given a list of command-line argument bytestrings, attempts to
     decode them to Unicode strings.
     """
-    return [s.decode(_encoding()) for s in arglist]
+    return [s.decode(_arg_encoding()) for s in arglist]
 
 
 def print_(*strings):
@@ -100,8 +109,8 @@ def print_(*strings):
     is not in the terminal's encoding's character set, just silently
     replaces it.
 
-    If the arguments are strings then they're expected to share the same type:
-    either bytes or unicode.
+    If the arguments are strings then they're expected to share the same
+    type: either bytes or unicode.
     """
     if strings:
         if isinstance(strings[0], unicode):
@@ -111,7 +120,7 @@ def print_(*strings):
     else:
         txt = u''
     if isinstance(txt, unicode):
-        txt = txt.encode(_encoding(), 'replace')
+        txt = txt.encode(_out_encoding(), 'replace')
     print(txt)
 
 
@@ -126,7 +135,7 @@ def input_(prompt=None):
     # http://bugs.python.org/issue1927
     if prompt:
         if isinstance(prompt, unicode):
-            prompt = prompt.encode(_encoding(), 'replace')
+            prompt = prompt.encode(_out_encoding(), 'replace')
         print(prompt, end=' ')
 
     try:

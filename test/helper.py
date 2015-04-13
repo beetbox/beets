@@ -51,7 +51,7 @@ from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
-from beets.ui import _encoding
+from beets.ui import _arg_encoding
 
 # TODO Move AutotagMock here
 from test import _common
@@ -121,7 +121,7 @@ def has_program(cmd, args=['--version']):
     full_cmd = [cmd] + args
     for i, elem in enumerate(full_cmd):
         if isinstance(elem, unicode):
-            full_cmd[i] = elem.encode(_encoding())
+            full_cmd[i] = elem.encode(_arg_encoding())
     try:
         with open(os.devnull, 'wb') as devnull:
             subprocess.check_call(full_cmd, stderr=devnull,
