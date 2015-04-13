@@ -216,9 +216,9 @@ class Bs1770gainBackend(Backend):
         out = []
         data = text.decode('utf8', errors='ignore')
         regex = re.compile(
-            ur'(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?\
-                )(?=\s{2,2}\[\d+\/\d+\]|\s{2,2}\[ALBUM\]:|done\.\s\
-                )', re.DOTALL | re.UNICODE)
+            ur'(\s{2,2}\[\d+\/\d+\].*?|\[ALBUM\].*?)'
+            '(?=\s{2,2}\[\d+\/\d+\]|\s{2,2}\[ALBUM\]'
+            ':|done\.\s)', re.DOTALL | re.UNICODE)
         results = re.findall(regex, data)
         for parts in results[0:num_lines]:
             part = parts.split(b'\n')
