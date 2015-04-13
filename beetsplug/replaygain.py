@@ -196,8 +196,11 @@ class Bs1770gainBackend(Backend):
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
         # prevents the backend from working with long paths.
-        output = call(cmd +
-                      [syspath(i.path, prefix=False) for i in items])
+        args = cmd + [syspath(i.path, prefix=False) for i in items]
+
+        # Invoke the command.
+        self._log.debug("executing {0}", " ".join(map(displayable_path, args)))
+        output = call(args)
 
         self._log.debug(u'analysis finished: {0}', output)
         results = self.parse_tool_output(output,
