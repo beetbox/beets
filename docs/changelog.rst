@@ -21,6 +21,9 @@ Little fixes and improvements:
 * :doc:`/plugins/replaygain`: Fix a number of issues with the new
   ``bs1770gain`` backend on Windows. Also, fix missing debug output in import
   mode. :bug:`1398`
+* Beets should now be better at guessing the appropriate output encoding on
+  Windows. (Specifically, the console output encoding is guessed separately
+  from the encoding for command-line arguments.) :bug:`1419`
 
 1.3.11 (April 5, 2015)
 ----------------------
