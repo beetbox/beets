@@ -759,7 +759,6 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
-        self.import_stages = [self.imported]
 
         # default backend is 'command' for backward-compatibility.
         self.config.add({
@@ -770,7 +769,6 @@ class ReplayGainPlugin(BeetsPlugin):
         })
 
         self.overwrite = self.config['overwrite'].get(bool)
-        self.automatic = self.config['auto'].get(bool)
         backend_name = self.config['backend'].get(unicode)
         if backend_name not in self.backends:
             raise ui.UserError(
@@ -780,6 +778,10 @@ class ReplayGainPlugin(BeetsPlugin):
                     u', '.join(self.backends.keys())
                 )
             )
+
+        # On-import analysis.
+        if self.config['auto']:
+            self.import_stages = [self.imported]
 
         try:
             self.backend_instance = self.backends[backend_name](
@@ -887,11 +889,6 @@ class ReplayGainPlugin(BeetsPlugin):
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
         """
-        if not self.automatic:
-            return
-
-        self._log.setLevel(logging.WARN)
-
         if task.is_album:
             self.handle_album(task.album, False)
         else:

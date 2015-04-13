@@ -19,7 +19,8 @@ Little fixes and improvements:
 * The output of the :ref:`fields-cmd` command is now sorted. Thanks to
   :user:`multikatt`. :bug:`1402`
 * :doc:`/plugins/replaygain`: Fix a number of issues with the new
-  ``bs1770gain`` backend on Windows. :bug:`1398`
+  ``bs1770gain`` backend on Windows. Also, fix missing debug output in import
+  mode. :bug:`1398`
 
 1.3.11 (April 5, 2015)
 ----------------------
