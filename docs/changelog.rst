@@ -25,6 +25,8 @@ Little fixes and improvements:
   Windows. (Specifically, the console output encoding is guessed separately
   from the encoding for command-line arguments.) A bug was also fixed where
   beets would ignore the locale settings and use UTF-8 by default. :bug:`1419`
+* :doc:`/plugins/discogs`: Better error handling when we can't communicate
+  with Discogs on setup. :bug:`1417`
 
 1.3.11 (April 5, 2015)
 ----------------------
