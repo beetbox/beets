@@ -109,24 +109,35 @@ def decargs(arglist):
     return [s.decode(_arg_encoding()) for s in arglist]
 
 
-def print_(*strings):
+def print_(*strings, **kwargs):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
 
     If the arguments are strings then they're expected to share the same
     type: either bytes or unicode.
+
+    The `end` keyword argument behaves similarly to the built-in `print`
+    (it defaults to a newline). The value should have the same string
+    type as the arguments.
     """
+    end = kwargs.get('end')
+
     if strings:
         if isinstance(strings[0], unicode):
             txt = u' '.join(strings)
+            txt += u'\n' if end is None else end
         else:
             txt = b' '.join(strings)
+            txt += b'\n' if end is None else end
     else:
         txt = u''
+
+    # Always send bytes to the stdout stream.
     if isinstance(txt, unicode):
         txt = txt.encode(_out_encoding(), 'replace')
-    print(txt)
+
+    sys.stdout.write(txt)
 
 
 def input_(prompt=None):
@@ -139,9 +150,7 @@ def input_(prompt=None):
     # use print() explicitly to display prompts.
     # http://bugs.python.org/issue1927
     if prompt:
-        if isinstance(prompt, unicode):
-            prompt = prompt.encode(_out_encoding(), 'replace')
-        print(prompt, end=' ')
+        print_(prompt, end=' ')
 
     try:
         resp = raw_input()
