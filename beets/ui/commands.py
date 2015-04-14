@@ -80,7 +80,7 @@ def _do_query(lib, query, album, also_items=True):
 def fields_func(lib, opts, args):
     def _print_rows(names):
         names.sort()
-        print("  " + "\n  ".join(names))
+        print_("  " + "\n  ".join(names))
 
     def _show_plugin_fields(album):
         plugin_fields = []
@@ -91,16 +91,16 @@ def fields_func(lib, opts, args):
                 fdict = plugin.template_fields
             plugin_fields += fdict.keys()
         if plugin_fields:
-            print("Template fields from plugins:")
+            print_("Template fields from plugins:")
             _print_rows(plugin_fields)
 
-    print("Item fields:")
+    print_("Item fields:")
     _print_rows(library.Item._fields.keys() +
                 library.Item._getters().keys() +
                 library.Item._types.keys())
     _show_plugin_fields(False)
 
-    print("\nAlbum fields:")
+    print_("\nAlbum fields:")
     _print_rows(library.Album._fields.keys() +
                 library.Album._getters().keys() +
                 library.Album._types.keys())
@@ -797,17 +797,17 @@ class TerminalImportSession(importer.ImportSession):
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
             for duplicate in real_duplicates:
-                print("Old: " + summarize_items(
+                print_("Old: " + summarize_items(
                     list(duplicate.items()) if task.is_album else [duplicate],
                     not task.is_album,
                 ))
 
             if real_duplicates != found_duplicates:  # there's empty albums
                 count = len(found_duplicates) - len(real_duplicates)
-                print("Old: {0} empty album{1}".format(
-                    count, "s" if count > 1 else ""))
+                print_("Old: {0} empty album{1}".format(
+                       count, "s" if count > 1 else ""))
 
-            print("New: " + summarize_items(
+            print_("New: " + summarize_items(
                 task.imported_items(),
                 not task.is_album,
             ))
@@ -1468,7 +1468,7 @@ def config_func(lib, opts, args):
             filenames.insert(0, user_path)
 
         for filename in filenames:
-            print(filename)
+            print_(filename)
 
     # Open in editor.
     elif opts.edit:
@@ -1476,7 +1476,7 @@ def config_func(lib, opts, args):
 
     # Dump configuration.
     else:
-        print(config.dump(full=opts.defaults, redact=opts.redact))
+        print_(config.dump(full=opts.defaults, redact=opts.redact))
 
 
 def config_edit():
@@ -1520,7 +1520,7 @@ default_commands.append(config_cmd)
 
 def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
-        print(line, end='')
+        print_(line, end='')
     if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
         log.warn(u'Warning: Unable to find the bash-completion package. '
                  u'Command line completion might not work.')
