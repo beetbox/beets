@@ -23,7 +23,8 @@ Little fixes and improvements:
   mode. :bug:`1398`
 * Beets should now be better at guessing the appropriate output encoding on
   Windows. (Specifically, the console output encoding is guessed separately
-  from the encoding for command-line arguments.) :bug:`1419`
+  from the encoding for command-line arguments.) A bug was also fixed where
+  beets would ignore the locale settings and use UTF-8 by default. :bug:`1419`
 
 1.3.11 (April 5, 2015)
 ----------------------
