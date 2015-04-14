@@ -95,7 +95,12 @@ class DiscogsPlugin(BeetsPlugin):
     def authenticate(self, c_key, c_secret):
         # Get the link for the OAuth page.
         auth_client = Client(USER_AGENT, c_key, c_secret)
-        _, _, url = auth_client.get_authorize_url()
+        try:
+            _, _, url = auth_client.get_authorize_url()
+        except CONNECTION_ERRORS as e:
+            self._log.debug('connection error: {0}', e)
+            raise beets.ui.UserError('communication with Discogs failed')
+
         beets.ui.print_("To authenticate with Discogs, visit:")
         beets.ui.print_(url)
 
@@ -107,7 +112,7 @@ class DiscogsPlugin(BeetsPlugin):
             raise beets.ui.UserError('Discogs authorization failed')
         except CONNECTION_ERRORS as e:
             self._log.debug(u'connection error: {0}', e)
-            raise beets.ui.UserError('communication with Discogs failed')
+            raise beets.ui.UserError('Discogs token request failed')
 
         # Save the token for later use.
         self._log.debug('Discogs token {0}, secret {1}', token, secret)
