@@ -44,7 +44,7 @@ threaded: yes
 timeout: 5.0
 per_disc_numbering: no
 verbose: 0
-terminal_encoding: utf8
+terminal_encoding:
 original_date: no
 id3v23: no
 
