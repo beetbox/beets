@@ -27,6 +27,8 @@ Little fixes and improvements:
   beets would ignore the locale settings and use UTF-8 by default. :bug:`1419`
 * :doc:`/plugins/discogs`: Better error handling when we can't communicate
   with Discogs on setup. :bug:`1417`
+* :doc:`/plugins/importadded`: Fix a crash when importing singletons in-place.
+  :bug:`1416`
 
 1.3.11 (April 5, 2015)
 ----------------------
