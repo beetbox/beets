@@ -19,4 +19,4 @@ test_script:
 # Allow all failures for now: the tests don't yet pass!
 matrix:
     allow_failures:
-        - platform: x86
+        - TOXENV: py27
