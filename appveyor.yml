@@ -1,0 +1,22 @@
+version: "{build}"
+build: off
+deploy: off
+
+environment:
+    matrix:
+        - PYTHON: "C:\\Python27"
+          TOXENV: py27
+
+# Install Pip to install Tox.
+install:
+    - ps: "(new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')"
+    - "%PYTHON%/python.exe C:/get-pip.py"
+    - "%PYTHON%/Scripts/pip.exe install tox"
+
+test_script:
+    - "%PYTHON%/Scripts/tox.exe"
+
+# Allow all failures for now: the tests don't yet pass!
+matrix:
+    allow_failures:
+        - platform: x86
