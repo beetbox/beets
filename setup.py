@@ -28,14 +28,15 @@ def _read(fn):
     return open(path).read()
 
 
-# Build manpages if we're making a source distribution tarball.
-if 'sdist' in sys.argv:
+def build_manpages():
     # Go into the docs directory and build the manpage.
     docdir = os.path.join(os.path.dirname(__file__), 'docs')
     curdir = os.getcwd()
     os.chdir(docdir)
     try:
         subprocess.check_call(['make', 'man'])
+    except OSError:
+        print("Could not build manpages (make man failed)!", file=sys.stderr)
     finally:
         os.chdir(curdir)
 
@@ -44,6 +45,12 @@ if 'sdist' in sys.argv:
     if os.path.exists(mandir):
         shutil.rmtree(mandir)
     shutil.copytree(os.path.join(docdir, '_build', 'man'), mandir)
+
+
+# Build manpages if we're making a source distribution tarball.
+if 'sdist' in sys.argv:
+    build_manpages()
+
 
 setup(
     name='beets',
