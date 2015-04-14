@@ -37,6 +37,7 @@ def build_manpages():
         subprocess.check_call(['make', 'man'])
     except OSError:
         print("Could not build manpages (make man failed)!", file=sys.stderr)
+        return
     finally:
         os.chdir(curdir)
 
