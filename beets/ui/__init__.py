@@ -80,6 +80,11 @@ def _out_encoding():
     if encoding:
         return encoding
 
+    # For testing: When sys.stdout is a StringIO under the test harness,
+    # it doesn't have an `encodiing` attribute. Just use UTF-8.
+    if not hasattr(sys.stdout, 'encoding'):
+        return 'utf8'
+
     # Python's guessed output stream encoding, or UTF-8 as a fallback
     # (e.g., when piped to a file).
     return sys.stdout.encoding or 'utf8'
