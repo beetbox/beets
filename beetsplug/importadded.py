@@ -9,6 +9,7 @@ from __future__ import (unicode_literals, absolute_import, print_function,
 import os
 
 from beets import util
+from beets import importer
 from beets.plugins import BeetsPlugin
 
 
@@ -50,7 +51,10 @@ class ImportAddedPlugin(BeetsPlugin):
                 session.config['link']):
             self._log.debug(u"In place import detected, recording mtimes from "
                             u"source paths")
-            for item in task.items:
+            items = [task.item] \
+                if isinstance(task, importer.SingletonImportTask) \
+                else task.items
+            for item in items:
                 self.record_import_mtime(item, item.path, item.path)
 
     def record_reimported(self, task, session):
