@@ -417,7 +417,20 @@ Completion of plugin commands only works for those plugins
 that were enabled when running ``beet completion``. If you add a plugin
 later on you will want to re-generate the script.
 
-If you use zsh, take a look instead at the included `completion script`_.
+zsh
+```
+
+If you use zsh, take a look at the included `completion script`_.
+
+Another approach is to use zsh's bash completion compatibility. This snippet
+defines some bash-specific functions to make this work without errors::
+
+    autoload bashcompinit
+    bashcompinit
+    _get_comp_words_by_ref() { :; }
+    compopt() { :; }
+    _filedir() { :; }
+    eval "$(beet completion)"
 
 .. _completion script: https://github.com/sampsyo/beets/blob/master/extra/_beet
 
