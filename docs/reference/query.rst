@@ -37,6 +37,15 @@ my library. It *doesn't* match other songs by the Magnetic Fields, nor does it
 match "Tomorrowland" by Walter Meego---those songs only have *one* of the two
 keywords I specified.
 
+Keywords can also be joined with a Boolean "or" using a comma. For example,
+the command::
+
+    $ beet ls magnetic tomorrow , beatles yesterday
+
+will match both "The House of Tomorrow" by the Magnetic Fields, as well as
+"Yesterday" by The Beatles. Note that the comma has to be followed by a space
+(e.g., ``foo,bar`` will be treated as a single keyword, *not* as an OR-query).
+
 Specific Fields
 ---------------
 
