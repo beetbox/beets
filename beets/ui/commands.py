@@ -857,7 +857,7 @@ def import_files(lib, paths, query):
             loghandler = logging.FileHandler(logpath)
         except IOError:
             raise ui.UserError(u"could not open log file for writing: "
-                               u"{0}".format(displayable_path(loghandler)))
+                               u"{0}".format(displayable_path(logpath)))
     else:
         loghandler = None
 
