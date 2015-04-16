@@ -31,6 +31,8 @@ Little fixes and improvements:
   :bug:`1416`
 * :doc:`/plugins/fuzzy`: Fix a regression causing a crash in the last release.
   :bug:`1422`
+* Fix a crash when the importer cannot open its log file. Thanks to
+  :user:`barsanuphe`. :bug:`1426`
 
 1.3.11 (April 5, 2015)
 ----------------------
