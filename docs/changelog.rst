@@ -29,6 +29,8 @@ Little fixes and improvements:
   with Discogs on setup. :bug:`1417`
 * :doc:`/plugins/importadded`: Fix a crash when importing singletons in-place.
   :bug:`1416`
+* :doc:`/plugins/fuzzy`: Fix a regression causing a crash in the last release.
+  :bug:`1422`
 
 1.3.11 (April 5, 2015)
 ----------------------
