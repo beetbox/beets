@@ -11,6 +11,9 @@ New features:
 * :doc:`/plugins/fetchart`: new settings `minwidth` and `enforce_ratio`
   to put restrictions (min width in pixels, and 1:1 image ratio, resp.)
   for valid album art candidates. :bug:`1394`
+* Queries can take the "OR"-operator in the form of a comma, e.g.,
+  ``beet ls foo , bar`` to get all items matching `foo` or matching `bar`.
+  :bug:`1423`
 
 Little fixes and improvements:
 
