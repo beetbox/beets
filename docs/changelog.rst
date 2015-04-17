@@ -37,6 +37,8 @@ Little fixes and improvements:
   :bug:`1422`
 * Fix a crash when the importer cannot open its log file. Thanks to
   :user:`barsanuphe`. :bug:`1426`
+* Fix an error when writing fields called `date` and `original_date` (which
+  are not built-in beets fields). :bug:`1404`
 
 1.3.11 (April 5, 2015)
 ----------------------
