@@ -4,24 +4,31 @@ Changelog
 1.3.12 (in development)
 -----------------------
 
+This little update makes queries more powerful and removes a performance
+bottleneck.
+
+Packagers should also note a new dependency in this version: the `Jellyfish`_
+Python library makes our text comparisons (a big part of the auto-tagging
+process) go much faster.
+
 New features:
 
-* The autotagger's matching algorithm should be a bit faster. We now
-  use the `Jellyfish`_ library to compute string similarity, which is better
-  optimized than our hand-rolled edit distance implementation. :bug:`1389`
-* :doc:`/plugins/fetchart`: There are new settings to control what constitutes
-  "acceptable" images. The `minwidth` option constrains the minimum image
-  width in pixels and the `enforce_ratio` option requires that images be
-  square. :bug:`1394`
 * Queries can now use **"or" logic**: if you use a comma to separate parts of a
   query, items and albums will match *either* side of the comma. For example,
   ``beet ls foo , bar`` will get all the items matching `foo` or matching
   `bar`. See :ref:`combiningqueries`. :bug:`1423`
+* The autotagger's **matching algorithm is faster**. We now use the
+  `Jellyfish`_ library to compute string similarity, which is better optimized
+  than our hand-rolled edit distance implementation. :bug:`1389`
+* :doc:`/plugins/fetchart`: There are new settings to control what constitutes
+  **"acceptable" images**. The `minwidth` option constrains the minimum image
+  width in pixels and the `enforce_ratio` option requires that images be
+  square. :bug:`1394`
 
 Little fixes and improvements:
 
-* :doc:`/plugins/fetchart`: Remove hard size limit when fetching from the
-  CoverArtArchive.
+* :doc:`/plugins/fetchart`: Remove a hard size limit when fetching from the
+  Cover Art Archive.
 * The output of the :ref:`fields-cmd` command is now sorted. Thanks to
   :user:`multikatt`. :bug:`1402`
 * :doc:`/plugins/replaygain`: Fix a number of issues with the new
