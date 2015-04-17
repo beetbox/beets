@@ -23,6 +23,8 @@ For example, this is what I might see when I run the command above::
     Bat for Lashes - Two Suns - Good Love
     ...
 
+.. _combiningqueries:
+
 Combining Keywords
 ------------------
 
