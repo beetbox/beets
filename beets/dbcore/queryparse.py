@@ -162,23 +162,36 @@ def sort_from_strings(model_cls, sort_parts):
     return sort
 
 
-def parse_sorted_query(model_cls, parts, prefixes={},
-                       query_cls=query.AndQuery):
+def parse_sorted_query(model_cls, parts, prefixes={}):
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
     """
     # Separate query token and sort token.
     query_parts = []
     sort_parts = []
-    for part in parts:
-        if part.endswith((u'+', u'-')) and u':' not in part:
-            sort_parts.append(part)
-        else:
-            query_parts.append(part)
 
-    # Parse each.
-    q = query_from_strings(
-        query_cls, model_cls, prefixes, query_parts
-    )
+    # Split up query in to comma-separated subqueries, each representing
+    # an AndQuery, which need to be joined together in one OrQuery
+    subquery_parts = []
+    for part in parts + [u',']:
+        if part.endswith(u','):
+            # Ensure we can catch "foo, bar" as well as "foo , bar"
+            last_subquery_part = part[:-1]
+            if last_subquery_part:
+                subquery_parts.append(last_subquery_part)
+            # Parse the subquery in to a single AndQuery
+            # TODO: Avoid needlessly wrapping AndQueries containing 1 subquery?
+            query_parts.append(query_from_strings(
+                query.AndQuery, model_cls, prefixes, subquery_parts
+            ))
+            del subquery_parts[:]
+        else:
+            if part.endswith((u'+', u'-')) and u':' not in part:
+                sort_parts.append(part)
+            else:
+                subquery_parts.append(part)
+
+    # Avoid needlessly wrapping single statements in an OR
+    q = query.OrQuery(query_parts) if len(query_parts) > 1 else query_parts[0]
     s = sort_from_strings(model_cls, sort_parts)
     return q, s
