@@ -7,7 +7,7 @@ Changelog
 New features:
 
 * The autotagger's matching algorithm should be a bit faster. We now
-  use the `Jellyfish`_ library to compute string similarly, which is better
+  use the `Jellyfish`_ library to compute string similarity, which is better
   optimized than our hand-rolled edit distance implementation. :bug:`1389`
 * :doc:`/plugins/fetchart`: There are new settings to control what constitutes
   "acceptable" images. The `minwidth` option constrains the minimum image
