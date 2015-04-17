@@ -32,9 +32,11 @@ Several issues have been encountered with the Discogs API. If you have one,
 please start by searching for `a similar issue on the repo
 <https://github.com/sampsyo/beets/issues?utf8=%E2%9C%93&q=is%3Aissue+discogs>`_.
 
-Two tips can generally be given:
+Here are two things you can try:
 
-* Delete the token file (``discogs_token.json`` by default).
-* Make sure that your system clock is on time.
+* Try deleting the token file (``~/.config/beets/discogs_token.json`` by
+  default) to force re-authorization.
+* Make sure that your system clock is accurate. The Discogs servers can reject
+  your request if your clock is too out of sync.
 
 .. _discogs-client: https://github.com/discogs/discogs_client
