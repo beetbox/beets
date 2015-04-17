@@ -550,7 +550,7 @@ class Item(LibModel):
         defaults to the item's path.
 
         `tags` is a dictionary of additional metadata the should be
-        written to the file.
+        written to the file. (These tags need not be in `_media_fields`.)
 
         Can raise either a `ReadError` or a `WriteError`.
         """
@@ -559,17 +559,22 @@ class Item(LibModel):
         else:
             path = normpath(path)
 
+        # Get the data to write to the file.
         item_tags = dict(self)
+        item_tags = {k: v for k, v in item_tags.items()
+                     if k in self._media_fields}  # Only write media fields.
         if tags is not None:
             item_tags.update(tags)
         plugins.send('write', item=self, path=path, tags=item_tags)
 
+        # Open the file.
         try:
             mediafile = MediaFile(syspath(path),
                                   id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError, UnreadableFileError) as exc:
             raise ReadError(self.path, exc)
 
+        # Write the tags to the file.
         mediafile.update(item_tags)
         try:
             mediafile.save()

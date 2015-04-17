@@ -1058,6 +1058,14 @@ class WriteTest(unittest.TestCase, TestHelper):
         self.assertNotEqual(item.artist, 'new artist')
         self.assertEqual(MediaFile(item.path).artist, 'new artist')
 
+    def test_write_date_field(self):
+        # Since `date` is not a MediaField, this should do nothing.
+        item = self.add_item_fixture()
+        clean_year = item.year
+        item.date = 'foo'
+        item.write()
+        self.assertEqual(MediaFile(item.path).year, clean_year)
+
 
 class ItemReadTest(unittest.TestCase):
 
