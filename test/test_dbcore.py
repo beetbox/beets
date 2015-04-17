@@ -479,43 +479,41 @@ class ParseSortedQueryTest(unittest.TestCase):
     def psq(self, parts):
         return dbcore.parse_sorted_query(
             TestModel1,
-            parts
+            parts.split(),
         )
 
     def test_and_query(self):
-        q, s = self.psq([u'foo', u'bar'])
+        q, s = self.psq('foo bar')
         self.assertIsInstance(q, dbcore.query.AndQuery)
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 2)
 
     def test_or_query(self):
-        q, s = self.psq([u'foo', u',', u'bar'])
+        q, s = self.psq('foo , bar')
         self.assertIsInstance(q, dbcore.query.OrQuery)
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 2)
 
     def test_no_space_before_comma_or_query(self):
-        # E.g., query `foo, bar`
-        q, s = self.psq([u'foo,', u'bar'])
+        q, s = self.psq('foo, bar')
         self.assertIsInstance(q, dbcore.query.OrQuery)
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 2)
 
     def test_no_spaces_or_query(self):
-        # E.g., query `foo, bar`
-        q, s = self.psq([u'foo,bar'])
+        q, s = self.psq('foo,bar')
         self.assertIsInstance(q, dbcore.query.AndQuery)
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 1)
 
     def test_trailing_comma_or_query(self):
-        q, s = self.psq([u'foo', u',', u'bar', u','])
+        q, s = self.psq('foo , bar ,')
         self.assertIsInstance(q, dbcore.query.OrQuery)
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 3)
 
     def test_leading_comma_or_query(self):
-        q, s = self.psq([u',', u'foo', u',', u'bar'])
+        q, s = self.psq(', foo , bar')
         self.assertIsInstance(q, dbcore.query.OrQuery)
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 3)
