@@ -6,11 +6,13 @@ Changelog
 
 New features:
 
-* Use Levenshtein distance from the Jellyfish library, over previously
-  handrolled one. :bug:`1389`
-* :doc:`/plugins/fetchart`: new settings `minwidth` and `enforce_ratio`
-  to put restrictions (min width in pixels, and 1:1 image ratio, resp.)
-  for valid album art candidates. :bug:`1394`
+* The autotagger's matching algorithm should be a bit faster. We now
+  use the `Jellyfish`_ library to compute string similarly, which is better
+  optimized than our hand-rolled edit distance implementation. :bug:`1389`
+* :doc:`/plugins/fetchart`: There are new settings to control what constitutes
+  "acceptable" images. The `minwidth` option constrains the minimum image
+  width in pixels and the `enforce_ratio` option requires that images be
+  square. :bug:`1394`
 * Queries can now use **"or" logic**: if you use a comma to separate parts of a
   query, items and albums will match *either* side of the comma. For example,
   ``beet ls foo , bar`` will get all the items matching `foo` or matching
@@ -39,6 +41,9 @@ Little fixes and improvements:
   :user:`barsanuphe`. :bug:`1426`
 * Fix an error when writing fields called `date` and `original_date` (which
   are not built-in beets fields). :bug:`1404`
+
+.. _Jellyfish: https://github.com/sunlightlabs/jellyfish
+
 
 1.3.11 (April 5, 2015)
 ----------------------
