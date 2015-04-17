@@ -67,6 +67,7 @@ time_format: '%Y-%m-%d %H:%M:%S'
 
 sort_album: albumartist+ album+
 sort_item: artist+ album+ disc+ track+
+sort_ignore_case: no
 
 paths:
     default: $albumartist/$album%aunique{}/$track $title

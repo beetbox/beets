@@ -19,7 +19,7 @@ from __future__ import division, absolute_import, print_function
 import re
 import itertools
 from . import query
-
+import beets
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -138,13 +138,14 @@ def construct_sort_part(model_cls, part):
     assert direction in ('+', '-'), "part must end with + or -"
     is_ascending = direction == '+'
 
+    ignore_case = beets.config['sort_ignore_case'].get(bool)
     if field in model_cls._sorts:
-        sort = model_cls._sorts[field](model_cls, is_ascending)
+        sort = model_cls._sorts[field](model_cls, is_ascending, ignore_case)
     elif field in model_cls._fields:
-        sort = query.FixedFieldSort(field, is_ascending)
+        sort = query.FixedFieldSort(field, is_ascending, ignore_case)
     else:
         # Flexible or computed.
-        sort = query.SlowFieldSort(field, is_ascending)
+        sort = query.SlowFieldSort(field, is_ascending, ignore_case)
     return sort
 
 

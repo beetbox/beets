@@ -18,7 +18,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import re
-from operator import attrgetter, mul
+from operator import mul
 from beets import util
 from datetime import datetime, timedelta
 
@@ -717,16 +717,23 @@ class FieldSort(Sort):
     """An abstract sort criterion that orders by a specific field (of
     any kind).
     """
-    def __init__(self, field, ascending=True):
+    def __init__(self, field, ascending=True, ignore_case=False):
         self.field = field
         self.ascending = ascending
+        self.ignore_case = ignore_case
 
     def sort(self, objs):
         # TODO: Conversion and null-detection here. In Python 3,
         # comparisons with None fail. We should also support flexible
         # attributes with different types without falling over.
-        return sorted(objs, key=attrgetter(self.field),
-                      reverse=not self.ascending)
+
+        def key(item):
+            field_val = getattr(item, self.field)
+            if self.ignore_case and isinstance(field_val, unicode):
+                field_val = field_val.lower()
+            return field_val
+
+        return sorted(objs, key=key, reverse=not self.ascending)
 
     def __repr__(self):
         return u'<{0}: {1}{2}>'.format(
@@ -749,7 +756,8 @@ class FixedFieldSort(FieldSort):
     """
     def order_clause(self):
         order = "ASC" if self.ascending else "DESC"
-        return "{0} {1}".format(self.field, order)
+        collate = 'COLLATE NOCASE' if self.ignore_case else ''
+        return "{0} {1} {2}".format(self.field, collate, order)
 
 
 class SlowFieldSort(FieldSort):
