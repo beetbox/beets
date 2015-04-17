@@ -514,6 +514,12 @@ class ParseSortedQueryTest(unittest.TestCase):
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 3)
 
+    def test_leading_comma_or_query(self):
+        q, s = self.psq([u',', u'foo', u',', u'bar'])
+        self.assertIsInstance(q, dbcore.query.OrQuery)
+        self.assertIsInstance(s, dbcore.query.NullSort)
+        self.assertEqual(len(q.subqueries), 3)
+
 
 class ResultsIteratorTest(unittest.TestCase):
     def setUp(self):
