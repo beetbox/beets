@@ -4,9 +4,9 @@ Changelog
 1.3.12 (in development)
 -----------------------
 
-This little update makes queries more powerful and removes a performance
-bottleneck. There's an experimental new plugin for synchronizing metadata with
-music players.
+This little update makes queries more powerful, sorts music more
+intelligently, and removes a performance bottleneck. There's an experimental
+new plugin for synchronizing metadata with music players.
 
 Packagers should also note a new dependency in this version: the `Jellyfish`_
 Python library makes our text comparisons (a big part of the auto-tagging
@@ -23,11 +23,12 @@ New features:
 * The autotagger's **matching algorithm is faster**. We now use the
   `Jellyfish`_ library to compute string similarity, which is better optimized
   than our hand-rolled edit distance implementation. :bug:`1389`
-* **Sorting is now case insensitive** by default. This means that artists will
-  be sorted lexicographically regardless of case, e.g., *Bar foo Qux*.
-  Previously this would have resulted in *Bar Qux foo*. This behavior can be
-  configured via the :ref:`sort_case_insensitive` configuration option.
-  See :ref:`query-sort`. :bug:`1429`
+* Sorting is now **case insensitive** by default. This means that artists will
+  be sorted lexicographically regardless of case. For example, the artist
+  alt-J will now properly sort before YACHT. (Previously, it would have ended
+  up at the end of the list, after all the capital-letter artists.)
+  You can turn this new behavior off using the :ref:`sort_case_insensitive`
+  configuration option. See :ref:`query-sort`. :bug:`1429`
 * :doc:`/plugins/fetchart`: There are new settings to control what constitutes
   **"acceptable" images**. The `minwidth` option constrains the minimum image
   width in pixels and the `enforce_ratio` option requires that images be
