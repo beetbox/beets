@@ -23,10 +23,10 @@ from sys import modules
 import inspect
 
 # Loggers.
-log = logging.getLogger('beets.psync')
+log = logging.getLogger('beets.metasync')
 
 
-class PSyncPlugin(BeetsPlugin):
+class MetaSyncPlugin(BeetsPlugin):
 
     item_types = {
         'amarok_rating':      types.INTEGER,
@@ -38,10 +38,10 @@ class PSyncPlugin(BeetsPlugin):
     }
 
     def __init__(self):
-        super(PSyncPlugin, self).__init__()
+        super(MetaSyncPlugin, self).__init__()
 
     def commands(self):
-        cmd = ui.Subcommand('psync',
+        cmd = ui.Subcommand('metasync',
                             help='update metadata from music player libraries')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show all changes but do nothing')
@@ -53,7 +53,7 @@ class PSyncPlugin(BeetsPlugin):
         return [cmd]
 
     def func(self, lib, opts, args):
-        """Command handler for the psync function.
+        """Command handler for the metasync function.
         """
         pretend = opts.pretend
         source = opts.source
@@ -62,9 +62,9 @@ class PSyncPlugin(BeetsPlugin):
         sources = {}
 
         for player in source:
-            __import__('beetsplug.psync', fromlist=[str(player)])
+            __import__('beetsplug.metasync', fromlist=[str(player)])
 
-            module = 'beetsplug.psync.' + player
+            module = 'beetsplug.metasync.' + player
 
             if module not in modules.keys():
                 log.error(u'Unknown metadata source \'' + player + '\'')
