@@ -32,65 +32,65 @@ class DummyDataTestCase(_common.TestCase):
         self.lib = beets.library.Library(':memory:')
 
         albums = [_common.album() for _ in range(3)]
-        albums[0].album = "album A"
+        albums[0].album = "Album A"
         albums[0].genre = "Rock"
         albums[0].year = "2001"
-        albums[0].flex1 = "flex1-1"
-        albums[0].flex2 = "flex2-A"
-        albums[0].albumartist = "foo"
+        albums[0].flex1 = "Flex1-1"
+        albums[0].flex2 = "Flex2-A"
+        albums[0].albumartist = "Foo"
         albums[0].albumartist_sort = None
-        albums[1].album = "album B"
+        albums[1].album = "Album B"
         albums[1].genre = "Rock"
         albums[1].year = "2001"
-        albums[1].flex1 = "flex1-2"
-        albums[1].flex2 = "flex2-A"
-        albums[1].albumartist = "bar"
+        albums[1].flex1 = "Flex1-2"
+        albums[1].flex2 = "Flex2-A"
+        albums[1].albumartist = "Bar"
         albums[1].albumartist_sort = None
-        albums[2].album = "album C"
+        albums[2].album = "Album C"
         albums[2].genre = "Jazz"
         albums[2].year = "2005"
-        albums[2].flex1 = "flex1-1"
-        albums[2].flex2 = "flex2-B"
-        albums[2].albumartist = "baz"
+        albums[2].flex1 = "Flex1-1"
+        albums[2].flex2 = "Flex2-B"
+        albums[2].albumartist = "Baz"
         albums[2].albumartist_sort = None
         for album in albums:
             self.lib.add(album)
 
         items = [_common.item() for _ in range(4)]
-        items[0].title = 'foo bar'
-        items[0].artist = 'one'
-        items[0].album = 'baz'
+        items[0].title = 'Foo bar'
+        items[0].artist = 'One'
+        items[0].album = 'Baz'
         items[0].year = 2001
         items[0].comp = True
-        items[0].flex1 = "flex1-0"
-        items[0].flex2 = "flex2-A"
+        items[0].flex1 = "Flex1-0"
+        items[0].flex2 = "Flex2-A"
         items[0].album_id = albums[0].id
         items[0].artist_sort = None
-        items[1].title = 'baz qux'
-        items[1].artist = 'two'
-        items[1].album = 'baz'
+        items[1].title = 'Baz qux'
+        items[1].artist = 'Two'
+        items[1].album = 'Baz'
         items[1].year = 2002
         items[1].comp = True
-        items[1].flex1 = "flex1-1"
-        items[1].flex2 = "flex2-A"
+        items[1].flex1 = "Flex1-1"
+        items[1].flex2 = "Flex2-A"
         items[1].album_id = albums[0].id
         items[1].artist_sort = None
-        items[2].title = 'beets 4 eva'
-        items[2].artist = 'three'
-        items[2].album = 'foo'
+        items[2].title = 'Beets 4 eva'
+        items[2].artist = 'Three'
+        items[2].album = 'Foo'
         items[2].year = 2003
         items[2].comp = False
-        items[2].flex1 = "flex1-2"
-        items[2].flex2 = "flex1-B"
+        items[2].flex1 = "Flex1-2"
+        items[2].flex2 = "Flex1-B"
         items[2].album_id = albums[1].id
         items[2].artist_sort = None
-        items[3].title = 'beets 4 eva'
-        items[3].artist = 'three'
-        items[3].album = 'foo2'
+        items[3].title = 'Beets 4 eva'
+        items[3].artist = 'Three'
+        items[3].album = 'Foo2'
         items[3].year = 2004
         items[3].comp = False
-        items[3].flex1 = "flex1-2"
-        items[3].flex2 = "flex1-C"
+        items[3].flex1 = "Flex1-2"
+        items[3].flex2 = "Flex1-C"
         items[3].album_id = albums[2].id
         items[3].artist_sort = None
         for item in items:
@@ -132,8 +132,8 @@ class SortFixedFieldTest(DummyDataTestCase):
         results = self.lib.items(q, sort)
         self.assertLessEqual(results[0]['album'], results[1]['album'])
         self.assertLessEqual(results[1]['album'], results[2]['album'])
-        self.assertEqual(results[0]['album'], 'baz')
-        self.assertEqual(results[1]['album'], 'baz')
+        self.assertEqual(results[0]['album'], 'Baz')
+        self.assertEqual(results[1]['album'], 'Baz')
         self.assertLessEqual(results[0]['year'], results[1]['year'])
         # same thing with query string
         q = 'album+ year+'
@@ -148,7 +148,7 @@ class SortFlexFieldTest(DummyDataTestCase):
         sort = dbcore.query.SlowFieldSort("flex1", True)
         results = self.lib.items(q, sort)
         self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
-        self.assertEqual(results[0]['flex1'], 'flex1-0')
+        self.assertEqual(results[0]['flex1'], 'Flex1-0')
         # same thing with query string
         q = 'flex1+'
         results2 = self.lib.items(q)
@@ -162,7 +162,7 @@ class SortFlexFieldTest(DummyDataTestCase):
         self.assertGreaterEqual(results[0]['flex1'], results[1]['flex1'])
         self.assertGreaterEqual(results[1]['flex1'], results[2]['flex1'])
         self.assertGreaterEqual(results[2]['flex1'], results[3]['flex1'])
-        self.assertEqual(results[0]['flex1'], 'flex1-2')
+        self.assertEqual(results[0]['flex1'], 'Flex1-2')
         # same thing with query string
         q = 'flex1-'
         results2 = self.lib.items(q)
@@ -179,8 +179,8 @@ class SortFlexFieldTest(DummyDataTestCase):
         results = self.lib.items(q, sort)
         self.assertGreaterEqual(results[0]['flex2'], results[1]['flex2'])
         self.assertGreaterEqual(results[1]['flex2'], results[2]['flex2'])
-        self.assertEqual(results[0]['flex2'], 'flex2-A')
-        self.assertEqual(results[1]['flex2'], 'flex2-A')
+        self.assertEqual(results[0]['flex2'], 'Flex2-A')
+        self.assertEqual(results[1]['flex2'], 'Flex2-A')
         self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
         # same thing with query string
         q = 'flex2- flex1+'
@@ -269,8 +269,8 @@ class SortAlbumFlexFieldTest(DummyDataTestCase):
         results = self.lib.albums(q, sort)
         self.assertLessEqual(results[0]['flex2'], results[1]['flex2'])
         self.assertLessEqual(results[1]['flex2'], results[2]['flex2'])
-        self.assertEqual(results[0]['flex2'], 'flex2-A')
-        self.assertEqual(results[1]['flex2'], 'flex2-A')
+        self.assertEqual(results[0]['flex2'], 'Flex2-A')
+        self.assertEqual(results[1]['flex2'], 'Flex2-A')
         self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
         # same thing with query string
         q = 'flex2+ flex1+'
@@ -356,6 +356,87 @@ class ConfigSortTest(DummyDataTestCase):
         config['sort_album'] = 'albumartist-'
         results = list(self.lib.albums())
         self.assertGreater(results[0].albumartist, results[1].albumartist)
+
+
+class CaseSensitivityTest(DummyDataTestCase, _common.TestCase):
+    """If case_insensitive is false, lower-case values should be placed
+    after all upper-case values. E.g., `Foo Qux bar`
+    """
+
+    def setUp(self):
+        super(CaseSensitivityTest, self).setUp()
+
+        album = _common.album()
+        album.album = "album"
+        album.genre = "alternative"
+        album.year = "2001"
+        album.flex1 = "flex1"
+        album.flex2 = "flex2-A"
+        album.albumartist = "bar"
+        album.albumartist_sort = None
+        self.lib.add(album)
+
+        item = _common.item()
+        item.title = 'another'
+        item.artist = 'lowercase'
+        item.album = 'album'
+        item.year = 2001
+        item.comp = True
+        item.flex1 = "flex1"
+        item.flex2 = "flex2-A"
+        item.album_id = album.id
+        item.artist_sort = None
+        self.lib.add(item)
+
+        self.new_album = album
+        self.new_item = item
+
+    def tearDown(self):
+        self.new_item.remove(delete=True)
+        self.new_album.remove(delete=True)
+        super(CaseSensitivityTest, self).tearDown()
+
+    def test_smart_artist_case_insensitive(self):
+        config['sort_case_insensitive'] = True
+        q = 'artist+'
+        results = list(self.lib.items(q))
+        self.assertEqual(results[0].artist, 'lowercase')
+        self.assertEqual(results[1].artist, 'One')
+
+    def test_smart_artist_case_sensitive(self):
+        config['sort_case_insensitive'] = False
+        q = 'artist+'
+        results = list(self.lib.items(q))
+        self.assertEqual(results[0].artist, 'One')
+        self.assertEqual(results[-1].artist, 'lowercase')
+
+    def test_fixed_field_case_insensitive(self):
+        config['sort_case_insensitive'] = True
+        q = 'album+'
+        results = list(self.lib.albums(q))
+        self.assertEqual(results[0].album, 'album')
+        self.assertEqual(results[1].album, 'Album A')
+
+    def test_fixed_field_case_sensitive(self):
+        config['sort_case_insensitive'] = False
+        q = 'album+'
+        results = list(self.lib.albums(q))
+        self.assertEqual(results[0].album, 'Album A')
+        self.assertEqual(results[-1].album, 'album')
+
+    def test_flex_field_case_insensitive(self):
+        config['sort_case_insensitive'] = True
+        q = 'flex1+'
+        results = list(self.lib.items(q))
+        self.assertEqual(results[0].flex1, 'flex1')
+        self.assertEqual(results[1].flex1, 'Flex1-0')
+
+    def test_flex_field_case_sensitive(self):
+        config['sort_case_insensitive'] = False
+        q = 'flex1+'
+        results = list(self.lib.items(q))
+        self.assertEqual(results[0].flex1, 'Flex1-0')
+        self.assertEqual(results[-1].flex1, 'flex1')
 
 
 def suite():
