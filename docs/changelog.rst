@@ -23,6 +23,11 @@ New features:
 * The autotagger's **matching algorithm is faster**. We now use the
   `Jellyfish`_ library to compute string similarity, which is better optimized
   than our hand-rolled edit distance implementation. :bug:`1389`
+* **Sorting is now case insensitive** by default. This means that artists will
+  be sorted lexicographically regardless of case, e.g., *Bar foo Qux*.
+  Previously this would have resulted in *Bar Qux foo*. This behavior can be
+  configured via the :ref:`sort_case_insensitive` configuration option.
+  See :ref:`query-sort`. :bug:`1429`
 * :doc:`/plugins/fetchart`: There are new settings to control what constitutes
   **"acceptable" images**. The `minwidth` option constrains the minimum image
   width in pixels and the `enforce_ratio` option requires that images be
