@@ -2,22 +2,25 @@ MetaSync Plugin
 ===============
 
 This plugin provides the ``metasync`` command, which lets you fetch certain
-metadata from other local or remote sources, for example your favorite audio
-player.
+metadata from other sources: for example, your favorite audio player.
 
-Currently we support the following list of metadata sources:
-- **amarok**: This syncs rating, score, first played, last played, playcount and uid from amarok.
+Currently, the plugin supports synchronizing with the `Amarok`_ music player.
+It can fetch the rating, score, first-played date, last-played date, play
+count, and track uid from Amarok.
+
+.. _Amarok: https://amarok.kde.org/
 
 
-Installing Dependencies
------------------------
+Installation
+------------
 
-Fetching metadata from amarok requires the dbus-python library.
+Enable the ``metasync`` plugin in your configuration (see
+:ref:`using-plugins`).
 
-There are packages for most major linux distributions, or you can download the
-library from its _website.
+To synchronize with Amarok, you'll need the `dbus-python`_ library. There are
+packages for most major Linux distributions.
 
-   _website: http://dbus.freedesktop.org/releases/dbus-python/
+.. _dbus-python: http://dbus.freedesktop.org/releases/dbus-python/
 
 
 Configuration
@@ -26,16 +29,16 @@ Configuration
 To configure the plugin, make a ``metasync:`` section in your configuration
 file. The available options are:
 
-- **source**: A list of sources to fetch metadata from.
+- **source**: A list of sources to fetch metadata from. Set this to "amarok"
+  to enable synchronization with that player.
   Default: empty
 
 
 Usage
 -----
 
-Enable the ``metasync`` plugin in your configuration (see
-:ref:`using-plugins`) then run ``beet metasync QUERY`` to fetch updated
-metadata from the configured list of sources.
+Run ``beet metasync QUERY`` to fetch metadata from the configured list of
+sources.
 
 The command has a few command-line options:
 

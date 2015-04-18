@@ -5,7 +5,8 @@ Changelog
 -----------------------
 
 This little update makes queries more powerful and removes a performance
-bottleneck.
+bottleneck. There's an experimental new plugin for synchronizing metadata with
+music players.
 
 Packagers should also note a new dependency in this version: the `Jellyfish`_
 Python library makes our text comparisons (a big part of the auto-tagging
@@ -17,6 +18,8 @@ New features:
   query, items and albums will match *either* side of the comma. For example,
   ``beet ls foo , bar`` will get all the items matching `foo` or matching
   `bar`. See :ref:`combiningqueries`. :bug:`1423`
+* An experimental new :doc:`/plugins/metasync` lets you get metadata from your
+  favorite music players, starting with Amarok. :bug:`1386`
 * The autotagger's **matching algorithm is faster**. We now use the
   `Jellyfish`_ library to compute string similarity, which is better optimized
   than our hand-rolled edit distance implementation. :bug:`1389`
