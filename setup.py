@@ -76,6 +76,7 @@ setup(
         'beetsplug.bpd',
         'beetsplug.web',
         'beetsplug.lastgenre',
+        'beetsplug.metasync',
     ],
     entry_points={
         'console_scripts': [
@@ -117,6 +118,7 @@ setup(
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
         'thumbnails': ['pathlib', 'pyxdg'],
+        'metasync': ['dbus-python'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # replaygain: mp3gain || aacgain
