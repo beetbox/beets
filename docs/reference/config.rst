@@ -204,6 +204,15 @@ sort_album
 Default sort order to use when fetching items from the database. Defaults to
 ``albumartist+ album+``. Explicit sort orders override this default.
 
+.. _sort_case_insensitive:
+
+sort_case_insensitive
+~~~~~~~~~~~~~~~~~~~~~
+Either ``yes`` or ``no``, indicating whether the case should be ignored when
+sorting lexicographic fields. When set to ``no``, lower-case values will be
+placed after upper-case values (e.g., *Bar Qux foo*), while ``yes`` would
+result in the more expected *Bar foo Qux*. Default: ``yes``.
+
 .. _original_date:
 
 original_date
