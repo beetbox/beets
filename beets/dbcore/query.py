@@ -717,10 +717,10 @@ class FieldSort(Sort):
     """An abstract sort criterion that orders by a specific field (of
     any kind).
     """
-    def __init__(self, field, ascending=True, ignore_case=False):
+    def __init__(self, field, ascending=True, case_insensitive=True):
         self.field = field
         self.ascending = ascending
-        self.ignore_case = ignore_case
+        self.case_insensitive = case_insensitive
 
     def sort(self, objs):
         # TODO: Conversion and null-detection here. In Python 3,
@@ -729,7 +729,7 @@ class FieldSort(Sort):
 
         def key(item):
             field_val = getattr(item, self.field)
-            if self.ignore_case and isinstance(field_val, unicode):
+            if self.case_insensitive and isinstance(field_val, unicode):
                 field_val = field_val.lower()
             return field_val
 
@@ -756,7 +756,7 @@ class FixedFieldSort(FieldSort):
     """
     def order_clause(self):
         order = "ASC" if self.ascending else "DESC"
-        collate = 'COLLATE NOCASE' if self.ignore_case else ''
+        collate = 'COLLATE NOCASE' if self.case_insensitive else ''
         return "{0} {1} {2}".format(self.field, collate, order)
 
 
