@@ -138,14 +138,15 @@ def construct_sort_part(model_cls, part):
     assert direction in ('+', '-'), "part must end with + or -"
     is_ascending = direction == '+'
 
-    ignore_case = beets.config['sort_ignore_case'].get(bool)
+    case_insensitive = beets.config['sort_case_insensitive'].get(bool)
     if field in model_cls._sorts:
-        sort = model_cls._sorts[field](model_cls, is_ascending, ignore_case)
+        sort = model_cls._sorts[field](model_cls, is_ascending,
+                                       case_insensitive)
     elif field in model_cls._fields:
-        sort = query.FixedFieldSort(field, is_ascending, ignore_case)
+        sort = query.FixedFieldSort(field, is_ascending, case_insensitive)
     else:
         # Flexible or computed.
-        sort = query.SlowFieldSort(field, is_ascending, ignore_case)
+        sort = query.SlowFieldSort(field, is_ascending, case_insensitive)
     return sort
 
 

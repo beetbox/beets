@@ -197,15 +197,15 @@ class SmartArtistSort(dbcore.query.Sort):
     """Sort by artist (either album artist or track artist),
     prioritizing the sort field over the raw field.
     """
-    def __init__(self, model_cls, ascending=True, ignore_case=False):
+    def __init__(self, model_cls, ascending=True, case_insensitive=True):
         self.album = model_cls is Album
         self.ascending = ascending
-        self.ignore_case = ignore_case
+        self.case_insensitive = case_insensitive
 
     def order_clause(self):
         order = "ASC" if self.ascending else "DESC"
         field = 'albumartist' if self.album else 'artist'
-        collate = 'COLLATE NOCASE' if self.ignore_case else ''
+        collate = 'COLLATE NOCASE' if self.case_insensitive else ''
         return ('(CASE {0}_sort WHEN NULL THEN {0} '
                 'WHEN "" THEN {0} '
                 'ELSE {0}_sort END) {1} {2}').format(field, collate, order)
@@ -216,7 +216,7 @@ class SmartArtistSort(dbcore.query.Sort):
         else:
             field = lambda i: i.artist_sort or i.artist
 
-        if self.ignore_case:
+        if self.case_insensitive:
             key = lambda x: field(x).lower()
         else:
             key = field
