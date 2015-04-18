@@ -56,6 +56,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    lyrics
    mbcollection
    mbsync
+   metasync
    missing
    mpdstats
    mpdupdate
@@ -104,6 +105,7 @@ Metadata
 * :doc:`lastimport`: Collect play counts from Last.fm.
 * :doc:`lyrics`: Automatically fetch song lyrics.
 * :doc:`mbsync`: Fetch updated metadata from MusicBrainz
+* :doc:`metasync`: Fetch metadata from local or remote sources
 * :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
   statistics (last_played, play_count, skip_count, rating).
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
