@@ -17,6 +17,11 @@ New features:
   query, items and albums will match *either* side of the comma. For example,
   ``beet ls foo , bar`` will get all the items matching `foo` or matching
   `bar`. See :ref:`combiningqueries`. :bug:`1423`
+* **Sorting is now case insensitive** by default. This means that artists will
+  be sorted lexicographically regardless of case, e.g., *Bar foo Qux*.
+  Previously this would have resulted in *Bar Qux foo*. This behavior can be
+  configured via the :ref:`sort_case_insensitive` configuration option.
+  See :ref:`query-sort`. :bug:`1429`
 
 Little fixes and improvements:
 
