@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.3.12 (in development)
+1.3.12 (April 18, 2015)
 -----------------------
 
 This little update makes queries more powerful, sorts music more
