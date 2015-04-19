@@ -121,7 +121,6 @@ setup(
         'metasync': ['dbus-python'],
     },
     # Non-Python/non-PyPI plugin dependencies:
-    # replaygain: mp3gain || aacgain
     # convert: ffmpeg
     # bpd: pygst
 
