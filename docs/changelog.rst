@@ -18,8 +18,6 @@ New features:
   query, items and albums will match *either* side of the comma. For example,
   ``beet ls foo , bar`` will get all the items matching `foo` or matching
   `bar`. See :ref:`combiningqueries`. :bug:`1423`
-* An experimental new :doc:`/plugins/metasync` lets you get metadata from your
-  favorite music players, starting with Amarok. :bug:`1386`
 * The autotagger's **matching algorithm is faster**. We now use the
   `Jellyfish`_ library to compute string similarity, which is better optimized
   than our hand-rolled edit distance implementation. :bug:`1389`
@@ -29,8 +27,10 @@ New features:
   up at the end of the list, after all the capital-letter artists.)
   You can turn this new behavior off using the :ref:`sort_case_insensitive`
   configuration option. See :ref:`query-sort`. :bug:`1429`
+* An experimental new :doc:`/plugins/metasync` lets you get metadata from your
+  favorite music players, starting with Amarok. :bug:`1386`
 * :doc:`/plugins/fetchart`: There are new settings to control what constitutes
-  **"acceptable" images**. The `minwidth` option constrains the minimum image
+  "acceptable" images. The `minwidth` option constrains the minimum image
   width in pixels and the `enforce_ratio` option requires that images be
   square. :bug:`1394`
 
@@ -55,8 +55,9 @@ Little fixes and improvements:
   :bug:`1422`
 * Fix a crash when the importer cannot open its log file. Thanks to
   :user:`barsanuphe`. :bug:`1426`
-* Fix an error when writing fields called `date` and `original_date` (which
-  are not built-in beets fields). :bug:`1404`
+* Fix an error when trying to write tags for items with flexible fields called
+  `date` and `original_date` (which are not built-in beets fields).
+  :bug:`1404`
 
 .. _Jellyfish: https://github.com/sunlightlabs/jellyfish
 
