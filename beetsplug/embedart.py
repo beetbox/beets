@@ -64,6 +64,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         ifempty = self.config['ifempty'].get(bool)
 
         def embed_func(lib, opts, args):
+            config['import']['write'] = True
             if opts.file:
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):

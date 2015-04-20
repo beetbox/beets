@@ -69,7 +69,9 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
     except IOError as exc:
         log.warning(u'could not read image file: {0}', exc)
         return
-    item.try_write(path=itempath, tags={'images': [image]})
+
+    if config['import']['write']:
+        item.try_write(path=itempath, tags={'images': [image]})
 
 
 def embed_album(log, album, maxwidth=None, quiet=False,
