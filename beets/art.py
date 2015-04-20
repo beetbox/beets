@@ -70,8 +70,7 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
         log.warning(u'could not read image file: {0}', exc)
         return
 
-    write = config['import']['write'].get(bool)
-    if write:
+    if config['import']['write']:
         item.try_write(path=itempath, tags={'images': [image]})
 
 
