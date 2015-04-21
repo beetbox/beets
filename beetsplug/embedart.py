@@ -126,7 +126,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def process_album(self, album):
         """Automatically embed art after art has been set
         """
-        if self.config['auto']:
+        if self.config['auto'] and config['import']['write']:
             max_width = self.config['maxwidth'].get(int)
             art.embed_album(self._log, album, max_width, True,
                             self.config['compare_threshold'].get(int),
