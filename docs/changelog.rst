@@ -4,7 +4,11 @@ Changelog
 1.3.13 (in development)
 -----------------------
 
-Changelog goes here!
+Fixes:
+
+* Importing with ``embedart`` plugin enabled now checks config option
+  ``write`` under ``import`` to determine whether to write tags and
+  art to music files. :bug:`1427`
 
 
 1.3.12 (April 18, 2015)
