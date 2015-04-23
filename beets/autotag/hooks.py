@@ -203,8 +203,10 @@ def _string_dist_basic(str1, str2):
     transliteration/lowering to ASCII characters. Normalized by string
     length.
     """
-    str1 = unidecode(str1)
-    str2 = unidecode(str2)
+    assert isinstance(str1, unicode)
+    assert isinstance(str2, unicode)
+    str1 = unidecode(str1).decode('ascii')
+    str2 = unidecode(str2).decode('ascii')
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
     if not str1 and not str2:
