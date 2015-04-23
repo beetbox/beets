@@ -10,6 +10,7 @@ Fixes:
   respects the ``write`` config option under ``import``. If this is disabled,
   album art is no longer embedded on import in order to leave files
   untouched---in effect, ``auto`` is implicitly disabled. :bug:`1427`
+* Fix compatibility with `Jellyfish`_ version 0.5.0.
 
 
 1.3.12 (April 18, 2015)
