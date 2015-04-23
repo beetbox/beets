@@ -6,9 +6,10 @@ Changelog
 
 Fixes:
 
-* Importing with ``embedart`` plugin enabled now checks config option
-  ``write`` under ``import`` to determine whether to write tags and
-  art to music files. :bug:`1427`
+* :doc:`/plugins/embedart`: In ``auto`` mode (the import hook), the plugin now
+  respects the ``write`` config option under ``import``. If this is disabled,
+  album art is no longer embedded on import in order to leave files
+  untouched---in effect, ``auto`` is implicitly disabled. :bug:`1427`
 
 
 1.3.12 (April 18, 2015)
