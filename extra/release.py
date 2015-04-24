@@ -302,6 +302,7 @@ def publish():
 
     # Push to GitHub.
     with chdir(BASE):
+        subprocess.check_call(['git', 'push'])
         subprocess.check_call(['git', 'push', '--tags'])
 
     # Upload to PyPI.
