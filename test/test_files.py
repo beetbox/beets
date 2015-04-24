@@ -124,16 +124,19 @@ class MoveTest(_common.TestCase):
         self.assertEqual(os.path.dirname(self.i.path),
                          os.path.dirname(dest))
 
+    @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_arrives(self):
         self.i.move(link=True)
         self.assertExists(self.dest)
         self.assertTrue(os.path.islink(self.dest))
         self.assertEqual(os.readlink(self.dest), self.path)
 
+    @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_does_not_depart(self):
         self.i.move(link=True)
         self.assertExists(self.path)
 
+    @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_changes_path(self):
         self.i.move(link=True)
         self.assertEqual(self.i.path, util.normpath(self.dest))

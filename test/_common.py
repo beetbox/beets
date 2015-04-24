@@ -53,6 +53,9 @@ log.setLevel(logging.DEBUG)
 # Dummy item creation.
 _item_ident = 0
 
+# OS feature test.
+HAVE_SYMLINK = hasattr(os, 'symlink')
+
 
 def item(lib=None):
     global _item_ident
