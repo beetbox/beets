@@ -1,16 +1,17 @@
 Changelog
 =========
 
-1.3.13 (in development)
+1.3.13 (April 24, 2015)
 -----------------------
 
-Fixes:
+This is a tiny bug-fix release. It copes with a dependency upgrade that broke
+beets. There are just two fixes:
 
+* Fix compatibility with `Jellyfish`_ version 0.5.0.
 * :doc:`/plugins/embedart`: In ``auto`` mode (the import hook), the plugin now
   respects the ``write`` config option under ``import``. If this is disabled,
   album art is no longer embedded on import in order to leave files
   untouched---in effect, ``auto`` is implicitly disabled. :bug:`1427`
-* Fix compatibility with `Jellyfish`_ version 0.5.0.
 
 
 1.3.12 (April 18, 2015)
