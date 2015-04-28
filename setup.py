@@ -105,6 +105,7 @@ setup(
         'responses',
         'pyxdg',
         'pathlib',
+        'python-mpd',
     ],
 
     # Plugin (optional) dependencies:

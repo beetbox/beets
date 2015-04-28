@@ -201,8 +201,12 @@ class MPDStats(object):
                             displayable_path(item.path))
 
     def update_rating(self, item, skipped):
-        """Update the rating for a beets item.
+        """Update the rating for a beets item. The `item` can either be a
+        beets `Item` or None. If the item is None, nothing changes.
         """
+        if item is None:
+            return
+
         item.load()
         rating = self.rating(
             int(item.get('play_count', 0)),
