@@ -4,7 +4,10 @@ Changelog
 1.3.14 (in development)
 -----------------------
 
-Changelog goes here!
+Fixes:
+
+* :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
+  beets library. Thanks to :user:`CodyReichert`. :bug:`1443`
 
 
 1.3.13 (April 24, 2015)
