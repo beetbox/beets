@@ -871,102 +871,66 @@ def import_files(lib, paths, query):
     plugins.send('import', lib=lib, paths=paths)
 
 
-def import_func(lib, opts, args):
+# TODO: add 'imp' and 'im' aliases
+@click.command('import', short_help='import new music')
+@click.option('copy', '-c', '--copy', flag_value=True,
+              help='copy tracks into library directory (default)')
+@click.option('copy', '-C', '--nocopy', flag_value=False, default=None,
+              help="don't copy tracks (opposite of -c)")
+@click.option('write', '-w', '--write', flag_value=True,
+              help="write new metadata to files' tags (default)")
+@click.option('write', '-W', '--nowrite', flag_value=False, default=None,
+              help="don't write metadata (opposite of -w)")
+@click.option('autotag', '-a', '--autotag', flag_value=True,
+              help='infer tags for imported files (default)')
+@click.option('autotag', '-A', '--noautotag', flag_value=False, default=None,
+              help="don't infer tags for imported files (opposite of -a)")
+@click.option('resume', '-p', '--resume', flag_value=True,
+              help='resume importing if interrupted')
+@click.option('resume', '-P', '--noresume', flag_value=False, default=None,
+              help='resume importing if interrupted')
+@click.option('-q', '--quiet', is_flag=True, default=None,
+              help='never prompt for input: skip albums instead')
+@click.option('-l', '--log', metavar='LOG', default=None,
+              help='file to log untaggable albums for later review')
+@click.option('-s', '--singletons', is_flag=True, default=None,
+              help='import individual tracks instead of full albums')
+@click.option('-t', '--timid', is_flag=True, default=None,
+              help='always confirm all actions')
+@click.option('-L', '--library', metavar='LIBRARY', default=None,
+              help='retag items matching a query')
+@click.option('incremental', '-i', '--incremental', flag_value=True,
+              help='skip already-import directories')
+@click.option('incremental', '-I', '--noincremental', flag_value=False,
+              default=None, help='do not skip already-imported directories')
+@click.option('--flat', is_flag=True, default=None,
+              help='import an entire tree as a single album')
+@click.option('-g', '--group-albums', is_flag=True, default=None,
+              help='group tracks in a folder into separate albums')
+@click.option('--pretend', is_flag=True, default=None,
+              help='just print the files to import')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def import_cmd(ctx, query, **opts):
     config['import'].set_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would
     # otherwise take precedence).
-    if opts.copy:
+    if opts['copy']:
         config['import']['move'] = False
 
-    if opts.library:
-        query = decargs(args)
+    if opts['library']:
+        query = decargs(query)
         paths = []
     else:
         query = None
-        paths = args
+        paths = query
         if not paths:
             raise ui.UserError('no path specified')
 
-    import_files(lib, paths, query)
+    import_files(ctx.lib, paths, query)
 
 
-import_cmd = ui.Subcommand(
-    'import', help='import new music', aliases=('imp', 'im')
-)
-import_cmd.parser.add_option(
-    '-c', '--copy', action='store_true', default=None,
-    help="copy tracks into library directory (default)"
-)
-import_cmd.parser.add_option(
-    '-C', '--nocopy', action='store_false', dest='copy',
-    help="don't copy tracks (opposite of -c)"
-)
-import_cmd.parser.add_option(
-    '-w', '--write', action='store_true', default=None,
-    help="write new metadata to files' tags (default)"
-)
-import_cmd.parser.add_option(
-    '-W', '--nowrite', action='store_false', dest='write',
-    help="don't write metadata (opposite of -w)"
-)
-import_cmd.parser.add_option(
-    '-a', '--autotag', action='store_true', dest='autotag',
-    help="infer tags for imported files (default)"
-)
-import_cmd.parser.add_option(
-    '-A', '--noautotag', action='store_false', dest='autotag',
-    help="don't infer tags for imported files (opposite of -a)"
-)
-import_cmd.parser.add_option(
-    '-p', '--resume', action='store_true', default=None,
-    help="resume importing if interrupted"
-)
-import_cmd.parser.add_option(
-    '-P', '--noresume', action='store_false', dest='resume',
-    help="do not try to resume importing"
-)
-import_cmd.parser.add_option(
-    '-q', '--quiet', action='store_true', dest='quiet',
-    help="never prompt for input: skip albums instead"
-)
-import_cmd.parser.add_option(
-    '-l', '--log', dest='log',
-    help='file to log untaggable albums for later review'
-)
-import_cmd.parser.add_option(
-    '-s', '--singletons', action='store_true',
-    help='import individual tracks instead of full albums'
-)
-import_cmd.parser.add_option(
-    '-t', '--timid', dest='timid', action='store_true',
-    help='always confirm all actions'
-)
-import_cmd.parser.add_option(
-    '-L', '--library', dest='library', action='store_true',
-    help='retag items matching a query'
-)
-import_cmd.parser.add_option(
-    '-i', '--incremental', dest='incremental', action='store_true',
-    help='skip already-imported directories'
-)
-import_cmd.parser.add_option(
-    '-I', '--noincremental', dest='incremental', action='store_false',
-    help='do not skip already-imported directories'
-)
-import_cmd.parser.add_option(
-    '--flat', dest='flat', action='store_true',
-    help='import an entire tree as a single album'
-)
-import_cmd.parser.add_option(
-    '-g', '--group-albums', dest='group_albums', action='store_true',
-    help='group tracks in a folder into separate albums'
-)
-import_cmd.parser.add_option(
-    '--pretend', dest='pretend', action='store_true',
-    help='just print the files to import'
-)
-import_cmd.func = import_func
 default_commands.append(import_cmd)
 
 
