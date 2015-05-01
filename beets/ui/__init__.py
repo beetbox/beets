@@ -1080,6 +1080,84 @@ class BeetsCLI(click.MultiCommand):
         return self._commands(ctx).get(name)
 
 
+def album_option(f):
+    """Add a -a/--album option to match albums instead of tracks.
+
+    If used then the format option can auto-detect whether we're setting
+    the format for items or albums.
+    Sets the album property on the options extracted from the CLI.
+    """
+    return click.option('-a', '--album', is_eager=True, is_flag=True,
+                        help='match albums instead of tracks')(f)
+
+
+def _set_format(target, fmt):
+    config[target._format_config_key].set(fmt)
+
+
+def path_option(f):
+    """Add a -p/--path option to display the path instead of the default
+    format.
+
+    By default this affects both items and albums. If album_option()
+    is used then the target will be autodetected.
+
+    Sets the format property to u'$path' on the options extracted from the
+    CLI.
+    """
+    def callback(ctx, param, value):
+        if not value:
+            return
+
+        if 'album' in ctx.params:
+            if ctx.params['album']:
+                _set_format(library.Album, '$path')
+            else:
+                _set_format(library.Item, '$path')
+        else:
+            _set_format(library.Item, '$path')
+            _set_format(library.Album, '$path')
+
+    return click.option('-p', '--path', callback=callback, is_flag=True,
+                        help='print paths for matched items or albums')(f)
+
+
+def format_option(target=None):
+    def callback(ctx, param, value):
+        if not value:
+            return
+
+        value = unicode(value)
+
+        _target = target
+        if _target:
+            if _target in ('item', 'album'):
+                _target = {'item': library.Item,
+                           'album': library.Album}[_target]
+            _set_format(_target, value)
+        else:
+            if 'album' in ctx.params:
+                if ctx.params['album']:
+                    _set_format(library.Album, value)
+                else:
+                    _set_format(library.Item, value)
+            else:
+                _set_format(library.Item, value)
+                _set_format(library.Album, value)
+
+    def decorator(f):
+        return click.option(
+            '-f', '--format', callback=callback,
+            expose_value=False, help='print with custom format'
+        )(f)
+
+    return decorator
+
+
+def all_common_options(f):
+    return album_option(path_option(format_option()(f)))
+
+
 class Context(object):
 
     def __init__(self, lib=None):

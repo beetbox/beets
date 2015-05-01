@@ -984,13 +984,15 @@ def list_items(lib, query, album, fmt=''):
             ui.print_(format(item, fmt))
 
 
-def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+# TODO: add 'ls' alias
+@click.command('list', short_help='query the library')
+@click.argument('query', nargs=-1)
+@ui.all_common_options
+@ui.pass_context
+def list_cmd(ctx, query, album, path):
+    list_items(ctx.lib, query, album)
 
 
-list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
-list_cmd.parser.add_all_common_options()
-list_cmd.func = list_func
 default_commands.append(list_cmd)
 
 
