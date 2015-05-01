@@ -1348,29 +1348,22 @@ def move_items(lib, dest, query, copy, album):
         obj.store()
 
 
-def move_func(lib, opts, args):
-    dest = opts.dest
+# TODO: add 'mv' alias
+@click.command('move', short_help='move or copy items')
+@click.option('-d', '--dest', metavar='DIR', help='destination directory')
+@click.option('-c', '--copy', is_flag=True, help='copy instead of moving')
+@ui.album_option
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def move_cmd(ctx, dest, query, copy, album):
     if dest is not None:
         dest = normpath(dest)
         if not os.path.isdir(dest):
-            raise ui.UserError('no such directory: %s' % dest)
+            raise ui.UserError('no such directory: {}'.format(dest))
 
-    move_items(lib, dest, decargs(args), opts.copy, opts.album)
+    move_items(ctx.lib, dest, query, copy, album)
 
 
-move_cmd = ui.Subcommand(
-    'move', help='move or copy items', aliases=('mv',)
-)
-move_cmd.parser.add_option(
-    '-d', '--dest', metavar='DIR', dest='dest',
-    help='destination directory'
-)
-move_cmd.parser.add_option(
-    '-c', '--copy', default=False, action='store_true',
-    help='copy instead of moving'
-)
-move_cmd.parser.add_album_option()
-move_cmd.func = move_func
 default_commands.append(move_cmd)
 
 
