@@ -410,7 +410,11 @@ class TestHelper(object):
             lib = self.lib
         else:
             lib = Library(':memory:')
-        beets.ui._raw_main(list(args), lib)
+        ctx = beets.ui.Context(lib=lib)
+        try:
+            beets.ui._raw_main(args=args, obj=ctx)
+        except SystemExit:
+            pass
 
     def run_with_output(self, *args):
         with capture_stdout() as out:

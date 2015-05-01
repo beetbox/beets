@@ -19,6 +19,7 @@ interface.
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+import click
 import os
 import re
 
@@ -77,7 +78,12 @@ def _do_query(lib, query, album, also_items=True):
 
 # fields: Shows a list of available fields for queries and format strings.
 
-def fields_func(lib, opts, args):
+@click.command(
+    'fields',
+    short_help='show fields available for queries and format strings',
+)
+@ui.pass_context
+def fields_cmd(ctx):
     def _print_rows(names):
         names.sort()
         print_("  " + "\n  ".join(names))
@@ -107,36 +113,28 @@ def fields_func(lib, opts, args):
     _show_plugin_fields(True)
 
 
-fields_cmd = ui.Subcommand(
-    'fields',
-    help='show fields available for queries and format strings'
-)
-fields_cmd.func = fields_func
 default_commands.append(fields_cmd)
 
 
 # help: Print help text for commands
 
-class HelpCommand(ui.Subcommand):
+@click.command('help',
+               short_help='give detailed help on a specific sub-command')
+@click.pass_context
+def help_cmd(ctx):
+    if not ctx.args:
+        print_(ctx.parent.get_help())
+        return
 
-    def __init__(self):
-        super(HelpCommand, self).__init__(
-            'help', aliases=('?',),
-            help='give detailed help on a specific sub-command',
-        )
+    cmd_name, cmd, args = ctx.parent.command.resolve_command(
+        ctx.parent,
+        ctx.args
+    )
+    with cmd.make_context(cmd_name, args, parent=ctx.parent) as ctx_:
+        print_(ctx_.get_help())
 
-    def func(self, lib, opts, args):
-        if args:
-            cmdname = args[0]
-            helpcommand = self.root_parser._subcommand_for_name(cmdname)
-            if not helpcommand:
-                raise ui.UserError("unknown command '{0}'".format(cmdname))
-            helpcommand.print_help()
-        else:
-            self.root_parser.print_help()
-
-
-default_commands.append(HelpCommand())
+help_cmd.allow_extra_args = True
+default_commands.append(help_cmd)
 
 
 # import: Autotagger and importer.
@@ -1157,9 +1155,14 @@ default_commands.append(remove_cmd)
 
 # stats: Show library/query statistics.
 
-def show_stats(lib, query, exact):
+@click.command('stats',
+               short_help='show statistics about the library or a query')
+@click.option('-e', '--exact', is_flag=True, help='exact size and time')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def stats_cmd(ctx, query, exact):
     """Shows some statistics about the matched items."""
-    items = lib.items(query)
+    items = ctx.lib.items(query)
 
     total_size = 0
     total_time = 0.0
@@ -1201,24 +1204,13 @@ Album artists: {7}""".format(
     )
 
 
-def stats_func(lib, opts, args):
-    show_stats(lib, decargs(args), opts.exact)
-
-
-stats_cmd = ui.Subcommand(
-    'stats', help='show statistics about the library or a query'
-)
-stats_cmd.parser.add_option(
-    '-e', '--exact', action='store_true',
-    help='exact size and time'
-)
-stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
 
 
 # version: Show current beets version.
 
-def show_version(lib, opts, args):
+@click.command('version', short_help='output version information')
+def version_cmd():
     print_('beets version %s' % beets.__version__)
     # Show plugins.
     names = sorted(p.name for p in plugins.find_plugins())
@@ -1228,10 +1220,6 @@ def show_version(lib, opts, args):
         print_('no plugins loaded')
 
 
-version_cmd = ui.Subcommand(
-    'version', help='output version information'
-)
-version_cmd.func = show_version
 default_commands.append(version_cmd)
 
 
@@ -1448,15 +1436,44 @@ default_commands.append(write_cmd)
 
 # config: Show and edit user configuration.
 
-def config_func(lib, opts, args):
+def config_edit(ctx, param, value):
+    """Open a program to edit the user configuration.
+    """
+    if not value or ctx.resilient_parsing:
+        return
+
+    path = config.user_config_path()
+
+    editor = os.environ.get('EDITOR')
+
+    try:
+        util.interactive_open(path, editor)
+        ctx.exit()
+    except OSError as exc:
+        message = "Could not edit configuration: {0}".format(exc)
+        if not editor:
+            message += ". Please set the EDITOR environment variable"
+        raise ui.UserError(message)
+
+
+@click.command('config', short_help='show or edit the user configuration')
+@click.option('-p', '--paths', is_flag=True,
+              help='Show files that configuration was loaded from.')
+@click.option('-e', '--edit', is_flag=True, callback=config_edit,
+              help='Edit user configuration with $EDITOR.')
+@click.option('-d', '--defaults', is_flag=True,
+              help='Include the default configuration.')
+@click.option('-c', '--clear', 'redact', is_flag=True, default=True,
+              help='Do not redact sensitive fields.')
+def config_cmd(*args, **opts):
     # Make sure lazy configuration is loaded
     config.resolve()
 
     # Print paths.
-    if opts.paths:
+    if opts['paths']:
         filenames = []
         for source in config.sources:
-            if not opts.defaults and source.default:
+            if not opts['defaults'] and source.default:
                 continue
             if source.filename:
                 filenames.append(source.filename)
@@ -1471,48 +1488,13 @@ def config_func(lib, opts, args):
             print_(filename)
 
     # Open in editor.
-    elif opts.edit:
+    elif opts['edit']:
         config_edit()
 
     # Dump configuration.
     else:
-        print_(config.dump(full=opts.defaults, redact=opts.redact))
+        print_(config.dump(full=opts['defaults'], redact=opts['redact']))
 
-
-def config_edit():
-    """Open a program to edit the user configuration.
-    """
-    path = config.user_config_path()
-
-    editor = os.environ.get('EDITOR')
-    try:
-        util.interactive_open(path, editor)
-    except OSError as exc:
-        message = "Could not edit configuration: {0}".format(exc)
-        if not editor:
-            message += ". Please set the EDITOR environment variable"
-        raise ui.UserError(message)
-
-config_cmd = ui.Subcommand('config',
-                           help='show or edit the user configuration')
-config_cmd.parser.add_option(
-    '-p', '--paths', action='store_true',
-    help='show files that configuration was loaded from'
-)
-config_cmd.parser.add_option(
-    '-e', '--edit', action='store_true',
-    help='edit user configuration with $EDITOR'
-)
-config_cmd.parser.add_option(
-    '-d', '--defaults', action='store_true',
-    help='include the default configuration'
-)
-config_cmd.parser.add_option(
-    '-c', '--clear', action='store_false',
-    dest='redact', default=True,
-    help='do not redact sensitive fields'
-)
-config_cmd.func = config_func
 default_commands.append(config_cmd)
 
 
