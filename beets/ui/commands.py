@@ -1403,20 +1403,17 @@ def write_items(lib, query, pretend, force):
             item.try_sync()
 
 
-def write_func(lib, opts, args):
-    write_items(lib, decargs(args), opts.pretend, opts.force)
+@click.command('write', short_help='write tag information to files')
+@click.option('-p', '--pretend', is_flag=True,
+              help='show all changes but do nothing')
+@click.option('-f', '--force', is_flag=True,
+              help='write tags even if the existing tags match the database')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def write_cmd(ctx, query, pretend, force):
+    write_items(ctx.lib, query, pretend, force)
 
 
-write_cmd = ui.Subcommand('write', help='write tag information to files')
-write_cmd.parser.add_option(
-    '-p', '--pretend', action='store_true',
-    help="show all changes but do nothing"
-)
-write_cmd.parser.add_option(
-    '-f', '--force', action='store_true',
-    help="write tags even if the existing tags match the database"
-)
-write_cmd.func = write_func
 default_commands.append(write_cmd)
 
 
