@@ -246,7 +246,7 @@ def has_PIL():
     """Return Image Magick version or None if it is unavailable
     Try importing PIL."""
     try:
-        __import__('PIL', fromlist=['Image'])
+        __import__('PIL', fromlist=[str('Image')])
         return (0,)
     except ImportError:
         return None
