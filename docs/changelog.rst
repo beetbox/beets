@@ -8,6 +8,9 @@ Fixes:
 
 * :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
   beets library. Thanks to :user:`CodyReichert`. :bug:`1443`
+* Fix a crash with ArtResizer on Windows systems (affecting
+  :doc:`/plugins/embedart`, :doc:`/plugins/fetchart`,
+  and :doc:`/plugins/thumbnails`). :bug:`1448`
 
 
 1.3.13 (April 24, 2015)
