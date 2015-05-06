@@ -31,7 +31,7 @@ class Amarok(object):
                     </filters> \
                 </query>'
 
-    def __init__(self):
+    def __init__(self, config=None):
         self.collection = \
             dbus.SessionBus().get_object('org.kde.amarok', '/Collection')
 

@@ -34,7 +34,13 @@ class MetaSyncPlugin(BeetsPlugin):
         'amarok_uid':         types.STRING,
         'amarok_playcount':   types.INTEGER,
         'amarok_firstplayed': DateType(),
-        'amarok_lastplayed':  DateType()
+        'amarok_lastplayed':  DateType(),
+
+        'itunes_rating':      types.INTEGER,  # 0..100 scale
+        'itunes_playcount':   types.INTEGER,
+        'itunes_skipcount':   types.INTEGER,
+        'itunes_lastplayed':  DateType(),
+        'itunes_lastskipped': DateType(),
     }
 
     def __init__(self):
@@ -74,7 +80,7 @@ class MetaSyncPlugin(BeetsPlugin):
 
             for entry in classes:
                 if entry[0].lower() == player:
-                    sources[player] = entry[1]()
+                    sources[player] = entry[1](self.config)
                 else:
                     continue
 
