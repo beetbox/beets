@@ -86,7 +86,7 @@ def permissions(lib, item=None, album=None):
 
         # Adding directories to the directory chmod queue.
         dir_chmod_queue.update(
-            dirs_in_library(config['directory'].get(),
+            dirs_in_library(lib.directory,
                             path))
 
     # Change permissions for the directories.
