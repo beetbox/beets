@@ -11,6 +11,7 @@ Fixes:
 * Fix a crash with ArtResizer on Windows systems (affecting
   :doc:`/plugins/embedart`, :doc:`/plugins/fetchart`,
   and :doc:`/plugins/thumbnails`). :bug:`1448`
+* :doc:`/plugins/permissions`: Fix an error with non-ASCII paths. :bug:`1449`
 
 
 1.3.13 (April 24, 2015)
