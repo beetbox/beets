@@ -42,7 +42,7 @@ itunes
 
 The path to your iTunes library **xml** file has to be configured, e.g.::
 
-    metaysnc:
+    metasync:
         source: itunes
         itunes:
             library: ~/Music/iTunes Library.xml

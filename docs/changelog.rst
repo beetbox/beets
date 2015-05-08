@@ -7,7 +7,7 @@ Changelog
 New features:
 
 * The :doc:`/plugins/metasync` plugin now lets you get metadata from iTunes.
-  This plugin is still in an experimental phase.
+  This plugin is still in an experimental phase. :bug:`1450`
 
 
 Fixes:
