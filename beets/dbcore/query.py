@@ -756,8 +756,11 @@ class FixedFieldSort(FieldSort):
     """
     def order_clause(self):
         order = "ASC" if self.ascending else "DESC"
-        collate = 'COLLATE NOCASE' if self.case_insensitive else ''
-        return "{0} {1} {2}".format(self.field, collate, order)
+        if self.case_insensitive:
+            field = 'LOWER({})'.format(self.field)
+        else:
+            field = self.field
+        return "{0} {1}".format(field, order)
 
 
 class SlowFieldSort(FieldSort):
