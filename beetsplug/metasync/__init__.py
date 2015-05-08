@@ -15,15 +15,21 @@
 """Synchronize information from music player libraries
 """
 
-from beets import ui, logging
+from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.dbcore import types
 from beets.library import DateType
 from sys import modules
 import inspect
 
-# Loggers.
-log = logging.getLogger('beets.metasync')
+
+class MetaSource(object):
+    def __init__(self, config, log):
+        self.config = config
+        self._log = log
+
+    def sync_data(self, item):
+        raise NotImplementedError()
 
 
 class MetaSyncPlugin(BeetsPlugin):
@@ -73,20 +79,21 @@ class MetaSyncPlugin(BeetsPlugin):
             module = 'beetsplug.metasync.' + player
 
             if module not in modules.keys():
-                log.error(u'Unknown metadata source \'' + player + '\'')
+                self._log.error(u'Unknown metadata source \'{0}\''.format(
+                    player))
                 continue
 
             classes = inspect.getmembers(modules[module], inspect.isclass)
 
             for entry in classes:
                 if entry[0].lower() == player:
-                    sources[player] = entry[1](self.config)
+                    sources[player] = entry[1](self.config, self._log)
                 else:
                     continue
 
         for item in lib.items(query):
             for player in sources.values():
-                player.get_data(item)
+                player.sync_data(item)
 
             changed = ui.show_model_changes(item)
 
