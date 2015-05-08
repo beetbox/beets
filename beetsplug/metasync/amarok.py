@@ -20,10 +20,12 @@ from datetime import datetime
 from time import mktime
 from beets.util import displayable_path
 from xml.sax.saxutils import escape
+from beetsplug.metasync import MetaSource
+
 import dbus
 
 
-class Amarok(object):
+class Amarok(MetaSource):
 
     queryXML = u'<query version="1.0"> \
                     <filters> \
@@ -31,11 +33,13 @@ class Amarok(object):
                     </filters> \
                 </query>'
 
-    def __init__(self, config=None):
+    def __init__(self, config, log):
+        super(Amarok, self).__init__(config, log)
+
         self.collection = \
             dbus.SessionBus().get_object('org.kde.amarok', '/Collection')
 
-    def get_data(self, item):
+    def sync_data(self, item):
         path = displayable_path(item.path)
 
         # amarok unfortunately doesn't allow searching for the full path, only

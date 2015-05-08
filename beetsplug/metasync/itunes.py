@@ -23,6 +23,7 @@ from time import mktime
 import plistlib
 from beets import util
 from beets.util.confit import ConfigValueError
+from beetsplug.metasync import MetaSource
 
 
 @contextmanager
@@ -36,35 +37,41 @@ def create_temporary_copy(path):
         shutil.rmtree(temp_dir)
 
 
-class ITunes(object):
+class ITunes(MetaSource):
 
-    def __init__(self, config=None):
-        # Load the iTunes library, which has to be the .xml one
+    def __init__(self, config, log):
+        super(ITunes, self).__init__(config, log)
+
+        # Load the iTunes library, which has to be the .xml one (not the .itl)
         library_path = util.normpath(config['itunes']['library'].get(str))
 
         try:
+            self._log.debug(
+                u'loading iTunes library from {0}'.format(library_path))
             with create_temporary_copy(library_path) as library_copy:
                 raw_library = plistlib.readPlist(library_copy)
         except IOError as e:
-            raise ConfigValueError("invalid iTunes library: " + e.strerror)
-        except:
-            # TODO: Tell user to make sure it is the .xml one?
-            raise ConfigValueError("invalid iTunes library")
+            raise ConfigValueError(u"invalid iTunes library: " + e.strerror)
+        except Exception as e:
+            # It's likely the user configured their '.itl' library (<> xml)
+            if os.path.splitext(library_path)[1].lower() != '.xml':
+                hint = u": please ensure that the configured path" \
+                       u" points to the .XML library"
+            else:
+                hint = ''
+            raise ConfigValueError(u"invalid iTunes library" + hint)
 
         # Convert the library in to something we can query more easily
         self.collection = {
             (track['Name'], track['Album'], track['Album Artist']): track
             for track in raw_library['Tracks'].values()}
 
-    def get_data(self, item):
+    def sync_data(self, item):
         key = (item.title, item.album, item.albumartist)
         result = self.collection.get(key)
 
-        # TODO: Need to investigate behavior for items without title, album, or
-        # albumartist before allowing them to be queried
         if not all(key) or not result:
-            # TODO: Need to log something here later
-            # print "No iTunes match found for {0}".format(item)
+            self._log.warning(u"no iTunes match found for {0}".format(item))
             return
 
         item.itunes_rating = result.get('Rating')
