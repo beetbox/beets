@@ -66,6 +66,7 @@ class DummyDataTestCase(_common.TestCase):
         items[0].flex2 = "Flex2-A"
         items[0].album_id = albums[0].id
         items[0].artist_sort = None
+        items[0].path = "/path0.mp3"
         items[1].title = 'Baz qux'
         items[1].artist = 'Two'
         items[1].album = 'Baz'
@@ -75,6 +76,7 @@ class DummyDataTestCase(_common.TestCase):
         items[1].flex2 = "Flex2-A"
         items[1].album_id = albums[0].id
         items[1].artist_sort = None
+        items[1].path = "/patH1.mp3"
         items[2].title = 'Beets 4 eva'
         items[2].artist = 'Three'
         items[2].album = 'Foo'
@@ -84,6 +86,7 @@ class DummyDataTestCase(_common.TestCase):
         items[2].flex2 = "Flex1-B"
         items[2].album_id = albums[1].id
         items[2].artist_sort = None
+        items[2].path = "/paTH2.mp3"
         items[3].title = 'Beets 4 eva'
         items[3].artist = 'Three'
         items[3].album = 'Foo2'
@@ -93,6 +96,7 @@ class DummyDataTestCase(_common.TestCase):
         items[3].flex2 = "Flex1-C"
         items[3].album_id = albums[2].id
         items[3].artist_sort = None
+        items[3].path = "/PATH3.mp3"
         for item in items:
             self.lib.add(item)
 
@@ -140,6 +144,15 @@ class SortFixedFieldTest(DummyDataTestCase):
         results2 = self.lib.items(q)
         for r1, r2 in zip(results, results2):
             self.assertEqual(r1.id, r2.id)
+
+    def test_sort_path_field(self):
+        q = ''
+        sort = dbcore.query.FixedFieldSort('path', True)
+        results = self.lib.items(q, sort)
+        self.assertEqual(results[0]['path'], '/path0.mp3')
+        self.assertEqual(results[1]['path'], '/patH1.mp3')
+        self.assertEqual(results[2]['path'], '/paTH2.mp3')
+        self.assertEqual(results[3]['path'], '/PATH3.mp3')
 
 
 class SortFlexFieldTest(DummyDataTestCase):
