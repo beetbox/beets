@@ -18,10 +18,8 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-from test import _common
 from test._common import unittest
 from beetsplug import betterlisting
-from beets import config
 
 from test.helper import TestHelper
 
@@ -31,7 +29,7 @@ class BetterListingPluginTest(unittest.TestCase, TestHelper):
         self.setup_beets()
         self.load_plugins('betterlisting')
         self.plugin = betterlisting.BetterListingPlugin()
-        default_config = { key:val.get() for key, val in
+        default_config = {key: val.get() for key, val in
                           self.plugin.config.items()}
         self._setup_config(**default_config)
 
@@ -191,6 +189,7 @@ class TemplateFieldsForDurationTest(BetterListingPluginTest):
         self._setup_config(sparks=u'')
         self.assertEqual(self.plugin.field_duration_bar(album), u'')
 
+
 class BetterListingPluginLyricsFieldsTest(BetterListingPluginTest):
     def add_fixtures(self, lyrics=3, total=3):
         """Add fixtures for the current tests."""
@@ -275,7 +274,8 @@ class BetterListingPluginFieldsForAlbumTotalTest(BetterListingPluginTest):
         album = self.add_fixtures(available=10, total=10)
         self.assertEqual(self.plugin.album_field_missing_icon(album), u'')
         self.assertEqual(self.plugin.album_field_missing_bar(album), u' ')
-        self.assertEqual(self.plugin.album_field_available_bar(album), u'\u2587')
+        self.assertEqual(self.plugin.album_field_available_bar(album),
+                         u'\u2587')
 
     def test_album_fields_for_missing_icon(self):
         """missing_icon field should return corresponding icon"""
@@ -302,10 +302,12 @@ class BetterListingPluginFieldsForAlbumTotalTest(BetterListingPluginTest):
         """missing_icon field should be configurable by the user"""
         self._setup_config(icon_missing_some=127477, icon_missing_none=127474)
         album = self.add_fixtures(available=4, total=10)
-        self.assertEqual(self.plugin.album_field_missing_icon(album), u'\U0001f1f5')
+        self.assertEqual(self.plugin.album_field_missing_icon(album),
+                         u'\U0001f1f5')
 
         album = self.add_fixtures(available=10, total=10)
-        self.assertEqual(self.plugin.album_field_missing_icon(album), u'\U0001f1f2')
+        self.assertEqual(self.plugin.album_field_missing_icon(album),
+                         u'\U0001f1f2')
 
     def test_album_fields_for_missing_bar(self):
         """missing_bar should return a spark bar for number of tracks missing"""
@@ -316,12 +318,15 @@ class BetterListingPluginFieldsForAlbumTotalTest(BetterListingPluginTest):
         self.assertEqual(self.plugin.album_field_missing_bar(album), u' ')
 
     def test_album_fields_for_available_bar(self):
-        """available_bar should return a spark bar for number of tracks present"""
+        """available_bar should return a spark bar for number of tracks
+        present"""
         album = self.add_fixtures(available=2, total=8)
-        self.assertEqual(self.plugin.album_field_available_bar(album), u'\u2582')
+        self.assertEqual(self.plugin.album_field_available_bar(album),
+                         u'\u2582')
 
         album = self.add_fixtures(available=8, total=8)
-        self.assertEqual(self.plugin.album_field_available_bar(album), u'\u2587')
+        self.assertEqual(self.plugin.album_field_available_bar(album),
+                         u'\u2587')
 
 
 def suite():
