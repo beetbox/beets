@@ -18,14 +18,33 @@
 from os.path import basename
 from datetime import datetime
 from time import mktime
-from beets.util import displayable_path
 from xml.sax.saxutils import escape
+
+from beets.util import displayable_path
+from beets.dbcore import types
+from beets.library import DateType
 from beetsplug.metasync import MetaSource
 
-import dbus
+
+def import_dbus():
+    try:
+        return __import__('dbus')
+    except ImportError:
+        return None
+
+dbus = import_dbus()
 
 
 class Amarok(MetaSource):
+
+    item_types = {
+        'amarok_rating':      types.INTEGER,
+        'amarok_score':       types.FLOAT,
+        'amarok_uid':         types.STRING,
+        'amarok_playcount':   types.INTEGER,
+        'amarok_firstplayed': DateType(),
+        'amarok_lastplayed':  DateType(),
+    }
 
     queryXML = u'<query version="1.0"> \
                     <filters> \
@@ -35,6 +54,9 @@ class Amarok(MetaSource):
 
     def __init__(self, config, log):
         super(Amarok, self).__init__(config, log)
+
+        if not dbus:
+            raise ImportError('failed to import dbus')
 
         self.collection = \
             dbus.SessionBus().get_object('org.kde.amarok', '/Collection')
