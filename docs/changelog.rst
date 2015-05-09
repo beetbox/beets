@@ -18,6 +18,8 @@ New:
   various-artists albums. The setting defaults to "Various Artists," the
   MusicBrainz standard. In order to match MusicBrainz, the
   :doc:`/plugins/discogs` also adopts the same setting.
+* The rewrite plugin now accepts back-references to matched substrings in the
+  replacement pattern. :bug:`1452`
 
 
 For developers:

@@ -34,9 +34,7 @@ def rewriter(field, rules):
     def fieldfunc(item):
         value = item._values_fixed[field]
         for pattern, replacement in rules:
-            if pattern.match(value.lower()):
-                # Rewrite activated.
-                return replacement
+            return re.sub(pattern, replacement, value)
         # Not activated; return original value.
         return value
     return fieldfunc
@@ -60,7 +58,7 @@ class RewritePlugin(BeetsPlugin):
                 raise ui.UserError("invalid field name (%s) in rewriter" %
                                    fieldname)
             self._log.debug(u'adding template field {0}', key)
-            pattern = re.compile(pattern.lower())
+            pattern = re.compile(pattern)
             rules[fieldname].append((pattern, value))
             if fieldname == 'artist':
                 # Special case for the artist field: apply the same

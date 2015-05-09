@@ -26,6 +26,18 @@ might use::
     rewrite:
         artist .*jimi hendrix.*: Jimi Hendrix
 
+As of v1.3.14 the replacement pattern may also consist of a regular expression
+in order to back-reference matched substrings. For example, you might want to
+replace certain characters in a tag. The following rewrite rule modifies the
+title to replace a trailing year in parentheses with the trailing year in
+brackets::
+
+    rewrite:
+        title (.*)\(([0-9]{4})\)$: '\1\[\2\]'
+
+This example will transform Jimi Hendrix' ``$title`` "Hey Joe (1969)" to "Hey
+Joe [1969]".
+
 As a convenience, the plugin applies patterns for the ``artist`` field to the
 ``albumartist`` field as well. (Otherwise, you would probably want to duplicate
 every rule for ``artist`` and ``albumartist``.)
