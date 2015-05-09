@@ -57,8 +57,8 @@ def load_meta_sources():
         module = import_module(METASYNC_MODULE + '.' + module_name)
         classes = inspect.getmembers(module, is_meta_source_implementation)
 
-        for cls_name, cls in classes:
-            meta_sources[cls_name.lower()] = cls
+        for cls_name, _cls in classes:
+            meta_sources[cls_name.lower()] = _cls
 
     return meta_sources
 
