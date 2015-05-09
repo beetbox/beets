@@ -18,10 +18,12 @@ from contextlib import contextmanager
 import os
 import shutil
 import tempfile
+import plistlib
 from time import mktime
 
-import plistlib
 from beets import util
+from beets.dbcore import types
+from beets.library import DateType
 from beets.util.confit import ConfigValueError
 from beetsplug.metasync import MetaSource
 
@@ -37,10 +39,18 @@ def create_temporary_copy(path):
         shutil.rmtree(temp_dir)
 
 
-class ITunes(MetaSource):
+class Itunes(MetaSource):
+
+    item_types = {
+        'itunes_rating':      types.INTEGER,  # 0..100 scale
+        'itunes_playcount':   types.INTEGER,
+        'itunes_skipcount':   types.INTEGER,
+        'itunes_lastplayed':  DateType(),
+        'itunes_lastskipped': DateType(),
+    }
 
     def __init__(self, config, log):
-        super(ITunes, self).__init__(config, log)
+        super(Itunes, self).__init__(config, log)
 
         # Load the iTunes library, which has to be the .xml one (not the .itl)
         library_path = util.normpath(config['itunes']['library'].get(str))
@@ -51,15 +61,15 @@ class ITunes(MetaSource):
             with create_temporary_copy(library_path) as library_copy:
                 raw_library = plistlib.readPlist(library_copy)
         except IOError as e:
-            raise ConfigValueError(u"invalid iTunes library: " + e.strerror)
-        except Exception as e:
+            raise ConfigValueError(u'invalid iTunes library: ' + e.strerror)
+        except Exception:
             # It's likely the user configured their '.itl' library (<> xml)
             if os.path.splitext(library_path)[1].lower() != '.xml':
-                hint = u": please ensure that the configured path" \
-                       u" points to the .XML library"
+                hint = u': please ensure that the configured path' \
+                       u' points to the .XML library'
             else:
                 hint = ''
-            raise ConfigValueError(u"invalid iTunes library" + hint)
+            raise ConfigValueError(u'invalid iTunes library' + hint)
 
         # Convert the library in to something we can query more easily
         self.collection = {
@@ -71,7 +81,7 @@ class ITunes(MetaSource):
         result = self.collection.get(key)
 
         if not all(key) or not result:
-            self._log.warning(u"no iTunes match found for {0}".format(item))
+            self._log.warning(u'no iTunes match found for {0}'.format(item))
             return
 
         item.itunes_rating = result.get('Rating')

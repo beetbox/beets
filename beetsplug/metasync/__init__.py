@@ -14,40 +14,70 @@
 
 """Synchronize information from music player libraries
 """
-
+from abc import abstractmethod, ABCMeta
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.dbcore import types
-from beets.library import DateType
-from sys import modules
 import inspect
+import pkgutil
+from importlib import import_module
+
+
+METASYNC_MODULE = 'beetsplug.metasync'
 
 
 class MetaSource(object):
+    __metaclass__ = ABCMeta
+
     def __init__(self, config, log):
+        self.item_types = {}
         self.config = config
         self._log = log
 
+    @abstractmethod
     def sync_data(self, item):
-        raise NotImplementedError()
+        pass
+
+
+def load_meta_sources():
+    """ Returns a dictionary of all the MetaSources
+    E.g., {'itunes': Itunes} with isinstance(Itunes, MetaSource) true
+    """
+
+    def is_meta_source_implementation(c):
+        return inspect.isclass(c) and \
+            not inspect.isabstract(c) and \
+            issubclass(c, MetaSource)
+
+    meta_sources = {}
+
+    module_names = [name for _, name, _ in pkgutil.walk_packages(
+        import_module(METASYNC_MODULE).__path__)]
+
+    for module_name in module_names:
+        module = import_module(METASYNC_MODULE + '.' + module_name)
+        classes = inspect.getmembers(module, is_meta_source_implementation)
+
+        for cls_name, cls in classes:
+            meta_sources[cls_name.lower()] = cls
+
+    return meta_sources
+
+
+META_SOURCES = load_meta_sources()
+
+
+def load_item_types():
+    """ Returns a dictionary containing the item_types of all the MetaSources
+    """
+    item_types = {}
+    for meta_source in META_SOURCES.values():
+        item_types.update(meta_source.item_types)
+    return item_types
 
 
 class MetaSyncPlugin(BeetsPlugin):
 
-    item_types = {
-        'amarok_rating':      types.INTEGER,
-        'amarok_score':       types.FLOAT,
-        'amarok_uid':         types.STRING,
-        'amarok_playcount':   types.INTEGER,
-        'amarok_firstplayed': DateType(),
-        'amarok_lastplayed':  DateType(),
-
-        'itunes_rating':      types.INTEGER,  # 0..100 scale
-        'itunes_playcount':   types.INTEGER,
-        'itunes_skipcount':   types.INTEGER,
-        'itunes_lastplayed':  DateType(),
-        'itunes_lastskipped': DateType(),
-    }
+    item_types = load_item_types()
 
     def __init__(self):
         super(MetaSyncPlugin, self).__init__()
@@ -57,9 +87,9 @@ class MetaSyncPlugin(BeetsPlugin):
                             help='update metadata from music player libraries')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show all changes but do nothing')
-        cmd.parser.add_option('-s', '--source', action='store_false',
-                              default=self.config['source'].as_str_seq(),
-                              help="select specific sources to import from")
+        cmd.parser.add_option('-s', '--source', default=[],
+                              action='append', dest='sources',
+                              help='comma-separated list of sources to sync')
         cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
@@ -68,32 +98,32 @@ class MetaSyncPlugin(BeetsPlugin):
         """Command handler for the metasync function.
         """
         pretend = opts.pretend
-        source = opts.source
         query = ui.decargs(args)
 
-        sources = {}
+        sources = []
+        for source in opts.sources:
+            sources.extend(source.split(','))
 
-        for player in source:
-            __import__('beetsplug.metasync', fromlist=[str(player)])
+        sources = sources or self.config['source'].as_str_seq()
 
-            module = 'beetsplug.metasync.' + player
+        meta_sources = {}
 
-            if module not in modules.keys():
+        # Instantiate the meta sources
+        for player in sources:
+            try:
+                meta_sources[player] = \
+                    META_SOURCES[player](self.config, self._log)
+            except KeyError:
                 self._log.error(u'Unknown metadata source \'{0}\''.format(
                     player))
-                continue
+            except ImportError as e:
+                self._log.error(u'Failed to instantiate metadata source '
+                                u'\'{0}\': {1}'.format(player, e))
 
-            classes = inspect.getmembers(modules[module], inspect.isclass)
-
-            for entry in classes:
-                if entry[0].lower() == player:
-                    sources[player] = entry[1](self.config, self._log)
-                else:
-                    continue
-
+        # Sync the items with all of the meta sources
         for item in lib.items(query):
-            for player in sources.values():
-                player.sync_data(item)
+            for meta_source in meta_sources.values():
+                meta_source.sync_data(item)
 
             changed = ui.show_model_changes(item)
 
