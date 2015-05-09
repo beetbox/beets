@@ -31,6 +31,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
 .. toctree::
    :hidden:
 
+   betterlisting
    bpd
    bpm
    bucket
@@ -119,6 +120,9 @@ Metadata
 Path Formats
 ------------
 
+* :doc:`betterlisting`: Extensive template functions and fields to
+  customize path format strings, and, also extended queries and nicer
+  looking listings of your search results.
 * :doc:`bucket`: Group your files into bucket directories that cover different
   field values ranges.
 * :doc:`inline`: Use Python snippets to customize path format strings.
