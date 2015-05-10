@@ -61,7 +61,7 @@ class Amarok(MetaSource):
         self.collection = \
             dbus.SessionBus().get_object('org.kde.amarok', '/Collection')
 
-    def sync_data(self, item):
+    def sync_from_source(self, item):
         path = displayable_path(item.path)
 
         # amarok unfortunately doesn't allow searching for the full path, only
