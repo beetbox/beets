@@ -1243,7 +1243,7 @@ def user_query(session, task):
 
     The coroutine accepts an ImportTask objects. It uses the
     session's `choose_match` method to determine the `action` for
-    this task. Depending on the action additional stages are exectuted
+    this task. Depending on the action additional stages are executed
     and the processed task is yielded.
 
     It emits the ``import_task_choice`` event for plugins. Plugins have
