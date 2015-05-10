@@ -315,12 +315,12 @@ class ImageType(enum.Enum):
 
 
 class Image(object):
-    """Strucuture representing image data and metadata that can be
+    """Structure representing image data and metadata that can be
     stored and retrieved from tags.
 
     The structure has four properties.
     * ``data``  The binary data of the image
-    * ``desc``  An optional descritpion of the image
+    * ``desc``  An optional description of the image
     * ``type``  An instance of `ImageType` indicating the kind of image
     * ``mime_type`` Read-only property that contains the mime type of
                     the binary data
@@ -812,7 +812,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
 
     The `get_list` method inherited from ``ListStorageStyle`` returns a
     list of ``Image``s. Similarly, the `set_list` method accepts a
-    list of ``Image``s as its ``values`` arguemnt.
+    list of ``Image``s as its ``values`` argument.
     """
     def __init__(self):
         super(MP3ImageStorageStyle, self).__init__(key='APIC')
