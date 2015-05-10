@@ -26,11 +26,10 @@ might use::
     rewrite:
         artist .*jimi hendrix.*: Jimi Hendrix
 
-As of v1.3.14 the replacement pattern may also consist of a regular expression
-in order to back-reference matched substrings. For example, you might want to
-replace certain characters in a tag. The following rewrite rule modifies the
-title to replace a trailing year in parentheses with the trailing year in
-brackets::
+The replacement pattern may also consist of a regular expression in order to
+back-reference matched substrings. For example, you might want to replace
+certain characters in a tag. The following rewrite rule modifies the title to
+replace a trailing year in parentheses with the year in brackets::
 
     rewrite:
         title (.*)\(([0-9]{4})\)$: '\1\[\2\]'
