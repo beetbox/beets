@@ -110,7 +110,7 @@ class PathQuery(dbcore.FieldQuery):
 
 class DateType(types.Float):
     # TODO representation should be `datetime` object
-    # TODO distinguish beetween date and time types
+    # TODO distinguish between date and time types
     query = dbcore.query.DateQuery
 
     def format(self, value):
@@ -550,7 +550,7 @@ class Item(LibModel):
         All fields in `_media_fields` are written to disk according to
         the values on this object.
 
-        `path` is the path of the mediafile to wirte the data to. It
+        `path` is the path of the mediafile to write the data to. It
         defaults to the item's path.
 
         `tags` is a dictionary of additional metadata the should be
@@ -1300,7 +1300,7 @@ class DefaultTemplateFunctions(object):
     _prefix = b'tmpl_'
 
     def __init__(self, item=None, lib=None):
-        """Paramaterize the functions. If `item` or `lib` is None, then
+        """Parametrize the functions. If `item` or `lib` is None, then
         some functions (namely, ``aunique``) will always evaluate to the
         empty string.
         """

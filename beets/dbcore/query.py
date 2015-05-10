@@ -368,7 +368,7 @@ class CollectionQuery(Query):
 
     def __hash__(self):
         """Since subqueries are mutable, this object should not be hashable.
-        However and for conveniencies purposes, it can be hashed.
+        However and for conveniences purposes, it can be hashed.
         """
         return reduce(mul, map(hash, self.subqueries), 1)
 

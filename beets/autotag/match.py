@@ -382,7 +382,7 @@ def tag_album(items, search_artist=None, search_album=None,
     search. This can be customized by setting the parameters. The
     `mapping` field of the album has the matched `items` as keys.
 
-    The recommendation is calculated from the match qualitiy of the
+    The recommendation is calculated from the match quality of the
     candidates.
     """
     # Get current metadata.
