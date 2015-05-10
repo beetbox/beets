@@ -34,7 +34,7 @@ from .query import MatchQuery, NullSort, TrueQuery
 class FormattedMapping(collections.Mapping):
     """A `dict`-like formatted view of a model.
 
-    The accessor `mapping[key]` returns the formated version of
+    The accessor `mapping[key]` returns the formatted version of
     `model[key]` as a unicode string.
 
     If `for_path` is true, all path separators in the formatted values
