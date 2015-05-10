@@ -30,7 +30,7 @@ from beetsplug.metasync import MetaSource
 
 @contextmanager
 def create_temporary_copy(path):
-    temp_dir = tempfile.gettempdir()
+    temp_dir = tempfile.mkdtemp()
     temp_path = os.path.join(temp_dir, 'temp_itunes_lib')
     shutil.copyfile(path, temp_path)
     try:
@@ -76,7 +76,7 @@ class Itunes(MetaSource):
             (track['Name'], track['Album'], track['Album Artist']): track
             for track in raw_library['Tracks'].values()}
 
-    def sync_data(self, item):
+    def sync_from_source(self, item):
         key = (item.title, item.album, item.albumartist)
         result = self.collection.get(key)
 

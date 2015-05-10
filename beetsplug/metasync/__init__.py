@@ -15,11 +15,13 @@
 """Synchronize information from music player libraries
 """
 from abc import abstractmethod, ABCMeta
-from beets import ui
-from beets.plugins import BeetsPlugin
 import inspect
 import pkgutil
 from importlib import import_module
+
+from beets.util.confit import ConfigValueError
+from beets import ui
+from beets.plugins import BeetsPlugin
 
 
 METASYNC_MODULE = 'beetsplug.metasync'
@@ -34,7 +36,7 @@ class MetaSource(object):
         self._log = log
 
     @abstractmethod
-    def sync_data(self, item):
+    def sync_from_source(self, item):
         pass
 
 
@@ -116,14 +118,17 @@ class MetaSyncPlugin(BeetsPlugin):
             except KeyError:
                 self._log.error(u'Unknown metadata source \'{0}\''.format(
                     player))
-            except ImportError as e:
+            except (ImportError, ConfigValueError) as e:
                 self._log.error(u'Failed to instantiate metadata source '
                                 u'\'{0}\': {1}'.format(player, e))
+
+        if not meta_sources:
+            return
 
         # Sync the items with all of the meta sources
         for item in lib.items(query):
             for meta_source in meta_sources.values():
-                meta_source.sync_data(item)
+                meta_source.sync_from_source(item)
 
             changed = ui.show_model_changes(item)
 
