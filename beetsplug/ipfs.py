@@ -34,6 +34,9 @@ class IPFSPlugin(BeetsPlugin):
         cmd.parser.add_option('-g', '--get', dest='get',
                                     action='store_true',
                                     help='Get from ipfs')
+        cmd.parser.add_option('-p', '--publish', dest='publish',
+                                    action='store_true',
+                                    help='Publish local library to ipfs')
 
         def func(lib, opts, args):
             if opts.add:
@@ -43,6 +46,9 @@ class IPFSPlugin(BeetsPlugin):
 
             if opts.get:
                 self.ipfs_get(lib, ui.decargs(args))
+
+            if opts.publish:
+                self.ipfs_publish(lib)
 
         cmd.func = func
         return [cmd]
@@ -88,3 +94,8 @@ class IPFSPlugin(BeetsPlugin):
                                                 query=None, paths=_hash)
         imp.run()
         shutil.rmtree(_hash[0])
+
+    def ipfs_publish(self, lib):
+        _proc = subprocess.Popen(["ipfs", "add", "-q", "-p", lib.path],
+                         stdout=subprocess.PIPE)
+        self._log.info("hash of library: {0}", _proc.stdout.readline())
