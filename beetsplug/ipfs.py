@@ -37,7 +37,10 @@ class IPFSPlugin(BeetsPlugin):
 
         def func(lib, opts, args):
             if opts.add:
-                self.ipfs_add(lib.albums(ui.decargs(args)))
+                for album in lib.albums(ui.decargs(args)):
+                    self.ipfs_add(album)
+                    album.store()
+
             if opts.get:
                 self.ipfs_get(lib, ui.decargs(args))
 
@@ -46,11 +49,30 @@ class IPFSPlugin(BeetsPlugin):
 
     def ipfs_add(self, lib):
         try:
-            album_dir = lib.get().item_dir()
+            album_dir = lib.item_dir()
         except AttributeError:
             return
         self._log.info('Adding {0} to ipfs', album_dir)
-        subprocess.call(["ipfs", "add", "-r", album_dir])
+
+        _proc = subprocess.Popen(["ipfs", "add", "-q", "-p", "-r", album_dir],
+                                 stdout=subprocess.PIPE)
+        count = 0
+        while True:
+            line = _proc.stdout.readline().strip()
+
+            if line != '':
+                if count < len(lib.items()):
+                    item = lib.items()[count]
+                    print "item:: %s" % line
+                    item.ipfs = line
+                    item.store()
+                    count += 1
+                else:
+                    print "album:: %s" % line
+                    lib.ipfs = line
+            else:
+                break
+        return True
 
     def ipfs_get(self, lib, _hash):
         try:
