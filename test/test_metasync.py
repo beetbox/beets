@@ -12,11 +12,17 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 import os
+import time
+from datetime import datetime
 from beets.library import Item
 
 from test import _common
 from test._common import unittest
 from test.helper import TestHelper
+
+
+def _parsetime(s):
+    return time.mktime(datetime.strptime(s, '%Y-%m-%d %H:%M:%S').timetuple())
 
 
 class MetaSyncTest(_common.TestCase, TestHelper):
@@ -75,12 +81,14 @@ class MetaSyncTest(_common.TestCase, TestHelper):
         self.assertEqual(self.lib.items()[0].itunes_playcount, 0)
         self.assertEqual(self.lib.items()[0].itunes_skipcount, 3)
         self.assertFalse(hasattr(self.lib.items()[0], 'itunes_lastplayed'))
-        self.assertEqual(self.lib.items()[0].itunes_lastskipped, 1423147264.0)
+        self.assertEqual(self.lib.items()[0].itunes_lastskipped,
+                         _parsetime('2015-02-05 15:41:04'))
 
         self.assertEqual(self.lib.items()[1].itunes_rating, 100)
         self.assertEqual(self.lib.items()[1].itunes_playcount, 31)
         self.assertEqual(self.lib.items()[1].itunes_skipcount, 0)
-        self.assertEqual(self.lib.items()[1].itunes_lastplayed, 1430734851.0)
+        self.assertEqual(self.lib.items()[1].itunes_lastplayed,
+                         _parsetime('2015-05-04 12:20:51'))
         self.assertFalse(hasattr(self.lib.items()[1], 'itunes_lastskipped'))
 
 
