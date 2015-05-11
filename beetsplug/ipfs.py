@@ -17,7 +17,7 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 import subprocess
-from os import rmdir
+import shutil
 
 
 class IPFSPlugin(BeetsPlugin):
@@ -87,4 +87,4 @@ class IPFSPlugin(BeetsPlugin):
         imp = ui.commands.TerminalImportSession(lib, loghandler=None,
                                                 query=None, paths=_hash)
         imp.run()
-        rmdir(_hash[0])
+        shutil.rmtree(_hash[0])
