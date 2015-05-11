@@ -97,5 +97,5 @@ class IPFSPlugin(BeetsPlugin):
 
     def ipfs_publish(self, lib):
         _proc = subprocess.Popen(["ipfs", "add", "-q", "-p", lib.path],
-                         stdout=subprocess.PIPE)
+                                 stdout=subprocess.PIPE)
         self._log.info("hash of library: {0}", _proc.stdout.readline())
