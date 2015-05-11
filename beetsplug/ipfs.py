@@ -63,12 +63,12 @@ class IPFSPlugin(BeetsPlugin):
             if line != '':
                 if count < len(lib.items()):
                     item = lib.items()[count]
-                    print "item:: %s" % line
+                    self._log.info("item: {0}", line)
                     item.ipfs = line
                     item.store()
                     count += 1
                 else:
-                    print "album:: %s" % line
+                    self._log.info("album: {0}", line)
                     lib.ipfs = line
             else:
                 break
