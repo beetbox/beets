@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Create freedesktop.org-compliant thumnails for album folders
+"""Create freedesktop.org-compliant thumbnails for album folders
 
 This plugin is POSIX-only.
 Spec: standards.freedesktop.org/thumbnail-spec/latest/index.html
