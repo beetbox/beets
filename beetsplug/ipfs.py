@@ -18,6 +18,7 @@ from beets.plugins import BeetsPlugin
 
 import subprocess
 import shutil
+import os
 
 
 class IPFSPlugin(BeetsPlugin):
@@ -37,6 +38,9 @@ class IPFSPlugin(BeetsPlugin):
         cmd.parser.add_option('-p', '--publish', dest='publish',
                                     action='store_true',
                                     help='Publish local library to ipfs')
+        cmd.parser.add_option('-i', '--import', dest='_import',
+                                    action='store_true',
+                                    help='Import remote library from ipfs')
 
         def func(lib, opts, args):
             if opts.add:
@@ -49,6 +53,9 @@ class IPFSPlugin(BeetsPlugin):
 
             if opts.publish:
                 self.ipfs_publish(lib)
+
+            if opts._import:
+                self.ipfs_import(lib, ui.decargs(args))
 
         cmd.func = func
         return [cmd]
@@ -99,3 +106,9 @@ class IPFSPlugin(BeetsPlugin):
         _proc = subprocess.Popen(["ipfs", "add", "-q", "-p", lib.path],
                                  stdout=subprocess.PIPE)
         self._log.info("hash of library: {0}", _proc.stdout.readline())
+
+    def ipfs_import(self, lib, _hash):
+        # TODO: should be able to tag libraries, for example by nicks
+        subprocess.Popen(["ipfs", "get", _hash[0]])
+        path = os.path.dirname(lib.path) + "/" + _hash[0] + ".db"
+        shutil.move(_hash[0], path)
