@@ -18,6 +18,7 @@ from __future__ import (division, absolute_import, print_function,
 import os.path
 import shutil
 from mock import patch
+import tempfile
 
 from test import _common
 from test._common import unittest
@@ -86,6 +87,22 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
         with self.assertRaises(ui.UserError):
             self.run_command('embedart', '-f', '/doesnotexist')
+
+    def test_embed_non_image_file(self):
+        album = self.add_album_fixture()
+        logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
+
+        handle, tmp_path = tempfile.mkstemp()
+        os.write(handle, 'I am not an image.')
+        os.close(handle)
+
+        try:
+            self.run_command('embedart', '-f', tmp_path)
+        finally:
+            os.remove(tmp_path)
+
+        mediafile = MediaFile(syspath(album.items()[0].path))
+        self.assertFalse(mediafile.images)  # No image added.
 
     @require_artresizer_compare
     def test_reject_different_art(self):
