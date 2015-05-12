@@ -53,6 +53,7 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
                compare_threshold=0, ifempty=False, as_album=False):
     """Embed an image into the item's media file.
     """
+    # Conditions and filters.
     if compare_threshold:
         if not check_art_similarity(log, item, imagepath, compare_threshold):
             log.info(u'Image not similar; skipping.')
@@ -63,12 +64,21 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
     if maxwidth and not as_album:
         imagepath = resize_image(log, imagepath, maxwidth)
 
+    # Get the `Image` object from the file.
     try:
         log.debug(u'embedding {0}', displayable_path(imagepath))
         image = mediafile_image(imagepath, maxwidth)
     except IOError as exc:
         log.warning(u'could not read image file: {0}', exc)
         return
+
+    # Make sure the image kind is safe (some formats only support PNG
+    # and JPEG).
+    if image.mime_type not in ('image/jpeg', 'image/png'):
+        log.info('not embedding image of unsupported type: {}',
+                 image.mime_type)
+        return
+
     item.try_write(path=itempath, tags={'images': [image]})
 
 

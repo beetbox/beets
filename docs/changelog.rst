@@ -13,6 +13,8 @@ Fixes:
   and :doc:`/plugins/thumbnails`). :bug:`1448`
 * :doc:`/plugins/permissions`: Fix an error with non-ASCII paths. :bug:`1449`
 * Fix sorting by paths when case-insensitive. :bug:`1451`
+* :doc:`/plugins/embedart`: Avoid an error when trying to embed invalid images
+  into MPEG-4 files.
 
 
 1.3.13 (April 24, 2015)
