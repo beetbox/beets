@@ -19,6 +19,8 @@ import os
 import shutil
 import tempfile
 import plistlib
+import urllib
+from urlparse import urlparse
 from time import mktime
 
 from beets import util
@@ -39,6 +41,21 @@ def create_temporary_copy(path):
         shutil.rmtree(temp_dir)
 
 
+def _norm_itunes_path(path):
+    # Itunes prepends the location with 'file://' on posix systems,
+    # and with 'file://localhost/' on Windows systems.
+    # The actual path to the file is always saved as posix form
+    # E.g., 'file://Users/Music/bar' or 'file://localhost/G:/Music/bar'
+
+    # The entire path will also be capitalized (e.g., '/Music/Alt-J')
+    # Note that this means the path will always have a leading separator,
+    # which is unwanted in the case of Windows systems.
+    # E.g., '\\G:\\Music\\bar' needs to be stripped to 'G:\\Music\\bar'
+
+    return util.bytestring_path(os.path.normpath(
+        urllib.unquote(urlparse(path).path)).lstrip('\\')).lower()
+
+
 class Itunes(MetaSource):
 
     item_types = {
@@ -52,8 +69,12 @@ class Itunes(MetaSource):
     def __init__(self, config, log):
         super(Itunes, self).__init__(config, log)
 
+        config.add({'itunes': {
+            'library': '~/Music/iTunes/iTunes Library.xml'
+        }})
+
         # Load the iTunes library, which has to be the .xml one (not the .itl)
-        library_path = util.normpath(config['itunes']['library'].get(str))
+        library_path = config['itunes']['library'].as_filename()
 
         try:
             self._log.debug(
@@ -71,16 +92,14 @@ class Itunes(MetaSource):
                 hint = ''
             raise ConfigValueError(u'invalid iTunes library' + hint)
 
-        # Convert the library in to something we can query more easily
-        self.collection = {
-            (track['Name'], track['Album'], track['Album Artist']): track
-            for track in raw_library['Tracks'].values()}
+        # Make the iTunes library queryable using the path
+        self.collection = {_norm_itunes_path(track['Location']): track
+                           for track in raw_library['Tracks'].values()}
 
     def sync_from_source(self, item):
-        key = (item.title, item.album, item.albumartist)
-        result = self.collection.get(key)
+        result = self.collection.get(util.bytestring_path(item.path).lower())
 
-        if not all(key) or not result:
+        if not result:
             self._log.warning(u'no iTunes match found for {0}'.format(item))
             return
 

@@ -12,6 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 import os
+import platform
 import time
 from datetime import datetime
 from beets.library import Item
@@ -25,20 +26,34 @@ def _parsetime(s):
     return time.mktime(datetime.strptime(s, '%Y-%m-%d %H:%M:%S').timetuple())
 
 
+def _is_windows():
+    return platform.system() == "Windows"
+
+
 class MetaSyncTest(_common.TestCase, TestHelper):
-    itunes_library = os.path.join(_common.RSRC, 'itunes_library.xml')
+    itunes_library_unix = os.path.join(_common.RSRC,
+                                       'itunes_library_unix.xml')
+    itunes_library_windows = os.path.join(_common.RSRC,
+                                          'itunes_library_windows.xml')
 
     def setUp(self):
         self.setup_beets()
         self.load_plugins('metasync')
 
         self.config['metasync']['source'] = 'itunes'
-        self.config['metasync']['itunes']['library'] = self.itunes_library
+
+        if _is_windows():
+            self.config['metasync']['itunes']['library'] = \
+                self.itunes_library_windows
+        else:
+            self.config['metasync']['itunes']['library'] = \
+                self.itunes_library_unix
 
         self._set_up_data()
 
     def _set_up_data(self):
         items = [_common.item() for _ in range(2)]
+
         items[0].title = 'Tessellate'
         items[0].artist = 'alt-J'
         items[0].albumartist = 'alt-J'
@@ -49,6 +64,15 @@ class MetaSyncTest(_common.TestCase, TestHelper):
         items[1].artist = 'alt-J'
         items[1].albumartist = 'alt-J'
         items[1].album = 'An Awesome Wave'
+
+        if _is_windows():
+            items[0].path = \
+                u'G:\\Music\\Alt-J\\An Awesome Wave\\03 Tessellate.mp3'
+            items[1].path = \
+                u'G:\\Music\\Alt-J\\An Awesome Wave\\04 Breezeblocks.mp3'
+        else:
+            items[0].path = u'/Music/Alt-J/An Awesome Wave/03 Tessellate.mp3'
+            items[1].path = u'/Music/Alt-J/An Awesome Wave/04 Breezeblocks.mp3'
 
         for item in items:
             self.lib.add(item)
@@ -71,7 +95,6 @@ class MetaSyncTest(_common.TestCase, TestHelper):
         self.assertIn('itunes_skipcount: 3', out)
         self.assertIn('itunes_lastplayed: 2015-05-04 12:20:51', out)
         self.assertIn('itunes_lastskipped: 2015-02-05 15:41:04', out)
-
         self.assertEqual(self.lib.items()[0].itunes_rating, 60)
 
     def test_sync_from_itunes(self):
@@ -94,6 +117,7 @@ class MetaSyncTest(_common.TestCase, TestHelper):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == b'__main__':
     unittest.main(defaultTest='suite')
