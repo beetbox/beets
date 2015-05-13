@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Major Version</key><integer>1</integer>
+	<key>Minor Version</key><integer>1</integer>
+	<key>Date</key><date>2015-05-11T15:27:14Z</date>
+	<key>Application Version</key><string>12.1.2.27</string>
+	<key>Features</key><integer>5</integer>
+	<key>Show Content Ratings</key><true/>
+	<key>Music Folder</key><string>file://localhost/C:/Documents%20and%20Settings/Owner/My%20Documents/My%20Music/iTunes/iTunes%20Media/</string>
+	<key>Library Persistent ID</key><string>B4C9F3EE26EFAF78</string>
+	<key>Tracks</key>
+	<dict>
+		<key>180</key>
+		<dict>
+			<key>Track ID</key><integer>180</integer>
+            <key>Name</key><string>Tessellate</string>
+			<key>Artist</key><string>alt-J</string>
+			<key>Album Artist</key><string>alt-J</string>
+			<key>Album</key><string>An Awesome Wave</string>
+			<key>Genre</key><string>Alternative</string>
+			<key>Kind</key><string>MPEG audio file</string>
+			<key>Size</key><integer>5525212</integer>
+			<key>Total Time</key><integer>182674</integer>
+			<key>Disc Number</key><integer>1</integer>
+			<key>Disc Count</key><integer>1</integer>
+			<key>Track Number</key><integer>3</integer>
+			<key>Track Count</key><integer>13</integer>
+			<key>Year</key><integer>2012</integer>
+			<key>Date Modified</key><date>2015-02-02T15:23:08Z</date>
+			<key>Date Added</key><date>2014-04-24T09:28:38Z</date>
+			<key>Bit Rate</key><integer>238</integer>
+			<key>Sample Rate</key><integer>44100</integer>
+			<key>Play Count</key><integer>0</integer>
+			<key>Play Date</key><integer>3513593824</integer>
+			<key>Skip Count</key><integer>3</integer>
+			<key>Skip Date</key><date>2015-02-05T15:41:04Z</date>
+			<key>Rating</key><integer>80</integer>
+			<key>Album Rating</key><integer>80</integer>
+			<key>Album Rating Computed</key><true/>
+			<key>Artwork Count</key><integer>1</integer>
+			<key>Sort Album</key><string>Awesome Wave</string>
+			<key>Sort Artist</key><string>alt-J</string>
+			<key>Persistent ID</key><string>20E89D1580C31363</string>
+			<key>Track Type</key><string>File</string>
+			<key>Location</key><string>file://localhost/G:/Music/Alt-J/An%20Awesome%20Wave/03%20Tessellate.mp3</string>
+			<key>File Folder Count</key><integer>-1</integer>
+			<key>Library Folder Count</key><integer>-1</integer>
+		</dict>
+		<key>183</key>
+		<dict>
+			<key>Track ID</key><integer>183</integer>
+			<key>Name</key><string>Breezeblocks</string>
+			<key>Artist</key><string>alt-J</string>
+			<key>Album Artist</key><string>alt-J</string>
+			<key>Album</key><string>An Awesome Wave</string>
+			<key>Genre</key><string>Alternative</string>
+			<key>Kind</key><string>MPEG audio file</string>
+			<key>Size</key><integer>6827195</integer>
+			<key>Total Time</key><integer>227082</integer>
+			<key>Disc Number</key><integer>1</integer>
+			<key>Disc Count</key><integer>1</integer>
+			<key>Track Number</key><integer>4</integer>
+			<key>Track Count</key><integer>13</integer>
+			<key>Year</key><integer>2012</integer>
+			<key>Date Modified</key><date>2015-02-02T15:23:08Z</date>
+			<key>Date Added</key><date>2014-04-24T09:28:38Z</date>
+			<key>Bit Rate</key><integer>237</integer>
+			<key>Sample Rate</key><integer>44100</integer>
+			<key>Play Count</key><integer>31</integer>
+			<key>Play Date</key><integer>3513594051</integer>
+			<key>Play Date UTC</key><date>2015-05-04T12:20:51Z</date>
+			<key>Skip Count</key><integer>0</integer>
+			<key>Rating</key><integer>100</integer>
+			<key>Album Rating</key><integer>80</integer>
+			<key>Album Rating Computed</key><true/>
+			<key>Artwork Count</key><integer>1</integer>
+			<key>Sort Album</key><string>Awesome Wave</string>
+			<key>Sort Artist</key><string>alt-J</string>
+			<key>Persistent ID</key><string>D7017B127B983D38</string>
+			<key>Track Type</key><string>File</string>
+			<key>Location</key><string>file://localhost/G:/Music/Alt-J/An%20Awesome%20Wave/04%20Breezeblocks.mp3</string>
+			<key>File Folder Count</key><integer>-1</integer>
+			<key>Library Folder Count</key><integer>-1</integer>
+		</dict>
+        <key>638</key>
+		<dict>
+			<key>Track ID</key><integer>638</integer>
+			<key>Name</key><string>❦ (Ripe &#38; Ruin)</string>
+			<key>Artist</key><string>alt-J</string>
+			<key>Album Artist</key><string>alt-J</string>
+			<key>Album</key><string>An Awesome Wave</string>
+			<key>Kind</key><string>MPEG audio file</string>
+			<key>Size</key><integer>2173293</integer>
+			<key>Total Time</key><integer>72097</integer>
+			<key>Disc Number</key><integer>1</integer>
+			<key>Disc Count</key><integer>1</integer>
+			<key>Track Number</key><integer>2</integer>
+			<key>Track Count</key><integer>13</integer>
+			<key>Year</key><integer>2012</integer>
+			<key>Date Modified</key><date>2015-05-09T17:04:53Z</date>
+			<key>Date Added</key><date>2015-02-02T15:28:39Z</date>
+			<key>Bit Rate</key><integer>233</integer>
+			<key>Sample Rate</key><integer>44100</integer>
+			<key>Play Count</key><integer>8</integer>
+			<key>Play Date</key><integer>3514109973</integer>
+			<key>Play Date UTC</key><date>2015-05-10T11:39:33Z</date>
+			<key>Skip Count</key><integer>1</integer>
+			<key>Skip Date</key><date>2015-02-02T15:29:10Z</date>
+			<key>Album Rating</key><integer>80</integer>
+			<key>Album Rating Computed</key><true/>
+			<key>Artwork Count</key><integer>1</integer>
+			<key>Sort Album</key><string>Awesome Wave</string>
+			<key>Sort Artist</key><string>alt-J</string>
+			<key>Persistent ID</key><string>183699FA0554D0E6</string>
+			<key>Track Type</key><string>File</string>
+			<key>Location</key><string>file://localhost/G:/Experiments/Alt-J/An%20Awesome%20Wave/02%20%E2%9D%A6%20(Ripe%20&#38;%20Ruin).mp3</string>
+			<key>File Folder Count</key><integer>4</integer>
+			<key>Library Folder Count</key><integer>2</integer>
+		</dict>
+	</dict>
+	<key>Playlists</key>
+	<array>
+		<dict>
+			<key>Name</key><string>Bibliotheek</string>
+			<key>Master</key><true/>
+			<key>Playlist ID</key><integer>72</integer>
+			<key>Playlist Persistent ID</key><string>728AA5B1D00ED23B</string>
+			<key>Visible</key><false/>
+			<key>All Items</key><true/>
+			<key>Playlist Items</key>
+			<array>
+				<dict>
+					<key>Track ID</key><integer>180</integer>
+				</dict>
+				<dict>
+					<key>Track ID</key><integer>183</integer>
+				</dict>
+                <dict>
+					<key>Track ID</key><integer>638</integer>
+				</dict>
+			</array>
+		</dict>
+		<dict>
+			<key>Name</key><string>Muziek</string>
+			<key>Playlist ID</key><integer>103</integer>
+			<key>Playlist Persistent ID</key><string>8120A002B0486AD7</string>
+			<key>Distinguished Kind</key><integer>4</integer>
+			<key>Music</key><true/>
+			<key>All Items</key><true/>
+			<key>Playlist Items</key>
+			<array>
+				<dict>
+					<key>Track ID</key><integer>180</integer>
+				</dict>
+				<dict>
+					<key>Track ID</key><integer>183</integer>
+				</dict>
+                <dict>
+					<key>Track ID</key><integer>638</integer>
+				</dict>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -4,11 +4,13 @@ MetaSync Plugin
 This plugin provides the ``metasync`` command, which lets you fetch certain
 metadata from other sources: for example, your favorite audio player.
 
-Currently, the plugin supports synchronizing with the `Amarok`_ music player.
+Currently, the plugin supports synchronizing with the `Amarok`_ music player,
+and with `iTunes`_.
 It can fetch the rating, score, first-played date, last-played date, play
 count, and track uid from Amarok.
 
 .. _Amarok: https://amarok.kde.org/
+.. _iTunes: https://www.apple.com/itunes/
 
 
 Installation
@@ -29,10 +31,23 @@ Configuration
 To configure the plugin, make a ``metasync:`` section in your configuration
 file. The available options are:
 
-- **source**: A list of sources to fetch metadata from. Set this to "amarok"
-  to enable synchronization with that player.
+- **source**: A list of comma-separated sources to fetch metadata from.
+  Set this to "amarok" or "itunes" to enable synchronization with that player.
   Default: empty
 
+The follow subsections describe additional configure required for some players.
+
+itunes
+''''''
+
+The path to your iTunes library **xml** file has to be configured, e.g.::
+
+    metasync:
+        source: itunes
+        itunes:
+            library: ~/Music/iTunes Library.xml
+
+Please note the indentation.
 
 Usage
 -----
@@ -44,5 +59,5 @@ The command has a few command-line options:
 
 * To preview the changes that would be made without applying them, use the
   ``-p`` (``--pretend``) flag.
-* To specify a temporary source to fetch metadata from, use the ``-s``
-  (``--source``) flag.
+* To specify temporary sources to fetch metadata from, use the ``-s``
+  (``--source``) flag with a comma-separated list of a sources.

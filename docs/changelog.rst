@@ -4,6 +4,12 @@ Changelog
 1.3.14 (in development)
 -----------------------
 
+New features:
+
+* The :doc:`/plugins/metasync` plugin now lets you get metadata from iTunes.
+  This plugin is still in an experimental phase. :bug:`1450`
+
+
 Fixes:
 
 * :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
