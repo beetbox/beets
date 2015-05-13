@@ -15,8 +15,6 @@
 """Synchronize information from music player libraries
 """
 from abc import abstractmethod, ABCMeta
-import inspect
-import pkgutil
 from importlib import import_module
 
 from beets.util.confit import ConfigValueError
@@ -25,6 +23,12 @@ from beets.plugins import BeetsPlugin
 
 
 METASYNC_MODULE = 'beetsplug.metasync'
+
+# Dictionary to map the MODULE and the CLASS NAME of meta sources
+SOURCES = {
+    'amarok': 'Amarok',
+    'itunes': 'Itunes',
+}
 
 
 class MetaSource(object):
@@ -44,23 +48,11 @@ def load_meta_sources():
     """ Returns a dictionary of all the MetaSources
     E.g., {'itunes': Itunes} with isinstance(Itunes, MetaSource) true
     """
-
-    def is_meta_source_implementation(c):
-        return inspect.isclass(c) and \
-            not inspect.isabstract(c) and \
-            issubclass(c, MetaSource)
-
     meta_sources = {}
 
-    module_names = [name for _, name, _ in pkgutil.walk_packages(
-        import_module(METASYNC_MODULE).__path__)]
-
-    for module_name in module_names:
-        module = import_module(METASYNC_MODULE + '.' + module_name)
-        classes = inspect.getmembers(module, is_meta_source_implementation)
-
-        for cls_name, _cls in classes:
-            meta_sources[cls_name.lower()] = _cls
+    for module_path, class_name in SOURCES.items():
+        module = import_module(METASYNC_MODULE + '.' + module_path)
+        meta_sources[class_name.lower()] = getattr(module, class_name)
 
     return meta_sources
 
@@ -108,12 +100,18 @@ class MetaSyncPlugin(BeetsPlugin):
 
         sources = sources or self.config['source'].as_str_seq()
 
-        meta_sources = {}
+        meta_source_instances = {}
+        items = lib.items(query)
+
+        # Avoid needlessly instantiating meta sources (can be expensive)
+        if not items:
+            self._log.info(u'No items found matching query')
+            return
 
         # Instantiate the meta sources
         for player in sources:
             try:
-                meta_sources[player] = \
+                meta_source_instances[player] = \
                     META_SOURCES[player](self.config, self._log)
             except KeyError:
                 self._log.error(u'Unknown metadata source \'{0}\''.format(
@@ -122,12 +120,14 @@ class MetaSyncPlugin(BeetsPlugin):
                 self._log.error(u'Failed to instantiate metadata source '
                                 u'\'{0}\': {1}'.format(player, e))
 
-        if not meta_sources:
+        # Avoid needlessly iterating over items
+        if not meta_source_instances:
+            self._log.error(u'No valid metadata sources found')
             return
 
         # Sync the items with all of the meta sources
-        for item in lib.items(query):
-            for meta_source in meta_sources.values():
+        for item in items:
+            for meta_source in meta_source_instances.values():
                 meta_source.sync_from_source(item)
 
             changed = ui.show_model_changes(item)
