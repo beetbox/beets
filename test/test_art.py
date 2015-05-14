@@ -203,7 +203,7 @@ class AAOTest(_common.TestCase):
                       match_querystring=True)
 
     def test_aao_scraper_finds_image(self):
-        body = """
+        body = b"""
         <br />
         <a href="TARGET_URL" title="View larger image"
            class="thickbox" style="color: #7E9DA2; text-decoration:none;">
@@ -216,7 +216,7 @@ class AAOTest(_common.TestCase):
         self.assertEqual(list(res)[0], 'TARGET_URL')
 
     def test_aao_scraper_returns_no_result_when_no_image_present(self):
-        self.mock_response(self.AAO_URL, 'blah blah')
+        self.mock_response(self.AAO_URL, b'blah blah')
         album = _common.Bag(asin=self.ASIN)
         res = self.source.get(album)
         self.assertEqual(list(res), [])
@@ -240,7 +240,7 @@ class GoogleImageTest(_common.TestCase):
 
     def test_google_art_finds_image(self):
         album = _common.Bag(albumartist="some artist", album="some album")
-        json = """{"responseData": {"results":
+        json = b"""{"responseData": {"results":
             [{"unescapedUrl": "url_to_the_image"}]}}"""
         self.mock_response(self._google_url, json)
         result_url = self.source.get(album)
@@ -248,7 +248,7 @@ class GoogleImageTest(_common.TestCase):
 
     def test_google_art_dont_finds_image(self):
         album = _common.Bag(albumartist="some artist", album="some album")
-        json = """bla blup"""
+        json = b"""bla blup"""
         self.mock_response(self._google_url, json)
         result_url = self.source.get(album)
         self.assertEqual(list(result_url), [])
