@@ -67,24 +67,28 @@ class IPFSPlugin(BeetsPlugin):
             return
         self._log.info('Adding {0} to ipfs', album_dir)
 
-        _proc = subprocess.Popen(["ipfs", "add", "-q", "-p", "-r", album_dir],
+        _proc = subprocess.Popen(["ipfs", "add", "-q", "-r", album_dir],
                                  stdout=subprocess.PIPE)
-        count = 0
-        while True:
-            line = _proc.stdout.readline().strip()
 
-            if line != '':
-                if count < len(lib.items()):
-                    item = lib.items()[count]
+        all_lines = _proc.stdout.readlines()
+        length = len(all_lines)
+
+        for linenr, line in enumerate(all_lines):
+            if linenr == length-1:
+                # last printed line is the album hash
+                self._log.info("album: {0}", line)
+                lib.ipfs = line
+            else:
+                try:
+                    item = lib.items()[linenr]
                     self._log.info("item: {0}", line)
                     item.ipfs = line
                     item.store()
-                    count += 1
-                else:
-                    self._log.info("album: {0}", line)
-                    lib.ipfs = line
-            else:
-                break
+                except IndexError:
+                    # if there's non music files in the to-add folder they'll
+                    # get ignored here
+                    pass
+
         return True
 
     def ipfs_get(self, lib, _hash):
