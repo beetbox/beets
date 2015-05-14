@@ -13,12 +13,13 @@
 
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
 """
-from beets import ui
+from beets import ui, library
 from beets.plugins import BeetsPlugin
 
 import subprocess
 import shutil
 import os
+import tempfile
 
 
 class IPFSPlugin(BeetsPlugin):
@@ -107,12 +108,28 @@ class IPFSPlugin(BeetsPlugin):
         shutil.rmtree(_hash[0])
 
     def ipfs_publish(self, lib):
-        _proc = subprocess.Popen(["ipfs", "add", "-q", "-p", lib.path],
-                                 stdout=subprocess.PIPE)
-        self._log.info("hash of library: {0}", _proc.stdout.readline())
+        # TODO: strip local paths from library before publishing
+        with tempfile.NamedTemporaryFile() as tmp:
+            ipfs_lib = self.ipfs_added_albums(lib, tmp.name)
+            _proc = subprocess.Popen(["ipfs", "add", "-q", tmp.name],
+                                     stdout=subprocess.PIPE)
+            self._log.info("hash of library: {0}", _proc.stdout.readline())
 
     def ipfs_import(self, lib, _hash):
         # TODO: should be able to tag libraries, for example by nicks
         subprocess.Popen(["ipfs", "get", _hash[0]])
         path = os.path.dirname(lib.path) + "/" + _hash[0] + ".db"
         shutil.move(_hash[0], path)
+    def ipfs_added_albums(self, rlib, tmpname):
+        """ Returns a new library with only albums/items added to ipfs
+        """
+        tmplib = library.Library(tmpname)
+        for album in rlib.albums():
+            try:
+                if album.ipfs:
+                    for item in album.items():
+                        tmplib.add(item)
+                    tmplib.add(album)
+            except AttributeError:
+                pass
+        return tmplib
