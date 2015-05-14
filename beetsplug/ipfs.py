@@ -110,7 +110,7 @@ class IPFSPlugin(BeetsPlugin):
     def ipfs_publish(self, lib):
         # TODO: strip local paths from library before publishing
         with tempfile.NamedTemporaryFile() as tmp:
-            ipfs_lib = self.ipfs_added_albums(lib, tmp.name)
+            self.ipfs_added_albums(lib, tmp.name)
             _proc = subprocess.Popen(["ipfs", "add", "-q", tmp.name],
                                      stdout=subprocess.PIPE)
             self._log.info("hash of library: {0}", _proc.stdout.readline())
