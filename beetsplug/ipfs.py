@@ -127,7 +127,6 @@ class IPFSPlugin(BeetsPlugin):
             lib_name = args[1]
         else:
             lib_name = _hash
-        # TODO: should be able to tag libraries, for example by nicks
         lib_root = os.path.dirname(lib.path)
         remote_libs = lib_root + "/remotes"
         if not os.path.exists(remote_libs):
