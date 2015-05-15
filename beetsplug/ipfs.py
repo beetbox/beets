@@ -118,14 +118,28 @@ class IPFSPlugin(BeetsPlugin):
 
     def ipfs_import(self, lib, _hash):
         # TODO: should be able to tag libraries, for example by nicks
-        # TODO: should create a special library for all remotes, merging all
-        # entries
         lib_root = os.path.dirname(lib.path)
         remote_libs = lib_root + "/remotes"
         if not os.path.exists(remote_libs):
             os.makedirs(remote_libs)
         path = remote_libs + "/" + _hash[0] + ".db"
-        subprocess.Popen(["ipfs", "get", _hash[0], "-o", path])
+        subprocess.call(["ipfs", "get", _hash[0], "-o", path])
+
+        # add all albums from remotes into a combined library
+        jpath = remote_libs + "/joined.db"
+        jlib = library.Library(jpath)
+        nlib = library.Library(path)
+        for album in nlib.albums():
+            if not self.already_added(album, jlib):
+                for item in album.items():
+                    jlib.add(item)
+                jlib.add(album)
+
+    def already_added(self, check, jlib):
+        for jalbum in jlib.albums():
+            if jalbum.mb_albumid == check.mb_albumid:
+                return True
+        return False
     def ipfs_added_albums(self, rlib, tmpname):
         """ Returns a new library with only albums/items added to ipfs
         """
