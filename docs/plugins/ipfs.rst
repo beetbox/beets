@@ -26,6 +26,8 @@ that specific file/folder.
 
 These hashes can then be given to a friend and they can ``get`` that album from
 ipfs and import it to beets using the -g or --get flag.
+If the argument passed to the -g flag isn't a ipfs hash it'll be used as a
+query instead, getting all albums matching the query.
 
 Using the -p or --publish flag a copy of the local library will be
 published to ipfs. Only albums/items with ipfs records in the database will
