@@ -121,14 +121,19 @@ class IPFSPlugin(BeetsPlugin):
                                      stdout=subprocess.PIPE)
             self._log.info("hash of library: {0}", _proc.stdout.readline())
 
-    def ipfs_import(self, lib, _hash):
+    def ipfs_import(self, lib, args):
+        _hash = args[0]
+        if len(args) > 1:
+            lib_name = args[1]
+        else:
+            lib_name = _hash
         # TODO: should be able to tag libraries, for example by nicks
         lib_root = os.path.dirname(lib.path)
         remote_libs = lib_root + "/remotes"
         if not os.path.exists(remote_libs):
             os.makedirs(remote_libs)
-        path = remote_libs + "/" + _hash[0] + ".db"
-        subprocess.call(["ipfs", "get", _hash[0], "-o", path])
+        path = remote_libs + "/" + lib_name + ".db"
+        subprocess.call(["ipfs", "get", _hash, "-o", path])
 
         # add all albums from remotes into a combined library
         jpath = remote_libs + "/joined.db"
