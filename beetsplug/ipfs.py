@@ -13,7 +13,7 @@
 
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
 """
-from beets import ui, library
+from beets import ui, library, config
 from beets.plugins import BeetsPlugin
 
 import subprocess
@@ -42,6 +42,9 @@ class IPFSPlugin(BeetsPlugin):
         cmd.parser.add_option('-i', '--import', dest='_import',
                                     action='store_true',
                                     help='Import remote library from ipfs')
+        cmd.parser.add_option('-l', '--list', dest='_list',
+                                    action='store_true',
+                                    help='List imported library')
 
         def func(lib, opts, args):
             if opts.add:
@@ -57,6 +60,9 @@ class IPFSPlugin(BeetsPlugin):
 
             if opts._import:
                 self.ipfs_import(lib, ui.decargs(args))
+
+            if opts._list:
+                self.ipfs_list(lib, ui.decargs(args))
 
         cmd.func = func
         return [cmd]
@@ -140,6 +146,17 @@ class IPFSPlugin(BeetsPlugin):
             if jalbum.mb_albumid == check.mb_albumid:
                 return True
         return False
+
+    def ipfs_list(self, lib, args):
+        lib_root = os.path.dirname(lib.path)
+        remote_libs = lib_root + "/remotes"
+        path = remote_libs + "/joined.db"
+        rlib = library.Library(path)
+        albums = rlib.albums(ui.decargs(args))
+        fmt = config['format_album'].get()
+        for album in albums:
+            ui.print_(format(album, fmt), " : ", album.ipfs)
+
     def ipfs_added_albums(self, rlib, tmpname):
         """ Returns a new library with only albums/items added to ipfs
         """
