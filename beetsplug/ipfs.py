@@ -115,7 +115,6 @@ class IPFSPlugin(BeetsPlugin):
         shutil.rmtree(_hash[0])
 
     def ipfs_publish(self, lib):
-        # TODO: strip local paths from library before publishing
         with tempfile.NamedTemporaryFile() as tmp:
             self.ipfs_added_albums(lib, tmp.name)
             _proc = subprocess.Popen(["ipfs", "add", "-q", tmp.name],
@@ -165,7 +164,10 @@ class IPFSPlugin(BeetsPlugin):
             try:
                 if album.ipfs:
                     for item in album.items():
+                        # Clear current path from item
+                        item.path = ''
                         tmplib.add(item)
+                    album.artpath = ''
                     tmplib.add(album)
             except AttributeError:
                 pass
