@@ -75,6 +75,7 @@ class IPFSPlugin(BeetsPlugin):
         length = len(all_lines)
 
         for linenr, line in enumerate(all_lines):
+            line = line.strip()
             if linenr == length-1:
                 # last printed line is the album hash
                 self._log.info("album: {0}", line)
