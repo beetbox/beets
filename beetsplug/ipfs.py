@@ -99,20 +99,30 @@ class IPFSPlugin(BeetsPlugin):
 
         return True
 
-    def ipfs_get(self, lib, _hash):
+    def ipfs_get(self, lib, query):
+        query = query[0]
+        # Check if query is a hash
+        if query.startswith("Qm") and len(query) == 46:
+            self.ipfs_get_from_hash(lib, query)
+        else:
+            albums = self.query(lib, query)
+            for album in albums:
+                self.ipfs_get_from_hash(lib, album.ipfs)
+
+    def ipfs_get_from_hash(self, lib, _hash):
         try:
-            subprocess.check_output(["ipfs", "get", _hash[0]],
+            subprocess.check_output(["ipfs", "get", _hash],
                                     stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as err:
             self._log.error('Failed to get {0} from ipfs.\n{1}',
-                            _hash[0], err.output)
+                            _hash, err.output)
             return False
 
-        self._log.info('Getting {0} from ipfs', _hash[0])
+        self._log.info('Getting {0} from ipfs', _hash)
         imp = ui.commands.TerminalImportSession(lib, loghandler=None,
-                                                query=None, paths=_hash)
+                                                query=None, paths=[_hash])
         imp.run()
-        shutil.rmtree(_hash[0])
+        shutil.rmtree(_hash)
 
     def ipfs_publish(self, lib):
         with tempfile.NamedTemporaryFile() as tmp:
