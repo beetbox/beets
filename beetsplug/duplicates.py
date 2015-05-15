@@ -40,11 +40,11 @@ class DuplicatesPlugin(BeetsPlugin):
             'strict': False,
             'path': False,
             'keys': ['mb_trackid', 'mb_albumid'],
-            'checksum': None,
-            'copy': False,
-            'move': False,
+            'checksum': '',
+            'copy': '',
+            'move': '',
             'delete': False,
-            'tag': False,
+            'tag': '',
         })
 
         self._command = Subcommand('duplicates',
@@ -97,16 +97,18 @@ class DuplicatesPlugin(BeetsPlugin):
 
         def _dup(lib, opts, args):
             self.config.set_args(opts)
-            fmt = self.config['format'].get()
             album = self.config['album'].get(bool)
-            full = self.config['full'].get(bool)
-            strict = self.config['strict'].get(bool)
-            keys = self.config['keys'].get()
-            checksum = self.config['checksum'].get()
-            copy = self.config['copy'].get()
-            move = self.config['move'].get()
+            checksum = self.config['checksum'].get(str)
+            copy = self.config['copy'].get(str)
+            count = self.config['count'].get(bool)
             delete = self.config['delete'].get(bool)
-            tag = self.config['tag'].get()
+            fmt = self.config['format'].get(str)
+            full = self.config['full'].get(bool)
+            keys = self.config['keys'].get(list)
+            move = self.config['move'].get(str)
+            path = self.config['path'].get(bool)
+            strict = self.config['strict'].get(bool)
+            tag = self.config['tag'].get(str)
 
             if album:
                 keys = ['mb_albumid']
@@ -114,11 +116,11 @@ class DuplicatesPlugin(BeetsPlugin):
             else:
                 items = lib.items(decargs(args))
 
-            if self.config['path']:
+            if path:
                 fmt = '$path'
 
             # Default format string for count mode.
-            if self.config['count'] and not fmt:
+            if count and not fmt:
                 if album:
                     fmt = '$albumartist - $album'
                 else:
@@ -126,10 +128,6 @@ class DuplicatesPlugin(BeetsPlugin):
                 fmt += ': {0}'
 
             if checksum:
-                if not isinstance(checksum, basestring):
-                    raise UserError(
-                        'duplicates: "checksum" option must be a command'
-                    )
                 for i in items:
                     k, _ = self._checksum(i, checksum)
                 keys = [k]
