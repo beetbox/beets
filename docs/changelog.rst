@@ -6,12 +6,16 @@ Changelog
 
 New features:
 
+* The :doc:`/plugins/duplicates` plugin now enforces an ordering on
+  duplicates: it defaults to metadata attribute set completeness,
+  or alternatively any list of attributes that should be favored.
 * The :doc:`/plugins/metasync` plugin now lets you get metadata from iTunes.
   This plugin is still in an experimental phase. :bug:`1450`
 
 
 Fixes:
 
+* :doc:`/plugins/duplicates`: Avoid a crash when misconfigured. :bug:`1457`
 * :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
   beets library. Thanks to :user:`CodyReichert`. :bug:`1443`
 * Fix a crash with ArtResizer on Windows systems (affecting

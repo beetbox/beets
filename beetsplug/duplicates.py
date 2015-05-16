@@ -22,6 +22,7 @@ import shlex
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, vararg_callback, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess
+from beets.library import Item, Album
 
 PLUGIN = 'duplicates'
 
@@ -33,17 +34,18 @@ class DuplicatesPlugin(BeetsPlugin):
         super(DuplicatesPlugin, self).__init__()
 
         self.config.add({
-            'format': '',
-            'count': False,
             'album': False,
-            'full': False,
-            'strict': False,
-            'path': False,
-            'keys': ['mb_trackid', 'mb_albumid'],
             'checksum': '',
             'copy': '',
-            'move': '',
+            'count': False,
             'delete': False,
+            'format': '',
+            'full': False,
+            'keys': [],
+            'move': '',
+            'path': False,
+            'tiebreak': {},
+            'strict': False,
             'tag': '',
         })
 
@@ -91,6 +93,7 @@ class DuplicatesPlugin(BeetsPlugin):
                                         action='store',
                                         help='tag matched items with \'k=v\''
                                         ' attribute')
+
         self._command.parser.add_all_common_options()
 
     def commands(self):
@@ -107,13 +110,17 @@ class DuplicatesPlugin(BeetsPlugin):
             keys = self.config['keys'].get(list)
             move = self.config['move'].get(str)
             path = self.config['path'].get(bool)
+            tiebreak = self.config['tiebreak'].get(dict)
             strict = self.config['strict'].get(bool)
             tag = self.config['tag'].get(str)
 
             if album:
-                keys = ['mb_albumid']
+                if not keys:
+                    keys = ['mb_albumid']
                 items = lib.albums(decargs(args))
             else:
+                if not keys:
+                    keys = ['mb_trackid', 'mb_albumid']
                 items = lib.items(decargs(args))
 
             if path:
@@ -135,7 +142,8 @@ class DuplicatesPlugin(BeetsPlugin):
             for obj_id, obj_count, objs in self._duplicates(items,
                                                             keys=keys,
                                                             full=full,
-                                                            strict=strict):
+                                                            strict=strict,
+                                                            tiebreak=tiebreak):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
                         self._process_item(o, lib,
@@ -221,10 +229,29 @@ class DuplicatesPlugin(BeetsPlugin):
 
         return counts
 
-    def _duplicates(self, objs, keys, full, strict):
+    def _order(self, objs, tiebreak=None):
+        """Return objs sorted by descending order of fields in tiebreak dict.
+
+        Default ordering is based on attribute completeness.
+        """
+        if tiebreak:
+            kind = 'items' if all(isinstance(o, Item)
+                                  for o in objs) else 'albums'
+            key = lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
+        else:
+            kind = Item if all(isinstance(o, Item) for o in objs) else Album
+            fields = [f for sublist in kind.get_fields() for f in sublist]
+            key = lambda x: len([(a, getattr(x, a, None)) for a in fields
+                                 if getattr(x, a, None) not in (None, '')])
+
+        return sorted(objs, key=key, reverse=True)
+
+    def _duplicates(self, objs, keys, full, strict, tiebreak):
         """Generate triples of keys, duplicate counts, and constituent objects.
         """
         offset = 0 if full else 1
         for k, objs in self._group_by(objs, keys, strict).iteritems():
             if len(objs) > 1:
-                yield (k, len(objs) - offset, objs[offset:])
+                yield (k,
+                       len(objs) - offset,
+                       self._order(objs, tiebreak)[offset:])
