@@ -82,29 +82,17 @@ def fields_func(lib, opts, args):
         names.sort()
         print_("  " + "\n  ".join(names))
 
-    def _show_plugin_fields(album):
-        plugin_fields = []
-        for plugin in plugins.find_plugins():
-            if album:
-                fdict = plugin.album_template_fields
-            else:
-                fdict = plugin.template_fields
-            plugin_fields += fdict.keys()
-        if plugin_fields:
-            print_("Template fields from plugins:")
-            _print_rows(plugin_fields)
-
+    fs, pfs = library.Item.get_fields()
     print_("Item fields:")
-    _print_rows(library.Item._fields.keys() +
-                library.Item._getters().keys() +
-                library.Item._types.keys())
-    _show_plugin_fields(False)
+    _print_rows(fs)
+    print_("Template fields from plugins:")
+    _print_rows(pfs)
 
-    print_("\nAlbum fields:")
-    _print_rows(library.Album._fields.keys() +
-                library.Album._getters().keys() +
-                library.Album._types.keys())
-    _show_plugin_fields(True)
+    fs, pfs = library.Album.get_fields()
+    print_("Album fields:")
+    _print_rows(fs)
+    print_("Template fields from plugins:")
+    _print_rows(pfs)
 
 
 fields_cmd = ui.Subcommand(
