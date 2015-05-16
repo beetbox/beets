@@ -83,6 +83,12 @@ file. The available options mirror the command-line options:
 - **tag**: A ``key=value`` pair. The plugin will add a new ``key`` attribute
   with ``value`` value as a flexattr to the database for duplicate items.
   Default: ``no``.
+- **tiebreak**: Dictionary of lists of attributes keyed by ``items``
+  or ``albums`` to use when choosing duplicates. By default, the
+  tie-breaking procedure favors the most complete metadata attribute
+  set. If you would like to consider the lower bitrates as duplicates,
+  for example, set ``tiebreak: items: [bitrate]``.
+  Default: ``{}``.
 
 Examples
 --------
