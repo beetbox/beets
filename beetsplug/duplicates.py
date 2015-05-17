@@ -173,7 +173,7 @@ class DuplicatesPlugin(BeetsPlugin):
                 k, v = tag.split('=')
             except:
                 raise UserError('%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
-            setattr(k, v)
+            setattr(item, k, v)
             item.store()
         print_(format(item, fmt))
 
