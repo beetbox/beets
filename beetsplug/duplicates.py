@@ -42,6 +42,7 @@ class DuplicatesPlugin(BeetsPlugin):
             'format': '',
             'full': False,
             'keys': [],
+            'merge': False,
             'move': '',
             'path': False,
             'tiebreak': {},
@@ -81,6 +82,10 @@ class DuplicatesPlugin(BeetsPlugin):
                                         callback=vararg_callback,
                                         help='report duplicates based on keys')
 
+        self._command.parser.add_option('-M', '--merge', dest='merge',
+                                        action='store_true',
+                                        help='merge duplicate items')
+
         self._command.parser.add_option('-m', '--move', dest='move',
                                         action='store', metavar='DEST',
                                         help='move items to dest')
@@ -108,6 +113,7 @@ class DuplicatesPlugin(BeetsPlugin):
             fmt = self.config['format'].get(str)
             full = self.config['full'].get(bool)
             keys = self.config['keys'].get(list)
+            merge = self.config['merge'].get(bool)
             move = self.config['move'].get(str)
             path = self.config['path'].get(bool)
             tiebreak = self.config['tiebreak'].get(dict)
@@ -143,10 +149,11 @@ class DuplicatesPlugin(BeetsPlugin):
                                                             keys=keys,
                                                             full=full,
                                                             strict=strict,
-                                                            tiebreak=tiebreak):
+                                                            tiebreak=tiebreak,
+                                                            merge=merge):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
-                        self._process_item(o, lib,
+                        self._process_item(o,
                                            copy=copy,
                                            move=move,
                                            delete=delete,
@@ -156,10 +163,11 @@ class DuplicatesPlugin(BeetsPlugin):
         self._command.func = _dup
         return [self._command]
 
-    def _process_item(self, item, lib, copy=False, move=False, delete=False,
+    def _process_item(self, item, copy=False, move=False, delete=False,
                       tag=False, fmt=''):
-        """Process Item `item` in `lib`.
+        """Process Item `item`.
         """
+        print_(format(item, fmt))
         if copy:
             item.move(basedir=copy, copy=True)
             item.store()
@@ -175,7 +183,6 @@ class DuplicatesPlugin(BeetsPlugin):
                 raise UserError('%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
             setattr(item, k, v)
             item.store()
-        print_(format(item, fmt))
 
     def _checksum(self, item, prog):
         """Run external `prog` on file path associated with `item`, cache
@@ -249,12 +256,66 @@ class DuplicatesPlugin(BeetsPlugin):
 
         return sorted(objs, key=key, reverse=True)
 
-    def _duplicates(self, objs, keys, full, strict, tiebreak):
+    def _merge_items(self, objs):
+        """Merge Item objs by copying missing fields from items in the tail to
+        the head item.
+
+        Return same number of items, with the head item modified.
+        """
+        fields = [f for sublist in Item.get_fields() for f in sublist]
+        for f in fields:
+            for o in objs[1:]:
+                if getattr(objs[0], f, None) in (None, ''):
+                    value = getattr(o, f, None)
+                    if value:
+                        self._log.debug(u'key {0} on item {1} is null '
+                                        'or empty: setting from item {2}',
+                                        f, displayable_path(objs[0].path),
+                                        displayable_path(o.path))
+                        setattr(objs[0], f, value)
+                        objs[0].store()
+                        break
+        return objs
+
+    def _merge_albums(self, objs):
+        """Merge Album objs by copying missing items from albums in the tail
+        to the head album.
+
+        Return same number of albums, with the head album modified."""
+        ids = [i.mb_trackid for i in objs[0].items()]
+        for o in objs[1:]:
+            for i in o.items():
+                if i.mb_trackid not in ids:
+                    missing = Item.from_path(i.path)
+                    missing.album_id = objs[0].id
+                    missing.add(i._db)
+                    self._log.debug(u'item {0} missing from album {1}:'
+                                    ' merging from {2} into {3}',
+                                    missing,
+                                    objs[0],
+                                    displayable_path(o.path),
+                                    displayable_path(missing.destination()))
+                    missing.move(copy=True)
+        return objs
+
+    def _merge(self, objs):
+        """Merge duplicate items. See ``_merge_items`` and ``_merge_albums``
+        for the relevant strategies.
+        """
+        kind = Item if all(isinstance(o, Item) for o in objs) else Album
+        if kind is Item:
+            objs = self._merge_items(objs)
+        else:
+            objs = self._merge_albums(objs)
+        return objs
+
+    def _duplicates(self, objs, keys, full, strict, tiebreak, merge):
         """Generate triples of keys, duplicate counts, and constituent objects.
         """
         offset = 0 if full else 1
         for k, objs in self._group_by(objs, keys, strict).iteritems():
             if len(objs) > 1:
-                yield (k,
-                       len(objs) - offset,
-                       self._order(objs, tiebreak)[offset:])
+                objs = self._order(objs, tiebreak)
+                if merge:
+                    objs = self._merge(objs)
+                yield (k, len(objs) - offset, objs[offset:])
