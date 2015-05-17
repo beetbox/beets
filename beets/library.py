@@ -312,10 +312,6 @@ class LibModel(dbcore.Model):
     def __unicode__(self):
         return format(self)
 
-    def __dir__(self):
-        return (self._fields.keys() + self._getters().keys() +
-                self._types.keys())
-
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
     """Add lookup for album-level fields.
@@ -489,7 +485,8 @@ class Item(LibModel):
         plugin_fields = []
         for plugin in plugins.find_plugins():
             plugin_fields += plugin.template_fields.keys()
-        return super(Item, cls).__dir__(cls()), plugin_fields
+        return (cls._fields.keys() + cls._getters().keys() +
+                cls._types.keys()), plugin_fields
 
     def __setitem__(self, key, value):
         """Set the item's value for a standard field or a flexattr.
@@ -924,7 +921,8 @@ class Album(LibModel):
         plugin_fields = []
         for plugin in plugins.find_plugins():
             plugin_fields += plugin.album_template_fields.keys()
-        return super(Album, cls).__dir__(cls()), plugin_fields
+        return (cls._fields.keys() + cls._getters().keys() +
+                cls._types.keys()), plugin_fields
 
     def items(self):
         """Returns an iterable over the items associated with this
