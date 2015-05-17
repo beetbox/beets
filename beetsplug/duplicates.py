@@ -240,9 +240,12 @@ class DuplicatesPlugin(BeetsPlugin):
             key = lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
         else:
             kind = Item if all(isinstance(o, Item) for o in objs) else Album
-            fields = [f for sublist in kind.get_fields() for f in sublist]
-            key = lambda x: len([(a, getattr(x, a, None)) for a in fields
-                                 if getattr(x, a, None) not in (None, '')])
+            if kind is Item:
+                fields = [f for sublist in kind.get_fields() for f in sublist]
+                key = lambda x: len([(a, getattr(x, a, None)) for a in fields
+                                     if getattr(x, a, None) not in (None, '')])
+            else:
+                key = lambda x: len(x.items())
 
         return sorted(objs, key=key, reverse=True)
 
