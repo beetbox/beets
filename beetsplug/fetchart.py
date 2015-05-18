@@ -409,7 +409,16 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         if not (self.enforce_ratio or self.minwidth):
             return True
 
+        # get_size returns None if no local imaging backend is available
         size = ArtResizer.shared.get_size(candidate)
+
+        if not size:
+            self._log.warning(u'could not verify size of image: please see '
+                              u'documentation for dependencies. '
+                              u'The configuration options `minwidth` and '
+                              u'`enforce_ratio` may be violated.')
+            return True
+
         return size and size[0] >= self.minwidth and \
             (not self.enforce_ratio or size[0] == size[1])
 
@@ -446,6 +455,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
 
         if self.maxwidth and out:
             out = ArtResizer.shared.resize(self.maxwidth, out)
+
         return out
 
     def batch_fetch_art(self, lib, albums, force):
