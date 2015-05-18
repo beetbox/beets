@@ -11,6 +11,8 @@ New features:
   or alternatively any list of attributes that should be favored.
 * The :doc:`/plugins/metasync` plugin now lets you get metadata from iTunes.
   This plugin is still in an experimental phase. :bug:`1450`
+* The :doc:`/plugins/fetchart` plugin will now complain for the `enforce_ratio`
+  and `min_width` options if no local imaging backend is available. :bug:`1460`
 
 
 Fixes:

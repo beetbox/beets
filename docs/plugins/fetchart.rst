@@ -54,6 +54,12 @@ file. The available options are:
   Default: ``coverart itunes albumart amazon google wikipedia``, i.e.,
   all sources.
 
+Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
+or `PIL`_.
+
+.. _PIL: http://www.pythonware.com/products/pil/
+.. _ImageMagick: http://www.imagemagick.org/
+
 Here's an example that makes plugin select only images that contain *front* or
 *back* keywords in their filenames and prioritizes the iTunes source over
 others::
