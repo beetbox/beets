@@ -36,9 +36,6 @@ from beets.util.artresizer import ArtResizer, WEBPROXY
 logger = logging.getLogger('beets.test_art')
 
 
-ARTRESIZER_USES_FALLBACK_BACKEND = ArtResizer.shared.method[0] == WEBPROXY
-
-
 class UseThePlugin(_common.TestCase):
     def setUp(self):
         super(UseThePlugin, self).setUp()
@@ -412,16 +409,21 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(local_artpath)
 
-    @unittest.skipIf(ARTRESIZER_USES_FALLBACK_BACKEND,
-                     'ArtResizer has no local imaging backend available')
+    def _require_backend(self):
+        """Skip the test if the art resizer doesn't have ImageMagick or
+        PIL (so comparisons and measurements are unavailable).
+        """
+        if ArtResizer.shared.method[0] == WEBPROXY:
+            self.skipTest("ArtResizer has no local imaging backend available")
+
     def test_respect_minwidth(self):
+        self._require_backend()
         self.plugin.minwidth = 300
         self._assertImageIsValidArt(self.IMG_225x225, False)
         self._assertImageIsValidArt(self.IMG_348x348, True)
 
-    @unittest.skipIf(ARTRESIZER_USES_FALLBACK_BACKEND,
-                     'ArtResizer has no local imaging backend available')
     def test_respect_enforce_ratio_yes(self):
+        self._require_backend()
         self.plugin.enforce_ratio = True
         self._assertImageIsValidArt(self.IMG_500x490, False)
         self._assertImageIsValidArt(self.IMG_225x225, True)
