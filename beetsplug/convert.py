@@ -169,7 +169,12 @@ class ConvertPlugin(BeetsPlugin):
         Raises `subprocess.CalledProcessError` if the command exited with a
         non-zero status code.
         """
-        quiet = self.config['quiet'].get()
+        # The paths and arguments must be bytes.
+        assert isinstance(command, bytes)
+        assert isinstance(source, bytes)
+        assert isinstance(dest, bytes)
+
+        quiet = self.config['quiet'].get(bool)
 
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
@@ -178,8 +183,8 @@ class ConvertPlugin(BeetsPlugin):
         args = shlex.split(command)
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
-                'source': source.decode('utf8'),
-                'dest': dest.decode('utf8'),
+                b'source': source,
+                b'dest': dest,
             })
 
         if pretend:
@@ -391,6 +396,7 @@ class ConvertPlugin(BeetsPlugin):
             command, ext = get_format()
             tmpdir = self.config['tmpdir'].get()
             fd, dest = tempfile.mkstemp('.' + ext, dir=tmpdir)
+            dest = util.bytestring_path(dest)
             os.close(fd)
             _temp_files.append(dest)  # Delete the transcode later.
             try:
