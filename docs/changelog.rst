@@ -27,6 +27,8 @@ Fixes:
 * Fix sorting by paths when case-insensitive. :bug:`1451`
 * :doc:`/plugins/embedart`: Avoid an error when trying to embed invalid images
   into MPEG-4 files.
+* :doc:`/plugins/fetchart`: The Wikipedia source is now able to better deal
+  with non-typical cased artists (e.g., alt-J, dEUS).
 
 
 1.3.13 (April 24, 2015)
