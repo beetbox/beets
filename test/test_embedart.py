@@ -133,16 +133,15 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
                          self.abbey_similarpath))
 
     def test_non_ascii_album_path(self):
-        resource_path = os.path.join(_common.RSRC, 'image.mp3')
+        resource_path = os.path.join(_common.RSRC, 'image.mp3').encode('utf8')
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
         albumpath = album.path
-        shutil.copy(resource_path, trackpath.decode('utf-8'))
+        shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command('extractart', '-n', 'extracted')
 
-        self.assertExists(os.path.join(albumpath.decode('utf-8'),
-                                       'extracted.png'))
+        self.assertExists(syspath(os.path.join(albumpath, b'extracted.png')))
 
 
 @patch('beets.art.subprocess')
