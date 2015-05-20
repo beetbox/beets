@@ -24,7 +24,7 @@ import re
 
 import beets
 from beets import ui
-from beets.ui import print_, input_, decargs
+from beets.ui import print_, input_, decargs, show_path_changes
 from beets import autotag
 from beets.autotag import Recommendation
 from beets.autotag import hooks
@@ -1344,7 +1344,7 @@ default_commands.append(modify_cmd)
 
 # move: Move/copy files to the library or a new base directory.
 
-def move_items(lib, dest, query, copy, album):
+def move_items(lib, dest, query, copy, album, pretend):
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
@@ -1355,11 +1355,19 @@ def move_items(lib, dest, query, copy, album):
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
     log.info(u'{0} {1} {2}s.', action, len(objs), entity)
-    for obj in objs:
-        log.debug(u'moving: {0}', util.displayable_path(obj.path))
+    if pretend:
+        if album:
+            show_path_changes([(item.path, item.destination(basedir=dest))
+                               for obj in objs for item in obj.items()])
+        else:
+            show_path_changes([(obj.path, obj.destination(basedir=dest))
+                               for obj in objs])
+    else:
+        for obj in objs:
+            log.debug(u'moving: {0}', util.displayable_path(obj.path))
 
-        obj.move(copy, basedir=dest)
-        obj.store()
+            obj.move(copy, basedir=dest)
+            obj.store()
 
 
 def move_func(lib, opts, args):
@@ -1369,7 +1377,7 @@ def move_func(lib, opts, args):
         if not os.path.isdir(dest):
             raise ui.UserError('no such directory: %s' % dest)
 
-    move_items(lib, dest, decargs(args), opts.copy, opts.album)
+    move_items(lib, dest, decargs(args), opts.copy, opts.album, opts.pretend)
 
 
 move_cmd = ui.Subcommand(
@@ -1383,6 +1391,9 @@ move_cmd.parser.add_option(
     '-c', '--copy', default=False, action='store_true',
     help='copy instead of moving'
 )
+move_cmd.parser.add_option(
+    '-p', '--pretend', default=False, action='store_true',
+    help='show how files would be moved, but don\'t touch anything')
 move_cmd.parser.add_album_option()
 move_cmd.func = move_func
 default_commands.append(move_cmd)
