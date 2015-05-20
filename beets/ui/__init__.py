@@ -615,6 +615,44 @@ def show_model_changes(new, old=None, fields=None, always=False):
     return bool(changes)
 
 
+def show_path_changes(path_changes):
+    """ Given a list of tuples (source, destination) that indicate the path
+    changes, the changes are shown. Output is guaranteed to be unicode.
+
+    Every tuple is shown on a single line if the terminal width permits it,
+    else it is split over two lines. E.g.,
+
+    Source -> Destination
+
+    vs.
+
+    Source
+      -> Destination
+    """
+    sources, destinations = zip(*path_changes)
+
+    # Ensure unicode output
+    sources = map(util.displayable_path, sources)
+    destinations = map(util.displayable_path, destinations)
+
+    # Calculate widths for terminal split
+    col_width = (term_width() - len(' -> ')) // 2
+    max_width = len(max(sources + destinations, key=len))
+
+    if max_width > col_width:
+        # Print every change over two lines
+        for source, dest in zip(sources, destinations):
+            log.info(u'{0} \n  -> {1}', source, dest)
+    else:
+        # Print every change on a single line, and add a header
+        title_pad = max_width - len('Source ') + len(' -> ')
+
+        log.info(u'Source {0} Destination', ' ' * title_pad)
+        for source, dest in zip(sources, destinations):
+            pad = max_width - len(source)
+            log.info(u'{0} {1} -> {2}', source, ' ' * pad, dest)
+
+
 class CommonOptionsParser(optparse.OptionParser, object):
     """Offers a simple way to add common formatting options.
 

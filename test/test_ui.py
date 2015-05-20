@@ -373,8 +373,9 @@ class MoveTest(_common.TestCase):
         # Alternate destination directory.
         self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
-    def _move(self, query=(), dest=None, copy=False, album=False):
-        commands.move_items(self.lib, dest, query, copy, album)
+    def _move(self, query=(), dest=None, copy=False, album=False,
+              pretend=False):
+        commands.move_items(self.lib, dest, query, copy, album, pretend)
 
     def test_move_item(self):
         self._move()
@@ -417,6 +418,16 @@ class MoveTest(_common.TestCase):
         self.assertTrue('testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
+
+    def test_pretend_move_item(self):
+        self._move(dest=self.otherdir, pretend=True)
+        self.i.load()
+        self.assertIn('srcfile', self.i.path)
+
+    def test_pretend_move_album(self):
+        self._move(album=True, pretend=True)
+        self.i.load()
+        self.assertIn('srcfile', self.i.path)
 
 
 class UpdateTest(_common.TestCase):

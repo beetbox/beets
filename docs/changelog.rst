@@ -13,6 +13,8 @@ New features:
   This plugin is still in an experimental phase. :bug:`1450`
 * The :doc:`/plugins/fetchart` plugin will now complain for the `enforce_ratio`
   and `min_width` options if no local imaging backend is available. :bug:`1460`
+* The `move` command has a new `-p/--pretend` option, making the command show
+  how the items will be moved, without modifying the files on disk.
 
 
 Fixes:
