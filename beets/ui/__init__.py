@@ -22,6 +22,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import locale
 import optparse
+import click
 import textwrap
 import sys
 from difflib import SequenceMatcher
@@ -956,7 +957,7 @@ def _load_plugins(config):
     return plugins
 
 
-def _setup(options, lib=None):
+def _setup(lib=None):
     """Prepare and global state and updates it with command line options.
 
     Returns a list of subcommands, a list of plugins, and a library instance.
@@ -964,23 +965,13 @@ def _setup(options, lib=None):
     # Configure the MusicBrainz API.
     mb.configure()
 
-    config = _configure(options)
-
-    plugins = _load_plugins(config)
-
-    # Get the default subcommands.
-    from beets.ui.commands import default_commands
-
-    subcommands = list(default_commands)
-    subcommands.extend(plugins.commands())
-
     if lib is None:
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
     library.Item._types.update(plugins.types(library.Item))
     library.Album._types.update(plugins.types(library.Album))
 
-    return subcommands, plugins, lib
+    return lib
 
 
 def _configure(options):
@@ -989,9 +980,9 @@ def _configure(options):
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
-    if getattr(options, b'config', None) is not None:
-        config_path = options.config
-        del options.config
+    if options.get('config') is not None:
+        config_path = options['config']
+        del options['config']
         config.set_file(config_path)
     config.set_args(options)
 
@@ -1057,43 +1048,149 @@ def _open_library(config):
     return lib
 
 
-def _raw_main(args, lib=None):
+class BeetsCLI(click.MultiCommand):
+
+    def _commands(self, ctx):
+        from beets.ui.commands import default_commands
+
+        config = _configure(ctx.params)
+        _load_plugins(config)
+
+        subcommands = list(default_commands)
+        subcommands.extend(plugins.commands())
+
+        return {
+            cmd.name: cmd
+            for cmd in subcommands
+            if isinstance(cmd, click.Command)
+        }
+
+    def list_commands(self, ctx):
+        return self._commands(ctx).keys()
+
+    def get_command(self, ctx, name):
+        # Special case for the `config --edit` command: bypass loading config
+        # so that an invalid configuration does not prevent the editor from
+        # starting.
+        if ctx.args and ctx.args[0] == 'config' and \
+           ('-e' in ctx.args or '--edit' in ctx.args):
+            from beets.ui.commands import config_cmd
+            return config_cmd
+
+        return self._commands(ctx).get(name)
+
+
+def album_option(f):
+    """Add a -a/--album option to match albums instead of tracks.
+
+    If used then the format option can auto-detect whether we're setting
+    the format for items or albums.
+    Sets the album property on the options extracted from the CLI.
+    """
+    return click.option('-a', '--album', is_eager=True, is_flag=True,
+                        help='match albums instead of tracks')(f)
+
+
+def _set_format(target, fmt):
+    config[target._format_config_key].set(fmt)
+
+
+def path_option(f):
+    """Add a -p/--path option to display the path instead of the default
+    format.
+
+    By default this affects both items and albums. If album_option()
+    is used then the target will be autodetected.
+
+    Sets the format property to u'$path' on the options extracted from the
+    CLI.
+    """
+    def callback(ctx, param, value):
+        if not value:
+            return
+
+        if 'album' in ctx.params:
+            if ctx.params['album']:
+                _set_format(library.Album, '$path')
+            else:
+                _set_format(library.Item, '$path')
+        else:
+            _set_format(library.Item, '$path')
+            _set_format(library.Album, '$path')
+
+    return click.option('-p', '--path', callback=callback, is_flag=True,
+                        help='print paths for matched items or albums')(f)
+
+
+def format_option(flags=('-f', '--format'), target=None):
+    def callback(ctx, param, value):
+        if not value:
+            return
+
+        value = unicode(value)
+
+        _target = target
+        if _target:
+            if _target in ('item', 'album'):
+                _target = {'item': library.Item,
+                           'album': library.Album}[_target]
+            _set_format(_target, value)
+        else:
+            if 'album' in ctx.params:
+                if ctx.params['album']:
+                    _set_format(library.Album, value)
+                else:
+                    _set_format(library.Item, value)
+            else:
+                _set_format(library.Item, value)
+                _set_format(library.Album, value)
+
+    def decorator(f):
+        return click.option(*flags, callback=callback, expose_value=False,
+                            help='print with custom format')(f)
+
+    return decorator
+
+
+def all_common_options(f):
+    return album_option(path_option(format_option()(f)))
+
+
+class Context(object):
+
+    def __init__(self, lib=None):
+        self.lib = lib
+
+
+pass_context = click.make_pass_decorator(Context, ensure=True)
+
+
+@click.command(cls=BeetsCLI,
+               context_settings={'help_option_names': ['-h', '--help']})
+@format_option(flags=('--format-item',), target=library.Item)
+@format_option(flags=('--format-album',), target=library.Album)
+@click.option('-l', '--library', metavar='LIBRARY',
+              help='Library database file to use.')
+@click.option('-d', '--directory', metavar='DIRECTORY',
+              help='Destination music directory.')
+@click.option('-v', '--verbose', count=True,
+              help='Print debugging information.')
+@click.option('-c', '--config', metavar='CONFIG',
+              help='Path to configuration file.')
+@click.pass_context
+def _raw_main(ctx, **options):
     """A helper function for `main` without top-level exception
     handling.
     """
-    parser = SubcommandsOptionParser()
-    parser.add_format_option(flags=('--format-item',), target=library.Item)
-    parser.add_format_option(flags=('--format-album',), target=library.Album)
-    parser.add_option('-l', '--library', dest='library',
-                      help='library database file to use')
-    parser.add_option('-d', '--directory', dest='directory',
-                      help="destination music directory")
-    parser.add_option('-v', '--verbose', dest='verbose', action='count',
-                      help='print debugging information')
-    parser.add_option('-c', '--config', dest='config',
-                      help='path to configuration file')
-    parser.add_option('-h', '--help', dest='help', action='store_true',
-                      help='how this help message and exit')
-    parser.add_option('--version', dest='version', action='store_true',
-                      help=optparse.SUPPRESS_HELP)
+    if ctx.invoked_subcommand == 'config':
+        return
 
-    options, subargs = parser.parse_global_options(args)
+    beets_ctx = ctx.ensure_object(Context)
+    beets_ctx.lib = _setup(beets_ctx.lib)
 
-    # Special case for the `config --edit` command: bypass _setup so
-    # that an invalid configuration does not prevent the editor from
-    # starting.
-    if subargs and subargs[0] == 'config' \
-       and ('-e' in subargs or '--edit' in subargs):
-        from beets.ui.commands import config_edit
-        return config_edit()
-
-    subcommands, plugins, lib = _setup(options, lib)
-    parser.add_subcommand(*subcommands)
-
-    subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
-    subcommand.func(lib, suboptions, subargs)
-
-    plugins.send('cli_exit', lib=lib)
+    @ctx.call_on_close
+    def send_plugin_cli_exit():
+        plugins.send('cli_exit', lib=beets_ctx.lib)
 
 
 def main(args=None):

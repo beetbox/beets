@@ -238,7 +238,11 @@ class ConfigView(object):
         like argparse or optparse, onto this view's value.
         """
         args = {}
-        for key, value in namespace.__dict__.items():
+        if isinstance(namespace, dict):
+            items = namespace.items()
+        else:
+            items = namespace.__dict__.items()
+        for key, value in items:
             if value is not None:  # Avoid unset options.
                 args[key] = value
         self.set(args)

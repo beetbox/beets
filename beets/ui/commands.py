@@ -19,6 +19,7 @@ interface.
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+import click
 import os
 import re
 
@@ -77,7 +78,12 @@ def _do_query(lib, query, album, also_items=True):
 
 # fields: Shows a list of available fields for queries and format strings.
 
-def fields_func(lib, opts, args):
+@click.command(
+    'fields',
+    short_help='show fields available for queries and format strings',
+)
+@ui.pass_context
+def fields_cmd(ctx):
     def _print_rows(names):
         names.sort()
         print_("  " + "\n  ".join(names))
@@ -95,36 +101,28 @@ def fields_func(lib, opts, args):
     _print_rows(pfs)
 
 
-fields_cmd = ui.Subcommand(
-    'fields',
-    help='show fields available for queries and format strings'
-)
-fields_cmd.func = fields_func
 default_commands.append(fields_cmd)
 
 
 # help: Print help text for commands
 
-class HelpCommand(ui.Subcommand):
+@click.command('help',
+               short_help='give detailed help on a specific sub-command')
+@click.pass_context
+def help_cmd(ctx):
+    if not ctx.args:
+        print_(ctx.parent.get_help())
+        return
 
-    def __init__(self):
-        super(HelpCommand, self).__init__(
-            'help', aliases=('?',),
-            help='give detailed help on a specific sub-command',
-        )
+    cmd_name, cmd, args = ctx.parent.command.resolve_command(
+        ctx.parent,
+        ctx.args
+    )
+    with cmd.make_context(cmd_name, args, parent=ctx.parent) as ctx_:
+        print_(ctx_.get_help())
 
-    def func(self, lib, opts, args):
-        if args:
-            cmdname = args[0]
-            helpcommand = self.root_parser._subcommand_for_name(cmdname)
-            if not helpcommand:
-                raise ui.UserError("unknown command '{0}'".format(cmdname))
-            helpcommand.print_help()
-        else:
-            self.root_parser.print_help()
-
-
-default_commands.append(HelpCommand())
+help_cmd.allow_extra_args = True
+default_commands.append(help_cmd)
 
 
 # import: Autotagger and importer.
@@ -861,102 +859,66 @@ def import_files(lib, paths, query):
     plugins.send('import', lib=lib, paths=paths)
 
 
-def import_func(lib, opts, args):
+# TODO: add 'imp' and 'im' aliases
+@click.command('import', short_help='import new music')
+@click.option('copy', '-c', '--copy', flag_value=True,
+              help='copy tracks into library directory (default)')
+@click.option('copy', '-C', '--nocopy', flag_value=False, default=None,
+              help="don't copy tracks (opposite of -c)")
+@click.option('write', '-w', '--write', flag_value=True,
+              help="write new metadata to files' tags (default)")
+@click.option('write', '-W', '--nowrite', flag_value=False, default=None,
+              help="don't write metadata (opposite of -w)")
+@click.option('autotag', '-a', '--autotag', flag_value=True,
+              help='infer tags for imported files (default)')
+@click.option('autotag', '-A', '--noautotag', flag_value=False, default=None,
+              help="don't infer tags for imported files (opposite of -a)")
+@click.option('resume', '-p', '--resume', flag_value=True,
+              help='resume importing if interrupted')
+@click.option('resume', '-P', '--noresume', flag_value=False, default=None,
+              help='resume importing if interrupted')
+@click.option('-q', '--quiet', is_flag=True, default=None,
+              help='never prompt for input: skip albums instead')
+@click.option('-l', '--log', metavar='LOG', default=None,
+              help='file to log untaggable albums for later review')
+@click.option('-s', '--singletons', is_flag=True, default=None,
+              help='import individual tracks instead of full albums')
+@click.option('-t', '--timid', is_flag=True, default=None,
+              help='always confirm all actions')
+@click.option('-L', '--library', metavar='LIBRARY', default=None,
+              help='retag items matching a query')
+@click.option('incremental', '-i', '--incremental', flag_value=True,
+              help='skip already-import directories')
+@click.option('incremental', '-I', '--noincremental', flag_value=False,
+              default=None, help='do not skip already-imported directories')
+@click.option('--flat', is_flag=True, default=None,
+              help='import an entire tree as a single album')
+@click.option('-g', '--group-albums', is_flag=True, default=None,
+              help='group tracks in a folder into separate albums')
+@click.option('--pretend', is_flag=True, default=None,
+              help='just print the files to import')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def import_cmd(ctx, query, **opts):
     config['import'].set_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would
     # otherwise take precedence).
-    if opts.copy:
+    if opts['copy']:
         config['import']['move'] = False
 
-    if opts.library:
-        query = decargs(args)
+    if opts['library']:
+        query = decargs(query)
         paths = []
     else:
         query = None
-        paths = args
+        paths = query
         if not paths:
             raise ui.UserError('no path specified')
 
-    import_files(lib, paths, query)
+    import_files(ctx.lib, paths, query)
 
 
-import_cmd = ui.Subcommand(
-    'import', help='import new music', aliases=('imp', 'im')
-)
-import_cmd.parser.add_option(
-    '-c', '--copy', action='store_true', default=None,
-    help="copy tracks into library directory (default)"
-)
-import_cmd.parser.add_option(
-    '-C', '--nocopy', action='store_false', dest='copy',
-    help="don't copy tracks (opposite of -c)"
-)
-import_cmd.parser.add_option(
-    '-w', '--write', action='store_true', default=None,
-    help="write new metadata to files' tags (default)"
-)
-import_cmd.parser.add_option(
-    '-W', '--nowrite', action='store_false', dest='write',
-    help="don't write metadata (opposite of -w)"
-)
-import_cmd.parser.add_option(
-    '-a', '--autotag', action='store_true', dest='autotag',
-    help="infer tags for imported files (default)"
-)
-import_cmd.parser.add_option(
-    '-A', '--noautotag', action='store_false', dest='autotag',
-    help="don't infer tags for imported files (opposite of -a)"
-)
-import_cmd.parser.add_option(
-    '-p', '--resume', action='store_true', default=None,
-    help="resume importing if interrupted"
-)
-import_cmd.parser.add_option(
-    '-P', '--noresume', action='store_false', dest='resume',
-    help="do not try to resume importing"
-)
-import_cmd.parser.add_option(
-    '-q', '--quiet', action='store_true', dest='quiet',
-    help="never prompt for input: skip albums instead"
-)
-import_cmd.parser.add_option(
-    '-l', '--log', dest='log',
-    help='file to log untaggable albums for later review'
-)
-import_cmd.parser.add_option(
-    '-s', '--singletons', action='store_true',
-    help='import individual tracks instead of full albums'
-)
-import_cmd.parser.add_option(
-    '-t', '--timid', dest='timid', action='store_true',
-    help='always confirm all actions'
-)
-import_cmd.parser.add_option(
-    '-L', '--library', dest='library', action='store_true',
-    help='retag items matching a query'
-)
-import_cmd.parser.add_option(
-    '-i', '--incremental', dest='incremental', action='store_true',
-    help='skip already-imported directories'
-)
-import_cmd.parser.add_option(
-    '-I', '--noincremental', dest='incremental', action='store_false',
-    help='do not skip already-imported directories'
-)
-import_cmd.parser.add_option(
-    '--flat', dest='flat', action='store_true',
-    help='import an entire tree as a single album'
-)
-import_cmd.parser.add_option(
-    '-g', '--group-albums', dest='group_albums', action='store_true',
-    help='group tracks in a folder into separate albums'
-)
-import_cmd.parser.add_option(
-    '--pretend', dest='pretend', action='store_true',
-    help='just print the files to import'
-)
-import_cmd.func = import_func
 default_commands.append(import_cmd)
 
 
@@ -974,13 +936,15 @@ def list_items(lib, query, album, fmt=''):
             ui.print_(format(item, fmt))
 
 
-def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+# TODO: add 'ls' alias
+@click.command('list', short_help='query the library')
+@click.argument('query', nargs=-1)
+@ui.all_common_options
+@ui.pass_context
+def list_cmd(ctx, query, album, path):
+    list_items(ctx.lib, query, album)
 
 
-list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
-list_cmd.parser.add_all_common_options()
-list_cmd.func = list_func
 default_commands.append(list_cmd)
 
 
@@ -1073,24 +1037,20 @@ def update_items(lib, query, album, move, pretend):
                 album.move()
 
 
-def update_func(lib, opts, args):
-    update_items(lib, decargs(args), opts.album, opts.move, opts.pretend)
+# TODO: add 'up' and 'upd' aliases
+@click.command('update', short_help='update the library')
+@ui.album_option
+@ui.format_option()
+@click.option('move', '-M', '--nomove', is_flag=True, default=True,
+              help="don't move files in library")
+@click.option('-p', '--pretend', is_flag=True,
+              help='show all changes but do nothing')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def update_cmd(ctx, query, album, move, pretend):
+    update_items(ctx.lib, query, album, move, pretend)
 
 
-update_cmd = ui.Subcommand(
-    'update', help='update the library', aliases=('upd', 'up',)
-)
-update_cmd.parser.add_album_option()
-update_cmd.parser.add_format_option()
-update_cmd.parser.add_option(
-    '-M', '--nomove', action='store_false', default=True, dest='move',
-    help="don't move files in library"
-)
-update_cmd.parser.add_option(
-    '-p', '--pretend', action='store_true',
-    help="show all changes but do nothing"
-)
-update_cmd.func = update_func
 default_commands.append(update_cmd)
 
 
@@ -1127,27 +1087,30 @@ def remove_items(lib, query, album, delete):
             obj.remove(delete)
 
 
-def remove_func(lib, opts, args):
-    remove_items(lib, decargs(args), opts.album, opts.delete)
+# TODO: add 'rm' alias
+@click.command('remove', short_help='remove matching items from the library')
+@click.option('-d', '--delete', is_flag=True,
+              help='also remove files from disk')
+@ui.album_option
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def remove_cmd(ctx, query, album, delete):
+    remove_items(ctx.lib, query, album, delete)
 
 
-remove_cmd = ui.Subcommand(
-    'remove', help='remove matching items from the library', aliases=('rm',)
-)
-remove_cmd.parser.add_option(
-    "-d", "--delete", action="store_true",
-    help="also remove files from disk"
-)
-remove_cmd.parser.add_album_option()
-remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
 
 # stats: Show library/query statistics.
 
-def show_stats(lib, query, exact):
+@click.command('stats',
+               short_help='show statistics about the library or a query')
+@click.option('-e', '--exact', is_flag=True, help='exact size and time')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def stats_cmd(ctx, query, exact):
     """Shows some statistics about the matched items."""
-    items = lib.items(query)
+    items = ctx.lib.items(query)
 
     total_size = 0
     total_time = 0.0
@@ -1189,24 +1152,13 @@ Album artists: {7}""".format(
     )
 
 
-def stats_func(lib, opts, args):
-    show_stats(lib, decargs(args), opts.exact)
-
-
-stats_cmd = ui.Subcommand(
-    'stats', help='show statistics about the library or a query'
-)
-stats_cmd.parser.add_option(
-    '-e', '--exact', action='store_true',
-    help='exact size and time'
-)
-stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
 
 
 # version: Show current beets version.
 
-def show_version(lib, opts, args):
+@click.command('version', short_help='output version information')
+def version_cmd():
     print_('beets version %s' % beets.__version__)
     # Show plugins.
     names = sorted(p.name for p in plugins.find_plugins())
@@ -1216,10 +1168,6 @@ def show_version(lib, opts, args):
         print_('no plugins loaded')
 
 
-version_cmd = ui.Subcommand(
-    'version', help='output version information'
-)
-version_cmd.func = show_version
 default_commands.append(version_cmd)
 
 
@@ -1307,38 +1255,28 @@ def modify_parse_args(args):
     return query, mods, dels
 
 
-def modify_func(lib, opts, args):
-    query, mods, dels = modify_parse_args(decargs(args))
+# TODO: add 'mod' alias
+@click.command('modify', short_help='change metadata fields')
+@click.option('move', '-M', '--nomove', is_flag=True, default=True,
+              help="don't move files in library")
+@click.option('write', '-w', '--write', flag_value=True,
+              help="write new metadata to files' tags (default)")
+@click.option('write', '-W', '--nowrite', flag_value=False, default=None,
+              help="don't write metadata (opposite of -w)")
+@ui.album_option
+@ui.format_option(target='item')
+@click.option('-y', '--yes', is_flag=True, help='skip_confirmation')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def modify_cmd(ctx, query, write, move, album, yes):
+    query, mods, dels = modify_parse_args(query)
     if not mods and not dels:
         raise ui.UserError('no modifications specified')
-    write = opts.write if opts.write is not None else \
+    write = write if write is not None else \
         config['import']['write'].get(bool)
-    modify_items(lib, mods, dels, query, write, opts.move, opts.album,
-                 not opts.yes)
+    modify_items(ctx.lib, mods, dels, query, write, move, album, not yes)
 
 
-modify_cmd = ui.Subcommand(
-    'modify', help='change metadata fields', aliases=('mod',)
-)
-modify_cmd.parser.add_option(
-    '-M', '--nomove', action='store_false', default=True, dest='move',
-    help="don't move files in library"
-)
-modify_cmd.parser.add_option(
-    '-w', '--write', action='store_true', default=None,
-    help="write new metadata to files' tags (default)"
-)
-modify_cmd.parser.add_option(
-    '-W', '--nowrite', action='store_false', dest='write',
-    help="don't write metadata (opposite of -w)"
-)
-modify_cmd.parser.add_album_option()
-modify_cmd.parser.add_format_option(target='item')
-modify_cmd.parser.add_option(
-    '-y', '--yes', action='store_true',
-    help='skip confirmation'
-)
-modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
 
 
@@ -1362,29 +1300,22 @@ def move_items(lib, dest, query, copy, album):
         obj.store()
 
 
-def move_func(lib, opts, args):
-    dest = opts.dest
+# TODO: add 'mv' alias
+@click.command('move', short_help='move or copy items')
+@click.option('-d', '--dest', metavar='DIR', help='destination directory')
+@click.option('-c', '--copy', is_flag=True, help='copy instead of moving')
+@ui.album_option
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def move_cmd(ctx, dest, query, copy, album):
     if dest is not None:
         dest = normpath(dest)
         if not os.path.isdir(dest):
-            raise ui.UserError('no such directory: %s' % dest)
+            raise ui.UserError('no such directory: {}'.format(dest))
 
-    move_items(lib, dest, decargs(args), opts.copy, opts.album)
+    move_items(ctx.lib, dest, query, copy, album)
 
 
-move_cmd = ui.Subcommand(
-    'move', help='move or copy items', aliases=('mv',)
-)
-move_cmd.parser.add_option(
-    '-d', '--dest', metavar='DIR', dest='dest',
-    help='destination directory'
-)
-move_cmd.parser.add_option(
-    '-c', '--copy', default=False, action='store_true',
-    help='copy instead of moving'
-)
-move_cmd.parser.add_album_option()
-move_cmd.func = move_func
 default_commands.append(move_cmd)
 
 
@@ -1417,34 +1348,60 @@ def write_items(lib, query, pretend, force):
             item.try_sync()
 
 
-def write_func(lib, opts, args):
-    write_items(lib, decargs(args), opts.pretend, opts.force)
+@click.command('write', short_help='write tag information to files')
+@click.option('-p', '--pretend', is_flag=True,
+              help='show all changes but do nothing')
+@click.option('-f', '--force', is_flag=True,
+              help='write tags even if the existing tags match the database')
+@click.argument('query', nargs=-1)
+@ui.pass_context
+def write_cmd(ctx, query, pretend, force):
+    write_items(ctx.lib, query, pretend, force)
 
 
-write_cmd = ui.Subcommand('write', help='write tag information to files')
-write_cmd.parser.add_option(
-    '-p', '--pretend', action='store_true',
-    help="show all changes but do nothing"
-)
-write_cmd.parser.add_option(
-    '-f', '--force', action='store_true',
-    help="write tags even if the existing tags match the database"
-)
-write_cmd.func = write_func
 default_commands.append(write_cmd)
 
 
 # config: Show and edit user configuration.
 
-def config_func(lib, opts, args):
+def config_edit(ctx, param, value):
+    """Open a program to edit the user configuration.
+    """
+    if not value or ctx.resilient_parsing:
+        return
+
+    path = config.user_config_path()
+
+    editor = os.environ.get('EDITOR')
+
+    try:
+        util.interactive_open(path, editor)
+        ctx.exit()
+    except OSError as exc:
+        message = "Could not edit configuration: {0}".format(exc)
+        if not editor:
+            message += ". Please set the EDITOR environment variable"
+        raise ui.UserError(message)
+
+
+@click.command('config', short_help='show or edit the user configuration')
+@click.option('-p', '--paths', is_flag=True,
+              help='Show files that configuration was loaded from.')
+@click.option('-e', '--edit', is_flag=True, callback=config_edit,
+              help='Edit user configuration with $EDITOR.')
+@click.option('-d', '--defaults', is_flag=True,
+              help='Include the default configuration.')
+@click.option('-c', '--clear', 'redact', is_flag=True, default=True,
+              help='Do not redact sensitive fields.')
+def config_cmd(*args, **opts):
     # Make sure lazy configuration is loaded
     config.resolve()
 
     # Print paths.
-    if opts.paths:
+    if opts['paths']:
         filenames = []
         for source in config.sources:
-            if not opts.defaults and source.default:
+            if not opts['defaults'] and source.default:
                 continue
             if source.filename:
                 filenames.append(source.filename)
@@ -1459,48 +1416,13 @@ def config_func(lib, opts, args):
             print_(filename)
 
     # Open in editor.
-    elif opts.edit:
+    elif opts['edit']:
         config_edit()
 
     # Dump configuration.
     else:
-        print_(config.dump(full=opts.defaults, redact=opts.redact))
+        print_(config.dump(full=opts['defaults'], redact=opts['redact']))
 
-
-def config_edit():
-    """Open a program to edit the user configuration.
-    """
-    path = config.user_config_path()
-
-    editor = os.environ.get('EDITOR')
-    try:
-        util.interactive_open(path, editor)
-    except OSError as exc:
-        message = "Could not edit configuration: {0}".format(exc)
-        if not editor:
-            message += ". Please set the EDITOR environment variable"
-        raise ui.UserError(message)
-
-config_cmd = ui.Subcommand('config',
-                           help='show or edit the user configuration')
-config_cmd.parser.add_option(
-    '-p', '--paths', action='store_true',
-    help='show files that configuration was loaded from'
-)
-config_cmd.parser.add_option(
-    '-e', '--edit', action='store_true',
-    help='edit user configuration with $EDITOR'
-)
-config_cmd.parser.add_option(
-    '-d', '--defaults', action='store_true',
-    help='include the default configuration'
-)
-config_cmd.parser.add_option(
-    '-c', '--clear', action='store_false',
-    dest='redact', default=True,
-    help='do not redact sensitive fields'
-)
-config_cmd.func = config_func
 default_commands.append(config_cmd)
 
 
