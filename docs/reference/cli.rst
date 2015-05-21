@@ -245,7 +245,7 @@ move
 ````
 ::
 
-    beet move [-ca] [-d DIR] QUERY
+    beet move [-cap] [-d DIR] QUERY
 
 Move or copy items in your library.
 
@@ -254,6 +254,10 @@ query are renamed into your library directory structure. By specifying a
 destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
+
+To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
+show you all how the files would be moved but won't actually change anything
+on disk.
 
 .. _update-cmd:
 
