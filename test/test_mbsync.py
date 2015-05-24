@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Thomas Scholtes.
+# Copyright 2015, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,13 +12,18 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from mock import patch
 
-from _common import unittest
-from helper import TestHelper,\
+from test._common import unittest
+from test.helper import TestHelper,\
     generate_album_info, \
-    generate_track_info
+    generate_track_info, \
+    capture_log
 
+from beets import config
 from beets.library import Item
 
 
@@ -42,7 +47,7 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
                                 {'title': 'singleton info'})
 
         album_item = Item(
-            title='old title',
+            album='old title',
             mb_albumid='album id',
             mb_trackid='track id',
             path=''
@@ -67,9 +72,64 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         album.load()
         self.assertEqual(album.album, 'album info')
 
+    def test_message_when_skipping(self):
+        config['format_item'] = '$artist - $album - $title'
+        config['format_album'] = '$albumartist - $album'
+
+        # Test album with no mb_albumid.
+        # The default format for an album include $albumartist so
+        # set that here, too.
+        album_invalid = Item(
+            albumartist='album info',
+            album='album info',
+            path=''
+        )
+        self.lib.add_album([album_invalid])
+
+        # default format
+        with capture_log('beets.mbsync') as logs:
+            self.run_command('mbsync')
+        e = 'mbsync: Skipping album with no mb_albumid: ' + \
+            'album info - album info'
+        self.assertEqual(e, logs[0])
+
+        # custom format
+        with capture_log('beets.mbsync') as logs:
+            self.run_command('mbsync', '-f', "'$album'")
+        e = "mbsync: Skipping album with no mb_albumid: 'album info'"
+        self.assertEqual(e, logs[0])
+
+        # restore the config
+        config['format_item'] = '$artist - $album - $title'
+        config['format_album'] = '$albumartist - $album'
+
+        # Test singleton with no mb_trackid.
+        # The default singleton format includes $artist and $album
+        # so we need to stub them here
+        item_invalid = Item(
+            artist='album info',
+            album='album info',
+            title='old title',
+            path='',
+        )
+        self.lib.add(item_invalid)
+
+        # default format
+        with capture_log('beets.mbsync') as logs:
+            self.run_command('mbsync')
+        e = 'mbsync: Skipping singleton with no mb_trackid: ' + \
+            'album info - album info - old title'
+        self.assertEqual(e, logs[0])
+
+        # custom format
+        with capture_log('beets.mbsync') as logs:
+            self.run_command('mbsync', '-f', "'$title'")
+        e = "mbsync: Skipping singleton with no mb_trackid: 'old title'"
+        self.assertEqual(e, logs[0])
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Thomas Scholtes.
+# Copyright 2015, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,7 +15,7 @@
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
 
-- The `control_stdin` and `capture_output` context managers allow one to
+- The `control_stdin` and `capture_stdout` context managers allow one to
   interact with the user interface.
 
 - `has_program` checks the presence of a command on the system.
@@ -30,6 +30,9 @@ information or mock the environment.
 """
 
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import sys
 import os
 import os.path
@@ -41,15 +44,38 @@ from StringIO import StringIO
 from enum import Enum
 
 import beets
+from beets import logging
 from beets import config
 import beets.plugins
-from beets.library import Library, Item
+from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.mediafile import MediaFile
+from beets.mediafile import MediaFile, Image
+from beets.ui import _arg_encoding
 
 # TODO Move AutotagMock here
-import _common
+from test import _common
+
+
+class LogCapture(logging.Handler):
+
+    def __init__(self):
+        logging.Handler.__init__(self)
+        self.messages = []
+
+    def emit(self, record):
+        self.messages.append(unicode(record.msg))
+
+
+@contextmanager
+def capture_log(logger='beets'):
+    capture = LogCapture()
+    log = logging.getLogger(logger)
+    log.addHandler(capture)
+    try:
+        yield capture.messages
+    finally:
+        log.removeHandler(capture)
 
 
 @contextmanager
@@ -80,22 +106,29 @@ def capture_stdout():
     'spam'
     """
     org = sys.stdout
-    sys.stdout = StringIO()
+    sys.stdout = capture = StringIO()
     sys.stdout.encoding = 'utf8'
     try:
         yield sys.stdout
     finally:
         sys.stdout = org
+        print(capture.getvalue())
 
 
 def has_program(cmd, args=['--version']):
     """Returns `True` if `cmd` can be executed.
     """
+    full_cmd = [cmd] + args
+    for i, elem in enumerate(full_cmd):
+        if isinstance(elem, unicode):
+            full_cmd[i] = elem.encode(_arg_encoding())
     try:
         with open(os.devnull, 'wb') as devnull:
-            subprocess.check_call([cmd] + args, stderr=devnull,
+            subprocess.check_call(full_cmd, stderr=devnull,
                                   stdout=devnull, stdin=devnull)
     except OSError:
+        return False
+    except subprocess.CalledProcessError:
         return False
     else:
         return True
@@ -139,8 +172,8 @@ class TestHelper(object):
         self.config.read()
 
         self.config['plugins'] = []
-        self.config['verbose'] = True
-        self.config['color'] = False
+        self.config['verbose'] = 1
+        self.config['ui']['color'] = False
         self.config['threaded'] = False
 
         self.libdir = os.path.join(self.temp_dir, 'libdir')
@@ -155,7 +188,8 @@ class TestHelper(object):
 
     def teardown_beets(self):
         del self.lib._connections
-        del os.environ['BEETSDIR']
+        if 'BEETSDIR' in os.environ:
+            del os.environ['BEETSDIR']
         self.remove_temp_dir()
         self.config.clear()
         beets.config.read(user=False, defaults=True)
@@ -166,38 +200,56 @@ class TestHelper(object):
         Similar setting a list of plugins in the configuration. Make
         sure you call ``unload_plugins()`` afterwards.
         """
+        # FIXME this should eventually be handled by a plugin manager
         beets.config['plugins'] = plugins
         beets.plugins.load_plugins(plugins)
         beets.plugins.find_plugins()
+        # Take a backup of the original _types to restore when unloading
+        Item._original_types = dict(Item._types)
+        Album._original_types = dict(Album._types)
+        Item._types.update(beets.plugins.types(Item))
+        Album._types.update(beets.plugins.types(Album))
 
     def unload_plugins(self):
         """Unload all plugins and remove the from the configuration.
         """
+        # FIXME this should eventually be handled by a plugin manager
         beets.config['plugins'] = []
-        for plugin in beets.plugins._classes:
-            plugin.listeners = None
         beets.plugins._classes = set()
         beets.plugins._instances = {}
+        Item._types = Item._original_types
+        Album._types = Album._original_types
 
     def create_importer(self, item_count=1, album_count=1):
-        """Returns import session with fixtures.
+        """Create files to import and return corresponding session.
 
         Copies the specified number of files to a subdirectory of
-        ``self.temp_dir`` and creates a ``TestImportSession`` for this
-        path.
+        `self.temp_dir` and creates a `TestImportSession` for this path.
         """
         import_dir = os.path.join(self.temp_dir, 'import')
         if not os.path.isdir(import_dir):
             os.mkdir(import_dir)
 
-        for i in range(album_count):
-            album = u'album {0}'.format(i)
+        album_no = 0
+        while album_count:
+            album = u'album {0}'.format(album_no)
             album_dir = os.path.join(import_dir, album)
+            if os.path.exists(album_dir):
+                album_no += 1
+                continue
             os.mkdir(album_dir)
-            for j in range(item_count):
-                title = 'track {0}'.format(j)
+            album_count -= 1
+
+            track_no = 0
+            album_item_count = item_count
+            while album_item_count:
+                title = 'track {0}'.format(track_no)
                 src = os.path.join(_common.RSRC, 'full.mp3')
                 dest = os.path.join(album_dir, '{0}.mp3'.format(title))
+                if os.path.exists(dest):
+                    track_no += 1
+                    continue
+                album_item_count -= 1
                 shutil.copy(src, dest)
                 mediafile = MediaFile(dest)
                 mediafile.update({
@@ -214,31 +266,91 @@ class TestHelper(object):
         config['import']['autotag'] = False
         config['import']['resume'] = False
 
-        return TestImportSession(self.lib, logfile=None, query=None,
+        return TestImportSession(self.lib, loghandler=None, query=None,
                                  paths=[import_dir])
+
+    # Library fixtures methods
+
+    def create_item(self, **values):
+        """Return an `Item` instance with sensible default values.
+
+        The item receives its attributes from `**values` paratmeter. The
+        `title`, `artist`, `album`, `track`, `format` and `path`
+        attributes have defaults if they are not given as parameters.
+        The `title` attribute is formated with a running item count to
+        prevent duplicates. The default for the `path` attribute
+        respects the `format` value.
+
+        The item is attached to the database from `self.lib`.
+        """
+        item_count = self._get_item_count()
+        values_ = {
+            'title': u't\u00eftle {0}',
+            'artist': u'the \u00e4rtist',
+            'album': u'the \u00e4lbum',
+            'track': item_count,
+            'format': 'MP3',
+        }
+        values_.update(values)
+        values_['title'] = values_['title'].format(item_count)
+        values_['db'] = self.lib
+        item = Item(**values_)
+        if 'path' not in values:
+            item['path'] = 'audio.' + item['format'].lower()
+        return item
+
+    def add_item(self, **values):
+        """Add an item to the library and return it.
+
+        Creates the item by passing the parameters to `create_item()`.
+
+        If `path` is not set in `values` it is set to `item.destination()`.
+        """
+        item = self.create_item(**values)
+        item.add(self.lib)
+        if 'path' not in values:
+            item['path'] = item.destination()
+            item.store()
+        return item
+
+    def add_item_fixture(self, **values):
+        """Add an item with an actual audio file to the library.
+        """
+        item = self.create_item(**values)
+        extension = item['format'].lower()
+        item['path'] = os.path.join(_common.RSRC, 'min.' + extension)
+        item.add(self.lib)
+        item.move(copy=True)
+        item.store()
+        return item
+
+    def add_album(self, **values):
+        item = self.add_item(**values)
+        return self.lib.add_album([item])
 
     def add_item_fixtures(self, ext='mp3', count=1):
         """Add a number of items with files to the database.
         """
+        # TODO base this on `add_item()`
         items = []
         path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(count):
-            item = Item.from_path(str(path))
-            item.album = u'\xc3\xa4lbum {0}'.format(i)  # Check unicode paths
-            item.title = u't\xc3\x8ftle {0}'.format(i)
+            item = Item.from_path(bytes(path))
+            item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
+            item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
             item.move(copy=True)
             item.store()
             items.append(item)
         return items
 
-    def add_album_fixture(self, track_count=1):
+    def add_album_fixture(self, track_count=1, ext='mp3'):
         """Add an album with files to the database.
         """
         items = []
-        path = os.path.join(_common.RSRC, 'full.mp3')
+        path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(track_count):
-            item = Item.from_path(str(path))
+            item = Item.from_path(bytes(path))
             item.album = u'\u00e4lbum'  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
@@ -247,17 +359,32 @@ class TestHelper(object):
             items.append(item)
         return self.lib.add_album(items)
 
-    def create_mediafile_fixture(self, ext='mp3'):
+    def create_mediafile_fixture(self, ext='mp3', images=[]):
         """Copies a fixture mediafile with the extension to a temporary
         location and returns the path.
 
         It keeps track of the created locations and will delete the with
         `remove_mediafile_fixtures()`
+
+        `images` is a subset of 'png', 'jpg', and 'tiff'. For each
+        specified extension a cover art image is added to the media
+        file.
         """
         src = os.path.join(_common.RSRC, 'full.' + ext)
         handle, path = mkstemp()
         os.close(handle)
         shutil.copyfile(src, path)
+
+        if images:
+            mediafile = MediaFile(path)
+            imgs = []
+            for img_ext in images:
+                img_path = os.path.join(_common.RSRC,
+                                        'image-2x3.{0}'.format(img_ext))
+                with open(img_path, 'rb') as f:
+                    imgs.append(Image(f.read()))
+            mediafile.images = imgs
+            mediafile.save()
 
         if not hasattr(self, '_mediafile_fixtures'):
             self._mediafile_fixtures = []
@@ -270,12 +397,27 @@ class TestHelper(object):
             for path in self._mediafile_fixtures:
                 os.remove(path)
 
+    def _get_item_count(self):
+        if not hasattr(self, '__item_count'):
+            count = 0
+        self.__item_count = count + 1
+        return count
+
+    # Running beets commands
+
     def run_command(self, *args):
         if hasattr(self, 'lib'):
             lib = self.lib
         else:
             lib = Library(':memory:')
         beets.ui._raw_main(list(args), lib)
+
+    def run_with_output(self, *args):
+        with capture_stdout() as out:
+            self.run_command(*args)
+        return out.getvalue().decode('utf-8')
+
+    # Safe file operations
 
     def create_temp_dir(self):
         """Create a temporary directory and assign it into
@@ -287,6 +429,27 @@ class TestHelper(object):
         """Delete the temporary directory created by `create_temp_dir`.
         """
         shutil.rmtree(self.temp_dir)
+
+    def touch(self, path, dir=None, content=''):
+        """Create a file at `path` with given content.
+
+        If `dir` is given, it is prepended to `path`. After that, if the
+        path is relative, it is resolved with respect to
+        `self.temp_dir`.
+        """
+        if dir:
+            path = os.path.join(dir, path)
+
+        if not os.path.isabs(path):
+            path = os.path.join(self.temp_dir, path)
+
+        parent = os.path.dirname(path)
+        if not os.path.isdir(parent):
+            os.makedirs(parent)
+
+        with open(path, 'a+') as f:
+            f.write(content)
+        return path
 
 
 class TestImportSession(importer.ImportSession):
@@ -340,7 +503,7 @@ class TestImportSession(importer.ImportSession):
         assert isinstance(resolution, self.Resolution)
         self._resolutions.append(resolution)
 
-    def resolve_duplicate(self, task):
+    def resolve_duplicate(self, task, found_duplicates):
         try:
             res = self._resolutions.pop(0)
         except IndexError:

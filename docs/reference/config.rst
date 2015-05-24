@@ -119,6 +119,31 @@ compatibility with Windows-influenced network filesystems like Samba).
 Trailing dots and trailing whitespace, which can cause problems on Windows
 clients, are also removed.
 
+Note that paths might contain special characters such as typographical
+quotes (``“”``). With the configuration above, those will not be
+replaced as they don't match the typewriter quote (``"``). To also strip these
+special characters, you can either add them to the replacement list or use the
+:ref:`asciify-paths` configuration option below.
+
+.. _asciify-paths:
+
+asciify_paths
+~~~~~~~~~~~~~
+
+Convert all non-ASCII characters in paths to ASCII equivalents.
+
+For example, if your path template for
+singletons is ``singletons/$title`` and the title of a track is "Café",
+then the track will be saved as ``singletons/Cafe.mp3``.  The changes
+take place before applying the :ref:`replace` configuration and are roughly
+equivalent to wrapping all your path templates in the ``%asciify{}``
+:ref:`template function <template-functions>`.
+
+Default: ``no``.
+
+.. _unidecode module: http://pypi.python.org/pypi/Unidecode
+
+
 .. _art-filename:
 
 art_filename
@@ -137,31 +162,56 @@ Either ``yes`` or ``no``, indicating whether the autotagger should use
 multiple threads. This makes things faster but may behave strangely.
 Defaults to ``yes``.
 
-color
-~~~~~
-
-Either ``yes`` or ``no``; whether to use color in console output (currently
-only in the ``import`` command). Turn this off if your terminal doesn't
-support ANSI colors.
 
 .. _list_format_item:
+.. _format_item:
 
-list_format_item
-~~~~~~~~~~~~~~~~
+format_item
+~~~~~~~~~~~
 
 Format to use when listing *individual items* with the :ref:`list-cmd`
 command and other commands that need to print out items. Defaults to
 ``$artist - $album - $title``. The ``-f`` command-line option overrides
 this setting.
 
-.. _list_format_album:
+It used to be named `list_format_item`.
 
-list_format_album
-~~~~~~~~~~~~~~~~~
+.. _list_format_album:
+.. _format_album:
+
+format_album
+~~~~~~~~~~~~
 
 Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
+
+It used to be named `list_format_album`.
+
+.. _sort_item:
+
+sort_item
+~~~~~~~~~
+
+Default sort order to use when fetching items from the database. Defaults to
+``artist+ album+ disc+ track+``. Explicit sort orders override this default.
+
+.. _sort_album:
+
+sort_album
+~~~~~~~~~~
+
+Default sort order to use when fetching items from the database. Defaults to
+``albumartist+ album+``. Explicit sort orders override this default.
+
+.. _sort_case_insensitive:
+
+sort_case_insensitive
+~~~~~~~~~~~~~~~~~~~~~
+Either ``yes`` or ``no``, indicating whether the case should be ignored when
+sorting lexicographic fields. When set to ``no``, lower-case values will be
+placed after upper-case values (e.g., *Bar Qux foo*), while ``yes`` would
+result in the more expected *Bar foo Qux*. Default: ``yes``.
 
 .. _original_date:
 
@@ -214,6 +264,9 @@ directory if it's empty. A directory is considered empty if it only contains
 files whose names match the glob patterns in `clutter`, which should be a list
 of strings. The default list consists of "Thumbs.DB" and ".DS_Store".
 
+The importer only removes recursively searched subdirectories---the top-level
+directory you specify on the command line is never deleted.
+
 .. _max_filename_length:
 
 max_filename_length
@@ -231,6 +284,49 @@ id3v23
 By default, beets writes MP3 tags using the ID3v2.4 standard, the latest
 version of ID3. Enable this option to instead use the older ID3v2.3 standard,
 which is preferred by certain older software such as Windows Media Player.
+
+
+UI Options
+----------
+
+The options that allow for customization of the visual appearance
+of the console interface.
+
+These options are available in this section:
+
+color
+~~~~~
+
+Either ``yes`` or ``no``; whether to use color in console output (currently
+only in the ``import`` command). Turn this off if your terminal doesn't
+support ANSI colors.
+
+.. note::
+
+    The `color` option was previously a top-level configuration. This is
+    still respected, but a deprecation message will be shown until your
+    top-level `color` configuration has been nested under `ui`.
+
+colors
+~~~~~~
+
+The colors that are used throughout the user interface. These are only used if
+the ``color`` option is set to ``yes``. For example, you might have a section
+in your configuration file that looks like this::
+
+    ui:
+        color: yes
+        colors:
+            text_success: green
+            text_warning: yellow
+            text_error: red
+            text_highlight: red
+            text_highlight_minor: lightgray
+            action_default: turquoise
+            action: blue
+
+Available colors: black, darkred, darkgreen, brown, darkblue, purple, teal,
+lightgray, darkgray, red, green, yellow, blue, fuchsia, turquoise, white
 
 
 Importer Options
@@ -280,6 +376,21 @@ case beets doesn't do what you expect with your files.
 This option *overrides* ``copy``, so enabling it will always move
 (and not copy) files. The ``-c`` switch to the ``beet import`` command,
 however, still takes precedence.
+
+.. _link:
+
+link
+~~~~
+
+Either ``yes`` or ``no``, indicating whether to use symbolic links instead of
+moving or copying files. (It conflicts with the ``move`` and ``copy``
+options.) Defaults to ``no``.
+
+This option only works on platforms that support symbolic links: i.e., Unixes.
+It will fail on Windows.
+
+It's likely that you'll also want to set ``write`` to ``no`` if you use this
+option to preserve the metadata on the linked files.
 
 resume
 ~~~~~~
@@ -377,6 +488,12 @@ tracks from many albums mixed together.
 The ``--group-albums`` or ``-g`` option to the :ref:`import-cmd` command is
 equivalent, and the *G* interactive option invokes the same workflow.
 
+.. note::
+    
+    The :ref:`import log <import_log>` currently contains less information
+    in album-grouping mode. (Specifically, no directory names recorded because
+    directories are not used for grouping in this mode.)
+
 Default: ``no``.
 
 .. _autotag:
@@ -414,6 +531,16 @@ to one request per second.
 
 .. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _MusicBrainz: http://musicbrainz.org/
+
+.. _searchlimit:
+
+searchlimit
+~~~~~~~~~~~
+
+The number of matches returned when sending search queries to the
+MusicBrainz server.
+
+Default: ``5``.
 
 .. _match-config:
 
@@ -529,6 +656,19 @@ the penalty name to the ``ignored`` setting::
         ignored: missing_tracks unmatched_tracks
 
 The available penalties are the same as those for the :ref:`max_rec` setting.
+
+.. _required:
+
+required
+~~~~~~~~
+
+You can avoid matches that lack certain required information. Add the tags you
+want to enforce to the ``required`` setting::
+
+    match:
+        required: year label catalognum country
+
+No tags are required by default.
 
 .. _path-format-config:
 

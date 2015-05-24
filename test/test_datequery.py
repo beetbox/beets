@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +14,11 @@
 
 """Test for dbcore's date-based queries.
 """
-import _common
-from _common import unittest
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test import _common
+from test._common import unittest
 from datetime import datetime
 import time
 from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
@@ -112,9 +115,17 @@ class DateQueryTest(_common.LibTestCase):
         self.assertEqual(len(matched), 0)
 
 
+class DateQueryConstructTest(unittest.TestCase):
+    def test_long_numbers(self):
+        DateQuery('added', '1409830085..1412422089')
+
+    def test_too_many_components(self):
+        DateQuery('added', '12-34-56-78')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

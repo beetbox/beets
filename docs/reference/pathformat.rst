@@ -69,7 +69,8 @@ These functions are built in to beets:
   nothing if ``falsetext`` is left off).
 * ``%asciify{text}``: Convert non-ASCII characters to their ASCII equivalents.
   For example, "café" becomes "cafe". Uses the mapping provided by the
-  `unidecode module`_.
+  `unidecode module`_. See the :ref:`asciify-paths` configuration
+  option.
 * ``%aunique{identifiers,disambiguators}``: Provides a unique string to
   disambiguate similar albums in the database. See :ref:`aunique`, below.
 * ``%time{date_time,format}``: Return the date and time in any format accepted
@@ -80,7 +81,7 @@ These functions are built in to beets:
 .. _strftime: http://docs.python.org/2/library/time.html#time.strftime
 
 Plugins can extend beets with more template functions (see
-:ref:`writing-plugins`).
+:ref:`templ_plugins`).
 
 
 .. _aunique:
@@ -158,7 +159,7 @@ Available Values
 Here's a list of the different values available to path formats. The current
 list can be found definitively by running the command ``beet fields``. Note that
 plugins can add new (or replace existing) template values (see
-:ref:`writing-plugins`).
+:ref:`templ_plugins`).
 
 Ordinary metadata:
 
@@ -227,3 +228,26 @@ Library metadata:
 
 * mtime: The modification time of the audio file.
 * added: The date and time that the music was added to your library.
+* path: The item's filename.
+
+
+.. _templ_plugins:
+
+Template functions and values provided by plugins
+-------------------------------------------------
+
+Beets plugins can provide additional fields and functions to templates. See
+the :doc:`/plugins/index` page for a full list of plugins. Some plugin-provided
+constructs include:
+
+* ``$missing`` by :doc:`/plugins/missing`: The number of missing tracks per
+  album.
+* ``%bucket{text}`` by :doc:`/plugins/bucket`: Substitute a string by the
+  range it belongs to.
+* ``%the{text}`` by :doc:`/plugins/the`: Moves English articles to ends of
+  strings.
+
+The :doc:`/plugins/inline` lets you define template fields in your beets
+configuration file using Python snippets. And for more advanced processing,
+you can go all-in and write a dedicated plugin to register your own fields and
+functions (see :ref:`writing-plugins`).

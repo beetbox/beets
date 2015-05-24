@@ -73,8 +73,8 @@ all of these limitations.
       that.
 
 * Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
-  Musepack, Windows Media, and Opus files are supported. (Do you use some
-  other format? Please `file a feature request`_!)
+  Musepack, Windows Media, Opus, and AIFF files are supported. (Do you use
+  some other format? Please `file a feature request`_!)
 
 .. _file a feature request: https://github.com/sampsyo/beets/issues/new
 

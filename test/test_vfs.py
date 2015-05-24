@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,10 +13,14 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests for the virtual filesystem builder.."""
-import _common
-from _common import unittest
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test import _common
+from test._common import unittest
 from beets import library
 from beets import vfs
+
 
 class VFSTest(_common.TestCase):
     def setUp(self):
@@ -37,8 +41,9 @@ class VFSTest(_common.TestCase):
         self.assertEqual(self.tree.dirs['albums'].dirs['the album'].
                          files['the title'], 2)
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

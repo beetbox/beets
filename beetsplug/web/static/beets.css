@@ -87,39 +87,54 @@ body {
     font-size: 0.9em;
 }
 
-#detail {
+
+#main-detail, #extra-detail {
     position: fixed;
-    top: 36px;
-    bottom: 0;
     left: 17em;
     margin: 1.0em 0 0 1.5em;
 }
-#detail .artist, #detail .album, #detail .title {
+#main-detail {
+    top: 36px;
+    height: 98px;
+}
+#main-detail .artist, #main-detail .album, #main-detail .title {
     display: block;
 }
-#detail .title {
+#main-detail .title {
     font-size: 1.3em;
     font-weight: bold;
 }
-#detail .albumtitle {
+#main-detail .albumtitle {
     font-style: italic;
 }
 
-#detail dl dt, #detail dl dd {
+#extra-detail {
+    overflow-x: hidden;
+    overflow-y: auto;
+    top: 134px;
+    bottom: 0;
+    right: 0;
+}
+/*Fix for correctly displaying line breaks in lyrics*/
+#extra-detail .lyrics {
+    white-space: pre-wrap;
+}
+#extra-detail dl dt, #extra-detail dl dd {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-#detail dl dt {
+#extra-detail dl dt {
     width: 10em;
     float: left;
     text-align: right;
     font-weight: bold;
     clear: both;
 }
-#detail dl dd {
+#extra-detail dl dd {
     margin-left: 10.5em;
 }
+
 
 #player {
     float: left;

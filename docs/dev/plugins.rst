@@ -87,8 +87,11 @@ The function should use any of the utility functions defined in ``beets.ui``.
 Try running ``pydoc beets.ui`` to see what's available.
 
 You can add command-line options to your new command using the ``parser`` member
-of the ``Subcommand`` class, which is an ``OptionParser`` instance. Just use it
-like you would a normal ``OptionParser`` in an independent script.
+of the ``Subcommand`` class, which is a ``CommonOptionsParser`` instance. Just
+use it like you would a normal ``OptionParser`` in an independent script. Note
+that it offers several methods to add common options: ``--album``, ``--path``
+and ``--format``. This feature is versatile and extensively documented, try
+``pydoc beets.ui.CommonOptionsParser`` for more information.
 
 .. _plugin_events:
 
@@ -112,8 +115,23 @@ an example::
     def loaded():
         print 'Plugin loaded!'
 
-Pass the name of the event in question to the ``listen`` decorator. The events
-currently available are:
+Pass the name of the event in question to the ``listen`` decorator.
+
+Note that if you want to access an attribute of your plugin (e.g. ``config`` or
+``log``) you'll have to define a method and not a function. Here is the usual
+registration process in this case::
+
+    from beets.plugins import BeetsPlugin
+
+    class SomePlugin(BeetsPlugin):
+      def __init__(self):
+        super(SomePlugin, self).__init__()
+        self.register_listener('pluginload', self.loaded)
+
+      def loaded(self):
+        self._log.info('Plugin loaded!')
+
+The events currently available are:
 
 * *pluginload*: called after all the plugins have been loaded after the ``beet``
   command starts
@@ -133,24 +151,41 @@ currently available are:
   singleton to the library (not called for full-album imports). Parameters:
   ``lib``, ``item``
 
+* *before_item_moved*: called with an ``Item`` object immediately before its
+  file is moved. Parameters: ``item``, ``source`` path, ``destination`` path
+
 * *item_moved*: called with an ``Item`` object whenever its file is moved.
+  Parameters: ``item``, ``source`` path, ``destination`` path
+
+* *item_linked*: called with an ``Item`` object whenever a symlink is created
+  for a file.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
 * *item_removed*: called with an ``Item`` object every time an item (singleton
   or album's part) is removed from the library (even when its file is not
   deleted from disk).
 
-* *write*: called with an ``Item`` object just before a file's metadata is
-  written to disk (i.e., just before the file on disk is opened). Event
-  handlers may raise a ``library.FileOperationError`` exception to abort
-  the write operation. Beets will catch that exception, print an error
-  message and continue.
+* *write*: called with an ``Item`` object, a ``path``, and a ``tags``
+  dictionary just before a file's metadata is written to disk (i.e.,
+  just before the file on disk is opened). Event handlers may change
+  the ``tags`` dictionary to customize the tags that are written to the
+  media file. Event handlers may also raise a
+  ``library.FileOperationError`` exception to abort the write
+  operation. Beets will catch that exception, print an error message
+  and continue.
 
 * *after_write*: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).
 
-* *import_task_start*: called when before an import task begins processing.
+* *import_task_created*: called immediately after an import task is
+  initialized. Plugins can use this to, for example, change imported files of a
+  task before anything else happens. It's also possible to replace the task
+  with another task by returning a list of tasks. This list can contain zero
+  or more `ImportTask`s. Returning an empty list will stop the task.
   Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
+
+* *import_task_start*: called when before an import task begins processing.
+  Parameters: ``task`` and ``session``.
 
 * *import_task_apply*: called after metadata changes have been applied in an
   import task. Parameters: ``task`` and ``session``.
@@ -168,10 +203,13 @@ currently available are:
   Library object. Parameter: ``lib``.
 
 * *database_change*: a modification has been made to the library database. The
-  change might not be committed yet. Parameter: ``lib``.
+  change might not be committed yet. Parameters: ``lib`` and ``model``.
 
 * *cli_exit*: called just before the ``beet`` command-line program exits.
   Parameter: ``lib``.
+
+* *import_begin*: called just before a ``beet import`` session starts up.
+  Parameter: ``session``.
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
@@ -245,6 +283,14 @@ If you want to access configuration values *outside* of your plugin's section,
 import the `config` object from the `beets` module. That is, just put ``from
 beets import config`` at the top of your plugin and access values from there.
 
+If your plugin provides configuration values for sensitive data (e.g.,
+passwords, API keys, ...), you should add these to the config so they can be
+redacted automatically when users dump their config. This can be done by
+setting each value's `redact` flag, like so::
+
+    self.config['password'].redact = True
+
+
 Add Path Format Functions and Fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -282,7 +328,7 @@ Here's an example that adds a ``$disc_and_track`` field::
 
     def _tmpl_disc_and_track(item):
         """Expand to the disc number and track number if this is a
-        multi-disc release. Otherwise, just exapnds to the track
+        multi-disc release. Otherwise, just expands to the track
         number.
         """
         if item.disctotal > 1:
@@ -315,11 +361,11 @@ method.
 
 Here's an example plugin that provides a meaningless new field "foo"::
 
-    class FooPlugin(BeetsPlugin):
+    class fooplugin(beetsplugin):
         def __init__(self):
-            field = mediafile.MediaField(
-                mediafile.MP3DescStorageStyle(u'foo')
-                mediafile.StorageStyle(u'foo')
+            field = mediafile.mediafield(
+                mediafile.mp3descstoragestyle(u'foo')
+                mediafile.storagestyle(u'foo')
             )
             self.add_media_field('foo', field)
 
@@ -347,7 +393,7 @@ Multiple stages run in parallel but each stage processes only one task at a time
 and each task is processed by only one stage at a time.
 
 Plugins provide stages as functions that take two arguments: ``config`` and
-``task``, which are ``ImportConfig`` and ``ImportTask`` objects (both defined in
+``task``, which are ``ImportSession`` and ``ImportTask`` objects (both defined in
 ``beets.importer``). Add such a function to the plugin's ``import_stages`` field
 to register it::
 
@@ -356,7 +402,7 @@ to register it::
         def __init__(self):
             super(ExamplePlugin, self).__init__()
             self.import_stages = [self.stage]
-        def stage(self, config, task):
+        def stage(self, session, task):
             print('Importing something!')
 
 .. _extend-query:
@@ -394,3 +440,73 @@ plugin will be used if we issue a command like ``beet ls @something`` or
             return {
                 '@': ExactMatchQuery
             }
+
+
+Flexible Field Types
+^^^^^^^^^^^^^^^^^^^^
+
+If your plugin uses flexible fields to store numbers or other
+non-string values, you can specify the types of those fields. A rating
+plugin, for example, might want to declare that the ``rating`` field
+should have an integer type::
+
+    from beets.plugins import BeetsPlugin
+    from beets.dbcore import types
+
+    class RatingPlugin(BeetsPlugin):
+        item_types = {'rating': types.INTEGER}
+
+        @property
+        def album_types(self):
+            return {'rating': types.INTEGER}
+
+A plugin may define two attributes: `item_types` and `album_types`.
+Each of those attributes is a dictionary mapping a flexible field name
+to a type instance. You can find the built-in types in the
+`beets.dbcore.types` and `beets.library` modules or implement your own
+type by inheriting from the `Type` class.
+
+Specifying types has several advantages:
+
+* Code that accesses the field like ``item['my_field']`` gets the right
+  type (instead of just a string).
+
+* You can use advanced queries (like :ref:`ranges <numericquery>`)
+  from the command line.
+
+* User input for flexible fields may be validated and converted.
+
+
+.. _plugin-logging:
+
+Logging
+^^^^^^^
+
+Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
+`standard Python logging module`_. The logger is set up to `PEP 3101`_,
+str.format-style string formatting. So you can write logging calls like this::
+
+    self._log.debug(u'Processing {0.title} by {0.artist}', item)
+
+.. _PEP 3101: https://www.python.org/dev/peps/pep-3101/
+.. _standard Python logging module: https://docs.python.org/2/library/logging.html
+
+When beets is in verbose mode, plugin messages are prefixed with the plugin
+name to make them easier to see.
+
+What messages will be logged depends on the logging level and the action
+performed:
+
+* On import stages and event handlers, the default is ``WARNING`` messages and
+  above.
+* On direct actions, the default is ``INFO`` or above, as with the rest of
+  beets.
+
+The verbosity can be increased with ``--verbose`` flags: each flags lowers the
+level by a notch.
+
+This addresses a common pattern where plugins need to use the same code for a
+command and an import stage, but the command needs to print more messages than
+the import stage. (For example, you'll want to log "found lyrics for this song"
+when you're run explicitly as a command, but you don't want to noisily
+interrupt the importer interface when running automatically.)

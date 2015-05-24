@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,12 +14,15 @@
 
 """Specific, edge-case tests for the MediaFile metadata layer.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import shutil
 
-import _common
-from _common import unittest
-from helper import TestHelper
+from test import _common
+from test._common import unittest
+from test.helper import TestHelper
 import beets.mediafile
 
 
@@ -106,6 +109,10 @@ class InvalidValueToleranceTest(unittest.TestCase):
         us = _sc(unicode, 'caf\xc3\xa9')
         self.assertTrue(isinstance(us, unicode))
         self.assertTrue(us.startswith(u'caf'))
+
+    def test_safe_cast_float_with_no_numbers(self):
+        v = _sc(float, '+')
+        self.assertEqual(v, 0.0)
 
 
 class SafetyTest(unittest.TestCase, TestHelper):
@@ -235,6 +242,13 @@ class TypeTest(unittest.TestCase):
         self.mf.track = None
         self.assertEqual(self.mf.track, 0)
 
+    def test_set_date_to_none(self):
+        self.mf.date = None
+        self.assertIsNone(self.mf.date)
+        self.assertIsNone(self.mf.year)
+        self.assertIsNone(self.mf.month)
+        self.assertIsNone(self.mf.day)
+
 
 class SoundCheckTest(unittest.TestCase):
     def test_round_trip(self):
@@ -262,43 +276,68 @@ class SoundCheckTest(unittest.TestCase):
 
 
 class ID3v23Test(unittest.TestCase, TestHelper):
-    def _make_test(self, ext='mp3'):
+    def _make_test(self, ext='mp3', id3v23=False):
         self.create_temp_dir()
         src = os.path.join(_common.RSRC, 'full.{0}'.format(ext))
         self.path = os.path.join(self.temp_dir, 'test.{0}'.format(ext))
         shutil.copy(src, self.path)
-        return beets.mediafile.MediaFile(self.path)
+        return beets.mediafile.MediaFile(self.path, id3v23=id3v23)
 
     def _delete_test(self):
         self.remove_temp_dir()
 
     def test_v24_year_tag(self):
-        mf = self._make_test()
+        mf = self._make_test(id3v23=False)
         try:
             mf.year = 2013
-            mf.save(id3v23=False)
+            mf.save()
             frame = mf.mgfile['TDRC']
-            self.assertTrue('2013' in str(frame))
+            self.assertTrue('2013' in unicode(frame))
             self.assertTrue('TYER' not in mf.mgfile)
         finally:
             self._delete_test()
 
     def test_v23_year_tag(self):
-        mf = self._make_test()
+        mf = self._make_test(id3v23=True)
         try:
             mf.year = 2013
-            mf.save(id3v23=True)
+            mf.save()
             frame = mf.mgfile['TYER']
-            self.assertTrue('2013' in str(frame))
+            self.assertTrue('2013' in unicode(frame))
             self.assertTrue('TDRC' not in mf.mgfile)
         finally:
             self._delete_test()
 
     def test_v23_on_non_mp3_is_noop(self):
-        mf = self._make_test('m4a')
+        mf = self._make_test('m4a', id3v23=True)
         try:
             mf.year = 2013
-            mf.save(id3v23=True)
+            mf.save()
+        finally:
+            self._delete_test()
+
+    def test_v24_image_encoding(self):
+        mf = self._make_test(id3v23=False)
+        try:
+            mf.images = [beets.mediafile.Image(b'test data')]
+            mf.save()
+            frame = mf.mgfile.tags.getall('APIC')[0]
+            self.assertEqual(frame.encoding, 3)
+        finally:
+            self._delete_test()
+
+    @unittest.skip("a bug, see #899")
+    def test_v23_image_encoding(self):
+        """For compatibility with OS X/iTunes (and strict adherence to
+        the standard), ID3v2.3 tags need to use an inferior text
+        encoding: UTF-8 is not supported.
+        """
+        mf = self._make_test(id3v23=True)
+        try:
+            mf.images = [beets.mediafile.Image(b'test data')]
+            mf.save()
+            frame = mf.mgfile.tags.getall('APIC')[0]
+            self.assertEqual(frame.encoding, 1)
         finally:
             self._delete_test()
 
@@ -307,5 +346,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
+# Copyright 2015, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,17 +14,17 @@
 
 """ Clears tag fields in media files."""
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import re
-import logging
 from beets.plugins import BeetsPlugin
-from beets.library import Item
+from beets.mediafile import MediaFile
 from beets.importer import action
 from beets.util import confit
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '0.10'
-
-log = logging.getLogger('beets')
 
 
 class ZeroPlugin(BeetsPlugin):
@@ -47,20 +47,24 @@ class ZeroPlugin(BeetsPlugin):
         self.warned = False
 
         for field in self.config['fields'].as_str_seq():
-            if field not in Item._fields.keys():
-                log.error(u'[zero] invalid field: {0}'.format(field))
+            if field in ('id', 'path', 'album_id'):
+                self._log.warn(u'field \'{0}\' ignored, zeroing '
+                               u'it would be dangerous', field)
+                continue
+            if field not in MediaFile.fields():
+                self._log.error(u'invalid field: {0}', field)
                 continue
 
             try:
                 self.patterns[field] = self.config[field].as_str_seq()
             except confit.NotFoundError:
                 # Matches everything
-                self.patterns[field] = [u'']
+                self.patterns[field] = True
 
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
         if task.choice_flag == action.ASIS and not self.warned:
-            log.warn(u'[zero] cannot zero in \"as-is\" mode')
+            self._log.warn(u'cannot zero in \"as-is\" mode')
             self.warned = True
         # TODO request write in as-is mode
 
@@ -69,24 +73,29 @@ class ZeroPlugin(BeetsPlugin):
         """Check if field (as string) is matching any of the patterns in
         the list.
         """
+        if patterns is True:
+            return True
         for p in patterns:
             if re.search(p, unicode(field), flags=re.IGNORECASE):
                 return True
         return False
 
-    def write_event(self, item):
-        """Listen for write event."""
+    def write_event(self, item, path, tags):
+        """Set values in tags to `None` if the key and value are matched
+        by `self.patterns`.
+        """
         if not self.patterns:
-            log.warn(u'[zero] no fields, nothing to do')
+            self._log.warn(u'no fields, nothing to do')
             return
 
         for field, patterns in self.patterns.items():
-            try:
-                value = getattr(item, field)
-            except AttributeError:
-                log.error(u'[zero] no such field: {0}'.format(field))
-                continue
+            if field in tags:
+                value = tags[field]
+                match = self.match_patterns(tags[field], patterns)
+            else:
+                value = ''
+                match = patterns is True
 
-            if self.match_patterns(value, patterns):
-                log.debug(u'[zero] {0}: {1} -> None'.format(field, value))
-                setattr(item, field, None)
+            if match:
+                self._log.debug(u'{0}: {1} -> None', field, value)
+                tags[field] = None

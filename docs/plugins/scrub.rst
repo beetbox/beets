@@ -11,7 +11,7 @@ Automatic Scrubbing
 -------------------
 
 To automatically remove files' tags before writing new ones, just
-enable the plugin (see :doc:`/plugins/index`). When importing new files (with
+enable the ``scrub`` plugin (see :ref:`using-plugins`). When importing new files (with
 ``import.write`` turned on) or modifying files' tags with the ``beet modify``
 command, beets will first strip all types of tags entirely and then write the
 database-tracked metadata to the file.
@@ -31,11 +31,11 @@ The ``-W`` (or ``--nowrite``) option causes the command to just remove tags but
 not restore any information. This will leave the files with no metadata
 whatsoever.
 
-Configuring
------------
+Configuration
+-------------
 
-The plugin has one configuration option, ``auto``, which lets you disable
-automatic metadata stripping. To do so, add this to your ``config.yaml``::
+To configure the plugin, make a ``scrub:`` section in your
+configuration file. There is one option:
 
-    scrub:
-        auto: no
+- **auto**: Enable metadata stripping during import.
+  Default: ``yes``.

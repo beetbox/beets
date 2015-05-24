@@ -7,9 +7,9 @@ created to work well with `MPD's`_ playlist functionality.
 
 .. _MPD's: http://www.musicpd.org/
 
-To use it, enable the plugin by putting ``smartplaylist`` in the ``plugins``
-section in your ``config.yaml``. Then configure your smart playlists like the
-following example::
+To use it, enable the ``smartplaylist`` plugin in your configuration
+(see :ref:`using-plugins`).
+Then configure your smart playlists like the following example::
 
     smartplaylist:
         relative_to: ~/Music
@@ -20,12 +20,6 @@ following example::
 
             - name: beatles.m3u
               query: 'artist:Beatles'
-
-If you intend to use this plugin to generate playlists for MPD, you should set
-``relative_to`` to your MPD music directory (by default, ``relative_to`` is
-``None``, and the absolute paths to your music files will be generated).
-
-``playlist_dir`` is where the generated playlist files will be put.
 
 You can generate as many playlists as you want by adding them to the
 ``playlists`` section, using beets query syntax (see
@@ -50,6 +44,18 @@ You can also gather the results of several queries by putting them in a list.
     - name: 'BeatlesUniverse.m3u'
       query: ['artist:beatles', 'genre:"beatles cover"']
 
+Note that since beets query syntax is in effect, you can also use sorting
+directives::
+
+    - name: 'Chronological Beatles'
+      query: 'artist:Beatles year+'
+    - name: 'Mixed Rock'
+      query: ['artist:Beatles year+', 'artist:"Led Zeppelin" bitrate+']
+
+The former case behaves as expected, however please note that in the latter the
+sorts will be merged: ``year+ bitrate+`` will apply to both the Beatles and Led
+Zeppelin. If that bothers you, please get in touch.
+
 For querying albums instead of items (mainly useful with extensible fields),
 use the ``album_query`` field. ``query`` and ``album_query`` can be used at the
 same time. The following example gathers single items but also items belonging
@@ -59,16 +65,34 @@ to albums that have a ``for_travel`` extensible field set to 1::
       album_query: 'for_travel:1'
       query: 'for_travel:1'
 
-By default, all playlists are automatically regenerated after every beets
-command that changes the library database. This can be disabled by specifying
-``auto: no``. To force regeneration, you can invoke it manually from the
-command line::
+By default, each playlist is automatically regenerated at the end of the
+session if an item or album it matches changed in the library database. To
+force regeneration, you can invoke it manually from the command line::
 
     $ beet splupdate
 
-which will generate your new smart playlists.
+This will regenerate all smart playlists. You can also specify which ones you
+want to regenerate::
+
+    $ beet splupdate BeatlesUniverse.m3u MyTravelPlaylist
 
 You can also use this plugin together with the :doc:`mpdupdate`, in order to
 automatically notify MPD of the playlist change, by adding ``mpdupdate`` to
 the ``plugins`` line in your config file *after* the ``smartplaylist``
 plugin.
+
+Configuration
+-------------
+
+To configure the plugin, make a ``smartplaylist:`` section in your
+configuration file. In addition to the ``playlists`` described above, the
+other configuration options are:
+
+- **auto**: Regenerate the playlist after every database change.
+  Default: ``yes``.
+- **playlist_dir**: Where to put the generated playlist files.
+  Default: The current working directory (i.e., ``'.'``).
+- **relative_to**: Generate paths in the playlist files relative to a base
+  directory. If you intend to use this plugin to generate playlists for MPD,
+  point this to your MPD music directory.
+  Default: Use absolute paths.

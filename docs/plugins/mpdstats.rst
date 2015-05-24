@@ -21,49 +21,37 @@ Install the library from `pip`_, like so::
 
     $ pip install python-mpd
 
+Add the ``mpdstats`` plugin to your configuration (see :ref:`using-plugins`).
+
 .. _pip: http://www.pip-installer.org/
-
-Configuring
------------
-
-To use it, enable it in your ``config.yaml`` by putting ``mpdstats`` on your
-``plugins`` line. Then, you'll probably want to configure the specifics of
-your MPD server. You can do that using an ``mpd:`` section in your
-``config.yaml``, which looks like this::
-
-    mpd:
-        host: localhost
-        port: 6600
-        password: seekrit
-
-If your MPD library is at another location then the beets library (e.g.,
-because one is mounted on a NFS share), you can specify the
-``music_directory`` in the config like this::
-
-    mpdstats:
-        music_directory: /PATH/TO/YOUR/FILES
-
-If you don't want the plugin to update the rating, you can disable it with::
-
-    mpdstats:
-        rating: False
-
-If you want to change the way the rating is calculated, you can set the
-``rating_mix`` option like this::
-
-    mpdstats:
-        rating_mix: 1.0
-
-For details, see below.
-
 
 Usage
 -----
 
-Now use the ``mpdstats`` command to fire it up::
+Use the ``mpdstats`` command to fire it up::
 
     $ beet mpdstats
 
+Configuration
+-------------
+
+To configure the plugin, make an ``mpd:`` section in your
+configuration file. The available options are:
+
+- **host**: The MPD server hostname.
+  Default: ``localhost``.
+- **port**: The MPD server port.
+  Default: 6600.
+- **password**: The MPD server password.
+  Default: None.
+- **music_directory**: If your MPD library is at a different location from the
+  beets library (e.g., because one is mounted on a NFS share), specify the path
+  here.
+  Default: The beets library directory.
+- **rating**: Enable rating updates.
+  Default: ``yes``.
+- **rating_mix**: Tune the way rating is calculated (see below).
+  Default: 0.75.
 
 A Word on Ratings
 -----------------

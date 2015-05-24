@@ -9,13 +9,12 @@ collection better.
 Installing
 ----------
 
-You will need Python. (Beets is written for `Python 2.7`_, but it works with
-2.6 as well. Python 3.x is not yet supported.)
+You will need Python. (Beets is written for `Python 2.7`_. 2.6 support has been
+dropped, and Python 3.x is not yet supported.)
 
-.. _Python 2.7: http://www.python.org/download/releases/2.7.2/
+.. _Python 2.7: http://www.python.org/download/
 
-* **Mac OS X** v10.7 (Lion) and 10.8 (Mountain Lion) include Python 2.7 out of
-  the box; Snow Leopard ships with Python 2.6.
+* **Mac OS X** v10.7 (Lion) and later include Python 2.7 out of the box.
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
@@ -35,8 +34,21 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 * On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
 
+* On **OpenBSD-current**, beets is available in ports (at ``audio/beets``) and
+  as a package, which can be installed with ``pkg_add beets``.
+
 * For **Slackware**, there's a `SlackBuild`_ available.
 
+* On **Fedora 21**, you there is a `copr`_ for beets, which you can install
+  using `DNF`_ like so::
+
+      $ yum install dnf dnf-plugins-core
+      $ dnf copr enable afreof/beets
+      $ yum update
+      $ yum install beets
+
+.. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
+.. _dnf: http://fedoraproject.org/wiki/Features/DNF
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
@@ -114,7 +126,9 @@ place to start::
 
 Change that first path to a directory where you'd like to keep your music. Then,
 for ``library``, choose a good place to keep a database file that keeps an index
-of your music.
+of your music. (The config's format is `YAML`_. You'll want to configure your
+text editor to use spaces, not real tabs, for indentation.)
+
 
 The default configuration assumes you want to start a new organized music folder
 (that ``directory`` above) and that you'll *copy* cleaned-up music into that
@@ -147,6 +161,8 @@ beets to behave many other ways:
 There are approximately six million other configuration options you can set
 here, including the directory and file naming scheme. See
 :doc:`/reference/config` for a full reference.
+
+.. _YAML: http://yaml.org/
 
 Importing Your Library
 ----------------------

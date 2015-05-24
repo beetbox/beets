@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,11 +13,15 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests the TerminalImportSession. The tests are the same as in the
+
 test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-from _common import unittest, DummyIO
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest, DummyIO
 from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer
@@ -65,7 +69,7 @@ class TestTerminalImportSession(TerminalImportSession):
             self.io.addinput('S')
         elif isinstance(choice, int):
             self.io.addinput('M')
-            self.io.addinput(str(choice))
+            self.io.addinput(unicode(choice))
             self._add_choice_input()
         else:
             raise Exception('Unknown choice %s' % choice)
@@ -91,7 +95,7 @@ class TerminalImportSessionSetup(object):
             self.io = DummyIO()
         self.io.install()
         self.importer = TestTerminalImportSession(
-            self.lib, logfile=None, query=None, io=self.io,
+            self.lib, loghandler=None, query=None, io=self.io,
             paths=[import_dir or self.import_dir],
         )
 
@@ -144,5 +148,5 @@ class GlobalGroupAlbumsImportTest(TerminalImportSessionSetup,
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

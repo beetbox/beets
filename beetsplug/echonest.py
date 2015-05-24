@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +14,10 @@
 
 """Fetch a variety of acoustic metrics from The Echo Nest.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import time
-import logging
 import socket
 import os
 import tempfile
@@ -23,11 +25,10 @@ from string import Template
 import subprocess
 
 from beets import util, config, plugins, ui
+from beets.dbcore import types
 import pyechonest
 import pyechonest.song
 import pyechonest.track
-
-log = logging.getLogger('beets')
 
 # If a request at the EchoNest fails, we want to retry the request RETRIES
 # times and wait between retries for RETRY_INTERVAL seconds.
@@ -38,7 +39,14 @@ DEVNULL = open(os.devnull, 'wb')
 ALLOWED_FORMATS = ('MP3', 'OGG', 'AAC')
 UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
-# The attributes we can import and where to store them in beets fields.
+# FIXME: use avconv?
+CONVERT_COMMAND = u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest'
+TRUNCATE_COMMAND = u'ffmpeg -t 300 -i $source'\
+                   u'-y -acodec libvorbis -vn -aq 2 $dest'
+
+# Maps attribute names from echonest to their field names in beets.
+# The attributes are retrieved from a songs `audio_summary`. See:
+# http://echonest.github.io/pyechonest/song.html#pyechonest.song.profile
 ATTRIBUTES = {
     'energy':       'energy',
     'liveness':     'liveness',
@@ -47,6 +55,16 @@ ATTRIBUTES = {
     'danceability': 'danceability',
     'valence':      'valence',
     'tempo':        'bpm',
+}
+
+# Types for the flexible fields added by `ATTRIBUTES`
+FIELD_TYPES = {
+    'energy':       types.FLOAT,
+    'liveness':     types.FLOAT,
+    'speechiness':  types.FLOAT,
+    'acousticness': types.FLOAT,
+    'danceability': types.FLOAT,
+    'valence':      types.FLOAT,
 }
 
 MUSICAL_SCALE = ['C', 'C#', 'D', 'D#', 'E' 'F',
@@ -100,28 +118,27 @@ def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
             d = diff(item, src_item)
             if d < threshold:
                 s = fmt.replace('${difference}', '{:2.2f}'.format(d))
-                ui.print_obj(item, lib, s)
+                ui.print_(format(item, s))
 
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):
+
+    item_types = FIELD_TYPES
+
     def __init__(self):
         super(EchonestMetadataPlugin, self).__init__()
         self.config.add({
             'auto':    True,
             'apikey':  u'NY2KTZHQ0QDSHBAP6',
-            'codegen': None,
             'upload':  True,
             'convert': True,
             'truncate': True,
         })
         self.config.add(ATTRIBUTES)
+        self.config['apikey'].redact = True
 
         pyechonest.config.ECHO_NEST_API_KEY = \
-            config['echonest']['apikey'].get(unicode)
-
-        if config['echonest']['codegen']:
-            pyechonest.config.CODEGEN_BINARY_OVERRIDE = \
-                config['echonest']['codegen'].get(unicode)
+            self.config['apikey'].get(unicode)
 
         if self.config['auto']:
             self.import_stages = [self.imported]
@@ -137,28 +154,30 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             except pyechonest.util.EchoNestAPIError as e:
                 if e.code == 3:
                     # reached access limit per minute
+                    self._log.debug(u'rate-limited on try {0}; waiting {1} '
+                                    u'seconds', i + 1, RETRY_INTERVAL)
                     time.sleep(RETRY_INTERVAL)
                 elif e.code == 5:
                     # specified identifier does not exist
                     # no use in trying again.
-                    log.debug(u'echonest: {0}'.format(e))
+                    self._log.debug(u'{0}', e)
                     return None
                 else:
-                    log.error(u'echonest: {0}'.format(e.args[0][0]))
+                    self._log.error(u'{0}', e.args[0][0])
                     return None
             except (pyechonest.util.EchoNestIOError, socket.error) as e:
-                log.warn(u'echonest: IO error: {0}'.format(e))
+                self._log.warn(u'IO error: {0}', e)
                 time.sleep(RETRY_INTERVAL)
             except Exception as e:
                 # there was an error analyzing the track, status: error
-                log.debug(u'echonest: {0}'.format(e))
+                self._log.debug(u'{0}', e)
                 return None
             else:
                 break
         else:
             # If we exited the loop without breaking, then we used up all
             # our allotted retries.
-            raise ui.UserError(u'echonest request failed repeatedly')
+            self._log.error(u'request failed repeatedly')
             return None
         return result
 
@@ -169,7 +188,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         seconds, it's considered a match.
         """
         if not songs:
-            log.debug(u'echonest: no songs found')
+            self._log.debug(u'no songs found')
             return
 
         pick = None
@@ -207,13 +226,13 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         # Look up the Echo Nest ID based on the MBID.
         else:
             if not item.mb_trackid:
-                log.debug(u'echonest: no ID available')
+                self._log.debug(u'no ID available')
                 return
             mbid = 'musicbrainz:track:{0}'.format(item.mb_trackid)
             track = self._echofun(pyechonest.track.track_from_id,
                                   identifier=mbid)
             if not track:
-                log.debug(u'echonest: lookup by MBID failed')
+                self._log.debug(u'lookup by MBID failed')
                 return
             enid = track.song_id
 
@@ -233,69 +252,52 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                                        'audio_summary'])
         return self._flatten_song(self._pick_song(songs, item))
 
-    # "Identify" (fingerprinting) lookup.
-
-    def fingerprint(self, item):
-        """Get the fingerprint for this item from the EchoNest.  If we
-        already have a fingerprint, return it and don't calculate it
-        again.
-        """
-        if FINGERPRINT_KEY in item:
-            return item[FINGERPRINT_KEY]
-
-        try:
-            res = self._echofun(pyechonest.util.codegen,
-                                filename=item.path.decode('utf-8'))
-        except Exception as e:
-            # Frustratingly, the pyechonest library raises a plain Exception
-            # when the command is not found.
-            log.debug(u'echonest: codegen failed: {0}'.format(e))
-            return
-
-        if not res or 'code' not in res[0] or not res[0]['code']:
-            log.debug(u'echonest: no fingerprint returned')
-            return
-        code = res[0]['code']
-
-        log.debug(u'echonest: calculated fingerprint')
-        item[FINGERPRINT_KEY] = code
-        return code
-
-    def identify(self, item):
-        """Try to identify the song at the EchoNest.
-        """
-        code = self.fingerprint(item)
-        if not code:
-            return
-
-        songs = self._echofun(pyechonest.song.identify, code=code)
-        if not songs:
-            log.debug(u'echonest: no songs found for fingerprint')
-            return
-
-        return self._flatten_song(max(songs, key=lambda s: s.score))
-
     # "Analyze" (upload the audio itself) method.
 
-    def convert(self, item):
+    def prepare_upload(self, item):
+        """Truncate and convert an item's audio file so it can be
+        uploaded to echonest.
+
+        Return a ``(source, tmp)`` tuple where `source` is the path to
+        the file to be uploaded and `tmp` is a temporary file to be
+        deleted after the upload or `None`.
+
+        If conversion or truncation fails, return `None`.
+        """
+        source = item.path
+        tmp = None
+        if item.format not in ALLOWED_FORMATS:
+            if self.config['convert']:
+                tmp = source = self.convert(source)
+            if not tmp:
+                return
+
+        if os.stat(source).st_size > UPLOAD_MAX_SIZE:
+            if self.config['truncate']:
+                source = self.truncate(source)
+                if tmp is not None:
+                    util.remove(tmp)
+                tmp = source
+            else:
+                return
+
+        if source:
+            return source, tmp
+
+    def convert(self, source):
         """Converts an item in an unsupported media format to ogg.  Config
         pending.
         This is stolen from Jakob Schnitzers convert plugin.
         """
-        fd, dest = tempfile.mkstemp(u'.ogg')
+        fd, dest = tempfile.mkstemp(b'.ogg')
         os.close(fd)
-        source = item.path
 
-        log.info(u'echonest: encoding {0} to {1}'.format(
-            util.displayable_path(source),
-            util.displayable_path(dest),
-        ))
+        self._log.info(u'encoding {0} to {1}',
+                       util.displayable_path(source),
+                       util.displayable_path(dest))
 
-        # Build up the FFmpeg command line.
-        # FIXME: use avconv?
-        command = u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest'
         opts = []
-        for arg in command.split():
+        for arg in CONVERT_COMMAND.split():
             arg = arg.encode('utf-8')
             opts.append(Template(arg).substitute(source=source, dest=dest))
 
@@ -303,29 +305,24 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         try:
             util.command_output(opts)
         except (OSError, subprocess.CalledProcessError) as exc:
-            log.debug(u'echonest: encode failed: {0}'.format(exc))
+            self._log.debug(u'encode failed: {0}', exc)
             util.remove(dest)
             return
 
-        log.info(u'echonest: finished encoding {0}'.format(
-            util.displayable_path(source))
-        )
+        self._log.info(u'finished encoding {0}', util.displayable_path(source))
         return dest
 
-    def truncate(self, item):
+    def truncate(self, source):
         """Truncates an item to a size less than UPLOAD_MAX_SIZE."""
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
-        source = item.path
 
-        log.info(u'echonest: truncating {0} to {1}'.format(
-            util.displayable_path(source),
-            util.displayable_path(dest),
-        ))
+        self._log.info(u'truncating {0} to {1}',
+                       util.displayable_path(source),
+                       util.displayable_path(dest))
 
-        command = u'ffmpeg -t 300 -i $source -y -acodec copy $dest'
         opts = []
-        for arg in command.split():
+        for arg in TRUNCATE_COMMAND.split():
             arg = arg.encode('utf-8')
             opts.append(Template(arg).substitute(source=source, dest=dest))
 
@@ -333,46 +330,31 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         try:
             util.command_output(opts)
         except (OSError, subprocess.CalledProcessError) as exc:
-            log.debug(u'echonest: truncate failed: {0}'.format(exc))
+            self._log.debug(u'truncate failed: {0}', exc)
             util.remove(dest)
             return
 
-        log.info(u'echonest: truncate encoding {0}'.format(
-            util.displayable_path(source))
-        )
+        self._log.info(u'truncate encoding {0}', util.displayable_path(source))
         return dest
 
     def analyze(self, item):
         """Upload the item to the EchoNest for analysis. May require to
         convert the item to a supported media format.
         """
-        # Get the file to upload (either by using the file directly or by
-        # transcoding it first).
-        source = item.path
-        if item.format not in ALLOWED_FORMATS:
-            if config['echonest']['convert']:
-                source = self.convert(item)
-                if not source:
-                    log.debug(u'echonest: failed to convert file')
-                    return
-            else:
-                return
+        prepared = self.prepare_upload(item)
+        if not prepared:
+            self._log.debug(u'could not prepare file for upload')
+            return
 
-        if os.stat(item.path).st_size > UPLOAD_MAX_SIZE:
-            if config['echonest']['truncate']:
-                source = self.truncate(item)
-                if not source:
-                    log.debug(u'echonest: failed to truncate file')
-                    return
-            else:
-                return
-
-        # Upload the audio file.
-        log.info(u'echonest: uploading file, please be patient')
+        source, tmp = prepared
+        self._log.info(u'uploading file, please be patient')
         track = self._echofun(pyechonest.track.track_from_filename,
                               filename=source)
+        if tmp is not None:
+            util.remove(tmp)
+
         if not track:
-            log.debug(u'echonest: failed to upload file')
+            self._log.debug(u'failed to upload file')
             return
 
         # Sometimes we have a track but no song. I guess this happens for
@@ -416,23 +398,18 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         # There are four different ways to get a song. Each method is a
         # callable that takes the Item as an argument.
         methods = [self.profile, self.search]
-        if config['echonest']['codegen']:
-            methods.append(self.identify)
-        if config['echonest']['upload']:
+        if self.config['upload']:
             methods.append(self.analyze)
 
         # Try each method in turn.
         for method in methods:
             song = method(item)
             if song:
-                log.debug(
-                    u'echonest: got song through {0}: {1} - {2} [{3}]'.format(
-                        method.__name__,
-                        item.artist,
-                        item.title,
-                        song['duration'],
-                    )
-                )
+                self._log.debug(u'got song through {0}: {1} [{2}]',
+                                method.__name__,
+                                item,
+                                song.get('duration'),
+                                )
                 return song
 
     def apply_metadata(self, item, values, write=False):
@@ -443,7 +420,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         for k, v in values.iteritems():
             if k in ATTRIBUTES:
                 field = ATTRIBUTES[k]
-                log.debug(u'echonest: metadata: {0} = {1}'.format(field, v))
+                self._log.debug(u'metadata: {0} = {1}', field, v)
                 if field == 'bpm':
                     item[field] = int(v)
                 else:
@@ -455,7 +432,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             item['initial_key'] = key
         if 'id' in values:
             enid = values['id']
-            log.debug(u'echonest: metadata: {0} = {1}'.format(ID_KEY, enid))
+            self._log.debug(u'metadata: {0} = {1}', ID_KEY, enid)
             item[ID_KEY] = enid
 
         # Write and save.
@@ -482,7 +459,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         for field in ATTRIBUTES.values():
             if not item.get(field):
                 return True
-        log.info(u'echonest: no update required')
+        self._log.info(u'no update required')
         return False
 
     def commands(self):
@@ -497,8 +474,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                log.info(u'echonest: {0} - {1}'.format(item.artist,
-                                                       item.title))
+                self._log.info(u'{0}', item)
                 if self.config['force'] or self.requires_update(item):
                     song = self.fetch_song(item)
                     if song:
@@ -511,10 +487,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             '-t', '--threshold', dest='threshold', action='store',
             type='float', default=0.15, help='Set difference threshold'
         )
-        sim_cmd.parser.add_option(
-            '-f', '--format', action='store', default='${difference}: ${path}',
-            help='print with custom format'
-        )
+        sim_cmd.parser.add_format_option()
 
         def sim_func(lib, opts, args):
             self.config.set_args(opts)

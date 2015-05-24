@@ -10,9 +10,10 @@ playback levels.
 Installation
 ------------
 
-This plugin can use one of two backends to compute the ReplayGain values:
-GStreamer and mp3gain (and its cousin, aacgain). mp3gain can be easier to
-install but GStreamer support more audio formats.
+This plugin can use one of four backends to compute the ReplayGain values:
+GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools and bs1770gain. mp3gain
+can be easier to install but GStreamer, Audio Tools and bs1770gain support more audio
+formats.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -23,12 +24,13 @@ GStreamer
 
 To use `GStreamer`_ for ReplayGain analysis, you will of course need to
 install GStreamer and plugins for compatibility with your audio files.
-You will need at least GStreamer 1.0.
+You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. python-gi).
 
+.. _PyGObject 3.x: https://wiki.gnome.org/action/show/Projects/PyGObject
 .. _GStreamer: http://gstreamer.freedesktop.org/
 
-Then, enable the plugin (see :ref:`using-plugins`) and specify the GStreamer
-backend by adding this to your configuration file::
+Then, enable the ``replaygain`` plugin (see :ref:`using-plugins`) and specify
+the GStreamer backend by adding this to your configuration file::
 
     replaygain:
         backend: gstreamer
@@ -60,35 +62,72 @@ you can configure the path explicitly like so::
     replaygain:
         command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
+Python Audio Tools
+``````````````````
+
+This backend uses the `Python Audio Tools`_ package to compute ReplayGain for
+a range of different file formats. The package is not available via PyPI; it
+must be installed manually.
+
+On OS X, most of the dependencies can be installed with `Homebrew`_::
+
+    brew install mpg123 mp3gain vorbisgain faad2 libvorbis
+
+.. _Python Audio Tools: http://audiotools.sourceforge.net
+
+bs1770gain
+``````````
+
+To use this backend, you will need to install the `bs1770gain`_ command-line
+tool. Follow the instructions at the `bs1770gain`_ Web site and ensure that
+the tool is on your ``$PATH``.
+
+.. _bs1770gain: http://bs1770gain.sourceforge.net/
+
+Then, enable the plugin (see :ref:`using-plugins`) and specify the
+backend in your configuration file::
+
+    replaygain:
+        backend: bs1770gain
+
+For Windows users: the tool currently has issues with long and non-ASCII path
+names. You may want to use the :ref:`asciify-paths` configuration option until
+this is resolved.
 
 Configuration
 -------------
 
-Available configuration options for the ``replaygain`` section in your
-configuration file include:
+To configure the plugin, make a ``replaygain:`` section in your
+configuration file. The available options are:
 
-* **overwrite**: By default, files that already have ReplayGain tags will not
-  be re-analyzed. If you want to analyze *every* file on import, you can set
-  the ``overwrite`` option for the plugin in your :doc:`configuration file
-  </reference/config>`, like so::
-
-      replaygain:
-          overwrite: yes
-
-* **targetlevel**: The target loudness level can be modified to any number of
-  decibels with the ``targetlevel`` option (default: 89 dB).
+- **auto**: Enable ReplayGain analysis during import.
+  Default: ``yes``.
+- **backend**: The analysis backend; either ``gstreamer``, ``command``, or ``audiotools``.
+  Default: ``command``.
+- **overwrite**: Re-analyze files that already have ReplayGain tags.
+  Default: ``no``.
+- **targetlevel**: A number of decibels for the target loudness level.
+  Default: 89.
 
 These options only work with the "command" backend:
 
-* **apply**: If you use a player that does not support ReplayGain
-  specifications, you can force the volume normalization by applying the gain
-  to the file via the ``apply`` option. This is a lossless and reversible
-  operation with no transcoding involved.
-* **noclip**: The use of ReplayGain can cause clipping if the average volume
-  of a song is below the target level. By default, a "prevent clipping" option
-  named ``noclip`` is enabled to reduce the amount of ReplayGain adjustment to
-  whatever amount would keep clipping from occurring.
+- **command**: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
+  cannot find it by itself).
+  For example: ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``.
+  Default: Search in your ``$PATH``.
+- **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
+  would keep clipping from occurring.
+  Default: ``yes``.
 
+These options only works with the "bs1770gain" backend:
+
+- **method**: The loudness scanning standard: either `replaygain` for
+  ReplayGain 2.0, `ebu` for EBU R128, or `atsc` for ATSC A/85. This dictates
+  the reference level: -18, -23, or -24 LUFS respectively. Default:
+  `replaygain`
+- **chunk_at**: Splits an album in groups of tracks of this amount.
+  Usefull when running into memory problems when analysing albums with
+  an exceptionally large amount of tracks. Default:5000
 
 Manual Analysis
 ---------------

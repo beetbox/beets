@@ -23,6 +23,8 @@ For example, this is what I might see when I run the command above::
     Bat for Lashes - Two Suns - Good Love
     ...
 
+.. _combiningqueries:
+
 Combining Keywords
 ------------------
 
@@ -36,6 +38,15 @@ matches songs from the album "The House of Tomorrow" by The Magnetic Fields in
 my library. It *doesn't* match other songs by the Magnetic Fields, nor does it
 match "Tomorrowland" by Walter Meego---those songs only have *one* of the two
 keywords I specified.
+
+Keywords can also be joined with a Boolean "or" using a comma. For example,
+the command::
+
+    $ beet ls magnetic tomorrow , beatles yesterday
+
+will match both "The House of Tomorrow" by the Magnetic Fields, as well as
+"Yesterday" by The Beatles. Note that the comma has to be followed by a space
+(e.g., ``foo,bar`` will be treated as a single keyword, *not* as an OR-query).
 
 Specific Fields
 ---------------
@@ -144,7 +155,7 @@ matches for the whole month.
 Date *intervals*, like the numeric intervals described above, are separated by
 two dots (``..``). You can specify a start, an end, or both.
 
-Here is an example that finds all the songs added in 2008::
+Here is an example that finds all the albums added in 2008::
 
     $ beet ls -a 'added:2008'
 
@@ -156,7 +167,7 @@ Find all items added before the year 2010::
 
     $ beet ls 'added:..2009'
 
-Find all items added on 2008-12-01 but before 2009-10-12::
+Find all items added on or after 2008-12-01 but before 2009-10-12::
 
     $ beet ls 'added:2008-12..2009-10-11'
 
@@ -165,6 +176,8 @@ Find all items with a file modification time between 2008-12-01 and
 
     $ beet ls 'mtime:2008-12-01..2008-12-02'
 
+
+.. _pathquery:
 
 Path Queries
 ------------
@@ -175,11 +188,46 @@ Sometimes it's useful to find all the items in your library that are
     $ beet list path:/my/music/directory
 
 In fact, beets automatically recognizes any query term containing a path
-separator (``/`` on POSIX systems) as a path query, so this command is
-equivalent::
+separator (``/`` on POSIX systems) as a path query if that path exists, so this
+command is equivalent as long as ``/my/music/directory`` exist::
 
     $ beet list /my/music/directory
 
 Note that this only matches items that are *already in your library*, so a path
 query won't necessarily find *all* the audio files in a directory---just the
 ones you've already added to your beets library.
+
+Path queries are case-sensitive on most platforms but case-insensitive on
+Windows.
+
+.. _query-sort:
+
+Sort Order
+----------
+
+Queries can specify a sort order. Use the name of the `field` you want to sort
+on, followed by a ``+`` or ``-`` sign to indicate ascending or descending
+sort. For example, this command::
+
+    $ beet list -a year+
+
+will list all albums in chronological order. You can also specify several sort
+orders, which will be used in the same order as they appear in your query::
+
+    $ beet list -a genre+ year+
+
+This command will sort all albums by genre and, in each genre, in chronological
+order.
+
+The ``artist`` and ``albumartist`` keys are special: they attempt to use their
+corresponding ``artist_sort`` and ``albumartist_sort`` fields for sorting
+transparently (but fall back to the ordinary fields when those are empty).
+
+Lexicographic sorts are case insensitive by default, resulting in the following
+sort order: ``Bar foo Qux``. This behavior can be changed with the
+:ref:`sort_case_insensitive` configuration option. Case sensitive sort will
+result in lower-case values being placed after upper-case values, e.g.,
+``Bar Qux foo``.
+
+You can set the default sorting behavior with the :ref:`sort_item` and
+:ref:`sort_album` configuration options.

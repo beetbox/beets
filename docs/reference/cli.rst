@@ -17,11 +17,16 @@ Command-Line Interface
 
         beet COMMAND [ARGS...]
 
-    Beets also offers command line completion via the `completion`_
-    command.  The rest of this document describes the available
+    The rest of this document describes the available
     commands. If you ever need a quick list of what's available, just
     type ``beet help`` or ``beet help COMMAND`` for help with a specific
     command.
+
+    Beets also offers shell completion. For bash, see the `completion`_
+    command; for zsh, see the accompanying `completion script`_ for the
+    ``beet`` command.
+
+
 
 
 Commands
@@ -123,9 +128,15 @@ Optional command flags:
   ``--group-albums`` option to split the files based on their metadata before
   matching them as separate albums.
 
+* If you want to preview which files would be imported, use the ``--pretend``
+  option. If set, beets will just print a list of files that it would
+  otherwise import.
+
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
 
 .. only:: html
+
+    .. _reimport:
 
     Reimporting
     ^^^^^^^^^^^
@@ -169,8 +180,8 @@ list
 
 Want to search for "Gronlandic Edit" by of Montreal? Try ``beet list
 gronlandic``.  Maybe you want to see everything released in 2009 with
-"vegetables" in the title? Try ``beet list year:2009 title:vegetables``. (Read
-more in :doc:`query`.)
+"vegetables" in the title? Try ``beet list year:2009 title:vegetables``. You
+can also specify the sort order. (Read more in :doc:`query`.)
 
 You can use the ``-a`` switch to search for albums instead of individual items.
 In this case, the queries you use are restricted to album-level fields: for
@@ -234,7 +245,7 @@ move
 ````
 ::
 
-    beet move [-ca] [-d DIR] QUERY
+    beet move [-cap] [-d DIR] QUERY
 
 Move or copy items in your library.
 
@@ -243,6 +254,10 @@ query are renamed into your library directory structure. By specifying a
 destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
+
+To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
+show you all how the files would be moved but won't actually change anything
+on disk.
 
 .. _update-cmd:
 
@@ -257,7 +272,10 @@ changes and file deletions.
 
 This will scan all the matched files and read their tags, populating the
 database with the new values. By default, files will be renamed according to
-their new metadata; disable this with ``-M``.
+their new metadata; disable this with ``-M``. Beets will skip files if their
+modification times have not changed, so any out-of-band metadata changes must
+also update these for ``beet update`` to recognise that the files have been
+edited.
 
 To perform a "dry run" of an update, just use the ``-p`` (for "pretend") flag.
 This will show you all the proposed changes but won't actually change anything
@@ -279,7 +297,7 @@ write
 `````
 ::
 
-    beet write [-ap] [QUERY]
+    beet write [-pf] [QUERY]
 
 Write metadata from the database into files' tags.
 
@@ -287,11 +305,14 @@ When you make changes to the metadata stored in beets' library database
 (during import or with the :ref:`modify-cmd` command, for example), you often
 have the option of storing changes only in the database, leaving your files
 untouched. The ``write`` command lets you later change your mind and write the
-contents of the database into the files.
+contents of the database into the files. By default, this writes the changes only if there is a difference between the database and the tags in the file.
+
+You can think of this command as the opposite of :ref:`update-cmd`.
 
 The ``-p`` option previews metadata changes without actually applying them.
 
-You can think of this command as the opposite of :ref:`update-cmd`.
+The ``-f`` option forces a write to the file, even if the file tags match the database. This is useful for making sure that enabled plugins that run on write (e.g., the Scrub and Zero plugins) are run on the file. 
+
 
 
 .. _stats-cmd:
@@ -305,8 +326,9 @@ stats
 Show some statistics on your entire library (if you don't provide a
 :doc:`query <query>`) or the matched items (if you do).
 
-The ``-e`` (``--exact``) option makes the calculation of total file size more
-accurate but slower.
+By default, the command calculates file sizes using their bitrate and
+duration. The ``-e`` (``--exact``) option reads the exact sizes of each file
+(but is slower). The exact mode also outputs the exact duration in seconds.
 
 .. _fields-cmd:
 
@@ -325,7 +347,7 @@ config
 ``````
 ::
 
-    beet config [-pd]
+    beet config [-pdc]
     beet config -e
 
 Show or edit the user configuration. This command does one of three things:
@@ -336,6 +358,8 @@ Show or edit the user configuration. This command does one of three things:
 * The ``--path`` option instead shows the path to your configuration file.
   This can be combined with the ``--default`` flag to show where beets keeps
   its internal defaults.
+* By default, sensitive information like passwords is removed when dumping the
+  configuration. The ``--clear`` option includes this sensitive data.
 * With the ``--edit`` option, beets attempts to open your config file for
   editing. It first tries the ``$EDITOR`` environment variable and then a
   fallback option depending on your platform: ``open`` on OS X, ``xdg-open``
@@ -354,7 +378,8 @@ import ...``.
 * ``-l LIBPATH``: specify the library database file to use.
 * ``-d DIRECTORY``: specify the library root directory.
 * ``-v``: verbose mode; prints out a deluge of debugging information. Please use
-  this flag when reporting bugs.
+  this flag when reporting bugs. You can use it twice, as in ``-vv``, to make
+  beets even more verbose.
 * ``-c FILE``: read a specified YAML :doc:`configuration file <config>`.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
@@ -398,6 +423,23 @@ sequence for the shell and won't be seen by beets.)
 Completion of plugin commands only works for those plugins
 that were enabled when running ``beet completion``. If you add a plugin
 later on you will want to re-generate the script.
+
+zsh
+```
+
+If you use zsh, take a look at the included `completion script`_.
+
+Another approach is to use zsh's bash completion compatibility. This snippet
+defines some bash-specific functions to make this work without errors::
+
+    autoload bashcompinit
+    bashcompinit
+    _get_comp_words_by_ref() { :; }
+    compopt() { :; }
+    _filedir() { :; }
+    eval "$(beet completion)"
+
+.. _completion script: https://github.com/sampsyo/beets/blob/master/extra/_beet
 
 
 .. only:: man

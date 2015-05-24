@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,11 +14,14 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import re
 import sys
 
-from _common import unittest
+from test._common import unittest
 
 pkgpath = os.path.dirname(__file__) or '.'
 sys.path.append(pkgpath)
@@ -31,6 +34,7 @@ try:
 except KeyError:
     pass
 
+
 def suite():
     s = unittest.TestSuite()
     # Get the suite() of every module in this directory beginning with
@@ -42,5 +46,5 @@ def suite():
             s.addTest(__import__(modname).suite())
     return s
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

@@ -1,5 +1,6 @@
+# -*- coding: utf8 -*-
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,14 @@
 
 """Tests for template engine.
 """
-from _common import unittest
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+import warnings
+
+from test._common import unittest
 from beets.util import functemplate
+
 
 def _normexpr(expr):
     """Normalize an Expression object's parts, collapsing multiple
@@ -38,9 +45,11 @@ def _normexpr(expr):
         if text:
             yield text
 
+
 def _normparse(text):
     """Parse a template and then normalize the resulting Expression."""
     return _normexpr(functemplate._parse(text))
+
 
 class ParseTest(unittest.TestCase):
     def test_empty_string(self):
@@ -139,7 +148,8 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(list(_normparse(u'foo %bar baz')), [u'foo %bar baz'])
 
     def test_call_with_unclosed_args(self):
-        self.assertEqual(list(_normparse(u'foo %bar{ baz')), [u'foo %bar{ baz'])
+        self.assertEqual(list(_normparse(u'foo %bar{ baz')),
+                         [u'foo %bar{ baz'])
 
     def test_call_with_unclosed_multiple_args(self):
         self.assertEqual(list(_normparse(u'foo %bar{bar,bar baz')),
@@ -203,6 +213,14 @@ class ParseTest(unittest.TestCase):
         self._assert_call(arg_parts[0], u"bar", 1)
         self.assertEqual(list(_normexpr(arg_parts[0].args[0])), [u'baz'])
 
+    def test_fail_on_utf8(self):
+        parts = u'é'.encode('utf8')
+        warnings.simplefilter("ignore")
+        with self.assertRaises(UnicodeDecodeError):
+            functemplate._parse(parts)
+        warnings.simplefilter("default")
+
+
 class EvalTest(unittest.TestCase):
     def _eval(self, template):
         values = {
@@ -255,8 +273,9 @@ class EvalTest(unittest.TestCase):
     def test_function_call_with_empty_arg(self):
         self.assertEqual(self._eval(u"%len{}"), u"0")
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

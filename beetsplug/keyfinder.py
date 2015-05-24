@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Thomas Scholtes.
+# Copyright 2015, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,15 +15,15 @@
 """Uses the `KeyFinder` program to add the `initial_key` field.
 """
 
-import logging
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import subprocess
 
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
-
-
-log = logging.getLogger('beets')
+from beets import config
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -35,8 +35,9 @@ class KeyFinderPlugin(BeetsPlugin):
             u'auto': True,
             u'overwrite': False,
         })
-        self.config['auto'].get(bool)
-        self.import_stages = [self.imported]
+
+        if self.config['auto'].get(bool):
+            self.import_stages = [self.imported]
 
     def commands(self):
         cmd = ui.Subcommand('keyfinder',
@@ -45,13 +46,13 @@ class KeyFinderPlugin(BeetsPlugin):
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.find_key(lib.items(ui.decargs(args)))
+        self.find_key(lib.items(ui.decargs(args)),
+                      write=config['import']['write'].get(bool))
 
     def imported(self, session, task):
-        if self.config['auto'].get(bool):
-            self.find_key(task.items)
+        self.find_key(task.items)
 
-    def find_key(self, items):
+    def find_key(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
         bin = util.bytestring_path(self.config['bin'].get(unicode))
 
@@ -60,13 +61,22 @@ class KeyFinderPlugin(BeetsPlugin):
                 continue
 
             try:
-                key = util.command_output([bin, '-f', item.path])
+                output = util.command_output([bin, '-f', item.path])
             except (subprocess.CalledProcessError, OSError) as exc:
-                log.error(u'KeyFinder execution failed: {0}'.format(exc))
+                self._log.error(u'execution failed: {0}', exc)
+                continue
+
+            key_raw = output.rsplit(None, 1)[-1]
+            try:
+                key = key_raw.decode('utf8')
+            except UnicodeDecodeError:
+                self._log.error(u'output is invalid UTF-8')
                 continue
 
             item['initial_key'] = key
-            log.debug('added computed initial key {0} for {1}'
-                      .format(key, util.displayable_path(item.path)))
-            item.try_write()
+            self._log.info(u'added computed initial key {0} for {1}',
+                           key, util.displayable_path(item.path))
+
+            if write:
+                item.try_write()
             item.store()

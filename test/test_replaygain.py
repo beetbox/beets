@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Thomas Scholtes
+# Copyright 2015, Thomas Scholtes
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,28 +13,30 @@
 # included in all copies or substantial portions of the Software.
 
 
-import os
-import shutil
-from glob import glob
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
-import _common
-from _common import unittest
-from helper import TestHelper, has_program
+from test._common import unittest
+from test.helper import TestHelper, has_program
 
-from beets.library import Item, Album
 from beets.mediafile import MediaFile
 
 try:
     import gi
     gi.require_version('Gst', '1.0')
     GST_AVAILABLE = True
-except ImportError, ValueError:
+except (ImportError, ValueError):
     GST_AVAILABLE = False
 
 if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
     GAIN_PROG_AVAILABLE = True
 else:
     GAIN_PROG_AVAILABLE = False
+
+if has_program('bs1770gain', ['--replaygain']):
+    LOUDNESS_PROG_AVAILABLE = True
+else:
+    LOUDNESS_PROG_AVAILABLE = False
 
 
 class ReplayGainCliTestBase(TestHelper):
@@ -45,9 +47,18 @@ class ReplayGainCliTestBase(TestHelper):
         try:
             self.load_plugins('replaygain')
         except:
-            self.teardown_beets()
-            self.unload_plugins()
-            raise
+            import sys
+            # store exception info so an error in teardown does not swallow it
+            exc_info = sys.exc_info()
+            try:
+                self.teardown_beets()
+                self.unload_plugins()
+            except:
+                # if load_plugins() failed then setup is incomplete and
+                # teardown operations may fail. In particular # {Item,Album}
+                # may not have the _original_types attribute in unload_plugins
+                pass
+            raise exc_info[1], None, exc_info[2]
 
         self.config['replaygain']['backend'] = self.backend
         album = self.add_album_fixture(2)
@@ -126,8 +137,13 @@ class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'command'
 
 
+@unittest.skipIf(not LOUDNESS_PROG_AVAILABLE, 'bs1770gain cannot be found')
+class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
+    backend = u'bs1770gain'
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

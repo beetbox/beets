@@ -1,7 +1,7 @@
 FtInTitle Plugin
 ================
 
-The ``ftintitle`` plugin automatically moved "featured" artists from the
+The ``ftintitle`` plugin automatically moves "featured" artists from the
 ``artist`` field to the ``title`` field.
 
 According to `MusicBrainz style`_, featured artists are part of the artist
@@ -10,15 +10,35 @@ tracks in your library like "Tellin' Me Things" by the artist "Blakroc feat.
 RZA". If you prefer to tag this as "Tellin' Me Things feat. RZA" by "Blakroc",
 then this plugin is for you.
 
-To use the plugin, just enable it and run the command::
+To use the ``ftintitle`` plugin, enable it in your configuration
+(see :ref:`using-plugins`).
+
+Configuration
+-------------
+
+To configure the plugin, make a ``ftintitle:`` section in your configuration
+file. The available options are:
+
+- **auto**: Enable metadata rewriting during import.
+  Default: ``yes``.
+- **drop**: Remove featured artists entirely instead of adding them to the
+  title field.
+  Default: ``no``.
+- **format**: Defines the format for the featuring X  part of the new title field.
+  In this format the ``{0}`` is used to define where the featured artists are placed.
+  Default: ``feat. {0}``
+
+Running Manually
+----------------
+
+From the command line, type::
 
     $ beet ftintitle [QUERY]
 
 The query is optional; if it's left off, the transformation will be applied to
 your entire collection.
 
-If you prefer to remove featured artists entirely instead of adding them to
-the title field, either use the ``-d`` flag to the command or set the
-``ftintitle.drop`` config option.
+Use the ``-d`` flag to remove featured artists (equivalent of the ``drop``
+config option).
 
 .. _MusicBrainz style: http://musicbrainz.org/doc/Style

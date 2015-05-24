@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,14 +13,17 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-import logging
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 from collections import namedtuple
 import re
 
+from beets import logging
 from beets import plugins
 from beets import config
 from beets.autotag import mb
-from beets.util import levenshtein
+from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
 log = logging.getLogger('beets')
@@ -109,7 +112,7 @@ class AlbumInfo(object):
                     'catalognum', 'script', 'language', 'country',
                     'albumstatus', 'albumdisambig', 'artist_credit', 'media']:
             value = getattr(self, fld)
-            if isinstance(value, str):
+            if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
         if self.tracks:
@@ -127,12 +130,15 @@ class TrackInfo(object):
     - ``artist_id``
     - ``length``: float: duration of the track in seconds
     - ``index``: position on the entire release
+    - ``media``: delivery mechanism (Vinyl, etc.)
     - ``medium``: the disc number this track appears on in the album
     - ``medium_index``: the track's position on the disc
     - ``medium_total``: the number of tracks on the item's disc
     - ``artist_sort``: name of the track artist for sorting
     - ``disctitle``: name of the individual medium (subtitle)
     - ``artist_credit``: Recording-specific artist name
+    - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
+    - ``data_url``: The data source release URL.
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
     may be None. The indices ``index``, ``medium``, and ``medium_index``
@@ -141,13 +147,15 @@ class TrackInfo(object):
     def __init__(self, title, track_id, artist=None, artist_id=None,
                  length=None, index=None, medium=None, medium_index=None,
                  medium_total=None, artist_sort=None, disctitle=None,
-                 artist_credit=None, data_source=None, data_url=None):
+                 artist_credit=None, data_source=None, data_url=None,
+                 media=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
         self.artist_id = artist_id
         self.length = length
         self.index = index
+        self.media = media
         self.medium = medium
         self.medium_index = medium_index
         self.medium_total = medium_total
@@ -163,9 +171,9 @@ class TrackInfo(object):
         to Unicode.
         """
         for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
-                    'artist_credit']:
+                    'artist_credit', 'media']:
             value = getattr(self, fld)
-            if isinstance(value, str):
+            if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
 
@@ -195,13 +203,15 @@ def _string_dist_basic(str1, str2):
     transliteration/lowering to ASCII characters. Normalized by string
     length.
     """
-    str1 = unidecode(str1)
-    str2 = unidecode(str2)
+    assert isinstance(str1, unicode)
+    assert isinstance(str2, unicode)
+    str1 = unidecode(str1).decode('ascii')
+    str2 = unidecode(str2).decode('ascii')
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
     if not str1 and not str2:
         return 0.0
-    return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
+    return levenshtein_distance(str1, str2) / float(max(len(str1), len(str2)))
 
 
 def string_dist(str1, str2):
@@ -354,6 +364,9 @@ class Distance(object):
 
     def __rsub__(self, other):
         return other - self.distance
+
+    def __unicode__(self):
+        return "{0:.2f}".format(self.distance)
 
     # Behave like a dict.
 

@@ -1,3 +1,6 @@
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import yaml
 from mock import patch
@@ -7,9 +10,9 @@ from shutil import rmtree
 from beets import ui
 from beets import config
 
-import _common
-from _common import unittest
-from helper import TestHelper, capture_stdout
+from test._common import unittest
+from test.helper import TestHelper, capture_stdout
+from beets.library import Library
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):
@@ -23,13 +26,15 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         self.config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(self.config_path, 'w') as file:
             file.write('library: lib\n')
-            file.write('option: value')
+            file.write('option: value\n')
+            file.write('password: password_value')
 
         self.cli_config_path = os.path.join(self.temp_dir, 'cli_config.yaml')
         with open(self.cli_config_path, 'w') as file:
             file.write('option: cli overwrite')
 
         config.clear()
+        config['password'].redact = True
         config._materialized = False
 
     def tearDown(self):
@@ -37,15 +42,17 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
 
     def test_show_user_config(self):
         with capture_stdout() as output:
-            self.run_command('config')
+            self.run_command('config', '-c')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'password_value')
 
     def test_show_user_config_with_defaults(self):
         with capture_stdout() as output:
-            self.run_command('config', '-d')
+            self.run_command('config', '-dc')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'password_value')
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['import']['timid'], False)
 
@@ -55,6 +62,21 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         output = yaml.load(output.getvalue())
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['option'], 'cli overwrite')
+
+    def test_show_redacted_user_config(self):
+        with capture_stdout() as output:
+            self.run_command('config')
+        output = yaml.load(output.getvalue())
+        self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'REDACTED')
+
+    def test_show_redacted_user_config_with_defaults(self):
+        with capture_stdout() as output:
+            self.run_command('config', '-d')
+        output = yaml.load(output.getvalue())
+        self.assertEqual(output['option'], 'value')
+        self.assertEqual(output['password'], 'REDACTED')
+        self.assertEqual(output['import']['timid'], False)
 
     def test_config_paths(self):
         with capture_stdout() as output:
@@ -77,37 +99,39 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         execlp.assert_called_once_with(
             'myeditor', 'myeditor', self.config_path)
 
-    def test_edit_config_with_open(self):
-        with _common.system_mock('Darwin'):
+    def test_edit_config_with_automatic_open(self):
+        with patch('beets.util.open_anything') as open:
+            open.return_value = 'please_open'
             with patch('os.execlp') as execlp:
                 self.run_command('config', '-e')
         execlp.assert_called_once_with(
-            'open', 'open', '-n', self.config_path)
-
-    def test_edit_config_with_xdg_open(self):
-        with _common.system_mock('Linux'):
-            with patch('os.execlp') as execlp:
-                self.run_command('config', '-e')
-        execlp.assert_called_once_with(
-            'xdg-open', 'xdg-open', self.config_path)
-
-    def test_edit_config_with_windows_exec(self):
-        with _common.system_mock('Windows'):
-            with patch('os.execlp') as execlp:
-                self.run_command('config', '-e')
-        execlp.assert_called_once_with(self.config_path, self.config_path)
+            'please_open', 'please_open', self.config_path)
 
     def test_config_editor_not_found(self):
         with self.assertRaises(ui.UserError) as user_error:
             with patch('os.execlp') as execlp:
-                execlp.side_effect = OSError()
+                execlp.side_effect = OSError('here is problem')
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
-                      str(user_error.exception.args[0]))
+                      unicode(user_error.exception))
+        self.assertIn('here is problem', unicode(user_error.exception))
+
+    def test_edit_invalid_config_file(self):
+        self.lib = Library(':memory:')
+        with open(self.config_path, 'w') as file:
+            file.write('invalid: [')
+        config.clear()
+        config._materialized = False
+
+        os.environ['EDITOR'] = 'myeditor'
+        with patch('os.execlp') as execlp:
+            self.run_command('config', '-e')
+        execlp.assert_called_once_with(
+            'myeditor', 'myeditor', self.config_path)
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

@@ -5,6 +5,7 @@ import:
     write: yes
     copy: yes
     move: no
+    link: no
     delete: no
     resume: ask
     incremental: no
@@ -20,6 +21,7 @@ import:
     detail: no
     flat: no
     group_albums: no
+    pretend: false
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information"]
@@ -32,27 +34,40 @@ replace:
     '\s+$': ''
     '^\s+': ''
 path_sep_replace: _
+asciify_paths: false
 art_filename: cover
 max_filename_length: 0
 
 plugins: []
 pluginpath: []
 threaded: yes
-color: yes
 timeout: 5.0
 per_disc_numbering: no
-verbose: no
-terminal_encoding: utf8
+verbose: 0
+terminal_encoding:
 original_date: no
 id3v23: no
 
 ui:
     terminal_width: 80
     length_diff_thresh: 10.0
+    color: yes
+    colors:
+        text_success: green
+        text_warning: yellow
+        text_error: red
+        text_highlight: red
+        text_highlight_minor: lightgray
+        action_default: turquoise
+        action: blue
 
-list_format_item: $artist - $album - $title
-list_format_album: $albumartist - $album
+format_item: $artist - $album - $title
+format_album: $albumartist - $album
 time_format: '%Y-%m-%d %H:%M:%S'
+
+sort_album: albumartist+ album+
+sort_item: artist+ album+ disc+ track+
+sort_case_insensitive: yes
 
 paths:
     default: $albumartist/$album%aunique{}/$track $title
@@ -65,6 +80,7 @@ musicbrainz:
     host: musicbrainz.org
     ratelimit: 1
     ratelimit_interval: 1.0
+    searchlimit: 5
 
 match:
     strong_rec_thresh: 0.04
@@ -98,5 +114,11 @@ match:
         media: []
         original_year: no
     ignored: []
+    required: []
     track_length_grace: 10
     track_length_max: 30
+
+thumbnails:
+    force: no
+    auto: yes
+    dolphin: no

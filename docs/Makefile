@@ -7,12 +7,17 @@ SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
+# When both are available, use Sphinx 2.x for autodoc compatibility.
+ifeq ($(shell which sphinx-build2 >/dev/null 2>&1 ; echo $$?),0)
+	SPHINXBUILD = sphinx-build2
+endif
+
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest auto
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -32,6 +37,10 @@ help:
 	@echo "  changes    to make an overview of all changed/added/deprecated items"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
+
+# My magical rebuilding, Safari-reloading auto target.
+auto:
+	watchmedo shell-command --patterns='*.rst' --ignore-pattern='_build/*' --recursive --command='if [ "$${watch_event_type}" == "created" -o "$${watch_event_type}" == "modified" ]; then make html ; osascript -l JavaScript refresh_safari.js; fi' --wait
 
 clean:
 	-rm -rf $(BUILDDIR)/*

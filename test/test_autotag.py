@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,13 +14,14 @@
 
 """Tests for autotagging functionality.
 """
-import os
-import shutil
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import re
 import copy
 
-import _common
-from _common import unittest
+from test import _common
+from test._common import unittest
 from beets import autotag
 from beets.autotag import match
 from beets.autotag.hooks import Distance, string_dist
@@ -116,6 +117,10 @@ def _clear_weights():
 
 
 class DistanceTest(_common.TestCase):
+    def tearDown(self):
+        super(DistanceTest, self).tearDown()
+        _clear_weights()
+
     def test_add(self):
         dist = Distance()
         dist.add('add', 1.0)
@@ -482,128 +487,6 @@ class AlbumDistanceTest(_common.TestCase):
         self.assertEqual(dist, 0)
 
 
-def _mkmp3(path):
-    shutil.copyfile(os.path.join(_common.RSRC, 'min.mp3'), path)
-
-
-class AlbumsInDirTest(_common.TestCase):
-    def setUp(self):
-        super(AlbumsInDirTest, self).setUp()
-
-        # create a directory structure for testing
-        self.base = os.path.abspath(os.path.join(self.temp_dir, 'tempdir'))
-        os.mkdir(self.base)
-
-        os.mkdir(os.path.join(self.base, 'album1'))
-        os.mkdir(os.path.join(self.base, 'album2'))
-        os.mkdir(os.path.join(self.base, 'more'))
-        os.mkdir(os.path.join(self.base, 'more', 'album3'))
-        os.mkdir(os.path.join(self.base, 'more', 'album4'))
-
-        _mkmp3(os.path.join(self.base, 'album1', 'album1song1.mp3'))
-        _mkmp3(os.path.join(self.base, 'album1', 'album1song2.mp3'))
-        _mkmp3(os.path.join(self.base, 'album2', 'album2song.mp3'))
-        _mkmp3(os.path.join(self.base, 'more', 'album3', 'album3song.mp3'))
-        _mkmp3(os.path.join(self.base, 'more', 'album4', 'album4song.mp3'))
-
-    def test_finds_all_albums(self):
-        albums = list(autotag.albums_in_dir(self.base))
-        self.assertEqual(len(albums), 4)
-
-    def test_separates_contents(self):
-        found = []
-        for _, album in autotag.albums_in_dir(self.base):
-            found.append(re.search(r'album(.)song', album[0].path).group(1))
-        self.assertTrue('1' in found)
-        self.assertTrue('2' in found)
-        self.assertTrue('3' in found)
-        self.assertTrue('4' in found)
-
-    def test_finds_multiple_songs(self):
-        for _, album in autotag.albums_in_dir(self.base):
-            n = re.search(r'album(.)song', album[0].path).group(1)
-            if n == '1':
-                self.assertEqual(len(album), 2)
-            else:
-                self.assertEqual(len(album), 1)
-
-
-class MultiDiscAlbumsInDirTest(_common.TestCase):
-    def setUp(self):
-        super(MultiDiscAlbumsInDirTest, self).setUp()
-
-        self.base = os.path.abspath(os.path.join(self.temp_dir, 'tempdir'))
-        os.mkdir(self.base)
-
-        self.dirs = [
-            # Nested album, multiple subdirs.
-            # Also, false positive marker in root dir, and subtitle for disc 3.
-            os.path.join(self.base, 'ABCD1234'),
-            os.path.join(self.base, 'ABCD1234', 'cd 1'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus'),
-
-            # Nested album, single subdir.
-            # Also, punctuation between marker and disc number.
-            os.path.join(self.base, 'album'),
-            os.path.join(self.base, 'album', 'cd _ 1'),
-
-            # Flattened album, case typo.
-            # Also, false positive marker in parent dir.
-            os.path.join(self.base, 'artist [CD5]'),
-            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1'),
-            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2'),
-
-            # Single disc album, sorted between CAT discs.
-            os.path.join(self.base, 'artist [CD5]', 'CATS'),
-        ]
-        self.files = [
-            os.path.join(self.base, 'ABCD1234', 'cd 1', 'song1.mp3'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song2.mp3'),
-            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song3.mp3'),
-            os.path.join(self.base, 'album', 'cd _ 1', 'song4.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1', 'song5.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2', 'song6.mp3'),
-            os.path.join(self.base, 'artist [CD5]', 'CATS', 'song7.mp3'),
-        ]
-
-        for path in self.dirs:
-            os.mkdir(path)
-        for path in self.files:
-            _mkmp3(path)
-
-    def test_coalesce_nested_album_multiple_subdirs(self):
-        albums = list(autotag.albums_in_dir(self.base))
-        self.assertEquals(len(albums), 4)
-        root, items = albums[0]
-        self.assertEquals(root, self.dirs[0:3])
-        self.assertEquals(len(items), 3)
-
-    def test_coalesce_nested_album_single_subdir(self):
-        albums = list(autotag.albums_in_dir(self.base))
-        root, items = albums[1]
-        self.assertEquals(root, self.dirs[3:5])
-        self.assertEquals(len(items), 1)
-
-    def test_coalesce_flattened_album_case_typo(self):
-        albums = list(autotag.albums_in_dir(self.base))
-        root, items = albums[2]
-        self.assertEquals(root, self.dirs[6:8])
-        self.assertEquals(len(items), 2)
-
-    def test_single_disc_album(self):
-        albums = list(autotag.albums_in_dir(self.base))
-        root, items = albums[3]
-        self.assertEquals(root, self.dirs[8:])
-        self.assertEquals(len(items), 1)
-
-    def test_do_not_yield_empty_album(self):
-        # Remove all the MP3s.
-        for path in self.files:
-            os.remove(path)
-        albums = list(autotag.albums_in_dir(self.base))
-        self.assertEquals(len(albums), 0)
-
-
 class AssignmentTest(unittest.TestCase):
     def item(self, title, track):
         return Item(
@@ -689,7 +572,7 @@ class AssignmentTest(unittest.TestCase):
             return Item(
                 artist=u'ben harper',
                 album=u'burn to shine',
-                title=u'ben harper - Burn to Shine ' + str(i),
+                title=u'ben harper - Burn to Shine {0}'.format(i),
                 track=i,
                 length=length,
                 mb_trackid='', mb_albumid='', mb_artistid='',
@@ -847,7 +730,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         my_info = copy.deepcopy(self.info)
         self._apply(info=my_info)
         self.assertEqual(self.items[0].artist, 'artistNew')
-        self.assertEqual(self.items[0].artist, 'artistNew')
+        self.assertEqual(self.items[1].artist, 'artistNew')
 
     def test_album_artist_overriden_by_nonempty_track_artist(self):
         my_info = copy.deepcopy(self.info)
@@ -905,6 +788,13 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[0].year, 1)
         self.assertEqual(self.items[0].month, 2)
         self.assertEqual(self.items[0].day, 3)
+
+    def test_data_source_applied(self):
+        my_info = copy.deepcopy(self.info)
+        my_info.data_source = 'MusicBrainz'
+        self._apply(info=my_info)
+
+        self.assertEqual(self.items[0].data_source, 'MusicBrainz')
 
 
 class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
@@ -1062,5 +952,5 @@ class EnumTest(_common.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

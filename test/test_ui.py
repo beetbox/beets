@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2014, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,22 +14,26 @@
 
 """Tests for the command-line interface.
 """
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 import os
 import shutil
 import re
 import subprocess
 import platform
+from copy import deepcopy
 
-import _common
-from _common import unittest
-from helper import capture_stdout, has_program
+from mock import patch
+from test import _common
+from test._common import unittest
+from test.helper import capture_stdout, has_program, TestHelper, control_stdin
 
 from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets.autotag.match import distance
-from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
 from beets import plugins
@@ -44,7 +48,7 @@ class ListTest(unittest.TestCase):
         self.lib.add(self.item)
         self.lib.add_album([self.item])
 
-    def _run_list(self, query='', album=False, path=False, fmt=None):
+    def _run_list(self, query='', album=False, path=False, fmt=''):
         commands.list_items(self.lib, query, album, fmt)
 
     def test_list_outputs_item(self):
@@ -142,92 +146,121 @@ class RemoveTest(_common.TestCase):
         self.assertFalse(os.path.exists(self.i.path))
 
 
-class ModifyTest(_common.TestCase):
+class ModifyTest(unittest.TestCase, TestHelper):
+
     def setUp(self):
-        super(ModifyTest, self).setUp()
+        self.setup_beets()
+        self.album = self.add_album_fixture()
+        [self.item] = self.album.items()
 
-        self.io.install()
+    def tearDown(self):
+        self.teardown_beets()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+    def modify(self, *args):
+        with control_stdin('y'):
+            ui._raw_main(['modify'] + list(args), self.lib)
 
-        # Copy a file into the library.
-        self.lib = library.Library(':memory:', self.libdir)
-        self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
-        self.lib.add(self.i)
-        self.i.move(copy=True)
-        self.album = self.lib.add_album([self.i])
+    # Item tests
 
-    def _modify(self, mods=(), dels=(), query=(), write=False, move=False,
-                album=False):
-        self.io.addinput('y')
-        commands.modify_items(self.lib, mods, dels, query,
-                              write, move, album, True)
-
-    def test_modify_item_dbdata(self):
-        self._modify(["title=newTitle"])
+    def test_modify_item(self):
+        self.modify("title=newTitle")
         item = self.lib.items().get()
         self.assertEqual(item.title, 'newTitle')
 
-    def test_modify_album_dbdata(self):
-        self._modify(["album=newAlbum"], album=True)
-        album = self.lib.albums()[0]
+    def test_modify_write_tags(self):
+        self.modify("title=newTitle")
+        item = self.lib.items().get()
+        item.read()
+        self.assertEqual(item.title, 'newTitle')
+
+    def test_modify_dont_write_tags(self):
+        self.modify("--nowrite", "title=newTitle")
+        item = self.lib.items().get()
+        item.read()
+        self.assertNotEqual(item.title, 'newTitle')
+
+    def test_move(self):
+        self.modify("title=newTitle")
+        item = self.lib.items().get()
+        self.assertIn(b'newTitle', item.path)
+
+    def test_not_move(self):
+        self.modify("--nomove", "title=newTitle")
+        item = self.lib.items().get()
+        self.assertNotIn(b'newTitle', item.path)
+
+    def test_update_mtime(self):
+        item = self.item
+        old_mtime = item.mtime
+
+        self.modify("title=newTitle")
+        item.load()
+        self.assertNotEqual(old_mtime, item.mtime)
+        self.assertEqual(item.current_mtime(), item.mtime)
+
+    def test_reset_mtime_with_no_write(self):
+        item = self.item
+
+        self.modify("--nowrite", "title=newTitle")
+        item.load()
+        self.assertEqual(0, item.mtime)
+
+    # Album Tests
+
+    def test_modify_album(self):
+        self.modify("--album", "album=newAlbum")
+        album = self.lib.albums().get()
         self.assertEqual(album.album, 'newAlbum')
 
-    def test_modify_item_tag_unmodified(self):
-        self._modify(["title=newTitle"], write=False)
-        item = self.lib.items().get()
-        item.read()
-        self.assertEqual(item.title, 'full')
-
-    def test_modify_album_tag_unmodified(self):
-        self._modify(["album=newAlbum"], write=False, album=True)
-        item = self.lib.items().get()
-        item.read()
-        self.assertEqual(item.album, 'the album')
-
-    def test_modify_item_tag(self):
-        self._modify(["title=newTitle"], write=True)
-        item = self.lib.items().get()
-        item.read()
-        self.assertEqual(item.title, 'newTitle')
-
-    def test_modify_album_tag(self):
-        self._modify(["album=newAlbum"], write=True, album=True)
+    def test_modify_album_write_tags(self):
+        self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
         self.assertEqual(item.album, 'newAlbum')
 
-    def test_item_move(self):
-        self._modify(["title=newTitle"], move=True)
+    def test_modify_album_dont_write_tags(self):
+        self.modify("--album", "--nowrite", "album=newAlbum")
         item = self.lib.items().get()
-        self.assertTrue('newTitle' in item.path)
+        item.read()
+        self.assertEqual(item.album, 'the album')
 
     def test_album_move(self):
-        self._modify(["album=newAlbum"], move=True, album=True)
+        self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertTrue('newAlbum' in item.path)
-
-    def test_item_not_move(self):
-        self._modify(["title=newTitle"], move=False)
-        item = self.lib.items().get()
-        self.assertFalse('newTitle' in item.path)
+        self.assertIn(b'newAlbum', item.path)
 
     def test_album_not_move(self):
-        self._modify(["album=newAlbum"], move=False, album=True)
+        self.modify("--nomove", "--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertFalse('newAlbum' in item.path)
+        self.assertNotIn(b'newAlbum', item.path)
+
+    # Misc
 
     def test_write_initial_key_tag(self):
-        self._modify(["initial_key=C#m"], write=True)
+        self.modify("initial_key=C#m")
         item = self.lib.items().get()
         mediafile = MediaFile(item.path)
         self.assertEqual(mediafile.initial_key, 'C#m')
 
+    def test_set_flexattr(self):
+        self.modify("flexattr=testAttr")
+        item = self.lib.items().get()
+        self.assertEqual(item.flexattr, 'testAttr')
+
+    def test_remove_flexattr(self):
+        item = self.lib.items().get()
+        item.flexattr = 'testAttr'
+        item.store()
+
+        self.modify("flexattr!")
+        item = self.lib.items().get()
+        self.assertNotIn("flexattr", item)
+
     @unittest.skip('not yet implemented')
     def test_delete_initial_key_tag(self):
-        item = self.i
+        item = self.lib.items().get()
         item.initial_key = 'C#m'
         item.write()
         item.store()
@@ -235,7 +268,7 @@ class ModifyTest(_common.TestCase):
         mediafile = MediaFile(item.path)
         self.assertEqual(mediafile.initial_key, 'C#m')
 
-        self._modify(dels=["initial_key!"], write=True)
+        self.modify("initial_key!")
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.initial_key)
 
@@ -243,7 +276,7 @@ class ModifyTest(_common.TestCase):
         (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
                                                           "title=newTitle"])
         self.assertEqual(query, ["title:oldTitle"])
-        self.assertEqual(mods, ["title=newTitle"])
+        self.assertEqual(mods, {"title": "newTitle"})
 
     def test_arg_parsing_delete(self):
         (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
@@ -255,13 +288,68 @@ class ModifyTest(_common.TestCase):
         (query, mods, dels) = commands.modify_parse_args(["title:oldTitle!",
                                                           "title=newTitle!"])
         self.assertEqual(query, ["title:oldTitle!"])
-        self.assertEqual(mods, ["title=newTitle!"])
+        self.assertEqual(mods, {"title": "newTitle!"})
 
     def test_arg_parsing_equals_in_value(self):
         (query, mods, dels) = commands.modify_parse_args(["title:foo=bar",
                                                           "title=newTitle"])
         self.assertEqual(query, ["title:foo=bar"])
-        self.assertEqual(mods, ["title=newTitle"])
+        self.assertEqual(mods, {"title": "newTitle"})
+
+
+class WriteTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def write_cmd(self, *args):
+        ui._raw_main(['write'] + list(args), self.lib)
+
+    def test_update_mtime(self):
+        item = self.add_item_fixture()
+        item['title'] = 'a new title'
+        item.store()
+
+        item = self.lib.items().get()
+        self.assertEqual(item.mtime, 0)
+
+        self.write_cmd()
+        item = self.lib.items().get()
+        self.assertEqual(item.mtime, item.current_mtime())
+
+    def test_non_metadata_field_unchanged(self):
+        """Changing a non-"tag" field like `bitrate` and writing should
+        have no effect.
+        """
+        # An item that starts out "clean".
+        item = self.add_item_fixture()
+        item.read()
+
+        # ... but with a mismatched bitrate.
+        item.bitrate = 123
+        item.store()
+
+        with capture_stdout() as stdout:
+            self.write_cmd()
+
+        self.assertEqual(stdout.getvalue(), '')
+
+    def test_write_metadata_field(self):
+        item = self.add_item_fixture()
+        item.read()
+        old_title = item.title
+
+        item.title = 'new title'
+        item.store()
+
+        with capture_stdout() as stdout:
+            self.write_cmd()
+
+        self.assertTrue('{0} -> new title'.format(old_title)
+                        in stdout.getvalue())
 
 
 class MoveTest(_common.TestCase):
@@ -285,8 +373,9 @@ class MoveTest(_common.TestCase):
         # Alternate destination directory.
         self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
-    def _move(self, query=(), dest=None, copy=False, album=False):
-        commands.move_items(self.lib, dest, query, copy, album)
+    def _move(self, query=(), dest=None, copy=False, album=False,
+              pretend=False):
+        commands.move_items(self.lib, dest, query, copy, album, pretend)
 
     def test_move_item(self):
         self._move()
@@ -329,6 +418,16 @@ class MoveTest(_common.TestCase):
         self.assertTrue('testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
+
+    def test_pretend_move_item(self):
+        self._move(dest=self.otherdir, pretend=True)
+        self.i.load()
+        self.assertIn('srcfile', self.i.path)
+
+    def test_pretend_move_album(self):
+        self._move(album=True, pretend=True)
+        self.i.load()
+        self.assertIn('srcfile', self.i.path)
 
 
 class UpdateTest(_common.TestCase):
@@ -487,16 +586,23 @@ class InputTest(_common.TestCase):
         self.io.install()
 
     def test_manual_search_gets_unicode(self):
-        self.io.addinput('\xc3\x82me')
-        self.io.addinput('\xc3\x82me')
+        self.io.addinput(b'\xc3\x82me')
+        self.io.addinput(b'\xc3\x82me')
         artist, album = commands.manual_search(False)
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
 
 
-class ConfigTest(_common.TestCase):
+class ConfigTest(unittest.TestCase, TestHelper):
     def setUp(self):
-        super(ConfigTest, self).setUp()
+        self.setup_beets()
+
+        # Don't use the BEETSDIR from `helper`. Instead, we point the home
+        # directory there. Some tests will set `BEETSDIR` themselves.
+        del os.environ['BEETSDIR']
+        self._old_home = os.environ.get('HOME')
+        os.environ['HOME'] = self.temp_dir
+
         self._orig_cwd = os.getcwd()
         self.test_cmd = self._make_test_cmd()
         commands.default_commands.append(self.test_cmd)
@@ -522,13 +628,9 @@ class ConfigTest(_common.TestCase):
 
     def tearDown(self):
         commands.default_commands.pop()
-        if 'BEETSDIR' in os.environ:
-            del os.environ['BEETSDIR']
-        if os.getcwd != self._orig_cwd:
-            os.chdir(self._orig_cwd)
-        if hasattr(self.test_cmd, 'lib'):
-            self.test_cmd.lib._connection().close()
-        super(ConfigTest, self).tearDown()
+        os.chdir(self._orig_cwd)
+        os.environ['HOME'] = self._old_home
+        self.teardown_beets()
 
     def _make_test_cmd(self):
         test_cmd = ui.Subcommand('test', help='test')
@@ -543,10 +645,8 @@ class ConfigTest(_common.TestCase):
 
     def _reset_config(self):
         # Config should read files again on demand
-        config.sources = []
+        config.clear()
         config._materialized = False
-        config._lazy_suffix = []
-        config._lazy_prefix = []
 
     def write_config_file(self):
         return open(self.user_config_path, 'w')
@@ -594,7 +694,7 @@ class ConfigTest(_common.TestCase):
 
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
-        self.assertEqual(replacements, [(re.compile(ur'[xy]'), u'z')])
+        self.assertEqual(replacements, [(re.compile(r'[xy]'), b'z')])
 
     def test_multiple_replacements_parsed(self):
         with self.write_config_file() as config:
@@ -603,8 +703,8 @@ class ConfigTest(_common.TestCase):
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
         self.assertEqual(replacements, [
-            (re.compile(ur'[xy]'), u'z'),
-            (re.compile(ur'foo'), u'bar'),
+            (re.compile(r'[xy]'), 'z'),
+            (re.compile(r'foo'), 'bar'),
         ])
 
     def test_cli_config_option(self):
@@ -728,7 +828,7 @@ class ConfigTest(_common.TestCase):
         beetsdir = os.path.join(self.temp_dir, 'beetsfile')
         open(beetsdir, 'a').close()
         os.environ['BEETSDIR'] = beetsdir
-        self.assertRaises(ConfigError, ui._raw_main, 'test')
+        self.assertRaises(ConfigError, ui._raw_main, ['test'])
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
         os.environ['BEETSDIR'] = self.beetsdir
@@ -832,10 +932,11 @@ class ShowChangeTest(_common.TestCase):
     def _show_change(self, items=None, info=None,
                      cur_artist=u'the artist', cur_album=u'the album',
                      dist=0.1):
+        """Return an unicode string representing the changes"""
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
-        config['color'] = False
+        config['ui']['color'] = False
         album_dist = distance(items, info, mapping)
         album_dist._penalties = {'album': [dist]}
         commands.show_change(
@@ -843,7 +944,8 @@ class ShowChangeTest(_common.TestCase):
             cur_album,
             autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
-        return self.io.getoutput().lower()
+        # FIXME decoding shouldn't be done here
+        return self.io.getoutput().lower().decode('utf8')
 
     def test_null_change(self):
         msg = self._show_change()
@@ -863,7 +965,7 @@ class ShowChangeTest(_common.TestCase):
     def test_item_data_change_with_unicode(self):
         self.items[0].title = u'caf\xe9'
         msg = self._show_change()
-        self.assertTrue(u'caf\xe9 -> the title' in msg.decode('utf8'))
+        self.assertTrue(u'caf\xe9 -> the title' in msg)
 
     def test_album_data_change_with_unicode(self):
         msg = self._show_change(cur_artist=u'caf\xe9',
@@ -878,9 +980,46 @@ class ShowChangeTest(_common.TestCase):
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = u''
         self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
-        msg = re.sub(r'  +', ' ', self._show_change().decode('utf8'))
-        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
-                        or u'caf.mp3 ->' in msg)
+        msg = re.sub(r'  +', ' ', self._show_change())
+        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg or
+                        u'caf.mp3 ->' in msg)
+
+
+class SummarizeItemsTest(_common.TestCase):
+    def setUp(self):
+        super(SummarizeItemsTest, self).setUp()
+        item = library.Item()
+        item.bitrate = 4321
+        item.length = 10 * 60 + 54
+        item.format = "F"
+        self.item = item
+        fsize_mock = patch('beets.library.Item.try_filesize').start()
+        fsize_mock.return_value = 987
+
+    def test_summarize_item(self):
+        summary = commands.summarize_items([], True)
+        self.assertEqual(summary, "")
+
+        summary = commands.summarize_items([self.item], True)
+        self.assertEqual(summary, "F, 4kbps, 10:54, 987.0 B")
+
+    def test_summarize_items(self):
+        summary = commands.summarize_items([], False)
+        self.assertEqual(summary, "0 items")
+
+        summary = commands.summarize_items([self.item], False)
+        self.assertEqual(summary, "1 items, F, 4kbps, 10:54, 987.0 B")
+
+        i2 = deepcopy(self.item)
+        summary = commands.summarize_items([self.item, i2], False)
+        self.assertEqual(summary, "2 items, F, 4kbps, 21:48, 1.9 KB")
+
+        i2.format = "G"
+        summary = commands.summarize_items([self.item, i2], False)
+        self.assertEqual(summary, "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KB")
+
+        summary = commands.summarize_items([self.item, i2, i2], False)
+        self.assertEqual(summary, "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KB")
 
 
 class PathFormatTest(_common.TestCase):
@@ -944,8 +1083,147 @@ class CompletionTest(_common.TestCase):
             self.fail('test/test_completion.sh did not execute properly')
 
 
+class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
+    """Test CommonOptionsParser and formatting LibModel formatting on 'list'
+    command.
+    """
+    def setUp(self):
+        self.setup_beets()
+        self.lib = library.Library(':memory:')
+        self.item = _common.item()
+        self.item.path = 'xxx/yyy'
+        self.lib.add(self.item)
+        self.lib.add_album([self.item])
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_base(self):
+        l = self.run_with_output('ls')
+        self.assertEqual(l, 'the artist - the album - the title\n')
+
+        l = self.run_with_output('ls', '-a')
+        self.assertEqual(l, 'the album artist - the album\n')
+
+    def test_path_option(self):
+        l = self.run_with_output('ls', '-p')
+        self.assertEqual(l, 'xxx/yyy\n')
+
+        l = self.run_with_output('ls', '-a', '-p')
+        self.assertEqual(l, 'xxx\n')
+
+    def test_format_option(self):
+        l = self.run_with_output('ls', '-f', '$artist')
+        self.assertEqual(l, 'the artist\n')
+
+        l = self.run_with_output('ls', '-a', '-f', '$albumartist')
+        self.assertEqual(l, 'the album artist\n')
+
+    def test_root_format_option(self):
+        l = self.run_with_output('--format-item', '$artist',
+                                 '--format-album', 'foo', 'ls')
+        self.assertEqual(l, 'the artist\n')
+
+        l = self.run_with_output('--format-item', 'foo',
+                                 '--format-album', '$albumartist', 'ls', '-a')
+        self.assertEqual(l, 'the album artist\n')
+
+
+class CommonOptionsParserTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_album_option(self):
+        parser = ui.CommonOptionsParser()
+        self.assertFalse(parser._album_flags)
+        parser.add_album_option()
+        self.assertTrue(bool(parser._album_flags))
+
+        self.assertEqual(parser.parse_args([]), ({'album': None}, []))
+        self.assertEqual(parser.parse_args(['-a']), ({'album': True}, []))
+        self.assertEqual(parser.parse_args(['--album']), ({'album': True}, []))
+
+    def test_path_option(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_path_option()
+        self.assertFalse(parser._album_flags)
+
+        config['format_item'].set('$foo')
+        self.assertEqual(parser.parse_args([]), ({'path': None}, []))
+        self.assertEqual(config['format_item'].get(unicode), u'$foo')
+
+        self.assertEqual(parser.parse_args(['-p']),
+                         ({'path': True, 'format': '$path'}, []))
+        self.assertEqual(parser.parse_args(['--path']),
+                         ({'path': True, 'format': '$path'}, []))
+
+        self.assertEqual(config['format_item'].get(unicode), '$path')
+        self.assertEqual(config['format_album'].get(unicode), '$path')
+
+    def test_format_option(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_format_option()
+        self.assertFalse(parser._album_flags)
+
+        config['format_item'].set('$foo')
+        self.assertEqual(parser.parse_args([]), ({'format': None}, []))
+        self.assertEqual(config['format_item'].get(unicode), u'$foo')
+
+        self.assertEqual(parser.parse_args(['-f', '$bar']),
+                         ({'format': '$bar'}, []))
+        self.assertEqual(parser.parse_args(['--format', '$baz']),
+                         ({'format': '$baz'}, []))
+
+        self.assertEqual(config['format_item'].get(unicode), '$baz')
+        self.assertEqual(config['format_album'].get(unicode), '$baz')
+
+    def test_format_option_with_target(self):
+        with self.assertRaises(KeyError):
+            ui.CommonOptionsParser().add_format_option(target='thingy')
+
+        parser = ui.CommonOptionsParser()
+        parser.add_format_option(target='item')
+
+        config['format_item'].set('$item')
+        config['format_album'].set('$album')
+
+        self.assertEqual(parser.parse_args(['-f', '$bar']),
+                         ({'format': '$bar'}, []))
+
+        self.assertEqual(config['format_item'].get(unicode), '$bar')
+        self.assertEqual(config['format_album'].get(unicode), '$album')
+
+    def test_format_option_with_album(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_album_option()
+        parser.add_format_option()
+
+        config['format_item'].set('$item')
+        config['format_album'].set('$album')
+
+        parser.parse_args(['-f', '$bar'])
+        self.assertEqual(config['format_item'].get(unicode), '$bar')
+        self.assertEqual(config['format_album'].get(unicode), '$album')
+
+        parser.parse_args(['-a', '-f', '$foo'])
+        self.assertEqual(config['format_item'].get(unicode), '$bar')
+        self.assertEqual(config['format_album'].get(unicode), '$foo')
+
+        parser.parse_args(['-f', '$foo2', '-a'])
+        self.assertEqual(config['format_album'].get(unicode), '$foo2')
+
+    def test_add_all_common_options(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_all_common_options()
+        self.assertEqual(parser.parse_args([]),
+                         ({'album': None, 'path': None, 'format': None}, []))
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

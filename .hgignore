@@ -4,3 +4,4 @@
 ^MANIFEST$
 ^docs/_build/
 ^\.tox/
+^\.idea/

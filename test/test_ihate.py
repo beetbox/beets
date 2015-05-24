@@ -1,6 +1,9 @@
 """Tests for the 'ihate' plugin"""
 
-from _common import unittest
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+from test._common import unittest
 from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin
@@ -15,17 +18,17 @@ class IHatePluginTest(unittest.TestCase):
             genre='TestGenre',
             album=u'TestAlbum',
             artist=u'TestArtist')
-        task = importer.SingletonImportTask(test_item)
+        task = importer.SingletonImportTask(None, test_item)
 
         # Empty query should let it pass.
         self.assertFalse(IHatePlugin.do_i_hate_this(task, match_pattern))
 
         # 1 query match.
-        match_pattern = ["artist:bad_artist","artist:TestArtist"]
+        match_pattern = ["artist:bad_artist", "artist:TestArtist"]
         self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
 
         # 2 query matches, either should trigger.
-        match_pattern = ["album:test","artist:testartist"]
+        match_pattern = ["album:test", "artist:testartist"]
         self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
 
         # Query is blocked by AND clause.
@@ -46,5 +49,5 @@ class IHatePluginTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     unittest.main(defaultTest='suite')

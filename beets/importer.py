@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,26 +12,32 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
 """
-from __future__ import print_function
 
 import os
-import logging
+import re
 import pickle
 import itertools
 from collections import defaultdict
 from tempfile import mkdtemp
+from bisect import insort, bisect_left
+from contextlib import contextmanager
 import shutil
+import time
 
+from beets import logging
 from beets import autotag
 from beets import library
 from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
-from beets.util import pipeline
+from beets.util import pipeline, sorted_walk, ancestry
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
 from beets import mediafile
@@ -63,7 +69,12 @@ def _open_state():
     try:
         with open(config['statefile'].as_filename()) as f:
             return pickle.load(f)
-    except (IOError, EOFError):
+    except Exception as exc:
+        # The `pickle` module can emit all sorts of exceptions during
+        # unpickling, including ImportError. We use a catch-all
+        # exception to avoid enumerating them all (the docs don't even have a
+        # full list!).
+        log.debug(u'state file could not be read: {0}', exc)
         return {}
 
 
@@ -73,39 +84,65 @@ def _save_state(state):
         with open(config['statefile'].as_filename(), 'w') as f:
             pickle.dump(state, f)
     except IOError as exc:
-        log.error(u'state file could not be written: %s' % unicode(exc))
+        log.error(u'state file could not be written: {0}', exc)
 
 
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
 
-def progress_set(toppath, paths):
-    """Record that tagging for the given `toppath` was successful up to
-    `paths`. If paths is None, then clear the progress value (indicating
-    that the tagging completed).
-    """
+def progress_read():
     state = _open_state()
-    if PROGRESS_KEY not in state:
-        state[PROGRESS_KEY] = {}
+    return state.setdefault(PROGRESS_KEY, {})
 
-    if paths is None:
-        # Remove progress from file.
-        if toppath in state[PROGRESS_KEY]:
-            del state[PROGRESS_KEY][toppath]
-    else:
-        state[PROGRESS_KEY][toppath] = paths
 
+@contextmanager
+def progress_write():
+    state = _open_state()
+    progress = state.setdefault(PROGRESS_KEY, {})
+    yield progress
     _save_state(state)
 
 
-def progress_get(toppath):
-    """Get the last successfully tagged subpath of toppath. If toppath
-    has no progress information, returns None.
+def progress_add(toppath, *paths):
+    """Record that the files under all of the `paths` have been imported
+    under `toppath`.
     """
-    state = _open_state()
-    if PROGRESS_KEY not in state:
-        return None
-    return state[PROGRESS_KEY].get(toppath)
+    with progress_write() as state:
+        imported = state.setdefault(toppath, [])
+        for path in paths:
+            # Normally `progress_add` will be called with the path
+            # argument increasing. This is because of the ordering in
+            # `albums_in_dir`. We take advantage of that to make the
+            # code faster
+            if imported and imported[len(imported) - 1] <= path:
+                imported.append(path)
+            else:
+                insort(imported, path)
+
+
+def progress_element(toppath, path):
+    """Return whether `path` has been imported in `toppath`.
+    """
+    state = progress_read()
+    if toppath not in state:
+        return False
+    imported = state[toppath]
+    i = bisect_left(imported, path)
+    return i != len(imported) and imported[i] == path
+
+
+def has_progress(toppath):
+    """Return `True` if there exist paths that have already been
+    imported under `toppath`.
+    """
+    state = progress_read()
+    return toppath in state
+
+
+def progress_reset(toppath):
+    with progress_write() as state:
+        if toppath in state:
+            del state[toppath]
 
 
 # Similarly, utilities for manipulating the "incremental" import log.
@@ -140,21 +177,29 @@ class ImportSession(object):
     """Controls an import action. Subclasses should implement methods to
     communicate with the user or otherwise make decisions.
     """
-    def __init__(self, lib, logfile, paths, query):
-        """Create a session. `lib` is a Library object. `logfile` is a
-        file-like object open for writing or None if no logging is to be
-        performed. Either `paths` or `query` is non-null and indicates
+    def __init__(self, lib, loghandler, paths, query):
+        """Create a session. `lib` is a Library object. `loghandler` is a
+        logging.Handler. Either `paths` or `query` is non-null and indicates
         the source of files to be imported.
         """
         self.lib = lib
-        self.logfile = logfile
+        self.logger = self._setup_logging(loghandler)
         self.paths = paths
         self.query = query
         self.seen_idents = set()
+        self._is_resuming = dict()
 
         # Normalize the paths.
         if self.paths:
             self.paths = map(normpath, self.paths)
+
+    def _setup_logging(self, loghandler):
+        logger = logging.getLogger(__name__)
+        logger.propagate = False
+        if not loghandler:
+            loghandler = logging.NullHandler()
+        logger.handlers = [loghandler]
+        return logger
 
     def set_config(self, config):
         """Set `config` property from global import config and make
@@ -175,9 +220,13 @@ class ImportSession(object):
             iconfig['resume'] = False
             iconfig['incremental'] = False
 
-        # Copy and move are mutually exclusive.
+        # Copy, move, and link are mutually exclusive.
         if iconfig['move']:
             iconfig['copy'] = False
+            iconfig['link'] = False
+        elif iconfig['link']:
+            iconfig['copy'] = False
+            iconfig['move'] = False
 
         # Only delete when copying.
         if not iconfig['copy']:
@@ -186,13 +235,10 @@ class ImportSession(object):
         self.want_resume = config['resume'].as_choice([True, False, 'ask'])
 
     def tag_log(self, status, paths):
-        """Log a message about a given album to logfile. The status should
-        reflect the reason the album couldn't be tagged.
+        """Log a message about a given album to the importer log. The status
+        should reflect the reason the album couldn't be tagged.
         """
-        if self.logfile:
-            print(u'{0} {1}'.format(status, displayable_path(paths)),
-                  file=self.logfile)
-            self.logfile.flush()
+        self.logger.info(u'{0} {1}', status, displayable_path(paths))
 
     def log_choice(self, task, duplicate=False):
         """Logs the task's current choice if it should be logged. If
@@ -221,7 +267,7 @@ class ImportSession(object):
     def choose_match(self, task):
         raise NotImplementedError
 
-    def resolve_duplicate(self, task):
+    def resolve_duplicate(self, task, found_duplicates):
         raise NotImplementedError
 
     def choose_item(self, task):
@@ -230,6 +276,7 @@ class ImportSession(object):
     def run(self):
         """Run the import task.
         """
+        self.logger.info(u'import started {0}', time.asctime())
         self.set_config(config['import'])
 
         # Set up the pipeline.
@@ -238,25 +285,32 @@ class ImportSession(object):
         else:
             stages = [query_tasks(self)]
 
-        if self.config['group_albums'] and \
-           not self.config['singletons']:
-            # Split directory tasks into one task for each album
-            stages += [group_albums(self)]
-        if self.config['autotag']:
-            # Only look up and query the user when autotagging.
-
-            # FIXME We should also resolve duplicates when not
-            # autotagging.
-            stages += [lookup_candidates(self), user_query(self)]
+        # In pretend mode, just log what would otherwise be imported.
+        if self.config['pretend']:
+            stages += [log_files(self)]
         else:
-            stages += [import_asis(self)]
-        stages += [apply_choices(self)]
-        for stage_func in plugins.import_stages():
-            stages.append(plugin_stage(self, stage_func))
-        stages += [manipulate_files(self)]
+            if self.config['group_albums'] and \
+               not self.config['singletons']:
+                # Split directory tasks into one task for each album.
+                stages += [group_albums(self)]
+
+            if self.config['autotag']:
+                stages += [lookup_candidates(self), user_query(self)]
+            else:
+                stages += [import_asis(self)]
+
+            stages += [apply_choices(self)]
+
+            # Plugin stages.
+            for stage_func in plugins.import_stages():
+                stages.append(plugin_stage(self, stage_func))
+
+            stages += [manipulate_files(self)]
+
         pl = pipeline.Pipeline(stages)
 
         # Run the pipeline.
+        plugins.send('import_begin', session=self)
         try:
             if config['threaded']:
                 pl.run_parallel(QUEUE_SIZE)
@@ -266,29 +320,95 @@ class ImportSession(object):
             # User aborted operation. Silently stop.
             pass
 
+    # Incremental and resumed imports
+
+    def already_imported(self, toppath, paths):
+        """Returns true if the files belonging to this task have already
+        been imported in a previous session.
+        """
+        if self.is_resuming(toppath) \
+           and all(map(lambda p: progress_element(toppath, p), paths)):
+            return True
+        if self.config['incremental'] \
+           and tuple(paths) in self.history_dirs:
+            return True
+
+        return False
+
+    @property
+    def history_dirs(self):
+        if not hasattr(self, '_history_dirs'):
+            self._history_dirs = history_get()
+        return self._history_dirs
+
+    def is_resuming(self, toppath):
+        """Return `True` if user wants to resume import of this path.
+
+        You have to call `ask_resume` first to determine the return value.
+        """
+        return self._is_resuming.get(toppath, False)
+
+    def ask_resume(self, toppath):
+        """If import of `toppath` was aborted in an earlier session, ask
+        user if she wants to resume the import.
+
+        Determines the return value of `is_resuming(toppath)`.
+        """
+        if self.want_resume and has_progress(toppath):
+            # Either accept immediately or prompt for input to decide.
+            if self.want_resume is True or \
+               self.should_resume(toppath):
+                log.warn(u'Resuming interrupted import of {0}',
+                         util.displayable_path(toppath))
+                self._is_resuming[toppath] = True
+            else:
+                # Clear progress; we're starting from the top.
+                progress_reset(toppath)
+
 
 # The importer task class.
 
 class ImportTask(object):
     """Represents a single set of items to be imported along with its
     intermediate state. May represent an album or a single item.
+
+    The import session and stages call the following methods in the
+    given order.
+
+    * `lookup_candidates()` Sets the `common_artist`, `common_album`,
+      `candidates`, and `rec` attributes. `candidates` is a list of
+      `AlbumMatch` objects.
+
+    * `choose_match()` Uses the session to set the `match` attribute
+      from the `candidates` list.
+
+    * `find_duplicates()` Returns a list of albums from `lib` with the
+       same artist and album name as the task.
+
+    * `apply_metadata()` Sets the attributes of the items from the
+      task's `match` attribute.
+
+    * `add()` Add the imported items and album to the database.
+
+    * `manipulate_files()` Copy, move, and write files depending on the
+      session configuration.
+
+    * `finalize()` Update the import progress and cleanup the file
+      system.
     """
     def __init__(self, toppath=None, paths=None, items=None):
         self.toppath = toppath
         self.paths = paths
         self.items = items
         self.choice_flag = None
+
+        self.cur_album = None
+        self.cur_artist = None
+        self.candidates = []
+        self.rec = None
         # TODO remove this eventually
         self.should_remove_duplicates = False
         self.is_album = True
-
-    def set_null_candidates(self):
-        """Set the candidates to indicate no album match was found.
-        """
-        self.cur_artist = None
-        self.cur_album = None
-        self.candidates = None
-        self.rec = None
 
     def set_choice(self, choice):
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -308,7 +428,8 @@ class ImportTask(object):
         """Updates the progress state to indicate that this album has
         finished.
         """
-        progress_set(self.toppath, self.paths)
+        if self.toppath:
+            progress_add(self.toppath, *self.paths)
 
     def save_history(self):
         """Save the directory in the history for incremental imports.
@@ -342,9 +463,9 @@ class ImportTask(object):
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
-        If this is an album task, return the list of items in the
-        selected match or everything if the choice is ASIS. If this is a
-        singleton task, return a list containing the item.
+
+        If the tasks applies an album match the method only returns the
+        matched items.
         """
         if self.choice_flag == action.ASIS:
             return list(self.items)
@@ -366,12 +487,11 @@ class ImportTask(object):
 
     def remove_duplicates(self, lib):
         duplicate_items = self.duplicate_items(lib)
-        log.debug('removing %i old duplicated items' %
-                  len(duplicate_items))
+        log.debug(u'removing {0} old duplicated items', len(duplicate_items))
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
-                log.debug(u'deleting duplicate %s' %
+                log.debug(u'deleting duplicate {0}',
                           util.displayable_path(item.path))
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path),
@@ -392,17 +512,17 @@ class ImportTask(object):
         self.cleanup(copy=session.config['copy'],
                      delete=session.config['delete'],
                      move=session.config['move'])
-        self._emit_imported(session.lib)
+
+        if not self.skip:
+            self._emit_imported(session.lib)
 
     def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths.
         """
-        # FIXME Maybe the keywords should be task properties.
-
-        # FIXME This shouldn't be here. Skipping should be handled in
-        # the stages.
+        # Do not delete any files or prune directories when skipping.
         if self.skip:
             return
+
         items = self.imported_items()
 
         # When copying and deleting originals, delete old files.
@@ -425,6 +545,20 @@ class ImportTask(object):
         if self.skip:
             return
         plugins.send('album_imported', lib=lib, album=self.album)
+
+    def handle_created(self, session):
+        """Send the `import_task_created` event for this task. Return a list of
+        tasks that should continue through the pipeline. By default, this is a
+        list containing only the task itself, but plugins can replace the task
+        with new ones.
+        """
+        tasks = plugins.send('import_task_created', session=session, task=self)
+        if not tasks:
+            tasks = [self]
+        else:
+            # The plugins gave us a list of lists of tasks. Flatten it.
+            tasks = [t for inner in tasks for t in inner]
+        return tasks
 
     def lookup_candidates(self):
         """Retrieve and store candidates for this album.
@@ -461,7 +595,7 @@ class ImportTask(object):
                 duplicates.append(album)
         return duplicates
 
-    def infer_album_fields(self):
+    def align_album_level_fields(self):
         """Make the some album fields equal across `self.items`
         """
         changes = {}
@@ -495,36 +629,29 @@ class ImportTask(object):
             item.update(changes)
 
     def manipulate_files(self, move=False, copy=False, write=False,
-                         session=None):
+                         link=False, session=None):
         items = self.imported_items()
         # Save the original paths of all items for deletion and pruning
         # in the next step (finalization).
         self.old_paths = [item.path for item in items]
         for item in items:
-            if session.config['move']:
-                # Just move the file.
-                item.move(False)
-            elif session.config['copy']:
-                # If it's a reimport, move in-library files and copy
-                # out-of-library files. Otherwise, copy and keep track
-                # of the old path.
+            if move or copy or link:
+                # In copy and link modes, treat re-imports specially:
+                # move in-library files. (Out-of-library files are
+                # copied/moved as usual).
                 old_path = item.path
-                if self.replaced_items[item]:
-                    # This is a reimport. Move in-library files and copy
-                    # out-of-library files.
-                    if session.lib.directory in util.ancestry(old_path):
-                        item.move(False)
-                        # We moved the item, so remove the
-                        # now-nonexistent file from old_paths.
-                        self.old_paths.remove(old_path)
-                    else:
-                        item.move(True)
+                if (copy or link) and self.replaced_items[item] and \
+                   session.lib.directory in util.ancestry(old_path):
+                    item.move()
+                    # We moved the item, so remove the
+                    # now-nonexistent file from old_paths.
+                    self.old_paths.remove(old_path)
                 else:
                     # A normal import. Just copy files and keep track of
                     # old paths.
-                    item.move(True)
+                    item.move(copy, link)
 
-            if session.config['write'] and self.apply:
+            if write and self.apply:
                 item.try_write()
 
         with session.lib.transaction():
@@ -536,26 +663,87 @@ class ImportTask(object):
     def add(self, lib):
         """Add the items as an album to the library and remove replaced items.
         """
+        self.align_album_level_fields()
         with lib.transaction():
+            self.record_replaced(lib)
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
+            self.reimport_metadata(lib)
+
+    def record_replaced(self, lib):
+        """Records the replaced items and albums in the `replaced_items`
+        and `replaced_albums` dictionaries.
+        """
+        self.replaced_items = defaultdict(list)
+        self.replaced_albums = defaultdict(list)
+        replaced_album_ids = set()
+        for item in self.imported_items():
+            dup_items = list(lib.items(
+                dbcore.query.BytesQuery('path', item.path)
+            ))
+            self.replaced_items[item] = dup_items
+            for dup_item in dup_items:
+                if (not dup_item.album_id or
+                        dup_item.album_id in replaced_album_ids):
+                    continue
+                replaced_album = dup_item.get_album()
+                if replaced_album:
+                    replaced_album_ids.add(dup_item.album_id)
+                    self.replaced_albums[replaced_album.path] = replaced_album
+
+    def reimport_metadata(self, lib):
+        """For reimports, preserves metadata for reimported items and
+        albums.
+        """
+        if self.is_album:
+            replaced_album = self.replaced_albums.get(self.album.path)
+            if replaced_album:
+                self.album.added = replaced_album.added
+                self.album.update(replaced_album._values_flex)
+                self.album.store()
+                log.debug(
+                    u'Reimported album: added {0}, flexible '
+                    u'attributes {1} from album {2} for {3}',
+                    self.album.added,
+                    replaced_album._values_flex.keys(),
+                    replaced_album.id,
+                    displayable_path(self.album.path)
+                )
+
+        for item in self.imported_items():
+            dup_items = self.replaced_items[item]
+            for dup_item in dup_items:
+                if dup_item.added and dup_item.added != item.added:
+                    item.added = dup_item.added
+                    log.debug(
+                        u'Reimported item added {0} '
+                        u'from item {1} for {2}',
+                        item.added,
+                        dup_item.id,
+                        displayable_path(item.path)
+                    )
+                item.update(dup_item._values_flex)
+                log.debug(
+                    u'Reimported item flexible attributes {0} '
+                    u'from item {1} for {2}',
+                    dup_item._values_flex.keys(),
+                    dup_item.id,
+                    displayable_path(item.path)
+                )
+                item.store()
 
     def remove_replaced(self, lib):
         """Removes all the items from the library that have the same
         path as an item from this task.
-
-        Records the replaced items in the `replaced_items` dictionary
         """
-        self.replaced_items = defaultdict(list)
         for item in self.imported_items():
-            dup_items = lib.items(dbcore.query.BytesQuery('path', item.path))
-            self.replaced_items[item] = dup_items
-            for dup_item in dup_items:
-                log.debug('replacing item %i: %s' %
-                          (dup_item.id, displayable_path(item.path)))
+            for dup_item in self.replaced_items[item]:
+                log.debug(u'Replacing item {0}: {1}',
+                          dup_item.id, displayable_path(item.path))
                 dup_item.remove()
-        log.debug('%i of %i items replaced' % (len(self.replaced_items),
-                                               len(self.imported_items())))
+        log.debug(u'{0} of {1} items replaced',
+                  sum(bool(l) for l in self.replaced_items.values()),
+                  len(self.imported_items()))
 
     def choose_match(self, session):
         """Ask the session which match should apply and apply it.
@@ -590,8 +778,8 @@ class SingletonImportTask(ImportTask):
     """ImportTask for a single track that is not associated to an album.
     """
 
-    def __init__(self, item):
-        super(SingletonImportTask, self).__init__(paths=[item.path])
+    def __init__(self, toppath, item):
+        super(SingletonImportTask, self).__init__(toppath, [item.path])
         self.item = item
         self.is_album = False
         self.paths = [item.path]
@@ -605,14 +793,6 @@ class SingletonImportTask(ImportTask):
 
     def imported_items(self):
         return [self.item]
-
-    def save_progress(self):
-        # TODO we should also save progress for singletons
-        pass
-
-    def save_history(self):
-        # TODO we should also save history for singletons
-        pass
 
     def apply_metadata(self):
         autotag.apply_item_metadata(self.item, self.match.info)
@@ -651,8 +831,10 @@ class SingletonImportTask(ImportTask):
 
     def add(self, lib):
         with lib.transaction():
+            self.record_replaced(lib)
             self.remove_replaced(lib)
             lib.add(self.item)
+            self.reimport_metadata(lib)
 
     def infer_album_fields(self):
         raise NotImplementedError
@@ -672,11 +854,11 @@ class SingletonImportTask(ImportTask):
 # are so many methods which pass. We should introduce a new
 # BaseImportTask class.
 class SentinelImportTask(ImportTask):
-    """This class marks the progress of an import and does not import
-    any items itself.
+    """A sentinel task marks the progress of an import and does not
+    import any items itself.
 
-    If only `toppath` is set the task indicats the end of a top-level
-    directory import. If the `paths` argument is givent, too, the task
+    If only `toppath` is set the task indicates the end of a top-level
+    directory import. If the `paths` argument is also given, the task
     indicates the progress in the `toppath` import.
     """
 
@@ -695,10 +877,10 @@ class SentinelImportTask(ImportTask):
     def save_progress(self):
         if self.paths is None:
             # "Done" sentinel.
-            progress_set(self.toppath, None)
+            progress_reset(self.toppath)
         else:
             # "Directory progress" sentinel for singletons
-            progress_set(self.toppath, self.paths)
+            progress_add(self.toppath, *self.paths)
 
     def skip(self):
         return True
@@ -714,9 +896,16 @@ class SentinelImportTask(ImportTask):
 
 
 class ArchiveImportTask(SentinelImportTask):
-    """Additional methods for handling archives.
+    """An import task that represents the processing of an archive.
 
-    Use when `toppath` points to a `zip`, `tar`, or `rar` archive.
+    `toppath` must be a `zip`, `tar`, or `rar` archive. Archive tasks
+    serve two purposes:
+    - First, it will unarchive the files to a temporary directory and
+      return it. The client should read tasks from the resulting
+      directory and send them through the pipeline.
+    - Second, it will clean up the temporary directory when it proceeds
+      through the pipeline. The client should send the archive task
+      after sending the rest of the music tasks to make this work.
     """
 
     def __init__(self, toppath):
@@ -764,6 +953,8 @@ class ArchiveImportTask(SentinelImportTask):
         """Removes the temporary directory the archive was extracted to.
         """
         if self.extracted:
+            log.debug(u'Removing extracted directory: {0}',
+                      displayable_path(self.toppath))
             shutil.rmtree(self.toppath)
 
     def extract(self):
@@ -784,6 +975,193 @@ class ArchiveImportTask(SentinelImportTask):
         self.toppath = extract_to
 
 
+class ImportTaskFactory(object):
+    """Generate album and singleton import tasks for all media files
+    indicated by a path.
+    """
+    def __init__(self, toppath, session):
+        """Create a new task factory.
+
+        `toppath` is the user-specified path to search for music to
+        import. `session` is the `ImportSession`, which controls how
+        tasks are read from the directory.
+        """
+        self.toppath = toppath
+        self.session = session
+        self.skipped = 0  # Skipped due to incremental/resume.
+        self.imported = 0  # "Real" tasks created.
+        self.is_archive = ArchiveImportTask.is_archive(syspath(toppath))
+
+    def tasks(self):
+        """Yield all import tasks for music found in the user-specified
+        path `self.toppath`. Any necessary sentinel tasks are also
+        produced.
+
+        During generation, update `self.skipped` and `self.imported`
+        with the number of tasks that were not produced (due to
+        incremental mode or resumed imports) and the number of concrete
+        tasks actually produced, respectively.
+
+        If `self.toppath` is an archive, it is adjusted to point to the
+        extracted data.
+        """
+        # Check whether this is an archive.
+        if self.is_archive:
+            archive_task = self.unarchive()
+            if not archive_task:
+                return
+
+        # Search for music in the directory.
+        for dirs, paths in self.paths():
+            if self.session.config['singletons']:
+                for path in paths:
+                    tasks = self._create(self.singleton(path))
+                    for task in tasks:
+                        yield task
+                yield self.sentinel(dirs)
+
+            else:
+                tasks = self._create(self.album(paths, dirs))
+                for task in tasks:
+                    yield task
+
+        # Produce the final sentinel for this toppath to indicate that
+        # it is finished. This is usually just a SentinelImportTask, but
+        # for archive imports, send the archive task instead (to remove
+        # the extracted directory).
+        if self.is_archive:
+            yield archive_task
+        else:
+            yield self.sentinel()
+
+    def _create(self, task):
+        """Handle a new task to be emitted by the factory.
+
+        Emit the `import_task_created` event and increment the
+        `imported` count if the task is not skipped. Return the same
+        task. If `task` is None, do nothing.
+        """
+        if task:
+            tasks = task.handle_created(self.session)
+            self.imported += len(tasks)
+            return tasks
+        return []
+
+    def paths(self):
+        """Walk `self.toppath` and yield `(dirs, files)` pairs where
+        `files` are individual music files and `dirs` the set of
+        containing directories where the music was found.
+
+        This can either be a recursive search in the ordinary case, a
+        single track when `toppath` is a file, a single directory in
+        `flat` mode.
+        """
+        if not os.path.isdir(syspath(self.toppath)):
+            yield [self.toppath], [self.toppath]
+        elif self.session.config['flat']:
+            paths = []
+            for dirs, paths_in_dir in albums_in_dir(self.toppath):
+                paths += paths_in_dir
+            yield [self.toppath], paths
+        else:
+            for dirs, paths in albums_in_dir(self.toppath):
+                yield dirs, paths
+
+    def singleton(self, path):
+        """Return a `SingletonImportTask` for the music file.
+        """
+        if self.session.already_imported(self.toppath, [path]):
+            log.debug(u'Skipping previously-imported path: {0}',
+                      displayable_path(path))
+            self.skipped += 1
+            return None
+
+        item = self.read_item(path)
+        if item:
+            return SingletonImportTask(self.toppath, item)
+        else:
+            return None
+
+    def album(self, paths, dirs=None):
+        """Return a `ImportTask` with all media files from paths.
+
+        `dirs` is a list of parent directories used to record already
+        imported albums.
+        """
+        if not paths:
+            return None
+
+        if dirs is None:
+            dirs = list(set(os.path.dirname(p) for p in paths))
+
+        if self.session.already_imported(self.toppath, dirs):
+            log.debug(u'Skipping previously-imported path: {0}',
+                      displayable_path(dirs))
+            self.skipped += 1
+            return None
+
+        items = map(self.read_item, paths)
+        items = [item for item in items if item]
+
+        if items:
+            return ImportTask(self.toppath, dirs, items)
+        else:
+            return None
+
+    def sentinel(self, paths=None):
+        """Return a `SentinelImportTask` indicating the end of a
+        top-level directory import.
+        """
+        return SentinelImportTask(self.toppath, paths)
+
+    def unarchive(self):
+        """Extract the archive for this `toppath`.
+
+        Extract the archive to a new directory, adjust `toppath` to
+        point to the extracted directory, and return an
+        `ArchiveImportTask`. If extraction fails, return None.
+        """
+        assert self.is_archive
+
+        if not (self.session.config['move'] or
+                self.session.config['copy']):
+            log.warn(u"Archive importing requires either "
+                     "'copy' or 'move' to be enabled.")
+            return
+
+        log.debug(u'Extracting archive: {0}',
+                  displayable_path(self.toppath))
+        archive_task = ArchiveImportTask(self.toppath)
+        try:
+            archive_task.extract()
+        except Exception as exc:
+            log.error(u'extraction failed: {0}', exc)
+            return
+
+        # Now read albums from the extracted directory.
+        self.toppath = archive_task.toppath
+        log.debug(u'Archive extracted to: {0}', self.toppath)
+        return archive_task
+
+    def read_item(self, path):
+        """Return an `Item` read from the path.
+
+        If an item cannot be read, return `None` instead and log an
+        error.
+        """
+        try:
+            return library.Item.from_path(path)
+        except library.ReadError as exc:
+            if isinstance(exc.reason, mediafile.FileTypeError):
+                # Silently ignore non-music files.
+                pass
+            elif isinstance(exc.reason, mediafile.UnreadableFileError):
+                log.warn(u'unreadable file: {0}', displayable_path(path))
+            else:
+                log.error(u'error reading {0}: {1}',
+                          displayable_path(path), exc)
+
+
 # Full-album pipeline stages.
 
 def read_tasks(session):
@@ -791,107 +1169,24 @@ def read_tasks(session):
     in the user-specified list of paths. In the case of a singleton
     import, yields single-item tasks instead.
     """
-    # Look for saved incremental directories.
-    if session.config['incremental']:
-        incremental_skipped = 0
-        history_dirs = history_get()
-
+    skipped = 0
     for toppath in session.paths:
-        # Extract archives.
-        archive_task = None
-        if ArchiveImportTask.is_archive(syspath(toppath)):
-            if not (session.config['move'] or session.config['copy']):
-                log.warn("Archive importing requires either "
-                         "'copy' or 'move' to be enabled.")
-                continue
+        # Check whether we need to resume the import.
+        session.ask_resume(toppath)
 
-            log.debug('extracting archive {0}'
-                      .format(displayable_path(toppath)))
-            archive_task = ArchiveImportTask(toppath)
-            try:
-                archive_task.extract()
-            except Exception as exc:
-                log.error('extraction failed: {0}'.format(exc))
-                continue
+        # Generate tasks.
+        task_factory = ImportTaskFactory(toppath, session)
+        for t in task_factory.tasks():
+            yield t
+        skipped += task_factory.skipped
 
-            # Continue reading albums from the extracted directory.
-            toppath = archive_task.toppath
+        if not task_factory.imported:
+            log.warn(u'No files imported from {0}',
+                     displayable_path(toppath))
 
-        # Check whether the path is to a file.
-        if not os.path.isdir(syspath(toppath)):
-            try:
-                item = library.Item.from_path(toppath)
-            except mediafile.UnreadableFileError:
-                log.warn(u'unreadable file: {0}'.format(
-                    util.displayable_path(toppath)
-                ))
-                continue
-            if session.config['singletons']:
-                yield SingletonImportTask(item)
-            else:
-                yield ImportTask(toppath, [toppath], [item])
-            continue
-
-        # A flat album import merges all items into one album.
-        if session.config['flat'] and not session.config['singletons']:
-            all_items = []
-            for _, items in autotag.albums_in_dir(toppath):
-                all_items += items
-            yield ImportTask(toppath, [toppath], all_items)
-            yield SentinelImportTask(toppath)
-            continue
-
-        resume_dir = None
-        if session.want_resume:
-            resume_dir = progress_get(toppath)
-            if resume_dir:
-                # Either accept immediately or prompt for input to decide.
-                if session.want_resume is True or \
-                   session.should_resume(toppath):
-                    log.warn('Resuming interrupted import of %s' % toppath)
-                else:
-                    # Clear progress; we're starting from the top.
-                    resume_dir = None
-                    progress_set(toppath, None)
-
-        # Produce paths under this directory.
-        for paths, items in autotag.albums_in_dir(toppath):
-            # Skip according to progress.
-            if session.want_resume and resume_dir:
-                # We're fast-forwarding to resume a previous tagging.
-                if paths == resume_dir:
-                    # We've hit the last good path! Turn off the
-                    # fast-forwarding.
-                    resume_dir = None
-                continue
-
-            # When incremental, skip paths in the history.
-            if session.config['incremental'] \
-               and tuple(paths) in history_dirs:
-                log.debug(u'Skipping previously-imported path: %s' %
-                          displayable_path(paths))
-                incremental_skipped += 1
-                continue
-
-            # Yield all the necessary tasks.
-            if session.config['singletons']:
-                for item in items:
-                    yield SingletonImportTask(item)
-                yield SentinelImportTask(toppath, paths)
-            else:
-                yield ImportTask(toppath, paths, items)
-
-        # Indicate the directory is finished.
-        # FIXME hack to delete extracted archives
-        if archive_task is None:
-            yield SentinelImportTask(toppath)
-        else:
-            yield archive_task
-
-    # Show skipped directories.
-    if session.config['incremental'] and incremental_skipped:
-        log.info(u'Incremental import: skipped %i directories.' %
-                 incremental_skipped)
+    # Show skipped directories (due to incremental/resume).
+    if skipped:
+        log.info(u'Skipped {0} paths.', skipped)
 
 
 def query_tasks(session):
@@ -902,13 +1197,15 @@ def query_tasks(session):
     if session.config['singletons']:
         # Search for items.
         for item in session.lib.items(session.query):
-            yield SingletonImportTask(item)
+            task = SingletonImportTask(None, item)
+            for task in task.handle_created(session):
+                yield task
 
     else:
         # Search for albums.
         for album in session.lib.albums(session.query):
-            log.debug('yielding album %i: %s - %s' %
-                      (album.id, album.albumartist, album.album))
+            log.debug(u'yielding album {0}: {1} - {2}',
+                      album.id, album.albumartist, album.album)
             items = list(album.items())
 
             # Clear IDs from re-tagged items so they appear "fresh" when
@@ -917,7 +1214,9 @@ def query_tasks(session):
                 item.id = None
                 item.album_id = None
 
-            yield ImportTask(None, [album.item_dir()], items)
+            task = ImportTask(None, [album.item_dir()], items)
+            for task in task.handle_created(session):
+                yield task
 
 
 @pipeline.mutator_stage
@@ -933,7 +1232,7 @@ def lookup_candidates(session, task):
         return
 
     plugins.send('import_task_start', session=session, task=task)
-    log.debug('Looking up: %s' % displayable_path(task.paths))
+    log.debug(u'Looking up: {0}', displayable_path(task.paths))
     task.lookup_candidates()
 
 
@@ -944,7 +1243,7 @@ def user_query(session, task):
 
     The coroutine accepts an ImportTask objects. It uses the
     session's `choose_match` method to determine the `action` for
-    this task. Depending on the action additional stages are exectuted
+    this task. Depending on the action additional stages are executed
     and the processed task is yielded.
 
     It emits the ``import_task_choice`` event for plugins. Plugins have
@@ -963,7 +1262,9 @@ def user_query(session, task):
         # Set up a little pipeline for dealing with the singletons.
         def emitter(task):
             for item in task.items:
-                yield SingletonImportTask(item)
+                task = SingletonImportTask(task.toppath, item)
+                for new_task in task.handle_created(session):
+                    yield new_task
             yield SentinelImportTask(task.toppath, task.paths)
 
         ipl = pipeline.Pipeline([
@@ -993,8 +1294,9 @@ def resolve_duplicates(session, task):
     """
     if task.choice_flag in (action.ASIS, action.APPLY):
         ident = task.chosen_ident()
-        if ident in session.seen_idents or task.find_duplicates(session.lib):
-            session.resolve_duplicate(task)
+        found_duplicates = task.find_duplicates(session.lib)
+        if ident in session.seen_idents or found_duplicates:
+            session.resolve_duplicate(task, found_duplicates)
             session.log_choice(task, True)
         session.seen_idents.add(ident)
 
@@ -1010,9 +1312,6 @@ def import_asis(session, task):
         return
 
     log.info(displayable_path(task.paths))
-
-    # Behave as if ASIS were selected.
-    task.set_null_candidates()
     task.set_choice(action.ASIS)
 
 
@@ -1028,10 +1327,6 @@ def apply_choices(session, task):
     if task.apply:
         task.apply_metadata()
         plugins.send('import_task_apply', session=session, task=task)
-
-    # Infer album-level fields.
-    if task.is_album:
-        task.infer_album_fields()
 
     task.add(session.lib)
 
@@ -1059,26 +1354,40 @@ def manipulate_files(session, task):
     manipulations *after* items have been added to the library and
     finalizes each task.
     """
-    if task.skip:
-        return
+    if not task.skip:
+        if task.should_remove_duplicates:
+            task.remove_duplicates(session.lib)
 
-    if task.should_remove_duplicates:
-        task.remove_duplicates(session.lib)
-
-    task.manipulate_files(
-        move=session.config['move'],
-        copy=session.config['copy'],
-        write=session.config['write'],
-        session=session,
-    )
+        task.manipulate_files(
+            move=session.config['move'],
+            copy=session.config['copy'],
+            write=session.config['write'],
+            link=session.config['link'],
+            session=session,
+        )
 
     # Progress, cleanup, and event.
     task.finalize(session)
 
 
+@pipeline.stage
+def log_files(session, task):
+    """A coroutine (pipeline stage) to log each file to be imported.
+    """
+    if isinstance(task, SingletonImportTask):
+        log.info(u'Singleton: {0}', displayable_path(task.item['path']))
+    elif task.items:
+        log.info(u'Album: {0}', displayable_path(task.paths[0]))
+        for item in task.items:
+            log.info(u'  {0}', displayable_path(item['path']))
+
+
 def group_albums(session):
-    """Group the items of a task by albumartist and album name and create a new
-    task for each album. Yield the tasks as a multi message.
+    """A pipeline stage that groups the items of each task into albums
+    using their metadata.
+
+    Groups are identified using their artist and album fields. The
+    pipeline stage emits new album tasks for each discovered group.
     """
     def group(item):
         return (item.albumartist or item.artist, item.album)
@@ -1090,7 +1399,108 @@ def group_albums(session):
             continue
         tasks = []
         for _, items in itertools.groupby(task.items, group):
-            tasks.append(ImportTask(items=list(items)))
+            task = ImportTask(items=list(items))
+            tasks += task.handle_created(session)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
         task = pipeline.multiple(tasks)
+
+
+MULTIDISC_MARKERS = (r'dis[ck]', r'cd')
+MULTIDISC_PAT_FMT = r'^(.*%s[\W_]*)\d'
+
+
+def albums_in_dir(path):
+    """Recursively searches the given directory and returns an iterable
+    of (paths, items) where paths is a list of directories and items is
+    a list of Items that is probably an album. Specifically, any folder
+    containing any media files is an album.
+    """
+    collapse_pat = collapse_paths = collapse_items = None
+    ignore = config['ignore'].as_str_seq()
+
+    for root, dirs, files in sorted_walk(path, ignore=ignore, logger=log):
+        items = [os.path.join(root, f) for f in files]
+        # If we're currently collapsing the constituent directories in a
+        # multi-disc album, check whether we should continue collapsing
+        # and add the current directory. If so, just add the directory
+        # and move on to the next directory. If not, stop collapsing.
+        if collapse_paths:
+            if (not collapse_pat and collapse_paths[0] in ancestry(root)) or \
+                    (collapse_pat and
+                     collapse_pat.match(os.path.basename(root))):
+                # Still collapsing.
+                collapse_paths.append(root)
+                collapse_items += items
+                continue
+            else:
+                # Collapse finished. Yield the collapsed directory and
+                # proceed to process the current one.
+                if collapse_items:
+                    yield collapse_paths, collapse_items
+                collapse_pat = collapse_paths = collapse_items = None
+
+        # Check whether this directory looks like the *first* directory
+        # in a multi-disc sequence. There are two indicators: the file
+        # is named like part of a multi-disc sequence (e.g., "Title Disc
+        # 1") or it contains no items but only directories that are
+        # named in this way.
+        start_collapsing = False
+        for marker in MULTIDISC_MARKERS:
+            marker_pat = re.compile(MULTIDISC_PAT_FMT % marker, re.I)
+            match = marker_pat.match(os.path.basename(root))
+
+            # Is this directory the root of a nested multi-disc album?
+            if dirs and not items:
+                # Check whether all subdirectories have the same prefix.
+                start_collapsing = True
+                subdir_pat = None
+                for subdir in dirs:
+                    # The first directory dictates the pattern for
+                    # the remaining directories.
+                    if not subdir_pat:
+                        match = marker_pat.match(subdir)
+                        if match:
+                            subdir_pat = re.compile(
+                                br'^%s\d' % re.escape(match.group(1)), re.I
+                            )
+                        else:
+                            start_collapsing = False
+                            break
+
+                    # Subsequent directories must match the pattern.
+                    elif not subdir_pat.match(subdir):
+                        start_collapsing = False
+                        break
+
+                # If all subdirectories match, don't check other
+                # markers.
+                if start_collapsing:
+                    break
+
+            # Is this directory the first in a flattened multi-disc album?
+            elif match:
+                start_collapsing = True
+                # Set the current pattern to match directories with the same
+                # prefix as this one, followed by a digit.
+                collapse_pat = re.compile(
+                    br'^%s\d' % re.escape(match.group(1)), re.I
+                )
+                break
+
+        # If either of the above heuristics indicated that this is the
+        # beginning of a multi-disc album, initialize the collapsed
+        # directory and item lists and check the next directory.
+        if start_collapsing:
+            # Start collapsing; continue to the next iteration.
+            collapse_paths = [root]
+            collapse_items = items
+            continue
+
+        # If it's nonempty, yield it.
+        if items:
+            yield [root], items
+
+    # Clear out any unfinished collapse.
+    if collapse_paths and collapse_items:
+        yield collapse_paths, collapse_items

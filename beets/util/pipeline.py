@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2015, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -30,14 +30,16 @@ up a bottleneck stage by dividing its work among multiple threads.
 To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
-from __future__ import print_function
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import Queue
 from threading import Thread, Lock
 import sys
 
-BUBBLE = '__PIPELINE_BUBBLE__'
-POISON = '__PIPELINE_POISON__'
+BUBBLE = b'__PIPELINE_BUBBLE__'
+POISON = b'__PIPELINE_POISON__'
 
 DEFAULT_QUEUE_SIZE = 16
 
@@ -457,7 +459,7 @@ class Pipeline(object):
                 yield msg
 
 # Smoke test.
-if __name__ == '__main__':
+if __name__ == b'__main__':
     import time
 
     # Test a normally-terminating pipeline both in sequence and

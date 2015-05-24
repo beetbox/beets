@@ -9,6 +9,5 @@ When you attempt to import a track that's missing a title, this plugin will
 look at the track's filename and guess its track number, title, and artist.
 These will be used to search in MusicBrainz and match track ordering.
 
-To use the plugin, just enable it by putting ``fromfilename`` on the
-``plugins:`` line in your config file. There are currently no configuration
-options.
+To use the ``fromfilename`` plugin, enable it in your configuration
+(see :ref:`using-plugins`).
