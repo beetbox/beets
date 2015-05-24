@@ -33,6 +33,9 @@ Fixes:
   with non-typical cased artists (e.g., alt-J, dEUS).
 * :doc:`/plugins/web`: Fix searching for non-ASCII queries. Thanks to
   :user:`oldtopman`. :bug:`1470`
+* :doc:`/plugins/mpdupdate`: We now recommend the newer ``python-mpd2``
+  library instead of its unmaintained parent. Thanks to :user:`Somasis`.
+  :bug:`1472`
 
 
 1.3.13 (April 24, 2015)
