@@ -14,12 +14,12 @@ habits from `MPD`_.  It collects the following information about tracks:
 Installing Dependencies
 -----------------------
 
-This plugin requires the python-mpd library in order to talk to the MPD
+This plugin requires the python-mpd2 library in order to talk to the MPD
 server.
 
 Install the library from `pip`_, like so::
 
-    $ pip install python-mpd
+    $ pip install python-mpd2
 
 Add the ``mpdstats`` plugin to your configuration (see :ref:`using-plugins`).
 
