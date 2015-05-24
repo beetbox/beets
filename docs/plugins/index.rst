@@ -205,13 +205,15 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-follow`_ lets you check for new albums from artists you like.
 
-* `beets-setlister`_ generate playlists from the setlists of a given artist
+* `beets-setlister`_ generate playlists from the setlists of a given artist.
+
+* `beets-noimport`_ adds and removes directories from the incremental import skip list.
 
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
-.. _beetFs: http://code.google.com/p/beetfs/
+.. _beetFs: https://code.google.com/p/beetfs/
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
 .. _A cmus plugin:
@@ -221,3 +223,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
+.. _beets-noimport: https://github.com/ttsda/beets-noimport
