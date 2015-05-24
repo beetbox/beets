@@ -105,7 +105,7 @@ setup(
         'responses',
         'pyxdg',
         'pathlib',
-        'python-mpd',
+        'python-mpd2',
     ],
 
     # Plugin (optional) dependencies:
@@ -115,7 +115,7 @@ setup(
         'discogs': ['discogs-client>=2.1.0'],
         'echonest': ['pyechonest'],
         'lastgenre': ['pylast'],
-        'mpdstats': ['python-mpd'],
+        'mpdstats': ['python-mpd2'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
         'thumbnails': ['pathlib', 'pyxdg'],
