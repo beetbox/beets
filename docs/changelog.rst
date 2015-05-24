@@ -31,6 +31,8 @@ Fixes:
   into MPEG-4 files.
 * :doc:`/plugins/fetchart`: The Wikipedia source is now able to better deal
   with non-typical cased artists (e.g., alt-J, dEUS).
+* :doc:`/plugins/web`: Fix searching for non-ASCII queries. Thanks to
+  :user:`oldtopman`. :bug:`1470`
 
 
 1.3.13 (April 24, 2015)
