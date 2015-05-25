@@ -368,7 +368,34 @@ class ImportSession(object):
 
 # The importer task class.
 
-class ImportTask(object):
+class BaseImportTask(object):
+    """An abstract base class for importer tasks.
+
+    Tasks flow through the importer pipeline. Each stage can update
+    them.     """
+    def __init__(self, toppath, paths, items):
+        """Create a task. The primary fields that define a task are:
+
+        * `toppath`: The user-specified base directory that contains the
+          music for this task. If the task has *no* user-specified base
+          (for example, when importing based on an -L query), this can
+          be None. This is used for tracking progress and history.
+        * `paths`: A list of *specific* paths where the music for this task
+          came from. These paths can be directories, when their entire
+          contents are being imported, or files, when the task comprises
+          individual tracks. This is used for progress/history tracking and
+          for displaying the task to the user.
+        * `items`: A list of `Item` objects representing the music being
+          imported.
+
+        These fields should not change after initialization.
+        """
+        self.toppath = toppath
+        self.paths = paths
+        self.items = items
+
+
+class ImportTask(BaseImportTask):
     """Represents a single set of items to be imported along with its
     intermediate state. May represent an album or a single item.
 
@@ -396,12 +423,9 @@ class ImportTask(object):
     * `finalize()` Update the import progress and cleanup the file
       system.
     """
-    def __init__(self, toppath=None, paths=None, items=None):
-        self.toppath = toppath
-        self.paths = paths
-        self.items = items
+    def __init__(self, toppath, paths, items):
+        super(ImportTask, self).__init__(toppath, paths, items)
         self.choice_flag = None
-
         self.cur_album = None
         self.cur_artist = None
         self.candidates = []
@@ -771,7 +795,7 @@ class SingletonImportTask(ImportTask):
     """
 
     def __init__(self, toppath, item):
-        super(SingletonImportTask, self).__init__(toppath, [item.path])
+        super(SingletonImportTask, self).__init__(toppath, [item.path], [item])
         self.item = item
         self.is_album = False
         self.paths = [item.path]
@@ -839,8 +863,8 @@ class SingletonImportTask(ImportTask):
 
 
 # FIXME The inheritance relationships are inverted. This is why there
-# are so many methods which pass. We should introduce a new
-# BaseImportTask class.
+# are so many methods which pass. More responsibility should be delegated to
+# the BaseImportTask class.
 class SentinelImportTask(ImportTask):
     """A sentinel task marks the progress of an import and does not
     import any items itself.
@@ -850,11 +874,9 @@ class SentinelImportTask(ImportTask):
     indicates the progress in the `toppath` import.
     """
 
-    def __init__(self, toppath=None, paths=None):
-        self.toppath = toppath
-        self.paths = paths
+    def __init__(self, toppath, paths):
+        super(SentinelImportTask, self).__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
-        self.items = None
         self.should_remove_duplicates = False
         self.is_album = True
         self.choice_flag = None
@@ -897,7 +919,7 @@ class ArchiveImportTask(SentinelImportTask):
     """
 
     def __init__(self, toppath):
-        super(ArchiveImportTask, self).__init__(toppath)
+        super(ArchiveImportTask, self).__init__(toppath, ())
         self.extracted = False
 
     @classmethod
