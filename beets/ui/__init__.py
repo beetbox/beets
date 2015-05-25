@@ -123,15 +123,12 @@ def print_(*strings, **kwargs):
     """
     end = kwargs.get('end')
 
-    if strings:
-        if isinstance(strings[0], unicode):
-            txt = u' '.join(strings)
-            txt += u'\n' if end is None else end
-        else:
-            txt = b' '.join(strings)
-            txt += b'\n' if end is None else end
+    if not strings or isinstance(strings[0], unicode):
+        txt = u' '.join(strings)
+        txt += u'\n' if end is None else end
     else:
-        txt = u''
+        txt = b' '.join(strings)
+        txt += b'\n' if end is None else end
 
     # Always send bytes to the stdout stream.
     if isinstance(txt, unicode):
