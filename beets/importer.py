@@ -406,7 +406,6 @@ class ImportTask(object):
         self.cur_artist = None
         self.candidates = []
         self.rec = None
-        # TODO remove this eventually
         self.should_remove_duplicates = False
         self.is_album = True
 
