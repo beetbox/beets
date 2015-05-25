@@ -673,7 +673,7 @@ class TerminalImportSession(importer.ImportSession):
         AlbumMatch object, ASIS, or SKIP.
         """
         # Show what we're tagging.
-        print_('\n')
+        print_()
         print_(displayable_path(task.paths, u'\n') +
                u' ({0} items)'.format(len(task.items)))
 

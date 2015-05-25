@@ -131,7 +131,7 @@ def print_(*strings, **kwargs):
             txt = b' '.join(strings)
             txt += b'\n' if end is None else end
     else:
-        txt = u''
+        txt = u'\n'
 
     # Always send bytes to the stdout stream.
     if isinstance(txt, unicode):
