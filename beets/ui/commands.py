@@ -191,184 +191,6 @@ def penalty_string(distance, limit=None):
         return ui.colorize('text_warning', '(%s)' % ', '.join(penalties))
 
 
-def show_change(cur_artist, cur_album, match):
-    """Print out a representation of the changes that will be made if an
-    album's tags are changed according to `match`, which must be an AlbumMatch
-    object.
-    """
-    def show_album(artist, album):
-        if artist:
-            album_description = u'    %s - %s' % (artist, album)
-        elif album:
-            album_description = u'    %s' % album
-        else:
-            album_description = u'    (unknown album)'
-        print_(album_description)
-
-    def format_index(track_info):
-        """Return a string representing the track index of the given
-        TrackInfo or Item object.
-        """
-        if isinstance(track_info, hooks.TrackInfo):
-            index = track_info.index
-            medium_index = track_info.medium_index
-            medium = track_info.medium
-            mediums = match.info.mediums
-        else:
-            index = medium_index = track_info.track
-            medium = track_info.disc
-            mediums = track_info.disctotal
-        if config['per_disc_numbering']:
-            if mediums > 1:
-                return u'{0}-{1}'.format(medium, medium_index)
-            else:
-                return unicode(medium_index)
-        else:
-            return unicode(index)
-
-    # Identify the album in question.
-    if cur_artist != match.info.artist or \
-            (cur_album != match.info.album and
-             match.info.album != VARIOUS_ARTISTS):
-        artist_l, artist_r = cur_artist or '', match.info.artist
-        album_l,  album_r = cur_album or '', match.info.album
-        if artist_r == VARIOUS_ARTISTS:
-            # Hide artists for VA releases.
-            artist_l, artist_r = u'', u''
-
-        artist_l, artist_r = ui.colordiff(artist_l, artist_r)
-        album_l, album_r = ui.colordiff(album_l, album_r)
-
-        print_("Correcting tags from:")
-        show_album(artist_l, album_l)
-        print_("To:")
-        show_album(artist_r, album_r)
-    else:
-        print_(u"Tagging:\n    {0.artist} - {0.album}".format(match.info))
-
-    # Data URL.
-    if match.info.data_url:
-        print_('URL:\n    %s' % match.info.data_url)
-
-    # Info line.
-    info = []
-    # Similarity.
-    info.append('(Similarity: %s)' % dist_string(match.distance))
-    # Penalties.
-    penalties = penalty_string(match.distance)
-    if penalties:
-        info.append(penalties)
-    # Disambiguation.
-    disambig = disambig_string(match.info)
-    if disambig:
-        info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
-    print_(' '.join(info))
-
-    # Tracks.
-    pairs = match.mapping.items()
-    pairs.sort(key=lambda (_, track_info): track_info.index)
-
-    # Build up LHS and RHS for track difference display. The `lines` list
-    # contains ``(lhs, rhs, width)`` tuples where `width` is the length (in
-    # characters) of the uncolorized LHS.
-    lines = []
-    medium = disctitle = None
-    for item, track_info in pairs:
-
-        # Medium number and title.
-        if medium != track_info.medium or disctitle != track_info.disctitle:
-            media = match.info.media or 'Media'
-            if match.info.mediums > 1 and track_info.disctitle:
-                lhs = '%s %s: %s' % (media, track_info.medium,
-                                     track_info.disctitle)
-            elif match.info.mediums > 1:
-                lhs = '%s %s' % (media, track_info.medium)
-            elif track_info.disctitle:
-                lhs = '%s: %s' % (media, track_info.disctitle)
-            else:
-                lhs = None
-            if lhs:
-                lines.append((lhs, '', 0))
-            medium, disctitle = track_info.medium, track_info.disctitle
-
-        # Titles.
-        new_title = track_info.title
-        if not item.title.strip():
-            # If there's no title, we use the filename.
-            cur_title = displayable_path(os.path.basename(item.path))
-            lhs, rhs = cur_title, new_title
-        else:
-            cur_title = item.title.strip()
-            lhs, rhs = ui.colordiff(cur_title, new_title)
-        lhs_width = len(cur_title)
-
-        # Track number change.
-        cur_track, new_track = format_index(item), format_index(track_info)
-        if cur_track != new_track:
-            if item.track in (track_info.index, track_info.medium_index):
-                color = 'text_highlight_minor'
-            else:
-                color = 'text_highlight'
-            templ = ui.colorize(color, u' (#{0})')
-            lhs += templ.format(cur_track)
-            rhs += templ.format(new_track)
-            lhs_width += len(cur_track) + 4
-
-        # Length change.
-        if item.length and track_info.length and \
-                abs(item.length - track_info.length) > \
-                config['ui']['length_diff_thresh'].as_number():
-            cur_length = ui.human_seconds_short(item.length)
-            new_length = ui.human_seconds_short(track_info.length)
-            templ = ui.colorize('text_highlight', u' ({0})')
-            lhs += templ.format(cur_length)
-            rhs += templ.format(new_length)
-            lhs_width += len(cur_length) + 3
-
-        # Penalties.
-        penalties = penalty_string(match.distance.tracks[track_info])
-        if penalties:
-            rhs += ' %s' % penalties
-
-        if lhs != rhs:
-            lines.append((' * %s' % lhs, rhs, lhs_width))
-        elif config['import']['detail']:
-            lines.append((' * %s' % lhs, '', lhs_width))
-
-    # Print each track in two columns, or across two lines.
-    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
-    if lines:
-        max_width = max(w for _, _, w in lines)
-        for lhs, rhs, lhs_width in lines:
-            if not rhs:
-                print_(lhs)
-            elif max_width > col_width:
-                print_(u'%s ->\n   %s' % (lhs, rhs))
-            else:
-                pad = max_width - lhs_width
-                print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
-
-    # Missing and unmatched tracks.
-    if match.extra_tracks:
-        print_('Missing tracks ({0}/{1} - {2:.1%}):'.format(
-               len(match.extra_tracks),
-               len(match.info.tracks),
-               len(match.extra_tracks) / len(match.info.tracks)
-               ))
-    for track_info in match.extra_tracks:
-        line = ' ! %s (#%s)' % (track_info.title, format_index(track_info))
-        if track_info.length:
-            line += ' (%s)' % ui.human_seconds_short(track_info.length)
-        print_(ui.colorize('text_warning', line))
-    if match.extra_items:
-        print_('Unmatched tracks ({0}):'.format(len(match.extra_items)))
-    for item in match.extra_items:
-        line = ' ! %s (#%s)' % (item.title, format_index(item))
-        if item.length:
-            line += ' (%s)' % ui.human_seconds_short(item.length)
-        print_(ui.colorize('text_warning', line))
-
-
 def show_item_change(item, match):
     """Print out the change that would occur by tagging `item` with the
     metadata from `match`, a TrackMatch object.
@@ -475,179 +297,6 @@ def _summary_judment(rec):
     return action
 
 
-def choose_candidate(candidates, singleton, rec, cur_artist=None,
-                     cur_album=None, item=None, itemcount=None):
-    """Given a sorted list of candidates, ask the user for a selection
-    of which candidate to use. Applies to both full albums and
-    singletons  (tracks). Candidates are either AlbumMatch or TrackMatch
-    objects depending on `singleton`. for albums, `cur_artist`,
-    `cur_album`, and `itemcount` must be provided. For singletons,
-    `item` must be provided.
-
-    Returns the result of the choice, which may SKIP, ASIS, TRACKS, or
-    MANUAL or a candidate (an AlbumMatch/TrackMatch object).
-    """
-    # Sanity check.
-    if singleton:
-        assert item is not None
-    else:
-        assert cur_artist is not None
-        assert cur_album is not None
-
-    # Zero candidates.
-    if not candidates:
-        if singleton:
-            print_("No matching recordings found.")
-            opts = ('Use as-is', 'Skip', 'Enter search', 'enter Id',
-                    'aBort')
-        else:
-            print_("No matching release found for {0} tracks."
-                   .format(itemcount))
-            print_('For help, see: '
-                   'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = ('Use as-is', 'as Tracks', 'Group albums', 'Skip',
-                    'Enter search', 'enter Id', 'aBort')
-        sel = ui.input_options(opts)
-        if sel == 'u':
-            return importer.action.ASIS
-        elif sel == 't':
-            assert not singleton
-            return importer.action.TRACKS
-        elif sel == 'e':
-            return importer.action.MANUAL
-        elif sel == 's':
-            return importer.action.SKIP
-        elif sel == 'b':
-            raise importer.ImportAbort()
-        elif sel == 'i':
-            return importer.action.MANUAL_ID
-        elif sel == 'g':
-            return importer.action.ALBUMS
-        else:
-            assert False
-
-    # Is the change good enough?
-    bypass_candidates = False
-    if rec != Recommendation.none:
-        match = candidates[0]
-        bypass_candidates = True
-
-    while True:
-        # Display and choose from candidates.
-        require = rec <= Recommendation.low
-
-        if not bypass_candidates:
-            # Display list of candidates.
-            print_(u'Finding tags for {0} "{1} - {2}".'.format(
-                u'track' if singleton else u'album',
-                item.artist if singleton else cur_artist,
-                item.title if singleton else cur_album,
-            ))
-
-            print_(u'Candidates:')
-            for i, match in enumerate(candidates):
-                # Index, metadata, and distance.
-                line = [
-                    u'{0}.'.format(i + 1),
-                    u'{0} - {1}'.format(
-                        match.info.artist,
-                        match.info.title if singleton else match.info.album,
-                    ),
-                    u'({0})'.format(dist_string(match.distance)),
-                ]
-
-                # Penalties.
-                penalties = penalty_string(match.distance, 3)
-                if penalties:
-                    line.append(penalties)
-
-                # Disambiguation
-                disambig = disambig_string(match.info)
-                if disambig:
-                    line.append(ui.colorize('text_highlight_minor',
-                                            '(%s)' % disambig))
-
-                print_(' '.join(line))
-
-            # Ask the user for a choice.
-            if singleton:
-                opts = ('Skip', 'Use as-is', 'Enter search', 'enter Id',
-                        'aBort')
-            else:
-                opts = ('Skip', 'Use as-is', 'as Tracks', 'Group albums',
-                        'Enter search', 'enter Id', 'aBort')
-            sel = ui.input_options(opts, numrange=(1, len(candidates)))
-            if sel == 's':
-                return importer.action.SKIP
-            elif sel == 'u':
-                return importer.action.ASIS
-            elif sel == 'm':
-                pass
-            elif sel == 'e':
-                return importer.action.MANUAL
-            elif sel == 't':
-                assert not singleton
-                return importer.action.TRACKS
-            elif sel == 'b':
-                raise importer.ImportAbort()
-            elif sel == 'i':
-                return importer.action.MANUAL_ID
-            elif sel == 'g':
-                return importer.action.ALBUMS
-            else:  # Numerical selection.
-                match = candidates[sel - 1]
-                if sel != 1:
-                    # When choosing anything but the first match,
-                    # disable the default action.
-                    require = True
-        bypass_candidates = False
-
-        # Show what we're about to do.
-        if singleton:
-            show_item_change(item, match)
-        else:
-            show_change(cur_artist, cur_album, match)
-
-        # Exact match => tag automatically if we're not in timid mode.
-        if rec == Recommendation.strong and not config['import']['timid']:
-            return match
-
-        # Ask for confirmation.
-        if singleton:
-            opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
-                    'Enter search', 'enter Id', 'aBort')
-        else:
-            opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
-                    'as Tracks', 'Group albums', 'Enter search', 'enter Id',
-                    'aBort')
-        default = config['import']['default_action'].as_choice({
-            'apply': 'a',
-            'skip': 's',
-            'asis': 'u',
-            'none': None,
-        })
-        if default is None:
-            require = True
-        sel = ui.input_options(opts, require=require, default=default)
-        if sel == 'a':
-            return match
-        elif sel == 'g':
-            return importer.action.ALBUMS
-        elif sel == 's':
-            return importer.action.SKIP
-        elif sel == 'u':
-            return importer.action.ASIS
-        elif sel == 't':
-            assert not singleton
-            return importer.action.TRACKS
-        elif sel == 'e':
-            return importer.action.MANUAL
-        elif sel == 'b':
-            raise importer.ImportAbort()
-        elif sel == 'i':
-            return importer.action.MANUAL_ID
-
-
 def manual_search(singleton):
     """Input either an artist and album (for full albums) or artist and
     track name (for singletons) for manual search.
@@ -681,7 +330,7 @@ class TerminalImportSession(importer.ImportSession):
         action = _summary_judment(task.rec)
         if action == importer.action.APPLY:
             match = task.candidates[0]
-            show_change(task.cur_artist, task.cur_album, match)
+            self.show_change(task.cur_artist, task.cur_album, match)
             return match
         elif action is not None:
             return action
@@ -690,7 +339,7 @@ class TerminalImportSession(importer.ImportSession):
         candidates, rec = task.candidates, task.rec
         while True:
             # Ask for a choice from the user.
-            choice = choose_candidate(
+            choice = self.choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
                 itemcount=len(task.items)
             )
@@ -738,7 +387,8 @@ class TerminalImportSession(importer.ImportSession):
 
         while True:
             # Ask for a choice.
-            choice = choose_candidate(candidates, True, rec, item=task.item)
+            choice = self.choose_candidate(
+                candidates, True, rec, item=task.item)
 
             if choice in (importer.action.SKIP, importer.action.ASIS):
                 return choice
@@ -820,6 +470,361 @@ class TerminalImportSession(importer.ImportSession):
         return ui.input_yn(u"Import of the directory:\n{0}\n"
                            "was interrupted. Resume (Y/n)?"
                            .format(displayable_path(path)))
+
+    def choose_candidate(self, candidates, singleton, rec, cur_artist=None,
+                         cur_album=None, item=None, itemcount=None):
+        """Given a sorted list of candidates, ask the user for a selection
+        of which candidate to use. Applies to both full albums and
+        singletons  (tracks). Candidates are either AlbumMatch or TrackMatch
+        objects depending on `singleton`. for albums, `cur_artist`,
+        `cur_album`, and `itemcount` must be provided. For singletons,
+        `item` must be provided.
+
+        Returns the result of the choice, which may SKIP, ASIS, TRACKS, or
+        MANUAL or a candidate (an AlbumMatch/TrackMatch object).
+        """
+        # Sanity check.
+        if singleton:
+            assert item is not None
+        else:
+            assert cur_artist is not None
+            assert cur_album is not None
+
+        # Zero candidates.
+        if not candidates:
+            if singleton:
+                print_("No matching recordings found.")
+                opts = ('Use as-is', 'Skip', 'Enter search', 'enter Id',
+                        'aBort')
+            else:
+                print_("No matching release found for {0} tracks."
+                    .format(itemcount))
+                print_('For help, see: '
+                    'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
+                opts = ('Use as-is', 'as Tracks', 'Group albums', 'Skip',
+                        'Enter search', 'enter Id', 'aBort')
+            sel = ui.input_options(opts)
+            if sel == 'u':
+                return importer.action.ASIS
+            elif sel == 't':
+                assert not singleton
+                return importer.action.TRACKS
+            elif sel == 'e':
+                return importer.action.MANUAL
+            elif sel == 's':
+                return importer.action.SKIP
+            elif sel == 'b':
+                raise importer.ImportAbort()
+            elif sel == 'i':
+                return importer.action.MANUAL_ID
+            elif sel == 'g':
+                return importer.action.ALBUMS
+            else:
+                assert False
+
+        # Is the change good enough?
+        bypass_candidates = False
+        if rec != Recommendation.none:
+            match = candidates[0]
+            bypass_candidates = True
+
+        while True:
+            # Display and choose from candidates.
+            require = rec <= Recommendation.low
+
+            if not bypass_candidates:
+                # Display list of candidates.
+                print_(u'Finding tags for {0} "{1} - {2}".'.format(
+                    u'track' if singleton else u'album',
+                    item.artist if singleton else cur_artist,
+                    item.title if singleton else cur_album,
+                ))
+
+                print_(u'Candidates:')
+                for i, match in enumerate(candidates):
+                    # Index, metadata, and distance.
+                    line = [
+                        u'{0}.'.format(i + 1),
+                        u'{0} - {1}'.format(
+                            match.info.artist,
+                            match.info.title if singleton else match.info.album,
+                        ),
+                        u'({0})'.format(dist_string(match.distance)),
+                    ]
+
+                    # Penalties.
+                    penalties = penalty_string(match.distance, 3)
+                    if penalties:
+                        line.append(penalties)
+
+                    # Disambiguation
+                    disambig = disambig_string(match.info)
+                    if disambig:
+                        line.append(ui.colorize('text_highlight_minor',
+                                                '(%s)' % disambig))
+
+                    print_(' '.join(line))
+
+                # Ask the user for a choice.
+                if singleton:
+                    opts = ('Skip', 'Use as-is', 'Enter search', 'enter Id',
+                            'aBort')
+                else:
+                    opts = ('Skip', 'Use as-is', 'as Tracks', 'Group albums',
+                            'Enter search', 'enter Id', 'aBort')
+                sel = ui.input_options(opts, numrange=(1, len(candidates)))
+                if sel == 's':
+                    return importer.action.SKIP
+                elif sel == 'u':
+                    return importer.action.ASIS
+                elif sel == 'm':
+                    pass
+                elif sel == 'e':
+                    return importer.action.MANUAL
+                elif sel == 't':
+                    assert not singleton
+                    return importer.action.TRACKS
+                elif sel == 'b':
+                    raise importer.ImportAbort()
+                elif sel == 'i':
+                    return importer.action.MANUAL_ID
+                elif sel == 'g':
+                    return importer.action.ALBUMS
+                else:  # Numerical selection.
+                    match = candidates[sel - 1]
+                    if sel != 1:
+                        # When choosing anything but the first match,
+                        # disable the default action.
+                        require = True
+            bypass_candidates = False
+
+            # Show what we're about to do.
+            if singleton:
+                show_item_change(item, match)
+            else:
+                self.show_change(cur_artist, cur_album, match)
+
+            # Exact match => tag automatically if we're not in timid mode.
+            if rec == Recommendation.strong and not config['import']['timid']:
+                return match
+
+            # Ask for confirmation.
+            if singleton:
+                opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
+                        'Enter search', 'enter Id', 'aBort')
+            else:
+                opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
+                        'as Tracks', 'Group albums', 'Enter search', 'enter Id',
+                        'aBort')
+            default = config['import']['default_action'].as_choice({
+                'apply': 'a',
+                'skip': 's',
+                'asis': 'u',
+                'none': None,
+            })
+            if default is None:
+                require = True
+            sel = ui.input_options(opts, require=require, default=default)
+            if sel == 'a':
+                return match
+            elif sel == 'g':
+                return importer.action.ALBUMS
+            elif sel == 's':
+                return importer.action.SKIP
+            elif sel == 'u':
+                return importer.action.ASIS
+            elif sel == 't':
+                assert not singleton
+                return importer.action.TRACKS
+            elif sel == 'e':
+                return importer.action.MANUAL
+            elif sel == 'b':
+                raise importer.ImportAbort()
+            elif sel == 'i':
+                return importer.action.MANUAL_ID
+
+    def show_change(self, cur_artist, cur_album, match):
+        """Print out a representation of the changes that will be made if an
+        album's tags are changed according to `match`, which must be an AlbumMatch
+        object.
+        """
+        def show_album(artist, album):
+            if artist:
+                album_description = u'    %s - %s' % (artist, album)
+            elif album:
+                album_description = u'    %s' % album
+            else:
+                album_description = u'    (unknown album)'
+            print_(album_description)
+
+        def format_index(track_info):
+            """Return a string representing the track index of the given
+            TrackInfo or Item object.
+            """
+            if isinstance(track_info, hooks.TrackInfo):
+                index = track_info.index
+                medium_index = track_info.medium_index
+                medium = track_info.medium
+                mediums = match.info.mediums
+            else:
+                index = medium_index = track_info.track
+                medium = track_info.disc
+                mediums = track_info.disctotal
+            if config['per_disc_numbering']:
+                if mediums > 1:
+                    return u'{0}-{1}'.format(medium, medium_index)
+                else:
+                    return unicode(medium_index)
+            else:
+                return unicode(index)
+
+        # Identify the album in question.
+        if cur_artist != match.info.artist or \
+                (cur_album != match.info.album and
+                match.info.album != VARIOUS_ARTISTS):
+            artist_l, artist_r = cur_artist or '', match.info.artist
+            album_l,  album_r = cur_album or '', match.info.album
+            if artist_r == VARIOUS_ARTISTS:
+                # Hide artists for VA releases.
+                artist_l, artist_r = u'', u''
+
+            artist_l, artist_r = ui.colordiff(artist_l, artist_r)
+            album_l, album_r = ui.colordiff(album_l, album_r)
+
+            print_("Correcting tags from:")
+            show_album(artist_l, album_l)
+            print_("To:")
+            show_album(artist_r, album_r)
+        else:
+            print_(u"Tagging:\n    {0.artist} - {0.album}".format(match.info))
+
+        # Data URL.
+        if match.info.data_url:
+            print_('URL:\n    %s' % match.info.data_url)
+
+        # Info line.
+        info = []
+        # Similarity.
+        info.append('(Similarity: %s)' % dist_string(match.distance))
+        # Penalties.
+        penalties = penalty_string(match.distance)
+        if penalties:
+            info.append(penalties)
+        # Disambiguation.
+        disambig = disambig_string(match.info)
+        if disambig:
+            info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
+        print_(' '.join(info))
+
+        # Tracks.
+        pairs = match.mapping.items()
+        pairs.sort(key=lambda (_, track_info): track_info.index)
+
+        # Build up LHS and RHS for track difference display. The `lines` list
+        # contains ``(lhs, rhs, width)`` tuples where `width` is the length (in
+        # characters) of the uncolorized LHS.
+        lines = []
+        medium = disctitle = None
+        for item, track_info in pairs:
+
+            # Medium number and title.
+            if medium != track_info.medium or disctitle != track_info.disctitle:
+                media = match.info.media or 'Media'
+                if match.info.mediums > 1 and track_info.disctitle:
+                    lhs = '%s %s: %s' % (media, track_info.medium,
+                                        track_info.disctitle)
+                elif match.info.mediums > 1:
+                    lhs = '%s %s' % (media, track_info.medium)
+                elif track_info.disctitle:
+                    lhs = '%s: %s' % (media, track_info.disctitle)
+                else:
+                    lhs = None
+                if lhs:
+                    lines.append((lhs, '', 0))
+                medium, disctitle = track_info.medium, track_info.disctitle
+
+            # Titles.
+            new_title = track_info.title
+            if not item.title.strip():
+                # If there's no title, we use the filename.
+                cur_title = displayable_path(os.path.basename(item.path))
+                lhs, rhs = cur_title, new_title
+            else:
+                cur_title = item.title.strip()
+                lhs, rhs = ui.colordiff(cur_title, new_title)
+            lhs_width = len(cur_title)
+
+            # Track number change.
+            cur_track, new_track = format_index(item), format_index(track_info)
+            if cur_track != new_track:
+                if item.track in (track_info.index, track_info.medium_index):
+                    color = 'text_highlight_minor'
+                else:
+                    color = 'text_highlight'
+                templ = ui.colorize(color, u' (#{0})')
+                lhs += templ.format(cur_track)
+                rhs += templ.format(new_track)
+                lhs_width += len(cur_track) + 4
+
+            # Length change.
+            if item.length and track_info.length and \
+                    abs(item.length - track_info.length) > \
+                    config['ui']['length_diff_thresh'].as_number():
+                cur_length = ui.human_seconds_short(item.length)
+                new_length = ui.human_seconds_short(track_info.length)
+                templ = ui.colorize('text_highlight', u' ({0})')
+                lhs += templ.format(cur_length)
+                rhs += templ.format(new_length)
+                lhs_width += len(cur_length) + 3
+
+            # Penalties.
+            penalties = penalty_string(match.distance.tracks[track_info])
+            if penalties:
+                rhs += ' %s' % penalties
+
+            if lhs != rhs:
+                lines.append((' * %s' % lhs, rhs, lhs_width))
+            elif config['import']['detail']:
+                lines.append((' * %s' % lhs, '', lhs_width))
+
+        # Print each track in two columns, or across two lines.
+        col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
+        if lines:
+            max_width = max(w for _, _, w in lines)
+            for lhs, rhs, lhs_width in lines:
+                if not rhs:
+                    print_(lhs)
+                elif max_width > col_width:
+                    print_(u'%s ->\n   %s' % (lhs, rhs))
+                else:
+                    pad = max_width - lhs_width
+                    print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
+
+        # Missing and unmatched tracks.
+        if match.extra_tracks:
+            print_('Missing tracks ({0}/{1} - {2:.1%}):'.format(
+                len(match.extra_tracks),
+                len(match.info.tracks),
+                len(match.extra_tracks) / len(match.info.tracks)
+                ))
+        for track_info in match.extra_tracks:
+            line = ' ! %s (#%s)' % (track_info.title, format_index(track_info))
+            if track_info.length:
+                line += ' (%s)' % ui.human_seconds_short(track_info.length)
+            print_(ui.colorize('text_warning', line))
+            self.logger.info("missing track: {0} from {1}".format(
+                track_info.title,
+                match.info.album,
+            ))
+        if match.extra_items:
+            print_('Unmatched tracks ({0}):'.format(len(match.extra_items)))
+        for item in match.extra_items:
+            line = ' ! %s (#%s)' % (item.title, format_index(item))
+            if item.length:
+                line += ' (%s)' % ui.human_seconds_short(item.length)
+            print_(ui.colorize('text_warning', line))
+
+
 
 # The import command.
 

@@ -939,7 +939,8 @@ class ShowChangeTest(_common.TestCase):
         config['ui']['color'] = False
         album_dist = distance(items, info, mapping)
         album_dist._penalties = {'album': [dist]}
-        commands.show_change(
+        session = commands.TerminalImportSession(None, None, None, None)
+        session.show_change(
             cur_artist,
             cur_album,
             autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
