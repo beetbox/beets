@@ -6,6 +6,9 @@ Changelog
 
 New features:
 
+* The :doc:`/plugins/duplicates` plugin now allows merging duplicate
+  track metadata (when detecting duplicate items), or duplicate album
+  tracks (when detecting duplicate albums).
 * The :doc:`/plugins/duplicates` plugin now enforces an ordering on
   duplicates: it defaults to metadata attribute set completeness,
   or alternatively any list of attributes that should be favored.
