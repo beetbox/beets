@@ -245,7 +245,7 @@ class ImportSession(object):
         ``duplicate``, then this is a secondary choice after a duplicate was
         detected and a decision was made.
         """
-        paths = task.paths
+        paths = task.paths_for_display
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.should_remove_duplicates:
@@ -397,6 +397,9 @@ class ImportTask(object):
       system.
     """
     def __init__(self, toppath=None, paths=None, items=None):
+        if not (toppath or paths or items):
+            raise ValueError("Must supply at least one truthy arg")
+
         self.toppath = toppath
         self.paths = paths
         self.items = items
@@ -428,8 +431,10 @@ class ImportTask(object):
         """Updates the progress state to indicate that this album has
         finished.
         """
+        paths = self.paths or self.item_paths
+
         if self.toppath:
-            progress_add(self.toppath, *self.paths)
+            progress_add(self.toppath, *paths)
 
     def save_history(self):
         """Save the directory in the history for incremental imports.
@@ -448,6 +453,25 @@ class ImportTask(object):
         return self.choice_flag == action.SKIP
 
     # Convenient data.
+
+    @property
+    def item_paths(self):
+        return [item.path for item in self.items]
+
+    @property
+    def paths_for_display(self):
+        """Returns a list of strings that indicate the paths this ImportTask is
+        acting on.
+        """
+        if self.paths:
+            return list(self.paths)
+        elif self.item_paths:
+            return self.item_paths
+        elif self.toppath:
+            return [self.toppath]
+        else:
+            raise RuntimeError(
+                "Improperly configured object. No paths to work with.")
 
     def chosen_ident(self):
         """Returns identifying metadata about the current choice. For
@@ -1221,7 +1245,7 @@ def lookup_candidates(session, task):
         return
 
     plugins.send('import_task_start', session=session, task=task)
-    log.debug(u'Looking up: {0}', displayable_path(task.paths))
+    log.debug(u'Looking up: {0}', displayable_path(task.paths_for_display))
     task.lookup_candidates()
 
 
@@ -1300,7 +1324,7 @@ def import_asis(session, task):
     if task.skip:
         return
 
-    log.info(displayable_path(task.paths))
+    log.info(displayable_path(task.paths_for_display))
     task.set_choice(action.ASIS)
 
 
@@ -1366,7 +1390,7 @@ def log_files(session, task):
     if isinstance(task, SingletonImportTask):
         log.info(u'Singleton: {0}', displayable_path(task.item['path']))
     elif task.items:
-        log.info(u'Album: {0}', displayable_path(task.paths[0]))
+        log.info(u'Album: {0}', displayable_path(task.paths_for_display[0]))
         for item in task.items:
             log.info(u'  {0}', displayable_path(item['path']))
 
@@ -1392,7 +1416,7 @@ def group_albums(session):
             task = ImportTask(task.toppath, [i.path for i in items],
                               items)
             tasks += task.handle_created(session)
-        tasks.append(SentinelImportTask(task.toppath, task.paths))
+        tasks.append(SentinelImportTask(task.toppath, task.paths_for_display))
 
         task = pipeline.multiple(tasks)
 
