@@ -500,9 +500,6 @@ class ImportTask(object):
     def finalize(self, session):
         """Save progress, clean up files, and emit plugin event.
         """
-        # FIXME the session argument is unfortunate. It should be
-        # present as an attribute of the task.
-
         # Update progress.
         if session.want_resume:
             self.save_progress()
@@ -540,10 +537,6 @@ class ImportTask(object):
                 self.prune(old_path)
 
     def _emit_imported(self, lib):
-        # FIXME This shouldn't be here. Skipping should be handled in
-        # the stages.
-        if self.skip:
-            return
         plugins.send('album_imported', lib=lib, album=self.album)
 
     def handle_created(self, session):
@@ -798,10 +791,6 @@ class SingletonImportTask(ImportTask):
         autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, lib):
-        # FIXME This shouldn't be here. Skipped tasks should be removed from
-        # the pipeline.
-        if self.skip:
-            return
         for item in self.imported_items():
             plugins.send('item_imported', lib=lib, item=item)
 
