@@ -39,6 +39,9 @@ Fixes:
 * :doc:`/plugins/mpdupdate`: We now recommend the newer ``python-mpd2``
   library instead of its unmaintained parent. Thanks to :user:`Somasis`.
   :bug:`1472`
+* The importer interface and log file now output a useful list of files
+  (instead of the word "None") when in album-grouping mode. :bug:`1475`
+  :bug:`825`
 
 
 1.3.13 (April 24, 2015)

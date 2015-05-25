@@ -488,12 +488,6 @@ tracks from many albums mixed together.
 The ``--group-albums`` or ``-g`` option to the :ref:`import-cmd` command is
 equivalent, and the *G* interactive option invokes the same workflow.
 
-.. note::
-    
-    The :ref:`import log <import_log>` currently contains less information
-    in album-grouping mode. (Specifically, no directory names recorded because
-    directories are not used for grouping in this mode.)
-
 Default: ``no``.
 
 .. _autotag:

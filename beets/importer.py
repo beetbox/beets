@@ -1388,7 +1388,9 @@ def group_albums(session):
             continue
         tasks = []
         for _, items in itertools.groupby(task.items, group):
-            task = ImportTask(items=list(items))
+            items = list(items)
+            task = ImportTask(task.toppath, [i.path for i in items],
+                              items)
             tasks += task.handle_created(session)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
