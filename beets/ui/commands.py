@@ -674,7 +674,7 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Show what we're tagging.
         print_()
-        print_(displayable_path(task.paths, u'\n') +
+        print_(displayable_path(task.paths_for_display, u'\n') +
                u' ({0} items)'.format(len(task.items)))
 
         # Take immediate action if appropriate.
