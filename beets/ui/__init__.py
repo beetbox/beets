@@ -1082,7 +1082,7 @@ def _open_library(config):
         )
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError):
-        log.debug(traceback.format_exc())
+        log.debug('{}', traceback.format_exc())
         raise UserError(u"database file {0} could not be opened".format(
             util.displayable_path(dbpath)
         ))
@@ -1148,8 +1148,8 @@ def main(args=None):
     except library.FileOperationError as exc:
         # These errors have reasonable human-readable descriptions, but
         # we still want to log their tracebacks for debugging.
-        log.debug(traceback.format_exc())
-        log.error(exc)
+        log.debug('{}', traceback.format_exc())
+        log.error('{}', exc)
         sys.exit(1)
     except confit.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
@@ -1165,4 +1165,4 @@ def main(args=None):
             raise
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
-        log.debug(traceback.format_exc())
+        log.debug('{}', traceback.format_exc())

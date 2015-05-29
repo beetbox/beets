@@ -1342,11 +1342,11 @@ class MediaFile(object):
                 # anywhere else.
                 raise
             else:
-                log.debug(traceback.format_exc())
+                log.debug('{}', traceback.format_exc())
                 raise MutagenError(path, exc)
         except Exception as exc:
             # Isolate bugs in Mutagen.
-            log.debug(traceback.format_exc())
+            log.debug('{}', traceback.format_exc())
             log.error(u'uncaught Mutagen exception in open: {0}', exc)
             raise MutagenError(path, exc)
 
@@ -1419,7 +1419,7 @@ class MediaFile(object):
             # Propagate these through: they don't represent Mutagen bugs.
             raise
         except Exception as exc:
-            log.debug(traceback.format_exc())
+            log.debug('{}', traceback.format_exc())
             log.error(u'uncaught Mutagen exception in save: {0}', exc)
             raise MutagenError(self.path, exc)
 
