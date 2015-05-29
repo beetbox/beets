@@ -109,7 +109,7 @@ class SpotifyPlugin(BeetsPlugin):
             r = requests.get(self.base_url, params={
                 "q": search_url, "type": "track"
             })
-            self._log.debug(r.url)
+            self._log.debug('{}', r.url)
             try:
                 r.raise_for_status()
             except HTTPError as e:

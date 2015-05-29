@@ -1321,7 +1321,7 @@ def import_asis(session, task):
     if task.skip:
         return
 
-    log.info(displayable_path(task.paths))
+    log.info('{}', displayable_path(task.paths))
     task.set_choice(action.ASIS)
 
 

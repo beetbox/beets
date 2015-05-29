@@ -42,6 +42,8 @@ Fixes:
 * The importer interface and log file now output a useful list of files
   (instead of the word "None") when in album-grouping mode. :bug:`1475`
   :bug:`825`
+* Fix some logging errors when filenames and other user-provided strings
+  contain curly braces. :bug:`1481`
 
 
 1.3.13 (April 24, 2015)

@@ -265,8 +265,11 @@ def load_plugins(names=()):
                         _classes.add(obj)
 
         except:
-            log.warn(u'** error loading plugin {0}', name)
-            log.warn(traceback.format_exc())
+            log.warn(
+                '** error loading plugin {}:\n{}',
+                name,
+                traceback.format_exc(),
+            )
 
 
 _instances = {}
