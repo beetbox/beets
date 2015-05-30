@@ -44,6 +44,8 @@ Fixes:
   :bug:`825`
 * Fix some logging errors when filenames and other user-provided strings
   contain curly braces. :bug:`1481`
+* Regular expression queries over paths now work more reliably with non-ASCII
+  characters in filenames. :bug:`1482`
 
 
 1.3.13 (April 24, 2015)
