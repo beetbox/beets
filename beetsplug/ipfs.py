@@ -44,7 +44,7 @@ class IPFSPlugin(BeetsPlugin):
                                     help='Import remote library from ipfs')
         cmd.parser.add_option('-l', '--list', dest='_list',
                                     action='store_true',
-                                    help='List imported library')
+                                    help='List imported libraries')
 
         def func(lib, opts, args):
             if opts.add:
