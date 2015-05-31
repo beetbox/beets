@@ -163,13 +163,18 @@ class IPFSPlugin(BeetsPlugin):
     def ipfs_list(self, lib, args):
         fmt = config['format_album'].get()
         albums = self.query(lib, args)
-        for album in albums:
-            ui.print_(format(album, fmt), " : ", album.ipfs)
+        if albums:
+            for album in albums:
+                ui.print_(format(album, fmt), " : ", album.ipfs)
+        else:
+            ui.print_("No imported albums yet.")
 
     def query(self, lib, args):
         lib_root = os.path.dirname(lib.path)
         remote_libs = lib_root + "/remotes"
         path = remote_libs + "/joined.db"
+        if not os.path.isfile(path):
+            return False
         rlib = library.Library(path)
         albums = rlib.albums(ui.decargs(args))
         return albums
