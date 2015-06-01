@@ -357,7 +357,7 @@ def _add_candidate(items, results, info):
     dist = distance(items, info, mapping)
 
     # Skip matches with ignored penalties.
-    penalties = [key for _, key in dist]
+    penalties = [key for key, _ in dist]
     for penalty in config['match']['ignored'].as_str_seq():
         if penalty in penalties:
             log.debug(u'Ignored. Penalty: {0}', penalty)
