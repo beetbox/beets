@@ -48,6 +48,7 @@ Fixes:
   characters in filenames. :bug:`1482`
 * Fix a bug, where the autotagger still considers matches that are specifically
   listed under the config's ignored section. :bug:`1487`
+* Fix a bug with unicode strings when generating thumbnails. :bug:`1485`
 
 
 1.3.13 (April 24, 2015)
