@@ -119,7 +119,7 @@ def pil_getsize(path_in):
 
 def im_getsize(path_in):
     try:
-        out = util.command_output(['identify', '-format', '%w %h',
+        out = util.command_output([b'identify', b'-format', b'%w %h',
                                    util.syspath(path_in)])
     except subprocess.CalledProcessError:
         log.warn(u'IM cannot compute size of {0}',
