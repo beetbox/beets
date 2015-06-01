@@ -55,7 +55,7 @@ import traceback
 import enum
 
 from beets import logging
-from beets.util import displayable_path
+from beets.util import displayable_path, syspath
 
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
@@ -1316,6 +1316,7 @@ class MediaFile(object):
         By default, MP3 files are saved with ID3v2.4 tags. You can use
         the older ID3v2.3 standard by specifying the `id3v23` option.
         """
+        path = syspath(path)
         self.path = path
 
         unreadable_exc = (
