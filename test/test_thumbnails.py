@@ -123,36 +123,39 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     @patch('beetsplug.thumbnails.shutil')
     def test_make_cover_thumbnail(self, mock_shutils, mock_os, mock_util,
                                   mock_artresizer, _):
+        thumbnail_dir = os.path.normpath(b"/thumbnail/dir")
+        md5_file = os.path.join(thumbnail_dir, b"md5")
+        path_to_art = os.path.normpath(b"/path/to/art")
+
         mock_os.path.join = os.path.join  # don't mock that function
         plugin = ThumbnailsPlugin()
         plugin.add_tags = Mock()
 
-        album = Mock(artpath=b"/path/to/art")
+        album = Mock(artpath=path_to_art)
         mock_util.syspath.side_effect = lambda x: x
         plugin.thumbnail_file_name = Mock(return_value="md5")
         mock_os.path.exists.return_value = False
 
         def os_stat(target):
-            if target == b"/thumbnail/dir/md5":
+            if target == md5_file:
                 return Mock(st_mtime=1)
-            elif target == b"/path/to/art":
+            elif target == path_to_art:
                 return Mock(st_mtime=2)
             else:
                 raise ValueError("invalid target {0}".format(target))
         mock_os.stat.side_effect = os_stat
 
-        plugin.make_cover_thumbnail(album, 12345, b"/thumbnail/dir")
+        plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
 
-        mock_os.path.exists.assert_called_once_with(b"/thumbnail/dir/md5")
-        mock_os.stat.has_calls([call(b"/thumbnail/dir/md5"),
-                                call(b"/path/to/art")], any_order=True)
+        mock_os.path.exists.assert_called_once_with(md5_file)
+        mock_os.stat.has_calls([call(md5_file), call(path_to_art)],
+                               any_order=True)
 
         resize = mock_artresizer.shared.resize
-        resize.assert_called_once_with(12345, b"/path/to/art",
-                                       b"/thumbnail/dir/md5")
+        resize.assert_called_once_with(12345, path_to_art, md5_file)
         plugin.add_tags.assert_called_once_with(album, resize.return_value)
         mock_shutils.move.assert_called_once_with(resize.return_value,
-                                                  b"/thumbnail/dir/md5")
+                                                  md5_file)
 
         # now test with recent thumbnail & with force
         mock_os.path.exists.return_value = True
@@ -160,22 +163,21 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         resize.reset_mock()
 
         def os_stat(target):
-            if target == b"/thumbnail/dir/md5":
+            if target == md5_file:
                 return Mock(st_mtime=3)
-            elif target == b"/path/to/art":
+            elif target == path_to_art:
                 return Mock(st_mtime=2)
             else:
                 raise ValueError("invalid target {0}".format(target))
         mock_os.stat.side_effect = os_stat
 
-        plugin.make_cover_thumbnail(album, 12345, b"/thumbnail/dir")
+        plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
         self.assertEqual(resize.call_count, 0)
 
         # and with force
         plugin.config['force'] = True
-        plugin.make_cover_thumbnail(album, 12345, b"/thumbnail/dir")
-        resize.assert_called_once_with(12345, b"/path/to/art",
-                                       b"/thumbnail/dir/md5")
+        plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
+        resize.assert_called_once_with(12345, path_to_art, md5_file)
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     def test_make_dolphin_cover_thumbnail(self, _):
@@ -185,13 +187,19 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
                      artpath=os.path.join(tmp, b"cover.jpg"))
         plugin.make_dolphin_cover_thumbnail(album)
         with open(os.path.join(tmp, b".directory"), "rb") as f:
-            self.assertEqual(f.read(), b"[Desktop Entry]\nIcon=./cover.jpg")
+            self.assertEqual(
+                f.read().splitlines(),
+                [b"[Desktop Entry]", b"Icon=./cover.jpg"]
+            )
 
         # not rewritten when it already exists (yup that's a big limitation)
         album.artpath = b"/my/awesome/art.tiff"
         plugin.make_dolphin_cover_thumbnail(album)
         with open(os.path.join(tmp, b".directory"), "rb") as f:
-            self.assertEqual(f.read(), b"[Desktop Entry]\nIcon=./cover.jpg")
+            self.assertEqual(
+                f.read().splitlines(),
+                [b"[Desktop Entry]", b"Icon=./cover.jpg"]
+            )
 
         rmtree(tmp)
 
