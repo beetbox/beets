@@ -210,6 +210,7 @@ class IPFSPlugin(BeetsPlugin):
                         item.path = ''
                         tmplib.add(item)
                     album.artpath = ''
+                    self._log.info("Adding '{0}' to temporary library", album)
                     tmplib.add(album)
             except AttributeError:
                 pass
