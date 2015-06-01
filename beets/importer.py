@@ -368,7 +368,34 @@ class ImportSession(object):
 
 # The importer task class.
 
-class ImportTask(object):
+class BaseImportTask(object):
+    """An abstract base class for importer tasks.
+
+    Tasks flow through the importer pipeline. Each stage can update
+    them.     """
+    def __init__(self, toppath, paths, items):
+        """Create a task. The primary fields that define a task are:
+
+        * `toppath`: The user-specified base directory that contains the
+          music for this task. If the task has *no* user-specified base
+          (for example, when importing based on an -L query), this can
+          be None. This is used for tracking progress and history.
+        * `paths`: A list of *specific* paths where the music for this task
+          came from. These paths can be directories, when their entire
+          contents are being imported, or files, when the task comprises
+          individual tracks. This is used for progress/history tracking and
+          for displaying the task to the user.
+        * `items`: A list of `Item` objects representing the music being
+          imported.
+
+        These fields should not change after initialization.
+        """
+        self.toppath = toppath
+        self.paths = paths
+        self.items = items
+
+
+class ImportTask(BaseImportTask):
     """Represents a single set of items to be imported along with its
     intermediate state. May represent an album or a single item.
 
@@ -396,17 +423,13 @@ class ImportTask(object):
     * `finalize()` Update the import progress and cleanup the file
       system.
     """
-    def __init__(self, toppath=None, paths=None, items=None):
-        self.toppath = toppath
-        self.paths = paths
-        self.items = items
+    def __init__(self, toppath, paths, items):
+        super(ImportTask, self).__init__(toppath, paths, items)
         self.choice_flag = None
-
         self.cur_album = None
         self.cur_artist = None
         self.candidates = []
         self.rec = None
-        # TODO remove this eventually
         self.should_remove_duplicates = False
         self.is_album = True
 
@@ -500,9 +523,6 @@ class ImportTask(object):
     def finalize(self, session):
         """Save progress, clean up files, and emit plugin event.
         """
-        # FIXME the session argument is unfortunate. It should be
-        # present as an attribute of the task.
-
         # Update progress.
         if session.want_resume:
             self.save_progress()
@@ -540,10 +560,6 @@ class ImportTask(object):
                 self.prune(old_path)
 
     def _emit_imported(self, lib):
-        # FIXME This shouldn't be here. Skipping should be handled in
-        # the stages.
-        if self.skip:
-            return
         plugins.send('album_imported', lib=lib, album=self.album)
 
     def handle_created(self, session):
@@ -779,7 +795,7 @@ class SingletonImportTask(ImportTask):
     """
 
     def __init__(self, toppath, item):
-        super(SingletonImportTask, self).__init__(toppath, [item.path])
+        super(SingletonImportTask, self).__init__(toppath, [item.path], [item])
         self.item = item
         self.is_album = False
         self.paths = [item.path]
@@ -798,10 +814,6 @@ class SingletonImportTask(ImportTask):
         autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, lib):
-        # FIXME This shouldn't be here. Skipped tasks should be removed from
-        # the pipeline.
-        if self.skip:
-            return
         for item in self.imported_items():
             plugins.send('item_imported', lib=lib, item=item)
 
@@ -851,8 +863,8 @@ class SingletonImportTask(ImportTask):
 
 
 # FIXME The inheritance relationships are inverted. This is why there
-# are so many methods which pass. We should introduce a new
-# BaseImportTask class.
+# are so many methods which pass. More responsibility should be delegated to
+# the BaseImportTask class.
 class SentinelImportTask(ImportTask):
     """A sentinel task marks the progress of an import and does not
     import any items itself.
@@ -862,11 +874,9 @@ class SentinelImportTask(ImportTask):
     indicates the progress in the `toppath` import.
     """
 
-    def __init__(self, toppath=None, paths=None):
-        self.toppath = toppath
-        self.paths = paths
+    def __init__(self, toppath, paths):
+        super(SentinelImportTask, self).__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
-        self.items = None
         self.should_remove_duplicates = False
         self.is_album = True
         self.choice_flag = None
@@ -909,7 +919,7 @@ class ArchiveImportTask(SentinelImportTask):
     """
 
     def __init__(self, toppath):
-        super(ArchiveImportTask, self).__init__(toppath)
+        super(ArchiveImportTask, self).__init__(toppath, ())
         self.extracted = False
 
     @classmethod
@@ -1243,7 +1253,7 @@ def user_query(session, task):
 
     The coroutine accepts an ImportTask objects. It uses the
     session's `choose_match` method to determine the `action` for
-    this task. Depending on the action additional stages are exectuted
+    this task. Depending on the action additional stages are executed
     and the processed task is yielded.
 
     It emits the ``import_task_choice`` event for plugins. Plugins have
@@ -1311,7 +1321,7 @@ def import_asis(session, task):
     if task.skip:
         return
 
-    log.info(displayable_path(task.paths))
+    log.info('{}', displayable_path(task.paths))
     task.set_choice(action.ASIS)
 
 
@@ -1399,7 +1409,9 @@ def group_albums(session):
             continue
         tasks = []
         for _, items in itertools.groupby(task.items, group):
-            task = ImportTask(items=list(items))
+            items = list(items)
+            task = ImportTask(task.toppath, [i.path for i in items],
+                              items)
             tasks += task.handle_created(session)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 

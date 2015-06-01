@@ -572,7 +572,7 @@ class Connection(object):
         if isinstance(lines, basestring):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
-        log.debug(out[:-1])  # Don't log trailing newline.
+        log.debug('{}', out[:-1])  # Don't log trailing newline.
         if isinstance(out, unicode):
             out = out.encode('utf8')
         return self.sock.sendall(out)
@@ -603,7 +603,7 @@ class Connection(object):
             line = line.strip()
             if not line:
                 break
-            log.debug(line)
+            log.debug('{}', line)
 
             if clist is not None:
                 # Command list already opened.
@@ -698,7 +698,7 @@ class Command(object):
 
         except Exception as e:
             # An "unintentional" error. Hide it from the client.
-            log.error(traceback.format_exc(e))
+            log.error('{}', traceback.format_exc(e))
             raise BPDError(ERROR_SYSTEM, u'server error', self.name)
 
 

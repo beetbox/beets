@@ -22,6 +22,7 @@ import shlex
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, vararg_callback, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess
+from beets.library import Item, Album
 
 PLUGIN = 'duplicates'
 
@@ -33,18 +34,20 @@ class DuplicatesPlugin(BeetsPlugin):
         super(DuplicatesPlugin, self).__init__()
 
         self.config.add({
-            'format': '',
-            'count': False,
             'album': False,
-            'full': False,
-            'strict': False,
-            'path': False,
-            'keys': ['mb_trackid', 'mb_albumid'],
-            'checksum': None,
-            'copy': False,
-            'move': False,
+            'checksum': '',
+            'copy': '',
+            'count': False,
             'delete': False,
-            'tag': False,
+            'format': '',
+            'full': False,
+            'keys': [],
+            'merge': False,
+            'move': '',
+            'path': False,
+            'tiebreak': {},
+            'strict': False,
+            'tag': '',
         })
 
         self._command = Subcommand('duplicates',
@@ -79,6 +82,10 @@ class DuplicatesPlugin(BeetsPlugin):
                                         callback=vararg_callback,
                                         help='report duplicates based on keys')
 
+        self._command.parser.add_option('-M', '--merge', dest='merge',
+                                        action='store_true',
+                                        help='merge duplicate items')
+
         self._command.parser.add_option('-m', '--move', dest='move',
                                         action='store', metavar='DEST',
                                         help='move items to dest')
@@ -91,34 +98,42 @@ class DuplicatesPlugin(BeetsPlugin):
                                         action='store',
                                         help='tag matched items with \'k=v\''
                                         ' attribute')
+
         self._command.parser.add_all_common_options()
 
     def commands(self):
 
         def _dup(lib, opts, args):
             self.config.set_args(opts)
-            fmt = self.config['format'].get()
             album = self.config['album'].get(bool)
-            full = self.config['full'].get(bool)
-            strict = self.config['strict'].get(bool)
-            keys = self.config['keys'].get()
-            checksum = self.config['checksum'].get()
-            copy = self.config['copy'].get()
-            move = self.config['move'].get()
+            checksum = self.config['checksum'].get(str)
+            copy = self.config['copy'].get(str)
+            count = self.config['count'].get(bool)
             delete = self.config['delete'].get(bool)
-            tag = self.config['tag'].get()
+            fmt = self.config['format'].get(str)
+            full = self.config['full'].get(bool)
+            keys = self.config['keys'].get(list)
+            merge = self.config['merge'].get(bool)
+            move = self.config['move'].get(str)
+            path = self.config['path'].get(bool)
+            tiebreak = self.config['tiebreak'].get(dict)
+            strict = self.config['strict'].get(bool)
+            tag = self.config['tag'].get(str)
 
             if album:
-                keys = ['mb_albumid']
+                if not keys:
+                    keys = ['mb_albumid']
                 items = lib.albums(decargs(args))
             else:
+                if not keys:
+                    keys = ['mb_trackid', 'mb_albumid']
                 items = lib.items(decargs(args))
 
-            if self.config['path']:
+            if path:
                 fmt = '$path'
 
             # Default format string for count mode.
-            if self.config['count'] and not fmt:
+            if count and not fmt:
                 if album:
                     fmt = '$albumartist - $album'
                 else:
@@ -126,10 +141,6 @@ class DuplicatesPlugin(BeetsPlugin):
                 fmt += ': {0}'
 
             if checksum:
-                if not isinstance(checksum, basestring):
-                    raise UserError(
-                        'duplicates: "checksum" option must be a command'
-                    )
                 for i in items:
                     k, _ = self._checksum(i, checksum)
                 keys = [k]
@@ -137,10 +148,12 @@ class DuplicatesPlugin(BeetsPlugin):
             for obj_id, obj_count, objs in self._duplicates(items,
                                                             keys=keys,
                                                             full=full,
-                                                            strict=strict):
+                                                            strict=strict,
+                                                            tiebreak=tiebreak,
+                                                            merge=merge):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
-                        self._process_item(o, lib,
+                        self._process_item(o,
                                            copy=copy,
                                            move=move,
                                            delete=delete,
@@ -150,10 +163,11 @@ class DuplicatesPlugin(BeetsPlugin):
         self._command.func = _dup
         return [self._command]
 
-    def _process_item(self, item, lib, copy=False, move=False, delete=False,
+    def _process_item(self, item, copy=False, move=False, delete=False,
                       tag=False, fmt=''):
-        """Process Item `item` in `lib`.
+        """Process Item `item`.
         """
+        print_(format(item, fmt))
         if copy:
             item.move(basedir=copy, copy=True)
             item.store()
@@ -167,9 +181,8 @@ class DuplicatesPlugin(BeetsPlugin):
                 k, v = tag.split('=')
             except:
                 raise UserError('%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
-            setattr(k, v)
+            setattr(item, k, v)
             item.store()
-        print_(format(item, fmt))
 
     def _checksum(self, item, prog):
         """Run external `prog` on file path associated with `item`, cache
@@ -223,10 +236,86 @@ class DuplicatesPlugin(BeetsPlugin):
 
         return counts
 
-    def _duplicates(self, objs, keys, full, strict):
+    def _order(self, objs, tiebreak=None):
+        """Return objs sorted by descending order of fields in tiebreak dict.
+
+        Default ordering is based on attribute completeness.
+        """
+        if tiebreak:
+            kind = 'items' if all(isinstance(o, Item)
+                                  for o in objs) else 'albums'
+            key = lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
+        else:
+            kind = Item if all(isinstance(o, Item) for o in objs) else Album
+            if kind is Item:
+                fields = [f for sublist in kind.get_fields() for f in sublist]
+                key = lambda x: len([(a, getattr(x, a, None)) for a in fields
+                                     if getattr(x, a, None) not in (None, '')])
+            else:
+                key = lambda x: len(x.items())
+
+        return sorted(objs, key=key, reverse=True)
+
+    def _merge_items(self, objs):
+        """Merge Item objs by copying missing fields from items in the tail to
+        the head item.
+
+        Return same number of items, with the head item modified.
+        """
+        fields = [f for sublist in Item.get_fields() for f in sublist]
+        for f in fields:
+            for o in objs[1:]:
+                if getattr(objs[0], f, None) in (None, ''):
+                    value = getattr(o, f, None)
+                    if value:
+                        self._log.debug(u'key {0} on item {1} is null '
+                                        'or empty: setting from item {2}',
+                                        f, displayable_path(objs[0].path),
+                                        displayable_path(o.path))
+                        setattr(objs[0], f, value)
+                        objs[0].store()
+                        break
+        return objs
+
+    def _merge_albums(self, objs):
+        """Merge Album objs by copying missing items from albums in the tail
+        to the head album.
+
+        Return same number of albums, with the head album modified."""
+        ids = [i.mb_trackid for i in objs[0].items()]
+        for o in objs[1:]:
+            for i in o.items():
+                if i.mb_trackid not in ids:
+                    missing = Item.from_path(i.path)
+                    missing.album_id = objs[0].id
+                    missing.add(i._db)
+                    self._log.debug(u'item {0} missing from album {1}:'
+                                    ' merging from {2} into {3}',
+                                    missing,
+                                    objs[0],
+                                    displayable_path(o.path),
+                                    displayable_path(missing.destination()))
+                    missing.move(copy=True)
+        return objs
+
+    def _merge(self, objs):
+        """Merge duplicate items. See ``_merge_items`` and ``_merge_albums``
+        for the relevant strategies.
+        """
+        kind = Item if all(isinstance(o, Item) for o in objs) else Album
+        if kind is Item:
+            objs = self._merge_items(objs)
+        else:
+            objs = self._merge_albums(objs)
+        return objs
+
+    def _duplicates(self, objs, keys, full, strict, tiebreak, merge):
         """Generate triples of keys, duplicate counts, and constituent objects.
         """
         offset = 0 if full else 1
         for k, objs in self._group_by(objs, keys, strict).iteritems():
             if len(objs) > 1:
+                objs = self._order(objs, tiebreak)
+                if merge:
+                    objs = self._merge(objs)
                 yield (k, len(objs) - offset, objs[offset:])

@@ -110,7 +110,7 @@ class PathQuery(dbcore.FieldQuery):
 
 class DateType(types.Float):
     # TODO representation should be `datetime` object
-    # TODO distinguish beetween date and time types
+    # TODO distinguish between date and time types
     query = dbcore.query.DateQuery
 
     def format(self, value):
@@ -479,6 +479,15 @@ class Item(LibModel):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
+    @classmethod
+    def get_fields(cls):
+        """Returns Item fields available for queries and format strings."""
+        plugin_fields = []
+        for plugin in plugins.find_plugins():
+            plugin_fields += plugin.template_fields.keys()
+        return (cls._fields.keys() + cls._getters().keys() +
+                cls._types.keys()), plugin_fields
+
     def __setitem__(self, key, value):
         """Set the item's value for a standard field or a flexattr.
         """
@@ -550,7 +559,7 @@ class Item(LibModel):
         All fields in `_media_fields` are written to disk according to
         the values on this object.
 
-        `path` is the path of the mediafile to wirte the data to. It
+        `path` is the path of the mediafile to write the data to. It
         defaults to the item's path.
 
         `tags` is a dictionary of additional metadata the should be
@@ -905,6 +914,15 @@ class Album(LibModel):
         getters['path'] = Album.item_dir
         getters['albumtotal'] = Album._albumtotal
         return getters
+
+    @classmethod
+    def get_fields(cls):
+        """Returns Album fields available for queries and format strings."""
+        plugin_fields = []
+        for plugin in plugins.find_plugins():
+            plugin_fields += plugin.album_template_fields.keys()
+        return (cls._fields.keys() + cls._getters().keys() +
+                cls._types.keys()), plugin_fields
 
     def items(self):
         """Returns an iterable over the items associated with this
@@ -1300,7 +1318,7 @@ class DefaultTemplateFunctions(object):
     _prefix = b'tmpl_'
 
     def __init__(self, item=None, lib=None):
-        """Paramaterize the functions. If `item` or `lib` is None, then
+        """Parametrize the functions. If `item` or `lib` is None, then
         some functions (namely, ``aunique``) will always evaluate to the
         empty string.
         """

@@ -4,8 +4,25 @@ Changelog
 1.3.14 (in development)
 -----------------------
 
+New features:
+
+* The :doc:`/plugins/duplicates` plugin now allows merging duplicate
+  track metadata (when detecting duplicate items), or duplicate album
+  tracks (when detecting duplicate albums).
+* The :doc:`/plugins/duplicates` plugin now enforces an ordering on
+  duplicates: it defaults to metadata attribute set completeness,
+  or alternatively any list of attributes that should be favored.
+* The :doc:`/plugins/metasync` plugin now lets you get metadata from iTunes.
+  This plugin is still in an experimental phase. :bug:`1450`
+* The :doc:`/plugins/fetchart` plugin will now complain for the `enforce_ratio`
+  and `min_width` options if no local imaging backend is available. :bug:`1460`
+* The `move` command has a new `-p/--pretend` option, making the command show
+  how the items will be moved, without modifying the files on disk.
+
+
 Fixes:
 
+* :doc:`/plugins/duplicates`: Avoid a crash when misconfigured. :bug:`1457`
 * :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
   beets library. Thanks to :user:`CodyReichert`. :bug:`1443`
 * Fix a crash with ArtResizer on Windows systems (affecting
@@ -13,6 +30,22 @@ Fixes:
   and :doc:`/plugins/thumbnails`). :bug:`1448`
 * :doc:`/plugins/permissions`: Fix an error with non-ASCII paths. :bug:`1449`
 * Fix sorting by paths when case-insensitive. :bug:`1451`
+* :doc:`/plugins/embedart`: Avoid an error when trying to embed invalid images
+  into MPEG-4 files.
+* :doc:`/plugins/fetchart`: The Wikipedia source is now able to better deal
+  with non-typical cased artists (e.g., alt-J, dEUS).
+* :doc:`/plugins/web`: Fix searching for non-ASCII queries. Thanks to
+  :user:`oldtopman`. :bug:`1470`
+* :doc:`/plugins/mpdupdate`: We now recommend the newer ``python-mpd2``
+  library instead of its unmaintained parent. Thanks to :user:`Somasis`.
+  :bug:`1472`
+* The importer interface and log file now output a useful list of files
+  (instead of the word "None") when in album-grouping mode. :bug:`1475`
+  :bug:`825`
+* Fix some logging errors when filenames and other user-provided strings
+  contain curly braces. :bug:`1481`
+* Regular expression queries over paths now work more reliably with non-ASCII
+  characters in filenames. :bug:`1482`
 
 
 1.3.13 (April 24, 2015)

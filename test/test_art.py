@@ -30,6 +30,7 @@ from beets import library
 from beets import importer
 from beets import config
 from beets import logging
+from beets.util.artresizer import ArtResizer, WEBPROXY
 
 
 logger = logging.getLogger('beets.test_art')
@@ -203,7 +204,7 @@ class AAOTest(_common.TestCase):
                       match_querystring=True)
 
     def test_aao_scraper_finds_image(self):
-        body = """
+        body = b"""
         <br />
         <a href="TARGET_URL" title="View larger image"
            class="thickbox" style="color: #7E9DA2; text-decoration:none;">
@@ -216,7 +217,7 @@ class AAOTest(_common.TestCase):
         self.assertEqual(list(res)[0], 'TARGET_URL')
 
     def test_aao_scraper_returns_no_result_when_no_image_present(self):
-        self.mock_response(self.AAO_URL, 'blah blah')
+        self.mock_response(self.AAO_URL, b'blah blah')
         album = _common.Bag(asin=self.ASIN)
         res = self.source.get(album)
         self.assertEqual(list(res), [])
@@ -240,7 +241,7 @@ class GoogleImageTest(_common.TestCase):
 
     def test_google_art_finds_image(self):
         album = _common.Bag(albumartist="some artist", album="some album")
-        json = """{"responseData": {"results":
+        json = b"""{"responseData": {"results":
             [{"unescapedUrl": "url_to_the_image"}]}}"""
         self.mock_response(self._google_url, json)
         result_url = self.source.get(album)
@@ -248,7 +249,7 @@ class GoogleImageTest(_common.TestCase):
 
     def test_google_art_dont_finds_image(self):
         album = _common.Bag(albumartist="some artist", album="some album")
-        json = """bla blup"""
+        json = b"""bla blup"""
         self.mock_response(self._google_url, json)
         result_url = self.source.get(album)
         self.assertEqual(list(result_url), [])
@@ -408,12 +409,21 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(local_artpath)
 
+    def _require_backend(self):
+        """Skip the test if the art resizer doesn't have ImageMagick or
+        PIL (so comparisons and measurements are unavailable).
+        """
+        if ArtResizer.shared.method[0] == WEBPROXY:
+            self.skipTest("ArtResizer has no local imaging backend available")
+
     def test_respect_minwidth(self):
+        self._require_backend()
         self.plugin.minwidth = 300
         self._assertImageIsValidArt(self.IMG_225x225, False)
         self._assertImageIsValidArt(self.IMG_348x348, True)
 
     def test_respect_enforce_ratio_yes(self):
+        self._require_backend()
         self.plugin.enforce_ratio = True
         self._assertImageIsValidArt(self.IMG_500x490, False)
         self._assertImageIsValidArt(self.IMG_225x225, True)

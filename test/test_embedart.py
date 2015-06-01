@@ -18,6 +18,7 @@ from __future__ import (division, absolute_import, print_function,
 import os.path
 import shutil
 from mock import patch
+import tempfile
 
 from test import _common
 from test._common import unittest
@@ -87,6 +88,22 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         with self.assertRaises(ui.UserError):
             self.run_command('embedart', '-f', '/doesnotexist')
 
+    def test_embed_non_image_file(self):
+        album = self.add_album_fixture()
+        logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
+
+        handle, tmp_path = tempfile.mkstemp()
+        os.write(handle, 'I am not an image.')
+        os.close(handle)
+
+        try:
+            self.run_command('embedart', '-f', tmp_path)
+        finally:
+            os.remove(tmp_path)
+
+        mediafile = MediaFile(syspath(album.items()[0].path))
+        self.assertFalse(mediafile.images)  # No image added.
+
     @require_artresizer_compare
     def test_reject_different_art(self):
         self._setup_data(self.abbey_artpath)
@@ -116,16 +133,15 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
                          self.abbey_similarpath))
 
     def test_non_ascii_album_path(self):
-        resource_path = os.path.join(_common.RSRC, 'image.mp3')
+        resource_path = os.path.join(_common.RSRC, 'image.mp3').encode('utf8')
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
         albumpath = album.path
-        shutil.copy(resource_path, trackpath.decode('utf-8'))
+        shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command('extractart', '-n', 'extracted')
 
-        self.assertExists(os.path.join(albumpath.decode('utf-8'),
-                                       'extracted.png'))
+        self.assertExists(syspath(os.path.join(albumpath, b'extracted.png')))
 
 
 @patch('beets.art.subprocess')

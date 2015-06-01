@@ -245,7 +245,7 @@ move
 ````
 ::
 
-    beet move [-ca] [-d DIR] QUERY
+    beet move [-cap] [-d DIR] QUERY
 
 Move or copy items in your library.
 
@@ -254,6 +254,10 @@ query are renamed into your library directory structure. By specifying a
 destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
+
+To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
+show you all how the files would be moved but won't actually change anything
+on disk.
 
 .. _update-cmd:
 
@@ -268,7 +272,10 @@ changes and file deletions.
 
 This will scan all the matched files and read their tags, populating the
 database with the new values. By default, files will be renamed according to
-their new metadata; disable this with ``-M``.
+their new metadata; disable this with ``-M``. Beets will skip files if their
+modification times have not changed, so any out-of-band metadata changes must
+also update these for ``beet update`` to recognise that the files have been
+edited.
 
 To perform a "dry run" of an update, just use the ``-p`` (for "pretend") flag.
 This will show you all the proposed changes but won't actually change anything

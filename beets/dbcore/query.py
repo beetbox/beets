@@ -21,6 +21,7 @@ import re
 from operator import mul
 from beets import util
 from datetime import datetime, timedelta
+import unicodedata
 
 
 class ParsingError(ValueError):
@@ -201,6 +202,7 @@ class RegexpQuery(StringFieldQuery):
     """
     def __init__(self, field, pattern, fast=True):
         super(RegexpQuery, self).__init__(field, pattern, fast)
+        pattern = self._normalize(pattern)
         try:
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
@@ -209,9 +211,16 @@ class RegexpQuery(StringFieldQuery):
                                                 "a regular expression",
                                                 format(exc))
 
+    @staticmethod
+    def _normalize(s):
+        """Normalize a Unicode string's representation (used on both
+        patterns and matched values).
+        """
+        return unicodedata.normalize('NFC', s)
+
     @classmethod
     def string_match(cls, pattern, value):
-        return pattern.search(value) is not None
+        return pattern.search(cls._normalize(value)) is not None
 
 
 class BooleanQuery(MatchQuery):
@@ -368,7 +377,7 @@ class CollectionQuery(Query):
 
     def __hash__(self):
         """Since subqueries are mutable, this object should not be hashable.
-        However and for conveniencies purposes, it can be hashed.
+        However and for conveniences purposes, it can be hashed.
         """
         return reduce(mul, map(hash, self.subqueries), 1)
 

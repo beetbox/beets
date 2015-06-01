@@ -405,7 +405,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return []
         except Exception as exc:
             # Isolate bugs in pylast.
-            self._log.debug(traceback.format_exc())
+            self._log.debug('{}', traceback.format_exc())
             self._log.error('error in pylast library: {0}', exc)
             return []
 

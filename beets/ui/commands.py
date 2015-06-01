@@ -24,7 +24,7 @@ import re
 
 import beets
 from beets import ui
-from beets.ui import print_, input_, decargs
+from beets.ui import print_, input_, decargs, show_path_changes
 from beets import autotag
 from beets.autotag import Recommendation
 from beets.autotag import hooks
@@ -82,29 +82,17 @@ def fields_func(lib, opts, args):
         names.sort()
         print_("  " + "\n  ".join(names))
 
-    def _show_plugin_fields(album):
-        plugin_fields = []
-        for plugin in plugins.find_plugins():
-            if album:
-                fdict = plugin.album_template_fields
-            else:
-                fdict = plugin.template_fields
-            plugin_fields += fdict.keys()
-        if plugin_fields:
-            print_("Template fields from plugins:")
-            _print_rows(plugin_fields)
-
+    fs, pfs = library.Item.get_fields()
     print_("Item fields:")
-    _print_rows(library.Item._fields.keys() +
-                library.Item._getters().keys() +
-                library.Item._types.keys())
-    _show_plugin_fields(False)
+    _print_rows(fs)
+    print_("Template fields from plugins:")
+    _print_rows(pfs)
 
-    print_("\nAlbum fields:")
-    _print_rows(library.Album._fields.keys() +
-                library.Album._getters().keys() +
-                library.Album._types.keys())
-    _show_plugin_fields(True)
+    fs, pfs = library.Album.get_fields()
+    print_("Album fields:")
+    _print_rows(fs)
+    print_("Template fields from plugins:")
+    _print_rows(pfs)
 
 
 fields_cmd = ui.Subcommand(
@@ -1356,7 +1344,7 @@ default_commands.append(modify_cmd)
 
 # move: Move/copy files to the library or a new base directory.
 
-def move_items(lib, dest, query, copy, album):
+def move_items(lib, dest, query, copy, album, pretend):
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
@@ -1367,11 +1355,19 @@ def move_items(lib, dest, query, copy, album):
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
     log.info(u'{0} {1} {2}s.', action, len(objs), entity)
-    for obj in objs:
-        log.debug(u'moving: {0}', util.displayable_path(obj.path))
+    if pretend:
+        if album:
+            show_path_changes([(item.path, item.destination(basedir=dest))
+                               for obj in objs for item in obj.items()])
+        else:
+            show_path_changes([(obj.path, obj.destination(basedir=dest))
+                               for obj in objs])
+    else:
+        for obj in objs:
+            log.debug(u'moving: {0}', util.displayable_path(obj.path))
 
-        obj.move(copy, basedir=dest)
-        obj.store()
+            obj.move(copy, basedir=dest)
+            obj.store()
 
 
 def move_func(lib, opts, args):
@@ -1381,7 +1377,7 @@ def move_func(lib, opts, args):
         if not os.path.isdir(dest):
             raise ui.UserError('no such directory: %s' % dest)
 
-    move_items(lib, dest, decargs(args), opts.copy, opts.album)
+    move_items(lib, dest, decargs(args), opts.copy, opts.album, opts.pretend)
 
 
 move_cmd = ui.Subcommand(
@@ -1395,6 +1391,9 @@ move_cmd.parser.add_option(
     '-c', '--copy', default=False, action='store_true',
     help='copy instead of moving'
 )
+move_cmd.parser.add_option(
+    '-p', '--pretend', default=False, action='store_true',
+    help='show how files would be moved, but don\'t touch anything')
 move_cmd.parser.add_album_option()
 move_cmd.func = move_func
 default_commands.append(move_cmd)

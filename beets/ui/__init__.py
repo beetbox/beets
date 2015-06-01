@@ -123,15 +123,12 @@ def print_(*strings, **kwargs):
     """
     end = kwargs.get('end')
 
-    if strings:
-        if isinstance(strings[0], unicode):
-            txt = u' '.join(strings)
-            txt += u'\n' if end is None else end
-        else:
-            txt = b' '.join(strings)
-            txt += b'\n' if end is None else end
+    if not strings or isinstance(strings[0], unicode):
+        txt = u' '.join(strings)
+        txt += u'\n' if end is None else end
     else:
-        txt = u''
+        txt = b' '.join(strings)
+        txt += b'\n' if end is None else end
 
     # Always send bytes to the stdout stream.
     if isinstance(txt, unicode):
@@ -615,6 +612,45 @@ def show_model_changes(new, old=None, fields=None, always=False):
     return bool(changes)
 
 
+def show_path_changes(path_changes):
+    """Given a list of tuples (source, destination) that indicate the
+    path changes, log the changes as INFO-level output to the beets log.
+    The output is guaranteed to be unicode.
+
+    Every pair is shown on a single line if the terminal width permits it,
+    else it is split over two lines. E.g.,
+
+    Source -> Destination
+
+    vs.
+
+    Source
+      -> Destination
+    """
+    sources, destinations = zip(*path_changes)
+
+    # Ensure unicode output
+    sources = map(util.displayable_path, sources)
+    destinations = map(util.displayable_path, destinations)
+
+    # Calculate widths for terminal split
+    col_width = (term_width() - len(' -> ')) // 2
+    max_width = len(max(sources + destinations, key=len))
+
+    if max_width > col_width:
+        # Print every change over two lines
+        for source, dest in zip(sources, destinations):
+            log.info(u'{0} \n  -> {1}', source, dest)
+    else:
+        # Print every change on a single line, and add a header
+        title_pad = max_width - len('Source ') + len(' -> ')
+
+        log.info(u'Source {0} Destination', ' ' * title_pad)
+        for source, dest in zip(sources, destinations):
+            pad = max_width - len(source)
+            log.info(u'{0} {1} -> {2}', source, ' ' * pad, dest)
+
+
 class CommonOptionsParser(optparse.OptionParser, object):
     """Offers a simple way to add common formatting options.
 
@@ -1046,7 +1082,7 @@ def _open_library(config):
         )
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError):
-        log.debug(traceback.format_exc())
+        log.debug('{}', traceback.format_exc())
         raise UserError(u"database file {0} could not be opened".format(
             util.displayable_path(dbpath)
         ))
@@ -1112,8 +1148,8 @@ def main(args=None):
     except library.FileOperationError as exc:
         # These errors have reasonable human-readable descriptions, but
         # we still want to log their tracebacks for debugging.
-        log.debug(traceback.format_exc())
-        log.error(exc)
+        log.debug('{}', traceback.format_exc())
+        log.error('{}', exc)
         sys.exit(1)
     except confit.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
@@ -1129,4 +1165,4 @@ def main(args=None):
             raise
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
-        log.debug(traceback.format_exc())
+        log.debug('{}', traceback.format_exc())

@@ -38,7 +38,7 @@ except ImportError:
     HAVE_ITUNES = False
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
-CONTENT_TYPES = ('image/jpeg',)
+CONTENT_TYPES = ('image/jpeg', 'image/gif')
 DOWNLOAD_EXTENSION = '.jpg'
 
 requests_session = requests.Session()
@@ -171,13 +171,16 @@ class Wikipedia(ArtSource):
                  PREFIX dbpprop: <http://dbpedia.org/property/>
                  PREFIX owl: <http://dbpedia.org/ontology/>
                  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                 SELECT DISTINCT ?coverFilename WHERE {{
+                 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+                 SELECT DISTINCT ?pageId ?coverFilename WHERE {{
+                   ?subject owl:wikiPageID ?pageId .
                    ?subject dbpprop:name ?name .
                    ?subject rdfs:label ?label .
                    {{ ?subject dbpprop:artist ?artist }}
                      UNION
                    {{ ?subject owl:artist ?artist }}
-                   {{ ?artist rdfs:label "{artist}"@en }}
+                   {{ ?artist foaf:name "{artist}"@en }}
                      UNION
                    {{ ?artist dbpprop:name "{artist}"@en }}
                    ?subject rdf:type <http://dbpedia.org/ontology/Album> .
@@ -191,28 +194,61 @@ class Wikipedia(ArtSource):
             return
 
         # Find the name of the cover art filename on DBpedia
-        cover_filename = None
+        cover_filename, page_id = None, None
         dbpedia_response = requests.get(
             self.DBPEDIA_URL,
             params={
                 'format': 'application/sparql-results+json',
                 'timeout': 2500,
-                'query': self.SPARQL_QUERY.format(artist=album.albumartist,
-                                                  album=album.album)
+                'query': self.SPARQL_QUERY.format(
+                    artist=album.albumartist.title(), album=album.album)
             }, headers={'content-type': 'application/json'})
         try:
             data = dbpedia_response.json()
             results = data['results']['bindings']
             if results:
-                cover_filename = results[0]['coverFilename']['value']
+                cover_filename = 'File:' + results[0]['coverFilename']['value']
+                page_id = results[0]['pageId']['value']
             else:
                 self._log.debug(u'album not found on dbpedia')
-        except:
+        except (ValueError, KeyError, IndexError):
             self._log.debug(u'error scraping dbpedia album page')
 
         # Ensure we have a filename before attempting to query wikipedia
-        if not cover_filename:
+        if not (cover_filename and page_id):
             return
+
+        # DBPedia sometimes provides an incomplete cover_filename, indicated
+        # by the filename having a space before the extension, e.g., 'foo .bar'
+        # An additional Wikipedia call can help to find the real filename.
+        # This may be removed once the DBPedia issue is resolved, see:
+        # https://github.com/dbpedia/extraction-framework/issues/396
+        if '.' not in cover_filename.split(' .')[-1]:
+            self._log.debug(u'dbpedia provided incomplete cover_filename')
+            lpart, rpart = cover_filename.rsplit(' .', 1)
+
+            # Query all the images in the page
+            wikipedia_response = requests.get(self.WIKIPEDIA_URL, params={
+                'format': 'json',
+                'action': 'query',
+                'continue': '',
+                'prop': 'images',
+                'pageids': page_id},
+                headers={'content-type': 'application/json'})
+
+            # Try to see if one of the images on the pages matches our
+            # imcomplete cover_filename
+            try:
+                data = wikipedia_response.json()
+                results = data['query']['pages'][page_id]['images']
+                for result in results:
+                    if re.match(re.escape(lpart) + r'.*?\.' + re.escape(rpart),
+                                result['title']):
+                        cover_filename = result['title']
+                        break
+            except (ValueError, KeyError):
+                self._log.debug(u'failed to retrieve a cover_filename')
+                return
 
         # Find the absolute url of the cover art on Wikipedia
         wikipedia_response = requests.get(self.WIKIPEDIA_URL, params={
@@ -221,15 +257,16 @@ class Wikipedia(ArtSource):
             'continue': '',
             'prop': 'imageinfo',
             'iiprop': 'url',
-            'titles': ('File:' + cover_filename).encode('utf-8')},
+            'titles': cover_filename.encode('utf-8')},
             headers={'content-type': 'application/json'})
+
         try:
             data = wikipedia_response.json()
             results = data['query']['pages']
             for _, result in results.iteritems():
                 image_url = result['imageinfo'][0]['url']
                 yield image_url
-        except:
+        except (ValueError, KeyError, IndexError):
             self._log.debug(u'error scraping wikipedia imageinfo')
             return
 
@@ -409,7 +446,16 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         if not (self.enforce_ratio or self.minwidth):
             return True
 
+        # get_size returns None if no local imaging backend is available
         size = ArtResizer.shared.get_size(candidate)
+
+        if not size:
+            self._log.warning(u'could not verify size of image: please see '
+                              u'documentation for dependencies. '
+                              u'The configuration options `minwidth` and '
+                              u'`enforce_ratio` may be violated.')
+            return True
+
         return size and size[0] >= self.minwidth and \
             (not self.enforce_ratio or size[0] == size[1])
 
@@ -446,6 +492,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
 
         if self.maxwidth and out:
             out = ArtResizer.shared.resize(self.maxwidth, out)
+
         return out
 
     def batch_fetch_art(self, lib, albums, force):

@@ -23,6 +23,7 @@ from test import helper
 from test.helper import control_stdin
 
 from beets.mediafile import MediaFile
+from beets import util
 
 
 class TestHelper(helper.TestHelper):
@@ -105,7 +106,9 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         self.item = self.album.items()[0]
         self.load_plugins('convert')
 
-        self.convert_dest = os.path.join(self.temp_dir, 'convert_dest')
+        self.convert_dest = util.bytestring_path(
+            os.path.join(self.temp_dir, 'convert_dest')
+        )
         self.config['convert'] = {
             'dest': self.convert_dest,
             'paths': {'default': 'converted'},

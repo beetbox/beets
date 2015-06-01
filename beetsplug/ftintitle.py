@@ -156,7 +156,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # that case, we attempt to move the featured artist to the title.
         _, featured = split_on_feat(artist)
         if featured and albumartist != artist and albumartist:
-            self._log.info(displayable_path(item.path))
+            self._log.info('{}', displayable_path(item.path))
 
             feat_part = None
 

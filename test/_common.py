@@ -169,11 +169,11 @@ class TestCase(unittest.TestCase):
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),
-                        'file does not exist: %s' % path)
+                        'file does not exist: {!r}'.format(path))
 
     def assertNotExists(self, path):
         self.assertFalse(os.path.exists(path),
-                         'file exists: %s' % path)
+                         'file exists: {!r}'.format((path)))
 
 
 class LibTestCase(TestCase):
