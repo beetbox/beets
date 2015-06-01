@@ -178,7 +178,7 @@ class IPFSPlugin(BeetsPlugin):
         if not os.path.isfile(path):
             raise IOError
         rlib = library.Library(path)
-        albums = rlib.albums(ui.decargs(args))
+        albums = rlib.albums(args)
         return albums
 
     def ipfs_added_albums(self, rlib, tmpname):
