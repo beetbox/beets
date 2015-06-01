@@ -46,6 +46,8 @@ Fixes:
   contain curly braces. :bug:`1481`
 * Regular expression queries over paths now work more reliably with non-ASCII
   characters in filenames. :bug:`1482`
+* Fix a bug, where the autotagger still considers matches that are specifically
+  listed under the config's ignored section. :bug:`1487`
 
 
 1.3.13 (April 24, 2015)
