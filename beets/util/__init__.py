@@ -359,10 +359,6 @@ def syspath(path, prefix=True):
     prefix on Windows, set `prefix` to False---but only do this if you
     *really* know what you're doing.
     """
-    # Don't do anything if we're not on windows
-    if os.path.__name__ != b'ntpath':
-        return path
-
     if not isinstance(path, unicode):
         # Beets currently represents Windows paths internally with UTF-8
         # arbitrarily. But earlier versions used MBCS because it is
@@ -374,6 +370,10 @@ def syspath(path, prefix=True):
             # Unicode representation.
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             path = path.decode(encoding, 'replace')
+
+    # Don't do anything if we're not on windows
+    if os.path.__name__ != b'ntpath':
+        return path
 
     # Add the magic prefix if it isn't already there.
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
