@@ -77,13 +77,13 @@ class IPFSPlugin(BeetsPlugin):
         cmd = "ipfs add -q -r".split()
         cmd.append(album_dir)
         try:
-            output = util.command_output(cmd)
+            output = util.command_output(cmd).split()
         except (OSError, subprocess.CalledProcessError) as exc:
             self._log.error(u'Failed to add {0}, error: {1}', album_dir, exc)
             return False
         length = len(output)
 
-        for linenr, line in enumerate(output.split()):
+        for linenr, line in enumerate(output):
             line = line.strip()
             if linenr == length - 1:
                 # last printed line is the album hash
@@ -119,7 +119,6 @@ class IPFSPlugin(BeetsPlugin):
             util.command_output(cmd)
         except (OSError, subprocess.CalledProcessError) as err:
             self._log.error('Failed to get {0} from ipfs.\n{1}',
-
                             _hash, err.output)
             return False
 
@@ -205,13 +204,19 @@ class IPFSPlugin(BeetsPlugin):
         for album in rlib.albums():
             try:
                 if album.ipfs:
+                    items = []
                     for item in album.items():
                         # Clear current path from item
-                        item.path = ''
+                        item.path = '/ipfs/{0}/{1}'.format(album.ipfs,
+                                                           os.path.basename(item.path))
+
                         tmplib.add(item)
-                    album.artpath = ''
+                        item.store()
+                        items.append(item)
                     self._log.info("Adding '{0}' to temporary library", album)
-                    tmplib.add(album)
+                    new_album = tmplib.add_album(items)
+                    new_album.ipfs = album.ipfs
+                    new_album.store()
             except AttributeError:
                 pass
         return tmplib
