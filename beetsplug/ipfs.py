@@ -45,6 +45,9 @@ class IPFSPlugin(BeetsPlugin):
         cmd.parser.add_option('-l', '--list', dest='_list',
                                     action='store_true',
                                     help='Query imported libraries')
+        cmd.parser.add_option('-m', '--play', dest='play',
+                                    action='store_true',
+                                    help='Play music remote libraries')
 
         def func(lib, opts, args):
             if opts.add:
@@ -64,8 +67,20 @@ class IPFSPlugin(BeetsPlugin):
             if opts._list:
                 self.ipfs_list(lib, ui.decargs(args))
 
+            if opts.play:
+                self.ipfs_play(lib, opts, ui.decargs(args))
+
         cmd.func = func
         return [cmd]
+
+    def ipfs_play(self, lib, opts, args):
+        from beetsplug.play import PlayPlugin
+
+        jlib = self.get_remote_lib(lib)
+        player = PlayPlugin()
+        config['play']['relative_to'] = None
+        player.album = True
+        player.play_music(jlib, player, args)
 
     def ipfs_add(self, lib):
         try:
@@ -188,14 +203,17 @@ class IPFSPlugin(BeetsPlugin):
             ui.print_(format(album, fmt), " : ", album.ipfs)
 
     def query(self, lib, args):
+        rlib = self.get_remote_lib(lib)
+        albums = rlib.albums(args)
+        return albums
+
+    def get_remote_lib(self, lib):
         lib_root = os.path.dirname(lib.path)
         remote_libs = lib_root + "/remotes"
         path = remote_libs + "/joined.db"
         if not os.path.isfile(path):
             raise IOError
-        rlib = library.Library(path)
-        albums = rlib.albums(args)
-        return albums
+        return library.Library(path)
 
     def ipfs_added_albums(self, rlib, tmpname):
         """ Returns a new library with only albums/items added to ipfs
