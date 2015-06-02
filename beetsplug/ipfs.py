@@ -47,7 +47,7 @@ class IPFSPlugin(BeetsPlugin):
                                     help='Query imported libraries')
         cmd.parser.add_option('-m', '--play', dest='play',
                                     action='store_true',
-                                    help='Play music remote libraries')
+                                    help='Play music from remote libraries')
 
         def func(lib, opts, args):
             if opts.add:
