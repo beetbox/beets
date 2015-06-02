@@ -22,6 +22,8 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/importfeeds`: Avoid generating incorrect m3u filename when
+  both `m3u` and `m3u_multi` options are `True`. :bug:`1490`
 * :doc:`/plugins/duplicates`: Avoid a crash when misconfigured. :bug:`1457`
 * :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
   beets library. Thanks to :user:`CodyReichert`. :bug:`1443`
