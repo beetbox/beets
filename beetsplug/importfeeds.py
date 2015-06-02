@@ -118,10 +118,9 @@ class ImportFeedsPlugin(BeetsPlugin):
                 paths.append(relpath)
 
         if 'm3u' in formats:
-            basename = bytestring_path(
-                self.config['m3u_name'].get(unicode)
-            )
-            m3u_path = os.path.join(feedsdir, basename)
+            m3u_basename = bytestring_path(
+                self.config['m3u_name'].get(unicode))
+            m3u_path = os.path.join(feedsdir, m3u_basename)
             _write_m3u(m3u_path, paths)
 
         if 'm3u_multi' in formats:
