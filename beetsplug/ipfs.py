@@ -165,7 +165,12 @@ class IPFSPlugin(BeetsPlugin):
         lib_root = os.path.dirname(lib.path)
         remote_libs = lib_root + "/remotes"
         if not os.path.exists(remote_libs):
-            os.makedirs(remote_libs)
+            try:
+                os.makedirs(remote_libs)
+            except OSError as e:
+                msg = "Could not create {0}. Error: {1}".format(remote_libs, e)
+                self._log.error(msg)
+                return False
         path = remote_libs + "/" + lib_name + ".db"
         cmd = "ipfs get {0} -o".format(_hash).split()
         cmd.append(path)
