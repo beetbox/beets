@@ -18,7 +18,12 @@ New features:
   and `min_width` options if no local imaging backend is available. :bug:`1460`
 * The `move` command has a new `-p/--pretend` option, making the command show
   how the items will be moved, without modifying the files on disk.
-* The importer now supports matching of pregap tracks in releases.
+* The importer now supports matching of "pregap" or HTOA (hidden track one
+  audio) tracks when they are listed in MusicBrainz. (This feature depends on a
+  new version of the ``musicbrainzngs`` library that is not yet released, but
+  will start working when it is available.) Thanks to :user:`ruippeixotog`.
+  :bug:`1104` :bug:`1493`
+
 
 Fixes:
 
