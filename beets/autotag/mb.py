@@ -215,7 +215,12 @@ def album_info(release):
     for medium in release['medium-list']:
         disctitle = medium.get('title')
         format = medium.get('format')
-        for track in medium['track-list']:
+
+        all_tracks = medium['track-list']
+        if 'pregap' in medium:
+            all_tracks.insert(0, medium['pregap'])
+
+        for track in all_tracks:
             # Basic information from the recording.
             index += 1
             ti = track_info(

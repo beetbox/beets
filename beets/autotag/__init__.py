@@ -95,7 +95,11 @@ def apply_metadata(album_info, mapping):
         item.title = track_info.title
 
         if config['per_disc_numbering']:
-            item.track = track_info.medium_index or track_info.index
+            # We want to let the track number be zero, but if the medium index
+            # is not provided we need to fall back to the overall index.
+            item.track = track_info.medium_index
+            if item.track is None:
+                item.track = track_info.index
             item.tracktotal = track_info.medium_total or len(album_info.tracks)
         else:
             item.track = track_info.index
