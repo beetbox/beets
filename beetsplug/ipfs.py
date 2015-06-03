@@ -230,7 +230,6 @@ class IPFSPlugin(BeetsPlugin):
     def create_new_album(self, album, tmplib):
         items = []
         for item in album.items():
-            print item
             try:
                 if not item.ipfs:
                     break
@@ -238,7 +237,7 @@ class IPFSPlugin(BeetsPlugin):
                 pass
             # Clear current path from item
             item.path = '/ipfs/{0}/{1}'.format(album.ipfs,
-                                                os.path.basename(item.path))
+                                               os.path.basename(item.path))
 
             tmplib.add(item)
             item.store()
