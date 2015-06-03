@@ -44,3 +44,7 @@ When remote libraries has been imported you can search them by using the -l or
 --list flag. The hash of albums matching the query will be returned, this can
 then be used with -g to fetch and import the album to the local library.
 
+Ipfs can be mounted as a FUSE file system. This means that music in a remote
+library can be streamed directly, without importing them to the local library
+first. If the /ipfs folder is mounted then matching queries will be sent to the
+:doc:`/plugins/play` using the -m or --play flag.
