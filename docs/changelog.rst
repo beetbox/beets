@@ -18,7 +18,7 @@ New features:
   and `min_width` options if no local imaging backend is available. :bug:`1460`
 * The `move` command has a new `-p/--pretend` option, making the command show
   how the items will be moved, without modifying the files on disk.
-
+* The importer now supports matching of pregap tracks in releases.
 
 Fixes:
 
