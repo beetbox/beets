@@ -535,14 +535,35 @@ def truncate_path(path, length=MAX_FILENAME_LENGTH):
     """
     comps = components(path)
 
-    out = [c[:length] for c in comps]
+    out = [truncate_string(c, length, _fsencoding()) for c in comps]
     base, ext = os.path.splitext(comps[-1])
     if ext:
         # Last component has an extension.
-        base = base[:length - len(ext)]
+        base = truncate_string(base, length - len(ext), _fsencoding())
         out[-1] = base + ext
 
     return os.path.join(*out)
+
+
+def truncate_string(s, length, encoding=None):
+    '''Truncate strings safely, i.e. on character boundaries.
+
+    Bytestrings are truncated to `length` bytes or less and are assumed to be
+    encoded in `encoding`. Unicode strings are truncated at `length` characters
+    or less.
+    '''
+    if isinstance(s, unicode):
+        return s[:length]
+
+    rv = b''
+    for char in s.decode(encoding):
+        new_rv = rv + char.encode(encoding)
+        if len(new_rv) <= length:
+            rv = new_rv
+        else:
+            break
+
+    return rv
 
 
 def str2bool(value):
