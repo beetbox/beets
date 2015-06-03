@@ -9,7 +9,7 @@ The plugin uses `ipfs`_ for storing the libraries and the file content.
 Installation
 ------------
 
-This plugin requires `go-ipfs`_ running as a dameon and that the ipfs command is
+This plugin requires `go-ipfs`_ running as a daemon and that the ipfs command is
 in the users $PATH.
 
 .. _go-ipfs: https://github.com/ipfs/go-ipfs
