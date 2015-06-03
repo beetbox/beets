@@ -222,19 +222,28 @@ class IPFSPlugin(BeetsPlugin):
         for album in rlib.albums():
             try:
                 if album.ipfs:
-                    items = []
-                    for item in album.items():
-                        # Clear current path from item
-                        item.path = '/ipfs/{0}/{1}'.format(album.ipfs,
-                                                           os.path.basename(item.path))
-
-                        tmplib.add(item)
-                        item.store()
-                        items.append(item)
-                    self._log.info("Adding '{0}' to temporary library", album)
-                    new_album = tmplib.add_album(items)
-                    new_album.ipfs = album.ipfs
-                    new_album.store()
+                    self.create_new_album(album, tmplib)
             except AttributeError:
                 pass
         return tmplib
+
+    def create_new_album(self, album, tmplib):
+        items = []
+        for item in album.items():
+            print item
+            try:
+                if not item.ipfs:
+                    break
+            except AttributeError:
+                pass
+            # Clear current path from item
+            item.path = '/ipfs/{0}/{1}'.format(album.ipfs,
+                                                os.path.basename(item.path))
+
+            tmplib.add(item)
+            item.store()
+            items.append(item)
+        self._log.info("Adding '{0}' to temporary library", album)
+        new_album = tmplib.add_album(items)
+        new_album.ipfs = album.ipfs
+        new_album.store()
