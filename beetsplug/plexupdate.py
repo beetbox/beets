@@ -1,9 +1,10 @@
 """Updates an Plex library whenever the beets library is changed.
-
+For Plex home users ensure that the token is filled out with the Plex Token for your user.
 Put something like the following in your config.yaml to configure:
     plex:
         host: localhost
         port: 32400
+        token: token
 """
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
@@ -15,10 +16,10 @@ from beets import config
 from beets.plugins import BeetsPlugin
 
 
-def get_music_section(host, port):
+def get_music_section(host, port, token):
     """Getting the section key for the music library in Plex.
     """
-    api_endpoint = 'library/sections'
+    api_endpoint = append_token('library/sections', token)
     url = urljoin('http://{0}:{1}'.format(host, port), api_endpoint)
 
     # Sends request.
@@ -31,17 +32,25 @@ def get_music_section(host, port):
             return child.get('key')
 
 
-def update_plex(host, port):
+def update_plex(host, port, token):
     """Sends request to the Plex api to start a library refresh.
     """
     # Getting section key and build url.
-    section_key = get_music_section(host, port)
-    api_endpoint = 'library/sections/{0}/refresh'.format(section_key)
+    section_key = get_music_section(host, port, token)
+    api_endpoint = append_token('library/sections/{0}/refresh'.format(section_key), token)
     url = urljoin('http://{0}:{1}'.format(host, port), api_endpoint)
 
     # Sends request and returns requests object.
     r = requests.get(url)
     return r
+
+
+def append_token(url, token):
+    """Appends the Plex Home token to the api call if required.
+    """
+    if token:
+        url += '?X-Plex-Token={0}'.format(token)
+    return url
 
 
 class PlexUpdate(BeetsPlugin):
@@ -51,7 +60,8 @@ class PlexUpdate(BeetsPlugin):
         # Adding defaults.
         config['plex'].add({
             u'host': u'localhost',
-            u'port': 32400})
+            u'port': 32400,
+            u'token': u''})
 
         self.register_listener('database_change', self.listen_for_db_change)
 
@@ -68,7 +78,8 @@ class PlexUpdate(BeetsPlugin):
         try:
             update_plex(
                 config['plex']['host'].get(),
-                config['plex']['port'].get())
+                config['plex']['port'].get(),
+                config['plex']['token'].get())
             self._log.info('... started.')
 
         except requests.exceptions.RequestException:
