@@ -233,7 +233,7 @@ A boolean controlling the track numbering style on multi-disc releases. By
 default (``per_disc_numbering: no``), tracks are numbered per-release, so the
 first track on the second disc has track number N+1 where N is the number of
 tracks on the first disc. If this ``per_disc_numbering`` is enabled, then the
-first track on each disc always has track number 1.
+first (non-pregap) track on each disc always has track number 1.
 
 If you enable ``per_disc_numbering``, you will likely want to change your
 :ref:`path-format-config` also to include ``$disc`` before ``$track`` to make
@@ -245,7 +245,7 @@ use a path format like this::
 
 When this option is off (the default), even "pregap" hidden tracks are
 numbered from one, not zero, so other track numbers may appear to be bumped up
-by one.
+by one. When it is on, the pregap track for each disc can be numbered zero.
 
 
 .. _terminal_encoding:
