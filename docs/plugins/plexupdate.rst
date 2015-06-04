@@ -13,6 +13,9 @@ which looks like this::
     plex:
         host: localhost
         port: 32400
+        token: token
+
+Use the token configuration option only when in a Plex Home (see `Plex Token`_)
 
 To use the ``plexupdate`` plugin you need to install the `requests`_ library with:
 
@@ -23,6 +26,7 @@ server every time you change your beets library.
 
 .. _Plex: http://plex.tv/
 .. _requests: http://docs.python-requests.org/en/latest/
+.. _Plex Token: https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 
 Configuration
 -------------
@@ -33,3 +37,5 @@ The available options under the ``plex:`` section are:
   Default: ``localhost``.
 - **port**: The Plex server port.
   Default: 32400.
+- **token**: The Plex Home token.
+  Default: Empty.
