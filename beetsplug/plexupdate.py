@@ -1,5 +1,6 @@
 """Updates an Plex library whenever the beets library is changed.
-For Plex home users ensure that the token is filled out with the Plex Token for your user.
+
+Plex Home users enter the Plex Token to enable updating.
 Put something like the following in your config.yaml to configure:
     plex:
         host: localhost
@@ -37,7 +38,8 @@ def update_plex(host, port, token):
     """
     # Getting section key and build url.
     section_key = get_music_section(host, port, token)
-    api_endpoint = append_token('library/sections/{0}/refresh'.format(section_key), token)
+    api_endpoint = 'library/sections/{0}/refresh'.format(section_key)
+    api_endpoint = append_token(api_endpoint, token)
     url = urljoin('http://{0}:{1}'.format(host, port), api_endpoint)
 
     # Sends request and returns requests object.
