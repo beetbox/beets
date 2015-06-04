@@ -6,17 +6,18 @@ Changelog
 
 New features:
 
-* The :doc:`/plugins/duplicates` plugin now allows merging duplicate
+* :doc:`/plugins/duplicates`: You can now merge duplicate
   track metadata (when detecting duplicate items), or duplicate album
   tracks (when detecting duplicate albums).
-* The :doc:`/plugins/duplicates` plugin now enforces an ordering on
+* :doc:`/plugins/duplicates`: Duplicate resolution uses an ordering on
   duplicates: it defaults to metadata attribute set completeness,
   or alternatively any list of attributes that should be favored.
-* The :doc:`/plugins/metasync` plugin now lets you get metadata from iTunes.
+* :doc:`/plugins/metasync`: Added a new backend to fetch metadata from iTunes.
   This plugin is still in an experimental phase. :bug:`1450`
-* The :doc:`/plugins/fetchart` plugin will now complain for the `enforce_ratio`
-  and `min_width` options if no local imaging backend is available. :bug:`1460`
-* The `move` command has a new `-p/--pretend` option, making the command show
+* :doc:`/plugins/fetchart`: Complain when the `enforce_ratio`
+  or `min_width` options are enabled if no local imaging backend is available.
+  :bug:`1460`
+* The `move` command has a new ``--pretend`` option, making the command show
   how the items will be moved, without modifying the files on disk.
 * The importer now supports matching of "pregap" or HTOA (hidden track one
   audio) tracks when they are listed in MusicBrainz. (This feature depends on a
