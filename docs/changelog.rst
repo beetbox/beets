@@ -18,10 +18,17 @@ New features:
   and `min_width` options if no local imaging backend is available. :bug:`1460`
 * The `move` command has a new `-p/--pretend` option, making the command show
   how the items will be moved, without modifying the files on disk.
+* The importer now supports matching of "pregap" or HTOA (hidden track one
+  audio) tracks when they are listed in MusicBrainz. (This feature depends on a
+  new version of the ``musicbrainzngs`` library that is not yet released, but
+  will start working when it is available.) Thanks to :user:`ruippeixotog`.
+  :bug:`1104` :bug:`1493`
 
 
 Fixes:
 
+* :doc:`/plugins/importfeeds`: Avoid generating incorrect m3u filename when
+  both `m3u` and `m3u_multi` options are `True`. :bug:`1490`
 * :doc:`/plugins/duplicates`: Avoid a crash when misconfigured. :bug:`1457`
 * :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
   beets library. Thanks to :user:`CodyReichert`. :bug:`1443`
