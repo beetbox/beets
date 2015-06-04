@@ -87,7 +87,8 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
         # Test if section key is "2" out of the mocking data.
         self.assertEqual(get_music_section(
             self.config['plex']['host'],
-            self.config['plex']['port']), '2')
+            self.config['plex']['port'],
+            self.config['plex']['token']), '2')
 
     @responses.activate
     def test_update_plex(self):
@@ -98,7 +99,8 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
         # Testing status code of the mocking request.
         self.assertEqual(update_plex(
             self.config['plex']['host'],
-            self.config['plex']['port']).status_code, 200)
+            self.config['plex']['port'],
+            self.config['plex']['token']).status_code, 200)
 
 
 def suite():
