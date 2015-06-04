@@ -23,6 +23,8 @@ New features:
   new version of the ``musicbrainzngs`` library that is not yet released, but
   will start working when it is available.) Thanks to :user:`ruippeixotog`.
   :bug:`1104` :bug:`1493`
+* :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
+  specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
 
 
 Fixes:
@@ -56,8 +58,6 @@ Fixes:
 * Fix a bug, where the autotagger still considers matches that are specifically
   listed under the config's ignored section. :bug:`1487`
 * Fix a bug with unicode strings when generating thumbnails. :bug:`1485`
-* :doc:`/plugins/plexupdate`: Fixed library updates not working when in a Plex
-  Home by allowing a token with requests.
 
 
 1.3.13 (April 24, 2015)
