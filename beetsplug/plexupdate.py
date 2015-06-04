@@ -12,6 +12,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import requests
 from urlparse import urljoin
+from urllib import urlencode
 import xml.etree.ElementTree as ET
 from beets import config
 from beets.plugins import BeetsPlugin
@@ -51,7 +52,7 @@ def append_token(url, token):
     """Appends the Plex Home token to the api call if required.
     """
     if token:
-        url += '?X-Plex-Token={0}'.format(token)
+        url += '?' + urlencode({'X-Plex-Token': token})
     return url
 
 
