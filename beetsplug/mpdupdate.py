@@ -97,7 +97,13 @@ class MPDUpdatePlugin(BeetsPlugin):
         """
         self._log.info('Updating MPD database...')
 
-        s = BufferedSocket(host, port)
+        try:
+            s = BufferedSocket(host, port)
+        except socket.error as e:
+            self._log.warning(u'MPD connection failed: {0}',
+                              unicode(e.strerror))
+            return
+
         resp = s.readline()
         if 'OK MPD' not in resp:
             self._log.warning(u'MPD connection failed: {0!r}', resp)
