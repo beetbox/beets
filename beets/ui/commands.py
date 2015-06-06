@@ -975,7 +975,7 @@ def list_items(lib, query, album, fmt=''):
 
 
 def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+    list_items(lib, decargs(args), opts.album, opts.format)
 
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
