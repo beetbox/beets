@@ -81,8 +81,8 @@ class IPFSPlugin(BeetsPlugin):
 
     def auto_add(self, session, task):
         if task.is_album:
-            self.ipfs_add(task.album)
-            task.album.store()
+            if self.ipfs_add(task.album):
+                task.album.store()
 
     def ipfs_play(self, lib, opts, args):
         from beetsplug.play import PlayPlugin
@@ -97,7 +97,14 @@ class IPFSPlugin(BeetsPlugin):
         try:
             album_dir = lib.item_dir()
         except AttributeError:
-            return
+            return False
+        try:
+            if lib.ipfs:
+                # Already added to ipfs
+                return False
+        except AttributeError:
+            pass
+
         self._log.info('Adding {0} to ipfs', album_dir)
 
         cmd = "ipfs add -q -r".split()
