@@ -22,11 +22,12 @@ Usage
 To add albums to ipfs, making them shareable, use the -a or --add flag. If used
 without arguments it will add all albums in the local library.  When added all
 items and albums will get a ipfs entry in the database containing the hash of
-that specific file/folder.
+that specific file/folder. Newly imported albums will be added automatically to
+ipfs unless set not to do so, see the configuration section below.
 
 These hashes can then be given to a friend and they can ``get`` that album from
 ipfs and import it to beets using the -g or --get flag.
-If the argument passed to the -g flag isn't a ipfs hash it'll be used as a
+If the argument passed to the -g flag isn't an ipfs hash it'll be used as a
 query instead, getting all albums matching the query.
 
 Using the -p or --publish flag a copy of the local library will be
@@ -48,3 +49,10 @@ Ipfs can be mounted as a FUSE file system. This means that music in a remote
 library can be streamed directly, without importing them to the local library
 first. If the /ipfs folder is mounted then matching queries will be sent to the
 :doc:`/plugins/play` using the -m or --play flag.
+
+Configuration
+-------------
+
+The ipfs plugin will automatically add imported albums to ipfs and add those hashes
+to the database. This can be turned off by setting the ``auto`` option in the
+ipfs section of the config to ``no``.
