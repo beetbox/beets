@@ -26,6 +26,12 @@ class IPFSPlugin(BeetsPlugin):
 
     def __init__(self):
         super(IPFSPlugin, self).__init__()
+        self.config.add({
+            'auto': True,
+        })
+
+        if self.config['auto']:
+            self.import_stages = [self.auto_add]
 
     def commands(self):
         cmd = ui.Subcommand('ipfs',
@@ -72,6 +78,11 @@ class IPFSPlugin(BeetsPlugin):
 
         cmd.func = func
         return [cmd]
+
+    def auto_add(self, session, task):
+        if task.is_album:
+            self.ipfs_add(task.album)
+            task.album.store()
 
     def ipfs_play(self, lib, opts, args):
         from beetsplug.play import PlayPlugin
