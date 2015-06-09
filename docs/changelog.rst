@@ -59,6 +59,7 @@ Fixes:
 * Fix a bug, where the autotagger still considers matches that are specifically
   listed under the config's ignored section. :bug:`1487`
 * Fix a bug with unicode strings when generating thumbnails. :bug:`1485`
+* :doc:`/plugins/keyfinder`: Fix handling of Unicode paths. :bug:`1502`
 
 
 1.3.13 (April 24, 2015)
