@@ -93,13 +93,13 @@ class IPFSPlugin(BeetsPlugin):
         player.album = True
         player.play_music(jlib, player, args)
 
-    def ipfs_add(self, lib):
+    def ipfs_add(self, album):
         try:
-            album_dir = lib.item_dir()
+            album_dir = album.item_dir()
         except AttributeError:
             return False
         try:
-            if lib.ipfs:
+            if album.ipfs:
                 # Already added to ipfs
                 return False
         except AttributeError:
@@ -121,10 +121,10 @@ class IPFSPlugin(BeetsPlugin):
             if linenr == length - 1:
                 # last printed line is the album hash
                 self._log.info("album: {0}", line)
-                lib.ipfs = line
+                album.ipfs = line
             else:
                 try:
-                    item = lib.items()[linenr]
+                    item = album.items()[linenr]
                     self._log.info("item: {0}", line)
                     item.ipfs = line
                     item.store()
