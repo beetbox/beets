@@ -262,9 +262,10 @@ class IPFSPlugin(BeetsPlugin):
             item.path = '/ipfs/{0}/{1}'.format(album.ipfs,
                                                os.path.basename(item.path))
 
-            tmplib.add(item)
-            item.store()
+            item.id = None
             items.append(item)
+        if len(items) < 1:
+            return False
         self._log.info("Adding '{0}' to temporary library", album)
         new_album = tmplib.add_album(items)
         new_album.ipfs = album.ipfs
