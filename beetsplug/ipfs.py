@@ -195,13 +195,14 @@ class IPFSPlugin(BeetsPlugin):
                 self._log.error(msg)
                 return False
         path = remote_libs + "/" + lib_name + ".db"
-        cmd = "ipfs get {0} -o".format(_hash).split()
-        cmd.append(path)
-        try:
-            util.command_output(cmd)
-        except (OSError, subprocess.CalledProcessError):
-            self._log.error("Could not import {0}".format(_hash))
-            return False
+        if not os.path.exists(path):
+            cmd = "ipfs get {0} -o".format(_hash).split()
+            cmd.append(path)
+            try:
+                util.command_output(cmd)
+            except (OSError, subprocess.CalledProcessError):
+                self._log.error("Could not import {0}".format(_hash))
+                return False
 
         # add all albums from remotes into a combined library
         jpath = remote_libs + "/joined.db"
