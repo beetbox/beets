@@ -58,6 +58,10 @@ class IPFSPlugin(BeetsPlugin):
         def func(lib, opts, args):
             if opts.add:
                 for album in lib.albums(ui.decargs(args)):
+                    if len(album.items()) == 0:
+                        self._log.info('{0} does not contain items, aborting',
+                                       album)
+
                     self.ipfs_add(album)
                     album.store()
 
@@ -100,6 +104,7 @@ class IPFSPlugin(BeetsPlugin):
             return False
         try:
             if album.ipfs:
+                self._log.debug('{0} already added', album_dir)
                 # Already added to ipfs
                 return False
         except AttributeError:
