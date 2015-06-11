@@ -210,9 +210,13 @@ class IPFSPlugin(BeetsPlugin):
         nlib = library.Library(path)
         for album in nlib.albums():
             if not self.already_added(album, jlib):
+                new_album = []
                 for item in album.items():
-                    jlib.add(item)
-                jlib.add(album)
+                    item.id = None
+                    new_album.append(item)
+                added_album = jlib.add_album(new_album)
+                added_album.ipfs = album.ipfs
+                added_album.store()
 
     def already_added(self, check, jlib):
         for jalbum in jlib.albums():
