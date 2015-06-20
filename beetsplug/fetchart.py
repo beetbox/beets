@@ -501,7 +501,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         """
         for album in albums:
             if album.artpath and not force:
-                message = 'has album art'
+                message = ui.colorize('text_success', 'has album art')
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
