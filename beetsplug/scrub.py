@@ -53,6 +53,7 @@ class ScrubPlugin(BeetsPlugin):
         super(ScrubPlugin, self).__init__()
         self.config.add({
             'auto': True,
+            'preserve': None
         })
         self.register_listener("write", self.write_item)
 
@@ -101,6 +102,34 @@ class ScrubPlugin(BeetsPlugin):
 
         return [scrub_cmd]
 
+    def _preserve(self, path, tags):
+        """Save tags mentioned in tags white list.
+        """
+        self._preservedTags = None
+
+        try:
+            mf = mediafile.MediaFile(path, config['id3v23'].get(bool))
+        except IOError as exc:
+            self._log.error(u'could not open file to preserve tags on scrub: {0}', exc)
+
+        self._preservedTags = dict.fromkeys(tags)
+        for tag in tags:
+            self._preservedTags[tag] = getattr(mf, tag)
+
+    def _restore(self, path):
+        """Restore tags mentioned in tags white list.
+        """
+        if not self._preservedTags:
+            return
+
+        self._log.debug(u'writing new tags after scrub')
+        mf = mediafile.MediaFile(path, config['id3v23'].get(bool))
+        for tag, value in self._preservedTags.items():
+            if value:
+                self._log.info(u'restoring {0} = {1}'.format(tag, value))
+                setattr(mf, tag, value)
+        mf.save()
+
     @staticmethod
     def _mutagen_classes():
         """Get a list of file type classes from the Mutagen module.
@@ -143,4 +172,9 @@ class ScrubPlugin(BeetsPlugin):
         """Automatically embed art into imported albums."""
         if not scrubbing and self.config['auto']:
             self._log.debug(u'auto-scrubbing {0}', util.displayable_path(path))
+            if self.config['preserve'].get():
+                preserveTags = self.config["preserve"].as_str_seq()
+                self._preserve(path, preserveTags)
             self._scrub(path)
+            if self.config['preserve'].get():
+                self._restore(path)
