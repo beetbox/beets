@@ -238,6 +238,18 @@ class Model(object):
         else:
             source = self._values_flex
 
+        # the value might be a template that must be evaluated
+        try:
+            # avoid parsing non-remplate string :
+            # the quick test is just here for performance reason
+            if isinstance(value, basestring) \
+                    and (u'$' in value or u'%' in value):
+                value = self.evaluate_template(value)
+        except UnicodeDecodeError:
+            # When setting the path, the value is a str containing unicode data
+            # it does not work well with 'in' but can be ignored safely.
+            pass
+
         # If the field has a type, filter the value.
         value = self._type(key).normalize(value)
 
