@@ -198,6 +198,19 @@ class ModelTest(unittest.TestCase):
         other_model = self.db._get(TestModel1, model.id)
         self.assertEqual(model.id, other_model.id)
 
+    def test_store_and_retrieve_with_template(self):
+        model = TestModel1()
+        model.add(self.db)
+        model.foo = 'foo'
+        # Cannot use method like %upper here as they are not available on the
+        # model object.
+        model.bar = 'bar $foo'
+        model.store()
+
+        other_model = self.db._get(TestModel1, model.id)
+        self.assertEqual(other_model.foo, 'foo')
+        self.assertEqual(other_model.bar, 'bar foo')
+
     def test_store_and_retrieve_flexattr(self):
         model = TestModel1()
         model.add(self.db)
