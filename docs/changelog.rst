@@ -60,6 +60,9 @@ Fixes:
   listed under the config's ignored section. :bug:`1487`
 * Fix a bug with unicode strings when generating thumbnails. :bug:`1485`
 * :doc:`/plugins/keyfinder`: Fix handling of Unicode paths. :bug:`1502`
+* :doc:`/plugins/fetchart`: When album art is already present, the message is
+  now printed in the ``text_highlight_minor`` color (light gray). Thanks to
+  :user:`Somasis`. :bug:`1512`
 
 
 1.3.13 (April 24, 2015)
