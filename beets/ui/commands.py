@@ -1107,11 +1107,11 @@ def remove_items(lib, query, album, delete):
     print_()
     if delete:
         fmt = u'$path - $title'
-        prompt = 'Really DELETE %i files (y/n)?' % len(items)
+        prompt = 'Really DELETE %i file%s (y/n)?' % (len(items), 's' if len(items)>1 else '')
     else:
         fmt = ''
-        prompt = 'Really remove %i items from the library (y/n)?' % \
-                 len(items)
+        prompt = 'Really remove %i item%s from the library (y/n)?' % \
+                 (len(items), 's' if len(items)>1 else '')
 
     # Show all the items.
     for item in items:
