@@ -1354,7 +1354,7 @@ def move_items(lib, dest, query, copy, album, pretend):
 
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
-    log.info(u'{0} {1} {2}s.', action, len(objs), entity)
+    log.info(u'{0} {1} {2}{3}.', action, len(objs), entity, 's' if len(objs)>1 else '')
     if pretend:
         if album:
             show_path_changes([(item.path, item.destination(basedir=dest))
