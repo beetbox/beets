@@ -1107,11 +1107,12 @@ def remove_items(lib, query, album, delete):
     print_()
     if delete:
         fmt = u'$path - $title'
-        prompt = 'Really DELETE %i file%s (y/n)?' % (len(items), 's' if len(items)>1 else '')
+        prompt = 'Really DELETE %i file%s (y/n)?' % \
+                 (len(items), 's' if len(items) > 1 else '')
     else:
         fmt = ''
         prompt = 'Really remove %i item%s from the library (y/n)?' % \
-                 (len(items), 's' if len(items)>1 else '')
+                 (len(items), 's' if len(items) > 1 else '')
 
     # Show all the items.
     for item in items:
@@ -1354,7 +1355,8 @@ def move_items(lib, dest, query, copy, album, pretend):
 
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
-    log.info(u'{0} {1} {2}{3}.', action, len(objs), entity, 's' if len(objs)>1 else '')
+    log.info(u'{0} {1} {2}{3}.', action, len(objs), entity,
+             's' if len(objs) > 1 else '')
     if pretend:
         if album:
             show_path_changes([(item.path, item.destination(basedir=dest))
