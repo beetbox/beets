@@ -63,6 +63,8 @@ Fixes:
 * :doc:`/plugins/fetchart`: When album art is already present, the message is
   now printed in the ``text_highlight_minor`` color (light gray). Thanks to
   :user:`Somasis`. :bug:`1512`
+* Some messages in the console UI now use plural nouns correctly. Thanks to
+  :user:`JesseWeinstein`. :bug:`1521`
 
 
 1.3.13 (April 24, 2015)
