@@ -270,6 +270,20 @@ def _sc_encode(gain, peak):
 
 # Cover art and other images.
 
+def _wider_test_jpeg(h, f):
+    """Test for a jpeg file following the UNIX file implementation which
+    uses the magic bytes rather just than looking for the bytes b'JFIF'
+    or b'EXIF' at a fixed position.
+    """
+    if h[:2] == b'\xff\xd8':
+        return 'jpeg'
+
+# Add this new test function to the list of functions used by imghdr to
+# determine the mime type
+imghdr.tests.append(_wider_test_jpeg)
+
+
+
 def _image_mime_type(data):
     """Return the MIME type of the image data (a bytestring).
     """
