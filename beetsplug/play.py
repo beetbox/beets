@@ -35,7 +35,7 @@ class PlayPlugin(BeetsPlugin):
             'command': None,
             'use_folders': False,
             'relative_to': None,
-            'optional_args': None,
+            'optargs': None,
         })
 
     def commands(self):
@@ -56,13 +56,13 @@ class PlayPlugin(BeetsPlugin):
         command_str = config['play']['command'].get()
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
-        optional_args = config['play']['optional_args'].get()
+        optargs = config['play']['optargs'].get()
         if relative_to:
             relative_to = util.normpath(relative_to)
 
-        # Prepare command strings wirh optional args
+        # Prepare command strings with optional args
         if opts.optargs:
-            command_str=command_str.format(optional_args or '')
+            command_str=command_str.format(optargs or '')
         else:
             command_str=command_str.format('')
 
