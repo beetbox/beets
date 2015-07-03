@@ -52,7 +52,7 @@ configuration file. The available options are:
 - **sources**: List of sources to search for lyrics. An asterisk `*` expands
   to all available sources.
   Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all sources.
-  *google* source will be automatically deactivated if no `google_engine_ID` is
+  *google* source will be automatically deactivated if no `google_API_key` is
   setup.
 
 Here's an example of ``config.yaml``::
