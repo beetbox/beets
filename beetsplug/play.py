@@ -44,8 +44,11 @@ class PlayPlugin(BeetsPlugin):
             help='send music to a player as a playlist'
         )
         play_command.parser.add_album_option()
-        play_command.parser.add_option('-o','--optargs',action='store_true',
-                                help='Insert additional arguments into command string')
+        play_command.parser.add_option(
+            '-o', '--optargs',
+            action='store_true',
+            help='Insert additional arguments into command string'
+        )
         play_command.func = self.play_music
         return [play_command]
 
@@ -62,9 +65,9 @@ class PlayPlugin(BeetsPlugin):
 
         # Prepare command strings with optional args
         if opts.optargs:
-            command_str=command_str.format(optargs or '')
+            command_str = command_str.format(optargs or '')
         else:
-            command_str=command_str.format('')
+            command_str = command_str.format('')
 
         # Perform search by album and add folders rather than tracks to
         # playlist.
