@@ -361,11 +361,11 @@ method.
 
 Here's an example plugin that provides a meaningless new field "foo"::
 
-    class fooplugin(beetsplugin):
+    class FooPlugin(BeetsPlugin):
         def __init__(self):
-            field = mediafile.mediafield(
-                mediafile.mp3descstoragestyle(u'foo')
-                mediafile.storagestyle(u'foo')
+            field = mediafile.MediaField(
+                mediafile.MP3DescStorageStyle(u'foo'),
+                mediafile.StorageStyle(u'foo')
             )
             self.add_media_field('foo', field)
 
