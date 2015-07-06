@@ -44,7 +44,7 @@ from beets import mediafile
 
 action = Enum('action',
               ['SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
-               'ALBUMS'])
+               'ALBUMS', 'MERGE'])
 
 QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
@@ -247,9 +247,11 @@ class ImportSession(object):
         """
         paths = task.paths
         if duplicate:
-            # Duplicate: log all three choices (skip, keep both, and trump).
+            # Duplicate: log all choices (skip, keep both, trump, merge).
             if task.should_remove_duplicates:
                 self.tag_log('duplicate-replace', paths)
+            elif task.should_merge_duplicates:
+                self.tag_log('duplicate-merge', paths)
             elif task.choice_flag in (action.ASIS, action.APPLY):
                 self.tag_log('duplicate-keep', paths)
             elif task.choice_flag is (action.SKIP):
@@ -431,6 +433,7 @@ class ImportTask(BaseImportTask):
         self.candidates = []
         self.rec = None
         self.should_remove_duplicates = False
+        self.should_merge_duplicates = False
         self.is_album = True
 
     def set_choice(self, choice):
@@ -519,6 +522,34 @@ class ImportTask(BaseImportTask):
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
+
+    def merge_duplicates(self, lib):
+        """Combine an import with an existing album.
+
+        Used after resolve_duplicates determines that there are
+        duplicates and the user selects merge.  Both sets of items have
+        already been added to the db; so this function combines them
+        into one list, zeroes out their ids, removes them from the db,
+        and re-adds them as a single album.
+        """
+
+        # Tag all with the same album id
+        existing_album = self.find_duplicates(lib)[0]
+        for item in self.items:
+            item.album_id = existing_album.id
+
+        # Must set album_id before setting choice_flag
+        # choice_flag used for self.import_items() in other methods
+        self.choice_flag = action.ASIS
+
+        for item in existing_album.items():
+            self.items.append(item)
+        self.align_album_level_fields()
+
+        # Set ids to None so add() "add"s rather than "store"s in lib.add_album
+        for item in self.items:
+            item.id = None
+        self.add(lib)
 
     def finalize(self, session):
         """Save progress, clean up files, and emit plugin event.
@@ -878,6 +909,7 @@ class SentinelImportTask(ImportTask):
         super(SentinelImportTask, self).__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
         self.should_remove_duplicates = False
+        self.should_merge_duplicates = False
         self.is_album = True
         self.choice_flag = None
 
@@ -1367,6 +1399,8 @@ def manipulate_files(session, task):
     if not task.skip:
         if task.should_remove_duplicates:
             task.remove_duplicates(session.lib)
+        elif task.should_merge_duplicates:
+            task.merge_duplicates(session.lib)
 
         task.manipulate_files(
             move=session.config['move'],
