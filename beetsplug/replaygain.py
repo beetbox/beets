@@ -388,6 +388,12 @@ class GStreamerBackend(Backend):
         self._res = self.Gst.ElementFactory.make("audioresample", "res")
         self._rg = self.Gst.ElementFactory.make("rganalysis", "rg")
 
+        if self._src is None or self._decbin is None or self._conv is None \
+           or self._res is None or self._rg is None:
+            raise FatalReplayGainError(
+                "Failed to load required GStreamer plugins"
+            )
+
         # We check which files need gain ourselves, so all files given
         # to rganalsys should have their gain computed, even if it
         # already exists.

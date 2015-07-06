@@ -66,6 +66,8 @@ Fixes:
 * Some messages in the console UI now use plural nouns correctly. Thanks to
   :user:`JesseWeinstein`. :bug:`1521`
 * Sorting numerical fields (such as track) now works again. :bug:`1511`
+* :doc:`/plugins/replaygain`: Missing GStreamer plugins now cause a helpful
+  error message instead of a crash. :bug:`1518`
 
 
 1.3.13 (April 24, 2015)
