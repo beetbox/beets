@@ -545,6 +545,59 @@ def truncate_path(path, length=MAX_FILENAME_LENGTH):
     return os.path.join(*out)
 
 
+def _legalize_stage(path, replacements, length, extension, fragment):
+    """ Perform a signle stage of legalization of the path (ie. a single
+    sanitization and truncation). Returns the path (unicode if fragment is set,
+    otherwise bytes), and whether truncation was required.
+    """
+    # Perform an initial sanitization including user replacements.
+    path = sanitize_path(path, replacements)
+
+    # Encode for the filesystem.
+    if not fragment:
+        path = bytestring_path(path)
+
+    # Preserve extension.
+    path += extension.lower()
+
+    # Truncate too-long components.
+    pre_truncate_path = path
+    path = truncate_path(path, length)
+
+    return (path, path != pre_truncate_path)
+
+
+def legalize_path(path, replacements, length, extension, fragment):
+    """ Perform up to three calls to _legalize_stage, to generate a stable
+    output path, taking user replacements into consideration if possible. This
+    additional complexity is necessary for cases where truncation produces
+    unclean paths (eg. trailing space).
+    """
+
+    if fragment:
+        # Outputting Unicode.
+        extension = extension.decode('utf8', 'ignore')
+
+    first_stage_path =\
+        _legalize_stage(path, replacements, length, extension, fragment)[0]
+
+    # Convert back to Unicode with extension removed.
+    first_stage_path = os.path.splitext(displayable_path(first_stage_path))[0]
+
+    # Re-sanitize following truncation (including user replacements).
+    second_stage_path, retruncated = _legalize_stage(
+        first_stage_path, replacements, length, extension, fragment
+    )
+
+    # If the path was once again truncated, discard user replacements.
+    if retruncated:
+        second_stage_path = _legalize_stage(
+            first_stage_path, None, length, extension, fragment
+        )[0]
+
+    return second_stage_path
+
+
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
     return value.lower() in ('yes', '1', 'true', 't', 'y')

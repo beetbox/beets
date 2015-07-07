@@ -30,7 +30,7 @@ from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util import bytestring_path, syspath, normpath, samefile, legalize_path
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
@@ -742,71 +742,6 @@ class Item(LibModel):
 
     # Templating.
 
-    def _legalize_partial(self, path, fragment, replacements):
-        """ Perform a partial legalization of the path (ie. a single
-        sanitization and truncation). Outputs unicode if fragment is set,
-        otherwise bytes.
-        """
-
-        # Truncate components and remove forbidden characters.
-        path = util.sanitize_path(path, replacements)
-
-        # Encode for the filesystem.
-        if not fragment:
-            path = bytestring_path(path)
-
-        # Preserve extension.
-        _, extension = os.path.splitext(self.path)
-        if fragment:
-            # Outputting Unicode.
-            extension = extension.decode('utf8', 'ignore')
-        path += extension.lower()
-
-        # Truncate too-long components.
-        maxlen = beets.config['max_filename_length'].get(int)
-        if not maxlen:
-            # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(self._db.directory)
-        path = util.truncate_path(path, maxlen)
-
-        return path
-
-    def _legalize_path(self, path, fragment):
-        """ Perform several iterations of _legalize_partial, to generate a
-        stable, optimal output path. This is necessary for cases where
-        truncation produces unclean paths (eg. trailing space).
-        """
-
-        # Create a list of path candidates
-        path_candidates = [b'']
-
-        replacements = self._db.replacements
-
-        # Perform an initial pass
-        path = self._legalize_partial(path, fragment, replacements)
-        while path != path_candidates[-1]:
-            # This will keep sanitizing the path until it's stable, or an
-            # infinite loop appears
-            while path not in path_candidates:
-                path_candidates.append(path)
-                # Convert back to Unicode with extension removed
-                print(util.displayable_path(path))
-                path = os.path.splitext(util.displayable_path(path))[0]
-
-                # Run next pass
-                path = self._legalize_partial(path, fragment, replacements)
-
-            # If an infinite loop occurred, adjust replacements to avoid it
-            if path != path_candidates[-1]:
-                replacements = dict((k, u'_') for k, v in replacements)
-
-                # If there's a rule to match a single underscore, set the
-                # target to a blank string.
-                if '_' in replacements:
-                    replacements['_'] = ''
-
-        return path
-
     def destination(self, fragment=False, basedir=None, platform=None,
                     path_formats=None):
         """Returns the path in the library directory designated for the
@@ -855,7 +790,13 @@ class Item(LibModel):
         if beets.config['asciify_paths']:
             subpath = unidecode(subpath)
 
-        subpath = self._legalize_path(subpath, fragment)
+        maxlen = beets.config['max_filename_length'].get(int)
+        if not maxlen:
+            # When zero, try to determine from filesystem.
+            maxlen = util.max_filename_length(self._db.directory)
+
+        subpath = util.legalize_path(subpath, self._db.replacements, maxlen,
+                                     os.path.splitext(self.path)[1], fragment)
 
         if fragment:
             return subpath
