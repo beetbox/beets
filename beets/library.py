@@ -795,8 +795,14 @@ class Item(LibModel):
             # When zero, try to determine from filesystem.
             maxlen = util.max_filename_length(self._db.directory)
 
-        subpath = util.legalize_path(subpath, self._db.replacements, maxlen,
-                                     os.path.splitext(self.path)[1], fragment)
+        subpath, fellback = util.legalize_path(
+            subpath, self._db.replacements, maxlen,
+            os.path.splitext(self.path)[1], fragment
+        )
+
+        # Print an error message if legalize fell back to default replacements
+        if fellback:
+            log.warning(u'fell back to default replacements when naming file')
 
         if fragment:
             return subpath
