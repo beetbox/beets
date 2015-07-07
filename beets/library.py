@@ -30,7 +30,7 @@ from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile, legalize_path
+from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
