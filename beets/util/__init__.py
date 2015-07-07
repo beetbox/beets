@@ -597,7 +597,9 @@ def legalize_path(path, replacements, length, extension, fragment):
             first_stage_path, None, length, extension, fragment
         )
 
-    return second_stage_path
+        return second_stage_path, True
+    else:
+        return second_stage_path, False
 
 
 def str2bool(value):
