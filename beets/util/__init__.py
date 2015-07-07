@@ -546,9 +546,9 @@ def truncate_path(path, length=MAX_FILENAME_LENGTH):
 
 
 def _legalize_stage(path, replacements, length, extension, fragment):
-    """ Perform a signle stage of legalization of the path (ie. a single
-    sanitization and truncation). Returns the path (unicode if fragment is set,
-    otherwise bytes), and whether truncation was required.
+    """ Performs sanitization of the path, then encodes for the filesystem,
+    appends the extension and truncates. Returns the path (unicode if fragment
+    is set, otherwise bytes), and whether truncation was required.
     """
     # Perform an initial sanitization including user replacements.
     path = sanitize_path(path, replacements)
@@ -564,22 +564,24 @@ def _legalize_stage(path, replacements, length, extension, fragment):
     pre_truncate_path = path
     path = truncate_path(path, length)
 
-    return (path, path != pre_truncate_path)
+    return path, path != pre_truncate_path
 
 
 def legalize_path(path, replacements, length, extension, fragment):
     """ Perform up to three calls to _legalize_stage, to generate a stable
-    output path, taking user replacements into consideration if possible. This
-    additional complexity is necessary for cases where truncation produces
-    unclean paths (eg. trailing space).
+    output path, taking user replacements into consideration if possible. The
+    limited number of iterations avoids the possibility of an infinite loop of
+    sanitization and truncation operations, which could be caused by some user
+    replacements.
     """
 
     if fragment:
         # Outputting Unicode.
         extension = extension.decode('utf8', 'ignore')
 
-    first_stage_path =\
-        _legalize_stage(path, replacements, length, extension, fragment)[0]
+    first_stage_path, _ = _legalize_stage(
+        path, replacements, length, extension, fragment
+    )
 
     # Convert back to Unicode with extension removed.
     first_stage_path = os.path.splitext(displayable_path(first_stage_path))[0]
@@ -591,9 +593,9 @@ def legalize_path(path, replacements, length, extension, fragment):
 
     # If the path was once again truncated, discard user replacements.
     if retruncated:
-        second_stage_path = _legalize_stage(
+        second_stage_path, _ = _legalize_stage(
             first_stage_path, None, length, extension, fragment
-        )[0]
+        )
 
     return second_stage_path
 
