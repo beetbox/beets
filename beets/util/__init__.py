@@ -546,9 +546,11 @@ def truncate_path(path, length=MAX_FILENAME_LENGTH):
 
 
 def _legalize_stage(path, replacements, length, extension, fragment):
-    """ Performs sanitization of the path, then encodes for the filesystem,
-    appends the extension and truncates. Returns the path (unicode if fragment
-    is set, otherwise bytes), and whether truncation was required.
+    """Perform a single round of path legalization steps
+    (sanitation/replacement, encoding from Unicode to bytes,
+    extension-appending, and truncation). Return the path (Unicode if
+    `fragment` is set, `bytes` otherwise) and whether truncation was
+    required.
     """
     # Perform an initial sanitization including user replacements.
     path = sanitize_path(path, replacements)
@@ -568,11 +570,25 @@ def _legalize_stage(path, replacements, length, extension, fragment):
 
 
 def legalize_path(path, replacements, length, extension, fragment):
-    """ Perform up to three calls to _legalize_stage, to generate a stable
-    output path, taking user replacements into consideration if possible. The
-    limited number of iterations avoids the possibility of an infinite loop of
-    sanitization and truncation operations, which could be caused by some user
-    replacements.
+    """Given a path-like Unicode string, produce a legal path. Return
+    the path and a flag indicating whether some replacements had to be
+    ignored (see below).
+
+    The legalization process (see `_legalize_stage`) consists of
+    applying the sanitation rules in `replacements`, encoding the string
+    to bytes (unless `fragment` is set), truncating components to
+    `length`, appending the `extension`.
+
+    This function performs up to three calls to `_legalize_stage` in
+    case truncation conflicts with replacements (as can happen when
+    truncation creates whitespace at the end of the string, for
+    example). The limited number of iterations iterations avoids the
+    possibility of an infinite loop of sanitation and truncation
+    operations, which could be caused by replacement rules that make the
+    string longer. The flag returned from this function indicates that
+    the path has to be truncated twice (indicating that replacements
+    made the string longer again after it was truncated); the
+    application should probably log some sort of warning.
     """
 
     if fragment:
@@ -584,22 +600,21 @@ def legalize_path(path, replacements, length, extension, fragment):
     )
 
     # Convert back to Unicode with extension removed.
-    first_stage_path = os.path.splitext(displayable_path(first_stage_path))[0]
+    first_stage_path, _ = os.path.splitext(displayable_path(first_stage_path))
 
     # Re-sanitize following truncation (including user replacements).
     second_stage_path, retruncated = _legalize_stage(
         first_stage_path, replacements, length, extension, fragment
     )
 
-    # If the path was once again truncated, discard user replacements.
+    # If the path was once again truncated, discard user replacements
+    # and run through one last legalization stage.
     if retruncated:
         second_stage_path, _ = _legalize_stage(
             first_stage_path, None, length, extension, fragment
         )
 
-        return second_stage_path, True
-    else:
-        return second_stage_path, False
+    return second_stage_path, retruncated
 
 
 def str2bool(value):

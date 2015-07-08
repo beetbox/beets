@@ -799,10 +799,12 @@ class Item(LibModel):
             subpath, self._db.replacements, maxlen,
             os.path.splitext(self.path)[1], fragment
         )
-
-        # Print an error message if legalize fell back to default replacements
         if fellback:
-            log.warning(u'fell back to default replacements when naming file')
+            # Print an error message if legalization fell back to
+            # default replacements because of the maximum length.
+            log.warning('Fell back to default replacements when naming '
+                        'file {}. Configure replacements to avoid lengthening '
+                        'the filename.', subpath)
 
         if fragment:
             return subpath
