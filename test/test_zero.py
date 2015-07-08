@@ -105,7 +105,6 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['year'], 0)
         self.assertIsNone(mediafile.year)
 
-
     def test_album_art(self):
         path = self.create_mediafile_fixture(images=['jpg'])
         item = Item.from_path(path)
