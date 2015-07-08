@@ -26,6 +26,8 @@ New features:
   :bug:`1104` :bug:`1493`
 * :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
   specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
+* :doc:`/plugins/zero`: A new ``update_database`` configuration option
+  allows the database to be updated along with files' tags. :bug:`1516`
 
 
 Fixes:

@@ -41,6 +41,7 @@ class ZeroPlugin(BeetsPlugin):
 
         self.config.add({
             'fields': [],
+            'update_database': False,
         })
 
         self.patterns = {}
@@ -99,3 +100,5 @@ class ZeroPlugin(BeetsPlugin):
             if match:
                 self._log.debug(u'{0}: {1} -> None', field, value)
                 tags[field] = None
+                if self.config['update_database']:
+                    item[field] = None
