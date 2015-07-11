@@ -100,7 +100,7 @@ While ordinary keywords perform simple substring matches, beets also supports
 regular expression matching for more advanced queries. To run a regex query, use
 an additional ``:`` between the field name and the expression::
 
-    $ beet list 'artist::Ann(a|ie)'
+    $ beet list "artist::Ann(a|ie)"
 
 That query finds songs by Anna Calvi and Annie but not Annuals. Similarly, this
 query prints the path to any file in my library that's missing a track title::
@@ -110,10 +110,15 @@ query prints the path to any file in my library that's missing a track title::
 To search *all* fields using a regular expression, just prefix the expression
 with a single ``:``, like so::
 
-    $ beet list :Ho[pm]eless
+    $ beet list ":Ho[pm]eless"
 
 Regular expressions are case-sensitive and build on `Python's built-in
 implementation`_. See Python's documentation for specifics on regex syntax.
+
+Most command-line shells will try to interpret common characters in regular
+expressions, such as ``()[]|``. To type those characters, you'll need to
+escape them (e.g., with backslashes or quotation marks, depending on your
+shell).
 
 .. _Python's built-in implementation: http://docs.python.org/library/re.html
 

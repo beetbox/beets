@@ -790,26 +790,21 @@ class Item(LibModel):
         if beets.config['asciify_paths']:
             subpath = unidecode(subpath)
 
-        # Truncate components and remove forbidden characters.
-        subpath = util.sanitize_path(subpath, self._db.replacements)
-
-        # Encode for the filesystem.
-        if not fragment:
-            subpath = bytestring_path(subpath)
-
-        # Preserve extension.
-        _, extension = os.path.splitext(self.path)
-        if fragment:
-            # Outputting Unicode.
-            extension = extension.decode('utf8', 'ignore')
-        subpath += extension.lower()
-
-        # Truncate too-long components.
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
             maxlen = util.max_filename_length(self._db.directory)
-        subpath = util.truncate_path(subpath, maxlen)
+
+        subpath, fellback = util.legalize_path(
+            subpath, self._db.replacements, maxlen,
+            os.path.splitext(self.path)[1], fragment
+        )
+        if fellback:
+            # Print an error message if legalization fell back to
+            # default replacements because of the maximum length.
+            log.warning('Fell back to default replacements when naming '
+                        'file {}. Configure replacements to avoid lengthening '
+                        'the filename.', subpath)
 
         if fragment:
             return subpath

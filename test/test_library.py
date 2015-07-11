@@ -452,8 +452,7 @@ class DestinationTest(_common.TestCase):
         self.assertEqual(self.i.destination(),
                          np('base/one/_.mp3'))
 
-    @unittest.skip('unimplemented: #496')
-    def test_truncation_does_not_conflict_with_replacement(self):
+    def test_legalize_path_one_for_one_replacement(self):
         # Use a replacement that should always replace the last X in any
         # path component with a Z.
         self.lib.replacements = [
@@ -466,7 +465,23 @@ class DestinationTest(_common.TestCase):
 
         # The final path should reflect the replacement.
         dest = self.i.destination()
-        self.assertTrue('XZ' in dest)
+        self.assertEqual(dest[-2:], 'XZ')
+
+    def test_legalize_path_one_for_many_replacement(self):
+        # Use a replacement that should always replace the last X in any
+        # path component with four Zs.
+        self.lib.replacements = [
+            (re.compile(r'X$'), u'ZZZZ'),
+        ]
+
+        # Construct an item whose untruncated path ends with a Y but whose
+        # truncated version ends with an X.
+        self.i.title = 'X' * 300 + 'Y'
+
+        # The final path should ignore the user replacement and create a path
+        # of the correct length, containing Xs.
+        dest = self.i.destination()
+        self.assertEqual(dest[-2:], 'XX')
 
 
 class ItemFormattedMappingTest(_common.LibTestCase):
