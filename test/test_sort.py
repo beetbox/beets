@@ -34,21 +34,21 @@ class DummyDataTestCase(_common.TestCase):
         albums = [_common.album() for _ in range(3)]
         albums[0].album = "Album A"
         albums[0].genre = "Rock"
-        albums[0].year = "2001"
+        albums[0].year = 2001
         albums[0].flex1 = "Flex1-1"
         albums[0].flex2 = "Flex2-A"
         albums[0].albumartist = "Foo"
         albums[0].albumartist_sort = None
         albums[1].album = "Album B"
         albums[1].genre = "Rock"
-        albums[1].year = "2001"
+        albums[1].year = 2001
         albums[1].flex1 = "Flex1-2"
         albums[1].flex2 = "Flex2-A"
         albums[1].albumartist = "Bar"
         albums[1].albumartist_sort = None
         albums[2].album = "Album C"
         albums[2].genre = "Jazz"
-        albums[2].year = "2005"
+        albums[2].year = 2005
         albums[2].flex1 = "Flex1-1"
         albums[2].flex2 = "Flex2-B"
         albums[2].albumartist = "Baz"
@@ -67,6 +67,7 @@ class DummyDataTestCase(_common.TestCase):
         items[0].album_id = albums[0].id
         items[0].artist_sort = None
         items[0].path = "/path0.mp3"
+        items[0].track = 1
         items[1].title = 'Baz qux'
         items[1].artist = 'Two'
         items[1].album = 'Baz'
@@ -77,6 +78,7 @@ class DummyDataTestCase(_common.TestCase):
         items[1].album_id = albums[0].id
         items[1].artist_sort = None
         items[1].path = "/patH1.mp3"
+        items[1].track = 2
         items[2].title = 'Beets 4 eva'
         items[2].artist = 'Three'
         items[2].album = 'Foo'
@@ -87,6 +89,7 @@ class DummyDataTestCase(_common.TestCase):
         items[2].album_id = albums[1].id
         items[2].artist_sort = None
         items[2].path = "/paTH2.mp3"
+        items[2].track = 3
         items[3].title = 'Beets 4 eva'
         items[3].artist = 'Three'
         items[3].album = 'Foo2'
@@ -97,6 +100,7 @@ class DummyDataTestCase(_common.TestCase):
         items[3].album_id = albums[2].id
         items[3].artist_sort = None
         items[3].path = "/PATH3.mp3"
+        items[3].track = 4
         for item in items:
             self.lib.add(item)
 
@@ -399,6 +403,7 @@ class CaseSensitivityTest(DummyDataTestCase, _common.TestCase):
         item.flex2 = "flex2-A"
         item.album_id = album.id
         item.artist_sort = None
+        item.track = 10
         self.lib.add(item)
 
         self.new_album = album
@@ -450,6 +455,17 @@ class CaseSensitivityTest(DummyDataTestCase, _common.TestCase):
         results = list(self.lib.items(q))
         self.assertEqual(results[0].flex1, 'Flex1-0')
         self.assertEqual(results[-1].flex1, 'flex1')
+
+    def test_case_sensitive_only_affects_text(self):
+        config['sort_case_insensitive'] = True
+        q = 'track+'
+        results = list(self.lib.items(q))
+        # If the numerical values were sorted as strings,
+        # then ['1', '10', '2'] would be valid.
+        print([r.track for r in results])
+        self.assertEqual(results[0].track, 1)
+        self.assertEqual(results[1].track, 2)
+        self.assertEqual(results[-1].track, 10)
 
 
 def suite():

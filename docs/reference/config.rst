@@ -119,6 +119,11 @@ compatibility with Windows-influenced network filesystems like Samba).
 Trailing dots and trailing whitespace, which can cause problems on Windows
 clients, are also removed.
 
+When replacements other than the defaults are used, it is possible that they
+will increase the length of the path. In the scenario where this leads to a
+conflict with the maximum filename length, the default replacements will be
+used to resolve the conflict and beets will display a warning.
+
 Note that paths might contain special characters such as typographical
 quotes (``“”``). With the configuration above, those will not be
 replaced as they don't match the typewriter quote (``"``). To also strip these
