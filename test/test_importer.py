@@ -1156,9 +1156,9 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
                 TrackInfo(
                     title=u'new title 1',
                     track_id=u'new trackid 1',),
-                #TrackInfo(
-                #    title=u'new title 2',
-                #    track_id=u'new trackid 2',),
+                # TrackInfo(
+                #     title=u'new title 2',
+                #     track_id=u'new trackid 2',),
             ]
 
             album_info = AlbumInfo(
@@ -1194,9 +1194,9 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         #         TrackInfo(
         #             title=u'new title 0',
         #             track_id=u'trackid',),
-        #         #TrackInfo(
-        #         #    title=u'new title 2',
-        #         #    track_id=u'new trackid 2',),
+        #         # TrackInfo(
+        #         #     title=u'new title 2',
+        #         #     track_id=u'new trackid 2',),
         #     ]
         #
         #     album_info = AlbumInfo(
