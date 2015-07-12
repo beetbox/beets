@@ -1329,6 +1329,7 @@ def user_query(session, task):
     resolve_duplicates(session, task)
     return task
 
+
 def resolve_duplicates(session, task):
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
