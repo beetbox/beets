@@ -1151,15 +1151,14 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         self.assertEqual(item.title, u't\xeftle 0')
 
     def test_merge_duplicate_album_without_duplicate_tracks(self):
-#        # Need unequal tracks for this merge to work
         def album_info():
             track_info = [
                 TrackInfo(
                     title=u'new title 1',
                     track_id=u'new trackid 1',),
-#                TrackInfo(
-#                    title=u'new title 2',
-#                    track_id=u'new trackid 2',),
+                #TrackInfo(
+                #    title=u'new title 2',
+                #    track_id=u'new trackid 2',),
             ]
 
             album_info = AlbumInfo(
@@ -1189,8 +1188,41 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         self.assertIn(u'new title 1', titles)
 
     def test_merge_duplicate_album_with_duplicate_tracks(self):
-        # TODO: Implement track conflict handling
         pass
+        # def album_info():
+        #     track_info = [
+        #         TrackInfo(
+        #             title=u'new title 0',
+        #             track_id=u'trackid',),
+        #         #TrackInfo(
+        #         #    title=u'new title 2',
+        #         #    track_id=u'new trackid 2',),
+        #     ]
+        #
+        #     album_info = AlbumInfo(
+        #         artist=u'artist',
+        #         album=u'album',
+        #         tracks=track_info,
+        #         album_id=u'albumid',
+        #         artist_id=u'artistid',
+        #     )
+        #
+        #     return album_info
+        #
+        # # Update patcher with new album
+        # self.match_album.return_value = iter([album_info()])
+        #
+        # item = self.lib.items().get()
+        # self.assertEqual(item.title, u't\xeftle 0')
+        #
+        # self.importer.default_resolution = self.importer.Resolution.MERGE
+        # self.importer.run()
+        #
+        # self.assertEqual(len(self.lib.albums()), 1)
+        # self.assertEqual(len(self.lib.items()), 1)
+        #
+        # titles = [i.title for i in self.lib.items()]
+        # self.assertIn(u'new title 0', titles)
 
     def test_twice_in_import_dir(self):
         self.skipTest('write me')

@@ -499,7 +499,6 @@ class TestImportSession(importer.ImportSession):
 
     default_resolution = 'REMOVE'
 
-
     def add_resolution(self, resolution):
         assert isinstance(resolution, self.Resolution)
         self._resolutions.append(resolution)
