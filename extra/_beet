@@ -18,10 +18,10 @@ function _beet_field_values()
 {
     local -a output fieldvals
     local library="$(beet config|grep library|cut -f 2 -d ' ')"
-	if [ -z "$library" ]; then
-		# Use default library location if there is no user defined one
-    	library="~/.config/beets/library.db"
-	fi
+    if [ -z "$library" ]; then
+        # Use default library location if there is no user defined one
+        library="~/.config/beets/library.db"
+    fi
     output=$(sqlite3 ${~library} "select distinct $1 from items;")
     case $1
         in
