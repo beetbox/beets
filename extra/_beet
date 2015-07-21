@@ -18,6 +18,10 @@ function _beet_field_values()
 {
     local -a output fieldvals
     local library="$(beet config|grep library|cut -f 2 -d ' ')"
+    if [ -z "$library" ]; then
+        # Use default library location if there is no user defined one
+        library="~/.config/beets/library.db"
+    fi
     output=$(sqlite3 ${~library} "select distinct $1 from items;")
     case $1
         in
@@ -50,7 +54,7 @@ query=( \( "$matchquery" ":query:query string:{_beet_query}" \) \( "$matchquery"
 modify=( \( "$matchmodify" ":modify:modify string:$modifyelem" \) \( "$matchmodify" ":modify:modify string:$modifyelem" \) \# )
 
 # arguments to _regex_arguments for completing files and directories
-local -a files dirs 
+local -a files dirs
 files=("$matchany" ':file:file:_files')
 dirs=("$matchany" ':dir:directory:_dirs')
 
@@ -82,7 +86,7 @@ retagopt='-L:retag items matching a query:${query[@]}'
 skipopt='-i:skip already-imported directories'
 noskipopt='-I:do not skip already-imported directories'
 flatopt='--flat:import an entire tree as a single album'
-groupopt='-g:group tracks in a folder into seperate albums' 
+groupopt='-g:group tracks in a folder into seperate albums'
 editopt='-e:edit user configuration with $EDITOR'
 defaultopt='-d:include the default configuration'
 copynomoveopt='-c:copy instead of moving'
@@ -184,7 +188,7 @@ do
             options=( "${reply[@]}" \# "${query[@]}" )
             ;;
         (stats)
-            _regex_words options "stats options" "$helpopt" "$exactopt" 
+            _regex_words options "stats options" "$helpopt" "$exactopt"
             options=( "${reply[@]}" \# "${query[@]}" )
             ;;
         (update)
@@ -200,9 +204,9 @@ do
             ;;
         (help)
             # The help subcommand is treated separately
-            continue 
+            continue
             ;;
-        (*) # completions for plugin commands are generated using _beet_subcmd_options 
+        (*) # completions for plugin commands are generated using _beet_subcmd_options
             _beet_subcmd_options "$subcmd"
             options=( \( "${reply[@]}" \# "${query[@]}" \) )
             ;;
@@ -237,6 +241,6 @@ zstyle ":completion:${curcontext}:" tag-order '! options'
 # Execute the completion function
 _beet "$@"
 
-# Local Variables: 
+# Local Variables:
 # mode:shell-script
 # End:
