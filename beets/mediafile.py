@@ -278,6 +278,7 @@ def _wider_test_jpeg(h, f):
     if h[:2] == b'\xff\xd8':
         return 'jpeg'
 
+
 def _image_mime_type(data):
     """Return the MIME type of the image data (a bytestring).
     """
@@ -285,7 +286,7 @@ def _image_mime_type(data):
     # determine its mimetype
     if not (_wider_test_jpeg in imghdr.tests):
         imghdr.tests.append(_wider_test_jpeg)
-    
+
     kind = imghdr.what(None, h=data)
     if kind in ['gif', 'jpeg', 'png', 'tiff', 'bmp']:
         return 'image/{0}'.format(kind)
