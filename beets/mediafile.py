@@ -272,21 +272,20 @@ def _sc_encode(gain, peak):
 
 def _wider_test_jpeg(h, f):
     """Test for a jpeg file following the UNIX file implementation which
-    uses the magic bytes rather just than looking for the bytes b'JFIF'
+    uses the magic bytes rather than just looking for the bytes b'JFIF'
     or b'EXIF' at a fixed position.
     """
     if h[:2] == b'\xff\xd8':
         return 'jpeg'
 
-# Add this new test function to the list of functions used by imghdr to
-# determine the mime type
-imghdr.tests.append(_wider_test_jpeg)
-
-
-
 def _image_mime_type(data):
     """Return the MIME type of the image data (a bytestring).
     """
+    # imghdr provides access to the list of tests performed on an image to
+    # determine its mimetype
+    if not (_wider_test_jpeg in imghdr.tests):
+        imghdr.tests.append(_wider_test_jpeg)
+    
     kind = imghdr.what(None, h=data)
     if kind in ['gif', 'jpeg', 'png', 'tiff', 'bmp']:
         return 'image/{0}'.format(kind)
