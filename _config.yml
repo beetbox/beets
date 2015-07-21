@@ -3,4 +3,3 @@ redcarpet:
     extensions: [smart]
 url: http://beets.radbox.org
 permalink: /blog/:title.html
-highlighter: null
