@@ -71,6 +71,8 @@ Fixes:
 * Fix an edge case when producing sanitized filenames where the maximum path
   length conflicted with the :ref:`replace` rules. Thanks to Ben Ockmore.
   :bug:`496` :bug:`1361`
+* Fix an incompatibility with OS X 10.11 (where ``/usr/sbin`` seems not to be
+  on the user's path by default).
 
 
 1.3.13 (April 24, 2015)
