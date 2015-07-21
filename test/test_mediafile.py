@@ -56,7 +56,9 @@ class ArtTestMixin(object):
     @property
     def jpg_data_only_magic_bytes(self):
         if not self._jpg_data:
-            with open(os.path.join(_common.RSRC, 'only-magic-bytes.jpg'), 'rb') as f:
+            with open(
+                    os.path.join(_common.RSRC, 'only-magic-bytes.jpg'),
+                    'rb') as f:
                 self._jpg_data = f.read()
         return self._jpg_data
     _jpg_data = None
