@@ -42,10 +42,6 @@ Just hit the Donate button to head to PayPal's site.
     </form>
 </p>
 
-## Gittip
-
-Set up a weekly, anonymous "tip" [on Gittip](https://www.gittip.com/sampsyo/).
-
 ## Amazon Payments
 
 Enter an amount in US Dollars and hit the Donate button.
