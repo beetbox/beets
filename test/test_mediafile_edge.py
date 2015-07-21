@@ -78,6 +78,13 @@ class EdgeTest(unittest.TestCase):
         f = beets.mediafile.MediaFile(os.path.join(_common.RSRC, 'oldape.ape'))
         self.assertEqual(f.bitrate, 0)
 
+    def test_only_magic_bytes_jpeg(self):
+        f = open(os.path.join(_common.RSRC, 'only-magic-bytes.jpg'), 'rb')
+        jpg_data = f.read()
+        self.assertEqual(
+            beets.mediafile._image_mime_type(jpg_data),
+            'image/jpeg')
+
 
 class InvalidValueToleranceTest(unittest.TestCase):
 
