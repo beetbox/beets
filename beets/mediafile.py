@@ -270,10 +270,23 @@ def _sc_encode(gain, peak):
 
 # Cover art and other images.
 
+def _wider_test_jpeg(data):
+    """Test for a jpeg file following the UNIX file implementation which
+    uses the magic bytes rather than just looking for the bytes b'JFIF'
+    or b'EXIF' at a fixed position.
+    """
+    if data[:2] == b'\xff\xd8':
+        return 'jpeg'
+
+
 def _image_mime_type(data):
     """Return the MIME type of the image data (a bytestring).
     """
-    kind = imghdr.what(None, h=data)
+    # This checks for a jpeg file with only the magic bytes (unrecognized by
+    # imghdr.what). imghdr.what returns none for that type of file, so
+    # _wider_test_jpeg is run in that case. It still returns None if it didn't
+    # match such a jpeg file.
+    kind = imghdr.what(None, h=data) or _wider_test_jpeg(data)
     if kind in ['gif', 'jpeg', 'png', 'tiff', 'bmp']:
         return 'image/{0}'.format(kind)
     elif kind == 'pgm':
