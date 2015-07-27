@@ -75,6 +75,10 @@ Fixes:
   :bug:`496` :bug:`1361`
 * Fix an incompatibility with OS X 10.11 (where ``/usr/sbin`` seems not to be
   on the user's path by default).
+* Fix an incompatibility with certain JPEG files. Here's a relevant `Python
+  bug`_. Thanks to :user:`nathdwek`. :bug:`1545`
+
+.. _Python bug: http://bugs.python.org/issue16512
 
 
 1.3.13 (April 24, 2015)
