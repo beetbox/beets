@@ -78,6 +78,17 @@ class EdgeTest(unittest.TestCase):
         f = beets.mediafile.MediaFile(os.path.join(_common.RSRC, 'oldape.ape'))
         self.assertEqual(f.bitrate, 0)
 
+    def test_only_magic_bytes_jpeg(self):
+        # Some jpeg files can only be recognized by their magic bytes and as
+        # such aren't recognized by imghdr. Ensure that this still works thanks
+        # to our own follow up mimetype detection based on
+        # https://github.com/file/file/blob/master/magic/Magdir/jpeg#L12
+        f = open(os.path.join(_common.RSRC, 'only-magic-bytes.jpg'), 'rb')
+        jpg_data = f.read()
+        self.assertEqual(
+            beets.mediafile._image_mime_type(jpg_data),
+            'image/jpeg')
+
 
 class InvalidValueToleranceTest(unittest.TestCase):
 
