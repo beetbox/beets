@@ -1408,7 +1408,7 @@ def group_albums(session):
         if task.skip:
             continue
         tasks = []
-        for _, items in itertools.groupby(task.items, group):
+        for _, items in itertools.groupby(sorted(task.items,key=group), group):
             items = list(items)
             task = ImportTask(task.toppath, [i.path for i in items],
                               items)
