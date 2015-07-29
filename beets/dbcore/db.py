@@ -271,6 +271,13 @@ class Model(object):
         else:
             return base_keys
 
+    @classmethod
+    def all_keys(self):
+        """Get a list of available keys for objects of this type.
+        Includes fixed and computed fields.
+        """
+        return list(self._fields) + self._getters().keys()
+
     # Act like a dictionary.
 
     def update(self, values):
