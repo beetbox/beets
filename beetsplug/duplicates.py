@@ -212,8 +212,8 @@ class DuplicatesPlugin(BeetsPlugin):
         return key, checksum
 
     def _group_by(self, objs, keys, strict):
-        """Return a dictionary with keys arbitrary concatenations of attributes and
-        values lists of objects (Albums or Items) with those keys.
+        """Return a dictionary with keys arbitrary concatenations of attributes
+        and values lists of objects (Albums or Items) with those keys.
 
         If strict, all attributes must be defined for a duplicate match.
         """
@@ -241,9 +241,9 @@ class DuplicatesPlugin(BeetsPlugin):
         order of priority.
 
         If provided, the `tiebreak` dict indicates the field to use to
-        prioritize the objects. Otherwise, the objects are placed in
-        order of "completeness": objects with more non-null fields come
-        first.
+        prioritize the objects. Otherwise, Items are placed in order of
+        "completeness" (objects with more non-null fields come first)
+        and Albums are ordered by their track count.
         """
         if tiebreak:
             kind = 'items' if all(isinstance(o, Item)
@@ -252,9 +252,14 @@ class DuplicatesPlugin(BeetsPlugin):
         else:
             kind = Item if all(isinstance(o, Item) for o in objs) else Album
             if kind is Item:
+                def truthy(v):
+                    # Avoid a Unicode warning by avoiding comparison
+                    # between a bytes object and the empty Unicode
+                    # string ''.
+                    return v is not None and \
+                        (v != '' if isinstance(v, unicode) else True)
                 fields = kind.all_keys()
-                key = lambda x: len([(a, getattr(x, a, None)) for a in fields
-                                     if getattr(x, a, None) not in (None, '')])
+                key = lambda x: sum(1 for f in fields if truthy(f))
             else:
                 key = lambda x: len(x.items())
 
