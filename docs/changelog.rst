@@ -79,6 +79,8 @@ Fixes:
   bug`_. Thanks to :user:`nathdwek`. :bug:`1545`
 * Fix the :ref:`group_albums` importer mode so it can handle when files are
   not already in order by album. :bug:`1550`
+* The ``fields`` command no longer separates built-in fields from
+  plugin-provided ones. This distinction was becoming increasingly unreliable.
 
 .. _Python bug: http://bugs.python.org/issue16512
 

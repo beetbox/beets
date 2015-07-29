@@ -479,15 +479,6 @@ class Item(LibModel):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    @classmethod
-    def get_fields(cls):
-        """Returns Item fields available for queries and format strings."""
-        plugin_fields = []
-        for plugin in plugins.find_plugins():
-            plugin_fields += plugin.template_fields.keys()
-        return (cls._fields.keys() + cls._getters().keys() +
-                cls._types.keys()), plugin_fields
-
     def __setitem__(self, key, value):
         """Set the item's value for a standard field or a flexattr.
         """
@@ -909,15 +900,6 @@ class Album(LibModel):
         getters['path'] = Album.item_dir
         getters['albumtotal'] = Album._albumtotal
         return getters
-
-    @classmethod
-    def get_fields(cls):
-        """Returns Album fields available for queries and format strings."""
-        plugin_fields = []
-        for plugin in plugins.find_plugins():
-            plugin_fields += plugin.album_template_fields.keys()
-        return (cls._fields.keys() + cls._getters().keys() +
-                cls._types.keys()), plugin_fields
 
     def items(self):
         """Returns an iterable over the items associated with this
