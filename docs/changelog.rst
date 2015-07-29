@@ -81,6 +81,8 @@ Fixes:
   not already in order by album. :bug:`1550`
 * The ``fields`` command no longer separates built-in fields from
   plugin-provided ones. This distinction was becoming increasingly unreliable.
+* :doc:`/plugins/duplicates`: Fix a Unicode warning when paths contained
+  non-ASCII characters. :bug:`1551`
 
 .. _Python bug: http://bugs.python.org/issue16512
 
