@@ -259,7 +259,7 @@ class DuplicatesPlugin(BeetsPlugin):
                     return v is not None and \
                         (v != '' if isinstance(v, unicode) else True)
                 fields = kind.all_keys()
-                key = lambda x: sum(1 for f in fields if truthy(f))
+                key = lambda x: sum(1 for f in fields if truthy(getattr(x, f)))
             else:
                 key = lambda x: len(x.items())
 
