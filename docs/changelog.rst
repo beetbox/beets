@@ -77,6 +77,8 @@ Fixes:
   on the user's path by default).
 * Fix an incompatibility with certain JPEG files. Here's a relevant `Python
   bug`_. Thanks to :user:`nathdwek`. :bug:`1545`
+* Fix the 'Group albums' feature so it can handle when files aren't already
+  in order by album. :bug:`1550`
 
 .. _Python bug: http://bugs.python.org/issue16512
 
