@@ -23,10 +23,6 @@ addons:
             - bash-completion
             - mp3gain
 
-# Coverage reporting library.
-before_install:
-    - "[ ! -z $COVERAGE ] && travis_retry pip install coveralls || true"
-
 # To install dependencies, tell tox to do everything but actually running the
 # test.
 install:
@@ -35,10 +31,11 @@ install:
 
 script: tox -e $TOX_ENV
 
-# coveralls.io reporting, using https://github.com/coagulant/coveralls-python
-# Only report coverage for one version.
+# Report coverage to codecov.io.
+before_install:
+    - "[ ! -z $COVERAGE ] && travis_retry pip install codecov || true"
 after_success:
-    - "[ ! -z $COVERAGE ] && coveralls || true"
+    - "[ ! -z $COVERAGE ] && codecov || true"
 
 notifications:
     irc:
