@@ -1,8 +1,8 @@
 .. image:: https://travis-ci.org/sampsyo/beets.svg?branch=master
     :target: https://travis-ci.org/sampsyo/beets
 
-.. image:: http://img.shields.io/coveralls/sampsyo/beets.svg
-    :target: https://coveralls.io/r/sampsyo/beets
+.. image:: http://img.shields.io/codecov/c/github/sampsyo/beets.svg
+    :target: https://codecov.io/github/sampsyo/beets
 
 .. image:: http://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
