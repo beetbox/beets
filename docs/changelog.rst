@@ -83,6 +83,8 @@ Fixes:
   plugin-provided ones. This distinction was becoming increasingly unreliable.
 * :doc:`/plugins/duplicates`: Fix a Unicode warning when paths contained
   non-ASCII characters. :bug:`1551`
+* :doc:`/plugins/fetchart`: Work around a urllib3 bug that could cause a
+  crash. :bug:`1555` :bug:`1556`
 
 .. _Python bug: http://bugs.python.org/issue16512
 
