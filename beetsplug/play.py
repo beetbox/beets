@@ -46,7 +46,7 @@ class PlayPlugin(BeetsPlugin):
         play_command.parser.add_album_option()
         play_command.parser.add_option(
             '-o', '--optargs',
-            action='store_true',
+            action='store',
             help='Insert additional arguments into command string'
         )
         play_command.func = self.play_music
@@ -59,16 +59,15 @@ class PlayPlugin(BeetsPlugin):
         command_str = config['play']['command'].get()
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
-        optargs = config['play']['optargs'].get()
+        confargs = config['play']['optargs'].get()
         if relative_to:
             relative_to = util.normpath(relative_to)
 
         # Prepare command strings with optional args
         if opts.optargs:
-            command_str = command_str.format(optargs or '')
-        else:
-            command_str = command_str.format('')
-
+            command_str = command_str.format(opts.optargs or '')\
+                          .format(confargs or '')
+            
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
