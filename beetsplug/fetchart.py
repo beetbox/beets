@@ -436,7 +436,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'downloaded art to: {0}',
                                 util.displayable_path(fh.name))
                 return fh.name
-        except (IOError, requests.RequestException):
+        except (IOError, requests.RequestException, TypeError):
             self._log.debug(u'error fetching art')
 
     def _is_valid_image_candidate(self, candidate):
