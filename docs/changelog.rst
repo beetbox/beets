@@ -26,7 +26,8 @@ New features:
   :bug:`1104` :bug:`1493`
 * :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
   specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
-
+* :doc:`/plugins/play`: A new option `--args`/`-A` has been added, used to
+  hand over options to the player.
 
 Fixes:
 
