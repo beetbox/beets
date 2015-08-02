@@ -82,17 +82,11 @@ def fields_func(lib, opts, args):
         names.sort()
         print_("  " + "\n  ".join(names))
 
-    fs, pfs = library.Item.get_fields()
     print_("Item fields:")
-    _print_rows(fs)
-    print_("Template fields from plugins:")
-    _print_rows(pfs)
+    _print_rows(library.Item.all_keys())
 
-    fs, pfs = library.Album.get_fields()
     print_("Album fields:")
-    _print_rows(fs)
-    print_("Template fields from plugins:")
-    _print_rows(pfs)
+    _print_rows(library.Album.all_keys())
 
 
 fields_cmd = ui.Subcommand(
@@ -1482,11 +1476,13 @@ def config_func(lib, opts, args):
 
 def config_edit():
     """Open a program to edit the user configuration.
+    An empty config file is created if no existing config file exists.
     """
     path = config.user_config_path()
-
     editor = os.environ.get('EDITOR')
     try:
+        if not os.path.isfile(path):
+            open(path, 'w+').close()
         util.interactive_open(path, editor)
     except OSError as exc:
         message = "Could not edit configuration: {0}".format(exc)

@@ -766,7 +766,10 @@ class FixedFieldSort(FieldSort):
     def order_clause(self):
         order = "ASC" if self.ascending else "DESC"
         if self.case_insensitive:
-            field = 'LOWER({})'.format(self.field)
+            field = '(CASE ' \
+                    'WHEN TYPEOF({0})="text" THEN LOWER({0}) ' \
+                    'WHEN TYPEOF({0})="blob" THEN LOWER({0}) ' \
+                    'ELSE {0} END)'.format(self.field)
         else:
             field = self.field
         return "{0} {1}".format(field, order)

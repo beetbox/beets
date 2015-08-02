@@ -26,8 +26,12 @@ New features:
   :bug:`1104` :bug:`1493`
 * :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
   specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
+* :doc:`/plugins/zero`: A new ``update_database`` configuration option
+  allows the database to be updated along with files' tags. :bug:`1516`
 * :doc:`/plugins/play`: A new option `--args`/`-A` has been added, used to
   hand over options to the player.
+
+>>>>>>> master
 
 Fixes:
 
@@ -66,6 +70,26 @@ Fixes:
   :user:`Somasis`. :bug:`1512`
 * Some messages in the console UI now use plural nouns correctly. Thanks to
   :user:`JesseWeinstein`. :bug:`1521`
+* Sorting numerical fields (such as track) now works again. :bug:`1511`
+* :doc:`/plugins/replaygain`: Missing GStreamer plugins now cause a helpful
+  error message instead of a crash. :bug:`1518`
+* Fix an edge case when producing sanitized filenames where the maximum path
+  length conflicted with the :ref:`replace` rules. Thanks to Ben Ockmore.
+  :bug:`496` :bug:`1361`
+* Fix an incompatibility with OS X 10.11 (where ``/usr/sbin`` seems not to be
+  on the user's path by default).
+* Fix an incompatibility with certain JPEG files. Here's a relevant `Python
+  bug`_. Thanks to :user:`nathdwek`. :bug:`1545`
+* Fix the :ref:`group_albums` importer mode so it can handle when files are
+  not already in order by album. :bug:`1550`
+* The ``fields`` command no longer separates built-in fields from
+  plugin-provided ones. This distinction was becoming increasingly unreliable.
+* :doc:`/plugins/duplicates`: Fix a Unicode warning when paths contained
+  non-ASCII characters. :bug:`1551`
+* :doc:`/plugins/fetchart`: Work around a urllib3 bug that could cause a
+  crash. :bug:`1555` :bug:`1556`
+
+.. _Python bug: http://bugs.python.org/issue16512
 
 
 1.3.13 (April 24, 2015)
