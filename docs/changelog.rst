@@ -1,10 +1,13 @@
 Changelog
 =========
 
-1.3.14 (in development)
+1.3.14 (August 2, 2015)
 -----------------------
 
-New features:
+This is mainly a bugfix release, but we also have a nifty new plugin for
+`ipfs`_ and a bunch of new configuration options.
+
+The new features:
 
 * A new :doc:`/plugins/ipfs` lets you share music via a new, global,
   decentralized filesystem. :bug:`1397`
@@ -27,7 +30,6 @@ New features:
   specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
 * :doc:`/plugins/zero`: A new ``update_database`` configuration option nulls
   out fields in the database along with files' tags. :bug:`1516`
-
 
 Fixes:
 
