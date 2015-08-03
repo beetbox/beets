@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.3.15 (in development)
+-----------------------
+
+Changelog goes here!
+
+
 1.3.14 (August 2, 2015)
 -----------------------
 
