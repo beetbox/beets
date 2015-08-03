@@ -85,6 +85,10 @@ Fixes:
   non-ASCII characters. :bug:`1551`
 * :doc:`/plugins/fetchart`: Work around a urllib3 bug that could cause a
   crash. :bug:`1555` :bug:`1556`
+* When you edit the configuration file with ``beet config -e`` and the file
+  does not exist, beets creates an empty file before editing it. This fixes an
+  error on OS X, where the ``open`` command does not work with non-existent
+  files. :bug:`1480`
 
 .. _Python bug: http://bugs.python.org/issue16512
 
