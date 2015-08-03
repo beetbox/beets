@@ -50,6 +50,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    importfeeds
    info
    inline
+   ipfs
    keyfinder
    lastgenre
    lastimport
@@ -130,6 +131,7 @@ Interoperability
 ----------------
 
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
+* :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
 * :doc:`play`: Play beets queries in your music player.
