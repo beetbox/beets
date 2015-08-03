@@ -6,6 +6,8 @@ Changelog
 
 New features:
 
+* A new :doc:`/plugins/ipfs` lets you share music via a new, global,
+  decentralized filesystem. :bug:`1397`
 * :doc:`/plugins/duplicates`: You can now merge duplicate
   track metadata (when detecting duplicate items), or duplicate album
   tracks (when detecting duplicate albums).
@@ -91,6 +93,7 @@ Fixes:
   files. :bug:`1480`
 
 .. _Python bug: http://bugs.python.org/issue16512
+.. _ipfs: http://ipfs.io
 
 
 1.3.13 (April 24, 2015)
