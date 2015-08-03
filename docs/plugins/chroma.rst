@@ -64,11 +64,13 @@ You will also need a mechanism for decoding audio files supported by the
 * OS X has a number of decoders already built into Core Audio, so there's no
   need to install anything.
 
-* On Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_ and
-  `pymad`_. How you install these will depend on your distribution.
-  For example, on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch
-  Linux, you want ``pacman -S gstreamer0.10-python``. If you use GStreamer, be
-  sure to install its codec plugins also.
+* On Linux, you can install `GStreamer`_ with `PyGObject`_, `FFmpeg`_, or
+  `MAD`_ with `pymad`_. How you install these will depend on your
+  distribution.
+  For example, on Ubuntu, run ``apt-get install gstreamer1.0 python-gi``. On
+  Arch Linux, you want ``pacman -S gstreamer python2-gobject``. If you use
+  GStreamer, be sure to install its codec plugins also (``gst-plugins-good``,
+  etc.).
 
   Note that if you install beets in a virtualenv, you'll need it to have
   ``--system-site-packages`` enabled for Python to see the GStreamer bindings.
@@ -77,13 +79,13 @@ You will also need a mechanism for decoding audio files supported by the
 
 .. _audioread: https://github.com/sampsyo/audioread
 .. _pyacoustid: http://github.com/sampsyo/pyacoustid
-.. _GStreamer for Python:
-    http://gstreamer.freedesktop.org/modules/gst-python.html
 .. _FFmpeg: http://ffmpeg.org/
 .. _MAD: http://spacepants.org/src/pymad/
 .. _pymad: http://www.underbit.com/products/mad/
 .. _Core Audio: http://developer.apple.com/technologies/mac/audio-and-video.html
 .. _OSSBuild: http://code.google.com/p/ossbuild/
+.. _Gstreamer: http://gstreamer.freedesktop.org/
+.. _PyGObject: https://wiki.gnome.org/Projects/PyGObject
 
 To decode audio formats (MP3, FLAC, etc.) with GStreamer, you'll need the
 standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
