@@ -11,31 +11,31 @@ New features:
 * :doc:`/plugins/duplicates`: You can now merge duplicate
   track metadata (when detecting duplicate items), or duplicate album
   tracks (when detecting duplicate albums).
-* :doc:`/plugins/duplicates`: Duplicate resolution uses an ordering on
-  duplicates: it defaults to metadata attribute set completeness,
-  or alternatively any list of attributes that should be favored.
+* :doc:`/plugins/duplicates`: Duplicate resolution now uses an ordering to
+  prioritize duplicates. By default, it prefers music with more complete
+  metadata, but you can configure it to use any list of attributes.
 * :doc:`/plugins/metasync`: Added a new backend to fetch metadata from iTunes.
   This plugin is still in an experimental phase. :bug:`1450`
-* :doc:`/plugins/fetchart`: Complain when the `enforce_ratio`
-  or `min_width` options are enabled if no local imaging backend is available.
-  :bug:`1460`
 * The `move` command has a new ``--pretend`` option, making the command show
-  how the items will be moved, without modifying the files on disk.
-* The importer now supports matching of "pregap" or HTOA (hidden track one
+  how the items will be moved without actually changing anything.
+* The importer now supports matching of "pregap" or HTOA (hidden track-one
   audio) tracks when they are listed in MusicBrainz. (This feature depends on a
   new version of the ``musicbrainzngs`` library that is not yet released, but
   will start working when it is available.) Thanks to :user:`ruippeixotog`.
   :bug:`1104` :bug:`1493`
 * :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
   specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
-* :doc:`/plugins/zero`: A new ``update_database`` configuration option
-  allows the database to be updated along with files' tags. :bug:`1516`
+* :doc:`/plugins/zero`: A new ``update_database`` configuration option nulls
+  out fields in the database along with files' tags. :bug:`1516`
 
 
 Fixes:
 
+* :doc:`/plugins/fetchart`: Complain when the `enforce_ratio`
+  or `min_width` options are enabled but no local imaging backend is available
+  to carry them out. :bug:`1460`
 * :doc:`/plugins/importfeeds`: Avoid generating incorrect m3u filename when
-  both `m3u` and `m3u_multi` options are `True`. :bug:`1490`
+  both of the `m3u` and `m3u_multi` options are enabled. :bug:`1490`
 * :doc:`/plugins/duplicates`: Avoid a crash when misconfigured. :bug:`1457`
 * :doc:`/plugins/mpdstats`: Avoid a crash when the music played is not in the
   beets library. Thanks to :user:`CodyReichert`. :bug:`1443`
@@ -43,11 +43,12 @@ Fixes:
   :doc:`/plugins/embedart`, :doc:`/plugins/fetchart`,
   and :doc:`/plugins/thumbnails`). :bug:`1448`
 * :doc:`/plugins/permissions`: Fix an error with non-ASCII paths. :bug:`1449`
-* Fix sorting by paths when case-insensitive. :bug:`1451`
+* Fix sorting by paths when the :ref:`sort_case_insensitive` option is
+  enabled. :bug:`1451`
 * :doc:`/plugins/embedart`: Avoid an error when trying to embed invalid images
   into MPEG-4 files.
-* :doc:`/plugins/fetchart`: The Wikipedia source is now able to better deal
-  with non-typical cased artists (e.g., alt-J, dEUS).
+* :doc:`/plugins/fetchart`: The Wikipedia source can now better deal artists
+  that use non-standard capitalization (e.g., alt-J, dEUS).
 * :doc:`/plugins/web`: Fix searching for non-ASCII queries. Thanks to
   :user:`oldtopman`. :bug:`1470`
 * :doc:`/plugins/mpdupdate`: We now recommend the newer ``python-mpd2``
@@ -60,9 +61,9 @@ Fixes:
   contain curly braces. :bug:`1481`
 * Regular expression queries over paths now work more reliably with non-ASCII
   characters in filenames. :bug:`1482`
-* Fix a bug, where the autotagger still considers matches that are specifically
-  listed under the config's ignored section. :bug:`1487`
-* Fix a bug with unicode strings when generating thumbnails. :bug:`1485`
+* Fix a bug where the autotagger's :ref:`ignored` setting was sometimes, well,
+  ignored. :bug:`1487`
+* Fix a bug with Unicode strings when generating image thumbnails. :bug:`1485`
 * :doc:`/plugins/keyfinder`: Fix handling of Unicode paths. :bug:`1502`
 * :doc:`/plugins/fetchart`: When album art is already present, the message is
   now printed in the ``text_highlight_minor`` color (light gray). Thanks to
@@ -79,8 +80,8 @@ Fixes:
   on the user's path by default).
 * Fix an incompatibility with certain JPEG files. Here's a relevant `Python
   bug`_. Thanks to :user:`nathdwek`. :bug:`1545`
-* Fix the :ref:`group_albums` importer mode so it can handle when files are
-  not already in order by album. :bug:`1550`
+* Fix the :ref:`group_albums` importer mode so that it works correctly when
+  files are not already in order by album. :bug:`1550`
 * The ``fields`` command no longer separates built-in fields from
   plugin-provided ones. This distinction was becoming increasingly unreliable.
 * :doc:`/plugins/duplicates`: Fix a Unicode warning when paths contained
