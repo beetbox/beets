@@ -4,6 +4,11 @@ Changelog
 1.3.15 (in development)
 -----------------------
 
+The new features:
+
+* Add new color aliases for standard terminal color names (e.g., cyan and
+  magenta). Thanks to :user:`mathstuf`. :bug:`1548`
+
 Fixes:
 
 * :doc:`/plugins/lastgenre`: Fix a bug that prevented tag popularity from
