@@ -335,8 +335,9 @@ in your configuration file that looks like this::
             action_default: turquoise
             action: blue
 
-Available colors: black, darkred, darkgreen, brown, darkblue, purple, teal,
-lightgray, darkgray, red, green, yellow, blue, fuchsia, turquoise, white
+Available colors: black, darkred, darkgreen, brown (darkyellow), darkblue,
+purple (darkmagenta), teal (darkcyan), lightgray, darkgray, red, green,
+yellow, blue, fuchsia (magenta), turquoise (cyan), white
 
 
 Importer Options
