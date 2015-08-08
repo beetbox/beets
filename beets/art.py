@@ -26,6 +26,7 @@ from beets.util import displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from beets import mediafile
 from beets import config
+from beets import plugins
 
 
 def mediafile_image(image_path, maxwidth=None):
@@ -205,3 +206,4 @@ def clear(log, lib, query):
         else:
             del mf.art
             mf.save()
+        plugins.send('after_write', item=item, path=item.path)
