@@ -411,7 +411,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Filter by weight (optionally).
         if min_weight:
-            res = [el for el in res if (int(el.weight) or 0) >= min_weight]
+            res = [el for el in res if (int(el.weight or 0)) >= min_weight]
 
         # Get strings from tags.
         res = [el.item.get_name().lower() for el in res]
