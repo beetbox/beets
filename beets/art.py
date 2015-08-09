@@ -194,4 +194,4 @@ def clear(log, lib, query):
     log.info(u'Clearing album art from {0} items', len(items))
     for item in items:
         log.debug(u'Clearing art for {0}', item)
-        item.try_write(path=item.path, tags={'images': None})
+        item.try_write(tags={'images': None})
