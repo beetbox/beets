@@ -51,3 +51,18 @@ Optional Arguments
 The ``--args`` (or ``-A``) flag to the ``play`` command lets you specify
 additional arguments for your player command. Options are inserted after the
 configured ``command`` string and before the playlist filename.
+
+For example, if you have the plugin configured like this::
+
+    play:
+        command: mplayer -quiet
+
+and you occasionally want to shuffle the songs you play, you can type::
+
+    $ beet play --args -shuffle
+
+to get beets to execute this command::
+
+    mplayer -quiet -shuffle /path/to/playlist.m3u
+
+instead of the default.
