@@ -7,14 +7,13 @@ corrupt files.
 Configuring
 -----------
 
-First, enable the ``badfiles`` plugin (see :ref:`using-plugins`). Then, add a
-``badfiles:`` section to your configuration file, like so::
+First, enable the ``badfiles`` plugin (see :ref:`using-plugins`). The default
+configuration defines the following default checkers, which you may need to
+install yourself:
 
-    badfiles:
-        commands: {}
+* `mp3val`_ for MP3 files
+* `FLAC`_ command-line tools for FLAC files
 
-This uses two default checkers: `mp3val`_ for MP3s and the ordinary `FLAC`_
-command-line tools for those files. (You will need to install these yourself.)
 You can also add custom commands for a specific extension, like this::
 
     badfiles:
