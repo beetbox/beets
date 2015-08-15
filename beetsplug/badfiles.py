@@ -20,7 +20,7 @@ from __future__ import (division, absolute_import, print_function,
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets.util import displayable_path
+from beets.util import displayable_path, confit
 from beets import ui
 from subprocess import check_output, CalledProcessError, list2cmdline, STDOUT
 import shlex
@@ -64,7 +64,10 @@ class BadFiles(BeetsPlugin):
 
     def get_checker(self, ext):
         ext = ext.lower()
-        command = self.config['commands'].get().get(ext)
+        try:
+            command = self.config['commands'].get(dict).get(ext)
+        except confit.NotFoundError:
+            command = None
         if command:
             return self.check_custom(command)
         elif ext == "mp3":
