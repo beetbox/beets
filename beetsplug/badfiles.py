@@ -1,15 +1,22 @@
-#!/usr/bin/python
-# coding=utf-8
+# This file is part of beets.
+# Copyright 2015, François-Xavier Thomas.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
-# Base Python File (badfiles.py)
-# Created: Tue 11 Aug 2015 10:46:34 PM CEST
-# Version: 1.0
-#
-# This Python script was developped by François-Xavier Thomas.
-# You are free to copy, adapt or modify it.
-# If you do so, however, leave my name somewhere in the credits, I'd appreciate it ;)
-#
-# (ɔ) François-Xavier Thomas <fx.thomas@gmail.com>
+"""Use command-line tools to check for audio file corruption.
+"""
+
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -21,10 +28,12 @@ import os
 import errno
 import sys
 
+
 class BadFiles(BeetsPlugin):
 
     def run_command(self, cmd):
-        self._log.debug(u"running command: %s" % displayable_path(list2cmdline(cmd)))
+        self._log.debug("running command: {}",
+                        displayable_path(list2cmdline(cmd)))
         try:
             output = check_output(cmd, stderr=STDOUT)
             return 0, [line for line in output.split("\n") if line]
@@ -32,7 +41,8 @@ class BadFiles(BeetsPlugin):
             return 1, [line for line in e.output.split("\n") if line]
         except OSError as e:
             if e.errno == errno.ENOENT:
-                ui.print_("Command '%s' does not exit. Is it installed?" % cmd[0])
+                ui.print_("command not found: {}",
+                          cmd[0])
                 sys.exit(1)
             else:
                 raise
@@ -70,9 +80,9 @@ class BadFiles(BeetsPlugin):
             # First check if the path exists. If not, should run 'beets update'
             # to cleanup your library.
             dpath = displayable_path(item.path)
-            self._log.debug(u"checking path: %s" % dpath)
+            self._log.debug("checking path: {}", dpath)
             if not os.path.exists(item.path):
-                ui.print_(u"%s: file does not exist" % dpath)
+                ui.print_("{}: file does not exist", dpath)
 
             # Run the checker against the file if one is found
             ext = os.path.splitext(item.path)[1][1:]
@@ -81,13 +91,15 @@ class BadFiles(BeetsPlugin):
                 continue
             errors, output = checker(item.path)
             if errors == 0:
-                ui.print_(u"%s: ok" % dpath)
+                ui.print_("{}: ok".format(dpath))
             else:
-                ui.print_(u"%s: checker found %d errors or warnings" % (dpath, errors))
+                ui.print_("{}: checker found {} errors or warnings"
+                          .format(dpath, errors))
                 for line in output:
-                    ui.print_(u"  %s" % displayable_path(line))
+                    ui.print_("  {}".format(displayable_path(line)))
 
     def commands(self):
-        bad_command = Subcommand('bad', help='check for corrupt or missing files')
+        bad_command = Subcommand('bad',
+                                 help='check for corrupt or missing files')
         bad_command.func = self.check_bad
         return [bad_command]
