@@ -8,8 +8,8 @@ The new features:
 
 * Add new color aliases for standard terminal color names (e.g., cyan and
   magenta). Thanks to :user:`mathstuf`. :bug:`1548`
-* :doc:`/plugins/play`: A new option `--args`/`-A` has been added, used to
-  hand over options to the player.
+* :doc:`/plugins/play`: A new ``--args`` option lets you specify options for
+  the player command. :bug:`1532`
 
 Fixes:
 

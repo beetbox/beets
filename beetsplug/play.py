@@ -66,7 +66,7 @@ class PlayPlugin(BeetsPlugin):
         # Prepare command strings with optional args
         command_str = command_str.format(opts.args or '')\
                                  .format(confargs or '')
-            
+
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
