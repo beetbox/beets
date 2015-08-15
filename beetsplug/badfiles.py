@@ -35,22 +35,27 @@ class BadFiles(BeetsPlugin):
                         displayable_path(list2cmdline(cmd)))
         try:
             output = check_output(cmd, stderr=STDOUT)
-            return 0, [line for line in output.split("\n") if line]
+            errors = 0
+            status = 0
         except CalledProcessError as e:
-            return 1, [line for line in e.output.split("\n") if line]
+            output = e.output
+            errors = 1
+            status = e.returncode
         except OSError as e:
             if e.errno == errno.ENOENT:
                 ui.print_("command not found: {}".format(cmd[0]))
                 sys.exit(1)
             else:
                 raise
+        output = output.decode(sys.getfilesystemencoding())
+        return status, errors, [line for line in output.split("\n") if line]
 
     def check_mp3val(self, path):
-        errors, output = self.run_command(["mp3val", path])
-        if errors == 0:
+        status, errors, output = self.run_command(["mp3val", path])
+        if status == 0:
             output = [line for line in output if line.startswith("WARNING:")]
             errors = len(output)
-        return errors, output
+        return status, errors, output
 
     def check_flac(self, path):
         return self.run_command(["flac", "-wst", path])
@@ -83,21 +88,30 @@ class BadFiles(BeetsPlugin):
             dpath = displayable_path(item.path)
             self._log.debug("checking path: {}", dpath)
             if not os.path.exists(item.path):
-                ui.print_("{}: file does not exist".format(dpath))
+                ui.print_("{}: file does not exist".format(
+                    ui.colorize('text_error', dpath)))
 
             # Run the checker against the file if one is found
             ext = os.path.splitext(item.path)[1][1:]
             checker = self.get_checker(ext)
             if not checker:
                 continue
-            errors, output = checker(item.path)
-            if errors == 0:
-                ui.print_("{}: ok".format(dpath))
-            else:
-                ui.print_("{}: checker found {} errors or warnings"
-                          .format(dpath, errors))
+            path = item.path
+            if not isinstance(path, unicode):
+                path = item.path.decode(sys.getfilesystemencoding())
+            status, errors, output = checker(path)
+            if status > 0:
+                ui.print_("{}: checker exited withs status {}"
+                          .format(ui.colorize('text_error', dpath), status))
                 for line in output:
                     ui.print_("  {}".format(displayable_path(line)))
+            elif errors > 0:
+                ui.print_("{}: checker found {} errors or warnings"
+                          .format(ui.colorize('text_warning', dpath), errors))
+                for line in output:
+                    ui.print_("  {}".format(displayable_path(line)))
+            else:
+                ui.print_("{}: ok".format(ui.colorize('text_success', dpath)))
 
     def commands(self):
         bad_command = Subcommand('bad',
