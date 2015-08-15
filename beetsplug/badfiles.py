@@ -81,7 +81,7 @@ class BadFiles(BeetsPlugin):
             return self.check_flac
 
     def check_bad(self, lib, opts, args):
-        for item in lib.items(args):
+        for item in lib.items(ui.decargs(args)):
 
             # First, check whether the path exists. If not, the user
             # should probably run `beet update` to cleanup your library.
