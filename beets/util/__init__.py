@@ -736,11 +736,14 @@ def open_anything():
 
 
 def interactive_open(target, command=None):
-    """Open `target` file with `command` or, in not available, ask the OS to
-    deal with it.
+    """Open the file `target` by `exec`ing a new command. (The new
+    program takes over, and Python execution ends: this does not fork a
+    subprocess.)
 
-    The executed program will have stdin, stdout and stderr.
-    OSError may be raised, it is left to the caller to catch them.
+    If `command` is provided, use it. Otherwise, use an OS-specific
+    command (from `open_anything`) to open the file.
+
+    Can raise `OSError`.
     """
     if command:
         command = command.encode('utf8')
