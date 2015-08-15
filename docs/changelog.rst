@@ -8,6 +8,8 @@ The new features:
 
 * Add new color aliases for standard terminal color names (e.g., cyan and
   magenta). Thanks to :user:`mathstuf`. :bug:`1548`
+* :doc:`/plugins/play`: A new option `--args`/`-A` has been added, used to
+  hand over options to the player.
 
 Fixes:
 
@@ -42,8 +44,6 @@ The new features:
   :bug:`1104` :bug:`1493`
 * :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
   specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
-* :doc:`/plugins/zero`: A new ``update_database`` configuration option nulls
-  out fields in the database along with files' tags. :bug:`1516`
 
 Fixes:
 
