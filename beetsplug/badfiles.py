@@ -49,7 +49,7 @@ class BadFiles(BeetsPlugin):
         errors, output = self.run_command(["mp3val", path])
         if errors == 0:
             output = [line for line in output if line.startswith("WARNING:")]
-            errors = sum(1 for line in output if line.startswith("WARNING:"))
+            errors = len(output)
         return errors, output
 
     def check_flac(self, path):
