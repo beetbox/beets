@@ -30,7 +30,6 @@ import sys
 
 
 class BadFiles(BeetsPlugin):
-
     def run_command(self, cmd):
         self._log.debug("running command: {}",
                         displayable_path(list2cmdline(cmd)))
@@ -41,8 +40,7 @@ class BadFiles(BeetsPlugin):
             return 1, [line for line in e.output.split("\n") if line]
         except OSError as e:
             if e.errno == errno.ENOENT:
-                ui.print_("command not found: {}",
-                          cmd[0])
+                ui.print_("command not found: {}".format(cmd[0]))
                 sys.exit(1)
             else:
                 raise
@@ -77,12 +75,12 @@ class BadFiles(BeetsPlugin):
     def check_bad(self, lib, opts, args):
         for item in lib.items(args):
 
-            # First check if the path exists. If not, should run 'beets update'
-            # to cleanup your library.
+            # First, check whether the path exists. If not, the user
+            # should probably run `beet update` to cleanup your library.
             dpath = displayable_path(item.path)
             self._log.debug("checking path: {}", dpath)
             if not os.path.exists(item.path):
-                ui.print_("{}: file does not exist", dpath)
+                ui.print_("{}: file does not exist".format(dpath))
 
             # Run the checker against the file if one is found
             ext = os.path.splitext(item.path)[1][1:]
