@@ -43,18 +43,27 @@ class PlayPlugin(BeetsPlugin):
             help='send music to a player as a playlist'
         )
         play_command.parser.add_album_option()
+        play_command.parser.add_option(
+            '-A', '--args',
+            action='store',
+            help='add additional arguments to the command',
+        )
         play_command.func = self.play_music
         return [play_command]
 
     def play_music(self, lib, opts, args):
         """Execute query, create temporary playlist and execute player
-        command passing that playlist.
+        command passing that playlist, at request insert optional arguments.
         """
         command_str = config['play']['command'].get()
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
         if relative_to:
             relative_to = util.normpath(relative_to)
+
+        # Add optional arguments to the player command.
+        if opts.args:
+            command_str = "{} {}".format(command_str, opts.args)
 
         # Perform search by album and add folders rather than tracks to
         # playlist.
@@ -106,6 +115,7 @@ class PlayPlugin(BeetsPlugin):
 
         ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
 
+        self._log.debug('executing command: {} {}', command_str, m3u.name)
         try:
             util.interactive_open(m3u.name, command_str)
         except OSError as exc:

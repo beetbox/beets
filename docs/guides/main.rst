@@ -51,8 +51,8 @@ dropped, and Python 3.x is not yet supported.)
 .. _dnf: http://fedoraproject.org/wiki/Features/DNF
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
-.. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
-.. _dev package: http://aur.archlinux.org/packages.php?ID=48617
+.. _beets from AUR: https://aur.archlinux.org/packages/beets-git/
+.. _dev package: https://aur.archlinux.org/packages/beets-git/
 .. _Debian details: http://packages.qa.debian.org/b/beets.html
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
 .. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/

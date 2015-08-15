@@ -82,17 +82,11 @@ def fields_func(lib, opts, args):
         names.sort()
         print_("  " + "\n  ".join(names))
 
-    fs, pfs = library.Item.get_fields()
     print_("Item fields:")
-    _print_rows(fs)
-    print_("Template fields from plugins:")
-    _print_rows(pfs)
+    _print_rows(library.Item.all_keys())
 
-    fs, pfs = library.Album.get_fields()
     print_("Album fields:")
-    _print_rows(fs)
-    print_("Template fields from plugins:")
-    _print_rows(pfs)
+    _print_rows(library.Album.all_keys())
 
 
 fields_cmd = ui.Subcommand(

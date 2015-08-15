@@ -471,7 +471,7 @@ class MBLibraryTest(unittest.TestCase):
                 ai = list(mb.match_album('hello', 'there'))[0]
 
                 sp.assert_called_with(artist='hello', release='there', limit=5)
-                gp.assert_calledwith(mbid)
+                gp.assert_called_with(mbid, mock.ANY)
                 self.assertEqual(ai.tracks[0].title, 'foo')
                 self.assertEqual(ai.album, 'hi')
 

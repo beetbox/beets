@@ -37,10 +37,32 @@ configuration file. The available options are:
 
 - **command**: The command used to open the playlist.
   Default: ``open`` on OS X, ``xdg-open`` on other Unixes and ``start`` on
-  Windows.
+  Windows. Insert ``{}`` to make use of the ``--args``-feature.
 - **relative_to**: Emit paths relative to base directory.
   Default: None.
 - **use_folders**: When using the ``-a`` option, the m3u will contain the
   paths to each track on the matched albums. Enable this option to
   store paths to folders instead.
   Default: ``no``.
+
+Optional Arguments
+------------------
+
+The ``--args`` (or ``-A``) flag to the ``play`` command lets you specify
+additional arguments for your player command. Options are inserted after the
+configured ``command`` string and before the playlist filename.
+
+For example, if you have the plugin configured like this::
+
+    play:
+        command: mplayer -quiet
+
+and you occasionally want to shuffle the songs you play, you can type::
+
+    $ beet play --args -shuffle
+
+to get beets to execute this command::
+
+    mplayer -quiet -shuffle /path/to/playlist.m3u
+
+instead of the default.

@@ -50,6 +50,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    importfeeds
    info
    inline
+   ipfs
    keyfinder
    lastgenre
    lastimport
@@ -130,6 +131,7 @@ Interoperability
 ----------------
 
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
+* :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
 * :doc:`play`: Play beets queries in your music player.
@@ -209,6 +211,8 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-noimport`_ adds and removes directories from the incremental import skip list.
 
+* `beets-badfiles`_ helps you identify broken audio files.
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -224,3 +228,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://github.com/ttsda/beets-noimport
+.. _beets-badfiles: https://github.com/fxthomas/beets-badfiles

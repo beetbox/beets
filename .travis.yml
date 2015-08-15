@@ -1,4 +1,5 @@
 language: python
+sudo: false
 
 branches:
     only:
@@ -15,13 +16,12 @@ matrix:
         - python: 2.7
           env: {TOX_ENV: flake8, NONTEST: 1}
 
-# Get the infrastructure for running tests, and the non-Python (and external)
-# deps. We only install dependencies from apt for actual test runs, not for
-# docs and style checkers.
-before_install:
-    - "[ -z $NONTEST ] && travis_retry sudo apt-get update || true"
-    - "[ -z $NONTEST ] && travis_retry sudo apt-get install -qq bash-completion mp3gain || true"
-    - "[ ! -z $COVERAGE ] && travis_retry pip install coveralls || true"
+# Non-Python dependencies.
+addons:
+    apt:
+        packages:
+            - bash-completion
+            - mp3gain
 
 # To install dependencies, tell tox to do everything but actually running the
 # test.
@@ -31,10 +31,11 @@ install:
 
 script: tox -e $TOX_ENV
 
-# coveralls.io reporting, using https://github.com/coagulant/coveralls-python
-# Only report coverage for one version.
+# Report coverage to codecov.io.
+before_install:
+    - "[ ! -z $COVERAGE ] && travis_retry pip install codecov || true"
 after_success:
-    - "[ ! -z $COVERAGE ] && coveralls || true"
+    - "[ ! -z $COVERAGE ] && codecov || true"
 
 notifications:
     irc:
