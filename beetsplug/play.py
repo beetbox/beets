@@ -35,7 +35,6 @@ class PlayPlugin(BeetsPlugin):
             'command': None,
             'use_folders': False,
             'relative_to': None,
-            'args': None,
         })
 
     def commands(self):
@@ -47,7 +46,7 @@ class PlayPlugin(BeetsPlugin):
         play_command.parser.add_option(
             '-A', '--args',
             action='store',
-            help='Insert additional arguments into command string'
+            help='add additional arguments to the command',
         )
         play_command.func = self.play_music
         return [play_command]
@@ -59,13 +58,12 @@ class PlayPlugin(BeetsPlugin):
         command_str = config['play']['command'].get()
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
-        confargs = config['play']['args'].get()
         if relative_to:
             relative_to = util.normpath(relative_to)
 
-        # Prepare command strings with optional args
-        command_str = command_str.format(opts.args or '')\
-                                 .format(confargs or '')
+        # Add optional arguments to the player command.
+        if opts.args:
+            command_str = "{} {}".format(command_str, opts.args)
 
         # Perform search by album and add folders rather than tracks to
         # playlist.
@@ -117,6 +115,7 @@ class PlayPlugin(BeetsPlugin):
 
         ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
 
+        self._log.debug('executing command: {} {}', command_str, m3u.name)
         try:
             util.interactive_open(m3u.name, command_str)
         except OSError as exc:
