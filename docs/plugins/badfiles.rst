@@ -40,7 +40,7 @@ This one will run checks on a specific album::
 
     beet bad album_id:1234
 
-Here is an example where the FLAC decoder was signals a corrupt file::
+Here is an example where the FLAC decoder signals a corrupt file::
 
     beet bad title::^$
     /tank/Music/__/00.flac: command exited with status 1
