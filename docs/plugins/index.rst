@@ -31,6 +31,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
 .. toctree::
    :hidden:
 
+   badfiles
    bpd
    bpm
    bucket
@@ -139,6 +140,7 @@ Interoperability
   changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
+* :doc:`badfiles`: Check audio file integrity.
 
 
 .. _Plex: http://plex.tv
@@ -211,8 +213,6 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-noimport`_ adds and removes directories from the incremental import skip list.
 
-* `beets-badfiles`_ helps you identify broken audio files.
-
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -228,4 +228,3 @@ Here are a few of the plugins written by the beets community:
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://github.com/ttsda/beets-noimport
-.. _beets-badfiles: https://github.com/fxthomas/beets-badfiles

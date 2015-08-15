@@ -10,6 +10,8 @@ The new features:
   magenta). Thanks to :user:`mathstuf`. :bug:`1548`
 * :doc:`/plugins/play`: A new ``--args`` option lets you specify options for
   the player command. :bug:`1532`
+* A new :doc:`/plugins/badfiles` helps you scan for corruption in your music
+  collection.
 
 Fixes:
 
