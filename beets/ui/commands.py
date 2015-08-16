@@ -1395,6 +1395,55 @@ move_cmd.func = move_func
 default_commands.append(move_cmd)
 
 
+def migrate_func(lib, opts, args):
+    items, _ = _do_query(lib, None, False, False)
+
+    not_found = []
+    for item in items:
+        if not os.path.exists(item.path):
+            not_found.append(item)
+
+    found = []
+    for item in not_found:
+        if os.path.exists(item.destination()):
+            found.append(item)
+
+    plural = not_found != 1
+    log.info(u'{0} item' + (u's' if plural else u'') + u' in the database have'
+            u' bad paths, and {1} will be fixed.', len(not_found), len(found))
+    
+    unchanged = len(not_found) - len(found)
+    if unchanged:
+        log.info(u'{0} must be migrated manually.', unchanged)
+ 
+    items = found
+    if opts.pretend:
+        if items and not opts.quiet:
+            show_path_changes([(item.path, item.destination())
+                               for item in items])
+    else:
+        for item in items:
+            log.debug(u'migrating: {0}', util.displayable_path(item.path))
+            item.path = item.destination()
+            item.store()
+
+
+migrate_cmd = ui.Subcommand(
+    'migrate', help='try to fix broken paths'
+)
+migrate_cmd.parser.add_option(
+    '-p', '--pretend', default=False, action='store_true',
+    help='show changes without doing anything'
+)
+migrate_cmd.parser.add_option(
+    '-q', '--quiet', default=False, action='store_true',
+    help='show number of changes without each path updated (only applicable to '
+     'pretend option)'
+)
+migrate_cmd.func = migrate_func
+default_commands.append(migrate_cmd)
+
+
 # write: Write tags into files.
 
 def write_items(lib, query, pretend, force):
