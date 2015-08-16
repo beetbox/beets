@@ -7,20 +7,23 @@ corrupt files.
 Configuring
 -----------
 
-First, enable the ``badfiles`` plugin (see :ref:`using-plugins`). Then, add a
-``badfiles:`` section to your configuration file, like so::
+First, enable the ``badfiles`` plugin (see :ref:`using-plugins`). The default
+configuration defines the following default checkers, which you may need to
+install yourself:
 
-    badfiles:
-        commands: {}
+* `mp3val`_ for MP3 files
+* `FLAC`_ command-line tools for FLAC files
 
-This uses two default checkers: `mp3val`_ for MP3s and the ordinary `FLAC`_
-command-line tools for those files. (You will need to install these yourself.)
 You can also add custom commands for a specific extension, like this::
 
     badfiles:
         commands:
             ogg: myoggchecker --opt1 --opt2
             flac: flac --test --warnings-as-errors --silent
+
+Custom commands will be run once for each file of the specified type, with the
+path to the file as the last argument. Commands must return a status code
+greater than zero for a file to be considered corrupt.
 
 .. _mp3val: http://mp3val.sourceforge.net/
 .. _flac: https://xiph.org/flac/
