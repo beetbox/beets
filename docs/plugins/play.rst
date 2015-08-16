@@ -66,3 +66,13 @@ to get beets to execute this command::
     mplayer -quiet -shuffle /path/to/playlist.m3u
 
 instead of the default.
+
+If you need to insert arguments somewhere other than the end of the
+``command`` string, use ``$args`` to indicate where to insert them. For
+example::
+
+    play:
+        command: mpv $args --playlist
+
+indicates that you need to insert extra arguments before specifying the
+playlist.

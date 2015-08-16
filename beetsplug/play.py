@@ -25,6 +25,10 @@ from beets import util
 from os.path import relpath
 from tempfile import NamedTemporaryFile
 
+# Indicate where arguments should be inserted into the command string.
+# If this is missing, they're placed at the end.
+ARGS_MARKER = '$args'
+
 
 class PlayPlugin(BeetsPlugin):
 
@@ -63,7 +67,10 @@ class PlayPlugin(BeetsPlugin):
 
         # Add optional arguments to the player command.
         if opts.args:
-            command_str = "{} {}".format(command_str, opts.args)
+            if ARGS_MARKER in command_str:
+                command_str = command_str.replace(ARGS_MARKER, opts.args)
+            else:
+                command_str = "{} {}".format(command_str, opts.args)
 
         # Perform search by album and add folders rather than tracks to
         # playlist.
