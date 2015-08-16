@@ -11,7 +11,7 @@ The new features:
 * :doc:`/plugins/play`: A new ``--args`` option lets you specify options for
   the player command. :bug:`1532`
 * A new :doc:`/plugins/badfiles` helps you scan for corruption in your music
-  collection.
+  collection. Thanks to :user:`fxthomas`. :bug:`1568`
 
 Fixes:
 
