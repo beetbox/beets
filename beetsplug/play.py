@@ -117,14 +117,15 @@ class PlayPlugin(BeetsPlugin):
 
         ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
         if raw:
-            passedToCommand = self._concatenatePaths(paths)
+            passedToCommand = paths
         else:
             passedToCommand, m3u = self._createTmpPlaylist(paths)
 
         self._log.debug('executing command: {} {}', command_str,
                         passedToCommand)
         try:
-            util.interactive_open(passedToCommand, command_str)
+            util.interactive_open(multiple_targets=passedToCommand,
+                                  command=command_str)
         except OSError as exc:
             raise ui.UserError("Could not play the music playlist: "
                                "{0}".format(exc))
@@ -138,8 +139,4 @@ class PlayPlugin(BeetsPlugin):
         for item in pathsList:
             m3u.write(item + b'\n')
         m3u.close()
-        return m3u.name, m3u
-
-    def _concatenatePaths(self, pathsList):
-        concatenatedPaths = b'"' + b'" "'.join(pathsList) + b'"'
-        return concatenatedPaths
+        return [m3u.name], m3u
