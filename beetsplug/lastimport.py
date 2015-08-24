@@ -88,6 +88,7 @@ def import_lastfm(lib, log):
             else:
                 log.error('ERROR: unable to read page #{0}',
                           page_current + 1)
+                log.debug('API response: {}', page)
                 if retry < retry_limit:
                     log.info(
                         'Retrying page #{0}... ({1}/{2} retry)',
