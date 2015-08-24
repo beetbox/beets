@@ -17,6 +17,9 @@ Fixes:
 
 * :doc:`/plugins/lastgenre`: Fix a bug that prevented tag popularity from
   being considered. Thanks to :user:`svoos`. :bug:`1559`
+* Fixed a bug where plugins wouldn't be notified of the deletion of an item's
+  art, for example with the ``clearart`` command from the
+  :doc:`/plugins/embedart`. Thanks to :user:`nathdwek`. :bug:`1565`
 
 
 1.3.14 (August 2, 2015)

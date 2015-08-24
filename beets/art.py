@@ -25,7 +25,6 @@ import os
 from beets.util import displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from beets import mediafile
-from beets import config
 
 
 def mediafile_image(image_path, maxwidth=None):
@@ -191,17 +190,8 @@ def extract_first(log, outpath, items):
 
 
 def clear(log, lib, query):
-    id3v23 = config['id3v23'].get(bool)
-
     items = lib.items(query)
     log.info(u'Clearing album art from {0} items', len(items))
     for item in items:
         log.debug(u'Clearing art for {0}', item)
-        try:
-            mf = mediafile.MediaFile(syspath(item.path), id3v23)
-        except mediafile.UnreadableFileError as exc:
-            log.warning(u'Could not read file {0}: {1}',
-                        displayable_path(item.path), exc)
-        else:
-            del mf.art
-            mf.save()
+        item.try_write(tags={'images': None})
