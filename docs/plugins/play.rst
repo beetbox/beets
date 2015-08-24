@@ -38,7 +38,7 @@ configuration file. The available options are:
 - **command**: The command used to open the playlist.
   Default: ``open`` on OS X, ``xdg-open`` on other Unixes and ``start`` on
   Windows. Insert ``{}`` to make use of the ``--args``-feature.
-- **relative_to**: Emit paths relative to base directory.
+- **relative_to**: If set, emit paths relative to this directory.
   Default: None.
 - **use_folders**: When using the ``-a`` option, the m3u will contain the
   paths to each track on the matched albums. Enable this option to
@@ -47,6 +47,9 @@ configuration file. The available options are:
 - **raw**: Instead of creating a temporary m3u playlist and then opening it,
   simply call the command with the paths returned by the query as arguments.
   Default: ``no``.
+- **warning_treshold**: Set the minimum number of files to play which will
+  trigger a warning to be emitted. If set to ``no``, warning are never issued.
+  Default: 100.
 
 Optional Arguments
 ------------------
