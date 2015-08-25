@@ -119,19 +119,20 @@ class PlayPlugin(BeetsPlugin):
         if raw:
             passed_to_command = paths
         else:
-            passed_to_command, m3u = self._create_tmp_playlist(paths)
+            passed_to_command = self._create_tmp_playlist(paths)
 
         self._log.debug('executing command: {} {}', command_str,
-                        passed_to_command)
+                        b'"' + b' '.join(passed_to_command) + b'"')
         try:
-            util.interactive_open(multiple_targets=passed_to_command,
-                                  command=command_str)
+            util.interactive_open(passed_to_command, command_str)
         except OSError as exc:
             raise ui.UserError("Could not play the music playlist: "
                                "{0}".format(exc))
         finally:
             if not raw:
-                util.remove(m3u.name)
+                self._log.debug('Removing temporary playlist: {}',
+                                passed_to_command[0])
+                util.remove(passed_to_command[0])
 
     def _create_tmp_playlist(self, paths_list):
         # Create temporary m3u file to hold our playlist.
@@ -139,4 +140,4 @@ class PlayPlugin(BeetsPlugin):
         for item in paths_list:
             m3u.write(item + b'\n')
         m3u.close()
-        return [m3u.name], m3u
+        return [m3u.name]
