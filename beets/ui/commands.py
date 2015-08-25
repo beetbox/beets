@@ -1485,7 +1485,7 @@ def config_edit():
     try:
         if not os.path.isfile(path):
             open(path, 'w+').close()
-        util.interactive_open(path, editor)
+        util.interactive_open([path], editor)
     except OSError as exc:
         message = "Could not edit configuration: {0}".format(exc)
         if not editor:
