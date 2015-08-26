@@ -693,6 +693,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         # this serves both as an indicator that we offer the feature AND allows
         # us to check whether it has been specified on the CLI - bypassing the
         # fact that arguments may be in any order
+        self._added_help = False
 
     def add_album_option(self, flags=('-a', '--album')):
         """Add a -a/--album option to match albums instead of tracks.
@@ -784,6 +785,15 @@ class CommonOptionsParser(optparse.OptionParser, object):
         self.add_album_option()
         self.add_path_option()
         self.add_format_option()
+
+    def add_help_text(self, text):
+        """Add a custom help text below the usage line to give extra hints
+        """
+        if self._added_help == False:
+            self.usage = self.usage + "\n"
+            self._added_help = True
+        self.usage = self.usage + "\n"
+        self.usage = self.usage + text
 
 # Subcommand parsing infrastructure.
 #
