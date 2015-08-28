@@ -789,7 +789,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
     def add_help_text(self, text):
         """Add a custom help text below the usage line to give extra hints
         """
-        if self._added_help == False:
+        if self._added_help is False:
             self.usage = self.usage + "\n"
             self._added_help = True
         self.usage = self.usage + "\n"
