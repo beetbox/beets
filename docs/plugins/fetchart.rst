@@ -49,8 +49,8 @@ file. The available options are:
   found in the filesystem.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``coverart itunes albumart amazon google wikipedia``, i.e.,
-  all sources.
+  Default: ``coverart itunes albumart amazon wikipedia``, i.e., everything but
+  ``google``.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `PIL`_.
