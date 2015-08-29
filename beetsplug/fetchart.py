@@ -45,6 +45,17 @@ requests_session = requests.Session()
 requests_session.headers = {'User-Agent': 'beets'}
 
 
+def _logged_get(log, *args, **kwargs):
+    """Like `requests.get()`, but logs the effective URL to the
+    specified `log` at the `DEBUG` level.
+    """
+    req = requests.Request('GET', *args, **kwargs)
+    with requests.Session() as s:
+        prepped = s.prepare_request(req)
+        log.debug('getting URL {}', prepped.url)
+        return s.send(prepped)
+
+
 # ART SOURCES ################################################################
 
 class ArtSource(object):
@@ -195,14 +206,17 @@ class Wikipedia(ArtSource):
 
         # Find the name of the cover art filename on DBpedia
         cover_filename, page_id = None, None
-        dbpedia_response = requests.get(
+        dbpedia_response = _logged_get(
+            self._log,
             self.DBPEDIA_URL,
             params={
                 'format': 'application/sparql-results+json',
                 'timeout': 2500,
                 'query': self.SPARQL_QUERY.format(
                     artist=album.albumartist.title(), album=album.album)
-            }, headers={'content-type': 'application/json'})
+            },
+            headers={'content-type': 'application/json'},
+        )
         try:
             data = dbpedia_response.json()
             results = data['results']['bindings']
@@ -210,9 +224,10 @@ class Wikipedia(ArtSource):
                 cover_filename = 'File:' + results[0]['coverFilename']['value']
                 page_id = results[0]['pageId']['value']
             else:
-                self._log.debug(u'album not found on dbpedia')
+                self._log.debug('wikipedia: album not found on dbpedia')
         except (ValueError, KeyError, IndexError):
-            self._log.debug(u'error scraping dbpedia album page')
+            self._log.debug('wikipedia: error scraping dbpedia response: {}',
+                            dbpedia_response.text)
 
         # Ensure we have a filename before attempting to query wikipedia
         if not (cover_filename and page_id):
@@ -224,17 +239,24 @@ class Wikipedia(ArtSource):
         # This may be removed once the DBPedia issue is resolved, see:
         # https://github.com/dbpedia/extraction-framework/issues/396
         if '.' not in cover_filename.split(' .')[-1]:
-            self._log.debug(u'dbpedia provided incomplete cover_filename')
+            self._log.debug(
+                'wikipedia: dbpedia provided incomplete cover_filename'
+            )
             lpart, rpart = cover_filename.rsplit(' .', 1)
 
             # Query all the images in the page
-            wikipedia_response = requests.get(self.WIKIPEDIA_URL, params={
-                'format': 'json',
-                'action': 'query',
-                'continue': '',
-                'prop': 'images',
-                'pageids': page_id},
-                headers={'content-type': 'application/json'})
+            wikipedia_response = _logged_get(
+                self._log,
+                self.WIKIPEDIA_URL,
+                params={
+                    'format': 'json',
+                    'action': 'query',
+                    'continue': '',
+                    'prop': 'images',
+                    'pageids': page_id,
+                },
+                headers={'content-type': 'application/json'},
+            )
 
             # Try to see if one of the images on the pages matches our
             # imcomplete cover_filename
@@ -247,18 +269,25 @@ class Wikipedia(ArtSource):
                         cover_filename = result['title']
                         break
             except (ValueError, KeyError):
-                self._log.debug(u'failed to retrieve a cover_filename')
+                self._log.debug(
+                    'wikipedia: failed to retrieve a cover_filename'
+                )
                 return
 
         # Find the absolute url of the cover art on Wikipedia
-        wikipedia_response = requests.get(self.WIKIPEDIA_URL, params={
-            'format': 'json',
-            'action': 'query',
-            'continue': '',
-            'prop': 'imageinfo',
-            'iiprop': 'url',
-            'titles': cover_filename.encode('utf-8')},
-            headers={'content-type': 'application/json'})
+        wikipedia_response = _logged_get(
+            self._log,
+            self.WIKIPEDIA_URL,
+            params={
+                'format': 'json',
+                'action': 'query',
+                'continue': '',
+                'prop': 'imageinfo',
+                'iiprop': 'url',
+                'titles': cover_filename.encode('utf-8'),
+            },
+            headers={'content-type': 'application/json'},
+        )
 
         try:
             data = wikipedia_response.json()
@@ -267,7 +296,7 @@ class Wikipedia(ArtSource):
                 image_url = result['imageinfo'][0]['url']
                 yield image_url
         except (ValueError, KeyError, IndexError):
-            self._log.debug(u'error scraping wikipedia imageinfo')
+            self._log.debug('wikipedia: error scraping imageinfo')
             return
 
 
@@ -342,9 +371,9 @@ class FetchArtPlugin(plugins.BeetsPlugin):
             'enforce_ratio': False,
             'remote_priority': False,
             'cautious': False,
-            'google_search': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': SOURCES_ALL,
+            'sources': ['coverart', 'itunes', 'amazon', 'albumart',
+                        'wikipedia'],
         })
 
         # Holds paths to downloaded images between fetching them and
@@ -530,7 +559,6 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         necessary.
         """
         source_names = {v: k for k, v in ART_SOURCES.items()}
-        print(source_names)
         for source in self.sources:
             self._log.debug(
                 'trying source {0} for album {1.albumartist} - {1.album}',
