@@ -21,8 +21,10 @@ Fixes:
   art, for example with the ``clearart`` command from the
   :doc:`/plugins/embedart`. Thanks to :user:`nathdwek`. :bug:`1565`
 * :doc:`/plugins/fetchart`: The Google Images source is disabled by default
-  (as it was before beets 1.3.9). To enable it, add ``google`` to your
-  ``sources`` configuration option.
+  (as it was before beets 1.3.9), as is the Wikipedia source (which was
+  causing lots of unnecessary delays due to DBpedia downtime). To re-enable
+  these sources, add ``wikipedia google`` to your ``sources`` configuration
+  option.
 
 
 1.3.14 (August 2, 2015)
