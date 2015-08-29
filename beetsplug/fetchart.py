@@ -269,7 +269,8 @@ class Wikipedia(ArtSource):
         # An additional Wikipedia call can help to find the real filename.
         # This may be removed once the DBPedia issue is resolved, see:
         # https://github.com/dbpedia/extraction-framework/issues/396
-        if '.' not in cover_filename.split(' .')[-1]:
+        if ' .' in cover_filename and \
+           '.' not in cover_filename.split(' .')[-1]:
             self._log.debug(
                 'wikipedia: dbpedia provided incomplete cover_filename'
             )
