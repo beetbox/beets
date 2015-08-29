@@ -41,24 +41,37 @@ IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg', 'image/gif')
 DOWNLOAD_EXTENSION = '.jpg'
 
-requests_session = requests.Session()
-requests_session.headers = {'User-Agent': 'beets'}
-
 
 def _logged_get(log, *args, **kwargs):
-    """Like `requests.get()`, but logs the effective URL to the
-    specified `log` at the `DEBUG` level.
+    """Like `requests.get`, but logs the effective URL to the specified
+    `log` at the `DEBUG` level.
+
+    Also sets the User-Agent header to indicate beets.
     """
     req = requests.Request('GET', *args, **kwargs)
     with requests.Session() as s:
+        s.headers = {'User-Agent': 'beets'}
         prepped = s.prepare_request(req)
         log.debug('getting URL {}', prepped.url)
         return s.send(prepped)
 
 
+class RequestMixin(object):
+    """Adds a Requests wrapper to the class that uses the logger, which
+    must be named `self._log`.
+    """
+
+    def request(self, *args, **kwargs):
+        """Like `requests.get`, but uses the logger `self._log`.
+
+        See also `_logged_get`.
+        """
+        return _logged_get(self._log, *args, **kwargs)
+
+
 # ART SOURCES ################################################################
 
-class ArtSource(object):
+class ArtSource(RequestMixin):
     def __init__(self, log):
         self._log = log
 
@@ -105,7 +118,7 @@ class AlbumArtOrg(ArtSource):
             return
         # Get the page from albumart.org.
         try:
-            resp = requests_session.get(self.URL, params={'asin': album.asin})
+            resp = self.request(self.URL, params={'asin': album.asin})
             self._log.debug(u'scraped art URL: {0}', resp.url)
         except requests.RequestException:
             self._log.debug(u'error scraping art page')
@@ -130,7 +143,7 @@ class GoogleImages(ArtSource):
         if not (album.albumartist and album.album):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
-        response = requests_session.get(self.URL, params={
+        response = self.request(self.URL, params={
             'v': '1.0',
             'q': search_string,
             'start': '0',
@@ -206,8 +219,7 @@ class Wikipedia(ArtSource):
 
         # Find the name of the cover art filename on DBpedia
         cover_filename, page_id = None, None
-        dbpedia_response = _logged_get(
-            self._log,
+        dbpedia_response = self.request(
             self.DBPEDIA_URL,
             params={
                 'format': 'application/sparql-results+json',
@@ -245,8 +257,7 @@ class Wikipedia(ArtSource):
             lpart, rpart = cover_filename.rsplit(' .', 1)
 
             # Query all the images in the page
-            wikipedia_response = _logged_get(
-                self._log,
+            wikipedia_response = self.request(
                 self.WIKIPEDIA_URL,
                 params={
                     'format': 'json',
@@ -275,7 +286,7 @@ class Wikipedia(ArtSource):
                 return
 
         # Find the absolute url of the cover art on Wikipedia
-        wikipedia_response = _logged_get(
+        wikipedia_response = self.request(
             self._log,
             self.WIKIPEDIA_URL,
             params={
@@ -360,7 +371,7 @@ ART_SOURCES = {
 # PLUGIN LOGIC ###############################################################
 
 
-class FetchArtPlugin(plugins.BeetsPlugin):
+class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
 
@@ -451,11 +462,11 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         """
         self._log.debug(u'downloading art: {0}', url)
         try:
-            with closing(requests_session.get(url, stream=True)) as resp:
+            with closing(self.request(url, stream=True)) as resp:
                 if 'Content-Type' not in resp.headers \
                         or resp.headers['Content-Type'] not in CONTENT_TYPES:
-                    self._log.debug(u'not an image')
-                    return
+                    self._log.debug('not an image')
+                    return None
 
                 # Generate a temporary file with the correct extension.
                 with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION,
@@ -465,10 +476,11 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'downloaded art to: {0}',
                                 util.displayable_path(fh.name))
                 return fh.name
-        except (IOError, requests.RequestException, TypeError):
+        except (IOError, requests.RequestException, TypeError) as exc:
             # Handling TypeError works around a urllib3 bug:
             # https://github.com/shazow/urllib3/issues/556
-            self._log.debug(u'error fetching art')
+            self._log.debug('error fetching art: {}', exc)
+            return None
 
     def _is_valid_image_candidate(self, candidate):
         if not candidate:
