@@ -973,6 +973,10 @@ def list_func(lib, opts, args):
 
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
+list_cmd.parser.add_help_text('query the library')
+list_cmd.parser.add_help_text(
+    'Example usage: %prog -f \'$album: $title\' artist:beatles'
+)
 list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
 default_commands.append(list_cmd)
