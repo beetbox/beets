@@ -403,8 +403,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'remote_priority': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': ['coverart', 'itunes', 'amazon', 'albumart',
-                        'wikipedia'],
+            'sources': ['coverart', 'itunes', 'amazon', 'albumart'],
         })
 
         # Holds paths to downloaded images between fetching them and
