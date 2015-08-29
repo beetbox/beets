@@ -319,7 +319,7 @@ class FileSystem(ArtSource):
 SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart', u'google',
                u'wikipedia']
 
-ART_FUNCS = {
+ART_SOURCES = {
     u'coverart': CoverArtArchive,
     u'itunes': ITunesStore,
     u'albumart': AlbumArtOrg,
@@ -365,7 +365,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
             available_sources.remove(u'itunes')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
-        self.sources = [ART_FUNCS[s](self._log) for s in sources_name]
+        self.sources = [ART_SOURCES[s](self._log) for s in sources_name]
         self.fs_source = FileSystem(self._log)
 
     # Asynchronous; after music is added to the library.
@@ -479,6 +479,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                 candidate = self.fs_source.get(path, cover_names, cautious)
                 if self._is_valid_image_candidate(candidate):
                     out = candidate
+                    self._log.debug('found local image {}', out)
                     break
 
         # Web art sources.
@@ -490,6 +491,7 @@ class FetchArtPlugin(plugins.BeetsPlugin):
                 candidate = self._fetch_image(url)
                 if self._is_valid_image_candidate(candidate):
                     out = candidate
+                    self._log.debug('using remote image {}', out)
                     break
 
         if self.maxwidth and out:
@@ -527,7 +529,15 @@ class FetchArtPlugin(plugins.BeetsPlugin):
         through this sequence early to avoid the cost of scraping when not
         necessary.
         """
+        source_names = {v: k for k, v in ART_SOURCES.items()}
+        print(source_names)
         for source in self.sources:
+            self._log.debug(
+                'trying source {0} for album {1.albumartist} - {1.album}',
+                source_names[type(source)],
+                album,
+            )
             urls = source.get(album)
             for url in urls:
+                self._log.debug('got image URL {}', url)
                 yield url
