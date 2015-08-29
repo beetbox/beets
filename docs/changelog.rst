@@ -20,6 +20,9 @@ Fixes:
 * Fixed a bug where plugins wouldn't be notified of the deletion of an item's
   art, for example with the ``clearart`` command from the
   :doc:`/plugins/embedart`. Thanks to :user:`nathdwek`. :bug:`1565`
+* :doc:`/plugins/fetchart`: The Google Images source is disabled by default
+  (as it was before beets 1.3.9). To enable it, add ``google`` to your
+  ``sources`` configuration option.
 
 
 1.3.14 (August 2, 2015)
