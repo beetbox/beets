@@ -786,14 +786,6 @@ class CommonOptionsParser(optparse.OptionParser, object):
         self.add_path_option()
         self.add_format_option()
 
-    def add_help_text(self, text):
-        """Add a custom help text below the usage line to give extra hints
-        """
-        if self._added_help is False:
-            self.usage = self.usage + "\n"
-            self._added_help = True
-        self.usage = self.usage + "\n"
-        self.usage = self.usage + text
 
 # Subcommand parsing infrastructure.
 #
@@ -802,7 +794,6 @@ class CommonOptionsParser(optparse.OptionParser, object):
 # http://gist.github.com/462717
 # There you will also find a better description of the code and a more
 # succinct example program.
-
 
 class Subcommand(object):
     """A subcommand of a root command-line application that may be
