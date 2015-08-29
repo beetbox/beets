@@ -36,8 +36,6 @@ file. The available options are:
   Default: ``no``.
 - **cover_names**: Prioritize images containing words in this list.
   Default: ``cover front art album folder``.
-- **google_search**: Gather images from Google Image Search.
-  Default: ``no``.
 - **minwidth**: Only images with a width bigger or equal to ``minwidth`` are
   considered as valid album art candidates. Default: 0.
 - **maxwidth**: A maximum image width to downscale fetched images if they are
