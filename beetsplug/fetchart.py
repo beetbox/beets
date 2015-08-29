@@ -46,14 +46,33 @@ def _logged_get(log, *args, **kwargs):
     """Like `requests.get`, but logs the effective URL to the specified
     `log` at the `DEBUG` level.
 
+    Use the optional `message` parameter to specify what to log before
+    the URL. By default, the string is "getting URL".
+
     Also sets the User-Agent header to indicate beets.
     """
-    req = requests.Request('GET', *args, **kwargs)
+    # Use some arguments with the `send` call but most with the
+    # `Request` construction. This is a cheap, magic-filled way to
+    # emulate `requests.get` or, more pertinently,
+    # `requests.Session.request`.
+    req_kwargs = kwargs
+    send_kwargs = {}
+    for arg in ('stream', 'verify', 'proxies', 'cert', 'timeout'):
+        if arg in kwargs:
+            send_kwargs[arg] = req_kwargs.pop(arg)
+
+    # Our special logging message parameter.
+    if 'message' in kwargs:
+        message = kwargs.pop('message')
+    else:
+        message = 'getting URL'
+
+    req = requests.Request('GET', *args, **req_kwargs)
     with requests.Session() as s:
         s.headers = {'User-Agent': 'beets'}
         prepped = s.prepare_request(req)
-        log.debug('getting URL {}', prepped.url)
-        return s.send(prepped)
+        log.debug('{}: {}', message, prepped.url)
+        return s.send(prepped, **send_kwargs)
 
 
 class RequestMixin(object):
@@ -460,12 +479,15 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         actually be an image. If so, returns a path to the downloaded image.
         Otherwise, returns None.
         """
-        self._log.debug(u'downloading art: {0}', url)
         try:
-            with closing(self.request(url, stream=True)) as resp:
+            with closing(self.request(url, stream=True,
+                                      message='downloading image')) as resp:
                 if 'Content-Type' not in resp.headers \
                         or resp.headers['Content-Type'] not in CONTENT_TYPES:
-                    self._log.debug('not an image')
+                    self._log.debug(
+                        'not an image: {}',
+                        resp.headers.get('Content-Type') or 'no content type',
+                    )
                     return None
 
                 # Generate a temporary file with the correct extension.
@@ -476,6 +498,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 self._log.debug(u'downloaded art to: {0}',
                                 util.displayable_path(fh.name))
                 return fh.name
+
         except (IOError, requests.RequestException, TypeError) as exc:
             # Handling TypeError works around a urllib3 bug:
             # https://github.com/shazow/urllib3/issues/556
@@ -579,5 +602,4 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             )
             urls = source.get(album)
             for url in urls:
-                self._log.debug('got image URL {}', url)
                 yield url
