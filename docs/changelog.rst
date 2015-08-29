@@ -25,6 +25,8 @@ Fixes:
   causing lots of unnecessary delays due to DBpedia downtime). To re-enable
   these sources, add ``wikipedia google`` to your ``sources`` configuration
   option.
+* The :ref:`list-cmd` command's help output now has a small query and format
+  string example. Thanks to :user:`pkess`. :bug:`1582`
 
 
 1.3.14 (August 2, 2015)
