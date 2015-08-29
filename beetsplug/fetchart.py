@@ -485,7 +485,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 if 'Content-Type' not in resp.headers \
                         or resp.headers['Content-Type'] not in CONTENT_TYPES:
                     self._log.debug(
-                        'not an image: {}',
+                        'not a supported image: {}',
                         resp.headers.get('Content-Type') or 'no content type',
                     )
                     return None
@@ -493,7 +493,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # Generate a temporary file with the correct extension.
                 with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION,
                                         delete=False) as fh:
-                    for chunk in resp.iter_content():
+                    for chunk in resp.iter_content(chunk_size=1024):
                         fh.write(chunk)
                 self._log.debug(u'downloaded art to: {0}',
                                 util.displayable_path(fh.name))
