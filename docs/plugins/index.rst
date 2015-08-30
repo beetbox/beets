@@ -42,6 +42,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    echonest
    embedart
    fetchart
+   filefilter
    fromfilename
    ftintitle
    fuzzy
@@ -66,9 +67,9 @@ Each plugin has its own set of options that can be defined in a section bearing 
    play
    plexupdate
    random
-   filefilter
    replaygain
    rewrite
+   runafter
    scrub
    smartplaylist
    spotify
@@ -141,6 +142,7 @@ Interoperability
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
 * :doc:`badfiles`: Check audio file integrity.
+* :doc:`runafter`: Run an arbitrary script after import.
 
 
 .. _Plex: http://plex.tv

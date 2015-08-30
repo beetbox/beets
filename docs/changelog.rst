@@ -12,6 +12,7 @@ The new features:
   the player command. :bug:`1532`
 * A new :doc:`/plugins/badfiles` helps you scan for corruption in your music
   collection. Thanks to :user:`fxthomas`. :bug:`1568`
+* New :doc:`/plugins/runafter` allows to run arbitrary scripts after import. Thanks to :user:`m-urban`. :bug:`1561`
 
 Fixes:
 
