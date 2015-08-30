@@ -693,7 +693,6 @@ class CommonOptionsParser(optparse.OptionParser, object):
         # this serves both as an indicator that we offer the feature AND allows
         # us to check whether it has been specified on the CLI - bypassing the
         # fact that arguments may be in any order
-        self._added_help = False
 
     def add_album_option(self, flags=('-a', '--album')):
         """Add a -a/--album option to match albums instead of tracks.
