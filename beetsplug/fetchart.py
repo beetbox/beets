@@ -307,7 +307,6 @@ class Wikipedia(ArtSource):
 
         # Find the absolute url of the cover art on Wikipedia
         wikipedia_response = self.request(
-            self._log,
             self.WIKIPEDIA_URL,
             params={
                 'format': 'json',
