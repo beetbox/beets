@@ -736,7 +736,7 @@ def open_anything():
 
 
 def interactive_open(targets, command=None):
-    """Open the file `target` by `exec`ing a new command. (The new
+    """Open the files in `targets` by `exec`ing a new command. (The new
     program takes over, and Python execution ends: this does not fork a
     subprocess.)
 
