@@ -27,6 +27,8 @@ Fixes:
   option.
 * The :ref:`list-cmd` command's help output now has a small query and format
   string example. Thanks to :user:`pkess`. :bug:`1582`
+* The check whether the file system is case sensitive or not could lead to
+  wrong results. It is much more robust now.
 
 
 1.3.14 (August 2, 2015)

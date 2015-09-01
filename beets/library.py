@@ -61,9 +61,8 @@ class PathQuery(dbcore.FieldQuery):
         """
         super(PathQuery, self).__init__(field, pattern, fast)
 
-        # By default, the case sensitivity depends on the platform.
         if case_sensitive is None:
-            case_sensitive = platform.system() != 'Windows'
+            case_sensitive = self.is_filesystem_case_sensitive()
         self.case_sensitive = case_sensitive
 
         # Use a normalized-case pattern for case-insensitive matches.
@@ -74,6 +73,16 @@ class PathQuery(dbcore.FieldQuery):
         self.file_path = util.bytestring_path(util.normpath(pattern))
         # As a directory (prefix).
         self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
+
+    @staticmethod
+    def is_filesystem_case_sensitive():
+        library_path = beets.config['directory'].get()
+        if os.path.exists(library_path):
+            # Check if the path to the library exists in lower and upper case
+            return not (os.path.exists(library_path.lower()) and
+                        os.path.exists(library_path.upper()))
+        # By default, the case sensitivity depends on the platform.
+        return platform.system() != 'Windows'
 
     @classmethod
     def is_path_query(cls, query_part):
