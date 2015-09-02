@@ -759,3 +759,41 @@ def interactive_open(target, command=None):
 
     command.append(target)
     return os.execlp(*command)
+
+
+def is_filesystem_case_sensitive(path):
+    if os.path.exists(path):
+        # Check if the path to the library exists in lower and upper case
+        if os.path.exists(path.lower()) and \
+           os.path.exists(path.upper()):
+            # All the paths may exist on the file system. Check if they
+            # refer to different files
+            if platform.system() != 'Windows':
+                # os.path.samefile is only available on Unix systems for
+                # python < 3.0
+                return not os.path.samefile(path.lower(),
+                                            path.upper())
+            # On windows we create a file with a lower case name
+            # and try to find the file using an upper case name.
+            base_file_name = 'beetsCaseSensitivityCheck'
+            lower = os.path.join(path, base_file_name.lower())
+            upper = os.path.join(path, base_file_name.upper())
+            # Check if one of the files (upper and lower case) do exist
+            # already
+            i = 0
+            while os.path.exists(lower) or os.path.exists(upper):
+                file_name = '{0}{1}'.format(base_file_name, i)
+                lower = os.path.join(path, file_name.lower())
+                upper = os.path.join(path, file_name.upper())
+            # Create the file using a lower case name
+            with open(lower, 'w'):
+                pass
+            # Check if the file can be found using the upper cas name
+            case_sensitive = not os.path.exists(upper)
+            # Remove the temporary file
+            os.remove(lower)
+            return case_sensitive
+        else:
+            return True
+    # By default, the case sensitivity depends on the platform.
+    return platform.system() != 'Windows'
