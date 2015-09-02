@@ -33,6 +33,9 @@ Fixes:
 * :doc:`/plugins/fetchart`: The plugin now fetches PNGs but not GIFs. (It
   still fetches JPEGs.) This avoids an error when trying to embed images,
   since not all formats support GIFs. :bug:`1588`
+* Date fields are now written in the correct order (year-month-day), which
+  eliminates an intermittent bug where the latter two fields would not get
+  written to files. Thanks to :user:`jdetrey`. :bug:`1303` :bug:`1589`
 
 
 1.3.14 (August 2, 2015)

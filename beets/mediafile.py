@@ -1461,11 +1461,14 @@ class MediaFile(object):
                 yield property.decode('utf8')
 
     @classmethod
-    def field_sort_name(cls, name):
-        """Get field name for sorting purposes. Fields names are kept
-        unchanged, unless they are instances of :class:`DateItemField`,
-        in which case `year`, `month`, and `day` are replaced by `date0`,
-        `date1`, and `date2`, respectively.
+    def _field_sort_name(cls, name):
+        """Get a sort key for a field name that determines the order
+        fields should be written in.
+
+        Fields names are kept unchanged, unless they are instances of
+        :class:`DateItemField`, in which case `year`, `month`, and `day`
+        are replaced by `date0`, `date1`, and `date2`, respectively, to
+        make them appear in that order.
         """
         if isinstance(cls.__dict__[name], DateItemField):
             name = re.sub('year',  'date0', name)
@@ -1475,11 +1478,14 @@ class MediaFile(object):
 
     @classmethod
     def sorted_fields(cls):
-        """Get the names of all writable metadata fields sorted by
-        lexicographic order (except for instances of :class:`DateItemField`,
-        which are sorted in year-month-day order).
+        """Get the names of all writable metadata fields, sorted in the
+        order that they should be written.
+
+        This is a lexicographic order, except for instances of
+        :class:`DateItemField`, which are sorted in year-month-day
+        order.
         """
-        for property in sorted(cls.fields(), key=cls.field_sort_name):
+        for property in sorted(cls.fields(), key=cls._field_sort_name):
             yield property
 
     @classmethod
