@@ -12,6 +12,9 @@ The new features:
   the player command. :bug:`1532`
 * A new :doc:`/plugins/badfiles` helps you scan for corruption in your music
   collection. Thanks to :user:`fxthomas`. :bug:`1568`
+* :doc:`/plugins/play`: A new ``raw`` configuration option lets the command
+  work with players (such as VLC) that expect music filenames as arguments,
+  rather than in a playlist. Thanks to :user:`nathdwek`. :bug:`1578`
 
 Fixes:
 
