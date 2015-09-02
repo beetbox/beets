@@ -30,6 +30,9 @@ Fixes:
   option.
 * The :ref:`list-cmd` command's help output now has a small query and format
   string example. Thanks to :user:`pkess`. :bug:`1582`
+* :doc:`/plugins/fetchart`: The plugin now fetches PNGs but not GIFs. (It
+  still fetches JPEGs.) This avoids an error when trying to embed images,
+  since not all formats support GIFs. :bug:`1588`
 
 
 1.3.14 (August 2, 2015)
