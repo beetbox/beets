@@ -38,7 +38,7 @@ except ImportError:
     HAVE_ITUNES = False
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
-CONTENT_TYPES = ('image/jpeg', 'image/gif')
+CONTENT_TYPES = ('image/jpeg', 'image/png')
 DOWNLOAD_EXTENSION = '.jpg'
 
 
