@@ -39,6 +39,7 @@ class PlayPlugin(BeetsPlugin):
             'command': None,
             'use_folders': False,
             'relative_to': None,
+            'raw': False,
         })
 
     def commands(self):
@@ -62,6 +63,7 @@ class PlayPlugin(BeetsPlugin):
         command_str = config['play']['command'].get()
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
+        raw = config['play']['raw'].get(bool)
         if relative_to:
             relative_to = util.normpath(relative_to)
 
@@ -91,6 +93,8 @@ class PlayPlugin(BeetsPlugin):
         else:
             selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
+            if relative_to:
+                paths = [relpath(path, relative_to) for path in paths]
             item_type = 'track'
 
         item_type += 's' if len(selection) > 1 else ''
@@ -111,22 +115,29 @@ class PlayPlugin(BeetsPlugin):
             if ui.input_options(('Continue', 'Abort')) == 'a':
                 return
 
-        # Create temporary m3u file to hold our playlist.
-        m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
-        for item in paths:
-            if relative_to:
-                m3u.write(relpath(item, relative_to) + b'\n')
-            else:
-                m3u.write(item + b'\n')
-        m3u.close()
-
         ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
+        if raw:
+            open_args = paths
+        else:
+            open_args = self._create_tmp_playlist(paths)
 
-        self._log.debug('executing command: {} {}', command_str, m3u.name)
+        self._log.debug('executing command: {} {}', command_str,
+                        b'"' + b' '.join(open_args) + b'"')
         try:
-            util.interactive_open(m3u.name, command_str)
+            util.interactive_open(open_args, command_str)
         except OSError as exc:
             raise ui.UserError("Could not play the music playlist: "
                                "{0}".format(exc))
         finally:
-            util.remove(m3u.name)
+            if not raw:
+                self._log.debug('Removing temporary playlist: {}',
+                                open_args[0])
+                util.remove(open_args[0])
+
+    def _create_tmp_playlist(self, paths_list):
+        # Create temporary m3u file to hold our playlist.
+        m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
+        for item in paths_list:
+            m3u.write(item + b'\n')
+        m3u.close()
+        return [m3u.name]
