@@ -1479,7 +1479,7 @@ class MediaFile(object):
         lexicographic order (except for instances of :class:`DateItemField`,
         which are sorted in year-month-day order).
         """
-        for property in sorted(cls.fields(), key = cls.field_sort_name):
+        for property in sorted(cls.fields(), key=cls.field_sort_name):
             yield property
 
     @classmethod
