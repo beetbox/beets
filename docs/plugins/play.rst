@@ -44,6 +44,9 @@ configuration file. The available options are:
   paths to each track on the matched albums. Enable this option to
   store paths to folders instead.
   Default: ``no``.
+- **raw**: Instead of creating a temporary m3u playlist and then opening it,
+  simply call the command with the paths returned by the query as arguments.
+  Default: ``no``.
 
 Optional Arguments
 ------------------

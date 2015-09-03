@@ -43,11 +43,11 @@ class UtilTest(unittest.TestCase):
     @patch('beets.util.open_anything')
     def test_interactive_open(self, mock_open, mock_execlp):
         mock_open.return_value = 'tagada'
-        util.interactive_open('foo')
+        util.interactive_open(['foo'])
         mock_execlp.assert_called_once_with('tagada', 'tagada', 'foo')
         mock_execlp.reset_mock()
 
-        util.interactive_open('foo', 'bar')
+        util.interactive_open(['foo'], 'bar')
         mock_execlp.assert_called_once_with('bar', 'bar', 'foo')
 
     def test_sanitize_unix_replaces_leading_dot(self):

@@ -1461,6 +1461,34 @@ class MediaFile(object):
                 yield property.decode('utf8')
 
     @classmethod
+    def _field_sort_name(cls, name):
+        """Get a sort key for a field name that determines the order
+        fields should be written in.
+
+        Fields names are kept unchanged, unless they are instances of
+        :class:`DateItemField`, in which case `year`, `month`, and `day`
+        are replaced by `date0`, `date1`, and `date2`, respectively, to
+        make them appear in that order.
+        """
+        if isinstance(cls.__dict__[name], DateItemField):
+            name = re.sub('year',  'date0', name)
+            name = re.sub('month', 'date1', name)
+            name = re.sub('day',   'date2', name)
+        return name
+
+    @classmethod
+    def sorted_fields(cls):
+        """Get the names of all writable metadata fields, sorted in the
+        order that they should be written.
+
+        This is a lexicographic order, except for instances of
+        :class:`DateItemField`, which are sorted in year-month-day
+        order.
+        """
+        for property in sorted(cls.fields(), key=cls._field_sort_name):
+            yield property
+
+    @classmethod
     def readable_fields(cls):
         """Get all metadata fields: the writable ones from
         :meth:`fields` and also other audio properties.
@@ -1496,7 +1524,7 @@ class MediaFile(object):
         the `MediaFile`. If a key has the value `None`, the
         corresponding property is deleted from the `MediaFile`.
         """
-        for field in self.fields():
+        for field in self.sorted_fields():
             if field in dict:
                 if dict[field] is None:
                     delattr(self, field)

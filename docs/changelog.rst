@@ -12,6 +12,9 @@ The new features:
   the player command. :bug:`1532`
 * A new :doc:`/plugins/badfiles` helps you scan for corruption in your music
   collection. Thanks to :user:`fxthomas`. :bug:`1568`
+* :doc:`/plugins/play`: A new ``raw`` configuration option lets the command
+  work with players (such as VLC) that expect music filenames as arguments,
+  rather than in a playlist. Thanks to :user:`nathdwek`. :bug:`1578`
 
 Fixes:
 
@@ -27,6 +30,12 @@ Fixes:
   option.
 * The :ref:`list-cmd` command's help output now has a small query and format
   string example. Thanks to :user:`pkess`. :bug:`1582`
+* :doc:`/plugins/fetchart`: The plugin now fetches PNGs but not GIFs. (It
+  still fetches JPEGs.) This avoids an error when trying to embed images,
+  since not all formats support GIFs. :bug:`1588`
+* Date fields are now written in the correct order (year-month-day), which
+  eliminates an intermittent bug where the latter two fields would not get
+  written to files. Thanks to :user:`jdetrey`. :bug:`1303` :bug:`1589`
 * The check whether the file system is case sensitive or not could lead to
   wrong results. It is much more robust now.
 

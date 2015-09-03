@@ -735,8 +735,8 @@ def open_anything():
     return base_cmd
 
 
-def interactive_open(target, command=None):
-    """Open the file `target` by `exec`ing a new command. (The new
+def interactive_open(targets, command=None):
+    """Open the files in `targets` by `exec`ing a new command. (The new
     program takes over, and Python execution ends: this does not fork a
     subprocess.)
 
@@ -757,7 +757,8 @@ def interactive_open(target, command=None):
         base_cmd = open_anything()
         command = [base_cmd, base_cmd]
 
-    command.append(target)
+    command += targets
+
     return os.execlp(*command)
 
 
