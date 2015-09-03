@@ -762,6 +762,13 @@ def interactive_open(target, command=None):
 
 
 def is_filesystem_case_sensitive(path):
+    """Checks if the filesystem at the given path is case sensitive.
+    If the path does not exist, a case sensitive file system is
+    assumed if the system is not windows.
+
+    :param path: The path to check for case sensitivity.
+    :return: True if the file system is case sensitive, False else.
+    """
     if os.path.exists(path):
         # Check if the path to the library exists in lower and upper case
         if os.path.exists(path.lower()) and \

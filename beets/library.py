@@ -60,6 +60,8 @@ class PathQuery(dbcore.FieldQuery):
         """
         super(PathQuery, self).__init__(field, pattern, fast)
 
+        # By default, the case sensitivity depends on the filesystem
+        # the library is located on.
         if case_sensitive is None:
             case_sensitive = beets.util.is_filesystem_case_sensitive(
                 beets.config['directory'].get())
