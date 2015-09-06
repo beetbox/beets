@@ -82,7 +82,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
                     if remove_art_file and album.artpath is not None:
                         if os.path.isfile(album.artpath):
-                            self._log.debug(u'Removing album art file for {0}', album)
+                            self._log.debug(u'Removing album art file '
+                                            u'for {0}', album)
                             os.remove(album.artpath)
 
         embed_cmd.func = embed_func
