@@ -58,6 +58,9 @@ file. The available options are:
   the aspect ratio is preserved. See also :ref:`image-resizing` for further
   caveats about image resizing.
   Default: 0 (disabled).
+- **remove_art_file**: Automatically remove the album art file for the album
+  after it has been embedded.
+  Default: ``no``.
 
 Note: ``compare_threshold`` option requires `ImageMagick`_, and ``maxwidth``
 requires either `ImageMagick`_ or `PIL`_.
