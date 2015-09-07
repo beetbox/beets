@@ -18,6 +18,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import os.path
 
+from beets import plugins
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.ui import decargs
@@ -85,6 +86,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                             self._log.debug(u'Removing album art file '
                                             u'for {0}', album)
                             os.remove(album.artpath)
+                            album.artpath = None
+                            album.store()
 
         embed_cmd.func = embed_func
 
