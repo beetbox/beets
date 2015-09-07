@@ -711,7 +711,13 @@ class AudioToolsBackend(Backend):
         # of the track.
         # Note that the method needs an audiotools.PCMReader instance that can
         # be obtained from an audiofile instance.
-        rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
+        try:
+            rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
+        except ValueError as exc:
+            # `audiotools.replaygain` can raise a `ValueError` if the sample
+            # rate is incorrect.
+            self._log.debug('error in rg.title_gain() call: {}', exc)
+            raise ReplayGainError('audiotools audio data error')
 
         self._log.debug(u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}',
                         item.artist, item.title, rg_track_gain, rg_track_peak)
