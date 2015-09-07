@@ -18,7 +18,6 @@ from __future__ import (division, absolute_import, print_function,
 
 import os.path
 
-from beets import plugins
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.ui import decargs
