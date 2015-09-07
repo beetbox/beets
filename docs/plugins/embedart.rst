@@ -59,7 +59,10 @@ file. The available options are:
   caveats about image resizing.
   Default: 0 (disabled).
 - **remove_art_file**: Automatically remove the album art file for the album
-  after it has been embedded.
+  after it has been embedded. This option is best used alongside the
+  :doc:`FetchArt </plugins/fetchart>` plugin to download art with the purpose of
+  directly embedding it into the file's metadata without an "intermediate"
+  album art file.
   Default: ``no``.
 
 Note: ``compare_threshold`` option requires `ImageMagick`_, and ``maxwidth``
