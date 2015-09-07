@@ -164,7 +164,10 @@ threaded
 ~~~~~~~~
 
 Either ``yes`` or ``no``, indicating whether the autotagger should use
-multiple threads. This makes things faster but may behave strangely.
+multiple threads. This makes things substantially faster by overlapping work:
+for example, it can copy files for one album in parallel with looking up data
+in MusicBrainz for a different album. You may want to disable this when
+debugging problems with the autotagger.
 Defaults to ``yes``.
 
 

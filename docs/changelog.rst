@@ -15,6 +15,9 @@ The new features:
 * :doc:`/plugins/play`: A new ``raw`` configuration option lets the command
   work with players (such as VLC) that expect music filenames as arguments,
   rather than in a playlist. Thanks to :user:`nathdwek`. :bug:`1578`
+* :doc:`/plugins/embedart`: A new ``remove_art_file`` option lets you clean up
+  if you prefer *only* embedded album art. Thanks to :user:`jackwilsdon`.
+  :bug:`1591` :bug:`733`
 
 Fixes:
 
