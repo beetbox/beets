@@ -18,6 +18,8 @@ The new features:
 * :doc:`/plugins/embedart`: A new ``remove_art_file`` option lets you clean up
   if you prefer *only* embedded album art. Thanks to :user:`jackwilsdon`.
   :bug:`1591` :bug:`733`
+* :doc:`/plugins/play`: You can now configure the number of tracks that
+  trigger a "lots of music" warning. :bug:`1577`
 
 Fixes:
 
