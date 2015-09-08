@@ -40,6 +40,7 @@ class PlayPlugin(BeetsPlugin):
             'use_folders': False,
             'relative_to': None,
             'raw': False,
+            'warning_treshold': 100,
         })
 
     def commands(self):
@@ -64,6 +65,7 @@ class PlayPlugin(BeetsPlugin):
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
         raw = config['play']['raw'].get(bool)
+        warning_treshold = config['play']['warning_treshold'].get(int)
         if relative_to:
             relative_to = util.normpath(relative_to)
 
@@ -105,7 +107,7 @@ class PlayPlugin(BeetsPlugin):
             return
 
         # Warn user before playing any huge playlists.
-        if len(selection) > 100:
+        if warning_treshold and len(selection) > warning_treshold:
             ui.print_(ui.colorize(
                 'text_warning',
                 'You are about to queue {0} {1}.'.format(len(selection),
