@@ -66,10 +66,6 @@ class PathQuery(dbcore.FieldQuery):
             case_sensitive = platform.system() != 'Windows'
         self.case_sensitive = case_sensitive
 
-        # Use a normalized-case pattern for case-insensitive matches.
-        if not case_sensitive:
-            pattern = pattern.lower()
-
         # Match the path as a single file.
         self.file_path = util.bytestring_path(util.normpath(pattern))
         # As a directory (prefix).
@@ -102,8 +98,8 @@ class PathQuery(dbcore.FieldQuery):
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
         dir_blob = buffer(dir_pattern + b'%')
-        return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
-               (file_blob, dir_blob, self.escape_char)
+        return '(lower({0}) = lower(?)) || ({0} LIKE ? ESCAPE ?)'.format(
+            self.field), (file_blob, dir_blob, self.escape_char)
 
 
 # Library-specific field types.

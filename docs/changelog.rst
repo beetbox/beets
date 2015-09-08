@@ -43,6 +43,8 @@ Fixes:
   written to files. Thanks to :user:`jdetrey`. :bug:`1303` :bug:`1589`
 * :doc:`/plugins/replaygain`: Avoid a crash when the PyAudioTools backend
   encounters an error. :bug:`1592`
+* Case insensitive searches might have returned nothing because of a wrong
+  SQL query.
 
 
 1.3.14 (August 2, 2015)
