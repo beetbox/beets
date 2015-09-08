@@ -88,7 +88,8 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
         self.assertEqual(get_music_section(
             self.config['plex']['host'],
             self.config['plex']['port'],
-            self.config['plex']['token']), '2')
+            self.config['plex']['token'],
+            self.config['plex']['library_name'].get()), '2')
 
     @responses.activate
     def test_update_plex(self):
@@ -100,7 +101,8 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
         self.assertEqual(update_plex(
             self.config['plex']['host'],
             self.config['plex']['port'],
-            self.config['plex']['token']).status_code, 200)
+            self.config['plex']['token'],
+            self.config['plex']['library_name'].get()).status_code, 200)
 
 
 def suite():
