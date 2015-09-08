@@ -18,6 +18,8 @@ The new features:
 * :doc:`/plugins/embedart`: A new ``remove_art_file`` option lets you clean up
   if you prefer *only* embedded album art. Thanks to :user:`jackwilsdon`.
   :bug:`1591` :bug:`733`
+* :doc:`/plugins/play`: You can now configure the number of tracks that
+  trigger a "lots of music" warning. :bug:`1577`
 
 Fixes:
 
@@ -39,6 +41,8 @@ Fixes:
 * Date fields are now written in the correct order (year-month-day), which
   eliminates an intermittent bug where the latter two fields would not get
   written to files. Thanks to :user:`jdetrey`. :bug:`1303` :bug:`1589`
+* :doc:`/plugins/replaygain`: Avoid a crash when the PyAudioTools backend
+  encounters an error. :bug:`1592`
 * The check whether the file system is case sensitive or not could lead to
   wrong results. It is much more robust now.
 
