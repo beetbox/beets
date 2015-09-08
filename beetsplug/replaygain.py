@@ -700,6 +700,23 @@ class AudioToolsBackend(Backend):
         """
         return [self._compute_track_gain(item) for item in items]
 
+    def _title_gain(self, rg, audiofile):
+        """Get the gain result pair from PyAudioTools using the `ReplayGain`
+        instance `rg` for the given `audiofile`.
+
+        Wraps `rg.title_gain(audiofile.to_pcm())` and throws a
+        `ReplayGainError` when the library fails.
+        """
+        try:
+            # The method needs an audiotools.PCMReader instance that can
+            # be obtained from an audiofile instance.
+            return rg.title_gain(audiofile.to_pcm())
+        except ValueError as exc:
+            # `audiotools.replaygain` can raise a `ValueError` if the sample
+            # rate is incorrect.
+            self._log.debug('error in rg.title_gain() call: {}', exc)
+            raise ReplayGainError('audiotools audio data error')
+
     def _compute_track_gain(self, item):
         """Compute ReplayGain value for the requested item.
 
@@ -707,17 +724,10 @@ class AudioToolsBackend(Backend):
         """
         audiofile = self.open_audio_file(item)
         rg = self.init_replaygain(audiofile, item)
-        # Each call to title_gain on a replaygain object return peak and gain
+
+        # Each call to title_gain on a ReplayGain object returns peak and gain
         # of the track.
-        # Note that the method needs an audiotools.PCMReader instance that can
-        # be obtained from an audiofile instance.
-        try:
-            rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
-        except ValueError as exc:
-            # `audiotools.replaygain` can raise a `ValueError` if the sample
-            # rate is incorrect.
-            self._log.debug('error in rg.title_gain() call: {}', exc)
-            raise ReplayGainError('audiotools audio data error')
+        rg_track_gain, rg_track_peak = rg._title_gain(rg, audiofile)
 
         self._log.debug(u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}',
                         item.artist, item.title, rg_track_gain, rg_track_peak)
@@ -740,7 +750,7 @@ class AudioToolsBackend(Backend):
         track_gains = []
         for item in album.items():
             audiofile = self.open_audio_file(item)
-            rg_track_gain, rg_track_peak = rg.title_gain(audiofile.to_pcm())
+            rg_track_gain, rg_track_peak = self._title_gain(rg, audiofile)
             track_gains.append(
                 Gain(gain=rg_track_gain, peak=rg_track_peak)
             )
