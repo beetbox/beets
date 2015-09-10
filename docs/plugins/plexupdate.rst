@@ -39,3 +39,5 @@ The available options under the ``plex:`` section are:
   Default: 32400.
 - **token**: The Plex Home token.
   Default: Empty.
+- **library_name**: The name of the Plex library to update.
+  Default: ``Music``
