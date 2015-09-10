@@ -8,9 +8,12 @@ import responses
 
 
 class PlexUpdateTest(unittest.TestCase, TestHelper):
-    def add_response_get_music_section(self):
+    def add_response_get_music_section(self, section_name = 'Music'):
         """Create response for mocking the get_music_section function.
         """
+
+        escaped_section_name = section_name.replace('"', '\\"')
+
         body = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<MediaContainer size="3" allowSync="0" '
@@ -28,7 +31,7 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             '</Directory>'
             '<Directory allowSync="0" art="/:/resources/artist-fanart.jpg" '
             'filters="1" refreshing="0" thumb="/:/resources/artist.png" '
-            'key="2" type="artist" title="Music" '
+            'key="2" type="artist" title="' + escaped_section_name + '" '
             'composite="/library/sections/2/composite/1416929243" '
             'agent="com.plexapp.agents.lastfm" scanner="Plex Music Scanner" '
             'language="en" uuid="90897c95-b3bd-4778-a9c8-1f43cb78f047" '
