@@ -95,6 +95,17 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             self.config['plex']['library_name'].get()), '2')
 
     @responses.activate
+    def test_get_named_music_section(self):
+        # Adding response.
+        self.add_response_get_music_section('My Music Library')
+
+        self.assertEqual(get_music_section(
+            self.config['plex']['host'],
+            self.config['plex']['port'],
+            self.config['plex']['token'],
+            'My Music Library'), '2')
+
+    @responses.activate
     def test_update_plex(self):
         # Adding responses.
         self.add_response_get_music_section()
