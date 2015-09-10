@@ -8,7 +8,7 @@ import responses
 
 
 class PlexUpdateTest(unittest.TestCase, TestHelper):
-    def add_response_get_music_section(self, section_name = 'Music'):
+    def add_response_get_music_section(self, section_name='Music'):
         """Create response for mocking the get_music_section function.
         """
 
