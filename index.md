@@ -47,7 +47,7 @@ shockingly simple if you know a little Python.
 [writing]: http://beets.readthedocs.org/page/dev/plugins.html
     
 <p class="teaser">Install beets by typing
-<code><a href="http://pip.openplans.org/">pip</a> install beets</code>.
+<code><a href="http://www.pip-installer.org/">pip</a> install beets</code>.
 You might then want to read the
 <a href="http://beets.readthedocs.org/page/guides/main.html">Getting
 Started</a> guide. Then follow
