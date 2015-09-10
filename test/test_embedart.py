@@ -82,6 +82,23 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
+    def test_embed_art_remove_art_file(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+
+        logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
+
+        handle, tmp_path = tempfile.mkstemp()
+        os.write(handle, self.image_data)
+        os.close(handle)
+
+        album.artpath = tmp_path
+        album.store()
+
+        config['embedart']['remove_art_file'] = True
+        self.run_command('embedart')
+        self.assertFalse(os.path.isfile(tmp_path))
+
     def test_art_file_missing(self):
         self.add_album_fixture()
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
