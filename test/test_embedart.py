@@ -97,7 +97,10 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         config['embedart']['remove_art_file'] = True
         self.run_command('embedart')
-        self.assertFalse(os.path.isfile(tmp_path))
+
+        if os.path.isfile(tmp_path):
+            os.remove(tmp_path)
+            self.fail('Artwork file {0} was not deleted'.format(tmp_path))
 
     def test_art_file_missing(self):
         self.add_album_fixture()
