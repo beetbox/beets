@@ -72,6 +72,6 @@ Example Configuration
         #   writing to "<file_name_here>"
         # Where <file_name_here> is the file being written to
         - event: write
-          command echo "writing to \"%FILE_NAME%\""
+          command: echo "writing to \"%FILE_NAME%\""
           substitute_args:
             path: %FILE_NAME%
