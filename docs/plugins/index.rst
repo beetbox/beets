@@ -46,6 +46,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    ftintitle
    fuzzy
    freedesktop
+   hook
    ihate
    importadded
    importfeeds
@@ -154,6 +155,7 @@ Miscellaneous
   a different directory.
 * :doc:`duplicates`: List duplicate tracks or albums.
 * :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
+* :doc:`hook`: Run a command when an event is emitted by beets.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
