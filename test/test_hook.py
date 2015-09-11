@@ -22,7 +22,7 @@ from test import _common
 from test._common import unittest
 from test.helper import TestHelper
 
-from beets import config, logging
+from beets import config
 from beets import plugins
 
 
