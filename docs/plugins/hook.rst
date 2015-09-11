@@ -26,8 +26,8 @@ file. The available options are:
   differently depending on the event it was called by. Can be individually
   overridden (see :ref:`individual-hook-configuration`).
   Default: ``%EVENT%``
-- **shell**: Run each command in a shell. Can be individually
-  overridden (see :ref:`individual-hook-configuration`).
+- **shell**: Run each command in a shell. Can be individually overridden (see
+  :ref:`individual-hook-configuration`).
   Default: ``yes``
 
 .. _individual-hook-configuration:
