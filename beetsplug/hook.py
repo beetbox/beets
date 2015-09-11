@@ -34,13 +34,18 @@ def create_hook_function(command, shell, substitute_args):
     #       Popen.std(out/err).readline() waits until a newline has been output
     #       to the stream before returning.
 
+    # TODO: Find a better way of converting arguments to strings, as I
+    #       currently have a feeling that forcing everything to utf-8 might
+    #       end up causing a mess.
+
     def hook_function(**kwargs):
         hook_command = command
 
-        for key in kwargs:
-            if key in substitute_args:
+        for key in substitute_args:
+            if key in kwargs:
                 hook_command = hook_command.replace(substitute_args[key],
-                                                    str(kwargs[key]))
+                                                    unicode(kwargs[key],
+                                                            "utf-8"))
 
         process = subprocess.Popen(hook_command,
                                    stdout=subprocess.PIPE,
