@@ -101,7 +101,7 @@ class HookPlugin(BeetsPlugin):
 
             hook_command = hook_command.replace(original, hook_event)
             hook_function = create_hook_function(self._log, hook_event,
-                                                hook_command, shell,
-                                                substitute_args)
+                                                 hook_command, shell,
+                                                 substitute_args)
 
             self.register_listener(hook_event, hook_function)
