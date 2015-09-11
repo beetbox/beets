@@ -1,0 +1,100 @@
+# This file is part of beets.
+# Copyright 2015, Adrian Sampson.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Allows custom commands to be run when an event is emitted by beets"""
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
+
+import subprocess
+import sys
+
+from beets.plugins import BeetsPlugin
+
+
+def create_hook_function(command, shell, substitute_args):
+
+    # TODO: Find a better way of piping STDOUT/STDERR/STDIN between the process
+    #       and the user.
+    #
+    #       The issue with our current method is that we can only pesudo-pipe
+    #       one (two if we count STDERR being piped to STDOUT) stream at a
+    #       time, meaning we can't have both output and input simultaneously.
+    #       This is due to how Popen.std(out/err) works, as
+    #       Popen.std(out/err).readline() waits until a newline has been output
+    #       to the stream before returning.
+
+    def hook_function(**kwargs):
+        hook_command = command
+
+        for key in kwargs:
+            if key in substitute_args:
+                hook_command = hook_command.replace(substitute_args[key],
+                                                    str(kwargs[key]))
+
+        process = subprocess.Popen(hook_command,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT,
+                                   shell=shell)
+
+        while process.poll() is None:
+            sys.stdout.write(process.stdout.readline())
+
+        # Ensure there's nothing left in the stream
+        sys.stdout.write(process.stdout.readline())
+
+    return hook_function
+
+
+class HookPlugin(BeetsPlugin):
+    """Allows custom commands to be run when an event is emitted by beets"""
+    def __init__(self):
+        super(HookPlugin, self).__init__()
+
+        self.config.add({
+            'hooks': [],
+            'substitute_event': '%EVENT%',
+            'shell': True
+        })
+
+        hooks = self.config['hooks'].get(list)
+        global_substitute_event = self.config['substitute_event'].get()
+        global_shell = self.config['shell'].get(bool)
+
+        for hook_index in range(len(hooks)):
+            hook = self.config['hooks'][hook_index]
+
+            hook_event = hook['event'].get()
+            hook_command = hook['command'].get()
+
+            if 'substitute_event' in hook:
+                original = hook['substitute_event'].get()
+            else:
+                original = global_substitute_event
+
+            if 'shell' in hook:
+                shell = hook['shell'].get(bool)
+            else:
+                shell = global_shell
+
+            if 'substitute_args' in hook:
+                substitute_args = hook['substitute_args'].get(dict)
+            else:
+                substitute_args = {}
+
+            hook_command = hook_command.replace(original, hook_event)
+            hook_function = create_hook_function(hook_command,
+                                                 shell,
+                                                 substitute_args)
+
+            self.register_listener(hook_event, hook_function)
