@@ -115,12 +115,12 @@ class HookTest(_common.TestCase, TestHelper):
         for index, path in enumerate(temporary_paths):
             self._add_hook('test_event_{0}'.format(index),
                            'echo > "%PATH%"'.format(path),
-                           substitute_args = { 'path': '%PATH%' })
+                           substitute_args={'path': '%PATH%'})
 
         self.load_plugins('hook')
 
-        for index, path  in enumerate(temporary_paths):
-            plugins.send('test_event_{0}'.format(index), path = path)
+        for index, path in enumerate(temporary_paths):
+            plugins.send('test_event_{0}'.format(index), path=path)
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
