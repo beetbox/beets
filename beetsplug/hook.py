@@ -22,7 +22,7 @@ import sys
 from beets.plugins import BeetsPlugin
 
 
-def create_hook_function(command, shell, substitute_args):
+def create_hook_function(log, event, command, shell, substitute_args):
 
     # TODO: Find a better way of piping STDOUT/STDERR/STDIN between the process
     #       and the user.
@@ -46,6 +46,8 @@ def create_hook_function(command, shell, substitute_args):
                 hook_command = hook_command.replace(substitute_args[key],
                                                     unicode(kwargs[key],
                                                             "utf-8"))
+
+        log.debug('Running command {0} for event {1}', hook_command, event)
 
         process = subprocess.Popen(hook_command,
                                    stdout=subprocess.PIPE,
@@ -98,8 +100,8 @@ class HookPlugin(BeetsPlugin):
                 substitute_args = {}
 
             hook_command = hook_command.replace(original, hook_event)
-            hook_function = create_hook_function(hook_command,
-                                                 shell,
-                                                 substitute_args)
+            hook_function = create_hook_function(self._log, hook_event,
+                                                hook_command, shell,
+                                                substitute_args)
 
             self.register_listener(hook_event, hook_function)
