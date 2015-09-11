@@ -22,6 +22,8 @@ The new features:
   trigger a "lots of music" warning. :bug:`1577`
 * :doc:`/plugins/plexupdate`: A new ``library_name`` option allows you to select
   which Plex library to update. :bug:`1572` :bug:`1595`
+* New :doc:`/plugins/hook` that allows commands to be executed when an event is
+  emitted by beets. :bug:`1561` :bug:`1603`
 
 Fixes:
 
