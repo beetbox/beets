@@ -47,6 +47,8 @@ Fixes:
   encounters an error. :bug:`1592`
 * The check whether the file system is case sensitive or not could lead to
   wrong results. It is much more robust now.
+* Case-insensitive path queries might have returned nothing because of a
+  wrong SQL query.
 
 
 1.3.14 (August 2, 2015)

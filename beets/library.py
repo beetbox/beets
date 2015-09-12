@@ -93,9 +93,8 @@ class PathQuery(dbcore.FieldQuery):
         return (path == self.file_path) or path.startswith(self.dir_path)
 
     def col_clause(self):
-        file_blob = buffer(self.file_path)
-
         if self.case_sensitive:
+            file_blob = buffer(self.file_path)
             dir_blob = buffer(self.dir_path)
             return '({0} = ?) || (substr({0}, 1, ?) = ?)'.format(self.field), \
                    (file_blob, len(dir_blob), dir_blob)
@@ -103,8 +102,11 @@ class PathQuery(dbcore.FieldQuery):
         escape = lambda m: self.escape_char + m.group(0)
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
         dir_blob = buffer(dir_pattern + b'%')
-        return '({0} = ?) || ({0} LIKE ? ESCAPE ?)'.format(self.field), \
-               (file_blob, dir_blob, self.escape_char)
+        file_pattern = self.escape_re.sub(escape, self.file_path)
+        file_blob = buffer(file_pattern)
+        return '({0} LIKE ? ESCAPE ?) || ({0} LIKE ? ESCAPE ?)'.format(
+            self.field), (file_blob, self.escape_char, dir_blob,
+                          self.escape_char)
 
 
 # Library-specific field types.
