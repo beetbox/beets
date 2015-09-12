@@ -50,15 +50,9 @@ def create_hook_function(log, event, command, shell, substitute_args):
         log.debug('Running command {0} for event {1}', hook_command, event)
 
         process = subprocess.Popen(hook_command,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
                                    shell=shell)
 
-        while process.poll() is None:
-            sys.stdout.write(process.stdout.readline())
-
-        # Ensure there's nothing left in the stream
-        sys.stdout.write(process.stdout.readline())
+        process.wait()
 
     return hook_function
 
