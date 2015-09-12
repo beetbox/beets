@@ -23,21 +23,6 @@ from beets.plugins import BeetsPlugin
 
 
 def create_hook_function(log, event, command, shell, substitute_args):
-
-    # TODO: Find a better way of piping STDOUT/STDERR/STDIN between the process
-    #       and the user.
-    #
-    #       The issue with our current method is that we can only pesudo-pipe
-    #       one (two if we count STDERR being piped to STDOUT) stream at a
-    #       time, meaning we can't have both output and input simultaneously.
-    #       This is due to how Popen.std(out/err) works, as
-    #       Popen.std(out/err).readline() waits until a newline has been output
-    #       to the stream before returning.
-
-    # TODO: Find a better way of converting arguments to strings, as I
-    #       currently have a feeling that forcing everything to utf-8 might
-    #       end up causing a mess.
-
     def hook_function(**kwargs):
         hook_command = command
 
