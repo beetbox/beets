@@ -17,8 +17,8 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import subprocess
-import sys
 
+from beets.ui import _arg_encoding
 from beets.plugins import BeetsPlugin
 
 
@@ -45,7 +45,7 @@ def create_hook_function(log, event, command, shell, substitute_args):
             if key in kwargs:
                 hook_command = hook_command.replace(substitute_args[key],
                                                     unicode(kwargs[key],
-                                                            "utf-8"))
+                                                            _arg_encoding()))
 
         log.debug('Running command {0} for event {1}', hook_command, event)
 
