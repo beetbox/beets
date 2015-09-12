@@ -102,7 +102,7 @@ class PathQuery(dbcore.FieldQuery):
         dir_pattern = self.escape_re.sub(escape, self.dir_path)
         dir_blob = buffer(dir_pattern + b'%')
         file_pattern = self.escape_re.sub(escape, self.file_path)
-        file_blob = buffer(file_pattern + b'%')
+        file_blob = buffer(file_pattern)
         return '({0} LIKE ? ESCAPE ?) || ({0} LIKE ? ESCAPE ?)'.format(
             self.field), (file_blob, self.escape_char, dir_blob,
                           self.escape_char)
