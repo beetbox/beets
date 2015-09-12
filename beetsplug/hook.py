@@ -49,10 +49,7 @@ def create_hook_function(log, event, command, shell, substitute_args):
 
         log.debug('Running command {0} for event {1}', hook_command, event)
 
-        process = subprocess.Popen(hook_command,
-                                   shell=shell)
-
-        process.wait()
+        subprocess.Popen(hook_command, shell=shell).wait()
 
     return hook_function
 
