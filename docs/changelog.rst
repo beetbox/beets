@@ -47,6 +47,8 @@ Fixes:
   encounters an error. :bug:`1592`
 * Case-insensitive path queries might have returned nothing because of a
   wrong SQL query.
+* Fix a crash when a query contains a "+" or "-" alone in a component.
+  :bug:`1605`
 
 
 1.3.14 (August 2, 2015)

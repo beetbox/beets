@@ -518,6 +518,12 @@ class ParseSortedQueryTest(unittest.TestCase):
         self.assertIsInstance(s, dbcore.query.NullSort)
         self.assertEqual(len(q.subqueries), 3)
 
+    def test_only_direction(self):
+        q, s = self.psq('-')
+        self.assertIsInstance(q, dbcore.query.AndQuery)
+        self.assertIsInstance(s, dbcore.query.NullSort)
+        self.assertEqual(len(q.subqueries), 1)
+
 
 class ResultsIteratorTest(unittest.TestCase):
     def setUp(self):

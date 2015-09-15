@@ -188,7 +188,11 @@ def parse_sorted_query(model_cls, parts, prefixes={}):
             ))
             del subquery_parts[:]
         else:
-            if part.endswith((u'+', u'-')) and u':' not in part:
+            # Sort parts (1) end in + or -, (2) don't have a field, and
+            # (3) consist of more than just the + or -.
+            if part.endswith((u'+', u'-')) \
+                    and u':' not in part \
+                    and len(part) > 1:
                 sort_parts.append(part)
             else:
                 subquery_parts.append(part)
