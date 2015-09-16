@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Your description
+"""Test module for file ui/commands.py
 """
 import os
 import shutil
