@@ -67,20 +67,19 @@ class QueryTest(_common.TestCase):
             pass
 
     def test_query_item(self):
-        self.i, self.itempath = self.add_item()
+        item, itempath = self.add_item()
         items, albums = commands._do_query(self.lib, (), False)
         self.assertEqual(len(albums), 0)
         self.assertEqual(len(items), 1)
 
-        self.i, self.itempath = self.add_item()
+        item, itempath = self.add_item()
         items, albums = commands._do_query(self.lib, (), False)
         self.assertEqual(len(albums), 0)
         self.assertEqual(len(items), 2)
 
     def test_query_album(self):
-        self.i, self.itempath = self.add_item()
-        self.album = self.add_album([self.i])
-#        raise Exception(self.album)
+        item, itempath = self.add_item()
+        album = self.add_album([item])
         items, albums = commands._do_query(self.lib, (), True)
         self.assertEqual(len(items), 1)
         self.assertEqual(len(albums), 1)
@@ -89,9 +88,9 @@ class QueryTest(_common.TestCase):
         self.assertEqual(len(items), 0)
         self.assertEqual(len(albums), 1)
 
-        self.i, self.itempath = self.add_item()
-        self.i2, self.itempath = self.add_item()
-        self.album = self.add_album([self.i, self.i2])
+        item, itempath = self.add_item()
+        item2, itempath = self.add_item()
+        self.album = self.add_album([item, item2])
         items, albums = commands._do_query(self.lib, (), True)
         self.assertEqual(len(items), 3)
         self.assertEqual(len(albums), 2)
