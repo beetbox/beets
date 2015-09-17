@@ -30,8 +30,6 @@ class QueryTest(_common.TestCase):
     def setUp(self):
         super(QueryTest, self).setUp()
 
-        self.io.install()
-
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
 
