@@ -71,7 +71,7 @@ class QueryTest(_common.TestCase):
 
     def test_query_album(self):
         item, itempath = self.add_item()
-        album = self.add_album([item])
+        self.add_album([item])
         items, albums = commands._do_query(self.lib, (), True)
         self.assertEqual(len(items), 1)
         self.assertEqual(len(albums), 1)
@@ -82,7 +82,7 @@ class QueryTest(_common.TestCase):
 
         item, itempath = self.add_item()
         item2, itempath = self.add_item()
-        self.album = self.add_album([item, item2])
+        self.add_album([item, item2])
         items, albums = commands._do_query(self.lib, (), True)
         self.assertEqual(len(items), 3)
         self.assertEqual(len(albums), 2)
