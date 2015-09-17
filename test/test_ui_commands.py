@@ -41,7 +41,7 @@ class QueryTest(_common.TestCase):
         # Alternate destination directory.
         self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
-    def add_Item(self, filename='srcfile', templatefile='full.mp3'):
+    def add_item(self, filename='srcfile', templatefile='full.mp3'):
         itempath = os.path.join(self.libdir, filename)
         shutil.copy(os.path.join(_common.RSRC, templatefile), itempath)
         item = library.Item.from_path(itempath)
@@ -67,18 +67,18 @@ class QueryTest(_common.TestCase):
             pass
 
     def test_query_item(self):
-        self.i, self.itempath = self.add_Item()
+        self.i, self.itempath = self.add_item()
         items, albums = commands._do_query(self.lib, (), False)
         self.assertEqual(len(albums), 0)
         self.assertEqual(len(items), 1)
 
-        self.i, self.itempath = self.add_Item()
+        self.i, self.itempath = self.add_item()
         items, albums = commands._do_query(self.lib, (), False)
         self.assertEqual(len(albums), 0)
         self.assertEqual(len(items), 2)
 
     def test_query_album(self):
-        self.i, self.itempath = self.add_Item()
+        self.i, self.itempath = self.add_item()
         self.album = self.add_album([self.i])
 #        raise Exception(self.album)
         items, albums = commands._do_query(self.lib, (), True)
@@ -89,8 +89,8 @@ class QueryTest(_common.TestCase):
         self.assertEqual(len(items), 0)
         self.assertEqual(len(albums), 1)
 
-        self.i, self.itempath = self.add_Item()
-        self.i2, self.itempath = self.add_Item()
+        self.i, self.itempath = self.add_item()
+        self.i2, self.itempath = self.add_item()
         self.album = self.add_album([self.i, self.i2])
         items, albums = commands._do_query(self.lib, (), True)
         self.assertEqual(len(items), 3)
