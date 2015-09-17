@@ -50,7 +50,7 @@ class QueryTest(_common.TestCase):
         album = self.lib.add_album(items)
         return album
 
-    def check_do_query(self, num_items, num_albums, 
+    def check_do_query(self, num_items, num_albums,
                        q=(), album=False, also_items=True):
         items, albums = commands._do_query(
             self.lib, q, album, also_items)
@@ -82,7 +82,6 @@ class QueryTest(_common.TestCase):
         self.add_album([item, item2])
         self.check_do_query(3, 2, album=True)
         self.check_do_query(0, 2, album=True, also_items=False)
-        
 
 
 def suite():
