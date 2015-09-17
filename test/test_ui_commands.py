@@ -52,19 +52,19 @@ class QueryTest(_common.TestCase):
 
     def test_query_empty(self):
         with self.assertRaises(ui.UserError):
-            items, albums = commands._do_query(self.lib, (), False)
+            commands._do_query(self.lib, (), False)
 
     def test_query_empty_album(self):
         with self.assertRaises(ui.UserError):
-            items, albums = commands._do_query(self.lib, (), True)
+            commands._do_query(self.lib, (), True)
 
     def test_query_item(self):
-        item, itempath = self.add_item()
+        self.add_item()
         items, albums = commands._do_query(self.lib, (), False)
         self.assertEqual(len(albums), 0)
         self.assertEqual(len(items), 1)
 
-        item, itempath = self.add_item()
+        self.add_item()
         items, albums = commands._do_query(self.lib, (), False)
         self.assertEqual(len(albums), 0)
         self.assertEqual(len(items), 2)
