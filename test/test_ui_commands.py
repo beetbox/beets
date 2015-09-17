@@ -53,18 +53,12 @@ class QueryTest(_common.TestCase):
         return album
 
     def test_query_empty(self):
-        try:
+        with self.assertRaises(ui.UserError):
             items, albums = commands._do_query(self.lib, (), False)
-            raise Exception("A UserError should have been raised")
-        except ui.UserError:
-            pass
 
     def test_query_empty_album(self):
-        try:
+        with self.assertRaises(ui.UserError):
             items, albums = commands._do_query(self.lib, (), True)
-            raise Exception("A UserError should have been raised")
-        except ui.UserError:
-            pass
 
     def test_query_item(self):
         item, itempath = self.add_item()
