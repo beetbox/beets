@@ -50,6 +50,13 @@ class QueryTest(_common.TestCase):
         album = self.lib.add_album(items)
         return album
 
+    def check_do_query(self, num_items, num_albums, 
+                       q=(), album=False, also_items=True):
+        items, albums = commands._do_query(
+            self.lib, q, album, also_items)
+        self.assertEqual(len(items), num_items)
+        self.assertEqual(len(albums), num_albums)
+
     def test_query_empty(self):
         with self.assertRaises(ui.UserError):
             commands._do_query(self.lib, (), False)
@@ -60,36 +67,22 @@ class QueryTest(_common.TestCase):
 
     def test_query_item(self):
         self.add_item()
-        items, albums = commands._do_query(self.lib, (), False)
-        self.assertEqual(len(albums), 0)
-        self.assertEqual(len(items), 1)
-
+        self.check_do_query(1, 0, album=False)
         self.add_item()
-        items, albums = commands._do_query(self.lib, (), False)
-        self.assertEqual(len(albums), 0)
-        self.assertEqual(len(items), 2)
+        self.check_do_query(2, 0, album=False)
 
     def test_query_album(self):
         item, itempath = self.add_item()
         self.add_album([item])
-        items, albums = commands._do_query(self.lib, (), True)
-        self.assertEqual(len(items), 1)
-        self.assertEqual(len(albums), 1)
-        items, albums = commands._do_query(
-            self.lib, (), True, also_items=False)
-        self.assertEqual(len(items), 0)
-        self.assertEqual(len(albums), 1)
+        self.check_do_query(1, 1, album=True)
+        self.check_do_query(0, 1, album=True, also_items=False)
 
         item, itempath = self.add_item()
         item2, itempath = self.add_item()
         self.add_album([item, item2])
-        items, albums = commands._do_query(self.lib, (), True)
-        self.assertEqual(len(items), 3)
-        self.assertEqual(len(albums), 2)
-        items, albums = commands._do_query(
-            self.lib, (), True, also_items=False)
-        self.assertEqual(len(items), 0)
-        self.assertEqual(len(albums), 2)
+        self.check_do_query(3, 2, album=True)
+        self.check_do_query(0, 2, album=True, also_items=False)
+        
 
 
 def suite():
