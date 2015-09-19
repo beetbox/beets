@@ -34,8 +34,7 @@ dropped, and Python 3.x is not yet supported.)
 
 * On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
 
-* On **OpenBSD-current**, beets is available in ports (at ``audio/beets``) and
-  as a package, which can be installed with ``pkg_add beets``.
+* On **OpenBSD**, beets can be installed with ``pkg_add beets``.
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
