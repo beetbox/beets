@@ -84,6 +84,25 @@ class QueryTest(_common.TestCase):
         self.check_do_query(0, 2, album=True, also_items=False)
 
 
+class FieldsTest(_common.TestCase):
+    def setUp(self):
+        super(FieldsTest, self).setUp()
+
+        self.io.install()
+
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        os.mkdir(self.libdir)
+
+        # Add a file to the library but don't copy it in yet.
+        self.lib = library.Library(':memory:', self.libdir)
+
+    def tearDown(self):
+        self.io.restore()
+
+    def test_fields_func(self):
+        commands.fields_func(self.lib, [], [])
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
