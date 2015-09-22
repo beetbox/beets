@@ -64,6 +64,12 @@ plugins
 A space-separated list of plugin module names to load. See
 :ref:`using-plugins`.
 
+include
+~~~~~~~
+
+A space-separated list of extra configuration files to include.
+Filenames are relative to the directory containing ``config.yaml``.
+
 pluginpath
 ~~~~~~~~~~
 
