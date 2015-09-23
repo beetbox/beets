@@ -779,16 +779,6 @@ class Configuration(RootView):
         if os.path.isfile(filename):
             self.add(ConfigSource(load_yaml(filename) or {}, filename))
 
-        try:
-            included_filenames = self['include'].get(list)
-        except NotFoundError:
-            included_filenames = []
-
-        for filename in included_filenames:
-            filename = os.path.join(self.config_dir(), filename)
-            if os.path.isfile(filename):
-                self.add(ConfigSource(load_yaml(filename) or {}, filename))
-
     def _add_default_source(self):
         """Add the package's default configuration settings. This looks
         for a YAML file located inside the package for the module
