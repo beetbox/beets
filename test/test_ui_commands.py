@@ -84,17 +84,11 @@ class QueryTest(_common.TestCase):
         self.check_do_query(0, 2, album=True, also_items=False)
 
 
-class FieldsTest(_common.TestCase):
+class FieldsTest(_common.LibTestCase):
     def setUp(self):
         super(FieldsTest, self).setUp()
 
         self.io.install()
-
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
-        os.mkdir(self.libdir)
-
-        # Add a file to the library but don't copy it in yet.
-        self.lib = library.Library(':memory:', self.libdir)
 
     def tearDown(self):
         self.io.restore()
