@@ -15,6 +15,8 @@
 
 """Test module for file ui/__init__.py
 """
+import textwrap
+
 from test import _common
 from test._common import unittest
 
@@ -58,6 +60,41 @@ class InitTest(_common.LibTestCase):
         ]
         for i, h in tests:
             self.assertEqual(h, ui.human_seconds(i))
+
+
+class SubcommandTest(_common.LibTestCase):
+    def setUp(self):
+        super(SubcommandTest, self).setUp()
+
+        self.io.install()
+
+    def tearDown(self):
+        self.io.restore()
+
+    def _add_subcommand(self, parser=None):
+        self.test_cmd = ui.Subcommand('test', parser,
+            help='This is the help text for test')
+
+    def test_print_help(self):
+        parser = ui.CommonOptionsParser(usage="Test")
+        parser.add_all_common_options()
+        self._add_subcommand(parser)
+        self.test_cmd.print_help()
+        desired_output = textwrap.dedent(
+            """            Usage: Test
+        
+            Options:
+              -h, --help            show this help message and exit
+              -a, --album           match albums instead of tracks
+              -p PATH, --path=PATH  print paths for matched items or albums
+              -f FORMAT, --format=FORMAT
+                                    print with custom format
+            """)
+        self.assertEqual(self.io.stdout.get(), desired_output) 
+
+    def test_get_root_parser(self):
+        self._add_subcommand()
+        root_parser = self.test_cmd.root_parser
 
 
 def suite():
