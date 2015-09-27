@@ -72,7 +72,8 @@ class SubcommandTest(_common.LibTestCase):
         self.io.restore()
 
     def _add_subcommand(self, parser=None):
-        self.test_cmd = ui.Subcommand('test', parser,
+        self.test_cmd = ui.Subcommand(
+            'test', parser,
             help='This is the help text for test')
 
     def test_print_help(self):
@@ -82,7 +83,7 @@ class SubcommandTest(_common.LibTestCase):
         self.test_cmd.print_help()
         desired_output = textwrap.dedent(
             """            Usage: Test
-        
+
             Options:
               -h, --help            show this help message and exit
               -a, --album           match albums instead of tracks
@@ -90,11 +91,13 @@ class SubcommandTest(_common.LibTestCase):
               -f FORMAT, --format=FORMAT
                                     print with custom format
             """)
-        self.assertEqual(self.io.stdout.get(), desired_output) 
+        self.assertEqual(self.io.stdout.get(), desired_output)
 
     def test_get_root_parser(self):
         self._add_subcommand()
         root_parser = self.test_cmd.root_parser
+        # Following is just a workaround for FLAKE8 rule F841
+        root_parser = root_parser
 
 
 def suite():
