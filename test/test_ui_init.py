@@ -34,6 +34,24 @@ class InitTest(_common.LibTestCase):
     def tearDown(self):
         self.io.restore()
 
+    def test_human_bytes(self):
+        tests = [
+            (0, '0.0 B'),
+            (30, '30.0 B'),
+            (pow(2, 10), '1.0 KB'),
+            (pow(2, 20), '1.0 MB'),
+            (pow(2, 30), '1.0 GB'),
+            (pow(2, 40), '1.0 TB'),
+            (pow(2, 50), '1.0 PB'),
+            (pow(2, 60), '1.0 EB'),
+            (pow(2, 70), '1.0 ZB'),
+            (pow(2, 80), '1.0 YB'),
+            (pow(2, 90), '1.0 HB'),
+            (pow(2, 100), 'big'),
+        ]
+        for i, h in tests:
+            self.assertEqual(h, ui.human_bytes(i))
+
     def test_human_seconds(self):
         tests = [
             (0, '0.0 seconds'),
