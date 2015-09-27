@@ -113,32 +113,6 @@ class FieldsTest(_common.LibTestCase):
         self.assertEqual(len(albums), 0)
 
 
-class InitTest(_common.LibTestCase):
-    def setUp(self):
-        super(InitTest, self).setUp()
-
-        self.io.install()
-
-    def tearDown(self):
-        self.io.restore()
-
-    def test_human_seconds(self):
-        tests = [
-            (0, '0.0 seconds'),
-            (30, '30.0 seconds'),
-            (60, '1.0 minutes'),
-            (90, '1.5 minutes'),
-            (125, '2.1 minutes'),
-            (3600, '1.0 hours'),
-            (86400, '1.0 days'),
-            (604800, '1.0 weeks'),
-            (31449600, '1.0 years'),
-            (314496000, '1.0 decades'),
-        ]
-        for i, h in tests:
-            self.assertEqual(h, ui.human_seconds(i))
-
-
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
