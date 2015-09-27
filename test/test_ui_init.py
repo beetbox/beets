@@ -25,11 +25,6 @@ class InitTest(_common.LibTestCase):
     def setUp(self):
         super(InitTest, self).setUp()
 
-        self.io.install()
-
-    def tearDown(self):
-        self.io.restore()
-
     def test_human_bytes(self):
         tests = [
             (0, '0.0 B'),
