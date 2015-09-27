@@ -15,13 +15,9 @@
 
 """Test module for file ui/__init__.py
 """
-import os
-import shutil
-
 from test import _common
 from test._common import unittest
 
-from beets import library
 from beets import ui
 
 
