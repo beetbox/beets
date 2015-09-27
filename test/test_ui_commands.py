@@ -84,6 +84,35 @@ class QueryTest(_common.TestCase):
         self.check_do_query(0, 2, album=True, also_items=False)
 
 
+class FieldsTest(_common.LibTestCase):
+    def setUp(self):
+        super(FieldsTest, self).setUp()
+
+        self.io.install()
+
+    def tearDown(self):
+        self.io.restore()
+
+    def remove_keys(self, l, text):
+        for i in text:
+            try:
+                l.remove(i)
+            except ValueError:
+                pass
+
+    def test_fields_func(self):
+        commands.fields_func(self.lib, [], [])
+        items = library.Item.all_keys()
+        albums = library.Album.all_keys()
+
+        output = self.io.stdout.get().split()
+        self.remove_keys(items, output)
+        self.remove_keys(albums, output)
+
+        self.assertEqual(len(items), 0)
+        self.assertEqual(len(albums), 0)
+
+
 class InitTest(_common.LibTestCase):
     def setUp(self):
         super(InitTest, self).setUp()
