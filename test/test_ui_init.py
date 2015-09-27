@@ -100,6 +100,27 @@ class SubcommandTest(_common.LibTestCase):
         root_parser = root_parser
 
 
+class MainTest(_common.LibTestCase):
+    def setUp(self):
+        super(MainTest, self).setUp()
+
+        self.io.install()
+
+    def tearDown(self):
+        self.io.restore()
+
+    def test_normal(self):
+        ui.main(["list"])
+
+    def test_user_error(self):
+        with self.assertRaises(SystemExit) as cm:
+            ui.main(["somestragecommandnameneverusedbyanyextension"])
+
+        self.assertEqual(cm.exception.code, 1)
+        #raise Exception(self.io.stdout.get())
+        #ui.main(("Subcommand"))
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
