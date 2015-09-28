@@ -150,6 +150,17 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         with self.assertRaises(ui.UserError):
             self._setup_config(bucket_year=['nodigits'])
 
+    def check_span_from_str(self, sstr, dfrom, dto):
+        d = bucket.span_from_str(sstr)
+        self.assertEqual(dfrom, d['from'])
+        self.assertEqual(dto, d['to'])
+
+    def test_span_from_str(self):
+        self.check_span_from_str("1980 2000", 1980, 2000)
+        self.check_span_from_str("1980 00", 1980, 2000)
+        self.check_span_from_str("1930 00", 1930, 2000)
+        self.check_span_from_str("1930 50", 1930, 1950)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
