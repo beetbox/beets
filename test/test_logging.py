@@ -31,6 +31,9 @@ class LoggingTest(TestCase):
         l5 = l3.getChild("shalala")
         self.assertEqual(l5.__class__, blog.BeetsLogger)
 
+        l6 = log.getLogger()
+        self.assertNotEqual(l1, l6)
+
     def test_str_format_logging(self):
         l = blog.getLogger("baz123")
         stream = StringIO()
