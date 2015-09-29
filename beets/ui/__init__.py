@@ -329,11 +329,13 @@ def input_yn(prompt, require=False):
 
 def human_bytes(size):
     """Formats size, a number of bytes, in a human-readable way."""
-    suffices = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB', 'HB']
-    for suffix in suffices:
+    powers = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'H']
+    unit = 'B'
+    for power in powers:
         if size < 1024:
-            return "%3.1f %s" % (size, suffix)
+            return "%3.1f %s%s" % (size, power, unit)
         size /= 1024.0
+        unit = 'iB'
     return "big"
 
 
