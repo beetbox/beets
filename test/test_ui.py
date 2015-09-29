@@ -1012,14 +1012,14 @@ class SummarizeItemsTest(_common.TestCase):
 
         i2 = deepcopy(self.item)
         summary = commands.summarize_items([self.item, i2], False)
-        self.assertEqual(summary, "2 items, F, 4kbps, 21:48, 1.9 KB")
+        self.assertEqual(summary, "2 items, F, 4kbps, 21:48, 1.9 KiB")
 
         i2.format = "G"
         summary = commands.summarize_items([self.item, i2], False)
-        self.assertEqual(summary, "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KB")
+        self.assertEqual(summary, "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KiB")
 
         summary = commands.summarize_items([self.item, i2, i2], False)
-        self.assertEqual(summary, "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KB")
+        self.assertEqual(summary, "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB")
 
 
 class PathFormatTest(_common.TestCase):
