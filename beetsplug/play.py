@@ -24,6 +24,7 @@ from beets import ui
 from beets import util
 from os.path import relpath
 from tempfile import NamedTemporaryFile
+import shlex
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
@@ -121,10 +122,10 @@ class PlayPlugin(BeetsPlugin):
         if raw:
             open_args = paths
         else:
-            open_args = self._create_tmp_playlist(paths)
+            open_args = [self._create_tmp_playlist(paths)]
 
         self._log.debug('executing command: {} {}', command_str,
-                        b'"' + b' '.join(open_args) + b'"')
+                        b' '.join(open_args))
         try:
             util.interactive_open(open_args, command_str)
         except OSError as exc:
@@ -137,9 +138,10 @@ class PlayPlugin(BeetsPlugin):
                 util.remove(open_args[0])
 
     def _create_tmp_playlist(self, paths_list):
-        # Create temporary m3u file to hold our playlist.
+        """Create a temporary .m3u file. Return the filename.
+        """
         m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
         for item in paths_list:
             m3u.write(item + b'\n')
         m3u.close()
-        return [m3u.name]
+        return m3u.name
