@@ -49,6 +49,7 @@ Fixes:
   wrong SQL query.
 * Fix a crash when a query contains a "+" or "-" alone in a component.
   :bug:`1605`
+* Fixed unit of file size to MiB, GiB, etc. instead of MB, GB, etc. :bug:`1623`
 
 
 1.3.14 (August 2, 2015)
