@@ -24,7 +24,6 @@ from beets import ui
 from beets import util
 from os.path import relpath
 from tempfile import NamedTemporaryFile
-import shlex
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
