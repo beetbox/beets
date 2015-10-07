@@ -33,14 +33,12 @@ class IncludeLazyConfig(confit.LazyConfig):
         super(IncludeLazyConfig, self).read(user, defaults)
 
         try:
-            included_filenames = self['include'].get(list)
+            for view in self['include'].all_contents():
+                filename = view.as_filename()
+                if os.path.isfile(filename):
+                    self.set_file(filename)
         except confit.NotFoundError:
-            included_filenames = []
-
-        for filename in included_filenames:
-            filename = os.path.join(self.config_dir(), filename)
-            if os.path.isfile(filename):
-                self.set_file(filename)
+            pass
 
 
 config = IncludeLazyConfig('beets', __name__)
