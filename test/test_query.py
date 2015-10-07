@@ -376,12 +376,17 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.i.store()
         self.lib.add_album([self.i])
 
-        self.patcher = patch('beets.library.os.path.exists')
-        self.patcher.start().return_value = True
+        self.patcher_exists = patch('beets.library.os.path.exists')
+        self.patcher_exists.start().return_value = True
+
+        self.patcher_samefile = patch('beets.library.os.path.samefile')
+        self.patcher_samefile.start().return_value = True
 
     def tearDown(self):
         super(PathQueryTest, self).tearDown()
-        self.patcher.stop()
+
+        self.patcher_samefile.stop()
+        self.patcher_exists.stop()
 
     def test_path_exact_match(self):
         q = 'path:/a/b/c.mp3'
@@ -503,7 +508,27 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.items(makeq(case_sensitive=False))
         self.assert_items_matched(results, ['path item', 'caps path'])
 
-        # test platform-aware default sensitivity
+        # Check for correct case sensitivity selection (this check
+        # only works for non-windows os)
+        with _common.system_mock('Darwin'):
+            # exists = True and samefile = True => Case insensitive
+            q = makeq()
+            self.assertEqual(q.case_sensitive, False)
+
+            self.patcher_samefile.stop()
+            self.patcher_samefile.start().return_value = False
+
+            # exists = True and samefile = False => Case sensitive
+            q = makeq()
+            self.assertEqual(q.case_sensitive, True)
+
+            self.patcher_samefile.stop()
+            self.patcher_samefile.start().return_value = True
+
+        # test platform-aware default sensitivity when the library
+        # path does not exist (exist = False)
+        self.patcher_exists.stop()
+        self.patcher_exists.start().return_value = False
         with _common.system_mock('Darwin'):
             q = makeq()
             self.assertEqual(q.case_sensitive, True)
@@ -511,6 +536,8 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         with _common.system_mock('Windows'):
             q = makeq()
             self.assertEqual(q.case_sensitive, False)
+        self.patcher_exists.stop()
+        self.patcher_exists.start().return_value = True
 
     @patch('beets.library.os')
     def test_path_sep_detection(self, mock_os):
@@ -526,7 +553,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
     def test_path_detection(self):
         # cover existence test
-        self.patcher.stop()
+        self.patcher_exists.stop()
         is_path = beets.library.PathQuery.is_path_query
 
         try:
@@ -546,7 +573,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
             finally:
                 os.chdir(cur_dir)
         finally:
-            self.patcher.start()
+            self.patcher_exists.start()
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):

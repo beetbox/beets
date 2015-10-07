@@ -24,7 +24,6 @@ import unicodedata
 import time
 import re
 from unidecode import unidecode
-import platform
 
 from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
@@ -61,9 +60,11 @@ class PathQuery(dbcore.FieldQuery):
         """
         super(PathQuery, self).__init__(field, pattern, fast)
 
-        # By default, the case sensitivity depends on the platform.
+        # By default, the case sensitivity depends on the filesystem
+        # the library is located on.
         if case_sensitive is None:
-            case_sensitive = platform.system() != 'Windows'
+            case_sensitive = beets.util.is_filesystem_case_sensitive(
+                beets.config['directory'].get())
         self.case_sensitive = case_sensitive
 
         # Use a normalized-case pattern for case-insensitive matches.
