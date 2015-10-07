@@ -24,14 +24,23 @@ __author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 Library = beets.library.Library
 
-config = confit.LazyConfig('beets', __name__)
 
-try:
-    included_filenames = config['include'].get(list)
-except confit.NotFoundError:
-    included_filenames = []
+class IncludeLazyConfig(confit.LazyConfig):
+    """A version of Confit's LazyConfig that also merges in data from
+    YAML files specified in an `include` setting.
+    """
+    def read(self, user=True, defaults=True):
+        super(IncludeLazyConfig, self).read(user, defaults)
 
-for filename in included_filenames:
-    filename = os.path.join(config.config_dir(), filename)
-    if os.path.isfile(filename):
-        config.set_file(filename)
+        try:
+            included_filenames = self['include'].get(list)
+        except confit.NotFoundError:
+            included_filenames = []
+
+        for filename in included_filenames:
+            filename = os.path.join(self.config_dir(), filename)
+            if os.path.isfile(filename):
+                self.set_file(filename)
+
+
+config = IncludeLazyConfig('beets', __name__)
