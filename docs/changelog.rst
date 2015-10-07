@@ -23,6 +23,11 @@ The new features:
 * :doc:`/plugins/plexupdate`: A new ``library_name`` option allows you to select
   which Plex library to update. :bug:`1572` :bug:`1595`
 * Add new `include` config option to allow including external config files.
+* The importer now supports audio files contained in data tracks when they are
+  listed in MusicBrainz: the corresponding audio tracks are now merged into the
+  main track list. (This feature depends on a new version of the
+  ``musicbrainzngs`` library which is not yet released, but will start working
+  when it is available.) Thanks to :user:`jdetrey`.  :bug:`1638`
 
 Fixes:
 
