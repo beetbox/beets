@@ -763,50 +763,55 @@ def interactive_open(targets, command=None):
     return os.execlp(*command)
 
 
-def is_filesystem_case_sensitive(path):
-    """Checks if the filesystem at the given path is case sensitive.
-    If the path does not exist, a case sensitive file system is
-    assumed if the system is not windows.
-
-    :param path: The path to check for case sensitivity.
-    :return: True if the file system is case sensitive, False else.
+def _windows_long_path_name(short_path):
+    """Use Windows' `GetLongPathNameW` via ctypes to get the canonical,
+    long path given a short filename.
     """
-    if os.path.exists(path):
-        # Check if the path to the library exists in lower and upper case
-        if os.path.exists(path.lower()) and \
-           os.path.exists(path.upper()):
-            # All the paths may exist on the file system. Check if they
-            # refer to different files
-            if platform.system() != 'Windows':
-                # os.path.samefile is only available on Unix systems for
-                # python < 3.0
-                return not os.path.samefile(path.lower(),
-                                            path.upper())
+    if not isinstance(short_path, unicode):
+        short_path = unicode(short_path)
+    buf = ctypes.create_unicode_buffer(260)
+    get_long_path_name_w = ctypes.windll.kernel32.GetLongPathNameW
+    return_value = get_long_path_name_w(short_path, buf, 260)
+    if return_value == 0 or return_value > 260:
+        # An error occurred
+        return short_path
+    else:
+        long_path = buf.value
+        # GetLongPathNameW does not change the case of the drive
+        # letter.
+        if len(long_path) > 1 and long_path[1] == ':':
+            long_path = long_path[0].upper() + long_path[1:]
+        return long_path
 
-            # On windows we use GetLongPathNameW to determine the real path
-            # using the actual case.
-            def get_long_path_name(short_path):
-                if not isinstance(short_path, unicode):
-                    short_path = unicode(short_path)
-                buf = ctypes.create_unicode_buffer(260)
-                get_long_path_name_w = ctypes.windll.kernel32.GetLongPathNameW
-                return_value = get_long_path_name_w(short_path, buf, 260)
-                if return_value == 0 or return_value > 260:
-                    # An error occurred
-                    return short_path
-                else:
-                    long_path = buf.value
-                    # GetLongPathNameW does not change the case of the drive
-                    # letter.
-                    if len(long_path) > 1 and long_path[1] == ':':
-                        long_path = long_path[0].upper() + long_path[1:]
-                    return long_path
 
-            lower = get_long_path_name(path.lower())
-            upper = get_long_path_name(path.upper())
+def case_sensitive(path):
+    """Check whether the filesystem at the given path is case sensitive.
 
-            return lower != upper
-        else:
-            return True
-    # By default, the case sensitivity depends on the platform.
-    return platform.system() != 'Windows'
+    To work best, the path should point to a file or a directory. If the path
+    does not exist, assume a case sensitive file system on every platform
+    except Windows.
+    """
+    # A fallback in case the path does not exist.
+    if not os.path.exists(path):
+        # By default, the case sensitivity depends on the platform.
+        return platform.system() != 'Windows'
+
+    # If an upper-case version of the path exists but a lower-case
+    # version does not, then the filesystem must be case-sensitive.
+    # (Otherwise, we have more work to do.)
+    if not (os.path.exists(path.lower()) and
+            os.path.exists(path.upper())):
+        return True
+
+    # Both versions of the path exist on the file system. Check whether
+    # they refer to different files by their inodes. Alas,
+    # `os.path.samefile` is only available on Unix systems on Python 2.
+    if platform.system() != 'Windows':
+        return not os.path.samefile(path.lower(),
+                                    path.upper())
+
+    # On Windows, we check whether the canonical, long filenames for the
+    # files are the same.
+    lower = _windows_long_path_name(path.lower())
+    upper = _windows_long_path_name(path.upper())
+    return lower != upper
