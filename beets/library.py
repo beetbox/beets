@@ -53,18 +53,18 @@ class PathQuery(dbcore.FieldQuery):
     escape_char = b'\\'
 
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
-        """Create a path query.
+        """Create a path query. `pattern` must be a path, either to a
+        file or a directory.
 
         `case_sensitive` can be a bool or `None`, indicating that the
-        behavior should depend on the platform (the default).
+        behavior should depend on the filesystem.
         """
         super(PathQuery, self).__init__(field, pattern, fast)
 
         # By default, the case sensitivity depends on the filesystem
-        # the library is located on.
+        # that the query path is located on.
         if case_sensitive is None:
-            case_sensitive = beets.util.is_filesystem_case_sensitive(
-                beets.config['directory'].get())
+            case_sensitive = beets.util.is_filesystem_case_sensitive(pattern)
         self.case_sensitive = case_sensitive
 
         # Use a normalized-case pattern for case-insensitive matches.
