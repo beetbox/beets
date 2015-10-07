@@ -792,23 +792,23 @@ def case_sensitive(path):
     except Windows.
     """
     # A fallback in case the path does not exist.
-    if not os.path.exists(path):
+    if not os.path.exists(syspath(path)):
         # By default, the case sensitivity depends on the platform.
         return platform.system() != 'Windows'
 
     # If an upper-case version of the path exists but a lower-case
     # version does not, then the filesystem must be case-sensitive.
     # (Otherwise, we have more work to do.)
-    if not (os.path.exists(path.lower()) and
-            os.path.exists(path.upper())):
+    if not (os.path.exists(syspath(path.lower())) and
+            os.path.exists(syspath(path.upper()))):
         return True
 
     # Both versions of the path exist on the file system. Check whether
     # they refer to different files by their inodes. Alas,
     # `os.path.samefile` is only available on Unix systems on Python 2.
     if platform.system() != 'Windows':
-        return not os.path.samefile(path.lower(),
-                                    path.upper())
+        return not os.path.samefile(syspath(path.lower()),
+                                    syspath(path.upper()))
 
     # On Windows, we check whether the canonical, long filenames for the
     # files are the same.
