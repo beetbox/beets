@@ -202,8 +202,8 @@ Note that this only matches items that are *already in your library*, so a path
 query won't necessarily find *all* the audio files in a directory---just the
 ones you've already added to your beets library.
 
-Path queries are case-sensitive if the file system the library is located on
-is case-sensitive, case-insensitive otherwise.
+Path queries are case sensitive if the queried path is on a case-sensitive
+filesystem.
 
 .. _query-sort:
 

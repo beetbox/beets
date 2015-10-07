@@ -46,8 +46,9 @@ Fixes:
   written to files. Thanks to :user:`jdetrey`. :bug:`1303` :bug:`1589`
 * :doc:`/plugins/replaygain`: Avoid a crash when the PyAudioTools backend
   encounters an error. :bug:`1592`
-* The check whether the file system is case sensitive or not could lead to
-  wrong results. It is much more robust now.
+* The case sensitivity of path queries is more useful now: rather than just
+  guessing based on the platform, we now check the case sensitivity of your
+  particular filesystem. :bug:`1586`
 * Case-insensitive path queries might have returned nothing because of a
   wrong SQL query.
 * Fix a crash when a query contains a "+" or "-" alone in a component.
