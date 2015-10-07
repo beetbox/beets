@@ -64,7 +64,7 @@ class PathQuery(dbcore.FieldQuery):
         # By default, the case sensitivity depends on the filesystem
         # that the query path is located on.
         if case_sensitive is None:
-            case_sensitive = beets.util.is_filesystem_case_sensitive(pattern)
+            case_sensitive = beets.util.case_sensitive(pattern)
         self.case_sensitive = case_sensitive
 
         # Use a normalized-case pattern for case-insensitive matches.
