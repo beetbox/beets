@@ -33,7 +33,7 @@ class IncludeLazyConfig(confit.LazyConfig):
         super(IncludeLazyConfig, self).read(user, defaults)
 
         try:
-            for view in self['include'].all_contents():
+            for view in self['include']:
                 filename = view.as_filename()
                 if os.path.isfile(filename):
                     self.set_file(filename)

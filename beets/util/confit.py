@@ -215,10 +215,28 @@ class ConfigView(object):
         return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
     def __iter__(self):
-        # Prevent list(config) from using __getitem__ and entering an
-        # infinite loop.
-        raise TypeError(u"{!r} object is not "
-                        u"iterable".format(self.__class__.__name__))
+        """Iterate over the keys of a dictionary view or the *subviews*
+        of a list view.
+        """
+        # Try getting the keys, if this is a dictionary view.
+        try:
+            keys = self.keys()
+            for key in keys:
+                yield key
+
+        except ConfigTypeError:
+            # Otherwise, try iterating over a list.
+            collection = self.get()
+            if not isinstance(collection, (list, tuple)):
+                raise ConfigTypeError(
+                    '{0} must be a dictionary or a list, not {1}'.format(
+                        self.name, type(collection).__name__
+                    )
+                )
+
+            # Yield all the indices in the list.
+            for index in range(len(collection)):
+                yield self[index]
 
     def __getitem__(self, key):
         """Get a subview of this view."""
