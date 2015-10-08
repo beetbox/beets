@@ -224,6 +224,70 @@ class MusiXmatch(SymbolsReplaced):
         return lyrics.strip(',"').replace('\\n', '\n')
 
 
+class Genius(Backend):
+    """Fetch lyrics from Genius via genius-api."""
+    def __init__(self, config, log):
+        super(Genius, self).__init__(config, log)
+        self.api_key = config['genius_api_key'].get(unicode)
+        self.headers = {'Authorization': "Bearer %s" % self.api_key}
+
+    def search_genius(self, artist, title):
+        query = u"%s %s" % (artist, title)
+        url = u'https://api.genius.com/search?q=%s' \
+            % (urllib.quote(query.encode('utf8')))
+
+        data = requests.get(
+            url,
+            headers=self.headers,
+            allow_redirects=True
+        ).content
+
+        return json.loads(data)
+
+    def get_lyrics(self, link):
+        url = u'http://genius-api.com/api/lyricsInfo'
+
+        data = requests.post(
+            url,
+            data={'link': link},
+            headers=self.headers,
+            allow_redirects=True
+        ).content
+
+        return json.loads(data)
+
+    def build_lyric_string(self, lyrics):
+        if 'lyrics' not in lyrics:
+            return
+        sections = lyrics['lyrics']['sections']
+
+        lyrics_list = []
+        for section in sections:
+            lyrics_list.append(section['name'])
+            lyrics_list.append('\n')
+            for verse in section['verses']:
+                if 'content' in verse:
+                    lyrics_list.append(verse['content'])
+
+        return ''.join(lyrics_list)
+
+    def fetch(self, artist, title):
+        search_data = self.search_genius(artist, title)
+
+        if not search_data['meta']['status'] == 200:
+            return
+        else:
+            records = search_data['response']['hits']
+            if not records:
+                return
+
+            record_url = records[0]['result']['url']
+            lyric_data = self.get_lyrics(record_url)
+            lyrics = self.build_lyric_string(lyric_data)
+
+            return lyrics
+
+
 class LyricsWiki(SymbolsReplaced):
     """Fetch lyrics from LyricsWiki."""
     URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
@@ -444,12 +508,13 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch']
+    SOURCES = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch', 'genius']
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
         'lyrics.com': LyricsCom,
         'musixmatch': MusiXmatch,
+        'genius': Genius,
     }
 
     def __init__(self):
@@ -459,12 +524,16 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'auto': True,
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
+            'genius_api_key':
+                "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
+                "76V-uFL5jks5dNvcGCdarqFjDhP9c",
             'fallback': None,
             'force': False,
             'sources': self.SOURCES,
         })
         self.config['google_API_key'].redact = True
         self.config['google_engine_ID'].redact = True
+        self.config['genius_api_key'].redact = True
 
         available_sources = list(self.SOURCES)
         if not self.config['google_API_key'].get() and \

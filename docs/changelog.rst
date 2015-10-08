@@ -23,6 +23,7 @@ The new features:
 * :doc:`/plugins/plexupdate`: A new ``library_name`` option allows you to select
   which Plex library to update. :bug:`1572` :bug:`1595`
 * Add new `include` config option to allow including external config files.
+* :doc:`/plugins/lyrics`: Genius.com is now a source for lyrics.
 
 Fixes:
 
