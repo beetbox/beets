@@ -48,44 +48,43 @@ class ZeroPlugin(BeetsPlugin):
         self.patterns = {}
         self.warned = False
 
-        if self.config['fields'] and self.config['keep_fields']:
-            self._log.warn(u'cannot blacklist and whitelist at the same time')
-
         if self.config['fields']:
+            self.validate_config('fields')
             for field in self.config['fields'].as_str_seq():
-                if field in ('id', 'path', 'album_id'):
-                    self._log.warn(u'field \'{0}\' ignored, zeroing '
-                                   u'it would be dangerous', field)
-                    continue
-                if field not in MediaFile.fields():
-                    self._log.error(u'invalid field: {0}', field)
-                    continue
-                
-                try:
-                    self.patterns[field] = self.config[field].as_str_seq()
-                except confit.NotFoundError:
-                    # Matches everything
-                    self.patterns[field] = True
+                self.write_patterns(field)
 
-        if self.config['keep_fields']:
-            for field in self.config['keep_fields'].as_str_seq():
-                if field not in MediaFile.fields():
-                    self._log.error(u'invalid field: {0}', field)
-                    continue
+        elif self.config['keep_fields']:
+            self.validate_config('keep_fields')
 
             for field in MediaFile.fields():
                 if field in self.config['keep_fields'].as_str_seq():
                     continue
-
-                try:
-                    self.patterns[field] = self.config[field].as_str_seq()
-                except:
-                    self.patterns[field] = True
+                self.write_patterns(field)
 
             # These fields should be preserved
-            if 'id' in self.patterns: del self.patterns['id']
-            if 'path' in self.patterns: del self.patterns['path']
-            if 'album_id' in self.patterns: del self.patterns['album_id']
+            for key in ('id', 'path', 'album_id'):
+                if key in self.patterns:
+                    del self.patterns[key]
+
+    def validate_config(self, mode):
+        """Check if fields written in config are correct."""
+        if self.config['fields'] and self.config['keep_fields']:
+            self._log.warn(u'cannot blacklist and whitelist at the same time')
+        for field in self.config[mode].as_str_seq():
+            if field not in MediaFile.fields():
+                self._log.error(u'invalid field: {0}', field)
+                continue
+            if mode == 'fields' and field in ('id', 'path', 'album_id'):
+                self._log.warn(u'field \'{0}\' ignored, zeroing '
+                               u'it would be dangerous', field)
+                continue
+
+    def write_patterns(self, field):
+        try:
+            self.patterns[field] = self.config[field].as_str_seq()
+        except confit.NotFoundError:
+            # Matches everything
+            self.patterns[field] = True
 
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
