@@ -2,8 +2,10 @@ Zero Plugin
 ===========
 
 The ``zero`` plugin allows you to null fields in files' metadata tags. Fields
-can be nulled unconditionally or conditioned on a pattern match. For example,
-the plugin can strip useless comments like "ripped by MyGreatRipper."
+can be nulled unconditionally or conditioned on a pattern match. It works in
+two independent modes - blacklist and whitelist. You can only choose one option,
+however blacklist is the default. For example, the plugin can strip useless
+comments like "ripped by MyGreatRipper."
 
 To use the ``zero`` plugin, enable the plugin in your configuration
 (see :ref:`using-plugins`).
@@ -18,6 +20,9 @@ fields to nullify and the conditions for nullifying them:
   get the list of all available fields by running ``beet fields``. In
   addition, the ``images`` field allows you to remove any images
   embedded in the media file.
+* Set ``keep_fields`` respectively to list of fields that plugin should
+  preserve. That way ``zero`` cleans anything other than fields written in this
+  option.
 * To conditionally filter a field, use ``field: [regexp, regexp]`` to specify
   regular expressions.
 * By default this plugin only affects files' tags ; the beets database is left
