@@ -41,26 +41,51 @@ class ZeroPlugin(BeetsPlugin):
 
         self.config.add({
             'fields': [],
-            'update_database': False,
+            'keep_fields': [],
+            'update_database': False
         })
 
         self.patterns = {}
         self.warned = False
 
-        for field in self.config['fields'].as_str_seq():
-            if field in ('id', 'path', 'album_id'):
-                self._log.warn(u'field \'{0}\' ignored, zeroing '
-                               u'it would be dangerous', field)
-                continue
-            if field not in MediaFile.fields():
-                self._log.error(u'invalid field: {0}', field)
-                continue
+        if self.config['fields'] and self.config['keep_fields']:
+            self._log.warn(u'cannot blacklist and whitelist at the same time')
 
-            try:
-                self.patterns[field] = self.config[field].as_str_seq()
-            except confit.NotFoundError:
-                # Matches everything
-                self.patterns[field] = True
+        if self.config['fields']:
+            for field in self.config['fields'].as_str_seq():
+                if field in ('id', 'path', 'album_id'):
+                    self._log.warn(u'field \'{0}\' ignored, zeroing '
+                                   u'it would be dangerous', field)
+                    continue
+                if field not in MediaFile.fields():
+                    self._log.error(u'invalid field: {0}', field)
+                    continue
+                
+                try:
+                    self.patterns[field] = self.config[field].as_str_seq()
+                except confit.NotFoundError:
+                    # Matches everything
+                    self.patterns[field] = True
+
+        if self.config['keep_fields']:
+            for field in self.config['keep_fields'].as_str_seq():
+                if field not in MediaFile.fields():
+                    self._log.error(u'invalid field: {0}', field)
+                    continue
+
+            for field in MediaFile.fields():
+                if field in self.config['keep_fields'].as_str_seq():
+                    continue
+
+                try:
+                    self.patterns[field] = self.config[field].as_str_seq()
+                except:
+                    self.patterns[field] = True
+
+            # These fields should be preserved
+            if 'id' in self.patterns: del self.patterns['id']
+            if 'path' in self.patterns: del self.patterns['path']
+            if 'album_id' in self.patterns: del self.patterns['album_id']
 
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
