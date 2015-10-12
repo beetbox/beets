@@ -81,7 +81,8 @@ class ZeroPlugin(BeetsPlugin):
 
     def set_pattern(self, field):
         """Set a field in `self.patterns` to a string list corresponding to
-        the configuration, or `True` if the field has no specific configuration.
+        the configuration, or `True` if the field has no specific
+        configuration.
         """
         try:
             self.patterns[field] = self.config[field].as_str_seq()
