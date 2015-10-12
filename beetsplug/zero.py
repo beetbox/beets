@@ -42,7 +42,7 @@ class ZeroPlugin(BeetsPlugin):
         self.config.add({
             'fields': [],
             'keep_fields': [],
-            'update_database': False
+            'update_database': False,
         })
 
         self.patterns = {}
@@ -51,7 +51,7 @@ class ZeroPlugin(BeetsPlugin):
         if self.config['fields']:
             self.validate_config('fields')
             for field in self.config['fields'].as_str_seq():
-                self.write_patterns(field)
+                self.set_pattern(field)
 
         elif self.config['keep_fields']:
             self.validate_config('keep_fields')
@@ -59,7 +59,7 @@ class ZeroPlugin(BeetsPlugin):
             for field in MediaFile.fields():
                 if field in self.config['keep_fields'].as_str_seq():
                     continue
-                self.write_patterns(field)
+                self.set_pattern(field)
 
             # These fields should be preserved
             for key in ('id', 'path', 'album_id'):
@@ -79,7 +79,10 @@ class ZeroPlugin(BeetsPlugin):
                                u'it would be dangerous', field)
                 continue
 
-    def write_patterns(self, field):
+    def set_pattern(self, field):
+        """Set a field in `self.patterns` to a string list corresponding to
+        the configuration, or `True` if the field has no specific configuration.
+        """
         try:
             self.patterns[field] = self.config[field].as_str_seq()
         except confit.NotFoundError:
