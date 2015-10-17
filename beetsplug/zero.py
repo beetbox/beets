@@ -48,11 +48,17 @@ class ZeroPlugin(BeetsPlugin):
         self.patterns = {}
         self.warned = False
 
+        # We'll only handle `fields` or `keep_fields`, but not both.
+        if self.config['fields'] and self.config['keep_fields']:
+            self._log.warn(u'cannot blacklist and whitelist at the same time')
+
+        # Blacklist mode.
         if self.config['fields']:
             self.validate_config('fields')
             for field in self.config['fields'].as_str_seq():
                 self.set_pattern(field)
 
+        # Whitelist mode.
         elif self.config['keep_fields']:
             self.validate_config('keep_fields')
 
@@ -61,15 +67,17 @@ class ZeroPlugin(BeetsPlugin):
                     continue
                 self.set_pattern(field)
 
-            # These fields should be preserved
+            # These fields should always be preserved.
             for key in ('id', 'path', 'album_id'):
                 if key in self.patterns:
                     del self.patterns[key]
 
     def validate_config(self, mode):
-        """Check if fields written in config are correct."""
-        if self.config['fields'] and self.config['keep_fields']:
-            self._log.warn(u'cannot blacklist and whitelist at the same time')
+        """Check whether fields in the configuration are valid.
+
+        `mode` should either be "fields" or "keep_fields", indicating
+        the section of the configuration to validate.
+        """
         for field in self.config[mode].as_str_seq():
             if field not in MediaFile.fields():
                 self._log.error(u'invalid field: {0}', field)
