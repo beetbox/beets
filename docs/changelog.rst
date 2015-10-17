@@ -26,7 +26,8 @@ The new features:
 * :doc:`/plugins/zero`: The plugin can now use a "whitelist" policy as an
   alternative to the (default) "blacklist" mode. Thanks to :user:`adkow`.
   :bug:`1621` :bug:`1641`
-* :doc:`/plugins/lyrics`: Genius.com is now a source for lyrics.
+* :doc:`/plugins/lyrics`: Genius.com is now a source for lyrics. Thanks to
+  :user:`sadatay`. :bug:`1626` :bug:`1639`
 
 Fixes:
 
