@@ -23,4 +23,4 @@ queries <numericquery>` to filter them.::
     beet ls rating:4..5
 
     beet modify --album "My favorite album" rating=5
-    beet modify --album rating:4..5
+    beet ls --album rating:4..5
