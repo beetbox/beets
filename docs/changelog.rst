@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.15 (in development)
------------------------
+1.3.15 (October 17, 2015)
+-------------------------
 
 This release adds a new plugin for checking file quality and a new source for
 lyrics. The larger features are:
