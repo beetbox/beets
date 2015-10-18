@@ -4,32 +4,36 @@ Changelog
 1.3.15 (in development)
 -----------------------
 
-The new features:
+This release adds a new plugin for checking file quality and a new source for
+lyrics. The larger features are:
+
+* A new :doc:`/plugins/badfiles` helps you scan for corruption in your music
+  collection. Thanks to :user:`fxthomas`. :bug:`1568`
+* :doc:`/plugins/lyrics`: You can now fetch lyrics from Genius.com.
+  Thanks to :user:`sadatay`. :bug:`1626` :bug:`1639`
+* :doc:`/plugins/zero`: The plugin can now use a "whitelist" policy as an
+  alternative to the (default) "blacklist" mode. Thanks to :user:`adkow`.
+  :bug:`1621` :bug:`1641`
+
+And there are smaller new features too:
 
 * Add new color aliases for standard terminal color names (e.g., cyan and
   magenta). Thanks to :user:`mathstuf`. :bug:`1548`
 * :doc:`/plugins/play`: A new ``--args`` option lets you specify options for
   the player command. :bug:`1532`
-* A new :doc:`/plugins/badfiles` helps you scan for corruption in your music
-  collection. Thanks to :user:`fxthomas`. :bug:`1568`
 * :doc:`/plugins/play`: A new ``raw`` configuration option lets the command
   work with players (such as VLC) that expect music filenames as arguments,
   rather than in a playlist. Thanks to :user:`nathdwek`. :bug:`1578`
+* :doc:`/plugins/play`: You can now configure the number of tracks that
+  trigger a "lots of music" warning. :bug:`1577`
 * :doc:`/plugins/embedart`: A new ``remove_art_file`` option lets you clean up
   if you prefer *only* embedded album art. Thanks to :user:`jackwilsdon`.
   :bug:`1591` :bug:`733`
-* :doc:`/plugins/play`: You can now configure the number of tracks that
-  trigger a "lots of music" warning. :bug:`1577`
 * :doc:`/plugins/plexupdate`: A new ``library_name`` option allows you to select
   which Plex library to update. :bug:`1572` :bug:`1595`
-* Add new `include` config option to allow including external config files.
-* :doc:`/plugins/zero`: The plugin can now use a "whitelist" policy as an
-  alternative to the (default) "blacklist" mode. Thanks to :user:`adkow`.
-  :bug:`1621` :bug:`1641`
-* :doc:`/plugins/lyrics`: Genius.com is now a source for lyrics. Thanks to
-  :user:`sadatay`. :bug:`1626` :bug:`1639`
+* A new ``include`` option lets you import external configuration files.
 
-Fixes:
+This release has plenty of fixes:
 
 * :doc:`/plugins/lastgenre`: Fix a bug that prevented tag popularity from
   being considered. Thanks to :user:`svoos`. :bug:`1559`
@@ -53,12 +57,13 @@ Fixes:
   encounters an error. :bug:`1592`
 * The case sensitivity of path queries is more useful now: rather than just
   guessing based on the platform, we now check the case sensitivity of your
-  particular filesystem. :bug:`1586`
+  filesystem. :bug:`1586`
 * Case-insensitive path queries might have returned nothing because of a
   wrong SQL query.
 * Fix a crash when a query contains a "+" or "-" alone in a component.
   :bug:`1605`
-* Fixed unit of file size to MiB, GiB, etc. instead of MB, GB, etc. :bug:`1623`
+* Fixed unit of file size to powers of two (MiB, GiB, etc.) instead of powers
+  of ten (MB, GB, etc.). :bug:`1623`
 
 
 1.3.14 (August 2, 2015)
