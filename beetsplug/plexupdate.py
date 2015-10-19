@@ -28,7 +28,7 @@ def get_music_section(host, port, token, library_name):
     r = requests.get(url)
 
     # Parse xml tree and extract music section key.
-    tree = ET.fromstring(r.text)
+    tree = ET.fromstring(r.content)
     for child in tree.findall('Directory'):
         if child.get('title') == library_name:
             return child.get('key')
