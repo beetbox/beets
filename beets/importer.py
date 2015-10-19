@@ -612,7 +612,7 @@ class ImportTask(BaseImportTask):
         return duplicates
 
     def align_album_level_fields(self):
-        """Make the some album fields equal across `self.items`
+        """Make some album fields equal across `self.items`.
         """
         changes = {}
 
