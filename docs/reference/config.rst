@@ -789,7 +789,8 @@ Here's an example file::
     plugins: bpd
     pluginpath: ~/beets/myplugins
     threaded: yes
-    color: yes
+    ui:
+        color: yes
 
     paths:
         default: $genre/$albumartist/$album/$track $title
