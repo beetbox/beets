@@ -4,7 +4,10 @@ Changelog
 1.3.16 (in development)
 -----------------------
 
-Changelog goes here!
+Fixes:
+
+* :doc:`/plugins/plexupdate`: Fix a crash when Plex libraries use non-ASCII
+  collection names. :bug:`1649`
 
 
 1.3.15 (October 17, 2015)
