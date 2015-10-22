@@ -36,6 +36,7 @@ DIV_RE = re.compile(r'<(/?)div>?', re.I)
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
 TAG_RE = re.compile(r'<[^>]*>')
 BREAK_RE = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
+ARTICLE_RE = re.compile(r'^(a|an|the)', re.I)
 URL_CHARACTERS = {
     u'\u2018': u"'",
     u'\u2019': u"'",
@@ -123,9 +124,10 @@ def search_pairs(item):
     The method also tries to split multiple titles separated with `/`.
     """
 
-    title, artist = item.title, item.artist
+    title, artist, album = item.title, item.artist, item.album
     titles = [title]
     artists = [artist]
+    albums = [album]
 
     # Remove any featuring artists from the artists name
     pattern = r"(.*?) {0}".format(plugins.feat_tokens())
@@ -155,7 +157,7 @@ def search_pairs(item):
         if '/' in title:
             multi_titles.append([x.strip() for x in title.split('/')])
 
-    return itertools.product(artists, multi_titles)
+    return itertools.product(artists, albums, multi_titles)
 
 
 class Backend(object):
@@ -171,8 +173,15 @@ class Backend(object):
             s = s.encode('utf8', 'ignore')
         return urllib.quote(s)
 
-    def build_url(self, artist, title):
-        return self.URL_PATTERN % (self._encode(artist.title()),
+    def build_url(self, artist, album, title, url_format=None):
+        # Currently only for DarkLyrics, but can be modified.
+        # Lowercase is set here, because the use of _encode messes
+        # with my ability to make them lowercase.
+        if url_format == "DarkLyrics":
+            return self.URL_PATTERN % (self._encode(artist.lower()),
+                                   self._encode(album.lower()))
+        else:
+            return self.URL_PATTERN % (self._encode(artist.title()),
                                    self._encode(title.title()))
 
     def fetch_url(self, url):
@@ -195,7 +204,7 @@ class Backend(object):
         else:
             self._log.debug(u'failed to fetch: {0} ({1})', url, r.status_code)
 
-    def fetch(self, artist, title):
+    def fetch(self, artist, album, title):
         raise NotImplementedError()
 
 
@@ -214,8 +223,8 @@ class SymbolsReplaced(Backend):
 class MusiXmatch(SymbolsReplaced):
     URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
 
-    def fetch(self, artist, title):
-        url = self.build_url(artist, title)
+    def fetch(self, artist, album, title):
+        url = self.build_url(artist, album, title)
         html = self.fetch_url(url)
         if not html:
             return
@@ -271,7 +280,7 @@ class Genius(Backend):
 
         return ''.join(lyrics_list)
 
-    def fetch(self, artist, title):
+    def fetch(self, artist, album, title):
         search_data = self.search_genius(artist, title)
 
         if not search_data['meta']['status'] == 200:
@@ -288,12 +297,37 @@ class Genius(Backend):
             return lyrics
 
 
+class DarkLyrics(SymbolsReplaced):
+    """ Fetch lyrics from DarkLyrics.
+        DarkLyrics isn't great with using articles in the title header,
+        so strip those. The base url is:
+        darklyrics.com/lyrics/artistname/albumname.html
+        both lowercase with no separators or punctuation.
+    """
+    URL_PATTERN = 'http://www.darklyrics.com/lyrics/%s/%s.html'
+
+    def fetch(self, artist, album, title):
+        title = ARTICLE_RE.sub('', title)
+        album = "".join([c if c.isalnum() else "" for c in album])
+        url = self.build_url(artist, album, title, url_format="DarkLyrics")
+        html = self.fetch_url(url)
+        if not html:
+            return
+        lyrics = extract_text_in(html, u'<div class="lyrics">')
+        # Each track is either before the next track which is linked,
+        # or the CCW "note", which is linked, so cut between those.
+        lyrics = extract_text_between(lyrics, u'%s</a>' % title, u'<a ')
+        if lyrics:
+            return lyrics
+
+
+
 class LyricsWiki(SymbolsReplaced):
     """Fetch lyrics from LyricsWiki."""
     URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
 
-    def fetch(self, artist, title):
-        url = self.build_url(artist, title)
+    def fetch(self, artist, album, title):
+        url = self.build_url(artist, album, title)
         html = self.fetch_url(url)
         if not html:
             return
@@ -316,8 +350,8 @@ class LyricsCom(Backend):
         s = re.sub(r'\s+', '-', s)
         return super(LyricsCom, cls)._encode(s).lower()
 
-    def fetch(self, artist, title):
-        url = self.build_url(artist, title)
+    def fetch(self, artist, album, title):
+        url = self.build_url(artist, album, title)
         html = self.fetch_url(url)
         if not html:
             return
@@ -508,13 +542,15 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch', 'genius']
+    SOURCES = ['google', 'lyricwiki', 'lyrics.com',
+               'musixmatch', 'genius', 'darklyrics',]
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
         'lyrics.com': LyricsCom,
         'musixmatch': MusiXmatch,
         'genius': Genius,
+        'darklyrics': DarkLyrics,
     }
 
     def __init__(self):
@@ -586,8 +622,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             return
 
         lyrics = None
-        for artist, titles in search_pairs(item):
-            lyrics = [self.get_lyrics(artist, title) for title in titles]
+        for artist, albums, titles in search_pairs(item):
+            lyrics = [self.get_lyrics(artist, albums, title)
+                                        for title in titles]
             if any(lyrics):
                 break
 
@@ -609,12 +646,12 @@ class LyricsPlugin(plugins.BeetsPlugin):
             item.try_write()
         item.store()
 
-    def get_lyrics(self, artist, title):
+    def get_lyrics(self, artist, album, title):
         """Fetch lyrics, trying each source in turn. Return a string or
         None if no lyrics were found.
         """
         for backend in self.backends:
-            lyrics = backend.fetch(artist, title)
+            lyrics = backend.fetch(artist, album, title)
             if lyrics:
                 self._log.debug(u'got lyrics from backend: {0}',
                                 backend.__class__.__name__)
