@@ -188,7 +188,10 @@ The events currently available are:
   Parameters: ``task`` and ``session``.
 
 * *import_task_apply*: called after metadata changes have been applied in an
-  import task. Parameters: ``task`` and ``session``.
+  import task. This is called on the same thread as the UI, so use this
+  sparingly and only for tasks that can be done quickly. For most plugins, an
+  import pipeline stage is a better choice (see :ref:`plugin-stage`).
+  Parameters: ``task`` and ``session``.
 
 * *import_task_choice*: called after a decision has been made about an import
   task. This event can be used to initiate further interaction with the user.
@@ -377,6 +380,8 @@ Here's an example plugin that provides a meaningless new field "foo"::
     item.write()
     # The "foo" tag of the file is now "ham"
 
+
+.. _plugin-stage:
 
 Add Import Pipeline Stages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
