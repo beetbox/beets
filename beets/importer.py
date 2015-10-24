@@ -1306,6 +1306,12 @@ def resolve_duplicates(session, task):
         ident = task.chosen_ident()
         found_duplicates = task.find_duplicates(session.lib)
         if ident in session.seen_idents or found_duplicates:
+            log.debug(
+                'resolving duplicates; in database: {}, in queue: {}'.format(
+                    len(found_duplicates),
+                    ident in session.seen_idents,
+                )
+            )
             session.resolve_duplicate(task, found_duplicates)
             session.log_choice(task, True)
         session.seen_idents.add(ident)
