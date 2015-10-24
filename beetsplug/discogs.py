@@ -39,7 +39,8 @@ import os
 urllib3_logger = logging.getLogger('requests.packages.urllib3')
 urllib3_logger.setLevel(logging.CRITICAL)
 
-USER_AGENT = u'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
+USER_AGENT = 'beets/{0} +http://beets.radbox.org/'.format(beets.__version__) \
+    .encode('utf8')
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (ConnectionError, socket.error, httplib.HTTPException,
@@ -65,8 +66,8 @@ class DiscogsPlugin(BeetsPlugin):
     def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary.
         """
-        c_key = self.config['apikey'].get(unicode)
-        c_secret = self.config['apisecret'].get(unicode)
+        c_key = self.config['apikey'].get(unicode).encode('utf8')
+        c_secret = self.config['apisecret'].get(unicode).encode('utf8')
 
         # Get the OAuth token from a file or log in.
         try:
@@ -76,8 +77,8 @@ class DiscogsPlugin(BeetsPlugin):
             # No token yet. Generate one.
             token, secret = self.authenticate(c_key, c_secret)
         else:
-            token = tokendata['token']
-            secret = tokendata['secret']
+            token = tokendata['token'].encode('utf8')
+            secret = tokendata['secret'].encode('utf8')
 
         self.discogs_client = Client(USER_AGENT, c_key, c_secret,
                                      token, secret)
@@ -120,7 +121,7 @@ class DiscogsPlugin(BeetsPlugin):
         with open(self._tokenfile(), 'w') as f:
             json.dump({'token': token, 'secret': secret}, f)
 
-        return token, secret
+        return token.encode('utf8'), secret.encode('utf8')
 
     def album_distance(self, items, album_info, mapping):
         """Returns the album distance.

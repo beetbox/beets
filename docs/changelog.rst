@@ -8,6 +8,8 @@ Fixes:
 
 * :doc:`/plugins/plexupdate`: Fix a crash when Plex libraries use non-ASCII
   collection names. :bug:`1649`
+* :doc:`/plugins/discogs`: Maybe fix a crash when using some versions of the
+  ``requests`` library. :bug:`1656`
 
 
 1.3.15 (October 17, 2015)
