@@ -10,6 +10,10 @@ Fixes:
   collection names. :bug:`1649`
 * :doc:`/plugins/discogs`: Maybe fix a crash when using some versions of the
   ``requests`` library. :bug:`1656`
+* Fix a race in the importer when importing two albums with the same artist
+  and name in quick succession. The importer would fail to detect them as
+  duplicates, claiming that there were "empty albums" in the database even
+  when there were not. :bug:`1652`
 
 
 1.3.15 (October 17, 2015)
