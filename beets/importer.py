@@ -186,7 +186,6 @@ class ImportSession(object):
         self.logger = self._setup_logging(loghandler)
         self.paths = paths
         self.query = query
-        self.seen_idents = set()
         self._is_resuming = dict()
 
         # Normalize the paths.
@@ -1307,18 +1306,13 @@ def resolve_duplicates(session, task):
     and ask the session to resolve this.
     """
     if task.choice_flag in (action.ASIS, action.APPLY):
-        ident = task.chosen_ident()
         found_duplicates = task.find_duplicates(session.lib)
-        if ident in session.seen_idents or found_duplicates:
-            log.debug(
-                'resolving duplicates; in database: {}, in queue: {}'.format(
-                    len(found_duplicates),
-                    ident in session.seen_idents,
-                )
-            )
+        if found_duplicates:
+            log.debug('found duplicates: {}'.format(
+                [o.id for o in found_duplicates]
+            ))
             session.resolve_duplicate(task, found_duplicates)
             session.log_choice(task, True)
-        session.seen_idents.add(ident)
 
 
 @pipeline.mutator_stage
