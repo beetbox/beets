@@ -294,12 +294,15 @@ class ImportSession(object):
                 # Split directory tasks into one task for each album.
                 stages += [group_albums(self)]
 
+            # These stages either talk to the user to get a decision or,
+            # in the case of a non-autotagged import, just choose to
+            # import everything as-is. In *both* cases, these stages
+            # also add the music to the library database, so later
+            # stages need to read and write data from there.
             if self.config['autotag']:
                 stages += [lookup_candidates(self), user_query(self)]
             else:
                 stages += [import_asis(self)]
-
-            stages += [apply_choices(self)]
 
             # Plugin stages.
             for stage_func in plugins.import_stages():
@@ -1295,6 +1298,7 @@ def user_query(session, task):
         return pipeline.multiple(ipl.pull())
 
     resolve_duplicates(session, task)
+    apply_choice(session, task)
     return task
 
 
@@ -1329,12 +1333,12 @@ def import_asis(session, task):
 
     log.info('{}', displayable_path(task.paths))
     task.set_choice(action.ASIS)
+    apply_choice(session, task)
 
 
-@pipeline.mutator_stage
-def apply_choices(session, task):
-    """A coroutine for applying changes to albums and singletons during
-    the autotag process.
+def apply_choice(session, task):
+    """Apply the task's choice to the Album or Item it contains and add
+    it to the library.
     """
     if task.skip:
         return
