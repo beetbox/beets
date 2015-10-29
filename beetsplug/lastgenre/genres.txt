@@ -1224,6 +1224,9 @@ rebetiko
 red dirt
 reel
 reggae
+reggae 110
+reggae bultrón
+reggae en español
 reggae fusion
 reggae highlife
 reggaefusion
@@ -1247,6 +1250,7 @@ rock opera
 rockabilly
 rocksteady
 rococo
+romantic flow
 romantic period in music
 rondeaux
 ronggeng
