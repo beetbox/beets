@@ -14,6 +14,8 @@ Fixes:
   and name in quick succession. The importer would fail to detect them as
   duplicates, claiming that there were "empty albums" in the database even
   when there were not. :bug:`1652`
+* :doc:`plugins/lastgenre`: Clean up the reggae related genres somewhat.
+  Thanks to :user:`Freso`. :bug:`1661`
 
 
 1.3.15 (October 17, 2015)
