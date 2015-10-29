@@ -317,6 +317,7 @@ class CommandBackend(Backend):
         the album gain
         """
         if len(items) == 0:
+            self._log.debug('no supported tracks to analyze')
             return []
 
         """Compute ReplayGain values and return a list of results
