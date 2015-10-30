@@ -291,6 +291,8 @@ class ConvertPlugin(BeetsPlugin):
             if self.config['embed']:
                 album = item.get_album()
                 if album and album.artpath:
+                    self._log.debug('embedding album art from {}',
+                                    util.displayable_path(album.artpath))
                     art.embed_item(self._log, item, album.artpath,
                                    itempath=converted)
 
