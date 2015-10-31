@@ -567,7 +567,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         fetchart CLI command.
         """
         for album in albums:
-            if album.artpath and not force:
+            if album.artpath and not force and os.path.isfile(album.artpath):
                 message = ui.colorize('text_highlight_minor', 'has album art')
             else:
                 # In ordinary invocations, look for images on the
