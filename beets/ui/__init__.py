@@ -137,6 +137,18 @@ def print_(*strings, **kwargs):
     sys.stdout.write(txt)
 
 
+def indent(count):
+    """Indents string with spaces.
+    """
+    return u' ' * count
+
+
+def indent_str(count, string):
+    """Indents string with spaces.
+    """
+    return indent(count) + string
+
+
 def input_(prompt=None):
     """Like `raw_input`, but decodes the result to a Unicode string.
     Raises a UserError if stdin is not available. The prompt is sent to
