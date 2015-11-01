@@ -465,7 +465,7 @@ COLOR_NAMES = ['text_success', 'text_warning', 'text_error', 'text_highlight',
                'action_description',
                'added', 'removed', 'changed',
                'added_highlight', 'removed_highlight', 'changed_highlight',
-               'added_diff', 'removed_diff', 'changed_diff']
+               'text_diff_added', 'text_diff_removed', 'text_diff_changed']
 COLORS = None
 
 
