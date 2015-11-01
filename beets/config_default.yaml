@@ -75,11 +75,11 @@ ui:
         action_description: ['blue']
     import:
         indentation:
-            match_header: 4
-            match_details: 8
-            match_tracklist: 6
+            match_header: 2
+            match_details: 2
+            match_tracklist: 5
         albumdiff:
-            layout: newline
+            layout: column
 
 format_item: $artist - $album - $title
 format_album: $albumartist - $album
