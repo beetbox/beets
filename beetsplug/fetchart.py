@@ -41,6 +41,9 @@ IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg', 'image/png')
 DOWNLOAD_EXTENSION = '.jpg'
 
+CANDIDATE_BAD = 0
+CANDIDATE_EXACT = 1
+CANDIDATE_DOWNSCALE = 2
 
 def _logged_get(log, *args, **kwargs):
     """Like `requests.get`, but logs the effective URL to the specified
@@ -506,10 +509,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
     def _is_valid_image_candidate(self, candidate):
         if not candidate:
-            return False
+            return CANDIDATE_BAD
 
         if not (self.enforce_ratio or self.minwidth):
-            return True
+            return CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
         size = ArtResizer.shared.get_size(candidate)
@@ -519,10 +522,14 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                               u'documentation for dependencies. '
                               u'The configuration options `minwidth` and '
                               u'`enforce_ratio` may be violated.')
-            return True
+            return CANDIDATE_EXACT
 
-        return size and size[0] >= self.minwidth and \
-            (not self.enforce_ratio or size[0] == size[1])
+        if size[0] >= self.minwidth and (
+            not self.enforce_ratio or size[0] == size[1]):
+            if size[0] > self.maxwidth:
+                return CANDIDATE_DOWNSCALE
+            return CANDIDATE_EXACT
+        return CANDIDATE_BAD
 
     def art_for_album(self, album, paths, local_only=False):
         """Given an Album object, returns a path to downloaded art for the
@@ -532,6 +539,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         are made.
         """
         out = None
+        check = None
 
         # Local art.
         cover_names = self.config['cover_names'].as_str_seq()
@@ -540,7 +548,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if paths:
             for path in paths:
                 candidate = self.fs_source.get(path, cover_names, cautious)
-                if self._is_valid_image_candidate(candidate):
+                check = self._is_valid_image_candidate(candidate)
+                if check:
                     out = candidate
                     self._log.debug('found local image {}', out)
                     break
@@ -552,12 +561,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 if self.maxwidth:
                     url = ArtResizer.shared.proxy_url(self.maxwidth, url)
                 candidate = self._fetch_image(url)
-                if self._is_valid_image_candidate(candidate):
+                check = self._is_valid_image_candidate(candidate)
+                if check:
                     out = candidate
                     self._log.debug('using remote image {}', out)
                     break
 
-        if self.maxwidth and out:
+        if check == CANDIDATE_DOWNSCALE:
             out = ArtResizer.shared.resize(self.maxwidth, out)
 
         return out
