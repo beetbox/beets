@@ -689,8 +689,11 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Show what we're tagging.
         print_()
-        print_(displayable_path(task.paths, u'\n') +
-               u' ({0} items)'.format(len(task.items)))
+        path_str0 = displayable_path(task.paths, u'\n')
+        path_str = ui.colorize('import_path', path_str0)
+        items_str0 = u'({0} items)'.format(len(task.items))
+        items_str = ui.colorize('import_path_items', items_str0)
+        print_(' '.join([path_str, items_str]))
 
         # Take immediate action if appropriate.
         action = _summary_judment(task.rec)
