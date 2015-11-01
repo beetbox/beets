@@ -403,12 +403,50 @@ LIGHT_COLORS = {
     "cyan": 6,
     "white": 7
 }
+# All ANSI Colors.
+ANSI_CODES = {
+    # Styles.
+    "normal":       0,
+    "bold":         1,
+    "faint":        2,
+    #"italic":       3,
+    "underline":    4,
+    #"blink_slow":   5,
+    #"blink_rapid":  6,
+    "inverse":      7,
+    #"conceal":      8,
+    #"crossed_out":  9
+    # Text colors.
+    "black":       30,
+    "red":         31,
+    "green":       32,
+    "yellow":      33,
+    "blue":        34,
+    "magenta":     35,
+    "cyan":        36,
+    "white":       37,
+    # Background colors.
+    "bg_black":    40,
+    "bg_red":      41,
+    "bg_green":    42,
+    "bg_yellow":   43,
+    "bg_blue":     44,
+    "bg_magenta":  45,
+    "bg_cyan":     46,
+    "bg_white":    47
+}
 RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
 
 # These abstract COLOR_NAMES are lazily mapped on to the actual color in COLORS
 # as they are defined in the configuration files, see function: colorize
 COLOR_NAMES = ['text_success', 'text_warning', 'text_error', 'text_highlight',
-               'text_highlight_minor', 'action_default', 'action']
+               'text_highlight_minor', 'action_default', 'action',
+               # New Colors
+               'import_path', 'import_path_items',
+               'action_description',
+               'added', 'removed', 'changed',
+               'added_highlight', 'removed_highlight', 'changed_highlight',
+               'added_diff', 'removed_diff', 'changed_diff']
 COLORS = None
 
 
@@ -417,10 +455,19 @@ def _colorize(color, text):
     in a terminal that is ANSI color-aware. The color must be something
     in DARK_COLORS or LIGHT_COLORS.
     """
-    if color in DARK_COLORS:
-        escape = COLOR_ESCAPE + "%im" % (DARK_COLORS[color] + 30)
-    elif color in LIGHT_COLORS:
-        escape = COLOR_ESCAPE + "%i;01m" % (LIGHT_COLORS[color] + 30)
+    if not isinstance(color, basestring):
+        # Non-strings are lists with advanced color definitions
+        escape = ""
+        for color_def in color:
+            
+            color_def = "{0}".format(color_def) # TODO what the fuck
+            
+            if color_def in ANSI_CODES.keys():
+                escape = escape + COLOR_ESCAPE + "%im" % ANSI_CODES[color_def]
+            #elif color_def in DARK_COLORS:
+            #    escape = COLOR_ESCAPE + "%im" % (DARK_COLORS[color_def] + 30)
+            #elif color_def in LIGHT_COLORS:
+            #    escape = COLOR_ESCAPE + "%i;01m" % (LIGHT_COLORS[color_def] + 30)
     else:
         raise ValueError('no such color %s', color)
     return escape + text + RESET_COLOR
@@ -433,7 +480,9 @@ def colorize(color_name, text):
     if config['ui']['color']:
         global COLORS
         if not COLORS:
-            COLORS = dict((name, config['ui']['colors'][name].get(unicode))
+            # TODO uncomment and repair
+            #COLORS = dict((name, config['ui']['colors'][name].get(unicode))
+            COLORS = dict((name, config['ui']['colors'][name])
                           for name in COLOR_NAMES)
         # In case a 3rd party plugin is still passing the actual color ('red')
         # instead of the abstract color name ('text_error')
