@@ -546,19 +546,37 @@ def _colordiff(a, b, highlight='text_highlight',
             b_out.append(b[b_start:b_end])
         elif op == 'insert':
             # Right only.
-            b_out.append(colorize(highlight, b[b_start:b_end]))
+            words = re.split('(\s)', b[b_start:b_end])
+            mapper = lambda w: \
+                w if re.match('(\s)', w) else colorize('text_diff_added', w)
+            words_colorized = map(mapper, words)
+            b_out.append(''.join(words_colorized))
         elif op == 'delete':
             # Left only.
-            a_out.append(colorize(highlight, a[a_start:a_end]))
+            words = re.split('(\s)', a[a_start:a_end])
+            mapper = lambda w: \
+                w if re.match('(\s)', w) else colorize('text_diff_removed', w)
+            words_colorized = map(mapper, words)
+            a_out.append(''.join(words_colorized))
         elif op == 'replace':
             # Right and left differ. Colorise with second highlight if
             # it's just a case change.
             if a[a_start:a_end].lower() != b[b_start:b_end].lower():
-                color = highlight
+                color_a = 'text_diff_removed'
+                color_b = 'text_diff_added'
             else:
-                color = minor_highlight
-            a_out.append(colorize(color, a[a_start:a_end]))
-            b_out.append(colorize(color, b[b_start:b_end]))
+                color_a = minor_highlight
+                color_b = minor_highlight
+            words_a = re.split('(\s)', a[a_start:a_end])
+            words_b = re.split('(\s)', b[b_start:b_end])
+            mapper_a = lambda w: \
+                w if re.match('(\s)', w) else colorize(color_a, w)
+            mapper_b = lambda w: \
+                w if re.match('(\s)', w) else colorize(color_b, w)
+            words_a_colorized = map(mapper_a, words_a)
+            words_b_colorized = map(mapper_b, words_b)
+            a_out.append(''.join(words_a_colorized))
+            b_out.append(''.join(words_b_colorized))
         else:
             assert(False)
 
