@@ -152,7 +152,7 @@ def disambig_string(info):
             disambig.append(info.albumdisambig)
 
     if disambig:
-        return u', '.join(disambig)
+        return u' | '.join(disambig)
 
 
 def dist_string(dist):
