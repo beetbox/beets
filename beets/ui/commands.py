@@ -155,18 +155,24 @@ def disambig_string(info):
         return u' | '.join(disambig)
 
 
+def dist_colorize(string, dist):
+    """Formats a string as a colorized similarity string accoring to a distance.
+    """
+    if dist <= config['match']['strong_rec_thresh'].as_number():
+        string = ui.colorize('text_success', string)
+    elif dist <= config['match']['medium_rec_thresh'].as_number():
+        string = ui.colorize('text_warning', string)
+    else:
+        string = ui.colorize('text_error', string)
+    return string
+
+
 def dist_string(dist):
     """Formats a distance (a float) as a colorized similarity percentage
     string.
     """
-    out = '%.1f%%' % ((1 - dist) * 100)
-    if dist <= config['match']['strong_rec_thresh'].as_number():
-        out = ui.colorize('text_success', out)
-    elif dist <= config['match']['medium_rec_thresh'].as_number():
-        out = ui.colorize('text_warning', out)
-    else:
-        out = ui.colorize('text_error', out)
-    return out
+    string = '%.1f%%' % ((1 - dist) * 100)
+    return dist_colorize(string, dist)
 
 
 def penalty_string(distance, limit=None):
