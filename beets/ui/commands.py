@@ -229,42 +229,49 @@ def show_change(cur_artist, cur_album, match):
             return unicode(index)
 
     # Identify the album in question.
-    if cur_artist != match.info.artist or \
-            (cur_album != match.info.album and
-             match.info.album != VARIOUS_ARTISTS):
-        artist_l, artist_r = cur_artist or '', match.info.artist
-        album_l,  album_r = cur_album or '', match.info.album
-        if artist_r == VARIOUS_ARTISTS:
-            # Hide artists for VA releases.
-            artist_l, artist_r = u'', u''
+    # 'Match' header and similarity.
+    print_('')
+    print_(ui.indent(2) + u'Match: (%s):' % dist_string(match.distance))
 
-        artist_l, artist_r = ui.colordiff(artist_l, artist_r)
-        album_l, album_r = ui.colordiff(album_l, album_r)
+    # Artist name and album title.
+    artist_album_str = u"{0.artist} - {0.album}".format(match.info)
+    print_(ui.indent(2) + dist_colorize(artist_album_str, match.distance))
 
-        print_("Correcting tags from:")
-        show_album(artist_l, album_l)
-        print_("To:")
-        show_album(artist_r, album_r)
-    else:
-        print_(u"Tagging:\n    {0.artist} - {0.album}".format(match.info))
-
-    # Data URL.
-    if match.info.data_url:
-        print_('URL:\n    %s' % match.info.data_url)
-
-    # Info line.
-    info = []
-    # Similarity.
-    info.append('(Similarity: %s)' % dist_string(match.distance))
     # Penalties.
     penalties = penalty_string(match.distance)
     if penalties:
-        info.append(penalties)
-    # Disambiguation.
+        print_(ui.indent(2) + penalties)
+
+    # Disambiguation
     disambig = disambig_string(match.info)
     if disambig:
-        info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
-    print_(' '.join(info))
+        print_(ui.indent(2) + ui.colorize('text_highlight_minor', disambig))
+
+    # Data URL.
+    if match.info.data_url:
+        url = ui.colorize('text_highlight_minor', '%s' % match.info.data_url)
+        print_(ui.indent(2) + url)
+
+    # Artist.
+    artist_l, artist_r = cur_artist or '', match.info.artist
+    if artist_r == VARIOUS_ARTISTS:
+        # Hide artists for VA releases.
+        artist_l, artist_r = u'', u''
+    if artist_l != artist_r:
+        artist_l, artist_r = ui.colordiff(artist_l, artist_r)
+        # Prefix with U+2260: Not Equal To
+        print_(ui.indent(2) + ui.colorize('changed', u'\u2260'), u'Artist:', artist_l, u'->', artist_r)
+    else:
+        print_(ui.indent(2) + '=', 'Artist:', artist_r)
+
+    # Album
+    album_l,  album_r = cur_album or '', match.info.album
+    if (cur_album != match.info.album and match.info.album != VARIOUS_ARTISTS):
+        album_l, album_r = ui.colordiff(album_l, album_r)
+        # Prefix with U+2260: Not Equal To
+        print_(ui.indent(2) + ui.colorize('changed', u'\u2260'), u'Album:', album_l, u'->', album_r)
+    else:
+        print_(ui.indent(2) + '=', 'Album:', album_r)
 
     # Tracks.
     pairs = match.mapping.items()
