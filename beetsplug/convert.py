@@ -396,15 +396,22 @@ class ConvertPlugin(BeetsPlugin):
         fmt = self.config['format'].get(unicode).lower()
         if should_transcode(item, fmt):
             command, ext = get_format()
+
+            # Create a temporary file for the conversion.
             tmpdir = self.config['tmpdir'].get()
             fd, dest = tempfile.mkstemp('.' + ext, dir=tmpdir)
-            dest = util.bytestring_path(dest)
             os.close(fd)
+            dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.
+
+            # Convert.
             try:
                 self.encode(command, item.path, dest)
             except subprocess.CalledProcessError:
                 return
+
+            # Change the newly-imported database entry to point to the
+            # converted file.
             item.path = dest
             item.write()
             item.read()  # Load new audio information data.
