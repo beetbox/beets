@@ -567,8 +567,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     self._log.debug('using remote image {}', out)
                     break
 
-        if self.maxwidth and out and check == CANDIDATE_DOWNSCALE:
-                out = ArtResizer.shared.resize(self.maxwidth, out)
+        if check == CANDIDATE_DOWNSCALE:
+            out = ArtResizer.shared.resize(self.maxwidth, out)
 
         return out
 
