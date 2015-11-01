@@ -45,6 +45,7 @@ CANDIDATE_BAD = 0
 CANDIDATE_EXACT = 1
 CANDIDATE_DOWNSCALE = 2
 
+
 def _logged_get(log, *args, **kwargs):
     """Like `requests.get`, but logs the effective URL to the specified
     `log` at the `DEBUG` level.
@@ -525,7 +526,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             return CANDIDATE_EXACT
 
         if size[0] >= self.minwidth and (
-            not self.enforce_ratio or size[0] == size[1]):
+                not self.enforce_ratio or size[0] == size[1]):
             if size[0] > self.maxwidth:
                 return CANDIDATE_DOWNSCALE
             return CANDIDATE_EXACT
@@ -567,7 +568,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     self._log.debug('using remote image {}', out)
                     break
 
-        if check == CANDIDATE_DOWNSCALE:
+        if self.maxwidth and out and check == CANDIDATE_DOWNSCALE:
             out = ArtResizer.shared.resize(self.maxwidth, out)
 
         return out
