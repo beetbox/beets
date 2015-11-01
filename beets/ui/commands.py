@@ -238,7 +238,7 @@ def show_change(cur_artist, cur_album, match):
             lhs['track'], lhs['title'], pad_l, lhs['length'])
         rhs_str = template.format(
             rhs['track'], rhs['title'], pad_r, rhs['length'])
-        print_(u'{0}{1} ->\n{2}{3}'.format(indent + prefix, lhs_str, indent + ui.indent(len(' * ')), rhs_str))
+        print_(u'{0}{1} ->\n{2}{3}'.format(indent + prefix, lhs_str, indent + ui.indent(len('* ')), rhs_str))
 
     def format_track_as_columns(indent, prefix, col_width_l, col_width_r,
                                 lhs, rhs):
@@ -290,7 +290,7 @@ def show_change(cur_artist, cur_album, match):
                 out += prefix
                 out += lhs['track'] + ' '
             else:
-                out += ui.indent(len(' * '))
+                out += ui.indent(len('* '))
                 out += ' ' * align_track
             
             # Line i of lhs track title.
@@ -349,29 +349,37 @@ def show_change(cur_artist, cur_album, match):
         # Print complete line.
         print_(out)
 
-    # Identify the album in question.
+    # Identify the album in question (Match Header).
+    match_header_indent_width = \
+        config['ui']['import']['indentation']['match_header'].as_number()
+    header_indent = ui.indent(match_header_indent_width)
     # 'Match' header and similarity.
     print_('')
-    print_(ui.indent(2) + u'Match: (%s):' % dist_string(match.distance))
+    print_(header_indent + u'Match: (%s):' % dist_string(match.distance))
 
     # Artist name and album title.
     artist_album_str = u"{0.artist} - {0.album}".format(match.info)
-    print_(ui.indent(2) + dist_colorize(artist_album_str, match.distance))
+    print_(header_indent + dist_colorize(artist_album_str, match.distance))
 
     # Penalties.
     penalties = penalty_string(match.distance)
     if penalties:
-        print_(ui.indent(2) + penalties)
+        print_(header_indent + penalties)
 
     # Disambiguation
     disambig = disambig_string(match.info)
     if disambig:
-        print_(ui.indent(2) + ui.colorize('text_highlight_minor', disambig))
+        print_(header_indent + ui.colorize('text_highlight_minor', disambig))
 
     # Data URL.
     if match.info.data_url:
         url = ui.colorize('text_highlight_minor', '%s' % match.info.data_url)
-        print_(ui.indent(2) + url)
+        print_(header_indent + url)
+
+    # Match details.
+    match_detail_indent_width = \
+        config['ui']['import']['indentation']['match_details'].as_number()
+    detail_indent = ui.indent(match_detail_indent_width)
 
     # Artist.
     artist_l, artist_r = cur_artist or '', match.info.artist
@@ -381,18 +389,20 @@ def show_change(cur_artist, cur_album, match):
     if artist_l != artist_r:
         artist_l, artist_r = ui.colordiff(artist_l, artist_r)
         # Prefix with U+2260: Not Equal To
-        print_(ui.indent(2) + ui.colorize('changed', u'\u2260'), u'Artist:', artist_l, u'->', artist_r)
+        print_(detail_indent + ui.colorize('changed', u'\u2260'),
+               u'Artist:', artist_l, u'->', artist_r)
     else:
-        print_(ui.indent(2) + '=', 'Artist:', artist_r)
+        print_(detail_indent + '=', 'Artist:', artist_r)
 
     # Album
     album_l,  album_r = cur_album or '', match.info.album
     if (cur_album != match.info.album and match.info.album != VARIOUS_ARTISTS):
         album_l, album_r = ui.colordiff(album_l, album_r)
         # Prefix with U+2260: Not Equal To
-        print_(ui.indent(2) + ui.colorize('changed', u'\u2260'), u'Album:', album_l, u'->', album_r)
+        print_(detail_indent + ui.colorize('changed', u'\u2260'),
+               u'Album:', album_l, u'->', album_r)
     else:
-        print_(ui.indent(2) + '=', 'Album:', album_r)
+        print_(detail_indent + '=', 'Album:', album_r)
 
     # Tracks.
     pairs = match.mapping.items()
@@ -504,18 +514,19 @@ def show_change(cur_artist, cur_album, match):
 
         if lhs_comp != rhs_comp:
             # Prefix changed tracks with U+2260: Not Equal To
-            prefix = ui.colorize('changed', ' \u2260 ')
+            prefix = ui.colorize('changed', '\u2260 ')
             lines.append((prefix, lhs, rhs, lhs_width, rhs_width))
         elif config['import']['detail']:
             # Prefix unchanged tracks with *
-            prefix = ' * '
+            prefix = '* '
             lines.append((prefix, lhs, [], lhs_width, 0))
 
     # Print each track in two columns, or across two lines.
-    joiner_width = len(''.join([' * ', ' -> ']))
-    indent_width = 4
-    indent = ui.indent(indent_width)
-    col_width = (ui.term_width() - indent_width - joiner_width) // 2
+    joiner_width = len(''.join(['* ', ' -> ']))
+    tracklist_indent_width = \
+        config['ui']['import']['indentation']['match_tracklist'].as_number()
+    indent = ui.indent(tracklist_indent_width)
+    col_width = (ui.term_width() - tracklist_indent_width - joiner_width) // 2
     if lines:
         # Size columns.
         max_width_l = max(lw for _, _, _, lw, _ in lines)
@@ -537,7 +548,7 @@ def show_change(cur_artist, cur_album, match):
         # Print lines.
         for prefix, lhs, rhs, lhs_width, rhs_width in lines:
             l_pre = indent + prefix
-            r_pre = indent + ui.indent(len(' * '))
+            r_pre = indent + ui.indent(len('* '))
             if not rhs:
                 pad_l = ' ' * (max_width_l - lhs_width)
                 lhs_str = "{0} {1} {2}{3}".format(lhs['track'], lhs['title'],

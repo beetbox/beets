@@ -74,6 +74,10 @@ ui:
         text_diff_changed: ['bold', 'red']
         action_description: ['blue']
     import:
+        indentation:
+            match_header: 4
+            match_details: 8
+            match_tracklist: 6
         albumdiff:
             layout: newline
 
