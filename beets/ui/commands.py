@@ -392,7 +392,7 @@ def show_change(cur_artist, cur_album, match):
         print_(detail_indent + ui.colorize('changed', u'\u2260'),
                u'Artist:', artist_l, u'->', artist_r)
     else:
-        print_(detail_indent + '=', 'Artist:', artist_r)
+        print_(detail_indent + '*', 'Artist:', artist_r)
 
     # Album
     album_l,  album_r = cur_album or '', match.info.album
@@ -402,7 +402,7 @@ def show_change(cur_artist, cur_album, match):
         print_(detail_indent + ui.colorize('changed', u'\u2260'),
                u'Album:', album_l, u'->', album_r)
     else:
-        print_(detail_indent + '=', 'Album:', album_r)
+        print_(detail_indent + '*', 'Album:', album_r)
 
     # Tracks.
     pairs = match.mapping.items()
@@ -419,20 +419,20 @@ def show_change(cur_artist, cur_album, match):
         if medium != track_info.medium or disctitle != track_info.disctitle:
             media = match.info.media or 'Media'
             if match.info.mediums > 1 and track_info.disctitle:
-                lhs = '%s %s: %s' % (media, track_info.medium,
+                out = '* %s %s: %s' % (media, track_info.medium,
                                      track_info.disctitle)
-            elif match.info.mediums > 1:
-                lhs = '%s %s' % (media, track_info.medium)
             elif track_info.disctitle:
-                lhs = '%s: %s' % (media, track_info.disctitle)
+                out = '* %s: %s' % (media, track_info.disctitle)
             else:
-                lhs = None
-            if lhs:
+                out = '* %s %s' % (media, track_info.medium)
+            if out:
+                
                 lhs = {
-                    'track':  u'',
-                    'title':  lhs,
-                    'length': u'',
-                    'raw': { 'track': u'', 'title': lhs, 'length': u'' }
+                    'disk':   detail_indent + out,
+                    'track':  None,
+                    'title':  None,
+                    'length': None,
+                    'raw':    None
                 }
                 lines.append(('', lhs, '', 0, 0))
             medium, disctitle = track_info.medium, track_info.disctitle
@@ -488,6 +488,7 @@ def show_change(cur_artist, cur_album, match):
         rhs_comp = ' '.join([new_track, new_title, new_length])
         # Construct lhs and rhs arrays
         lhs = {
+            'disk':   None,
             'track':  lhs_track,
             'title':  lhs_title,
             'length': lhs_length,
@@ -550,10 +551,13 @@ def show_change(cur_artist, cur_album, match):
             l_pre = indent + prefix
             r_pre = indent + ui.indent(len('* '))
             if not rhs:
-                pad_l = ' ' * (max_width_l - lhs_width)
-                lhs_str = "{0} {1} {2}{3}".format(lhs['track'], lhs['title'],
-                                                  pad_l, lhs['length'])
-                print_(l_pre + lhs_str)
+                if lhs['disk']:
+                    print_(lhs['disk'])
+                else:
+                    pad_l = ' ' * (max_width_l - lhs_width)
+                    lhs_str = "{0} {1} {2}{3}".format(
+                        lhs['track'], lhs['title'], pad_l, lhs['length'])
+                    print_(l_pre + lhs_str)
             elif (lhs_width > col_width_l) or (rhs_width > col_width_r):
                 layout = \
                     config['ui']['import']['albumdiff']['layout'].as_choice({
