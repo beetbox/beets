@@ -547,6 +547,23 @@ class ImportTask(BaseImportTask):
 
         items = self.imported_items()
 
+        # If any original album art files were reused, leave them untouched.
+        for item in items:
+            album = item.get_album()
+            if album:
+                self.old_art_paths.discard(album.artpath)
+
+        # Delete remaining original album art files.
+        for old_art_path in self.old_art_paths:
+            log.debug('Deleting orphaned album art: {0}', old_art_path)
+            util.remove(syspath(old_art_path), True)
+            # XXX: Ideally the directory would get pruned with self.prune()
+            # below, but when calling `beet import -L`, self.toppath is set
+            # to None, making self.prune() a no-op; hence this workaround of
+            # calling util.prune_dirs() directly.
+            util.prune_dirs(os.path.dirname(old_art_path),
+                            clutter=config['clutter'].as_str_seq())
+
         # When copying and deleting originals, delete old files.
         if copy and delete:
             new_paths = [os.path.realpath(item.path) for item in items]
@@ -652,6 +669,11 @@ class ImportTask(BaseImportTask):
         # Save the original paths of all items for deletion and pruning
         # in the next step (finalization).
         self.old_paths = [item.path for item in items]
+
+        # Keep track of paths of all original album art for the same reason.
+        self.old_art_paths = set(filter(bool,
+            (album.artpath for album in self.replaced_albums.values())))
+
         for item in items:
             if move or copy or link:
                 # In copy and link modes, treat re-imports specially:
