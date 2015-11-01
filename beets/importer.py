@@ -671,8 +671,8 @@ class ImportTask(BaseImportTask):
         self.old_paths = [item.path for item in items]
 
         # Keep track of paths of all original album art for the same reason.
-        self.old_art_paths = set(filter(bool,
-            (album.artpath for album in self.replaced_albums.values())))
+        self.old_art_paths = set(filter(
+            bool, (album.artpath for album in self.replaced_albums.values())))
 
         for item in items:
             if move or copy or link:
