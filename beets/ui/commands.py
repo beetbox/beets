@@ -228,6 +228,127 @@ def show_change(cur_artist, cur_album, match):
         else:
             return unicode(index)
 
+    def format_track(indent, prefix, lhs_width, rhs_width, col_width_l, col_width_r, lhs, rhs):
+        """docstring for format_track"""
+        # Print track 
+        pad_l = ' ' * (col_width_l - lhs_width)
+        pad_r = ' ' * (col_width_r - rhs_width)
+        template = "{0} {1} {2}{3}"
+        lhs_str = template.format(
+            lhs['track'], lhs['title'], pad_l, lhs['length'])
+        rhs_str = template.format(
+            rhs['track'], rhs['title'], pad_r, rhs['length'])
+        print_(u'{0}{1} ->\n{2}{3}'.format(indent + prefix, lhs_str, indent + ui.indent(len(' * ')), rhs_str))
+
+    def format_track_as_columns(indent, prefix, col_width_l, col_width_r,
+                                lhs, rhs):
+        """docstring for format_track_as_columns"""
+        # Calculate available space for word wrapping.
+        # Left-hand side.
+        lhs_track_len = len(lhs['raw']['track'])
+        lhs_length_len = len(lhs['raw']['length'])
+        lhs_spaces_first   = 2
+        lhs_used_first     = lhs_track_len + lhs_spaces_first + lhs_length_len
+        col_width_l_first  = col_width_l - lhs_used_first
+        lhs_spaces_middle  = 1
+        lhs_used_middle    = lhs_track_len + lhs_spaces_middle
+        col_width_l_middle = col_width_l - lhs_used_middle
+        lhs_spaces_last    = 1
+        lhs_used_last      = lhs_track_len + lhs_spaces_last
+        col_width_l_last   = col_width_l - lhs_used_last
+        # Right-hand side.
+        rhs_track_len = len(rhs['raw']['track'])
+        rhs_length_len = len(rhs['raw']['length'])
+        rhs_spaces_first   = 2
+        rhs_used_first     = rhs_track_len + rhs_spaces_first + rhs_length_len
+        col_width_r_first  = col_width_r - rhs_used_first
+        rhs_spaces_middle  = 1
+        rhs_used_middle    = rhs_track_len + rhs_spaces_middle
+        col_width_r_middle = col_width_r - rhs_used_middle
+        rhs_spaces_last    = 1
+        rhs_used_last      = rhs_track_len + rhs_spaces_last
+        col_width_r_last   = col_width_r - rhs_used_last
+
+        # Calculate word wrapping.
+        lhs_lines = ui.split_into_lines(lhs['title'], lhs['raw']['title'],
+            col_width_l_first, col_width_l_middle, col_width_l_last)
+        rhs_lines = ui.split_into_lines(rhs['title'], rhs['raw']['title'],
+            col_width_r_first, col_width_r_middle, col_width_r_last)
+
+        # Construct string for all lines of both columns.
+        max_line_count = max(len(lhs_lines['col']), len(rhs_lines['col']))
+        align_track    = len(lhs['raw']['track']) + 1
+        align_length_l = len(lhs['raw']['length'])
+        align_length_r = len(rhs['raw']['length'])
+        out = u''
+        for i in range(max_line_count):
+            # Indentation
+            out += indent
+            
+            # Prefix and track number, or alignment.
+            if i == 0:
+                out += prefix
+                out += lhs['track'] + ' '
+            else:
+                out += ui.indent(len(' * '))
+                out += ' ' * align_track
+            
+            # Line i of lhs track title.
+            if i in range(len(lhs_lines['col'])):
+                out += lhs_lines['col'][i]
+            
+            # Alignment up to the end of the left column.
+            if i in range(len(lhs_lines['raw'])):
+                align_title = len(lhs_lines['raw'][i])
+            else:
+                align_title = 0
+            align_used = align_track + align_title
+            if i == 0:
+                align_used += align_length_l
+            padding = col_width_l - align_used
+            out += ' ' * padding
+            
+            # Length in first line.
+            if i == 0:
+                out += lhs['length']
+            
+            # Arrow between columns.
+            if i == 0:
+                out += u' -> '
+            else:
+                out += u'    ' # u' .. '
+            
+            # Track number or alignment.
+            if i == 0:
+                out += lhs['track'] + ' '
+            else:
+                out += ' ' * align_track
+            
+            # Line i of rhs track title.
+            if i in range(len(rhs_lines['col'])):
+                out += rhs_lines['col'][i]
+            
+            # Alignment up to the end of the right column.
+            if i in range(len(rhs_lines['raw'])):
+                align_title = len(rhs_lines['raw'][i])
+            else:
+                align_title = 0
+            align_used = align_track + align_title
+            if i == 0:
+                align_used += align_length_r
+            padding = col_width_r - align_used
+            out += ' ' * padding
+            
+            # Length in first line.
+            if i == 0:
+                out += rhs['length']
+            
+            # Linebreak, except in the last line.
+            if i < max_line_count-1:
+                out += u'\n'
+        # Print complete line.
+        print_(out)
+
     # Identify the album in question.
     # 'Match' header and similarity.
     print_('')
@@ -297,65 +418,154 @@ def show_change(cur_artist, cur_album, match):
             else:
                 lhs = None
             if lhs:
-                lines.append((lhs, '', 0))
+                lhs = {
+                    'track':  u'',
+                    'title':  lhs,
+                    'length': u'',
+                    'raw': { 'track': u'', 'title': lhs, 'length': u'' }
+                }
+                lines.append(('', lhs, '', 0, 0))
             medium, disctitle = track_info.medium, track_info.disctitle
 
+        # Build all parts of both lhs and rhs, then compare line lengths and
+        # align.
         # Titles.
         new_title = track_info.title
         if not item.title.strip():
             # If there's no title, we use the filename.
             cur_title = displayable_path(os.path.basename(item.path))
-            lhs, rhs = cur_title, new_title
+            lhs_title, rhs_title = cur_title, new_title
         else:
             cur_title = item.title.strip()
-            lhs, rhs = ui.colordiff(cur_title, new_title)
-        lhs_width = len(cur_title)
+            lhs_title, rhs_title = ui.colordiff(cur_title, new_title)
 
         # Track number change.
-        cur_track, new_track = format_index(item), format_index(track_info)
+        templ = u'(#{0})'
+        cur_track = templ.format(format_index(item))
+        new_track = templ.format(format_index(track_info))
         if cur_track != new_track:
             if item.track in (track_info.index, track_info.medium_index):
                 color = 'text_highlight_minor'
             else:
                 color = 'text_highlight'
-            templ = ui.colorize(color, u' (#{0})')
-            lhs += templ.format(cur_track)
-            rhs += templ.format(new_track)
-            lhs_width += len(cur_track) + 4
+            templ = ui.colorize(color, u'{0}')
+        else:
+            templ = u'{0}'
+        lhs_track = templ.format(cur_track)
+        rhs_track = templ.format(new_track)
 
         # Length change.
         if item.length and track_info.length and \
                 abs(item.length - track_info.length) > \
                 config['ui']['length_diff_thresh'].as_number():
-            cur_length = ui.human_seconds_short(item.length)
-            new_length = ui.human_seconds_short(track_info.length)
-            templ = ui.colorize('text_highlight', u' ({0})')
-            lhs += templ.format(cur_length)
-            rhs += templ.format(new_length)
-            lhs_width += len(cur_length) + 3
+            cur_length0 = ui.human_seconds_short(item.length)
+            new_length0 = ui.human_seconds_short(track_info.length)
+            cur_length = u'({})'.format(cur_length0)
+            new_length = u'({})'.format(new_length0)
+            lhs_length = ui.colorize('text_highlight', cur_length)
+            rhs_length = ui.colorize('text_highlight', new_length)
+        else:
+            cur_length = u''
+            new_length = u''
+            lhs_length = u''
+            rhs_length = u''
 
         # Penalties.
         penalties = penalty_string(match.distance.tracks[track_info])
-        if penalties:
-            rhs += ' %s' % penalties
 
-        if lhs != rhs:
-            lines.append((' * %s' % lhs, rhs, lhs_width))
+        # Construct comparison strings to check for differences
+        lhs_comp = ' '.join([cur_track, cur_title, cur_length])
+        rhs_comp = ' '.join([new_track, new_title, new_length])
+        # Construct lhs and rhs arrays
+        lhs = {
+            'track':  lhs_track,
+            'title':  lhs_title,
+            'length': lhs_length,
+            'raw' : {
+                'track':  cur_track,
+                'title':  cur_title,
+                'length': cur_length,
+            }
+        }
+        rhs = {
+            'track':  rhs_track,
+            'title':  rhs_title,
+            'length': rhs_length,
+            'penalties': penalty_string(match.distance.tracks[track_info]),
+            'raw' : {
+                'track':  new_track,
+                'title':  new_title,
+                'length': new_length,
+            }
+        }
+        # Construct lhs and rhs line widths
+        lhs_width = len(lhs_comp)
+        rhs_width = len(rhs_comp)
+
+        if lhs_comp != rhs_comp:
+            # Prefix changed tracks with U+2260: Not Equal To
+            prefix = ui.colorize('changed', ' \u2260 ')
+            lines.append((prefix, lhs, rhs, lhs_width, rhs_width))
         elif config['import']['detail']:
-            lines.append((' * %s' % lhs, '', lhs_width))
+            # Prefix unchanged tracks with *
+            prefix = ' * '
+            lines.append((prefix, lhs, [], lhs_width, 0))
 
     # Print each track in two columns, or across two lines.
-    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
+    joiner_width = len(''.join([' * ', ' -> ']))
+    indent_width = 4
+    indent = ui.indent(indent_width)
+    col_width = (ui.term_width() - indent_width - joiner_width) // 2
     if lines:
-        max_width = max(w for _, _, w in lines)
-        for lhs, rhs, lhs_width in lines:
+        # Size columns.
+        max_width_l = max(lw for _, _, _, lw, _ in lines)
+        max_width_r = max(rw for _, _, _, _, rw in lines)
+        
+        if (max_width_l <= col_width) and (max_width_r <= col_width):
+            col_width_l = max_width_l
+            col_width_r = max_width_r
+        elif ((max_width_l > col_width) or (max_width_r > col_width)) \
+             and ((max_width_l + max_width_r) <= col_width * 2):
+            # Either left or right column larger than allowed, but the other is
+            # smaller than allowed - in total the content fits.
+            col_width_l = max_width_l
+            col_width_r = max_width_r
+        else:
+            col_width_l = col_width
+            col_width_r = col_width
+        
+        # Print lines.
+        for prefix, lhs, rhs, lhs_width, rhs_width in lines:
+            l_pre = indent + prefix
+            r_pre = indent + ui.indent(len(' * '))
             if not rhs:
-                print_(lhs)
-            elif max_width > col_width:
-                print_(u'%s ->\n   %s' % (lhs, rhs))
+                pad_l = ' ' * (max_width_l - lhs_width)
+                lhs_str = "{0} {1} {2}{3}".format(lhs['track'], lhs['title'],
+                                                  pad_l, lhs['length'])
+                print_(l_pre + lhs_str)
+            elif (lhs_width > col_width_l) or (rhs_width > col_width_r):
+                layout = \
+                    config['ui']['import']['albumdiff']['layout'].as_choice({
+                        'column':  0,
+                        'newline': 1,
+                    })
+                if layout == 0:
+                    # Word wrapping inside columns.
+                    format_track_as_columns(indent, prefix,
+                        col_width_l, col_width_r, lhs, rhs)
+                elif layout == 1:
+                    # Wrap overlong track changes at column border.
+                    format_track(indent, prefix, lhs_width, rhs_width,
+                        max_width_l, max_width_r, lhs, rhs)
             else:
-                pad = max_width - lhs_width
-                print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
+                pad_l = ' ' * (col_width_l - lhs_width)
+                pad_r = ' ' * (col_width_r - rhs_width)
+                template = "{0} {1} {2}{3}"
+                lhs_str = template.format(
+                    lhs['track'], lhs['title'], pad_l, lhs['length'])
+                rhs_str = template.format(
+                    rhs['track'], rhs['title'], pad_r, rhs['length'])
+                print_(l_pre + u'%s -> %s' % (lhs_str, rhs_str))
 
     # Missing and unmatched tracks.
     if match.extra_tracks:

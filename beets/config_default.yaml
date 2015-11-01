@@ -73,6 +73,9 @@ ui:
         text_diff_removed: ['bold', 'red']
         text_diff_changed: ['bold', 'red']
         action_description: ['blue']
+    import:
+        albumdiff:
+            layout: newline
 
 format_item: $artist - $album - $title
 format_album: $albumartist - $album

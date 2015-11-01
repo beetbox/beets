@@ -645,6 +645,69 @@ def term_width():
     return width
 
 
+def split_into_lines(string, raw_string, first_width, middle_width, last_width):
+    """Splits string into substrings at whitespace. The first substring has a
+    length not longer than first_width, the last substring has a length not
+    longer than last_width, and all other substrings have a length not longer
+    than middle_width.
+    if raw_string is defined, raw_string and string contain the same words, but
+    string contains ANSI codes at word borders. Use raw_string to find
+    substrings, but return the words of string.
+    """
+    #print_('str: {}\nraw: {}\nfw: {}\nmw: {}\nlw: {}'.format(string, raw_string, first_width, middle_width, last_width))
+    words_raw = raw_string.split()
+    words     = string.split()
+    assert len(words_raw) == len(words)
+    result = { 'col': [], 'raw': [] }
+    next_substr_raw = u''
+    next_substr     = u''
+    # Iterate over all words.
+    for i in range(len(words_raw)):
+        if i == 0:
+            pot_substr_raw = words_raw[i]
+            pot_substr     = words[i]
+        else:
+            pot_substr_raw = ' '.join([next_substr_raw, words_raw[i]])
+            pot_substr     = ' '.join([next_substr,     words[i]])
+        
+        #print_('pot_substr_raw: {}'.format(pot_substr_raw))
+        
+        # Find out if pot(ential)_substr fits into next substring
+        fits_first = \
+            (len(result['raw']) == 0 and len(pot_substr_raw) <= first_width)
+        fits_middle = \
+            (len(result['raw']) != 0 and len(pot_substr_raw) <= middle_width)
+        if fits_first or fits_middle:
+            next_substr_raw = pot_substr_raw
+            next_substr     = pot_substr
+        else:
+            result['raw'].append(next_substr_raw)
+            result['col'].append(next_substr)
+            next_substr_raw = words_raw[i]
+            next_substr     = words[i]
+    # Assure that last line fits.
+    if len(next_substr_raw) <= last_width:
+        result['raw'].append(next_substr_raw)
+        result['col'].append(next_substr)
+    else:
+        words_raw = next_substr_raw.split()
+        words     = next_substr.split()
+        assert len(words_raw) == len(words)
+        if len(words_raw) > 1:
+            last_substr_raw = words_raw.pop()
+            last_substr     = words.pop()
+            next_substr_raw = ' '.join(words_raw)
+            next_substr     = ' '.join(words)
+        else:
+            last_substr_raw = u''
+            last_substr     = u''
+        result['raw'].append(next_substr_raw)
+        result['col'].append(next_substr)
+        result['raw'].append(last_substr_raw)
+        result['col'].append(last_substr)
+    return result
+
+
 FLOAT_EPSILON = 0.01
 
 
