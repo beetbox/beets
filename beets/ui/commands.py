@@ -547,36 +547,42 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
         if not bypass_candidates:
             # Display list of candidates.
+            print_(u'')
             print_(u'Finding tags for {0} "{1} - {2}".'.format(
                 u'track' if singleton else u'album',
                 item.artist if singleton else cur_artist,
                 item.title if singleton else cur_album,
             ))
 
-            print_(u'Candidates:')
+            print_(ui.indent(2) + u'Candidates:')
             for i, match in enumerate(candidates):
                 # Index, metadata, and distance.
-                line = [
-                    u'{0}.'.format(i + 1),
-                    u'{0} - {1}'.format(
-                        match.info.artist,
-                        match.info.title if singleton else match.info.album,
-                    ),
-                    u'({0})'.format(dist_string(match.distance)),
+                index0 = u'{0}.'.format(i + 1)
+                index = dist_colorize(index0, match.distance)
+                dist = '(%.1f%%)' % ((1 - match.distance) * 100)
+                distance = dist_colorize(dist, match.distance)
+                metadata = u'{0} - {1}'.format(
+                    match.info.artist,
+                    match.info.title if singleton else match.info.album,
+                )
+                if i == 0:
+                    metadata = dist_colorize(metadata, match.distance)
+                line1 = [
+                    index,
+                    distance,
+                    metadata
                 ]
+                print_(ui.indent(2) + ' '.join(line1))
 
                 # Penalties.
                 penalties = penalty_string(match.distance, 3)
                 if penalties:
-                    line.append(penalties)
+                    print_(ui.indent(13) + penalties)
 
                 # Disambiguation
                 disambig = disambig_string(match.info)
                 if disambig:
-                    line.append(ui.colorize('text_highlight_minor',
-                                            '(%s)' % disambig))
-
-                print_(' '.join(line))
+                    print_(ui.indent(13) +                         ui.colorize('text_highlight_minor', disambig))
 
             # Ask the user for a choice.
             if singleton:
