@@ -18,6 +18,7 @@ Without anything specified in your ``config.yaml`` for ``yamleditor:``
 you will get
 
     track-$title-$artist-$album      for items
+    
 and
 
     $album-$albumartist              for albums
@@ -25,6 +26,7 @@ and
 you can get more fields from the cmdline by adding
 
     -f '$genre $added'
+    
 or
 
     -e '$year $comments'
