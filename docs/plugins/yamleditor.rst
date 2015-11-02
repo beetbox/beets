@@ -59,7 +59,7 @@ Make a ``yamleditor:`` section in your config.yaml ``(beet config -e)``
        * albumfields: genre album    
        * itemfields: track artist    
        * not_fields: id path         
-       * separator: "|>"   
+       * separator: "<>"   
        
 * editor: you can pick your own texteditor. Defaults to systems default.
 * editor_args: in case you need extra arguments for your text-editor.
@@ -84,6 +84,6 @@ Make a ``yamleditor:`` section in your config.yaml ``(beet config -e)``
 
         ``-02-The Night Before-The Beatles-Help!``
 
-   but with ex "|>" it will look like:
+   but with ex "<>" it will look like:
 
-        ``|>02|>The Night Before|>The Beatles|>Help!``
+        ``<>02<>The Night Before<>The Beatles<>Help!``
