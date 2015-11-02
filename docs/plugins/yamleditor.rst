@@ -63,12 +63,12 @@ Make a ``yamleditor:`` section in your config.yaml ``(beet config -e)``
        
 * editor: you can pick your own texteditor. Defaults to systems default.
 * editor_args: in case you need extra arguments for your text-editor.
-* diff_method: 4 choices 
+* diff_method: 4 choices with no diff_method you get the beets way of showing differences.
     * ndiff: you see original and the changed yaml files with the changes
     * unified: you see the changes with a bit of context. Simple and compact. 
     * html: a html file that you can open in a browser. Looks nice. 
     * vimdiff: gives you VIM with the diffs
-    with no diff_method you get the beets way of showing differences.
+  
 * html_viewer:
   If you pick ``html`` you can specify a viewer for it. If not the systems-default
   will be picked.
