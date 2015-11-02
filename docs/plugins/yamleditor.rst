@@ -1,7 +1,6 @@
 Yamleditor Plugin
 =================
-The ``yamleditor`` plugin lets you open the tags, fields from a group of items
-, edit them in a text-editor and save them back.
+The ``yamleditor`` plugin lets you open the tags, fields from a group of items, edit them in a text-editor and save them back.
 
 You simply put in a query like you normally do in beets.
 
@@ -13,20 +12,19 @@ You simply put in a query like you normally do in beets.
     
 
 
-You get a list of hits and then you can edit them.
-The ``yamleditor`` opens your standard text-editor with a list of your hits
-and for each hit a bunch of fields.
+You get a list of hits and then you can edit them. The ``yamleditor`` opens your standard text-editor with a list of your hits and for each hit a bunch of fields.
 
-Without anything specified in your ``config.yaml`` for ``yamleditor:``
-you will get
+Without anything specified in your ``config.yaml`` for ``yamleditor:`` you will get
 
-    `track-$title-$artist-$album`      for items
+for items
+
+    `track-$title-$artist-$album`      
     
-and
+and for albums
 
-   `$album-$albumartist`             for albums
+   `$album-$albumartist`            
 
-you can get more fields from the cmdline by adding
+you can get fields from the cmdline by adding
 
     `-f '$genre $added'`
     
@@ -34,16 +32,13 @@ or
 
    `-e '$year $comments'`
 
-If you use ``-f '$field $field'`` you get *only* what you specified.
+If you use ``-f '$field ...'`` you get *only* what you specified.
 
-If you use ``-e '$field $field'`` you get what you specified *extra*.
+If you use ``-e '$field ...'`` you get what you specified *extra*.
 
-    ``-f or -e '$_all'``      gets you all the fields
+If you use ``-f or -e '$_all'`` you get all the fields.
 
-After you edit the values in your text-editor - *and you may only edit the values,
-no deleting fields or adding fields!* - you save the file, answer with y on ``Done`` and
-you get a summary of your changes.
-Check em, answer y or n and the changes are written to your library.
+After you edit the values in your text-editor - *and you may only edit the values, no deleting fields or adding fields!* - you save the file, answer with y on ``Done`` and you get a summary of your changes. Check em, answer y or n and the changes are written to your library.
 
 Configuration
 -------------
