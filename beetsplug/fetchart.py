@@ -509,6 +509,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             return None
 
     def _is_valid_image_candidate(self, candidate):
+        """Determine whether the given candidate artwork is valid based on
+        its dimensions (width and ratio).
+
+        Return `CANDIDATE_BAD` if the file is unusable.
+        Return `CANDIDATE_EXACT` if the file is usable as-is.
+        Return `CANDIDATE_DOWNSCALE` if the file must be resized.
+        """
         if not candidate:
             return CANDIDATE_BAD
 
