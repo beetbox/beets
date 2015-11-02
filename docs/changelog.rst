@@ -19,6 +19,7 @@ Fixes:
 * :doc:`plugins/fetchart`: Fix a bug where a database reference to a
   non-existent album art file would prevent the command from fetching new art.
   :bug:`1126`
+* :doc:`/plugins/thumbnails`: Fix a crash with Unicode paths. :bug:`1686`
 
 
 1.3.15 (October 17, 2015)
