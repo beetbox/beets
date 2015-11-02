@@ -16,6 +16,9 @@ Fixes:
   when there were not. :bug:`1652`
 * :doc:`plugins/lastgenre`: Clean up the reggae related genres somewhat.
   Thanks to :user:`Freso`. :bug:`1661`
+* :doc:`plugins/fetchart`: Fix a bug where a database reference to a
+  non-existent album art file would prevent the command from fetching new art.
+  :bug:`1126`
 
 
 1.3.15 (October 17, 2015)
