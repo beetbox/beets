@@ -1,5 +1,5 @@
 Yamleditor Plugin
-================
+=================
 The ``yamleditor`` plugin lets you open the tags, fields from a group of items
 , edit them in a text-editor and save them back.
 
@@ -41,7 +41,7 @@ you get a summary of your changes.
 Check em, answer y or n and the changes are written to your library.
 
 Configuration
-------------
+-------------
 
 Make a ``yamleditor:`` section in your config.yaml ``(beet config -e)``
 
