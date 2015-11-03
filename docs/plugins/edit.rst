@@ -1,11 +1,11 @@
-editPlugin
+Edit Plugin
 ============
 The ``edit`` plugin lets you open the tags, fields from a group of items, edit them in a text-editor and save them back.
 Add the ``edit`` plugin to your ``plugins:`` in your ``config.yaml``. Then
 you simply put in a query like you normally do.
 ::
 
-    beet yamleditor beatles
+     beet yamleditor beatles
      beet yamleditor beatles -a
      beet yamleditor beatles -f '$title $lyrics'
 
@@ -82,6 +82,7 @@ Make a ``edit:`` section in your config.yaml ``(beet config -e)``
 
         -02-The Night Before-The Beatles-Help!
 
+  
 but you can pick anything else. With "<>" it will look like:
 ::
 
