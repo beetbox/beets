@@ -78,6 +78,7 @@ Make a ``edit:`` section in your config.yaml ``(beet config -e)``
   Don't want to mess with them.
 
 * The default ``separator:`` prints like:
+
 ::
 
         -02-The Night Before-The Beatles-Help!
