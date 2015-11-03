@@ -275,8 +275,6 @@ class EditPlugin(plugins.BeetsPlugin):
         if self.diff_method:
             ostr = self.print_items[self.style](oldset)
             nwstr = self.print_items[self.style](newset)
-            pprint.pprint(self.diff_method)
-            pprint.pprint(type(self.diff_method))
             self.diffresults[self.diff_method](ostr, nwstr)
         else:
             for obj in changedob:
@@ -330,7 +328,6 @@ class EditPlugin(plugins.BeetsPlugin):
         newlines = newfilestr.splitlines()
         oldlines = oldfilestr.splitlines()
         diff = difflib.HtmlDiff()
-        pprint.pprint("here in html")
         df = diff.make_file(newlines, oldlines)
         ht = NamedTemporaryFile('w', suffix='.html', delete=False)
         ht.write(df)
