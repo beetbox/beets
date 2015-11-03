@@ -21,6 +21,7 @@ import os
 import shutil
 
 import responses
+from mock import patch
 
 from test import _common
 from test._common import unittest
@@ -409,6 +410,12 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(local_artpath)
 
+    def _assertImageResized(self, image_file, should_resize):
+        self.image_file = image_file
+        with patch.object(ArtResizer.shared, 'resize') as mock_resize:
+            self.plugin.art_for_album(None, [''], True)
+            self.assertEqual(mock_resize.called, should_resize)
+
     def _require_backend(self):
         """Skip the test if the art resizer doesn't have ImageMagick or
         PIL (so comparisons and measurements are unavailable).
@@ -431,6 +438,12 @@ class ArtForAlbumTest(UseThePlugin):
     def test_respect_enforce_ratio_no(self):
         self.plugin.enforce_ratio = False
         self._assertImageIsValidArt(self.IMG_500x490, True)
+
+    def test_resize_if_necessary(self):
+        self._require_backend()
+        self.plugin.maxwidth = 300
+        self._assertImageResized(self.IMG_225x225, False)
+        self._assertImageResized(self.IMG_348x348, True)
 
 
 def suite():
