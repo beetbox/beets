@@ -79,14 +79,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 for album in lib.albums(decargs(args)):
                     art.embed_album(self._log, album, maxwidth, False,
                                     compare_threshold, ifempty)
-
-                    if remove_art_file and album.artpath is not None:
-                        if os.path.isfile(album.artpath):
-                            self._log.debug(u'Removing album art file '
-                                            u'for {0}', album)
-                            os.remove(album.artpath)
-                            album.artpath = None
-                            album.store()
+                    self.remove_artfile(album)
 
         embed_cmd.func = embed_func
 
@@ -141,3 +134,12 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             art.embed_album(self._log, album, max_width, True,
                             self.config['compare_threshold'].get(int),
                             self.config['ifempty'].get(bool))
+            self.remove_artfile(album)
+    def remove_artfile(self, album)
+        if self.config['remove_art_file'] and album.artpath:
+            if os.path.isfile(album.artpath):
+                self._log.debug(u'Removing album art file '
+                                u'for {0}', album)
+                os.remove(album.artpath)
+                album.artpath = None
+                album.store()
