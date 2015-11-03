@@ -16,6 +16,8 @@ Fixes:
   when there were not. :bug:`1652`
 * :doc:`plugins/lastgenre`: Clean up the reggae related genres somewhat.
   Thanks to :user:`Freso`. :bug:`1661`
+* :doc:`plugins/fetchart`: The plugin now only resizes album art if necessary,
+  rather than always by default. :bug:`1264`
 
 
 1.3.15 (October 17, 2015)
