@@ -1592,6 +1592,18 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         self.importer.run()
         self.assertEqual(self._item().added, 4747.0)
 
+    def test_reimported_item_preserves_art(self):
+        self._setup_session()
+        artpath = os.path.join(_common.RSRC, 'abbey.jpg')
+        replaced_album = self._album()
+        replaced_album.set_art(artpath)
+        replaced_album.store()
+        self.importer.run()
+        new_album = self._album()
+        new_artpath = new_album.art_destination(artpath)
+        self.assertEqual(new_album.artpath, new_artpath)
+        self.assertTrue(os.path.exists(new_artpath))
+
 
 class ImportPretendTest(_common.TestCase, ImportHelper):
     """ Test the pretend commandline option
