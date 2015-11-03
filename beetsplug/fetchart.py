@@ -519,7 +519,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not candidate:
             return CANDIDATE_BAD
 
-        if not (self.enforce_ratio or self.minwidth):
+        if not (self.enforce_ratio or self.minwidth or self.maxwidth):
             return CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -532,9 +532,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                               u'`enforce_ratio` may be violated.')
             return CANDIDATE_EXACT
 
-        if size[0] >= self.minwidth and (
+        if (not self.minwidth or size[0] >= self.minwidth) and (
                 not self.enforce_ratio or size[0] == size[1]):
-            if size[0] > self.maxwidth:
+            if not self.maxwidth or size[0] > self.maxwidth:
                 return CANDIDATE_DOWNSCALE
             return CANDIDATE_EXACT
         return CANDIDATE_BAD
