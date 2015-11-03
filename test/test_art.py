@@ -31,6 +31,7 @@ from beets import library
 from beets import importer
 from beets import config
 from beets import logging
+from beets import util
 from beets.util.artresizer import ArtResizer, WEBPROXY
 
 
@@ -357,6 +358,18 @@ class ArtImporterTest(UseThePlugin):
         shutil.copyfile(self.art_file, artdest)
         self.afa_response = artdest
         self._fetch_art(True)
+
+    def test_fetch_art_if_imported_file_deleted(self):
+        # See #1126. Test the following scenario:
+        #   - Album art imported, `album.artpath` set.
+        #   - Imported album art file subsequently deleted (by user or other
+        #     program).
+        # `fetchart` should import album art again instead of printing the
+        # message "<album> has album art".
+        self._fetch_art(True)
+        util.remove(self.album.artpath)
+        self.plugin.batch_fetch_art(self.lib, self.lib.albums(), force=False)
+        self.assertExists(self.album.artpath)
 
 
 class ArtForAlbumTest(UseThePlugin):
