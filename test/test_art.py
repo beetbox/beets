@@ -21,6 +21,7 @@ import os
 import shutil
 
 import responses
+from mock import patch
 
 from test import _common
 from test._common import unittest
@@ -30,6 +31,7 @@ from beets import library
 from beets import importer
 from beets import config
 from beets import logging
+from beets import util
 from beets.util.artresizer import ArtResizer, WEBPROXY
 
 
@@ -357,6 +359,18 @@ class ArtImporterTest(UseThePlugin):
         self.afa_response = artdest
         self._fetch_art(True)
 
+    def test_fetch_art_if_imported_file_deleted(self):
+        # See #1126. Test the following scenario:
+        #   - Album art imported, `album.artpath` set.
+        #   - Imported album art file subsequently deleted (by user or other
+        #     program).
+        # `fetchart` should import album art again instead of printing the
+        # message "<album> has album art".
+        self._fetch_art(True)
+        util.remove(self.album.artpath)
+        self.plugin.batch_fetch_art(self.lib, self.lib.albums(), force=False)
+        self.assertExists(self.album.artpath)
+
 
 class ArtForAlbumTest(UseThePlugin):
     """ Tests that fetchart.art_for_album respects the size
@@ -409,6 +423,12 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(local_artpath)
 
+    def _assertImageResized(self, image_file, should_resize):
+        self.image_file = image_file
+        with patch.object(ArtResizer.shared, 'resize') as mock_resize:
+            self.plugin.art_for_album(None, [''], True)
+            self.assertEqual(mock_resize.called, should_resize)
+
     def _require_backend(self):
         """Skip the test if the art resizer doesn't have ImageMagick or
         PIL (so comparisons and measurements are unavailable).
@@ -431,6 +451,12 @@ class ArtForAlbumTest(UseThePlugin):
     def test_respect_enforce_ratio_no(self):
         self.plugin.enforce_ratio = False
         self._assertImageIsValidArt(self.IMG_500x490, True)
+
+    def test_resize_if_necessary(self):
+        self._require_backend()
+        self.plugin.maxwidth = 300
+        self._assertImageResized(self.IMG_225x225, False)
+        self._assertImageResized(self.IMG_348x348, True)
 
 
 def suite():

@@ -208,6 +208,23 @@ Use the ``%asciify{}`` function in your path formats. See
 :ref:`template-functions`.
 
 
+.. _move-dir:
+
+…point beets at a new music directory?
+--------------------------------------
+
+If you want to move your music from one directory to another, the best way is
+to let beets do it for you. First, edit your configuration and set the
+``directory`` setting to the new place. Then, type ``beet move`` to have beets
+move all your files.
+
+If you've already moved your music *outside* of beets, you have a few options:
+
+- Move the music back (with an ordinary ``mv``) and then use the above steps.
+- Delete your database and re-create it from the new paths using ``beet import -AWMC``.
+- Resort to manually modifying the SQLite database (not recommended).
+
+
 Why does beets…
 ===============
 
