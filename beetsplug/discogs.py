@@ -150,8 +150,8 @@ class DiscogsPlugin(BeetsPlugin):
                 return self.candidates(items, artist, album, va_likely)
             else:
                 return []
-        except CONNECTION_ERRORS as e:
-            self._log.debug(u'HTTP Connection Error: {0}', e)
+        except CONNECTION_ERRORS:
+            self._log.debug('Connection error in album search', exc_info=True)
             return []
 
     def album_for_id(self, album_id):
@@ -181,8 +181,8 @@ class DiscogsPlugin(BeetsPlugin):
                     self.reset_auth()
                     return self.album_for_id(album_id)
             return None
-        except CONNECTION_ERRORS as e:
-            self._log.debug(u'HTTP Connection Error: {0}', e)
+        except CONNECTION_ERRORS:
+            self._log.debug('Connection error in album lookup', exc_info=True)
             return None
         return self.get_album_info(result)
 
@@ -203,9 +203,9 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             releases = self.discogs_client.search(query,
                                                   type='release').page(1)
-        except CONNECTION_ERRORS as exc:
-            self._log.debug("Communication error while searching for {0!r}: "
-                            "{1}".format(query, exc))
+        except CONNECTION_ERRORS:
+            self._log.debug("Communication error while searching for {0!r}",
+                            query, exc_info=True)
             return []
         return [self.get_album_info(release) for release in releases[:5]]
 
