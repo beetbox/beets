@@ -39,8 +39,8 @@ from beets.util.artresizer import ArtResizer, has_IM, has_PIL
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
-NORMAL_DIR = os.path.join(BASE_DIR, "normal")
-LARGE_DIR = os.path.join(BASE_DIR, "large")
+NORMAL_DIR = util.bytestring_path(os.path.join(BASE_DIR, "normal"))
+LARGE_DIR = util.bytestring_path(os.path.join(BASE_DIR, "large"))
 
 
 class ThumbnailsPlugin(BeetsPlugin):

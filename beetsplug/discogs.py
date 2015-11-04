@@ -39,8 +39,7 @@ import os
 urllib3_logger = logging.getLogger('requests.packages.urllib3')
 urllib3_logger.setLevel(logging.CRITICAL)
 
-USER_AGENT = 'beets/{0} +http://beets.radbox.org/'.format(beets.__version__) \
-    .encode('utf8')
+USER_AGENT = u'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (ConnectionError, socket.error, httplib.HTTPException,
@@ -66,8 +65,8 @@ class DiscogsPlugin(BeetsPlugin):
     def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary.
         """
-        c_key = self.config['apikey'].get(unicode).encode('utf8')
-        c_secret = self.config['apisecret'].get(unicode).encode('utf8')
+        c_key = self.config['apikey'].get(unicode)
+        c_secret = self.config['apisecret'].get(unicode)
 
         # Get the OAuth token from a file or log in.
         try:
@@ -77,8 +76,8 @@ class DiscogsPlugin(BeetsPlugin):
             # No token yet. Generate one.
             token, secret = self.authenticate(c_key, c_secret)
         else:
-            token = tokendata['token'].encode('utf8')
-            secret = tokendata['secret'].encode('utf8')
+            token = tokendata['token']
+            secret = tokendata['secret']
 
         self.discogs_client = Client(USER_AGENT, c_key, c_secret,
                                      token, secret)
@@ -121,7 +120,7 @@ class DiscogsPlugin(BeetsPlugin):
         with open(self._tokenfile(), 'w') as f:
             json.dump({'token': token, 'secret': secret}, f)
 
-        return token.encode('utf8'), secret.encode('utf8')
+        return token, secret
 
     def album_distance(self, items, album_info, mapping):
         """Returns the album distance.
@@ -151,8 +150,8 @@ class DiscogsPlugin(BeetsPlugin):
                 return self.candidates(items, artist, album, va_likely)
             else:
                 return []
-        except CONNECTION_ERRORS as e:
-            self._log.debug(u'HTTP Connection Error: {0}', e)
+        except CONNECTION_ERRORS:
+            self._log.debug('Connection error in album search', exc_info=True)
             return []
 
     def album_for_id(self, album_id):
@@ -182,8 +181,8 @@ class DiscogsPlugin(BeetsPlugin):
                     self.reset_auth()
                     return self.album_for_id(album_id)
             return None
-        except CONNECTION_ERRORS as e:
-            self._log.debug(u'HTTP Connection Error: {0}', e)
+        except CONNECTION_ERRORS:
+            self._log.debug('Connection error in album lookup', exc_info=True)
             return None
         return self.get_album_info(result)
 
@@ -204,9 +203,9 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             releases = self.discogs_client.search(query,
                                                   type='release').page(1)
-        except CONNECTION_ERRORS as exc:
-            self._log.debug("Communication error while searching for {0!r}: "
-                            "{1}".format(query, exc))
+        except CONNECTION_ERRORS:
+            self._log.debug("Communication error while searching for {0!r}",
+                            query, exc_info=True)
             return []
         return [self.get_album_info(release) for release in releases[:5]]
 

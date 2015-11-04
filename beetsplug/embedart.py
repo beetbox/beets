@@ -63,7 +63,6 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         maxwidth = self.config['maxwidth'].get(int)
         compare_threshold = self.config['compare_threshold'].get(int)
         ifempty = self.config['ifempty'].get(bool)
-        remove_art_file = self.config['remove_art_file'].get(bool)
 
         def embed_func(lib, opts, args):
             if opts.file:
@@ -79,14 +78,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 for album in lib.albums(decargs(args)):
                     art.embed_album(self._log, album, maxwidth, False,
                                     compare_threshold, ifempty)
-
-                    if remove_art_file and album.artpath is not None:
-                        if os.path.isfile(album.artpath):
-                            self._log.debug(u'Removing album art file '
-                                            u'for {0}', album)
-                            os.remove(album.artpath)
-                            album.artpath = None
-                            album.store()
+                    self.remove_artfile(album)
 
         embed_cmd.func = embed_func
 
@@ -141,3 +133,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             art.embed_album(self._log, album, max_width, True,
                             self.config['compare_threshold'].get(int),
                             self.config['ifempty'].get(bool))
+            self.remove_artfile(album)
+
+    def remove_artfile(self, album):
+        """Possibly delete the album art file for an album (if the
+        appropriate configuration option is enabled.
+        """
+        if self.config['remove_art_file'] and album.artpath:
+            if os.path.isfile(album.artpath):
+                self._log.debug('Removing album art file for {0}', album)
+                os.remove(album.artpath)
+                album.artpath = None
+                album.store()
