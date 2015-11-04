@@ -434,6 +434,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def fetch_art(self, session, task):
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
+            if task.album.artpath and os.path.isfile(task.album.artpath):
+                # Album already has art (probably a re-import); skip it.
+                return
             if task.choice_flag == importer.action.ASIS:
                 # For as-is imports, don't search Web sources for art.
                 local = True

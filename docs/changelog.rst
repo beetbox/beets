@@ -16,6 +16,10 @@ Fixes:
   when there were not. :bug:`1652`
 * :doc:`plugins/lastgenre`: Clean up the reggae related genres somewhat.
   Thanks to :user:`Freso`. :bug:`1661`
+* The importer now correctly moves album art files when re-importing.
+  :bug:`314`
+* :doc:`/plugins/fetchart`: In auto mode, skips albums that already have
+  art attached to them so as not to interfere with re-imports. :bug:`314`
 * :doc:`plugins/fetchart`: The plugin now only resizes album art if necessary,
   rather than always by default. :bug:`1264`
 * :doc:`plugins/fetchart`: Fix a bug where a database reference to a
