@@ -101,7 +101,7 @@ class EditPlugin(plugins.BeetsPlugin):
         edit_command.parser.add_option(
             '--sum',
             action='store_true', dest='sum',
-            help='groups fields with the same value',
+            help='list fields with the same value',
         )
         edit_command.parser.add_all_common_options()
         edit_command.func = self.editor_music
@@ -324,10 +324,10 @@ class EditPlugin(plugins.BeetsPlugin):
         ol = []
         changedob = []
         for o, n in ono:
-            if not opts.album:
-                ob = lib.get_item(n[0])
+            if opts.album:
+                ob = lib.get_album(int(n[0]))
             else:
-                ob = lib.get_album(n[0])
+                ob = lib.get_item(n[0])
             # change id to item-string
             ol.append((format(ob),) + o[1:])
             ob.update(n[1])
