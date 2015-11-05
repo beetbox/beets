@@ -94,7 +94,8 @@ class Itunes(MetaSource):
 
         # Make the iTunes library queryable using the path
         self.collection = {_norm_itunes_path(track['Location']): track
-                           for track in raw_library['Tracks'].values()}
+                           for track in raw_library['Tracks'].values()
+                           if 'Location' in track}
 
     def sync_from_source(self, item):
         result = self.collection.get(util.bytestring_path(item.path).lower())
