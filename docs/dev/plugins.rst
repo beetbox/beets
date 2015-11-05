@@ -222,13 +222,9 @@ The events currently available are:
   autotagger selection was made.
   Parameter: ``info``.
 
-* *albuminfo_received*: called after meta data for an album item has been
-  fetched from disparate sources, such as MusicBrainz. Gives a developer the
-  option to intercept the fetched AlbumInfo object. Can be used to modify tags
-  on a ``beet import`` operation or during later adjustments, such as
-  ``mbsync``. Can be slow, as event is fired for any fetched possible match
-  *before* user or autotagger selection was made.
-  Parameter: ``info``.
+* *albuminfo_received*: Like *trackinfo_received*, the event indicates new meta
+  data for album items, but supplies an *AlbumInfo* object instead of a
+  *TrackInfo*.
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
