@@ -271,7 +271,7 @@ class DuplicatesPlugin(BeetsPlugin):
 
         Return same number of items, with the head item modified.
         """
-        fields = [f for sublist in Item.get_fields() for f in sublist]
+        fields = Item.all_keys()
         for f in fields:
             for o in objs[1:]:
                 if getattr(objs[0], f, None) in (None, ''):
