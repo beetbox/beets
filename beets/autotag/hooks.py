@@ -511,10 +511,7 @@ def album_for_mbid(release_id):
     if the ID is not found.
     """
     try:
-        album = mb.album_for_id(release_id)
-        if album:
-            plugins.send('albuminfo_received', info=album)
-        return album
+        return mb.album_for_id(release_id)
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
@@ -524,10 +521,7 @@ def track_for_mbid(recording_id):
     if the ID is not found.
     """
     try:
-        track = mb.track_for_id(recording_id)
-        if track:
-            plugins.send('trackinfo_received', info=track)
-        return track
+        return mb.track_for_id(recording_id)
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
@@ -535,20 +529,18 @@ def track_for_mbid(recording_id):
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     candidates = [album_for_mbid(album_id)]
-    plugin_albums = plugins.album_for_id(album_id)
-    for a in plugin_albums:
-        plugins.send('trackinfo_received', info=a)
-    candidates.extend(plugin_albums)
+    candidates.extend(plugins.album_for_id(album_id))
+    for a in candidates:
+        plugins.send('albuminfo_received', info=a)
     return filter(None, candidates)
 
 
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     candidates = [track_for_mbid(track_id)]
-    plugin_tracks = plugins.track_for_id(track_id)
-    for t in plugin_tracks:
+    candidates.extend(plugins.track_for_id(track_id))
+    for t in candidates:
         plugins.send('trackinfo_received', info=t)
-    candidates.extend(plugin_tracks)
     return filter(None, candidates)
 
 
@@ -578,10 +570,6 @@ def album_candidates(items, artist, album, va_likely):
     # Candidates from plugins.
     out.extend(plugins.candidates(items, artist, album, va_likely))
 
-    # Notify subscribed plugins about fetched album info
-    for a in out:
-        plugins.send('albuminfo_received', info=a)
-
     return out
 
 
@@ -601,9 +589,5 @@ def item_candidates(item, artist, title):
 
     # Plugin candidates.
     out.extend(plugins.item_candidates(item, artist, title))
-
-    # Notify subscribed plugins about fetched album info
-    for i in out:
-        plugins.send('trackinfo_received', info=i)
 
     return out
