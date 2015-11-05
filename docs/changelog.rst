@@ -30,6 +30,7 @@ Fixes:
   (as well as with the explicit command). :bug:`1662` :bug:`1675`
 * :doc:`/plugins/metasync`: Fix a crash when syncing with recent versions of
   iTunes. :bug:`1700`
+* :doc:`/plugins/duplicates`: Fix a crash when merging items. :bug:`1699`
 
 
 1.3.15 (October 17, 2015)
