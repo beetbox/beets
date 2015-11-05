@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2015 jean-marie winters
+# Copyright 2015
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -28,6 +28,7 @@ from sys import exit
 from beets import config
 from beets import ui
 from tempfile import NamedTemporaryFile
+import os
 
 
 class EditPlugin(plugins.BeetsPlugin):
@@ -42,8 +43,8 @@ class EditPlugin(plugins.BeetsPlugin):
             'browser': '',
             'albumfields': 'album albumartist',
             'itemfields': 'track title artist album ',
-            'not_fields': 'path',
-            'separator': '-'
+            'not_fields': 'id path',
+            'sep': '-'
 
         })
         self.style = self.config['style'].get(unicode)
@@ -77,7 +78,7 @@ class EditPlugin(plugins.BeetsPlugin):
         self.not_fields = self.config['not_fields'].as_str_seq()
         '''the separator in your config sets the separator that will be used
         between fields in your terminal. Defaults to -'''
-        self.separator = self.config['separator'].get(unicode)
+        self.sep = self.config['sep'].get(unicode)
         self.ed = None
         self.ed_args = None
         self.brw = None
@@ -96,6 +97,11 @@ class EditPlugin(plugins.BeetsPlugin):
             '--all',
             action='store_true', dest='all',
             help='add all fields to edit',
+        )
+        edit_command.parser.add_option(
+            '--sum',
+            action='store_true', dest='sum',
+            help='groups fields with the same value',
         )
         edit_command.parser.add_all_common_options()
         edit_command.func = self.editor_music
@@ -142,7 +148,7 @@ class EditPlugin(plugins.BeetsPlugin):
             return
         dict_from_objs = self.make_dict[self.pick](self.fields, objs, opts)
         newyaml, oldyaml = self.change_objs(dict_from_objs)
-        changed_objs = self.check_diff(newyaml, oldyaml)
+        changed_objs = self.check_diff(newyaml, oldyaml, opts)
         if not changed_objs:
             print_("nothing to change")
             return
@@ -168,7 +174,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
     def get_fields_from(self, objs, opts):
         # construct a list of fields we need
-        cl = ui.colorize('action', self.separator)
+        cl = ui.colorize('action', self.sep)
         # see if we need album or item fields
         self.fields = self.albumfields if opts.album else self.itemfields
         # if opts.format is given only use those fields
@@ -215,15 +221,37 @@ class EditPlugin(plugins.BeetsPlugin):
 
     def get_selected_fields(self, myfields, objs, opts):
         a = []
-        for mod in objs:
-            a.append([{fi: mod[fi]}for fi in myfields])
-        return a
+        if opts.sum:
+            for field in myfields:
+                if field not in self.not_fields:
+                    d = collections.defaultdict(str)
+                    for obj in objs:
+                        d[obj[field]] += (" " + str(obj['id']))
+                    a.append([field, [{f: i} for f, i in d.items()]])
+            return a
+        else:
+            for mod in objs:
+                a.append([{fi: mod[fi]}for fi in myfields])
+            return a
 
     def get_all_fields(self, myfields, objs, opts):
         a = []
-        for mod in objs:
-            a.append([{fi: mod[fi]} for fi in sorted(mod._fields)])
-        return a
+        if opts.sum:
+            fields = (library.Album.all_keys() if opts.album
+                      else library.Item.all_keys())
+            for field in sorted(fields):
+                # for every field get a dict
+                d = collections.defaultdict(str)
+                for obj in objs:
+                    # put all the ob-ids in the dict[field] as a string
+                    d[obj[field]] += (" " + str(obj['id']))
+                # for the field, we get the value and the users
+                a.append([field, [{f: i} for f, i in sorted(d.items())]])
+            return a
+        else:
+            for mod in objs:
+                a.append([{fi: mod[fi]} for fi in sorted(mod._fields)])
+            return a
 
     def change_objs(self, dict_items):
         # construct a yaml from the original object-fields
@@ -233,48 +261,82 @@ class EditPlugin(plugins.BeetsPlugin):
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
         new.write(newyaml)
         new.close()
-        if not self.ed:
-            webbrowser.open(new.name, new=2, autoraise=True)
-        else:
-            callmethod = [self.ed]
-            if self.ed_args:
-                callmethod.extend(self.ed_args)
-            callmethod.append(new.name)
-            subprocess.check_call(callmethod)
+        self.get_editor(new.name)
 
         if ui.input_yn(ui.colorize('action_default', "done?(y)"), True):
-            with open(new.name) as f:
-                newyaml = f.read()
+            while True:
+                try:
+                    with open(new.name) as f:
+                        newyaml = f.read()
+                        list(yaml.load_all(newyaml))
+                        break
+                except yaml.YAMLError as e:
+                    print_(ui.colorize('text_warning',
+                           "change this fault: {}".format(e)))
+                    print_("correct format for empty = - '' :")
+                    if ui.input_yn(
+                            ui.colorize('action_default', "fix?(y)"), True):
+                        self.get_editor(new.name)
+                        if ui.input_yn(ui.colorize(
+                           'action_default', "ok.fixed.(y)"), True):
+                            pass
+
             return newyaml, oldyaml
         else:
             exit()
 
-    def save_items(self, oldnewlist, lib, fmt, opts):
-        oldset = []
-        newset = []
-        for old, new in oldnewlist:
-            oldset.append(old)
-            newset.append(new)
-
-        no = []
-        for newitem in range(0, len(newset)):
-            ordict = collections.OrderedDict()
-            for each in newset[newitem]:
-                ordict.update(each)
-            no.append(ordict)
-
-        changedob = []
-        for each in no:
-            if not opts.album:
-                ob = lib.get_item(each['id'])
+    def get_editor(self, name):
+        if not self.ed:
+            editor = os.getenv('EDITOR')
+            if editor:
+                os.system(editor + " " + name)
             else:
-                ob = lib.get_album(each['id'])
-            ob.update(each)
-            changedob.append(ob)
+                webbrowser.open(name, new=2, autoraise=True)
+        else:
+            callmethod = [self.ed]
+            if self.ed_args:
+                callmethod.extend(self.ed_args)
+            callmethod.append(name)
+            subprocess.check_call(callmethod)
 
+    def same_format(self, newset, opts):
+        alld = collections.defaultdict(dict)
+        if opts.sum:
+            for o in newset:
+                for so in o:
+                    ids = set((so[1].values()[0].split()))
+                    for id in ids:
+                        alld[id].update(
+                            {so[0].items()[0][1]: so[1].items()[0][0]})
+        else:
+            for o in newset:
+                for so in o:
+                    alld[o[0].values()[0]].update(so)
+        return alld
+
+    def save_items(self, oldnewlist, lib, fmt, opts):
+
+        oldset, newset = zip(*oldnewlist)
+        no = self.same_format(newset, opts)
+        oo = self.same_format(oldset, opts)
+        ono = zip(oo.items(), no.items())
+        nl = []
+        ol = []
+        changedob = []
+        for o, n in ono:
+            if not opts.album:
+                ob = lib.get_item(n[0])
+            else:
+                ob = lib.get_album(n[0])
+            # change id to item-string
+            ol.append((format(ob),) + o[1:])
+            ob.update(n[1])
+            nl.append((format(ob),) + n[1:])
+            changedob.append(ob)
+        # see the changes we made
         if self.diff_method:
-            ostr = self.print_items[self.style](oldset)
-            nwstr = self.print_items[self.style](newset)
+            ostr = self.print_items[self.style](ol)
+            nwstr = self.print_items[self.style](nl)
             self.diffresults[self.diff_method](ostr, nwstr)
         else:
             for obj in changedob:
@@ -294,11 +356,33 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return
 
-    def check_diff(self, newyaml, oldyaml):
-        # get the changed objects
+    def check_diff(self, newyaml, oldyaml, opts):
+        # make python objs from yamlstrings
         nl = self.string_to_dict[self.style](newyaml)
         ol = self.string_to_dict[self.style](oldyaml)
-        return filter(None, map(self.reduce_it, ol, nl))
+        if opts.sum:
+            return filter(None, map(self.reduce_sum, ol, nl))
+        else:
+            return filter(None, map(self.reduce_it, ol, nl))
+
+    def reduce_sum(self, ol, nl):
+        # only get the changed objs
+        if ol != nl:
+            sol = [i for i in ol[1]]
+            snl = [i for i in nl[1]]
+            a = filter(None, map(self.reduce_sub, sol, snl))
+            header = {"field": ol[0]}
+            ol = [[header, b[0]] for b in a]
+            nl = [[header, b[1]] for b in a]
+            return ol, nl
+
+    def reduce_sub(self, sol, snl):
+        # if the keys have changed  resets them
+        if sol != snl:
+            if snl.values() != sol.values():
+                snl[snl.keys()[0]] = sol[sol.keys()[0]]
+        if sol != snl:
+            return sol, snl
 
     def reduce_it(self, ol, nl):
         # if there is a forbidden field it resets them
@@ -334,7 +418,11 @@ class EditPlugin(plugins.BeetsPlugin):
         ht.flush()
         hdn = ht.name
         if not self.brw:
-            webbrowser.open(hdn, new=2, autoraise=True)
+            browser = os.getenv('BROWSER')
+            if browser:
+                os.system(browser + " " + hdn)
+            else:
+                webbrowser.open(hdn, new=2, autoraise=True)
         else:
             callmethod = [self.brw]
             if self.brw_args:
