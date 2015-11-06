@@ -31,9 +31,9 @@ Fixes:
 * :doc:`/plugins/metasync`: Fix a crash when syncing with recent versions of
   iTunes. :bug:`1700`
 * :doc:`/plugins/duplicates`: Fix a crash when merging items. :bug:`1699`
-* :doc:`/plugins/discogs`: New config option (va_name) to change the default
-  album artist name if album is V.A. The default is changed to 'Various Artists'
-  to be the same as MusicBrainz.
+* :doc:`/plugins/discogs`: A new option, ``va_name``, controls the album
+  artist name for various-artists albums. The default is now "Various
+  Artists," to match MusicBrainz.
 
 
 1.3.15 (October 17, 2015)
