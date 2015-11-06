@@ -26,7 +26,7 @@ Fixes:
   (as well as with the explicit command). :bug:`1662` :bug:`1675`
 * :doc:`/plugins/discogs`: New config option (va_name) to change the default
   album artist name if album is V.A. The default is changed to 'Various Artists'
-  to be the same as for MusicBrainz.
+  to be the same as MusicBrainz.
 
 
 1.3.15 (October 17, 2015)
