@@ -215,6 +215,8 @@ Here are a few of the plugins written by the beets community:
 
 * `whatlastgenre`_ fetches genres from various music sites.
 
+* `beets-usertag`_ lets you use keywords to tag and organize your music.
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -231,3 +233,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://github.com/ttsda/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
+.. _beets-usertag: https://github.com/igordertigor/beets-usertag
