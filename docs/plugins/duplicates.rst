@@ -67,9 +67,6 @@ file. The available options mirror the command-line options:
 - **full**: List every track or album that has duplicates, not just the
   duplicates themselves.
   Default: ``no``
-- **strict**: Do not report duplicate matches if some of the
-  attributes are not defined (ie. null or empty).
-  Default: ``no``
 - **keys**: Define in which track or album fields duplicates are to be
   searched. By default, the plugin uses the musicbrainz track and album IDs for
   this purpose. Using the ``keys`` option (as a YAML list in the configuration
@@ -83,6 +80,9 @@ file. The available options mirror the command-line options:
   Default: none (disabled).
 - **path**: Output the path instead of metadata when listing duplicates.
   Default: ``no``.
+- **strict**: Do not report duplicate matches if some of the
+  attributes are not defined (ie. null or empty).
+  Default: ``no``
 - **tag**: A ``key=value`` pair. The plugin will add a new ``key`` attribute
   with ``value`` value as a flexattr to the database for duplicate items.
   Default: ``no``.
