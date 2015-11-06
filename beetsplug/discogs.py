@@ -226,7 +226,7 @@ class DiscogsPlugin(BeetsPlugin):
             result.data['formats'][0].get('descriptions', [])) or None
         va = result.data['artists'][0]['name'].lower() == 'various'
         if va:
-           artist = self.config['va_name'].get()
+            artist = self.config['va_name'].get()
         year = result.data['year']
         label = result.data['labels'][0]['name']
         mediums = len(set(t.medium for t in tracks))
