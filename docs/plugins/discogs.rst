@@ -27,11 +27,13 @@ at the "enter Id" prompt in the importer.
 
 Configuration
 -------------
+
 To configure the plugin, make a ``discogs:`` section in your configuration
 file. The available options are:
 
-- **va_name**: Change the name of the albumartist if an album is V.A.
-  Default: ``'Various Artists'`` (Same as MusicBrainz).
+- **va_name**: The albumartist name to use when an album is marked as being by
+  "various" artists.
+  Default: "Various Artists" (matching the MusicBrainz convention).
 
 Troubleshooting
 ---------------
