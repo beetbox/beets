@@ -139,21 +139,39 @@ def print_(*strings, **kwargs):
 
 # Configuration wrappers.
 
-def _bool_fallback(opt, view):
-    """Given a boolean or None, return the original value or a
-    configuration option as a fallback.
+def _bool_fallback(a, b):
+    """Given a boolean or None, return the original value or a fallback.
     """
-    if opt is None:
-        return view.get(bool)
+    if a is None:
+        assert isinstance(b, bool)
+        return b
     else:
-        return opt
+        assert isinstance(a, bool)
+        return a
 
 
 def should_write(write_opt=None):
-    """Decide whether a command that updates metadata should also write tags,
-    using the importer configuration as the default.
+    """Decide whether a command that updates metadata should also write
+    tags, using the importer configuration as the default.
     """
-    return _bool_fallback(write_opt, config['import']['write'])
+    return _bool_fallback(write_opt, config['import']['write'].get(bool))
+
+
+def should_move(move_opt=None):
+    """Decide whether a command that updates metadata should also move
+    files when they're inside the library, using the importer
+    configuration as the default.
+
+    Specifically, commands should move files after metadata updates only
+    when the importer is configured *either* to move *or* to copy files.
+    They should avoid moving files when the importer is configured not
+    to touch any filenames.
+    """
+    return _bool_fallback(
+        move_opt,
+        config['import']['move'].get(bool) or
+        config['import']['copy'].get(bool)
+    )
 
 
 # Input prompts.
