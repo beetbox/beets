@@ -149,7 +149,7 @@ def _bool_fallback(opt, view):
         return opt
 
 
-def should_write(write_opt):
+def should_write(write_opt=None):
     """Decide whether a command that updates metadata should also write tags,
     using the importer configuration as the default.
     """
