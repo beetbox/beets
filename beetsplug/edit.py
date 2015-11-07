@@ -161,7 +161,7 @@ class EditPlugin(plugins.BeetsPlugin):
         if not changed_objs:
             print_("nothing to change")
             return
-        self.save_items(changed_objs, lib, fmt, opts)
+        self.save_items(changed_objs, lib, opts)
 
     def print_to_yaml(self, arg):
         # from object to yaml
@@ -323,7 +323,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     alld[o[0].values()[0]].update(so)
         return alld
 
-    def save_items(self, oldnewlist, lib, fmt, opts):
+    def save_items(self, oldnewlist, lib, opts):
 
         oldset, newset = zip(*oldnewlist)
         no = self.same_format(newset, opts)
