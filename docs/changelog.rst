@@ -6,10 +6,9 @@ Changelog
 
 For developers:
 
-* :doc:`/dev/plugins`: New hooks ``albuminfo_received`` and
-  ``trackinfo_received`` have been added for developers who would like to
-  intercept fetched meta data, before they are applied in tag manipulation
-  operations. :bug:`872`
+* :doc:`/dev/plugins`: Two new hooks, ``albuminfo_received`` and
+  ``trackinfo_received``, let plugins intercept metadata as soon as it is
+  received, before it is applied to music in the database. :bug:`872`
 
 Fixes:
 
