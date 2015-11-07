@@ -150,11 +150,14 @@ class EditPlugin(plugins.BeetsPlugin):
         if not objs:
             print_('nothing found')
             return
-        fmt = self.get_fields_from(objs, opts)
-        print_(fmt)
-        [print_(format(item, fmt)) for item in objs]
-        if not ui.input_yn(ui.colorize('action_default', "Edit?(n/y)"), True):
+        self.get_fields_from(objs, opts)
+
+        # Confirm.
+        for obj in objs:
+            print_(format(obj))
+        if not ui.input_yn(ui.colorize('action_default', "Edit? (y/n)"), True):
             return
+
         dict_from_objs = self.make_dict[self.pick](self.fields, objs, opts)
         newyaml, oldyaml = self.change_objs(dict_from_objs)
         changed_objs = self.check_diff(newyaml, oldyaml, opts)
@@ -183,7 +186,6 @@ class EditPlugin(plugins.BeetsPlugin):
 
     def get_fields_from(self, objs, opts):
         # construct a list of fields we need
-        cl = ui.colorize('action', self.sep)
         # see if we need album or item fields
         self.fields = self.albumfields if opts.album else self.itemfields
         # if opts.format is given only use those fields
@@ -202,10 +204,6 @@ class EditPlugin(plugins.BeetsPlugin):
             self.fields = None
             self.pick = "all"
             print_(ui.colorize('text_warning', "edit all fields from:"))
-            if opts.album:
-                fmt = cl + cl.join(['$albumartist', '$album'])
-            else:
-                fmt = cl + cl.join(['$title', '$artist'])
         else:
             for it in self.fields:
                 if opts.album:
@@ -223,10 +221,6 @@ class EditPlugin(plugins.BeetsPlugin):
                                     'text_warning', it)))
                         self.fields.remove(it)
             self.pick = "selected"
-            fmtfields = ["$" + it for it in self.fields]
-            fmt = cl + cl.join(fmtfields[1:])
-
-        return fmt
 
     def get_selected_fields(self, myfields, objs, opts):
         a = []
