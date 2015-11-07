@@ -12,7 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""open tags of items in texteditor,change them and save back to the items.
+"""Open metadata information in a text editor to let the user change
+them directly.
 """
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
@@ -42,43 +43,51 @@ class EditPlugin(plugins.BeetsPlugin):
             'diff_method': '',
             'browser': '',
             'albumfields': 'album albumartist',
-            'itemfields': 'track title artist album ',
+            'itemfields': 'track title artist album',
             'not_fields': 'id path',
-            'sep': '-'
-
+            'sep': '-',
         })
+
         self.style = self.config['style'].get(unicode)
-        """the editor field in the config lets you specify your editor.
-        Defaults to open with webrowser module"""
+
+        # The editor field in the config lets you specify your editor.
+        # Defaults to open with webrowser module.
         self.editor = self.config['editor'].as_str_seq()
-        """the html_viewer field in your config lets you specify
-        your htmlviewer. Defaults to open with webrowser module"""
+
+        # the html_viewer field in your config lets you specify
+        # your htmlviewer. Defaults to open with webrowser module
         self.browser = self.config['browser'].as_str_seq()
-        """the diff_method field in your config picks the way to see your
-         changes. Options are:
-        'ndiff'(2 files with differences),
-        'unified'(just the different lines and a few lines of context),
-        'html'(view in html-format),
-        'vimdiff'(view in VIM)"""
+
+        # the diff_method field in your config picks the way to see your
+        # changes. Options are:
+        # 'ndiff'(2 files with differences),
+        # 'unified'(just the different lines and a few lines of context),
+        # 'html'(view in html-format),
+        # 'vimdiff'(view in VIM)
         self.diff_method = self.config['diff_method'].get(unicode)
-        """the albumfields field in your config sets the tags that
-        you want to see/change for albums.
-        Defaults to album albumartist.
-        the ID tag will always be listed as it is used to identify the item"""
+
+        # the albumfields field in your config sets the tags that
+        # you want to see/change for albums.
+        # Defaults to album albumartist.
+        # the ID tag will always be listed as it is used to identify the item
         self.albumfields = self.config['albumfields'].as_str_seq()
-        """the itemfields field in your config sets the tags that
-        you want to see/change or items.
-        Defaults to track title artist album.
-        the ID tag will always be listed as it is used to identify the item"""
+
+        # the itemfields field in your config sets the tags that
+        # you want to see/change or items.
+        # Defaults to track title artist album.
+        # the ID tag will always be listed as it is used to identify the item
         self.itemfields = self.config['itemfields'].as_str_seq()
-        '''the not_fields field in your config sets the tags that
-        will not be changed.
-        If you happen to change them, they will be restored to the original
-        value. The ID of an item will never be changed.'''
+
+        # the not_fields field in your config sets the tags that
+        # will not be changed.
+        # If you happen to change them, they will be restored to the original
+        # value. The ID of an item will never be changed.
         self.not_fields = self.config['not_fields'].as_str_seq()
-        '''the separator in your config sets the separator that will be used
-        between fields in your terminal. Defaults to -'''
+
+        # the separator in your config sets the separator that will be used
+        # between fields in your terminal. Defaults to -
         self.sep = self.config['sep'].get(unicode)
+
         self.ed = None
         self.ed_args = None
         self.brw = None
@@ -87,7 +96,7 @@ class EditPlugin(plugins.BeetsPlugin):
     def commands(self):
         edit_command = Subcommand(
             'edit',
-            help='send items to yamleditor for editing tags')
+            help='interactively edit metadata')
         edit_command.parser.add_option(
             '-e', '--extra',
             action='store',
@@ -96,7 +105,7 @@ class EditPlugin(plugins.BeetsPlugin):
         edit_command.parser.add_option(
             '--all',
             action='store_true', dest='all',
-            help='add all fields to edit',
+            help='edit all fields',
         )
         edit_command.parser.add_option(
             '--sum',
