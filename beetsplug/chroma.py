@@ -194,8 +194,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
         def fingerprint_cmd_func(lib, opts, args):
             for item in lib.items(ui.decargs(args)):
-                fingerprint_item(self._log, item,
-                                 write=config['import']['write'].get(bool))
+                fingerprint_item(self._log, item, write=ui.should_write())
         fingerprint_cmd.func = fingerprint_cmd_func
 
         return [submit_cmd, fingerprint_cmd]

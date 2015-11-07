@@ -20,7 +20,6 @@ from __future__ import (division, absolute_import, print_function,
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
-from beets import config
 from collections import defaultdict
 
 
@@ -50,7 +49,7 @@ class MBSyncPlugin(BeetsPlugin):
                               default=True, dest='move',
                               help="don't move files in library")
         cmd.parser.add_option('-W', '--nowrite', action='store_false',
-                              default=config['import']['write'], dest='write',
+                              default=None, dest='write',
                               help="don't write updated metadata to files")
         cmd.parser.add_format_option()
         cmd.func = self.func
@@ -61,7 +60,7 @@ class MBSyncPlugin(BeetsPlugin):
         """
         move = opts.move
         pretend = opts.pretend
-        write = opts.write
+        write = ui.should_write(opts.write)
         query = ui.decargs(args)
 
         self.singletons(lib, query, move, pretend, write)

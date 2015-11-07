@@ -31,7 +31,6 @@ import traceback
 from beets import plugins
 from beets import ui
 from beets.util import normpath, plurality
-from beets import config
 from beets import library
 
 
@@ -336,7 +335,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         )
 
         def lastgenre_func(lib, opts, args):
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
             self.config.set_args(opts)
 
             for album in lib.albums(ui.decargs(args)):
