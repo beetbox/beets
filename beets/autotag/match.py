@@ -463,8 +463,8 @@ def tag_item(item, search_artist=None, search_title=None,
     if trackid:
         log.debug(u'Searching for track ID: {0}', trackid)
         for track_info in hooks.tracks_for_id(trackid):
-            # Notify subscribed plugins about fetched track info and let them perform
-            # their manipulations
+            # Notify subscribed plugins about fetched track info and let them
+            # perform their manipulations
             plugins.send('trackinfo_received', info=track_info)
 
             dist = track_distance(item, track_info, incl_artist=True)
@@ -490,8 +490,8 @@ def tag_item(item, search_artist=None, search_title=None,
 
     # Get and evaluate candidate metadata.
     for track_info in hooks.item_candidates(item, search_artist, search_title):
-        # Notify subscribed plugins about fetched track info and let them perform
-        # their manipulations
+        # Notify subscribed plugins about fetched track info and let them
+        # perform their manipulations
         plugins.send('trackinfo_received', info=track_info)
 
         dist = track_distance(item, track_info, incl_artist=True)
