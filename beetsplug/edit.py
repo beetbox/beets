@@ -20,6 +20,7 @@ from __future__ import (division, absolute_import, print_function,
 
 from beets import plugins
 from beets.ui import Subcommand, decargs, library, print_
+from beets.ui.commands import _do_query
 import subprocess
 import difflib
 import yaml
@@ -124,8 +125,15 @@ class EditPlugin(plugins.BeetsPlugin):
             self.brw_args = self.browser[1:] if len(self.browser) > 1 else None
             self.brw = self.browser[0] if self.browser else None
 
-        # edit tags in a textfile in yaml-style
+        # Get the objects to edit.
         query = decargs(args)
+        items, albums = _do_query(lib, query, opts.album, False)
+        objs = albums if opts.album else items
+        if not objs:
+            print_('Nothing to edit.')
+            return
+
+        # edit tags in a textfile in yaml-style
         # makes a string representation of an object
         # for now yaml but we could add html,pprint,toml
         self.print_items = {
@@ -146,10 +154,6 @@ class EditPlugin(plugins.BeetsPlugin):
             'all': self.get_all_fields,
             "selected": self.get_selected_fields}
 
-        objs = self._get_objs(lib, opts, query)
-        if not objs:
-            print_('nothing found')
-            return
         self.get_fields_from(objs, opts)
 
         # Confirm.
@@ -176,13 +180,6 @@ class EditPlugin(plugins.BeetsPlugin):
     def yaml_to_dict(self, yam):
         # from yaml to object
         return yaml.load_all(yam)
-
-    def _get_objs(self, lib, opts, query):
-        # get objects from a query
-        if opts.album:
-            return list(lib.albums(query))
-        else:
-            return list(lib.items(query))
 
     def get_fields_from(self, objs, opts):
         # construct a list of fields we need
