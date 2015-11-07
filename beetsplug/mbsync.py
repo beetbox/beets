@@ -45,8 +45,11 @@ class MBSyncPlugin(BeetsPlugin):
                             help='update metadata from musicbrainz')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show all changes but do nothing')
+        cmd.parser.add_option('-m', '--move', action='store_true',
+                              dest='move',
+                              help="move files in the library directory")
         cmd.parser.add_option('-M', '--nomove', action='store_false',
-                              default=True, dest='move',
+                              dest='move',
                               help="don't move files in library")
         cmd.parser.add_option('-W', '--nowrite', action='store_false',
                               default=None, dest='write',
@@ -58,7 +61,7 @@ class MBSyncPlugin(BeetsPlugin):
     def func(self, lib, opts, args):
         """Command handler for the mbsync function.
         """
-        move = opts.move
+        move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
         query = ui.decargs(args)

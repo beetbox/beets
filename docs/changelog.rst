@@ -4,6 +4,17 @@ Changelog
 1.3.16 (in development)
 -----------------------
 
+New:
+
+* Three commands, ``modify``, ``update``, and ``mbsync``, would previously
+  move files by default after changing their metadata. Now, these commands
+  will only move files if you have the :ref:`config-import-copy` or
+  :ref:`config-import-move` options enabled in your importer configuration.
+  This way, if you configure the importer not to touch your filenames, other
+  commands will respect that decision by default too. Each command also
+  sprouted a ``--move`` command-line option to override this default (in
+  addition to the ``--nomove`` flag they already had). :bug:`1697`
+
 For developers:
 
 * :doc:`/dev/plugins`: Two new hooks, ``albuminfo_received`` and

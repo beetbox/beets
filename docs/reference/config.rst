@@ -370,6 +370,8 @@ Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
 written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
 and ``-W`` command-line options override this setting.
 
+.. _config-import-copy:
+
 copy
 ~~~~
 
@@ -379,6 +381,8 @@ overridden with the ``-c`` and ``-C`` command-line options.
 
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
+
+.. _config-import-move:
 
 move
 ~~~~
