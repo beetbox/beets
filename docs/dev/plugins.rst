@@ -214,6 +214,19 @@ The events currently available are:
 * *import_begin*: called just before a ``beet import`` session starts up.
   Parameter: ``session``.
 
+* *trackinfo_received*: called after meta data for a track item has been fetched
+  from disparate sources, such as MusicBrainz. Gives a developer the option to
+  intercept the fetched ``TrackInfo`` object. Can be used to modify tags on a
+  ``beet import`` operation or during later adjustments, such as ``mbsync``.
+  Slow handlers of the event can impact the operation, since the event is fired
+  for any fetched possible match *before* user or autotagger selection was made.
+  Parameter: ``info``.
+
+* *albuminfo_received*: Like *trackinfo_received*, the event indicates new meta
+  data for album items, but supplies an ``AlbumInfo`` object instead of a
+  ``TrackInfo``.
+  Parameter: ``info``.
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
