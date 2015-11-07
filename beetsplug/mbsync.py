@@ -139,6 +139,7 @@ class MBSyncPlugin(BeetsPlugin):
                             break
 
             # Apply.
+            self._log.debug('applying changes to {}', album_formatted)
             with lib.transaction():
                 autotag.apply_metadata(album_info, mapping)
                 changed = False
