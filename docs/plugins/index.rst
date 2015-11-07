@@ -13,7 +13,7 @@ Using Plugins
 -------------
 
 To use one of the plugins included with beets (see the rest of this page for a
-list), just use the `plugins` option in your :doc:`config.yaml </reference/config>`: file, like so::
+list), just use the `plugins` option in your :doc:`config.yaml </reference/config>` file, like so::
 
     plugins: inline convert web
 
