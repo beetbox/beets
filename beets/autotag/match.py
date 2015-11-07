@@ -350,6 +350,10 @@ def _add_candidate(items, results, info):
             log.debug(u'Ignored. Missing required tag: {0}', req_tag)
             return
 
+    # Notify subscribed plugins about fetched album info and let them perform
+    # their manipulations
+    plugins.send('albuminfo_received', info=info)
+
     # Find mapping between the items and the track info.
     mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
 
@@ -459,6 +463,10 @@ def tag_item(item, search_artist=None, search_title=None,
     if trackid:
         log.debug(u'Searching for track ID: {0}', trackid)
         for track_info in hooks.tracks_for_id(trackid):
+            # Notify subscribed plugins about fetched track info and let them perform
+            # their manipulations
+            plugins.send('trackinfo_received', info=track_info)
+
             dist = track_distance(item, track_info, incl_artist=True)
             candidates[track_info.track_id] = \
                 hooks.TrackMatch(dist, track_info)
@@ -482,6 +490,10 @@ def tag_item(item, search_artist=None, search_title=None,
 
     # Get and evaluate candidate metadata.
     for track_info in hooks.item_candidates(item, search_artist, search_title):
+        # Notify subscribed plugins about fetched track info and let them perform
+        # their manipulations
+        plugins.send('trackinfo_received', info=track_info)
+
         dist = track_distance(item, track_info, incl_artist=True)
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
 

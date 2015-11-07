@@ -530,8 +530,6 @@ def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     candidates = [album_for_mbid(album_id)]
     candidates.extend(plugins.album_for_id(album_id))
-    for a in candidates:
-        plugins.send('albuminfo_received', info=a)
     return filter(None, candidates)
 
 
@@ -539,8 +537,6 @@ def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     candidates = [track_for_mbid(track_id)]
     candidates.extend(plugins.track_for_id(track_id))
-    for t in candidates:
-        plugins.send('trackinfo_received', info=t)
     return filter(None, candidates)
 
 
