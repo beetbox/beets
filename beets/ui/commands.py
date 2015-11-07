@@ -1293,10 +1293,8 @@ def modify_func(lib, opts, args):
     query, mods, dels = modify_parse_args(decargs(args))
     if not mods and not dels:
         raise ui.UserError('no modifications specified')
-    write = opts.write if opts.write is not None else \
-        config['import']['write'].get(bool)
-    modify_items(lib, mods, dels, query, write, opts.move, opts.album,
-                 not opts.yes)
+    modify_items(lib, mods, dels, query, ui.should_write(opts.write),
+                 opts.move, opts.album, not opts.yes)
 
 
 modify_cmd = ui.Subcommand(
