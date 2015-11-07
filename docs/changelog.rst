@@ -4,6 +4,13 @@ Changelog
 1.3.16 (in development)
 -----------------------
 
+For developers:
+
+* :doc:`/dev/plugins`: New hooks ``albuminfo_received`` and
+  ``trackinfo_received`` have been added for developers who would like to
+  intercept fetched meta data, before they are applied in tag manipulation
+  operations. :bug:`872`
+
 Fixes:
 
 * :doc:`/plugins/plexupdate`: Fix a crash when Plex libraries use non-ASCII
@@ -128,10 +135,6 @@ The new features:
   :bug:`1104` :bug:`1493`
 * :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
   specify a key for Plex Home setups. Thanks to :user:`edcarroll`. :bug:`1494`
-* :doc:`/dev/plugins`: New hooks ``albuminfo_received`` and
-  ``trackinfo_received`` have been added for developers who would like to
-  intercept fetched meta data, before they are applied in tag manipulation
-  operations. :bug:`872`
 
 Fixes:
 
