@@ -188,10 +188,6 @@ class EditPlugin(plugins.BeetsPlugin):
         # construct a list of fields we need
         # see if we need album or item fields
         self.fields = self.albumfields if opts.album else self.itemfields
-        # if opts.format is given only use those fields
-        if opts.format:
-            self.fields = []
-            self.fields.extend((opts.format).replace('$', "").split())
         # if opts.extra is given add those
         if opts.extra:
             fi = (opts.extra).replace('$', "").split()
