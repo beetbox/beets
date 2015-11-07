@@ -1055,7 +1055,8 @@ def update_items(lib, query, album, move, pretend):
 
 
 def update_func(lib, opts, args):
-    update_items(lib, decargs(args), opts.album, opts.move, opts.pretend)
+    update_items(lib, decargs(args), opts.album, ui.should_move(opts.move),
+                 opts.pretend)
 
 
 update_cmd = ui.Subcommand(
@@ -1064,7 +1065,11 @@ update_cmd = ui.Subcommand(
 update_cmd.parser.add_album_option()
 update_cmd.parser.add_format_option()
 update_cmd.parser.add_option(
-    '-M', '--nomove', action='store_false', default=True, dest='move',
+    '-m', '--move', action='store_true', dest='move',
+    help="move files in the library directory"
+)
+update_cmd.parser.add_option(
+    '-M', '--nomove', action='store_false', dest='move',
     help="don't move files in library"
 )
 update_cmd.parser.add_option(
@@ -1294,14 +1299,18 @@ def modify_func(lib, opts, args):
     if not mods and not dels:
         raise ui.UserError('no modifications specified')
     modify_items(lib, mods, dels, query, ui.should_write(opts.write),
-                 opts.move, opts.album, not opts.yes)
+                 ui.should_move(opts.move), opts.album, not opts.yes)
 
 
 modify_cmd = ui.Subcommand(
     'modify', help='change metadata fields', aliases=('mod',)
 )
 modify_cmd.parser.add_option(
-    '-M', '--nomove', action='store_false', default=True, dest='move',
+    '-m', '--move', action='store_true', dest='move',
+    help="move files in the library directory"
+)
+modify_cmd.parser.add_option(
+    '-M', '--nomove', action='store_false', dest='move',
     help="don't move files in library"
 )
 modify_cmd.parser.add_option(
