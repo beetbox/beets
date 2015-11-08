@@ -259,6 +259,8 @@ def album_info(release):
         data_url=album_url(release['id']),
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
+    if info.va:
+        info.artist = config['va_name'].get(unicode)
     info.asin = release.get('asin')
     info.releasegroup_id = release['release-group']['id']
     info.country = release.get('country')
