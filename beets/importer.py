@@ -48,7 +48,6 @@ action = Enum('action',
 
 QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
-VARIOUS_ARTISTS = u'Various Artists'
 PROGRESS_KEY = 'tagprogress'
 HISTORY_KEY = 'taghistory'
 
@@ -631,7 +630,7 @@ class ImportTask(BaseImportTask):
                 changes['comp'] = False
             else:
                 # VA.
-                changes['albumartist'] = VARIOUS_ARTISTS
+                changes['albumartist'] = config['va_name'].get(unicode)
                 changes['comp'] = True
 
         elif self.choice_flag == action.APPLY:
