@@ -304,6 +304,15 @@ By default, beets writes MP3 tags using the ID3v2.4 standard, the latest
 version of ID3. Enable this option to instead use the older ID3v2.3 standard,
 which is preferred by certain older software such as Windows Media Player.
 
+.. _va_name:
+
+va_name
+~~~~~~~
+
+Sets the albumartist for various-artist compilations. Defaults to ``'Various
+Artists'`` (MusicBrainz standard). Affects other sources, such as
+:doc:`/plugins/discogs`, too.
+
 
 UI Options
 ----------
