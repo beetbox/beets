@@ -310,7 +310,7 @@ va_name
 ~~~~~~~
 
 Sets the albumartist for various-artist compilations. Defaults to ``'Various
-Artists'`` (MusicBrainz standard). Affects other sources, such as
+Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
 
 

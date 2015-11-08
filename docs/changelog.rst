@@ -14,6 +14,11 @@ New:
   commands will respect that decision by default too. Each command also
   sprouted a ``--move`` command-line option to override this default (in
   addition to the ``--nomove`` flag they already had). :bug:`1697`
+* A new configuration option, ``va_name``, controls the album artist name for
+  various-artists albums. The setting defaults to "Various Artists," the
+  MusicBrainz standard. In order to match MusicBrainz, the
+  :doc:`/plugins/discogs` also adopts the same setting.
+
 
 For developers:
 
@@ -48,10 +53,6 @@ Fixes:
 * :doc:`/plugins/metasync`: Fix a crash when syncing with recent versions of
   iTunes. :bug:`1700`
 * :doc:`/plugins/duplicates`: Fix a crash when merging items. :bug:`1699`
-* A new global option, ``va_name``, controls the album artist name for
-  various-artists albums. Defaults to "Various Artists" (MusicBrainz standard).
-  In order to match MusicBrainz, :doc:`/plugins/discogs` adapts to this, too.
-
 
 
 1.3.15 (October 17, 2015)
