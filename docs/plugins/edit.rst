@@ -5,9 +5,9 @@ Add the ``edit`` plugin to your ``plugins:`` in your ``config.yaml``. Then
 you simply put in a query like you normally do.
 ::
 
-     beet yamleditor beatles
-     beet yamleditor beatles -a
-     beet yamleditor beatles -f '$title $lyrics'
+     beet edit beatles
+     beet edit beatles -a
+     beet edit beatles -f '$title $lyrics'
 
 
 
