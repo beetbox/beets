@@ -30,6 +30,7 @@ import traceback
 
 from beets import plugins
 from beets import ui
+from beets import config
 from beets.util import normpath, plurality
 from beets import library
 
@@ -291,7 +292,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             result = None
             if isinstance(obj, library.Item):
                 result = self.fetch_artist_genre(obj)
-            elif obj.albumartist != 'Various Artists':
+            elif obj.albumartist != config['va_name'].get(unicode):
                 result = self.fetch_album_artist_genre(obj)
             else:
                 # For "Various Artists", pick the most popular track genre.
