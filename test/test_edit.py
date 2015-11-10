@@ -78,8 +78,12 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.load_plugins('edit')
         # make sure that we avoid invoking the editor except for making changes
         self.config['edit']['diff_method'] = ''
-        # add an album
-        self.add_album_fixture(track_count=self.TRACK_COUNT)
+        # add an album, storing the original fields for comparison
+        self.album = self.add_album_fixture(track_count=self.TRACK_COUNT)
+        self.album_orig = {f: self.album[f] for f in self.album._fields}
+        self.items_orig = [{f: item[f] for f in item._fields} for
+                           item in self.album.items()]
+
         # keep track of write()s
         library.Item.write = Mock()
 
@@ -103,6 +107,20 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.assertTrue(all(i.title.startswith(title_starts_with)
                             for i in self.lib.items()))
 
+    def assertItemFieldsModified(self, library_items, items, fields=[]):
+        """Assert that items in the library (`lib_items`) have different values
+        on the specified `fields` (and *only* on those fields), compared to
+        `items`.
+        An empty `fields` list results in asserting that no modifications have
+        been performed.
+        """
+        changed_fields = []
+        for lib_item, item in zip(library_items, items):
+            changed_fields.append([field for field in lib_item._fields
+                                   if lib_item[field] != item[field]])
+        self.assertTrue(all(diff_fields == fields for diff_fields in
+                            changed_fields))
+
     def test_title_edit_discard(self):
         """Edit title for all items in the library, then discard changes-"""
         # edit titles
@@ -113,6 +131,7 @@ class EditCommandTest(unittest.TestCase, TestHelper):
 
         self.assertCounts(write_call_count=0,
                           title_starts_with=u't\u00eftle')
+        self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_title_edit_apply(self):
         """Edit title for all items in the library, then apply changes."""
@@ -124,6 +143,23 @@ class EditCommandTest(unittest.TestCase, TestHelper):
 
         self.assertCounts(write_call_count=self.TRACK_COUNT,
                           title_starts_with=u'modified t\u00eftle')
+        self.assertItemFieldsModified(self.album.items(), self.items_orig,
+                                      ['title'])
+
+    def test_single_title_edit_apply(self):
+        """Edit title for on items in the library, then apply changes."""
+        # edit title
+        self.run_mocked_command({'replacements': {u't\u00eftle 9':
+                                                  u'modified t\u00eftle 9'}},
+                                # edit? y, done? y, modify? y
+                                ['y', 'y', 'y'])
+
+        self.assertCounts(write_call_count=1,)
+        # no changes except on last item
+        self.assertItemFieldsModified(list(self.album.items())[:-1],
+                                      self.items_orig[:-1], [])
+        self.assertEqual(list(self.album.items())[-1].title,
+                         u'modified t\u00eftle 9')
 
     def test_noedit(self):
         """Do not edit anything."""
@@ -134,6 +170,24 @@ class EditCommandTest(unittest.TestCase, TestHelper):
 
         self.assertCounts(write_call_count=0,
                           title_starts_with=u't\u00eftle')
+        self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
+
+    def test_album_edit_apply(self):
+        """Edit the album field for all items in the library, apply changes
+
+        TODO: decide if the plugin should be wise enough to update the album,
+        and handle other complex cases (create new albums, etc). At the moment
+        this test only checks for modifications on items.
+        """
+        # edit album
+        self.run_mocked_command({'replacements': {u'\u00e4lbum':
+                                                  u'modified \u00e4lbum'}},
+                                # edit? y, done? y, modify? y
+                                ['y', 'y', 'y'])
+
+        self.assertCounts(write_call_count=self.TRACK_COUNT)
+        self.assertItemFieldsModified(self.album.items(), self.items_orig,
+                                      ['album'])
 
     def test_malformed_yaml_discard(self):
         """Edit the yaml file incorrectly (resulting in a malformed yaml
