@@ -53,6 +53,8 @@ Fixes:
 * :doc:`/plugins/metasync`: Fix a crash when syncing with recent versions of
   iTunes. :bug:`1700`
 * :doc:`/plugins/duplicates`: Fix a crash when merging items. :bug:`1699`
+* :doc:`/plugins/smartplaylist`: More gracefully handle malformed queries and
+  missing configuration.
 
 
 1.3.15 (October 17, 2015)
