@@ -26,6 +26,7 @@ import difflib
 import yaml
 import collections
 import webbrowser
+from contextlib import nested
 from sys import exit
 from beets import config
 from beets import ui
@@ -265,6 +266,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     with open(new.name) as f:
                         newyaml = f.read()
                         list(yaml.load_all(newyaml))
+                        os.remove(new.name)
                         break
                 except yaml.YAMLError as e:
                     print_(ui.colorize('text_warning',
@@ -279,6 +281,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
             return newyaml, oldyaml
         else:
+            os.remove(new.name)
             exit()
 
     def get_editor(self, name):
@@ -301,8 +304,8 @@ class EditPlugin(plugins.BeetsPlugin):
             for o in newset:
                 for so in o:
                     ids = set((so[1].values()[0].split()))
-                    for id in ids:
-                        alld[id].update(
+                    for id_ in ids:
+                        alld[id_].update(
                             {so[0].items()[0][1]: so[1].items()[0][0]})
         else:
             for o in newset:
@@ -340,7 +343,8 @@ class EditPlugin(plugins.BeetsPlugin):
         self.save_write(changedob)
 
     def save_write(self, changedob):
-        if not ui.input_yn('really modify? (y/n)'):
+        if not ui.input_yn(ui.colorize('action_default',
+                                       'really modify? (y/n)')):
             return
 
         for ob in changedob:
@@ -409,30 +413,31 @@ class EditPlugin(plugins.BeetsPlugin):
         oldlines = oldfilestr.splitlines()
         diff = difflib.HtmlDiff()
         df = diff.make_file(newlines, oldlines)
-        ht = NamedTemporaryFile('w', suffix='.html', delete=False)
-        ht.write(df)
-        ht.flush()
-        hdn = ht.name
-        if not self.brw:
-            browser = os.getenv('BROWSER')
-            if browser:
-                os.system(browser + " " + hdn)
+
+        with NamedTemporaryFile('w', suffix='.html', bufsize=0) as ht:
+            # TODO: if webbrowser.open() is not blocking, ht might be deleted
+            # too soon - need to test
+            ht.write(df)
+            if not self.brw:
+                browser = os.getenv('BROWSER')
+                if browser:
+                    os.system(browser + " " + ht.name)
+                else:
+                    webbrowser.open(ht.name, new=2, autoraise=True)
             else:
-                webbrowser.open(hdn, new=2, autoraise=True)
-        else:
-            callmethod = [self.brw]
-            if self.brw_args:
-                callmethod.extend(self.brw_args)
-            callmethod.append(hdn)
-            subprocess.call(callmethod)
+                callmethod = [self.brw]
+                if self.brw_args:
+                    callmethod.extend(self.brw_args)
+                callmethod.append(ht.name)
+                subprocess.call(callmethod)
+
         return
 
     def vimdiff(self, newstringstr, oldstringstr):
-
-        newdiff = NamedTemporaryFile(suffix='.old.yaml', delete=False)
-        newdiff.write(newstringstr)
-        newdiff.close()
-        olddiff = NamedTemporaryFile(suffix='.new.yaml', delete=False)
-        olddiff.write(oldstringstr)
-        olddiff.close()
-        subprocess.call(['vimdiff', newdiff.name, olddiff.name])
+        with nested(NamedTemporaryFile(suffix='.old.yaml',
+                                       bufsize=0),
+                    NamedTemporaryFile(suffix='.new.yaml',
+                                       bufsize=0)) as (newdiff, olddiff):
+            newdiff.write(newstringstr)
+            olddiff.write(oldstringstr)
+            subprocess.call(['vimdiff', newdiff.name, olddiff.name])
