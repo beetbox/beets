@@ -18,7 +18,8 @@ New:
   various-artists albums. The setting defaults to "Various Artists," the
   MusicBrainz standard. In order to match MusicBrainz, the
   :doc:`/plugins/discogs` also adopts the same setting.
-
+* :doc:`/plugins/embyupdate`: A plugin to trigger a library refresh on a
+  `Emby Server`_ if database changed.
 
 For developers:
 
@@ -55,6 +56,8 @@ Fixes:
 * :doc:`/plugins/duplicates`: Fix a crash when merging items. :bug:`1699`
 * :doc:`/plugins/smartplaylist`: More gracefully handle malformed queries and
   missing configuration.
+
+.. _Emby Server: http://emby.media
 
 
 1.3.15 (October 17, 2015)
