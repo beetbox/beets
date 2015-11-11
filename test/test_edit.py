@@ -22,6 +22,7 @@ from test.helper import TestHelper, control_stdin
 
 from beets import library
 from beetsplug.edit import EditPlugin
+from beets.ui import UserError
 
 
 class ModifyFileMocker(object):
@@ -91,12 +92,13 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
         self.unload_plugins()
 
-    def run_mocked_command(self, modify_file_args={}, stdin=[]):
-        """Run the edit command, with mocked stdin and yaml writing."""
+    def run_mocked_command(self, modify_file_args={}, stdin=[], args=[]):
+        """Run the edit command, with mocked stdin and yaml writing, and
+        passing `args` to `run_command`."""
         m = ModifyFileMocker(**modify_file_args)
         with patch.object(EditPlugin, 'get_editor', side_effect=m.action):
             with control_stdin('\n'.join(stdin)):
-                self.run_command('edit')
+                self.run_command('edit', *args)
 
     def assertCounts(self, album_count=ALBUM_COUNT, track_count=TRACK_COUNT,
                      write_call_count=TRACK_COUNT, title_starts_with=''):
@@ -173,11 +175,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_album_edit_apply(self):
-        """Edit the album field for all items in the library, apply changes
-
-        TODO: decide if the plugin should be wise enough to update the album,
-        and handle other complex cases (create new albums, etc). At the moment
-        this test only checks for modifications on items.
+        """Edit the album field for all items in the library, apply changes.
+        By design, the album should not be updated.""
         """
         # edit album
         self.run_mocked_command({'replacements': {u'\u00e4lbum':
@@ -188,6 +187,37 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.assertCounts(write_call_count=self.TRACK_COUNT)
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['album'])
+        # ensure album is *not* modified
+        self.album.load()
+        self.assertEqual(self.album.album, u'\u00e4lbum')
+
+    def test_a_album_edit_apply(self):
+        """Album query (-a), edit album field, apply changes."""
+        self.run_mocked_command({'replacements': {u'\u00e4lbum':
+                                                  u'modified \u00e4lbum'}},
+                                # edit? y, done? y, modify? y
+                                ['y', 'y', 'y'],
+                                args=['-a'])
+
+        self.album.load()
+        self.assertCounts(write_call_count=self.TRACK_COUNT)
+        self.assertEqual(self.album.album, u'modified \u00e4lbum')
+        self.assertItemFieldsModified(self.album.items(), self.items_orig,
+                                      ['album'])
+
+    def test_a_albumartist_edit_apply(self):
+        """Album query (-a), edit albumartist field, apply changes."""
+        self.run_mocked_command({'replacements': {u'album artist':
+                                                  u'modified album artist'}},
+                                # edit? y, done? y, modify? y
+                                ['y', 'y', 'y'],
+                                args=['-a'])
+
+        self.album.load()
+        self.assertCounts(write_call_count=self.TRACK_COUNT)
+        self.assertEqual(self.album.albumartist, u'the modified album artist')
+        self.assertItemFieldsModified(self.album.items(), self.items_orig,
+                                      ['albumartist'])
 
     def test_malformed_yaml_discard(self):
         """Edit the yaml file incorrectly (resulting in a malformed yaml
@@ -197,9 +227,12 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         "fix?" -> "ok.fixed." prompt loop unless he is able to provide a
         well-formed yaml."""
         # edit the yaml file to an invalid file
-        self.run_mocked_command({'contents': '!MALFORMED'},
-                                # edit? n, done? y, fix? n
-                                ['y', 'y', 'n'])
+        try:
+            self.run_mocked_command({'contents': '!MALFORMED'},
+                                    # edit? y, done? y, fix? n
+                                    ['y', 'y', 'n'])
+        except UserError as e:
+            self.fail(repr(e))
 
         self.assertCounts(write_call_count=0,
                           title_starts_with=u't\u00eftle')
@@ -211,9 +244,13 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         TODO: this test currently fails, on purpose. `check_diff()` chokes
         ungracefully"""
         # edit the yaml file to an invalid file
-        self.run_mocked_command({'contents': 'wellformed: yes, but invalid'},
-                                # edit? n, done? y
-                                ['y', 'y'])
+        try:
+            self.run_mocked_command({'contents':
+                                     'wellformed: yes, but invalid'},
+                                    # edit? y, done? y
+                                    ['y', 'y'])
+        except KeyError as e:
+            self.fail(repr(e))
 
         self.assertCounts(write_call_count=0,
                           title_starts_with=u't\u00eftle')
