@@ -28,6 +28,6 @@ The available options under the ``emby:`` section are:
 - **host**: The Emby server name.
   Default: ``localhost``
 - **port**: The Emby server port.
-  Defailt: 8096
+  Default: 8096
 - **username**: A username of a Emby user that is allowed to refresh the library.
-- **password**: That users password.
+- **password**: That user's password.
