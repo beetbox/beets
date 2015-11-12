@@ -1,7 +1,7 @@
 Fish plugins
 ============
 
-the ``fish`` plugin adds a ``beet fish`` command that will create a fish
+The ``fish`` plugin adds a ``beet fish`` command that will create a fish
 autocompletion file ``beet.fish`` in ``~/.config/fish/completions``
 This makes `fish`_ - a different shell - autocomplete commands for beet.
 
@@ -26,7 +26,7 @@ you will get the autosuggestions for all your plugins/commands and
 typing ``-`` will get you all the options available to you.
 If you type ``beet ls`` and you ``TAB`` you will get a list of all the album/item
 fields that beet offers. Start typing ``genr`` ``TAB`` and fish completes
- ``genre:`` ... ready to type on...
+``genre:`` ... ready to type on...
 
 Options
 =======
@@ -35,7 +35,7 @@ The default is that you get autocompletion for all the album/item fields.
 You can disable that with ``beet fish -f`` In that case you only get all
 the plugins/commands/options. Everything else you type in yourself.
 If you want completion for a specific album/item field, you can get that like
- this ``beet fish -e genre`` or ``beet fish -e genre -e albumartist`` .
+this ``beet fish -e genre`` or ``beet fish -e genre -e albumartist`` .
 Then when you type at your fish-prompt ``beet list genre:`` and you ``TAB``
 you will get a list of all your genres to choose from.
 REMEMBER : we get all the values of these fields and put them in the completion
