@@ -12,11 +12,11 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""If you use the fish-shell http://fishshell.com/ ... this will do 
-autocomplete for you. 
+"""If you use the fish-shell http://fishshell.com/ ... this will do
+autocomplete for you.
 It does the main commands and options for beet and the plugins.
-It gives you all the album and itemfields (like genre, album) but 
-not all the values for these. It suggest genre: or album: 
+It gives you all the album and itemfields (like genre, album) but
+not all the values for these. It suggest genre: or album:
 but not genre: Pop..Jazz...Rock
 You can get that by specifying ex. --extrafields genre.
 """
