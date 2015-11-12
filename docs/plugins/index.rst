@@ -148,7 +148,8 @@ Interoperability
 
 .. _Emby: http://emby.media
 .. _Plex: http://plex.tv
-.. _fish: http://fishshell.com/
+.. _fish: http://fishshell.com
+
 Miscellaneous
 -------------
 
