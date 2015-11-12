@@ -6,6 +6,7 @@ Changelog
 
 New:
 
+* A new plugin, ``fish`` makes the `fish`_  shell do autocompletion for beet.
 * Three commands, ``modify``, ``update``, and ``mbsync``, would previously
   move files by default after changing their metadata. Now, these commands
   will only move files if you have the :ref:`config-import-copy` or
@@ -58,7 +59,7 @@ Fixes:
   missing configuration.
 
 .. _Emby Server: http://emby.media
-
+.. _fish: http://fishshell.com/
 
 1.3.15 (October 17, 2015)
 -------------------------

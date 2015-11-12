@@ -43,6 +43,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    embedart
    embyupdate
    fetchart
+   fish
    fromfilename
    ftintitle
    fuzzy
@@ -143,11 +144,11 @@ Interoperability
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
 * :doc:`badfiles`: Check audio file integrity.
-
+* :doc:`fish`: Makes `fish`_ do autocomplete for your beet.
 
 .. _Emby: http://emby.media
 .. _Plex: http://plex.tv
-
+.. _fish: http://fishshell.com/
 Miscellaneous
 -------------
 
