@@ -101,7 +101,10 @@ class EditPlugin(plugins.BeetsPlugin):
             help='interactively edit metadata')
         edit_command.parser.add_option(
             '-e', '--extra',
-            action='store',
+            action='append',
+            type='choice',
+            choices=library.Item.all_keys() +
+            library.Album.all_keys(),
             help='add additional fields to edit',
         )
         edit_command.parser.add_option(
@@ -188,8 +191,7 @@ class EditPlugin(plugins.BeetsPlugin):
         self.fields = self.albumfields if opts.album else self.itemfields
         # if opts.extra is given add those
         if opts.extra:
-            fi = (opts.extra).replace('$', "").split()
-            self.fields.extend([f for f in fi if f not in self.fields])
+            self.fields.extend([f for f in opts.extra if f not in self.fields])
         # make sure we got the id for identification
         if 'id' not in self.fields:
             self.fields.insert(0, 'id')
