@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Open metadata information in a text editor to let the user change
-them directly.
+"""Open metadata information in a text editor to let the user edit it.
 """
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
@@ -25,13 +24,13 @@ import subprocess
 import difflib
 import yaml
 import collections
-import webbrowser
 from contextlib import nested
 from sys import exit
 from beets import config
 from beets import ui
 from tempfile import NamedTemporaryFile
 import os
+import sys
 
 
 class EditPlugin(plugins.BeetsPlugin):
@@ -98,7 +97,8 @@ class EditPlugin(plugins.BeetsPlugin):
     def commands(self):
         edit_command = Subcommand(
             'edit',
-            help='interactively edit metadata')
+            help='interactively edit metadata'
+        )
         edit_command.parser.add_option(
             '-e', '--extra',
             action='append',
@@ -286,14 +286,25 @@ class EditPlugin(plugins.BeetsPlugin):
             os.remove(new.name)
             exit()
 
+    def open_file(self, startcmd):
+        # opens a file in the standard program on all systems
+        subprocess.call(('cmd /c start "" "' + startcmd + '"')
+                        if os.name is 'nt' else (
+                        'open' if sys.platform.startswith('darwin') else
+                        'xdg-open', startcmd))
+
     def get_editor(self, name):
         if not self.ed:
+            # if not specified in config use $EDITOR from system
             editor = os.getenv('EDITOR')
             if editor:
                 os.system(editor + " " + name)
             else:
-                webbrowser.open(name, new=2, autoraise=True)
+                # let the system handle the file
+                self.open_file(name)
+                # webbrowser.open(name, new=2, autoraise=True)
         else:
+            # use the editor specified in config
             callmethod = [self.ed]
             if self.ed_args:
                 callmethod.extend(self.ed_args)
@@ -416,17 +427,22 @@ class EditPlugin(plugins.BeetsPlugin):
         diff = difflib.HtmlDiff()
         df = diff.make_file(newlines, oldlines)
 
-        with NamedTemporaryFile('w', suffix='.html', bufsize=0) as ht:
+        with NamedTemporaryFile(
+                'w', suffix='.html', bufsize=0, delete=False) as ht:
             # TODO: if webbrowser.open() is not blocking, ht might be deleted
-            # too soon - need to test
+            # too soon - need to test aded delete=false otherwise file is gone
+            # before the browser picks it up
             ht.write(df)
             if not self.brw:
+                # if browser not in config get $BROWSER
                 browser = os.getenv('BROWSER')
                 if browser:
                     os.system(browser + " " + ht.name)
                 else:
-                    webbrowser.open(ht.name, new=2, autoraise=True)
+                    # let the system handle it
+                    self.open_file(ht.name)
             else:
+                # use browser specified in config
                 callmethod = [self.brw]
                 if self.brw_args:
                     callmethod.extend(self.brw_args)
