@@ -56,6 +56,8 @@ Fixes:
 * :doc:`/plugins/duplicates`: Fix a crash when merging items. :bug:`1699`
 * :doc:`/plugins/smartplaylist`: More gracefully handle malformed queries and
   missing configuration.
+* Fix a crash with some files with unreadable iTunes SoundCheck metadata.
+  :bug:`1666`
 
 .. _Emby Server: http://emby.media
 
