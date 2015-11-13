@@ -35,7 +35,7 @@ The default is that you get autocompletion for all the album/item fields.
 You can disable that with ``beet fish -f`` In that case you only get all
 the plugins/commands/options. Everything else you type in yourself.
 If you want completion for a specific album/item field, you can get that like
- this ``beet fish -e genre`` or ``beet fish -e genre -e albumartist`` .
+this ``beet fish -e genre`` or ``beet fish -e genre -e albumartist`` .
 Then when you type at your fish-prompt ``beet list genre:`` and you ``TAB``
 you will get a list of all your genres to choose from.
 REMEMBER : we get all the values of these fields and put them in the completion

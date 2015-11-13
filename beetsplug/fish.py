@@ -222,9 +222,11 @@ end
 
 function __fish_beet_using_command
     set cmd (commandline -opc)
-    if test (count $cmd) -gt 1
-        if test $argv[1] = $cmd[2]
-            return 0
+    set needle (count $cmd)
+    if test $needle -gt 1
+        if begin test $argv[1] = $cmd[2];
+            and not contains -- $cmd[$needle] $FIELDS; end
+                return 0
         end
     end
     return 1
