@@ -121,7 +121,7 @@ def getSubarguments(zippy, opts):
                 word += " ".join(bl_extra3.format(
                     (cmdname + " " + f + ":"),
                     ('-f ' + '-A ' + '-a ' + setvar),
-                    ('-d ' + wrap('a ' + f + ' value'))).split()) + "\n"
+                    ('-d ' + wrap(f))).split()) + "\n"
     return word
 
 
