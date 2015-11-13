@@ -1,7 +1,7 @@
 Fish plugins
 ============
 
-the ``fish`` plugin adds a ``beet fish`` command that will create a fish
+The ``fish`` plugin adds a ``beet fish`` command that will create a fish
 autocompletion file ``beet.fish`` in ``~/.config/fish/completions``
 This makes `fish`_ - a different shell - autocomplete commands for beet.
 
@@ -26,7 +26,7 @@ you will get the autosuggestions for all your plugins/commands and
 typing ``-`` will get you all the options available to you.
 If you type ``beet ls`` and you ``TAB`` you will get a list of all the album/item
 fields that beet offers. Start typing ``genr`` ``TAB`` and fish completes
- ``genre:`` ... ready to type on...
+``genre:`` ... ready to type on...
 
 Options
 =======
