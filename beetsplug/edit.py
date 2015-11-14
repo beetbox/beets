@@ -20,7 +20,7 @@ from __future__ import (division, absolute_import, print_function,
 from beets import plugins
 from beets import util
 from beets import library
-from beets.ui import Subcommand, decargs, print_
+from beets import ui
 from beets.ui.commands import _do_query
 import subprocess
 import yaml
@@ -77,7 +77,7 @@ class EditPlugin(plugins.BeetsPlugin):
         self.ed_args = None
 
     def commands(self):
-        edit_command = Subcommand(
+        edit_command = ui.Subcommand(
             'edit',
             help='interactively edit metadata'
         )
@@ -105,15 +105,15 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # main program flow
         # Get the objects to edit.
-        query = decargs(args)
+        query = ui.decargs(args)
         items, albums = _do_query(lib, query, opts.album, False)
         objs = albums if opts.album else items
         if not objs:
-            print_('Nothing to edit.')
+            ui.print_('Nothing to edit.')
             return
         # Confirmation from user about the queryresult
         for obj in objs:
-            print_(format(obj))
+            ui.print_(format(obj))
         if not ui.input_yn(ui.colorize('action_default', "Edit? (y/n)"), True):
             return
 
@@ -128,7 +128,7 @@ class EditPlugin(plugins.BeetsPlugin):
         newyaml, oldyaml = self.change_objs(data)
         changed_objs = self.check_diff(newyaml, oldyaml, opts)
         if not changed_objs:
-            print_("nothing to change")
+            ui.print_("nothing to change")
             return
         self.save_items(changed_objs, lib, opts)
 
@@ -156,13 +156,13 @@ class EditPlugin(plugins.BeetsPlugin):
         # we need all the fields
         if opts.all:
             fields = None
-            print_(ui.colorize('text_warning', "edit all fields from:"))
+            ui.print_(ui.colorize('text_warning', "edit all fields from:"))
         else:
             for it in fields:
                 if opts.album:
                     # check if it is really an albumfield
                     if it not in library.Album.all_keys():
-                        print_(
+                        ui.print_(
                             "{} not in albumfields.Removed it.".format(
                                 ui.colorize(
                                     'text_warning', it)))
@@ -170,7 +170,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 else:
                     # if it is not an itemfield remove it
                     if it not in library.Item.all_keys():
-                        print_(
+                        ui.print_(
                             "{} not in itemfields.Removed it.".format(
                                 ui.colorize(
                                     'text_warning', it)))
@@ -207,9 +207,9 @@ class EditPlugin(plugins.BeetsPlugin):
                 except yaml.YAMLError as e:
                     # some error-correcting mainly for empty-values
                     # not being well-formated
-                    print_(ui.colorize('text_warning',
+                    ui.print_(ui.colorize('text_warning',
                            "change this fault: {}".format(e)))
-                    print_("correct format for empty = - '' :")
+                    ui.print_("correct format for empty = - '' :")
                     if ui.input_yn(
                             ui.colorize('action_default', "fix?(y)"), True):
                         edit(new.name)
@@ -284,6 +284,6 @@ class EditPlugin(plugins.BeetsPlugin):
             for x in range(0, len(nl)):
                 if ol[x] != nl[x] and ol[x].keys()[0]in self.not_fields:
                     nl[x] = ol[x]
-                    print_("reset forbidden field.")
+                    ui.print_("reset forbidden field.")
         if ol != nl:  # only keep objects that have changed
             return ol, nl
