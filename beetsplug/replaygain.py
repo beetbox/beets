@@ -27,7 +27,6 @@ from beets import logging
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output, displayable_path
-from beets import config
 
 
 # Utilities.
@@ -926,7 +925,7 @@ class ReplayGainPlugin(BeetsPlugin):
         def func(lib, opts, args):
             self._log.setLevel(logging.INFO)
 
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
 
             if opts.album:
                 for album in lib.albums(ui.decargs(args)):

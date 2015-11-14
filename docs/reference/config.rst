@@ -304,6 +304,15 @@ By default, beets writes MP3 tags using the ID3v2.4 standard, the latest
 version of ID3. Enable this option to instead use the older ID3v2.3 standard,
 which is preferred by certain older software such as Windows Media Player.
 
+.. _va_name:
+
+va_name
+~~~~~~~
+
+Sets the albumartist for various-artist compilations. Defaults to ``'Various
+Artists'`` (the MusicBrainz standard). Affects other sources, such as
+:doc:`/plugins/discogs`, too.
+
 
 UI Options
 ----------
@@ -370,6 +379,8 @@ Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
 written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
 and ``-W`` command-line options override this setting.
 
+.. _config-import-copy:
+
 copy
 ~~~~
 
@@ -379,6 +390,8 @@ overridden with the ``-c`` and ``-C`` command-line options.
 
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
+
+.. _config-import-move:
 
 move
 ~~~~

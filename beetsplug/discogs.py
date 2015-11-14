@@ -20,6 +20,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import beets.ui
 from beets import logging
+from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
 from beets.util import confit
@@ -223,6 +224,8 @@ class DiscogsPlugin(BeetsPlugin):
         albumtype = ', '.join(
             result.data['formats'][0].get('descriptions', [])) or None
         va = result.data['artists'][0]['name'].lower() == 'various'
+        if va:
+            artist = config['va_name'].get(unicode)
         year = result.data['year']
         label = result.data['labels'][0]['name']
         mediums = len(set(t.medium for t in tracks))

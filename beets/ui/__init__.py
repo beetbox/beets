@@ -70,7 +70,7 @@ class UserError(Exception):
     """
 
 
-# Utilities.
+# Encoding utilities.
 
 def _out_encoding():
     """Get the encoding to use for *outputting* strings to the console.
@@ -136,6 +136,45 @@ def print_(*strings, **kwargs):
 
     sys.stdout.write(txt)
 
+
+# Configuration wrappers.
+
+def _bool_fallback(a, b):
+    """Given a boolean or None, return the original value or a fallback.
+    """
+    if a is None:
+        assert isinstance(b, bool)
+        return b
+    else:
+        assert isinstance(a, bool)
+        return a
+
+
+def should_write(write_opt=None):
+    """Decide whether a command that updates metadata should also write
+    tags, using the importer configuration as the default.
+    """
+    return _bool_fallback(write_opt, config['import']['write'].get(bool))
+
+
+def should_move(move_opt=None):
+    """Decide whether a command that updates metadata should also move
+    files when they're inside the library, using the importer
+    configuration as the default.
+
+    Specifically, commands should move files after metadata updates only
+    when the importer is configured *either* to move *or* to copy files.
+    They should avoid moving files when the importer is configured not
+    to touch any filenames.
+    """
+    return _bool_fallback(
+        move_opt,
+        config['import']['move'].get(bool) or
+        config['import']['copy'].get(bool)
+    )
+
+
+# Input prompts.
 
 def input_(prompt=None):
     """Like `raw_input`, but decodes the result to a Unicode string.
@@ -327,6 +366,8 @@ def input_yn(prompt, require=False):
     return sel == 'y'
 
 
+# Human output formatting.
+
 def human_bytes(size):
     """Formats size, a number of bytes, in a human-readable way."""
     powers = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'H']
@@ -373,6 +414,8 @@ def human_seconds_short(interval):
     interval = int(interval)
     return u'%i:%02i' % (interval // 60, interval % 60)
 
+
+# Colorization.
 
 # ANSI terminal colorization code heavily inspired by pygments:
 # http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
