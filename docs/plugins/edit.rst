@@ -52,7 +52,6 @@ Make a ``edit:`` section in your config.yaml ``(beet config -e)``
 
     edit:
        editor: nano -w -p
-       diff_method: html
        browser: firefox  -private-window
        albumfields: genre album
        itemfields: track artist
@@ -60,12 +59,6 @@ Make a ``edit:`` section in your config.yaml ``(beet config -e)``
        separator: "<>"
 
 * ``editor:`` pick your own texteditor; add arguments if needed. If no``editor:`` then your system opens the file-extension.
-
-* ``diff_method:`` 4 choices. With no ``diff_method:`` you get the beets way of showing differences.
-    - ``ndiff``: you see original and the changed yamls with the changes.
-    - ``unified``: you see the changes with a bit of context. Simple and compact.
-    - ``html``: a html file that you can open in a browser. Looks nice.
-    - ``vimdiff``: gives you VIM with the diffs.You need VIM for this.
 
 * ``browser:``
   If you pick ``diff_method:html`` you can specify a viewer for it (if needed add arguments). If not, let your system open the file-extension.
