@@ -21,10 +21,8 @@ from beets import plugins
 from beets.ui import Subcommand, decargs, library, print_
 from beets.ui.commands import _do_query
 import subprocess
-import difflib
 import yaml
 import collections
-from contextlib import nested
 from sys import exit
 from beets import config
 from beets import ui
@@ -40,19 +38,13 @@ class EditPlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'editor': '',
-            'browser': '',
             'albumfields': 'album albumartist',
             'itemfields': 'track title artist album',
             'not_fields': 'id path',
         })
 
         # The editor field in the config lets you specify your editor.
-        # Defaults to open with webrowser module.
         self.editor = self.config['editor'].as_str_seq()
-
-        # the html_viewer field in your config lets you specify
-        # your htmlviewer. Defaults to open with webrowser module
-        self.browser = self.config['browser'].as_str_seq()
 
         # the albumfields field in your config sets the tags that
         # you want to see/change for albums.
@@ -74,8 +66,6 @@ class EditPlugin(plugins.BeetsPlugin):
 
         self.ed = None
         self.ed_args = None
-        self.brw = None
-        self.brw_args = None
 
     def commands(self):
         edit_command = Subcommand(
@@ -103,9 +93,6 @@ class EditPlugin(plugins.BeetsPlugin):
         if self.editor:
             self.ed_args = self.editor[1:] if len(self.editor) > 1 else None
             self.ed = self.editor[0] if self.editor else None
-        if self.browser:
-            self.brw_args = self.browser[1:] if len(self.browser) > 1 else None
-            self.brw = self.browser[0] if self.browser else None
 
         # main program flow
         # Get the objects to edit.
@@ -242,7 +229,6 @@ class EditPlugin(plugins.BeetsPlugin):
             else:
                 # let the system handle the file
                 self.open_file(name)
-                # webbrowser.open(name, new=2, autoraise=True)
         else:
             # use the editor specified in config
             callmethod = [self.ed]
@@ -316,56 +302,3 @@ class EditPlugin(plugins.BeetsPlugin):
                     print_("reset forbidden field.")
         if ol != nl:  # only keep objects that have changed
             return ol, nl
-
-    def ndiff(self, newfilestr, oldfilestr):
-        newlines = newfilestr.splitlines()
-        oldlines = oldfilestr.splitlines()
-        diff = difflib.ndiff(newlines, oldlines)
-        print_('\n'.join(list(diff)))
-        return
-
-    def unified(self, newfilestr, oldfilestr):
-        newlines = newfilestr.splitlines()
-        oldlines = oldfilestr.splitlines()
-        diff = difflib.unified_diff(newlines, oldlines, lineterm='')
-        print_('\n'.join(list(diff)))
-        return
-
-    def html(self, newfilestr, oldfilestr):
-        newlines = newfilestr.splitlines()
-        oldlines = oldfilestr.splitlines()
-        diff = difflib.HtmlDiff()
-        df = diff.make_file(newlines, oldlines)
-
-        with NamedTemporaryFile(
-                'w', suffix='.html', bufsize=0, delete=False) as ht:
-            # TODO: if webbrowser.open() is not blocking, ht might be deleted
-            # too soon - need to test aded delete=false otherwise file is gone
-            # before the browser picks it up
-            ht.write(df)
-            if not self.brw:
-                # if browser not in config get $BROWSER
-                browser = os.getenv('BROWSER')
-                if browser:
-                    os.system(browser + " " + ht.name)
-                else:
-                    # let the system handle it
-                    self.open_file(ht.name)
-            else:
-                # use browser specified in config
-                callmethod = [self.brw]
-                if self.brw_args:
-                    callmethod.extend(self.brw_args)
-                callmethod.append(ht.name)
-                subprocess.call(callmethod)
-
-        return
-
-    def vimdiff(self, newstringstr, oldstringstr):
-        with nested(NamedTemporaryFile(suffix='.old.yaml',
-                                       bufsize=0),
-                    NamedTemporaryFile(suffix='.new.yaml',
-                                       bufsize=0)) as (newdiff, olddiff):
-            newdiff.write(newstringstr)
-            olddiff.write(oldstringstr)
-            subprocess.call(['vimdiff', newdiff.name, olddiff.name])
