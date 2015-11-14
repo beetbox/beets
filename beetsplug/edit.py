@@ -18,7 +18,9 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 from beets import plugins
-from beets.ui import Subcommand, decargs, library, print_
+from beets import util
+from beets import library
+from beets.ui import Subcommand, decargs, print_
 from beets.ui.commands import _do_query
 import subprocess
 import yaml
@@ -28,7 +30,14 @@ from beets import config
 from beets import ui
 from tempfile import NamedTemporaryFile
 import os
-import sys
+
+
+def edit(filename):
+    """Open `filename` in a test editor.
+    """
+    cmd = util.shlex_split(util.editor_command())
+    cmd.append(filename)
+    subprocess.call(cmd)
 
 
 class EditPlugin(plugins.BeetsPlugin):
@@ -184,7 +193,7 @@ class EditPlugin(plugins.BeetsPlugin):
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
         new.write(newyaml)
         new.close()
-        self.get_editor(new.name)
+        edit(new.name)
         # wait for user to edit yaml and continue
         if ui.input_yn(ui.colorize('action_default', "done?(y)"), True):
             while True:
@@ -203,7 +212,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     print_("correct format for empty = - '' :")
                     if ui.input_yn(
                             ui.colorize('action_default', "fix?(y)"), True):
-                        self.get_editor(new.name)
+                        edit(new.name)
                         if ui.input_yn(ui.colorize(
                            'action_default', "ok.fixed.(y)"), True):
                             pass
@@ -212,30 +221,6 @@ class EditPlugin(plugins.BeetsPlugin):
         else:
             os.remove(new.name)
             exit()
-
-    def open_file(self, startcmd):
-        # opens a file in the standard program on all systems
-        subprocess.call(('cmd /c start "" "' + startcmd + '"')
-                        if os.name is 'nt' else (
-                        'open' if sys.platform.startswith('darwin') else
-                        'xdg-open', startcmd))
-
-    def get_editor(self, name):
-        if not self.ed:
-            # if not specified in config use $EDITOR from system
-            editor = os.getenv('EDITOR')
-            if editor:
-                os.system(editor + " " + name)
-            else:
-                # let the system handle the file
-                self.open_file(name)
-        else:
-            # use the editor specified in config
-            callmethod = [self.ed]
-            if self.ed_args:
-                callmethod.extend(self.ed_args)
-            callmethod.append(name)
-            subprocess.check_call(callmethod)
 
     def nice_format(self, newset):
         # format the results so that we have an ID at the top
