@@ -106,7 +106,7 @@ class EditPlugin(plugins.BeetsPlugin):
         )
         edit_command.parser.add_all_common_options()
         edit_command.func = self.editor_music
-        return[edit_command]
+        return [edit_command]
 
     def editor_music(self, lib, opts, args):
         if self.editor:
@@ -122,11 +122,7 @@ class EditPlugin(plugins.BeetsPlugin):
             'unified': self.unified,
             'html': self.html,
             'vimdiff': self.vimdiff}
-        # make a dictionary from the chosen fields
-        # you can do em all or a selection
-        self.make_dict = {
-            'all': self.get_all_fields,
-            "selected": self.get_selected_fields}
+
         # main program flow
         # Get the objects to edit.
         query = decargs(args)
@@ -135,17 +131,21 @@ class EditPlugin(plugins.BeetsPlugin):
         if not objs:
             print_('Nothing to edit.')
             return
-        # get the fields the user wants
-        self.get_fields_from(objs, opts)
         # Confirmation from user about the queryresult
         for obj in objs:
             print_(format(obj))
         if not ui.input_yn(ui.colorize('action_default', "Edit? (y/n)"), True):
             return
+
         # get the fields from the objects
-        dict_from_objs = self.make_dict[self.pick](self.fields, objs, opts)
+        if opts.all:
+            data = self.get_all_fields(objs)
+        else:
+            fields = self.get_fields_from(objs, opts)
+            data = self.get_selected_fields(fields, objs, opts)
+
         # present the yaml to the user and let her change it
-        newyaml, oldyaml = self.change_objs(dict_from_objs)
+        newyaml, oldyaml = self.change_objs(data)
         changed_objs = self.check_diff(newyaml, oldyaml, opts)
         if not changed_objs:
             print_("nothing to change")
@@ -166,20 +166,19 @@ class EditPlugin(plugins.BeetsPlugin):
     def get_fields_from(self, objs, opts):
         # construct a list of fields we need
         # see if we need album or item fields
-        self.fields = self.albumfields if opts.album else self.itemfields
+        fields = self.albumfields if opts.album else self.itemfields
         # if opts.extra is given add those
         if opts.extra:
-            self.fields.extend([f for f in opts.extra if f not in self.fields])
+            fields.extend([f for f in opts.extra if f not in fields])
         # make sure we got the id for identification
-        if 'id' not in self.fields:
-            self.fields.insert(0, 'id')
+        if 'id' not in fields:
+            fields.insert(0, 'id')
         # we need all the fields
         if opts.all:
-            self.fields = None
-            self.pick = "all"
+            fields = None
             print_(ui.colorize('text_warning', "edit all fields from:"))
         else:
-            for it in self.fields:
+            for it in fields:
                 if opts.album:
                     # check if it is really an albumfield
                     if it not in library.Album.all_keys():
@@ -187,7 +186,7 @@ class EditPlugin(plugins.BeetsPlugin):
                             "{} not in albumfields.Removed it.".format(
                                 ui.colorize(
                                     'text_warning', it)))
-                        self.fields.remove(it)
+                        fields.remove(it)
                 else:
                     # if it is not an itemfield remove it
                     if it not in library.Item.all_keys():
@@ -195,13 +194,14 @@ class EditPlugin(plugins.BeetsPlugin):
                             "{} not in itemfields.Removed it.".format(
                                 ui.colorize(
                                     'text_warning', it)))
-                        self.fields.remove(it)
-            self.pick = "selected"
+                        fields.remove(it)
+
+        return fields
 
     def get_selected_fields(self, myfields, objs, opts):
         return [[{field: obj[field]}for field in myfields]for obj in objs]
 
-    def get_all_fields(self, myfields, objs, opts):
+    def get_all_fields(self, objs):
         return [[{field: obj[field]}for field in sorted(obj._fields)]
                 for obj in objs]
 
