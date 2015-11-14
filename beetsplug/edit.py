@@ -25,7 +25,6 @@ from beets.ui.commands import _do_query
 import subprocess
 import yaml
 import collections
-from sys import exit
 from tempfile import NamedTemporaryFile
 import os
 
@@ -38,7 +37,7 @@ def edit(filename):
     subprocess.call(cmd)
 
 
-def dump(self, arg):
+def dump(arg):
     """Dump an object as YAML for editing.
     """
     return yaml.safe_dump_all(
@@ -48,10 +47,10 @@ def dump(self, arg):
     )
 
 
-def load(self, yam):
+def load(s):
     """Read a YAML string back to an object.
     """
-    return yaml.load_all(yam)
+    return yaml.load_all(s)
 
 
 class EditPlugin(plugins.BeetsPlugin):
@@ -106,7 +105,6 @@ class EditPlugin(plugins.BeetsPlugin):
         return [edit_command]
 
     def editor_music(self, lib, opts, args):
-        # main program flow
         # Get the objects to edit.
         query = ui.decargs(args)
         items, albums = _do_query(lib, query, opts.album, False)
@@ -114,25 +112,22 @@ class EditPlugin(plugins.BeetsPlugin):
         if not objs:
             ui.print_('Nothing to edit.')
             return
-        # Confirmation from user about the queryresult
-        for obj in objs:
-            ui.print_(format(obj))
-        if not ui.input_yn(ui.colorize('action_default', "Edit? (y/n)"), True):
-            return
 
-        # get the fields from the objects
+        # Get the content to edit as raw data structures.
         if opts.all:
             data = self.get_all_fields(objs)
         else:
             fields = self.get_fields_from(objs, opts)
             data = self.get_selected_fields(fields, objs, opts)
 
-        # present the yaml to the user and let her change it
-        newyaml, oldyaml = self.change_objs(data)
-        changed_objs = self.check_diff(newyaml, oldyaml, opts)
-        if not changed_objs:
-            ui.print_("nothing to change")
+        # Present the YAML to the user and let her change it.
+        new_data = self.change_objs(data)
+        changed_objs = self.check_diff(data, new_data)
+        if changed_objs is None:
+            # Editing failed.
             return
+
+        # Save the new data.
         self.save_items(changed_objs, lib, opts)
 
     def get_fields_from(self, objs, opts):
@@ -178,41 +173,21 @@ class EditPlugin(plugins.BeetsPlugin):
                 for obj in objs]
 
     def change_objs(self, dict_items):
-        # construct a yaml from the original object-fields
-        # and make a yaml that we can change in the text-editor
-        oldyaml = dump(dict_items)  # our backup
-        newyaml = dump(dict_items)  # goes to user
+        # Ask the user to edit the data.
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
-        new.write(newyaml)
+        new.write(dump(dict_items))
         new.close()
         edit(new.name)
-        # wait for user to edit yaml and continue
-        if ui.input_yn(ui.colorize('action_default', "done?(y)"), True):
-            while True:
-                try:
-                    # reading the yaml back in
-                    with open(new.name) as f:
-                        newyaml = f.read()
-                        list(yaml.load_all(newyaml))
-                        os.remove(new.name)
-                        break
-                except yaml.YAMLError as e:
-                    # some error-correcting mainly for empty-values
-                    # not being well-formated
-                    ui.print_(ui.colorize('text_warning',
-                              "change this fault: {}".format(e)))
-                    ui.print_("correct format for empty = - '' :")
-                    if ui.input_yn(
-                            ui.colorize('action_default', "fix?(y)"), True):
-                        edit(new.name)
-                        if ui.input_yn(ui.colorize(
-                           'action_default', "ok.fixed.(y)"), True):
-                            pass
-            # only continue when all the mistakes are corrected
-            return newyaml, oldyaml
-        else:
-            os.remove(new.name)
-            exit()
+
+        # Parse the updated data.
+        with open(new.name) as f:
+            new_str = f.read()
+        os.remove(new.name)
+        try:
+            return load(new_str)
+        except yaml.YAMLError as e:
+            ui.print_("Invalid YAML: {}".format(e))
+            return None
 
     def nice_format(self, newset):
         # format the results so that we have an ID at the top
@@ -257,11 +232,8 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return
 
-    def check_diff(self, newyaml, oldyaml, opts):
-        # make python objs from yamlstrings
-        nl = load(newyaml)
-        ol = load(oldyaml)
-        return filter(None, map(self.reduce_it, ol, nl))
+    def check_diff(self, old_data, new_data):
+        return filter(None, map(self.reduce_it, old_data, new_data))
 
     def reduce_it(self, ol, nl):
         # if there is a forbidden field it resets them
