@@ -38,6 +38,22 @@ def edit(filename):
     subprocess.call(cmd)
 
 
+def dump(self, arg):
+    """Dump an object as YAML for editing.
+    """
+    return yaml.safe_dump_all(
+        arg,
+        allow_unicode=True,
+        default_flow_style=False,
+    )
+
+
+def load(self, yam):
+    """Read a YAML string back to an object.
+    """
+    return yaml.load_all(yam)
+
+
 class EditPlugin(plugins.BeetsPlugin):
 
     def __init__(self):
@@ -119,17 +135,6 @@ class EditPlugin(plugins.BeetsPlugin):
             return
         self.save_items(changed_objs, lib, opts)
 
-    def print_to_yaml(self, arg):
-        # from object to yaml
-        return yaml.safe_dump_all(
-            arg,
-            allow_unicode=True,
-            default_flow_style=False)
-
-    def yaml_to_dict(self, yam):
-        # from yaml to object
-        return yaml.load_all(yam)
-
     def get_fields_from(self, objs, opts):
         # construct a list of fields we need
         # see if we need album or item fields
@@ -175,8 +180,8 @@ class EditPlugin(plugins.BeetsPlugin):
     def change_objs(self, dict_items):
         # construct a yaml from the original object-fields
         # and make a yaml that we can change in the text-editor
-        oldyaml = self.print_to_yaml(dict_items)  # our backup
-        newyaml = self.print_to_yaml(dict_items)  # goes to user
+        oldyaml = dump(dict_items)  # our backup
+        newyaml = dump(dict_items)  # goes to user
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
         new.write(newyaml)
         new.close()
@@ -225,8 +230,6 @@ class EditPlugin(plugins.BeetsPlugin):
         niceNewSet = self.nice_format(newset)
         niceOldSet = self.nice_format(oldset)
         niceCombiSet = zip(niceOldSet.items(), niceNewSet.items())
-        newSetTitled = []
-        oldSetTitled = []
         changedObjs = []
         for o, n in niceCombiSet:
             if opts.album:
@@ -234,9 +237,7 @@ class EditPlugin(plugins.BeetsPlugin):
             else:
                 ob = lib.get_item(n[0])
             # change id to item-string
-            oldSetTitled.append((format(ob),) + o[1:])
             ob.update(n[1])  # update the object
-            newSetTitled.append((format(ob),) + n[1:])
             changedObjs.append(ob)
 
         # see the changes we made
@@ -258,8 +259,8 @@ class EditPlugin(plugins.BeetsPlugin):
 
     def check_diff(self, newyaml, oldyaml, opts):
         # make python objs from yamlstrings
-        nl = self.yaml_to_dict(newyaml)
-        ol = self.yaml_to_dict(oldyaml)
+        nl = load(newyaml)
+        ol = load(oldyaml)
         return filter(None, map(self.reduce_it, ol, nl))
 
     def reduce_it(self, ol, nl):
