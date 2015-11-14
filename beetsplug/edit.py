@@ -101,10 +101,12 @@ class EditPlugin(plugins.BeetsPlugin):
             help='edit all fields',
         )
         edit_command.parser.add_all_common_options()
-        edit_command.func = self.editor_music
+        edit_command.func = self._edit_command
         return [edit_command]
 
-    def editor_music(self, lib, opts, args):
+    def _edit_command(self, lib, opts, args):
+        """The CLI command function for the `beet edit` command.
+        """
         # Get the objects to edit.
         query = ui.decargs(args)
         items, albums = _do_query(lib, query, opts.album, False)
@@ -113,12 +115,29 @@ class EditPlugin(plugins.BeetsPlugin):
             ui.print_('Nothing to edit.')
             return
 
-        # Get the content to edit as raw data structures.
+        # Get the fields to edit.
         if opts.all:
-            data = self.get_all_fields(objs)
+            fields = None
         else:
-            fields = self.get_fields_from(objs, opts)
-            data = self.get_selected_fields(fields, objs, opts)
+            fields = self.get_fields_from(objs, opts.album, opts.extra)
+            # TODO
+            # fields.extend([f for f in opts.extra if f not in fields])
+
+        self.edit(lib, opts.album, objs, fields)
+
+    def edit(self, lib, album, objs, fields):
+        """The core editor logic.
+
+        - `lib`: The `Library` object.
+        - `album`: A flag indicating whether we're editing Items or Albums.
+        - `objs`: The `Item`s or `Album`s to edit.
+        - `fields`: The set of field names to edit.
+        """
+        # Get the content to edit as raw data structures.
+        if fields:
+            data = self.get_selected_fields(fields, objs)
+        else:
+            data = self.get_all_fields(objs)
 
         # Present the YAML to the user and let her change it.
         new_data = self.change_objs(data)
@@ -128,44 +147,42 @@ class EditPlugin(plugins.BeetsPlugin):
             return
 
         # Save the new data.
-        self.save_items(changed_objs, lib, opts)
+        self.save_items(changed_objs, lib, album)
 
-    def get_fields_from(self, objs, opts):
+    def get_fields_from(self, objs, album, extra):
         # construct a list of fields we need
         # see if we need album or item fields
-        fields = self.albumfields if opts.album else self.itemfields
+        fields = self.albumfields if album else self.itemfields
+
         # if opts.extra is given add those
-        if opts.extra:
-            fields.extend([f for f in opts.extra if f not in fields])
+        if extra:
+            fields.extend([f for f in extra if f not in fields])
+
         # make sure we got the id for identification
         if 'id' not in fields:
             fields.insert(0, 'id')
-        # we need all the fields
-        if opts.all:
-            fields = None
-            ui.print_(ui.colorize('text_warning', "edit all fields from:"))
-        else:
-            for it in fields:
-                if opts.album:
-                    # check if it is really an albumfield
-                    if it not in library.Album.all_keys():
-                        ui.print_(
-                            "{} not in albumfields.Removed it.".format(
-                                ui.colorize(
-                                    'text_warning', it)))
-                        fields.remove(it)
-                else:
-                    # if it is not an itemfield remove it
-                    if it not in library.Item.all_keys():
-                        ui.print_(
-                            "{} not in itemfields.Removed it.".format(
-                                ui.colorize(
-                                    'text_warning', it)))
-                        fields.remove(it)
+
+        for it in fields:
+            if album:
+                # check if it is really an albumfield
+                if it not in library.Album.all_keys():
+                    ui.print_(
+                        "{} not in albumfields.Removed it.".format(
+                            ui.colorize(
+                                'text_warning', it)))
+                    fields.remove(it)
+            else:
+                # if it is not an itemfield remove it
+                if it not in library.Item.all_keys():
+                    ui.print_(
+                        "{} not in itemfields.Removed it.".format(
+                            ui.colorize(
+                                'text_warning', it)))
+                    fields.remove(it)
 
         return fields
 
-    def get_selected_fields(self, myfields, objs, opts):
+    def get_selected_fields(self, myfields, objs):
         return [[{field: obj[field]}for field in myfields]for obj in objs]
 
     def get_all_fields(self, objs):
@@ -199,7 +216,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 wellformed[item[0].values()[0]].update(field)
         return wellformed
 
-    def save_items(self, oldnewlist, lib, opts):
+    def save_items(self, oldnewlist, lib, album):
 
         oldset, newset = zip(*oldnewlist)
         niceNewSet = self.nice_format(newset)
@@ -207,7 +224,7 @@ class EditPlugin(plugins.BeetsPlugin):
         niceCombiSet = zip(niceOldSet.items(), niceNewSet.items())
         changedObjs = []
         for o, n in niceCombiSet:
-            if opts.album:
+            if album:
                 ob = lib.get_album(int(n[0]))
             else:
                 ob = lib.get_item(n[0])
