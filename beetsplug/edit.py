@@ -53,6 +53,18 @@ def load(s):
     return yaml.load_all(s)
 
 
+def flatten(obj, fields):
+    """Represent `obj`, a `dbcore.Model` object, as a dictionary for
+    serialization. Only include the given `fields` if provided;
+    otherwise, include everything.
+    """
+    d = dict(obj)
+    if fields:
+        return {k: v for k, v in d.items() if k in fields}
+    else:
+        return d
+
+
 class EditPlugin(plugins.BeetsPlugin):
 
     def __init__(self):
@@ -138,13 +150,10 @@ class EditPlugin(plugins.BeetsPlugin):
           everything).
         """
         # Get the content to edit as raw data structures.
-        if fields:
-            data = self.get_selected_fields(fields, objs)
-        else:
-            data = self.get_all_fields(objs)
+        data = [flatten(o, fields) for o in objs]
 
         # Present the YAML to the user and let her change it.
-        new_data = self.change_objs(data)
+        new_data = self.edit_data(data)
         changed_objs = self.check_diff(data, new_data)
         if changed_objs is None:
             # Editing failed.
@@ -153,14 +162,7 @@ class EditPlugin(plugins.BeetsPlugin):
         # Save the new data.
         self.save_items(changed_objs, lib, album)
 
-    def get_selected_fields(self, myfields, objs):
-        return [[{field: obj[field]}for field in myfields]for obj in objs]
-
-    def get_all_fields(self, objs):
-        return [[{field: obj[field]}for field in sorted(obj._fields)]
-                for obj in objs]
-
-    def change_objs(self, dict_items):
+    def edit_data(self, dict_items):
         # Ask the user to edit the data.
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
         new.write(dump(dict_items))
