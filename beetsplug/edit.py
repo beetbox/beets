@@ -40,7 +40,6 @@ class EditPlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'editor': '',
-            'diff_method': '',
             'browser': '',
             'albumfields': 'album albumartist',
             'itemfields': 'track title artist album',
@@ -54,14 +53,6 @@ class EditPlugin(plugins.BeetsPlugin):
         # the html_viewer field in your config lets you specify
         # your htmlviewer. Defaults to open with webrowser module
         self.browser = self.config['browser'].as_str_seq()
-
-        # the diff_method field in your config picks the way to see your
-        # changes. Options are:
-        # 'ndiff'(2 files with differences),
-        # 'unified'(just the different lines and a few lines of context),
-        # 'html'(view in html-format),
-        # 'vimdiff'(view in VIM)
-        self.diff_method = self.config['diff_method'].get(unicode)
 
         # the albumfields field in your config sets the tags that
         # you want to see/change for albums.
@@ -115,13 +106,6 @@ class EditPlugin(plugins.BeetsPlugin):
         if self.browser:
             self.brw_args = self.browser[1:] if len(self.browser) > 1 else None
             self.brw = self.browser[0] if self.browser else None
-
-        # 4 ways to view the changes in objects
-        self.diffresults = {
-            'ndiff': self.ndiff,
-            'unified': self.unified,
-            'html': self.html,
-            'vimdiff': self.vimdiff}
 
         # main program flow
         # Get the objects to edit.
@@ -296,14 +280,11 @@ class EditPlugin(plugins.BeetsPlugin):
             ob.update(n[1])  # update the object
             newSetTitled.append((format(ob),) + n[1:])
             changedObjs.append(ob)
+
         # see the changes we made
-        if self.diff_method:
-            ostr = self.print_to_yaml(oldSetTitled)
-            nwstr = self.print_to_yaml(newSetTitled)
-            self.diffresults[self.diff_method](ostr, nwstr)
-        else:
-            for obj in changedObjs:
-                ui.show_model_changes(obj)
+        for obj in changedObjs:
+            ui.show_model_changes(obj)
+
         self.save_write(changedObjs)
 
     def save_write(self, changedob):
