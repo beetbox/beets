@@ -49,7 +49,7 @@ def dump(arg):
 def load(s):
     """Read a YAML string back to an object.
     """
-    return yaml.load_all(s)
+    return list(yaml.load_all(s))
 
 
 def flatten(obj, fields):
@@ -154,7 +154,7 @@ class EditPlugin(plugins.BeetsPlugin):
             return
 
         # Apply the updated metadata to the objects.
-        self.apply_data(objs, new_data)
+        self.apply_data(objs, data, new_data)
 
         # Save the new data.
         self.save_write(objs)
@@ -189,34 +189,33 @@ class EditPlugin(plugins.BeetsPlugin):
             ui.print_("Invalid YAML: {}".format(e))
             return None
 
-    def apply_data(self, objs, new_data):
+    def apply_data(self, objs, old_data, new_data):
         """Take potentially-updated data and apply it to a set of Model
         objects.
 
         The objects are not written back to the database, so the changes
         are temporary.
         """
+        if len(old_data) != len(new_data):
+            self._log.warn('number of objects changed from {} to {}',
+                           len(old_data), len(new_data))
+
         obj_by_id = {o.id: o for o in objs}
         ignore_fields = self.config['ignore_fields'].as_str_seq()
-        for d in new_data:
-            id = d.get('id')
-
-            if not isinstance(id, int):
-                self._log.warn('skipping data with missing ID')
-                continue
-            if id not in obj_by_id:
-                self._log.warn('skipping unmatched ID {}', id)
-                continue
-
-            obj = obj_by_id[d['id']]
-
-            # Filter out any forbidden fields so we can avoid
+        for old_dict, new_dict in zip(old_data, new_data):
+            # Prohibit any changes to forbidden fields to avoid
             # clobbering `id` and such by mistake.
-            for key in list(d):
-                if key in ignore_fields:
-                    del d[key]
+            forbidden = False
+            for key in ignore_fields:
+                if old_dict.get(key) != new_dict.get(key):
+                    self._log.warn('ignoring object where {} changed', key)
+                    forbidden = True
+                    break
+            if forbidden:
+                continue
 
-            obj.update(d)
+            obj = obj_by_id[old_dict['id']]
+            obj.update(new_dict)
 
     def save_write(self, objs):
         """Save a list of updated Model objects to the database.
