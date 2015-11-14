@@ -116,7 +116,7 @@ class EditPlugin(plugins.BeetsPlugin):
             fields = None
         else:
             fields = self._get_fields(opts.album, opts.extra)
-        self.edit(lib, opts.album, objs, fields)
+        self.edit(opts.album, objs, fields)
 
     def _get_fields(self, album, extra):
         """Get the set of fields to edit.
@@ -136,10 +136,9 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return set(fields)
 
-    def edit(self, lib, album, objs, fields):
+    def edit(self, album, objs, fields):
         """The core editor logic.
 
-        - `lib`: The `Library` object.
         - `album`: A flag indicating whether we're editing Items or Albums.
         - `objs`: The `Item`s or `Album`s to edit.
         - `fields`: The set of field names to edit (or None to edit
@@ -219,17 +218,16 @@ class EditPlugin(plugins.BeetsPlugin):
 
             obj.update(d)
 
-    def save_write(self, changedob):
-        # see the changes we made
-        for obj in changedob:
+    def save_write(self, objs):
+        """Save a list of updated Model objects to the database.
+        """
+        # Display and confirm the changes.
+        for obj in objs:
             ui.show_model_changes(obj)
-
-        if not ui.input_yn(
-                ui.colorize('action_default', 'really modify? (y/n)')):
+        if not ui.input_yn('Apply changes? (y/n)'):
             return
 
-        for ob in changedob:
+        # Save to the database and possibly write tags.
+        for ob in objs:
             self._log.debug('saving changes to {}', ob)
             ob.try_sync(ui.should_write())
-
-        return
