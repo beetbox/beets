@@ -71,16 +71,13 @@ class EditPlugin(plugins.BeetsPlugin):
         super(EditPlugin, self).__init__()
 
         self.config.add({
+            # The default fields to edit.
             'albumfields': 'album albumartist',
             'itemfields': 'track title artist album',
-            'not_fields': 'id path',
-        })
 
-        # the not_fields field in your config sets the tags that
-        # will not be changed.
-        # If you happen to change them, they will be restored to the original
-        # value. The ID of an item will never be changed.
-        self.not_fields = self.config['not_fields'].as_str_seq()
+            # Silently ignore any changes to these fields.
+            'ignore_fields': 'id path',
+        })
 
     def commands(self):
         edit_command = ui.Subcommand(
@@ -158,10 +155,16 @@ class EditPlugin(plugins.BeetsPlugin):
             # Editing failed.
             return
 
-        changed_objs = self.check_diff(data, new_data)
+        # Filter out any forbidden fields so we can avoid clobbering
+        # `id` and such by mistake.
+        ignore_fields = self.config['ignore_fields'].as_str_seq()
+        for d in data:
+            for key in list(d):
+                if key in ignore_fields:
+                    del d[key]
 
         # Save the new data.
-        self.save_items(changed_objs, lib, album)
+        self.save_items(data, lib, album)
 
     def edit_data(self, data):
         """Dump a data structure to a file as text, ask the user to edit
@@ -235,16 +238,3 @@ class EditPlugin(plugins.BeetsPlugin):
             ob.try_sync(ui.should_write())
 
         return
-
-    def check_diff(self, old_data, new_data):
-        return filter(None, map(self.reduce_it, old_data, new_data))
-
-    def reduce_it(self, ol, nl):
-        # if there is a forbidden field it resets them
-        if ol != nl:
-            for x in range(0, len(nl)):
-                if ol[x] != nl[x] and ol[x].keys()[0]in self.not_fields:
-                    nl[x] = ol[x]
-                    ui.print_("reset forbidden field.")
-        if ol != nl:  # only keep objects that have changed
-            return ol, nl
