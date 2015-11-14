@@ -44,14 +44,10 @@ class EditPlugin(plugins.BeetsPlugin):
         super(EditPlugin, self).__init__()
 
         self.config.add({
-            'editor': '',
             'albumfields': 'album albumartist',
             'itemfields': 'track title artist album',
             'not_fields': 'id path',
         })
-
-        # The editor field in the config lets you specify your editor.
-        self.editor = self.config['editor'].as_str_seq()
 
         # the albumfields field in your config sets the tags that
         # you want to see/change for albums.
@@ -70,9 +66,6 @@ class EditPlugin(plugins.BeetsPlugin):
         # If you happen to change them, they will be restored to the original
         # value. The ID of an item will never be changed.
         self.not_fields = self.config['not_fields'].as_str_seq()
-
-        self.ed = None
-        self.ed_args = None
 
     def commands(self):
         edit_command = ui.Subcommand(
@@ -97,10 +90,6 @@ class EditPlugin(plugins.BeetsPlugin):
         return [edit_command]
 
     def editor_music(self, lib, opts, args):
-        if self.editor:
-            self.ed_args = self.editor[1:] if len(self.editor) > 1 else None
-            self.ed = self.editor[0] if self.editor else None
-
         # main program flow
         # Get the objects to edit.
         query = ui.decargs(args)
