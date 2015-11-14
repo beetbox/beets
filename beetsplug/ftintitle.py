@@ -22,7 +22,6 @@ import re
 from beets import plugins
 from beets import ui
 from beets.util import displayable_path
-from beets import config
 
 
 def split_on_feat(artist):
@@ -102,7 +101,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         def func(lib, opts, args):
             self.config.set_args(opts)
             drop_feat = self.config['drop'].get(bool)
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
 
             for item in lib.items(ui.decargs(args)):
                 self.ft_in_title(item, drop_feat)

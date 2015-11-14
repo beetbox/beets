@@ -13,7 +13,7 @@ Using Plugins
 -------------
 
 To use one of the plugins included with beets (see the rest of this page for a
-list), just use the `plugins` option in your :doc:`config.yaml </reference/config>`: file, like so::
+list), just use the `plugins` option in your :doc:`config.yaml </reference/config>` file, like so::
 
     plugins: inline convert web
 
@@ -42,6 +42,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    echonest
    edit
    embedart
+   embyupdate
    fetchart
    fromfilename
    ftintitle
@@ -133,6 +134,7 @@ Path Formats
 Interoperability
 ----------------
 
+* :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
@@ -145,6 +147,7 @@ Interoperability
 * :doc:`badfiles`: Check audio file integrity.
 
 
+.. _Emby: http://emby.media
 .. _Plex: http://plex.tv
 
 Miscellaneous
@@ -217,6 +220,8 @@ Here are a few of the plugins written by the beets community:
 
 * `whatlastgenre`_ fetches genres from various music sites.
 
+* `beets-usertag`_ lets you use keywords to tag and organize your music.
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -233,3 +238,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://github.com/ttsda/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
+.. _beets-usertag: https://github.com/igordertigor/beets-usertag

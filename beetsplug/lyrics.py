@@ -29,7 +29,7 @@ import warnings
 from HTMLParser import HTMLParseError
 
 from beets import plugins
-from beets import config, ui
+from beets import ui
 
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
@@ -557,7 +557,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
             for item in lib.items(ui.decargs(args)):
                 self.fetch_item_lyrics(
                     lib, item, write,

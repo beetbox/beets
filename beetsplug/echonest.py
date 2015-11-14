@@ -24,7 +24,7 @@ import tempfile
 from string import Template
 import subprocess
 
-from beets import util, config, plugins, ui
+from beets import util, plugins, ui
 from beets.dbcore import types
 import pyechonest
 import pyechonest.song
@@ -472,7 +472,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         def fetch_func(lib, opts, args):
             self.config.set_args(opts)
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
             for item in lib.items(ui.decargs(args)):
                 self._log.info(u'{0}', item)
                 if self.config['force'] or self.requires_update(item):

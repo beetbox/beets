@@ -8,6 +8,29 @@ Changelog
   with the items and the fields of the items you want to edit. Afterwards you can
   review your changes save them back into the items.
 
+New:
+
+* Three commands, ``modify``, ``update``, and ``mbsync``, would previously
+  move files by default after changing their metadata. Now, these commands
+  will only move files if you have the :ref:`config-import-copy` or
+  :ref:`config-import-move` options enabled in your importer configuration.
+  This way, if you configure the importer not to touch your filenames, other
+  commands will respect that decision by default too. Each command also
+  sprouted a ``--move`` command-line option to override this default (in
+  addition to the ``--nomove`` flag they already had). :bug:`1697`
+* A new configuration option, ``va_name``, controls the album artist name for
+  various-artists albums. The setting defaults to "Various Artists," the
+  MusicBrainz standard. In order to match MusicBrainz, the
+  :doc:`/plugins/discogs` also adopts the same setting.
+* :doc:`/plugins/embyupdate`: A plugin to trigger a library refresh on a
+  `Emby Server`_ if database changed.
+
+For developers:
+
+* :doc:`/dev/plugins`: Two new hooks, ``albuminfo_received`` and
+  ``trackinfo_received``, let plugins intercept metadata as soon as it is
+  received, before it is applied to music in the database. :bug:`872`
+
 Fixes:
 
 * :doc:`/plugins/plexupdate`: Fix a crash when Plex libraries use non-ASCII
@@ -35,6 +58,12 @@ Fixes:
 * :doc:`/plugins/metasync`: Fix a crash when syncing with recent versions of
   iTunes. :bug:`1700`
 * :doc:`/plugins/duplicates`: Fix a crash when merging items. :bug:`1699`
+* :doc:`/plugins/smartplaylist`: More gracefully handle malformed queries and
+  missing configuration.
+* Fix a crash with some files with unreadable iTunes SoundCheck metadata.
+  :bug:`1666`
+
+.. _Emby Server: http://emby.media
 
 
 1.3.15 (October 17, 2015)

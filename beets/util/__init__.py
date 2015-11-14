@@ -736,27 +736,52 @@ def open_anything():
     return base_cmd
 
 
-def interactive_open(targets, command=None):
-    """Open the files in `targets` by `exec`ing a new command. (The new
-    program takes over, and Python execution ends: this does not fork a
-    subprocess.)
+def editor_command():
+    """Get a command for opening a text file.
 
-    If `command` is provided, use it. Otherwise, use an OS-specific
-    command (from `open_anything`) to open the file.
+    Use the `EDITOR` environment variable by default. If it is not
+    present, fall back to `open_anything()`, the platform-specific tool
+    for opening files in general.
+    """
+    editor = os.environ.get('EDITOR')
+    if editor:
+        return editor
+    return open_anything()
+
+
+def shlex_split(s):
+    """Split a Unicode or bytes string according to shell lexing rules.
+
+    Raise `ValueError` if the string is not a well-formed shell string.
+    This is a workaround for a bug in some versions of Python.
+    """
+    if isinstance(s, bytes):
+        # Shlex works fine.
+        return shlex.split(s)
+
+    elif isinstance(s, unicode):
+        # Work around a Python bug.
+        # http://bugs.python.org/issue6988
+        bs = s.encode('utf8')
+        return [c.decode('utf8') for c in shlex.split(bs)]
+
+    else:
+        raise TypeError('shlex_split called with non-string')
+
+
+def interactive_open(targets, command):
+    """Open the files in `targets` by `exec`ing a new `command`, given
+    as a Unicode string. (The new program takes over, and Python
+    execution ends: this does not fork a subprocess.)
 
     Can raise `OSError`.
     """
-    if command:
-        command = command.encode('utf8')
-        try:
-            command = [c.decode('utf8')
-                       for c in shlex.split(command)]
-        except ValueError:  # Malformed shell tokens.
-            command = [command]
-        command.insert(0, command[0])  # for argv[0]
-    else:
-        base_cmd = open_anything()
-        command = [base_cmd, base_cmd]
+    # Split the command string into its arguments.
+    try:
+        command = shlex_split(command)
+    except ValueError:  # Malformed shell tokens.
+        command = [command]
+    command.insert(0, command[0])  # for argv[0]
 
     command += targets
 
