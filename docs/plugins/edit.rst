@@ -51,13 +51,10 @@ Make a ``edit:`` section in your config.yaml ``(beet config -e)``
 ::
 
     edit:
-       editor: nano -w -p
        albumfields: genre album
        itemfields: track artist
        not_fields: id path
        separator: "<>"
-
-* ``editor:`` pick your own texteditor; add arguments if needed. If no``editor:`` then your system opens the file-extension.
 
 * The ``albumfields:`` and ``itemfields:`` lets you list the fields you want to change.
   ``albumfields:`` gets picked if you put ``-a`` in your search query, else ``itemfields:``. For a list of fields
