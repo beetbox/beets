@@ -221,8 +221,12 @@ class EditPlugin(plugins.BeetsPlugin):
         """Save a list of updated Model objects to the database.
         """
         # Display and confirm the changes.
+        changed = False
         for obj in objs:
-            ui.show_model_changes(obj)
+            changed |= ui.show_model_changes(obj)
+        if not changed:
+            ui.print_('No changes to apply.')
+            return
         if not ui.input_yn('Apply changes? (y/n)'):
             return
 
