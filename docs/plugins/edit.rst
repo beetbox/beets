@@ -53,21 +53,10 @@ Make a ``edit:`` section in your config.yaml ``(beet config -e)``
     edit:
        albumfields: genre album
        itemfields: track artist
-       not_fields: id path
-       separator: "<>"
 
 * The ``albumfields:`` and ``itemfields:`` lets you list the fields you want to change.
   ``albumfields:`` gets picked if you put ``-a`` in your search query, else ``itemfields:``. For a list of fields
   do the ``beet fields`` command.
-
-* The ``not_fields:``. Fields that you put in here will not be changed. You can see them but not change them. It always contains ``id`` and standard also the ``path``.
-  Don't want to mess with them.
-
-* The default ``separator:`` prints like:
-
-::
-
-        -02-The Night Before-The Beatles-Help!
 
 
 but you can pick anything else. With "<>" it will look like:
