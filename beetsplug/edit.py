@@ -26,8 +26,6 @@ import subprocess
 import yaml
 import collections
 from sys import exit
-from beets import config
-from beets import ui
 from tempfile import NamedTemporaryFile
 import os
 
@@ -208,7 +206,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     # some error-correcting mainly for empty-values
                     # not being well-formated
                     ui.print_(ui.colorize('text_warning',
-                           "change this fault: {}".format(e)))
+                              "change this fault: {}".format(e)))
                     ui.print_("correct format for empty = - '' :")
                     if ui.input_yn(
                             ui.colorize('action_default', "fix?(y)"), True):
@@ -264,11 +262,8 @@ class EditPlugin(plugins.BeetsPlugin):
             return
 
         for ob in changedob:
-            if config['import']['write'].get(bool):
-                ob.try_sync()
-            else:
-                ob.store()
-            print("changed: {0}".format(ob))
+            self._log.debug('saving changes to {}', ob)
+            ob.try_sync(ui.should_write())
 
         return
 
