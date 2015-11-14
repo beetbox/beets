@@ -736,28 +736,36 @@ def open_anything():
     return base_cmd
 
 
-def interactive_open(targets, command=None):
-    """Open the files in `targets` by `exec`ing a new command. (The new
-    program takes over, and Python execution ends: this does not fork a
-    subprocess.)
+def editor_command():
+    """Get a command for opening a text file.
 
-    If `command` is provided, use it. Otherwise, use an OS-specific
-    command (from `open_anything`) to open the file.
+    Use the `EDITOR` environment variable by default. If it is not
+    present, fall back to `open_anything()`, the platform-specific tool
+    for opening files in general.
+    """
+    editor = os.environ.get('EDITOR')
+    if editor:
+        return editor
+    return open_anything()
+
+
+def interactive_open(targets, command):
+    """Open the files in `targets` by `exec`ing a new `command`, given
+    as a Unicode string. (The new program takes over, and Python
+    execution ends: this does not fork a subprocess.)
 
     Can raise `OSError`.
     """
-    if command:
-        command = command.encode('utf8')
-        try:
-            command = [c.decode('utf8')
-                       for c in shlex.split(command)]
-        except ValueError:  # Malformed shell tokens.
-            command = [command]
-        command.insert(0, command[0])  # for argv[0]
-    else:
-        base_cmd = open_anything()
-        command = [base_cmd, base_cmd]
+    # Split the command string into its arguments.
+    command = command.encode('utf8')
+    try:
+        command = [c.decode('utf8')
+                   for c in shlex.split(command)]
+    except ValueError:  # Malformed shell tokens.
+        command = [command]
+    command.insert(0, command[0])  # for argv[0]
 
+    # Add the explicit arguments.
     command += targets
 
     return os.execlp(*command)

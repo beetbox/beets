@@ -1473,7 +1473,7 @@ def config_edit():
     An empty config file is created if no existing config file exists.
     """
     path = config.user_config_path()
-    editor = os.environ.get('EDITOR')
+    editor = util.editor_command()
     try:
         if not os.path.isfile(path):
             open(path, 'w+').close()
