@@ -154,25 +154,39 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Present the YAML to the user and let her change it.
         new_data = self.edit_data(data)
-        changed_objs = self.check_diff(data, new_data)
-        if changed_objs is None:
+        if new_data is None:
             # Editing failed.
             return
+
+        changed_objs = self.check_diff(data, new_data)
 
         # Save the new data.
         self.save_items(changed_objs, lib, album)
 
-    def edit_data(self, dict_items):
+    def edit_data(self, data):
+        """Dump a data structure to a file as text, ask the user to edit
+        it, and then read back the updated data.
+
+        If something goes wrong during editing, return None to indicate
+        the process should abort.
+        """
         # Ask the user to edit the data.
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
-        new.write(dump(dict_items))
+        old_str = dump(data)
+        new.write(old_str)
         new.close()
         edit(new.name)
 
-        # Parse the updated data.
+        # Read the data back after editing and check whether anything
+        # changed.
         with open(new.name) as f:
             new_str = f.read()
         os.remove(new.name)
+        if new_str == old_str:
+            ui.print_("No changes; aborting.")
+            return None
+
+        # Parse the updated data.
         try:
             return load(new_str)
         except yaml.YAMLError as e:
