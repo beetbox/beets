@@ -64,18 +64,6 @@ class EditPlugin(plugins.BeetsPlugin):
             'not_fields': 'id path',
         })
 
-        # the albumfields field in your config sets the tags that
-        # you want to see/change for albums.
-        # Defaults to album albumartist.
-        # the ID tag will always be listed as it is used to identify the item
-        self.albumfields = self.config['albumfields'].as_str_seq()
-
-        # the itemfields field in your config sets the tags that
-        # you want to see/change or items.
-        # Defaults to track title artist album.
-        # the ID tag will always be listed as it is used to identify the item
-        self.itemfields = self.config['itemfields'].as_str_seq()
-
         # the not_fields field in your config sets the tags that
         # will not be changed.
         # If you happen to change them, they will be restored to the original
@@ -119,11 +107,26 @@ class EditPlugin(plugins.BeetsPlugin):
         if opts.all:
             fields = None
         else:
-            fields = self.get_fields_from(objs, opts.album, opts.extra)
-            # TODO
-            # fields.extend([f for f in opts.extra if f not in fields])
-
+            fields = self._get_fields(opts.album, opts.extra)
         self.edit(lib, opts.album, objs, fields)
+
+    def _get_fields(self, album, extra):
+        """Get the set of fields to edit.
+        """
+        # Start with the configured base fields.
+        if album:
+            fields = self.config['albumfields'].as_str_seq()
+        else:
+            fields = self.config['itemfields'].as_str_seq()
+
+        # Add the requested extra fields.
+        if extra:
+            fields += extra
+
+        # Ensure we always have the `id` field for identification.
+        fields.append('id')
+
+        return set(fields)
 
     def edit(self, lib, album, objs, fields):
         """The core editor logic.
@@ -131,7 +134,8 @@ class EditPlugin(plugins.BeetsPlugin):
         - `lib`: The `Library` object.
         - `album`: A flag indicating whether we're editing Items or Albums.
         - `objs`: The `Item`s or `Album`s to edit.
-        - `fields`: The set of field names to edit.
+        - `fields`: The set of field names to edit (or None to edit
+          everything).
         """
         # Get the content to edit as raw data structures.
         if fields:
@@ -148,39 +152,6 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Save the new data.
         self.save_items(changed_objs, lib, album)
-
-    def get_fields_from(self, objs, album, extra):
-        # construct a list of fields we need
-        # see if we need album or item fields
-        fields = self.albumfields if album else self.itemfields
-
-        # if opts.extra is given add those
-        if extra:
-            fields.extend([f for f in extra if f not in fields])
-
-        # make sure we got the id for identification
-        if 'id' not in fields:
-            fields.insert(0, 'id')
-
-        for it in fields:
-            if album:
-                # check if it is really an albumfield
-                if it not in library.Album.all_keys():
-                    ui.print_(
-                        "{} not in albumfields.Removed it.".format(
-                            ui.colorize(
-                                'text_warning', it)))
-                    fields.remove(it)
-            else:
-                # if it is not an itemfield remove it
-                if it not in library.Item.all_keys():
-                    ui.print_(
-                        "{} not in itemfields.Removed it.".format(
-                            ui.colorize(
-                                'text_warning', it)))
-                    fields.remove(it)
-
-        return fields
 
     def get_selected_fields(self, myfields, objs):
         return [[{field: obj[field]}for field in myfields]for obj in objs]
