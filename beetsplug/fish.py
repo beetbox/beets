@@ -79,7 +79,7 @@ class FishPlugin(BeetsPlugin):
                               type='choice',
                               choices=library.Item.all_keys() +
                               library.Album.all_keys(),
-                              help='pick field, get field-values for autocomplete')
+                              help='add field, get fieldvalues autocompletion')
         return [cmd]
 
     def run(self, lib, opts, args):
