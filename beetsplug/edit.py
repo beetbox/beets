@@ -24,7 +24,6 @@ from beets import ui
 from beets.ui.commands import _do_query
 import subprocess
 import yaml
-import collections
 from tempfile import NamedTemporaryFile
 import os
 
@@ -155,16 +154,11 @@ class EditPlugin(plugins.BeetsPlugin):
             # Editing failed.
             return
 
-        # Filter out any forbidden fields so we can avoid clobbering
-        # `id` and such by mistake.
-        ignore_fields = self.config['ignore_fields'].as_str_seq()
-        for d in data:
-            for key in list(d):
-                if key in ignore_fields:
-                    del d[key]
+        # Apply the updated metadata to the objects.
+        self.apply_data(objs, new_data)
 
         # Save the new data.
-        self.save_items(data, lib, album)
+        self.save_write(objs)
 
     def edit_data(self, data):
         """Dump a data structure to a file as text, ask the user to edit
@@ -196,39 +190,40 @@ class EditPlugin(plugins.BeetsPlugin):
             ui.print_("Invalid YAML: {}".format(e))
             return None
 
-    def nice_format(self, newset):
-        # format the results so that we have an ID at the top
-        # that we can change to a userfrienly title/artist format
-        # when we present our results
-        wellformed = collections.defaultdict(dict)
-        for item in newset:
-            for field in item:
-                wellformed[item[0].values()[0]].update(field)
-        return wellformed
+    def apply_data(self, objs, new_data):
+        """Take potentially-updated data and apply it to a set of Model
+        objects.
 
-    def save_items(self, oldnewlist, lib, album):
+        The objects are not written back to the database, so the changes
+        are temporary.
+        """
+        obj_by_id = {o.id: o for o in objs}
+        ignore_fields = self.config['ignore_fields'].as_str_seq()
+        for d in new_data:
+            id = d.get('id')
 
-        oldset, newset = zip(*oldnewlist)
-        niceNewSet = self.nice_format(newset)
-        niceOldSet = self.nice_format(oldset)
-        niceCombiSet = zip(niceOldSet.items(), niceNewSet.items())
-        changedObjs = []
-        for o, n in niceCombiSet:
-            if album:
-                ob = lib.get_album(int(n[0]))
-            else:
-                ob = lib.get_item(n[0])
-            # change id to item-string
-            ob.update(n[1])  # update the object
-            changedObjs.append(ob)
+            if not isinstance(id, int):
+                self._log.warn('skipping data with missing ID')
+                continue
+            if id not in obj_by_id:
+                self._log.warn('skipping unmatched ID {}', id)
+                continue
 
-        # see the changes we made
-        for obj in changedObjs:
-            ui.show_model_changes(obj)
+            obj = obj_by_id[d['id']]
 
-        self.save_write(changedObjs)
+            # Filter out any forbidden fields so we can avoid
+            # clobbering `id` and such by mistake.
+            for key in list(d):
+                if key in ignore_fields:
+                    del d[key]
+
+            obj.update(d)
 
     def save_write(self, changedob):
+        # see the changes we made
+        for obj in changedob:
+            ui.show_model_changes(obj)
+
         if not ui.input_yn(
                 ui.colorize('action_default', 'really modify? (y/n)')):
             return
