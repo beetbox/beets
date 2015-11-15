@@ -172,7 +172,8 @@ class EditPlugin(plugins.BeetsPlugin):
         new.write(old_str)
         new.close()
         edit(new.name)
-
+        if not ui.input_yn('Done editing? (y/n)'):
+            return
         # Read the data back after editing and check whether anything
         # changed.
         with open(new.name) as f:
