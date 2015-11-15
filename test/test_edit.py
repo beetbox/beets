@@ -239,6 +239,18 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.assertCounts(write_call_count=0,
                           title_starts_with=u't\u00eftle')
 
+    def test_invalid_yaml_extra_field(self):
+        """Edit the yaml file incorrectly (resulting in a well-formed but
+        invalid yaml document), appending an extra field to the first item."""
+        # append "foo: bar" to item with id == 1
+        self.run_mocked_command({'replacements': {u'id: 1':
+                                                  u'id: 1\nfoo: bar'}},
+                                # no stdin
+                                [])
+
+        self.assertCounts(write_call_count=0,
+                          title_starts_with=u't\u00eftle')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
