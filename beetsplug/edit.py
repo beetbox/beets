@@ -29,7 +29,7 @@ import os
 
 
 def edit(filename):
-    """Open `filename` in a test editor.
+    """Open `filename` in a text editor.
     """
     cmd = util.shlex_split(util.editor_command())
     cmd.append(filename)
