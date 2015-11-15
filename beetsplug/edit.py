@@ -24,6 +24,7 @@ from beets import ui
 from beets.ui.commands import _do_query
 import subprocess
 import yaml
+import collections
 from tempfile import NamedTemporaryFile
 import os
 
@@ -64,6 +65,42 @@ def flatten(obj, fields):
         return d
 
 
+def summarize(data, fields):
+    """groups fields values by id of object
+    """
+    fields.remove('id')
+    newdata = []
+    for fi in fields:
+        col = collections.defaultdict(str)
+        for dt in data:
+            col[dt[fi]] += (str(dt['id']) + " ")
+        newdata.append([fi, [{f: i} for f, i in col.items()]])
+    return newdata
+
+
+def desummarize(old_data, new_data):
+    """input an object organised by field object-ids and
+    return object-by-id and it's changed fields
+    """
+    datacol = [old_data, new_data]
+    newdatacol = []
+    for data in datacol:
+        newdata = collections.defaultdict(dict)
+        for objs in data:
+            for field in objs[1]:
+                f, v = field.items()[0]
+                ids = v.split()
+                for id in ids:
+                    newdata[id].update({objs[0]: f})
+        nl = []
+        for nid, v in newdata.items():
+            a = {'id': int(nid)}
+            a.update(v)
+            nl.append(a)
+        newdatacol.append(nl)
+    return (newdatacol[0], newdatacol[1])
+
+
 class EditPlugin(plugins.BeetsPlugin):
 
     def __init__(self):
@@ -96,6 +133,11 @@ class EditPlugin(plugins.BeetsPlugin):
             action='store_true', dest='all',
             help='edit all fields',
         )
+        edit_command.parser.add_option(
+            '--group',
+            action='store_true', dest='group',
+            help='group results by field',
+        )
         edit_command.parser.add_all_common_options()
         edit_command.func = self._edit_command
         return [edit_command]
@@ -116,7 +158,7 @@ class EditPlugin(plugins.BeetsPlugin):
             fields = None
         else:
             fields = self._get_fields(opts.album, opts.extra)
-        self.edit(opts.album, objs, fields)
+        self.edit(opts.album, objs, fields, opts.group)
 
     def _get_fields(self, album, extra):
         """Get the set of fields to edit.
@@ -136,7 +178,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return set(fields)
 
-    def edit(self, album, objs, fields):
+    def edit(self, album, objs, fields, group):
         """The core editor logic.
 
         - `album`: A flag indicating whether we're editing Items or Albums.
@@ -146,7 +188,8 @@ class EditPlugin(plugins.BeetsPlugin):
         """
         # Get the content to edit as raw data structures.
         data = [flatten(o, fields) for o in objs]
-
+        if group:
+            data = summarize(data, fields)
         # Present the YAML to the user and let her change it.
         new_data = self.edit_data(data)
         if new_data is None:
@@ -154,7 +197,7 @@ class EditPlugin(plugins.BeetsPlugin):
             return
 
         # Apply the updated metadata to the objects.
-        self.apply_data(objs, data, new_data)
+        self.apply_data(objs, data, new_data, group)
 
         # Save the new data.
         self.save_write(objs)
@@ -190,7 +233,7 @@ class EditPlugin(plugins.BeetsPlugin):
             ui.print_("Invalid YAML: {}".format(e))
             return None
 
-    def apply_data(self, objs, old_data, new_data):
+    def apply_data(self, objs, old_data, new_data, group):
         """Take potentially-updated data and apply it to a set of Model
         objects.
 
@@ -200,7 +243,8 @@ class EditPlugin(plugins.BeetsPlugin):
         if len(old_data) != len(new_data):
             self._log.warn('number of objects changed from {} to {}',
                            len(old_data), len(new_data))
-
+        if group:
+            old_data, new_data = desummarize(old_data, new_data)
         obj_by_id = {o.id: o for o in objs}
         ignore_fields = self.config['ignore_fields'].as_str_seq()
         for old_dict, new_dict in zip(old_data, new_data):

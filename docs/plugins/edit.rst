@@ -34,6 +34,11 @@ If you add ``--all`` you get all the fields.
 
 After you edit the values in your text-editor - *and you may only edit the values, no deleting fields or adding fields!* - you save the file and you get a summary of your changes. Check em. Apply the changes into your library.
 
+If you add ``--group`` you will get a list of fields with their values and the objects ids that use them.
+So you can see ex: that the comment "downloaded from x-site" is used by 40 items. You can then delete that
+string and have cleaned up your comments.
+Or you can see that artist: J. S. Bach is used by 40 items and artist: JS Bach by 10. Change as you like,
+
 Configuration
 -------------
 
