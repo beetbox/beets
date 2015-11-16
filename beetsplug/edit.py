@@ -166,28 +166,38 @@ class EditPlugin(plugins.BeetsPlugin):
         If something goes wrong during editing, return None to indicate
         the process should abort.
         """
-        # Ask the user to edit the data.
+        # Set up a temporary file with the initial data for editi
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
         old_str = dump(data)
         new.write(old_str)
         new.close()
-        edit(new.name)
 
-        # Read the data back after editing and check whether anything
-        # changed.
-        with open(new.name) as f:
-            new_str = f.read()
-        os.remove(new.name)
-        if new_str == old_str:
-            ui.print_("No changes; aborting.")
-            return None
-
-        # Parse the updated data.
+        # Loop until we have parseable data.
         try:
-            return load(new_str)
-        except yaml.YAMLError as e:
-            ui.print_("Invalid YAML: {}".format(e))
-            return None
+            while True:
+                # Ask the user to edit the data.
+                edit(new.name)
+
+                # Read the data back after editing and check whether anything
+                # changed.
+                with open(new.name) as f:
+                    new_str = f.read()
+                if new_str == old_str:
+                    ui.print_("No changes; aborting.")
+                    return None
+
+                # Parse the updated data.
+                try:
+                    return load(new_str)
+                except yaml.YAMLError as e:
+                    ui.print_("Invalid YAML: {}".format(e))
+                    if not ui.input_yn("Edit again to fix? (Y/n)", True):
+                        return None
+
+        # Remove the temporary file before returning.
+        finally:
+            os.remove(new.name)
+
 
     def apply_data(self, objs, old_data, new_data):
         """Take potentially-updated data and apply it to a set of Model
