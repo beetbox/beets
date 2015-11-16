@@ -189,6 +189,19 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.album.load()
         self.assertEqual(self.album.album, u'\u00e4lbum')
 
+    def test_single_edit_add_field(self):
+        """Edit the yaml file appending an extra field to the first item, then
+        apply changes."""
+        # append "foo: bar" to item with id == 1
+        self.run_mocked_command({'replacements': {u'id: 1':
+                                                  u'id: 1\nfoo: bar'}},
+                                # Apply changes? y
+                                ['y'])
+
+        self.assertEqual(self.lib.items('id:1')[0].foo, 'bar')
+        self.assertCounts(write_call_count=1,
+                          title_starts_with=u't\u00eftle')
+
     def test_a_album_edit_apply(self):
         """Album query (-a), edit album field, apply changes."""
         self.run_mocked_command({'replacements': {u'\u00e4lbum':
@@ -233,18 +246,6 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         invalid yaml document)."""
         # edit the yaml file to an invalid file
         self.run_mocked_command({'contents': 'wellformed: yes, but invalid'},
-                                # no stdin
-                                [])
-
-        self.assertCounts(write_call_count=0,
-                          title_starts_with=u't\u00eftle')
-
-    def test_invalid_yaml_extra_field(self):
-        """Edit the yaml file incorrectly (resulting in a well-formed but
-        invalid yaml document), appending an extra field to the first item."""
-        # append "foo: bar" to item with id == 1
-        self.run_mocked_command({'replacements': {u'id: 1':
-                                                  u'id: 1\nfoo: bar'}},
                                 # no stdin
                                 [])
 
