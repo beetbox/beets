@@ -137,42 +137,36 @@ class EditPlugin(plugins.BeetsPlugin):
         return set(fields)
 
     def edit(self, album, objs, fields):
-        """The core editor logic.
+        """The core editor function.
 
         - `album`: A flag indicating whether we're editing Items or Albums.
         - `objs`: The `Item`s or `Album`s to edit.
         - `fields`: The set of field names to edit (or None to edit
           everything).
         """
-        # Get the content to edit as raw data structures.
-        data = [flatten(o, fields) for o in objs]
-
         # Present the YAML to the user and let her change it.
-        new_data = self.edit_data(data)
-        if new_data is None:
-            # Editing failed.
-            return
-
-        # Apply the updated metadata to the objects.
-        self.apply_data(objs, data, new_data)
+        success = self.edit_objects(objs, fields)
 
         # Save the new data.
-        self.save_write(objs)
+        if success:
+            self.save_write(objs)
 
-    def edit_data(self, data):
-        """Dump a data structure to a file as text, ask the user to edit
-        it, and then read back the updated data.
+    def edit_objects(self, objs, fields):
+        """Dump a set of Model objects to a file as text, ask the user
+        to edit it, and apply any changes to the objects.
 
-        If something goes wrong during editing, return None to indicate
-        the process should abort.
+        Return a boolean indicating whether the edit succeeded.
         """
-        # Set up a temporary file with the initial data for editi
+        # Get the content to edit as raw data structures.
+        old_data = [flatten(o, fields) for o in objs]
+
+        # Set up a temporary file with the initial data for editing.
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
-        old_str = dump(data)
+        old_str = dump(old_data)
         new.write(old_str)
         new.close()
 
-        # Loop until we have parseable data.
+        # Loop until we have parseable data and the user confirms.
         try:
             while True:
                 # Ask the user to edit the data.
@@ -184,20 +178,42 @@ class EditPlugin(plugins.BeetsPlugin):
                     new_str = f.read()
                 if new_str == old_str:
                     ui.print_("No changes; aborting.")
-                    return None
+                    return False
 
                 # Parse the updated data.
                 try:
-                    return load(new_str)
+                    new_data = load(new_str)
                 except yaml.YAMLError as e:
                     ui.print_("Invalid YAML: {}".format(e))
-                    if not ui.input_yn("Edit again to fix? (Y/n)", True):
-                        return None
+                    if ui.input_yn("Edit again to fix? (Y/n)", True):
+                        continue
+                    else:
+                        return False
+
+                # Show the changes.
+                self.apply_data(objs, old_data, new_data)
+                changed = False
+                for obj in objs:
+                    changed |= ui.show_model_changes(obj)
+                if not changed:
+                    ui.print_('No changes to apply.')
+                    return False
+
+                # Confirm the changes.
+                choice = ui.input_options(('continue Editing', 'apply', 'cancel'))
+                if choice == 'a':  # Apply.
+                    return True
+                elif choice == 'c':  # Cancel.
+                    return False
+                elif choice == 'e':  # Keep editing.
+                    # Reset the temporary changes to the objects.
+                    for objs in objs:
+                        obj.read()
+                    continue
 
         # Remove the temporary file before returning.
         finally:
             os.remove(new.name)
-
 
     def apply_data(self, objs, old_data, new_data):
         """Take potentially-updated data and apply it to a set of Model
@@ -230,16 +246,6 @@ class EditPlugin(plugins.BeetsPlugin):
     def save_write(self, objs):
         """Save a list of updated Model objects to the database.
         """
-        # Display and confirm the changes.
-        changed = False
-        for obj in objs:
-            changed |= ui.show_model_changes(obj)
-        if not changed:
-            ui.print_('No changes to apply.')
-            return
-        if not ui.input_yn('Apply changes? (y/n)'):
-            return
-
         # Save to the database and possibly write tags.
         for ob in objs:
             if ob._dirty:
