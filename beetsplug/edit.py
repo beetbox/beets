@@ -96,7 +96,7 @@ class EditPlugin(plugins.BeetsPlugin):
             action='store_true', dest='all',
             help='edit all fields',
         )
-        edit_command.parser.add_all_common_options()
+        edit_command.parser.add_album_option()
         edit_command.func = self._edit_command
         return [edit_command]
 
