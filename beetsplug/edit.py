@@ -242,5 +242,6 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Save to the database and possibly write tags.
         for ob in objs:
-            self._log.debug('saving changes to {}', ob)
-            ob.try_sync(ui.should_write())
+            if ob._dirty:
+                self._log.debug('saving changes to {}', ob)
+                ob.try_sync(ui.should_write())
