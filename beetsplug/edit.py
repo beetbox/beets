@@ -216,22 +216,29 @@ class EditPlugin(plugins.BeetsPlugin):
         new.close()
         edit(new.name)
         if not ui.input_yn('Done editing? (y/n)'):
-            return
-        # Read the data back after editing and check whether anything
-        # changed.
-        with open(new.name) as f:
-            new_str = f.read()
-        os.remove(new.name)
-        if new_str == old_str:
-            ui.print_("No changes; aborting.")
             return None
-
-        # Parse the updated data.
-        try:
-            return load(new_str)
-        except yaml.YAMLError as e:
-            ui.print_("Invalid YAML: {}".format(e))
-            return None
+        else:
+            while True:
+                try:
+                    # Read the data back after editing
+                    # and check whether anything changed.
+                    with open(new.name) as f:
+                        new_str = f.read()
+                        if new_str == old_str:
+                            ui.print_("No changes; aborting.")
+                            return None
+                        a = load(new_str)
+                        os.remove(new.name)
+                        return a
+                except yaml.YAMLError as e:
+                    # if malformatted yaml reopen to correct mistakes
+                    ui.print_("Invalid YAML: {}".format(e))
+                    if ui.input_yn(
+                            ui.colorize('action_default', "Fix?(y/n)"), True):
+                        edit(new.name)
+                        if ui.input_yn(ui.colorize(
+                           'action_default', "OK.Fixed.(y)"), True):
+                            pass
 
     def apply_data(self, objs, old_data, new_data, group):
         """Take potentially-updated data and apply it to a set of Model
