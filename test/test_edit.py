@@ -126,8 +126,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         # edit titles
         self.run_mocked_command({'replacements': {u't\u00eftle':
                                                   u'modified t\u00eftle'}},
-                                # Apply changes? n
-                                ['n'])
+                                # Cancel.
+                                ['c'])
 
         self.assertCounts(write_call_count=0,
                           title_starts_with=u't\u00eftle')
@@ -138,8 +138,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         # edit titles
         self.run_mocked_command({'replacements': {u't\u00eftle':
                                                   u'modified t\u00eftle'}},
-                                # Apply changes? y
-                                ['y'])
+                                # Apply changes.
+                                ['a'])
 
         self.assertCounts(write_call_count=self.TRACK_COUNT,
                           title_starts_with=u'modified t\u00eftle')
@@ -151,8 +151,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         # edit title
         self.run_mocked_command({'replacements': {u't\u00eftle 9':
                                                   u'modified t\u00eftle 9'}},
-                                # Apply changes? y
-                                ['y'])
+                                # Apply changes.
+                                ['a'])
 
         self.assertCounts(write_call_count=1,)
         # no changes except on last item
@@ -179,8 +179,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         # edit album
         self.run_mocked_command({'replacements': {u'\u00e4lbum':
                                                   u'modified \u00e4lbum'}},
-                                # Apply changes? y
-                                ['y'])
+                                # Apply changes.
+                                ['a'])
 
         self.assertCounts(write_call_count=self.TRACK_COUNT)
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
@@ -195,8 +195,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         # append "foo: bar" to item with id == 1
         self.run_mocked_command({'replacements': {u'id: 1':
                                                   u'id: 1\nfoo: bar'}},
-                                # Apply changes? y
-                                ['y'])
+                                # Apply changes.
+                                ['a'])
 
         self.assertEqual(self.lib.items('id:1')[0].foo, 'bar')
         self.assertCounts(write_call_count=1,
@@ -206,8 +206,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         """Album query (-a), edit album field, apply changes."""
         self.run_mocked_command({'replacements': {u'\u00e4lbum':
                                                   u'modified \u00e4lbum'}},
-                                # Apply changes? y
-                                ['y'],
+                                # Apply changes.
+                                ['a'],
                                 args=['-a'])
 
         self.album.load()
@@ -220,8 +220,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         """Album query (-a), edit albumartist field, apply changes."""
         self.run_mocked_command({'replacements': {u'album artist':
                                                   u'modified album artist'}},
-                                # Apply changes? y
-                                ['y'],
+                                # Apply changes.
+                                ['a'],
                                 args=['-a'])
 
         self.album.load()
@@ -235,8 +235,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         document)."""
         # edit the yaml file to an invalid file
         self.run_mocked_command({'contents': '!MALFORMED'},
-                                # no stdin
-                                [])
+                                # Edit again to fix? No.
+                                ['n'])
 
         self.assertCounts(write_call_count=0,
                           title_starts_with=u't\u00eftle')
