@@ -96,17 +96,33 @@ def construct_query_part(model_cls, prefixes, query_part):
     key, pattern, query_class = \
         parse_query_part(query_part, query_classes, prefixes)
 
+    # Handle negation: set negation flag, and recover the original query_class.
+    negate = query_class is query.NotQuery
+    if negate:
+        query_class = query_classes.get(key, query.SubstringQuery)
+
     # No key specified.
     if key is None:
         if issubclass(query_class, query.FieldQuery):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
-            return query.AnyFieldQuery(pattern, model_cls._search_fields,
-                                       query_class)
+            q = query.AnyFieldQuery(pattern, model_cls._search_fields,
+                                    query_class)
+            if negate:
+                return query.NotQuery([q])
+            else:
+                return q
         else:
             # Other query type.
-            return query_class(pattern)
+            if negate:
+                return query.NotQuery([query_class(pattern)])
+            else:
+                return query_class(pattern)
+    else:
+        if negate:
+            return query.NotQuery([query_class(key.lower(), pattern,
+                                               key in model_cls._fields)])
 
     key = key.lower()
     return query_class(key.lower(), pattern, key in model_cls._fields)
