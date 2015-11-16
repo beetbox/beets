@@ -200,7 +200,9 @@ class EditPlugin(plugins.BeetsPlugin):
                     return False
 
                 # Confirm the changes.
-                choice = ui.input_options(('continue Editing', 'apply', 'cancel'))
+                choice = ui.input_options(
+                    ('continue Editing', 'apply', 'cancel')
+                )
                 if choice == 'a':  # Apply.
                     return True
                 elif choice == 'c':  # Cancel.
