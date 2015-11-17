@@ -89,6 +89,13 @@ class EdgeTest(unittest.TestCase):
             beets.mediafile._image_mime_type(jpg_data),
             'image/jpeg')
 
+    def test_soundcheck_non_ascii(self):
+        # Make sure we don't crash when the iTunes SoundCheck field contains
+        # non-ASCII binary data.
+        f = beets.mediafile.MediaFile(os.path.join(_common.RSRC,
+                                                   'soundcheck-nonascii.m4a'))
+        self.assertEqual(f.rg_track_gain, 0.0)
+
 
 class InvalidValueToleranceTest(unittest.TestCase):
 
@@ -269,19 +276,19 @@ class SoundCheckTest(unittest.TestCase):
         self.assertEqual(peak, 1.0)
 
     def test_decode_zero(self):
-        data = u' 80000000 80000000 00000000 00000000 00000000 00000000 ' \
-               u'00000000 00000000 00000000 00000000'
+        data = b' 80000000 80000000 00000000 00000000 00000000 00000000 ' \
+               b'00000000 00000000 00000000 00000000'
         gain, peak = beets.mediafile._sc_decode(data)
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 
     def test_malformatted(self):
-        gain, peak = beets.mediafile._sc_decode(u'foo')
+        gain, peak = beets.mediafile._sc_decode(b'foo')
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 
     def test_special_characters(self):
-        gain, peak = beets.mediafile._sc_decode(u'caf\xe9')
+        gain, peak = beets.mediafile._sc_decode(u'caf\xe9'.encode('utf8'))
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 

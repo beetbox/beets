@@ -66,9 +66,9 @@ file. The available options are:
   Default: ``no``.
 
 Note: ``compare_threshold`` option requires `ImageMagick`_, and ``maxwidth``
-requires either `ImageMagick`_ or `PIL`_.
+requires either `ImageMagick`_ or `Pillow`_.
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 .. _PHASH: http://www.fmwconcepts.com/misc_tests/perceptual_hash_test_results_510/
 

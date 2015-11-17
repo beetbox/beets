@@ -215,9 +215,9 @@ def _sc_decode(soundcheck):
     # SoundCheck tags consist of 10 numbers, each represented by 8
     # characters of ASCII hex preceded by a space.
     try:
-        soundcheck = soundcheck.replace(' ', '').decode('hex')
+        soundcheck = soundcheck.replace(b' ', b'').decode('hex')
         soundcheck = struct.unpack(b'!iiiiiiiiii', soundcheck)
-    except (struct.error, TypeError, UnicodeEncodeError):
+    except (struct.error, TypeError):
         # SoundCheck isn't in the format we expect, so return default
         # values.
         return 0.0, 0.0

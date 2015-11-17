@@ -54,9 +54,9 @@ file. The available options are:
   the cost of some speed.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
-or `PIL`_.
+or `Pillow`_.
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 
 Here's an example that makes plugin select only images that contain *front* or
@@ -87,8 +87,8 @@ be processed; otherwise, the command processes every album in your library.
 Image Resizing
 --------------
 
-Beets can resize images using `PIL`_, `ImageMagick`_, or a server-side resizing
-proxy. If either PIL or ImageMagick is installed, beets will use those;
+Beets can resize images using `Pillow`_, `ImageMagick`_, or a server-side resizing
+proxy. If either Pillow or ImageMagick is installed, beets will use those;
 otherwise, it falls back to the resizing proxy. If the resizing proxy is used,
 no resizing is performed for album art found on the filesystem---only downloaded
 art is resized. Server-side resizing can also be slower than local resizing, so
@@ -97,9 +97,9 @@ consider installing one of the two backends for better performance.
 When using ImageMagic, beets looks for the ``convert`` executable in your path.
 On some versions of Windows, the program can be shadowed by a system-provided
 ``convert.exe``. On these systems, you may need to modify your ``%PATH%``
-environment variable so that ImageMagick comes first or use PIL instead.
+environment variable so that ImageMagick comes first or use Pillow instead.
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 
 Album Art Sources
