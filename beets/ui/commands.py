@@ -450,35 +450,48 @@ def show_change(cur_artist, cur_album, match):
             lhs_title, rhs_title = ui.colordiff(cur_title, new_title)
 
         # Track number change.
-        templ = u'(#{0})'
-        cur_track = templ.format(format_index(item))
-        new_track = templ.format(format_index(track_info))
+        cur_track = format_index(item)
+        new_track = format_index(track_info)
         if cur_track != new_track:
             if item.track in (track_info.index, track_info.medium_index):
-                color = 'text_highlight_minor'
+                cur_track_templ = u'(#{})'
+                new_track_templ = u'(#{})'
+                cur_track_color = 'text_highlight_minor'
+                new_track_color = 'text_highlight_minor'
             else:
-                color = 'text_highlight'
-            templ = ui.colorize(color, u'{0}')
+                cur_track_templ = u'(#{})'
+                new_track_templ = u'(#{})'
+                cur_track_color = 'text_highlight'
+                new_track_color = 'text_highlight'
         else:
-            templ = u'{0}'
-        lhs_track = templ.format(cur_track)
-        rhs_track = templ.format(new_track)
+            cur_track_templ = u''
+            new_track_templ = u''
+            cur_track_color = 'text_faint'
+            new_track_color = 'text_faint'
+        cur_track = cur_track_templ.format(cur_track)
+        new_track = new_track_templ.format(new_track)
+        lhs_track = ui.colorize(cur_track_color, cur_track)
+        rhs_track = ui.colorize(new_track_color, new_track)
 
         # Length change.
         if item.length and track_info.length and \
                 abs(item.length - track_info.length) > \
                 config['ui']['length_diff_thresh'].as_number():
-            cur_length0 = ui.human_seconds_short(item.length)
-            new_length0 = ui.human_seconds_short(track_info.length)
-            cur_length = u'({})'.format(cur_length0)
-            new_length = u'({})'.format(new_length0)
-            lhs_length = ui.colorize('text_highlight', cur_length)
-            rhs_length = ui.colorize('text_highlight', new_length)
+            cur_length_templ = u'({})'
+            new_length_templ = u'({})'
+            cur_length_color = 'text_highlight'
+            new_length_color = 'text_highlight'
         else:
-            cur_length = u''
-            new_length = u''
-            lhs_length = u''
-            rhs_length = u''
+            cur_length_templ = u'({})'
+            new_length_templ = u'({})'
+            cur_length_color = 'text_highlight_minor'
+            new_length_color = 'text_highlight_minor'
+        cur_length0 = ui.human_seconds_short(item.length)
+        new_length0 = ui.human_seconds_short(track_info.length)
+        cur_length = cur_length_templ.format(cur_length0)
+        new_length = new_length_templ.format(new_length0)
+        lhs_length = ui.colorize(cur_length_color, cur_length)
+        rhs_length = ui.colorize(new_length_color, new_length)
 
         # Penalties.
         penalties = penalty_string(match.distance.tracks[track_info])
