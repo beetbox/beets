@@ -209,7 +209,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     return False
                 elif choice == 'e':  # Keep editing.
                     # Reset the temporary changes to the objects.
-                    for objs in objs:
+                    for obj in objs:
                         obj.read()
                     continue
 
