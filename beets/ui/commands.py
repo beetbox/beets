@@ -245,28 +245,26 @@ def show_change(cur_artist, cur_album, match):
         """docstring for format_track_as_columns"""
         # Calculate available space for word wrapping.
         # Left-hand side.
-        lhs_track_len = len(lhs['raw']['track'])
+        lhs_track_len  = len(lhs['raw']['track'])
         lhs_length_len = len(lhs['raw']['length'])
-        lhs_spaces_first   = 2
-        lhs_used_first     = lhs_track_len + lhs_spaces_first + lhs_length_len
+        if lhs_track_len > 0:  lhs_track_len += 1  # Space.
+        if lhs_length_len > 0: lhs_length_len += 1 # Space.
+        lhs_used_first  = lhs_track_len + lhs_length_len
+        lhs_used_middle = lhs_track_len
+        lhs_used_last   = lhs_track_len
         col_width_l_first  = col_width_l - lhs_used_first
-        lhs_spaces_middle  = 1
-        lhs_used_middle    = lhs_track_len + lhs_spaces_middle
         col_width_l_middle = col_width_l - lhs_used_middle
-        lhs_spaces_last    = 1
-        lhs_used_last      = lhs_track_len + lhs_spaces_last
         col_width_l_last   = col_width_l - lhs_used_last
         # Right-hand side.
-        rhs_track_len = len(rhs['raw']['track'])
+        rhs_track_len  = len(rhs['raw']['track'])
         rhs_length_len = len(rhs['raw']['length'])
-        rhs_spaces_first   = 2
-        rhs_used_first     = rhs_track_len + rhs_spaces_first + rhs_length_len
+        if rhs_track_len > 0:  rhs_track_len += 1  # Space.
+        if rhs_length_len > 0: rhs_length_len += 1 # Space.
+        rhs_used_first  = rhs_track_len + rhs_length_len
+        rhs_used_middle = rhs_track_len
+        rhs_used_last   = rhs_track_len
         col_width_r_first  = col_width_r - rhs_used_first
-        rhs_spaces_middle  = 1
-        rhs_used_middle    = rhs_track_len + rhs_spaces_middle
         col_width_r_middle = col_width_r - rhs_used_middle
-        rhs_spaces_last    = 1
-        rhs_used_last      = rhs_track_len + rhs_spaces_last
         col_width_r_last   = col_width_r - rhs_used_last
 
         # Calculate word wrapping.
