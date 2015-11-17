@@ -28,7 +28,6 @@ from beets import library, ui
 from beets.ui import commands
 from operator import attrgetter
 import os
-
 BL_NEED2 = """complete -c beet -n '__fish_beet_needs_command' {} {}\n"""
 BL_USE3 = """complete -c beet -n '__fish_beet_using_command {}' {} {}\n"""
 BL_SUBS = """complete -c beet -n '__fish_at_level {} ""' {}  {}\n"""
@@ -74,12 +73,14 @@ class FishPlugin(BeetsPlugin):
         cmd.parser.add_option('-f', '--noFields', action='store_true',
                               default=False,
                               help='no item/album fields for autocomplete')
-        cmd.parser.add_option('-e', '--extravalues',
-                              action='append',
-                              type='choice',
-                              choices=library.Item.all_keys() +
-                              library.Album.all_keys(),
-                              help='add field, get fieldvalues autocompletion')
+        cmd.parser.add_option(
+            '-e',
+            '--extravalues',
+            action='append',
+            type='choice',
+            choices=library.Item.all_keys() +
+            library.Album.all_keys(),
+            help='pick field, get field-values for autocomplete')
         return [cmd]
 
     def run(self, lib, opts, args):
@@ -104,12 +105,16 @@ class FishPlugin(BeetsPlugin):
             key=attrgetter('name'))
         fields = sorted(set(
             library.Album.all_keys() + library.Item.all_keys()))
-        cmds_helps = [cmd.help for cmd in beetcmds]
-        cmds_names = [cmd.name for cmd in beetcmds]
-        cmds_zipped = zip(cmds_names, cmds_helps)
+        # collect cmds and their aliases and their help message
+        cmd_names_help = []
+        for cmd in beetcmds:
+            names = ["\?" if alias == "?" else alias for alias in cmd.aliases]
+            names.append(cmd.name)
+            for name in names:
+                cmd_names_help.append((name, cmd.help))
         # here we go assembling the string
         totstring = HEAD + "\n"
-        totstring += get_cmds_list(cmds_names)
+        totstring += get_cmds_list([name[0] for name in cmd_names_help])
         totstring += '' if nobasicfields else get_standard_fields(fields)
         totstring += get_extravalues(lib, extravalues) if extravalues else ''
         totstring += "\n" + "# ====== {} =====".format(
@@ -117,7 +122,8 @@ class FishPlugin(BeetsPlugin):
         totstring += get_basic_beet_options()
         totstring += "\n" + "# ====== {} =====".format(
             "setup field completion for subcommands") + "\n"
-        totstring += get_subcommands(cmds_zipped, nobasicfields, extravalues)
+        totstring += get_subcommands(
+            cmd_names_help, nobasicfields, extravalues)
         # setup completion for all the command-options
         totstring += get_all_commands(beetcmds)
 
@@ -221,47 +227,40 @@ def get_all_commands(beetcmds):
     # formatting for fish to complete command-options
     word = ""
     for cmd in beetcmds:
-        name = cmd.name
-        word += ("\n" * 2) + "# ====== {} =====".format(
-            "completions for  " + cmd.name) + "\n"
-        if cmd.aliases:  # if we have aliases, get them
-            word += "# === {} =".format(
-                "aliases for " + cmd.name) + "\n"
-            for alias in cmd.aliases:
-                alias = alias if alias != "?" else "\?"  # escape the ? alias
-                word += "abbr -a {} {}".format(
-                    alias, name) + "\n"
+        names = ["\?" if alias == "?" else alias for alias in cmd.aliases]
+        names.append(cmd.name)
+        for name in names:
+            word += "\n"
+            word += ("\n" * 2) + "# ====== {} =====".format(
+                "completions for  " + name) + "\n"
 
-        word += "\n"
+            for option in cmd.parser._get_all_options()[1:]:
+                cmd_LO = (" -l " + option._long_opts[0].replace('--', '')
+                          )if option._long_opts else ''
+                cmd_SO = (" -s " + option._short_opts[0].replace('-', '')
+                          ) if option._short_opts else ''
+                cmd_needARG = ' -r ' if option.nargs in [1] else ''
+                cmd_helpstr = (" -d " + wrap(' '.join(option.help.split()))
+                               ) if option.help else ''
+                cmd_arglist = (' -a ' + wrap(" ".join(option.choices))
+                               ) if option.choices else ''
 
-        for option in cmd.parser._get_all_options()[1:]:
-            cmd_LO = (" -l " + option._long_opts[0].replace('--', '')
-                      )if option._long_opts else ''
-            cmd_SO = (" -s " + option._short_opts[0].replace('-', '')
-                      ) if option._short_opts else ''
-            cmd_needARG = ' -r ' if option.nargs in [1] else ''
-            cmd_helpstr = (" -d " + wrap(' '.join(option.help.split()))
-                           ) if option.help else ''
-            cmd_arglist = (' -a ' + wrap(" ".join(option.choices))
-                           ) if option.choices else ''
+                word += " ".join(BL_USE3.format(
+                    name,
+                    (cmd_needARG + cmd_SO + cmd_LO + " -f " + cmd_arglist),
+                    cmd_helpstr).split()) + "\n"
 
-            word += " ".join(BL_USE3.format(
+            word = (word + " ".join(BL_USE3.format(
                 name,
-                (cmd_needARG + cmd_SO + cmd_LO + " -f " + cmd_arglist),
-                cmd_helpstr).split()) + "\n"
-
-        word = (word + " ".join(BL_USE3.format(
-            name,
-            ("-s " + "h " + "-l " + "help" + " -f "),
-            ('-d ' + wrap("print help") + "\n")
-        ).split()))
+                ("-s " + "h " + "-l " + "help" + " -f "),
+                ('-d ' + wrap("print help") + "\n")
+            ).split()))
     return word
 
 
 def clean_whitespace(word):
     # remove to much whitespace,tabs in string
-    # but don't when there is just 1 word
-    return " ".join(word.split()) if " " in word else word
+    return " ".join(word.split())
 
 
 def wrap(word):
