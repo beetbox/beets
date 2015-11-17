@@ -461,6 +461,7 @@ RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
 COLOR_NAMES = ['text_success', 'text_warning', 'text_error', 'text_highlight',
                'text_highlight_minor', 'action_default', 'action',
                # New Colors
+               'text', 'text_faint',
                'import_path', 'import_path_items',
                'action_description',
                'added', 'removed', 'changed',
