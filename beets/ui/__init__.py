@@ -651,11 +651,10 @@ def split_into_lines(string, raw_string, first_width, middle_width, last_width):
     length not longer than first_width, the last substring has a length not
     longer than last_width, and all other substrings have a length not longer
     than middle_width.
-    if raw_string is defined, raw_string and string contain the same words, but
+    If raw_string is defined, raw_string and string contain the same words, but
     string contains ANSI codes at word borders. Use raw_string to find
     substrings, but return the words of string.
     """
-    #print_('str: {}\nraw: {}\nfw: {}\nmw: {}\nlw: {}'.format(string, raw_string, first_width, middle_width, last_width))
     words_raw = raw_string.split()
     words     = string.split()
     assert len(words_raw) == len(words)
