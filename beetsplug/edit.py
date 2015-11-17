@@ -83,7 +83,7 @@ class EditPlugin(plugins.BeetsPlugin):
             help='interactively edit metadata'
         )
         edit_command.parser.add_option(
-            '-e', '--extra',
+            '-f', '--field',
             metavar='FIELD',
             action='append',
             help='edit this field also',
@@ -112,7 +112,7 @@ class EditPlugin(plugins.BeetsPlugin):
         if opts.all:
             fields = None
         else:
-            fields = self._get_fields(opts.album, opts.extra)
+            fields = self._get_fields(opts.album, opts.field)
         self.edit(opts.album, objs, fields)
 
     def _get_fields(self, album, extra):

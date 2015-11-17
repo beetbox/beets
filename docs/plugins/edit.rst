@@ -19,7 +19,7 @@ Command-Line Options
 The ``edit`` command has these command-line options:
 
 - ``-a`` or ``--album``: Edit albums instead of individual items.
-- ``-e FIELD`` or ``--extra FIELD``: Specify an additional field to edit
+- ``-f FIELD`` or ``--field FIELD``: Specify an additional field to edit
   (in addition to the defaults set in the configuration).
 - ``--all``: Edit *all* available fields.
 
