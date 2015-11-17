@@ -16,11 +16,9 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 import codecs
 
-from mock import Mock, patch
+from mock import patch
 from test._common import unittest
 from test.helper import TestHelper, control_stdin
-
-from beets import library
 
 
 class ModifyFileMocker(object):
@@ -84,9 +82,11 @@ class EditCommandTest(unittest.TestCase, TestHelper):
                            item in self.album.items()]
 
         # keep track of write()s
-        library.Item.write = Mock()
+        self.write_patcher = patch('beets.library.Item.write')
+        self.mock_write = self.write_patcher.start()
 
     def tearDown(self):
+        self.write_patcher.stop()
         self.teardown_beets()
         self.unload_plugins()
 
@@ -103,7 +103,7 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         """Several common assertions on Album, Track and call counts."""
         self.assertEqual(len(self.lib.albums()), album_count)
         self.assertEqual(len(self.lib.items()), track_count)
-        self.assertEqual(library.Item.write.call_count, write_call_count)
+        self.assertEqual(self.mock_write.call_count, write_call_count)
         self.assertTrue(all(i.title.startswith(title_starts_with)
                             for i in self.lib.items()))
 
