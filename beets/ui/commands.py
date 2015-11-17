@@ -277,7 +277,6 @@ def show_change(cur_artist, cur_album, match):
 
         # Construct string for all lines of both columns.
         max_line_count = max(len(lhs_lines['col']), len(rhs_lines['col']))
-        align_track    = len(lhs['raw']['track']) + 1
         align_length_l = len(lhs['raw']['length'])
         align_length_r = len(rhs['raw']['length'])
         out = u''
@@ -285,13 +284,17 @@ def show_change(cur_artist, cur_album, match):
             # Indentation
             out += indent
             
-            # Prefix and track number, or alignment.
+            # Prefix.
             if i == 0:
                 out += prefix
-                out += lhs['track'] + ' '
             else:
                 out += ui.indent(len('* '))
-                out += ' ' * align_track
+            
+            # Track number or alignment
+            if i == 0 and lhs_track_len > 0:
+                out += lhs['track'] + ' '
+            else:
+                out += ' ' * lhs_track_len
             
             # Line i of lhs track title.
             if i in range(len(lhs_lines['col'])):
@@ -302,7 +305,7 @@ def show_change(cur_artist, cur_album, match):
                 align_title = len(lhs_lines['raw'][i])
             else:
                 align_title = 0
-            align_used = align_track + align_title
+            align_used = lhs_track_len + align_title
             if i == 0:
                 align_used += align_length_l
             padding = col_width_l - align_used
@@ -319,10 +322,10 @@ def show_change(cur_artist, cur_album, match):
                 out += u'    ' # u' .. '
             
             # Track number or alignment.
-            if i == 0:
-                out += lhs['track'] + ' '
+            if i == 0 and rhs_track_len > 0:
+                out += rhs['track'] + ' '
             else:
-                out += ' ' * align_track
+                out += ' ' * rhs_track_len
             
             # Line i of rhs track title.
             if i in range(len(rhs_lines['col'])):
@@ -333,7 +336,7 @@ def show_change(cur_artist, cur_album, match):
                 align_title = len(rhs_lines['raw'][i])
             else:
                 align_title = 0
-            align_used = align_track + align_title
+            align_used = rhs_track_len + align_title
             if i == 0:
                 align_used += align_length_r
             padding = col_width_r - align_used
