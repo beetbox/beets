@@ -19,7 +19,6 @@ from __future__ import (division, absolute_import, print_function,
 
 from beets import plugins
 from beets import util
-from beets import library
 from beets import ui
 from beets.ui.commands import _do_query
 import subprocess
@@ -85,11 +84,9 @@ class EditPlugin(plugins.BeetsPlugin):
         )
         edit_command.parser.add_option(
             '-e', '--extra',
+            metavar='FIELD',
             action='append',
-            type='choice',
-            choices=library.Item.all_keys() +
-            library.Album.all_keys(),
-            help='add additional fields to edit',
+            help='edit this field also',
         )
         edit_command.parser.add_option(
             '--all',
