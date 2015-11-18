@@ -24,6 +24,10 @@ import beets
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
     r'(?:'
+    ur'(-|\u00ac)'  # Negation prefixes
+    r')?'
+
+    r'(?:'
     r'(\S+?)'    # The field key.
     r'(?<!\\):'  # Unescaped :
     r')?'
@@ -64,18 +68,19 @@ def parse_query_part(part, query_classes={}, prefixes={},
     part = part.strip()
     match = PARSE_QUERY_PART_REGEX.match(part)
 
-    assert match  # Regex should always match.
-    key = match.group(1)
-    term = match.group(2).replace('\:', ':')
+    assert match  # Regex should always match
+    negate = bool(match.group(1))
+    key = match.group(2)
+    term = match.group(3).replace('\:', ':')
 
     # Match the search term against the list of prefixes.
     for pre, query_class in prefixes.items():
         if term.startswith(pre):
-            return key, term[len(pre):], query_class
+            return key, term[len(pre):], query_class, negate
 
     # No matching prefix: use type-based or fallback/default query.
     query_class = query_classes.get(key, default_class)
-    return key, term, query_class
+    return key, term, query_class, negate
 
 
 def construct_query_part(model_cls, prefixes, query_part):
@@ -93,13 +98,8 @@ def construct_query_part(model_cls, prefixes, query_part):
         query_classes[k] = t.query
 
     # Parse the string.
-    key, pattern, query_class = \
+    key, pattern, query_class, negate = \
         parse_query_part(query_part, query_classes, prefixes)
-
-    # Handle negation: set negation flag, and recover the original query_class.
-    negate = query_class is query.NotQuery
-    if negate:
-        query_class = query_classes.get(key, query.SubstringQuery)
 
     # No key specified.
     if key is None:
