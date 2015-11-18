@@ -726,56 +726,56 @@ class NotQueryMatchTest(_common.TestCase):
     def test_regex_match_positive(self):
         q = dbcore.query.RegexpQuery('album', '^the album$')
         self.assertTrue(q.match(self.item))
-        self.assertFalse(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertFalse(dbcore.query.NotQuery(q).match(self.item))
 
     def test_regex_match_negative(self):
         q = dbcore.query.RegexpQuery('album', '^album$')
         self.assertFalse(q.match(self.item))
-        self.assertTrue(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertTrue(dbcore.query.NotQuery(q).match(self.item))
 
     def test_regex_match_non_string_value(self):
         q = dbcore.query.RegexpQuery('disc', '^6$')
         self.assertTrue(q.match(self.item))
-        self.assertFalse(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertFalse(dbcore.query.NotQuery(q).match(self.item))
 
     def test_substring_match_positive(self):
         q = dbcore.query.SubstringQuery('album', 'album')
         self.assertTrue(q.match(self.item))
-        self.assertFalse(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertFalse(dbcore.query.NotQuery(q).match(self.item))
 
     def test_substring_match_negative(self):
         q = dbcore.query.SubstringQuery('album', 'ablum')
         self.assertFalse(q.match(self.item))
-        self.assertTrue(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertTrue(dbcore.query.NotQuery(q).match(self.item))
 
     def test_substring_match_non_string_value(self):
         q = dbcore.query.SubstringQuery('disc', '6')
         self.assertTrue(q.match(self.item))
-        self.assertFalse(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertFalse(dbcore.query.NotQuery(q).match(self.item))
 
     def test_year_match_positive(self):
         q = dbcore.query.NumericQuery('year', '1')
         self.assertTrue(q.match(self.item))
-        self.assertFalse(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertFalse(dbcore.query.NotQuery(q).match(self.item))
 
     def test_year_match_negative(self):
         q = dbcore.query.NumericQuery('year', '10')
         self.assertFalse(q.match(self.item))
-        self.assertTrue(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertTrue(dbcore.query.NotQuery(q).match(self.item))
 
     def test_bitrate_range_positive(self):
         q = dbcore.query.NumericQuery('bitrate', '100000..200000')
         self.assertTrue(q.match(self.item))
-        self.assertFalse(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertFalse(dbcore.query.NotQuery(q).match(self.item))
 
     def test_bitrate_range_negative(self):
         q = dbcore.query.NumericQuery('bitrate', '200000..300000')
         self.assertFalse(q.match(self.item))
-        self.assertTrue(dbcore.query.NotQuery((q,)).match(self.item))
+        self.assertTrue(dbcore.query.NotQuery(q).match(self.item))
 
     def test_open_range(self):
         q = dbcore.query.NumericQuery('bitrate', '100000..')
-        dbcore.query.NotQuery((q,))
+        dbcore.query.NotQuery(q)
 
 
 class NotQueryTest(DummyDataTestCase):
@@ -790,7 +790,7 @@ class NotQueryTest(DummyDataTestCase):
         - q AND not(q) == 0
         - not(not(q)) == q
         """
-        not_q = dbcore.query.NotQuery([q])
+        not_q = dbcore.query.NotQuery(q)
         # assert using OrQuery, AndQuery
         q_or = dbcore.query.OrQuery([q, not_q])
         q_and = dbcore.query.AndQuery([q, not_q])
@@ -805,7 +805,7 @@ class NotQueryTest(DummyDataTestCase):
         self.assertEqual(q_results.intersection(not_q_results), set())
 
         # round trip
-        not_not_q = dbcore.query.NotQuery([not_q])
+        not_not_q = dbcore.query.NotQuery(not_q)
         self.assertEqual([i.title for i in self.lib.items(q)],
                          [i.title for i in self.lib.items(not_not_q)])
 
@@ -813,50 +813,50 @@ class NotQueryTest(DummyDataTestCase):
         # not(a and b) <-> not(a) or not(b)
         q = dbcore.query.AndQuery([dbcore.query.BooleanQuery('comp', True),
                                    dbcore.query.NumericQuery('year', '2002')])
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['foo bar', 'beets 4 eva'])
         self.assertNegationProperties(q)
 
     def test_type_anyfield(self):
         q = dbcore.query.AnyFieldQuery('foo', ['title', 'artist', 'album'],
                                        dbcore.query.SubstringQuery)
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['baz qux'])
         self.assertNegationProperties(q)
 
     def test_type_boolean(self):
         q = dbcore.query.BooleanQuery('comp', True)
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['beets 4 eva'])
         self.assertNegationProperties(q)
 
     def test_type_date(self):
         q = dbcore.query.DateQuery('mtime', '0.0')
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, [])
         self.assertNegationProperties(q)
 
     def test_type_false(self):
         q = dbcore.query.FalseQuery()
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched_all(not_results)
         self.assertNegationProperties(q)
 
     def test_type_match(self):
         q = dbcore.query.MatchQuery('year', '2003')
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['foo bar', 'baz qux'])
         self.assertNegationProperties(q)
 
     def test_type_none(self):
         q = dbcore.query.NoneQuery('rg_track_gain')
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, [])
         self.assertNegationProperties(q)
 
     def test_type_numeric(self):
         q = dbcore.query.NumericQuery('year', '2001..2002')
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['beets 4 eva'])
         self.assertNegationProperties(q)
 
@@ -864,25 +864,25 @@ class NotQueryTest(DummyDataTestCase):
         # not(a or b) <-> not(a) and not(b)
         q = dbcore.query.OrQuery([dbcore.query.BooleanQuery('comp', True),
                                   dbcore.query.NumericQuery('year', '2002')])
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['beets 4 eva'])
         self.assertNegationProperties(q)
 
     def test_type_regexp(self):
         q = dbcore.query.RegexpQuery('artist', '^t')
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['foo bar'])
         self.assertNegationProperties(q)
 
     def test_type_substring(self):
         q = dbcore.query.SubstringQuery('album', 'ba')
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, ['beets 4 eva'])
         self.assertNegationProperties(q)
 
     def test_type_true(self):
         q = dbcore.query.TrueQuery()
-        not_results = self.lib.items(dbcore.query.NotQuery([q]))
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
         self.assert_items_matched(not_results, [])
         self.assertNegationProperties(q)
 
@@ -903,8 +903,8 @@ class NotQueryTest(DummyDataTestCase):
                    (dbcore.query.SubstringQuery, ['title', 'x'])]
 
         for klass, args in classes:
-            q_fast = dbcore.query.NotQuery([klass(*(args + [True]))])
-            q_slow = dbcore.query.NotQuery([klass(*(args + [False]))])
+            q_fast = dbcore.query.NotQuery(klass(*(args + [True])))
+            q_slow = dbcore.query.NotQuery(klass(*(args + [False])))
 
             try:
                 self.assertEqual([i.title for i in self.lib.items(q_fast)],
