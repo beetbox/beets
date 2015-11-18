@@ -447,14 +447,14 @@ class OrQuery(MutableCollectionQuery):
         return any([q.match(item) for q in self.subqueries])
 
 
-class NotQuery(MutableCollectionQuery):
+class NotQuery(Query):
     """A query that matches the negation of its `subquery`, as a shorcut for
-    performing `not(subquery)` without using regular expressions.
+    performing `not(subquery)` without using regular expressions."""
+    def __init__(self, subquery):
+        self.subquery = subquery
 
-    TODO: revise class hierarchy, probably limiting to one subquery
-    """
     def clause(self):
-        clause, subvals = self.clause_with_joiner('TODO')
+        clause, subvals = self.subquery.clause()
         if clause:
             return 'not ({0})'.format(clause), subvals
         else:
@@ -462,7 +462,17 @@ class NotQuery(MutableCollectionQuery):
             return clause, subvals
 
     def match(self, item):
-        return not all([q.match(item) for q in self.subqueries])
+        return not self.subquery.match(item)
+
+    def __repr__(self):
+        return "{0.__class__.__name__}({0.subquery})".format(self)
+
+    def __eq__(self, other):
+        return super(NotQuery, self).__eq__(other) and \
+            self.subquery == other.subquery
+
+    def __hash__(self):
+        return hash(('not', hash(self.subquery)))
 
 
 class TrueQuery(Query):

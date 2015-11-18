@@ -110,22 +110,21 @@ def construct_query_part(model_cls, prefixes, query_part):
             q = query.AnyFieldQuery(pattern, model_cls._search_fields,
                                     query_class)
             if negate:
-                return query.NotQuery([q])
+                return query.NotQuery(q)
             else:
                 return q
         else:
             # Other query type.
             if negate:
-                return query.NotQuery([query_class(pattern)])
+                return query.NotQuery(query_class(pattern))
             else:
                 return query_class(pattern)
-    else:
-        if negate:
-            return query.NotQuery([query_class(key.lower(), pattern,
-                                               key in model_cls._fields)])
 
     key = key.lower()
-    return query_class(key.lower(), pattern, key in model_cls._fields)
+    q = query_class(key.lower(), pattern, key in model_cls._fields)
+    if negate:
+        return query.NotQuery(q)
+    return q
 
 
 def query_from_strings(query_cls, model_cls, prefixes, query_parts):
