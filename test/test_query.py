@@ -807,8 +807,8 @@ class NotQueryTest(DummyDataTestCase):
 
         # round trip
         not_not_q = dbcore.query.NotQuery(not_q)
-        self.assertEqual([i.title for i in self.lib.items(q)],
-                         [i.title for i in self.lib.items(not_not_q)])
+        self.assertEqual(set([i.title for i in self.lib.items(q)]),
+                         set([i.title for i in self.lib.items(not_not_q)]))
 
     def test_type_and(self):
         # not(a and b) <-> not(a) or not(b)
