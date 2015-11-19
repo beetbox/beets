@@ -60,9 +60,8 @@ class Query(object):
     """
     def clause(self):
         """Generate an SQLite expression implementing the query.
-        Return a clause string, a sequence of substitution values for
-        the clause, and a Query object representing the "remainder"
-        Returns (clause, subvals) where clause is a valid sqlite
+
+        Return (clause, subvals) where clause is a valid sqlite
         WHERE clause implementing the query and subvals is a list of
         items to be substituted for ?s in the clause.
         """
@@ -353,7 +352,7 @@ class CollectionQuery(Query):
         return item in self.subqueries
 
     def clause_with_joiner(self, joiner):
-        """Returns a clause created by joining together the clauses of
+        """Return a clause created by joining together the clauses of
         all subqueries with the string joiner (padded by spaces).
         """
         clause_parts = []
