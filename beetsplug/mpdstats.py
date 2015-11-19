@@ -1,4 +1,4 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Peter Schnebel and Johann Klähn.
 #
