@@ -890,7 +890,7 @@ class NotQueryTest(DummyDataTestCase):
     def test_get_prefixes_keyed(self):
         """Test both negation prefixes on a keyed query."""
         q0 = '-title:qux'
-        q1 = '\u00actitle:qux'
+        q1 = '^title:qux'
         results0 = self.lib.items(q0)
         results1 = self.lib.items(q1)
         self.assert_items_matched(results0, ['foo bar', 'beets 4 eva'])
@@ -899,13 +899,13 @@ class NotQueryTest(DummyDataTestCase):
     def test_get_prefixes_unkeyed(self):
         """Test both negation prefixes on an unkeyed query."""
         q0 = '-qux'
-        q1 = '\u00acqux'
+        q1 = '^qux'
         results0 = self.lib.items(q0)
         results1 = self.lib.items(q1)
         self.assert_items_matched(results0, ['foo bar', 'beets 4 eva'])
         self.assert_items_matched(results1, ['foo bar', 'beets 4 eva'])
 
-    def test_get_keyed_regexp(self):
+    def test_get_one_keyed_regexp(self):
         q = r'-artist::t.+r'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['foo bar', 'baz qux'])
