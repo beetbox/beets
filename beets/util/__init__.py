@@ -16,8 +16,6 @@
 
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
-import ctypes
-
 import os
 import sys
 import re
@@ -794,9 +792,12 @@ def _windows_long_path_name(short_path):
     """
     if not isinstance(short_path, unicode):
         short_path = unicode(short_path)
+
+    import ctypes
     buf = ctypes.create_unicode_buffer(260)
     get_long_path_name_w = ctypes.windll.kernel32.GetLongPathNameW
     return_value = get_long_path_name_w(short_path, buf, 260)
+
     if return_value == 0 or return_value > 260:
         # An error occurred
         return short_path
