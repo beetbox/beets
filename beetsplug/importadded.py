@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Populate an item's `added` and `mtime` fields by using the file
 modification time (mtime) of the item's source file before import.
 
