@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Updates an Plex library whenever the beets library is changed.
 
 Plex Home users enter the Plex Token to enable updating.
