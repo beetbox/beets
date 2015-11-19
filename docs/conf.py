@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 AUTHOR = u'Adrian Sampson'
 
 # General configuration

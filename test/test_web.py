@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Tests for the 'web' plugin"""
 
 from __future__ import (division, absolute_import, print_function,
