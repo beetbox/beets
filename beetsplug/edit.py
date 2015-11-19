@@ -27,6 +27,12 @@ from tempfile import NamedTemporaryFile
 import os
 
 
+class ParseError(Exception):
+    """The modified file is unreadable. The user should be offered a chance to
+    fix the error.
+    """
+
+
 def edit(filename):
     """Open `filename` in a text editor.
     """
@@ -36,7 +42,7 @@ def edit(filename):
 
 
 def dump(arg):
-    """Dump an object as YAML for editing.
+    """Dump a sequence of dictionaries as YAML for editing.
     """
     return yaml.safe_dump_all(
         arg,
@@ -46,9 +52,23 @@ def dump(arg):
 
 
 def load(s):
-    """Read a YAML string back to an object.
+    """Read a sequence of YAML documents back to a list of dictionaries.
+
+    Can raise a `ParseError`.
     """
-    return list(yaml.load_all(s))
+    try:
+        out = []
+        for d in yaml.load_all(s):
+            if not isinstance(d, dict):
+                raise ParseError(
+                    'each entry must be a dictionary; found {}'.format(
+                        type(d).__name__
+                    )
+                )
+            out.append(d)
+    except yaml.YAMLError as e:
+        raise ParseError('invalid YAML: {}'.format(e))
+    return out
 
 
 def flatten(obj, fields):
@@ -193,8 +213,8 @@ class EditPlugin(plugins.BeetsPlugin):
                 # Parse the updated data.
                 try:
                     new_data = load(new_str)
-                except yaml.YAMLError as e:
-                    ui.print_("Invalid YAML: {}".format(e))
+                except ParseError as e:
+                    ui.print_("Could not read data: {}".format(e))
                     if ui.input_yn("Edit again to fix? (Y/n)", True):
                         continue
                     else:
