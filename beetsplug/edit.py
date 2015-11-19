@@ -52,7 +52,8 @@ def dump(arg):
 
 
 def load(s):
-    """Read a sequence of YAML documents back to a list of dictionaries.
+    """Read a sequence of YAML documents back to a list of dictionaries
+    with string keys and values.
 
     Can raise a `ParseError`.
     """
@@ -65,7 +66,12 @@ def load(s):
                         type(d).__name__
                     )
                 )
-            out.append(d)
+
+            # Convert all keys and values to strings. They started out
+            # as strings, but the user may have inadvertently messed
+            # this up.
+            out.append({unicode(k): unicode(v) for k, v in d.items()})
+
     except yaml.YAMLError as e:
         raise ParseError('invalid YAML: {}'.format(e))
     return out
