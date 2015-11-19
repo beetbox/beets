@@ -193,8 +193,8 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         """Edit the yaml file appending an extra field to the first item, then
         apply changes."""
         # append "foo: bar" to item with id == 1
-        self.run_mocked_command({'replacements': {u'id: 1':
-                                                  u'id: 1\nfoo: bar'}},
+        self.run_mocked_command({'replacements': {u"id: '1'":
+                                                  u"id: '1'\nfoo: bar"}},
                                 # Apply changes.
                                 ['a'])
 
