@@ -466,6 +466,11 @@ class Model(object):
 
         return cls._type(key).parse(string)
 
+    def set_parse(self, key, string):
+        """Set the object's key to a value represented by a string.
+        """
+        self[key] = self._parse(key, string)
+
 
 # Database controller and supporting interfaces.
 

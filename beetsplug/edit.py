@@ -55,12 +55,25 @@ def flatten(obj, fields):
     """Represent `obj`, a `dbcore.Model` object, as a dictionary for
     serialization. Only include the given `fields` if provided;
     otherwise, include everything.
+
+    The resulting dictionary's keys are all human-readable strings.
     """
-    d = dict(obj)
+    d = dict(obj.formatted())
     if fields:
         return {k: v for k, v in d.items() if k in fields}
     else:
         return d
+
+
+def apply(obj, data):
+    """Set the fields of a `dbcore.Model` object according to a
+    dictionary.
+
+    This is the opposite of `flatten`. The `data` dictionary should have
+    strings as values.
+    """
+    for key, value in data.items():
+        obj.set_parse(key, value)
 
 
 class EditPlugin(plugins.BeetsPlugin):
@@ -233,14 +246,14 @@ class EditPlugin(plugins.BeetsPlugin):
             forbidden = False
             for key in ignore_fields:
                 if old_dict.get(key) != new_dict.get(key):
-                    self._log.warn('ignoring object where {} changed', key)
+                    self._log.warn('ignoring object whose {} changed', key)
                     forbidden = True
                     break
             if forbidden:
                 continue
 
-            obj = obj_by_id[old_dict['id']]
-            obj.update(new_dict)
+            id = int(old_dict['id'])
+            apply(obj_by_id[id], new_dict)
 
     def save_write(self, objs):
         """Save a list of updated Model objects to the database.
