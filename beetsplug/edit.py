@@ -92,8 +92,9 @@ def flatten(obj, fields):
     """
     # Format each value.
     d = {}
-    for key, value in obj.items():
+    for key in obj.keys():
         typ = obj._type(key)
+        value = obj[key]
         if isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type):
             # A safe value that is faithfully representable in YAML.
             d[key] = value
