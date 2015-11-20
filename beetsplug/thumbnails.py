@@ -224,6 +224,17 @@ class PathlibURI(URIGetter):
         return PurePosixPath(path).as_uri()
 
 
+def copy_c_string(c_string):
+    """Copy a `ctypes.POINTER(ctypes.c_char)` value into a new Python
+    string and return it. The old memory is then safe to free.
+    """
+    # This is a pretty dumb way to get a string copy, but it seems to
+    # work. A more surefire way would be to allocate a ctypes buffer and copy
+    # the data with `memcpy` or somesuch.
+    s = ctypes.cast(c_string, ctypes.c_char_p).value
+    return '' + s
+
+
 class GioURI(URIGetter):
     """Use gio URI function g_file_get_uri. Paths must be utf-8 encoded.
     """
@@ -239,7 +250,7 @@ class GioURI(URIGetter):
             self.libgio.g_file_new_for_path.restype = ctypes.c_void_p
 
             self.libgio.g_file_get_uri.argtypes = [ctypes.c_void_p]
-            self.libgio.g_file_get_uri.restype = ctypes.c_char_p
+            self.libgio.g_file_get_uri.restype = ctypes.POINTER(ctypes.c_char)
 
             self.libgio.g_object_unref.argtypes = [ctypes.c_void_p]
 
@@ -270,7 +281,7 @@ class GioURI(URIGetter):
                                "{0}".format(util.displayable_path(path)))
 
         try:
-            uri = ctypes.c_char_p(uri_ptr).value
+            uri = copy_c_string(uri_ptr)
         except:
             raise
         finally:
