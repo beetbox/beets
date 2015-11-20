@@ -20,11 +20,17 @@ from __future__ import (division, absolute_import, print_function,
 from beets import plugins
 from beets import util
 from beets import ui
+from beets.dbcore import types
 from beets.ui.commands import _do_query
 import subprocess
 import yaml
 from tempfile import NamedTemporaryFile
 import os
+
+
+# These "safe" types can avoid the format/parse cycle that most fields go
+# through: they are safe to edit with native YAML types.
+SAFE_TYPES = (types.Float, types.Integer, types.Boolean)
 
 
 class ParseError(Exception):
@@ -53,7 +59,7 @@ def dump(arg):
 
 def load(s):
     """Read a sequence of YAML documents back to a list of dictionaries
-    with string keys and values.
+    with string keys.
 
     Can raise a `ParseError`.
     """
@@ -67,10 +73,9 @@ def load(s):
                     )
                 )
 
-            # Convert all keys and values to strings. They started out
-            # as strings, but the user may have inadvertently messed
-            # this up.
-            out.append({unicode(k): unicode(v) for k, v in d.items()})
+            # Convert all keys to strings. They started out as strings,
+            # but the user may have inadvertently messed this up.
+            out.append({unicode(k): v for k, v in d.items()})
 
     except yaml.YAMLError as e:
         raise ParseError('invalid YAML: {}'.format(e))
@@ -82,9 +87,21 @@ def flatten(obj, fields):
     serialization. Only include the given `fields` if provided;
     otherwise, include everything.
 
-    The resulting dictionary's keys are all human-readable strings.
+    The resulting dictionary's keys are strings and the values are
+    safely YAML-serializable types.
     """
-    d = dict(obj.formatted())
+    # Format each value.
+    d = {}
+    for key, value in obj.items():
+        typ = obj._type(key)
+        if isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type):
+            # A safe value that is faithfully representable in YAML.
+            d[key] = value
+        else:
+            # A value that should be edited as a string.
+            d[key] = obj.formatted()[key]
+
+    # Possibly filter field names.
     if fields:
         return {k: v for k, v in d.items() if k in fields}
     else:
@@ -99,7 +116,15 @@ def apply(obj, data):
     strings as values.
     """
     for key, value in data.items():
-        obj.set_parse(key, value)
+        typ = obj._type(key)
+        if isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type):
+            # A safe value *stayed* represented as a safe type. Assign it
+            # directly.
+            obj[key] = value
+        else:
+            # Either the field was stringified originally or the user changed
+            # it from a safe type to an unsafe one. Parse it as a string.
+            obj.set_parse(key, unicode(value))
 
 
 class EditPlugin(plugins.BeetsPlugin):
