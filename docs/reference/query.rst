@@ -186,7 +186,7 @@ Find all items with a file modification time between 2008-12-01 and
 Query Term Negation
 -------------------
 
-Query terms can also be negated, acting like a Boolean "not", by prepending
+Query terms can also be negated, acting like a Boolean "not," by prefixing
 them with ``-`` or ``^``. This has the effect of returning all the items that
 do **not** match the query term. For example, this command::
 
@@ -195,19 +195,17 @@ do **not** match the query term. For example, this command::
 matches all the songs in the library that do not have "love" in any of their
 fields.
 
-Negation can be combined with the rest of the query mechanisms, allowing to
+Negation can be combined with the rest of the query mechanisms, so you can
 negate specific fields, regular expressions, etc. For example, this command::
 
-    $ beet list -a artist:dylan ^year:1980..1990 "^album::the(y)?"
+    $ beet list -a artist:dylan ^year:1980..1989 "^album::the(y)?"
 
 matches all the albums with an artist containing "dylan", but excluding those
-released on the eighties and those that have "the" or "they" on the title.
+released in the eighties and those that have "the" or "they" on the title.
 
-Note that the ``-`` character is treated by most shells as a reserved character
-for passing arguments, and as such needs to be escaped if using it for query
-negation. In most UNIX derivatives shells, using a double dash ``--``
-(indicating that everything after that point should not be treated as
-arguments) before the query terms should prevent conflicts, such as::
+The syntax supports both ``^`` and ``-`` as synonyms because the latter
+indicates flags on the command line. To use a minus sign in a command-line
+query, use a double dash ``--`` to separate the options from the query::
 
     $ beet list -a -- artist:dylan -year:1980..1990 "-album::the(y)?"
 
