@@ -782,8 +782,6 @@ class NotQueryTest(DummyDataTestCase):
     """Test `query.NotQuery` against the dummy data:
     - `test_type_xxx`: tests for the negation of a particular XxxQuery class.
     - `test_get_yyy`: tests on query strings (similar to `GetTest`)
-
-    TODO: add test_type_bytes, for ByteQuery?
     """
     def assertNegationProperties(self, q):
         """Given a Query `q`, assert that:
