@@ -352,7 +352,7 @@ class QueryParseTest(unittest.TestCase):
             part,
             {'year': dbcore.query.NumericQuery},
             {':': dbcore.query.RegexpQuery},
-        )
+        )[:-1]  # remove the negate flag
 
     def test_one_basic_term(self):
         q = 'test'
