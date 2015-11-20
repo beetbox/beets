@@ -449,7 +449,8 @@ class OrQuery(MutableCollectionQuery):
 
 class NotQuery(Query):
     """A query that matches the negation of its `subquery`, as a shorcut for
-    performing `not(subquery)` without using regular expressions."""
+    performing `not(subquery)` without using regular expressions.
+    """
     def __init__(self, subquery):
         self.subquery = subquery
 
@@ -458,7 +459,8 @@ class NotQuery(Query):
         if clause:
             return 'not ({0})'.format(clause), subvals
         else:
-            # special case for RegexpQuery, (None, ())
+            # If there is no clause, there is nothing to negate. All the logic
+            # is handled by match() for slow queries.
             return clause, subvals
 
     def match(self, item):

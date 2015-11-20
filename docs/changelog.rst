@@ -20,6 +20,10 @@ New:
   :doc:`/plugins/discogs` also adopts the same setting.
 * :doc:`/plugins/embyupdate`: A plugin to trigger a library refresh on a
   `Emby Server`_ if database changed.
+* Queries can now use "not" logic: if you prepend a query term with "-" or
+  "^", items or albums matching that term will be excluded from the results.
+  For example, ``beet ls foo ^artist:bar`` will get all the items matching
+  `foo` but whose artist do not match `bar`. See :ref:`not_query`. :bug:`819`
 
 For developers:
 
