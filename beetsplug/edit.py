@@ -82,6 +82,17 @@ def load(s):
     return out
 
 
+def _safe_value(obj, key, value):
+    """Check whether the `value` is safe to represent in YAML and trust as
+    returned from parsed YAML.
+
+    This ensures that values do not change their type when the user edits their
+    YAML representation.
+    """
+    typ = obj._type(key)
+    return isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type)
+
+
 def flatten(obj, fields):
     """Represent `obj`, a `dbcore.Model` object, as a dictionary for
     serialization. Only include the given `fields` if provided;
@@ -93,9 +104,8 @@ def flatten(obj, fields):
     # Format each value.
     d = {}
     for key in obj.keys():
-        typ = obj._type(key)
         value = obj[key]
-        if isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type):
+        if _safe_value(obj, key, value):
             # A safe value that is faithfully representable in YAML.
             d[key] = value
         else:
@@ -117,8 +127,7 @@ def apply(obj, data):
     strings as values.
     """
     for key, value in data.items():
-        typ = obj._type(key)
-        if isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type):
+        if _safe_value(obj, key, value):
             # A safe value *stayed* represented as a safe type. Assign it
             # directly.
             obj[key] = value
