@@ -62,6 +62,8 @@ Fixes:
   missing configuration.
 * Fix a crash with some files with unreadable iTunes SoundCheck metadata.
   :bug:`1666`
+* :doc:`/plugins/thumbnails`: Fix a nasty segmentation fault crash that arose
+  with some library versions. :bug:`1433`
 
 .. _Emby Server: http://emby.media
 
