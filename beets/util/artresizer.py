@@ -113,18 +113,21 @@ def pil_getsize(path_in):
     try:
         im = Image.open(util.syspath(path_in))
         return im.size
-    except IOError:
-        log.error(u"PIL cannot compute size of '{0}'",
-                  util.displayable_path(path_in))
+    except IOError as exc:
+        log.error(u"PIL could not read file {}: {}",
+                  util.displayable_path(path_in), exc)
 
 
 def im_getsize(path_in):
+    cmd = [b'identify', b'-format', b'%w %h', util.syspath(path_in)]
     try:
-        out = util.command_output([b'identify', b'-format', b'%w %h',
-                                   util.syspath(path_in)])
-    except subprocess.CalledProcessError:
-        log.warn(u'IM cannot compute size of {0}',
-                 util.displayable_path(path_in))
+        out = util.command_output(cmd)
+    except subprocess.CalledProcessError as exc:
+        log.warn(
+            'ImageMagick invocation failed when '
+            'getting size with command {}: {}: cannot compute size of {0}',
+            cmd, exc
+        )
         return
     try:
         return tuple(map(int, out.split(b' ')))
