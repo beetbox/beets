@@ -530,8 +530,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         size = ArtResizer.shared.get_size(candidate)
 
         if not size:
-            self._log.warning(u'could not verify size of image: please see '
-                              u'documentation for dependencies. '
+            self._log.warning(u'Could not get size of image (please see '
+                              u'documentation for dependencies). '
                               u'The configuration options `minwidth` and '
                               u'`enforce_ratio` may be violated.')
             return CANDIDATE_EXACT
