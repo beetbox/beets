@@ -64,6 +64,8 @@ Fixes:
   :bug:`1666`
 * :doc:`/plugins/thumbnails`: Fix a nasty segmentation fault crash that arose
   with some library versions. :bug:`1433`
+* :doc:`/plugins/convert`: Fix a crash with Unicode paths in ``--pretend``
+  mode. :bug:`1735`
 
 .. _Emby Server: http://emby.media
 
