@@ -180,6 +180,11 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         with open(converted, 'r') as f:
             self.assertEqual(f.read(), 'XXX')
 
+    def test_pretend(self):
+        self.run_command('convert', '--pretend', self.item.path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertFalse(os.path.exists(converted))
+
 
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     """Test the effect of the `never_convert_lossy_files` option.

@@ -189,7 +189,7 @@ class ConvertPlugin(BeetsPlugin):
             })
 
         if pretend:
-            self._log.info(' '.join(args))
+            self._log.info(' '.join(ui.decargs(args)))
             return
 
         try:
