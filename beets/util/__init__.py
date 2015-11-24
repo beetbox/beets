@@ -700,6 +700,7 @@ def command_output(cmd, shell=False):
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
             cmd=b' '.join(cmd),
+            output=stdout + stderr,
         )
     return stdout
 

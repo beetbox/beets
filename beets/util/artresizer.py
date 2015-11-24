@@ -123,10 +123,11 @@ def im_getsize(path_in):
     try:
         out = util.command_output(cmd)
     except subprocess.CalledProcessError as exc:
-        log.warn(
-            'ImageMagick invocation failed when '
-            'getting size with command {}: {}',
-            cmd, exc
+        log.warn('ImageMagick size query failed')
+        log.debug(
+            '`convert` exited with (status {}) when '
+            'getting size with command {}:\n{}',
+            exc.returncode, cmd, exc.output.strip()
         )
         return
     try:
