@@ -52,6 +52,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn('disctitle: DDD', out)
         self.assertIn('genres: a; b; c', out)
         self.assertNotIn('composer:', out)
+        self.remove_mediafile_fixtures()
 
     def test_item_query(self):
         item1, item2 = self.add_item_fixtures(count=2)
@@ -93,6 +94,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn(u'album: AAA', out)
         self.assertIn(u'tracktotal: 5', out)
         self.assertIn(u'title: [various]', out)
+        self.remove_mediafile_fixtures()
 
     def test_include_pattern(self):
         item, = self.add_item_fixtures()

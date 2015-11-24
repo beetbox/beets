@@ -215,14 +215,14 @@ def make_key_filter(include):
         key = key.replace(r'\*', '.*')
         matchers.append(re.compile(key + '$'))
 
-    def filter(data):
+    def filter_(data):
         filtered = dict()
         for key, value in data.items():
             if any(map(lambda m: m.match(key), matchers)):
                 filtered[key] = value
         return filtered
 
-    return filter
+    return filter_
 
 
 def identity(val):
