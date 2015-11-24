@@ -108,7 +108,7 @@ class UtilTest(unittest.TestCase):
     def test_command_output(self, mock_popen):
         def popen_fail(*args, **kwargs):
             m = Mock(returncode=1)
-            m.communicate.return_value = None, None
+            m.communicate.return_value = 'foo', 'bar'
             return m
 
         mock_popen.side_effect = popen_fail
