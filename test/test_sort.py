@@ -469,6 +469,69 @@ class CaseSensitivityTest(DummyDataTestCase, _common.TestCase):
         self.assertEqual(results[-1].track, 10)
 
 
+class NonExistingFieldTest(DummyDataTestCase):
+    """Test sorting by non-existing fields"""
+
+    def test_non_existing_fields_not_fail(self):
+        qs = ['foo+', 'foo-', '--', '-+', '+-', '++', '-foo-', '-foo+', '---']
+
+        q0 = 'foo+'
+        results0 = list(self.lib.items(q0))
+        for q1 in qs:
+            results1 = list(self.lib.items(q1))
+            for r1, r2 in zip(results0, results1):
+                self.assertEqual(r1.id, r2.id)
+
+    def test_combined_non_existing_field_asc(self):
+        all_results = list(self.lib.items('id+'))
+        q = 'foo+ id+'
+        results = list(self.lib.items(q))
+        self.assertEqual(len(all_results), len(results))
+        for r1, r2 in zip(all_results, results):
+            self.assertEqual(r1.id, r2.id)
+
+    def test_combined_non_existing_field_desc(self):
+        all_results = list(self.lib.items('id+'))
+        q = 'foo- id+'
+        results = list(self.lib.items(q))
+        self.assertEqual(len(all_results), len(results))
+        for r1, r2 in zip(all_results, results):
+            self.assertEqual(r1.id, r2.id)
+
+    def test_field_present_in_some_items(self):
+        """Test ordering by a field not present on all items."""
+        # append 'foo' to two to items (1,2)
+        items = self.lib.items('id+')
+        ids = [i.id for i in items]
+        items[1].foo = 'bar1'
+        items[2].foo = 'bar2'
+        items[1].store()
+        items[2].store()
+
+        results_asc = list(self.lib.items('foo+ id+'))
+        self.assertEqual([i.id for i in results_asc],
+                         # items without field first
+                         [ids[0], ids[3], ids[1], ids[2]])
+        results_desc = list(self.lib.items('foo- id+'))
+        self.assertEqual([i.id for i in results_desc],
+                         # items without field last
+                         [ids[2], ids[1], ids[0], ids[3]])
+
+    def test_negation_interaction(self):
+        """Test the handling of negation and sorting together.
+
+        If a string ends with a sorting suffix, it takes precedence over the
+        NotQuery parsing.
+        """
+        query, sort = beets.library.parse_query_string('-bar+',
+                                                       beets.library.Item)
+        self.assertEqual(len(query.subqueries), 1)
+        self.assertTrue(isinstance(query.subqueries[0],
+                                   dbcore.query.TrueQuery))
+        self.assertTrue(isinstance(sort, dbcore.query.SlowFieldSort))
+        self.assertEqual(sort.field, '-bar')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
