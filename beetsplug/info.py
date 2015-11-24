@@ -25,6 +25,7 @@ import re
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import mediafile
+from beets.library import Item
 from beets.util import displayable_path, normpath, syspath
 
 
@@ -52,7 +53,11 @@ def tag_data_emitter(path):
             tags[field] = getattr(mf, field)
         tags['art'] = mf.art is not None
         tags['path'] = displayable_path(path)
+        # create a temporary Item to take advantage of __format__
+        tags['item'] = Item(db=None, **tags)
+
         return tags
+
     return emitter
 
 
@@ -65,6 +70,7 @@ def library_data_emitter(item):
     def emitter():
         data = dict(item.formatted())
         data['path'] = displayable_path(item.path)
+        data['item'] = item
         return data
     return emitter
 
@@ -78,14 +84,36 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(data):
+def print_data(data, fmt=None, human_length=True):
+    """Print, with optional formatting, the fields of a single item.
+
+    If no format string `fmt` is passed, the entries on `data` are printed one
+    in each line, with the format 'field: value'. If `fmt` is not `None`, the
+    item is printed according to `fmt`, using the `Item.__format__` machinery.
+
+    If `raw_length` is `True`, the `length` field is displayed using its raw
+    value (float with the number of seconds and miliseconds). If not, a human
+    readable form is displayed instead (mm:ss).
+    """
+    item = data.pop('item', None)
+    if fmt:
+        # use fmt specified by the user, prettifying length if needed
+        if human_length and '$length' in fmt:
+            item['humanlength'] = ui.human_seconds_short(item.length)
+            fmt = fmt.replace('$length', '$humanlength')
+        ui.print_(format(item, fmt))
+        return
+
     path = data.pop('path', None)
     formatted = {}
     for key, value in data.iteritems():
         if isinstance(value, list):
             formatted[key] = u'; '.join(value)
         if value is not None:
-            formatted[key] = value
+            if human_length and key == 'length':
+                formatted[key] = ui.human_seconds_short(float(value))
+            else:
+                formatted[key] = value
 
     if len(formatted) == 0:
         return
@@ -115,6 +143,10 @@ class InfoPlugin(BeetsPlugin):
         cmd.parser.add_option('-i', '--include-keys', default=[],
                               action='append', dest='included_keys',
                               help='comma separated list of keys to show')
+        cmd.parser.add_option('-r', '--raw-length', action='store_true',
+                              default=False,
+                              help='display length as seconds')
+        cmd.parser.add_format_option(target='item')
         return [cmd]
 
     def run(self, lib, opts, args):
@@ -151,18 +183,20 @@ class InfoPlugin(BeetsPlugin):
                 continue
 
             path = data.get('path')
+            item = data.get('item')
             data = key_filter(data)
             data['path'] = path  # always show path
+            data['item'] = item  # always include item, to avoid filtering
             if opts.summarize:
                 update_summary(summary, data)
             else:
                 if not first:
                     ui.print_()
-                print_data(data)
+                print_data(data, opts.format, not opts.raw_length)
                 first = False
 
         if opts.summarize:
-            print_data(summary)
+            print_data(summary, human_length=not opts.raw_length)
 
 
 def make_key_filter(include):
