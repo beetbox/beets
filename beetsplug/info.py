@@ -84,7 +84,7 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(data, fmt=None, human_length=True):
+def print_data(data, fmt=None):
     """Print, with optional formatting, the fields of a single item.
 
     If no format string `fmt` is passed, the entries on `data` are printed one
