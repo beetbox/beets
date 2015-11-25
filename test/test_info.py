@@ -107,43 +107,11 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertNotIn(u'title:', out)
         self.assertIn(u'album: xxxx', out)
 
-    def test_length_human_library(self):
-        item, = self.add_item_fixtures()
-        item.album = 'loool'
-        item.length = 123.4
-        item.write()
-        item.store()
-
-        out = self.run_with_output('--library')
-        self.assertIn(u'length: 2:03', out)
-
-    def test_length_raw_library(self):
-        item, = self.add_item_fixtures()
-        item.album = 'loool'
-        item.length = 123.4
-        item.write()
-        item.store()
-
-        out = self.run_with_output('--library', '--raw-length')
-        self.assertIn(u'length: 123.4', out)
-
-    def test_length_human_path(self):
-        path = self.create_mediafile_fixture()
-        out = self.run_with_output(path)
-        self.assertIn(u'length: 0:01', out)
-        self.remove_mediafile_fixtures()
-
-    def test_length_raw_path(self):
-        path = self.create_mediafile_fixture()
-        out = self.run_with_output(path, '--raw-length')
-        self.assertIn(u'length: 1.071', out)
-        self.remove_mediafile_fixtures()
-
     def test_custom_format(self):
         self.add_item_fixtures()
         out = self.run_with_output('--library', '--format',
                                    '$track. $title - $artist ($length)')
-        self.assertEqual(u'02. tïtle 0 - the artist (0:01)\n', out)
+        self.assertEqual(u'02. tïtle 0 - the artist (1.1)\n', out)
 
 
 def suite():
