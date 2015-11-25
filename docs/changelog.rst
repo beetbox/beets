@@ -24,6 +24,8 @@ New:
   *exclude* matching music from the results. For example, ``beet list -a
   beatles ^album:1`` will find all your albums by the Beatles except for their
   singles compilation, "1." See :ref:`not_query`. :bug:`819` :bug:`1728`
+* :doc:`/plugins/info`: The plugin now accepts the ``-f/--format`` option for
+  customizing how items are displayed. :bug:`1737`
 
 For developers:
 
