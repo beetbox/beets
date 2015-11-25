@@ -767,7 +767,7 @@ class FieldSort(Sort):
         # attributes with different types without falling over.
 
         def key(item):
-            field_val = getattr(item, self.field)
+            field_val = item.get(self.field, '')
             if self.case_insensitive and isinstance(field_val, unicode):
                 field_val = field_val.lower()
             return field_val

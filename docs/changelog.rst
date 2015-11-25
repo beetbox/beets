@@ -66,6 +66,7 @@ Fixes:
   with some library versions. :bug:`1433`
 * :doc:`/plugins/convert`: Fix a crash with Unicode paths in ``--pretend``
   mode. :bug:`1735`
+* Fix a crash when sorting by nonexistent fields on queries. :bug:`1734`
 
 .. _Emby Server: http://emby.media
 
