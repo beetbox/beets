@@ -52,12 +52,10 @@ def tag_data_emitter(path):
         for field in fields:
             tags[field] = getattr(mf, field)
         tags['art'] = mf.art is not None
-        tags['path'] = displayable_path(path)
         # create a temporary Item to take advantage of __format__
-        tags['item'] = Item(db=None, **tags)
+        item = Item.from_path(syspath(path))
 
-        return tags
-
+        return tags, item
     return emitter
 
 
@@ -69,9 +67,9 @@ def library_data(lib, args):
 def library_data_emitter(item):
     def emitter():
         data = dict(item.formatted())
-        data['path'] = displayable_path(item.path)
-        data['item'] = item
-        return data
+        data.pop('path', None)  # path is fetched from item
+
+        return data, item
     return emitter
 
 
@@ -84,20 +82,20 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(data, fmt=None):
-    """Print, with optional formatting, the fields of a single item.
+def print_data(data, item=None, fmt=None):
+    """Print, with optional formatting, the fields of a single element.
 
     If no format string `fmt` is passed, the entries on `data` are printed one
     in each line, with the format 'field: value'. If `fmt` is not `None`, the
-    item is printed according to `fmt`, using the `Item.__format__` machinery.
+    `item` is printed according to `fmt`, using the `Item.__format__`
+    machinery.
     """
-    item = data.pop('item', None)
     if fmt:
         # use fmt specified by the user
         ui.print_(format(item, fmt))
         return
 
-    path = data.pop('path', None)
+    path = displayable_path(item.path) if item else None
     formatted = {}
     for key, value in data.iteritems():
         if isinstance(value, list):
@@ -164,22 +162,18 @@ class InfoPlugin(BeetsPlugin):
         summary = {}
         for data_emitter in data_collector(lib, ui.decargs(args)):
             try:
-                data = data_emitter()
+                data, item = data_emitter()
             except (mediafile.UnreadableFileError, IOError) as ex:
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
 
-            path = data.get('path')
-            item = data.get('item')
             data = key_filter(data)
-            data['path'] = path  # always show path
-            data['item'] = item  # always include item, to avoid filtering
             if opts.summarize:
                 update_summary(summary, data)
             else:
                 if not first:
                     ui.print_()
-                print_data(data, opts.format)
+                print_data(data, item, opts.format)
                 first = False
 
         if opts.summarize:
