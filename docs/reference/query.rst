@@ -261,5 +261,9 @@ sort order: ``Bar foo Qux``. This behavior can be changed with the
 result in lower-case values being placed after upper-case values, e.g.,
 ``Bar Qux foo``.
 
+Note that when sorting by fields that are not present on all items (such as
+flexible fields, or those defined by plugins) in *ascending* order,  the items
+that lack that particular field will be listed at the *beginning* of the list.
+
 You can set the default sorting behavior with the :ref:`sort_item` and
 :ref:`sort_album` configuration options.
