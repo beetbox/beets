@@ -69,6 +69,8 @@ Fixes:
 * :doc:`/plugins/convert`: Fix a crash with Unicode paths in ``--pretend``
   mode. :bug:`1735`
 * Fix a crash when sorting by nonexistent fields on queries. :bug:`1734`
+* Probably fix some mysterious errors when dealing with images using
+  ImageMagick on Windows. :bug:`1721`
 
 .. _Emby Server: http://emby.media
 
