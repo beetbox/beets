@@ -92,8 +92,9 @@ def im_resize(maxwidth, path_in, path_out=None):
     # compatibility.
     try:
         util.command_output([
-            b'convert', util.syspath(path_in),
-            b'-resize', b'{0}x^>'.format(maxwidth), path_out
+            b'convert', util.syspath(path_in, prefix=False),
+            b'-resize', b'{0}x^>'.format(maxwidth),
+            util.syspath(path_out, prefix=False),
         ])
     except subprocess.CalledProcessError:
         log.warn(u'artresizer: IM convert failed for {0}',
@@ -119,7 +120,8 @@ def pil_getsize(path_in):
 
 
 def im_getsize(path_in):
-    cmd = [b'identify', b'-format', b'%w %h', util.syspath(path_in)]
+    cmd = [b'identify', b'-format', b'%w %h',
+           util.syspath(path_in, prefix=False)]
     try:
         out = util.command_output(cmd)
     except subprocess.CalledProcessError as exc:
