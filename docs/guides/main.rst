@@ -71,6 +71,14 @@ new versions.
 
 .. _@b33ts: http://twitter.com/b33ts
 
+Installing on Mac OS X 10.11
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On Mac OS X 1.011 (El Captitan), Apple has enabled System Integrity Protection (SIP),
+and because of SIP, some installation processes may fail, even with ``sudo``, because
+they intrude on protected areas of the system. If this happens, try installing
+beets only for the current user by running ``pip install --user beets``.
+
 Installing on Windows
 ^^^^^^^^^^^^^^^^^^^^^
 
