@@ -380,7 +380,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.patcher_exists = patch('beets.library.os.path.exists')
         self.patcher_exists.start().return_value = True
 
-        #We have to create function samefile as it does not exist on 
+        # We have to create function samefile as it does not exist on
         # Windows and python 2.7
         self.patcher_samefile = patch('beets.library.os.path.samefile',
                                       create=True)
