@@ -380,7 +380,10 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.patcher_exists = patch('beets.library.os.path.exists')
         self.patcher_exists.start().return_value = True
 
-        self.patcher_samefile = patch('beets.library.os.path.samefile')
+        #We have to create function samefile as it does not exist on 
+        # Windows and python 2.7
+        self.patcher_samefile = patch('beets.library.os.path.samefile',
+                                      create=True)
         self.patcher_samefile.start().return_value = True
 
     def tearDown(self):
