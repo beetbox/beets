@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #

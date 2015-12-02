@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2015 Bruno Cauet
 # Split an album-file in tracks thanks a cue file
 

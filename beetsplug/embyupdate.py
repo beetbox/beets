@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Updates the Emby Library whenever the beets library is changed.
 
     emby:

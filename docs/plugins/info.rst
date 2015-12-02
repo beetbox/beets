@@ -36,6 +36,10 @@ Additional command-line options include:
 * ``--summarize`` or ``-s``: Merge all the information from multiple files
   into a single list of values. If the tags differ across the files, print
   ``[various]``.
+* ``--format`` or ``-f``: Specify a specific format with which to print every
+  item. This uses the same template syntax as beets’ :doc:`path formats
+  </reference/pathformat>`.
+
 
 .. _id3v2: http://id3v2.sourceforge.net
 .. _mp3info: http://www.ibiblio.org/mp3info/

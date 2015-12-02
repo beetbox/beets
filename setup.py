@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -23,6 +24,8 @@ import beets
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
+    r'(-|\^)?'   # Negation prefixes.
+
     r'(?:'
     r'(\S+?)'    # The field key.
     r'(?<!\\):'  # Unescaped :
@@ -37,9 +40,9 @@ PARSE_QUERY_PART_REGEX = re.compile(
 def parse_query_part(part, query_classes={}, prefixes={},
                      default_class=query.SubstringQuery):
     """Take a query in the form of a key/value pair separated by a
-    colon and return a tuple of `(key, value, cls)`. `key` may be None,
+    colon and return a tuple of `(key, value, cls, negate)`. `key` may be None,
     indicating that any field may be matched. `cls` is a subclass of
-    `FieldQuery`.
+    `FieldQuery`. `negate` is a boolean indicating if the query is negated.
 
     The optional `query_classes` parameter maps field names to default
     query types; `default_class` is the fallback. `prefixes` is a map
@@ -53,10 +56,11 @@ def parse_query_part(part, query_classes={}, prefixes={},
     class is available, `default_class` is used.
 
     For instance,
-    'stapler' -> (None, 'stapler', SubstringQuery)
-    'color:red' -> ('color', 'red', SubstringQuery)
-    ':^Quiet' -> (None, '^Quiet', RegexpQuery)
-    'color::b..e' -> ('color', 'b..e', RegexpQuery)
+    'stapler' -> (None, 'stapler', SubstringQuery, False)
+    'color:red' -> ('color', 'red', SubstringQuery, False)
+    ':^Quiet' -> (None, '^Quiet', RegexpQuery, False)
+    'color::b..e' -> ('color', 'b..e', RegexpQuery, False)
+    '-color:red' -> ('color', 'red', SubstringQuery, True)
 
     Prefixes may be "escaped" with a backslash to disable the keying
     behavior.
@@ -64,18 +68,19 @@ def parse_query_part(part, query_classes={}, prefixes={},
     part = part.strip()
     match = PARSE_QUERY_PART_REGEX.match(part)
 
-    assert match  # Regex should always match.
-    key = match.group(1)
-    term = match.group(2).replace('\:', ':')
+    assert match  # Regex should always match
+    negate = bool(match.group(1))
+    key = match.group(2)
+    term = match.group(3).replace('\:', ':')
 
     # Match the search term against the list of prefixes.
     for pre, query_class in prefixes.items():
         if term.startswith(pre):
-            return key, term[len(pre):], query_class
+            return key, term[len(pre):], query_class, negate
 
     # No matching prefix: use type-based or fallback/default query.
     query_class = query_classes.get(key, default_class)
-    return key, term, query_class
+    return key, term, query_class, negate
 
 
 def construct_query_part(model_cls, prefixes, query_part):
@@ -93,7 +98,7 @@ def construct_query_part(model_cls, prefixes, query_part):
         query_classes[k] = t.query
 
     # Parse the string.
-    key, pattern, query_class = \
+    key, pattern, query_class, negate = \
         parse_query_part(query_part, query_classes, prefixes)
 
     # No key specified.
@@ -102,14 +107,24 @@ def construct_query_part(model_cls, prefixes, query_part):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
-            return query.AnyFieldQuery(pattern, model_cls._search_fields,
-                                       query_class)
+            q = query.AnyFieldQuery(pattern, model_cls._search_fields,
+                                    query_class)
+            if negate:
+                return query.NotQuery(q)
+            else:
+                return q
         else:
             # Other query type.
-            return query_class(pattern)
+            if negate:
+                return query.NotQuery(query_class(pattern))
+            else:
+                return query_class(pattern)
 
     key = key.lower()
-    return query_class(key.lower(), pattern, key in model_cls._fields)
+    q = query_class(key.lower(), pattern, key in model_cls._fields)
+    if negate:
+        return query.NotQuery(q)
+    return q
 
 
 def query_from_strings(query_cls, model_cls, prefixes, query_parts):
