@@ -24,6 +24,12 @@ New:
   :doc:`/plugins/discogs` also adopts the same setting.
 * :doc:`/plugins/embyupdate`: A plugin to trigger a library refresh on a
   `Emby Server`_ if database changed.
+* Queries can now use "not" logic. Type a ``^`` before part of a query to
+  *exclude* matching music from the results. For example, ``beet list -a
+  beatles ^album:1`` will find all your albums by the Beatles except for their
+  singles compilation, "1." See :ref:`not_query`. :bug:`819` :bug:`1728`
+* :doc:`/plugins/info`: The plugin now accepts the ``-f/--format`` option for
+  customizing how items are displayed. :bug:`1737`
 
 For developers:
 
@@ -62,6 +68,13 @@ Fixes:
   missing configuration.
 * Fix a crash with some files with unreadable iTunes SoundCheck metadata.
   :bug:`1666`
+* :doc:`/plugins/thumbnails`: Fix a nasty segmentation fault crash that arose
+  with some library versions. :bug:`1433`
+* :doc:`/plugins/convert`: Fix a crash with Unicode paths in ``--pretend``
+  mode. :bug:`1735`
+* Fix a crash when sorting by nonexistent fields on queries. :bug:`1734`
+* Probably fix some mysterious errors when dealing with images using
+  ImageMagick on Windows. :bug:`1721`
 
 .. _Emby Server: http://emby.media
 

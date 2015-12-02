@@ -10,9 +10,9 @@ as the :doc:`/plugins/fetchart`.  You'll need 2 additional python packages:
 `pyxdg` and `pathlib`.
 
 ``thumbnails`` needs to resize the covers, and therefore requires either
-`ImageMagick`_ or `PIL`_.
+`ImageMagick`_ or `Pillow`_.
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 
 Configuration

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Fabrice Laporte
 #
@@ -91,8 +92,9 @@ def im_resize(maxwidth, path_in, path_out=None):
     # compatibility.
     try:
         util.command_output([
-            b'convert', util.syspath(path_in),
-            b'-resize', b'{0}x^>'.format(maxwidth), path_out
+            b'convert', util.syspath(path_in, prefix=False),
+            b'-resize', b'{0}x^>'.format(maxwidth),
+            util.syspath(path_out, prefix=False),
         ])
     except subprocess.CalledProcessError:
         log.warn(u'artresizer: IM convert failed for {0}',
@@ -112,18 +114,23 @@ def pil_getsize(path_in):
     try:
         im = Image.open(util.syspath(path_in))
         return im.size
-    except IOError:
-        log.error(u"PIL cannot compute size of '{0}'",
-                  util.displayable_path(path_in))
+    except IOError as exc:
+        log.error(u"PIL could not read file {}: {}",
+                  util.displayable_path(path_in), exc)
 
 
 def im_getsize(path_in):
+    cmd = [b'identify', b'-format', b'%w %h',
+           util.syspath(path_in, prefix=False)]
     try:
-        out = util.command_output([b'identify', b'-format', b'%w %h',
-                                   util.syspath(path_in)])
-    except subprocess.CalledProcessError:
-        log.warn(u'IM cannot compute size of {0}',
-                 util.displayable_path(path_in))
+        out = util.command_output(cmd)
+    except subprocess.CalledProcessError as exc:
+        log.warn('ImageMagick size query failed')
+        log.debug(
+            '`convert` exited with (status {}) when '
+            'getting size with command {}:\n{}',
+            exc.returncode, cmd, exc.output.strip()
+        )
         return
     try:
         return tuple(map(int, out.split(b' ')))

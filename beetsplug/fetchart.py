@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -527,20 +528,34 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         # get_size returns None if no local imaging backend is available
         size = ArtResizer.shared.get_size(candidate)
+        self._log.debug('image size: {}', size)
 
         if not size:
-            self._log.warning(u'could not verify size of image: please see '
-                              u'documentation for dependencies. '
+            self._log.warning(u'Could not get size of image (please see '
+                              u'documentation for dependencies). '
                               u'The configuration options `minwidth` and '
                               u'`enforce_ratio` may be violated.')
             return CANDIDATE_EXACT
 
-        if (not self.minwidth or size[0] >= self.minwidth) and (
-                not self.enforce_ratio or size[0] == size[1]):
-            if not self.maxwidth or size[0] > self.maxwidth:
-                return CANDIDATE_DOWNSCALE
-            return CANDIDATE_EXACT
-        return CANDIDATE_BAD
+        # Check minimum size.
+        if self.minwidth and size[0] < self.minwidth:
+            self._log.debug('image too small ({} < {})',
+                            size[0], self.minwidth)
+            return CANDIDATE_BAD
+
+        # Check aspect ratio.
+        if self.enforce_ratio and size[0] != size[1]:
+            self._log.debug('image is not square ({} != {})',
+                            size[0], size[1])
+            return CANDIDATE_BAD
+
+        # Check maximum size.
+        if self.maxwidth and size[0] > self.maxwidth:
+            self._log.debug('image needs resizing ({} > {})',
+                            size[0], self.maxwidth)
+            return CANDIDATE_DOWNSCALE
+
+        return CANDIDATE_EXACT
 
     def art_for_album(self, album, paths, local_only=False):
         """Given an Album object, returns a path to downloaded art for the

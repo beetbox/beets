@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Thomas Scholtes.
 #
@@ -178,6 +179,11 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         self.run_command('convert', '--yes', self.item.path)
         with open(converted, 'r') as f:
             self.assertEqual(f.read(), 'XXX')
+
+    def test_pretend(self):
+        self.run_command('convert', '--pretend', self.item.path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertFalse(os.path.exists(converted))
 
 
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
