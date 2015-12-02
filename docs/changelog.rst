@@ -6,6 +6,8 @@ Changelog
 
 New:
 
+* :doc:`/plugins/txt2pls`: A plugin to make a playlist from a textfile filled
+  with artist-album(song) lines.
 * Three commands, ``modify``, ``update``, and ``mbsync``, would previously
   move files by default after changing their metadata. Now, these commands
   will only move files if you have the :ref:`config-import-copy` or

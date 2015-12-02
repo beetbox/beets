@@ -75,6 +75,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    spotify
    the
    thumbnails
+   txt2pls
    types
    web
    zero
@@ -166,6 +167,7 @@ Miscellaneous
   on regular expressions.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
+* :doc:`txt2pls`: create playlists from a textfile with artist-titles lines.
 * :doc:`web`: An experimental Web-based GUI for beets.
 
 .. _MPD: http://www.musicpd.org/
