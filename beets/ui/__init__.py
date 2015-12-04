@@ -416,6 +416,19 @@ def human_seconds_short(interval):
     return u'%i:%02i' % (interval // 60, interval % 60)
 
 
+def raw_seconds_short(string):
+    """Formats a human-readable M:SS string as a float (number of seconds).
+
+    Raises ValueError if the conversion cannot take place due to `string` not
+    being in the right format.
+    """
+    match = re.match('^(\d+):([0-5]\d)$', string)
+    if not match:
+        raise ValueError('String not in M:SS format')
+    minutes, seconds = map(int, match.groups())
+    return float(minutes*60 + seconds)
+
+
 # Colorization.
 
 # ANSI terminal colorization code heavily inspired by pygments:
