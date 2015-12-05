@@ -678,8 +678,8 @@ class DurationQuery(NumericQuery):
                 return float(s)
             except ValueError:
                 raise InvalidQueryArgumentTypeError(
-                        s,
-                        "a M:SS string or a float")
+                    s,
+                    "a M:SS string or a float")
 
 
 # Sorting.

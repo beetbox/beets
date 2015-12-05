@@ -209,7 +209,7 @@ class DurationType(types.Float):
     def parse(self, string):
         try:
             # Try to format back hh:ss to seconds.
-            return beets.ui.raw_seconds_short(value)
+            return beets.ui.raw_seconds_short(string)
         except ValueError:
             # Fall back to a plain float..
             try:
