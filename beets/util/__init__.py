@@ -431,6 +431,7 @@ def move(path, dest, replace=False):
     instead, in which case metadata will *not* be preserved. Paths are
     translated to system paths.
     """
+    #FIXME next line would not change case on case insensitive filesystem
     if samefile(path, dest):
         return
     path = syspath(path)
