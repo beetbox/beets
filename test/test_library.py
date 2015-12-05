@@ -1058,7 +1058,7 @@ class WriteTest(unittest.TestCase, TestHelper):
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
         custom_path = os.path.join(self.temp_dir, 'custom.mp3')
-        shutil.copy(item.path, custom_path)
+        shutil.copy(syspath(item.path), syspath(custom_path))
 
         item['artist'] = 'new artist'
         self.assertNotEqual(MediaFile(custom_path).artist, 'new artist')
