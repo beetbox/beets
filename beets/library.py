@@ -200,7 +200,11 @@ class DurationType(types.Float):
     query = dbcore.query.DurationQuery
 
     def format(self, value):
-        return beets.ui.human_seconds_short(value or 0.0)
+        # TODO: decide if documenting format_raw_length
+        if not beets.config['format_raw_length'].get(bool):
+            return beets.ui.human_seconds_short(value or 0.0)
+        else:
+            return value
 
     def parse(self, string):
         try:
