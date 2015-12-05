@@ -426,7 +426,7 @@ def raw_seconds_short(string):
     if not match:
         raise ValueError('String not in M:SS format')
     minutes, seconds = map(int, match.groups())
-    return float(minutes*60 + seconds)
+    return float(minutes * 60 + seconds)
 
 
 # Colorization.
