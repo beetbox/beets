@@ -36,6 +36,7 @@ from beets import util
 from beets import plugins
 from beets import config
 from beets.mediafile import MediaFile
+from beets.util import syspath
 from test.helper import TestHelper
 
 # Shortcut to path normalization.
@@ -1044,7 +1045,7 @@ class WriteTest(unittest.TestCase, TestHelper):
 
     def test_no_write_permission(self):
         item = self.add_item_fixture()
-        path = item.path
+        path = syspath(item.path)
         os.chmod(path, stat.S_IRUSR)
 
         try:
