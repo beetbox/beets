@@ -25,7 +25,6 @@ import shutil
 import re
 import unicodedata
 import sys
-import time
 
 from test import _common
 from test._common import unittest
