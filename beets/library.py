@@ -200,7 +200,6 @@ class DurationType(types.Float):
     query = dbcore.query.DurationQuery
 
     def format(self, value):
-        # TODO: decide if documenting format_raw_length
         if not beets.config['format_raw_length'].get(bool):
             return beets.ui.human_seconds_short(value or 0.0)
         else:
@@ -211,7 +210,7 @@ class DurationType(types.Float):
             # Try to format back hh:ss to seconds.
             return util.raw_seconds_short(string)
         except ValueError:
-            # Fall back to a plain float..
+            # Fall back to a plain float.
             try:
                 return float(string)
             except ValueError:
