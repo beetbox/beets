@@ -26,6 +26,11 @@ New:
   singles compilation, "1." See :ref:`not_query`. :bug:`819` :bug:`1728`
 * :doc:`/plugins/info`: The plugin now accepts the ``-f/--format`` option for
   customizing how items are displayed. :bug:`1737`
+* Track length is now displayed as ``M:SS`` by default, instead of displaying
+  the raw number of seconds. Queries on track length also accept this format:
+  for example, ``beet list length:5:30..`` will find all your tracks that have
+  a duration over 5 minutes and 30 seconds. You can toggle this setting off
+  via the ``format_raw_length`` configuration option. :bug:`1749`
 
 For developers:
 
