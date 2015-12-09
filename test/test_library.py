@@ -25,6 +25,7 @@ import shutil
 import re
 import unicodedata
 import sys
+import time
 
 from test import _common
 from test._common import unittest
@@ -1132,7 +1133,10 @@ class LibraryFieldTypesTest(unittest.TestCase):
         t = beets.library.DateType()
 
         # format
-        self.assertEqual('1973-11-29 22:33:09', t.format(123456789))
+        self.assertEqual(time.strftime(beets.config['time_format'].
+                                       get(unicode),
+                                       time.localtime(123456789)),
+                         t.format(123456789))
         # parse
         self.assertEqual(123456789.0, t.parse('1973-11-29 22:33:09'))
         self.assertEqual(123456789.0, t.parse('123456789.0'))
