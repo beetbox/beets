@@ -670,9 +670,7 @@ class DurationQuery(NumericQuery):
         if not s:
             return None
         try:
-            # TODO: tidy up circular import
-            from beets.ui import raw_seconds_short
-            return raw_seconds_short(s)
+            return util.raw_seconds_short(s)
         except ValueError:
             try:
                 return float(s)
