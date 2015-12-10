@@ -199,7 +199,7 @@ class SideEffectsTest(unittest.TestCase):
         self.assertEqual(old_mtime, new_mtime)
 
 
-class EncodingTest(unittest.TestCase, TestHelper):
+class MP4EncodingTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.create_temp_dir()
         src = os.path.join(_common.RSRC, 'full.m4a')
@@ -216,6 +216,26 @@ class EncodingTest(unittest.TestCase, TestHelper):
         self.mf.save()
         new_mf = beets.mediafile.MediaFile(self.path)
         self.assertEqual(new_mf.label, u'foo\xe8bar')
+
+
+class MP3EncodingTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.create_temp_dir()
+        src = os.path.join(_common.RSRC, 'full.mp3')
+        self.path = os.path.join(self.temp_dir, 'test.mp3')
+        shutil.copy(src, self.path)
+
+        self.mf = beets.mediafile.MediaFile(self.path)
+
+    def test_comment_with_latin1_encoding(self):
+        # Set up the test file with a Latin1-encoded COMM frame. The encoding
+        # indices defined by MP3 are listed here:
+        # http://id3.org/id3v2.4.0-structure
+        self.mf.mgfile['COMM::eng'].encoding = 0
+
+        # Try to store non-Latin1 text.
+        self.mf.comments = u'\u2028'
+        self.mf.save()
 
 
 class ZeroLengthMediaFile(beets.mediafile.MediaFile):

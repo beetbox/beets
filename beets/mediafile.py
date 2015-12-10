@@ -38,6 +38,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import mutagen
 import mutagen.mp3
+import mutagen.id3
 import mutagen.oggopus
 import mutagen.oggvorbis
 import mutagen.mp4
@@ -747,19 +748,20 @@ class MP3DescStorageStyle(MP3StorageStyle):
         if self.key != 'USLT':
             value = [value]
 
-        # try modifying in place
+        # Try modifying in place.
         found = False
         for frame in frames:
             if frame.desc.lower() == self.description.lower():
                 frame.text = value
+                frame.encoding = mutagen.id3.Encoding.UTF8
                 found = True
 
-        # need to make a new frame?
+        # Try creating a new frame.
         if not found:
             frame = mutagen.id3.Frames[self.key](
                 desc=bytes(self.description),
                 text=value,
-                encoding=3
+                encoding=mutagen.id3.Encoding.UTF8,
             )
             if self.id3_lang:
                 frame.lang = self.id3_lang

@@ -71,6 +71,8 @@ Fixes:
 * Fix a crash when sorting by nonexistent fields on queries. :bug:`1734`
 * Probably fix some mysterious errors when dealing with images using
   ImageMagick on Windows. :bug:`1721`
+* Fix a crash when writing some Unicode comment strings to MP3s that used
+  older encodings. The encoding is now always updated to UTF-8. :bug:`879`
 
 .. _Emby Server: http://emby.media
 
