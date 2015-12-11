@@ -22,6 +22,9 @@ from __future__ import (division, absolute_import, print_function,
 
 import os
 import re
+from collections import namedtuple
+from itertools import chain
+from string import lowercase, whitespace
 
 import beets
 from beets import ui
@@ -39,6 +42,7 @@ from beets import logging
 from beets.util.confit import _package_path
 
 VARIOUS_ARTISTS = u'Various Artists'
+ExtraChoice = namedtuple('ExtraChoice', ['plugin', 'id', 'long', 'callback'])
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -471,7 +475,8 @@ def _summary_judment(rec):
 
 
 def choose_candidate(candidates, singleton, rec, cur_artist=None,
-                     cur_album=None, item=None, itemcount=None):
+                     cur_album=None, item=None, itemcount=None,
+                     extra_choices=[]):
     """Given a sorted list of candidates, ask the user for a selection
     of which candidate to use. Applies to both full albums and
     singletons  (tracks). Candidates are either AlbumMatch or TrackMatch
@@ -489,6 +494,13 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         assert cur_artist is not None
         assert cur_album is not None
 
+    # Build helper variables for extra choices.
+    # TODO: move "abort" choice always to the end?
+    # TODO: add plugin name info on choices ("(mb) Print tracks")?
+    extra_opts = tuple([c.long for c in extra_choices])
+    extra_actions = {c.long.strip(lowercase + whitespace)[0].lower(): c.id
+                     for c in extra_choices}
+
     # Zero candidates.
     if not candidates:
         if singleton:
@@ -502,7 +514,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                    'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
             opts = ('Use as-is', 'as Tracks', 'Group albums', 'Skip',
                     'Enter search', 'enter Id', 'aBort')
-        sel = ui.input_options(opts)
+        sel = ui.input_options(opts + extra_opts)
         if sel == 'u':
             return importer.action.ASIS
         elif sel == 't':
@@ -518,6 +530,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             return importer.action.MANUAL_ID
         elif sel == 'g':
             return importer.action.ALBUMS
+        elif sel in extra_actions.keys():
+            return extra_actions[sel]
         else:
             assert False
 
@@ -571,7 +585,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             else:
                 opts = ('Skip', 'Use as-is', 'as Tracks', 'Group albums',
                         'Enter search', 'enter Id', 'aBort')
-            sel = ui.input_options(opts, numrange=(1, len(candidates)))
+            sel = ui.input_options(opts + extra_opts,
+                                   numrange=(1, len(candidates)))
             if sel == 's':
                 return importer.action.SKIP
             elif sel == 'u':
@@ -589,6 +604,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 return importer.action.MANUAL_ID
             elif sel == 'g':
                 return importer.action.ALBUMS
+            elif sel in extra_actions.keys():
+                return extra_actions[sel]
             else:  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
@@ -623,7 +640,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         })
         if default is None:
             require = True
-        sel = ui.input_options(opts, require=require, default=default)
+        sel = ui.input_options(opts + extra_opts, require=require,
+                               default=default)
         if sel == 'a':
             return match
         elif sel == 'g':
@@ -641,6 +659,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             raise importer.ImportAbort()
         elif sel == 'i':
             return importer.action.MANUAL_ID
+        elif sel in extra_actions.keys():
+            return extra_actions[sel]
 
 
 def manual_search(singleton):
@@ -684,10 +704,18 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         candidates, rec = task.candidates, task.rec
         while True:
+            # Gather extra choices from plugins.
+            # TODO: check for conflicts in choices (duplicated letters, etc)
+            # TODO: provide a way to override summary_judment and/or non-timid
+            # mode? Might be useful for some plugins
+            extra_choices = list(chain(*plugins.send('before_choose_candidate',
+                                                     session=self, task=task)))
+            extra_ops = {c.id: c.callback for c in extra_choices}
+
             # Ask for a choice from the user.
             choice = choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
-                itemcount=len(task.items)
+                itemcount=len(task.items), extra_choices=extra_choices
             )
 
             # Choose which tags to use.
@@ -708,6 +736,15 @@ class TerminalImportSession(importer.ImportSession):
                     _, _, candidates, rec = autotag.tag_album(
                         task.items, search_id=search_id
                     )
+            elif choice in extra_ops.keys():
+                # Allow extra ops to automatically set the post-choice.
+                # TODO: currently action.MANUAL and action.MANUAL_ID are not
+                # properly handled
+                post_choice = extra_ops[choice](self, task)
+                if post_choice in (importer.action.SKIP, importer.action.ASIS,
+                                   importer.action.TRACKS,
+                                   importer.action.ALBUMS):
+                    return post_choice
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
