@@ -38,16 +38,12 @@ dropped, and Python 3.x is not yet supported.)
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
-* On **Fedora 21**, you there is a `copr`_ for beets, which you can install
-  using `DNF`_ like so::
+* On **Fedora** 22 or later, there is a `DNF package`_ (or three)::
 
-      $ yum install dnf dnf-plugins-core
-      $ dnf copr enable afreof/beets
-      $ yum update
-      $ yum install beets
+      $ sudo dnf install beets beets-plugins beets-doc
 
 .. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
-.. _dnf: http://fedoraproject.org/wiki/Features/DNF
+.. _dnf package: https://apps.fedoraproject.org/packages/beets
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: https://aur.archlinux.org/packages/beets-git/
