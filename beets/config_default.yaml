@@ -48,6 +48,7 @@ terminal_encoding:
 original_date: no
 id3v23: no
 va_name: "Various Artists"
+strip_album_search: ''
 
 ui:
     terminal_width: 80
