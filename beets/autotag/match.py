@@ -421,7 +421,8 @@ def tag_album(items, search_artist=None, search_album=None,
         if not (search_artist and search_album):
             # No explicit search terms -- use current metadata.
             search_artist, search_album = cur_artist, cur_album
-            search_album = re.sub(config['strip_album_search'].get(), '', search_album)
+            search_album = re.sub(config['strip_album_search'].get(), '', 
+                                  search_album)
         log.debug(u'Search terms: {0} - {1}', search_artist, search_album)
 
         # Is this album likely to be a "various artist" release?
