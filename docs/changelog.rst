@@ -84,6 +84,9 @@ Fixes:
   older encodings. The encoding is now always updated to UTF-8. :bug:`879`
 * :doc:`/plugins/fetchart`: The Google Images backend has been removed. It
   used an API that has been shut down. :bug:`1760`
+* :doc:`/plugins/lyrics`: Fix a crash in the Google backend when searching for
+  bands with regular-expression characters in their names, like Sunn O))).
+  :bug:`1673`
 
 .. _Emby Server: http://emby.media
 

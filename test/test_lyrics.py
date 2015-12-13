@@ -376,6 +376,17 @@ class LyricsGooglePluginTest(unittest.TestCase):
         self.assertEqual(google.is_page_candidate(url, urlTitle, s['title'],
                          s['artist']), False, url)
 
+    def test_is_page_candidate_special_chars(self):
+        """Ensure that `is_page_candidate` doesn't crash when the artist
+        and such contain special regular expression characters.
+        """
+        # https://github.com/sampsyo/beets/issues/1673
+        s = self.source
+        url = s['url'] + s['path']
+        url_title = u'foo'
+
+        google.is_page_candidate(url, url_title, s['title'], 'Sunn O)))')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
