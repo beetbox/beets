@@ -45,9 +45,6 @@ _MUTAGEN_FORMATS = {
 }
 
 
-scrubbing = False
-
-
 class ScrubPlugin(BeetsPlugin):
     """Removes extraneous metadata from files' tags."""
     def __init__(self):
@@ -55,15 +52,12 @@ class ScrubPlugin(BeetsPlugin):
         self.config.add({
             'auto': True,
         })
-        self.register_listener("write", self.write_item)
+
+        if self.config['auto']:
+            self.register_listener("import_task_files", self.import_task_files)
 
     def commands(self):
         def scrub_func(lib, opts, args):
-            # This is a little bit hacky, but we set a global flag to
-            # avoid autoscrubbing when we're also explicitly scrubbing.
-            global scrubbing
-            scrubbing = True
-
             # Walk through matching files and remove tags.
             for item in lib.items(ui.decargs(args)):
                 self._log.info(u'scrubbing: {0}',
@@ -91,8 +85,6 @@ class ScrubPlugin(BeetsPlugin):
                         mf = mediafile.MediaFile(util.syspath(item.path))
                         mf.art = art
                         mf.save()
-
-            scrubbing = False
 
         scrub_cmd = ui.Subcommand('scrub', help='clean audio tags')
         scrub_cmd.parser.add_option('-W', '--nowrite', dest='write',
@@ -140,8 +132,9 @@ class ScrubPlugin(BeetsPlugin):
                 self._log.error(u'could not scrub {0}: {1}',
                                 util.displayable_path(path), exc)
 
-    def write_item(self, item, path, tags):
-        """Automatically embed art into imported albums."""
-        if not scrubbing and self.config['auto']:
+    def import_task_files(self, session, task):
+        """Automatically scrub imported files."""
+        for item in task.imported_items():
+            path = item.path
             self._log.debug(u'auto-scrubbing {0}', util.displayable_path(path))
             self._scrub(path)
