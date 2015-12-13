@@ -196,9 +196,17 @@ class ITunesStore(ArtSource):
         try:
             # Isolate bugs in the iTunes library while searching.
             try:
-                itunes_album = itunes.search_album(search_string)[0]
+                results = itunes.search_album(search_string)
             except Exception as exc:
                 self._log.debug('iTunes search failed: {0}', exc)
+                return
+
+            # Get the first match.
+            if results:
+                itunes_album = results[0]
+            else:
+                self._log.debug('iTunes search for {:r} got no results',
+                                search_string)
                 return
 
             if itunes_album.get_artwork()['100']:
