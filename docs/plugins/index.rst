@@ -40,6 +40,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    discogs
    duplicates
    echonest
+   edit
    embedart
    embyupdate
    fetchart
@@ -96,6 +97,7 @@ Metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
 * :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
   `the Echo Nest`_ (tempo, energy, danceability, ...).
+* :doc:`edit`: Edit metadata from a texteditor.
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`ftintitle`: Move "featured" artists from the artist field to the title

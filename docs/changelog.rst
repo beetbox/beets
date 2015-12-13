@@ -3,6 +3,10 @@ Changelog
 
 1.3.16 (in development)
 -----------------------
+* A new plugin edit helps you manually edit fields from items.
+  You search for items in the normal beets way.Then edit opens a texteditor
+  with the items and the fields of the items you want to edit. Afterwards you can
+  review your changes save them back into the items.
 
 New:
 
