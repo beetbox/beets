@@ -25,6 +25,7 @@ import shutil
 import re
 import unicodedata
 import sys
+import time
 
 from test import _common
 from test._common import unittest
@@ -1125,6 +1126,58 @@ class ParseQueryTest(unittest.TestCase):
     def test_parse_bytes(self):
         with self.assertRaises(AssertionError):
             beets.library.parse_query_string(b"query", None)
+
+
+class LibraryFieldTypesTest(unittest.TestCase):
+    """Test format() and parse() for library-specific field types"""
+    def test_datetype(self):
+        t = beets.library.DateType()
+
+        # format
+        time_local = time.strftime(beets.config['time_format'].get(unicode),
+                                   time.localtime(123456789))
+        self.assertEqual(time_local, t.format(123456789))
+        # parse
+        self.assertEqual(123456789.0, t.parse(time_local))
+        self.assertEqual(123456789.0, t.parse('123456789.0'))
+        self.assertEqual(t.null, t.parse('not123456789.0'))
+        self.assertEqual(t.null, t.parse('1973-11-29'))
+
+    def test_pathtype(self):
+        t = beets.library.PathType()
+
+        # format
+        self.assertEqual('/tmp', t.format('/tmp'))
+        self.assertEqual(u'/tmp/\xe4lbum', t.format(u'/tmp/\u00e4lbum'))
+        # parse
+        self.assertEqual(b'/tmp', t.parse('/tmp'))
+        self.assertEqual(b'/tmp/\xc3\xa4lbum', t.parse(u'/tmp/\u00e4lbum/'))
+
+    def test_musicalkey(self):
+        t = beets.library.MusicalKey()
+
+        # parse
+        self.assertEqual('C#m', t.parse('c#m'))
+        self.assertEqual('Gm', t.parse('g   minor'))
+        self.assertEqual('Not c#m', t.parse('not C#m'))
+
+    def test_durationtype(self):
+        t = beets.library.DurationType()
+
+        # format
+        self.assertEqual('1:01', t.format(61.23))
+        self.assertEqual('60:01', t.format(3601.23))
+        self.assertEqual('0:00', t.format(None))
+        # parse
+        self.assertEqual(61.0, t.parse('1:01'))
+        self.assertEqual(61.23, t.parse('61.23'))
+        self.assertEqual(3601.0, t.parse('60:01'))
+        self.assertEqual(t.null, t.parse('1:00:01'))
+        self.assertEqual(t.null, t.parse('not61.23'))
+        # config format_raw_length
+        beets.config['format_raw_length'] = True
+        self.assertEqual(61.23, t.format(61.23))
+        self.assertEqual(3601.23, t.format(3601.23))
 
 
 def suite():
