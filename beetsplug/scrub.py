@@ -62,29 +62,7 @@ class ScrubPlugin(BeetsPlugin):
             for item in lib.items(ui.decargs(args)):
                 self._log.info(u'scrubbing: {0}',
                                util.displayable_path(item.path))
-
-                # Get album art if we need to restore it.
-                if opts.write:
-                    try:
-                        mf = mediafile.MediaFile(util.syspath(item.path),
-                                                 config['id3v23'].get(bool))
-                    except IOError as exc:
-                        self._log.error(u'could not open file to scrub: {0}',
-                                        exc)
-                    art = mf.art
-
-                # Remove all tags.
-                self._scrub(item.path)
-
-                # Restore tags, if enabled.
-                if opts.write:
-                    self._log.debug(u'writing new tags after scrub')
-                    item.try_write()
-                    if art:
-                        self._log.info(u'restoring art')
-                        mf = mediafile.MediaFile(util.syspath(item.path))
-                        mf.art = art
-                        mf.save()
+                self._scrub_item(item, opts.write)
 
         scrub_cmd = ui.Subcommand('scrub', help='clean audio tags')
         scrub_cmd.parser.add_option('-W', '--nowrite', dest='write',
@@ -132,9 +110,36 @@ class ScrubPlugin(BeetsPlugin):
                 self._log.error(u'could not scrub {0}: {1}',
                                 util.displayable_path(path), exc)
 
+    def _scrub_item(self, item, restore=True):
+        """Remove tags from an Item's associated file and, if `restore`
+        is enabled, write the database's tags back to the file.
+        """
+        # Get album art if we need to restore it.
+        if restore:
+            try:
+                mf = mediafile.MediaFile(util.syspath(item.path),
+                                         config['id3v23'].get(bool))
+            except IOError as exc:
+                self._log.error(u'could not open file to scrub: {0}',
+                                exc)
+            art = mf.art
+
+        # Remove all tags.
+        self._scrub(item.path)
+
+        # Restore tags, if enabled.
+        if restore:
+            self._log.debug(u'writing new tags after scrub')
+            item.try_write()
+            if art:
+                self._log.info(u'restoring art')
+                mf = mediafile.MediaFile(util.syspath(item.path))
+                mf.art = art
+                mf.save()
+
     def import_task_files(self, session, task):
         """Automatically scrub imported files."""
         for item in task.imported_items():
-            path = item.path
-            self._log.debug(u'auto-scrubbing {0}', util.displayable_path(path))
-            self._scrub(path)
+            self._log.debug(u'auto-scrubbing {0}',
+                            util.displayable_path(item.path))
+            self._scrub_item(item)

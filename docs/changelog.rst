@@ -90,6 +90,8 @@ Fixes:
 * :doc:`/plugins/scrub`: In ``auto`` mode, the plugin now *actually* only
   scrubs files on import---not every time files were written, as it previously
   did. :bug:`1657`
+* :doc:`/plugins/scrub`: Also in ``auto`` mode, album art is now correctly
+  restored. :bug:`1657`
 
 .. _Emby Server: http://emby.media
 
