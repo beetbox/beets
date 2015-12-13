@@ -73,6 +73,8 @@ Fixes:
   ImageMagick on Windows. :bug:`1721`
 * Fix a crash when writing some Unicode comment strings to MP3s that used
   older encodings. The encoding is now always updated to UTF-8. :bug:`879`
+* :doc:`/plugins/fetchart`: The Google Images backend has been removed. It
+  used an API that has been shut down. :bug:`1760`
 
 .. _Emby Server: http://emby.media
 
