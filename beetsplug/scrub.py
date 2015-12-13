@@ -132,7 +132,7 @@ class ScrubPlugin(BeetsPlugin):
             self._log.debug(u'writing new tags after scrub')
             item.try_write()
             if art:
-                self._log.info(u'restoring art')
+                self._log.debug(u'restoring art')
                 mf = mediafile.MediaFile(util.syspath(item.path))
                 mf.art = art
                 mf.save()
