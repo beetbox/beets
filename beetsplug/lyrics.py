@@ -454,28 +454,28 @@ class Google(Backend):
     BY_TRANS = ['by', 'par', 'de', 'von']
     LYRICS_TRANS = ['lyrics', 'paroles', 'letras', 'liedtexte']
 
-    def is_page_candidate(self, urlLink, urlTitle, title, artist):
+    def is_page_candidate(self, url_link, url_title, title, artist):
         """Return True if the URL title makes it a good candidate to be a
         page that contains lyrics of title by artist.
         """
         title = self.slugify(title.lower())
         artist = self.slugify(artist.lower())
         sitename = re.search(u"//([^/]+)/.*",
-                             self.slugify(urlLink.lower())).group(1)
-        urlTitle = self.slugify(urlTitle.lower())
+                             self.slugify(url_link.lower())).group(1)
+        url_title = self.slugify(url_title.lower())
         # Check if URL title contains song title (exact match)
-        if urlTitle.find(title) != -1:
+        if url_title.find(title) != -1:
             return True
         # or try extracting song title from URL title and check if
         # they are close enough
         tokens = [by + '_' + artist for by in self.BY_TRANS] + \
                  [artist, sitename, sitename.replace('www.', '')] + \
             self.LYRICS_TRANS
-        songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
-        songTitle = songTitle.strip('_|')
-        typoRatio = .9
-        ratio = difflib.SequenceMatcher(None, songTitle, title).ratio()
-        return ratio >= typoRatio
+        song_title = re.sub(u'(%s)' % u'|'.join(tokens), u'', url_title)
+        song_title = song_title.strip('_|')
+        typo_ratio = .9
+        ratio = difflib.SequenceMatcher(None, song_title, title).ratio()
+        return ratio >= typo_ratio
 
     def fetch(self, artist, title):
         query = u"%s %s" % (artist, title)
@@ -492,12 +492,12 @@ class Google(Backend):
 
         if 'items' in data.keys():
             for item in data['items']:
-                urlLink = item['link']
-                urlTitle = item.get('title', u'')
-                if not self.is_page_candidate(urlLink, urlTitle,
+                url_link = item['link']
+                url_title = item.get('title', u'')
+                if not self.is_page_candidate(url_link, url_title,
                                               title, artist):
                     continue
-                html = self.fetch_url(urlLink)
+                html = self.fetch_url(url_link)
                 lyrics = scrape_lyrics_from_html(html)
                 if not lyrics:
                     continue
