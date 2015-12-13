@@ -87,6 +87,9 @@ Fixes:
 * :doc:`/plugins/lyrics`: Fix a crash in the Google backend when searching for
   bands with regular-expression characters in their names, like Sunn O))).
   :bug:`1673`
+* :doc:`/plugins/scrub`: In ``auto`` mode, the plugin now *actually* only
+  scrubs files on import---not every time files were written, as it previously
+  did. :bug:`1657`
 
 .. _Emby Server: http://emby.media
 
