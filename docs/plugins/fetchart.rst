@@ -126,10 +126,13 @@ iTunes Store
 To use the iTunes Store as an art source, install the `python-itunes`_
 library. You can do this using `pip`_, like so::
 
-    $ pip install python-itunes
+    $ pip install https://github.com/ocelma/python-itunes/archive/master.zip
 
+(There's currently `a problem`_ that prevents a plain ``pip install
+python-itunes`` from working.)
 Once the library is installed, the plugin will use it to search automatically.
 
+.. _a problem: https://github.com/ocelma/python-itunes/issues/9
 .. _python-itunes: https://github.com/ocelma/python-itunes
 .. _pip: http://pip.openplans.org/
 
