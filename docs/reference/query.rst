@@ -144,6 +144,11 @@ and this command finds MP3 files with bitrates of 128k or lower::
 
     $ beet list format:MP3 bitrate:..128000
 
+The ``length`` field also lets you use a "M:SS" format. For example, this
+query finds tracks that are less than four and a half minutes in length::
+
+    $ beet list length:..4:30
+
 
 .. _datequery:
 
