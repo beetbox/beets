@@ -65,6 +65,7 @@ ui:
 format_item: $artist - $album - $title
 format_album: $albumartist - $album
 time_format: '%Y-%m-%d %H:%M:%S'
+format_raw_length: no
 
 sort_album: albumartist+ album+
 sort_item: artist+ album+ disc+ track+

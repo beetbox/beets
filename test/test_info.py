@@ -111,7 +111,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.add_item_fixtures()
         out = self.run_with_output('--library', '--format',
                                    '$track. $title - $artist ($length)')
-        self.assertEqual(u'02. tïtle 0 - the artist (1.1)\n', out)
+        self.assertEqual(u'02. tïtle 0 - the artist (0:01)\n', out)
 
 
 def suite():
