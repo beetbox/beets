@@ -29,8 +29,8 @@ New:
 * Track length is now displayed as ``M:SS`` by default, instead of displaying
   the raw number of seconds. Queries on track length also accept this format:
   for example, ``beet list length:5:30..`` will find all your tracks that have
-  a duration over 5 minutes and 30 seconds. You can toggle this setting off
-  via the ``format_raw_length`` configuration option. :bug:`1749`
+  a duration over 5 minutes and 30 seconds. You can turn off this new behavior
+  using the ``format_raw_length`` configuration option. :bug:`1749`
 
 For developers:
 
