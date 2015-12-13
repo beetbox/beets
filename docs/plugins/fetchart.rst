@@ -50,7 +50,7 @@ file. The available options are:
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
   Default: ``coverart itunes amazon albumart``, i.e., everything but
-  ``wikipedia`` and ``google``. Enable those two sources for more matches at
+  ``wikipedia``. Enable those two sources for more matches at
   the cost of some speed.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
@@ -94,7 +94,7 @@ no resizing is performed for album art found on the filesystem---only downloaded
 art is resized. Server-side resizing can also be slower than local resizing, so
 consider installing one of the two backends for better performance.
 
-When using ImageMagic, beets looks for the ``convert`` executable in your path.
+When using ImageMagick, beets looks for the ``convert`` executable in your path.
 On some versions of Windows, the program can be shadowed by a system-provided
 ``convert.exe``. On these systems, you may need to modify your ``%PATH%``
 environment variable so that ImageMagick comes first or use Pillow instead.
@@ -106,8 +106,9 @@ Album Art Sources
 -----------------
 
 By default, this plugin searches for art in the local filesystem as well as on
-the Cover Art Archive, the iTunes Store, Amazon, AlbumArt.org,
-and Google Image Search, and Wikipedia, in that order. You can reorder the sources or remove
+the Cover Art Archive, the iTunes Store, Amazon, and AlbumArt.org, in that
+order.
+You can reorder the sources or remove
 some to speed up the process using the ``sources`` configuration option.
 
 When looking for local album art, beets checks for image files located in the
@@ -135,16 +136,6 @@ Once the library is installed, the plugin will use it to search automatically.
 .. _a problem: https://github.com/ocelma/python-itunes/issues/9
 .. _python-itunes: https://github.com/ocelma/python-itunes
 .. _pip: http://pip.openplans.org/
-
-Google Image Search
-'''''''''''''''''''
-
-You can optionally search for cover art on `Google Images`_. This option uses
-the first hit for a search query consisting of the artist and album name. It
-is therefore approximate: "incorrect" image matches are possible (although
-unlikely).
-
-.. _Google Images: http://images.google.com/
 
 
 Embedding Album Art
