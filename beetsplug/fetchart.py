@@ -157,34 +157,6 @@ class AlbumArtOrg(ArtSource):
             self._log.debug(u'no image found on page')
 
 
-class GoogleImages(ArtSource):
-    URL = 'https://ajax.googleapis.com/ajax/services/search/images'
-
-    def get(self, album):
-        """Return art URL from google.org given an album title and
-        interpreter.
-        """
-        if not (album.albumartist and album.album):
-            return
-        search_string = (album.albumartist + ',' + album.album).encode('utf-8')
-        response = self.request(self.URL, params={
-            'v': '1.0',
-            'q': search_string,
-            'start': '0',
-        })
-
-        # Get results using JSON.
-        try:
-            results = response.json()
-            data = results['responseData']
-            dataInfo = data['results']
-            for myUrl in dataInfo:
-                yield myUrl['unescapedUrl']
-        except:
-            self._log.debug(u'error scraping art page')
-            return
-
-
 class ITunesStore(ArtSource):
     # Art from the iTunes Store.
     def get(self, album):
@@ -196,9 +168,17 @@ class ITunesStore(ArtSource):
         try:
             # Isolate bugs in the iTunes library while searching.
             try:
-                itunes_album = itunes.search_album(search_string)[0]
+                results = itunes.search_album(search_string)
             except Exception as exc:
                 self._log.debug('iTunes search failed: {0}', exc)
+                return
+
+            # Get the first match.
+            if results:
+                itunes_album = results[0]
+            else:
+                self._log.debug('iTunes search for {:r} got no results',
+                                search_string)
                 return
 
             if itunes_album.get_artwork()['100']:
@@ -380,7 +360,7 @@ class FileSystem(ArtSource):
 
 # Try each source in turn.
 
-SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart', u'google',
+SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart',
                u'wikipedia']
 
 ART_SOURCES = {
@@ -388,7 +368,6 @@ ART_SOURCES = {
     u'itunes': ITunesStore,
     u'albumart': AlbumArtOrg,
     u'amazon': Amazon,
-    u'google': GoogleImages,
     u'wikipedia': Wikipedia,
 }
 
