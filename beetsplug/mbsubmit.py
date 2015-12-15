@@ -27,7 +27,7 @@ from __future__ import (division, absolute_import, print_function,
 from beets.autotag import Recommendation
 from beets.importer import action
 from beets.plugins import BeetsPlugin
-from beets.ui.commands import ExtraChoice
+from beets.ui.commands import PromptChoice
 from beetsplug.info import print_data
 
 
@@ -39,16 +39,12 @@ class MBSubmitPlugin(BeetsPlugin):
                                self.before_choose_candidate_event)
 
     def before_choose_candidate_event(self, session, task):
-        # This intends to illustrate a simple plugin that adds choices
-        # depending on conditions.
-        # Plugins should return a list of ExtraChoices (basically, the
-        # "cosmetic" values and a callback function). This list is received and
-        # flattened on plugins.send('before_choose_candidate').
         if not task.candidates or task.rec == Recommendation.none:
-            return [ExtraChoice(self, 'PRINT', 'Print tracks',
-                                self.print_tracks),
-                    ExtraChoice(self, 'PRINT_SKIP', 'print tracks and sKip',
-                                self.print_tracks_and_skip)]
+            return [PromptChoice(self, 'PRINT', 'p', 'Print tracks',
+                                 self.print_tracks),
+                    PromptChoice(self, 'PRINT_SKIP', 'k',
+                                 'print tracks and sKip',
+                                 self.print_tracks_and_skip)]
 
     # Callbacks for choices.
     def print_tracks(self, session, task):
@@ -56,13 +52,6 @@ class MBSubmitPlugin(BeetsPlugin):
             print_data(None, i, '$track. $artist - $title ($length)')
 
     def print_tracks_and_skip(self, session, task):
-        # Example of a function that automatically sets the next action,
-        # avoiding the user to be prompted again. It has some drawbacks (for
-        # example, actions such as action.MANUAL are not handled properly, as
-        # they do not exit the main TerminalImportSession.choose_match loop).
-        #
-        # The idea is that if a callback function returns an action.X value,
-        # task.action is set to that value after the callback is processed.
         for i in task.items:
             print_data(None, i, '$track. $artist - $title ($length)')
         return action.SKIP
