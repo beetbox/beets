@@ -226,38 +226,6 @@ class AAOTest(_common.TestCase):
         self.assertEqual(list(res), [])
 
 
-class GoogleImageTest(_common.TestCase):
-
-    _google_url = 'https://ajax.googleapis.com/ajax/services/search/images'
-
-    def setUp(self):
-        super(GoogleImageTest, self).setUp()
-        self.source = fetchart.GoogleImages(logger)
-
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super(GoogleImageTest, self).run(*args, **kwargs)
-
-    def mock_response(self, url, json):
-        responses.add(responses.GET, url, body=json,
-                      content_type='application/json')
-
-    def test_google_art_finds_image(self):
-        album = _common.Bag(albumartist="some artist", album="some album")
-        json = b"""{"responseData": {"results":
-            [{"unescapedUrl": "url_to_the_image"}]}}"""
-        self.mock_response(self._google_url, json)
-        result_url = self.source.get(album)
-        self.assertEqual(list(result_url)[0], 'url_to_the_image')
-
-    def test_google_art_dont_finds_image(self):
-        album = _common.Bag(albumartist="some artist", album="some album")
-        json = b"""bla blup"""
-        self.mock_response(self._google_url, json)
-        result_url = self.source.get(album)
-        self.assertEqual(list(result_url), [])
-
-
 class ArtImporterTest(UseThePlugin):
     def setUp(self):
         super(ArtImporterTest, self).setUp()

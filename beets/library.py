@@ -195,6 +195,28 @@ class MusicalKey(types.String):
             return self.parse(key)
 
 
+class DurationType(types.Float):
+    """Human-friendly (M:SS) representation of a time interval."""
+    query = dbcore.query.DurationQuery
+
+    def format(self, value):
+        if not beets.config['format_raw_length'].get(bool):
+            return beets.ui.human_seconds_short(value or 0.0)
+        else:
+            return value
+
+    def parse(self, string):
+        try:
+            # Try to format back hh:ss to seconds.
+            return util.raw_seconds_short(string)
+        except ValueError:
+            # Fall back to a plain float.
+            try:
+                return float(string)
+            except ValueError:
+                return self.null
+
+
 # Library-specific sort types.
 
 class SmartArtistSort(dbcore.query.Sort):
@@ -426,7 +448,7 @@ class Item(LibModel):
         'original_day':         types.PaddedInt(2),
         'initial_key':          MusicalKey(),
 
-        'length':      types.FLOAT,
+        'length':      DurationType(),
         'bitrate':     types.ScaledInt(1000, u'kbps'),
         'format':      types.STRING,
         'samplerate':  types.ScaledInt(1000, u'kHz'),

@@ -3,6 +3,10 @@ Changelog
 
 1.3.16 (in development)
 -----------------------
+* A new plugin edit helps you manually edit fields from items.
+  You search for items in the normal beets way.Then edit opens a texteditor
+  with the items and the fields of the items you want to edit. Afterwards you can
+  review your changes save them back into the items.
 
 New:
 
@@ -26,6 +30,11 @@ New:
   singles compilation, "1." See :ref:`not_query`. :bug:`819` :bug:`1728`
 * :doc:`/plugins/info`: The plugin now accepts the ``-f/--format`` option for
   customizing how items are displayed. :bug:`1737`
+* Track length is now displayed as ``M:SS`` by default, instead of displaying
+  the raw number of seconds. Queries on track length also accept this format:
+  for example, ``beet list length:5:30..`` will find all your tracks that have
+  a duration over 5 minutes and 30 seconds. You can turn off this new behavior
+  using the ``format_raw_length`` configuration option. :bug:`1749`
 
 For developers:
 
@@ -73,6 +82,16 @@ Fixes:
   ImageMagick on Windows. :bug:`1721`
 * Fix a crash when writing some Unicode comment strings to MP3s that used
   older encodings. The encoding is now always updated to UTF-8. :bug:`879`
+* :doc:`/plugins/fetchart`: The Google Images backend has been removed. It
+  used an API that has been shut down. :bug:`1760`
+* :doc:`/plugins/lyrics`: Fix a crash in the Google backend when searching for
+  bands with regular-expression characters in their names, like Sunn O))).
+  :bug:`1673`
+* :doc:`/plugins/scrub`: In ``auto`` mode, the plugin now *actually* only
+  scrubs files on import---not every time files were written, as it previously
+  did. :bug:`1657`
+* :doc:`/plugins/scrub`: Also in ``auto`` mode, album art is now correctly
+  restored. :bug:`1657`
 
 .. _Emby Server: http://emby.media
 

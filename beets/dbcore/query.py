@@ -653,6 +653,33 @@ class DateQuery(FieldQuery):
         return clause, subvals
 
 
+class DurationQuery(NumericQuery):
+    """NumericQuery that allow human-friendly (M:SS) time interval formats.
+
+    Converts the range(s) to a float value, and delegates on NumericQuery.
+
+    Raises InvalidQueryError when the pattern does not represent an int, float
+    or M:SS time interval.
+    """
+    def _convert(self, s):
+        """Convert a M:SS or numeric string to a float.
+
+        Return None if `s` is empty.
+        Raise an InvalidQueryError if the string cannot be converted.
+        """
+        if not s:
+            return None
+        try:
+            return util.raw_seconds_short(s)
+        except ValueError:
+            try:
+                return float(s)
+            except ValueError:
+                raise InvalidQueryArgumentTypeError(
+                    s,
+                    "a M:SS string or a float")
+
+
 # Sorting.
 
 class Sort(object):
