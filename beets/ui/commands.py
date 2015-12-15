@@ -22,9 +22,8 @@ from __future__ import (division, absolute_import, print_function,
 
 import os
 import re
-from collections import namedtuple
+from collections import namedtuple, Counter
 from itertools import chain
-from string import lowercase, whitespace
 
 import beets
 from beets import ui
@@ -42,7 +41,8 @@ from beets import logging
 from beets.util.confit import _package_path
 
 VARIOUS_ARTISTS = u'Various Artists'
-ExtraChoice = namedtuple('ExtraChoice', ['plugin', 'id', 'long', 'callback'])
+PromptChoice = namedtuple('ExtraChoice', ['plugin', 'id', 'short', 'long',
+                                          'callback'])
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -495,11 +495,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         assert cur_album is not None
 
     # Build helper variables for extra choices.
-    # TODO: move "abort" choice always to the end?
-    # TODO: add plugin name info on choices ("(mb) Print tracks")?
-    extra_opts = tuple([c.long for c in extra_choices])
-    extra_actions = {c.long.strip(lowercase + whitespace)[0].lower(): c.id
-                     for c in extra_choices}
+    extra_opts = tuple(c.long for c in extra_choices)
+    extra_actions = {c.short: c.id for c in extra_choices}
 
     # Zero candidates.
     if not candidates:
@@ -705,11 +702,7 @@ class TerminalImportSession(importer.ImportSession):
         candidates, rec = task.candidates, task.rec
         while True:
             # Gather extra choices from plugins.
-            # TODO: check for conflicts in choices (duplicated letters, etc)
-            # TODO: provide a way to override summary_judment and/or non-timid
-            # mode? Might be useful for some plugins
-            extra_choices = list(chain(*plugins.send('before_choose_candidate',
-                                                     session=self, task=task)))
+            extra_choices = self._get_plugin_options(task)
             extra_ops = {c.id: c.callback for c in extra_choices}
 
             # Ask for a choice from the user.
@@ -738,10 +731,9 @@ class TerminalImportSession(importer.ImportSession):
                     )
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
-                # TODO: currently action.MANUAL and action.MANUAL_ID are not
-                # properly handled
                 post_choice = extra_ops[choice](self, task)
-                if post_choice in (importer.action.SKIP, importer.action.ASIS,
+                if post_choice in (importer.action.SKIP,
+                                   importer.action.ASIS,
                                    importer.action.TRACKS,
                                    importer.action.ALBUMS):
                     return post_choice
@@ -837,6 +829,53 @@ class TerminalImportSession(importer.ImportSession):
         return ui.input_yn(u"Import of the directory:\n{0}\n"
                            "was interrupted. Resume (Y/n)?"
                            .format(displayable_path(path)))
+
+    def _get_plugin_options(self, task):
+        """Get the extra options appended to the plugins to the ui prompt.
+
+        The `before_choose_candidate` event is sent to the plugins, with
+        session and task as its parameters. Plugins are responsible for
+        checking the right conditions and returning a list of `PromptChoice`s,
+        which is flattened and checked for conflicts.
+
+        Raises `ValueError` if two of the choices have the same short letter.
+
+        Returns a list of `PromptChoice`s.
+        """
+        # Send the before_choose_candidate event and flatten list.
+        extra_choices = list(chain(*plugins.send('before_choose_candidate',
+                                                 session=self, task=task)))
+        # Take into account default options, for duplicate checking.
+        all_choices = [PromptChoice(self, importer.action.SKIP, 's', 'Skip',
+                                    None),
+                       PromptChoice(self, importer.action.ASIS, 'u',
+                                    'Use as-is', None),
+                       PromptChoice(self, importer.action.TRACKS, 't',
+                                    'as Tracks', None),
+                       PromptChoice(self, importer.action.ALBUMS, 'g',
+                                    'Group albums', None),
+                       PromptChoice(self, importer.action.MANUAL, 'e',
+                                    'Enter search', None),
+                       PromptChoice(self, importer.action.MANUAL_ID, 'i',
+                                    'enter Id', None),
+                       PromptChoice(self, '', 'b', 'aBort', None)] +\
+            extra_choices
+
+        short_letters = [c.short for c in all_choices]
+        if len(short_letters) != len(set(short_letters)):
+            # Duplicate short letter has been found.
+            duplicates = [i for i, count in Counter(short_letters).items()
+                          if count > 1]
+            # Build informative message: 'x': classname:"long option",...
+            dup = {letter: ['%s:"%s"' % (type(c.plugin).__name__, c.long)
+                            for c in all_choices if c.short == letter]
+                   for letter in duplicates}
+            conflict_msg = '; '.join("'%s': %s" % (k, ', '.join(v))
+                                     for (k, v) in dup.iteritems())
+            raise ValueError("Prompt options have the same short letter\n%s" %
+                             conflict_msg)
+        return extra_choices
+
 
 # The import command.
 
