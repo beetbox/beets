@@ -17,17 +17,18 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import os
-from mock import patch, Mock
+from mock import patch, Mock, ANY
 import shutil
 import itertools
 
 from beets.importer import SingletonImportTask, SentinelImportTask, \
-    ArchiveImportTask
-from beets import plugins, config
+    ArchiveImportTask, action
+from beets import plugins, config, ui
 from beets.library import Item
 from beets.dbcore import types
 from beets.mediafile import MediaFile
-from test.test_importer import ImportHelper
+from test.test_importer import ImportHelper, AutotagStub
+from test.test_ui_importer import TerminalImportSessionSetup
 from test._common import unittest, RSRC
 from test import helper
 
@@ -399,6 +400,155 @@ class ListenersTest(unittest.TestCase, TestHelper):
             plugins.send('event8', foo=5)
 
         plugins.send('event9', foo=5)
+
+
+class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
+                        ImportHelper, TestHelper):
+    def setUp(self):
+        self.setup_plugin_loader()
+        self.setup_beets()
+        self._create_import_dir(3)
+        self._setup_import_session()
+        self.matcher = AutotagStub().install()
+        # keep track of ui.input_option() calls
+        self.input_options_patcher = patch('beets.ui.input_options',
+                                           side_effect=ui.input_options)
+        self.mock_input_options = self.input_options_patcher.start()
+
+    def tearDown(self):
+        self.input_options_patcher.stop()
+        self.teardown_plugin_loader()
+        self.teardown_beets()
+
+    def test_plugin_choices_in_ui_input_options_album(self):
+        """Test the presence of plugin choices on the prompt (album)."""
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.register_listener('before_choose_candidate',
+                                       self.return_choices)
+
+            def return_choices(self, session, task):
+                return [ui.commands.PromptChoice('f', 'Foo', None),
+                        ui.commands.PromptChoice('r', 'baR', None)]
+
+        self.register_plugin(DummyPlugin)
+        # Default options + extra choices by the plugin ('Foo', 'Bar')
+        opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
+                u'as Tracks', u'Group albums', u'Enter search',
+                u'enter Id', u'aBort') + ('Foo', 'baR')
+
+        self.importer.add_choice(action.SKIP)
+        self.importer.run()
+        self.mock_input_options.assert_called_once_with(opts, default='a',
+                                                        require=ANY)
+
+    def test_plugin_choices_in_ui_input_options_singleton(self):
+        """Test the presence of plugin choices on the prompt (singleton)."""
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.register_listener('before_choose_candidate',
+                                       self.return_choices)
+
+            def return_choices(self, session, task):
+                return [ui.commands.PromptChoice('f', 'Foo', None),
+                        ui.commands.PromptChoice('r', 'baR', None)]
+
+        self.register_plugin(DummyPlugin)
+        # Default options + extra choices by the plugin ('Foo', 'Bar')
+        opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
+                u'Enter search',
+                u'enter Id', u'aBort') + ('Foo', 'baR')
+
+        config['import']['singletons'] = True
+        self.importer.add_choice(action.SKIP)
+        self.importer.run()
+        self.mock_input_options.assert_called_with(opts, default='a',
+                                                   require=ANY)
+
+    def test_choices_conflicts(self):
+        """Test the short letter conflict solving."""
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.register_listener('before_choose_candidate',
+                                       self.return_choices)
+
+            def return_choices(self, session, task):
+                return [ui.commands.PromptChoice('a', 'A foo', None),  # dupe
+                        ui.commands.PromptChoice('z', 'baZ', None),    # ok
+                        ui.commands.PromptChoice('z', 'Zupe', None),   # dupe
+                        ui.commands.PromptChoice('z', 'Zoo', None)]    # dupe
+
+        self.register_plugin(DummyPlugin)
+        # Default options + not dupe extra choices by the plugin ('baZ')
+        opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
+                u'as Tracks', u'Group albums', u'Enter search',
+                u'enter Id', u'aBort') + ('baZ',)
+        self.importer.add_choice(action.SKIP)
+        self.importer.run()
+        self.mock_input_options.assert_called_once_with(opts, default='a',
+                                                        require=ANY)
+
+    def test_plugin_callback(self):
+        """Test that plugin callbacks are being called upon user choice."""
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.register_listener('before_choose_candidate',
+                                       self.return_choices)
+
+            def return_choices(self, session, task):
+                return [ui.commands.PromptChoice('f', 'Foo', self.foo)]
+
+            def foo(self, session, task):
+                pass
+
+        self.register_plugin(DummyPlugin)
+        # Default options + extra choices by the plugin ('Foo', 'Bar')
+        opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
+                u'as Tracks', u'Group albums', u'Enter search',
+                u'enter Id', u'aBort') + ('Foo',)
+
+        # DummyPlugin.foo() should be called once
+        with patch.object(DummyPlugin, 'foo', autospec=True) as mock_foo:
+            with helper.control_stdin('\n'.join(['f', 's'])):
+                self.importer.run()
+            self.assertEqual(mock_foo.call_count, 1)
+
+        # input_options should be called twice, as foo() returns None
+        self.assertEqual(self.mock_input_options.call_count, 2)
+        self.mock_input_options.assert_called_with(opts, default='a',
+                                                   require=ANY)
+
+    def test_plugin_callback_return(self):
+        """Test that plugin callbacks that return a value exit the loop."""
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super(DummyPlugin, self).__init__()
+                self.register_listener('before_choose_candidate',
+                                       self.return_choices)
+
+            def return_choices(self, session, task):
+                return [ui.commands.PromptChoice('f', 'Foo', self.foo)]
+
+            def foo(self, session, task):
+                return action.SKIP
+
+        self.register_plugin(DummyPlugin)
+        # Default options + extra choices by the plugin ('Foo', 'Bar')
+        opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
+                u'as Tracks', u'Group albums', u'Enter search',
+                u'enter Id', u'aBort') + ('Foo',)
+
+        # DummyPlugin.foo() should be called once
+        with helper.control_stdin('f\n'):
+            self.importer.run()
+
+        # input_options should be called once, as foo() returns SKIP
+        self.mock_input_options.assert_called_once_with(opts, default='a',
+                                                        require=ANY)
 
 
 def suite():
