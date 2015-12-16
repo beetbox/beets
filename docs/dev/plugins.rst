@@ -547,6 +547,7 @@ a list of ``PromptChoices`` that represent the additional choices that your
 plugin shall expose to the user::
 
     from beets.plugins import BeetsPlugin
+    from beets.ui.commands import PromptChoice
 
     class ExamplePlugin(BeetsPlugin):
         def __init__(self):
@@ -555,14 +556,14 @@ plugin shall expose to the user::
                                    self.before_choose_candidate_event)
 
         def before_choose_candidate_event(self, session, task):
-            return [PromptChoice(self, 'PRINT_FOO', 'p', 'Print foo', self.foo),
-                    PromptChoice(self, 'DO_BAR', 'd', 'Do bar', self.bar)]
+            return [PromptChoice('p', 'Print foo', self.foo),
+                    PromptChoice('d', 'Do bar', self.bar)]
 
         def foo(self, session, task):
             print('User has chosen "Print foo"!')
 
         def bar(self, session, task):
-            print('User has chosen "do Bar"!')
+            print('User has chosen "Do bar"!')
 
 The previous example modifies the standard prompt::
 
@@ -585,11 +586,11 @@ Please make sure that the short letter for each of the choices provided by the
 plugin is not already in use: the importer will raise an exception if two or
 more choices try to use the same short letter. As a reference, the following
 characters are used by the choices on the core importer prompt, and hence
-should not be used: ``s``, ``u``, ``t``, ``g``, ``e``, ``i``, ``b``.
+should not be used: ``a``, ``s``, ``u``, ``t``, ``g``, ``e``, ``i``, ``b``.
 
 Additionally, the callback function can optionally specify the next action to
 be performed by returning one of the values from ``importer.action``, which
 will be passed to the main loop upon the callback has been processed. Note that
 ``action.MANUAL`` and ``action.MANUAL_ID`` will have no effect even if
-returned by the callback, due to the current arquitecture of the import
+returned by the callback, due to the current architecture of the import
 process.

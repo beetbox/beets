@@ -40,10 +40,8 @@ class MBSubmitPlugin(BeetsPlugin):
 
     def before_choose_candidate_event(self, session, task):
         if not task.candidates or task.rec == Recommendation.none:
-            return [PromptChoice(self, 'PRINT', 'p', 'Print tracks',
-                                 self.print_tracks),
-                    PromptChoice(self, 'PRINT_SKIP', 'k',
-                                 'print tracks and sKip',
+            return [PromptChoice('p', 'Print tracks', self.print_tracks),
+                    PromptChoice('k', 'print tracks and sKip',
                                  self.print_tracks_and_skip)]
 
     # Callbacks for choices.
