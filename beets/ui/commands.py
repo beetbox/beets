@@ -41,8 +41,7 @@ from beets import logging
 from beets.util.confit import _package_path
 
 VARIOUS_ARTISTS = u'Various Artists'
-PromptChoice = namedtuple('ExtraChoice', ['plugin', 'id', 'short', 'long',
-                                          'callback'])
+PromptChoice = namedtuple('ExtraChoice', ['short', 'long', 'callback'])
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -484,8 +483,16 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     `cur_album`, and `itemcount` must be provided. For singletons,
     `item` must be provided.
 
-    Returns the result of the choice, which may SKIP, ASIS, TRACKS, or
-    MANUAL or a candidate (an AlbumMatch/TrackMatch object).
+    `extra_choices` is a list of `PromptChoice`s, containg the choices
+    appended by the plugins after receiving the `before_choose_candidate`
+    event. If not empty, the choices are appended to the prompt presented
+    to the user.
+
+    Returns one of the following:
+    * the result of the choice, which may be SKIP, ASIS, TRACKS, or MANUAL
+    * a candidate (an AlbumMatch/TrackMatch object)
+    * the short letter of a `PromptChoice` (if the user selected one of
+    the `extra_choices`).
     """
     # Sanity check.
     if singleton:
@@ -496,7 +503,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
     # Build helper variables for extra choices.
     extra_opts = tuple(c.long for c in extra_choices)
-    extra_actions = {c.short: c.id for c in extra_choices}
+    extra_actions = tuple(c.short for c in extra_choices)
 
     # Zero candidates.
     if not candidates:
@@ -527,8 +534,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             return importer.action.MANUAL_ID
         elif sel == 'g':
             return importer.action.ALBUMS
-        elif sel in extra_actions.keys():
-            return extra_actions[sel]
+        elif sel in extra_actions:
+            return sel
         else:
             assert False
 
@@ -601,8 +608,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 return importer.action.MANUAL_ID
             elif sel == 'g':
                 return importer.action.ALBUMS
-            elif sel in extra_actions.keys():
-                return extra_actions[sel]
+            elif sel in extra_actions:
+                return sel
             else:  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
@@ -656,8 +663,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             raise importer.ImportAbort()
         elif sel == 'i':
             return importer.action.MANUAL_ID
-        elif sel in extra_actions.keys():
-            return extra_actions[sel]
+        elif sel in extra_actions:
+            return sel
 
 
 def manual_search(singleton):
@@ -702,8 +709,8 @@ class TerminalImportSession(importer.ImportSession):
         candidates, rec = task.candidates, task.rec
         while True:
             # Gather extra choices from plugins.
-            extra_choices = self._get_plugin_options(task)
-            extra_ops = {c.id: c.callback for c in extra_choices}
+            extra_choices = self._get_plugin_choices(task)
+            extra_ops = {c.short: c.callback for c in extra_choices}
 
             # Ask for a choice from the user.
             choice = choose_candidate(
@@ -732,10 +739,8 @@ class TerminalImportSession(importer.ImportSession):
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
                 post_choice = extra_ops[choice](self, task)
-                if post_choice in (importer.action.SKIP,
-                                   importer.action.ASIS,
-                                   importer.action.TRACKS,
-                                   importer.action.ALBUMS):
+                if isinstance(post_choice, importer.action):
+                    # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
@@ -761,8 +766,12 @@ class TerminalImportSession(importer.ImportSession):
             return action
 
         while True:
+            extra_choices = self._get_plugin_choices(task)
+            extra_ops = {c.short: c.callback for c in extra_choices}
+
             # Ask for a choice.
-            choice = choose_candidate(candidates, True, rec, item=task.item)
+            choice = choose_candidate(candidates, True, rec, item=task.item,
+                                      extra_choices=extra_choices)
 
             if choice in (importer.action.SKIP, importer.action.ASIS):
                 return choice
@@ -779,6 +788,12 @@ class TerminalImportSession(importer.ImportSession):
                 if search_id:
                     candidates, rec = autotag.tag_item(task.item,
                                                        search_id=search_id)
+            elif choice in extra_ops.keys():
+                # Allow extra ops to automatically set the post-choice.
+                post_choice = extra_ops[choice](self, task)
+                if isinstance(post_choice, importer.action):
+                    # MANUAL and MANUAL_ID have no effect, even if returned.
+                    return post_choice
             else:
                 # Chose a candidate.
                 assert isinstance(choice, autotag.TrackMatch)
@@ -830,8 +845,8 @@ class TerminalImportSession(importer.ImportSession):
                            "was interrupted. Resume (Y/n)?"
                            .format(displayable_path(path)))
 
-    def _get_plugin_options(self, task):
-        """Get the extra options appended to the plugins to the ui prompt.
+    def _get_plugin_choices(self, task):
+        """Get the extra choices appended to the plugins to the ui prompt.
 
         The `before_choose_candidate` event is sent to the plugins, with
         session and task as its parameters. Plugins are responsible for
@@ -846,19 +861,14 @@ class TerminalImportSession(importer.ImportSession):
         extra_choices = list(chain(*plugins.send('before_choose_candidate',
                                                  session=self, task=task)))
         # Take into account default options, for duplicate checking.
-        all_choices = [PromptChoice(self, importer.action.SKIP, 's', 'Skip',
-                                    None),
-                       PromptChoice(self, importer.action.ASIS, 'u',
-                                    'Use as-is', None),
-                       PromptChoice(self, importer.action.TRACKS, 't',
-                                    'as Tracks', None),
-                       PromptChoice(self, importer.action.ALBUMS, 'g',
-                                    'Group albums', None),
-                       PromptChoice(self, importer.action.MANUAL, 'e',
-                                    'Enter search', None),
-                       PromptChoice(self, importer.action.MANUAL_ID, 'i',
-                                    'enter Id', None),
-                       PromptChoice(self, '', 'b', 'aBort', None)] +\
+        all_choices = [PromptChoice('a', 'Apply', None),
+                       PromptChoice('s', 'Skip', None),
+                       PromptChoice('u', 'Use as-is', None),
+                       PromptChoice('t', 'as Tracks', None),
+                       PromptChoice('g', 'Group albums', None),
+                       PromptChoice('e', 'Enter search', None),
+                       PromptChoice('i', 'enter Id', None),
+                       PromptChoice('b', 'aBort', None)] +\
             extra_choices
 
         short_letters = [c.short for c in all_choices]
@@ -866,14 +876,14 @@ class TerminalImportSession(importer.ImportSession):
             # Duplicate short letter has been found.
             duplicates = [i for i, count in Counter(short_letters).items()
                           if count > 1]
-            # Build informative message: 'x': classname:"long option",...
-            dup = {letter: ['%s:"%s"' % (type(c.plugin).__name__, c.long)
-                            for c in all_choices if c.short == letter]
-                   for letter in duplicates}
-            conflict_msg = '; '.join("'%s': %s" % (k, ', '.join(v))
-                                     for (k, v) in dup.iteritems())
-            raise ValueError("Prompt options have the same short letter\n%s" %
-                             conflict_msg)
+            for short in duplicates:
+                # Keep the first of the choices, removing the rest.
+                dup_choices = [c for c in all_choices if c.short == short]
+                for c in dup_choices[1:]:
+                    log.warn(u"Prompt choice '{0}' removed due to conflict "
+                             u"with '{1}' (short letter: '{2}')",
+                             c.long, dup_choices[0].long, c.short)
+                    extra_choices.remove(c)
         return extra_choices
 
 
