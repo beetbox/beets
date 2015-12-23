@@ -36,9 +36,11 @@ New:
 
 For developers:
 
-* :doc:`/dev/plugins`: Two new hooks, ``albuminfo_received`` and
+* Two new :ref:`plugin hooks <plugin_events>`, ``albuminfo_received`` and
   ``trackinfo_received``, let plugins intercept metadata as soon as it is
   received, before it is applied to music in the database. :bug:`872`
+* Plugins can now add options to the interactive importer prompts. See
+  :ref:`append_prompt_choices`. :bug:`1758`
 
 Fixes:
 
