@@ -227,12 +227,17 @@ The events currently available are:
   of a ``TrackInfo``.
   Parameter: ``info``.
 
+* `before_choose_candidate`: called before the user is prompted for a decision
+  during a ``beet import`` interactive session. Plugins can use this event for
+  :ref:`appending choices to the prompt <append_prompt_choices>` by returning a
+  list of ``PromptChoices``. Parameters: ``task`` and ``session``.
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
 ^^^^^^^^^^^^^^^^^^^^^
 
-Plugins in can also enhance the functionality of the autotagger. For a
+Plugins can also enhance the functionality of the autotagger. For a
 comprehensive example, try looking at the ``chroma`` plugin, which is included
 with beets.
 
@@ -528,3 +533,64 @@ command and an import stage, but the command needs to print more messages than
 the import stage. (For example, you'll want to log "found lyrics for this song"
 when you're run explicitly as a command, but you don't want to noisily
 interrupt the importer interface when running automatically.)
+
+.. _append_prompt_choices:
+
+Append Prompt Choices
+^^^^^^^^^^^^^^^^^^^^^
+
+Plugins can also append choices to the prompt presented to the user during
+an import session.
+
+To do so, add a listener for the ``before_choose_candidate`` event, and return
+a list of ``PromptChoices`` that represent the additional choices that your
+plugin shall expose to the user::
+
+    from beets.plugins import BeetsPlugin
+    from beets.ui.commands import PromptChoice
+
+    class ExamplePlugin(BeetsPlugin):
+        def __init__(self):
+            super(ExamplePlugin, self).__init__()
+            self.register_listener('before_choose_candidate',
+                                   self.before_choose_candidate_event)
+
+        def before_choose_candidate_event(self, session, task):
+            return [PromptChoice('p', 'Print foo', self.foo),
+                    PromptChoice('d', 'Do bar', self.bar)]
+
+        def foo(self, session, task):
+            print('User has chosen "Print foo"!')
+
+        def bar(self, session, task):
+            print('User has chosen "Do bar"!')
+
+The previous example modifies the standard prompt::
+
+    # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
+    Enter search, enter Id, aBort?
+
+by appending two additional options (``Print foo`` and ``Do bar``)::
+
+    # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
+    Enter search, enter Id, aBort, Print foo, Do bar?
+
+If the user selects a choice, the ``callback`` attribute of the corresponding
+``PromptChoice`` will be called. It is the responsibility of the plugin to
+check for the status of the import session and decide the choices to be
+appended: for example, if a particular choice should only be presented if the
+album has no candidates, the relevant checks against ``task.candidates`` should
+be performed inside the plugin's ``before_choose_candidate_event`` accordingly.
+
+Please make sure that the short letter for each of the choices provided by the
+plugin is not already in use: the importer will raise an exception if two or
+more choices try to use the same short letter. As a reference, the following
+characters are used by the choices on the core importer prompt, and hence
+should not be used: ``a``, ``s``, ``u``, ``t``, ``g``, ``e``, ``i``, ``b``.
+
+Additionally, the callback function can optionally specify the next action to
+be performed by returning one of the values from ``importer.action``, which
+will be passed to the main loop upon the callback has been processed. Note that
+``action.MANUAL`` and ``action.MANUAL_ID`` will have no effect even if
+returned by the callback, due to the current architecture of the import
+process.
