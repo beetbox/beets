@@ -522,10 +522,9 @@ class GStreamerBackend(Backend):
         err, debug = message.parse_error()
         f = self._src.get_property("location")
         # A GStreamer error, either an unsupported format or a bug.
-        self._error = \
-            ReplayGainError(u"Error {0} - {1} on file {2}".format(err,
-                                                                  debug,
-                                                                  f))
+        self._error = ReplayGainError(
+            "Error {0!r} - {1!r} on file {2!r}".format(err, debug, f)
+        )
 
     def _on_tag(self, bus, message):
         tags = message.parse_tag()
