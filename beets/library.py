@@ -1421,7 +1421,7 @@ class DefaultTemplateFunctions(object):
         # Find matching albums to disambiguate with.
         subqueries = []
         for key in keys:
-            value = getattr(album, key)
+            value = album.get(key, '')
             subqueries.append(dbcore.MatchQuery(key, value))
         albums = self.lib.albums(dbcore.AndQuery(subqueries))
 
@@ -1434,7 +1434,7 @@ class DefaultTemplateFunctions(object):
         # Find the first disambiguator that distinguishes the albums.
         for disambiguator in disam:
             # Get the value for each album for the current field.
-            disam_values = set([getattr(a, disambiguator) for a in albums])
+            disam_values = set([a.get(disambiguator, '') for a in albums])
 
             # If the set of unique values is equal to the number of
             # albums in the disambiguation set, we're done -- this is

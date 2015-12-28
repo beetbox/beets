@@ -92,6 +92,8 @@ Fixes:
   did. :bug:`1657`
 * :doc:`/plugins/scrub`: Also in ``auto`` mode, album art is now correctly
   restored. :bug:`1657`
+* Possibly allow flexible attributes to be used with the ``%aunique`` template
+  function. :bug:`1775`
 
 .. _Emby Server: http://emby.media
 
