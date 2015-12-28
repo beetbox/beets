@@ -96,8 +96,9 @@ class RequestMixin(object):
 # ART SOURCES ################################################################
 
 class ArtSource(RequestMixin):
-    def __init__(self, log):
+    def __init__(self, log, config):
         self._log = log
+        self._config = config
 
     def get(self, album):
         raise NotImplementedError()
@@ -155,6 +156,43 @@ class AlbumArtOrg(ArtSource):
             yield image_url
         else:
             self._log.debug(u'no image found on page')
+
+
+class GoogleImages(ArtSource):
+    URL = u'https://www.googleapis.com/customsearch/v1'
+
+    def get(self, album):
+        """Return art URL from google custom search engine
+        given an album title and interpreter.
+        """
+        self._log.debug('fetching art from google...')
+        api_key = self._config['google_api_key'].get()
+        engine_id = self._config['google_engine_ID'].get()
+        self._log.debug('API Key: ' + api_key)
+        self._log.debug('Engine ID: ' + engine_id)
+        if not api_key:
+            self._log.debug(u'google api key not set')
+            return
+        if not (album.albumartist and album.album):
+            return
+        search_string = (album.albumartist + ',' + album.album).encode('utf-8')
+        response = self.request(self.URL, params={
+            'key': api_key,
+            'cx': engine_id,
+            'q': search_string,
+            'searchType': 'image'
+        })
+
+        # Get results using JSON.
+        data = response.json()
+        if 'error' in data:
+            reason = data['error']['errors'][0]['reason']
+            self._log.debug(u'google fetchart error: {0}', reason)
+            return
+
+        if 'items' in data.keys():
+            for item in data['items']:
+                yield item['link']
 
 
 class ITunesStore(ArtSource):
@@ -361,7 +399,7 @@ class FileSystem(ArtSource):
 # Try each source in turn.
 
 SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart',
-               u'wikipedia']
+               u'wikipedia', u'google']
 
 ART_SOURCES = {
     u'coverart': CoverArtArchive,
@@ -369,6 +407,7 @@ ART_SOURCES = {
     u'albumart': AlbumArtOrg,
     u'amazon': Amazon,
     u'wikipedia': Wikipedia,
+    u'google': GoogleImages,
 }
 
 # PLUGIN LOGIC ###############################################################
@@ -387,7 +426,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
             'sources': ['coverart', 'itunes', 'amazon', 'albumart'],
+            'google_API_key': None,
+            'google_engine_ID': u'001442825323518660753:hrh5ch1gjzm',
         })
+        self.config['google_API_key'].redact = True
 
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
@@ -407,8 +449,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             available_sources.remove(u'itunes')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
-        self.sources = [ART_SOURCES[s](self._log) for s in sources_name]
-        self.fs_source = FileSystem(self._log)
+        self.sources = [ART_SOURCES[s](self._log, self.config) for s in sources_name]
+        self.fs_source = FileSystem(self._log, self.config)
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
