@@ -65,13 +65,13 @@ class FetchImageTest(UseThePlugin):
         self.assertNotEqual(artpath, None)
 
 
-class FSArtTest(_common.TestCase):
+class FSArtTest(UseThePlugin):
     def setUp(self):
         super(FSArtTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, 'arttest')
         os.mkdir(self.dpath)
 
-        self.source = fetchart.FileSystem(logger)
+        self.source = fetchart.FileSystem(logger, self.plugin.config)
 
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
@@ -190,13 +190,13 @@ class CombinedTest(UseThePlugin):
         self.assertEqual(len(responses.calls), 0)
 
 
-class AAOTest(_common.TestCase):
+class AAOTest(UseThePlugin):
     ASIN = 'xxxx'
     AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
 
     def setUp(self):
         super(AAOTest, self).setUp()
-        self.source = fetchart.AlbumArtOrg(logger)
+        self.source = fetchart.AlbumArtOrg(logger, self.plugin.config)
 
     @responses.activate
     def run(self, *args, **kwargs):
