@@ -96,8 +96,9 @@ class RequestMixin(object):
 # ART SOURCES ################################################################
 
 class ArtSource(RequestMixin):
-    def __init__(self, log):
+    def __init__(self, log, config):
         self._log = log
+        self._config = config
 
     def get(self, album):
         raise NotImplementedError()
@@ -168,8 +169,8 @@ class GoogleImages(ArtSource):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
         response = self.request(self.URL, params={
-            'key': config['fetchart']['google_API_key'].get(),
-            'cx': config['fetchart']['google_engine_ID'].get(),
+            'key': self._config['google_API_key'].get(),
+            'cx': self._config['google_engine_ID'].get(),
             'q': search_string,
             'searchType': 'image'
         })
@@ -443,8 +444,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             available_sources.remove(u'google')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
-        self.sources = [ART_SOURCES[s](self._log) for s in sources_name]
-        self.fs_source = FileSystem(self._log)
+        self.sources = [ART_SOURCES[s](self._log, self.config) for s in sources_name]
+        self.fs_source = FileSystem(self._log, self.config)
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
