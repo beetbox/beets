@@ -165,7 +165,7 @@ class GoogleImages(ArtSource):
         given an album title and interpreter.
         """
         self._log.debug('fetching art from google...')
-        api_key = config['fetchart']['google_api_key'].get()
+        api_key = config['fetchart']['google_API_key'].get()
         engine_id = config['fetchart']['google_engine_ID'].get()
         self._log.debug('API Key: ' + api_key)
         self._log.debug('Engine ID: ' + engine_id)
