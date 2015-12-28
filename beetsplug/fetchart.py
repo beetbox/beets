@@ -169,9 +169,6 @@ class GoogleImages(ArtSource):
         engine_id = config['fetchart']['google_engine_ID'].get()
         self._log.debug('API Key: ' + api_key)
         self._log.debug('Engine ID: ' + engine_id)
-        if not api_key:
-            self._log.debug(u'google api key not set')
-            return
         if not (album.albumartist and album.album):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
@@ -446,6 +443,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         available_sources = list(SOURCES_ALL)
         if not HAVE_ITUNES and u'itunes' in available_sources:
             available_sources.remove(u'itunes')
+        if not self.config['google_API_key'].get() and \
+                u'google' in available_sources:
+            available_sources.remove(u'google')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
         self.sources = [ART_SOURCES[s](self._log) for s in sources_name]
