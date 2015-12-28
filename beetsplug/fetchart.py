@@ -164,14 +164,12 @@ class GoogleImages(ArtSource):
         """Return art URL from google custom search engine
         given an album title and interpreter.
         """
-        api_key = config['fetchart']['google_API_key'].get()
-        engine_id = config['fetchart']['google_engine_ID'].get()
         if not (album.albumartist and album.album):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
         response = self.request(self.URL, params={
-            'key': api_key,
-            'cx': engine_id,
+            'key': config['fetchart']['google_API_key'].get(),
+            'cx': config['fetchart']['google_engine_ID'].get(),
             'q': search_string,
             'searchType': 'image'
         })
