@@ -176,7 +176,12 @@ class GoogleImages(ArtSource):
         })
 
         # Get results using JSON.
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError:
+            self._log.debug(u'google: error loading response: {}'.format(response.text))
+            return
+
         if 'error' in data:
             reason = data['error']['errors'][0]['reason']
             self._log.debug(u'google fetchart error: {0}', reason)
