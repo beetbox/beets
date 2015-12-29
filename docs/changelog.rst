@@ -94,6 +94,8 @@ Fixes:
   restored. :bug:`1657`
 * Possibly allow flexible attributes to be used with the ``%aunique`` template
   function. :bug:`1775`
+* :doc:`/plugins/lyrics`: The Genius backend is now more robust to
+  communication errors. :bug:`1770`
 
 .. _Emby Server: http://emby.media
 
