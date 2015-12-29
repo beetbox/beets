@@ -52,9 +52,9 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google lyricwiki lyrics.com musixmatch genius``, i.e., all
-  sources. The *google* source will be automatically deactivated if no
-  ``google_API_key`` is setup.
+  Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all the
+  sources except for `genius`. The `google` source will be automatically
+  deactivated if no ``google_API_key`` is setup.
 
 Here's an example of ``config.yaml``::
 
