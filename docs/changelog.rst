@@ -10,10 +10,11 @@ by making changes in a visual text editor, which can sometimes be far more
 efficient than the built-in :ref:`modify-cmd` command. No more carefully
 retyping the same artist name with slight capitalization changes.
 
-This version also adds friendlier formatting (and querying!) of song
-durations.
+This version also adds an oft-requested "not" operator to beets' queries, so
+you can exclude music from any operation. It also brings friendlier formatting
+(and querying!) of song durations.
 
-Big new stuff:
+The big new stuff:
 
 * A new :doc:`/plugins/edit` lets you manually edit your music's metadata
   using your favorite text editor. :bug:`164` :bug:`1706`
@@ -21,13 +22,13 @@ Big new stuff:
   *exclude* matching music from the results. For example, ``beet list -a
   beatles ^album:1`` will find all your albums by the Beatles except for their
   singles compilation, "1." See :ref:`not_query`. :bug:`819` :bug:`1728`
-* A new :doc:`/plugins/embyupdate` can trigger a library refresh on a `Emby
-  Server`_ when your beets database changes.
-* Track length is now displayed as ``M:SS`` by default, instead of displaying
-  the raw number of seconds. Queries on track length also accept this format:
-  for example, ``beet list length:5:30..`` will find all your tracks that have
-  a duration over 5 minutes and 30 seconds. You can turn off this new behavior
-  using the ``format_raw_length`` configuration option. :bug:`1749`
+* A new :doc:`/plugins/embyupdate` can trigger a library refresh on an `Emby`_
+  server when your beets database changes.
+* Track length is now displayed as "M:SS" rather than a raw number of seconds.
+  Queries on track length also accept this format: for example, ``beet list
+  length:5:30..`` will find all your tracks that have a duration over 5
+  minutes and 30 seconds. You can turn off this new behavior using the
+  ``format_raw_length`` configuration option. :bug:`1749`
 
 Smaller changes:
 
@@ -65,12 +66,13 @@ Fixes:
   and name in quick succession. The importer would fail to detect them as
   duplicates, claiming that there were "empty albums" in the database even
   when there were not. :bug:`1652`
-* :doc:`plugins/lastgenre`: Clean up the reggae related genres somewhat.
+* :doc:`plugins/lastgenre`: Clean up the reggae-related genres somewhat.
   Thanks to :user:`Freso`. :bug:`1661`
 * The importer now correctly moves album art files when re-importing.
   :bug:`314`
-* :doc:`/plugins/fetchart`: In auto mode, skips albums that already have
-  art attached to them so as not to interfere with re-imports. :bug:`314`
+* :doc:`/plugins/fetchart`: In auto mode, the plugin now skips albums that
+  already have art attached to them so as not to interfere with re-imports.
+  :bug:`314`
 * :doc:`plugins/fetchart`: The plugin now only resizes album art if necessary,
   rather than always by default. :bug:`1264`
 * :doc:`plugins/fetchart`: Fix a bug where a database reference to a
@@ -101,8 +103,8 @@ Fixes:
   bands with regular-expression characters in their names, like Sunn O))).
   :bug:`1673`
 * :doc:`/plugins/scrub`: In ``auto`` mode, the plugin now *actually* only
-  scrubs files on import---not every time files were written, as it previously
-  did. :bug:`1657`
+  scrubs files on import, as the documentation always claimed it did---not
+  every time files were written, as it previously did. :bug:`1657`
 * :doc:`/plugins/scrub`: Also in ``auto`` mode, album art is now correctly
   restored. :bug:`1657`
 * Possibly allow flexible attributes to be used with the ``%aunique`` template
@@ -111,7 +113,7 @@ Fixes:
   communication errors. The backend has also been disabled by default, since
   the API it depends on is currently down. :bug:`1770`
 
-.. _Emby Server: http://emby.media
+.. _Emby: http://emby.media
 
 
 1.3.15 (October 17, 2015)
