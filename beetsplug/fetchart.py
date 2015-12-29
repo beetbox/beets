@@ -179,7 +179,8 @@ class GoogleImages(ArtSource):
         try:
             data = response.json()
         except ValueError:
-            self._log.debug(u'google: error loading response: {}'.format(response.text))
+            self._log.debug(u'google: error loading response: {}'
+                            .format(response.text))
             return
 
         if 'error' in data:
@@ -449,7 +450,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             available_sources.remove(u'google')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
-        self.sources = [ART_SOURCES[s](self._log, self.config) for s in sources_name]
+        self.sources = [ART_SOURCES[s](self._log, self.config)
+                        for s in sources_name]
         self.fs_source = FileSystem(self._log, self.config)
 
     # Asynchronous; after music is added to the library.
