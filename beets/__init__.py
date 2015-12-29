@@ -20,7 +20,7 @@ import os
 import beets.library
 from beets.util import confit
 
-__version__ = '1.3.16'
+__version__ = '1.3.17'
 __author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 Library = beets.library.Library
