@@ -50,12 +50,18 @@ file. The available options are:
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
   Default: ``coverart itunes amazon albumart``, i.e., everything but
-  ``wikipedia``. Enable those two sources for more matches at
+  ``wikipedia`` and ``google``. Enable those two sources for more matches at
   the cost of some speed.
+- **google_API_key**: Your Google API key (to enable the Google Custom Search
+  backend).
+  Default: None.
+- **google_engine_ID**: The custom search engine to use.
+  Default: The `beets custom search engine`_, which searches the entire web.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
 
+.. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
 .. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 
@@ -137,6 +143,24 @@ Once the library is installed, the plugin will use it to search automatically.
 .. _python-itunes: https://github.com/ocelma/python-itunes
 .. _pip: http://pip.openplans.org/
 
+Google custom search
+''''''''''''''''''''
+
+To use the google image search backend you need to
+`register for a Google API key`_. Set the ``google_API_key`` configuration
+option to your key, then add ``google`` to the list of sources in your
+configuration.
+
+.. _register for a Google API key: https://code.google.com/apis/console.
+
+Optionally, you can `define a custom search engine`_. Get your search engine's
+token and use it for your ``google_engine_ID`` configuration option. The
+default engine searches the entire web for cover art.
+
+.. _define a custom search engine: http://www.google.com/cse/all
+
+Note that the Google custom search API is limited to 100 queries per day.
+After that, the fetchart plugin will fall back on other declared data sources.
 
 Embedding Album Art
 -------------------
