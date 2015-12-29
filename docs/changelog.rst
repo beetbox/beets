@@ -4,10 +4,33 @@ Changelog
 1.3.16 (in development)
 -----------------------
 
-New:
+The big news in this release is a new :doc:`interactive editor plugin
+</plugins/edit>`. It's really nifty: you can now change your music's metadata
+by making changes in a visual text editor, which can sometimes be far more
+efficient than the built-in :ref:`modify-cmd` command. No more carefully
+retyping the same artist name with slight capitalization changes.
+
+This version also adds friendlier formatting (and querying!) of song
+durations.
+
+Big new stuff:
 
 * A new :doc:`/plugins/edit` lets you manually edit your music's metadata
   using your favorite text editor. :bug:`164` :bug:`1706`
+* Queries can now use "not" logic. Type a ``^`` before part of a query to
+  *exclude* matching music from the results. For example, ``beet list -a
+  beatles ^album:1`` will find all your albums by the Beatles except for their
+  singles compilation, "1." See :ref:`not_query`. :bug:`819` :bug:`1728`
+* A new :doc:`/plugins/embyupdate` can trigger a library refresh on a `Emby
+  Server`_ when your beets database changes.
+* Track length is now displayed as ``M:SS`` by default, instead of displaying
+  the raw number of seconds. Queries on track length also accept this format:
+  for example, ``beet list length:5:30..`` will find all your tracks that have
+  a duration over 5 minutes and 30 seconds. You can turn off this new behavior
+  using the ``format_raw_length`` configuration option. :bug:`1749`
+
+Smaller changes:
+
 * Three commands, ``modify``, ``update``, and ``mbsync``, would previously
   move files by default after changing their metadata. Now, these commands
   will only move files if you have the :ref:`config-import-copy` or
@@ -20,21 +43,11 @@ New:
   various-artists albums. The setting defaults to "Various Artists," the
   MusicBrainz standard. In order to match MusicBrainz, the
   :doc:`/plugins/discogs` also adopts the same setting.
-* :doc:`/plugins/embyupdate`: A plugin to trigger a library refresh on a
-  `Emby Server`_ if database changed.
-* Queries can now use "not" logic. Type a ``^`` before part of a query to
-  *exclude* matching music from the results. For example, ``beet list -a
-  beatles ^album:1`` will find all your albums by the Beatles except for their
-  singles compilation, "1." See :ref:`not_query`. :bug:`819` :bug:`1728`
-* :doc:`/plugins/info`: The plugin now accepts the ``-f/--format`` option for
-  customizing how items are displayed. :bug:`1737`
-* Track length is now displayed as ``M:SS`` by default, instead of displaying
-  the raw number of seconds. Queries on track length also accept this format:
-  for example, ``beet list length:5:30..`` will find all your tracks that have
-  a duration over 5 minutes and 30 seconds. You can turn off this new behavior
-  using the ``format_raw_length`` configuration option. :bug:`1749`
+* :doc:`/plugins/info`: The ``info`` command now accepts a ``-f/--format``
+  option for customizing how items are displayed, just like the built-in
+  ``list`` command. :bug:`1737`
 
-For developers:
+Some changes for developers:
 
 * Two new :ref:`plugin hooks <plugin_events>`, ``albuminfo_received`` and
   ``trackinfo_received``, let plugins intercept metadata as soon as it is
