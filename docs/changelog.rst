@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.16 (in development)
------------------------
+1.3.16 (December 28, 2015)
+--------------------------
 
 The big news in this release is a new :doc:`interactive editor plugin
 </plugins/edit>`. It's really nifty: you can now change your music's metadata
