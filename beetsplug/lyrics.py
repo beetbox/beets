@@ -237,25 +237,45 @@ class Genius(Backend):
         url = u'https://api.genius.com/search?q=%s' \
             % (urllib.quote(query.encode('utf8')))
 
-        data = requests.get(
-            url,
-            headers=self.headers,
-            allow_redirects=True
-        ).content
+        self._log.debug('genius: requesting search {}', url)
+        try:
+            req = requests.get(
+                url,
+                headers=self.headers,
+                allow_redirects=True
+            )
+            req.raise_for_status()
+        except requests.RequestException as exc:
+            self._log.debug('genius: request error: {}', exc)
+            return None
 
-        return json.loads(data)
+        try:
+            return req.json()
+        except ValueError:
+            self._log.debug('genius: invalid response: {}', req.text)
+            return None
 
     def get_lyrics(self, link):
         url = u'http://genius-api.com/api/lyricsInfo'
 
-        data = requests.post(
-            url,
-            data={'link': link},
-            headers=self.headers,
-            allow_redirects=True
-        ).content
+        self._log.debug('genius: requesting lyrics for link {}', link)
+        try:
+            req = requests.post(
+                url,
+                data={'link': link},
+                headers=self.headers,
+                allow_redirects=True
+            )
+            req.raise_for_status()
+        except requests.RequestException as exc:
+            self._log.debug('genius: request error: {}', exc)
+            return None
 
-        return json.loads(data)
+        try:
+            return req.json()
+        except ValueError:
+            self._log.debug('genius: invalid response: {}', req.text)
+            return None
 
     def build_lyric_string(self, lyrics):
         if 'lyrics' not in lyrics:
@@ -274,6 +294,8 @@ class Genius(Backend):
 
     def fetch(self, artist, title):
         search_data = self.search_genius(artist, title)
+        if not search_data:
+            return
 
         if not search_data['meta']['status'] == 200:
             return
@@ -284,6 +306,8 @@ class Genius(Backend):
 
             record_url = records[0]['result']['url']
             lyric_data = self.get_lyrics(record_url)
+            if not lyric_data:
+                return
             lyrics = self.build_lyric_string(lyric_data)
 
             return lyrics
