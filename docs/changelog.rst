@@ -4,7 +4,11 @@ Changelog
 1.3.17 (in development)
 -----------------------
 
-Changelog goes here!
+New:
+
+* :doc:`/plugins/fetchart`: The Google Images backend has been restored. It
+  now requires an API key from Google. Thanks to :user:`lcharlick`.
+  :bug:`1778`
 
 
 1.3.16 (December 28, 2015)
