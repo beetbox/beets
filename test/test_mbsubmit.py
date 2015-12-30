@@ -35,7 +35,7 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_xxxxprint_tracks_output(self):
+    def test_print_tracks_output(self):
         """Test the output of the "print tracks" choice."""
         self.matcher.matching = AutotagStub.BAD
 
@@ -44,13 +44,13 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
                 # Print tracks; Skip
                 self.importer.run()
 
-        # manually build the string for comparing the output
+        # Manually build the string for comparing the output.
         tracklist = ('Print tracks? '
                      '01. Tag Title 1 - Tag Artist (0:01)\n'
                      '02. Tag Title 2 - Tag Artist (0:01)')
         self.assertIn(tracklist, output.getvalue())
 
-    def test_xxprint_tracks_output_as_tracks(self):
+    def test_print_tracks_output_as_tracks(self):
         """Test the output of the "print tracks" choice, as singletons."""
         self.matcher.matching = AutotagStub.BAD
 
@@ -59,7 +59,7 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
                 # as Tracks; Skip; Print tracks; Skip
                 self.importer.run()
 
-        # manually build the string for comparing the output
+        # Manually build the string for comparing the output.
         tracklist = ('Print tracks? '
                      '02. Tag Title 2 - Tag Artist (0:01)')
         self.assertIn(tracklist, output.getvalue())

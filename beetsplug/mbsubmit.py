@@ -41,7 +41,7 @@ class MBSubmitPlugin(BeetsPlugin):
             'threshold': 'medium',
         })
 
-        # validate and store threshold
+        # Validate and store threshold.
         self.threshold = self.config['threshold'].as_choice({
             'none': Recommendation.none,
             'low': Recommendation.low,
