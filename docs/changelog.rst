@@ -9,6 +9,9 @@ New:
 * :doc:`/plugins/fetchart`: The Google Images backend has been restored. It
   now requires an API key from Google. Thanks to :user:`lcharlick`.
   :bug:`1778`
+* A new :doc:`/plugins/mbsubmit` lets you print the tracks of an album in a
+  format parseable by MusicBrainz track parser during an interactive import
+  session. :bug:`1779`
 
 
 1.3.16 (December 28, 2015)
