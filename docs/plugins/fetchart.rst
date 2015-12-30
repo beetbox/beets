@@ -52,10 +52,10 @@ file. The available options are:
   Default: ``coverart itunes amazon albumart``, i.e., everything but
   ``wikipedia`` and ``google``. Enable those two sources for more matches at
   the cost of some speed.
-- **google_API_key**: Your Google API key (to enable the Google Custom Search
+- **google_key**: Your Google API key (to enable the Google Custom Search
   backend).
   Default: None.
-- **google_engine_ID**: The custom search engine to use.
+- **google_engine**: The custom search engine to use.
   Default: The `beets custom search engine`_, which searches the entire web.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
@@ -147,14 +147,14 @@ Google custom search
 ''''''''''''''''''''
 
 To use the google image search backend you need to
-`register for a Google API key`_. Set the ``google_API_key`` configuration
+`register for a Google API key`_. Set the ``google_key`` configuration
 option to your key, then add ``google`` to the list of sources in your
 configuration.
 
 .. _register for a Google API key: https://code.google.com/apis/console.
 
 Optionally, you can `define a custom search engine`_. Get your search engine's
-token and use it for your ``google_engine_ID`` configuration option. The
+token and use it for your ``google_engine`` configuration option. The
 default engine searches the entire web for cover art.
 
 .. _define a custom search engine: http://www.google.com/cse/all

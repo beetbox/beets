@@ -169,8 +169,8 @@ class GoogleImages(ArtSource):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
         response = self.request(self.URL, params={
-            'key': self._config['google_API_key'].get(),
-            'cx': self._config['google_engine_ID'].get(),
+            'key': self._config['google_key'].get(),
+            'cx': self._config['google_engine'].get(),
             'q': search_string,
             'searchType': 'image'
         })
@@ -424,10 +424,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
             'sources': ['coverart', 'itunes', 'amazon', 'albumart'],
-            'google_API_key': None,
-            'google_engine_ID': u'001442825323518660753:hrh5ch1gjzm',
+            'google_key': None,
+            'google_engine': u'001442825323518660753:hrh5ch1gjzm',
         })
-        self.config['google_API_key'].redact = True
+        self.config['google_key'].redact = True
 
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
@@ -445,7 +445,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         available_sources = list(SOURCES_ALL)
         if not HAVE_ITUNES and u'itunes' in available_sources:
             available_sources.remove(u'itunes')
-        if not self.config['google_API_key'].get() and \
+        if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
         sources_name = plugins.sanitize_choices(
