@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015 Bruno Cauet
+# Copyright 2016 Bruno Cauet
 # Split an album-file in tracks thanks a cue file
 
 import subprocess
