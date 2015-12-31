@@ -131,11 +131,6 @@ class PlayPlugin(BeetsPlugin):
         except OSError as exc:
             raise ui.UserError("Could not play the music playlist: "
                                "{0}".format(exc))
-        finally:
-            if not raw:
-                self._log.debug('Removing temporary playlist: {}',
-                                open_args[0])
-                util.remove(open_args[0])
 
     def _create_tmp_playlist(self, paths_list):
         """Create a temporary .m3u file. Return the filename.
