@@ -48,10 +48,16 @@ def fetch_info(log, lib):
         if item.mb_trackid:
             log.info('getting data for: {}', item)
 
+            # Fetch the data from the AB API.
             url = generate_url(item.mb_trackid)
             log.debug('fetching URL: {}', url)
-            rs = requests.get(url)
+            try:
+                rs = requests.get(url)
+            except requests.RequestException as exc:
+                log.info('request error: {}', exc)
+                continue
 
+            # Parse the JSON response.
             try:
                 rs.json()
             except ValueError:
