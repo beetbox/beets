@@ -58,6 +58,11 @@ def fetch_info(log, items):
                 log.info('request error: {}', exc)
                 continue
 
+            # Check for missing tracks.
+            if rs.status_code == 404:
+                log.info('recording ID {} not found', item.mb_trackid)
+                continue
+
             # Parse the JSON response.
             try:
                 data = rs.json()
