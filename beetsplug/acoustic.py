@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2016, Adrian Sampson.
+# Copyright 2016, Ohm Patel.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -18,9 +18,9 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+import requests
 
 from beets import plugins, ui
-import requests
 
 ACOUSTIC_URL = "http://acousticbrainz.org/"
 LEVEL = "/high-level"
@@ -46,12 +46,32 @@ def fetch_info(lib):
     """
     for item in lib.items():
         if item.mb_trackid:
-            r = requests.get(generate_url(item.mb_trackid))
-            print(item.mb_trackid)
-            print(r.status_code)
+            rs = requests.get(generate_url(item.mb_trackid)).json()
+
+            item.abrainz_danceable = get_value(rs, ["highlevel",
+                                                    "danceability",
+                                                    "all",
+                                                    "danceable"])
+            item.abrainz_happy = get_value(rs, ["highlevel",
+                                                "mood_happy",
+                                                "all",
+                                                "happy"])
+            item.abrainz_party = get_value(rs, ["highlevel",
+                                                "mood_party",
+                                                "all",
+                                                "party"])
+
+            item.write()
+            item.store()
 
 
 def generate_url(mbid):
     """Generates url of AcousticBrainz end point for given MBID
     """
     return ACOUSTIC_URL + mbid + LEVEL
+
+
+def get_value(data, map_path):
+    """Allows traversal of dictionary with cleaner formatting
+    """
+    return reduce(lambda d, k: d[k], map_path, data)
