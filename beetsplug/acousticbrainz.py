@@ -31,7 +31,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         super(AcousticPlugin, self).__init__()
 
     def commands(self):
-        cmd = ui.Subcommand('abrainz',
+        cmd = ui.Subcommand('acousticbrainz',
                             help="fetch metadata from AcousticBrainz")
 
         def func(lib, opts, args):
