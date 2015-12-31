@@ -35,16 +35,17 @@ class AcousticPlugin(plugins.BeetsPlugin):
                             help="fetch metadata from AcousticBrainz")
 
         def func(lib, opts, args):
-            fetch_info(self._log, lib)
+            items = lib.items(ui.decargs(args))
+            fetch_info(self._log, items, ui.should_write())
 
         cmd.func = func
         return [cmd]
 
 
-def fetch_info(log, lib):
+def fetch_info(log, items, write):
     """Currently outputs MBID and corresponding request status code
     """
-    for item in lib.items():
+    for item in items:
         if item.mb_trackid:
             log.info('getting data for: {}', item)
 
@@ -79,7 +80,8 @@ def fetch_info(log, lib):
                 ["highlevel", "mood_party", "all", "party"],
             )
 
-            item.write()
+            if write:
+                item.try_write()
             item.store()
 
 

@@ -9,7 +9,7 @@ The ``acoustricbrainz`` plugin gets acoustic-analysis information from the
 
 Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run it by typing::
 
-    $ beet acousticbrainz
+    $ beet acousticbrainz [QUERY]
 
 For all tracks with a MusicBrainz recording ID, the plugin currently sets
 these fields:
