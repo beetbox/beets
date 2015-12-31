@@ -59,22 +59,25 @@ def fetch_info(log, lib):
 
             # Parse the JSON response.
             try:
-                rs.json()
+                data = rs.json()
             except ValueError:
                 log.debug('Invalid Response: {}', rs.text)
 
-            item.danceable = get_value(log, rs.json(), ["highlevel",
-                                                        "danceability",
-                                                        "all",
-                                                        "danceable"])
-            item.mood_happy = get_value(log, rs.json(), ["highlevel",
-                                                         "mood_happy",
-                                                         "all",
-                                                         "happy"])
-            item.mood_party = get_value(log, rs.json(), ["highlevel",
-                                                         "mood_party",
-                                                         "all",
-                                                         "party"])
+            item.danceable = get_value(
+                log,
+                data,
+                ["highlevel", "danceability", "all", "danceable"],
+            )
+            item.mood_happy = get_value(
+                log,
+                data,
+                ["highlevel", "mood_happy", "all", "happy"],
+            )
+            item.mood_party = get_value(
+                log,
+                data,
+                ["highlevel", "mood_party", "all", "party"],
+            )
 
             item.write()
             item.store()
