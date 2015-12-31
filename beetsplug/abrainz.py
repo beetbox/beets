@@ -51,7 +51,7 @@ def fetch_info(self, lib):
             try:
                 rs.json()
             except ValueError:
-                self._log.debug('abrainz: Invalid Response: {}', rs.text)
+                self._log.debug('Invalid Response: {}', rs.text)
 
             item.danceable = get_value(self._log, rs.json(), ["highlevel",
                                                               "danceability",
