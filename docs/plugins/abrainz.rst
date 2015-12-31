@@ -1,5 +1,5 @@
 ABrainz Plugin
-===========
+==============
 
 The ``abrainz`` plugin provides a command that traverses through a library and tags tracks with valid MusicBrainz IDs with additional metadata such as
 
