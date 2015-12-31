@@ -129,7 +129,7 @@ class PlayPlugin(BeetsPlugin):
         try:
             util.interactive_open(open_args, command_str)
         except OSError as exc:
-            raise ui.UserError("Could not play the music playlist: "
+            raise ui.UserError("Could not play the query: "
                                "{0}".format(exc))
 
     def _create_tmp_playlist(self, paths_list):
