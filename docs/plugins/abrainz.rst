@@ -2,11 +2,12 @@ ABrainz Plugin
 ===========
 
 The ``abrainz`` plugin provides a command that traverses through a library and tags tracks with valid MusicBrainz IDs with additional metadata such as
-* ```danceable```
+
+* ``danceable``
     + Predicts how easy the track is danceable to
-* ```mood_happy```
+* ``mood_happy``
     + Predicts the probability this track is played to invoke happiness
-* ```mood_party```
+* ``mood_party``
     + Predicts the probability this track is played in a party environment
 
 Enable the ``abrainz`` plugin in your configuration (see :ref:`using-plugins`) and run with:
