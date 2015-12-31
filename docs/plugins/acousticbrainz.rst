@@ -1,5 +1,5 @@
 Acousticbrainz Plugin
-==============
+=====================
 
 The ``acoustricbrainz`` plugin provides a command that traverses through a library and tags tracks with valid MusicBrainz IDs with additional metadata such as
 
@@ -12,6 +12,6 @@ The ``acoustricbrainz`` plugin provides a command that traverses through a libra
 
 Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run with:
 
-    $ beet abrainz
+    $ beet acousticbrainz
 
 Additional command-line options coming soon.
