@@ -1,17 +1,22 @@
-Acousticbrainz Plugin
+AcousticBrainz Plugin
 =====================
 
-The ``acoustricbrainz`` plugin provides a command that traverses through a library and tags tracks with valid MusicBrainz IDs with additional metadata such as
+The ``acoustricbrainz`` plugin gets acoustic-analysis information from the
+`AcousticBrainz`_ project. The spirit is similar to the
+:doc:`/plugins/echonest`.
 
-* ``danceable``
-    + Predicts how easy the track is danceable to
-* ``mood_happy``
-    + Predicts the probability this track is played to invoke happiness
-* ``mood_party``
-    + Predicts the probability this track is played in a party environment
+.. _AcousticBrainz: http://acousticbrainz.org/
 
-Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run with:
+Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run it by typing::
 
     $ beet acousticbrainz
 
-Additional command-line options coming soon.
+For all tracks with a MusicBrainz recording ID, the plugin currently sets
+these fields:
+
+* ``danceable``: Predicts how easy the track is to dance to.
+* ``mood_happy``: Predicts the probability this track will evoke happiness.
+* ``mood_party``: Predicts the probability this track should be played at a
+  party.
+
+These three fields are all numbers between 0.0 and 1.0.
