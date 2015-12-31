@@ -48,10 +48,10 @@ def fetch_info(lib):
         if item.mb_trackid:
             rs = requests.get(generate_url(item.mb_trackid)).json()
 
-            item.abrainz_danceable = get_value(rs, ["highlevel",
-                                                    "danceability",
-                                                    "all",
-                                                    "danceable"])
+            item.abrainz_dance = get_value(rs, ["highlevel",
+                                                "danceability",
+                                                "all",
+                                                "danceable"])
             item.abrainz_happy = get_value(rs, ["highlevel",
                                                 "mood_happy",
                                                 "all",
