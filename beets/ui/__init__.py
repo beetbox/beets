@@ -1172,7 +1172,7 @@ def _raw_main(args, lib=None):
     parser.add_option('-d', '--directory', dest='directory',
                       help="destination music directory")
     parser.add_option('-v', '--verbose', dest='verbose', action='count',
-                      help='print debugging information')
+                      help='log more details (use twice for even more)')
     parser.add_option('-c', '--config', dest='config',
                       help='path to configuration file')
     parser.add_option('-h', '--help', dest='help', action='store_true',
