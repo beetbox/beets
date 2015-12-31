@@ -517,16 +517,18 @@ str.format-style string formatting. So you can write logging calls like this::
 When beets is in verbose mode, plugin messages are prefixed with the plugin
 name to make them easier to see.
 
-What messages will be logged depends on the logging level and the action
+Which messages will be logged depends on the logging level and the action
 performed:
 
-* On import stages and event handlers, the default is ``WARNING`` messages and
-  above.
-* On direct actions, the default is ``INFO`` or above, as with the rest of
-  beets.
+* Inside import stages and event handlers, the default is ``WARNING`` messages
+  and above.
+* Everywhere else, the default is ``INFO`` or above.
 
-The verbosity can be increased with ``--verbose`` flags: each flags lowers the
-level by a notch.
+The verbosity can be increased with ``--verbose`` (``-v``) flags: each flags
+lowers the level by a notch. That means that, with a single ``-v`` flag, event
+handlers won't have their ``DEBUG`` messages displayed, but command functions
+(for example) will. With ``-vv`` on the command line, ``DEBUG`` messages will
+be displayed everywhere.
 
 This addresses a common pattern where plugins need to use the same code for a
 command and an import stage, but the command needs to print more messages than
