@@ -35,36 +35,40 @@ class AcousticPlugin(plugins.BeetsPlugin):
                             help="fetch metadata from AcousticBrainz")
 
         def func(lib, opts, args):
-            fetch_info(self, lib)
+            fetch_info(self._log, lib)
 
         cmd.func = func
         return [cmd]
 
 
-def fetch_info(self, lib):
+def fetch_info(log, lib):
     """Currently outputs MBID and corresponding request status code
     """
     for item in lib.items():
         if item.mb_trackid:
-            rs = requests.get(generate_url(item.mb_trackid))
+            log.info('getting data for: {}', item)
+
+            url = generate_url(item.mb_trackid)
+            log.debug('fetching URL: {}', url)
+            rs = requests.get(url)
 
             try:
                 rs.json()
             except ValueError:
-                self._log.debug('Invalid Response: {}', rs.text)
+                log.debug('Invalid Response: {}', rs.text)
 
-            item.danceable = get_value(self._log, rs.json(), ["highlevel",
-                                                              "danceability",
-                                                              "all",
-                                                              "danceable"])
-            item.mood_happy = get_value(self._log, rs.json(), ["highlevel",
-                                                               "mood_happy",
-                                                               "all",
-                                                               "happy"])
-            item.mood_party = get_value(self._log, rs.json(), ["highlevel",
-                                                               "mood_party",
-                                                               "all",
-                                                               "party"])
+            item.danceable = get_value(log, rs.json(), ["highlevel",
+                                                        "danceability",
+                                                        "all",
+                                                        "danceable"])
+            item.mood_happy = get_value(log, rs.json(), ["highlevel",
+                                                         "mood_happy",
+                                                         "all",
+                                                         "happy"])
+            item.mood_party = get_value(log, rs.json(), ["highlevel",
+                                                         "mood_party",
+                                                         "all",
+                                                         "party"])
 
             item.write()
             item.store()
