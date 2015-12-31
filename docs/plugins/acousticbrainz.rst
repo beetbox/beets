@@ -1,7 +1,7 @@
-ABrainz Plugin
+Acousticbrainz Plugin
 ==============
 
-The ``abrainz`` plugin provides a command that traverses through a library and tags tracks with valid MusicBrainz IDs with additional metadata such as
+The ``acoustricbrainz`` plugin provides a command that traverses through a library and tags tracks with valid MusicBrainz IDs with additional metadata such as
 
 * ``danceable``
     + Predicts how easy the track is danceable to
@@ -10,7 +10,7 @@ The ``abrainz`` plugin provides a command that traverses through a library and t
 * ``mood_party``
     + Predicts the probability this track is played in a party environment
 
-Enable the ``abrainz`` plugin in your configuration (see :ref:`using-plugins`) and run with:
+Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run with:
 
     $ beet abrainz
 

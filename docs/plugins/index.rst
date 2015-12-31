@@ -31,7 +31,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
 .. toctree::
    :hidden:
 
-   abrainz
+   acousticbrainz
    badfiles
    bpd
    bpm
@@ -95,7 +95,7 @@ Autotagger Extensions
 Metadata
 --------
 
-* :doc:`abrainz`: Fetch various AcousticBrainz metadata
+* :doc:`acousticbrainz`: Fetch various AcousticBrainz metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
 * :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
   `the Echo Nest`_ (tempo, energy, danceability, ...).
