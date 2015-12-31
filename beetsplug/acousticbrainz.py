@@ -36,13 +36,13 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            fetch_info(self._log, items, ui.should_write())
+            fetch_info(self._log, items)
 
         cmd.func = func
         return [cmd]
 
 
-def fetch_info(log, items, write):
+def fetch_info(log, items):
     """Currently outputs MBID and corresponding request status code
     """
     for item in items:
@@ -64,6 +64,7 @@ def fetch_info(log, items, write):
             except ValueError:
                 log.debug('Invalid Response: {}', rs.text)
 
+            # Get each field and assign it on the item.
             item.danceable = get_value(
                 log,
                 data,
@@ -80,8 +81,8 @@ def fetch_info(log, items, write):
                 ["highlevel", "mood_party", "all", "party"],
             )
 
-            if write:
-                item.try_write()
+            # Store the data. We only update flexible attributes, so we
+            # don't call `item.try_write()` here.
             item.store()
 
 
