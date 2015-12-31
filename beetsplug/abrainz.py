@@ -31,35 +31,40 @@ class AcousticPlugin(plugins.BeetsPlugin):
         super(AcousticPlugin, self).__init__()
 
     def commands(self):
-        cmd = ui.Subcommand('acoustic',
+        cmd = ui.Subcommand('abrainz',
                             help="fetch metadata from AcousticBrainz")
 
         def func(lib, opts, args):
-            fetch_info(lib)
+            fetch_info(self, lib)
 
         cmd.func = func
         return [cmd]
 
 
-def fetch_info(lib):
+def fetch_info(self, lib):
     """Currently outputs MBID and corresponding request status code
     """
     for item in lib.items():
         if item.mb_trackid:
-            rs = requests.get(generate_url(item.mb_trackid)).json()
+            rs = requests.get(generate_url(item.mb_trackid))
 
-            item.abrainz_dance = get_value(rs, ["highlevel",
-                                                "danceability",
-                                                "all",
-                                                "danceable"])
-            item.abrainz_happy = get_value(rs, ["highlevel",
-                                                "mood_happy",
-                                                "all",
-                                                "happy"])
-            item.abrainz_party = get_value(rs, ["highlevel",
-                                                "mood_party",
-                                                "all",
-                                                "party"])
+            try:
+                rs.json()
+            except ValueError:
+                self._log.debug('abrainz: Invalid Response: {}', rs.text)
+
+            item.danceable = get_value(self._log, rs.json(), ["highlevel",
+                                                              "danceability",
+                                                              "all",
+                                                              "danceable"])
+            item.mood_happy = get_value(self._log, rs.json(), ["highlevel",
+                                                               "mood_happy",
+                                                               "all",
+                                                               "happy"])
+            item.mood_party = get_value(self._log, rs.json(), ["highlevel",
+                                                               "mood_party",
+                                                               "all",
+                                                               "party"])
 
             item.write()
             item.store()
@@ -71,7 +76,10 @@ def generate_url(mbid):
     return ACOUSTIC_URL + mbid + LEVEL
 
 
-def get_value(data, map_path):
+def get_value(log, data, map_path):
     """Allows traversal of dictionary with cleaner formatting
     """
-    return reduce(lambda d, k: d[k], map_path, data)
+    try:
+        return reduce(lambda d, k: d[k], map_path, data)
+    except KeyError:
+        log.debug('Invalid Path: {}', map_path)
