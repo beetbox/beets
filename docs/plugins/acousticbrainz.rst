@@ -19,4 +19,20 @@ these fields:
 * ``mood_party``: Predicts the probability this track should be played at a
   party.
 
-These three fields are all numbers between 0.0 and 1.0.
+Automatic Tagging
+-----------------
+
+To automatically tag files using AcousticBrainz data during import, just
+enable the ``acousticbrainz`` plugin (see :ref:`using-plugins`). When importing 
+new files (with ``import.write`` turned on) or modifying files' tags with the 
+``beet modify`` command, beets will query the AcousticBrainz API using MBID and
+set the appropriate metadata.
+
+Configuration
+-------------
+
+To configure the plugin, make a ``acousticbrainz:`` section in your
+configuration file. There is one option:
+
+- **auto**: Enable AcousticBrainz import during import.
+  Default: ``yes``.
