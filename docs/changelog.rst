@@ -22,6 +22,8 @@ Fixes:
   generated ``.m3u`` files beforehand either.). If this is an issue for you, you
   might want to take a look at the ``raw`` config option of the
   :doc:`/plugins/play`. :bug:`1785`, :bug:`1600`
+* The :ref:`move-cmd` command does not display files whose path does not change
+  anymore. :bug:`1583`
 
 
 
