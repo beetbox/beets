@@ -30,6 +30,11 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(AcousticPlugin, self).__init__()
 
+        self.config.add({'auto': True})
+        if self.config['auto']:
+            self.register_listener('import_task_files',
+                                   self.import_task_files)
+
     def commands(self):
         cmd = ui.Subcommand('acousticbrainz',
                             help="fetch metadata from AcousticBrainz")
@@ -40,6 +45,13 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         cmd.func = func
         return [cmd]
+
+    def import_task_files(self, session, task):
+        """Automatically tag imported files
+        """
+
+        items = task.imported_items()
+        fetch_info(self._log, items)
 
 
 def fetch_info(log, items):
