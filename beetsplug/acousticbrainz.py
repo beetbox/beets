@@ -147,7 +147,7 @@ def fetch_info(log, items):
                 data,
                 ["highlevel", "voice_instrumental", "value"],
             )
-            
+
             # Store the data. We only update flexible attributes, so we
             # don't call `item.try_write()` here.
             item.store()
