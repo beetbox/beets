@@ -14,10 +14,19 @@ Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plug
 For all tracks with a MusicBrainz recording ID, the plugin currently sets
 these fields:
 
-* ``danceable``: Predicts how easy the track is to dance to.
-* ``mood_happy``: Predicts the probability this track will evoke happiness.
-* ``mood_party``: Predicts the probability this track should be played at a
-  party.
+* ``danceable``
+* ``gender``
+* ``genre_rosamerica``
+* ``mood_acoustic``
+* ``mood_aggressive``
+* ``mood_electronic``
+* ``mood_happy``
+* ``mood_party``
+* ``mood_relaxed``
+* ``mood_sad``
+* ``rhythm``
+* ``tonal``
+* ``voice_instrumental``
 
 Automatic Tagging
 -----------------
