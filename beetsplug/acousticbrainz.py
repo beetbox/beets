@@ -87,6 +87,31 @@ def fetch_info(log, items):
                 data,
                 ["highlevel", "danceability", "all", "danceable"],
             )
+            item.gender = get_value(
+                log,
+                data,
+                ["highlevel", "gender", "value"],
+            )
+            item.genre_rosamerica = get_value(
+                log,
+                data,
+                ["highlevel", "genre_rosamerica", "value"],
+            )
+            item.mood_acoustic = get_value(
+                log,
+                data,
+                ["highlevel", "mood_acoustic", "all", "acoustic"],
+            )
+            item.mood_aggressive = get_value(
+                log,
+                data,
+                ["highlevel", "mood_aggresive", "all", "aggresive"],
+            )
+            item.mood_electronic = get_value(
+                log,
+                data,
+                ["highlevel", "mood_electronic", "all", "electronic"],
+            )
             item.mood_happy = get_value(
                 log,
                 data,
@@ -97,7 +122,32 @@ def fetch_info(log, items):
                 data,
                 ["highlevel", "mood_party", "all", "party"],
             )
-
+            item.mood_relaxed = get_value(
+                log,
+                data,
+                ["highlevel", "mood_relaxed", "all", "relaxed"],
+            )
+            item.mood_sad = get_value(
+                log,
+                data,
+                ["highlevel", "mood_sad", "all", "sad"],
+            )
+            item.rhythm = get_value(
+                log,
+                data
+                ["highlevel", "ismir04_rhythm", "value"],
+            )
+            item.tonal = get_value(
+                log,
+                data,
+                ["highlevel", "tonal_atonal", "all", "tonal"],
+            )
+            item.voice_instrumental = get_value(
+                log,
+                data,
+                ["highlevel", "voice_instrumental", "value"],
+            )
+            
             # Store the data. We only update flexible attributes, so we
             # don't call `item.try_write()` here.
             item.store()
