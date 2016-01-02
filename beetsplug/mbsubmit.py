@@ -16,8 +16,10 @@
 """Aid in submitting information to MusicBrainz.
 
 This plugin allows the user to print track information in a format that is
-parseable by the MusicBrainz track parser. Programmatic submitting is not
+parseable by the MusicBrainz track parser [1]. Programmatic submitting is not
 implemented by MusicBrainz yet.
+
+[1] http://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 """
 
 from __future__ import (division, absolute_import, print_function,
@@ -25,7 +27,6 @@ from __future__ import (division, absolute_import, print_function,
 
 
 from beets.autotag import Recommendation
-from beets.importer import action
 from beets.plugins import BeetsPlugin
 from beets.ui.commands import PromptChoice
 from beetsplug.info import print_data
@@ -35,21 +36,26 @@ class MBSubmitPlugin(BeetsPlugin):
     def __init__(self):
         super(MBSubmitPlugin, self).__init__()
 
+        self.config.add({
+            'format': '$track. $title - $artist ($length)',
+            'threshold': 'medium',
+        })
+
+        # Validate and store threshold.
+        self.threshold = self.config['threshold'].as_choice({
+            'none': Recommendation.none,
+            'low': Recommendation.low,
+            'medium': Recommendation.medium,
+            'strong': Recommendation.strong
+        })
+
         self.register_listener('before_choose_candidate',
                                self.before_choose_candidate_event)
 
     def before_choose_candidate_event(self, session, task):
-        if not task.candidates or task.rec == Recommendation.none:
-            return [PromptChoice('p', 'Print tracks', self.print_tracks),
-                    PromptChoice('k', 'print tracks and sKip',
-                                 self.print_tracks_and_skip)]
+        if task.rec <= self.threshold:
+            return [PromptChoice('p', 'Print tracks', self.print_tracks)]
 
-    # Callbacks for choices.
     def print_tracks(self, session, task):
         for i in task.items:
-            print_data(None, i, '$track. $artist - $title ($length)')
-
-    def print_tracks_and_skip(self, session, task):
-        for i in task.items:
-            print_data(None, i, '$track. $artist - $title ($length)')
-        return action.SKIP
+            print_data(None, i, self.config['format'].get())

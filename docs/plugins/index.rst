@@ -60,6 +60,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    lastimport
    lyrics
    mbcollection
+   mbsubmit
    mbsync
    metasync
    missing
@@ -164,6 +165,7 @@ Miscellaneous
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
+* :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`filefilter`: Automatically skip files during the import process based
