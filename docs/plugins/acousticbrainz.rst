@@ -14,9 +14,13 @@ Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plug
 For all tracks with a MusicBrainz recording ID, the plugin currently sets
 these fields:
 
+* ``average_loudness``*
 * ``danceable``
 * ``gender``
 * ``genre_rosamerica``
+* ``key_key``
+* ``key_scale``
+* ``key_strength``
 * ``mood_acoustic``
 * ``mood_aggressive``
 * ``mood_electronic``
