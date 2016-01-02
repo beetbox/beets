@@ -158,6 +158,26 @@ def fetch_info(log, items):
                 low_data,
                 ["lowlevel", "average_loudness"],
             )
+            item.chords_changes_rate = get_value(
+                log,
+                low_data,
+                ["tonal", "chords_changes_rate"],
+            )
+            item.chords_key = get_value(
+                log,
+                low_data,
+                ["tonal", "chords_key"],
+            )
+            item.chords_number_rate = get_value(
+                log,
+                low_data,
+                ["tonal", "chords_number_rate"],
+            )
+            item.chords_scale = get_value(
+                log,
+                low_data,
+                ["tonal", "chords_scale"],
+            )
             item.key_key = get_value(
                 log,
                 low_data,

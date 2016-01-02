@@ -15,6 +15,10 @@ For all tracks with a MusicBrainz recording ID, the plugin currently sets
 these fields:
 
 * ``average_loudness``
+* ``chords_changes_rate``
+* ``chords_key``
+* ``chords_number_rate``
+* ``chords_scale``
 * ``danceable``
 * ``gender``
 * ``genre_rosamerica``
