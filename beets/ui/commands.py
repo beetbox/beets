@@ -1428,10 +1428,18 @@ def move_items(lib, dest, query, copy, album, pretend):
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
 
+    # Filter out files that don't need to be moved.
+    isitemmoved = lambda item: item.path != item.destination(basedir=dest)
+    isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
+    objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
+
     action = 'Copying' if copy else 'Moving'
     entity = 'album' if album else 'item'
     log.info(u'{0} {1} {2}{3}.', action, len(objs), entity,
-             's' if len(objs) > 1 else '')
+             's' if len(objs) != 1 else '')
+    if not objs:
+        return
+
     if pretend:
         if album:
             show_path_changes([(item.path, item.destination(basedir=dest))

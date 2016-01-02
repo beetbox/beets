@@ -256,7 +256,7 @@ anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
 
 To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
-show you all how the files would be moved but won't actually change anything
+show you a list of files that would be moved but won't actually change anything
 on disk.
 
 .. _update-cmd:

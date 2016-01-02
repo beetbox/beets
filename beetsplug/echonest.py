@@ -465,7 +465,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         fetch_cmd = ui.Subcommand('echonest',
-                                  help='Fetch metadata from the EchoNest')
+                                  help='fetch metadata from The Echo Nest')
         fetch_cmd.parser.add_option(
             '-f', '--force', dest='force', action='store_true', default=False,
             help='(re-)download information from the EchoNest'
