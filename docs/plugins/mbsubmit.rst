@@ -30,7 +30,7 @@ strong recommendations are found for the album::
 As MusicBrainz currently does not support submitting albums programmatically,
 the recommended workflow is to copy the output of the ``Print tracks`` choice
 and paste it into the parser that can be found by clicking on the
-"`Track Parser`" button on MusicBrainz "`Tracklist`" tab.
+"Track Parser" button on MusicBrainz "Tracklist" tab.
 
 Configuration
 -------------
@@ -38,7 +38,7 @@ Configuration
 To configure the plugin, make a ``mbsubmit:`` section in your configuration
 file. The following options are available:
 
-- **mb_format**: The format used for printing the tracks, defined using the
+- **format**: The format used for printing the tracks, defined using the
   same template syntax as beets’ :doc:`path formats </reference/pathformat>`.
   Default: ``$track. $title - $artist ($length)``.
 - **threshold**: The minimum strength of the autotagger recommendation that
@@ -51,4 +51,4 @@ Please note that some values of the ``threshold`` configuration option might
 require other ``beets`` command line switches to be enabled in order to work as
 intended. In particular, setting a threshold of ``strong`` will only display
 the prompt if ``timid`` mode is enabled. You can find more information about
-how the recommendation system works on :ref:`match-config`.
+how the recommendation system works at :ref:`match-config`.
