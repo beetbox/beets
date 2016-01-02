@@ -22,8 +22,7 @@ these fields:
 * ``danceable``
 * ``gender``
 * ``genre_rosamerica``
-* ``key_key``
-* ``key_scale``
+* ``initial_key``
 * ``key_strength``
 * ``mood_acoustic``
 * ``mood_aggressive``

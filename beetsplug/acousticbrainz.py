@@ -63,8 +63,7 @@ def fetch_info(log, items):
             # Fetch the data from the AB API.
             high_url = generate_url(item.mb_trackid, "/high-level")
             low_url = generate_url(item.mb_trackid, "/low-level")
-            log.debug('fetching URL: {}', high_url)
-            log.debug('fetching URL: {}', low_url)
+            log.debug('fetching URLs: {} and {}', high_url, low_url)
             try:
                 high = requests.get(high_url)
                 low = requests.get(low_url)
@@ -81,11 +80,11 @@ def fetch_info(log, items):
             try:
                 high_data = high.json()
             except ValueError:
-                log.debug('Invalid Response: {}', high.text)
+                log.debug('Invalid Response from high-level: {}', high.text)
             try:
                 low_data = low.json()
             except ValueError:
-                log.debug('Invalid Response: {}', low.text)
+                log.debug('Invalid Response from low-level: {}', low.text)
 
             # Get each field and assign it on the item.
             item.danceable = get_value(
@@ -178,15 +177,9 @@ def fetch_info(log, items):
                 low_data,
                 ["tonal", "chords_scale"],
             )
-            item.key_key = get_value(
-                log,
-                low_data,
-                ["tonal", "key_key"],
-            )
-            item.key_scale = get_value(
-                log,
-                low_data,
-                ["tonal", "key_scale"],
+            item.initial_key = '{} {}'.format(
+                get_value(log, low_data, ["tonal", "key_key"]),
+                get_value(log, low_data, ["tonal", "key_scale"])
             )
             item.key_strength = get_value(
                 log,
