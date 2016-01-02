@@ -11,6 +11,9 @@ New:
   :bug:`1778`
 * A new :doc:`/plugins/acousticbrainz` fetches acoustic-analysis information
   from the `AcousticBrainz`_ project. Thanks to :user:`opatel99`. :bug:`1784`
+* A new :doc:`/plugins/mbsubmit` lets you print the tracks of an album in a
+  format parseable by MusicBrainz track parser during an interactive import
+  session. :bug:`1779`
 
 .. _AcousticBrainz: http://acousticbrainz.org/
 
