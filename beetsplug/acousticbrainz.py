@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-""" Fetch various AcousticBrainz metadata using MBID
+"""Fetch various AcousticBrainz metadata using MBID.
 """
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
@@ -47,7 +47,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         return [cmd]
 
     def import_task_files(self, session, task):
-        """Automatically tag imported files
+        """Function is called upon beet import.
         """
 
         items = task.imported_items()
@@ -55,7 +55,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
 
 def fetch_info(log, items):
-    """Currently outputs MBID and corresponding request status code
+    """Currently outputs MBID and corresponding request status code.
     """
     for item in items:
         if item.mb_trackid:
@@ -154,13 +154,13 @@ def fetch_info(log, items):
 
 
 def generate_url(mbid):
-    """Generates url of AcousticBrainz end point for given MBID
+    """Generates AcousticBrainz end point url for given MBID.
     """
     return ACOUSTIC_URL + mbid + LEVEL
 
 
 def get_value(log, data, map_path):
-    """Allows traversal of dictionary with cleaner formatting
+    """Allows easier traversal of dictionary.
     """
     try:
         return reduce(lambda d, k: d[k], map_path, data)
