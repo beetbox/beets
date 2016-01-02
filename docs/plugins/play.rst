@@ -82,3 +82,17 @@ example::
 
 indicates that you need to insert extra arguments before specifying the
 playlist.
+
+Note on the Leakage of the Generated Playlists
+_______________________________________________
+
+Because the command that will open the generated ``.m3u`` files can be
+arbitrarily configured by the user, beets won't try to delete those files. For
+this reason, using this plugin will leave one or several playlist(s) in the
+directory selected to create temporary files (Most likely ``/tmp/`` on Unix-like
+systems. See `tempfile.tempdir`_.). Leaking those playlists until they are
+externally wiped could be an issue for privacy or storage reasons. If this is
+the case for you, you might want to use the ``raw`` config option described
+above.
+
+.. _tempfile.tempdir: https://docs.python.org/2/library/tempfile.html#tempfile.tempdir
