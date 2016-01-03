@@ -19,6 +19,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import requests
+import operator
 
 from beets import plugins, ui
 
@@ -57,9 +58,10 @@ class AcousticPlugin(plugins.BeetsPlugin):
 def fetch_info(log, items):
     """Currently outputs MBID and corresponding request status code.
     """
+
     def get_value(map_path):
         try:
-            return reduce(lambda d, k: d[k], map_path, data)
+            return reduce(operator.getitem, map_path, data)
         except KeyError:
             log.debug('Invalid Path: {}', map_path)
 
