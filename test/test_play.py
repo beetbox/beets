@@ -13,6 +13,7 @@ from test._common import unittest
 from test.helper import TestHelper, control_stdin
 
 from beets.ui import UserError
+from beets.util import open_anything
 
 class PlayPluginTest(unittest.TestCase, TestHelper):
     def setUp(self):
@@ -22,13 +23,14 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.lib.add_album([self.item])
         self.open_patcher = patch('beetsplug.play.util.interactive_open')
         self.open_mock = self.open_patcher.start()
+        self.config['play']['command'] = 'echo'
 
     def tearDown(self):
         self.open_patcher.stop()
         self.teardown_beets()
         self.unload_plugins()
 
-    def do_test(self, args=('title:aNiceTitle',), expected_cmd=None, expected_playlist='{}\n'):
+    def do_test(self, args=('title:aNiceTitle',), expected_cmd='echo', expected_playlist='{}\n'):
         self.run_command('play', *args)
 
         self.open_mock.assert_called_once_with(ANY, expected_cmd)
@@ -43,8 +45,6 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.do_test(['-a', 'nice'])
 
     def test_args_option(self):
-        self.config['play']['command'] = 'echo'
-
         self.do_test(['-A', 'foo', 'title:aNiceTitle'], 'echo foo')
 
     def test_args_option_in_middle(self):
@@ -59,10 +59,11 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.do_test(expected_cmd='echo', expected_playlist='..{}\n')
 
     def test_use_folders(self):
+        self.config['play']['command'] = None
         self.config['play']['use_folders'] = True
         self.run_command('play', '-a', 'nice')
 
-        self.open_mock.assert_called_once_with(ANY, None)
+        self.open_mock.assert_called_once_with(ANY, open_anything())
         playlist = open(self.open_mock.call_args[0][0][0], 'r')
         self.assertEqual('{}\n'.format(
             os.path.dirname(self.item.path.decode('utf-8'))),
@@ -73,7 +74,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
         self.run_command('play', 'nice')
 
-        self.open_mock.assert_called_once_with([self.item.path], None)
+        self.open_mock.assert_called_once_with([self.item.path], 'echo')
 
     def test_not_found(self):
         self.run_command('play', 'not found')
