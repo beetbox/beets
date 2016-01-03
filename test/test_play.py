@@ -10,8 +10,9 @@ import os
 from mock import patch, ANY
 
 from test._common import unittest
-from test.helper import TestHelper
+from test.helper import TestHelper, control_stdin
 
+from beets.ui import UserError
 
 @patch('beetsplug.play.util.interactive_open')
 class PlayPluginTest(unittest.TestCase, TestHelper):
@@ -78,6 +79,19 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
     def test_not_found(self, open_mock):
         self.run_command('play', 'not found')
         open_mock.assert_not_called()
+
+    def test_warning_threshold(self, open_mock):
+        self.config['play']['warning_treshold'] = 1
+        item2 = self.add_item(title='another NiceTitle')
+        with control_stdin("a"):
+            self.run_command('play', 'nice')
+
+        open_mock.assert_not_called()
+
+    def test_command_failed(self, open_mock):
+        open_mock.side_effect = OSError("some reason")
+        with self.assertRaises(UserError):
+            self.run_command('play', 'title:aNiceTitle')
 
     def assertPlaylistCorrect(self, open_mock, expected='{}\n'):
         playlist = open(open_mock.call_args[0][0][0], 'r')
