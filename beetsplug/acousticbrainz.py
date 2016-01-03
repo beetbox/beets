@@ -23,6 +23,7 @@ import requests
 from beets import plugins, ui
 
 ACOUSTIC_BASE = "http://acousticbrainz.org/"
+LEVELS = ["/low-level", "/high-level"]
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
@@ -67,7 +68,7 @@ def fetch_info(log, items):
             log.info('getting data for: {}', item)
 
             # Fetch the data from the AB API.
-            urls = [generate_url(item.mb_trackid, path) for path in ["/low-level", "/high-level"]]
+            urls = [generate_url(item.mb_trackid, path) for path in LEVELS]
             log.debug('fetching URLs: {}', urls)
             try:
                 responses = [requests.get(url) for url in urls]
@@ -85,7 +86,8 @@ def fetch_info(log, items):
                 data = responses[0].json()
                 data.update(responses[1].json())
             except ValueError:
-                log.debug('Invalid Response from low-level: {}', low.text)
+                log.debug('Invalid Response: {} & {}',
+                          responses[0].text, responses[1].text)
 
             # Get each field and assign it on the item.
             item.danceable = get_value(
