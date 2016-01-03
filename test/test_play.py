@@ -36,11 +36,18 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         open_mock.assert_called_once_with(ANY, 'true foo')
         self.assertPlaylistCorrect(open_mock)
 
+    @patch('beetsplug.play.util.interactive_open')
+    def test_args_option_in_middle(self, open_mock):
+        self.config['play']['command'] = 'true $args other'
+        self.run_command('play', '-A', 'foo', 'title:aNiceTitle')
+
+        open_mock.assert_called_once_with(ANY, 'true foo other')
+        self.assertPlaylistCorrect(open_mock)
+
     def assertPlaylistCorrect(self, open_mock):
         playlist = open(open_mock.call_args[0][0][0], 'r')
         self.assertEqual(self.item.path.decode('utf-8') + '\n',
                          playlist.read().decode('utf-8'))
-        
 
 
 def suite():
