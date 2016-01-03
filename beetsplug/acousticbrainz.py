@@ -59,7 +59,7 @@ def fetch_info(log, items):
     """Currently outputs MBID and corresponding request status code.
     """
 
-    def get_value(map_path):
+    def get_value(*map_path):
         try:
             return reduce(operator.getitem, map_path, data)
         except KeyError:
@@ -73,85 +73,84 @@ def fetch_info(log, items):
             urls = [generate_url(item.mb_trackid, path) for path in LEVELS]
             log.debug('fetching URLs: {}', urls)
             try:
-                responses = [requests.get(url) for url in urls]
+                res = [requests.get(url) for url in urls]
             except requests.RequestException as exc:
                 log.info('request error: {}', exc)
                 continue
 
             # Check for missing tracks.
-            if any(r.status_code == 404 for r in responses):
+            if any(r.status_code == 404 for r in res):
                 log.info('recording ID {} not found', item.mb_trackid)
                 continue
 
             # Parse the JSON response.
             try:
-                data = responses[0].json()
-                data.update(responses[1].json())
+                data = res[0].json()
+                data.update(res[1].json())
             except ValueError:
-                log.debug('Invalid Response: {} & {}',
-                          responses[0].text, responses[1].text)
+                log.debug('Invalid Response: {} & {}', [r.text for r in res])
 
             # Get each field and assign it on the item.
             item.danceable = get_value(
-                ["highlevel", "danceability", "all", "danceable"],
+                "highlevel", "danceability", "all", "danceable",
             )
             item.gender = get_value(
-                ["highlevel", "gender", "value"],
+                "highlevel", "gender", "value",
             )
             item.genre_rosamerica = get_value(
-                ["highlevel", "genre_rosamerica", "value"],
+                "highlevel", "genre_rosamerica", "value"
             )
             item.mood_acoustic = get_value(
-                ["highlevel", "mood_acoustic", "all", "acoustic"],
+                "highlevel", "mood_acoustic", "all", "acoustic"
             )
             item.mood_aggressive = get_value(
-                ["highlevel", "mood_aggresive", "all", "aggresive"],
+                "highlevel", "mood_aggresive", "all", "aggresive"
             )
             item.mood_electronic = get_value(
-                ["highlevel", "mood_electronic", "all", "electronic"],
+                "highlevel", "mood_electronic", "all", "electronic"
             )
             item.mood_happy = get_value(
-                ["highlevel", "mood_happy", "all", "happy"],
+                "highlevel", "mood_happy", "all", "happy"
             )
             item.mood_party = get_value(
-                ["highlevel", "mood_party", "all", "party"],
+                "highlevel", "mood_party", "all", "party"
             )
             item.mood_relaxed = get_value(
-                ["highlevel", "mood_relaxed", "all", "relaxed"],
+                "highlevel", "mood_relaxed", "all", "relaxed"
             )
             item.mood_sad = get_value(
-                ["highlevel", "mood_sad", "all", "sad"],
+                "highlevel", "mood_sad", "all", "sad"
             )
             item.rhythm = get_value(
-                ["highlevel", "ismir04_rhythm", "value"],
+                "highlevel", "ismir04_rhythm", "value"
             )
             item.tonal = get_value(
-                ["highlevel", "tonal_atonal", "all", "tonal"],
+                "highlevel", "tonal_atonal", "all", "tonal"
             )
             item.voice_instrumental = get_value(
-                ["highlevel", "voice_instrumental", "value"],
+                "highlevel", "voice_instrumental", "value"
             )
             item.average_loudness = get_value(
-                ["lowlevel", "average_loudness"],
+                "lowlevel", "average_loudness"
             )
             item.chords_changes_rate = get_value(
-                ["tonal", "chords_changes_rate"],
+                "tonal", "chords_changes_rate"
             )
             item.chords_key = get_value(
-                ["tonal", "chords_key"],
+                "tonal", "chords_key"
             )
             item.chords_number_rate = get_value(
-                ["tonal", "chords_number_rate"],
+                "tonal", "chords_number_rate"
             )
             item.chords_scale = get_value(
-                ["tonal", "chords_scale"],
+                "tonal", "chords_scale"
             )
             item.initial_key = '{} {}'.format(
-                get_value(["tonal", "key_key"]),
-                get_value(["tonal", "key_scale"])
+                get_value("tonal", "key_key"),
+                get_value("tonal", "key_scale")
             )
             item.key_strength = get_value(
-                ["tonal", "key_stength"],
+                "tonal", "key_stength"
             )
 
             # Store the data. We only update flexible attributes, so we
