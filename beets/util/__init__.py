@@ -779,16 +779,17 @@ def interactive_open(targets, command):
     if command:
         # Split the command string into its arguments.
         try:
-            command = shlex_split(command)
+            args = shlex_split(command)
         except ValueError:  # Malformed shell tokens.
-            command = [command]
+            args = [command]
     else:
-        command = [open_anything()]
-    command.insert(0, command[0])  # for argv[0]
+        args = [open_anything()]
 
-    command += targets
+    args.insert(0, args[0])  # for argv[0]
 
-    return os.execlp(*command)
+    args += targets
+
+    return os.execlp(*args)
 
 
 def _windows_long_path_name(short_path):
