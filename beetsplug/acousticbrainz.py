@@ -56,134 +56,97 @@ class AcousticPlugin(plugins.BeetsPlugin):
 def fetch_info(log, items):
     """Currently outputs MBID and corresponding request status code.
     """
+    def get_value(map_path):
+        try:
+            return reduce(lambda d, k: d[k], map_path, data)
+        except KeyError:
+            log.debug('Invalid Path: {}', map_path)
+
     for item in items:
         if item.mb_trackid:
             log.info('getting data for: {}', item)
 
             # Fetch the data from the AB API.
-            high_url = generate_url(item.mb_trackid, "/high-level")
-            low_url = generate_url(item.mb_trackid, "/low-level")
-            log.debug('fetching URLs: {} and {}', high_url, low_url)
+            urls = [generate_url(item.mb_trackid, path) for path in ["/low-level", "/high-level"]]
+            log.debug('fetching URLs: {}', urls)
             try:
-                high = requests.get(high_url)
-                low = requests.get(low_url)
+                responses = [requests.get(url) for url in urls]
             except requests.RequestException as exc:
                 log.info('request error: {}', exc)
                 continue
 
             # Check for missing tracks.
-            if high.status_code == 404 or low.status_code == 404:
+            if any(r.status_code == 404 for r in responses):
                 log.info('recording ID {} not found', item.mb_trackid)
                 continue
 
             # Parse the JSON response.
             try:
-                high_data = high.json()
-            except ValueError:
-                log.debug('Invalid Response from high-level: {}', high.text)
-            try:
-                low_data = low.json()
+                data = responses[0].json()
+                data.update(responses[1].json())
             except ValueError:
                 log.debug('Invalid Response from low-level: {}', low.text)
 
             # Get each field and assign it on the item.
             item.danceable = get_value(
-                log,
-                high_data,
                 ["highlevel", "danceability", "all", "danceable"],
             )
             item.gender = get_value(
-                log,
-                high_data,
                 ["highlevel", "gender", "value"],
             )
             item.genre_rosamerica = get_value(
-                log,
-                high_data,
                 ["highlevel", "genre_rosamerica", "value"],
             )
             item.mood_acoustic = get_value(
-                log,
-                high_data,
                 ["highlevel", "mood_acoustic", "all", "acoustic"],
             )
             item.mood_aggressive = get_value(
-                log,
-                high_data,
                 ["highlevel", "mood_aggresive", "all", "aggresive"],
             )
             item.mood_electronic = get_value(
-                log,
-                high_data,
                 ["highlevel", "mood_electronic", "all", "electronic"],
             )
             item.mood_happy = get_value(
-                log,
-                high_data,
                 ["highlevel", "mood_happy", "all", "happy"],
             )
             item.mood_party = get_value(
-                log,
-                high_data,
                 ["highlevel", "mood_party", "all", "party"],
             )
             item.mood_relaxed = get_value(
-                log,
-                high_data,
                 ["highlevel", "mood_relaxed", "all", "relaxed"],
             )
             item.mood_sad = get_value(
-                log,
-                high_data,
                 ["highlevel", "mood_sad", "all", "sad"],
             )
             item.rhythm = get_value(
-                log,
-                high_data,
                 ["highlevel", "ismir04_rhythm", "value"],
             )
             item.tonal = get_value(
-                log,
-                high_data,
                 ["highlevel", "tonal_atonal", "all", "tonal"],
             )
             item.voice_instrumental = get_value(
-                log,
-                high_data,
                 ["highlevel", "voice_instrumental", "value"],
             )
             item.average_loudness = get_value(
-                log,
-                low_data,
                 ["lowlevel", "average_loudness"],
             )
             item.chords_changes_rate = get_value(
-                log,
-                low_data,
                 ["tonal", "chords_changes_rate"],
             )
             item.chords_key = get_value(
-                log,
-                low_data,
                 ["tonal", "chords_key"],
             )
             item.chords_number_rate = get_value(
-                log,
-                low_data,
                 ["tonal", "chords_number_rate"],
             )
             item.chords_scale = get_value(
-                log,
-                low_data,
                 ["tonal", "chords_scale"],
             )
             item.initial_key = '{} {}'.format(
-                get_value(log, low_data, ["tonal", "key_key"]),
-                get_value(log, low_data, ["tonal", "key_scale"])
+                get_value(["tonal", "key_key"]),
+                get_value(["tonal", "key_scale"])
             )
             item.key_strength = get_value(
-                log,
-                low_data,
                 ["tonal", "key_stength"],
             )
 
@@ -196,12 +159,3 @@ def generate_url(mbid, level):
     """Generates AcousticBrainz end point url for given MBID.
     """
     return ACOUSTIC_BASE + mbid + level
-
-
-def get_value(log, data, map_path):
-    """Allows easier traversal of dictionary.
-    """
-    try:
-        return reduce(lambda d, k: d[k], map_path, data)
-    except KeyError:
-        log.debug('Invalid Path: {}', map_path)
