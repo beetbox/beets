@@ -776,11 +776,14 @@ def interactive_open(targets, command):
 
     Can raise `OSError`.
     """
-    # Split the command string into its arguments.
-    try:
-        command = shlex_split(command)
-    except ValueError:  # Malformed shell tokens.
-        command = [command]
+    if command:
+        # Split the command string into its arguments.
+        try:
+            command = shlex_split(command)
+        except ValueError:  # Malformed shell tokens.
+            command = [command]
+    else:
+        command = [open_anything()]
     command.insert(0, command[0])  # for argv[0]
 
     command += targets
