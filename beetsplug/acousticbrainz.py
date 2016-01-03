@@ -42,7 +42,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            fetch_info(self._log, items)
+            fetch_info(self._log, items, ui.should_write())
 
         cmd.func = func
         return [cmd]
@@ -52,11 +52,11 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """
 
         items = task.imported_items()
-        fetch_info(self._log, items)
+        fetch_info(self._log, items, False)
 
 
-def fetch_info(log, items):
-    """Currently outputs MBID and corresponding request status code.
+def fetch_info(log, items, write):
+    """Get data from AcousticBrainz for the items.
     """
 
     def get_value(*map_path):
@@ -153,9 +153,10 @@ def fetch_info(log, items):
                 "tonal", "key_stength"
             )
 
-            # Store the data. We only update flexible attributes, so we
-            # don't call `item.try_write()` here.
+            # Store the data.
             item.store()
+            if write:
+                item.try_write()
 
 
 def generate_url(mbid, level):
