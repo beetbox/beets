@@ -5,6 +5,8 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+import os
+
 from mock import patch, ANY
 
 from test._common import unittest
@@ -35,6 +37,16 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         open_mock.assert_called_once_with(ANY, None)
         self.assertPlaylistCorrect(open_mock)
 
+    def test_use_folders(self, open_mock):
+        self.config['play']['use_folders'] = True
+        self.run_command('play', '-a', 'nice')
+
+        open_mock.assert_called_once_with(ANY, None)
+        playlist = open(open_mock.call_args[0][0][0], 'r')
+        self.assertEqual('{}\n'.format(
+            os.path.dirname(self.item.path.decode('utf-8'))),
+            playlist.read().decode('utf-8'))
+
     def test_args_option(self, open_mock):
         self.config['play']['command'] = 'echo'
         self.run_command('play', '-A', 'foo', 'title:aNiceTitle')
@@ -56,6 +68,16 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
         open_mock.assert_called_once_with(ANY, 'echo')
         self.assertPlaylistCorrect(open_mock, '..{}\n')
+
+    def test_raw(self, open_mock):
+        self.config['play']['raw'] = True
+        self.run_command('play', 'nice')
+
+        open_mock.assert_called_once_with([self.item.path], None)
+
+    def test_not_found(self, open_mock):
+        self.run_command('play', 'not found')
+        open_mock.assert_not_called()
 
     def assertPlaylistCorrect(self, open_mock, expected='{}\n'):
         playlist = open(open_mock.call_args[0][0][0], 'r')
