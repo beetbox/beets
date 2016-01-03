@@ -186,6 +186,7 @@ class MusicalKey(types.String):
         for flat, sharp in self.ENHARMONIC.items():
             key = re.sub(flat, sharp, key)
         key = re.sub(r'[\W\s]+minor', 'm', key)
+        key = re.sub(r'[\W\s]+major', '', key)
         return key.capitalize()
 
     def normalize(self, key):

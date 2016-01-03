@@ -13,22 +13,28 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-""" Fetch various AcousticBrainz metadata using MBID
+"""Fetch various AcousticBrainz metadata using MBID.
 """
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import requests
+import operator
 
 from beets import plugins, ui
 
-ACOUSTIC_URL = "http://acousticbrainz.org/"
-LEVEL = "/high-level"
+ACOUSTIC_BASE = "http://acousticbrainz.org/"
+LEVELS = ["/low-level", "/high-level"]
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(AcousticPlugin, self).__init__()
+
+        self.config.add({'auto': True})
+        if self.config['auto']:
+            self.register_listener('import_task_files',
+                                   self.import_task_files)
 
     def commands(self):
         cmd = ui.Subcommand('acousticbrainz',
@@ -41,49 +47,110 @@ class AcousticPlugin(plugins.BeetsPlugin):
         cmd.func = func
         return [cmd]
 
+    def import_task_files(self, session, task):
+        """Function is called upon beet import.
+        """
+
+        items = task.imported_items()
+        fetch_info(self._log, items)
+
 
 def fetch_info(log, items):
-    """Currently outputs MBID and corresponding request status code
+    """Currently outputs MBID and corresponding request status code.
     """
+
+    def get_value(*map_path):
+        try:
+            return reduce(operator.getitem, map_path, data)
+        except KeyError:
+            log.debug('Invalid Path: {}', map_path)
+
     for item in items:
         if item.mb_trackid:
             log.info('getting data for: {}', item)
 
             # Fetch the data from the AB API.
-            url = generate_url(item.mb_trackid)
-            log.debug('fetching URL: {}', url)
+            urls = [generate_url(item.mb_trackid, path) for path in LEVELS]
+            log.debug('fetching URLs: {}', urls)
             try:
-                rs = requests.get(url)
+                res = [requests.get(url) for url in urls]
             except requests.RequestException as exc:
                 log.info('request error: {}', exc)
                 continue
 
             # Check for missing tracks.
-            if rs.status_code == 404:
+            if any(r.status_code == 404 for r in res):
                 log.info('recording ID {} not found', item.mb_trackid)
                 continue
 
             # Parse the JSON response.
             try:
-                data = rs.json()
+                data = res[0].json()
+                data.update(res[1].json())
             except ValueError:
-                log.debug('Invalid Response: {}', rs.text)
+                log.debug('Invalid Response: {} & {}', [r.text for r in res])
 
             # Get each field and assign it on the item.
             item.danceable = get_value(
-                log,
-                data,
-                ["highlevel", "danceability", "all", "danceable"],
+                "highlevel", "danceability", "all", "danceable",
+            )
+            item.gender = get_value(
+                "highlevel", "gender", "value",
+            )
+            item.genre_rosamerica = get_value(
+                "highlevel", "genre_rosamerica", "value"
+            )
+            item.mood_acoustic = get_value(
+                "highlevel", "mood_acoustic", "all", "acoustic"
+            )
+            item.mood_aggressive = get_value(
+                "highlevel", "mood_aggresive", "all", "aggresive"
+            )
+            item.mood_electronic = get_value(
+                "highlevel", "mood_electronic", "all", "electronic"
             )
             item.mood_happy = get_value(
-                log,
-                data,
-                ["highlevel", "mood_happy", "all", "happy"],
+                "highlevel", "mood_happy", "all", "happy"
             )
             item.mood_party = get_value(
-                log,
-                data,
-                ["highlevel", "mood_party", "all", "party"],
+                "highlevel", "mood_party", "all", "party"
+            )
+            item.mood_relaxed = get_value(
+                "highlevel", "mood_relaxed", "all", "relaxed"
+            )
+            item.mood_sad = get_value(
+                "highlevel", "mood_sad", "all", "sad"
+            )
+            item.rhythm = get_value(
+                "highlevel", "ismir04_rhythm", "value"
+            )
+            item.tonal = get_value(
+                "highlevel", "tonal_atonal", "all", "tonal"
+            )
+            item.voice_instrumental = get_value(
+                "highlevel", "voice_instrumental", "value"
+            )
+            item.average_loudness = get_value(
+                "lowlevel", "average_loudness"
+            )
+            item.chords_changes_rate = get_value(
+                "tonal", "chords_changes_rate"
+            )
+            item.chords_key = get_value(
+                "tonal", "chords_key"
+            )
+            item.chords_number_rate = get_value(
+                "tonal", "chords_number_rate"
+            )
+            item.chords_scale = get_value(
+                "tonal", "chords_scale"
+            )
+            item.initial_key = '{} {}'.format(
+                get_value("tonal", "key_key"),
+                get_value("tonal", "key_scale")
+            )
+            item.key_strength = get_value(
+                "tonal", "key_stength"
             )
 
             # Store the data. We only update flexible attributes, so we
@@ -91,16 +158,7 @@ def fetch_info(log, items):
             item.store()
 
 
-def generate_url(mbid):
-    """Generates url of AcousticBrainz end point for given MBID
+def generate_url(mbid, level):
+    """Generates AcousticBrainz end point url for given MBID.
     """
-    return ACOUSTIC_URL + mbid + LEVEL
-
-
-def get_value(log, data, map_path):
-    """Allows traversal of dictionary with cleaner formatting
-    """
-    try:
-        return reduce(lambda d, k: d[k], map_path, data)
-    except KeyError:
-        log.debug('Invalid Path: {}', map_path)
+    return ACOUSTIC_BASE + mbid + level
