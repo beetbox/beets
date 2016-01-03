@@ -27,7 +27,8 @@ Fixes:
   :doc:`/plugins/play`. :bug:`1785`, :bug:`1600`
 * The :ref:`move-cmd` command does not display files whose path does not change
   anymore. :bug:`1583`
-
+* :doc:`/plugins/play`: Fix a regression in the last version where there was
+  no default command. :bug:`1793`
 
 
 1.3.16 (December 28, 2015)
