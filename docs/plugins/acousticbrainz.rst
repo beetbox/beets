@@ -22,7 +22,8 @@ these fields:
 * ``danceable``
 * ``gender``
 * ``genre_rosamerica``
-* ``initial_key``
+* ``initial_key`` (This is a built-in beets field, which can also be provided
+  by :doc:`/plugins/keyfinder`.)
 * ``key_strength``
 * ``mood_acoustic``
 * ``mood_aggressive``
