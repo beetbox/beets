@@ -71,7 +71,7 @@ def fetch_info(log, items, write):
 
             # Fetch the data from the AB API.
             urls = [generate_url(item.mb_trackid, path) for path in LEVELS]
-            log.debug('fetching URLs: {}', urls)
+            log.debug('fetching URLs: {}', ' '.join(urls))
             try:
                 res = [requests.get(url) for url in urls]
             except requests.RequestException as exc:
@@ -104,7 +104,7 @@ def fetch_info(log, items, write):
                 "highlevel", "mood_acoustic", "all", "acoustic"
             )
             item.mood_aggressive = get_value(
-                "highlevel", "mood_aggresive", "all", "aggresive"
+                "highlevel", "mood_aggressive", "all", "aggressive"
             )
             item.mood_electronic = get_value(
                 "highlevel", "mood_electronic", "all", "electronic"
@@ -150,7 +150,7 @@ def fetch_info(log, items, write):
                 get_value("tonal", "key_scale")
             )
             item.key_strength = get_value(
-                "tonal", "key_stength"
+                "tonal", "key_strength"
             )
 
             # Store the data.
