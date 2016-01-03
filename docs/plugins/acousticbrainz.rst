@@ -14,9 +14,40 @@ Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plug
 For all tracks with a MusicBrainz recording ID, the plugin currently sets
 these fields:
 
-* ``danceable``: Predicts how easy the track is to dance to.
-* ``mood_happy``: Predicts the probability this track will evoke happiness.
-* ``mood_party``: Predicts the probability this track should be played at a
-  party.
+* ``average_loudness``
+* ``chords_changes_rate``
+* ``chords_key``
+* ``chords_number_rate``
+* ``chords_scale``
+* ``danceable``
+* ``gender``
+* ``genre_rosamerica``
+* ``initial_key``
+* ``key_strength``
+* ``mood_acoustic``
+* ``mood_aggressive``
+* ``mood_electronic``
+* ``mood_happy``
+* ``mood_party``
+* ``mood_relaxed``
+* ``mood_sad``
+* ``rhythm``
+* ``tonal``
+* ``voice_instrumental``
 
-These three fields are all numbers between 0.0 and 1.0.
+Automatic Tagging
+-----------------
+
+To automatically tag files using AcousticBrainz data during import, just
+enable the ``acousticbrainz`` plugin (see :ref:`using-plugins`). When importing 
+new files, beets will query the AcousticBrainz API using MBID and
+set the appropriate metadata.
+
+Configuration
+-------------
+
+To configure the plugin, make a ``acousticbrainz:`` section in your
+configuration file. There is one option:
+
+- **auto**: Enable AcousticBrainz during ``beet import``.
+  Default: ``yes``.
