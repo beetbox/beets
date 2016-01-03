@@ -63,6 +63,8 @@ class PlayPlugin(BeetsPlugin):
         command passing that playlist, at request insert optional arguments.
         """
         command_str = config['play']['command'].get()
+        if not command_str:
+            command_str = util.open_anything()
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
         raw = config['play']['raw'].get(bool)
