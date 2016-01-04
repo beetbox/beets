@@ -15,6 +15,7 @@ from test.helper import TestHelper, control_stdin
 from beets.ui import UserError
 from beets.util import open_anything
 
+
 class PlayPluginTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
@@ -30,13 +31,14 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
         self.unload_plugins()
 
-    def do_test(self, args=('title:aNiceTitle',), expected_cmd='echo', expected_playlist='{}\n'):
+    def do_test(self, args=('title:aNiceTitle',), expected_cmd='echo',
+                expected_playlist='{}\n'):
         self.run_command('play', *args)
 
         self.open_mock.assert_called_once_with(ANY, expected_cmd)
-        expected_playlist_content = expected_playlist.format(self.item.path.decode('utf-8'))
+        exp_playlist = expected_playlist.format(self.item.path.decode('utf-8'))
         with open(self.open_mock.call_args[0][0][0], 'r') as playlist:
-            self.assertEqual(expected_playlist_content, playlist.read().decode('utf-8'))
+            self.assertEqual(exp_playlist, playlist.read().decode('utf-8'))
 
     def test_basic(self):
         self.do_test()
@@ -83,7 +85,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
     def test_warning_threshold(self):
         self.config['play']['warning_treshold'] = 1
-        item2 = self.add_item(title='another NiceTitle')
+        self.add_item(title='another NiceTitle')
 
         with control_stdin("a"):
             self.run_command('play', 'nice')
@@ -95,6 +97,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
         with self.assertRaises(UserError):
             self.run_command('play', 'title:aNiceTitle')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
