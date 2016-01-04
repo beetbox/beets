@@ -194,7 +194,7 @@ def process_tracks(lib, tracks, log):
     log.info('Received {0} tracks in this page, processing...', total)
 
     for num in xrange(0, total):
-        song = ''
+        song = None
         trackid = tracks[num]['mbid'].strip()
         artist = tracks[num]['artist'].get('name', '').strip()
         title = tracks[num]['name'].strip()
@@ -211,7 +211,7 @@ def process_tracks(lib, tracks, log):
             ).get()
 
         # Otherwise try artist/title/album
-        if not song:
+        if song is None:
             log.debug(u'no match for mb_trackid {0}, trying by '
                       u'artist/title/album', trackid)
             query = dbcore.AndQuery([
@@ -222,7 +222,7 @@ def process_tracks(lib, tracks, log):
             song = lib.items(query).get()
 
         # If not, try just artist/title
-        if not song:
+        if song is None:
             log.debug(u'no album match, trying by artist/title')
             query = dbcore.AndQuery([
                 dbcore.query.SubstringQuery('artist', artist),
@@ -231,7 +231,7 @@ def process_tracks(lib, tracks, log):
             song = lib.items(query).get()
 
         # Last resort, try just replacing to utf-8 quote
-        if not song:
+        if song is None:
             title = title.replace("'", u'\u2019')
             log.debug(u'no title match, trying utf-8 single quote')
             query = dbcore.AndQuery([
@@ -240,7 +240,7 @@ def process_tracks(lib, tracks, log):
             ])
             song = lib.items(query).get()
 
-        if song:
+        if song is not None:
             count = int(song.get('play_count', 0))
             new_count = int(tracks[num]['playcount'])
             log.debug(u'match: {0} - {1} ({2}) '
