@@ -16,7 +16,8 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-import requests
+import pylast
+from pylast import TopItem, _extract, _number
 from beets import ui
 from beets import dbcore
 from beets import config
@@ -52,6 +53,63 @@ class LastImportPlugin(plugins.BeetsPlugin):
         return [cmd]
 
 
+class CustomUser(pylast.User):
+    """ Custom user class derived from pylast.User, and overriding the
+    _get_things method to return MBID and album. Also introduces new
+    get_top_tracks_by_page method to allow access to more than one page of top
+    tracks.
+    """
+    def __init__(self, *args, **kwargs):
+        super(CustomUser, self).__init__(*args, **kwargs)
+
+    def _get_things(self, method, thing, thing_type, params=None,
+                    cacheable=True):
+        """Returns a list of the most played thing_types by this thing, in a
+        tuple with the total number of pages of results. Includes an MBID, if
+        found.
+        """
+        doc = self._request(
+            self.ws_prefix + "." + method, cacheable, params)
+
+        toptracks_node = doc.getElementsByTagName('toptracks')[0]
+        total_pages = int(toptracks_node.getAttribute('totalPages'))
+
+        seq = []
+        for node in doc.getElementsByTagName(thing):
+            title = _extract(node, "name")
+            artist = _extract(node, "name", 1)
+            mbid = _extract(node, "mbid")
+            playcount = _number(_extract(node, "playcount"))
+
+            thing = thing_type(artist, title, self.network)
+            thing.mbid = mbid
+            seq.append(TopItem(thing, playcount))
+
+        return seq, total_pages
+
+    def get_top_tracks_by_page(self, period=pylast.PERIOD_OVERALL, limit=None,
+                               page=1, cacheable=True):
+        """Returns the top tracks played by a user, in a tuple with the total
+        number of pages of results.
+        * period: The period of time. Possible values:
+          o PERIOD_OVERALL
+          o PERIOD_7DAYS
+          o PERIOD_1MONTH
+          o PERIOD_3MONTHS
+          o PERIOD_6MONTHS
+          o PERIOD_12MONTHS
+        """
+
+        params = self._get_params()
+        params['period'] = period
+        params['page'] = page
+        if limit:
+            params['limit'] = limit
+
+        return self._get_things(
+            "getTopTracks", "track", pylast.Track, params, cacheable)
+
+
 def import_lastfm(lib, log):
     user = config['lastfm']['user'].get(unicode)
     per_page = config['lastimport']['per_page'].get(int)
@@ -73,23 +131,19 @@ def import_lastfm(lib, log):
                  '/{}'.format(page_total) if page_total > 1 else '')
 
         for retry in range(0, retry_limit):
-            page = fetch_tracks(user, page_current + 1, per_page)
-            if 'tracks' in page:
-                # Let us the reveal the holy total pages!
-                page_total = int(page['tracks']['@attr']['totalPages'])
-                if page_total < 1:
-                    # It means nothing to us!
-                    raise ui.UserError('Last.fm reported no data.')
+            tracks, page_total = fetch_tracks(user, page_current + 1, per_page)
+            if page_total < 1:
+                # It means nothing to us!
+                raise ui.UserError('Last.fm reported no data.')
 
-                track = page['tracks']['track']
-                found, unknown = process_tracks(lib, track, log)
+            if tracks:
+                found, unknown = process_tracks(lib, tracks, log)
                 found_total += found
                 unknown_total += unknown
                 break
             else:
                 log.error('ERROR: unable to read page #{0}',
                           page_current + 1)
-                log.debug('API response: {}', page)
                 if retry < retry_limit:
                     log.info(
                         'Retrying page #{0}... ({1}/{2} retry)',
@@ -107,14 +161,30 @@ def import_lastfm(lib, log):
 
 
 def fetch_tracks(user, page, limit):
-    return requests.get(API_URL, params={
-        'method': 'library.gettracks',
-        'user': user,
-        'api_key': plugins.LASTFM_KEY,
-        'page': bytes(page),
-        'limit': bytes(limit),
-        'format': 'json',
-    }).json()
+    """ JSON format:
+        [
+            {
+                "mbid": "...",
+                "artist": "...",
+                "title": "...",
+                "playcount": "..."
+            }
+        ]
+    """
+    network = pylast.LastFMNetwork(api_key=config['lastfm']['api_key'])
+    user_obj = CustomUser(user, network)
+    results, total_pages =\
+        user_obj.get_top_tracks_by_page(limit=limit, page=page)
+    return [
+        {
+            "mbid": track.item.mbid if track.item.mbid else '',
+            "artist": {
+                "name": track.item.artist.name
+            },
+            "name": track.item.title,
+            "playcount": track.weight
+        } for track in results
+    ], total_pages
 
 
 def process_tracks(lib, tracks, log):
