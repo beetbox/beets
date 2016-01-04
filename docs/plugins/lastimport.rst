@@ -9,10 +9,12 @@ with this field.
 Installation
 ------------
 
-To use the ``lastimport`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then install the `requests`_ library by typing::
+The plugin requires `pylast`_, which you can install using `pip`_ by typing::
 
-    pip install requests
+    pip install pylast
+
+After you have pylast installed, enable the ``lastimport`` plugin in your
+configuration (see :ref:`using-plugins`).
 
 Next, add your Last.fm username to your beets configuration file::
 
