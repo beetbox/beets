@@ -29,6 +29,10 @@ Fixes:
   anymore. :bug:`1583`
 * :doc:`/plugins/play`: Fix a regression in the last version where there was
   no default command. :bug:`1793`
+* :doc:`/plugins/lastimport`: Switched API method from library.getTracks to
+  user.getTopTracks. This fixes :bug:`1574`, which was caused by the former API
+  method being removed. Also moved from custom HTTP requests to using pylast
+  library.
 
 
 1.3.16 (December 28, 2015)
