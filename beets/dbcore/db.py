@@ -668,8 +668,17 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        cursor = self.db._connection().execute(statement, subvals)
-        return cursor.lastrowid
+        try:
+            cursor = self.db._connection().execute(statement, subvals)
+            return cursor.lastrowid
+        except sqlite3.OperationalError as exe:
+            if exe.message == "unable to open database file":
+                print("ERROR: ", exe)
+                print(
+                    "Sorry, but there is a problem opening your database file."
+                    " Make sure the directory containing your database file "
+                    "has write permissions.")
+            raise
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""

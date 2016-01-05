@@ -1,6 +1,9 @@
 Changelog
 =========
 
+* Give some helpful extra info in the event of a
+  "sqlite3.OperationalError: unable to open database file". :bug:`1676`
+
 1.3.17 (in development)
 -----------------------
 
