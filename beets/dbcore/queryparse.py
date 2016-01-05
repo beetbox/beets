@@ -77,7 +77,8 @@ def parse_query_part(part, query_classes={}, prefixes={},
     For example, assuming the `:` prefix is used for `RegexpQuery`:
     - `'stapler'` -> `(None, 'stapler', SubstringQuery, False)`
     - `'color:red'` -> `('color', 'red', SubstringQuery, False)`
-    - `':^Quiet'` -> `(None, '^Quiet', RegexpQuery, False)`
+    - `':^Quiet'` -> `(None, '^Quiet', RegexpQuery, False)`, because
+      the `^` follows the `:`
     - `'color::b..e'` -> `('color', 'b..e', RegexpQuery, False)`
     - `'-color:red'` -> `('color', 'red', SubstringQuery, True)`
     """
