@@ -29,17 +29,17 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def test_permissions_on_album_imported(self):
-        self.do_test(True)
+        self.do_thing(True)
 
     def test_permissions_on_item_imported(self):
         self.config['import']['singletons'] = True
-        self.do_test(True)
+        self.do_thing(True)
 
     @patch("os.chmod", Mock())
     def test_failing_to_set_permissions(self):
-        self.do_test(False)
+        self.do_thing(False)
 
-    def do_test(self, expectSuccess):
+    def do_thing(self, expectSuccess):
         def get_stat(v):
             return os.stat(
                 os.path.join(self.temp_dir, 'import', *v)).st_mode & 0o777
