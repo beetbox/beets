@@ -40,23 +40,28 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         self.do_test(False)
 
     def do_test(self, expectSuccess):
+        def get_stat(v):
+            return os.stat(
+                os.path.join(self.temp_dir, 'import', *v)).st_mode & 0o777
         self.importer = self.create_importer()
+        typs = ['file', 'dir']
+        self.exp_perms = {
+            True: {k: convert_perm(self.config['permissions'][k].get())
+                   for k in typs},
+            False: {k: get_stat(v)
+                    for (k, v) in zip(typs, (('album 0', 'track 0.mp3'), ()))}}
+
         self.importer.run()
         item = self.lib.items().get()
 
-        exp_perms = {k: convert_perm(self.config['permissions'][k].get())
-                     for k in ['file', 'dir']}
-
-        self.assertPerms(item.path, convert_perm(644),
-                         exp_perms['file'], expectSuccess)
+        self.assertPerms(item.path, 'file', expectSuccess)
 
         for path in dirs_in_library(self.lib.directory, item.path):
-            self.assertPerms(path, convert_perm(755),
-                             exp_perms['dir'], expectSuccess)
+            self.assertPerms(path, 'dir', expectSuccess)
 
-    def assertPerms(self, path, old_perms, new_perms, expectSuccess):
-        for x in [(True, new_perms if expectSuccess else old_perms, '!='),
-                  (False, old_perms if expectSuccess else new_perms, '==')]:
+    def assertPerms(self, path, typ, expectSuccess):
+        for x in [(True, self.exp_perms[expectSuccess][typ], '!='),
+                  (False, self.exp_perms[not expectSuccess][typ], '==')]:
             self.assertEqual(x[0], check_permissions(path, x[1]),
                              msg='{} : {} {} {}'.format(
                 path, oct(os.stat(path).st_mode), x[2], oct(x[1])))
