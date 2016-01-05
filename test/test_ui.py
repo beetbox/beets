@@ -1129,6 +1129,16 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
                                  '--format-album', '$albumartist', 'ls', '-a')
         self.assertEqual(l, 'the album artist\n')
 
+    def test_help(self):
+        l = self.run_with_output('help')
+        self.assertIn('Usage:', l)
+
+        l = self.run_with_output('help', 'list')
+        self.assertIn('Usage:', l)
+
+        with self.assertRaises(ui.UserError):
+            self.run_command('help', 'this.is.not.a.real.command')
+
 
 class CommonOptionsParserTest(unittest.TestCase, TestHelper):
     def setUp(self):
