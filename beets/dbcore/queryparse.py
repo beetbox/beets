@@ -47,7 +47,7 @@ def parse_query_part(part, query_classes={}, prefixes={},
     - Optionally, a *field name* preceding the pattern, separated by a
       colon. So in `foo:bar`, `foo` is the field name and `bar` is the
       pattern.
-    - Optionally, a *query prefix* just before the field (and after the
+    - Optionally, a *query prefix* just before the pattern (and after the
       optional colon) indicating the type of query that should be used. For
       example, in `~foo`, `~` might be a prefix. (The set of prefixes to
       look for is given in the `prefixes` parameter.)
