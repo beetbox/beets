@@ -33,6 +33,12 @@ Fixes:
   user.getTopTracks. This fixes :bug:`1574`, which was caused by the former API
   method being removed. Also moved from custom HTTP requests to using pylast
   library.
+* Fix typos. For the :doc:`/plugins/play`, the recommended configuration option
+  to set the warning threshold is now ``warning_threshold`` (instead of
+  ``warning_treshold``) but backwards compatibility is preserved until the next
+  major version so ``warning_treshold`` will still work. Thanks to
+  :user:`JesseWeinstein`. :bug:`1802` :bug:`1803`
+
 
 
 1.3.16 (December 28, 2015)
