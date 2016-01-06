@@ -72,9 +72,9 @@ class PlayPlugin(BeetsPlugin):
         raw = config['play']['raw'].get(bool)
         warning_threshold = config['play']['warning_threshold'].get(int)
         # We use -2 as a default value for warning_threshold to detect if it is
-        # set or not. We can't use a falsey value because it has an actual in
-        # the configuration of this pluginmeaning, and we do not use -1 because
-        # some people might use it as a value to obtain no warning, which
+        # set or not. We can't use a falsey value because it would have an
+        # actual meaning in the configuration of this plugin, and we do not use
+        # -1 because some people might use it as a value to obtain no warning,
         # which wouldn't be that bad of a practice.
         if warning_threshold == -2:
             # if warning_threshold has not been set by user, look for
