@@ -41,7 +41,9 @@ class PlayPlugin(BeetsPlugin):
             'use_folders': False,
             'relative_to': None,
             'raw': False,
-            'warning_threshold': 100,
+            # Backwards compatibility. See #1803 and line 74
+            'warning_threshold': -2,
+            'warning_treshold': 100,
         })
 
     def commands(self):
@@ -69,6 +71,17 @@ class PlayPlugin(BeetsPlugin):
         relative_to = config['play']['relative_to'].get()
         raw = config['play']['raw'].get(bool)
         warning_threshold = config['play']['warning_threshold'].get(int)
+        # We use -2 as a default value for warning_threshold to detect if it is
+        # set or not. We can't use a falsey value because it has an actual in
+        # the configuration of this pluginmeaning, and we do not use -1 because
+        # some people might use it as a value to obtain no warning, which
+        # which wouldn't be that bad of a practice.
+        if warning_threshold == -2:
+            # if warning_threshold has not been set by user, look for
+            # warning_treshold, to preserve backwards compatibility. See #1803.
+            # warning_treshold has the correct default value of 100.
+            warning_threshold = config['play']['warning_treshold'].get(int)
+
         if relative_to:
             relative_to = util.normpath(relative_to)
 
