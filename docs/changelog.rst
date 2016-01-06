@@ -38,6 +38,7 @@ Fixes:
   ``warning_treshold``) but backwards compatibility is preserved until the next
   major version so ``warning_treshold`` will still work. Thanks to
   :user:`JesseWeinstein`. :bug:`1802` :bug:`1803`
+* :doc:`/plugins/lyrics`: The Genius backend has been re-enabled.
 
 
 
