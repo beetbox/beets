@@ -440,7 +440,7 @@ def summarize_items(items, singleton):
     return ', '.join(summary_parts)
 
 
-def _summary_judment(rec):
+def _summary_judgment(rec):
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
     NONE recommendations. Return an action or None if the user should be
@@ -697,7 +697,7 @@ class TerminalImportSession(importer.ImportSession):
                u' ({0} items)'.format(len(task.items)))
 
         # Take immediate action if appropriate.
-        action = _summary_judment(task.rec)
+        action = _summary_judgment(task.rec)
         if action == importer.action.APPLY:
             match = task.candidates[0]
             show_change(task.cur_artist, task.cur_album, match)
@@ -757,7 +757,7 @@ class TerminalImportSession(importer.ImportSession):
         candidates, rec = task.candidates, task.rec
 
         # Take immediate action if appropriate.
-        action = _summary_judment(task.rec)
+        action = _summary_judgment(task.rec)
         if action == importer.action.APPLY:
             match = candidates[0]
             show_item_change(task.item, match)
