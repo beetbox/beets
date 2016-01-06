@@ -47,7 +47,7 @@ configuration file. The available options are:
 - **raw**: Instead of creating a temporary m3u playlist and then opening it,
   simply call the command with the paths returned by the query as arguments.
   Default: ``no``.
-- **warning_treshold**: Set the minimum number of files to play which will
+- **warning_threshold**: Set the minimum number of files to play which will
   trigger a warning to be emitted. If set to ``no``, warning are never issued.
   Default: 100.
 
