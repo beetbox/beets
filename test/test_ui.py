@@ -1139,6 +1139,22 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
         with self.assertRaises(ui.UserError):
             self.run_command('help', 'this.is.not.a.real.command')
 
+    def test_stats(self):
+        l = self.run_with_output('stats')
+        self.assertIn('Approximate total size:', l)
+
+        # # Need to have more realistic library setup for this to work
+        # l = self.run_with_output('stats', '-e')
+        # self.assertIn('Total size:', l)
+
+    def test_version(self):
+        l = self.run_with_output('version')
+        self.assertIn('no plugins loaded', l)
+
+        # # Need to have plugin loaded
+        # l = self.run_with_output('version')
+        # self.assertIn('plugins: ', l)
+
 
 class CommonOptionsParserTest(unittest.TestCase, TestHelper):
     def setUp(self):
