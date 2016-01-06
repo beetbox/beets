@@ -97,7 +97,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.open_mock.assert_not_called()
 
     def test_warning_threshold(self):
-        self.config['play']['warning_treshold'] = 1
+        self.config['play']['warning_threshold'] = 1
         self.add_item(title='another NiceTitle')
 
         with control_stdin("a"):
