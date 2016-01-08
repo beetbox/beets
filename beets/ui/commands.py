@@ -1353,13 +1353,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Apply changes to database and files
     with lib.transaction():
         for obj in changed:
-            if move:
-                cur_path = obj.path
-                if lib.directory in ancestry(cur_path):  # In library?
-                    log.debug(u'moving object {0}', displayable_path(cur_path))
-                    obj.move()
-
-            obj.try_sync(write)
+            obj.try_sync(write, move)
 
 
 def modify_parse_args(args):
@@ -1510,7 +1504,9 @@ def write_items(lib, query, pretend, force):
         changed = ui.show_model_changes(item, clean_item,
                                         library.Item._media_tag_fields, force)
         if (changed or force) and not pretend:
-            item.try_sync()
+            # We use `try_sync` here to keep the mtime up to date in the
+            # database.
+            item.try_sync(True, False)
 
 
 def write_func(lib, opts, args):
