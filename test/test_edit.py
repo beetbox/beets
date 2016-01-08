@@ -107,19 +107,21 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         self.assertTrue(all(i.title.startswith(title_starts_with)
                             for i in self.lib.items()))
 
-    def assertItemFieldsModified(self, library_items, items, fields=[]):
+    def assertItemFieldsModified(self, library_items, items, fields=[],
+                                 allowed=['path']):
         """Assert that items in the library (`lib_items`) have different values
         on the specified `fields` (and *only* on those fields), compared to
         `items`.
+
         An empty `fields` list results in asserting that no modifications have
-        been performed.
+        been performed. `allowed` is a list of field changes that are ignored
+        (they may or may not have changed; the assertion doesn't care).
         """
-        changed_fields = []
         for lib_item, item in zip(library_items, items):
-            changed_fields.append([field for field in lib_item._fields
-                                   if lib_item[field] != item[field]])
-        self.assertTrue(all(diff_fields == fields for diff_fields in
-                            changed_fields))
+            diff_fields = [field for field in lib_item._fields
+                           if lib_item[field] != item[field]]
+            self.assertEqual(set(diff_fields).difference(allowed),
+                             set(fields))
 
     def test_title_edit_discard(self):
         """Edit title for all items in the library, then discard changes-"""

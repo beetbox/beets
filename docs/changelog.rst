@@ -39,6 +39,8 @@ Fixes:
   major version so ``warning_treshold`` will still work. Thanks to
   :user:`JesseWeinstein`. :bug:`1802` :bug:`1803`
 * :doc:`/plugins/lyrics`: The Genius backend has been re-enabled.
+* :doc:`/plugins/edit`: Editing metadata now moves files, when appropriate
+  (like the :ref:`modify-cmd` command). :bug:`1804`
 
 
 

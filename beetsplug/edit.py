@@ -323,4 +323,4 @@ class EditPlugin(plugins.BeetsPlugin):
         for ob in objs:
             if ob._dirty:
                 self._log.debug('saving changes to {}', ob)
-                ob.try_sync(ui.should_write(), False)
+                ob.try_sync(ui.should_write(), ui.should_move())
