@@ -4,7 +4,7 @@ Getting Started
 Welcome to `beets`_! This guide will help you begin using it to make your music
 collection better.
 
-.. _beets: http://beets.radbox.org/
+.. _beets: http://beets.io/
 
 Installing
 ----------

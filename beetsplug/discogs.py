@@ -41,7 +41,7 @@ import os
 urllib3_logger = logging.getLogger('requests.packages.urllib3')
 urllib3_logger.setLevel(logging.CRITICAL)
 
-USER_AGENT = u'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
+USER_AGENT = u'beets/{0} +http://beets.io/'.format(beets.__version__)
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (ConnectionError, socket.error, httplib.HTTPException,

@@ -79,7 +79,7 @@ news and updates.
 You can install beets by typing ``pip install beets``. Then check out the
 `Getting Started`_ guide.
 
-.. _its Web site: http://beets.radbox.org/
+.. _its Web site: http://beets.io/
 .. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
 
