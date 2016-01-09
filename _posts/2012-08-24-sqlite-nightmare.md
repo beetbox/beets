@@ -59,18 +59,18 @@ A simple solution would be to crank the SQLite lock timeout up to eleven. But I 
 
 To accomplish all of this, beets uses *explicit transactions* that make it obvious where database accesses begin and end. And those transactions are made *mutually exclusive* using Python-level locks to ensure that only one thread accesses the database at a time.
 
-Here's what it looks like. When a thread needs to access the database, it uses a [`with` block][with] and a "Transaction" [context manager][ctx] to query and manipulate the data. Here's [an example](https://github.com/sampsyo/beets/blob/master/beets/library.py#L1182) in which a Library object looks up an Item by its ID:
+Here's what it looks like. When a thread needs to access the database, it uses a [`with` block][with] and a "Transaction" [context manager][ctx] to query and manipulate the data. Here's [an example](https://github.com/beetbox/beets/blob/master/beets/library.py#L1182) in which a Library object looks up an Item by its ID:
 
     with self.transaction() as tx:
         rows = tx.query('SELECT * FROM items WHERE id=?', (load_id,))
 
 The only way to access the database is via methods on the [Transaction object][txn]. And creating a Transaction means acquiring a lock. Together, these two restrictions make it impossible for two different threads to access the database at the same time. This reduces the concurrency available in the DB (appropriate for beets but not for, say, a popular Web service) but eradicates the possibility of SQLite timeouts and will make it easy for beets to move to a different backend in the future---even one that doesn't support concurrency itself.
 
-[txn]: https://github.com/sampsyo/beets/blob/master/beets/library.py#L919
+[txn]: https://github.com/beetbox/beets/blob/master/beets/library.py#L919
 
-To make this explicit-transaction approach feasible, transactions need to be *composable:* it has to be possible to take two correctly-coded transactional functions and call them both together in a single transaction. For example, the beets Library has [a method that deletes a single track](https://github.com/sampsyo/beets/blob/master/beets/library.py#L1220). The ["beet remove" command][beet remove] needs to remove *many* tracks in one fell, atomic swoop.
+To make this explicit-transaction approach feasible, transactions need to be *composable:* it has to be possible to take two correctly-coded transactional functions and call them both together in a single transaction. For example, the beets Library has [a method that deletes a single track](https://github.com/beetbox/beets/blob/master/beets/library.py#L1220). The ["beet remove" command][beet remove] needs to remove *many* tracks in one fell, atomic swoop.
 
-The smaller method---`Library.remove`---uses a transaction internally so it can synchronize correctly when it's called alone. But the higher-level command has to call it many times in a single transaction, [like so](https://github.com/sampsyo/beets/blob/master/beets/ui/commands.py#L984):
+The smaller method---`Library.remove`---uses a transaction internally so it can synchronize correctly when it's called alone. But the higher-level command has to call it many times in a single transaction, [like so](https://github.com/beetbox/beets/blob/master/beets/ui/commands.py#L984):
 
     with lib.transaction():
         for item in items:
@@ -84,7 +84,7 @@ To accomplish this, each thread transparently maintains a *transaction stack* th
 [ctx]: http://docs.python.org/library/stdtypes.html#typecontextmanager
 [with]: http://www.python.org/dev/peps/pep-0343/
 [zen]: http://www.python.org/dev/peps/pep-0020/
-[nosql]: https://github.com/sampsyo/beets/wiki/Refactoring
+[nosql]: https://github.com/beetbox/beets/wiki/Refactoring
 [nop]: http://en.wikipedia.org/wiki/NOP
 
 ## Takeaway for Other Projects

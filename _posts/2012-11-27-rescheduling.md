@@ -25,6 +25,6 @@ So the release schedule is changing. The current development version will become
 To summarize: 1.0 very soon; Confit right after that. Here goes!
 
 [Confit]: https://github.com/sampsyo/confit
-[confit branch]: https://github.com/sampsyo/beets/tree/confit
+[confit branch]: https://github.com/beetbox/beets/tree/confit
 [opoblog]: {{site.url}}/blog/one-point-oh.html
 [changelog]: http://beets.readthedocs.org/en/latest/changelog.html

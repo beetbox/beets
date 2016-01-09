@@ -22,13 +22,13 @@ These problems are so basic that I don't think I'm alone in growing uneasy with 
 
 [confitwiki]: http://en.wikipedia.org/wiki/Confit
 [confit]: https://github.com/sampsyo/confit
-[import_files]: https://github.com/sampsyo/beets/blob/30ac59f3d20dd3e7ef72456e8fca3e47713d38dc/beets/ui/commands.py#L627
+[import_files]: https://github.com/beetbox/beets/blob/30ac59f3d20dd3e7ef72456e8fca3e47713d38dc/beets/ui/commands.py#L627
 [yamlspec]: http://www.yaml.org/spec/1.2/spec.html
 [replace]: http://beets.readthedocs.org/en/latest/reference/config.html#replace
 [pathconfig]: http://beets.readthedocs.org/en/latest/reference/config.html#path-format-configuration
 [yaml]: http://yaml.org/
 [config]: http://beets.readthedocs.org/en/latest/reference/config.html
-[firstcommit]: https://github.com/sampsyo/beets/commit/c1ed60af98bd5f18ab0a32bf782260ac15954d8e
+[firstcommit]: https://github.com/beetbox/beets/commit/c1ed60af98bd5f18ab0a32bf782260ac15954d8e
 [b1]: http://beets.readthedocs.org/en/latest/changelog.html#b1-june-17-2010
 
 ## Beta 17

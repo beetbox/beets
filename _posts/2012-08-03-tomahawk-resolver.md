@@ -24,5 +24,5 @@ Tomahawk will now be able to find tracks from your beets library. Type a query i
 [bpd]: http://beets.readthedocs.org/page/plugins/bpd.html
 [web]: http://beets.readthedocs.org/page/plugins/web.html
 [config]: http://beets.readthedocs.org/page/reference/config.html
-[git]: https://github.com/sampsyo/beets
+[git]: https://github.com/beetbox/beets
 [mercurial]: https://bitbucket.org/adrian/beets
