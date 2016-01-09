@@ -76,7 +76,7 @@ all of these limitations.
   Musepack, Windows Media, Opus, and AIFF files are supported. (Do you use
   some other format? Please `file a feature request`_!)
 
-.. _file a feature request: https://github.com/sampsyo/beets/issues/new
+.. _file a feature request: https://github.com/beetbox/beets/issues/new
 
 Now that that's out of the way, let's tag some music.
 
@@ -281,7 +281,7 @@ MusicBrainz---so consider adding the data yourself.
 If you think beets is ignoring an album that's listed in MusicBrainz, please
 `file a bug report`_.
 
-.. _file a bug report: https://github.com/sampsyo/beets/issues
+.. _file a bug report: https://github.com/beetbox/beets/issues
 
 I Hope That Makes Sense
 -----------------------

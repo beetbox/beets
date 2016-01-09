@@ -20,7 +20,7 @@ pygments_style = 'sphinx'
 
 # External links to the bug tracker.
 extlinks = {
-    'bug': ('https://github.com/sampsyo/beets/issues/%s', '#'),
+    'bug': ('https://github.com/beetbox/beets/issues/%s', '#'),
     'user': ('https://github.com/%s', ''),
 }
 
