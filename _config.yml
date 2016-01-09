@@ -1,5 +1,5 @@
 markdown: redcarpet
 redcarpet:
     extensions: [smart]
-url: http://beets.radbox.org
+url: http://beets.io
 permalink: /blog/:title.html

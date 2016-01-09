@@ -13,7 +13,7 @@ music-related development.
 [@b33ts](http://twitter.com/b33ts) on Twitter, where smaller project updates
 are posted more frequently.
 
-[beets]: http://beets.radbox.org/
+[beets]: {{site.url}}
 [Adrian Sampson]: http://www.cs.washington.edu/homes/asampson/
 [sub]: {{ site.url }}/blog/atom.xml
 

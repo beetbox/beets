@@ -26,5 +26,5 @@ To summarize: 1.0 very soon; Confit right after that. Here goes!
 
 [Confit]: https://github.com/sampsyo/confit
 [confit branch]: https://github.com/sampsyo/beets/tree/confit
-[opoblog]: http://beets.radbox.org/blog/one-point-oh.html
+[opoblog]: {{site.url}}/blog/one-point-oh.html
 [changelog]: http://beets.readthedocs.org/en/latest/changelog.html

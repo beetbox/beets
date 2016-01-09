@@ -19,7 +19,7 @@ organization software. They need support more than I do.
 ## Bitcoin
 
 <!-- coinbase tip button -->
-<div class="cb-tip-button" data-content-location="http://beets.radbox.org" data-href="//www.coinbase.com/tip_buttons/show_tip" data-to-user-id="532ce1f562812e11390002e8"></div>
+<div class="cb-tip-button" data-content-location="{{site.url}}" data-href="//www.coinbase.com/tip_buttons/show_tip" data-to-user-id="532ce1f562812e11390002e8"></div>
 <script>!function(d,s,id) {var js,cjs=d.getElementsByTagName(s)[0],e=d.getElementById(id);if(e){return;}js=d.createElement(s);js.id=id;js.src="https://www.coinbase.com/assets/tips.js";cjs.parentNode.insertBefore(js,cjs);}(document, 'script', 'coinbase-tips');</script>
 
 You can send Bitcoin donations to [1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo](bitcoin:1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo). Or you might prefer to donate using [Coinbase][]:
@@ -59,7 +59,7 @@ Enter an amount in US Dollars and hit the Donate button.
     <input type="hidden" name="accessKey" value="11SEM03K88SD016FS1G2" >
     <input type="hidden" name="cobrandingStyle" value="logo" >
     <input type="hidden" name="processImmediate" value="1" >
-    <input type="hidden" name="returnUrl" value="http://beets.radbox.org/" >
+    <input type="hidden" name="returnUrl" value="{{site.url}}/" >
     <div style = "margin: 0 5px 0 0; float: left;">
     $ <input type="text" name="amount" size="8" value="15.00">
     </div>
@@ -72,7 +72,7 @@ Enter an amount in US Dollars and hit the Donate button.
 Make a micro-donation by hitting the Flattr button.
 
 <p>
-    <a class="FlattrButton" style="display:none;" href="http://beets.radbox.org/"></a>
+    <a class="FlattrButton" style="display:none;" href="{{site.url}}/"></a>
     <noscript>
     <a href="http://flattr.com/thing/139913/beets" target="_blank">
     <img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" />
