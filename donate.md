@@ -72,7 +72,7 @@ Enter an amount in US Dollars and hit the Donate button.
 Make a micro-donation by hitting the Flattr button.
 
 <p>
-    <a class="FlattrButton" style="display:none;" href="{{site.url}}/"></a>
+    <a class="FlattrButton" style="display:none;" href="http://beets.radbox.org/"></a>
     <noscript>
     <a href="http://flattr.com/thing/139913/beets" target="_blank">
     <img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" />
