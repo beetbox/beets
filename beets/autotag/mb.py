@@ -33,7 +33,7 @@ VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 BASE_URL = 'http://musicbrainz.org/'
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
-                             'http://beets.radbox.org/')
+                             'http://beets.io/')
 
 
 class MusicBrainzAPIError(util.HumanReadableException):

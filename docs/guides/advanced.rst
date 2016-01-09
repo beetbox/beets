@@ -78,7 +78,7 @@ including a beets server. Just download Tomahawk and open its settings to
 connect it to beets. `A post on the beets blog`_ has a more detailed guide.
 
 .. _A post on the beets blog:
-    http://beets.radbox.org/blog/tomahawk-resolver.html
+    http://beets.io/blog/tomahawk-resolver.html
 .. _Tomahawk: http://www.tomahawk-player.org
 
 
@@ -132,7 +132,7 @@ And, unlike :ref:`built-in fields <itemfields>`, such fields can be removed::
 Read more than you ever wanted to know about the *flexible attributes*
 feature `on the beets blog`_.
 
-.. _on the beets blog: http://beets.radbox.org/blog/flexattr.html
+.. _on the beets blog: http://beets.io/blog/flexattr.html
 
 
 Choose a path style manually for some music
