@@ -4,6 +4,10 @@ Changelog
 1.3.17 (in development)
 -----------------------
 
+As of this release, the beets project has some new Internet homes! Our new
+domain name is `beets.io`_, and we have a shiny new GitHub organization:
+`Beetbox`_.
+
 New:
 
 * :doc:`/plugins/fetchart`: The Google Images backend has been restored. It
@@ -41,6 +45,9 @@ Fixes:
 * :doc:`/plugins/lyrics`: The Genius backend has been re-enabled.
 * :doc:`/plugins/edit`: Editing metadata now moves files, when appropriate
   (like the :ref:`modify-cmd` command). :bug:`1804`
+
+.. _beets.io: http://beets.io/
+.. _Beetbox: https://github.com/beetbox
 
 
 
