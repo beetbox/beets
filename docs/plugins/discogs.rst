@@ -30,7 +30,7 @@ Troubleshooting
 
 Several issues have been encountered with the Discogs API. If you have one,
 please start by searching for `a similar issue on the repo
-<https://github.com/sampsyo/beets/issues?utf8=%E2%9C%93&q=is%3Aissue+discogs>`_.
+<https://github.com/beetbox/beets/issues?utf8=%E2%9C%93&q=is%3Aissue+discogs>`_.
 
 Here are two things you can try:
 

@@ -220,7 +220,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Save the new data.
         if success:
-            self.save_write(objs)
+            self.save_changes(objs)
 
     def edit_objects(self, objs, fields):
         """Dump a set of Model objects to a file as text, ask the user
@@ -316,11 +316,11 @@ class EditPlugin(plugins.BeetsPlugin):
             id = int(old_dict['id'])
             apply(obj_by_id[id], new_dict)
 
-    def save_write(self, objs):
+    def save_changes(self, objs):
         """Save a list of updated Model objects to the database.
         """
         # Save to the database and possibly write tags.
         for ob in objs:
             if ob._dirty:
                 self._log.debug('saving changes to {}', ob)
-                ob.try_sync(ui.should_write())
+                ob.try_sync(ui.should_write(), ui.should_move())

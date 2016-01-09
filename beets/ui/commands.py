@@ -440,7 +440,7 @@ def summarize_items(items, singleton):
     return ', '.join(summary_parts)
 
 
-def _summary_judment(rec):
+def _summary_judgment(rec):
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
     NONE recommendations. Return an action or None if the user should be
@@ -697,7 +697,7 @@ class TerminalImportSession(importer.ImportSession):
                u' ({0} items)'.format(len(task.items)))
 
         # Take immediate action if appropriate.
-        action = _summary_judment(task.rec)
+        action = _summary_judgment(task.rec)
         if action == importer.action.APPLY:
             match = task.candidates[0]
             show_change(task.cur_artist, task.cur_album, match)
@@ -757,7 +757,7 @@ class TerminalImportSession(importer.ImportSession):
         candidates, rec = task.candidates, task.rec
 
         # Take immediate action if appropriate.
-        action = _summary_judment(task.rec)
+        action = _summary_judgment(task.rec)
         if action == importer.action.APPLY:
             match = candidates[0]
             show_item_change(task.item, match)
@@ -1353,13 +1353,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Apply changes to database and files
     with lib.transaction():
         for obj in changed:
-            if move:
-                cur_path = obj.path
-                if lib.directory in ancestry(cur_path):  # In library?
-                    log.debug(u'moving object {0}', displayable_path(cur_path))
-                    obj.move()
-
-            obj.try_sync(write)
+            obj.try_sync(write, move)
 
 
 def modify_parse_args(args):
@@ -1510,7 +1504,9 @@ def write_items(lib, query, pretend, force):
         changed = ui.show_model_changes(item, clean_item,
                                         library.Item._media_tag_fields, force)
         if (changed or force) and not pretend:
-            item.try_sync()
+            # We use `try_sync` here to keep the mtime up to date in the
+            # database.
+            item.try_sync(True, False)
 
 
 def write_func(lib, opts, args):

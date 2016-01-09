@@ -1,6 +1,6 @@
 #compdef beet
 
-# Completion for beets music library manager and MusicBrainz tagger: http://beets.radbox.org/
+# Completion for beets music library manager and MusicBrainz tagger: http://beets.io/
 
 # useful: argument to _regex_arguments for matching any word
 local matchany=/$'[^\0]##\0'/

@@ -630,20 +630,26 @@ class Item(LibModel):
             log.error("{0}", exc)
             return False
 
-    def try_sync(self, write=None):
-        """Synchronize the item with the database and the media file
-        tags, updating them with this object's current state.
+    def try_sync(self, write, move, with_album=True):
+        """Synchronize the item with the database and, possibly, updates its
+        tags on disk and its path (by moving the file).
 
-        By default, the current `path` for the item is used to write
-        tags. If `write` is `False`, no tags are written. If `write` is
-        a path, tags are written to that file instead.
+        `write` indicates whether to write new tags into the file. Similarly,
+        `move` controls whether the path should be updated. In the
+        latter case, files are *only* moved when they are inside their
+        library's directory (if any).
 
-        Similar to calling :meth:`write` and :meth:`store`.
+        Similar to calling :meth:`write`, :meth:`move`, and :meth:`store`
+        (conditionally).
         """
-        if write is True:
-            write = None
-        if write is not False:
-            self.try_write(path=write)
+        if write:
+            self.try_write()
+        if move:
+            # Check whether this file is inside the library directory.
+            if self._db and self._db.directory in util.ancestry(self.path):
+                log.debug('moving {0} to synchronize path',
+                          util.displayable_path(self.path))
+                self.move(with_album=with_album)
         self.store()
 
     # Files themselves.
@@ -1108,15 +1114,18 @@ class Album(LibModel):
                         item[key] = value
                     item.store()
 
-    def try_sync(self, write=True):
-        """Synchronize the album and its items with the database and
-        their files by updating them with this object's current state.
+    def try_sync(self, write, move):
+        """Synchronize the album and its items with the database.
+        Optionally, also write any new tags into the files and update
+        their paths.
 
-        `write` indicates whether to write tags to the item files.
+        `write` indicates whether to write tags to the item files, and
+        `move` controls whether files (both audio and album art) are
+        moved.
         """
         self.store()
         for item in self.items():
-            item.try_sync(bool(write))
+            item.try_sync(write, move)
 
 
 # Query construction helpers.

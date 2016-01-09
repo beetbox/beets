@@ -4,6 +4,10 @@ Changelog
 1.3.17 (in development)
 -----------------------
 
+As of this release, the beets project has some new Internet homes! Our new
+domain name is `beets.io`_, and we have a shiny new GitHub organization:
+`Beetbox`_.
+
 New:
 
 * :doc:`/plugins/fetchart`: The Google Images backend has been restored. It
@@ -35,6 +39,18 @@ Fixes:
   user.getTopTracks. This fixes :bug:`1574`, which was caused by the former API
   method being removed. Also moved from custom HTTP requests to using pylast
   library.
+* Fix typos. For the :doc:`/plugins/play`, the recommended configuration option
+  to set the warning threshold is now ``warning_threshold`` (instead of
+  ``warning_treshold``) but backwards compatibility is preserved until the next
+  major version so ``warning_treshold`` will still work. Thanks to
+  :user:`JesseWeinstein`. :bug:`1802` :bug:`1803`
+* :doc:`/plugins/lyrics`: The Genius backend has been re-enabled.
+* :doc:`/plugins/edit`: Editing metadata now moves files, when appropriate
+  (like the :ref:`modify-cmd` command). :bug:`1804`
+
+.. _beets.io: http://beets.io/
+.. _Beetbox: https://github.com/beetbox
+
 
 
 1.3.16 (December 28, 2015)
@@ -1428,7 +1444,7 @@ previous versions would spit out a warning and then list your entire library.
 
 There's more detail than you could ever need `on the beets blog`_.
 
-.. _on the beets blog: http://beets.radbox.org/blog/flexattr.html
+.. _on the beets blog: http://beets.io/blog/flexattr.html
 
 
 1.2.2 (August 27, 2013)
@@ -2016,7 +2032,7 @@ begins today on features for version 1.1.
   unintentionally loading the plugins they contain.
 
 .. _The Echo Nest: http://the.echonest.com/
-.. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
+.. _Tomahawk resolver: http://beets.io/blog/tomahawk-resolver.html
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
 .. _aacgain: http://aacgain.altosdesign.com
 
@@ -2213,7 +2229,7 @@ release.
 * Significant internal restructuring to avoid SQLite locking errors. As part of
   these changes, the not-very-useful "save" plugin event has been removed.
 
-.. _pyacoustid: https://github.com/sampsyo/pyacoustid
+.. _pyacoustid: https://github.com/beetbox/pyacoustid
 
 
 1.0b13 (March 16, 2012)

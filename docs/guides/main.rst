@@ -4,7 +4,7 @@ Getting Started
 Welcome to `beets`_! This guide will help you begin using it to make your music
 collection better.
 
-.. _beets: http://beets.radbox.org/
+.. _beets: http://beets.io/
 
 Installing
 ----------
@@ -101,7 +101,7 @@ trouble or you have more detail to contribute here, please direct it to
 `the mailing list`_.
 
 .. _install Python: http://python.org/download/
-.. _beets.reg: https://github.com/sampsyo/beets/blob/master/extra/beets.reg
+.. _beets.reg: https://github.com/beetbox/beets/blob/master/extra/beets.reg
 .. _install pip: http://www.pip-installer.org/en/latest/installing.html#install-pip
 .. _get-pip.py: https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 

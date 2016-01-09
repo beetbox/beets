@@ -439,7 +439,7 @@ defines some bash-specific functions to make this work without errors::
     _filedir() { :; }
     eval "$(beet completion)"
 
-.. _completion script: https://github.com/sampsyo/beets/blob/master/extra/_beet
+.. _completion script: https://github.com/beetbox/beets/blob/master/extra/_beet
 
 
 .. only:: man
