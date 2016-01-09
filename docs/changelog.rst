@@ -2220,7 +2220,7 @@ release.
 * Significant internal restructuring to avoid SQLite locking errors. As part of
   these changes, the not-very-useful "save" plugin event has been removed.
 
-.. _pyacoustid: https://github.com/sampsyo/pyacoustid
+.. _pyacoustid: https://github.com/beetbox/pyacoustid
 
 
 1.0b13 (March 16, 2012)

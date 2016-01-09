@@ -380,7 +380,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
         """Ensure that `is_page_candidate` doesn't crash when the artist
         and such contain special regular expression characters.
         """
-        # https://github.com/sampsyo/beets/issues/1673
+        # https://github.com/beetbox/beets/issues/1673
         s = self.source
         url = s['url'] + s['path']
         url_title = u'foo'

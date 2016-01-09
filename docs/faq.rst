@@ -138,13 +138,13 @@ it's helpful to run on the "bleeding edge". To run the latest source:
 2. Install from source. There are a few easy ways to do this:
 
    -  Use ``pip`` to install the latest snapshot tarball: just type
-      ``pip install https://github.com/sampsyo/beets/tarball/master``.
+      ``pip install https://github.com/beetbox/beets/tarball/master``.
    -  Grab the source using Git:
-      ``git clone https://github.com/sampsyo/beets.git``. Then
+      ``git clone https://github.com/beetbox/beets.git``. Then
       ``cd beets`` and type ``python setup.py install``.
    -  Use ``pip`` to install an "editable" version of beets based on an
       automatic source checkout. For example, run
-      ``pip install -e git+https://github.com/sampsyo/beets#egg=beets``
+      ``pip install -e git+https://github.com/beetbox/beets#egg=beets``
       to clone beets and install it, allowing you to modify the source
       in-place to try out changes.
 
@@ -157,8 +157,8 @@ pages.
 …report a bug in beets?
 -----------------------
 
-We use the `issue tracker <https://github.com/sampsyo/beets/issues>`__
-on GitHub. `Enter a new issue <https://github.com/sampsyo/beets/issues/new>`__
+We use the `issue tracker <https://github.com/beetbox/beets/issues>`__
+on GitHub. `Enter a new issue <https://github.com/beetbox/beets/issues/new>`__
 there to report a bug. Please follow these guidelines when reporting an issue:
 
 -  Most importantly: if beets is crashing, please `include the
@@ -325,7 +325,7 @@ integrity---for example, type ``metaflac --list music.flac`` to check
 FLAC files.
 
 If beets still complains about a file that seems to be valid, `file a
-bug <https://github.com/sampsyo/beets/issues/new>`__ and we'll look into
+bug <https://github.com/beetbox/beets/issues/new>`__ and we'll look into
 it. There's always a possibility that there's a bug "upstream" in the
 `Mutagen <http://code.google.com/p/mutagen/>`__ library used by beets,
 in which case we'll forward the bug to that project's tracker.

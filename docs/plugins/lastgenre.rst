@@ -37,7 +37,7 @@ Wikipedia`_.
 .. _pip: http://www.pip-installer.org/
 .. _pylast: http://code.google.com/p/pylast/
 .. _script that scrapes Wikipedia: https://gist.github.com/1241307
-.. _internal whitelist: https://raw.githubusercontent.com/sampsyo/beets/master/beetsplug/lastgenre/genres.txt
+.. _internal whitelist: https://raw.githubusercontent.com/beetbox/beets/master/beetsplug/lastgenre/genres.txt
 
 Canonicalization
 ^^^^^^^^^^^^^^^^

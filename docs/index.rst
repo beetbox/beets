@@ -19,7 +19,7 @@ improved.
 
 .. _beets: http://beets.io/
 .. _the mailing list: http://groups.google.com/group/beets-users
-.. _file a bug: https://github.com/sampsyo/beets/issues
+.. _file a bug: https://github.com/beetbox/beets/issues
 
 Contents
 --------
