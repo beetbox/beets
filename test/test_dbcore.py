@@ -19,6 +19,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import os
+import shutil
 import sqlite3
 
 from test._common import unittest
@@ -130,11 +131,13 @@ class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
     """
-    def setUp(self):
-        handle, self.libfile = mkstemp('db')
+
+    @classmethod
+    def setUpClass(cls):
+        handle, cls.orig_libfile = mkstemp('orig_db')
         os.close(handle)
         # Set up a database with the two-field schema.
-        old_lib = TestDatabase2(self.libfile)
+        old_lib = TestDatabase2(cls.orig_libfile)
 
         # Add an item to the old library.
         old_lib._connection().execute(
@@ -142,6 +145,15 @@ class MigrationTest(unittest.TestCase):
         )
         old_lib._connection().commit()
         del old_lib
+
+    @classmethod
+    def tearDownClass(cls):
+        os.remove(cls.orig_libfile)
+
+    def setUp(self):
+        handle, self.libfile = mkstemp('db')
+        os.close(handle)
+        shutil.copyfile(self.orig_libfile, self.libfile)
 
     def tearDown(self):
         os.remove(self.libfile)
