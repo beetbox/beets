@@ -64,6 +64,8 @@ class TestHelper(helper.TestHelper):
                                 .format(path, tag))
 
 
+@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
+                 'Skipping because test is slow')
 class ImportConvertTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -99,6 +101,8 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.assertTrue(os.path.isfile(item.path))
 
 
+@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
+                 'Skipping because test is slow')
 class ConvertCliTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -186,6 +190,8 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         self.assertFalse(os.path.exists(converted))
 
 
+@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
+                 'Skipping because test is slow')
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     """Test the effect of the `never_convert_lossy_files` option.
     """

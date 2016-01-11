@@ -127,6 +127,8 @@ class TestModelWithGetters(dbcore.Model):
         return {}
 
 
+@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
+                 'Skipping because test is slow')
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.

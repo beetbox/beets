@@ -5,6 +5,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import sys
+import os
 import threading
 import logging as log
 from StringIO import StringIO
@@ -163,6 +164,8 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
         self.assertIn('dummy: debug import_stage', logs)
 
 
+@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
+                 'Skipping because test is slow')
 class ConcurrentEventsTest(TestCase, helper.TestHelper):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in
