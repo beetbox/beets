@@ -45,6 +45,8 @@ Fixes:
 * :doc:`/plugins/lyrics`: The Genius backend has been re-enabled.
 * :doc:`/plugins/edit`: Editing metadata now moves files, when appropriate
   (like the :ref:`modify-cmd` command). :bug:`1804`
+* The :ref:`stats-cmd` command no longer crashes when files are missing or
+  inaccessible. :bug:`1806`
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox
