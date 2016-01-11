@@ -47,6 +47,8 @@ Fixes:
   (like the :ref:`modify-cmd` command). :bug:`1804`
 * The :ref:`stats-cmd` command no longer crashes when files are missing or
   inaccessible. :bug:`1806`
+* :doc:`/plugins/fetchart`: Possibly fix a Unicode-related crash when using
+  some versions of pyOpenSSL. :bug:`1805`
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox
