@@ -1232,7 +1232,10 @@ def show_stats(lib, query, exact):
 
     for item in items:
         if exact:
-            total_size += os.path.getsize(item.path)
+            try:
+                total_size += os.path.getsize(item.path)
+            except OSError as exc:
+                log.info('could not get size of {}: {}', item.path, exc)
         else:
             total_size += int(item.length * item.bitrate / 8)
         total_time += item.length
