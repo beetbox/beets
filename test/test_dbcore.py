@@ -116,6 +116,16 @@ class TestDatabaseTwoModels(dbcore.Database):
     pass
 
 
+class TestModelWithGetters(dbcore.Model):
+
+    @classmethod
+    def _getters(cls):
+        return {'aComputedField': (lambda s: 'thing')}
+
+    def _template_funcs(self):
+        return {}
+
+
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
@@ -273,6 +283,40 @@ class ModelTest(unittest.TestCase):
 
         model2.load()
         self.assertNotIn('flex_field', model2)
+
+    def test_check_db_fails(self):
+        with self.assertRaisesRegexp(ValueError, 'no database'):
+            dbcore.Model()._check_db()
+        with self.assertRaisesRegexp(ValueError, 'no id'):
+            TestModel1(self.db)._check_db()
+
+        dbcore.Model(self.db)._check_db(need_id=False)
+
+    def test_missing_field(self):
+        with self.assertRaises(AttributeError):
+            TestModel1(self.db).nonExistingKey
+
+    def test_computed_field(self):
+        model = TestModelWithGetters()
+        self.assertEqual(model.aComputedField, 'thing')
+        with self.assertRaisesRegexp(KeyError, 'computed field .+ deleted'):
+            del model.aComputedField
+
+    def test_items(self):
+        model = TestModel1(self.db)
+        model.id = 5
+        self.assertEqual({('id', 5), ('field_one', None)},
+                         set(model.items()))
+
+    def test_delete_internal_field(self):
+        model = dbcore.Model()
+        del model._db
+        with self.assertRaises(AttributeError):
+            model._db
+
+    def test_parse_nonstring(self):
+        with self.assertRaisesRegexp(TypeError, "must be a string"):
+            dbcore.Model._parse(None, 42)
 
 
 class FormatTest(unittest.TestCase):
@@ -587,6 +631,15 @@ class ResultsIteratorTest(unittest.TestCase):
     def test_length(self):
         objs = self.db._fetch(TestModel1)
         self.assertEqual(len(objs), 2)
+
+    def test_out_of_range(self):
+        objs = self.db._fetch(TestModel1)
+        with self.assertRaises(IndexError):
+            objs[100]
+
+    def test_no_results(self):
+        self.assertIsNone(self.db._fetch(
+            TestModel1, dbcore.query.FalseQuery()).get())
 
 
 def suite():
