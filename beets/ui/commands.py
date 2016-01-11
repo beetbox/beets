@@ -1022,6 +1022,10 @@ import_cmd.parser.add_option(
     '--pretend', dest='pretend', action='store_true',
     help='just print the files to import'
 )
+import_cmd.parser.add_option(
+    '-m', '--musicbrainzid', dest='musicbrainz_id',
+    help='restrict the matching to a single MusicBrainz id'
+)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
