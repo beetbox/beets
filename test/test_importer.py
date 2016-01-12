@@ -236,6 +236,8 @@ class ImportHelper(TestHelper):
         self.assertEqual(len(os.listdir(self.libdir)), 0)
 
 
+@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
+                 'Skipping because test is slow')
 class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
     def setUp(self):
         self.setup_beets(disk=True)
