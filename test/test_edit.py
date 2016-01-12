@@ -15,6 +15,7 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 import codecs
+import os
 
 from mock import patch
 from test._common import unittest
@@ -62,6 +63,8 @@ class ModifyFileMocker(object):
             f.write(contents)
 
 
+@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
+                 'Skipping because test is slow')
 class EditCommandTest(unittest.TestCase, TestHelper):
     """ Black box tests for `beetsplug.edit`. Command line interaction is
     simulated using `test.helper.control_stdin()`, and yaml editing via an
