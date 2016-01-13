@@ -348,7 +348,7 @@ def system_mock(name):
         platform.system = old_system
 
 
-def slowTest(unused=None):
+def slow_test(unused=None):
     def _id(obj):
         return obj
     if 'SKIP_SLOW_TESTS' in os.environ:
