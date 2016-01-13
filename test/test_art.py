@@ -261,7 +261,7 @@ class GoogleImageTest(UseThePlugin):
         self.assertEqual(list(result_url), [])
 
 
-@_common.slowTest()
+@_common.slow_test()
 class ArtImporterTest(UseThePlugin):
     def setUp(self):
         super(ArtImporterTest, self).setUp()

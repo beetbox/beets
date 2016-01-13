@@ -236,7 +236,7 @@ class ImportHelper(TestHelper):
         self.assertEqual(len(os.listdir(self.libdir)), 0)
 
 
-@_common.slowTest()
+@_common.slow_test()
 class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
     def setUp(self):
         self.setup_beets(disk=True)

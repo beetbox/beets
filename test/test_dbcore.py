@@ -128,7 +128,7 @@ class TestModelWithGetters(dbcore.Model):
         return {}
 
 
-@_common.slowTest()
+@_common.slow_test()
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.

@@ -63,7 +63,7 @@ class ModifyFileMocker(object):
             f.write(contents)
 
 
-@_common.slowTest()
+@_common.slow_test()
 class EditCommandTest(unittest.TestCase, TestHelper):
     """ Black box tests for `beetsplug.edit`. Command line interaction is
     simulated using `test.helper.control_stdin()`, and yaml editing via an

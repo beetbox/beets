@@ -594,7 +594,7 @@ class InputTest(_common.TestCase):
         self.assertEqual(album, u'\xc2me')
 
 
-@_common.slowTest()
+@_common.slow_test()
 class ConfigTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
@@ -1036,7 +1036,7 @@ class PathFormatTest(_common.TestCase):
         self.assertEqual(pf[1:], default_formats)
 
 
-@_common.slowTest()
+@_common.slow_test()
 class PluginTest(_common.TestCase):
     def test_plugin_command_from_pluginpath(self):
         config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
@@ -1044,7 +1044,7 @@ class PluginTest(_common.TestCase):
         ui._raw_main(['test'])
 
 
-@_common.slowTest()
+@_common.slow_test()
 class CompletionTest(_common.TestCase):
     def test_completion(self):
         # Load plugin commands
