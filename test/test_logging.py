@@ -5,7 +5,6 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 import sys
-import os
 import threading
 import logging as log
 from StringIO import StringIO
@@ -13,6 +12,7 @@ from StringIO import StringIO
 import beets.logging as blog
 from beets import plugins, ui
 import beetsplug
+from test import _common
 from test._common import unittest, TestCase
 from test import helper
 
@@ -164,8 +164,7 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
         self.assertIn('dummy: debug import_stage', logs)
 
 
-@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
-                 'Skipping because test is slow')
+@_common.slowTest()
 class ConcurrentEventsTest(TestCase, helper.TestHelper):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in

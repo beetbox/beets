@@ -594,8 +594,7 @@ class InputTest(_common.TestCase):
         self.assertEqual(album, u'\xc2me')
 
 
-@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
-                 'Skipping because test is slow')
+@_common.slowTest()
 class ConfigTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
@@ -1037,8 +1036,7 @@ class PathFormatTest(_common.TestCase):
         self.assertEqual(pf[1:], default_formats)
 
 
-@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
-                 'Skipping because test is slow')
+@_common.slowTest()
 class PluginTest(_common.TestCase):
     def test_plugin_command_from_pluginpath(self):
         config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
@@ -1046,8 +1044,7 @@ class PluginTest(_common.TestCase):
         ui._raw_main(['test'])
 
 
-@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
-                 'Skipping because test is slow')
+@_common.slowTest()
 class CompletionTest(_common.TestCase):
     def test_completion(self):
         # Load plugin commands

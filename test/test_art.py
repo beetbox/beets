@@ -261,8 +261,7 @@ class GoogleImageTest(UseThePlugin):
         self.assertEqual(list(result_url), [])
 
 
-@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
-                 'Skipping because test is slow')
+@_common.slowTest()
 class ArtImporterTest(UseThePlugin):
     def setUp(self):
         super(ArtImporterTest, self).setUp()

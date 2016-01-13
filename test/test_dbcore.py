@@ -22,6 +22,7 @@ import os
 import shutil
 import sqlite3
 
+from test import _common
 from test._common import unittest
 from beets import dbcore
 from tempfile import mkstemp
@@ -127,8 +128,7 @@ class TestModelWithGetters(dbcore.Model):
         return {}
 
 
-@unittest.skipIf('SKIP_SLOW_TESTS' in os.environ,
-                 'Skipping because test is slow')
+@_common.slowTest()
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
