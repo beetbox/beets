@@ -119,6 +119,24 @@ def print_data(data, item=None, fmt=None):
         ui.print_(lineformat.format(field, value))
 
 
+def print_data_keys(data, item=None):
+
+    path = displayable_path(item.path) if item else None
+    formatted = []
+    for key, value in data.iteritems():
+        formatted.append(key)
+
+    if len(formatted) == 0:
+        return
+
+    line_format = u'{0}{{0}}'.format(u' ' * 4)
+    if path:
+        ui.print_(displayable_path(path))
+
+    for field in sorted(formatted):
+        ui.print_(line_format.format(field))
+
+
 class InfoPlugin(BeetsPlugin):
 
     def commands(self):
@@ -131,6 +149,8 @@ class InfoPlugin(BeetsPlugin):
         cmd.parser.add_option('-i', '--include-keys', default=[],
                               action='append', dest='included_keys',
                               help='comma separated list of keys to show')
+        cmd.parser.add_option('-k', '--keys-only', action='store_true',
+                              help='show only the keys')
         cmd.parser.add_format_option(target='item')
         return [cmd]
 
@@ -173,7 +193,10 @@ class InfoPlugin(BeetsPlugin):
             else:
                 if not first:
                     ui.print_()
-                print_data(data, item, opts.format)
+                if opts.keys_only:
+                    print_data_keys(data, item)
+                else:
+                    print_data(data, item, opts.format)
                 first = False
 
         if opts.summarize:
