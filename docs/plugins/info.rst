@@ -39,7 +39,7 @@ Additional command-line options include:
 * ``--format`` or ``-f``: Specify a specific format with which to print every
   item. This uses the same template syntax as beets’ :doc:`path formats
   </reference/pathformat>`.
-
+* ``--keys-only`` or ``-k``: Show the name of the tags without the values.
 
 .. _id3v2: http://id3v2.sourceforge.net
 .. _mp3info: http://www.ibiblio.org/mp3info/
