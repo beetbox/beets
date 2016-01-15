@@ -120,7 +120,8 @@ def print_data(data, item=None, fmt=None):
 
 
 def print_data_keys(data, item=None):
-
+    """Print only the keys (field names) for an item.
+    """
     path = displayable_path(item.path) if item else None
     formatted = []
     for key, value in data.iteritems():
