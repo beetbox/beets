@@ -61,11 +61,11 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
                 {'state': 'pause'},
                 {'state': 'play', 'songid': 1, 'time': '0:1'},
                 {'state': 'stop'}]
+    EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
     ITEM_PATH = '/foo/bar.flac'
 
     @patch("beetsplug.mpdstats.MPDClientWrapper", return_value=Mock(**{
-        "events.side_effect": [["player"]] * (len(STATUSES)-1) + [KeyboardInterrupt],
-        "status.side_effect": STATUSES,
+        "events.side_effect": EVENTS, "status.side_effect": STATUSES,
         "playlist.return_value": {1: ITEM_PATH}}))
     def test_run_MPDStats(self, mpd_mock):
         item = Item(title='title', path=self.ITEM_PATH, id=1)
