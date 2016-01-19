@@ -17,6 +17,7 @@ from __future__ import (division, absolute_import, print_function,
 import codecs
 
 from mock import patch
+from test import _common
 from test._common import unittest
 from test.helper import TestHelper, control_stdin
 
@@ -62,6 +63,7 @@ class ModifyFileMocker(object):
             f.write(contents)
 
 
+@_common.slow_test()
 class EditCommandTest(unittest.TestCase, TestHelper):
     """ Black box tests for `beetsplug.edit`. Command line interaction is
     simulated using `test.helper.control_stdin()`, and yaml editing via an

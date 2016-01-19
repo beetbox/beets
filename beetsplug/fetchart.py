@@ -72,9 +72,9 @@ def _logged_get(log, *args, **kwargs):
     else:
         message = 'getting URL'
 
-    req = requests.Request('GET', *args, **req_kwargs)
+    req = requests.Request(b'GET', *args, **req_kwargs)
     with requests.Session() as s:
-        s.headers = {'User-Agent': 'beets'}
+        s.headers = {b'User-Agent': b'beets'}
         prepped = s.prepare_request(req)
         log.debug('{}: {}', message, prepped.url)
         return s.send(prepped, **send_kwargs)
