@@ -209,10 +209,10 @@ class AAOTest(UseThePlugin):
     def test_aao_scraper_finds_image(self):
         body = b"""
         <br />
-        <a href="TARGET_URL" title="View larger image"
-           class="thickbox" style="color: #7E9DA2; text-decoration:none;">
-        <img src="http://www.albumart.org/images/zoom-icon.jpg"
-             alt="View larger image" width="17" height="15"  border="0"/></a>
+        <a href=\"TARGET_URL\" title=\"View larger image\"
+           class=\"thickbox\" style=\"color: #7E9DA2; text-decoration:none;\">
+        <img src=\"http://www.albumart.org/images/zoom-icon.jpg\"
+       alt=\"View larger image\" width=\"17\" height=\"15\"  border=\"0\"/></a>
         """
         self.mock_response(self.AAO_URL, body)
         album = _common.Bag(asin=self.ASIN)
@@ -261,6 +261,7 @@ class GoogleImageTest(UseThePlugin):
         self.assertEqual(list(result_url), [])
 
 
+@_common.slow_test()
 class ArtImporterTest(UseThePlugin):
     def setUp(self):
         super(ArtImporterTest, self).setUp()

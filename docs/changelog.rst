@@ -18,6 +18,8 @@ New:
 * A new :doc:`/plugins/mbsubmit` lets you print the tracks of an album in a
   format parseable by MusicBrainz track parser during an interactive import
   session. :bug:`1779`
+* :doc:`/plugins/info`: A new option will print only fields' names and not
+  their values. Thanks to :user:`GuilhermeHideki`. :bug:`1812`
 
 .. _AcousticBrainz: http://acousticbrainz.org/
 
@@ -45,6 +47,10 @@ Fixes:
 * :doc:`/plugins/lyrics`: The Genius backend has been re-enabled.
 * :doc:`/plugins/edit`: Editing metadata now moves files, when appropriate
   (like the :ref:`modify-cmd` command). :bug:`1804`
+* The :ref:`stats-cmd` command no longer crashes when files are missing or
+  inaccessible. :bug:`1806`
+* :doc:`/plugins/fetchart`: Possibly fix a Unicode-related crash when using
+  some versions of pyOpenSSL. :bug:`1805`
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox

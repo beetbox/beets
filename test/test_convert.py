@@ -64,6 +64,7 @@ class TestHelper(helper.TestHelper):
                                 .format(path, tag))
 
 
+@_common.slow_test()
 class ImportConvertTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -99,6 +100,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.assertTrue(os.path.isfile(item.path))
 
 
+@_common.slow_test()
 class ConvertCliTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -186,6 +188,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         self.assertFalse(os.path.exists(converted))
 
 
+@_common.slow_test()
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     """Test the effect of the `never_convert_lossy_files` option.
     """
