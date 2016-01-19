@@ -370,7 +370,7 @@ def _add_candidate(items, results, info):
 
 
 def tag_album(items, search_artist=None, search_album=None,
-              search_id=None):
+              search_ids=[]):
     """Return a tuple of a artist name, an album name, a list of
     `AlbumMatch` candidates from the metadata backend, and a
     `Recommendation`.
@@ -397,9 +397,11 @@ def tag_album(items, search_artist=None, search_album=None,
     candidates = {}
 
     # Search by explicit ID.
-    if search_id is not None:
-        log.debug(u'Searching for album ID: {0}', search_id)
-        search_cands = hooks.albums_for_id(search_id)
+    if search_ids:
+        search_cands = []
+        for search_id in search_ids:
+            log.debug(u'Searching for album ID: {0}', search_id)
+            search_cands.extend(hooks.albums_for_id(search_id))
 
     # Use existing metadata or text search.
     else:
@@ -444,33 +446,35 @@ def tag_album(items, search_artist=None, search_album=None,
 
 
 def tag_item(item, search_artist=None, search_title=None,
-             search_id=None):
+             search_ids=[]):
     """Attempts to find metadata for a single track. Returns a
     `(candidates, recommendation)` pair where `candidates` is a list of
     TrackMatch objects. `search_artist` and `search_title` may be used
     to override the current metadata for the purposes of the MusicBrainz
-    title; likewise `search_id`.
+    title; likewise `search_ids`.
     """
     # Holds candidates found so far: keys are MBIDs; values are
     # (distance, TrackInfo) pairs.
     candidates = {}
 
     # First, try matching by MusicBrainz ID.
-    trackid = search_id or item.mb_trackid
-    if trackid:
-        log.debug(u'Searching for track ID: {0}', trackid)
-        for track_info in hooks.tracks_for_id(trackid):
-            dist = track_distance(item, track_info, incl_artist=True)
-            candidates[track_info.track_id] = \
-                hooks.TrackMatch(dist, track_info)
-            # If this is a good match, then don't keep searching.
-            rec = _recommendation(candidates.values())
-            if rec == Recommendation.strong and not config['import']['timid']:
-                log.debug(u'Track ID match.')
-                return candidates.values(), rec
+    trackids = search_ids or filter(None, [item.mb_trackid])
+    if trackids:
+        for trackid in trackids:
+            log.debug(u'Searching for track ID: {0}', trackid)
+            for track_info in hooks.tracks_for_id(trackid):
+                dist = track_distance(item, track_info, incl_artist=True)
+                candidates[track_info.track_id] = \
+                    hooks.TrackMatch(dist, track_info)
+                # If this is a good match, then don't keep searching.
+                rec = _recommendation(candidates.values())
+                if rec == Recommendation.strong and \
+                        not config['import']['timid']:
+                    log.debug(u'Track ID match.')
+                    return candidates.values(), rec
 
     # If we're searching by ID, don't proceed.
-    if search_id is not None:
+    if search_ids != []:
         if candidates:
             return candidates.values(), rec
         else:

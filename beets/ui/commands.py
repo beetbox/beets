@@ -734,7 +734,7 @@ class TerminalImportSession(importer.ImportSession):
                 search_id = manual_id(False)
                 if search_id:
                     _, _, candidates, rec = autotag.tag_album(
-                        task.items, search_id=search_id
+                        task.items, search_ids=[search_id]
                     )
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
@@ -787,7 +787,7 @@ class TerminalImportSession(importer.ImportSession):
                 search_id = manual_id(True)
                 if search_id:
                     candidates, rec = autotag.tag_item(task.item,
-                                                       search_id=search_id)
+                                                       search_ids=[search_id])
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
                 post_choice = extra_ops[choice](self, task)
@@ -1023,7 +1023,7 @@ import_cmd.parser.add_option(
     help='just print the files to import'
 )
 import_cmd.parser.add_option(
-    '-m', '--musicbrainzid', dest='musicbrainz_id',
+    '-m', '--musicbrainzid', dest='musicbrainz_ids', action='append',
     help='restrict the matching to a single MusicBrainz id'
 )
 import_cmd.func = import_func

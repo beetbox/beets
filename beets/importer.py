@@ -582,12 +582,12 @@ class ImportTask(BaseImportTask):
         """Retrieve and store candidates for this album.
         """
         # Use a MusicBrainz id directly if provided by the importer -m option.
-        mb_id = None
-        if config['import']['musicbrainz_id'].exists():
-            mb_id = config['import']['musicbrainz_id'].get()
+        mb_ids = []
+        if config['import']['musicbrainz_ids'].exists():
+            mb_ids = config['import']['musicbrainz_ids'].get()
 
         artist, album, candidates, recommendation = \
-            autotag.tag_album(self.items, search_id=mb_id)
+            autotag.tag_album(self.items, search_ids=mb_ids)
         self.cur_artist = artist
         self.cur_album = album
         self.candidates = candidates
@@ -827,12 +827,12 @@ class SingletonImportTask(ImportTask):
 
     def lookup_candidates(self):
         # Use a MusicBrainz id directly if provided by the importer -m option.
-        mb_id = None
-        if config['import']['musicbrainz_id'].exists():
-            mb_id = config['import']['musicbrainz_id'].get()
+        mb_ids = []
+        if config['import']['musicbrainz_ids'].exists():
+            mb_ids = config['import']['musicbrainz_ids'].get()
 
         candidates, recommendation = autotag.tag_item(self.item,
-                                                      search_id=mb_id)
+                                                      search_ids=mb_ids)
         self.candidates = candidates
         self.rec = recommendation
 
