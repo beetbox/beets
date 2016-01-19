@@ -1688,6 +1688,84 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
                          .format(displayable_path(self.empty_path))])
 
 
+class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
+    """Test the --musicbrainzid argument."""
+    # The Beatles - Revolver (14 tracks)
+    ID_REVOLVER = ('https://musicbrainz.org/release/'
+                   'd74365b0-288d-3b85-b344-7f9f603378b6')
+    # The Beatles - Rubber Soul (14 tracks)
+    ID_RUBBER = ('https://musicbrainz.org/release/'
+                 'd5d19748-72fc-3f20-aae7-7ca22da283a0')
+    # The Beatles - Rubber Soul - Michelle
+    ID_MICHELLE = ('https://musicbrainz.org/recording/'
+                   '45846566-fb79-4758-a006-15cf69e0d138')
+    # The Beatles - Rubber Soul - Girl
+    ID_GIRL = ('https://musicbrainz.org/recording/'
+               '91ec42bc-a04d-497e-b829-439831c8dbcb')
+
+    def setUp(self):
+        self.setup_beets()
+        self._create_import_dir(1)
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_one_mbid_one_album(self):
+        self.config['import']['musicbrainz_ids'] = [self.ID_REVOLVER]
+        self._setup_import_session()
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'Revolver')
+
+    def test_several_mbid_one_album(self):
+        self.config['import']['musicbrainz_ids'] = [self.ID_REVOLVER,
+                                                    self.ID_RUBBER]
+        self._setup_import_session()
+        self.importer.add_choice(2)
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'Rubber Soul')
+
+    def test_one_mbid_one_singleton(self):
+        self.config['import']['musicbrainz_ids'] = [self.ID_MICHELLE]
+        self._setup_import_session(singletons=True)
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'Michelle')
+
+    def test_several_mbid_one_singleton(self):
+        self.config['import']['musicbrainz_ids'] = [self.ID_MICHELLE,
+                                                    self.ID_GIRL]
+        self._setup_import_session(singletons=True)
+        self.importer.add_choice(2)
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'Girl')
+
+    def test_candidates_album(self):
+        """Test directly task.lookup_candidates()."""
+        self.config['import']['musicbrainz_ids'] = [self.ID_REVOLVER,
+                                                    self.ID_RUBBER,
+                                                    'invalid id']  # discarded
+        task = importer.ImportTask(paths=self.import_dir,
+                                   toppath='top path',
+                                   items=[_common.item()])
+        task.lookup_candidates()
+        self.assertEqual(set(['Revolver', 'Rubber Soul']),
+                         set([c.info.album for c in task.candidates]))
+
+    def test_candidates_singleton(self):
+        """Test directly task.lookup_candidates()."""
+        self.config['import']['musicbrainz_ids'] = [self.ID_MICHELLE,
+                                                    self.ID_GIRL,
+                                                    'invalid id']  # discarded
+        task = importer.SingletonImportTask(toppath='top path',
+                                            item=_common.item())
+        task.lookup_candidates()
+        self.assertEqual(set(['Michelle', 'Girl']),
+                         set([c.info.title for c in task.candidates]))
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
