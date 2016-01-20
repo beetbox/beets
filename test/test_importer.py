@@ -1844,13 +1844,13 @@ def mocked_get_recording_by_id(id_, includes=[], release_status=[],
             'title': releases[id_][0],
             'id': id_,
             'length': 59,
-        },
-        'artist-credit': [{
-            'artist': {
-                'name': releases[id_][1],
-                'id': 'some-id',
-            },
-        }],
+            'artist-credit': [{
+                'artist': {
+                    'name': releases[id_][1],
+                    'id': 'some-id',
+                },
+            }],
+        }
     }
 
 

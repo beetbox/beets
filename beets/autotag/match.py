@@ -467,16 +467,16 @@ def tag_item(item, search_artist=None, search_title=None,
                 candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)
                 # If this is a good match, then don't keep searching.
-                rec = _recommendation(candidates.values())
+                rec = _recommendation(sorted(candidates.itervalues()))
                 if rec == Recommendation.strong and \
                         not config['import']['timid']:
                     log.debug(u'Track ID match.')
-                    return candidates.values(), rec
+                    return sorted(candidates.itervalues()), rec
 
     # If we're searching by ID, don't proceed.
     if search_ids != []:
         if candidates:
-            return candidates.values(), rec
+            return sorted(candidates.itervalues()), rec
         else:
             return [], Recommendation.none
 
