@@ -1691,80 +1691,167 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
 
 class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
     """Test the --musicbrainzid argument."""
-    # The Beatles - Revolver (14 tracks)
-    ID_REVOLVER = ('https://musicbrainz.org/release/'
-                   'd74365b0-288d-3b85-b344-7f9f603378b6')
-    # The Beatles - Rubber Soul (14 tracks)
-    ID_RUBBER = ('https://musicbrainz.org/release/'
-                 'd5d19748-72fc-3f20-aae7-7ca22da283a0')
-    # The Beatles - Rubber Soul - Michelle
-    ID_MICHELLE = ('https://musicbrainz.org/recording/'
-                   '45846566-fb79-4758-a006-15cf69e0d138')
-    # The Beatles - Rubber Soul - Girl
-    ID_GIRL = ('https://musicbrainz.org/recording/'
-               '91ec42bc-a04d-497e-b829-439831c8dbcb')
+
+    MB_RELEASE_PREFIX = 'https://musicbrainz.org/release/'
+    MB_RECORDING_PREFIX = 'https://musicbrainz.org/recording/'
+    ID_RELEASE_0 = '00000000-0000-0000-0000-000000000000'
+    ID_RELEASE_1 = '11111111-1111-1111-1111-111111111111'
+    ID_RECORDING_0 = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    ID_RECORDING_1 = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 
     def setUp(self):
         self.setup_beets()
         self._create_import_dir(1)
 
+        # Patch calls to musicbrainzngs.
+        self.release_patcher = patch('musicbrainzngs.get_release_by_id',
+                                     side_effect=mocked_get_release_by_id)
+        self.recording_patcher = patch('musicbrainzngs.get_recording_by_id',
+                                       side_effect=mocked_get_recording_by_id)
+        self.release_patcher.start()
+        self.recording_patcher.start()
+
     def tearDown(self):
+        self.recording_patcher.stop()
+        self.release_patcher.stop()
         self.teardown_beets()
 
     def test_one_mbid_one_album(self):
-        self.config['import']['musicbrainz_ids'] = [self.ID_REVOLVER]
+        self.config['import']['musicbrainz_ids'] = \
+            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0]
         self._setup_import_session()
+
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'Revolver')
+        self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_0')
 
     def test_several_mbid_one_album(self):
-        self.config['import']['musicbrainz_ids'] = [self.ID_REVOLVER,
-                                                    self.ID_RUBBER]
+        self.config['import']['musicbrainz_ids'] = \
+            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
+             self.MB_RELEASE_PREFIX + self.ID_RELEASE_1]
         self._setup_import_session()
-        self.importer.add_choice(2)
+
+        self.importer.add_choice(2)  # Pick the 2nd best match (release 1).
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'Rubber Soul')
+        self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_1')
 
     def test_one_mbid_one_singleton(self):
-        self.config['import']['musicbrainz_ids'] = [self.ID_MICHELLE]
+        self.config['import']['musicbrainz_ids'] = \
+            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0]
         self._setup_import_session(singletons=True)
+
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Michelle')
+        self.assertEqual(self.lib.items().get().title, 'VALID_RECORDING_0')
 
     def test_several_mbid_one_singleton(self):
-        self.config['import']['musicbrainz_ids'] = [self.ID_MICHELLE,
-                                                    self.ID_GIRL]
+        self.config['import']['musicbrainz_ids'] = \
+            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
+             self.MB_RECORDING_PREFIX + self.ID_RECORDING_1]
         self._setup_import_session(singletons=True)
-        self.importer.add_choice(2)
+
+        self.importer.add_choice(2)  # Pick the 2nd best match (recording 1).
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Girl')
+        self.assertEqual(self.lib.items().get().title, 'VALID_RECORDING_1')
 
     def test_candidates_album(self):
-        """Test directly task.lookup_candidates()."""
-        self.config['import']['musicbrainz_ids'] = [self.ID_REVOLVER,
-                                                    self.ID_RUBBER,
-                                                    'invalid id']  # discarded
+        """Test directly ImportTask.lookup_candidates()."""
+        self.config['import']['musicbrainz_ids'] = \
+            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
+             self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
+             'an invalid and discarded id']
+
         task = importer.ImportTask(paths=self.import_dir,
                                    toppath='top path',
                                    items=[_common.item()])
         task.lookup_candidates()
-        self.assertEqual(set(['Revolver', 'Rubber Soul']),
+        self.assertEqual(set(['VALID_RELEASE_0', 'VALID_RELEASE_1']),
                          set([c.info.album for c in task.candidates]))
 
     def test_candidates_singleton(self):
-        """Test directly task.lookup_candidates()."""
-        self.config['import']['musicbrainz_ids'] = [self.ID_MICHELLE,
-                                                    self.ID_GIRL,
-                                                    'invalid id']  # discarded
+        """Test directly SingletonImportTask.lookup_candidates()."""
+        self.config['import']['musicbrainz_ids'] = \
+            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
+             self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
+             'an invalid and discarded id']
+
         task = importer.SingletonImportTask(toppath='top path',
                                             item=_common.item())
         task.lookup_candidates()
-        self.assertEqual(set(['Michelle', 'Girl']),
+        self.assertEqual(set(['VALID_RECORDING_0', 'VALID_RECORDING_1']),
                          set([c.info.title for c in task.candidates]))
+
+
+# Helpers for ImportMusicBrainzIdTest.
+
+
+def mocked_get_release_by_id(id_, includes=[], release_status=[],
+                             release_type=[]):
+    """Mimic musicbrainzngs.get_release_by_id, accepting only a restricted list
+    of MB ids (ID_RELEASE_0, ID_RELEASE_1). The returned dict differs only in
+    the release title and artist name, so that ID_RELEASE_0 is a closer match
+    to the items created by ImportHelper._create_import_dir()."""
+    # Map IDs to (release title, artist), so the distances are different.
+    releases = {ImportMusicBrainzIdTest.ID_RELEASE_0: ('VALID_RELEASE_0',
+                                                       'TAG ARTIST'),
+                ImportMusicBrainzIdTest.ID_RELEASE_1: ('VALID_RELEASE_1',
+                                                       'DISTANT_MATCH')}
+
+    return {
+        'release': {
+            'title': releases[id_][0],
+            'id': id_,
+            'medium-list': [{
+                'track-list': [{
+                    'recording': {
+                        'title': 'foo',
+                        'id': 'bar',
+                        'length': 59,
+                    },
+                    'position': 9,
+                }],
+                'position': 5,
+            }],
+            'artist-credit': [{
+                'artist': {
+                    'name': releases[id_][1],
+                    'id': 'some-id',
+                },
+            }],
+            'release-group': {
+                'id': 'another-id',
+            }
+        }
+    }
+
+
+def mocked_get_recording_by_id(id_, includes=[], release_status=[],
+                               release_type=[]):
+    """Mimic musicbrainzngs.get_recording_by_id, accepting only a restricted
+    list of MB ids (ID_RECORDING_0, ID_RECORDING_1). The returned dict differs
+    only in the recording title and artist name, so that ID_RECORDING_0 is a
+    closer match to the items created by ImportHelper._create_import_dir()."""
+    # Map IDs to (recording title, artist), so the distances are different.
+    releases = {ImportMusicBrainzIdTest.ID_RECORDING_0: ('VALID_RECORDING_0',
+                                                         'TAG ARTIST'),
+                ImportMusicBrainzIdTest.ID_RECORDING_1: ('VALID_RECORDING_1',
+                                                         'DISTANT_MATCH')}
+
+    return {
+        'recording': {
+            'title': releases[id_][0],
+            'id': id_,
+            'length': 59,
+        },
+        'artist-credit': [{
+            'artist': {
+                'name': releases[id_][1],
+                'id': 'some-id',
+            },
+        }],
+    }
 
 
 def suite():
