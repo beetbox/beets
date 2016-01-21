@@ -1758,27 +1758,25 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
 
     def test_candidates_album(self):
         """Test directly ImportTask.lookup_candidates()."""
-        self.config['import']['musicbrainz_ids'] = \
-            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
-             self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
-             'an invalid and discarded id']
-
         task = importer.ImportTask(paths=self.import_dir,
                                    toppath='top path',
                                    items=[_common.item()])
+        task.musicbrainz_ids = [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
+                                self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
+                                'an invalid and discarded id']
+
         task.lookup_candidates()
         self.assertEqual(set(['VALID_RELEASE_0', 'VALID_RELEASE_1']),
                          set([c.info.album for c in task.candidates]))
 
     def test_candidates_singleton(self):
         """Test directly SingletonImportTask.lookup_candidates()."""
-        self.config['import']['musicbrainz_ids'] = \
-            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
-             self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
-             'an invalid and discarded id']
-
         task = importer.SingletonImportTask(toppath='top path',
                                             item=_common.item())
+        task.musicbrainz_ids = [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
+                                self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
+                                'an invalid and discarded id']
+
         task.lookup_candidates()
         self.assertEqual(set(['VALID_RECORDING_0', 'VALID_RECORDING_1']),
                          set([c.info.title for c in task.candidates]))
