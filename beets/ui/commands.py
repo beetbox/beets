@@ -734,7 +734,7 @@ class TerminalImportSession(importer.ImportSession):
                 search_id = manual_id(False)
                 if search_id:
                     _, _, candidates, rec = autotag.tag_album(
-                        task.items, search_ids=[search_id]
+                        task.items, search_ids=search_id.split(' ')
                     )
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
@@ -786,8 +786,8 @@ class TerminalImportSession(importer.ImportSession):
                 # Ask for a track ID.
                 search_id = manual_id(True)
                 if search_id:
-                    candidates, rec = autotag.tag_item(task.item,
-                                                       search_ids=[search_id])
+                    candidates, rec = autotag.tag_item(
+                        task.item, search_ids=search_id.split(' '))
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
                 post_choice = extra_ops[choice](self, task)

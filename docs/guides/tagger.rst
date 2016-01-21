@@ -160,10 +160,10 @@ When beets needs your input about a match, it says something like this::
         Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
-    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, or aBort?
+    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, enter Id, or aBort?
 
 When beets asks you this question, it wants you to enter one of the capital
-letters: A, M, S, U, T, G, E, or B. That is, you can choose one of the
+letters: A, M, S, U, T, G, E, I or B. That is, you can choose one of the
 following:
 
 * *A*: Apply the suggested changes shown and move on.
@@ -189,6 +189,11 @@ following:
 * *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
   or untagged.
+
+* *I*: Enter a MusicBrainz id to use as search in the database. Use this option
+  to specify a MusicBrainz entity (release or recording) directly, by pasting
+  its ID or the full URL. You can also specify several IDs by separating them
+  by a space.
 
 * *B*: Cancel this import task altogether. No further albums will be tagged;
   beets shuts down immediately. The next time you attempt to import the same
