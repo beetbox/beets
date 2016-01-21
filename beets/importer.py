@@ -434,6 +434,7 @@ class ImportTask(BaseImportTask):
         self.rec = None
         self.should_remove_duplicates = False
         self.is_album = True
+        self.musicbrainz_ids = []  # user-supplied candidate IDs.
 
     def set_choice(self, choice):
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -579,13 +580,12 @@ class ImportTask(BaseImportTask):
         return tasks
 
     def lookup_candidates(self):
-        """Retrieve and store candidates for this album.
+        """Retrieve and store candidates for this album. User-specified
+        candidate IDs are stored in self.musicbrainz_ids: if present, the
+        initial lookup is restricted to only those IDs.
         """
-        # Use a MusicBrainz id directly if provided by the importer -m option.
-        mb_ids = config['import']['musicbrainz_ids'].as_str_seq()
-
         artist, album, candidates, recommendation = \
-            autotag.tag_album(self.items, search_ids=mb_ids)
+            autotag.tag_album(self.items, search_ids=self.musicbrainz_ids)
         self.cur_artist = artist
         self.cur_album = album
         self.candidates = candidates
@@ -824,11 +824,8 @@ class SingletonImportTask(ImportTask):
             plugins.send('item_imported', lib=lib, item=item)
 
     def lookup_candidates(self):
-        # Use a MusicBrainz id directly if provided by the importer -m option.
-        mb_ids = config['import']['musicbrainz_ids'].as_str_seq()
-
-        candidates, recommendation = autotag.tag_item(self.item,
-                                                      search_ids=mb_ids)
+        candidates, recommendation = autotag.tag_item(
+            self.item, search_ids=self.musicbrainz_ids)
         self.candidates = candidates
         self.rec = recommendation
 
@@ -1253,6 +1250,11 @@ def lookup_candidates(session, task):
 
     plugins.send('import_task_start', session=session, task=task)
     log.debug(u'Looking up: {0}', displayable_path(task.paths))
+
+    # Restrict the initial lookup to IDs specified by the user via the -m
+    # option. Currently all the IDs are passed onto the tasks directly.
+    task.musicbrainz_ids = session.config['musicbrainz_ids'].as_str_seq()
+
     task.lookup_candidates()
 
 
