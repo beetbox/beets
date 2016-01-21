@@ -132,6 +132,11 @@ Optional command flags:
   option. If set, beets will just print a list of files that it would
   otherwise import.
 
+* If you already have a MusicBrainz ID that matches the items to be imported,
+  you can instruct beets to restrict the search to that ID instead of searching
+  for other candidates by using the ``--musicbrainzid MB_ID`` option. Multiple
+  IDs can be specified by simply repeating the option several times.
+
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
 
 .. only:: html
