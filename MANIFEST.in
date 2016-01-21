@@ -1,6 +1,8 @@
 # Include tests (but avoid including *.pyc, etc.)
 prune test
 recursive-include test/rsrc *
+recursive-exclude test/rsrc *.pyc
+recursive-exclude test/rsrc *.pyo
 include test/*.py
 
 # Include relevant text files.
