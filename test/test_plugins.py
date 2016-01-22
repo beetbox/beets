@@ -419,6 +419,7 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         self.input_options_patcher.stop()
         self.teardown_plugin_loader()
         self.teardown_beets()
+        self.matcher.restore()
 
     def test_plugin_choices_in_ui_input_options_album(self):
         """Test the presence of plugin choices on the prompt (album)."""
