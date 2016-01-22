@@ -434,7 +434,7 @@ class ImportTask(BaseImportTask):
         self.rec = None
         self.should_remove_duplicates = False
         self.is_album = True
-        self.musicbrainz_ids = []  # user-supplied candidate IDs.
+        self.search_ids = []  # user-supplied candidate IDs.
 
     def set_choice(self, choice):
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -581,11 +581,11 @@ class ImportTask(BaseImportTask):
 
     def lookup_candidates(self):
         """Retrieve and store candidates for this album. User-specified
-        candidate IDs are stored in self.musicbrainz_ids: if present, the
+        candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
         """
         artist, album, candidates, recommendation = \
-            autotag.tag_album(self.items, search_ids=self.musicbrainz_ids)
+            autotag.tag_album(self.items, search_ids=self.search_ids)
         self.cur_artist = artist
         self.cur_album = album
         self.candidates = candidates
@@ -825,7 +825,7 @@ class SingletonImportTask(ImportTask):
 
     def lookup_candidates(self):
         candidates, recommendation = autotag.tag_item(
-            self.item, search_ids=self.musicbrainz_ids)
+            self.item, search_ids=self.search_ids)
         self.candidates = candidates
         self.rec = recommendation
 
@@ -1253,7 +1253,7 @@ def lookup_candidates(session, task):
 
     # Restrict the initial lookup to IDs specified by the user via the -m
     # option. Currently all the IDs are passed onto the tasks directly.
-    task.musicbrainz_ids = session.config['musicbrainz_ids'].as_str_seq()
+    task.search_ids = session.config['search_ids'].as_str_seq()
 
     task.lookup_candidates()
 

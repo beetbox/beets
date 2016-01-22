@@ -20,6 +20,10 @@ New:
   session. :bug:`1779`
 * :doc:`/plugins/info`: A new option will print only fields' names and not
   their values. Thanks to :user:`GuilhermeHideki`. :bug:`1812`
+* A new ``--search-id`` importer option lets you specify one or several
+  matching MusicBrainz/Discogs IDs directly, bypassing the default initial
+  candidate search. Also, the ``enter Id`` prompt choice now accepts several
+  IDs, separated by spaces. :bug:`1808`
 
 .. _AcousticBrainz: http://acousticbrainz.org/
 
