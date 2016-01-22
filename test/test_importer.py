@@ -1717,7 +1717,7 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
         self.teardown_beets()
 
     def test_one_mbid_one_album(self):
-        self.config['import']['musicbrainz_ids'] = \
+        self.config['import']['search_ids'] = \
             [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0]
         self._setup_import_session()
 
@@ -1726,7 +1726,7 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
         self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_0')
 
     def test_several_mbid_one_album(self):
-        self.config['import']['musicbrainz_ids'] = \
+        self.config['import']['search_ids'] = \
             [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
              self.MB_RELEASE_PREFIX + self.ID_RELEASE_1]
         self._setup_import_session()
@@ -1737,7 +1737,7 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
         self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_1')
 
     def test_one_mbid_one_singleton(self):
-        self.config['import']['musicbrainz_ids'] = \
+        self.config['import']['search_ids'] = \
             [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0]
         self._setup_import_session(singletons=True)
 
@@ -1746,7 +1746,7 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
         self.assertEqual(self.lib.items().get().title, 'VALID_RECORDING_0')
 
     def test_several_mbid_one_singleton(self):
-        self.config['import']['musicbrainz_ids'] = \
+        self.config['import']['search_ids'] = \
             [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
              self.MB_RECORDING_PREFIX + self.ID_RECORDING_1]
         self._setup_import_session(singletons=True)
@@ -1761,9 +1761,9 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
         task = importer.ImportTask(paths=self.import_dir,
                                    toppath='top path',
                                    items=[_common.item()])
-        task.musicbrainz_ids = [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
-                                self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
-                                'an invalid and discarded id']
+        task.search_ids = [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
+                           self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
+                           'an invalid and discarded id']
 
         task.lookup_candidates()
         self.assertEqual(set(['VALID_RELEASE_0', 'VALID_RELEASE_1']),
@@ -1773,9 +1773,9 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
         """Test directly SingletonImportTask.lookup_candidates()."""
         task = importer.SingletonImportTask(toppath='top path',
                                             item=_common.item())
-        task.musicbrainz_ids = [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
-                                self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
-                                'an invalid and discarded id']
+        task.search_ids = [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
+                           self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
+                           'an invalid and discarded id']
 
         task.lookup_candidates()
         self.assertEqual(set(['VALID_RECORDING_0', 'VALID_RECORDING_1']),
