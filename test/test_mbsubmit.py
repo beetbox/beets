@@ -34,6 +34,7 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
+        self.matcher.restore()
 
     def test_print_tracks_output(self):
         """Test the output of the "print tracks" choice."""
