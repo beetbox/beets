@@ -39,6 +39,7 @@ from beets.mediafile import MediaFile
 from beets import config
 from beets import plugins
 from beets.util.confit import ConfigError
+from beets import util
 
 
 class ListTest(unittest.TestCase):
@@ -1051,12 +1052,6 @@ class CompletionTest(_common.TestCase):
         config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
         config['plugins'] = ['test']
 
-        test_script = os.path.join(
-            os.path.dirname(__file__), 'test_completion.sh'
-        )
-        bash_completion = os.path.abspath(os.environ.get(
-            'BASH_COMPLETION_SCRIPT', '/etc/bash_completion'))
-
         # Tests run in bash
         cmd = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc').split()
         if not has_program(cmd[0]):
@@ -1064,21 +1059,30 @@ class CompletionTest(_common.TestCase):
         tester = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE)
 
-        # Load bash_completion
-        try:
-            with open(bash_completion, 'r') as bash_completion:
-                tester.stdin.writelines(bash_completion)
-        except IOError:
+        # Load bash_completion library.
+        for path in commands.BASH_COMPLETION_PATHS:
+            if os.path.exists(util.syspath(path)):
+                bash_completion = path
+                break
+        else:
             self.skipTest('bash-completion script not found')
+        try:
+            with open(util.syspath(bash_completion), 'r') as f:
+                tester.stdin.writelines(f)
+        except IOError:
+            self.skipTest('could not read bash-completion script')
 
-        # Load complection script
+        # Load completion script.
         self.io.install()
         ui._raw_main(['completion'])
         completion_script = self.io.getoutput()
         self.io.restore()
         tester.stdin.writelines(completion_script)
 
-        # Load testsuite
+        # Load test suite.
+        test_script = os.path.join(
+            os.path.dirname(__file__), 'test_completion.sh'
+        )
         with open(test_script, 'r') as test_script:
             tester.stdin.writelines(test_script)
         (out, err) = tester.communicate()
