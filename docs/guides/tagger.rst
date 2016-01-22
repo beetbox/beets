@@ -60,8 +60,8 @@ all of these limitations.
   because beets by default infers tags based on existing metadata. But this is
   not a hard and fast rule---there are a few ways to tag metadata-poor music:
 
-    * You can use the *E* option described below to search in MusicBrainz for
-      a specific album or song.
+    * You can use the *E* or *I* options described below to search in
+      MusicBrainz for a specific album or song.
     * The :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to
       use acoustic fingerprinting to find information for arbitrary audio.
       Install that plugin if you're willing to spend a little more CPU power
@@ -160,10 +160,10 @@ When beets needs your input about a match, it says something like this::
         Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
-    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, or aBort?
+    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, enter Id, or aBort?
 
 When beets asks you this question, it wants you to enter one of the capital
-letters: A, M, S, U, T, G, E, or B. That is, you can choose one of the
+letters: A, M, S, U, T, G, E, I or B. That is, you can choose one of the
 following:
 
 * *A*: Apply the suggested changes shown and move on.
@@ -189,6 +189,11 @@ following:
 * *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
   or untagged.
+
+* *I*: Enter a metadata backend ID to use as search in the database. Use this
+  option to specify a backend entity (for example, a MusicBrainz release or
+  recording) directly, by pasting its ID or the full URL. You can also specify
+  several IDs by separating them by a space.
 
 * *B*: Cancel this import task altogether. No further albums will be tagged;
   beets shuts down immediately. The next time you attempt to import the same

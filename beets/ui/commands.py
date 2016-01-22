@@ -734,7 +734,7 @@ class TerminalImportSession(importer.ImportSession):
                 search_id = manual_id(False)
                 if search_id:
                     _, _, candidates, rec = autotag.tag_album(
-                        task.items, search_id=search_id
+                        task.items, search_ids=search_id.split()
                     )
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
@@ -786,8 +786,8 @@ class TerminalImportSession(importer.ImportSession):
                 # Ask for a track ID.
                 search_id = manual_id(True)
                 if search_id:
-                    candidates, rec = autotag.tag_item(task.item,
-                                                       search_id=search_id)
+                    candidates, rec = autotag.tag_item(
+                        task.item, search_ids=search_id.split())
             elif choice in extra_ops.keys():
                 # Allow extra ops to automatically set the post-choice.
                 post_choice = extra_ops[choice](self, task)
@@ -1021,6 +1021,11 @@ import_cmd.parser.add_option(
 import_cmd.parser.add_option(
     '--pretend', dest='pretend', action='store_true',
     help='just print the files to import'
+)
+import_cmd.parser.add_option(
+    '-S', '--search-id', dest='search_ids', action='append',
+    metavar='BACKEND_ID',
+    help='restrict matching to a specific metadata backend ID'
 )
 import_cmd.func = import_func
 default_commands.append(import_cmd)
