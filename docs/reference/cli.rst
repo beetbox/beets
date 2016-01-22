@@ -134,7 +134,7 @@ Optional command flags:
 
 * If you already have a metadata backend ID that matches the items to be
   imported, you can instruct beets to restrict the search to that ID instead of
-  searching for other candidates by using the ``--search_id SEARCH_ID`` option.
+  searching for other candidates by using the ``--search-id SEARCH_ID`` option.
   Multiple IDs can be specified by simply repeating the option several times.
 
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
