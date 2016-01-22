@@ -1080,9 +1080,7 @@ class CompletionTest(_common.TestCase):
         tester.stdin.writelines(completion_script)
 
         # Load test suite.
-        test_script = os.path.join(
-            os.path.dirname(__file__), 'test_completion.sh'
-        )
+        test_script = os.path.join(_common.RSRC, 'test_completion.sh')
         with open(test_script, 'r') as test_script:
             tester.stdin.writelines(test_script)
         (out, err) = tester.communicate()
