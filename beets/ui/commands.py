@@ -231,8 +231,8 @@ def show_change(cur_artist, cur_album, match):
     def format_track(indent, prefix, lhs_width, rhs_width, col_width_l, col_width_r, lhs, rhs):
         """docstring for format_track"""
         # Print track 
-        pad_l = ' ' * (col_width_l - lhs_width)
-        pad_r = ' ' * (col_width_r - rhs_width)
+        pad_l = u' ' * (col_width_l - lhs_width)
+        pad_r = u' ' * (col_width_r - rhs_width)
         template = "{0} {1} {2}{3}"
         lhs_str = template.format(
             lhs['track'], lhs['title'], pad_l, lhs['length'])
@@ -255,6 +255,7 @@ def show_change(cur_artist, cur_album, match):
         col_width_l_first  = col_width_l - lhs_used_first
         col_width_l_middle = col_width_l - lhs_used_middle
         col_width_l_last   = col_width_l - lhs_used_last
+        
         # Right-hand side.
         rhs_track_len  = len(rhs['raw']['track'])
         rhs_length_len = len(rhs['raw']['length'])
