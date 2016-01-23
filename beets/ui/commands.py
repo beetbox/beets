@@ -350,32 +350,40 @@ def show_change(cur_artist, cur_album, match):
         # Print complete line.
         print_(out)
 
-    # Identify the album in question (Match Header).
-    match_header_indent_width = \
-        config['ui']['import']['indentation']['match_header'].as_number()
-    header_indent = ui.indent(match_header_indent_width)
-    # 'Match' header and similarity.
-    print_('')
-    print_(header_indent + u'Match: (%s):' % dist_string(match.distance))
+    def show_match_header(match):
+        """Print out a “header” identifying the suggested match (album name, artist name,…) and summarizing the changes that would be made should the user accept the match."""
+        # Read match header indentation width from config.
+        match_header_indent_width = \
+            config['ui']['import']['indentation']['match_header'].as_number()
+        header_indent = ui.indent(match_header_indent_width)
 
-    # Artist name and album title.
-    artist_album_str = u"{0.artist} - {0.album}".format(match.info)
-    print_(header_indent + dist_colorize(artist_album_str, match.distance))
+        # Print newline at beginning of change block.
+        print_(u'')
 
-    # Penalties.
-    penalties = penalty_string(match.distance)
-    if penalties:
-        print_(header_indent + penalties)
+        # 'Match' line and similarity.
+        print_(header_indent + u'Match (%s):' % dist_string(match.distance))
 
-    # Disambiguation
-    disambig = disambig_string(match.info)
-    if disambig:
-        print_(header_indent + ui.colorize('text_highlight_minor', disambig))
+        # Artist name and album title.
+        artist_album_str = u'{0.artist} - {0.album}'.format(match.info)
+        print_(header_indent + dist_colorize(artist_album_str, match.distance))
 
-    # Data URL.
-    if match.info.data_url:
-        url = ui.colorize('text_highlight_minor', '%s' % match.info.data_url)
-        print_(header_indent + url)
+        # Penalties.
+        penalties = penalty_string(match.distance)
+        if penalties:
+            print_(header_indent + penalties)
+
+        # Disambiguation.
+        disambig = disambig_string(match.info)
+        if disambig:
+            print_(header_indent + ui.colorize('text_highlight_minor', disambig))
+
+        # Data URL.
+        if match.info.data_url:
+            url = ui.colorize('text_highlight_minor', '%s' % match.info.data_url)
+            print_(header_indent + url)
+
+    # Print the match header.
+    show_match_header(match)
 
     # Match details.
     match_detail_indent_width = \
