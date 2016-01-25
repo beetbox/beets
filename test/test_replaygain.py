@@ -44,6 +44,7 @@ class ReplayGainCliTestBase(TestHelper):
 
     def setUp(self):
         self.setup_beets()
+        self.config['replaygain']['backend'] = self.backend
 
         try:
             self.load_plugins('replaygain')
@@ -61,7 +62,6 @@ class ReplayGainCliTestBase(TestHelper):
                 pass
             raise exc_info[1], None, exc_info[2]
 
-        self.config['replaygain']['backend'] = self.backend
         album = self.add_album_fixture(2)
         for item in album.items():
             self._reset_replaygain(item)
