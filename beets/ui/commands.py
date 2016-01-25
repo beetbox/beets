@@ -504,6 +504,60 @@ def show_change(cur_artist, cur_album, match):
             rhs_length = ui.colorize(new_length_color, new_length)
             return lhs_length, rhs_length
 
+        def calc_column_width(col_width, max_width_l, max_width_r):
+            """docstring for calc_column_width
+            """
+            if (max_width_l <= col_width) and (max_width_r <= col_width):
+                col_width_l = max_width_l
+                col_width_r = max_width_r
+            elif ((max_width_l > col_width) or (max_width_r > col_width)) \
+                 and ((max_width_l + max_width_r) <= col_width * 2):
+                # Either left or right column larger than allowed, but the other is
+                # smaller than allowed - in total the content fits.
+                col_width_l = max_width_l
+                col_width_r = max_width_r
+            else:
+                col_width_l = col_width
+                col_width_r = col_width
+            return col_width_l, col_width_r
+
+        def print_line(info, lhs, rhs):
+            """
+            """
+            l_pre = indent + info['prefix']
+            r_pre = indent + ui.indent(len('* '))
+            if not rhs:
+                if info['disk']:
+                    print_(info['disk'])
+                else:
+                    pad_l = ' ' * (max_width_l - lhs['width'])
+                    lhs_str = "{0} {1} {2}{3}".format(
+                        lhs['track'], lhs['title'], pad_l, lhs['length'])
+                    print_(l_pre + lhs_str)
+            elif (lhs['width'] > col_width_l) or (rhs['width'] > col_width_r):
+                layout = \
+                    config['ui']['import']['albumdiff']['layout'].as_choice({
+                        'column':  0,
+                        'newline': 1,
+                    })
+                if layout == 0:
+                    # Word wrapping inside columns.
+                    format_track_as_columns(indent, info['prefix'],
+                        col_width_l, col_width_r, lhs, rhs)
+                elif layout == 1:
+                    # Wrap overlong track changes at column border.
+                    format_track(indent, info['prefix'], lhs['width'], rhs['width'],
+                        max_width_l, max_width_r, lhs, rhs)
+            else:
+                pad_l = ' ' * (col_width_l - lhs['width'])
+                pad_r = ' ' * (col_width_r - rhs['width'])
+                template = "{0} {1} {2}{3}"
+                lhs_str = template.format(
+                    lhs['track'], lhs['title'], pad_l, lhs['length'])
+                rhs_str = template.format(
+                    rhs['track'], rhs['title'], pad_r, rhs['length'])
+                print_(l_pre + u'%s -> %s' % (lhs_str, rhs_str))
+
         # Read match detail indentation width from config.
         detail_indent = get_match_details_indentation()
 
@@ -520,20 +574,22 @@ def show_change(cur_artist, cur_album, match):
         # width is the length (in characters) of the uncolorized LHS.
         lines = []
         medium = disctitle = None
+        max_width_l = max_width_r = 0
+
         for item, track_info in pairs:
 
             # If the track is the first on a new medium, show medium
             # number and title.
             if medium != track_info.medium or disctitle != track_info.disctitle:
                 out = make_medium_info_line()
-                lhs = {
-                    'disk':   detail_indent + out,
-                    'track':  None,
-                    'title':  None,
-                    'length': None,
-                    'raw':    None
+                info = {
+                    'prefix':    u'',
+                    'disk':      detail_indent + out,
+                    'penalties': None,
                 }
-                lines.append(('', lhs, '', 0, 0))
+                lhs = {}
+                rhs = {}
+                lines.append((info, lhs, rhs))
                 medium, disctitle = track_info.medium, track_info.disctitle
 
             # Track titles.
@@ -545,100 +601,66 @@ def show_change(cur_artist, cur_album, match):
             # Penalties.
             penalties = penalty_string(match.distance.tracks[track_info])
 
+            # Construct comparison strings to check for differences.
+            lhs_comp = ui.uncolorize(' '.join([lhs_track, lhs_title, lhs_length]))
+            rhs_comp = ui.uncolorize(' '.join([rhs_track, rhs_title, rhs_length]))
+            # Construct lhs and rhs line widths.
+            lhs_width = len(lhs_comp)
+            rhs_width = len(rhs_comp)
+            if max_width_l < lhs_width: max_width_l = lhs_width
+            if max_width_r < rhs_width: max_width_r = rhs_width
+
             # Construct lhs and rhs arrays.
+            info = {
+                'prefix':    u'',
+                'disk':      None,
+                'penalties': penalty_string(match.distance.tracks[track_info]),
+            }
             lhs = {
                 'track':  lhs_track,
                 'title':  lhs_title,
                 'length': lhs_length,
+                'width':  lhs_width,
             }
             rhs = {
                 'track':  rhs_track,
                 'title':  rhs_title,
                 'length': rhs_length,
-                'penalties': penalty_string(match.distance.tracks[track_info]),
+                'width':  rhs_width,
             }
-
-            # Construct comparison strings to check for differences.
-            lhs_comp = ' '.join([cur_track, cur_title, cur_length])
-            rhs_comp = ' '.join([new_track, new_title, new_length])
-            # Construct lhs and rhs line widths.
-            lhs_width = len(lhs_comp)
-            rhs_width = len(rhs_comp)
 
             # Check whether track info will change should the user apply
             # the match.
             if lhs_comp != rhs_comp:
                 # Prefix changed tracks with U+2260: Not Equal To
-                prefix = ui.colorize('changed', '\u2260 ')
-                lines.append((prefix, lhs, rhs, lhs_width, rhs_width))
+                info['prefix'] = ui.colorize('changed', '\u2260 ')
+                lines.append((info, lhs, rhs))
             elif config['import']['detail']:
                 # Prefix unchanged tracks with *
-                prefix = '* '
-                lines.append((prefix, lhs, [], lhs_width, 0))
+                info['prefix'] = '* '
+                lines.append((info, lhs, {}))
 
         ### -----------------------------------------------------------------
         ### Print lines
         ### -----------------------------------------------------------------
 
-        # Print each track in two columns, or across two lines.
         joiner_width = len(''.join(['* ', ' -> ']))
         tracklist_indent_width = \
             config['ui']['import']['indentation']['match_tracklist'].as_number()
         indent = ui.indent(tracklist_indent_width)
         col_width = (ui.term_width() - tracklist_indent_width - joiner_width) // 2
+
         if lines:
-            # Size columns.
-            max_width_l = max(lw for _, _, _, lw, _ in lines)
-            max_width_r = max(rw for _, _, _, _, rw in lines)
-            
-            if (max_width_l <= col_width) and (max_width_r <= col_width):
-                col_width_l = max_width_l
-                col_width_r = max_width_r
-            elif ((max_width_l > col_width) or (max_width_r > col_width)) \
-                 and ((max_width_l + max_width_r) <= col_width * 2):
-                # Either left or right column larger than allowed, but the other is
-                # smaller than allowed - in total the content fits.
-                col_width_l = max_width_l
-                col_width_r = max_width_r
-            else:
-                col_width_l = col_width
-                col_width_r = col_width
-            
+            # Calculate width of left and right column.
+            col_width_l, col_width_r = \
+                calc_column_width(col_width, max_width_l, max_width_r)
             # Print lines.
-            for prefix, lhs, rhs, lhs_width, rhs_width in lines:
-                l_pre = indent + prefix
-                r_pre = indent + ui.indent(len('* '))
-                if not rhs:
-                    if lhs['disk']:
-                        print_(lhs['disk'])
-                    else:
-                        pad_l = ' ' * (max_width_l - lhs_width)
-                        lhs_str = "{0} {1} {2}{3}".format(
-                            lhs['track'], lhs['title'], pad_l, lhs['length'])
-                        print_(l_pre + lhs_str)
-                elif (lhs_width > col_width_l) or (rhs_width > col_width_r):
-                    layout = \
-                        config['ui']['import']['albumdiff']['layout'].as_choice({
-                            'column':  0,
-                            'newline': 1,
-                        })
-                    if layout == 0:
-                        # Word wrapping inside columns.
-                        format_track_as_columns(indent, prefix,
-                            col_width_l, col_width_r, lhs, rhs)
-                    elif layout == 1:
-                        # Wrap overlong track changes at column border.
-                        format_track(indent, prefix, lhs_width, rhs_width,
-                            max_width_l, max_width_r, lhs, rhs)
-                else:
-                    pad_l = ' ' * (col_width_l - lhs_width)
-                    pad_r = ' ' * (col_width_r - rhs_width)
-                    template = "{0} {1} {2}{3}"
-                    lhs_str = template.format(
-                        lhs['track'], lhs['title'], pad_l, lhs['length'])
-                    rhs_str = template.format(
-                        rhs['track'], rhs['title'], pad_r, rhs['length'])
-                    print_(l_pre + u'%s -> %s' % (lhs_str, rhs_str))
+            for info, lhs, rhs in lines:
+                print_line(info, lhs, rhs)
+
+        ### -----------------------------------------------------------------
+        ### Missing and unmatched tracks
+        ### -----------------------------------------------------------------
 
         # Missing and unmatched tracks.
         if match.extra_tracks:
