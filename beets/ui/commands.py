@@ -593,11 +593,11 @@ def show_change(cur_artist, cur_album, match):
                 medium, disctitle = track_info.medium, track_info.disctitle
 
             # Track titles.
-            lhs_title, rhs_title = make_track_titles()
+            lhs_title, rhs_title = make_track_titles(item, track_info)
             # Track number change.
-            lhs_track, rhs_track = make_track_numbers()
+            lhs_track, rhs_track = make_track_numbers(item, track_info)
             # Length change.
-            lhs_length, rhs_length = make_track_lengths()
+            lhs_length, rhs_length = make_track_lengths(item, track_info)
             # Penalties.
             penalties = penalty_string(match.distance.tracks[track_info])
 
@@ -617,14 +617,14 @@ def show_change(cur_artist, cur_album, match):
                 'penalties': penalty_string(match.distance.tracks[track_info]),
             }
             lhs = {
-                'track':  lhs_track,
                 'title':  lhs_title,
+                'track':  lhs_track,
                 'length': lhs_length,
                 'width':  lhs_width,
             }
             rhs = {
-                'track':  rhs_track,
                 'title':  rhs_title,
+                'track':  rhs_track,
                 'length': rhs_length,
                 'width':  rhs_width,
             }
