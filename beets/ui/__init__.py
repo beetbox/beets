@@ -524,6 +524,33 @@ def colorize(color_name, text):
         return text
 
 
+def uncolorize(colored_text):
+    """Remove colors from a string.
+    """
+    # Define a regular expression to match ANSI codes.
+    # See: http://stackoverflow.com/a/2187024/1382707
+    # Explanation of regular expression:
+    #     \x1b     - matches ESC character
+    #     \[       - matches opening square bracket
+    #     [;\d]*   - matches a sequence consisting of one or more digits or
+    #                semicola
+    #     [A-Za-z] - matches a letter
+    ansi_code_regex = re.compile(r"\x1b\[[;\d]*[A-Za-z]", re.VERBOSE)
+    # Strip ANSI codes from `colored_text` using the regular expression.
+    text = ansi_code_regex.sub(u'', colored_text)
+    return text
+
+
+def color_len(colored_text):
+    """Measure the length of a string while excluding ANSI codes from the
+    measurement. The standard `len(my_string)` method also counts ANSI codes
+    to the string length, which is counterproductive when layouting a
+    Terminal interface.
+    """
+    # Return the length of the uncolored string.
+    return len(uncolorize(colored_text))
+
+
 def _colordiff(a, b, highlight='text_highlight',
                minor_highlight='text_highlight_minor'):
     """Given two values, return the same pair of strings except with
