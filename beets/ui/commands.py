@@ -429,7 +429,7 @@ def show_change(cur_artist, cur_album, match):
         suggests for them.
         """
         def make_medium_info_line():
-            """Construct a line with the current medium’s info."""
+            """Construct a line with the current medium's info."""
             media = match.info.media or 'Media'
             # Build output string.
             if match.info.mediums > 1 and track_info.disctitle:
@@ -446,7 +446,7 @@ def show_change(cur_artist, cur_album, match):
             """
             new_title = track_info.title
             if not item.title.strip():
-                # If there's no title, we use the filename. Don’t colordiff.
+                # If there's no title, we use the filename. Don't colordiff.
                 cur_title = displayable_path(os.path.basename(item.path))
                 return cur_title, new_title
             else:
