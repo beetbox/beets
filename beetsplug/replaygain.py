@@ -43,6 +43,11 @@ class FatalReplayGainError(Exception):
     """
 
 
+class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
+    """Raised when a fatal error occurs in the GStreamerBackend when
+    loading the required plugins."""
+
+
 def call(args):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
@@ -391,7 +396,7 @@ class GStreamerBackend(Backend):
 
         if self._src is None or self._decbin is None or self._conv is None \
            or self._res is None or self._rg is None:
-            raise FatalReplayGainError(
+            raise FatalGstreamerPluginReplayGainError(
                 "Failed to load required GStreamer plugins"
             )
 

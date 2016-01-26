@@ -22,7 +22,8 @@ from test.helper import TestHelper, has_program
 
 from beets import config
 from beets.mediafile import MediaFile
-from beetsplug.replaygain import FatalReplayGainError, GStreamerBackend
+from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
+                                  GStreamerBackend)
 
 try:
     import gi
@@ -147,12 +148,10 @@ class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
             # GStreamerBackend (via its .__init__).
             config['replaygain']['targetlevel'] = 89
             GStreamerBackend(config['replaygain'], None)
-        except FatalReplayGainError as e:
+        except FatalGstreamerPluginReplayGainError as e:
             # Skip the test if plugins could not be loaded.
-            if str(e) == "Failed to load required GStreamer plugins":
-                self.skipTest(str(e))
-            else:
-                raise e
+            self.skipTest(str(e))
+
         super(ReplayGainGstCliTest, self).setUp()
 
 
