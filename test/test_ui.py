@@ -632,7 +632,8 @@ class ConfigTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         commands.default_commands.pop()
         os.chdir(self._orig_cwd)
-        os.environ['HOME'] = self._old_home
+        if self._old_home is not None:
+            os.environ['HOME'] = self._old_home
         self.teardown_beets()
 
     def _make_test_cmd(self):
