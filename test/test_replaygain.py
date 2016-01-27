@@ -20,7 +20,10 @@ from __future__ import (division, absolute_import, print_function,
 from test._common import unittest
 from test.helper import TestHelper, has_program
 
+from beets import config
 from beets.mediafile import MediaFile
+from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
+                                  GStreamerBackend)
 
 try:
     import gi
@@ -87,6 +90,13 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_track_gain)
 
         self.run_command('replaygain')
+
+        # Skip the test if rg_track_peak and rg_track gain is None, assuming
+        # that it could only happen if the decoder plugins are missing.
+        if all(i.rg_track_peak is None and i.rg_track_gain is None
+               for i in self.lib.items()):
+            self.skipTest('decoder plugins could not be loaded.')
+
         for item in self.lib.items():
             self.assertIsNotNone(item.rg_track_peak)
             self.assertIsNotNone(item.rg_track_gain)
@@ -131,6 +141,18 @@ class ReplayGainCliTestBase(TestHelper):
 @unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'gstreamer'
+
+    def setUp(self):
+        try:
+            # Check if required plugins can be loaded by instantiating a
+            # GStreamerBackend (via its .__init__).
+            config['replaygain']['targetlevel'] = 89
+            GStreamerBackend(config['replaygain'], None)
+        except FatalGstreamerPluginReplayGainError as e:
+            # Skip the test if plugins could not be loaded.
+            self.skipTest(str(e))
+
+        super(ReplayGainGstCliTest, self).setUp()
 
 
 @unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
