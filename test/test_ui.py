@@ -158,9 +158,12 @@ class ModifyTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    def modify(self, *args):
-        with control_stdin('y'):
+    def modify_inp(self, inp, *args):
+        with control_stdin(inp):
             ui._raw_main(['modify'] + list(args), self.lib)
+
+    def modify(self, *args):
+        self.modify_inp('y', *args)
 
     # Item tests
 
