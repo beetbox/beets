@@ -201,6 +201,13 @@ class ModifyTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertNotIn(b'newTitle', item.path)
 
+    def test_no_write_no_move(self):
+        self.modify("--nomove", "--nowrite", "title=newTitle")
+        item = self.lib.items().get()
+        item.read()
+        self.assertNotIn(b'newTitle', item.path)
+        self.assertNotEqual(item.title, 'newTitle')
+
     def test_update_mtime(self):
         item = self.item
         old_mtime = item.mtime
