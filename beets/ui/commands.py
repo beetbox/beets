@@ -570,8 +570,7 @@ def show_change(cur_artist, cur_album, match):
         ### -----------------------------------------------------------------
 
         # Build up LHS and RHS for track difference display. The `lines` list
-        # contains ``prefix, lhs, rhs, lhs_width, rhs_width`` tuples where
-        # width is the length (in characters) of the uncolorized LHS.
+        # contains `(info, lhs, rhs)` tuples.
         lines = []
         medium = disctitle = None
         max_width_l = max_width_r = 0
