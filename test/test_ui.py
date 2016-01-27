@@ -172,6 +172,13 @@ class ModifyTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertEqual(item.title, 'newTitle')
 
+    def test_modify_item_abort(self):
+        item = self.lib.items().get()
+        title = item.title
+        self.modify_inp('n', "title=newTitle")
+        item = self.lib.items().get()
+        self.assertEqual(item.title, title)
+
     def test_modify_item_no_change(self):
         title = "Tracktitle"
         item = self.add_item_fixture(title=title)
