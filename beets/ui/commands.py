@@ -1330,13 +1330,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
            .format(len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
-        obj.update(mods)
-        for field in dels:
-            try:
-                del obj[field]
-            except KeyError:
-                pass
-        if ui.show_model_changes(obj):
+        if print_modify_item(obj, mods, dels):
             changed.add(obj)
 
     # Still something to do?
@@ -1362,6 +1356,21 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     with lib.transaction():
         for obj in changed:
             obj.try_sync(write, move)
+
+
+def print_modify_item(obj, mods, dels):
+    """Print the modifications to an item
+    and return False if no changes were made
+    mods: modifications
+    dels: fields to delete
+    """
+    obj.update(mods)
+    for field in dels:
+        try:
+            del obj[field]
+        except KeyError:
+            pass
+    return ui.show_model_changes(obj)
 
 
 def modify_parse_args(args):
