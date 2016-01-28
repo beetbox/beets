@@ -672,7 +672,8 @@ class ImportTask(BaseImportTask):
                     # old paths.
                     item.move(copy, link)
 
-            if write and self.apply:
+            # TODO: the EDIT_FLAG field is a hack!
+            if write and (self.apply or getattr(self, 'EDIT_FLAG', False)):
                 item.try_write()
 
         with session.lib.transaction():

@@ -21,7 +21,9 @@ from beets import plugins
 from beets import util
 from beets import ui
 from beets.dbcore import types
-from beets.ui.commands import _do_query
+from beets.importer import action
+from beets.ui.commands import _do_query, PromptChoice
+from copy import deepcopy
 import subprocess
 import yaml
 from tempfile import NamedTemporaryFile
@@ -151,6 +153,13 @@ class EditPlugin(plugins.BeetsPlugin):
             'ignore_fields': 'id path',
         })
 
+        self.register_listener('before_choose_candidate',
+                               self.before_choose_candidate_event)
+
+        # Field to be used as "unequivocal, non-editable key" for an Item.
+        # TODO: cleanup
+        self.mapping_field = 'id'
+
     def commands(self):
         edit_command = ui.Subcommand(
             'edit',
@@ -202,8 +211,8 @@ class EditPlugin(plugins.BeetsPlugin):
         if extra:
             fields += extra
 
-        # Ensure we always have the `id` field for identification.
-        fields.append('id')
+        # Ensure we always have the mapping field for identification.
+        fields.append(self.mapping_field)
 
         return set(fields)
 
@@ -262,10 +271,21 @@ class EditPlugin(plugins.BeetsPlugin):
                         return False
 
                 # Show the changes.
+                # If the objects are not on the DB yet, we need a copy of their
+                # original state for show_model_changes.
+                if all(not obj.id for obj in objs):
+                    objs_old = deepcopy(objs)
                 self.apply_data(objs, old_data, new_data)
                 changed = False
                 for obj in objs:
-                    changed |= ui.show_model_changes(obj)
+                    if not obj.id:
+                        # TODO: remove uglyness
+                        obj_old = next(x for x in objs_old if
+                                       getattr(x, self.mapping_field) ==
+                                       getattr(obj, self.mapping_field))
+                    else:
+                        obj_old = None
+                    changed |= ui.show_model_changes(obj, obj_old)
                 if not changed:
                     ui.print_('No changes to apply.')
                     return False
@@ -295,11 +315,24 @@ class EditPlugin(plugins.BeetsPlugin):
         The objects are not written back to the database, so the changes
         are temporary.
         """
+        # TODO: make this more pythonic
+        def ref_field_value(o):
+            if self.mapping_field == 'id':
+                return int(o.id)
+            elif self.mapping_field == 'path':
+                return util.displayable_path(o.path)
+
+        def obj_from_ref(d):
+            if self.mapping_field == 'id':
+                return int(d['id'])
+            elif self.mapping_field == 'path':
+                return util.displayable_path(d['path'])
+
         if len(old_data) != len(new_data):
             self._log.warn('number of objects changed from {} to {}',
                            len(old_data), len(new_data))
 
-        obj_by_id = {o.id: o for o in objs}
+        obj_by_f = {ref_field_value(o): o for o in objs}
         ignore_fields = self.config['ignore_fields'].as_str_seq()
         for old_dict, new_dict in zip(old_data, new_data):
             # Prohibit any changes to forbidden fields to avoid
@@ -313,8 +346,9 @@ class EditPlugin(plugins.BeetsPlugin):
             if forbidden:
                 continue
 
-            id = int(old_dict['id'])
-            apply(obj_by_id[id], new_dict)
+            # Reconcile back the user edits, using the mapping_field.
+            val = obj_from_ref(old_dict)
+            apply(obj_by_f[val], new_dict)
 
     def save_changes(self, objs):
         """Save a list of updated Model objects to the database.
@@ -324,3 +358,48 @@ class EditPlugin(plugins.BeetsPlugin):
             if ob._dirty:
                 self._log.debug('saving changes to {}', ob)
                 ob.try_sync(ui.should_write(), ui.should_move())
+
+    # Methods for interactive importer execution.
+
+    def before_choose_candidate_event(self, session, task):
+        """Append an "Edit" choice to the interactive importer prompt.
+        """
+        return [PromptChoice('d', 'eDit', self.importer_edit),
+                PromptChoice('c', 'edit Candidates',
+                             self.importer_edit_candidate)]
+
+    def importer_edit(self, session, task):
+        """Callback for invoking the functionality during an interactive
+        import session on the *original* item tags.
+        """
+        # Make 'path' the mapping field, as the Items do not have ids yet.
+        # TODO: move to ~import_begin
+        self.mapping_field = 'path'
+
+        # Present the YAML to the user and let her change it.
+        fields = self._get_fields(album=None, extra=[])
+        success = self.edit_objects(task.items, fields)
+
+        # Save the new data.
+        if success:
+            # TODO: implement properly, this is a quick illustrative hack.
+            # If using Items, the operation is something like
+            # "use the *modified* Items AS-IS *and* write() them"
+            task.EDIT_FLAG = True
+            return action.ASIS
+        else:
+            # Edit cancelled / no edits made. Revert changes.
+            for obj in task.items:
+                obj.read()
+
+    def importer_edit_candidate(self, session, task):
+        """Callback for invoking the functionality during an interactive
+        import session on a *candidate* applied to the original items.
+        """
+        # Prompt the user for a candidate, and simulate matching.
+        sel = ui.input_options([], numrange=(1, len(task.candidates)))
+        # Force applying the candidate on the items.
+        task.match = task.candidates[sel-1]
+        task.apply_metadata()
+
+        return self.importer_edit(session, task)
