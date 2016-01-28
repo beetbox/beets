@@ -1432,7 +1432,7 @@ default_commands.append(modify_cmd)
 
 # move: Move/copy files to the library or a new base directory.
 
-def move_items(lib, dest, query, copy, album, pretend, confirm):
+def move_items(lib, dest, query, copy, album, pretend, confirm=False):
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
