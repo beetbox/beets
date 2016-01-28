@@ -79,15 +79,15 @@ def _do_query(lib, query, album, also_items=True):
     return items, albums
 
 
-def _print_sqlite(query):
-    """Gets the result of the query, transforms the sqlite3.Row in dictionary
-    entries and print the values of it, with identation of 2 spaces.
+# fields: Shows a list of available fields for queries and format strings.
+
+def _print_keys(query):
+    """Given a SQLite query result, print the `key` field of each
+    returned row, with identation of 2 spaces.
     """
     for row in query:
         print_(' ' * 2 + row[b'key'])
 
-
-# fields: Shows a list of available fields for queries and format strings.
 
 def fields_func(lib, opts, args):
     def _print_rows(names):
@@ -105,10 +105,10 @@ def fields_func(lib, opts, args):
         unique_fields = 'SELECT DISTINCT key FROM (%s)'
 
         print_("Item flexible attributes:")
-        _print_sqlite(tx.query(unique_fields % library.Item._flex_table))
+        _print_keys(tx.query(unique_fields % library.Item._flex_table))
 
         print_("Album flexible attributes:")
-        _print_sqlite(tx.query(unique_fields % library.Album._flex_table))
+        _print_keys(tx.query(unique_fields % library.Album._flex_table))
 
 fields_cmd = ui.Subcommand(
     'fields',
