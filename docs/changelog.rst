@@ -20,6 +20,8 @@ New:
   session. :bug:`1779`
 * :doc:`/plugins/info`: A new option will print only fields' names and not
   their values. Thanks to :user:`GuilhermeHideki`. :bug:`1812`
+* The :ref:`fields-cmd` command now displays flexible attributes. 
+  Thanks to :user:`GuilhermeHideki`. :bug:`1818`
 
 .. _AcousticBrainz: http://acousticbrainz.org/
 
