@@ -84,7 +84,7 @@ def _print_sqlite(query):
     entries and print the values of it, with identation of 2 spaces.
     """
     for row in query:
-        print_(' ' * 2 + dict(zip(row.keys(), row))['key'])
+        print_(' ' * 2 + row[b'key'])
 
 
 # fields: Shows a list of available fields for queries and format strings.
