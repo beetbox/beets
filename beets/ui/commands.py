@@ -1350,7 +1350,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
             extra = ''
 
         changed = ui.input_select_items(
-            'Really modify%s (Y/n)?' % extra, changed,
+            'Really modify%s' % extra, changed,
             lambda o: print_modify_item(o, mods, dels))
 
     # Apply changes to database and files
