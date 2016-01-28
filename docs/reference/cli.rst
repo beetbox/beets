@@ -344,7 +344,9 @@ fields
     beet fields
 
 Show the item and album metadata fields available for use in :doc:`query` and
-:doc:`pathformat`. Includes any template fields provided by plugins.
+:doc:`pathformat`. The listing includes any template fields provided by
+plugins and any flexible attributes you've manually assigned to your items and
+albums.
 
 .. _config-cmd:
 
