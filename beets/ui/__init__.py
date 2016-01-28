@@ -367,6 +367,31 @@ def input_yn(prompt, require=False):
     return sel == 'y'
 
 
+def input_select_items(prompt, items, rep):
+    """Prompts the user to use all, none or some of the items
+    Will return the list of items the user selected
+    prompt: prompt to use for all and for selective choice
+    items: full list of items
+    rep: function which represents an item to the user
+         is called with the item as argument
+         function is responsive for newline at input
+    """
+    out_items = []
+    choice = input_options(
+        ('y', 'n', 's'), False,
+        '%s (Yes/No/Selective)?' % prompt)
+    print()
+    if choice == 'y':
+        out_items = items
+    elif choice == 's':
+        for item in items:
+            rep(item)
+            if input_yn('%s (y/n)?' % prompt, True):
+                out_items.append(item)
+            print()
+    return out_items
+
+
 # Human output formatting.
 
 def human_bytes(size):
