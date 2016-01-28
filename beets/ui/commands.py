@@ -853,7 +853,9 @@ class TerminalImportSession(importer.ImportSession):
         checking the right conditions and returning a list of `PromptChoice`s,
         which is flattened and checked for conflicts.
 
-        Raises `ValueError` if two of the choices have the same short letter.
+        If two or more choices have the same short letter, a warning is
+        emitted and all but one choices are discarded, giving preference
+        to the default importer choices.
 
         Returns a list of `PromptChoice`s.
         """
