@@ -379,7 +379,7 @@ def input_select_items(prompt, items, rep):
     out_items = []
     choice = input_options(
         ('y', 'n', 's'), False,
-        '%s (Yes/No/Selective)?' % prompt)
+        '%s (Yes/No/Select items)?' % prompt)
     print()
     if choice == 'y':
         out_items = items
