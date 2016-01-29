@@ -399,7 +399,7 @@ class EditPlugin(plugins.BeetsPlugin):
         # Prompt the user for a candidate, and simulate matching.
         sel = ui.input_options([], numrange=(1, len(task.candidates)))
         # Force applying the candidate on the items.
-        task.match = task.candidates[sel-1]
+        task.match = task.candidates[sel - 1]
         task.apply_metadata()
 
         return self.importer_edit(session, task)
