@@ -81,6 +81,14 @@ def _do_query(lib, query, album, also_items=True):
 
 # fields: Shows a list of available fields for queries and format strings.
 
+def _print_keys(query):
+    """Given a SQLite query result, print the `key` field of each
+    returned row, with identation of 2 spaces.
+    """
+    for row in query:
+        print_(' ' * 2 + row[b'key'])
+
+
 def fields_func(lib, opts, args):
     def _print_rows(names):
         names.sort()
@@ -92,6 +100,15 @@ def fields_func(lib, opts, args):
     print_("Album fields:")
     _print_rows(library.Album.all_keys())
 
+    with lib.transaction() as tx:
+        # The SQL uses the DISTINCT to get unique values from the query
+        unique_fields = 'SELECT DISTINCT key FROM (%s)'
+
+        print_("Item flexible attributes:")
+        _print_keys(tx.query(unique_fields % library.Item._flex_table))
+
+        print_("Album flexible attributes:")
+        _print_keys(tx.query(unique_fields % library.Album._flex_table))
 
 fields_cmd = ui.Subcommand(
     'fields',
