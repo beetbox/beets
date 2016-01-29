@@ -1361,7 +1361,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
 def print_modify_item(obj, mods, dels):
     """Print the modifications to an item
-    and return False if no changes were made
+    and return a bool indicating whether any changes were made
     mods: modifications
     dels: fields to delete
     """
