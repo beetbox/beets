@@ -158,9 +158,12 @@ class ModifyTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    def modify(self, *args):
-        with control_stdin('y'):
+    def modify_inp(self, inp, *args):
+        with control_stdin(inp):
             ui._raw_main(['modify'] + list(args), self.lib)
+
+    def modify(self, *args):
+        self.modify_inp('y', *args)
 
     # Item tests
 
@@ -168,6 +171,20 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.modify("title=newTitle")
         item = self.lib.items().get()
         self.assertEqual(item.title, 'newTitle')
+
+    def test_modify_item_abort(self):
+        item = self.lib.items().get()
+        title = item.title
+        self.modify_inp('n', "title=newTitle")
+        item = self.lib.items().get()
+        self.assertEqual(item.title, title)
+
+    def test_modify_item_no_change(self):
+        title = "Tracktitle"
+        item = self.add_item_fixture(title=title)
+        self.modify_inp('y', "title", "title={0}".format(title))
+        item = self.lib.items(title).get()
+        self.assertEqual(item.title, title)
 
     def test_modify_write_tags(self):
         self.modify("title=newTitle")
@@ -190,6 +207,13 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.modify("--nomove", "title=newTitle")
         item = self.lib.items().get()
         self.assertNotIn(b'newTitle', item.path)
+
+    def test_no_write_no_move(self):
+        self.modify("--nomove", "--nowrite", "title=newTitle")
+        item = self.lib.items().get()
+        item.read()
+        self.assertNotIn(b'newTitle', item.path)
+        self.assertNotEqual(item.title, 'newTitle')
 
     def test_update_mtime(self):
         item = self.item
@@ -632,7 +656,8 @@ class ConfigTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         commands.default_commands.pop()
         os.chdir(self._orig_cwd)
-        os.environ['HOME'] = self._old_home
+        if self._old_home is not None:
+            os.environ['HOME'] = self._old_home
         self.teardown_beets()
 
     def _make_test_cmd(self):
