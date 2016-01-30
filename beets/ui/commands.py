@@ -1330,7 +1330,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
            .format(len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
-        if print_modify_item(obj, mods, dels):
+        if print_and_modify(obj, mods, dels):
             changed.add(obj)
 
     # Still something to do?
@@ -1351,7 +1351,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
         changed = ui.input_select_items(
             'Really modify%s' % extra, changed,
-            lambda o: print_modify_item(o, mods, dels))
+            lambda o: print_and_modify(o, mods, dels))
 
     # Apply changes to database and files
     with lib.transaction():
@@ -1359,7 +1359,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
             obj.try_sync(write, move)
 
 
-def print_modify_item(obj, mods, dels):
+def print_and_modify(obj, mods, dels):
     """Print the modifications to an item
     and return a bool indicating whether any changes were made
     mods: modifications
