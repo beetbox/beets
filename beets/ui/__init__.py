@@ -1176,7 +1176,7 @@ def _raw_main(args, lib=None):
     parser.add_option('-c', '--config', dest='config',
                       help='path to configuration file')
     parser.add_option('-h', '--help', dest='help', action='store_true',
-                      help='how this help message and exit')
+                      help='show this help message and exit')
     parser.add_option('--version', dest='version', action='store_true',
                       help=optparse.SUPPRESS_HELP)
 
