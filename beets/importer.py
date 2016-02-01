@@ -45,7 +45,7 @@ from beets import mediafile
 
 action = Enum('action',
               ['SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
-               'ALBUMS'])
+               'ALBUMS', 'RETAG'])
 
 QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
@@ -443,7 +443,8 @@ class ImportTask(BaseImportTask):
         # Not part of the task structure:
         assert choice not in (action.MANUAL, action.MANUAL_ID)
         assert choice != action.APPLY  # Only used internally.
-        if choice in (action.SKIP, action.ASIS, action.TRACKS, action.ALBUMS):
+        if choice in (action.SKIP, action.ASIS, action.TRACKS, action.ALBUMS,
+                      action.RETAG):
             self.choice_flag = choice
             self.match = None
         else:
@@ -482,7 +483,7 @@ class ImportTask(BaseImportTask):
         (in which case the data comes from the files' current metadata)
         or APPLY (data comes from the choice).
         """
-        if self.choice_flag is action.ASIS:
+        if self.choice_flag in (action.ASIS, action.RETAG):
             return (self.cur_artist, self.cur_album)
         elif self.choice_flag is action.APPLY:
             return (self.match.info.artist, self.match.info.album)
@@ -493,7 +494,7 @@ class ImportTask(BaseImportTask):
         If the tasks applies an album match the method only returns the
         matched items.
         """
-        if self.choice_flag == action.ASIS:
+        if self.choice_flag in (action.ASIS, action.RETAG):
             return list(self.items)
         elif self.choice_flag == action.APPLY:
             return self.match.mapping.keys()
@@ -637,7 +638,7 @@ class ImportTask(BaseImportTask):
                 changes['albumartist'] = config['va_name'].get(unicode)
                 changes['comp'] = True
 
-        elif self.choice_flag == action.APPLY:
+        elif self.choice_flag in (action.APPLY, action.RETAG):
             # Applying autotagged metadata. Just get AA from the first
             # item.
             if not self.items[0].albumartist:
@@ -672,8 +673,7 @@ class ImportTask(BaseImportTask):
                     # old paths.
                     item.move(copy, link)
 
-            # TODO: the EDIT_FLAG field is a hack!
-            if write and (self.apply or getattr(self, 'EDIT_FLAG', False)):
+            if write and (self.apply or self.choice_flag == action.RETAG):
                 item.try_write()
 
         with session.lib.transaction():
@@ -1316,7 +1316,7 @@ def resolve_duplicates(session, task):
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """
-    if task.choice_flag in (action.ASIS, action.APPLY):
+    if task.choice_flag in (action.ASIS, action.APPLY, action.RETAG):
         found_duplicates = task.find_duplicates(session.lib)
         if found_duplicates:
             log.debug('found duplicates: {}'.format(
