@@ -154,11 +154,21 @@ class EditPlugin(plugins.BeetsPlugin):
         })
 
         self.register_listener('before_choose_candidate',
-                               self.before_choose_candidate_event)
+                               self.before_choose_candidate_listener)
+        self.register_listener('import_begin', self.import_begin_listener)
 
-        # Field to be used as "unequivocal, non-editable key" for an Item.
-        # TODO: cleanup
-        self.mapping_field = 'id'
+    def _set_reference_field(self, field):
+        """Set the "unequivocal, non-editable field" that will be used for
+        reconciling back the user changes.
+        """
+        if field == 'id':
+            self.reference_field = 'id'
+            self.ref_field_value = lambda o: int(o.id)
+            self.obj_from_ref = lambda d: int(d['id'])
+        elif field == 'path':
+            self.reference_field = 'path'
+            self.ref_field_value = lambda o: util.displayable_path(o.path)
+            self.obj_from_ref = lambda d: util.displayable_path(d['path'])
 
     def commands(self):
         edit_command = ui.Subcommand(
@@ -183,6 +193,9 @@ class EditPlugin(plugins.BeetsPlugin):
     def _edit_command(self, lib, opts, args):
         """The CLI command function for the `beet edit` command.
         """
+        # Set the reference field to "id", as all Models have valid ids.
+        self._set_reference_field('id')
+
         # Get the objects to edit.
         query = ui.decargs(args)
         items, albums = _do_query(lib, query, opts.album, False)
@@ -211,8 +224,8 @@ class EditPlugin(plugins.BeetsPlugin):
         if extra:
             fields += extra
 
-        # Ensure we always have the mapping field for identification.
-        fields.append(self.mapping_field)
+        # Ensure we always have the reference field for identification.
+        fields.append(self.reference_field)
 
         return set(fields)
 
@@ -274,15 +287,14 @@ class EditPlugin(plugins.BeetsPlugin):
                 # If the objects are not on the DB yet, we need a copy of their
                 # original state for show_model_changes.
                 if all(not obj.id for obj in objs):
-                    objs_old = deepcopy(objs)
+                    objs_old = {self.ref_field_value(obj): deepcopy(obj)
+                                for obj in objs}
                 self.apply_data(objs, old_data, new_data)
                 changed = False
                 for obj in objs:
                     if not obj.id:
                         # TODO: remove uglyness
-                        obj_old = next(x for x in objs_old if
-                                       getattr(x, self.mapping_field) ==
-                                       getattr(obj, self.mapping_field))
+                        obj_old = objs_old[self.ref_field_value(obj)]
                     else:
                         obj_old = None
                     changed |= ui.show_model_changes(obj, obj_old)
@@ -315,24 +327,11 @@ class EditPlugin(plugins.BeetsPlugin):
         The objects are not written back to the database, so the changes
         are temporary.
         """
-        # TODO: make this more pythonic
-        def ref_field_value(o):
-            if self.mapping_field == 'id':
-                return int(o.id)
-            elif self.mapping_field == 'path':
-                return util.displayable_path(o.path)
-
-        def obj_from_ref(d):
-            if self.mapping_field == 'id':
-                return int(d['id'])
-            elif self.mapping_field == 'path':
-                return util.displayable_path(d['path'])
-
         if len(old_data) != len(new_data):
             self._log.warn('number of objects changed from {} to {}',
                            len(old_data), len(new_data))
 
-        obj_by_f = {ref_field_value(o): o for o in objs}
+        obj_by_f = {self.ref_field_value(o): o for o in objs}
         ignore_fields = self.config['ignore_fields'].as_str_seq()
         for old_dict, new_dict in zip(old_data, new_data):
             # Prohibit any changes to forbidden fields to avoid
@@ -346,8 +345,8 @@ class EditPlugin(plugins.BeetsPlugin):
             if forbidden:
                 continue
 
-            # Reconcile back the user edits, using the mapping_field.
-            val = obj_from_ref(old_dict)
+            # Reconcile back the user edits, using the reference_field.
+            val = self.obj_from_ref(old_dict)
             apply(obj_by_f[val], new_dict)
 
     def save_changes(self, objs):
@@ -361,32 +360,35 @@ class EditPlugin(plugins.BeetsPlugin):
 
     # Methods for interactive importer execution.
 
-    def before_choose_candidate_event(self, session, task):
+    def before_choose_candidate_listener(self, session, task):
         """Append an "Edit" choice to the interactive importer prompt.
         """
-        return [PromptChoice('d', 'eDit', self.importer_edit),
-                PromptChoice('c', 'edit Candidates',
-                             self.importer_edit_candidate)]
+        choices = [PromptChoice('d', 'eDit', self.importer_edit)]
+        if task.candidates:
+            choices.append(PromptChoice('c', 'edit Candidates',
+                                        self.importer_edit_candidate))
+
+        return choices
+
+    def import_begin_listener(self, session):
+        """Initialize the reference field to 'path', as during an interactive
+        import session Models do not have valid 'id's yet.
+        """
+        self._set_reference_field('path')
 
     def importer_edit(self, session, task):
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
         """
-        # Make 'path' the mapping field, as the Items do not have ids yet.
-        # TODO: move to ~import_begin
-        self.mapping_field = 'path'
-
         # Present the YAML to the user and let her change it.
         fields = self._get_fields(album=None, extra=[])
         success = self.edit_objects(task.items, fields)
 
         # Save the new data.
         if success:
-            # TODO: implement properly, this is a quick illustrative hack.
-            # If using Items, the operation is something like
-            # "use the *modified* Items AS-IS *and* write() them"
-            task.EDIT_FLAG = True
-            return action.ASIS
+            # Return action.RETAG, which makes the importer write the tags
+            # to the files if needed.
+            return action.RETAG
         else:
             # Edit cancelled / no edits made. Revert changes.
             for obj in task.items:
