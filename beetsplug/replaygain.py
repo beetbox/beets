@@ -501,14 +501,25 @@ class GStreamerBackend(Backend):
         if len(self._file_tags) != len(items):
             raise ReplayGainError("Some items in album did not receive tags")
 
-        ret = []
+        # Collect track gains.
+        track_gains = []
         for item in items:
-            ret.append(Gain(self._file_tags[item]["TRACK_GAIN"],
-                            self._file_tags[item]["TRACK_PEAK"]))
+            try:
+                gain = self._file_tags[item]["TRACK_GAIN"]
+                peak = self._file_tags[item]["TRACK_PEAK"]
+            except KeyError:
+                raise ReplayGainError("results missing for track")
+            track_gains.append(Gain(gain, peak))
 
+        # Get album gain information from the last track.
         last_tags = self._file_tags[items[-1]]
-        return AlbumGain(Gain(last_tags["ALBUM_GAIN"],
-                              last_tags["ALBUM_PEAK"]), ret)
+        try:
+            gain = last_tags["ALBUM_GAIN"]
+            peak = last_tags["ALBUM_PEAK"]
+        except KeyError:
+            raise ReplayGainError("results missing for album")
+
+        return AlbumGain(Gain(gain, peak), track_gains)
 
     def close(self):
         self._bus.remove_signal_watch()
