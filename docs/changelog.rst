@@ -55,6 +55,9 @@ Fixes:
   some versions of pyOpenSSL. :bug:`1805`
 * :doc:`/plugins/replaygain`: Fix an intermittent crash with the GStreamer
   backend. :bug:`1855`
+* :doc:`/plugins/lyrics`: In a continuing saga, the Genius API we use is down
+  again, so it's been disabled by default *again*. We'll probably leave it
+  disabled this time.
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox
