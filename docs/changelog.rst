@@ -27,7 +27,7 @@ New:
   :bug:`1778`
 * :doc:`/plugins/info`: A new option will print only fields' names and not
   their values. Thanks to :user:`GuilhermeHideki`. :bug:`1812`
-* The :ref:`fields-cmd` command now displays flexible attributes. 
+* The :ref:`fields-cmd` command now displays flexible attributes.
   Thanks to :user:`GuilhermeHideki`. :bug:`1818`
 
 .. _Google Code-In: https://codein.withgoogle.com/
