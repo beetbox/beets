@@ -53,6 +53,8 @@ Fixes:
   inaccessible. :bug:`1806`
 * :doc:`/plugins/fetchart`: Possibly fix a Unicode-related crash when using
   some versions of pyOpenSSL. :bug:`1805`
+* :doc:`/plugins/replaygain`: Fix an intermittent crash with the GStreamer
+  backend. :bug:`1855`
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox
