@@ -715,7 +715,7 @@ defaults look like this::
         singleton: Non-Album/$artist/$title
         comp: Compilations/$album%aunique{}/$track $title
 
-Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
+Note the use of ``$albumartist`` instead of ``$artist``; this ensures that albums
 will be well-organized. For more about these format strings, see
 :doc:`pathformat`. The ``aunique{}`` function ensures that identically-named
 albums are placed in different directories; see :ref:`aunique` for details.
