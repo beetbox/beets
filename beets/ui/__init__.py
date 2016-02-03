@@ -380,7 +380,7 @@ def input_select_items(prompt, items, rep):
     choice = input_options(
         ('y', 'n', 's'), False,
         '%s? (Yes/no/select)' % prompt)
-    print()
+    print()  # go to a new line
     if choice == 'y':
         out_items = items
     elif choice == 's':
@@ -388,7 +388,7 @@ def input_select_items(prompt, items, rep):
             rep(item)
             if input_yn('%s? (yes/no)' % prompt, True):
                 out_items.append(item)
-            print()
+            print()  # go to a new line
     return out_items
 
 
