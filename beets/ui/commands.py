@@ -1347,13 +1347,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
            .format(len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
-        obj.update(mods)
-        for field in dels:
-            try:
-                del obj[field]
-            except KeyError:
-                pass
-        if ui.show_model_changes(obj):
+        if print_modify_item(obj, mods, dels):
             changed.add(obj)
 
     # Still something to do?
@@ -1372,13 +1366,33 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
         else:
             extra = ''
 
-        if not ui.input_yn('Really modify%s (Y/n)?' % extra):
+        choice = ui.input_options(
+            ('y', 'n', 's'), False,
+            'Really modify%s (Yes/No/Selective)?' % extra)
+        print(choice)
+        if choice == 'n':
             return
+        elif choice == 's':
+            changed = []
+            for obj in objs:
+                if print_modify_item(obj, mods, dels):
+                    if ui.input_yn('Really modify%s (y/n)?' % extra, True):
+                        changed.append(obj)
 
     # Apply changes to database and files
     with lib.transaction():
         for obj in changed:
             obj.try_sync(write, move)
+
+
+def print_modify_item(obj, mods, dels):
+    obj.update(mods)
+    for field in dels:
+        try:
+            del obj[field]
+        except KeyError:
+            pass
+    return ui.show_model_changes(obj)
 
 
 def modify_parse_args(args):
