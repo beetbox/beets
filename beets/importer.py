@@ -621,8 +621,12 @@ class ImportTask(BaseImportTask):
         """Make some album fields equal across `self.items`.
         """
         changes = {}
+        # Determine where to gather the info from for the RETAG action.
+        retag_asis = (self.choice_flag == action.RETAG and
+                      not self.items[0].artist and
+                      not self.items[0].mb_artistid)
 
-        if self.choice_flag == action.ASIS:
+        if self.choice_flag == action.ASIS or retag_asis:
             # Taking metadata "as-is". Guess whether this album is VA.
             plur_albumartist, freq = util.plurality(
                 [i.albumartist or i.artist for i in self.items]
@@ -808,8 +812,8 @@ class SingletonImportTask(ImportTask):
         self.paths = [item.path]
 
     def chosen_ident(self):
-        assert self.choice_flag in (action.ASIS, action.APPLY)
-        if self.choice_flag is action.ASIS:
+        assert self.choice_flag in (action.ASIS, action.APPLY, action.RETAG)
+        if self.choice_flag in (action.ASIS, action.RETAG):
             return (self.item.artist, self.item.title)
         elif self.choice_flag is action.APPLY:
             return (self.match.info.artist, self.match.info.title)
