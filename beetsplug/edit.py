@@ -21,7 +21,8 @@ from beets import plugins
 from beets import util
 from beets import ui
 from beets.dbcore import types
-from beets.importer import action
+from beets.importer import action, SingletonImportTask
+from beets.library import Item, Album
 from beets.ui.commands import _do_query, PromptChoice
 from copy import deepcopy
 import subprocess
@@ -121,7 +122,7 @@ def flatten(obj, fields):
         return d
 
 
-def apply(obj, data):
+def apply_(obj, data):
     """Set the fields of a `dbcore.Model` object according to a
     dictionary.
 
@@ -238,20 +239,26 @@ class EditPlugin(plugins.BeetsPlugin):
           everything).
         """
         # Present the YAML to the user and let her change it.
-        success = self.edit_objects(objs, fields)
+        if album:
+            success = self.edit_objects(objs, None, fields)
+        else:
+            success = self.edit_objects(objs, fields, None)
 
         # Save the new data.
         if success:
             self.save_changes(objs)
 
-    def edit_objects(self, objs, fields):
+    def edit_objects(self, objs, item_fields, album_fields):
         """Dump a set of Model objects to a file as text, ask the user
         to edit it, and apply any changes to the objects.
 
         Return a boolean indicating whether the edit succeeded.
         """
         # Get the content to edit as raw data structures.
-        old_data = [flatten(o, fields) for o in objs]
+        old_data = [flatten(o,
+                            item_fields if isinstance(o, Item)
+                            else album_fields)
+                    for o in objs]
 
         # Set up a temporary file with the initial data for editing.
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
@@ -331,7 +338,7 @@ class EditPlugin(plugins.BeetsPlugin):
             self._log.warn('number of objects changed from {} to {}',
                            len(old_data), len(new_data))
 
-        obj_by_f = {self.ref_field_value(o): o for o in objs}
+        obj_by_ref = {self.ref_field_value(o): o for o in objs}
         ignore_fields = self.config['ignore_fields'].as_str_seq()
         for old_dict, new_dict in zip(old_data, new_data):
             # Prohibit any changes to forbidden fields to avoid
@@ -347,7 +354,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
             # Reconcile back the user edits, using the reference_field.
             val = self.obj_from_ref(old_dict)
-            apply(obj_by_f[val], new_dict)
+            apply_(obj_by_ref[val], new_dict)
 
     def save_changes(self, objs):
         """Save a list of updated Model objects to the database.
@@ -380,12 +387,25 @@ class EditPlugin(plugins.BeetsPlugin):
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
         """
+        singleton = isinstance(object, SingletonImportTask)
+        item_fields = self._get_fields(False, [])
+        items = list(task.items)  # Shallow copy, not modifying task.items.
+        if not singleton:
+            # Prepend a FakeAlbum for allowing the user to edit album fields.
+            album = FakeAlbum(task.items, task.toppath)
+            items.insert(0, album)
+            album_fields = self._get_fields(True, [])
+        else:
+            album_fields = None
+
         # Present the YAML to the user and let her change it.
-        fields = self._get_fields(album=None, extra=[])
-        success = self.edit_objects(task.items, fields)
+        success = self.edit_objects(items, item_fields, album_fields)
 
         # Save the new data.
         if success:
+            if not singleton:
+                # Propagate the album changes to the items.
+                album._apply_changes()
             # Return action.RETAG, which makes the importer write the tags
             # to the files if needed.
             return action.RETAG
@@ -405,3 +425,32 @@ class EditPlugin(plugins.BeetsPlugin):
         task.apply_metadata()
 
         return self.importer_edit(session, task)
+
+
+class FakeAlbum(Album):
+    """Helper for presenting the user with an Album to be edited when there
+    is no real Album present. The album fields are set from the first item,
+    and after editing propagated to the items on `_apply_changes`.
+    """
+    def __init__(self, items, path):
+        self._src_items = items
+
+        # Create the album structure using metadata from the first item.
+        values = dict((key, items[0][key]) for key in Album.item_keys)
+        # Manually set the path as a single value field.
+        values[u'path'] = util.displayable_path(path)
+        super(FakeAlbum, self).__init__(**values)
+
+    def _getters(self):
+        """Remove 'path' from Album._getters(), treating it as a regular field
+        in order to be able to use it directly."""
+        getters = Album._getters()
+        getters.pop('path')
+        return getters
+
+    def _apply_changes(self):
+        """Propagate changes to the album fields onto the Items.
+        """
+        values = dict((key, self[key]) for key in Album.item_keys)
+        for i in self._src_items:
+            i.update(values)
