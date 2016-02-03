@@ -23,6 +23,7 @@ from test.helper import TestHelper, control_stdin
 from test.test_ui_importer import TerminalImportSessionSetup
 from test.test_importer import ImportHelper, AutotagStub
 from beets.library import Item
+from beetsplug.edit import EditPlugin
 
 
 class ModifyFileMocker(object):
@@ -126,6 +127,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.mock_write = self.write_patcher.start()
 
     def tearDown(self):
+        EditPlugin.listeners = None
         self.write_patcher.stop()
         self.teardown_beets()
         self.unload_plugins()
@@ -289,6 +291,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self.config['import']['timid'] = True
 
     def tearDown(self):
+        EditPlugin.listeners = None
         self.unload_plugins()
         self.teardown_beets()
         self.matcher.restore()
