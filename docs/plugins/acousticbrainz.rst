@@ -1,7 +1,7 @@
 AcousticBrainz Plugin
 =====================
 
-The ``acoustricbrainz`` plugin gets acoustic-analysis information from the
+The ``acousticbrainz`` plugin gets acoustic-analysis information from the
 `AcousticBrainz`_ project. The spirit is similar to the
 :doc:`/plugins/echonest`.
 
