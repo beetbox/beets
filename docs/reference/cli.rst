@@ -250,7 +250,7 @@ move
 ````
 ::
 
-    beet move [-cap] [-d DIR] QUERY
+    beet move [-capt] [-d DIR] QUERY
 
 Move or copy items in your library.
 
@@ -262,7 +262,8 @@ them. As with other commands, the ``-a`` option matches albums instead of items.
 
 To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
 show you a list of files that would be moved but won't actually change anything
-on disk.
+on disk. In advance the ``-t`` option sets the timid mode which will ask again
+before really moving or copying the files.
 
 .. _update-cmd:
 
