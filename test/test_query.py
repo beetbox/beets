@@ -461,6 +461,12 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['path album'])
 
+    @unittest.skip('unfixed (#1865)')
+    def test_path_query_in_or_query(self):
+        q = '/a/b , /a/b'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['path item'])
+
     def test_non_slashed_does_not_match_path(self):
         q = 'c.mp3'
         results = self.lib.items(q)
