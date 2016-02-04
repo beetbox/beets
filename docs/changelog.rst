@@ -29,6 +29,10 @@ New:
   their values. Thanks to :user:`GuilhermeHideki`. :bug:`1812`
 * The :ref:`fields-cmd` command now displays flexible attributes.
   Thanks to :user:`GuilhermeHideki`. :bug:`1818`
+* The :ref:`modify-cmd` command lets you interactive select tracks to apply
+  changes. :bug:`1843`
+* The :ref:`move-cmd` command accepts `-t`, `--timid` switch now to confirm
+  or interactive select tracks process. :bug:`1843`
 
 .. _Google Code-In: https://codein.withgoogle.com/
 .. _AcousticBrainz: http://acousticbrainz.org/
