@@ -44,10 +44,11 @@ Canonicalization
 
 The plugin can also *canonicalize* genres, meaning that more obscure genres can
 be turned into coarser-grained ones that are present in the whitelist. This
-works using a tree of nested genre names, represented using `YAML`_, where the
+works using a `tree of nested genre names`_, represented using `YAML`_, where the
 leaves of the tree represent the most specific genres.
 
 .. _YAML: http://www.yaml.org/
+.. _tree of nested genre names: https://raw.githubusercontent.com/beetbox/beets/master/beetsplug/lastgenre/genres-tree.yaml
 
 
 Genre Source
