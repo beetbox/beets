@@ -117,7 +117,12 @@ using the :ref:`modify-cmd` command::
 
     beet modify context=party artist:'beastie boys'
 
-And then :doc:`query </reference/query>` your music just as you would with any
+By default beets will show you the changes that are about to be applied and ask
+if you really want to apply them to all, some or none of the items or albums.
+You can type y for "yes", n for "no", or s for "select". If you choose the latter,
+the command will prompt you for each individual matching item or album.
+
+Then :doc:`query </reference/query>` your music just as you would with any
 other field::
 
     beet ls context:mope
