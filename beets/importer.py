@@ -46,6 +46,9 @@ from beets import mediafile
 action = Enum('action',
               ['SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
                'ALBUMS', 'RETAG'])
+# The RETAG action represents "don't apply any match, but do record
+# new metadata". It's not reachable via the standard command prompt but
+# can be used by plugins.
 
 QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
@@ -480,8 +483,8 @@ class ImportTask(BaseImportTask):
         """Returns identifying metadata about the current choice. For
         albums, this is an (artist, album) pair. For items, this is
         (artist, title). May only be called when the choice flag is ASIS
-        (in which case the data comes from the files' current metadata)
-        or APPLY (data comes from the choice).
+        or RETAG (in which case the data comes from the files' current
+        metadata) or APPLY (data comes from the choice).
         """
         if self.choice_flag in (action.ASIS, action.RETAG):
             return (self.cur_artist, self.cur_album)
@@ -618,15 +621,14 @@ class ImportTask(BaseImportTask):
         return duplicates
 
     def align_album_level_fields(self):
-        """Make some album fields equal across `self.items`.
+        """Make some album fields equal across `self.items`. For the
+        RETAG action, we assume that the responsible for returning it
+        (ie. a plugin) always ensures that the first item contains
+        valid data on the relevant fields.
         """
         changes = {}
-        # Determine where to gather the info from for the RETAG action.
-        retag_asis = (self.choice_flag == action.RETAG and
-                      not self.items[0].artist and
-                      not self.items[0].mb_artistid)
 
-        if self.choice_flag == action.ASIS or retag_asis:
+        if self.choice_flag == action.ASIS:
             # Taking metadata "as-is". Guess whether this album is VA.
             plur_albumartist, freq = util.plurality(
                 [i.albumartist or i.artist for i in self.items]
