@@ -21,8 +21,7 @@ from beets import plugins
 from beets import util
 from beets import ui
 from beets.dbcore import types
-from beets.importer import action, SingletonImportTask
-from beets.library import Item, Album
+from beets.importer import action
 from beets.ui.commands import _do_query, PromptChoice
 from copy import deepcopy
 import subprocess
@@ -156,20 +155,6 @@ class EditPlugin(plugins.BeetsPlugin):
 
         self.register_listener('before_choose_candidate',
                                self.before_choose_candidate_listener)
-        self.register_listener('import_begin', self.import_begin_listener)
-
-    def _set_reference_field(self, field):
-        """Set the "unequivocal, non-editable field" that will be used for
-        reconciling back the user changes.
-        """
-        if field == 'id':
-            self.reference_field = 'id'
-            self.ref_field_value = lambda o: int(o.id)
-            self.obj_from_ref = lambda d: int(d['id'])
-        elif field == 'path':
-            self.reference_field = 'path'
-            self.ref_field_value = lambda o: util.displayable_path(o.path)
-            self.obj_from_ref = lambda d: util.displayable_path(d['path'])
 
     def commands(self):
         edit_command = ui.Subcommand(
@@ -194,9 +179,6 @@ class EditPlugin(plugins.BeetsPlugin):
     def _edit_command(self, lib, opts, args):
         """The CLI command function for the `beet edit` command.
         """
-        # Set the reference field to "id", as all Models have valid ids.
-        self._set_reference_field('id')
-
         # Get the objects to edit.
         query = ui.decargs(args)
         items, albums = _do_query(lib, query, opts.album, False)
@@ -225,8 +207,8 @@ class EditPlugin(plugins.BeetsPlugin):
         if extra:
             fields += extra
 
-        # Ensure we always have the reference field for identification.
-        fields.append(self.reference_field)
+        # Ensure we always have the `id` field for identification.
+        fields.append('id')
 
         return set(fields)
 
@@ -239,26 +221,20 @@ class EditPlugin(plugins.BeetsPlugin):
           everything).
         """
         # Present the YAML to the user and let her change it.
-        if album:
-            success = self.edit_objects(objs, None, fields)
-        else:
-            success = self.edit_objects(objs, fields, None)
+        success = self.edit_objects(objs, fields)
 
         # Save the new data.
         if success:
             self.save_changes(objs)
 
-    def edit_objects(self, objs, item_fields, album_fields):
+    def edit_objects(self, objs, fields):
         """Dump a set of Model objects to a file as text, ask the user
         to edit it, and apply any changes to the objects.
 
         Return a boolean indicating whether the edit succeeded.
         """
         # Get the content to edit as raw data structures.
-        old_data = [flatten(o,
-                            item_fields if isinstance(o, Item)
-                            else album_fields)
-                    for o in objs]
+        old_data = [flatten(o, fields) for o in objs]
 
         # Set up a temporary file with the initial data for editing.
         new = NamedTemporaryFile(suffix='.yaml', delete=False)
@@ -293,17 +269,11 @@ class EditPlugin(plugins.BeetsPlugin):
                 # Show the changes.
                 # If the objects are not on the DB yet, we need a copy of their
                 # original state for show_model_changes.
-                if all(not obj.id for obj in objs):
-                    objs_old = {self.ref_field_value(obj): deepcopy(obj)
-                                for obj in objs}
+                objs_old = [deepcopy(obj) if not obj._db else None
+                            for obj in objs]
                 self.apply_data(objs, old_data, new_data)
                 changed = False
-                for obj in objs:
-                    if not obj.id:
-                        # TODO: remove uglyness
-                        obj_old = objs_old[self.ref_field_value(obj)]
-                    else:
-                        obj_old = None
+                for obj, obj_old in zip(objs, objs_old):
                     changed |= ui.show_model_changes(obj, obj_old)
                 if not changed:
                     ui.print_('No changes to apply.')
@@ -338,7 +308,7 @@ class EditPlugin(plugins.BeetsPlugin):
             self._log.warn('number of objects changed from {} to {}',
                            len(old_data), len(new_data))
 
-        obj_by_ref = {self.ref_field_value(o): o for o in objs}
+        obj_by_id = {o.id: o for o in objs}
         ignore_fields = self.config['ignore_fields'].as_str_seq()
         for old_dict, new_dict in zip(old_data, new_data):
             # Prohibit any changes to forbidden fields to avoid
@@ -352,9 +322,8 @@ class EditPlugin(plugins.BeetsPlugin):
             if forbidden:
                 continue
 
-            # Reconcile back the user edits, using the reference_field.
-            val = self.obj_from_ref(old_dict)
-            apply_(obj_by_ref[val], new_dict)
+            id_ = int(old_dict['id'])
+            apply_(obj_by_id[id_], new_dict)
 
     def save_changes(self, objs):
         """Save a list of updated Model objects to the database.
@@ -368,7 +337,8 @@ class EditPlugin(plugins.BeetsPlugin):
     # Methods for interactive importer execution.
 
     def before_choose_candidate_listener(self, session, task):
-        """Append an "Edit" choice to the interactive importer prompt.
+        """Append an "Edit" choice and an "edit Candidates" choice (if
+        there are candidates) to the interactive importer prompt.
         """
         choices = [PromptChoice('d', 'eDit', self.importer_edit)]
         if task.candidates:
@@ -377,37 +347,26 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return choices
 
-    def import_begin_listener(self, session):
-        """Initialize the reference field to 'path', as during an interactive
-        import session Models do not have valid 'id's yet.
-        """
-        self._set_reference_field('path')
-
     def importer_edit(self, session, task):
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
         """
-        singleton = isinstance(object, SingletonImportTask)
-        item_fields = self._get_fields(False, [])
-        items = list(task.items)  # Shallow copy, not modifying task.items.
-        if not singleton:
-            # Prepend a FakeAlbum for allowing the user to edit album fields.
-            album = FakeAlbum(task.items, task.toppath)
-            items.insert(0, album)
-            album_fields = self._get_fields(True, [])
-        else:
-            album_fields = None
+        # Assign temporary ids to the Items.
+        for i, obj in enumerate(task.items):
+            obj.id = i + 1
 
         # Present the YAML to the user and let her change it.
-        success = self.edit_objects(items, item_fields, album_fields)
+        fields = self._get_fields(album=False, extra=[])
+        success = self.edit_objects(task.items, fields)
+
+        # Remove temporary ids.
+        for obj in task.items:
+            obj.id = None
 
         # Save the new data.
         if success:
-            if not singleton:
-                # Propagate the album changes to the items.
-                album._apply_changes()
             # Return action.RETAG, which makes the importer write the tags
-            # to the files if needed.
+            # to the files if needed without re-applying metadata.
             return action.RETAG
         else:
             # Edit cancelled / no edits made. Revert changes.
@@ -416,41 +375,13 @@ class EditPlugin(plugins.BeetsPlugin):
 
     def importer_edit_candidate(self, session, task):
         """Callback for invoking the functionality during an interactive
-        import session on a *candidate* applied to the original items.
+        import session on a *candidate*. The candidate's metadata is
+        applied to the original items.
         """
-        # Prompt the user for a candidate, and simulate matching.
+        # Prompt the user for a candidate.
         sel = ui.input_options([], numrange=(1, len(task.candidates)))
         # Force applying the candidate on the items.
         task.match = task.candidates[sel - 1]
         task.apply_metadata()
 
         return self.importer_edit(session, task)
-
-
-class FakeAlbum(Album):
-    """Helper for presenting the user with an Album to be edited when there
-    is no real Album present. The album fields are set from the first item,
-    and after editing propagated to the items on `_apply_changes`.
-    """
-    def __init__(self, items, path):
-        self._src_items = items
-
-        # Create the album structure using metadata from the first item.
-        values = dict((key, items[0][key]) for key in Album.item_keys)
-        # Manually set the path as a single value field.
-        values[u'path'] = util.displayable_path(path)
-        super(FakeAlbum, self).__init__(**values)
-
-    def _getters(self):
-        """Remove 'path' from Album._getters(), treating it as a regular field
-        in order to be able to use it directly."""
-        getters = Album._getters()
-        getters.pop('path')
-        return getters
-
-    def _apply_changes(self):
-        """Propagate changes to the album fields onto the Items.
-        """
-        values = dict((key, self[key]) for key in Album.item_keys)
-        for i in self._src_items:
-            i.update(values)
