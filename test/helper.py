@@ -496,7 +496,7 @@ class TestImportSession(importer.ImportSession):
 
     choose_item = choose_match
 
-    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH')
+    Resolution = Enum('Resolution', 'REMOVE SKIP MERGE KEEPBOTH')
 
     default_resolution = 'REMOVE'
 
@@ -512,6 +512,8 @@ class TestImportSession(importer.ImportSession):
 
         if res == self.Resolution.SKIP:
             task.set_choice(importer.action.SKIP)
+        elif res == self.Resolution.MERGE:
+            task.should_merge_duplicates = True
         elif res == self.Resolution.REMOVE:
             task.should_remove_duplicates = True
 
