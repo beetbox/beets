@@ -62,6 +62,8 @@ Fixes:
 * :doc:`/plugins/lyrics`: In a continuing saga, the Genius API we use is down
   again, so it's been disabled by default *again*. We'll probably leave it
   disabled this time.
+* :doc:`/plugins/lastimport`: The plugin now works with the beets api key by
+  default. This can be overridden in the plugin config.
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox
