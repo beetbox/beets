@@ -47,6 +47,16 @@ be turned into coarser-grained ones that are present in the whitelist. This
 works using a `tree of nested genre names`_, represented using `YAML`_, where the
 leaves of the tree represent the most specific genres.
 
+The most common way to use this would be with a custom whitelist containing only
+a desired subset of genres. For example, if the custom whitelist contains `rock`
+and `heavy metal` (which is a child node of `rock` in the default genre tree)
+then an item that has its genre specified as `viking metal` would actually be
+tagged as `heavy metal` because neither `viking metal` nor its parent
+`black metal` are in the whitelist. Considering that, it's not very useful to
+use the default whitelist (which contains about any genre contained in the tree)
+with canonicalization because nothing would ever be matched to a more generic
+node since all the specific subgenres are in the whitelist to begin with.
+
 .. _YAML: http://www.yaml.org/
 .. _tree of nested genre names: https://raw.githubusercontent.com/beetbox/beets/master/beetsplug/lastgenre/genres-tree.yaml
 
