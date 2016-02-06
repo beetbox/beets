@@ -55,8 +55,8 @@ a desired subset of genres. Consider for a example this minimal whitelist::
     pop
     
 together with the default genre tree. Then an item that has its genre specified
-as `viking metal` would actually be tagged as `heavy metal` because neither
-`viking metal` nor its parent `black metal` are in the whitelist. It always
+as *viking metal* would actually be tagged as *heavy metal* because neither
+*viking metal* nor its parent *black metal* are in the whitelist. It always
 tries to use the most specific genre that's available in the whitelist.
 
 The relevant subtree path in the default tree looks like this::
