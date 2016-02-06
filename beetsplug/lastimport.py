@@ -32,7 +32,7 @@ class LastImportPlugin(plugins.BeetsPlugin):
         super(LastImportPlugin, self).__init__()
         config['lastfm'].add({
             'user':     '',
-            'api_key':  '',
+            'api_key':  plugins.LASTFM_KEY,
         })
         config['lastfm']['api_key'].redact = True
         self.config.add({
@@ -171,7 +171,7 @@ def fetch_tracks(user, page, limit):
             }
         ]
     """
-    network = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
+    network = pylast.LastFMNetwork(api_key=config['lastfm']['api_key'])
     user_obj = CustomUser(user, network)
     results, total_pages =\
         user_obj.get_top_tracks_by_page(limit=limit, page=page)
