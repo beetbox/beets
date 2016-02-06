@@ -171,7 +171,7 @@ def fetch_tracks(user, page, limit):
             }
         ]
     """
-    network = pylast.LastFMNetwork(api_key=config['lastfm']['api_key'])
+    network = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
     user_obj = CustomUser(user, network)
     results, total_pages =\
         user_obj.get_top_tracks_by_page(limit=limit, page=page)
