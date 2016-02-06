@@ -32,7 +32,7 @@ class LastImportPlugin(plugins.BeetsPlugin):
         super(LastImportPlugin, self).__init__()
         config['lastfm'].add({
             'user':     '',
-            'api_key':  '',
+            'api_key':  plugins.LASTFM_KEY,
         })
         config['lastfm']['api_key'].redact = True
         self.config.add({
