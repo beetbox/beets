@@ -1368,7 +1368,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
         else:
             extra = ''
 
-        changed = ui.input_select_items(
+        changed = ui.input_select_objects(
             'Really modify%s' % extra, changed,
             lambda o: print_and_modify(o, mods, dels))
 
@@ -1481,7 +1481,7 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False):
                                for obj in objs])
     else:
         if confirm:
-            objs = ui.input_select_items(
+            objs = ui.input_select_objects(
                 'Really %s' % act, objs,
                 lambda o: show_path_changes(
                     [(o.path, o.destination(basedir=dest))]))
