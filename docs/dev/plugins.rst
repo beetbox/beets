@@ -585,10 +585,11 @@ album has no candidates, the relevant checks against ``task.candidates`` should
 be performed inside the plugin's ``before_choose_candidate_event`` accordingly.
 
 Please make sure that the short letter for each of the choices provided by the
-plugin is not already in use: the importer will raise an exception if two or
-more choices try to use the same short letter. As a reference, the following
-characters are used by the choices on the core importer prompt, and hence
-should not be used: ``a``, ``s``, ``u``, ``t``, ``g``, ``e``, ``i``, ``b``.
+plugin is not already in use: the importer will emit a warning and discard
+all but one of the choices using the same letter, giving priority to the
+core importer prompt choices. As a reference, the following characters are used
+by the choices on the core importer prompt, and hence should not be used:
+``a``, ``s``, ``u``, ``t``, ``g``, ``e``, ``i``, ``b``.
 
 Additionally, the callback function can optionally specify the next action to
 be performed by returning one of the values from ``importer.action``, which
