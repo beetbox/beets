@@ -67,7 +67,7 @@ Python Audio Tools
 
 This backend uses the `Python Audio Tools`_ package to compute ReplayGain for
 a range of different file formats. The package is not available via PyPI; it
-must be installed manually.
+must be installed manually (only versions preceding 3.x are compatible).
 
 On OS X, most of the dependencies can be installed with `Homebrew`_::
 
