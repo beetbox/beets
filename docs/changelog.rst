@@ -64,6 +64,8 @@ Fixes:
   disabled this time.
 * :doc:`/plugins/lastimport`: The plugin now works with the beets api key by
   default. This can be overridden in the plugin config.
+* :doc:`/plugins/replaygain`: Fix a crash using the Python Audio Tools
+  backend. :bug:`1873`
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox

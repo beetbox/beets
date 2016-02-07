@@ -743,7 +743,7 @@ class AudioToolsBackend(Backend):
 
         # Each call to title_gain on a ReplayGain object returns peak and gain
         # of the track.
-        rg_track_gain, rg_track_peak = rg._title_gain(rg, audiofile)
+        rg_track_gain, rg_track_peak = self._title_gain(rg, audiofile)
 
         self._log.debug(u'ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}',
                         item.artist, item.title, rg_track_gain, rg_track_peak)
