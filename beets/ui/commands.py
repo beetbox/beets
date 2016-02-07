@@ -1370,7 +1370,8 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
         changed = ui.input_select_objects(
             'Really modify%s' % extra, changed,
-            lambda o: print_and_modify(o, mods, dels))
+            lambda o: print_and_modify(o, mods, dels)
+        )
 
     # Apply changes to database and files
     with lib.transaction():
@@ -1379,10 +1380,11 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
 
 def print_and_modify(obj, mods, dels):
-    """Print the modifications to an item
-    and return a bool indicating whether any changes were made
-    mods: modifications
-    dels: fields to delete
+    """Print the modifications to an item and return a bool indicating
+    whether any changes were made.
+
+    `mods` is a dictionary of fields and values to update on the object;
+    `dels` is a sequence of fields to delete.
     """
     obj.update(mods)
     for field in dels:
