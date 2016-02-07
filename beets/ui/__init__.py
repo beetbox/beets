@@ -390,6 +390,7 @@ def input_select_objects(prompt, objs, rep):
             if input_yn('%s? (yes/no)' % prompt, True):
                 out.append(obj)
             print()  # go to a new line
+        return out
 
     else:  # No.
         return []
