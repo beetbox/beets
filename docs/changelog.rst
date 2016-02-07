@@ -22,6 +22,12 @@ New:
   initial lookup is slow.
   Also, the ``enter Id`` prompt choice now accepts several IDs, separated by
   spaces. :bug:`1808`
+* :doc:`/plugins/edit`: You can now edit metadata *on the fly* during the
+  import process. The plugin provides two new interactive options: one to edit
+  *your music's* metadata, and one to edit the *matched metadata* retrieved
+  from MusicBrainz (or another data source). This feature is still in its
+  early stages, so please send feedback if you find anything missing.
+  :bug:`1846` :bug:`396`
 * :doc:`/plugins/fetchart`: The Google Images backend has been restored. It
   now requires an API key from Google. Thanks to :user:`lcharlick`.
   :bug:`1778`
