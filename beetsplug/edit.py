@@ -21,7 +21,9 @@ from beets import plugins
 from beets import util
 from beets import ui
 from beets.dbcore import types
-from beets.ui.commands import _do_query
+from beets.importer import action
+from beets.ui.commands import _do_query, PromptChoice
+from copy import deepcopy
 import subprocess
 import yaml
 from tempfile import NamedTemporaryFile
@@ -119,7 +121,7 @@ def flatten(obj, fields):
         return d
 
 
-def apply(obj, data):
+def apply_(obj, data):
     """Set the fields of a `dbcore.Model` object according to a
     dictionary.
 
@@ -150,6 +152,9 @@ class EditPlugin(plugins.BeetsPlugin):
             # Silently ignore any changes to these fields.
             'ignore_fields': 'id path',
         })
+
+        self.register_listener('before_choose_candidate',
+                               self.before_choose_candidate_listener)
 
     def commands(self):
         edit_command = ui.Subcommand(
@@ -262,10 +267,14 @@ class EditPlugin(plugins.BeetsPlugin):
                         return False
 
                 # Show the changes.
+                # If the objects are not on the DB yet, we need a copy of their
+                # original state for show_model_changes.
+                objs_old = [deepcopy(obj) if not obj._db else None
+                            for obj in objs]
                 self.apply_data(objs, old_data, new_data)
                 changed = False
-                for obj in objs:
-                    changed |= ui.show_model_changes(obj)
+                for obj, obj_old in zip(objs, objs_old):
+                    changed |= ui.show_model_changes(obj, obj_old)
                 if not changed:
                     ui.print_('No changes to apply.')
                     return False
@@ -313,8 +322,8 @@ class EditPlugin(plugins.BeetsPlugin):
             if forbidden:
                 continue
 
-            id = int(old_dict['id'])
-            apply(obj_by_id[id], new_dict)
+            id_ = int(old_dict['id'])
+            apply_(obj_by_id[id_], new_dict)
 
     def save_changes(self, objs):
         """Save a list of updated Model objects to the database.
@@ -324,3 +333,55 @@ class EditPlugin(plugins.BeetsPlugin):
             if ob._dirty:
                 self._log.debug('saving changes to {}', ob)
                 ob.try_sync(ui.should_write(), ui.should_move())
+
+    # Methods for interactive importer execution.
+
+    def before_choose_candidate_listener(self, session, task):
+        """Append an "Edit" choice and an "edit Candidates" choice (if
+        there are candidates) to the interactive importer prompt.
+        """
+        choices = [PromptChoice('d', 'eDit', self.importer_edit)]
+        if task.candidates:
+            choices.append(PromptChoice('c', 'edit Candidates',
+                                        self.importer_edit_candidate))
+
+        return choices
+
+    def importer_edit(self, session, task):
+        """Callback for invoking the functionality during an interactive
+        import session on the *original* item tags.
+        """
+        # Assign temporary ids to the Items.
+        for i, obj in enumerate(task.items):
+            obj.id = i + 1
+
+        # Present the YAML to the user and let her change it.
+        fields = self._get_fields(album=False, extra=[])
+        success = self.edit_objects(task.items, fields)
+
+        # Remove temporary ids.
+        for obj in task.items:
+            obj.id = None
+
+        # Save the new data.
+        if success:
+            # Return action.RETAG, which makes the importer write the tags
+            # to the files if needed without re-applying metadata.
+            return action.RETAG
+        else:
+            # Edit cancelled / no edits made. Revert changes.
+            for obj in task.items:
+                obj.read()
+
+    def importer_edit_candidate(self, session, task):
+        """Callback for invoking the functionality during an interactive
+        import session on a *candidate*. The candidate's metadata is
+        applied to the original items.
+        """
+        # Prompt the user for a candidate.
+        sel = ui.input_options([], numrange=(1, len(task.candidates)))
+        # Force applying the candidate on the items.
+        task.match = task.candidates[sel - 1]
+        task.apply_metadata()
+
+        return self.importer_edit(session, task)
