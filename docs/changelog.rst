@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.17 (in development)
------------------------
+1.3.17 (February 7, 2016)
+-------------------------
 
 This release introduces one new plugin to fetch audio information from the
 `AcousticBrainz`_ project and another plugin to make it easier to submit your
