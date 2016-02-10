@@ -53,3 +53,9 @@ options under the ``lastimport:`` section:
 * **retry_limit**: How many times should we re-send requests to Last.fm on
   failure?
   Default: 3.
+
+By default lastimport will use beets Last.fm API key. If you wish you can
+override this with your own API key.::
+
+    lastfm:
+      api_key: your_api_key
