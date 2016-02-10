@@ -55,6 +55,7 @@ options under the ``lastimport:`` section:
   Default: 3.
 
 By default lastimport will use beets Last.fm API key. If you wish you can
-override this with your own API key.
-  lastfm:
+override this with your own API key.::
+
+    lastfm:
       api_key: your_api_key
