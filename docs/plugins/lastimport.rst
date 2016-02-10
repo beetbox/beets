@@ -54,8 +54,8 @@ options under the ``lastimport:`` section:
   failure?
   Default: 3.
 
-By default lastimport will use beets Last.fm API key. If you wish you can
-override this with your own API key.::
+By default, the plugin will use beets's own Last.fm API key. You can also
+override it with your own API key::
 
     lastfm:
-      api_key: your_api_key
+        api_key: your_api_key
