@@ -221,7 +221,7 @@ move all your files.
 If you've already moved your music *outside* of beets, you have a few options:
 
 - Move the music back (with an ordinary ``mv``) and then use the above steps.
-- Delete your database and re-create it from the new paths using ``beet import -AWMC``.
+- Delete your database and re-create it from the new paths using ``beet import -AWC``.
 - Resort to manually modifying the SQLite database (not recommended).
 
 
