@@ -13,15 +13,15 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 
 import os
 
 import beets.library
 from beets.util import confit
 
-__version__ = '1.3.17'
-__author__ = 'Adrian Sampson <adrian@radbox.org>'
+__version__ = u'1.3.17'
+__author__ = u'Adrian Sampson <adrian@radbox.org>'
 
 Library = beets.library.Library
 
