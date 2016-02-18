@@ -596,8 +596,10 @@ def show_change(cur_artist, cur_album, match):
             # Construct lhs and rhs line widths.
             lhs_width = len(lhs_comp)
             rhs_width = len(rhs_comp)
-            if max_width_l < lhs_width: max_width_l = lhs_width
-            if max_width_r < rhs_width: max_width_r = rhs_width
+            if max_width_l < lhs_width:
+                max_width_l = lhs_width
+            if max_width_r < rhs_width:
+                max_width_r = rhs_width
 
             # Construct lhs and rhs arrays.
             info = {
