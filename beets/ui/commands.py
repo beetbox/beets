@@ -198,15 +198,6 @@ def show_change(cur_artist, cur_album, match):
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
     """
-    def show_album(artist, album):
-        if artist:
-            album_description = u'    %s - %s' % (artist, album)
-        elif album:
-            album_description = u'    %s' % album
-        else:
-            album_description = u'    (unknown album)'
-        print_(album_description)
-
     def format_index(track_info):
         """Return a string representing the track index of the given
         TrackInfo or Item object.
