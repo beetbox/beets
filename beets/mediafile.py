@@ -33,8 +33,7 @@ Internally ``MediaFile`` uses ``MediaField`` descriptors to access the
 data from the tags. In turn ``MediaField`` uses a number of
 ``StorageStyle`` strategies to handle format specific logic.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import mutagen
 import mutagen.mp3
@@ -645,13 +644,13 @@ class MP4BoolStorageStyle(MP4StorageStyle):
             return None
 
     def get_list(self, mutagen_file):
-        raise NotImplementedError('MP4 bool storage does not support lists')
+        raise NotImplementedError(u'MP4 bool storage does not support lists')
 
     def set(self, mutagen_file, value):
         mutagen_file[self.key] = value
 
     def set_list(self, mutagen_file, values):
-        raise NotImplementedError('MP4 bool storage does not support lists')
+        raise NotImplementedError(u'MP4 bool storage does not support lists')
 
 
 class MP4ImageStorageStyle(MP4ListStorageStyle):
@@ -669,7 +668,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
         elif image.mime_type == 'image/jpeg':
             kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
         else:
-            raise ValueError('MP4 files only supports PNG and JPEG images')
+            raise ValueError(u'MP4 files only supports PNG and JPEG images')
         return mutagen.mp4.MP4Cover(image.data, kind)
 
 
@@ -1359,11 +1358,11 @@ class MediaFile(object):
                 # anywhere else.
                 raise
             else:
-                log.debug('{}', traceback.format_exc())
+                log.debug(u'{}', traceback.format_exc())
                 raise MutagenError(path, exc)
         except Exception as exc:
             # Isolate bugs in Mutagen.
-            log.debug('{}', traceback.format_exc())
+            log.debug(u'{}', traceback.format_exc())
             log.error(u'uncaught Mutagen exception in open: {0}', exc)
             raise MutagenError(path, exc)
 
@@ -1436,7 +1435,7 @@ class MediaFile(object):
             # Propagate these through: they don't represent Mutagen bugs.
             raise
         except Exception as exc:
-            log.debug('{}', traceback.format_exc())
+            log.debug(u'{}', traceback.format_exc())
             log.error(u'uncaught Mutagen exception in save: {0}', exc)
             raise MutagenError(self.path, exc)
 
