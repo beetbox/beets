@@ -15,8 +15,7 @@
 
 """The core data store and collection logic for beets.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import os
 import sys
@@ -627,7 +626,7 @@ class Item(LibModel):
             self.write(path, tags)
             return True
         except FileOperationError as exc:
-            log.error("{0}", exc)
+            log.error(u"{0}", exc)
             return False
 
     def try_sync(self, write, move, with_album=True):
@@ -647,7 +646,7 @@ class Item(LibModel):
         if move:
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):
-                log.debug('moving {0} to synchronize path',
+                log.debug(u'moving {0} to synchronize path',
                           util.displayable_path(self.path))
                 self.move(with_album=with_album)
         self.store()
@@ -796,7 +795,7 @@ class Item(LibModel):
                 if query == PF_KEY_DEFAULT:
                     break
             else:
-                assert False, "no default path format"
+                assert False, u"no default path format"
         if isinstance(path_format, Template):
             subpath_tmpl = path_format
         else:
@@ -826,9 +825,10 @@ class Item(LibModel):
         if fellback:
             # Print an error message if legalization fell back to
             # default replacements because of the maximum length.
-            log.warning('Fell back to default replacements when naming '
-                        'file {}. Configure replacements to avoid lengthening '
-                        'the filename.', subpath)
+            log.warning(
+                u'Fell back to default replacements when naming '
+                u'file {}. Configure replacements to avoid lengthening '
+                u'the filename.', subpath)
 
         if fragment:
             return subpath
@@ -1016,7 +1016,7 @@ class Album(LibModel):
         """
         item = self.items().get()
         if not item:
-            raise ValueError('empty album')
+            raise ValueError(u'empty album')
         return os.path.dirname(item.path)
 
     def _albumtotal(self):
@@ -1170,7 +1170,7 @@ def parse_query_string(s, model_cls):
 
     The string is split into components using shell-like syntax.
     """
-    assert isinstance(s, unicode), "Query is not unicode: {0!r}".format(s)
+    assert isinstance(s, unicode), u"Query is not unicode: {0!r}".format(s)
     try:
         parts = util.shlex_split(s)
     except ValueError as exc:
