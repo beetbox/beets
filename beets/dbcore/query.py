@@ -15,8 +15,7 @@
 
 """The Query type hierarchy for DBCore.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import re
 from operator import mul
@@ -39,7 +38,7 @@ class InvalidQueryError(ParsingError):
     def __init__(self, query, explanation):
         if isinstance(query, list):
             query = " ".join(query)
-        message = "'{0}': {1}".format(query, explanation)
+        message = u"'{0}': {1}".format(query, explanation)
         super(InvalidQueryError, self).__init__(message)
 
 
@@ -50,9 +49,9 @@ class InvalidQueryArgumentTypeError(ParsingError):
     query) InvalidQueryError can be raised.
     """
     def __init__(self, what, expected, detail=None):
-        message = "'{0}' is not {1}".format(what, expected)
+        message = u"'{0}' is not {1}".format(what, expected)
         if detail:
-            message = "{0}: {1}".format(message, detail)
+            message = u"{0}: {1}".format(message, detail)
         super(InvalidQueryArgumentTypeError, self).__init__(message)
 
 
@@ -75,7 +74,7 @@ class Query(object):
         raise NotImplementedError
 
     def __repr__(self):
-        return "{0.__class__.__name__}()".format(self)
+        return u"{0.__class__.__name__}()".format(self)
 
     def __eq__(self, other):
         return type(self) == type(other)
@@ -117,8 +116,8 @@ class FieldQuery(Query):
         return self.value_match(self.pattern, item.get(self.field))
 
     def __repr__(self):
-        return ("{0.__class__.__name__}({0.field!r}, {0.pattern!r}, "
-                "{0.fast})".format(self))
+        return (u"{0.__class__.__name__}({0.field!r}, {0.pattern!r}, "
+                u"{0.fast})".format(self))
 
     def __eq__(self, other):
         return super(FieldQuery, self).__eq__(other) and \
@@ -154,7 +153,7 @@ class NoneQuery(FieldQuery):
             return True
 
     def __repr__(self):
-        return "{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
+        return u"{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
 
 
 class StringFieldQuery(FieldQuery):
@@ -208,7 +207,7 @@ class RegexpQuery(StringFieldQuery):
         except re.error as exc:
             # Invalid regular expression.
             raise InvalidQueryArgumentTypeError(pattern,
-                                                "a regular expression",
+                                                u"a regular expression",
                                                 format(exc))
 
     @staticmethod
@@ -283,7 +282,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryArgumentTypeError(s, "an int or a float")
+                raise InvalidQueryArgumentTypeError(s, u"an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
@@ -328,7 +327,7 @@ class NumericQuery(FieldQuery):
             elif self.rangemax is not None:
                 return u'{0} <= ?'.format(self.field), (self.rangemax,)
             else:
-                return '1', ()
+                return u'1', ()
 
 
 class CollectionQuery(Query):
@@ -369,7 +368,7 @@ class CollectionQuery(Query):
         return clause, subvals
 
     def __repr__(self):
-        return "{0.__class__.__name__}({0.subqueries})".format(self)
+        return u"{0.__class__.__name__}({0.subqueries})".format(self)
 
     def __eq__(self, other):
         return super(CollectionQuery, self).__eq__(other) and \
@@ -407,8 +406,8 @@ class AnyFieldQuery(CollectionQuery):
         return False
 
     def __repr__(self):
-        return ("{0.__class__.__name__}({0.pattern!r}, {0.fields}, "
-                "{0.query_class.__name__})".format(self))
+        return (u"{0.__class__.__name__}({0.pattern!r}, {0.fields}, "
+                u"{0.query_class.__name__})".format(self))
 
     def __eq__(self, other):
         return super(AnyFieldQuery, self).__eq__(other) and \
@@ -467,7 +466,7 @@ class NotQuery(Query):
         return not self.subquery.match(item)
 
     def __repr__(self):
-        return "{0.__class__.__name__}({0.subquery})".format(self)
+        return u"{0.__class__.__name__}({0.subquery})".format(self)
 
     def __eq__(self, other):
         return super(NotQuery, self).__eq__(other) and \
@@ -535,7 +534,7 @@ class Period(object):
         precision (a string, one of "year", "month", or "day").
         """
         if precision not in Period.precisions:
-            raise ValueError('Invalid precision {0}'.format(precision))
+            raise ValueError(u'Invalid precision {0}'.format(precision))
         self.date = date
         self.precision = precision
 
@@ -575,7 +574,7 @@ class Period(object):
         elif 'day' == precision:
             return date + timedelta(days=1)
         else:
-            raise ValueError('unhandled precision {0}'.format(precision))
+            raise ValueError(u'unhandled precision {0}'.format(precision))
 
 
 class DateInterval(object):
@@ -587,7 +586,7 @@ class DateInterval(object):
 
     def __init__(self, start, end):
         if start is not None and end is not None and not start < end:
-            raise ValueError("start date {0} is not before end date {1}"
+            raise ValueError(u"start date {0} is not before end date {1}"
                              .format(start, end))
         self.start = start
         self.end = end
@@ -608,7 +607,7 @@ class DateInterval(object):
         return True
 
     def __str__(self):
-        return'[{0}, {1})'.format(self.start, self.end)
+        return u'[{0}, {1})'.format(self.start, self.end)
 
 
 class DateQuery(FieldQuery):
@@ -677,7 +676,7 @@ class DurationQuery(NumericQuery):
             except ValueError:
                 raise InvalidQueryArgumentTypeError(
                     s,
-                    "a M:SS string or a float")
+                    u"a M:SS string or a float")
 
 
 # Sorting.
