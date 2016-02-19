@@ -200,7 +200,8 @@ class Model(object):
         exception is raised otherwise.
         """
         if not self._db:
-            raise ValueError(u'{0} has no database'.format(type(self).__name__))
+            raise ValueError(
+                u'{0} has no database'.format(type(self).__name__))
         if need_id and not self.id:
             raise ValueError(u'{0} has no id'.format(type(self).__name__))
 
