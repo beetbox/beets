@@ -309,68 +309,117 @@ def show_change(cur_artist, cur_album, match):
                 out = '* %s %s' % (media, track_info.medium)
             return out
 
-        def make_track_titles(item, track_info):
-            """docstring for fname
-            """
-            new_title = track_info.title
-            if not item.title.strip():
-                # If there's no title, we use the filename. Don't colordiff.
-                cur_title = displayable_path(os.path.basename(item.path))
-                return cur_title, new_title
-            else:
-                # If there is a title, highlight differences.
-                cur_title = item.title.strip()
-                return ui.colordiff(cur_title, new_title)
-
-        def make_track_numbers(item, track_info):
-            """docstring for fname
-            """
-            cur_track = format_index(item)
-            new_track = format_index(track_info)
-            if cur_track != new_track:
-                if item.track in (track_info.index, track_info.medium_index):
-                    cur_track_templ = u'(#{})'
-                    new_track_templ = u'(#{})'
-                    cur_track_color = 'text_highlight_minor'
-                    new_track_color = 'text_highlight_minor'
+        def make_line(item, track_info):
+            """docstring for make_track_line"""
+            def make_track_titles(item, track_info):
+                """docstring for fname
+                """
+                new_title = track_info.title
+                if not item.title.strip():
+                    # If there's no title, we use the filename. Don't colordiff.
+                    cur_title = displayable_path(os.path.basename(item.path))
+                    return cur_title, new_title
                 else:
-                    cur_track_templ = u'(#{})'
-                    new_track_templ = u'(#{})'
-                    cur_track_color = 'text_highlight'
-                    new_track_color = 'text_highlight'
-            else:
-                cur_track_templ = u''
-                new_track_templ = u''
-                cur_track_color = 'text_faint'
-                new_track_color = 'text_faint'
-            cur_track = cur_track_templ.format(cur_track)
-            new_track = new_track_templ.format(new_track)
-            lhs_track = ui.colorize(cur_track_color, cur_track)
-            rhs_track = ui.colorize(new_track_color, new_track)
-            return lhs_track, rhs_track
+                    # If there is a title, highlight differences.
+                    cur_title = item.title.strip()
+                    return ui.colordiff(cur_title, new_title)
 
-        def make_track_lengths(item, track_info):
-            """
-            """
-            if item.length and track_info.length and \
-                    abs(item.length - track_info.length) > \
-                    config['ui']['length_diff_thresh'].as_number():
-                cur_length_templ = u'({})'
-                new_length_templ = u'({})'
-                cur_length_color = 'text_highlight'
-                new_length_color = 'text_highlight'
-            else:
-                cur_length_templ = u'({})'
-                new_length_templ = u'({})'
-                cur_length_color = 'text_highlight_minor'
-                new_length_color = 'text_highlight_minor'
-            cur_length0 = ui.human_seconds_short(item.length)
-            new_length0 = ui.human_seconds_short(track_info.length)
-            cur_length = cur_length_templ.format(cur_length0)
-            new_length = new_length_templ.format(new_length0)
-            lhs_length = ui.colorize(cur_length_color, cur_length)
-            rhs_length = ui.colorize(new_length_color, new_length)
-            return lhs_length, rhs_length
+            def make_track_numbers(item, track_info):
+                """docstring for fname
+                """
+                cur_track = format_index(item)
+                new_track = format_index(track_info)
+                if cur_track != new_track:
+                    if item.track in (track_info.index, track_info.medium_index):
+                        cur_track_templ = u'(#{})'
+                        new_track_templ = u'(#{})'
+                        cur_track_color = 'text_highlight_minor'
+                        new_track_color = 'text_highlight_minor'
+                    else:
+                        cur_track_templ = u'(#{})'
+                        new_track_templ = u'(#{})'
+                        cur_track_color = 'text_highlight'
+                        new_track_color = 'text_highlight'
+                else:
+                    cur_track_templ = u''
+                    new_track_templ = u''
+                    cur_track_color = 'text_faint'
+                    new_track_color = 'text_faint'
+                cur_track = cur_track_templ.format(cur_track)
+                new_track = new_track_templ.format(new_track)
+                lhs_track = ui.colorize(cur_track_color, cur_track)
+                rhs_track = ui.colorize(new_track_color, new_track)
+                return lhs_track, rhs_track
+
+            def make_track_lengths(item, track_info):
+                """
+                """
+                if item.length and track_info.length and \
+                        abs(item.length - track_info.length) > \
+                        config['ui']['length_diff_thresh'].as_number():
+                    cur_length_templ = u'({})'
+                    new_length_templ = u'({})'
+                    cur_length_color = 'text_highlight'
+                    new_length_color = 'text_highlight'
+                else:
+                    cur_length_templ = u'({})'
+                    new_length_templ = u'({})'
+                    cur_length_color = 'text_highlight_minor'
+                    new_length_color = 'text_highlight_minor'
+                cur_length0 = ui.human_seconds_short(item.length)
+                new_length0 = ui.human_seconds_short(track_info.length)
+                cur_length = cur_length_templ.format(cur_length0)
+                new_length = new_length_templ.format(new_length0)
+                lhs_length = ui.colorize(cur_length_color, cur_length)
+                rhs_length = ui.colorize(new_length_color, new_length)
+                return lhs_length, rhs_length
+
+            # Track titles.
+            lhs_title, rhs_title = make_track_titles(item, track_info)
+            # Track number change.
+            lhs_track, rhs_track = make_track_numbers(item, track_info)
+            # Length change.
+            lhs_length, rhs_length = make_track_lengths(item, track_info)
+            # Penalties.
+            penalties = penalty_string(match.distance.tracks[track_info])
+
+            # Construct comparison strings to check for differences and update
+            # line length.
+            lhs_comp = ui.uncolorize(' '.join([lhs_track, lhs_title, lhs_length]))
+            rhs_comp = ui.uncolorize(' '.join([rhs_track, rhs_title, rhs_length]))
+            lhs_width = len(lhs_comp)
+            rhs_width = len(rhs_comp)
+
+            # Construct lhs and rhs dicts.
+            info = {
+                'prefix':    u'',
+                'disk':      None,
+                'penalties': penalty_string(match.distance.tracks[track_info]),
+            }
+            lhs = {
+                'title':  lhs_title,
+                'track':  lhs_track,
+                'length': lhs_length,
+                'width':  lhs_width,
+            }
+            rhs = {
+                'title':  rhs_title,
+                'track':  rhs_track,
+                'length': rhs_length,
+                'width':  rhs_width,
+            }
+
+            # Check whether track info will change should the user apply
+            # the match.
+            # TODO: Is there a better way to determine if a track has changed?
+            if lhs_comp != rhs_comp:
+                # Prefix changed tracks with U+2260: Not Equal To
+                info['prefix'] = ui.colorize('changed', '\u2260 ')
+                return (info, lhs, rhs)
+            elif config['import']['detail']:
+                # Prefix unchanged tracks with *
+                info['prefix'] = '* '
+                return (info, lhs, {})
 
         def calc_column_width(col_width, max_width_l, max_width_r):
             """docstring for calc_column_width
@@ -588,7 +637,6 @@ def show_change(cur_artist, cur_album, match):
         max_width_l = max_width_r = 0
 
         for item, track_info in pairs:
-
             # If the track is the first on a new medium, show medium
             # number and title.
             if medium != track_info.medium or disctitle != track_info.disctitle:
@@ -603,55 +651,15 @@ def show_change(cur_artist, cur_album, match):
                 lines.append((info, lhs, rhs))
                 medium, disctitle = track_info.medium, track_info.disctitle
 
-            # Track titles.
-            lhs_title, rhs_title = make_track_titles(item, track_info)
-            # Track number change.
-            lhs_track, rhs_track = make_track_numbers(item, track_info)
-            # Length change.
-            lhs_length, rhs_length = make_track_lengths(item, track_info)
-            # Penalties.
-            penalties = penalty_string(match.distance.tracks[track_info])
+            # Construct the line tuple for the track.
+            info, lhs, rhs = make_line(item, track_info)
+            lines.append((info, lhs, rhs))
 
-            # Construct comparison strings to check for differences.
-            lhs_comp = ui.uncolorize(' '.join([lhs_track, lhs_title, lhs_length]))
-            rhs_comp = ui.uncolorize(' '.join([rhs_track, rhs_title, rhs_length]))
-            # Construct lhs and rhs line widths.
-            lhs_width = len(lhs_comp)
-            rhs_width = len(rhs_comp)
-            if max_width_l < lhs_width:
-                max_width_l = lhs_width
-            if max_width_r < rhs_width:
-                max_width_r = rhs_width
-
-            # Construct lhs and rhs arrays.
-            info = {
-                'prefix':    u'',
-                'disk':      None,
-                'penalties': penalty_string(match.distance.tracks[track_info]),
-            }
-            lhs = {
-                'title':  lhs_title,
-                'track':  lhs_track,
-                'length': lhs_length,
-                'width':  lhs_width,
-            }
-            rhs = {
-                'title':  rhs_title,
-                'track':  rhs_track,
-                'length': rhs_length,
-                'width':  rhs_width,
-            }
-
-            # Check whether track info will change should the user apply
-            # the match.
-            if lhs_comp != rhs_comp:
-                # Prefix changed tracks with U+2260: Not Equal To
-                info['prefix'] = ui.colorize('changed', '\u2260 ')
-                lines.append((info, lhs, rhs))
-            elif config['import']['detail']:
-                # Prefix unchanged tracks with *
-                info['prefix'] = '* '
-                lines.append((info, lhs, {}))
+            # Update lhs and rhs maximum line widths.
+            if max_width_l < lhs['width']:
+                max_width_l = lhs['width']
+            if max_width_r < rhs['width']:
+                max_width_r = rhs['width']
 
         ### -----------------------------------------------------------------
         ### Print lines
