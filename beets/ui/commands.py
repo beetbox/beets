@@ -198,27 +198,6 @@ def show_change(cur_artist, cur_album, match):
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
     """
-    def format_index(track_info):
-        """Return a string representing the track index of the given
-        TrackInfo or Item object.
-        """
-        if isinstance(track_info, hooks.TrackInfo):
-            index = track_info.index
-            medium_index = track_info.medium_index
-            medium = track_info.medium
-            mediums = match.info.mediums
-        else:
-            index = medium_index = track_info.track
-            medium = track_info.disc
-            mediums = track_info.disctotal
-        if config['per_disc_numbering']:
-            if mediums > 1:
-                return u'{0}-{1}'.format(medium, medium_index)
-            else:
-                return unicode(medium_index)
-        else:
-            return unicode(index)
-
     def show_match_header():
         """Print out a 'header' identifying the suggested match (album name,
         artist name,...) and summarizing the changes that would be made should
@@ -437,6 +416,27 @@ def show_change(cur_artist, cur_album, match):
                 col_width_l = col_width
                 col_width_r = col_width
             return col_width_l, col_width_r
+
+        def format_index(track_info):
+            """Return a string representing the track index of the given
+            TrackInfo or Item object.
+            """
+            if isinstance(track_info, hooks.TrackInfo):
+                index = track_info.index
+                medium_index = track_info.medium_index
+                medium = track_info.medium
+                mediums = match.info.mediums
+            else:
+                index = medium_index = track_info.track
+                medium = track_info.disc
+                mediums = track_info.disctotal
+            if config['per_disc_numbering']:
+                if mediums > 1:
+                    return u'{0}-{1}'.format(medium, medium_index)
+                else:
+                    return unicode(medium_index)
+            else:
+                return unicode(index)
 
         def format_track(indent, prefix, lhs_width, rhs_width, col_width_l, col_width_r, lhs, rhs):
             """docstring for format_track"""
