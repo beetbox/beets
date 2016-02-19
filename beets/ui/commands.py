@@ -403,41 +403,63 @@ def show_change(cur_artist, cur_album, match):
 
         def format_track_as_columns(indent, prefix, col_width_l, col_width_r, lhs, rhs):
             """docstring for format_track_as_columns"""
-            # Calculate available space for word wrapping.
-            # Left-hand side.
-            lhs_track_len  = len(lhs['raw']['track'])
-            lhs_length_len = len(lhs['raw']['length'])
-            if lhs_track_len > 0:  lhs_track_len += 1  # Space.
-            if lhs_length_len > 0: lhs_length_len += 1 # Space.
-            lhs_used_first  = lhs_track_len + lhs_length_len
-            lhs_used_middle = lhs_track_len
-            lhs_used_last   = lhs_track_len
-            col_width_l_first  = col_width_l - lhs_used_first
-            col_width_l_middle = col_width_l - lhs_used_middle
-            col_width_l_last   = col_width_l - lhs_used_last
-        
-            # Right-hand side.
-            rhs_track_len  = len(rhs['raw']['track'])
-            rhs_length_len = len(rhs['raw']['length'])
-            if rhs_track_len > 0:  rhs_track_len += 1  # Space.
-            if rhs_length_len > 0: rhs_length_len += 1 # Space.
-            rhs_used_first  = rhs_track_len + rhs_length_len
-            rhs_used_middle = rhs_track_len
-            rhs_used_last   = rhs_track_len
-            col_width_r_first  = col_width_r - rhs_used_first
-            col_width_r_middle = col_width_r - rhs_used_middle
-            col_width_r_last   = col_width_r - rhs_used_last
+            # TODO: Think about how to beautify calc_available_columns_per_line
+            #       and ui.split_into_lines, especially with regard to the
+            #       available cols tuple (first, middle, last).
+            def calc_available_columns_per_line(col_width, track_num_len, track_duration_len):
+                """Calculate the available space in columns for the track title
+                for the first, all middle, and the last line."""
+                # Account for space between title and number/duration.
+                if track_num_len      > 0: track_num_len      += 1
+                if track_duration_len > 0: track_duration_len += 1
+                # Calculate the columns already in use for track number and
+                # track duration.
+                used_first  = track_num_len + track_duration_len
+                used_middle = track_num_len
+                used_last   = track_num_len
+                # Calculate the available columns for the track title.
+                col_width_first  = col_width - used_first
+                col_width_middle = col_width - used_middle
+                col_width_last   = col_width - used_last
+                return col_width_first, col_width_middle, col_width_last
+
+            def calc_word_wrapping(col_width, xhs):
+                """docstring for calc_word_wrapping"""
+                # Calculate available space for word wrapping.
+                available_cols = calc_available_columns_per_line(
+                    col_width,
+                    xhs['len']['track'],
+                    xhs['len']['length']
+                )
+                # Calculate word wrapping.
+                xhs_lines = ui.split_into_lines(
+                    xhs['title'],
+                    xhs['uncolored']['title'],
+                    available_cols
+                )
+                return xhs_lines
+
+            # Uncolorize and measure colored strings.
+            # TODO: Get rid of this.
+            lhs['len'] = {}
+            lhs['len']['track']       = ui.color_len(lhs['track'])
+            lhs['len']['length']      = ui.color_len(lhs['length'])
+            lhs['uncolored'] = {}
+            lhs['uncolored']['title'] = ui.uncolorize(lhs['title'])
+            rhs['len'] = {}
+            rhs['len']['track']       = ui.color_len(rhs['track'])
+            rhs['len']['length']      = ui.color_len(rhs['length'])
+            rhs['uncolored'] = {}
+            rhs['uncolored']['title'] = ui.uncolorize(rhs['title'])
 
             # Calculate word wrapping.
-            lhs_lines = ui.split_into_lines(lhs['title'], lhs['raw']['title'],
-                col_width_l_first, col_width_l_middle, col_width_l_last)
-            rhs_lines = ui.split_into_lines(rhs['title'], rhs['raw']['title'],
-                col_width_r_first, col_width_r_middle, col_width_r_last)
+            lhs_lines = calc_word_wrapping(col_width_l, lhs)
+            rhs_lines = calc_word_wrapping(col_width_r, rhs)
 
             # Construct string for all lines of both columns.
             max_line_count = max(len(lhs_lines['col']), len(rhs_lines['col']))
-            align_length_l = len(lhs['raw']['length'])
-            align_length_r = len(rhs['raw']['length'])
+            align_length_l = lhs['len']['length']
+            align_length_r = rhs['len']['length']
             out = u''
             for i in range(max_line_count):
                 # Indentation
@@ -450,10 +472,10 @@ def show_change(cur_artist, cur_album, match):
                     out += ui.indent(len('* '))
 
                 # Track number or alignment
-                if i == 0 and lhs_track_len > 0:
+                if i == 0 and lhs['len']['track'] > 0:
                     out += lhs['track'] + ' '
                 else:
-                    out += ' ' * lhs_track_len
+                    out += ' ' * lhs['len']['track']
 
                 # Line i of lhs track title.
                 if i in range(len(lhs_lines['col'])):
@@ -464,7 +486,7 @@ def show_change(cur_artist, cur_album, match):
                     align_title = len(lhs_lines['raw'][i])
                 else:
                     align_title = 0
-                align_used = lhs_track_len + align_title
+                align_used = lhs['len']['track'] + align_title
                 if i == 0:
                     align_used += align_length_l
                 padding = col_width_l - align_used
@@ -481,10 +503,10 @@ def show_change(cur_artist, cur_album, match):
                     out += u'    ' # u' .. '
 
                 # Track number or alignment.
-                if i == 0 and rhs_track_len > 0:
+                if i == 0 and rhs['len']['track'] > 0:
                     out += rhs['track'] + ' '
                 else:
-                    out += ' ' * rhs_track_len
+                    out += ' ' * rhs['len']['track']
 
                 # Line i of rhs track title.
                 if i in range(len(rhs_lines['col'])):
@@ -495,7 +517,7 @@ def show_change(cur_artist, cur_album, match):
                     align_title = len(rhs_lines['raw'][i])
                 else:
                     align_title = 0
-                align_used = rhs_track_len + align_title
+                align_used = lhs['len']['track'] + align_title
                 if i == 0:
                     align_used += align_length_r
                 padding = col_width_r - align_used

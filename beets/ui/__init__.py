@@ -682,7 +682,7 @@ def term_width():
     return width
 
 
-def split_into_lines(string, raw_string, first_width, middle_width, last_width):
+def split_into_lines(string, raw_string, width_tuple):
     """Splits string into substrings at whitespace. The first substring has a
     length not longer than first_width, the last substring has a length not
     longer than last_width, and all other substrings have a length not longer
@@ -691,6 +691,8 @@ def split_into_lines(string, raw_string, first_width, middle_width, last_width):
     string contains ANSI codes at word borders. Use raw_string to find
     substrings, but return the words of string.
     """
+    first_width, middle_width, last_width = width_tuple
+
     words_raw = raw_string.split()
     words     = string.split()
     assert len(words_raw) == len(words)
@@ -705,9 +707,9 @@ def split_into_lines(string, raw_string, first_width, middle_width, last_width):
         else:
             pot_substr_raw = ' '.join([next_substr_raw, words_raw[i]])
             pot_substr     = ' '.join([next_substr,     words[i]])
-        
+
         #print_('pot_substr_raw: {}'.format(pot_substr_raw))
-        
+
         # Find out if pot(ential)_substr fits into next substring
         fits_first = \
             (len(result['raw']) == 0 and len(pot_substr_raw) <= first_width)
