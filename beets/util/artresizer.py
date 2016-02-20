@@ -16,8 +16,7 @@
 """Abstraction layer to resize images using PIL, ImageMagick, or a
 public resizing proxy if neither is available.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import urllib
 import subprocess
@@ -125,10 +124,10 @@ def im_getsize(path_in):
     try:
         out = util.command_output(cmd)
     except subprocess.CalledProcessError as exc:
-        log.warn('ImageMagick size query failed')
+        log.warn(u'ImageMagick size query failed')
         log.debug(
-            '`convert` exited with (status {}) when '
-            'getting size with command {}:\n{}',
+            u'`convert` exited with (status {}) when '
+            u'getting size with command {}:\n{}',
             exc.returncode, cmd, exc.output.strip()
         )
         return
