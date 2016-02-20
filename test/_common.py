@@ -14,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Some common functionality for beets' test cases."""
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import time
 import sys
@@ -102,11 +101,11 @@ def album(lib=None):
     _item_ident += 1
     i = beets.library.Album(
         artpath=None,
-        albumartist='some album artist',
-        albumartist_sort='some sort album artist',
-        albumartist_credit='some album artist credit',
-        album='the album',
-        genre='the genre',
+        albumartist=u'some album artist',
+        albumartist_sort=u'some sort album artist',
+        albumartist_credit=u'some album artist credit',
+        album=u'the album',
+        genre=u'the genre',
         year=2014,
         month=2,
         day=5,
@@ -170,11 +169,11 @@ class TestCase(unittest.TestCase):
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),
-                        'file does not exist: {!r}'.format(path))
+                        u'file does not exist: {!r}'.format(path))
 
     def assertNotExists(self, path):
         self.assertFalse(os.path.exists(path),
-                         'file exists: {!r}'.format((path)))
+                         u'file exists: {!r}'.format((path)))
 
 
 class LibTestCase(TestCase):
@@ -226,9 +225,9 @@ class InputException(Exception):
         self.output = output
 
     def __str__(self):
-        msg = "Attempt to read with no input provided."
+        msg = u"Attempt to read with no input provided."
         if self.output is not None:
-            msg += " Output: %s" % self.output
+            msg += u" Output: %s" % self.output
         return msg
 
 
@@ -352,5 +351,5 @@ def slow_test(unused=None):
     def _id(obj):
         return obj
     if 'SKIP_SLOW_TESTS' in os.environ:
-        return unittest.skip('test is slow')
+        return unittest.skip(u'test is slow')
     return _id
