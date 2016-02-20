@@ -16,8 +16,7 @@
 """Adds Discogs album search support to the autotagger. Requires the
 discogs-client library.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import beets.ui
 from beets import logging
@@ -101,24 +100,24 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             _, _, url = auth_client.get_authorize_url()
         except CONNECTION_ERRORS as e:
-            self._log.debug('connection error: {0}', e)
-            raise beets.ui.UserError('communication with Discogs failed')
+            self._log.debug(u'connection error: {0}', e)
+            raise beets.ui.UserError(u'communication with Discogs failed')
 
-        beets.ui.print_("To authenticate with Discogs, visit:")
+        beets.ui.print_(u"To authenticate with Discogs, visit:")
         beets.ui.print_(url)
 
         # Ask for the code and validate it.
-        code = beets.ui.input_("Enter the code:")
+        code = beets.ui.input_(u"Enter the code:")
         try:
             token, secret = auth_client.get_access_token(code)
         except DiscogsAPIError:
-            raise beets.ui.UserError('Discogs authorization failed')
+            raise beets.ui.UserError(u'Discogs authorization failed')
         except CONNECTION_ERRORS as e:
             self._log.debug(u'connection error: {0}', e)
-            raise beets.ui.UserError('Discogs token request failed')
+            raise beets.ui.UserError(u'Discogs token request failed')
 
         # Save the token for later use.
-        self._log.debug('Discogs token {0}, secret {1}', token, secret)
+        self._log.debug(u'Discogs token {0}, secret {1}', token, secret)
         with open(self._tokenfile(), 'w') as f:
             json.dump({'token': token, 'secret': secret}, f)
 
@@ -153,7 +152,7 @@ class DiscogsPlugin(BeetsPlugin):
             else:
                 return []
         except CONNECTION_ERRORS:
-            self._log.debug('Connection error in album search', exc_info=True)
+            self._log.debug(u'Connection error in album search', exc_info=True)
             return []
 
     def album_for_id(self, album_id):
@@ -184,7 +183,7 @@ class DiscogsPlugin(BeetsPlugin):
                     return self.album_for_id(album_id)
             return None
         except CONNECTION_ERRORS:
-            self._log.debug('Connection error in album lookup', exc_info=True)
+            self._log.debug(u'Connection error in album lookup', exc_info=True)
             return None
         return self.get_album_info(result)
 
@@ -206,7 +205,7 @@ class DiscogsPlugin(BeetsPlugin):
             releases = self.discogs_client.search(query,
                                                   type='release').page(1)
         except CONNECTION_ERRORS:
-            self._log.debug("Communication error while searching for {0!r}",
+            self._log.debug(u"Communication error while searching for {0!r}",
                             query, exc_info=True)
             return []
         return [self.get_album_info(release) for release in releases[:5]]
