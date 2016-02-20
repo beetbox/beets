@@ -15,8 +15,7 @@
 
 """Fetch various AcousticBrainz metadata using MBID.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import requests
 import operator
@@ -38,7 +37,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('acousticbrainz',
-                            help="fetch metadata from AcousticBrainz")
+                            help=u"fetch metadata from AcousticBrainz")
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
@@ -63,24 +62,24 @@ def fetch_info(log, items, write):
         try:
             return reduce(operator.getitem, map_path, data)
         except KeyError:
-            log.debug('Invalid Path: {}', map_path)
+            log.debug(u'Invalid Path: {}', map_path)
 
     for item in items:
         if item.mb_trackid:
-            log.info('getting data for: {}', item)
+            log.info(u'getting data for: {}', item)
 
             # Fetch the data from the AB API.
             urls = [generate_url(item.mb_trackid, path) for path in LEVELS]
-            log.debug('fetching URLs: {}', ' '.join(urls))
+            log.debug(u'fetching URLs: {}', ' '.join(urls))
             try:
                 res = [requests.get(url) for url in urls]
             except requests.RequestException as exc:
-                log.info('request error: {}', exc)
+                log.info(u'request error: {}', exc)
                 continue
 
             # Check for missing tracks.
             if any(r.status_code == 404 for r in res):
-                log.info('recording ID {} not found', item.mb_trackid)
+                log.info(u'recording ID {} not found', item.mb_trackid)
                 continue
 
             # Parse the JSON response.
@@ -88,7 +87,7 @@ def fetch_info(log, items, write):
                 data = res[0].json()
                 data.update(res[1].json())
             except ValueError:
-                log.debug('Invalid Response: {} & {}', [r.text for r in res])
+                log.debug(u'Invalid Response: {} & {}', [r.text for r in res])
 
             # Get each field and assign it on the item.
             item.danceable = get_value(
