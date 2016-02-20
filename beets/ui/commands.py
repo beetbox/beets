@@ -369,10 +369,16 @@ def show_change(cur_artist, cur_album, match):
             lhs_width = len(lhs_comp)
             rhs_width = len(rhs_comp)
 
+            # Construct indentation.
+            indent_width = \
+            config['ui']['import']['indentation']['match_tracklist'].as_number()
+            indent = ui.indent(indent_width)
+            
             # Construct lhs and rhs dicts.
             info = {
                 'prefix':    u'',
-                'disk':      None,
+                'indent':    indent,
+                'changed':   False,
                 'penalties': penalty_string(match.distance.tracks[track_info]),
             }
             lhs = {
@@ -393,10 +399,12 @@ def show_change(cur_artist, cur_album, match):
             # TODO: Is there a better way to determine if a track has changed?
             if lhs_comp != rhs_comp:
                 # Prefix changed tracks with U+2260: Not Equal To
+                info['changed'] = True
                 info['prefix'] = ui.colorize('changed', '\u2260 ')
                 return (info, lhs, rhs)
             elif config['import']['detail']:
                 # Prefix unchanged tracks with *
+                info['changed'] = False
                 info['prefix'] = '* '
                 return (info, lhs, {})
 
@@ -438,19 +446,35 @@ def show_change(cur_artist, cur_album, match):
             else:
                 return unicode(index)
 
-        def format_track(indent, prefix, lhs_width, rhs_width, col_width_l, col_width_r, lhs, rhs):
+        def format_track(info, lhs_width, rhs_width, col_width_l, col_width_r, lhs, rhs):
             """docstring for format_track"""
-            # Print track 
+            # Print track.
             pad_l = u' ' * (col_width_l - lhs_width)
             pad_r = u' ' * (col_width_r - rhs_width)
-            template = "{0} {1} {2}{3}"
-            lhs_str = template.format(
-                lhs['track'], lhs['title'], pad_l, lhs['length'])
-            rhs_str = template.format(
-                rhs['track'], rhs['title'], pad_r, rhs['length'])
-            print_(u'{0}{1} ->\n{2}{3}'.format(indent + prefix, lhs_str, indent + ui.indent(len('* ')), rhs_str))
+            xhs_template = u'{title} {title} {padding}{length}'
+            lhs_str = xhs_template.format(
+                track   = lhs['track'],
+                title   = lhs['title'],
+                padding = pad_l,
+                length  = lhs['length']
+            )
+            rhs_str = xhs_template.format(
+                track   = rhs['track'],
+                title   = rhs['title'],
+                padding = pad_r,
+                length  = rhs['length']
+            )
+            line_template = u'{indent}{prefix}{lhs} ->\n{indent}{padding}{rhs}'
+            out = line_template.format(
+                indent  = info['indent'],
+                prefix  = info['prefix'],
+                padding = ui.indent(len('* ')),
+                lhs     = lhs_str,
+                rhs     = rhs_str,
+            )
+            print_(out)
 
-        def format_track_as_columns(indent, prefix, col_width_l, col_width_r, lhs, rhs):
+        def format_track_as_columns(info, col_width_l, col_width_r, lhs, rhs):
             """docstring for format_track_as_columns"""
             # TODO: Think about how to beautify calc_available_columns_per_line
             #       and ui.split_into_lines, especially with regard to the
@@ -501,6 +525,10 @@ def show_change(cur_artist, cur_album, match):
             rhs['uncolored'] = {}
             rhs['uncolored']['title'] = ui.uncolorize(rhs['title'])
 
+            # Get indent and prefix.
+            indent = info['indent']
+            prefix = info['prefix']
+            
             # Calculate word wrapping.
             lhs_lines = calc_word_wrapping(col_width_l, lhs)
             rhs_lines = calc_word_wrapping(col_width_r, rhs)
@@ -585,39 +613,42 @@ def show_change(cur_artist, cur_album, match):
         def print_line(info, lhs, rhs):
             """
             """
-            l_pre = indent + info['prefix']
-            r_pre = indent + ui.indent(len('* '))
-            if not rhs:
-                if info['disk']:
-                    print_(info['disk'])
-                else:
-                    pad_l = ' ' * (max_width_l - lhs['width'])
-                    lhs_str = "{0} {1} {2}{3}".format(
-                        lhs['track'], lhs['title'], pad_l, lhs['length'])
-                    print_(l_pre + lhs_str)
-            elif (lhs['width'] > col_width_l) or (rhs['width'] > col_width_r):
-                layout = \
-                    config['ui']['import']['albumdiff']['layout'].as_choice({
-                        'column':  0,
-                        'newline': 1,
-                    })
-                if layout == 0:
-                    # Word wrapping inside columns.
-                    format_track_as_columns(indent, info['prefix'],
-                        col_width_l, col_width_r, lhs, rhs)
-                elif layout == 1:
-                    # Wrap overlong track changes at column border.
-                    format_track(indent, info['prefix'], lhs['width'], rhs['width'],
-                        max_width_l, max_width_r, lhs, rhs)
-            else:
-                pad_l = ' ' * (col_width_l - lhs['width'])
-                pad_r = ' ' * (col_width_r - rhs['width'])
-                template = "{0} {1} {2}{3}"
-                lhs_str = template.format(
+            if 'disk' in info:
+                # Print disk info.
+                print_(info['disk'])
+            elif not info['changed']:
+                # Print unchanged track.
+                l_pre = info['indent'] + info['prefix']
+                pad_l = ' ' * (max_width_l - lhs['width'])
+                lhs_str = "{0} {1} {2}{3}".format(
                     lhs['track'], lhs['title'], pad_l, lhs['length'])
-                rhs_str = template.format(
-                    rhs['track'], rhs['title'], pad_r, rhs['length'])
-                print_(l_pre + u'%s -> %s' % (lhs_str, rhs_str))
+                print_(l_pre + lhs_str)
+            else:
+                # Print changed track.
+                if (lhs['width'] > col_width_l) or (rhs['width'] > col_width_r):
+                    layout = \
+                        config['ui']['import']['albumdiff']['layout'].as_choice({
+                            'column':  0,
+                            'newline': 1,
+                        })
+                    if layout == 0:
+                        # Word wrapping inside columns.
+                        format_track_as_columns(info,
+                            col_width_l, col_width_r, lhs, rhs)
+                    elif layout == 1:
+                        # Wrap overlong track changes at column border.
+                        format_track(info, lhs['width'], rhs['width'],
+                            max_width_l, max_width_r, lhs, rhs)
+                else:
+                    l_pre = info['indent'] + info['prefix']
+                    pad_l = ' ' * (col_width_l - lhs['width'])
+                    pad_r = ' ' * (col_width_r - rhs['width'])
+                    template = "{0} {1} {2}{3}"
+                    lhs_str = template.format(
+                        lhs['track'], lhs['title'], pad_l, lhs['length'])
+                    rhs_str = template.format(
+                        rhs['track'], rhs['title'], pad_r, rhs['length'])
+                    print_(l_pre + u'%s -> %s' % (lhs_str, rhs_str))
 
         # Read match detail indentation width from config.
         detail_indent = get_match_details_indentation()
@@ -665,11 +696,10 @@ def show_change(cur_artist, cur_album, match):
         ### Print lines
         ### -----------------------------------------------------------------
 
-        joiner_width = len(''.join(['* ', ' -> ']))
-        tracklist_indent_width = \
-            config['ui']['import']['indentation']['match_tracklist'].as_number()
-        indent = ui.indent(tracklist_indent_width)
-        col_width = (ui.term_width() - tracklist_indent_width - joiner_width) // 2
+        terminal_width = ui.term_width()
+        joiner_width   = len(''.join(['* ', ' -> ']))
+        indent_width   = config['ui']['import']['indentation']['match_tracklist'].as_number()
+        col_width = (terminal_width - indent_width - joiner_width) // 2
 
         if lines:
             # Calculate width of left and right column.
