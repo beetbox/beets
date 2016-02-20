@@ -5,8 +5,7 @@ modification time (mtime) of the item's source file before import.
 
 Reimported albums and items are skipped.
 """
-from __future__ import (unicode_literals, absolute_import, print_function,
-                        division)
+from __future__ import (absolute_import, print_function, division)
 
 import os
 
