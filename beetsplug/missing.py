@@ -15,8 +15,7 @@
 
 """List missing tracks.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 from beets.autotag import hooks
 from beets.library import Item
@@ -95,12 +94,12 @@ class MissingPlugin(BeetsPlugin):
         self._command = Subcommand('missing',
                                    help=__doc__,
                                    aliases=['miss'])
-        self._command.parser.add_option('-c', '--count', dest='count',
-                                        action='store_true',
-                                        help='count missing tracks per album')
-        self._command.parser.add_option('-t', '--total', dest='total',
-                                        action='store_true',
-                                        help='count total of missing tracks')
+        self._command.parser.add_option(
+            u'-c', u'--count', dest='count', action='store_true',
+            help=u'count missing tracks per album')
+        self._command.parser.add_option(
+            u'-t', u'--total', dest='total', action='store_true',
+            help=u'count total of missing tracks')
         self._command.parser.add_format_option()
 
     def commands(self):
