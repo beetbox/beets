@@ -17,8 +17,7 @@
 automatically whenever tags are written.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -64,10 +63,11 @@ class ScrubPlugin(BeetsPlugin):
                                util.displayable_path(item.path))
                 self._scrub_item(item, opts.write)
 
-        scrub_cmd = ui.Subcommand('scrub', help='clean audio tags')
-        scrub_cmd.parser.add_option('-W', '--nowrite', dest='write',
-                                    action='store_false', default=True,
-                                    help='leave tags empty')
+        scrub_cmd = ui.Subcommand('scrub', help=u'clean audio tags')
+        scrub_cmd.parser.add_option(
+            u'-W', u'--nowrite', dest='write',
+            action='store_false', default=True,
+            help=u'leave tags empty')
         scrub_cmd.func = scrub_func
 
         return [scrub_cmd]
