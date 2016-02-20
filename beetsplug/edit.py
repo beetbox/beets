@@ -14,8 +14,7 @@
 
 """Open metadata information in a text editor to let the user edit it.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 from beets import plugins
 from beets import util
@@ -68,7 +67,7 @@ def load(s):
         for d in yaml.load_all(s):
             if not isinstance(d, dict):
                 raise ParseError(
-                    'each entry must be a dictionary; found {}'.format(
+                    u'each entry must be a dictionary; found {}'.format(
                         type(d).__name__
                     )
                 )
@@ -78,7 +77,7 @@ def load(s):
             out.append({unicode(k): v for k, v in d.items()})
 
     except yaml.YAMLError as e:
-        raise ParseError('invalid YAML: {}'.format(e))
+        raise ParseError(u'invalid YAML: {}'.format(e))
     return out
 
 
@@ -154,18 +153,18 @@ class EditPlugin(plugins.BeetsPlugin):
     def commands(self):
         edit_command = ui.Subcommand(
             'edit',
-            help='interactively edit metadata'
+            help=u'interactively edit metadata'
         )
         edit_command.parser.add_option(
-            '-f', '--field',
+            u'-f', u'--field',
             metavar='FIELD',
             action='append',
-            help='edit this field also',
+            help=u'edit this field also',
         )
         edit_command.parser.add_option(
-            '--all',
+            u'--all',
             action='store_true', dest='all',
-            help='edit all fields',
+            help=u'edit all fields',
         )
         edit_command.parser.add_album_option()
         edit_command.func = self._edit_command
@@ -179,7 +178,7 @@ class EditPlugin(plugins.BeetsPlugin):
         items, albums = _do_query(lib, query, opts.album, False)
         objs = albums if opts.album else items
         if not objs:
-            ui.print_('Nothing to edit.')
+            ui.print_(u'Nothing to edit.')
             return
 
         # Get the fields to edit.
@@ -248,15 +247,15 @@ class EditPlugin(plugins.BeetsPlugin):
                 with open(new.name) as f:
                     new_str = f.read()
                 if new_str == old_str:
-                    ui.print_("No changes; aborting.")
+                    ui.print_(u"No changes; aborting.")
                     return False
 
                 # Parse the updated data.
                 try:
                     new_data = load(new_str)
                 except ParseError as e:
-                    ui.print_("Could not read data: {}".format(e))
-                    if ui.input_yn("Edit again to fix? (Y/n)", True):
+                    ui.print_(u"Could not read data: {}".format(e))
+                    if ui.input_yn(u"Edit again to fix? (Y/n)", True):
                         continue
                     else:
                         return False
@@ -267,18 +266,18 @@ class EditPlugin(plugins.BeetsPlugin):
                 for obj in objs:
                     changed |= ui.show_model_changes(obj)
                 if not changed:
-                    ui.print_('No changes to apply.')
+                    ui.print_(u'No changes to apply.')
                     return False
 
                 # Confirm the changes.
                 choice = ui.input_options(
-                    ('continue Editing', 'apply', 'cancel')
+                    (u'continue Editing', u'apply', u'cancel')
                 )
-                if choice == 'a':  # Apply.
+                if choice == u'a':  # Apply.
                     return True
-                elif choice == 'c':  # Cancel.
+                elif choice == u'c':  # Cancel.
                     return False
-                elif choice == 'e':  # Keep editing.
+                elif choice == u'e':  # Keep editing.
                     # Reset the temporary changes to the objects.
                     for obj in objs:
                         obj.read()
@@ -296,7 +295,7 @@ class EditPlugin(plugins.BeetsPlugin):
         are temporary.
         """
         if len(old_data) != len(new_data):
-            self._log.warn('number of objects changed from {} to {}',
+            self._log.warn(u'number of objects changed from {} to {}',
                            len(old_data), len(new_data))
 
         obj_by_id = {o.id: o for o in objs}
@@ -307,7 +306,7 @@ class EditPlugin(plugins.BeetsPlugin):
             forbidden = False
             for key in ignore_fields:
                 if old_dict.get(key) != new_dict.get(key):
-                    self._log.warn('ignoring object whose {} changed', key)
+                    self._log.warn(u'ignoring object whose {} changed', key)
                     forbidden = True
                     break
             if forbidden:
@@ -322,5 +321,5 @@ class EditPlugin(plugins.BeetsPlugin):
         # Save to the database and possibly write tags.
         for ob in objs:
             if ob._dirty:
-                self._log.debug('saving changes to {}', ob)
+                self._log.debug(u'saving changes to {}', ob)
                 ob.try_sync(ui.should_write(), ui.should_move())
