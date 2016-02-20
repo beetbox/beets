@@ -14,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Allows beets to embed album art into file metadata."""
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import os.path
 
@@ -56,10 +55,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def commands(self):
         # Embed command.
         embed_cmd = ui.Subcommand(
-            'embedart', help='embed image files into file metadata'
+            'embedart', help=u'embed image files into file metadata'
         )
         embed_cmd.parser.add_option(
-            '-f', '--file', metavar='PATH', help='the image file to embed'
+            u'-f', u'--file', metavar='PATH', help=u'the image file to embed'
         )
         maxwidth = self.config['maxwidth'].get(int)
         compare_threshold = self.config['compare_threshold'].get(int)
@@ -84,17 +83,18 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd.func = embed_func
 
         # Extract command.
-        extract_cmd = ui.Subcommand('extractart',
-                                    help='extract an image from file metadata')
-        extract_cmd.parser.add_option('-o', dest='outpath',
-                                      help='image output file')
-        extract_cmd.parser.add_option('-n', dest='filename',
-                                      help='image filename to create for all '
-                                           'matched albums')
-        extract_cmd.parser.add_option('-a', dest='associate',
-                                      action='store_true',
-                                      help='associate the extracted images '
-                                           'with the album')
+        extract_cmd = ui.Subcommand(
+            'extractart',
+            help=u'extract an image from file metadata')
+        extract_cmd.parser.add_option(
+            u'-o', dest='outpath',
+            help=u'image output file')
+        extract_cmd.parser.add_option(
+            u'-n', dest='filename',
+            help=u'image filename to create for all matched albums')
+        extract_cmd.parser.add_option(
+            '-a', dest='associate', action='store_true',
+            help='associate the extracted images with the album')
 
         def extract_func(lib, opts, args):
             if opts.outpath:
@@ -104,8 +104,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 filename = bytestring_path(opts.filename or
                                            config['art_filename'].get())
                 if os.path.dirname(filename) != '':
-                    self._log.error(u"Only specify a name rather than a path "
-                                    u"for -n")
+                    self._log.error(
+                        u"Only specify a name rather than a path for -n")
                     return
                 for album in lib.albums(decargs(args)):
                     artpath = normpath(os.path.join(album.path, filename))
@@ -117,8 +117,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         extract_cmd.func = extract_func
 
         # Clear command.
-        clear_cmd = ui.Subcommand('clearart',
-                                  help='remove images from file metadata')
+        clear_cmd = ui.Subcommand(
+            'clearart',
+            help=u'remove images from file metadata')
 
         def clear_func(lib, opts, args):
             art.clear(self._log, lib, decargs(args))
@@ -142,7 +143,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         if self.config['remove_art_file'] and album.artpath:
             if os.path.isfile(album.artpath):
-                self._log.debug('Removing album art file for {0}', album)
+                self._log.debug(u'Removing album art file for {0}', album)
                 os.remove(album.artpath)
                 album.artpath = None
                 album.store()
