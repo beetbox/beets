@@ -16,8 +16,7 @@
 """Fetches, embeds, and displays lyrics.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import re
 import requests
@@ -107,7 +106,7 @@ def extract_text_in(html, starttag):
             parts.append(html[pos:match.start()])
             break
     else:
-        print('no closing tag found!')
+        print(u'no closing tag found!')
         return
     return u''.join(parts)
 
@@ -237,7 +236,7 @@ class Genius(Backend):
         url = u'https://api.genius.com/search?q=%s' \
             % (urllib.quote(query.encode('utf8')))
 
-        self._log.debug('genius: requesting search {}', url)
+        self._log.debug(u'genius: requesting search {}', url)
         try:
             req = requests.get(
                 url,
@@ -246,19 +245,19 @@ class Genius(Backend):
             )
             req.raise_for_status()
         except requests.RequestException as exc:
-            self._log.debug('genius: request error: {}', exc)
+            self._log.debug(u'genius: request error: {}', exc)
             return None
 
         try:
             return req.json()
         except ValueError:
-            self._log.debug('genius: invalid response: {}', req.text)
+            self._log.debug(u'genius: invalid response: {}', req.text)
             return None
 
     def get_lyrics(self, link):
         url = u'http://genius-api.com/api/lyricsInfo'
 
-        self._log.debug('genius: requesting lyrics for link {}', link)
+        self._log.debug(u'genius: requesting lyrics for link {}', link)
         try:
             req = requests.post(
                 url,
@@ -268,13 +267,13 @@ class Genius(Backend):
             )
             req.raise_for_status()
         except requests.RequestException as exc:
-            self._log.debug('genius: request error: {}', exc)
+            self._log.debug(u'genius: request error: {}', exc)
             return None
 
         try:
             return req.json()
         except ValueError:
-            self._log.debug('genius: invalid response: {}', req.text)
+            self._log.debug(u'genius: invalid response: {}', req.text)
             return None
 
     def build_lyric_string(self, lyrics):
@@ -576,12 +575,14 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
-        cmd.parser.add_option('-p', '--print', dest='printlyr',
-                              action='store_true', default=False,
-                              help='print lyrics to console')
-        cmd.parser.add_option('-f', '--force', dest='force_refetch',
-                              action='store_true', default=False,
-                              help='always re-download lyrics')
+        cmd.parser.add_option(
+            u'-p', u'--print', dest='printlyr',
+            action='store_true', default=False,
+            help=u'print lyrics to console')
+        cmd.parser.add_option(
+            u'-f', u'--force', dest='force_refetch',
+            action='store_true', default=False,
+            help=u'always re-download lyrics')
 
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
