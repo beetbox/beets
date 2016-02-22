@@ -14,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import os.path
 from mock import Mock, patch
@@ -31,7 +30,7 @@ class EchonestCliTest(unittest.TestCase, TestHelper):
         try:
             __import__('pyechonest')
         except ImportError:
-            self.skipTest('pyechonest not available')
+            self.skipTest(u'pyechonest not available')
 
         self.setup_beets()
         self.load_plugins('echonest')
@@ -157,7 +156,7 @@ class EchonestCliTest(unittest.TestCase, TestHelper):
     def test_custom_field_range_query(self):
         item = Item(liveness=2.2)
         item.add(self.lib)
-        item = self.lib.items('liveness:2.2..3').get()
+        item = self.lib.items(u'liveness:2.2..3').get()
         self.assertEqual(item['liveness'], 2.2)
 
     def profile(self, item, **values):
