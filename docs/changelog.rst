@@ -4,7 +4,10 @@ Changelog
 1.3.18 (in development)
 -----------------------
 
-Changelog goes here!
+Fixes:
+
+* Fix a problem with the :ref:`stats-cmd` in exact mode when filenames on
+  Windows use non-ASCII characters. :bug:`1891`
 
 
 1.3.17 (February 7, 2016)

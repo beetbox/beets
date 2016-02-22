@@ -1257,7 +1257,7 @@ def show_stats(lib, query, exact):
     for item in items:
         if exact:
             try:
-                total_size += os.path.getsize(item.path)
+                total_size += os.path.getsize(syspath(item.path))
             except OSError as exc:
                 log.info('could not get size of {}: {}', item.path, exc)
         else:
