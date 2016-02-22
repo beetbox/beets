@@ -384,7 +384,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
         url = s['url'] + s['path']
         url_title = u'foo'
 
-        google.is_page_candidate(url, url_title, s['title'], 'Sunn O)))')
+        google.is_page_candidate(url, url_title, s['title'], u'Sunn O)))')
 
 
 def suite():
