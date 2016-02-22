@@ -15,8 +15,7 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 from test._common import unittest
 from test.helper import TestHelper
@@ -150,33 +149,33 @@ class FtInTitlePluginTest(unittest.TestCase):
             self.assertEqual(feat_part, test_case['feat_part'])
 
     def test_split_on_feat(self):
-        parts = ftintitle.split_on_feat('Alice ft. Bob')
-        self.assertEqual(parts, ('Alice', 'Bob'))
-        parts = ftintitle.split_on_feat('Alice feat Bob')
-        self.assertEqual(parts, ('Alice', 'Bob'))
-        parts = ftintitle.split_on_feat('Alice feat. Bob')
-        self.assertEqual(parts, ('Alice', 'Bob'))
-        parts = ftintitle.split_on_feat('Alice featuring Bob')
-        self.assertEqual(parts, ('Alice', 'Bob'))
-        parts = ftintitle.split_on_feat('Alice & Bob')
-        self.assertEqual(parts, ('Alice', 'Bob'))
-        parts = ftintitle.split_on_feat('Alice and Bob')
-        self.assertEqual(parts, ('Alice', 'Bob'))
-        parts = ftintitle.split_on_feat('Alice With Bob')
-        self.assertEqual(parts, ('Alice', 'Bob'))
-        parts = ftintitle.split_on_feat('Alice defeat Bob')
-        self.assertEqual(parts, ('Alice defeat Bob', None))
+        parts = ftintitle.split_on_feat(u'Alice ft. Bob')
+        self.assertEqual(parts, (u'Alice', u'Bob'))
+        parts = ftintitle.split_on_feat(u'Alice feat Bob')
+        self.assertEqual(parts, (u'Alice', u'Bob'))
+        parts = ftintitle.split_on_feat(u'Alice feat. Bob')
+        self.assertEqual(parts, (u'Alice', u'Bob'))
+        parts = ftintitle.split_on_feat(u'Alice featuring Bob')
+        self.assertEqual(parts, (u'Alice', u'Bob'))
+        parts = ftintitle.split_on_feat(u'Alice & Bob')
+        self.assertEqual(parts, (u'Alice', u'Bob'))
+        parts = ftintitle.split_on_feat(u'Alice and Bob')
+        self.assertEqual(parts, (u'Alice', u'Bob'))
+        parts = ftintitle.split_on_feat(u'Alice With Bob')
+        self.assertEqual(parts, (u'Alice', u'Bob'))
+        parts = ftintitle.split_on_feat(u'Alice defeat Bob')
+        self.assertEqual(parts, (u'Alice defeat Bob', None))
 
     def test_contains_feat(self):
-        self.assertTrue(ftintitle.contains_feat('Alice ft. Bob'))
-        self.assertTrue(ftintitle.contains_feat('Alice feat. Bob'))
-        self.assertTrue(ftintitle.contains_feat('Alice feat Bob'))
-        self.assertTrue(ftintitle.contains_feat('Alice featuring Bob'))
-        self.assertTrue(ftintitle.contains_feat('Alice & Bob'))
-        self.assertTrue(ftintitle.contains_feat('Alice and Bob'))
-        self.assertTrue(ftintitle.contains_feat('Alice With Bob'))
-        self.assertFalse(ftintitle.contains_feat('Alice defeat Bob'))
-        self.assertFalse(ftintitle.contains_feat('Aliceft.Bob'))
+        self.assertTrue(ftintitle.contains_feat(u'Alice ft. Bob'))
+        self.assertTrue(ftintitle.contains_feat(u'Alice feat. Bob'))
+        self.assertTrue(ftintitle.contains_feat(u'Alice feat Bob'))
+        self.assertTrue(ftintitle.contains_feat(u'Alice featuring Bob'))
+        self.assertTrue(ftintitle.contains_feat(u'Alice & Bob'))
+        self.assertTrue(ftintitle.contains_feat(u'Alice and Bob'))
+        self.assertTrue(ftintitle.contains_feat(u'Alice With Bob'))
+        self.assertFalse(ftintitle.contains_feat(u'Alice defeat Bob'))
+        self.assertFalse(ftintitle.contains_feat(u'Aliceft.Bob'))
 
 
 def suite():
