@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 import codecs
 
 from mock import patch
@@ -202,7 +201,7 @@ class EditCommandTest(unittest.TestCase, TestHelper):
                                 # Apply changes.
                                 ['a'])
 
-        self.assertEqual(self.lib.items('id:1')[0].foo, 'bar')
+        self.assertEqual(self.lib.items(u'id:1')[0].foo, 'bar')
         self.assertCounts(write_call_count=1,
                           title_starts_with=u't\u00eftle')
 
@@ -249,7 +248,7 @@ class EditCommandTest(unittest.TestCase, TestHelper):
         """Edit the yaml file incorrectly (resulting in a well-formed but
         invalid yaml document)."""
         # edit the yaml file to an invalid file
-        self.run_mocked_command({'contents': 'wellformed: yes, but invalid'},
+        self.run_mocked_command({'contents': u'wellformed: yes, but invalid'},
                                 # no stdin
                                 [])
 
