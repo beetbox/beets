@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import os
 from mock import patch, Mock, ANY
@@ -72,22 +71,22 @@ class ItemTypesTest(unittest.TestCase, TestHelper):
         self.register_plugin(RatingPlugin)
         self.config['plugins'] = 'rating'
 
-        item = Item(path='apath', artist='aaa')
+        item = Item(path=u'apath', artist=u'aaa')
         item.add(self.lib)
 
         # Do not match unset values
-        out = self.run_with_output('ls', 'rating:1..3')
-        self.assertNotIn('aaa', out)
+        out = self.run_with_output(u'ls', u'rating:1..3')
+        self.assertNotIn(u'aaa', out)
 
-        self.run_command('modify', 'rating=2', '--yes')
+        self.run_command(u'modify', u'rating=2', u'--yes')
 
         # Match in range
-        out = self.run_with_output('ls', 'rating:1..3')
-        self.assertIn('aaa', out)
+        out = self.run_with_output(u'ls', u'rating:1..3')
+        self.assertIn(u'aaa', out)
 
         # Don't match out of range
-        out = self.run_with_output('ls', 'rating:3..5')
-        self.assertNotIn('aaa', out)
+        out = self.run_with_output(u'ls', u'rating:3..5')
+        self.assertNotIn(u'aaa', out)
 
 
 class ItemWriteTest(unittest.TestCase, TestHelper):
@@ -108,16 +107,16 @@ class ItemWriteTest(unittest.TestCase, TestHelper):
     def test_change_tags(self):
 
         def on_write(item=None, path=None, tags=None):
-            if tags['artist'] == 'XXX':
-                tags['artist'] = 'YYY'
+            if tags['artist'] == u'XXX':
+                tags['artist'] = u'YYY'
 
         self.register_listener('write', on_write)
 
-        item = self.add_item_fixture(artist='XXX')
+        item = self.add_item_fixture(artist=u'XXX')
         item.write()
 
         mediafile = MediaFile(item.path)
-        self.assertEqual(mediafile.artist, 'YYY')
+        self.assertEqual(mediafile.artist, u'YYY')
 
     def register_listener(self, event, func):
         self.event_listener_plugin.register_listener(event, func)
@@ -193,8 +192,8 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
         os.makedirs(self.album_path)
 
         metadata = {
-            'artist': 'Tag Artist',
-            'album':  'Tag Album',
+            'artist': u'Tag Artist',
+            'album':  u'Tag Album',
             'albumartist':  None,
             'mb_trackid': None,
             'mb_albumid': None,
@@ -203,7 +202,7 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
         self.file_paths = []
         for i in range(count):
             metadata['track'] = i + 1
-            metadata['title'] = 'Tag Title Album %d' % (i + 1)
+            metadata['title'] = u'Tag Title Album %d' % (i + 1)
             dest_path = os.path.join(self.album_path,
                                      '%02d - track.mp3' % (i + 1))
             self.__copy_file(dest_path, metadata)
@@ -220,13 +219,14 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        self.assertEqual(logs.count('Sending event: import_task_created'), 1)
+        self.assertEqual(logs.count(u'Sending event: import_task_created'), 1)
 
-        logs = [line for line in logs if not line.startswith('Sending event:')]
+        logs = [line for line in logs if not line.startswith(
+            u'Sending event:')]
         self.assertEqual(logs, [
-            'Album: {0}'.format(os.path.join(self.import_dir, 'album')),
-            '  {0}'.format(self.file_paths[0]),
-            '  {0}'.format(self.file_paths[1]),
+            u'Album: {0}'.format(os.path.join(self.import_dir, 'album')),
+            u'  {0}'.format(self.file_paths[0]),
+            u'  {0}'.format(self.file_paths[1]),
         ])
 
     def test_import_task_created_with_plugin(self):
@@ -262,23 +262,27 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        self.assertEqual(logs.count('Sending event: import_task_created'), 1)
+        self.assertEqual(logs.count(u'Sending event: import_task_created'), 1)
 
-        logs = [line for line in logs if not line.startswith('Sending event:')]
+        logs = [line for line in logs if not line.startswith(
+            u'Sending event:')]
         self.assertEqual(logs, [
-            'Singleton: {0}'.format(self.file_paths[0]),
-            'Singleton: {0}'.format(self.file_paths[1]),
+            u'Singleton: {0}'.format(self.file_paths[0]),
+            u'Singleton: {0}'.format(self.file_paths[1]),
         ])
 
 
 class HelpersTest(unittest.TestCase):
 
     def test_sanitize_choices(self):
-        self.assertEqual(plugins.sanitize_choices(['A', 'Z'], ('A', 'B')),
-                         ['A'])
-        self.assertEqual(plugins.sanitize_choices(['A', 'A'], ('A')), ['A'])
-        self.assertEqual(plugins.sanitize_choices(['D', '*', 'A'],
-                         ('A', 'B', 'C', 'D')), ['D', 'B', 'C', 'A'])
+        self.assertEqual(
+            plugins.sanitize_choices([u'A', u'Z'], (u'A', u'B')), [u'A'])
+        self.assertEqual(
+            plugins.sanitize_choices([u'A', u'A'], (u'A')), [u'A'])
+        self.assertEqual(
+            plugins.sanitize_choices([u'D', u'*', u'A'],
+                                     (u'A', u'B', u'C', u'D')),
+            [u'D', u'B', u'C', u'A'])
 
 
 class ListenersTest(unittest.TestCase, TestHelper):
@@ -331,8 +335,8 @@ class ListenersTest(unittest.TestCase, TestHelper):
         d.foo.assert_has_calls([])
         d.bar.assert_has_calls([])
 
-        plugins.send('event_foo', var="tagada")
-        d.foo.assert_called_once_with(var="tagada")
+        plugins.send('event_foo', var=u"tagada")
+        d.foo.assert_called_once_with(var=u"tagada")
         d.bar.assert_has_calls([])
 
     @patch('beets.plugins.find_plugins')
@@ -430,14 +434,14 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
                                        self.return_choices)
 
             def return_choices(self, session, task):
-                return [ui.commands.PromptChoice('f', 'Foo', None),
-                        ui.commands.PromptChoice('r', 'baR', None)]
+                return [ui.commands.PromptChoice('f', u'Foo', None),
+                        ui.commands.PromptChoice('r', u'baR', None)]
 
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
                 u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + ('Foo', 'baR')
+                u'enter Id', u'aBort') + (u'Foo', u'baR')
 
         self.importer.add_choice(action.SKIP)
         self.importer.run()
@@ -453,14 +457,14 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
                                        self.return_choices)
 
             def return_choices(self, session, task):
-                return [ui.commands.PromptChoice('f', 'Foo', None),
-                        ui.commands.PromptChoice('r', 'baR', None)]
+                return [ui.commands.PromptChoice('f', u'Foo', None),
+                        ui.commands.PromptChoice('r', u'baR', None)]
 
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
                 u'Enter search',
-                u'enter Id', u'aBort') + ('Foo', 'baR')
+                u'enter Id', u'aBort') + (u'Foo', u'baR')
 
         config['import']['singletons'] = True
         self.importer.add_choice(action.SKIP)
@@ -477,16 +481,16 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
                                        self.return_choices)
 
             def return_choices(self, session, task):
-                return [ui.commands.PromptChoice('a', 'A foo', None),  # dupe
-                        ui.commands.PromptChoice('z', 'baZ', None),    # ok
-                        ui.commands.PromptChoice('z', 'Zupe', None),   # dupe
-                        ui.commands.PromptChoice('z', 'Zoo', None)]    # dupe
+                return [ui.commands.PromptChoice('a', u'A foo', None),  # dupe
+                        ui.commands.PromptChoice('z', u'baZ', None),    # ok
+                        ui.commands.PromptChoice('z', u'Zupe', None),   # dupe
+                        ui.commands.PromptChoice('z', u'Zoo', None)]    # dupe
 
         self.register_plugin(DummyPlugin)
         # Default options + not dupe extra choices by the plugin ('baZ')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
                 u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + ('baZ',)
+                u'enter Id', u'aBort') + (u'baZ',)
         self.importer.add_choice(action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(opts, default='a',
@@ -501,7 +505,7 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
                                        self.return_choices)
 
             def return_choices(self, session, task):
-                return [ui.commands.PromptChoice('f', 'Foo', self.foo)]
+                return [ui.commands.PromptChoice('f', u'Foo', self.foo)]
 
             def foo(self, session, task):
                 pass
@@ -510,7 +514,7 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
                 u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + ('Foo',)
+                u'enter Id', u'aBort') + (u'Foo',)
 
         # DummyPlugin.foo() should be called once
         with patch.object(DummyPlugin, 'foo', autospec=True) as mock_foo:
@@ -532,7 +536,7 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
                                        self.return_choices)
 
             def return_choices(self, session, task):
-                return [ui.commands.PromptChoice('f', 'Foo', self.foo)]
+                return [ui.commands.PromptChoice('f', u'Foo', self.foo)]
 
             def foo(self, session, task):
                 return action.SKIP
@@ -541,7 +545,7 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
                 u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + ('Foo',)
+                u'enter Id', u'aBort') + (u'Foo',)
 
         # DummyPlugin.foo() should be called once
         with helper.control_stdin('f\n'):
