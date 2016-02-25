@@ -348,22 +348,16 @@ class ConvertPlugin(BeetsPlugin):
                 resize = ArtResizer.shared.must_resize(size, maxwidth)
 
         if resize:
-            if pretend:
-                self._log.info(u'resize_artwork {0} {1}',
-                               util.displayable_path(album.artpath),
-                               util.displayable_path(dest))
-            else:
-                self._log.info(u'Converting cover art to {0}',
-                              util.displayable_path(dest))
+            self._log.info(u'Resizing cover art from {0} to {1}',
+                           util.displayable_path(album.artpath),
+                           util.displayable_path(dest))
+            if not pretend:
                 ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
-            if pretend:
-                self._log.info(u'cp {0} {1}',
-                               util.displayable_path(album.artpath),
-                               util.displayable_path(dest))
-            else:
-                self._log.info(u'Copying cover art to {0}',
-                               util.displayable_path(dest))
+            self._log.info(u'Copying cover art from {0} to {1}',
+                           util.displayable_path(album.artpath),
+                           util.displayable_path(dest))
+            if not pretend:
                 util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
