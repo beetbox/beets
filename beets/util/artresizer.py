@@ -173,46 +173,6 @@ class ArtResizer(object):
         log.debug(u"artresizer: method is {0}", self.method)
         self.can_compare = self._can_compare()
 
-    def valid_size(self, size, enforce_ratio = False, minwidth = None):
-        """If size constraints exist, check whether the provided image size
-        matches them.
-        """
-        # Check minimum size.
-        if minwidth and size[0] < minwidth:
-            log.debug('image too small ({} < {})',
-                      size[0], minwidth)
-            return False
-
-        # Check aspect ratio.
-        if enforce_ratio and size[0] != size[1]:
-            log.debug('image is not square ({} != {})',
-                       size[0], size[1])
-            return False
-
-        return True
-
-    def must_resize(self, size, maxwidth = None):
-        """Determine whether the provided image size means that the image
-        will need to be scaled to fit the maximum width.
-        """
-        if not maxwidth:
-            return False
-
-        if not size:
-            log.warning(u'Could not get size of image (please see '
-                        u'documentation for dependencies).')
-            return False
-
-        if size[0] <= maxwidth:
-            log.debug('dump values ({} > {})',
-                      size[0], maxwidth)
-            log.debug(u'Image does not need to be resized.')
-            return False
-
-        log.debug('Image needs resizing ({} > {})',
-                  size[0], maxwidth)
-        return True
-
     def resize(self, maxwidth, path_in, path_out=None):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
