@@ -23,7 +23,7 @@ Here's a link to the music files that trigger the bug (if relevant):
 * OS: 
 * Python version: 
 * beets version: 
-* I tried turning off plugins, and that made the problem go away (yes/no): 
+* Turning off plugins made problem go away (yes/no): 
 
 My configuration (output of `beet config`) is:
 
