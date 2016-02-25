@@ -342,10 +342,10 @@ class ConvertPlugin(BeetsPlugin):
         maxwidth = None
 
         if self.config['copy_album_art_maxwidth']:
-          maxwidth = self.config['copy_album_art_maxwidth'].get(int)
-          size = ArtResizer.shared.get_size(album.artpath)
-          if size:
-              resize = ArtResizer.shared.must_resize(size, maxwidth)
+            maxwidth = self.config['copy_album_art_maxwidth'].get(int)
+            size = ArtResizer.shared.get_size(album.artpath)
+            if size:
+                resize = ArtResizer.shared.must_resize(size, maxwidth)
 
         if resize:
             if pretend:
