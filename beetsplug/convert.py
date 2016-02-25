@@ -344,8 +344,12 @@ class ConvertPlugin(BeetsPlugin):
         if self.config['copy_album_art_maxwidth']:
             maxwidth = self.config['copy_album_art_maxwidth'].get(int)
             size = ArtResizer.shared.get_size(album.artpath)
+            self._log.debug('image size: {}', size)
             if size:
-                resize = ArtResizer.shared.must_resize(size, maxwidth)
+                resize = size[0] > maxwidth
+            else:
+                self._log.warning(u'Could not get size of image (please see '
+                                  u'documentation for dependencies).')
 
         if resize:
             self._log.info(u'Resizing cover art from {0} to {1}',

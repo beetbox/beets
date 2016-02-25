@@ -42,6 +42,10 @@ IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg', 'image/png')
 DOWNLOAD_EXTENSION = '.jpg'
 
+CANDIDATE_BAD = 0
+CANDIDATE_EXACT = 1
+CANDIDATE_DOWNSCALE = 2
+
 
 def _logged_get(log, *args, **kwargs):
     """Like `requests.get`, but logs the effective URL to the specified
@@ -531,6 +535,51 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self._log.debug('error fetching art: {}', exc)
             return None
 
+    def _is_valid_image_candidate(self, candidate):
+        """Determine whether the given candidate artwork is valid based on
+        its dimensions (width and ratio).
+
+        Return `CANDIDATE_BAD` if the file is unusable.
+        Return `CANDIDATE_EXACT` if the file is usable as-is.
+        Return `CANDIDATE_DOWNSCALE` if the file must be resized.
+        """
+        if not candidate:
+            return CANDIDATE_BAD
+
+        if not (self.enforce_ratio or self.minwidth or self.maxwidth):
+            return CANDIDATE_EXACT
+
+        # get_size returns None if no local imaging backend is available
+        size = ArtResizer.shared.get_size(candidate)
+        self._log.debug('image size: {}', size)
+
+        if not size:
+            self._log.warning(u'Could not get size of image (please see '
+                              u'documentation for dependencies). '
+                              u'The configuration options `minwidth` and '
+                              u'`enforce_ratio` may be violated.')
+            return CANDIDATE_EXACT
+
+        # Check minimum size.
+        if self.minwidth and size[0] < self.minwidth:
+            self._log.debug('image too small ({} < {})',
+                            size[0], self.minwidth)
+            return CANDIDATE_BAD
+
+        # Check aspect ratio.
+        if self.enforce_ratio and size[0] != size[1]:
+            self._log.debug('image is not square ({} != {})',
+                            size[0], size[1])
+            return CANDIDATE_BAD
+
+        # Check maximum size.
+        if self.maxwidth and size[0] > self.maxwidth:
+            self._log.debug('image needs resizing ({} > {})',
+                            size[0], self.maxwidth)
+            return CANDIDATE_DOWNSCALE
+
+        return CANDIDATE_EXACT
+
     def art_for_album(self, album, paths, local_only=False):
         """Given an Album object, returns a path to downloaded art for the
         album (or None if no art is found). If `maxwidth`, then images are
@@ -539,7 +588,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         are made.
         """
         out = None
-        size = None
+        check = None
 
         # Local art.
         cover_names = self.config['cover_names'].as_str_seq()
@@ -548,21 +597,11 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if paths:
             for path in paths:
                 candidate = self.fs_source.get(path, cover_names, cautious)
-                if not candidate:
-                    continue
-
-                # get_size returns None if no local imaging backend is available
-                size = ArtResizer.shared.get_size(candidate)
-                self._log.debug('image size: {}', size)
-                if size:
-                    valid = ArtResizer.shared.valid_size(size,
-                        self.enforce_ratio, self.minwidth)
-                    if not valid:
-                        continue
-
-                out = candidate
-                self._log.debug('found local image {}', out)
-                break
+                check = self._is_valid_image_candidate(candidate)
+                if check:
+                    out = candidate
+                    self._log.debug('found local image {}', out)
+                    break
 
         # Web art sources.
         remote_priority = self.config['remote_priority'].get(bool)
@@ -571,23 +610,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 if self.maxwidth:
                     url = ArtResizer.shared.proxy_url(self.maxwidth, url)
                 candidate = self._fetch_image(url)
-                if not candidate:
-                    continue
+                check = self._is_valid_image_candidate(candidate)
+                if check:
+                    out = candidate
+                    self._log.debug('using remote image {}', out)
+                    break
 
-                # get_size returns None if no local imaging backend is available
-                size = ArtResizer.shared.get_size(candidate)
-                self._log.debug('image size: {}', size)
-                if size:
-                    valid = ArtResizer.shared.valid_size(size,
-                        self.enforce_ratio, self.minwidth)
-                    if not valid:
-                        continue
-
-                out = candidate
-                self._log.debug('using remote image {}', out)
-                break
-
-        if self.maxwidth and out and ArtResizer.shared.must_resize(size, self.maxwidth):
+        if self.maxwidth and out and check == CANDIDATE_DOWNSCALE:
             out = ArtResizer.shared.resize(self.maxwidth, out)
 
         return out
