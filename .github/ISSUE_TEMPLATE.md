@@ -1,7 +1,6 @@
-Describe your problem, feature request, or discussion topic here. If you're reporting a bug, please fill out the "Problem" and "Setup" sections below. Otherwise, you can delete it.
-
-
 ### Problem
+
+(Describe your problem, feature request, or discussion topic here. If you're reporting a bug, please fill out this and the "Setup" section below. Otherwise, you can delete them.)
 
 Running this command in verbose (`-vv`) mode:
 
