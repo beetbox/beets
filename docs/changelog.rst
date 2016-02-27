@@ -4,6 +4,12 @@ Changelog
 1.3.18 (in development)
 -----------------------
 
+New features:
+
+* :doc:`/plugins/convert`: A new `album_art_maxwidth` option which will
+  downsize destination images if the `copy_album_art` switch is true and the
+  image is too wide.
+
 Fixes:
 
 * Fix a problem with the :ref:`stats-cmd` in exact mode when filenames on
