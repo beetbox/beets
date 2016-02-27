@@ -338,9 +338,9 @@ class ConvertPlugin(BeetsPlugin):
                            util.displayable_path(album.artpath))
             return
 
+        # Decide whether we need to resize the cover-art image.
         resize = False
         maxwidth = None
-
         if self.config['album_art_maxwidth']:
             maxwidth = self.config['album_art_maxwidth'].get(int)
             size = ArtResizer.shared.get_size(album.artpath)
@@ -351,6 +351,7 @@ class ConvertPlugin(BeetsPlugin):
                 self._log.warning(u'Could not get size of image (please see '
                                   u'documentation for dependencies).')
 
+        # Either copy or resize (while copying) the image.
         if resize:
             self._log.info(u'Resizing cover art from {0} to {1}',
                            util.displayable_path(album.artpath),
@@ -358,10 +359,14 @@ class ConvertPlugin(BeetsPlugin):
             if not pretend:
                 ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
-            self._log.info(u'cp {0} {1}',
-                           util.displayable_path(album.artpath),
-                           util.displayable_path(dest))
-            if not pretend:
+            if pretend:
+                self._log.info(u'cp {0} {1}',
+                               util.displayable_path(album.artpath),
+                               util.displayable_path(dest))
+            else:
+                self._log.info(u'Copying cover art to {0}',
+                               util.displayable_path(album.artpath),
+                               util.displayable_path(dest))
                 util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
