@@ -6,9 +6,8 @@ Changelog
 
 New features:
 
-* :doc:`/plugins/convert`: A new `album_art_maxwidth` option which will
-  downsize destination images if the `copy_album_art` switch is true and the
-  image is too wide.
+* :doc:`/plugins/convert`: A new `album_art_maxwidth` lets you resize album
+  art while copying it.
 
 Fixes:
 
