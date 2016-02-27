@@ -133,7 +133,7 @@ class ConvertPlugin(BeetsPlugin):
             u'paths': {},
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
-            u'copy_album_art_maxwidth': 0,
+            u'album_art_maxwidth': 0,
         })
         self.import_stages = [self.auto_convert]
 
@@ -341,8 +341,8 @@ class ConvertPlugin(BeetsPlugin):
         resize = False
         maxwidth = None
 
-        if self.config['copy_album_art_maxwidth']:
-            maxwidth = self.config['copy_album_art_maxwidth'].get(int)
+        if self.config['album_art_maxwidth']:
+            maxwidth = self.config['album_art_maxwidth'].get(int)
             size = ArtResizer.shared.get_size(album.artpath)
             self._log.debug('image size: {}', size)
             if size:
@@ -358,7 +358,7 @@ class ConvertPlugin(BeetsPlugin):
             if not pretend:
                 ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
-            self._log.info(u'Copying cover art from {0} to {1}',
+            self._log.info(u'cp {0} {1}',
                            util.displayable_path(album.artpath),
                            util.displayable_path(dest))
             if not pretend:
