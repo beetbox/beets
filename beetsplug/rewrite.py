@@ -16,7 +16,7 @@
 """Uses user-specified rewriting rules to canonicalize names for path
 formats.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import re
 from collections import defaultdict

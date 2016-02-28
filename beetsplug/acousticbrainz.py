@@ -15,7 +15,7 @@
 
 """Fetch various AcousticBrainz metadata using MBID.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import requests
 import operator

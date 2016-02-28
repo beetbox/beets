@@ -15,7 +15,7 @@
 
 """Moves "featured" artists to the title from the artist field.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import re
 

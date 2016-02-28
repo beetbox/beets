@@ -22,7 +22,7 @@ implemented by MusicBrainz yet.
 [1] http://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 
 from beets.autotag import Recommendation

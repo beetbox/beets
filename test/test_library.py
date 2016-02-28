@@ -15,7 +15,7 @@
 
 """Tests for non-query database functions of Item.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import os
 import os.path

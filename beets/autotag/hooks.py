@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from collections import namedtuple
 import re

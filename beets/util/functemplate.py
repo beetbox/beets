@@ -27,7 +27,7 @@ This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import re
 import ast

@@ -15,7 +15,7 @@
 
 """Send the results of a query to the configured music player as a playlist.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand

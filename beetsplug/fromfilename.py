@@ -16,7 +16,7 @@
 """If the title is empty, try to extract track and title from the
 filename.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets.util import displayable_path

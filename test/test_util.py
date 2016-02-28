@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 """Tests for base utils from the beets.util package.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import sys
 import re

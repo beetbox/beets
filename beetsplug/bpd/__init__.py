@@ -18,7 +18,7 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import re
 from string import Template

@@ -16,7 +16,7 @@
 """Creates freedesktop.org-compliant .directory files on an album level.
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui

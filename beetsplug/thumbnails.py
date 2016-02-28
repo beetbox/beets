@@ -19,7 +19,7 @@ This plugin is POSIX-only.
 Spec: standards.freedesktop.org/thumbnail-spec/latest/index.html
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from hashlib import md5
 import os

@@ -9,7 +9,7 @@ Put something like the following in your config.yaml to configure:
         port: 32400
         token: token
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import requests
 from urlparse import urljoin
