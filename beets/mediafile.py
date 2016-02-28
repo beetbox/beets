@@ -215,9 +215,9 @@ def _sc_decode(soundcheck):
     used by ReplayGain.
     """
     # We decode binary data. If one of the formats gives us a text
-    # string, guess that it's UTF-8.
+    # string, interpret it as UTF-8.
     if isinstance(soundcheck, unicode):
-        soundcheck = soundcheck.decode('utf8')
+        soundcheck = soundcheck.encode('utf8')
 
     # SoundCheck tags consist of 10 numbers, each represented by 8
     # characters of ASCII hex preceded by a space.
