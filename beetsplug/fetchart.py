@@ -292,7 +292,8 @@ class Wikipedia(ArtSource):
         if ' .' in cover_filename and \
            '.' not in cover_filename.split(' .')[-1]:
             self._log.debug(
-                u'wikipedia: dbpedia provided incomplete cover_filename')
+                u'wikipedia: dbpedia provided incomplete cover_filename'
+            )
             lpart, rpart = cover_filename.rsplit(' .', 1)
 
             # Query all the images in the page
@@ -320,7 +321,8 @@ class Wikipedia(ArtSource):
                         break
             except (ValueError, KeyError):
                 self._log.debug(
-                    u'wikipedia: failed to retrieve a cover_filename')
+                    u'wikipedia: failed to retrieve a cover_filename'
+                )
                 return
 
         # Find the absolute url of the cover art on Wikipedia
@@ -493,7 +495,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cmd.parser.add_option(
             u'-f', u'--force', dest='force',
             action='store_true', default=False,
-            help=u're-download art when already present')
+            help=u're-download art when already present'
+        )
 
         def func(lib, opts, args):
             self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)

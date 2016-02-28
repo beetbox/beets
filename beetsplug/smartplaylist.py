@@ -47,8 +47,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
     def commands(self):
         spl_update = ui.Subcommand(
             'splupdate',
-            help=u'update the smart playlists. Playlist '
-            u'names may be passed as arguments.')
+            help=u'update the smart playlists. Playlist names may be '
+            u'passed as arguments.'
+        )
         spl_update.func = self.update_cmd
         return [spl_update]
 
@@ -66,7 +67,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
             if not playlists:
                 raise ui.UserError(
                     u'No playlist matching any of {0} found'.format(
-                        [name for name, _, _ in self._unmatched_playlists]))
+                        [name for name, _, _ in self._unmatched_playlists])
+                )
 
             self._matched_playlists = playlists
             self._unmatched_playlists -= playlists

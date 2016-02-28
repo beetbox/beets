@@ -204,7 +204,8 @@ class Bs1770gainBackend(Backend):
 
         # Invoke the command.
         self._log.debug(
-            u'executing {0}', u' '.join(map(displayable_path, args)))
+            u'executing {0}', u' '.join(map(displayable_path, args))
+        )
         output = call(args)
 
         self._log.debug(u'analysis finished: {0}', output)
@@ -274,7 +275,8 @@ class CommandBackend(Backend):
                     pass
         if not self.command:
             raise FatalReplayGainError(
-                u'no replaygain command found: install mp3gain or aacgain')
+                u'no replaygain command found: install mp3gain or aacgain'
+            )
 
         self.noclip = config['noclip'].get(bool)
         target_level = config['targetlevel'].as_number()
@@ -395,7 +397,8 @@ class GStreamerBackend(Backend):
         if self._src is None or self._decbin is None or self._conv is None \
            or self._res is None or self._rg is None:
             raise FatalGstreamerPluginReplayGainError(
-                u"Failed to load required GStreamer plugins")
+                u"Failed to load required GStreamer plugins"
+            )
 
         # We check which files need gain ourselves, so all files given
         # to rganalsys should have their gain computed, even if it
@@ -441,13 +444,15 @@ class GStreamerBackend(Backend):
             import gi
         except ImportError:
             raise FatalReplayGainError(
-                u"Failed to load GStreamer: python-gi not found")
+                u"Failed to load GStreamer: python-gi not found"
+            )
 
         try:
             gi.require_version('Gst', '1.0')
         except ValueError as e:
             raise FatalReplayGainError(
-                u"Failed to load GStreamer 1.0: {0}".format(e))
+                u"Failed to load GStreamer 1.0: {0}".format(e)
+            )
 
         from gi.repository import GObject, Gst, GLib
         # Calling GObject.threads_init() is not needed for
@@ -534,7 +539,8 @@ class GStreamerBackend(Backend):
         f = self._src.get_property("location")
         # A GStreamer error, either an unsupported format or a bug.
         self._error = ReplayGainError(
-            u"Error {0!r} - {1!r} on file {2!r}".format(err, debug, f))
+            u"Error {0!r} - {1!r} on file {2!r}".format(err, debug, f)
+        )
 
     def _on_tag(self, bus, message):
         tags = message.parse_tag()
@@ -657,7 +663,8 @@ class AudioToolsBackend(Backend):
             import audiotools.replaygain
         except ImportError:
             raise FatalReplayGainError(
-                u"Failed to load audiotools: audiotools not found")
+                u"Failed to load audiotools: audiotools not found"
+            )
         self._mod_audiotools = audiotools
         self._mod_replaygain = audiotools.replaygain
 
@@ -674,10 +681,12 @@ class AudioToolsBackend(Backend):
             audiofile = self._mod_audiotools.open(item.path)
         except IOError:
             raise ReplayGainError(
-                u"File {} was not found".format(item.path))
+                u"File {} was not found".format(item.path)
+            )
         except self._mod_audiotools.UnsupportedFile:
             raise ReplayGainError(
-                u"Unsupported file type {}".format(item.format))
+                u"Unsupported file type {}".format(item.format)
+            )
 
         return audiofile
 
@@ -902,7 +911,8 @@ class ReplayGainPlugin(BeetsPlugin):
             track_gains = self.backend_instance.compute_track_gain([item])
             if len(track_gains) != 1:
                 raise ReplayGainError(
-                    u"ReplayGain backend failed for track {0}".format(item))
+                    u"ReplayGain backend failed for track {0}".format(item)
+                )
 
             self.store_track_gain(item, track_gains[0])
             if write:

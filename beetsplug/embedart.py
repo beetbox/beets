@@ -85,16 +85,20 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         # Extract command.
         extract_cmd = ui.Subcommand(
             'extractart',
-            help=u'extract an image from file metadata')
+            help=u'extract an image from file metadata',
+        )
         extract_cmd.parser.add_option(
             u'-o', dest='outpath',
-            help=u'image output file')
+            help=u'image output file',
+        )
         extract_cmd.parser.add_option(
             u'-n', dest='filename',
-            help=u'image filename to create for all matched albums')
+            help=u'image filename to create for all matched albums',
+        )
         extract_cmd.parser.add_option(
             '-a', dest='associate', action='store_true',
-            help='associate the extracted images with the album')
+            help='associate the extracted images with the album',
+        )
 
         def extract_func(lib, opts, args):
             if opts.outpath:
@@ -119,7 +123,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         # Clear command.
         clear_cmd = ui.Subcommand(
             'clearart',
-            help=u'remove images from file metadata')
+            help=u'remove images from file metadata',
+        )
 
         def clear_func(lib, opts, args):
             art.clear(self._log, lib, decargs(args))
