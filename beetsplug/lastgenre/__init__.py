@@ -239,25 +239,29 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Return the album genre for this Item or Album.
         """
         return self._last_lookup(
-            u'album', LASTFM.get_album, obj.albumartist, obj.album)
+            u'album', LASTFM.get_album, obj.albumartist, obj.album
+        )
 
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album.
         """
         return self._last_lookup(
-            u'artist', LASTFM.get_artist, obj.albumartist)
+            u'artist', LASTFM.get_artist, obj.albumartist
+        )
 
     def fetch_artist_genre(self, item):
         """Returns the track artist genre for this Item.
         """
         return self._last_lookup(
-            u'artist', LASTFM.get_artist, item.artist)
+            u'artist', LASTFM.get_artist, item.artist
+        )
 
     def fetch_track_genre(self, obj):
         """Returns the track genre for this Item.
         """
         return self._last_lookup(
-            u'track', LASTFM.get_track, obj.artist, obj.title)
+            u'track', LASTFM.get_track, obj.artist, obj.title
+        )
 
     def _get_genre(self, obj):
         """Get the genre string for an Album or Item object based on

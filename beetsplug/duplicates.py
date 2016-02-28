@@ -56,54 +56,54 @@ class DuplicatesPlugin(BeetsPlugin):
         self._command.parser.add_option(
             u'-c', u'--count', dest='count',
             action='store_true',
-            help=u'show duplicate counts')
-
+            help=u'show duplicate counts',
+        )
         self._command.parser.add_option(
             u'-C', u'--checksum', dest='checksum',
             action='store', metavar='PROG',
-            help=u'report duplicates based on arbitrary command')
-
+            help=u'report duplicates based on arbitrary command',
+        )
         self._command.parser.add_option(
             u'-d', u'--delete', dest='delete',
             action='store_true',
-            help=u'delete items from library and disk')
-
+            help=u'delete items from library and disk',
+        )
         self._command.parser.add_option(
             u'-F', u'--full', dest='full',
             action='store_true',
-            help=u'show all versions of duplicate tracks or albums')
-
+            help=u'show all versions of duplicate tracks or albums',
+        )
         self._command.parser.add_option(
             u'-s', u'--strict', dest='strict',
             action='store_true',
-            help=u'report duplicates only if all attributes are set')
-
+            help=u'report duplicates only if all attributes are set',
+        )
         self._command.parser.add_option(
             u'-k', u'--keys', dest='keys',
             action='callback', metavar='KEY1 KEY2',
             callback=vararg_callback,
-            help=u'report duplicates based on keys')
-
+            help=u'report duplicates based on keys',
+        )
         self._command.parser.add_option(
             u'-M', u'--merge', dest='merge',
             action='store_true',
-            help=u'merge duplicate items')
-
+            help=u'merge duplicate items',
+        )
         self._command.parser.add_option(
             u'-m', u'--move', dest='move',
             action='store', metavar='DEST',
-            help=u'move items to dest')
-
+            help=u'move items to dest',
+        )
         self._command.parser.add_option(
             u'-o', u'--copy', dest='copy',
             action='store', metavar='DEST',
-            help=u'copy items to dest')
-
+            help=u'copy items to dest',
+        )
         self._command.parser.add_option(
             u'-t', u'--tag', dest='tag',
             action='store',
-            help=u'tag matched items with \'k=v\' attribute')
-
+            help=u'tag matched items with \'k=v\' attribute',
+        )
         self._command.parser.add_all_common_options()
 
     def commands(self):
@@ -186,7 +186,8 @@ class DuplicatesPlugin(BeetsPlugin):
                 k, v = tag.split('=')
             except:
                 raise UserError(
-                    u'%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
+                    u"{}: can't parse k=v tag: {}".format(PLUGIN, tag)
+                )
             setattr(item, k, v)
             item.store()
 

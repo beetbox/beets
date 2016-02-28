@@ -144,17 +144,21 @@ class InfoPlugin(BeetsPlugin):
         cmd.func = self.run
         cmd.parser.add_option(
             u'-l', u'--library', action='store_true',
-            help=u'show library fields instead of tags')
+            help=u'show library fields instead of tags',
+        )
         cmd.parser.add_option(
             u'-s', u'--summarize', action='store_true',
-            help=u'summarize the tags of all files')
+            help=u'summarize the tags of all files',
+        )
         cmd.parser.add_option(
             u'-i', u'--include-keys', default=[],
             action='append', dest='included_keys',
-            help=u'comma separated list of keys to show')
+            help=u'comma separated list of keys to show',
+        )
         cmd.parser.add_option(
             u'-k', u'--keys-only', action='store_true',
-            help=u'show only the keys')
+            help=u'show only the keys',
+        )
         cmd.parser.add_format_option(target='item')
         return [cmd]
 

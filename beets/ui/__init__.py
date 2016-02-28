@@ -1144,7 +1144,10 @@ def _configure(options):
             log.warning(
                 u'Warning: configuration uses "{0}" which is deprecated'
                 u' in favor of "{1}" now that it affects all commands. '
-                u'See changelog & documentation.'.format(old_key, new_key))
+                u'See changelog & documentation.',
+                old_key,
+                new_key,
+            )
             config[new_key].set(config[old_key])
 
     config_path = config.user_config_path()

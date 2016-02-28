@@ -578,11 +578,13 @@ class LyricsPlugin(plugins.BeetsPlugin):
         cmd.parser.add_option(
             u'-p', u'--print', dest='printlyr',
             action='store_true', default=False,
-            help=u'print lyrics to console')
+            help=u'print lyrics to console',
+        )
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
-            help=u'always re-download lyrics')
+            help=u'always re-download lyrics',
+        )
 
         def func(lib, opts, args):
             # The "write to files" option corresponds to the

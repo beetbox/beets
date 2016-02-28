@@ -107,6 +107,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
         # Submit to MusicBrainz.
         self._log.info(
-            u'Updating MusicBrainz collection {0}...', collection_id)
+            u'Updating MusicBrainz collection {0}...', collection_id
+        )
         submit_albums(collection_id, album_ids)
         self._log.info(u'...MusicBrainz collection updated.')

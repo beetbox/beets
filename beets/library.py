@@ -828,7 +828,9 @@ class Item(LibModel):
             log.warning(
                 u'Fell back to default replacements when naming '
                 u'file {}. Configure replacements to avoid lengthening '
-                u'the filename.', subpath)
+                u'the filename.',
+                subpath
+            )
 
         if fragment:
             return subpath
