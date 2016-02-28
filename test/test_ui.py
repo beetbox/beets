@@ -15,8 +15,7 @@
 
 """Tests for the command-line interface.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import (division, absolute_import, print_function)
 
 import os
 import shutil
@@ -50,7 +49,7 @@ class ListTest(unittest.TestCase):
         self.lib.add(self.item)
         self.lib.add_album([self.item])
 
-    def _run_list(self, query='', album=False, path=False, fmt=''):
+    def _run_list(self, query=u'', album=False, path=False, fmt=''):
         commands.list_items(self.lib, query, album, fmt)
 
     def test_list_outputs_item(self):
@@ -135,14 +134,14 @@ class RemoveTest(_common.TestCase):
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, '', False, False)
+        commands.remove_items(self.lib, u'', False, False)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertTrue(os.path.exists(self.i.path))
 
     def test_remove_items_with_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, '', False, True)
+        commands.remove_items(self.lib, u'', False, True)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
@@ -168,58 +167,58 @@ class ModifyTest(unittest.TestCase, TestHelper):
     # Item tests
 
     def test_modify_item(self):
-        self.modify("title=newTitle")
+        self.modify(u"title=newTitle")
         item = self.lib.items().get()
-        self.assertEqual(item.title, 'newTitle')
+        self.assertEqual(item.title, u'newTitle')
 
     def test_modify_item_abort(self):
         item = self.lib.items().get()
         title = item.title
-        self.modify_inp('n', "title=newTitle")
+        self.modify_inp('n', u"title=newTitle")
         item = self.lib.items().get()
         self.assertEqual(item.title, title)
 
     def test_modify_item_no_change(self):
-        title = "Tracktitle"
+        title = u"Tracktitle"
         item = self.add_item_fixture(title=title)
-        self.modify_inp('y', "title", "title={0}".format(title))
+        self.modify_inp('y', u"title", u"title={0}".format(title))
         item = self.lib.items(title).get()
         self.assertEqual(item.title, title)
 
     def test_modify_write_tags(self):
-        self.modify("title=newTitle")
+        self.modify(u"title=newTitle")
         item = self.lib.items().get()
         item.read()
-        self.assertEqual(item.title, 'newTitle')
+        self.assertEqual(item.title, u'newTitle')
 
     def test_modify_dont_write_tags(self):
-        self.modify("--nowrite", "title=newTitle")
+        self.modify(u"--nowrite", u"title=newTitle")
         item = self.lib.items().get()
         item.read()
         self.assertNotEqual(item.title, 'newTitle')
 
     def test_move(self):
-        self.modify("title=newTitle")
+        self.modify(u"title=newTitle")
         item = self.lib.items().get()
         self.assertIn(b'newTitle', item.path)
 
     def test_not_move(self):
-        self.modify("--nomove", "title=newTitle")
+        self.modify(u"--nomove", u"title=newTitle")
         item = self.lib.items().get()
         self.assertNotIn(b'newTitle', item.path)
 
     def test_no_write_no_move(self):
-        self.modify("--nomove", "--nowrite", "title=newTitle")
+        self.modify(u"--nomove", u"--nowrite", u"title=newTitle")
         item = self.lib.items().get()
         item.read()
         self.assertNotIn(b'newTitle', item.path)
-        self.assertNotEqual(item.title, 'newTitle')
+        self.assertNotEqual(item.title, u'newTitle')
 
     def test_update_mtime(self):
         item = self.item
         old_mtime = item.mtime
 
-        self.modify("title=newTitle")
+        self.modify(u"title=newTitle")
         item.load()
         self.assertNotEqual(old_mtime, item.mtime)
         self.assertEqual(item.current_mtime(), item.mtime)
@@ -227,53 +226,53 @@ class ModifyTest(unittest.TestCase, TestHelper):
     def test_reset_mtime_with_no_write(self):
         item = self.item
 
-        self.modify("--nowrite", "title=newTitle")
+        self.modify(u"--nowrite", u"title=newTitle")
         item.load()
         self.assertEqual(0, item.mtime)
 
     def test_selective_modify(self):
-        title = "Tracktitle"
-        album = "album"
-        origArtist = "composer"
-        newArtist = "coverArtist"
+        title = u"Tracktitle"
+        album = u"album"
+        origArtist = u"composer"
+        newArtist = u"coverArtist"
         for i in range(0, 10):
-            self.add_item_fixture(title="{0}{1}".format(title, i),
+            self.add_item_fixture(title=u"{0}{1}".format(title, i),
                                   artist=origArtist,
                                   album=album)
         self.modify_inp('s\ny\ny\ny\nn\nn\ny\ny\ny\ny\nn',
-                        title, "artist={0}".format(newArtist))
-        origItems = self.lib.items("artist:{0}".format(origArtist))
-        newItems = self.lib.items("artist:{0}".format(newArtist))
+                        title, u"artist={0}".format(newArtist))
+        origItems = self.lib.items(u"artist:{0}".format(origArtist))
+        newItems = self.lib.items(u"artist:{0}".format(newArtist))
         self.assertEqual(len(list(origItems)), 3)
         self.assertEqual(len(list(newItems)), 7)
 
     # Album Tests
 
     def test_modify_album(self):
-        self.modify("--album", "album=newAlbum")
+        self.modify(u"--album", u"album=newAlbum")
         album = self.lib.albums().get()
-        self.assertEqual(album.album, 'newAlbum')
+        self.assertEqual(album.album, u'newAlbum')
 
     def test_modify_album_write_tags(self):
-        self.modify("--album", "album=newAlbum")
+        self.modify(u"--album", u"album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertEqual(item.album, 'newAlbum')
+        self.assertEqual(item.album, u'newAlbum')
 
     def test_modify_album_dont_write_tags(self):
-        self.modify("--album", "--nowrite", "album=newAlbum")
+        self.modify(u"--album", u"--nowrite", u"album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertEqual(item.album, 'the album')
+        self.assertEqual(item.album, u'the album')
 
     def test_album_move(self):
-        self.modify("--album", "album=newAlbum")
+        self.modify(u"--album", u"album=newAlbum")
         item = self.lib.items().get()
         item.read()
         self.assertIn(b'newAlbum', item.path)
 
     def test_album_not_move(self):
-        self.modify("--nomove", "--album", "album=newAlbum")
+        self.modify(u"--nomove", u"--album", u"album=newAlbum")
         item = self.lib.items().get()
         item.read()
         self.assertNotIn(b'newAlbum', item.path)
@@ -281,62 +280,62 @@ class ModifyTest(unittest.TestCase, TestHelper):
     # Misc
 
     def test_write_initial_key_tag(self):
-        self.modify("initial_key=C#m")
+        self.modify(u"initial_key=C#m")
         item = self.lib.items().get()
         mediafile = MediaFile(item.path)
-        self.assertEqual(mediafile.initial_key, 'C#m')
+        self.assertEqual(mediafile.initial_key, u'C#m')
 
     def test_set_flexattr(self):
-        self.modify("flexattr=testAttr")
+        self.modify(u"flexattr=testAttr")
         item = self.lib.items().get()
-        self.assertEqual(item.flexattr, 'testAttr')
+        self.assertEqual(item.flexattr, u'testAttr')
 
     def test_remove_flexattr(self):
         item = self.lib.items().get()
-        item.flexattr = 'testAttr'
+        item.flexattr = u'testAttr'
         item.store()
 
-        self.modify("flexattr!")
+        self.modify(u"flexattr!")
         item = self.lib.items().get()
-        self.assertNotIn("flexattr", item)
+        self.assertNotIn(u"flexattr", item)
 
-    @unittest.skip('not yet implemented')
+    @unittest.skip(u'not yet implemented')
     def test_delete_initial_key_tag(self):
         item = self.lib.items().get()
-        item.initial_key = 'C#m'
+        item.initial_key = u'C#m'
         item.write()
         item.store()
 
         mediafile = MediaFile(item.path)
-        self.assertEqual(mediafile.initial_key, 'C#m')
+        self.assertEqual(mediafile.initial_key, u'C#m')
 
-        self.modify("initial_key!")
+        self.modify(u"initial_key!")
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.initial_key)
 
     def test_arg_parsing_colon_query(self):
-        (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
-                                                          "title=newTitle"])
-        self.assertEqual(query, ["title:oldTitle"])
-        self.assertEqual(mods, {"title": "newTitle"})
+        (query, mods, dels) = commands.modify_parse_args([u"title:oldTitle",
+                                                          u"title=newTitle"])
+        self.assertEqual(query, [u"title:oldTitle"])
+        self.assertEqual(mods, {"title": u"newTitle"})
 
     def test_arg_parsing_delete(self):
-        (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
-                                                          "title!"])
-        self.assertEqual(query, ["title:oldTitle"])
+        (query, mods, dels) = commands.modify_parse_args([u"title:oldTitle",
+                                                          u"title!"])
+        self.assertEqual(query, [u"title:oldTitle"])
         self.assertEqual(dels, ["title"])
 
     def test_arg_parsing_query_with_exclaimation(self):
-        (query, mods, dels) = commands.modify_parse_args(["title:oldTitle!",
-                                                          "title=newTitle!"])
-        self.assertEqual(query, ["title:oldTitle!"])
-        self.assertEqual(mods, {"title": "newTitle!"})
+        (query, mods, dels) = commands.modify_parse_args([u"title:oldTitle!",
+                                                          u"title=newTitle!"])
+        self.assertEqual(query, [u"title:oldTitle!"])
+        self.assertEqual(mods, {"title": u"newTitle!"})
 
     def test_arg_parsing_equals_in_value(self):
-        (query, mods, dels) = commands.modify_parse_args(["title:foo=bar",
-                                                          "title=newTitle"])
-        self.assertEqual(query, ["title:foo=bar"])
-        self.assertEqual(mods, {"title": "newTitle"})
+        (query, mods, dels) = commands.modify_parse_args([u"title:foo=bar",
+                                                          u"title=newTitle"])
+        self.assertEqual(query, [u"title:foo=bar"])
+        self.assertEqual(mods, {"title": u"newTitle"})
 
 
 class WriteTest(unittest.TestCase, TestHelper):
@@ -352,7 +351,7 @@ class WriteTest(unittest.TestCase, TestHelper):
 
     def test_update_mtime(self):
         item = self.add_item_fixture()
-        item['title'] = 'a new title'
+        item['title'] = u'a new title'
         item.store()
 
         item = self.lib.items().get()
@@ -384,13 +383,13 @@ class WriteTest(unittest.TestCase, TestHelper):
         item.read()
         old_title = item.title
 
-        item.title = 'new title'
+        item.title = u'new title'
         item.store()
 
         with capture_stdout() as stdout:
             self.write_cmd()
 
-        self.assertTrue('{0} -> new title'.format(old_title)
+        self.assertTrue(u'{0} -> new title'.format(old_title)
                         in stdout.getvalue())
 
 
@@ -522,40 +521,40 @@ class UpdateTest(_common.TestCase):
 
     def test_modified_metadata_detected(self):
         mf = MediaFile(self.i.path)
-        mf.title = 'differentTitle'
+        mf.title = u'differentTitle'
         mf.save()
         self._update()
         item = self.lib.items().get()
-        self.assertEqual(item.title, 'differentTitle')
+        self.assertEqual(item.title, u'differentTitle')
 
     def test_modified_metadata_moved(self):
         mf = MediaFile(self.i.path)
-        mf.title = 'differentTitle'
+        mf.title = u'differentTitle'
         mf.save()
         self._update(move=True)
         item = self.lib.items().get()
-        self.assertTrue('differentTitle' in item.path)
+        self.assertTrue(u'differentTitle' in item.path)
 
     def test_modified_metadata_not_moved(self):
         mf = MediaFile(self.i.path)
-        mf.title = 'differentTitle'
+        mf.title = u'differentTitle'
         mf.save()
         self._update(move=False)
         item = self.lib.items().get()
-        self.assertTrue('differentTitle' not in item.path)
+        self.assertTrue(u'differentTitle' not in item.path)
 
     def test_modified_album_metadata_moved(self):
         mf = MediaFile(self.i.path)
-        mf.album = 'differentAlbum'
+        mf.album = u'differentAlbum'
         mf.save()
         self._update(move=True)
         item = self.lib.items().get()
-        self.assertTrue('differentAlbum' in item.path)
+        self.assertTrue(u'differentAlbum' in item.path)
 
     def test_modified_album_metadata_art_moved(self):
         artpath = self.album.artpath
         mf = MediaFile(self.i.path)
-        mf.album = 'differentAlbum'
+        mf.album = u'differentAlbum'
         mf.save()
         self._update(move=True)
         album = self.lib.albums()[0]
@@ -563,7 +562,7 @@ class UpdateTest(_common.TestCase):
 
     def test_mtime_match_skips_update(self):
         mf = MediaFile(self.i.path)
-        mf.title = 'differentTitle'
+        mf.title = u'differentTitle'
         mf.save()
 
         # Make in-memory mtime match on-disk mtime.
@@ -572,7 +571,7 @@ class UpdateTest(_common.TestCase):
 
         self._update(reset_mtime=False)
         item = self.lib.items().get()
-        self.assertEqual(item.title, 'full')
+        self.assertEqual(item.title, u'full')
 
 
 class PrintTest(_common.TestCase):
@@ -588,7 +587,7 @@ class PrintTest(_common.TestCase):
         try:
             ui.print_(u'something')
         except TypeError:
-            self.fail('TypeError during print')
+            self.fail(u'TypeError during print')
         finally:
             if lang:
                 os.environ['LANG'] = lang
@@ -602,7 +601,7 @@ class PrintTest(_common.TestCase):
         try:
             ui.print_(u'something')
         except ValueError:
-            self.fail('ValueError during print')
+            self.fail(u'ValueError during print')
         finally:
             if old_lang:
                 os.environ['LANG'] = old_lang
@@ -677,7 +676,7 @@ class ConfigTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def _make_test_cmd(self):
-        test_cmd = ui.Subcommand('test', help='test')
+        test_cmd = ui.Subcommand('test', help=u'test')
 
         def run(lib, options, args):
             test_cmd.lib = lib
@@ -747,7 +746,7 @@ class ConfigTest(unittest.TestCase, TestHelper):
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
         self.assertEqual(replacements, [
-            (re.compile(r'[xy]'), 'z'),
+            (re.compile(r'[xy]'), u'z'),
             (re.compile(r'foo'), 'bar'),
         ])
 
@@ -929,34 +928,34 @@ class ShowModelChangeTest(_common.TestCase):
         self.b.title = 'x'
         change, out = self._show()
         self.assertTrue(change)
-        self.assertTrue('title' in out)
+        self.assertTrue(u'title' in out)
 
     def test_int_fixed_field_change(self):
         self.b.track = 9
         change, out = self._show()
         self.assertTrue(change)
-        self.assertTrue('track' in out)
+        self.assertTrue(u'track' in out)
 
     def test_floats_close_to_identical(self):
         self.a.length = 1.00001
         self.b.length = 1.00005
         change, out = self._show()
         self.assertFalse(change)
-        self.assertEqual(out, '')
+        self.assertEqual(out, u'')
 
     def test_floats_different(self):
         self.a.length = 1.00001
         self.b.length = 2.00001
         change, out = self._show()
         self.assertTrue(change)
-        self.assertTrue('length' in out)
+        self.assertTrue(u'length' in out)
 
     def test_both_values_shown(self):
-        self.a.title = 'foo'
-        self.b.title = 'bar'
+        self.a.title = u'foo'
+        self.b.title = u'bar'
         change, out = self._show()
-        self.assertTrue('foo' in out)
-        self.assertTrue('bar' in out)
+        self.assertTrue(u'foo' in out)
+        self.assertTrue(u'bar' in out)
 
 
 class ShowChangeTest(_common.TestCase):
@@ -1014,12 +1013,12 @@ class ShowChangeTest(_common.TestCase):
     def test_album_data_change_with_unicode(self):
         msg = self._show_change(cur_artist=u'caf\xe9',
                                 cur_album=u'another album')
-        self.assertTrue('correcting tags from:' in msg)
+        self.assertTrue(u'correcting tags from:' in msg)
 
     def test_item_data_change_title_missing(self):
         self.items[0].title = u''
         msg = re.sub(r'  +', ' ', self._show_change())
-        self.assertTrue('file.mp3 -> the title' in msg)
+        self.assertTrue(u'file.mp3 -> the title' in msg)
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = u''
@@ -1042,28 +1041,28 @@ class SummarizeItemsTest(_common.TestCase):
 
     def test_summarize_item(self):
         summary = commands.summarize_items([], True)
-        self.assertEqual(summary, "")
+        self.assertEqual(summary, u"")
 
         summary = commands.summarize_items([self.item], True)
-        self.assertEqual(summary, "F, 4kbps, 10:54, 987.0 B")
+        self.assertEqual(summary, u"F, 4kbps, 10:54, 987.0 B")
 
     def test_summarize_items(self):
         summary = commands.summarize_items([], False)
-        self.assertEqual(summary, "0 items")
+        self.assertEqual(summary, u"0 items")
 
         summary = commands.summarize_items([self.item], False)
-        self.assertEqual(summary, "1 items, F, 4kbps, 10:54, 987.0 B")
+        self.assertEqual(summary, u"1 items, F, 4kbps, 10:54, 987.0 B")
 
         i2 = deepcopy(self.item)
         summary = commands.summarize_items([self.item, i2], False)
-        self.assertEqual(summary, "2 items, F, 4kbps, 21:48, 1.9 KiB")
+        self.assertEqual(summary, u"2 items, F, 4kbps, 21:48, 1.9 KiB")
 
         i2.format = "G"
         summary = commands.summarize_items([self.item, i2], False)
-        self.assertEqual(summary, "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KiB")
+        self.assertEqual(summary, u"2 items, F 1, G 1, 4kbps, 21:48, 1.9 KiB")
 
         summary = commands.summarize_items([self.item, i2, i2], False)
-        self.assertEqual(summary, "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB")
+        self.assertEqual(summary, u"3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB")
 
 
 class PathFormatTest(_common.TestCase):
@@ -1073,8 +1072,8 @@ class PathFormatTest(_common.TestCase):
         config['paths'] = {u'foo': u'bar'}
         pf = ui.get_path_formats()
         key, tmpl = pf[0]
-        self.assertEqual(key, 'foo')
-        self.assertEqual(tmpl.original, 'bar')
+        self.assertEqual(key, u'foo')
+        self.assertEqual(tmpl.original, u'bar')
         self.assertEqual(pf[1:], default_formats)
 
 
@@ -1096,7 +1095,7 @@ class CompletionTest(_common.TestCase):
         # Tests run in bash
         cmd = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc').split()
         if not has_program(cmd[0]):
-            self.skipTest('bash not available')
+            self.skipTest(u'bash not available')
         tester = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE)
 
@@ -1106,12 +1105,12 @@ class CompletionTest(_common.TestCase):
                 bash_completion = path
                 break
         else:
-            self.skipTest('bash-completion script not found')
+            self.skipTest(u'bash-completion script not found')
         try:
             with open(util.syspath(bash_completion), 'r') as f:
                 tester.stdin.writelines(f)
         except IOError:
-            self.skipTest('could not read bash-completion script')
+            self.skipTest(u'could not read bash-completion script')
 
         # Load completion script.
         self.io.install()
@@ -1125,9 +1124,9 @@ class CompletionTest(_common.TestCase):
         with open(test_script, 'r') as test_script:
             tester.stdin.writelines(test_script)
         (out, err) = tester.communicate()
-        if tester.returncode != 0 or out != "completion tests passed\n":
+        if tester.returncode != 0 or out != u"completion tests passed\n":
             print(out)
-            self.fail('test/test_completion.sh did not execute properly')
+            self.fail(u'test/test_completion.sh did not execute properly')
 
 
 class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
@@ -1146,56 +1145,57 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def test_base(self):
-        l = self.run_with_output('ls')
-        self.assertEqual(l, 'the artist - the album - the title\n')
+        l = self.run_with_output(u'ls')
+        self.assertEqual(l, u'the artist - the album - the title\n')
 
-        l = self.run_with_output('ls', '-a')
-        self.assertEqual(l, 'the album artist - the album\n')
+        l = self.run_with_output(u'ls', u'-a')
+        self.assertEqual(l, u'the album artist - the album\n')
 
     def test_path_option(self):
-        l = self.run_with_output('ls', '-p')
-        self.assertEqual(l, 'xxx/yyy\n')
+        l = self.run_with_output(u'ls', u'-p')
+        self.assertEqual(l, u'xxx/yyy\n')
 
-        l = self.run_with_output('ls', '-a', '-p')
-        self.assertEqual(l, 'xxx\n')
+        l = self.run_with_output(u'ls', u'-a', u'-p')
+        self.assertEqual(l, u'xxx\n')
 
     def test_format_option(self):
-        l = self.run_with_output('ls', '-f', '$artist')
-        self.assertEqual(l, 'the artist\n')
+        l = self.run_with_output(u'ls', u'-f', '$artist')
+        self.assertEqual(l, u'the artist\n')
 
-        l = self.run_with_output('ls', '-a', '-f', '$albumartist')
-        self.assertEqual(l, 'the album artist\n')
+        l = self.run_with_output(u'ls', u'-a', u'-f', '$albumartist')
+        self.assertEqual(l, u'the album artist\n')
 
     def test_root_format_option(self):
-        l = self.run_with_output('--format-item', '$artist',
-                                 '--format-album', 'foo', 'ls')
-        self.assertEqual(l, 'the artist\n')
+        l = self.run_with_output(u'--format-item', u'$artist',
+                                 u'--format-album', u'foo', u'ls')
+        self.assertEqual(l, u'the artist\n')
 
-        l = self.run_with_output('--format-item', 'foo',
-                                 '--format-album', '$albumartist', 'ls', '-a')
-        self.assertEqual(l, 'the album artist\n')
+        l = self.run_with_output(u'--format-item', u'foo',
+                                 u'--format-album', u'$albumartist',
+                                 u'ls', u'-a')
+        self.assertEqual(l, u'the album artist\n')
 
     def test_help(self):
-        l = self.run_with_output('help')
-        self.assertIn('Usage:', l)
+        l = self.run_with_output(u'help')
+        self.assertIn(u'Usage:', l)
 
-        l = self.run_with_output('help', 'list')
-        self.assertIn('Usage:', l)
+        l = self.run_with_output(u'help', u'list')
+        self.assertIn(u'Usage:', l)
 
         with self.assertRaises(ui.UserError):
-            self.run_command('help', 'this.is.not.a.real.command')
+            self.run_command(u'help', u'this.is.not.a.real.command')
 
     def test_stats(self):
-        l = self.run_with_output('stats')
-        self.assertIn('Approximate total size:', l)
+        l = self.run_with_output(u'stats')
+        self.assertIn(u'Approximate total size:', l)
 
         # # Need to have more realistic library setup for this to work
         # l = self.run_with_output('stats', '-e')
         # self.assertIn('Total size:', l)
 
     def test_version(self):
-        l = self.run_with_output('version')
-        self.assertIn('no plugins loaded', l)
+        l = self.run_with_output(u'version')
+        self.assertIn(u'no plugins loaded', l)
 
         # # Need to have plugin loaded
         # l = self.run_with_output('version')
@@ -1216,8 +1216,9 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         self.assertTrue(bool(parser._album_flags))
 
         self.assertEqual(parser.parse_args([]), ({'album': None}, []))
-        self.assertEqual(parser.parse_args(['-a']), ({'album': True}, []))
-        self.assertEqual(parser.parse_args(['--album']), ({'album': True}, []))
+        self.assertEqual(parser.parse_args([u'-a']), ({'album': True}, []))
+        self.assertEqual(parser.parse_args([u'--album']),
+                         ({'album': True}, []))
 
     def test_path_option(self):
         parser = ui.CommonOptionsParser()
@@ -1228,13 +1229,13 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         self.assertEqual(parser.parse_args([]), ({'path': None}, []))
         self.assertEqual(config['format_item'].get(unicode), u'$foo')
 
-        self.assertEqual(parser.parse_args(['-p']),
-                         ({'path': True, 'format': '$path'}, []))
+        self.assertEqual(parser.parse_args([u'-p']),
+                         ({'path': True, 'format': u'$path'}, []))
         self.assertEqual(parser.parse_args(['--path']),
-                         ({'path': True, 'format': '$path'}, []))
+                         ({'path': True, 'format': u'$path'}, []))
 
-        self.assertEqual(config['format_item'].get(unicode), '$path')
-        self.assertEqual(config['format_album'].get(unicode), '$path')
+        self.assertEqual(config['format_item'].get(unicode), u'$path')
+        self.assertEqual(config['format_album'].get(unicode), u'$path')
 
     def test_format_option(self):
         parser = ui.CommonOptionsParser()
@@ -1245,13 +1246,13 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         self.assertEqual(parser.parse_args([]), ({'format': None}, []))
         self.assertEqual(config['format_item'].get(unicode), u'$foo')
 
-        self.assertEqual(parser.parse_args(['-f', '$bar']),
-                         ({'format': '$bar'}, []))
-        self.assertEqual(parser.parse_args(['--format', '$baz']),
-                         ({'format': '$baz'}, []))
+        self.assertEqual(parser.parse_args([u'-f', u'$bar']),
+                         ({'format': u'$bar'}, []))
+        self.assertEqual(parser.parse_args([u'--format', u'$baz']),
+                         ({'format': u'$baz'}, []))
 
-        self.assertEqual(config['format_item'].get(unicode), '$baz')
-        self.assertEqual(config['format_album'].get(unicode), '$baz')
+        self.assertEqual(config['format_item'].get(unicode), u'$baz')
+        self.assertEqual(config['format_album'].get(unicode), u'$baz')
 
     def test_format_option_with_target(self):
         with self.assertRaises(KeyError):
@@ -1263,11 +1264,11 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         config['format_item'].set('$item')
         config['format_album'].set('$album')
 
-        self.assertEqual(parser.parse_args(['-f', '$bar']),
-                         ({'format': '$bar'}, []))
+        self.assertEqual(parser.parse_args([u'-f', u'$bar']),
+                         ({'format': u'$bar'}, []))
 
-        self.assertEqual(config['format_item'].get(unicode), '$bar')
-        self.assertEqual(config['format_album'].get(unicode), '$album')
+        self.assertEqual(config['format_item'].get(unicode), u'$bar')
+        self.assertEqual(config['format_album'].get(unicode), u'$album')
 
     def test_format_option_with_album(self):
         parser = ui.CommonOptionsParser()
@@ -1277,16 +1278,16 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         config['format_item'].set('$item')
         config['format_album'].set('$album')
 
-        parser.parse_args(['-f', '$bar'])
-        self.assertEqual(config['format_item'].get(unicode), '$bar')
-        self.assertEqual(config['format_album'].get(unicode), '$album')
+        parser.parse_args([u'-f', u'$bar'])
+        self.assertEqual(config['format_item'].get(unicode), u'$bar')
+        self.assertEqual(config['format_album'].get(unicode), u'$album')
 
-        parser.parse_args(['-a', '-f', '$foo'])
-        self.assertEqual(config['format_item'].get(unicode), '$bar')
-        self.assertEqual(config['format_album'].get(unicode), '$foo')
+        parser.parse_args([u'-a', u'-f', u'$foo'])
+        self.assertEqual(config['format_item'].get(unicode), u'$bar')
+        self.assertEqual(config['format_album'].get(unicode), u'$foo')
 
-        parser.parse_args(['-f', '$foo2', '-a'])
-        self.assertEqual(config['format_album'].get(unicode), '$foo2')
+        parser.parse_args([u'-f', u'$foo2', u'-a'])
+        self.assertEqual(config['format_album'].get(unicode), u'$foo2')
 
     def test_add_all_common_options(self):
         parser = ui.CommonOptionsParser()
