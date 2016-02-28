@@ -19,7 +19,7 @@ test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest, DummyIO
 from test import test_importer

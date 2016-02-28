@@ -16,7 +16,7 @@
 """Adds Chromaprint/Acoustid acoustic fingerprinting support to the
 autotagger. Requires the pyacoustid library.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets import ui

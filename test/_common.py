@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Some common functionality for beets' test cases."""
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import time
 import sys

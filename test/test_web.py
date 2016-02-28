@@ -2,7 +2,7 @@
 
 """Tests for the 'web' plugin"""
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from test import _common

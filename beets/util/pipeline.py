@@ -32,7 +32,7 @@ To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import Queue
 from threading import Thread, Lock

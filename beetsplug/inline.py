@@ -15,7 +15,7 @@
 
 """Allows inline path template customization code in the config file.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import traceback
 import itertools

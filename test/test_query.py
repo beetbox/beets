@@ -15,7 +15,7 @@
 
 """Various tests for querying the library database.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from functools import partial
 from mock import patch

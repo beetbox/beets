@@ -15,7 +15,7 @@
 
 """The central Model and Database constructs for DBCore.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import time
 import os

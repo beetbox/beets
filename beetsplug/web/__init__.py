@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """A Web interface to beets."""
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui

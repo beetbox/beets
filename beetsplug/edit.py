@@ -14,7 +14,7 @@
 
 """Open metadata information in a text editor to let the user edit it.
 """
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets import util

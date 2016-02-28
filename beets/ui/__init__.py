@@ -18,7 +18,7 @@ interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
 
-from __future__ import (division, absolute_import, print_function)
+from __future__ import division, absolute_import, print_function
 
 import locale
 import optparse
