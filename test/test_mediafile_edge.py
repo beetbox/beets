@@ -313,6 +313,13 @@ class SoundCheckTest(unittest.TestCase):
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 
+    def test_decode_handles_unicode(self):
+        # Most of the time, we expect to decode the raw bytes. But some formats
+        # might give us text strings, which we need to handle.
+        gain, peak = beets.mediafile._sc_decode(u'caf\xe9')
+        self.assertEqual(gain, 0.0)
+        self.assertEqual(peak, 0.0)
+
 
 class ID3v23Test(unittest.TestCase, TestHelper):
     def _make_test(self, ext='mp3', id3v23=False):
