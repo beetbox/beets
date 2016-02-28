@@ -869,7 +869,9 @@ class TerminalImportSession(importer.ImportSession):
         checking the right conditions and returning a list of `PromptChoice`s,
         which is flattened and checked for conflicts.
 
-        Raises `ValueError` if two of the choices have the same short letter.
+        If two or more choices have the same short letter, a warning is
+        emitted and all but one choices are discarded, giving preference
+        to the default importer choices.
 
         Returns a list of `PromptChoice`s.
         """
@@ -1254,7 +1256,7 @@ def show_stats(lib, query, exact):
     for item in items:
         if exact:
             try:
-                total_size += os.path.getsize(item.path)
+                total_size += os.path.getsize(syspath(item.path))
             except OSError as exc:
                 log.info(u'could not get size of {}: {}', item.path, exc)
         else:
@@ -1365,9 +1367,10 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
         else:
             extra = u''
 
-        changed = ui.input_select_items(
+        changed = ui.input_select_objects(
             u'Really modify%s' % extra, changed,
-            lambda o: print_and_modify(o, mods, dels))
+            lambda o: print_and_modify(o, mods, dels)
+        )
 
     # Apply changes to database and files
     with lib.transaction():
@@ -1376,10 +1379,11 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
 
 def print_and_modify(obj, mods, dels):
-    """Print the modifications to an item
-    and return a bool indicating whether any changes were made
-    mods: modifications
-    dels: fields to delete
+    """Print the modifications to an item and return a bool indicating
+    whether any changes were made.
+
+    `mods` is a dictionary of fields and values to update on the object;
+    `dels` is a sequence of fields to delete.
     """
     obj.update(mods)
     for field in dels:
@@ -1478,7 +1482,7 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False):
                                for obj in objs])
     else:
         if confirm:
-            objs = ui.input_select_items(
+            objs = ui.input_select_objects(
                 u'Really %s' % act, objs,
                 lambda o: show_path_changes(
                     [(o.path, o.destination(basedir=dest))]))

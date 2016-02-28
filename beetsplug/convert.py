@@ -28,6 +28,7 @@ from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from beets.util.confit import ConfigTypeError
 from beets import art
+from beets.util.artresizer import ArtResizer
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -131,6 +132,7 @@ class ConvertPlugin(BeetsPlugin):
             u'paths': {},
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
+            u'album_art_maxwidth': 0,
         })
         self.import_stages = [self.auto_convert]
 
@@ -304,8 +306,8 @@ class ConvertPlugin(BeetsPlugin):
                              dest=converted, keepnew=False)
 
     def copy_album_art(self, album, dest_dir, path_formats, pretend=False):
-        """Copies the associated cover art of the album. Album must have at
-        least one track.
+        """Copies or converts the associated cover art of the album. Album must
+        have at least one track.
         """
         if not album or not album.artpath:
             return
@@ -335,14 +337,36 @@ class ConvertPlugin(BeetsPlugin):
                            util.displayable_path(album.artpath))
             return
 
-        if pretend:
-            self._log.info(u'cp {0} {1}',
+        # Decide whether we need to resize the cover-art image.
+        resize = False
+        maxwidth = None
+        if self.config['album_art_maxwidth']:
+            maxwidth = self.config['album_art_maxwidth'].get(int)
+            size = ArtResizer.shared.get_size(album.artpath)
+            self._log.debug('image size: {}', size)
+            if size:
+                resize = size[0] > maxwidth
+            else:
+                self._log.warning(u'Could not get size of image (please see '
+                                  u'documentation for dependencies).')
+
+        # Either copy or resize (while copying) the image.
+        if resize:
+            self._log.info(u'Resizing cover art from {0} to {1}',
                            util.displayable_path(album.artpath),
                            util.displayable_path(dest))
+            if not pretend:
+                ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
-            self._log.info(u'Copying cover art to {0}',
-                           util.displayable_path(dest))
-            util.copy(album.artpath, dest)
+            if pretend:
+                self._log.info(u'cp {0} {1}',
+                               util.displayable_path(album.artpath),
+                               util.displayable_path(dest))
+            else:
+                self._log.info(u'Copying cover art to {0}',
+                               util.displayable_path(album.artpath),
+                               util.displayable_path(dest))
+                util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
         if not opts.dest:
