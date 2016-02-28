@@ -225,9 +225,9 @@ class InputException(Exception):
         self.output = output
 
     def __str__(self):
-        msg = u"Attempt to read with no input provided."
+        msg = "Attempt to read with no input provided."
         if self.output is not None:
-            msg += u" Output: %s" % self.output
+            msg += " Output: {!r}".format(self.output)
         return msg
 
 
