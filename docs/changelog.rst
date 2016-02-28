@@ -1,14 +1,37 @@
 Changelog
 =========
 
-1.3.17 (in development)
+1.3.18 (in development)
 -----------------------
 
-As of this release, the beets project has some new Internet homes! Our new
-domain name is `beets.io`_, and we have a shiny new GitHub organization:
+New features:
+
+* :doc:`/plugins/convert`: A new `album_art_maxwidth` lets you resize album
+  art while copying it.
+
+Fixes:
+
+* Fix a problem with the :ref:`stats-cmd` in exact mode when filenames on
+  Windows use non-ASCII characters. :bug:`1891`
+* Fix a crash when iTunes Sound Check tags contained invalid data. :bug:`1895`
+
+
+1.3.17 (February 7, 2016)
+-------------------------
+
+This release introduces one new plugin to fetch audio information from the
+`AcousticBrainz`_ project and another plugin to make it easier to submit your
+handcrafted metadata back to MusicBrainz.
+The importer also gained two oft-requested features: a way to skip the initial
+search process by specifying an ID ahead of time, and a way to *manually*
+provide metadata in the middle of the import process (via the
+:doc:`/plugins/edit`).
+
+Also, as of this release, the beets project has some new Internet homes! Our
+new domain name is `beets.io`_, and we have a shiny new GitHub organization:
 `beetbox`_.
 
-New:
+Here are the big new features:
 
 * A new :doc:`/plugins/acousticbrainz` fetches acoustic-analysis information
   from the `AcousticBrainz`_ project. Thanks to :user:`opatel99`, and thanks
@@ -22,6 +45,15 @@ New:
   initial lookup is slow.
   Also, the ``enter Id`` prompt choice now accepts several IDs, separated by
   spaces. :bug:`1808`
+* :doc:`/plugins/edit`: You can now edit metadata *on the fly* during the
+  import process. The plugin provides two new interactive options: one to edit
+  *your music's* metadata, and one to edit the *matched metadata* retrieved
+  from MusicBrainz (or another data source). This feature is still in its
+  early stages, so please send feedback if you find anything missing.
+  :bug:`1846` :bug:`396`
+
+There are even more new features:
+
 * :doc:`/plugins/fetchart`: The Google Images backend has been restored. It
   now requires an API key from Google. Thanks to :user:`lcharlick`.
   :bug:`1778`
@@ -29,18 +61,18 @@ New:
   their values. Thanks to :user:`GuilhermeHideki`. :bug:`1812`
 * The :ref:`fields-cmd` command now displays flexible attributes.
   Thanks to :user:`GuilhermeHideki`. :bug:`1818`
-* The :ref:`modify-cmd` command lets you interactive select tracks to apply
-  changes. :bug:`1843`
-* The :ref:`move-cmd` command accepts `-t`, `--timid` switch now to confirm
-  or interactive select tracks process. :bug:`1843`
+* The :ref:`modify-cmd` command lets you interactively select which albums or
+  items you want to change. :bug:`1843`
+* The :ref:`move-cmd` command gained a new ``--timid`` flag to print and
+  confirm which files you want to move. :bug:`1843`
+* The :ref:`move-cmd` command no longer prints filenames for files that
+  don't actually need to be moved. :bug:`1583`
 
 .. _Google Code-In: https://codein.withgoogle.com/
 .. _AcousticBrainz: http://acousticbrainz.org/
 
 Fixes:
 
-* The :ref:`move-cmd` command no longer not prints filenames for files that
-  don't actually need to be moved. :bug:`1583`
 * :doc:`/plugins/play`: Fix a regression in the last version where there was
   no default command. :bug:`1793`
 * :doc:`/plugins/lastimport`: The plugin now works again after being broken by
@@ -49,8 +81,6 @@ Fixes:
   now ``warning_threshold`` instead of ``warning_treshold``, but we kept the
   old name around for compatibility. Thanks to :user:`JesseWeinstein`.
   :bug:`1802` :bug:`1803`
-* :doc:`/plugins/lyrics`: The Genius backend has been re-enabled (after being
-  temporarily disabled in the last version).
 * :doc:`/plugins/edit`: Editing metadata now moves files, when appropriate
   (like the :ref:`modify-cmd` command). :bug:`1804`
 * The :ref:`stats-cmd` command no longer crashes when files are missing or
@@ -59,9 +89,10 @@ Fixes:
   some versions of pyOpenSSL. :bug:`1805`
 * :doc:`/plugins/replaygain`: Fix an intermittent crash with the GStreamer
   backend. :bug:`1855`
-* :doc:`/plugins/lyrics`: In a continuing saga, the Genius API we use is down
-  again, so it's been disabled by default *again*. We'll probably leave it
-  disabled this time.
+* :doc:`/plugins/lastimport`: The plugin now works with the beets API key by
+  default. You can still provide a different key the configuration.
+* :doc:`/plugins/replaygain`: Fix a crash using the Python Audio Tools
+  backend. :bug:`1873`
 
 .. _beets.io: http://beets.io/
 .. _Beetbox: https://github.com/beetbox

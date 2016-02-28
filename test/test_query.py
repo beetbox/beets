@@ -370,12 +370,25 @@ class MatchTest(_common.TestCase):
 class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
     def setUp(self):
         super(PathQueryTest, self).setUp()
+
+        # This is the item we'll try to match.
         self.i.path = '/a/b/c.mp3'
         self.i.title = u'path item'
         self.i.album = u'path album'
         self.i.store()
         self.lib.add_album([self.i])
 
+        # A second item for testing exclusion.
+        i2 = _common.item()
+        i2.path = '/x/y/z.mp3'
+        i2.title = 'another item'
+        i2.album = 'another album'
+        self.lib.add(i2)
+        self.lib.add_album([i2])
+
+        # Unadorned path queries with path separators in them are considered
+        # path queries only when the path in question actually exists. So we
+        # mock the existence check to return true.
         self.patcher_exists = patch('beets.library.os.path.exists')
         self.patcher_exists.start().return_value = True
 
@@ -447,6 +460,12 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, [u'path album'])
 
+    @unittest.skip('unfixed (#1865)')
+    def test_path_query_in_or_query(self):
+        q = '/a/b , /a/b'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['path item'])
+
     def test_non_slashed_does_not_match_path(self):
         q = u'c.mp3'
         results = self.lib.items(q)
@@ -461,7 +480,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_items_matched(results, [])
 
     def test_path_item_regex(self):
-        q = u'path::\\.mp3$'
+        q = u'path::c\\.mp3$'
         results = self.lib.items(q)
         self.assert_items_matched(results, [u'path item'])
 

@@ -32,18 +32,18 @@ class InputMethodsTest(_common.TestCase):
     def _print_helper2(self, s, prefix):
         print(prefix, s)
 
-    def test_input_select_items(self):
+    def test_input_select_objects(self):
         full_items = ['1', '2', '3', '4', '5']
 
         # Test no
         self.io.addinput('n')
-        items = ui.input_select_items(
+        items = ui.input_select_objects(
             "Prompt", full_items, self._print_helper)
         self.assertEqual(items, [])
 
         # Test yes
         self.io.addinput('y')
-        items = ui.input_select_items(
+        items = ui.input_select_objects(
             "Prompt", full_items, self._print_helper)
         self.assertEqual(items, full_items)
 
@@ -54,7 +54,7 @@ class InputMethodsTest(_common.TestCase):
         self.io.addinput('n')
         self.io.addinput('y')
         self.io.addinput('n')
-        items = ui.input_select_items(
+        items = ui.input_select_objects(
             "Prompt", full_items, self._print_helper)
         self.assertEqual(items, ['2', '4'])
 
@@ -65,7 +65,7 @@ class InputMethodsTest(_common.TestCase):
         self.io.addinput('n')
         self.io.addinput('y')
         self.io.addinput('n')
-        items = ui.input_select_items(
+        items = ui.input_select_objects(
             "Prompt", full_items,
             lambda s: self._print_helper2(s, "Prefix"))
         self.assertEqual(items, ['1', '2', '4'])

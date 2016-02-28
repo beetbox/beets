@@ -210,9 +210,14 @@ def _pack_asf_image(mime, data, type=3, description=""):
 # iTunes Sound Check encoding.
 
 def _sc_decode(soundcheck):
-    """Convert a Sound Check string value to a (gain, peak) tuple as
+    """Convert a Sound Check bytestring value to a (gain, peak) tuple as
     used by ReplayGain.
     """
+    # We decode binary data. If one of the formats gives us a text
+    # string, interpret it as UTF-8.
+    if isinstance(soundcheck, unicode):
+        soundcheck = soundcheck.encode('utf8')
+
     # SoundCheck tags consist of 10 numbers, each represented by 8
     # characters of ASCII hex preceded by a space.
     try:
