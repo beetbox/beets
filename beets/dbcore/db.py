@@ -183,7 +183,7 @@ class Model(object):
         return obj
 
     def __repr__(self):
-        return u'{0}({1})'.format(
+        return '{0}({1})'.format(
             type(self).__name__,
             ', '.join('{0}={1!r}'.format(k, v) for k, v in dict(self).items()),
         )

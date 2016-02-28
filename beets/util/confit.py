@@ -129,10 +129,10 @@ class ConfigSource(dict):
         self.default = default
 
     def __repr__(self):
-        return 'ConfigSource({0}, {1}, {2})'.format(
-            super(ConfigSource, self).__repr__(),
-            repr(self.filename),
-            repr(self.default)
+        return 'ConfigSource({0!r}, {1!r}, {2!r})'.format(
+            super(ConfigSource, self),
+            self.filename,
+            self.default,
         )
 
     @classmethod
@@ -212,7 +212,7 @@ class ConfigView(object):
         raise NotImplementedError
 
     def __repr__(self):
-        return u'<{}: {}>'.format(self.__class__.__name__, self.name)
+        return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
     def __iter__(self):
         """Iterate over the keys of a dictionary view or the *subviews*
@@ -1018,7 +1018,7 @@ class Template(object):
         )
 
     def __repr__(self):
-        return u'{0}({1})'.format(
+        return '{0}({1})'.format(
             type(self).__name__,
             '' if self.default is REQUIRED else repr(self.default),
         )

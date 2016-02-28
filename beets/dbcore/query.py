@@ -74,7 +74,7 @@ class Query(object):
         raise NotImplementedError
 
     def __repr__(self):
-        return u"{0.__class__.__name__}()".format(self)
+        return "{0.__class__.__name__}()".format(self)
 
     def __eq__(self, other):
         return type(self) == type(other)
@@ -116,8 +116,8 @@ class FieldQuery(Query):
         return self.value_match(self.pattern, item.get(self.field))
 
     def __repr__(self):
-        return (u"{0.__class__.__name__}({0.field!r}, {0.pattern!r}, "
-                u"{0.fast})".format(self))
+        return ("{0.__class__.__name__}({0.field!r}, {0.pattern!r}, "
+                "{0.fast})".format(self))
 
     def __eq__(self, other):
         return super(FieldQuery, self).__eq__(other) and \
@@ -153,7 +153,7 @@ class NoneQuery(FieldQuery):
             return True
 
     def __repr__(self):
-        return u"{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
+        return "{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
 
 
 class StringFieldQuery(FieldQuery):
@@ -368,7 +368,7 @@ class CollectionQuery(Query):
         return clause, subvals
 
     def __repr__(self):
-        return u"{0.__class__.__name__}({0.subqueries})".format(self)
+        return "{0.__class__.__name__}({0.subqueries!r})".format(self)
 
     def __eq__(self, other):
         return super(CollectionQuery, self).__eq__(other) and \
@@ -406,8 +406,8 @@ class AnyFieldQuery(CollectionQuery):
         return False
 
     def __repr__(self):
-        return (u"{0.__class__.__name__}({0.pattern!r}, {0.fields}, "
-                u"{0.query_class.__name__})".format(self))
+        return ("{0.__class__.__name__}({0.pattern!r}, {0.fields!r}, "
+                "{0.query_class.__name__})".format(self))
 
     def __eq__(self, other):
         return super(AnyFieldQuery, self).__eq__(other) and \
@@ -466,7 +466,7 @@ class NotQuery(Query):
         return not self.subquery.match(item)
 
     def __repr__(self):
-        return u"{0.__class__.__name__}({0.subquery})".format(self)
+        return "{0.__class__.__name__}({0.subquery!r})".format(self)
 
     def __eq__(self, other):
         return super(NotQuery, self).__eq__(other) and \
@@ -607,7 +607,7 @@ class DateInterval(object):
         return True
 
     def __str__(self):
-        return u'[{0}, {1})'.format(self.start, self.end)
+        return '[{0}, {1})'.format(self.start, self.end)
 
 
 class DateQuery(FieldQuery):
@@ -768,7 +768,7 @@ class MultipleSort(Sort):
         return items
 
     def __repr__(self):
-        return u'MultipleSort({0})'.format(repr(self.sorts))
+        return 'MultipleSort({!r})'.format(self.sorts)
 
     def __hash__(self):
         return hash(tuple(self.sorts))
@@ -801,7 +801,7 @@ class FieldSort(Sort):
         return sorted(objs, key=key, reverse=not self.ascending)
 
     def __repr__(self):
-        return u'<{0}: {1}{2}>'.format(
+        return '<{0}: {1}{2}>'.format(
             type(self).__name__,
             self.field,
             '+' if self.ascending else '-',
