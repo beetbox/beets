@@ -100,6 +100,7 @@ setup(
         'beautifulsoup4',
         'flask',
         'mock',
+        'nose',
         'pyechonest',
         'pylast',
         'rarfile',
