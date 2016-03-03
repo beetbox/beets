@@ -15,8 +15,7 @@
 
 """Searches for albums in the MusicBrainz database.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import musicbrainzngs
 import re
@@ -43,7 +42,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
     def __init__(self, reason, verb, query, tb=None):
         self.query = query
         if isinstance(reason, musicbrainzngs.WebServiceError):
-            reason = 'MusicBrainz not reachable'
+            reason = u'MusicBrainz not reachable'
         super(MusicBrainzAPIError, self).__init__(reason, verb, tb)
 
     def get_message(self):
@@ -162,7 +161,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         medium=medium,
         medium_index=medium_index,
         medium_total=medium_total,
-        data_source='MusicBrainz',
+        data_source=u'MusicBrainz',
         data_url=track_url(recording['id']),
     )
 
@@ -256,7 +255,7 @@ def album_info(release):
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
         artist_credit=artist_credit_name,
-        data_source='MusicBrainz',
+        data_source=u'MusicBrainz',
         data_url=album_url(release['id']),
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
@@ -377,7 +376,7 @@ def _parse_id(s):
     no ID can be found, return None.
     """
     # Find the first thing that looks like a UUID/MBID.
-    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
+    match = re.search(ur'[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
     if match:
         return match.group()
 
@@ -398,7 +397,7 @@ def album_for_id(releaseid):
         log.debug(u'Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
+        raise MusicBrainzAPIError(exc, u'get release by ID', albumid,
                                   traceback.format_exc())
     return album_info(res['release'])
 
@@ -417,6 +416,6 @@ def track_for_id(releaseid):
         log.debug(u'Track ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'get recording by ID', trackid,
+        raise MusicBrainzAPIError(exc, u'get recording by ID', trackid,
                                   traceback.format_exc())
     return track_info(res['recording'])

@@ -18,8 +18,7 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 from string import Template
@@ -124,9 +123,9 @@ def make_bpd_error(s_code, s_message):
             pass
     return NewBPDError
 
-ArgumentTypeError = make_bpd_error(ERROR_ARG, 'invalid type for argument')
-ArgumentIndexError = make_bpd_error(ERROR_ARG, 'argument out of range')
-ArgumentNotFoundError = make_bpd_error(ERROR_NO_EXIST, 'argument not found')
+ArgumentTypeError = make_bpd_error(ERROR_ARG, u'invalid type for argument')
+ArgumentIndexError = make_bpd_error(ERROR_ARG, u'argument out of range')
+ArgumentNotFoundError = make_bpd_error(ERROR_NO_EXIST, u'argument not found')
 
 
 def cast_arg(t, val):
@@ -269,7 +268,7 @@ class BaseServer(object):
             conn.authenticated = True
         else:
             conn.authenticated = False
-            raise BPDError(ERROR_PASSWORD, 'incorrect password')
+            raise BPDError(ERROR_PASSWORD, u'incorrect password')
 
     def cmd_commands(self, conn):
         """Lists the commands available to the user."""
@@ -807,9 +806,9 @@ class Server(BaseServer):
         """
         # Path is ignored. Also, the real MPD does this asynchronously;
         # this is done inline.
-        print('Building directory tree...')
+        print(u'Building directory tree...')
         self.tree = vfs.libtree(self.lib)
-        print('... done.')
+        print(u'... done.')
         self.updated_time = time.time()
 
     # Path (directory tree) browsing.
@@ -848,7 +847,7 @@ class Server(BaseServer):
         node = self._resolve_path(path)
         if isinstance(node, int):
             # Trying to list a track.
-            raise BPDError(ERROR_ARG, 'this is not a directory')
+            raise BPDError(ERROR_ARG, u'this is not a directory')
         else:
             for name, itemid in iter(sorted(node.files.items())):
                 item = self.lib.get_item(itemid)
@@ -1173,18 +1172,18 @@ class BPDPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = beets.ui.Subcommand(
-            'bpd', help='run an MPD-compatible music player server'
+            'bpd', help=u'run an MPD-compatible music player server'
         )
         cmd.parser.add_option(
             '-d', '--debug', action='store_true',
-            help='dump all MPD traffic to stdout'
+            help=u'dump all MPD traffic to stdout'
         )
 
         def func(lib, opts, args):
             host = args.pop(0) if args else self.config['host'].get(unicode)
             port = args.pop(0) if args else self.config['port'].get(int)
             if args:
-                raise beets.ui.UserError('too many arguments')
+                raise beets.ui.UserError(u'too many arguments')
             password = self.config['password'].get(unicode)
             volume = self.config['volume'].get(int)
             debug = opts.debug or False

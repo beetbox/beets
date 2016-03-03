@@ -15,8 +15,7 @@
 
 """Tests for the 'bucket' plugin."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from beetsplug import bucket

@@ -22,8 +22,7 @@ implemented by MusicBrainz yet.
 [1] http://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 
 from beets.autotag import Recommendation
@@ -54,7 +53,7 @@ class MBSubmitPlugin(BeetsPlugin):
 
     def before_choose_candidate_event(self, session, task):
         if task.rec <= self.threshold:
-            return [PromptChoice('p', 'Print tracks', self.print_tracks)]
+            return [PromptChoice(u'p', u'Print tracks', self.print_tracks)]
 
     def print_tracks(self, session, task):
         for i in task.items:

@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 """Gets genres for imported music based on Last.fm tags.
 
@@ -239,25 +238,30 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
-        return self._last_lookup(u'album', LASTFM.get_album, obj.albumartist,
-                                 obj.album)
+        return self._last_lookup(
+            u'album', LASTFM.get_album, obj.albumartist, obj.album
+        )
 
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album.
         """
-        return self._last_lookup(u'artist', LASTFM.get_artist,
-                                 obj.albumartist)
+        return self._last_lookup(
+            u'artist', LASTFM.get_artist, obj.albumartist
+        )
 
     def fetch_artist_genre(self, item):
         """Returns the track artist genre for this Item.
         """
-        return self._last_lookup(u'artist', LASTFM.get_artist, item.artist)
+        return self._last_lookup(
+            u'artist', LASTFM.get_artist, item.artist
+        )
 
     def fetch_track_genre(self, obj):
         """Returns the track genre for this Item.
         """
-        return self._last_lookup(u'track', LASTFM.get_track, obj.artist,
-                                 obj.title)
+        return self._last_lookup(
+            u'track', LASTFM.get_track, obj.artist, obj.title
+        )
 
     def _get_genre(self, obj):
         """Get the genre string for an Album or Item object based on
@@ -326,14 +330,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return None, None
 
     def commands(self):
-        lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
+        lastgenre_cmd = ui.Subcommand('lastgenre', help=u'fetch genres')
         lastgenre_cmd.parser.add_option(
-            '-f', '--force', dest='force', action='store_true', default=False,
-            help='re-download genre when already present'
+            u'-f', u'--force', dest='force',
+            action='store_true', default=False,
+            help=u're-download genre when already present'
         )
         lastgenre_cmd.parser.add_option(
-            '-s', '--source', dest='source', type='string',
-            help='genre source: artist, album, or track'
+            u'-s', u'--source', dest='source', type='string',
+            help=u'genre source: artist, album, or track'
         )
 
         def lastgenre_func(lib, opts, args):
@@ -406,8 +411,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return []
         except Exception as exc:
             # Isolate bugs in pylast.
-            self._log.debug('{}', traceback.format_exc())
-            self._log.error('error in pylast library: {0}', exc)
+            self._log.debug(u'{}', traceback.format_exc())
+            self._log.error(u'error in pylast library: {0}', exc)
             return []
 
         # Filter by weight (optionally).

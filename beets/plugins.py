@@ -15,8 +15,7 @@
 
 """Support for beets plugins."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import inspect
 import traceback
@@ -267,7 +266,7 @@ def load_plugins(names=()):
 
         except:
             log.warn(
-                '** error loading plugin {}:\n{}',
+                u'** error loading plugin {}:\n{}',
                 name,
                 traceback.format_exc(),
             )
@@ -322,8 +321,8 @@ def types(model_cls):
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictException(
                     u'Plugin {0} defines flexible field {1} '
-                    'which has already been defined with '
-                    'another type.'.format(plugin.name, field)
+                    u'which has already been defined with '
+                    u'another type.'.format(plugin.name, field)
                 )
         types.update(plugin_types)
     return types

@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import subprocess
 import os
@@ -56,13 +55,13 @@ def call(args):
         return command_output(args)
     except subprocess.CalledProcessError as e:
         raise ReplayGainError(
-            "{0} exited with status {1}".format(args[0], e.returncode)
+            u"{0} exited with status {1}".format(args[0], e.returncode)
         )
     except UnicodeEncodeError:
         # Due to a bug in Python 2's subprocess on Windows, Unicode
         # filenames can fail to encode on that platform. See:
         # http://code.google.com/p/beets/issues/detail?id=499
-        raise ReplayGainError("argument encoding failed")
+        raise ReplayGainError(u"argument encoding failed")
 
 
 # Backend base and plumbing classes.
@@ -111,11 +110,11 @@ class Bs1770gainBackend(Backend):
             self.command = cmd
         except OSError:
             raise FatalReplayGainError(
-                'Is bs1770gain installed? Is your method in config correct?'
+                u'Is bs1770gain installed? Is your method in config correct?'
             )
         if not self.command:
             raise FatalReplayGainError(
-                'no replaygain command found: install bs1770gain'
+                u'no replaygain command found: install bs1770gain'
             )
 
     def compute_track_gain(self, items):
@@ -137,7 +136,7 @@ class Bs1770gainBackend(Backend):
         output = self.compute_gain(supported_items, True)
 
         if not output:
-            raise ReplayGainError('no output from bs1770gain')
+            raise ReplayGainError(u'no output from bs1770gain')
         return AlbumGain(output[-1], output[:-1])
 
     def isplitter(self, items, chunk_at):
@@ -204,7 +203,9 @@ class Bs1770gainBackend(Backend):
         args = cmd + [syspath(i.path, prefix=False) for i in items]
 
         # Invoke the command.
-        self._log.debug("executing {0}", " ".join(map(displayable_path, args)))
+        self._log.debug(
+            u'executing {0}', u' '.join(map(displayable_path, args))
+        )
         output = call(args)
 
         self._log.debug(u'analysis finished: {0}', output)
@@ -228,8 +229,8 @@ class Bs1770gainBackend(Backend):
         for parts in results[0:num_lines]:
             part = parts.split(b'\n')
             if len(part) == 0:
-                self._log.debug('bad tool output: {0!r}', text)
-                raise ReplayGainError('bs1770gain failed')
+                self._log.debug(u'bad tool output: {0!r}', text)
+                raise ReplayGainError(u'bs1770gain failed')
 
             try:
                 song = {
@@ -238,7 +239,7 @@ class Bs1770gainBackend(Backend):
                     'peak': float(part[2].split('/')[1]),
                 }
             except IndexError:
-                self._log.info('bs1770gain reports (faulty file?): {}', parts)
+                self._log.info(u'bs1770gain reports (faulty file?): {}', parts)
                 continue
 
             out.append(Gain(song['gain'], song['peak']))
@@ -261,9 +262,8 @@ class CommandBackend(Backend):
             # Explicit executable path.
             if not os.path.isfile(self.command):
                 raise FatalReplayGainError(
-                    'replaygain command does not exist: {0}'.format(
-                        self.command
-                    )
+                    u'replaygain command does not exist: {0}'.format(
+                        self.command)
                 )
         else:
             # Check whether the program is in $PATH.
@@ -275,7 +275,7 @@ class CommandBackend(Backend):
                     pass
         if not self.command:
             raise FatalReplayGainError(
-                'no replaygain command found: install mp3gain or aacgain'
+                u'no replaygain command found: install mp3gain or aacgain'
             )
 
         self.noclip = config['noclip'].get(bool)
@@ -322,7 +322,7 @@ class CommandBackend(Backend):
         the album gain
         """
         if len(items) == 0:
-            self._log.debug('no supported tracks to analyze')
+            self._log.debug(u'no supported tracks to analyze')
             return []
 
         """Compute ReplayGain values and return a list of results
@@ -361,7 +361,7 @@ class CommandBackend(Backend):
             parts = line.split(b'\t')
             if len(parts) != 6 or parts[0] == b'File':
                 self._log.debug(u'bad tool output: {0}', text)
-                raise ReplayGainError('mp3gain failed')
+                raise ReplayGainError(u'mp3gain failed')
             d = {
                 'file': parts[0],
                 'mp3gain': int(parts[1]),
@@ -397,7 +397,7 @@ class GStreamerBackend(Backend):
         if self._src is None or self._decbin is None or self._conv is None \
            or self._res is None or self._rg is None:
             raise FatalGstreamerPluginReplayGainError(
-                "Failed to load required GStreamer plugins"
+                u"Failed to load required GStreamer plugins"
             )
 
         # We check which files need gain ourselves, so all files given
@@ -444,14 +444,14 @@ class GStreamerBackend(Backend):
             import gi
         except ImportError:
             raise FatalReplayGainError(
-                "Failed to load GStreamer: python-gi not found"
+                u"Failed to load GStreamer: python-gi not found"
             )
 
         try:
             gi.require_version('Gst', '1.0')
         except ValueError as e:
             raise FatalReplayGainError(
-                "Failed to load GStreamer 1.0: {0}".format(e)
+                u"Failed to load GStreamer 1.0: {0}".format(e)
             )
 
         from gi.repository import GObject, Gst, GLib
@@ -486,7 +486,7 @@ class GStreamerBackend(Backend):
     def compute_track_gain(self, items):
         self.compute(items, False)
         if len(self._file_tags) != len(items):
-            raise ReplayGainError("Some tracks did not receive tags")
+            raise ReplayGainError(u"Some tracks did not receive tags")
 
         ret = []
         for item in items:
@@ -499,7 +499,7 @@ class GStreamerBackend(Backend):
         items = list(album.items())
         self.compute(items, True)
         if len(self._file_tags) != len(items):
-            raise ReplayGainError("Some items in album did not receive tags")
+            raise ReplayGainError(u"Some items in album did not receive tags")
 
         # Collect track gains.
         track_gains = []
@@ -508,7 +508,7 @@ class GStreamerBackend(Backend):
                 gain = self._file_tags[item]["TRACK_GAIN"]
                 peak = self._file_tags[item]["TRACK_PEAK"]
             except KeyError:
-                raise ReplayGainError("results missing for track")
+                raise ReplayGainError(u"results missing for track")
             track_gains.append(Gain(gain, peak))
 
         # Get album gain information from the last track.
@@ -517,7 +517,7 @@ class GStreamerBackend(Backend):
             gain = last_tags["ALBUM_GAIN"]
             peak = last_tags["ALBUM_PEAK"]
         except KeyError:
-            raise ReplayGainError("results missing for album")
+            raise ReplayGainError(u"results missing for album")
 
         return AlbumGain(Gain(gain, peak), track_gains)
 
@@ -539,7 +539,7 @@ class GStreamerBackend(Backend):
         f = self._src.get_property("location")
         # A GStreamer error, either an unsupported format or a bug.
         self._error = ReplayGainError(
-            "Error {0!r} - {1!r} on file {2!r}".format(err, debug, f)
+            u"Error {0!r} - {1!r} on file {2!r}".format(err, debug, f)
         )
 
     def _on_tag(self, bus, message):
@@ -663,7 +663,7 @@ class AudioToolsBackend(Backend):
             import audiotools.replaygain
         except ImportError:
             raise FatalReplayGainError(
-                "Failed to load audiotools: audiotools not found"
+                u"Failed to load audiotools: audiotools not found"
             )
         self._mod_audiotools = audiotools
         self._mod_replaygain = audiotools.replaygain
@@ -681,11 +681,11 @@ class AudioToolsBackend(Backend):
             audiofile = self._mod_audiotools.open(item.path)
         except IOError:
             raise ReplayGainError(
-                "File {} was not found".format(item.path)
+                u"File {} was not found".format(item.path)
             )
         except self._mod_audiotools.UnsupportedFile:
             raise ReplayGainError(
-                "Unsupported file type {}".format(item.format)
+                u"Unsupported file type {}".format(item.format)
             )
 
         return audiofile
@@ -704,8 +704,7 @@ class AudioToolsBackend(Backend):
             rg = self._mod_replaygain.ReplayGain(audiofile.sample_rate())
         except ValueError:
             raise ReplayGainError(
-                "Unsupported sample rate {}".format(item.samplerate)
-            )
+                u"Unsupported sample rate {}".format(item.samplerate))
             return
         return rg
 
@@ -730,8 +729,8 @@ class AudioToolsBackend(Backend):
         except ValueError as exc:
             # `audiotools.replaygain` can raise a `ValueError` if the sample
             # rate is incorrect.
-            self._log.debug('error in rg.title_gain() call: {}', exc)
-            raise ReplayGainError('audiotools audio data error')
+            self._log.debug(u'error in rg.title_gain() call: {}', exc)
+            raise ReplayGainError(u'audiotools audio data error')
 
     def _compute_track_gain(self, item):
         """Compute ReplayGain value for the requested item.
@@ -830,8 +829,7 @@ class ReplayGainPlugin(BeetsPlugin):
             )
         except (ReplayGainError, FatalReplayGainError) as e:
             raise ui.UserError(
-                'replaygain initialization failed: {0}'.format(e)
-            )
+                u'replaygain initialization failed: {0}'.format(e))
 
     def track_requires_gain(self, item):
         return self.overwrite or \
@@ -894,8 +892,7 @@ class ReplayGainPlugin(BeetsPlugin):
             self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(
-                u"Fatal replay gain error: {0}".format(e)
-            )
+                u"Fatal replay gain error: {0}".format(e))
 
     def handle_track(self, item, write):
         """Compute track replay gain and store it in the item.
@@ -924,8 +921,7 @@ class ReplayGainPlugin(BeetsPlugin):
             self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(
-                u"Fatal replay gain error: {0}".format(e)
-            )
+                u"Fatal replay gain error: {0}".format(e))
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
@@ -951,7 +947,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 for item in lib.items(ui.decargs(args)):
                     self.handle_track(item, write)
 
-        cmd = ui.Subcommand('replaygain', help='analyze for ReplayGain')
+        cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
         cmd.func = func
         return [cmd]

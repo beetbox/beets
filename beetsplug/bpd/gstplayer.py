@@ -17,8 +17,7 @@
 music player.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import sys
 import time
@@ -91,7 +90,7 @@ class GstPlayer(object):
             # error
             self.player.set_state(gst.STATE_NULL)
             err, debug = message.parse_error()
-            print("Error: {0}".format(err))
+            print(u"Error: {0}".format(err))
             self.playing = False
 
     def _set_volume(self, volume):

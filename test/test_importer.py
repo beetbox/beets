@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 """Tests for the general importer functionality.
 """
@@ -121,7 +120,7 @@ class AutotagStub(object):
         else:
             id = ''
         if artist is None:
-            artist = "Various Artists"
+            artist = u"Various Artists"
         else:
             artist = artist.replace('Tag', 'Applied') + id
         album = album.replace('Tag', 'Applied') + id
@@ -150,9 +149,9 @@ class ImportHelper(TestHelper):
     def setup_beets(self, disk=False):
         super(ImportHelper, self).setup_beets(disk)
         self.lib.path_formats = [
-            ('default', os.path.join('$artist', '$album', '$title')),
-            ('singleton:true', os.path.join('singletons', '$title')),
-            ('comp:true', os.path.join('compilations', '$album', '$title')),
+            (u'default', os.path.join('$artist', '$album', '$title')),
+            (u'singleton:true', os.path.join('singletons', '$title')),
+            (u'comp:true', os.path.join('compilations', '$album', '$title')),
         ]
 
     def _create_import_dir(self, count=3):
@@ -179,8 +178,8 @@ class ImportHelper(TestHelper):
         resource_path = os.path.join(_common.RSRC, 'full.mp3')
 
         metadata = {
-            'artist': 'Tag Artist',
-            'album':  'Tag Album',
+            'artist': u'Tag Artist',
+            'album':  u'Tag Album',
             'albumartist':  None,
             'mb_trackid': None,
             'mb_albumid': None,
@@ -195,7 +194,7 @@ class ImportHelper(TestHelper):
 
             # Set metadata
             metadata['track'] = i + 1
-            metadata['title'] = 'Tag Title %d' % (i + 1)
+            metadata['title'] = u'Tag Title %d' % (i + 1)
             for attr in metadata:
                 setattr(medium, attr, metadata[attr])
             medium.save()
@@ -250,7 +249,7 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
-        self.assertEqual(albums[0].albumartist, 'Tag Artist')
+        self.assertEqual(albums[0].albumartist, u'Tag Artist')
 
     def test_import_copy_arrives(self):
         self.importer.run()
@@ -411,7 +410,7 @@ class ImportTarTest(ImportZipTest):
         return path
 
 
-@unittest.skipIf(not has_program('unrar'), 'unrar program not found')
+@unittest.skipIf(not has_program('unrar'), u'unrar program not found')
 class ImportRarTest(ImportZipTest):
 
     def create_archive(self):
@@ -446,7 +445,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Tag Title 1')
+        self.assertEqual(self.lib.items().get().title, u'Tag Title 1')
 
     def test_apply_asis_does_not_add_album(self):
         self.assertEqual(self.lib.albums().get(), None)
@@ -467,7 +466,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Applied Title 1')
+        self.assertEqual(self.lib.items().get().title, u'Applied Title 1')
 
     def test_apply_candidate_does_not_add_album(self):
         self.importer.add_choice(importer.action.APPLY)
@@ -479,7 +478,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assert_file_in_lib('singletons', 'Applied Title 1.mp3')
+        self.assert_file_in_lib('singletons', u'Applied Title 1.mp3')
 
     def test_skip_does_not_add_first_track(self):
         self.importer.add_choice(importer.action.SKIP)
@@ -532,13 +531,13 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'Tag Album')
+        self.assertEqual(self.lib.albums().get().album, u'Tag Album')
 
     def test_apply_asis_adds_tracks(self):
         self.assertEqual(self.lib.items().get(), None)
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Tag Title 1')
+        self.assertEqual(self.lib.items().get().title, u'Tag Title 1')
 
     def test_apply_asis_adds_album_path(self):
         self.assert_lib_dir_empty()
@@ -552,14 +551,14 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'Applied Album')
+        self.assertEqual(self.lib.albums().get().album, u'Applied Album')
 
     def test_apply_candidate_adds_tracks(self):
         self.assertEqual(self.lib.items().get(), None)
 
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Applied Title 1')
+        self.assertEqual(self.lib.items().get().title, u'Applied Title 1')
 
     def test_apply_candidate_adds_album_path(self):
         self.assert_lib_dir_empty()
@@ -617,7 +616,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
-        self.assertIn('No files imported from {0}'.format(import_dir), logs)
+        self.assertIn(u'No files imported from {0}'.format(import_dir), logs)
 
     def test_empty_directory_singleton_warning(self):
         import_dir = os.path.join(self.temp_dir, 'empty')
@@ -626,7 +625,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
-        self.assertIn('No files imported from {0}'.format(import_dir), logs)
+        self.assertIn(u'No files imported from {0}'.format(import_dir), logs)
 
     def test_asis_no_data_source(self):
         self.assertEqual(self.lib.items().get(), None)
@@ -659,7 +658,7 @@ class ImportTracksTest(_common.TestCase, ImportHelper):
         self.importer.add_choice(importer.action.APPLY)
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Applied Title 1')
+        self.assertEqual(self.lib.items().get().title, u'Applied Title 1')
         self.assertEqual(self.lib.albums().get(), None)
 
     def test_apply_tracks_adds_singleton_path(self):
@@ -688,27 +687,27 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
     def test_asis_homogenous_sets_albumartist(self):
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().albumartist, 'Tag Artist')
+        self.assertEqual(self.lib.albums().get().albumartist, u'Tag Artist')
         for item in self.lib.items():
-            self.assertEqual(item.albumartist, 'Tag Artist')
+            self.assertEqual(item.albumartist, u'Tag Artist')
 
     def test_asis_heterogenous_sets_various_albumartist(self):
-        self.import_media[0].artist = 'Other Artist'
+        self.import_media[0].artist = u'Other Artist'
         self.import_media[0].save()
-        self.import_media[1].artist = 'Another Artist'
+        self.import_media[1].artist = u'Another Artist'
         self.import_media[1].save()
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         self.assertEqual(self.lib.albums().get().albumartist,
-                         'Various Artists')
+                         u'Various Artists')
         for item in self.lib.items():
-            self.assertEqual(item.albumartist, 'Various Artists')
+            self.assertEqual(item.albumartist, u'Various Artists')
 
     def test_asis_heterogenous_sets_sompilation(self):
-        self.import_media[0].artist = 'Other Artist'
+        self.import_media[0].artist = u'Other Artist'
         self.import_media[0].save()
-        self.import_media[1].artist = 'Another Artist'
+        self.import_media[1].artist = u'Another Artist'
         self.import_media[1].save()
 
         self.importer.add_choice(importer.action.ASIS)
@@ -717,33 +716,33 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
             self.assertTrue(item.comp)
 
     def test_asis_sets_majority_albumartist(self):
-        self.import_media[0].artist = 'Other Artist'
+        self.import_media[0].artist = u'Other Artist'
         self.import_media[0].save()
-        self.import_media[1].artist = 'Other Artist'
+        self.import_media[1].artist = u'Other Artist'
         self.import_media[1].save()
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().albumartist, 'Other Artist')
+        self.assertEqual(self.lib.albums().get().albumartist, u'Other Artist')
         for item in self.lib.items():
-            self.assertEqual(item.albumartist, 'Other Artist')
+            self.assertEqual(item.albumartist, u'Other Artist')
 
     def test_asis_albumartist_tag_sets_albumartist(self):
-        self.import_media[0].artist = 'Other Artist'
-        self.import_media[1].artist = 'Another Artist'
+        self.import_media[0].artist = u'Other Artist'
+        self.import_media[1].artist = u'Another Artist'
         for mediafile in self.import_media:
-            mediafile.albumartist = 'Album Artist'
-            mediafile.mb_albumartistid = 'Album Artist ID'
+            mediafile.albumartist = u'Album Artist'
+            mediafile.mb_albumartistid = u'Album Artist ID'
             mediafile.save()
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().albumartist, 'Album Artist')
+        self.assertEqual(self.lib.albums().get().albumartist, u'Album Artist')
         self.assertEqual(self.lib.albums().get().mb_albumartistid,
-                         'Album Artist ID')
+                         u'Album Artist ID')
         for item in self.lib.items():
-            self.assertEqual(item.albumartist, 'Album Artist')
-            self.assertEqual(item.mb_albumartistid, 'Album Artist ID')
+            self.assertEqual(item.albumartist, u'Album Artist')
+            self.assertEqual(item.mb_albumartistid, u'Album Artist ID')
 
 
 class ImportExistingTest(_common.TestCase, ImportHelper):
@@ -794,17 +793,17 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
     def test_asis_updates_metadata(self):
         self.setup_importer.run()
         medium = MediaFile(self.lib.items().get().path)
-        medium.title = 'New Title'
+        medium.title = u'New Title'
         medium.save()
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'New Title')
+        self.assertEqual(self.lib.items().get().title, u'New Title')
 
     def test_asis_updated_moves_file(self):
         self.setup_importer.run()
         medium = MediaFile(self.lib.items().get().path)
-        medium.title = 'New Title'
+        medium.title = u'New Title'
         medium.save()
 
         old_path = os.path.join('Applied Artist', 'Applied Album',
@@ -820,7 +819,7 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
     def test_asis_updated_without_copy_does_not_move_file(self):
         self.setup_importer.run()
         medium = MediaFile(self.lib.items().get().path)
-        medium.title = 'New Title'
+        medium.title = u'New Title'
         medium.save()
 
         old_path = os.path.join('Applied Artist', 'Applied Album',
@@ -881,8 +880,8 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         self.matcher.restore()
 
     def test_add_album_for_different_artist_and_different_album(self):
-        self.import_media[0].artist = "Artist B"
-        self.import_media[0].album = "Album B"
+        self.import_media[0].artist = u"Artist B"
+        self.import_media[0].album = u"Album B"
         self.import_media[0].save()
 
         self.importer.run()
@@ -890,11 +889,11 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(albums, set(['Album B', 'Tag Album']))
 
     def test_add_album_for_different_artist_and_same_albumartist(self):
-        self.import_media[0].artist = "Artist B"
-        self.import_media[0].albumartist = "Album Artist"
+        self.import_media[0].artist = u"Artist B"
+        self.import_media[0].albumartist = u"Album Artist"
         self.import_media[0].save()
-        self.import_media[1].artist = "Artist C"
-        self.import_media[1].albumartist = "Album Artist"
+        self.import_media[1].artist = u"Artist C"
+        self.import_media[1].albumartist = u"Album Artist"
         self.import_media[1].save()
 
         self.importer.run()
@@ -902,7 +901,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(artists, set(['Album Artist', 'Tag Artist']))
 
     def test_add_album_for_same_artist_and_different_album(self):
-        self.import_media[0].album = "Album B"
+        self.import_media[0].album = u"Album B"
         self.import_media[0].save()
 
         self.importer.run()
@@ -910,7 +909,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(albums, set(['Album B', 'Tag Album']))
 
     def test_add_album_for_same_album_and_different_artist(self):
-        self.import_media[0].artist = "Artist B"
+        self.import_media[0].artist = u"Artist B"
         self.import_media[0].save()
 
         self.importer.run()
@@ -919,7 +918,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
 
     def test_incremental(self):
         config['import']['incremental'] = True
-        self.import_media[0].album = "Album B"
+        self.import_media[0].album = u"Album B"
         self.import_media[0].save()
 
         self.importer.run()
@@ -951,12 +950,12 @@ class ChooseCandidateTest(_common.TestCase, ImportHelper):
     def test_choose_first_candidate(self):
         self.importer.add_choice(1)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'Applied Album M')
+        self.assertEqual(self.lib.albums().get().album, u'Applied Album M')
 
     def test_choose_second_candidate(self):
         self.importer.add_choice(2)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'Applied Album MM')
+        self.assertEqual(self.lib.albums().get().album, u'Applied Album MM')
 
 
 class InferAlbumDataTest(_common.TestCase):
@@ -966,9 +965,9 @@ class InferAlbumDataTest(_common.TestCase):
         i1 = _common.item()
         i2 = _common.item()
         i3 = _common.item()
-        i1.title = 'first item'
-        i2.title = 'second item'
-        i3.title = 'third item'
+        i1.title = u'first item'
+        i2.title = u'second item'
+        i3.title = u'third item'
         i1.comp = i2.comp = i3.comp = False
         i1.albumartist = i2.albumartist = i3.albumartist = ''
         i1.mb_albumartistid = i2.mb_albumartistid = i3.mb_albumartistid = ''
@@ -984,28 +983,28 @@ class InferAlbumDataTest(_common.TestCase):
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
     def test_asis_heterogenous_va(self):
-        self.items[0].artist = 'another artist'
-        self.items[1].artist = 'some other artist'
+        self.items[0].artist = u'another artist'
+        self.items[1].artist = u'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
         self.task.align_album_level_fields()
 
         self.assertTrue(self.items[0].comp)
-        self.assertEqual(self.items[0].albumartist, 'Various Artists')
+        self.assertEqual(self.items[0].albumartist, u'Various Artists')
 
     def test_asis_comp_applied_to_all_items(self):
-        self.items[0].artist = 'another artist'
-        self.items[1].artist = 'some other artist'
+        self.items[0].artist = u'another artist'
+        self.items[1].artist = u'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
         self.task.align_album_level_fields()
 
         for item in self.items:
             self.assertTrue(item.comp)
-            self.assertEqual(item.albumartist, 'Various Artists')
+            self.assertEqual(item.albumartist, u'Various Artists')
 
     def test_asis_majority_artist_single_artist(self):
-        self.items[0].artist = 'another artist'
+        self.items[0].artist = u'another artist'
         self.task.set_choice(importer.action.ASIS)
 
         self.task.align_album_level_fields()
@@ -1014,19 +1013,19 @@ class InferAlbumDataTest(_common.TestCase):
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
     def test_asis_track_albumartist_override(self):
-        self.items[0].artist = 'another artist'
-        self.items[1].artist = 'some other artist'
+        self.items[0].artist = u'another artist'
+        self.items[1].artist = u'some other artist'
         for item in self.items:
-            item.albumartist = 'some album artist'
-            item.mb_albumartistid = 'some album artist id'
+            item.albumartist = u'some album artist'
+            item.mb_albumartistid = u'some album artist id'
         self.task.set_choice(importer.action.ASIS)
 
         self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist,
-                         'some album artist')
+                         u'some album artist')
         self.assertEqual(self.items[0].mb_albumartistid,
-                         'some album artist id')
+                         u'some album artist id')
 
     def test_apply_gets_artist_and_id(self):
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
@@ -1039,16 +1038,16 @@ class InferAlbumDataTest(_common.TestCase):
 
     def test_apply_lets_album_values_override(self):
         for item in self.items:
-            item.albumartist = 'some album artist'
-            item.mb_albumartistid = 'some album artist id'
+            item.albumartist = u'some album artist'
+            item.mb_albumartistid = u'some album artist id'
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
         self.task.align_album_level_fields()
 
         self.assertEqual(self.items[0].albumartist,
-                         'some album artist')
+                         u'some album artist')
         self.assertEqual(self.items[0].mb_albumartistid,
-                         'some album artist id')
+                         u'some album artist id')
 
     def test_small_single_artist_album(self):
         self.items = [self.items[0]]
@@ -1272,11 +1271,11 @@ class ResumeImportTest(unittest.TestCase, TestHelper):
 
         self.importer.run()
         self.assertEqual(len(self.lib.albums()), 1)
-        self.assertIsNotNone(self.lib.albums('album:album 0').get())
+        self.assertIsNotNone(self.lib.albums(u'album:album 0').get())
 
         self.importer.run()
         self.assertEqual(len(self.lib.albums()), 2)
-        self.assertIsNotNone(self.lib.albums('album:album 1').get())
+        self.assertIsNotNone(self.lib.albums(u'album:album 1').get())
 
     @patch('beets.plugins.send')
     def test_resume_singleton(self, plugins_send):
@@ -1293,11 +1292,11 @@ class ResumeImportTest(unittest.TestCase, TestHelper):
 
         self.importer.run()
         self.assertEqual(len(self.lib.items()), 1)
-        self.assertIsNotNone(self.lib.items('title:track 0').get())
+        self.assertIsNotNone(self.lib.items(u'title:track 0').get())
 
         self.importer.run()
         self.assertEqual(len(self.lib.items()), 2)
-        self.assertIsNotNone(self.lib.items('title:track 1').get())
+        self.assertIsNotNone(self.lib.items(u'title:track 1').get())
 
 
 class IncrementalImportTest(unittest.TestCase, TestHelper):
@@ -1685,7 +1684,7 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
     def test_import_pretend_empty(self):
         logs = self.__run([self.empty_path])
 
-        self.assertEqual(logs, ['No files imported from {0}'
+        self.assertEqual(logs, [u'No files imported from {0}'
                          .format(displayable_path(self.empty_path))])
 
 

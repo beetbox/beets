@@ -16,8 +16,7 @@
 """Adds Chromaprint/Acoustid acoustic fingerprinting support to the
 autotagger. Requires the pyacoustid library.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets import ui
@@ -178,19 +177,19 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         submit_cmd = ui.Subcommand('submit',
-                                   help='submit Acoustid fingerprints')
+                                   help=u'submit Acoustid fingerprints')
 
         def submit_cmd_func(lib, opts, args):
             try:
                 apikey = config['acoustid']['apikey'].get(unicode)
             except confit.NotFoundError:
-                raise ui.UserError('no Acoustid user API key provided')
+                raise ui.UserError(u'no Acoustid user API key provided')
             submit_items(self._log, apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
 
         fingerprint_cmd = ui.Subcommand(
             'fingerprint',
-            help='generate fingerprints for items without them'
+            help=u'generate fingerprints for items without them'
         )
 
         def fingerprint_cmd_func(lib, opts, args):

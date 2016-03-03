@@ -13,9 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
-
+from __future__ import division, absolute_import, print_function
 
 from mock import Mock, patch, call, ANY
 from test._common import unittest
@@ -35,7 +33,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def test_update_rating(self):
-        item = Item(title='title', path='', id=1)
+        item = Item(title=u'title', path='', id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -46,7 +44,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
 
     def test_get_item(self):
         ITEM_PATH = '/foo/bar.flac'
-        item = Item(title='title', path=ITEM_PATH, id=1)
+        item = Item(title=u'title', path=ITEM_PATH, id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -54,13 +52,13 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
 
         self.assertEqual(str(mpdstats.get_item(ITEM_PATH)), str(item))
         self.assertIsNone(mpdstats.get_item('/some/non-existing/path'))
-        self.assertIn('item not found:', log.info.call_args[0][0])
+        self.assertIn(u'item not found:', log.info.call_args[0][0])
 
     FAKE_UNKNOWN_STATE = 'some-unknown-one'
     STATUSES = [{'state': FAKE_UNKNOWN_STATE},
-                {'state': 'pause'},
-                {'state': 'play', 'songid': 1, 'time': '0:1'},
-                {'state': 'stop'}]
+                {'state': u'pause'},
+                {'state': u'play', 'songid': 1, 'time': u'0:1'},
+                {'state': u'stop'}]
     EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
     ITEM_PATH = '/foo/bar.flac'
 
@@ -68,7 +66,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         "events.side_effect": EVENTS, "status.side_effect": STATUSES,
         "playlist.return_value": {1: ITEM_PATH}}))
     def test_run_MPDStats(self, mpd_mock):
-        item = Item(title='title', path=self.ITEM_PATH, id=1)
+        item = Item(title=u'title', path=self.ITEM_PATH, id=1)
         item.add(self.lib)
 
         log = Mock()

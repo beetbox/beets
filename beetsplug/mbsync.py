@@ -15,8 +15,7 @@
 
 """Update library's tags using MusicBrainz.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
@@ -43,18 +42,20 @@ class MBSyncPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('mbsync',
-                            help='update metadata from musicbrainz')
-        cmd.parser.add_option('-p', '--pretend', action='store_true',
-                              help='show all changes but do nothing')
-        cmd.parser.add_option('-m', '--move', action='store_true',
-                              dest='move',
-                              help="move files in the library directory")
-        cmd.parser.add_option('-M', '--nomove', action='store_false',
-                              dest='move',
-                              help="don't move files in library")
-        cmd.parser.add_option('-W', '--nowrite', action='store_false',
-                              default=None, dest='write',
-                              help="don't write updated metadata to files")
+                            help=u'update metadata from musicbrainz')
+        cmd.parser.add_option(
+            u'-p', u'--pretend', action='store_true',
+            help=u'show all changes but do nothing')
+        cmd.parser.add_option(
+            u'-m', u'--move', action='store_true', dest='move',
+            help=u"move files in the library directory")
+        cmd.parser.add_option(
+            u'-M', u'--nomove', action='store_false', dest='move',
+            help=u"don't move files in library")
+        cmd.parser.add_option(
+            u'-W', u'--nowrite', action='store_false',
+            default=None, dest='write',
+            help=u"don't write updated metadata to files")
         cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
@@ -140,7 +141,7 @@ class MBSyncPlugin(BeetsPlugin):
                             break
 
             # Apply.
-            self._log.debug('applying changes to {}', album_formatted)
+            self._log.debug(u'applying changes to {}', album_formatted)
             with lib.transaction():
                 autotag.apply_metadata(album_info, mapping)
                 changed = False

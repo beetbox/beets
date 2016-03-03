@@ -16,8 +16,7 @@
 """Provides a fuzzy matching query.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.dbcore.query import StringFieldQuery

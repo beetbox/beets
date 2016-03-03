@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from test.helper import capture_stdout, control_stdin, TestHelper
@@ -46,9 +45,9 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
                 self.importer.run()
 
         # Manually build the string for comparing the output.
-        tracklist = ('Print tracks? '
-                     '01. Tag Title 1 - Tag Artist (0:01)\n'
-                     '02. Tag Title 2 - Tag Artist (0:01)')
+        tracklist = (u'Print tracks? '
+                     u'01. Tag Title 1 - Tag Artist (0:01)\n'
+                     u'02. Tag Title 2 - Tag Artist (0:01)')
         self.assertIn(tracklist, output.getvalue())
 
     def test_print_tracks_output_as_tracks(self):
@@ -61,8 +60,8 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
                 self.importer.run()
 
         # Manually build the string for comparing the output.
-        tracklist = ('Print tracks? '
-                     '02. Tag Title 2 - Tag Artist (0:01)')
+        tracklist = (u'Print tracks? '
+                     u'02. Tag Title 2 - Tag Artist (0:01)')
         self.assertIn(tracklist, output.getvalue())
 
 

@@ -9,8 +9,7 @@ Put something like the following in your config.yaml to configure:
         port: 32400
         token: token
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import requests
 from urlparse import urljoin
@@ -78,7 +77,7 @@ class PlexUpdate(BeetsPlugin):
     def update(self, lib):
         """When the client exists try to send refresh request to Plex server.
         """
-        self._log.info('Updating Plex library...')
+        self._log.info(u'Updating Plex library...')
 
         # Try to send update request.
         try:
@@ -87,7 +86,7 @@ class PlexUpdate(BeetsPlugin):
                 config['plex']['port'].get(),
                 config['plex']['token'].get(),
                 config['plex']['library_name'].get())
-            self._log.info('... started.')
+            self._log.info(u'... started.')
 
         except requests.exceptions.RequestException:
-            self._log.warning('Update failed.')
+            self._log.warning(u'Update failed.')

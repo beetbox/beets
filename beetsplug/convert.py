@@ -15,8 +15,7 @@
 
 """Converts tracks or albums to external directory
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
 import threading
@@ -140,21 +139,21 @@ class ConvertPlugin(BeetsPlugin):
         self.register_listener('import_task_files', self._cleanup)
 
     def commands(self):
-        cmd = ui.Subcommand('convert', help='convert to external location')
+        cmd = ui.Subcommand('convert', help=u'convert to external location')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
-                              help='show actions but do nothing')
+                              help=u'show actions but do nothing')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
-                              help='change the number of threads, \
+                              help=u'change the number of threads, \
                               defaults to maximum available processors')
         cmd.parser.add_option('-k', '--keep-new', action='store_true',
-                              dest='keep_new', help='keep only the converted \
+                              dest='keep_new', help=u'keep only the converted \
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
-                              help='set the destination directory')
+                              help=u'set the destination directory')
         cmd.parser.add_option('-f', '--format', action='store', dest='format',
-                              help='set the target format of the tracks')
+                              help=u'set the target format of the tracks')
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
-                              help='do not ask for confirmation')
+                              help=u'do not ask for confirmation')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
@@ -294,7 +293,7 @@ class ConvertPlugin(BeetsPlugin):
             if self.config['embed']:
                 album = item.get_album()
                 if album and album.artpath:
-                    self._log.debug('embedding album art from {}',
+                    self._log.debug(u'embedding album art from {}',
                                     util.displayable_path(album.artpath))
                     art.embed_item(self._log, item, album.artpath,
                                    itempath=converted)
@@ -373,7 +372,7 @@ class ConvertPlugin(BeetsPlugin):
         if not opts.dest:
             opts.dest = self.config['dest'].get()
         if not opts.dest:
-            raise ui.UserError('no convert destination set')
+            raise ui.UserError(u'no convert destination set')
         opts.dest = util.bytestring_path(opts.dest)
 
         if not opts.threads:
@@ -393,7 +392,7 @@ class ConvertPlugin(BeetsPlugin):
         if not pretend:
             ui.commands.list_items(lib, ui.decargs(args), opts.album)
 
-            if not (opts.yes or ui.input_yn("Convert? (Y/n)")):
+            if not (opts.yes or ui.input_yn(u"Convert? (Y/n)")):
                 return
 
         if opts.album:

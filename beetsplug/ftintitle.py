@@ -15,8 +15,7 @@
 
 """Moves "featured" artists to the title from the artist field.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 
@@ -87,12 +86,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         self._command = ui.Subcommand(
             'ftintitle',
-            help='move featured artists to the title field')
+            help=u'move featured artists to the title field')
 
         self._command.parser.add_option(
-            '-d', '--drop', dest='drop',
+            u'-d', u'--drop', dest='drop',
             action='store_true', default=False,
-            help='drop featuring from artists and ignore title update')
+            help=u'drop featuring from artists and ignore title update')
 
         if self.config['auto']:
             self.import_stages = [self.imported]

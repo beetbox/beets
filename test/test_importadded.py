@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 """Tests for the `importadded` plugin."""
 
@@ -73,7 +72,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         for m in self.media_files:
             if m.title.replace('Tag', 'Applied') == item.title:
                 return m
-        raise AssertionError("No MediaFile found for Item " +
+        raise AssertionError(u"No MediaFile found for Item " +
                              util.displayable_path(item.path))
 
     def assertEqualTimes(self, first, second, msg=None):
@@ -127,7 +126,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
                                  for item in album.items())
         for item_path, added_after in items_added_after.iteritems():
             self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  "reimport modified Item.added for " +
+                                  u"reimport modified Item.added for " +
                                   item_path)
 
     def test_import_singletons_with_added_dates(self):
@@ -165,7 +164,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
                                  for item in self.lib.items())
         for item_path, added_after in items_added_after.iteritems():
             self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  "reimport modified Item.added for " +
+                                  u"reimport modified Item.added for " +
                                   item_path)
 
 
