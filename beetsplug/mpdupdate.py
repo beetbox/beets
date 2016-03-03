@@ -21,8 +21,7 @@ Put something like the following in your config.yaml to configure:
         port: 6600
         password: seekrit
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 import os
@@ -126,4 +125,4 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         s.send('close\n')
         s.close()
-        self._log.info('Database updated.')
+        self._log.info(u'Database updated.')

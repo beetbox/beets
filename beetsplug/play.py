@@ -15,8 +15,7 @@
 
 """Send the results of a query to the configured music player as a playlist.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -49,13 +48,13 @@ class PlayPlugin(BeetsPlugin):
     def commands(self):
         play_command = Subcommand(
             'play',
-            help='send music to a player as a playlist'
+            help=u'send music to a player as a playlist'
         )
         play_command.parser.add_album_option()
         play_command.parser.add_option(
-            '-A', '--args',
+            u'-A', u'--args',
             action='store',
-            help='add additional arguments to the command',
+            help=u'add additional arguments to the command',
         )
         play_command.func = self.play_music
         return [play_command]
@@ -90,7 +89,7 @@ class PlayPlugin(BeetsPlugin):
             if ARGS_MARKER in command_str:
                 command_str = command_str.replace(ARGS_MARKER, opts.args)
             else:
-                command_str = "{} {}".format(command_str, opts.args)
+                command_str = u"{} {}".format(command_str, opts.args)
 
         # Perform search by album and add folders rather than tracks to
         # playlist.
@@ -119,16 +118,15 @@ class PlayPlugin(BeetsPlugin):
 
         if not selection:
             ui.print_(ui.colorize('text_warning',
-                                  'No {0} to play.'.format(item_type)))
+                                  u'No {0} to play.'.format(item_type)))
             return
 
         # Warn user before playing any huge playlists.
         if warning_threshold and len(selection) > warning_threshold:
             ui.print_(ui.colorize(
                 'text_warning',
-                'You are about to queue {0} {1}.'.format(len(selection),
-                                                         item_type)
-            ))
+                u'You are about to queue {0} {1}.'.format(
+                    len(selection), item_type)))
 
             if ui.input_options(('Continue', 'Abort')) == 'a':
                 return
@@ -139,13 +137,13 @@ class PlayPlugin(BeetsPlugin):
         else:
             open_args = [self._create_tmp_playlist(paths)]
 
-        self._log.debug('executing command: {} {}', command_str,
+        self._log.debug(u'executing command: {} {}', command_str,
                         b' '.join(open_args))
         try:
             util.interactive_open(open_args, command_str)
         except OSError as exc:
-            raise ui.UserError("Could not play the query: "
-                               "{0}".format(exc))
+            raise ui.UserError(
+                "Could not play the query: {0}".format(exc))
 
     def _create_tmp_playlist(self, paths_list):
         """Create a temporary .m3u file. Return the filename.

@@ -14,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from collections import namedtuple
 import re
@@ -394,7 +393,7 @@ class Distance(object):
         """
         if not isinstance(dist, Distance):
             raise ValueError(
-                '`dist` must be a Distance object, not {0}'.format(type(dist))
+                u'`dist` must be a Distance object, not {0}'.format(type(dist))
             )
         for key, penalties in dist._penalties.iteritems():
             self._penalties.setdefault(key, []).extend(penalties)
@@ -418,7 +417,7 @@ class Distance(object):
         """
         if not 0.0 <= dist <= 1.0:
             raise ValueError(
-                '`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
+                u'`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
             )
         self._penalties.setdefault(key, []).append(dist)
 
@@ -514,7 +513,7 @@ def album_for_mbid(release_id):
     try:
         album = mb.album_for_id(release_id)
         if album:
-            plugins.send('albuminfo_received', info=album)
+            plugins.send(u'albuminfo_received', info=album)
         return album
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
@@ -527,7 +526,7 @@ def track_for_mbid(recording_id):
     try:
         track = mb.track_for_id(recording_id)
         if track:
-            plugins.send('trackinfo_received', info=track)
+            plugins.send(u'trackinfo_received', info=track)
         return track
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
@@ -538,7 +537,7 @@ def albums_for_id(album_id):
     candidates = [album_for_mbid(album_id)]
     plugin_albums = plugins.album_for_id(album_id)
     for a in plugin_albums:
-        plugins.send('albuminfo_received', info=a)
+        plugins.send(u'albuminfo_received', info=a)
     candidates.extend(plugin_albums)
     return filter(None, candidates)
 
@@ -548,7 +547,7 @@ def tracks_for_id(track_id):
     candidates = [track_for_mbid(track_id)]
     plugin_tracks = plugins.track_for_id(track_id)
     for t in plugin_tracks:
-        plugins.send('trackinfo_received', info=t)
+        plugins.send(u'trackinfo_received', info=t)
     candidates.extend(plugin_tracks)
     return filter(None, candidates)
 
@@ -581,7 +580,7 @@ def album_candidates(items, artist, album, va_likely):
 
     # Notify subscribed plugins about fetched album info
     for a in out:
-        plugins.send('albuminfo_received', info=a)
+        plugins.send(u'albuminfo_received', info=a)
 
     return out
 
@@ -605,6 +604,6 @@ def item_candidates(item, artist, title):
 
     # Notify subscribed plugins about fetched track info
     for i in out:
-        plugins.send('trackinfo_received', info=i)
+        plugins.send(u'trackinfo_received', info=i)
 
     return out

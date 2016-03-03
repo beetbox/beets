@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from test.helper import TestHelper

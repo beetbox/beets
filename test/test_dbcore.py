@@ -15,8 +15,7 @@
 
 """Tests for the DBCore database abstraction.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
@@ -313,7 +312,7 @@ class ModelTest(unittest.TestCase):
     def test_computed_field(self):
         model = TestModelWithGetters()
         self.assertEqual(model.aComputedField, 'thing')
-        with self.assertRaisesRegexp(KeyError, 'computed field .+ deleted'):
+        with self.assertRaisesRegexp(KeyError, u'computed field .+ deleted'):
             del model.aComputedField
 
     def test_items(self):
@@ -329,7 +328,7 @@ class ModelTest(unittest.TestCase):
             model._db
 
     def test_parse_nonstring(self):
-        with self.assertRaisesRegexp(TypeError, "must be a string"):
+        with self.assertRaisesRegexp(TypeError, u"must be a string"):
             dbcore.Model._parse(None, 42)
 
 

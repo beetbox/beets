@@ -15,8 +15,7 @@
 
 """Miscellaneous utility functions."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 import os
 import sys
 import re
@@ -57,10 +56,10 @@ class HumanReadableException(Exception):
     def _gerund(self):
         """Generate a (likely) gerund form of the English verb.
         """
-        if ' ' in self.verb:
+        if u' ' in self.verb:
             return self.verb
-        gerund = self.verb[:-1] if self.verb.endswith('e') else self.verb
-        gerund += 'ing'
+        gerund = self.verb[:-1] if self.verb.endswith(u'e') else self.verb
+        gerund += u'ing'
         return gerund
 
     def _reasonstr(self):
@@ -415,7 +414,7 @@ def copy(path, dest, replace=False):
     path = syspath(path)
     dest = syspath(dest)
     if not replace and os.path.exists(dest):
-        raise FilesystemError('file exists', 'copy', (path, dest))
+        raise FilesystemError(u'file exists', 'copy', (path, dest))
     try:
         shutil.copyfile(path, dest)
     except (OSError, IOError) as exc:
@@ -436,7 +435,7 @@ def move(path, dest, replace=False):
     path = syspath(path)
     dest = syspath(dest)
     if os.path.exists(dest) and not replace:
-        raise FilesystemError('file exists', 'rename', (path, dest),
+        raise FilesystemError(u'file exists', 'rename', (path, dest),
                               traceback.format_exc())
 
     # First, try renaming the file.
@@ -462,13 +461,13 @@ def link(path, dest, replace=False):
     path = syspath(path)
     dest = syspath(dest)
     if os.path.exists(dest) and not replace:
-        raise FilesystemError('file exists', 'rename', (path, dest),
+        raise FilesystemError(u'file exists', 'rename', (path, dest),
                               traceback.format_exc())
     try:
         os.symlink(path, dest)
     except OSError:
-        raise FilesystemError('Operating system does not support symbolic '
-                              'links.', 'link', (path, dest),
+        raise FilesystemError(u'Operating system does not support symbolic '
+                              u'links.', 'link', (path, dest),
                               traceback.format_exc())
 
 
@@ -619,7 +618,7 @@ def legalize_path(path, replacements, length, extension, fragment):
 
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
-    return value.lower() in ('yes', '1', 'true', 't', 'y')
+    return value.lower() in (u'yes', u'1', u'true', u't', u'y')
 
 
 def as_string(value):
@@ -643,7 +642,7 @@ def plurality(objs):
     """
     c = Counter(objs)
     if not c:
-        raise ValueError('sequence must be non-empty')
+        raise ValueError(u'sequence must be non-empty')
     return c.most_common(1)[0]
 
 
@@ -766,7 +765,7 @@ def shlex_split(s):
         return [c.decode('utf8') for c in shlex.split(bs)]
 
     else:
-        raise TypeError('shlex_split called with non-string')
+        raise TypeError(u'shlex_split called with non-string')
 
 
 def interactive_open(targets, command):
@@ -854,8 +853,8 @@ def raw_seconds_short(string):
     Raises ValueError if the conversion cannot take place due to `string` not
     being in the right format.
     """
-    match = re.match('^(\d+):([0-5]\d)$', string)
+    match = re.match(r'^(\d+):([0-5]\d)$', string)
     if not match:
-        raise ValueError('String not in M:SS format')
+        raise ValueError(u'String not in M:SS format')
     minutes, seconds = map(int, match.groups())
     return float(minutes * 60 + seconds)

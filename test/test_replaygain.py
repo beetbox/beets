@@ -14,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from test.helper import TestHelper, has_program
@@ -95,7 +94,7 @@ class ReplayGainCliTestBase(TestHelper):
         # that it could only happen if the decoder plugins are missing.
         if all(i.rg_track_peak is None and i.rg_track_gain is None
                for i in self.lib.items()):
-            self.skipTest('decoder plugins could not be loaded.')
+            self.skipTest(u'decoder plugins could not be loaded.')
 
         for item in self.lib.items():
             self.assertIsNotNone(item.rg_track_peak)
@@ -107,11 +106,11 @@ class ReplayGainCliTestBase(TestHelper):
                 mediafile.rg_track_gain, item.rg_track_gain, places=2)
 
     def test_cli_skips_calculated_tracks(self):
-        self.run_command('replaygain')
+        self.run_command(u'replaygain')
         item = self.lib.items()[0]
         peak = item.rg_track_peak
         item.rg_track_gain = 0.0
-        self.run_command('replaygain')
+        self.run_command(u'replaygain')
         self.assertEqual(item.rg_track_gain, 0.0)
         self.assertEqual(item.rg_track_peak, peak)
 
@@ -121,7 +120,7 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_album_peak)
             self.assertIsNone(mediafile.rg_album_gain)
 
-        self.run_command('replaygain', '-a')
+        self.run_command(u'replaygain', u'-a')
 
         peaks = []
         gains = []
@@ -138,7 +137,7 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertNotEqual(max(peaks), 0.0)
 
 
-@unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
+@unittest.skipIf(not GST_AVAILABLE, u'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'gstreamer'
 
@@ -155,12 +154,12 @@ class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
         super(ReplayGainGstCliTest, self).setUp()
 
 
-@unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
+@unittest.skipIf(not GAIN_PROG_AVAILABLE, u'no *gain command found')
 class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'command'
 
 
-@unittest.skipIf(not LOUDNESS_PROG_AVAILABLE, 'bs1770gain cannot be found')
+@unittest.skipIf(not LOUDNESS_PROG_AVAILABLE, u'bs1770gain cannot be found')
 class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'bs1770gain'
 

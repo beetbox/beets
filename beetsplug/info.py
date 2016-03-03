@@ -16,8 +16,7 @@
 """Shows file metadata.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
 import re
@@ -141,17 +140,25 @@ def print_data_keys(data, item=None):
 class InfoPlugin(BeetsPlugin):
 
     def commands(self):
-        cmd = ui.Subcommand('info', help='show file metadata')
+        cmd = ui.Subcommand('info', help=u'show file metadata')
         cmd.func = self.run
-        cmd.parser.add_option('-l', '--library', action='store_true',
-                              help='show library fields instead of tags')
-        cmd.parser.add_option('-s', '--summarize', action='store_true',
-                              help='summarize the tags of all files')
-        cmd.parser.add_option('-i', '--include-keys', default=[],
-                              action='append', dest='included_keys',
-                              help='comma separated list of keys to show')
-        cmd.parser.add_option('-k', '--keys-only', action='store_true',
-                              help='show only the keys')
+        cmd.parser.add_option(
+            u'-l', u'--library', action='store_true',
+            help=u'show library fields instead of tags',
+        )
+        cmd.parser.add_option(
+            u'-s', u'--summarize', action='store_true',
+            help=u'summarize the tags of all files',
+        )
+        cmd.parser.add_option(
+            u'-i', u'--include-keys', default=[],
+            action='append', dest='included_keys',
+            help=u'comma separated list of keys to show',
+        )
+        cmd.parser.add_option(
+            u'-k', u'--keys-only', action='store_true',
+            help=u'show only the keys',
+        )
         cmd.parser.add_format_option(target='item')
         return [cmd]
 

@@ -15,8 +15,7 @@
 
 """Fetches album art.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from contextlib import closing
 import os
@@ -206,14 +205,14 @@ class ITunesStore(ArtSource):
             try:
                 results = itunes.search_album(search_string)
             except Exception as exc:
-                self._log.debug('iTunes search failed: {0}', exc)
+                self._log.debug(u'iTunes search failed: {0}', exc)
                 return
 
             # Get the first match.
             if results:
                 itunes_album = results[0]
             else:
-                self._log.debug('iTunes search for {:r} got no results',
+                self._log.debug(u'iTunes search for {:r} got no results',
                                 search_string)
                 return
 
@@ -276,9 +275,9 @@ class Wikipedia(ArtSource):
                 cover_filename = 'File:' + results[0]['coverFilename']['value']
                 page_id = results[0]['pageId']['value']
             else:
-                self._log.debug('wikipedia: album not found on dbpedia')
+                self._log.debug(u'wikipedia: album not found on dbpedia')
         except (ValueError, KeyError, IndexError):
-            self._log.debug('wikipedia: error scraping dbpedia response: {}',
+            self._log.debug(u'wikipedia: error scraping dbpedia response: {}',
                             dbpedia_response.text)
 
         # Ensure we have a filename before attempting to query wikipedia
@@ -293,7 +292,7 @@ class Wikipedia(ArtSource):
         if ' .' in cover_filename and \
            '.' not in cover_filename.split(' .')[-1]:
             self._log.debug(
-                'wikipedia: dbpedia provided incomplete cover_filename'
+                u'wikipedia: dbpedia provided incomplete cover_filename'
             )
             lpart, rpart = cover_filename.rsplit(' .', 1)
 
@@ -322,7 +321,7 @@ class Wikipedia(ArtSource):
                         break
             except (ValueError, KeyError):
                 self._log.debug(
-                    'wikipedia: failed to retrieve a cover_filename'
+                    u'wikipedia: failed to retrieve a cover_filename'
                 )
                 return
 
@@ -347,7 +346,7 @@ class Wikipedia(ArtSource):
                 image_url = result['imageinfo'][0]['url']
                 yield image_url
         except (ValueError, KeyError, IndexError):
-            self._log.debug('wikipedia: error scraping imageinfo')
+            self._log.debug(u'wikipedia: error scraping imageinfo')
             return
 
 
@@ -493,9 +492,11 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     # Manual album art fetching.
     def commands(self):
         cmd = ui.Subcommand('fetchart', help='download album art')
-        cmd.parser.add_option('-f', '--force', dest='force',
-                              action='store_true', default=False,
-                              help='re-download art when already present')
+        cmd.parser.add_option(
+            u'-f', u'--force', dest='force',
+            action='store_true', default=False,
+            help=u're-download art when already present'
+        )
 
         def func(lib, opts, args):
             self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)
@@ -511,12 +512,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """
         try:
             with closing(self.request(url, stream=True,
-                                      message='downloading image')) as resp:
+                                      message=u'downloading image')) as resp:
                 if 'Content-Type' not in resp.headers \
                         or resp.headers['Content-Type'] not in CONTENT_TYPES:
                     self._log.debug(
-                        'not a supported image: {}',
-                        resp.headers.get('Content-Type') or 'no content type',
+                        u'not a supported image: {}',
+                        resp.headers.get('Content-Type') or u'no content type',
                     )
                     return None
 
@@ -532,7 +533,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         except (IOError, requests.RequestException, TypeError) as exc:
             # Handling TypeError works around a urllib3 bug:
             # https://github.com/shazow/urllib3/issues/556
-            self._log.debug('error fetching art: {}', exc)
+            self._log.debug(u'error fetching art: {}', exc)
             return None
 
     def _is_valid_image_candidate(self, candidate):
@@ -551,7 +552,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         # get_size returns None if no local imaging backend is available
         size = ArtResizer.shared.get_size(candidate)
-        self._log.debug('image size: {}', size)
+        self._log.debug(u'image size: {}', size)
 
         if not size:
             self._log.warning(u'Could not get size of image (please see '
@@ -562,19 +563,19 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         # Check minimum size.
         if self.minwidth and size[0] < self.minwidth:
-            self._log.debug('image too small ({} < {})',
+            self._log.debug(u'image too small ({} < {})',
                             size[0], self.minwidth)
             return CANDIDATE_BAD
 
         # Check aspect ratio.
         if self.enforce_ratio and size[0] != size[1]:
-            self._log.debug('image is not square ({} != {})',
+            self._log.debug(u'image is not square ({} != {})',
                             size[0], size[1])
             return CANDIDATE_BAD
 
         # Check maximum size.
         if self.maxwidth and size[0] > self.maxwidth:
-            self._log.debug('image needs resizing ({} > {})',
+            self._log.debug(u'image needs resizing ({} > {})',
                             size[0], self.maxwidth)
             return CANDIDATE_DOWNSCALE
 
@@ -600,7 +601,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 check = self._is_valid_image_candidate(candidate)
                 if check:
                     out = candidate
-                    self._log.debug('found local image {}', out)
+                    self._log.debug(u'found local image {}', out)
                     break
 
         # Web art sources.
@@ -613,7 +614,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 check = self._is_valid_image_candidate(candidate)
                 if check:
                     out = candidate
-                    self._log.debug('using remote image {}', out)
+                    self._log.debug(u'using remote image {}', out)
                     break
 
         if self.maxwidth and out and check == CANDIDATE_DOWNSCALE:
@@ -627,7 +628,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """
         for album in albums:
             if album.artpath and not force and os.path.isfile(album.artpath):
-                message = ui.colorize('text_highlight_minor', 'has album art')
+                message = ui.colorize('text_highlight_minor', u'has album art')
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
@@ -638,9 +639,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 if path:
                     album.set_art(path, False)
                     album.store()
-                    message = ui.colorize('text_success', 'found album art')
+                    message = ui.colorize('text_success', u'found album art')
                 else:
-                    message = ui.colorize('text_error', 'no art found')
+                    message = ui.colorize('text_error', u'no art found')
 
             self._log.info(u'{0}: {1}', album, message)
 
@@ -654,7 +655,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         source_names = {v: k for k, v in ART_SOURCES.items()}
         for source in self.sources:
             self._log.debug(
-                'trying source {0} for album {1.albumartist} - {1.album}',
+                u'trying source {0} for album {1.albumartist} - {1.album}',
                 source_names[type(source)],
                 album,
             )

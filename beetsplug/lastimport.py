@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import pylast
 from pylast import TopItem, _extract, _number
@@ -44,7 +43,7 @@ class LastImportPlugin(plugins.BeetsPlugin):
         }
 
     def commands(self):
-        cmd = ui.Subcommand('lastimport', help='import last.fm play-count')
+        cmd = ui.Subcommand('lastimport', help=u'import last.fm play-count')
 
         def func(lib, opts, args):
             import_lastfm(lib, self._log)
@@ -115,9 +114,9 @@ def import_lastfm(lib, log):
     per_page = config['lastimport']['per_page'].get(int)
 
     if not user:
-        raise ui.UserError('You must specify a user name for lastimport')
+        raise ui.UserError(u'You must specify a user name for lastimport')
 
-    log.info('Fetching last.fm library for @{0}', user)
+    log.info(u'Fetching last.fm library for @{0}', user)
 
     page_total = 1
     page_current = 0
@@ -126,7 +125,7 @@ def import_lastfm(lib, log):
     retry_limit = config['lastimport']['retry_limit'].get(int)
     # Iterate through a yet to be known page total count
     while page_current < page_total:
-        log.info('Querying page #{0}{1}...',
+        log.info(u'Querying page #{0}{1}...',
                  page_current + 1,
                  '/{}'.format(page_total) if page_total > 1 else '')
 
@@ -134,7 +133,7 @@ def import_lastfm(lib, log):
             tracks, page_total = fetch_tracks(user, page_current + 1, per_page)
             if page_total < 1:
                 # It means nothing to us!
-                raise ui.UserError('Last.fm reported no data.')
+                raise ui.UserError(u'Last.fm reported no data.')
 
             if tracks:
                 found, unknown = process_tracks(lib, tracks, log)
@@ -142,22 +141,22 @@ def import_lastfm(lib, log):
                 unknown_total += unknown
                 break
             else:
-                log.error('ERROR: unable to read page #{0}',
+                log.error(u'ERROR: unable to read page #{0}',
                           page_current + 1)
                 if retry < retry_limit:
                     log.info(
-                        'Retrying page #{0}... ({1}/{2} retry)',
+                        u'Retrying page #{0}... ({1}/{2} retry)',
                         page_current + 1, retry + 1, retry_limit
                     )
                 else:
-                    log.error('FAIL: unable to fetch page #{0}, ',
-                              'tried {1} times', page_current, retry + 1)
+                    log.error(u'FAIL: unable to fetch page #{0}, ',
+                              u'tried {1} times', page_current, retry + 1)
         page_current += 1
 
-    log.info('... done!')
-    log.info('finished processing {0} song pages', page_total)
-    log.info('{0} unknown play-counts', unknown_total)
-    log.info('{0} play-counts imported', found_total)
+    log.info(u'... done!')
+    log.info(u'finished processing {0} song pages', page_total)
+    log.info(u'{0} unknown play-counts', unknown_total)
+    log.info(u'{0} play-counts imported', found_total)
 
 
 def fetch_tracks(user, page, limit):
@@ -191,7 +190,7 @@ def process_tracks(lib, tracks, log):
     total = len(tracks)
     total_found = 0
     total_fails = 0
-    log.info('Received {0} tracks in this page, processing...', total)
+    log.info(u'Received {0} tracks in this page, processing...', total)
 
     for num in xrange(0, total):
         song = None
@@ -244,7 +243,7 @@ def process_tracks(lib, tracks, log):
                      artist, title, album)
 
     if total_fails > 0:
-        log.info('Acquired {0}/{1} play-counts ({2} unknown)',
+        log.info(u'Acquired {0}/{1} play-counts ({2} unknown)',
                  total_found, total, total_fails)
 
     return total_found, total_fails

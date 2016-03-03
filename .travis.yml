@@ -1,10 +1,6 @@
 language: python
 sudo: false
 
-branches:
-    only:
-        - master
-
 matrix:
     include:
         - python: 2.7

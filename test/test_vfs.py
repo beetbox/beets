@@ -14,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests for the virtual filesystem builder.."""
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test import _common
 from test._common import unittest
@@ -27,8 +26,8 @@ class VFSTest(_common.TestCase):
     def setUp(self):
         super(VFSTest, self).setUp()
         self.lib = library.Library(':memory:', path_formats=[
-            ('default', 'albums/$album/$title'),
-            ('singleton:true', 'tracks/$artist/$title'),
+            (u'default', u'albums/$album/$title'),
+            (u'singleton:true', u'tracks/$artist/$title'),
         ])
         self.lib.add(_common.item())
         self.lib.add_album([_common.item()])

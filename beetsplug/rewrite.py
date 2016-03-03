@@ -16,8 +16,7 @@
 """Uses user-specified rewriting rules to canonicalize names for path
 formats.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 from collections import defaultdict
@@ -56,9 +55,9 @@ class RewritePlugin(BeetsPlugin):
             try:
                 fieldname, pattern = key.split(None, 1)
             except ValueError:
-                raise ui.UserError("invalid rewrite specification")
+                raise ui.UserError(u"invalid rewrite specification")
             if fieldname not in library.Item._fields:
-                raise ui.UserError("invalid field name (%s) in rewriter" %
+                raise ui.UserError(u"invalid field name (%s) in rewriter" %
                                    fieldname)
             self._log.debug(u'adding template field {0}', key)
             pattern = re.compile(pattern.lower())

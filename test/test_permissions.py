@@ -2,8 +2,7 @@
 
 """Tests for the 'permissions' plugin.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
 from mock import patch, Mock
@@ -63,7 +62,7 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         for x in [(True, self.exp_perms[expectSuccess][typ], '!='),
                   (False, self.exp_perms[not expectSuccess][typ], '==')]:
             self.assertEqual(x[0], check_permissions(path, x[1]),
-                             msg='{} : {} {} {}'.format(
+                             msg=u'{} : {} {} {}'.format(
                 path, oct(os.stat(path).st_mode), x[2], oct(x[1])))
 
     def test_convert_perm_from_string(self):

@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
@@ -251,17 +250,17 @@ class ImportSession(object):
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.should_remove_duplicates:
-                self.tag_log('duplicate-replace', paths)
+                self.tag_log(u'duplicate-replace', paths)
             elif task.choice_flag in (action.ASIS, action.APPLY):
-                self.tag_log('duplicate-keep', paths)
+                self.tag_log(u'duplicate-keep', paths)
             elif task.choice_flag is (action.SKIP):
-                self.tag_log('duplicate-skip', paths)
+                self.tag_log(u'duplicate-skip', paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is action.ASIS:
-                self.tag_log('asis', paths)
+                self.tag_log(u'asis', paths)
             elif task.choice_flag is action.SKIP:
-                self.tag_log('skip', paths)
+                self.tag_log(u'skip', paths)
 
     def should_resume(self, path):
         raise NotImplementedError
@@ -1150,7 +1149,7 @@ class ImportTaskFactory(object):
         if not (self.session.config['move'] or
                 self.session.config['copy']):
             log.warn(u"Archive importing requires either "
-                     "'copy' or 'move' to be enabled.")
+                     u"'copy' or 'move' to be enabled.")
             return
 
         log.debug(u'Extracting archive: {0}',
@@ -1325,7 +1324,7 @@ def resolve_duplicates(session, task):
     if task.choice_flag in (action.ASIS, action.APPLY, action.RETAG):
         found_duplicates = task.find_duplicates(session.lib)
         if found_duplicates:
-            log.debug('found duplicates: {}'.format(
+            log.debug(u'found duplicates: {}'.format(
                 [o.id for o in found_duplicates]
             ))
             session.resolve_duplicate(task, found_duplicates)
@@ -1342,7 +1341,7 @@ def import_asis(session, task):
     if task.skip:
         return
 
-    log.info('{}', displayable_path(task.paths))
+    log.info(u'{}', displayable_path(task.paths))
     task.set_choice(action.ASIS)
     apply_choice(session, task)
 

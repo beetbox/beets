@@ -8,8 +8,7 @@
         username: user
         password: password
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets import config
 from beets.plugins import BeetsPlugin
@@ -120,7 +119,8 @@ class EmbyUpdate(BeetsPlugin):
         token = get_token(host, port, headers, auth_data)
         if not token:
             self._log.warning(
-                u'Couldnt not get token for user {0}'.format(username))
+                u'Could not get token for user {0}', username
+            )
             return
 
         # Recreate headers with a token.

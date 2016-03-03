@@ -15,8 +15,7 @@
 
 """Tests for the album art fetchers."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
@@ -298,10 +297,10 @@ class ArtImporterTest(UseThePlugin):
         self.task.is_album = True
         self.task.album = self.album
         info = AlbumInfo(
-            album='some album',
-            album_id='albumid',
-            artist='some artist',
-            artist_id='artistid',
+            album=u'some album',
+            album_id=u'albumid',
+            artist=u'some artist',
+            artist_id=u'artistid',
             tracks=[],
         )
         self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
@@ -439,7 +438,7 @@ class ArtForAlbumTest(UseThePlugin):
         PIL (so comparisons and measurements are unavailable).
         """
         if ArtResizer.shared.method[0] == WEBPROXY:
-            self.skipTest("ArtResizer has no local imaging backend available")
+            self.skipTest(u"ArtResizer has no local imaging backend available")
 
     def test_respect_minwidth(self):
         self._require_backend()

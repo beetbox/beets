@@ -18,8 +18,7 @@ interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import locale
 import optparse
@@ -192,7 +191,7 @@ def input_(prompt=None):
     try:
         resp = raw_input()
     except EOFError:
-        raise UserError('stdin stream ended while input required')
+        raise UserError(u'stdin stream ended while input required')
 
     return resp.decode(sys.stdin.encoding or 'utf8', 'ignore')
 
@@ -238,7 +237,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                     found_letter = letter
                     break
             else:
-                raise ValueError('no unambiguous lettering found')
+                raise ValueError(u'no unambiguous lettering found')
 
         letters[found_letter.lower()] = option
         index = option.index(found_letter)
@@ -321,9 +320,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
     # Make a fallback prompt too. This is displayed if the user enters
     # something that is not recognized.
     if not fallback_prompt:
-        fallback_prompt = 'Enter one of '
+        fallback_prompt = u'Enter one of '
         if numrange:
-            fallback_prompt += '%i-%i, ' % numrange
+            fallback_prompt += u'%i-%i, ' % numrange
         fallback_prompt += ', '.join(display_letters) + ':'
 
     resp = input_(prompt)
@@ -362,9 +361,9 @@ def input_yn(prompt, require=False):
     "yes" unless `require` is `True`, in which case there is no default.
     """
     sel = input_options(
-        ('y', 'n'), require, prompt, 'Enter Y or N:'
+        ('y', 'n'), require, prompt, u'Enter Y or N:'
     )
-    return sel == 'y'
+    return sel == u'y'
 
 
 def input_select_objects(prompt, objs, rep):
@@ -376,18 +375,18 @@ def input_select_objects(prompt, objs, rep):
     object to print it out when confirming objects individually.
     """
     choice = input_options(
-        ('y', 'n', 's'), False,
-        '%s? (Yes/no/select)' % prompt)
+        (u'y', u'n', u's'), False,
+        u'%s? (Yes/no/select)' % prompt)
     print()  # Blank line.
 
-    if choice == 'y':  # Yes.
+    if choice == u'y':  # Yes.
         return objs
 
-    elif choice == 's':  # Select.
+    elif choice == u's':  # Select.
         out = []
         for obj in objs:
             rep(obj)
-            if input_yn('%s? (yes/no)' % prompt, True):
+            if input_yn(u'%s? (yes/no)' % prompt, True):
                 out.append(obj)
             print()  # go to a new line
         return out
@@ -400,14 +399,14 @@ def input_select_objects(prompt, objs, rep):
 
 def human_bytes(size):
     """Formats size, a number of bytes, in a human-readable way."""
-    powers = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'H']
+    powers = [u'', u'K', u'M', u'G', u'T', u'P', u'E', u'Z', u'Y', u'H']
     unit = 'B'
     for power in powers:
         if size < 1024:
-            return "%3.1f %s%s" % (size, power, unit)
+            return u"%3.1f %s%s" % (size, power, unit)
         size /= 1024.0
-        unit = 'iB'
-    return "big"
+        unit = u'iB'
+    return u"big"
 
 
 def human_seconds(interval):
@@ -415,13 +414,13 @@ def human_seconds(interval):
     interval using English words.
     """
     units = [
-        (1, 'second'),
-        (60, 'minute'),
-        (60, 'hour'),
-        (24, 'day'),
-        (7, 'week'),
-        (52, 'year'),
-        (10, 'decade'),
+        (1, u'second'),
+        (60, u'minute'),
+        (60, u'hour'),
+        (24, u'day'),
+        (7, u'week'),
+        (52, u'year'),
+        (10, u'decade'),
     ]
     for i in range(len(units) - 1):
         increment, suffix = units[i]
@@ -434,7 +433,7 @@ def human_seconds(interval):
         increment, suffix = units[-1]
         interval /= float(increment)
 
-    return "%3.1f %ss" % (interval, suffix)
+    return u"%3.1f %ss" % (interval, suffix)
 
 
 def human_seconds_short(interval):
@@ -495,7 +494,7 @@ def _colorize(color, text):
     elif color in LIGHT_COLORS:
         escape = COLOR_ESCAPE + "%i;01m" % (LIGHT_COLORS[color] + 30)
     else:
-        raise ValueError('no such color %s', color)
+        raise ValueError(u'no such color %s', color)
     return escape + text + RESET_COLOR
 
 
@@ -777,7 +776,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         Sets the album property on the options extracted from the CLI.
         """
         album = optparse.Option(*flags, action='store_true',
-                                help='match albums instead of tracks')
+                                help=u'match albums instead of tracks')
         self.add_option(album)
         self._album_flags = set(flags)
 
@@ -822,7 +821,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
                                callback=self._set_format,
                                callback_kwargs={'fmt': '$path',
                                                 'store_true': True},
-                               help='print paths for matched items or albums')
+                               help=u'print paths for matched items or albums')
         self.add_option(path)
 
     def add_format_option(self, flags=('-f', '--format'), target=None):
@@ -850,7 +849,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         opt = optparse.Option(*flags, action='callback',
                               callback=self._set_format,
                               callback_kwargs=kwargs,
-                              help='print with custom format')
+                              help=u'print with custom format')
         self.add_option(opt)
 
     def add_all_common_options(self):
@@ -916,7 +915,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         """
         # A more helpful default usage.
         if 'usage' not in kwargs:
-            kwargs['usage'] = """
+            kwargs['usage'] = u"""
   %prog COMMAND [ARGS...]
   %prog help COMMAND"""
         kwargs['add_help_option'] = False
@@ -1024,7 +1023,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         cmdname = args.pop(0)
         subcommand = self._subcommand_for_name(cmdname)
         if not subcommand:
-            raise UserError("unknown command '{0}'".format(cmdname))
+            raise UserError(u"unknown command '{0}'".format(cmdname))
 
         suboptions, subargs = subcommand.parse_args(args)
         return subcommand, suboptions, subargs
@@ -1076,7 +1075,7 @@ def _load_plugins(config):
     """
     paths = config['pluginpath'].get(confit.StrSeq(split=False))
     paths = map(util.normpath, paths)
-    log.debug('plugin paths: {0}', util.displayable_path(paths))
+    log.debug(u'plugin paths: {0}', util.displayable_path(paths))
 
     import beetsplug
     beetsplug.__path__ = paths + beetsplug.__path__
@@ -1146,10 +1145,13 @@ def _configure(options):
         old_key = 'list_format_{0}'.format(elem)
         if config[old_key].exists():
             new_key = 'format_{0}'.format(elem)
-            log.warning('Warning: configuration uses "{0}" which is deprecated'
-                        ' in favor of "{1}" now that it affects all commands. '
-                        'See changelog & documentation.'.format(old_key,
-                                                                new_key))
+            log.warning(
+                u'Warning: configuration uses "{0}" which is deprecated'
+                u' in favor of "{1}" now that it affects all commands. '
+                u'See changelog & documentation.',
+                old_key,
+                new_key,
+            )
             config[new_key].set(config[old_key])
 
     config_path = config.user_config_path()
@@ -1178,7 +1180,7 @@ def _open_library(config):
         )
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError):
-        log.debug('{}', traceback.format_exc())
+        log.debug(u'{}', traceback.format_exc())
         raise UserError(u"database file {0} could not be opened".format(
             util.displayable_path(dbpath)
         ))
@@ -1197,15 +1199,15 @@ def _raw_main(args, lib=None):
     parser.add_format_option(flags=('--format-item',), target=library.Item)
     parser.add_format_option(flags=('--format-album',), target=library.Album)
     parser.add_option('-l', '--library', dest='library',
-                      help='library database file to use')
+                      help=u'library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
-                      help="destination music directory")
+                      help=u"destination music directory")
     parser.add_option('-v', '--verbose', dest='verbose', action='count',
-                      help='log more details (use twice for even more)')
+                      help=u'log more details (use twice for even more)')
     parser.add_option('-c', '--config', dest='config',
-                      help='path to configuration file')
+                      help=u'path to configuration file')
     parser.add_option('-h', '--help', dest='help', action='store_true',
-                      help='show this help message and exit')
+                      help=u'show this help message and exit')
     parser.add_option('--version', dest='version', action='store_true',
                       help=optparse.SUPPRESS_HELP)
 
@@ -1261,4 +1263,4 @@ def main(args=None):
             raise
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
-        log.debug('{}', traceback.format_exc())
+        log.debug(u'{}', traceback.format_exc())
