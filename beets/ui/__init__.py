@@ -59,8 +59,8 @@ log.propagate = False  # Don't propagate to root handler.
 
 
 PF_KEY_QUERIES = {
-    'comp': 'comp:true',
-    'singleton': 'singleton:true',
+    'comp': u'comp:true',
+    'singleton': u'singleton:true',
 }
 
 
