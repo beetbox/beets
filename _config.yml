@@ -1,5 +1,8 @@
-markdown: redcarpet
-redcarpet:
-    extensions: [smart]
+markdown: kramdown
+kramdown:
+    auto_ids: true
+    entity_output: symbolic
+highlighter: null
+
 url: http://beets.io
 permalink: /blog/:title.html
