@@ -14,6 +14,8 @@ Fixes:
 * Fix a problem with the :ref:`stats-cmd` in exact mode when filenames on
   Windows use non-ASCII characters. :bug:`1891`
 * Fix a crash when iTunes Sound Check tags contained invalid data. :bug:`1895`
+* :doc:`/plugins/mbcollection`: The plugin now redacts your MusicBrainz
+  password in the ``beet config`` output. :bug:`1907`
 
 
 1.3.17 (February 7, 2016)

@@ -55,6 +55,7 @@ def submit_albums(collection_id, release_ids):
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self):
         super(MusicBrainzCollectionPlugin, self).__init__()
+        config['musicbrainz']['pass'].redact = True
         musicbrainzngs.auth(
             config['musicbrainz']['user'].get(unicode),
             config['musicbrainz']['pass'].get(unicode),
