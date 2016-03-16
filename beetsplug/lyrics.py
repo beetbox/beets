@@ -229,7 +229,7 @@ class MusiXmatch(SymbolsReplaced):
         if not html:
             return
         lyrics = extract_text_between(html,
-                                      '"lyrics_body":', '"lyrics_language":')
+                                      '"body":', '"language":')
         return lyrics.strip(',"').replace('\\n', '\n')
 
 
