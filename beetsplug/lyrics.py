@@ -216,6 +216,7 @@ class SymbolsReplaced(Backend):
 
         return super(SymbolsReplaced, cls)._encode(s)
 
+
 class MusiXmatch(SymbolsReplaced):
     REPLACEMENTS = dict(SymbolsReplaced.REPLACEMENTS, **{
         r'\s+': '-'
