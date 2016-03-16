@@ -133,7 +133,8 @@ class ScrubPlugin(BeetsPlugin):
             item.try_write()
             if art:
                 self._log.debug(u'restoring art')
-                mf = mediafile.MediaFile(util.syspath(item.path))
+                mf = mediafile.MediaFile(util.syspath(item.path),
+                                         config['id3v23'].get(bool))
                 mf.art = art
                 mf.save()
 

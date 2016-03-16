@@ -16,6 +16,8 @@ Fixes:
 * Fix a crash when iTunes Sound Check tags contained invalid data. :bug:`1895`
 * :doc:`/plugins/mbcollection`: The plugin now redacts your MusicBrainz
   password in the ``beet config`` output. :bug:`1907`
+* :doc:`/plugins/scrub`: Fix an occasional problem where scrubbing on import
+  could undo the ``id3v23`` setting. :bug:`1903`
 
 
 1.3.17 (February 7, 2016)
