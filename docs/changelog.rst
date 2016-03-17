@@ -18,6 +18,8 @@ Fixes:
   password in the ``beet config`` output. :bug:`1907`
 * :doc:`/plugins/scrub`: Fix an occasional problem where scrubbing on import
   could undo the ``id3v23`` setting. :bug:`1903`
+* :doc:`/plugins/lyrics`: Fix lyric retrieval for MusixMatch and improve URL
+  generation. :bug:`1880`
 
 
 1.3.17 (February 7, 2016)
