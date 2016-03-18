@@ -321,7 +321,8 @@ class LyricsWiki(SymbolsReplaced):
         html = self.fetch_url(url)
         if not html:
             return
-        lyrics = extract_text_in(html, u"<div class='lyricbox'>")
+        lyrics = extract_text_in(unescape(html), u"<div class='lyricbox'>")
+        lyrics = scrape_lyrics_from_html(lyrics)
         if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
             return lyrics
 
