@@ -18,6 +18,8 @@ Fixes:
   password in the ``beet config`` output. :bug:`1907`
 * :doc:`/plugins/scrub`: Fix an occasional problem where scrubbing on import
   could undo the ``id3v23`` setting. :bug:`1903`
+* :doc:`/plugins/lyrics`: Add compatibility with some changes to the
+  LyricsWiki page markup. :bug:`1912` :bug:`1909`
 
 
 1.3.17 (February 7, 2016)
