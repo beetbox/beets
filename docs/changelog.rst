@@ -20,6 +20,8 @@ Fixes:
   could undo the ``id3v23`` setting. :bug:`1903`
 * :doc:`/plugins/lyrics`: Add compatibility with some changes to the
   LyricsWiki page markup. :bug:`1912` :bug:`1909`
+* :doc:`/plugins/lyrics`: Also fix retrieval from Musixmatch and the way we
+  guess the URL for lyrics. :bug:`1880`
 
 
 1.3.17 (February 7, 2016)

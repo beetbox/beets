@@ -200,18 +200,28 @@ class Backend(object):
 
 
 class SymbolsReplaced(Backend):
+    REPLACEMENTS = {
+        r'\s+': '_',
+        '<': 'Less_Than',
+        '>': 'Greater_Than',
+        '#': 'Number_',
+        r'[\[\{]': '(',
+        r'[\[\{]': ')'
+    }
+
     @classmethod
     def _encode(cls, s):
-        s = re.sub(r'\s+', '_', s)
-        s = s.replace("<", "Less_Than")
-        s = s.replace(">", "Greater_Than")
-        s = s.replace("#", "Number_")
-        s = re.sub(r'[\[\{]', '(', s)
-        s = re.sub(r'[\]\}]', ')', s)
+        for old, new in cls.REPLACEMENTS.iteritems():
+            s = re.sub(old, new, s)
+
         return super(SymbolsReplaced, cls)._encode(s)
 
 
 class MusiXmatch(SymbolsReplaced):
+    REPLACEMENTS = dict(SymbolsReplaced.REPLACEMENTS, **{
+        r'\s+': '-'
+    })
+
     URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
 
     def fetch(self, artist, title):
@@ -220,7 +230,7 @@ class MusiXmatch(SymbolsReplaced):
         if not html:
             return
         lyrics = extract_text_between(html,
-                                      '"lyrics_body":', '"lyrics_language":')
+                                      '"body":', '"language":')
         return lyrics.strip(',"').replace('\\n', '\n')
 
 
