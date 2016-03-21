@@ -430,8 +430,13 @@ def scrape_lyrics_from_html(html):
                              parse_only=SoupStrainer(text=is_text_notcode))
     except HTMLParseError:
         return None
-    soup = sorted(soup.stripped_strings, key=len)[-1]
-    return soup
+
+    # Get the longest text element (if any).
+    strings = sorted(soup.stripped_strings, key=len, reverse=True)
+    if strings:
+        return strings[0]
+    else:
+        return None
 
 
 class Google(Backend):
