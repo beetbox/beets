@@ -43,15 +43,14 @@ file. The available options are:
   pixels. The height is recomputed so that the aspect ratio is preserved.
 - **enforce_ratio**: Only images with a width:height ratio of 1:1 are
   considered as valid album art candidates. Default: ``no``.
-- **remote_priority**: Query remote sources every time and use local image only
-  as fallback.
-  Default: ``no``; remote (Web) art sources are only queried if no local art is
-  found in the filesystem.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``coverart itunes amazon albumart``, i.e., everything but
+  Default: ``filesystem coverart itunes amazon albumart``, i.e., everything but
   ``wikipedia`` and ``google``. Enable those two sources for more matches at
-  the cost of some speed.
+  the cost of some speed. They are searched in the given order, thus in the
+  default config, no remote (Web) art source are queried if local art is 
+  found in the filesystem. To use a local image as fallback, move it to the end
+  of the list.
 - **google_key**: Your Google API key (to enable the Google Custom Search
   backend).
   Default: None.
