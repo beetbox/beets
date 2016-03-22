@@ -124,8 +124,8 @@ class ImportAddedPlugin(BeetsPlugin):
             item.store()
 
     def update_after_write_time(self, item):
-        """Update the mtime of the item's file with the item.added value 
-        after each write of the item if `preserve_write_mtimes` is enabled. 
+        """Update the mtime of the item's file with the item.added value
+        after each write of the item if `preserve_write_mtimes` is enabled.
         """
         if item.added:
             if self.config['preserve_write_mtimes'].get(bool):
