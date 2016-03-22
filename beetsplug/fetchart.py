@@ -70,9 +70,9 @@ class Candidate():
         if not self.path:
             return CANDIDATE_BAD
 
-        if not (extra.['enforce_ratio'] or 
-                extra.['minwidth'] or 
-                extra.['maxwidth']):
+        if not (extra['enforce_ratio'] or 
+                extra['minwidth'] or 
+                extra['maxwidth']):
             return CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -87,21 +87,21 @@ class Candidate():
             return CANDIDATE_EXACT
 
         # Check minimum size.
-        if extra.['minwidth'] and self.size[0] < extra.['minwidth']:
+        if extra['minwidth'] and self.size[0] < extra['minwidth']:
             self._log.debug(u'image too small ({} < {})',
-                            self.size[0], extra.['minwidth'])
+                            self.size[0], extra['minwidth'])
             return CANDIDATE_BAD
 
         # Check aspect ratio.
-        if extra.['enforce_ratio'] and self.size[0] != self.size[1]:
+        if extra['enforce_ratio'] and self.size[0] != self.size[1]:
             self._log.debug(u'image is not square ({} != {})',
                             self.size[0], self.size[1])
             return CANDIDATE_BAD
 
         # Check maximum size.
-        if extra.['maxwidth'] and self.size[0] > extra.['maxwidth']:
+        if extra['maxwidth'] and self.size[0] > extra['maxwidth']:
             self._log.debug(u'image needs resizing ({} > {})',
-                            self.size[0], extra.['maxwidth'])
+                            self.size[0], extra['maxwidth'])
             return CANDIDATE_DOWNSCALE
 
         return CANDIDATE_EXACT
@@ -111,8 +111,8 @@ class Candidate():
         return self.check
 
     def resize(self, extra):
-        if extra.['maxwidth'] and self.check == CANDIDATE_DOWNSCALE:
-            self.path = ArtResizer.shared.resize(extra.['maxwidth'], self.path)
+        if extra['maxwidth'] and self.check == CANDIDATE_DOWNSCALE:
+            self.path = ArtResizer.shared.resize(extra['maxwidth'], self.path)
 
 
 def _logged_get(log, *args, **kwargs):
@@ -504,7 +504,7 @@ class FileSystem(LocalArtSource):
         cover_pat = br"(\b|_)({0})(\b|_)".format(b'|'.join(cover_names))
         cautious = extra['cautious']
         
-        for path in paths
+        for path in paths:
             if not os.path.isdir(path):
                 continue
 
