@@ -19,6 +19,7 @@ class ImportAddedPlugin(BeetsPlugin):
         super(ImportAddedPlugin, self).__init__()
         self.config.add({
             'preserve_mtimes': False,
+            'preserve_write_mtimes': False,
         })
 
         # item.id for new items that were reimported
@@ -37,6 +38,7 @@ class ImportAddedPlugin(BeetsPlugin):
         register('item_linked', self.record_import_mtime)
         register('album_imported', self.update_album_times)
         register('item_imported', self.update_item_times)
+        register('after_write', self.update_after_write_time)
 
     def check_config(self, task, session):
         self.config['preserve_mtimes'].get(bool)
@@ -120,3 +122,13 @@ class ImportAddedPlugin(BeetsPlugin):
             self._log.debug(u"Import of item '{0}', selected item.added={1}",
                             util.displayable_path(item.path), item.added)
             item.store()
+
+    def update_after_write_time(self, item):
+        """Update the mtime of the item's file with the item.added value
+        after each write of the item if `preserve_write_mtimes` is enabled.
+        """
+        if item.added:
+            if self.config['preserve_write_mtimes'].get(bool):
+                self.write_item_mtime(item, item.added)
+            self._log.debug(u"Write of item '{0}', selected item.added={1}",
+                            util.displayable_path(item.path), item.added)
