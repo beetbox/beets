@@ -41,17 +41,17 @@ IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg', 'image/png')
 DOWNLOAD_EXTENSION = '.jpg'
 
-CANDIDATE_BAD = 0
-CANDIDATE_EXACT = 1
-CANDIDATE_DOWNSCALE = 2
-
-MATCH_EXACT = 0
-MATCH_FALLBACK = 1
-
 class Candidate():
     """ 
 
     """
+    CANDIDATE_BAD = 0
+    CANDIDATE_EXACT = 1
+    CANDIDATE_DOWNSCALE = 2
+
+    MATCH_EXACT = 0
+    MATCH_FALLBACK = 1
+
     def __init__(self, path=None, url=None, source=u'', match=None):
         self.path = path
         self.source = source
@@ -68,12 +68,12 @@ class Candidate():
         Return `CANDIDATE_DOWNSCALE` if the file must be resized.
         """
         if not self.path:
-            return CANDIDATE_BAD
+            return self.CANDIDATE_BAD
 
         if not (extra['enforce_ratio'] or 
                 extra['minwidth'] or 
                 extra['maxwidth']):
-            return CANDIDATE_EXACT
+            return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
         self.size = ArtResizer.shared.get_size(self.path)
@@ -84,34 +84,34 @@ class Candidate():
                               u'documentation for dependencies). '
                               u'The configuration options `minwidth` and '
                               u'`enforce_ratio` may be violated.')
-            return CANDIDATE_EXACT
+            return self.CANDIDATE_EXACT
 
         # Check minimum size.
         if extra['minwidth'] and self.size[0] < extra['minwidth']:
             self._log.debug(u'image too small ({} < {})',
                             self.size[0], extra['minwidth'])
-            return CANDIDATE_BAD
+            return self.CANDIDATE_BAD
 
         # Check aspect ratio.
         if extra['enforce_ratio'] and self.size[0] != self.size[1]:
             self._log.debug(u'image is not square ({} != {})',
                             self.size[0], self.size[1])
-            return CANDIDATE_BAD
+            return self.CANDIDATE_BAD
 
         # Check maximum size.
         if extra['maxwidth'] and self.size[0] > extra['maxwidth']:
             self._log.debug(u'image needs resizing ({} > {})',
                             self.size[0], extra['maxwidth'])
-            return CANDIDATE_DOWNSCALE
+            return self.CANDIDATE_DOWNSCALE
 
-        return CANDIDATE_EXACT
+        return self.CANDIDATE_EXACT
 
     def validate(self, extra):
         self.check = self._validate(extra)
         return self.check
 
     def resize(self, extra):
-        if extra['maxwidth'] and self.check == CANDIDATE_DOWNSCALE:
+        if extra['maxwidth'] and self.check == self.CANDIDATE_DOWNSCALE:
             self.path = ArtResizer.shared.resize(extra['maxwidth'], self.path)
 
 
@@ -235,11 +235,11 @@ class CoverArtArchive(RemoteArtSource):
         if album.mb_albumid:
             yield Candidate(url=self.URL.format(mbid=album.mb_albumid),
                             source=u'coverartarchive.org',
-                            match=MATCH_EXACT)
+                            match=Candidate.MATCH_EXACT)
         if album.mb_releasegroupid:
             yield Candidate(url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
                             source=u'coverartarchive.org',
-                            match=MATCH_FALLBACK)
+                            match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
@@ -253,7 +253,7 @@ class Amazon(RemoteArtSource):
             for index in self.INDICES:
                 yield Candidate(url=self.URL % (album.asin, index),
                                 source=u'Amazon',
-                                match=MATCH_EXACT)
+                                match=Candidate.MATCH_EXACT)
 
 
 class AlbumArtOrg(RemoteArtSource):
@@ -280,7 +280,7 @@ class AlbumArtOrg(RemoteArtSource):
             image_url = m.group(1)
             yield Candidate(url=image_url,
                             source=u'AlbumArt.org',
-                            match=MATCH_EXACT)
+                            match=Candidate.MATCH_EXACT)
         else:
             self._log.debug(u'no image found on page')
 
@@ -319,7 +319,7 @@ class GoogleImages(RemoteArtSource):
             for item in data['items']:
                 yield Candidate(url=item['link'],
                                 source=u'Google images',
-                                match=MATCH_EXACT)
+                                match=Candidate.MATCH_EXACT)
 
 
 class ITunesStore(RemoteArtSource):
@@ -351,7 +351,7 @@ class ITunesStore(RemoteArtSource):
                 big_url = small_url.replace('100x100', '1200x1200')
                 yield Candidate(url=big_url,
                                 source=u'iTunes Store',
-                                match=MATCH_EXACT)
+                                match=Candidate.MATCH_EXACT)
             else:
                 self._log.debug(u'album has no artwork in iTunes Store')
         except IndexError:
@@ -478,7 +478,7 @@ class Wikipedia(RemoteArtSource):
                 image_url = result['imageinfo'][0]['url']
                 yield Candidate(url=image_url,
                                 source=u'Wikipedia',
-                                match=MATCH_EXACT)
+                                match=Candidate.MATCH_EXACT)
         except (ValueError, KeyError, IndexError):
             self._log.debug(u'wikipedia: error scraping imageinfo')
             return
@@ -525,7 +525,7 @@ class FileSystem(LocalArtSource):
                                     util.displayable_path(fn))
                     yield Candidate(path=os.path.join(path, fn),
                                     source=u'Filesystem',
-                                    match=MATCH_EXACT)
+                                    match=Candidate.MATCH_EXACT)
 
             # Fall back to any image in the folder.
             if images and not cautious:
@@ -533,7 +533,7 @@ class FileSystem(LocalArtSource):
                                 util.displayable_path(images[0]))
                 yield Candidate(path=os.path.join(path, images[0]),
                                 source=u'Filesystem',
-                                match=MATCH_FALLBACK)
+                                match=Candidate.MATCH_FALLBACK)
 
 
 # Try each source in turn.
@@ -683,7 +683,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                  'maxwidth': self.maxwidth}
 
         for source in self.sources:
-            if source.is_local or not local_only:
+            if source.IS_LOCAL or not local_only:
                 self._log.debug(
                     u'trying source {0} for album {1.albumartist} - {1.album}',
                     SOURCE_NAMES[type(source)],
