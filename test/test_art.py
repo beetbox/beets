@@ -53,15 +53,23 @@ class FetchImageTest(UseThePlugin):
         responses.add(responses.GET, 'http://example.com',
                       content_type=content_type)
 
+    def setUp(self):
+        super(FetchImageTest, self).setUp()
+        self.dpath = os.path.join(self.temp_dir, 'arttest')
+        self.candidate = self.plugin.Candidate(url='http://example.com')
+        self.source = self.plugin.RemoteArtSource(logger, self.plugin.config)
+
     def test_invalid_type_returns_none(self):
         self.mock_response('image/watercolour')
-        artpath = self.plugin._fetch_image('http://example.com')
-        self.assertEqual(artpath, None)
+        self.candidate.path = None
+        self.source.fetch_image(candidate)
+        self.assertEqual(self.candidate.path, None)
 
     def test_jpeg_type_returns_path(self):
         self.mock_response('image/jpeg')
-        artpath = self.plugin._fetch_image('http://example.com')
-        self.assertNotEqual(artpath, None)
+        self.candidate.path = None
+        self.source.fetch_image(candidate)
+        self.assertNotEqual(self.candidate.path, None)
 
 
 class FSArtTest(UseThePlugin):
@@ -71,38 +79,44 @@ class FSArtTest(UseThePlugin):
         os.mkdir(self.dpath)
 
         self.source = fetchart.FileSystem(logger, self.plugin.config)
+        self.extra = {'cautious': False,
+                      'cover_names': ('art',),
+                      'paths': self.dpath}
 
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        fn = self.source.get(self.dpath, ('art',), False)
-        self.assertEqual(fn, os.path.join(self.dpath, 'a.jpg'))
+        candidate = next(self.source.get(None, self.extra))
+        self.assertEqual(candidate.path, os.path.join(self.dpath, 'a.jpg'))
 
     def test_appropriately_named_file_takes_precedence(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
         _common.touch(os.path.join(self.dpath, 'art.jpg'))
-        fn = self.source.get(self.dpath, ('art',), False)
-        self.assertEqual(fn, os.path.join(self.dpath, 'art.jpg'))
+        candidate = next(self.source.get(None, self.extra))
+        self.assertEqual(candidate.path, os.path.join(self.dpath, 'art.jpg'))
 
     def test_non_image_file_not_identified(self):
         _common.touch(os.path.join(self.dpath, 'a.txt'))
-        fn = self.source.get(self.dpath, ('art',), False)
-        self.assertEqual(fn, None)
+        candidate = next(self.source.get(None, self.extra))
+        self.assertEqual(candidate.path, None)
 
     def test_cautious_skips_fallback(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        fn = self.source.get(self.dpath, ('art',), True)
-        self.assertEqual(fn, None)
+        self.extra['cautious'] = True
+        candidate = next(self.source.get(None, self.extra))
+        self.assertEqual(candidate.path, None)
 
     def test_empty_dir(self):
-        fn = self.source.get(self.dpath, ('art',), True)
-        self.assertEqual(fn, None)
+        candidate = next(self.source.get(None, self.extra))
+        self.assertEqual(candidate.path, None)
 
     def test_precedence_amongst_correct_files(self):
         _common.touch(os.path.join(self.dpath, 'back.jpg'))
         _common.touch(os.path.join(self.dpath, 'front.jpg'))
         _common.touch(os.path.join(self.dpath, 'front-cover.jpg'))
-        fn = self.source.get(self.dpath, ('cover', 'front', 'back'), False)
-        self.assertEqual(fn, os.path.join(self.dpath, 'front-cover.jpg'))
+        self.extra['cover_names'] = ('cover', 'front', 'back')
+        candidate = next(self.source.get(None, self.extra))
+        self.assertEqual(candidate.path, 
+                         os.path.join(self.dpath, 'front-cover.jpg'))
 
 
 class CombinedTest(UseThePlugin):
