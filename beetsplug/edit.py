@@ -46,7 +46,12 @@ def edit(filename, log):
     cmd = util.shlex_split(util.editor_command())
     cmd.append(filename)
     log.debug(u'invoking editor command: {!r}', cmd)
-    subprocess.call(cmd)
+    try:
+        subprocess.call(cmd)
+    except OSError as exc:
+        raise ui.UserError(u'could not run editor command {!r}: {}'.format(
+            cmd[0], exc
+        ))
 
 
 def dump(arg):

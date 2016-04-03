@@ -24,6 +24,8 @@ Fixes:
   LyricsWiki page markup. :bug:`1912` :bug:`1909`
 * :doc:`/plugins/lyrics`: Also fix retrieval from Musixmatch and the way we
   guess the URL for lyrics. :bug:`1880`
+* :doc:`/plugins/error`: Fail gracefully when the configured text editor
+  command can't be invoked. :bug:`1927`
 
 
 1.3.17 (February 7, 2016)
