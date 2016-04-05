@@ -179,7 +179,7 @@ class LocalArtSource(ArtSource):
     LOC_STR = u'local'
 
     def fetch_image(self, candidate, extra):
-        return candidate
+        pass 
 
 class RemoteArtSource(ArtSource):
     IS_LOCAL = False
