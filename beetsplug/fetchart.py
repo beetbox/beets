@@ -698,7 +698,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     source.fetch_image(candidate, extra)
                     if candidate.validate(extra):
                         out = candidate
-                        self._log.debug(u'using {0.LOC_STR()} image {1}'
+                        self._log.debug(u'using {0.LOC_STR} image {1}'
                                         .format(source, out.path))
                         break
                 if out:
