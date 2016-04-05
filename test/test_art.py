@@ -45,31 +45,32 @@ class UseThePlugin(_common.TestCase):
 
 
 class FetchImageTest(UseThePlugin):
+    URL = 'http://example.com'
+
     @responses.activate
     def run(self, *args, **kwargs):
         super(FetchImageTest, self).run(*args, **kwargs)
 
     def mock_response(self, content_type):
-        responses.add(responses.GET, 'http://example.com',
+        responses.add(responses.GET, self.URL,
                       content_type=content_type)
 
     def setUp(self):
         super(FetchImageTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, 'arttest')
-        self.candidate = self.plugin.Candidate(url='http://example.com')
         self.source = self.plugin.RemoteArtSource(logger, self.plugin.config)
 
     def test_invalid_type_returns_none(self):
         self.mock_response('image/watercolour')
-        self.candidate.path = None
+        candidate = fetchart.Candidate(url=self.URL)
         self.source.fetch_image(candidate)
-        self.assertEqual(self.candidate.path, None)
+        self.assertEqual(candidate.path, None)
 
     def test_jpeg_type_returns_path(self):
         self.mock_response('image/jpeg')
-        self.candidate.path = None
+        candidate = fetchart.Candidate(url=self.URL)
         self.source.fetch_image(candidate)
-        self.assertNotEqual(self.candidate.path, None)
+        self.assertNotEqual(candidate.path, None)
 
 
 class FSArtTest(UseThePlugin):
@@ -97,26 +98,26 @@ class FSArtTest(UseThePlugin):
     def test_non_image_file_not_identified(self):
         _common.touch(os.path.join(self.dpath, 'a.txt'))
         with self.assertRaises(StopIteration):
-            candidate = next(self.source.get(None, self.extra))
+            next(self.source.get(None, self.extra))
 
     def test_cautious_skips_fallback(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
         self.extra['cautious'] = True
         with self.assertRaises(StopIteration):
-            candidate = next(self.source.get(None, self.extra))
+            next(self.source.get(None, self.extra))
 
     def test_empty_dir(self):
         with self.assertRaises(StopIteration):
-            candidate = next(self.source.get(None, self.extra))
+            next(self.source.get(None, self.extra))
 
     def test_precedence_amongst_correct_files(self):
-        images = ('front-cover.jpg', 'front.jpg', 'back.jpg') 
-        paths = (os.path.join(self.dpath, i) for i in images)
+        images = ['front-cover.jpg', 'front.jpg', 'back.jpg']
+        paths = [os.path.join(self.dpath, i) for i in images]
         for p in paths:
             _common.touch(p)
-        self.extra['cover_names'] = ('cover', 'front', 'back')
-        candidates = (candidate.path
-                      for candidate in self.source.get(None, self.extra))
+        self.extra['cover_names'] = ['cover', 'front', 'back']
+        candidates = [candidate.path for candidate in
+                      self.source.get(None, self.extra)]
         self.assertEqual(candidates, paths)
 
 
@@ -237,8 +238,8 @@ class AAOTest(UseThePlugin):
     def test_aao_scraper_returns_no_result_when_no_image_present(self):
         self.mock_response(self.AAO_URL, b'blah blah')
         album = _common.Bag(asin=self.ASIN)
-        with assertRaises(StopIteration):
-            candidate = next(self.source.get(album, self.extra))
+        with self.assertRaises(StopIteration):
+            next(self.source.get(album, self.extra))
 
 
 class GoogleImageTest(UseThePlugin):
@@ -266,15 +267,15 @@ class GoogleImageTest(UseThePlugin):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = b'{"error": {"errors": [{"reason": "some reason"}]}}'
         self.mock_response(fetchart.GoogleImages.URL, json)
-        with assertRaises(StopIteration):
-            candidate = next(self.source.get(album, self.extra))
+        with self.assertRaises(StopIteration):
+            next(self.source.get(album, self.extra))
 
     def test_google_art_returns_no_result_with_malformed_response(self):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = b"""bla blup"""
         self.mock_response(fetchart.GoogleImages.URL, json)
-        with assertRaises(StopIteration):
-            candidate = next(self.source.get(album, self.extra))
+        with self.assertRaises(StopIteration):
+            next(self.source.get(album, self.extra))
 
 
 @_common.slow_test()
@@ -421,14 +422,15 @@ class ArtForAlbumTest(UseThePlugin):
         self.assertExists(image_file)
         self.image_file = image_file
 
-        artpath = self.plugin.art_for_album(None, [''], True).path
+        candidate = self.plugin.art_for_album(None, [''], True)
 
         if should_exist:
-            self.assertEqual(artpath, self.image_file)
-            self.assertExists(artpath)
-            return artpath
+            self.assertNotEqual(candidate, None)
+            self.assertEqual(candidate.path, self.image_file)
+            self.assertExists(candidate.path)
+            return candidate.path
         else:
-            self.assertIsNone(artpath)
+            self.assertIsNone(candidate)
 
     def _assertImageResized(self, image_file, should_resize):
         self.image_file = image_file
