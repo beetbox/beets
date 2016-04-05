@@ -41,9 +41,10 @@ IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg', 'image/png')
 DOWNLOAD_EXTENSION = '.jpg'
 
-class Candidate():
-    """ 
 
+class Candidate():
+    """Holds information about a matching artwork, deals with validation of
+    dimension restrictions and resizing.
     """
     CANDIDATE_BAD = 0
     CANDIDATE_EXACT = 1
@@ -54,6 +55,7 @@ class Candidate():
 
     def __init__(self, path=None, url=None, source=u'', match=None):
         self.path = path
+        self.url = url
         self.source = source
         self.check = None
         self.match = match
@@ -70,8 +72,8 @@ class Candidate():
         if not self.path:
             return self.CANDIDATE_BAD
 
-        if not (extra['enforce_ratio'] or 
-                extra['minwidth'] or 
+        if not (extra['enforce_ratio'] or
+                extra['minwidth'] or
                 extra['maxwidth']):
             return self.CANDIDATE_EXACT
 
@@ -174,12 +176,14 @@ class ArtSource(RequestMixin):
     def fetch_image(self, candidate, extra):
         raise NotImplementedError()
 
+
 class LocalArtSource(ArtSource):
     IS_LOCAL = True
     LOC_STR = u'local'
 
     def fetch_image(self, candidate, extra):
-        pass 
+        pass
+
 
 class RemoteArtSource(ArtSource):
     IS_LOCAL = False
@@ -191,7 +195,7 @@ class RemoteArtSource(ArtSource):
         Otherwise, returns None.
         """
         if extra['maxwidth']:
-            candidate.url = ArtResizer.shared.proxy_url(extra['maxwidth'], 
+            candidate.url = ArtResizer.shared.proxy_url(extra['maxwidth'],
                                                         candidate.url)
         try:
             with closing(self.request(candidate.url, stream=True,
@@ -203,7 +207,7 @@ class RemoteArtSource(ArtSource):
                         resp.headers.get('Content-Type') or u'no content type',
                     )
                     candidate.path = None
-                    return 
+                    return
 
                 # Generate a temporary file with the correct extension.
                 with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION,
@@ -220,7 +224,7 @@ class RemoteArtSource(ArtSource):
             # https://github.com/shazow/urllib3/issues/556
             self._log.debug(u'error fetching art: {}', exc)
             candidate.path = None
-            return 
+            return
 
 
 class CoverArtArchive(RemoteArtSource):
@@ -237,9 +241,10 @@ class CoverArtArchive(RemoteArtSource):
                             source=u'coverartarchive.org',
                             match=Candidate.MATCH_EXACT)
         if album.mb_releasegroupid:
-            yield Candidate(url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                            source=u'coverartarchive.org',
-                            match=Candidate.MATCH_FALLBACK)
+            yield Candidate(
+                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
+                source=u'coverartarchive.org',
+                match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
@@ -503,7 +508,7 @@ class FileSystem(LocalArtSource):
         cover_names = extra['cover_names']
         cover_pat = br"(\b|_)({0})(\b|_)".format(b'|'.join(cover_names))
         cautious = extra['cautious']
-        
+
         for path in paths:
             if not os.path.isdir(path):
                 continue
@@ -517,7 +522,7 @@ class FileSystem(LocalArtSource):
                         images.append(fn)
 
             # Look for "preferred" filenames.
-            images = sorted(images, 
+            images = sorted(images,
                             lambda x: self.filename_priority(x, cover_names))
             for fn in images:
                 if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
@@ -538,7 +543,7 @@ class FileSystem(LocalArtSource):
 
 # Try each source in turn.
 
-SOURCES_ALL = [u'filesysytem', 
+SOURCES_ALL = [u'filesysytem',
                u'coverart', u'itunes', u'amazon', u'albumart',
                u'wikipedia', u'google']
 
@@ -565,10 +570,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'minwidth': 0,
             'maxwidth': 0,
             'enforce_ratio': False,
-            'remote_priority': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': ['filesystem', 
+            'sources': ['filesystem',
                         'coverart', 'itunes', 'amazon', 'albumart'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
@@ -669,14 +673,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         are made.
         """
         out = None
-        check = None
 
         # all the information any of the sources might need
         cover_names = self.config['cover_names'].as_str_seq()
         cover_names = map(util.bytestring_path, cover_names)
         cautious = self.config['cautious'].get(bool)
-        extra = {'paths': paths, 
-                 'cover_names': cover_names, 
+        extra = {'paths': paths,
+                 'cover_names': cover_names,
                  'cautious': cautious,
                  'enforce_ratio': self.enforce_ratio,
                  'minwidth': self.minwidth,
@@ -692,7 +695,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # URLs might be invalid at this point, or the image may not
                 # fulfill the requirements
                 for candidate in source.get(album, extra):
-                    source.fetch_image(candidate)
+                    source.fetch_image(candidate, extra)
                     if candidate.validate(extra):
                         out = candidate
                         self._log.debug(u'using {0.LOC_STR()} image {1}'
@@ -728,4 +731,3 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize('text_error', u'no art found')
 
             self._log.info(u'{0}: {1}', album, message)
-
