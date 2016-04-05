@@ -286,7 +286,7 @@ class ArtImporterTest(UseThePlugin):
         self.art_file = os.path.join(self.temp_dir, 'tmpcover.jpg')
         _common.touch(self.art_file)
         self.old_afa = self.plugin.art_for_album
-        self.afa_response = self.art_file
+        self.afa_response = fetchart.Candidate(path=self.art_file)
 
         def art_for_album(i, p, local_only=False):
             return self.afa_response
@@ -377,7 +377,7 @@ class ArtImporterTest(UseThePlugin):
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
         shutil.copyfile(self.art_file, artdest)
-        self.afa_response = artdest
+        self.afa_response = fetchart.Candidate(path=artdest)
         self._fetch_art(True)
 
     def test_fetch_art_if_imported_file_deleted(self):
