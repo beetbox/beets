@@ -626,10 +626,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            path = self.art_for_album(task.album, task.paths, local)
+            candidate = self.art_for_album(task.album, task.paths, local)
 
-            if path:
-                self.art_paths[task] = path
+            if candidate:
+                self.art_paths[task] = candidate.path
 
     # Synchronous; after music files are put in place.
     def assign_art(self, session, task):
@@ -719,9 +719,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # sources.
                 local_paths = None if force else [album.path]
 
-                path = self.art_for_album(album, local_paths)
-                if path:
-                    album.set_art(path, False)
+                candidate = self.art_for_album(album, local_paths)
+                if candidate:
+                    album.set_art(candidate.path, False)
                     album.store()
                     message = ui.colorize('text_success', u'found album art')
                 else:
