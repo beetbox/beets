@@ -405,44 +405,30 @@ class ArtForAlbumTest(UseThePlugin):
     def setUp(self):
         super(ArtForAlbumTest, self).setUp()
 
-        self.old_fs_source_get = self.plugin.fs_source.get
-        self.old_fetch_img = self.plugin._fetch_image
-        self.old_source_urls = self.plugin._source_urls
+        self.old_fs_source_get = fetchart.FileSystem.get
 
-        def fs_source_get(*_):
-            return self.image_file
+        def fs_source_get(album, paths, *_):
+            if paths:
+                yield fetchart.Candidate(path=self.image_file)
 
-        def source_urls(_):
-            return ['']
-
-        def fetch_img(_):
-            return self.image_file
-
-        self.plugin.fs_source.get = fs_source_get
-        self.plugin._source_urls = source_urls
-        self.plugin._fetch_image = fetch_img
+        fetchart.FileSystem.get = fs_source_get
 
     def tearDown(self):
-        self.plugin.fs_source.get = self.old_fs_source_get
-        self.plugin._source_urls = self.old_source_urls
-        self.plugin._fetch_image = self.old_fetch_img
+        fetchart.FileSystem.get = self.old_fs_source_get
         super(ArtForAlbumTest, self).tearDown()
 
     def _assertImageIsValidArt(self, image_file, should_exist):
         self.assertExists(image_file)
         self.image_file = image_file
 
-        local_artpath = self.plugin.art_for_album(None, [''], True)
-        remote_artpath = self.plugin.art_for_album(None, [], False)
-
-        self.assertEqual(local_artpath, remote_artpath)
+        artpath = self.plugin.art_for_album(None, [''], True).path
 
         if should_exist:
-            self.assertEqual(local_artpath, self.image_file)
-            self.assertExists(local_artpath)
-            return local_artpath
+            self.assertEqual(artpath, self.image_file)
+            self.assertExists(artpath)
+            return artpath
         else:
-            self.assertIsNone(local_artpath)
+            self.assertIsNone(artpath)
 
     def _assertImageResized(self, image_file, should_resize):
         self.image_file = image_file
