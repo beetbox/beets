@@ -58,7 +58,7 @@ class FetchImageTest(UseThePlugin):
     def setUp(self):
         super(FetchImageTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, 'arttest')
-        self.source = self.plugin.RemoteArtSource(logger, self.plugin.config)
+        self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
 
     def test_invalid_type_returns_none(self):
         self.mock_response('image/watercolour')
@@ -147,25 +147,26 @@ class CombinedTest(UseThePlugin):
         self.mock_response(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
-        self.assertNotEqual(candidate.path, None)
+        self.assertIsNotNone(candidate)
 
     def test_main_interface_returns_none_for_missing_asin_and_path(self):
         album = _common.Bag()
         candidate = self.plugin.art_for_album(album, None)
-        self.assertEqual(candidate.path, None)
+        self.assertIsNotNone(candidate)
 
     def test_main_interface_gives_precedence_to_fs_art(self):
         _common.touch(os.path.join(self.dpath, 'art.jpg'))
         self.mock_response(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
+        self.assertIsNotNone(candidate)
         self.assertEqual(candidate.path, os.path.join(self.dpath, 'art.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         self.mock_response(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
-        self.assertNotEqual(candidate.path, None)
+        self.assertIsNotNone(candidate)
         self.assertFalse(candidate.path.startswith(self.dpath))
 
     def test_main_interface_tries_amazon_before_aao(self):
@@ -185,15 +186,14 @@ class CombinedTest(UseThePlugin):
         self.mock_response(self.CAA_URL)
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
-        self.assertNotEqual(candidate.path, None)
+        self.assertIsNotNone(candidate)
         self.assertEqual(len(responses.calls), 1)
         self.assertEqual(responses.calls[0].request.url, self.CAA_URL)
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
-        candidate = self.plugin.art_for_album(album, [self.dpath],
-                                              local_only=True)
-        self.assertEqual(candidate.path, None)
+        with self.assertRaises(StopIteration):
+            self.plugin.art_for_album(album, local_only=True)
         self.assertEqual(len(responses.calls), 0)
 
     def test_local_only_gets_fs_image(self):
@@ -201,6 +201,7 @@ class CombinedTest(UseThePlugin):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath],
                                               local_only=True)
+        self.assertIsNotNone(candidate)
         self.assertEqual(candidate.path, os.path.join(self.dpath, 'art.jpg'))
         self.assertEqual(len(responses.calls), 0)
 
