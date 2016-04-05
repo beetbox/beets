@@ -211,6 +211,7 @@ class AAOTest(UseThePlugin):
     def setUp(self):
         super(AAOTest, self).setUp()
         self.source = fetchart.AlbumArtOrg(logger, self.plugin.config)
+        self.extra = dict()
 
     @responses.activate
     def run(self, *args, **kwargs):
@@ -230,20 +231,21 @@ class AAOTest(UseThePlugin):
         """
         self.mock_response(self.AAO_URL, body)
         album = _common.Bag(asin=self.ASIN)
-        res = self.source.get(album)
-        self.assertEqual(list(res)[0], 'TARGET_URL')
+        candidate = next(self.source.get(album, self.extra))
+        self.assertEqual(candidate.url, 'TARGET_URL')
 
     def test_aao_scraper_returns_no_result_when_no_image_present(self):
         self.mock_response(self.AAO_URL, b'blah blah')
         album = _common.Bag(asin=self.ASIN)
-        res = self.source.get(album)
-        self.assertEqual(list(res), [])
+        with assertRaises(StopIteration):
+            candidate = next(self.source.get(album, self.extra))
 
 
 class GoogleImageTest(UseThePlugin):
     def setUp(self):
         super(GoogleImageTest, self).setUp()
         self.source = fetchart.GoogleImages(logger, self.plugin.config)
+        self.extra = dict()
 
     @responses.activate
     def run(self, *args, **kwargs):
@@ -257,22 +259,22 @@ class GoogleImageTest(UseThePlugin):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = b'{"items": [{"link": "url_to_the_image"}]}'
         self.mock_response(fetchart.GoogleImages.URL, json)
-        result_url = self.source.get(album)
-        self.assertEqual(list(result_url)[0], 'url_to_the_image')
+        candidate = next(self.source.get(album, self.extra))
+        self.assertEqual(candidate.url, 'url_to_the_image')
 
     def test_google_art_returns_no_result_when_error_received(self):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = b'{"error": {"errors": [{"reason": "some reason"}]}}'
         self.mock_response(fetchart.GoogleImages.URL, json)
-        result_url = self.source.get(album)
-        self.assertEqual(list(result_url), [])
+        with assertRaises(StopIteration):
+            candidate = next(self.source.get(album, self.extra))
 
     def test_google_art_returns_no_result_with_malformed_response(self):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = b"""bla blup"""
         self.mock_response(fetchart.GoogleImages.URL, json)
-        result_url = self.source.get(album)
-        self.assertEqual(list(result_url), [])
+        with assertRaises(StopIteration):
+            candidate = next(self.source.get(album, self.extra))
 
 
 @_common.slow_test()
