@@ -13,18 +13,15 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Fetches, embeds, and displays lyrics.
-"""
+from __future__ import absolute_import, division, print_function
 
-from __future__ import division, absolute_import, print_function
-
-import re
-import requests
-import json
-import unicodedata
-import urllib
 import difflib
 import itertools
+import json
+import re
+import requests
+import unicodedata
+import urllib
 import warnings
 from HTMLParser import HTMLParseError
 
@@ -56,7 +53,7 @@ URL_CHARACTERS = {
 
 
 def unescape(text):
-    """Resolves &#xxx; HTML entities (and some others)."""
+    """Resolve &#xxx; HTML entities (and some others)."""
     if isinstance(text, bytes):
         text = text.decode('utf8', 'ignore')
     out = text.replace(u'&nbsp;', u' ')
@@ -455,29 +452,29 @@ class Google(Backend):
         """
         if not text:
             return False
-        badTriggersOcc = []
-        nbLines = text.count('\n')
-        if nbLines <= 1:
+        bad_triggers_occ = []
+        nb_lines = text.count('\n')
+        if nb_lines <= 1:
             self._log.debug(u"Ignoring too short lyrics '{0}'", text)
             return False
-        elif nbLines < 5:
-            badTriggersOcc.append('too_short')
+        elif nb_lines < 5:
+            bad_triggers_occ.append('too_short')
         else:
             # Lyrics look legit, remove credits to avoid being penalized
             # further down
             text = remove_credits(text)
 
-        badTriggers = ['lyrics', 'copyright', 'property', 'links']
+        bad_triggers = ['lyrics', 'copyright', 'property', 'links']
         if artist:
-            badTriggersOcc += [artist]
+            bad_triggers_occ += [artist]
 
-        for item in badTriggers:
-            badTriggersOcc += [item] * len(re.findall(r'\W%s\W' % item,
-                                                      text, re.I))
+        for item in bad_triggers:
+            bad_triggers_occ += [item] * len(re.findall(r'\W%s\W' % item,
+                                                        text, re.I))
 
-        if badTriggersOcc:
-            self._log.debug(u'Bad triggers detected: {0}', badTriggersOcc)
-        return len(badTriggersOcc) < 2
+        if bad_triggers_occ:
+            self._log.debug(u'Bad triggers detected: {0}', bad_triggers_occ)
+        return len(bad_triggers_occ) < 2
 
     def slugify(self, text):
         """Normalize a string and remove non-alphanumeric characters.
