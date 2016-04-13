@@ -673,12 +673,11 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         if lyrics:
             self._log.info(u'fetched lyrics: {0}', item)
-            lang_lyrics = detect(lyrics)
-
+            lang_from = detect(lyrics)
             if self.config['bing_client_secret'].get() and \
-                    self.config['bing_lang_to']:
+                    self.config['bing_lang_to'].get() != lang_from:
                 if not self.config['bing_lang_from'] or (
-                        lang_lyrics in self.config[
+                        lang_from in self.config[
                         'bing_lang_from'].as_str_seq()):
                     lyrics = self.append_translation(
                         lyrics, self.config['bing_lang_to'])
@@ -689,9 +688,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 lyrics = fallback
             else:
                 return
-
         item.lyrics = lyrics
-
         if write:
             item.try_write()
         item.store()
