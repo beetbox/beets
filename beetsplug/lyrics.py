@@ -24,6 +24,7 @@ import unicodedata
 import urllib
 import warnings
 from HTMLParser import HTMLParseError
+from langdetect import detect
 
 from beets import plugins
 from beets import ui
@@ -567,6 +568,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.import_stages = [self.imported]
         self.config.add({
             'auto': True,
+            'bing_client_secret': None,
+            'bing_lang_from': [],
+            'bing_lang_to': None,
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
             'genius_api_key':
@@ -576,6 +580,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'force': False,
             'sources': self.SOURCES,
         })
+        self.config['bing_client_secret'].redact = True
         self.config['google_API_key'].redact = True
         self.config['google_engine_ID'].redact = True
         self.config['genius_api_key'].redact = True
@@ -589,6 +594,27 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         self.backends = [self.SOURCE_BACKENDS[key](self.config, self._log)
                          for key in self.config['sources'].as_str_seq()]
+        self.config['bing_lang_from'] = [
+            x.lower() for x in self.config['bing_lang_from'].as_str_seq()]
+        self.bing_auth_token = None
+
+    def get_bing_access_token(self):
+        params = {
+            'client_id': 'beets',
+            'client_secret': self.config['bing_client_secret'],
+            'scope': 'http://api.microsofttranslator.com',
+            'grant_type': 'client_credentials',
+        }
+
+        oauth_url = 'https://datamarket.accesscontrol.windows.net/v2/OAuth2-13'
+        oauth_token = json.loads(requests.post(
+            oauth_url,
+            data=urllib.urlencode(params)).content)
+        if 'access_token' in oauth_token:
+            return "Bearer " + oauth_token['access_token']
+        else:
+            self._log.warning(u'Could not get Bing Translate API access token. '
+                              u'Check your "bing_client_secret" password')
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
@@ -644,6 +670,15 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         if lyrics:
             self._log.info(u'fetched lyrics: {0}', item)
+            lang_lyrics = detect(lyrics)
+
+            if self.config['bing_client_secret'].get() and \
+                    self.config['bing_lang_to']:
+                if not self.config['bing_lang_from'] or (
+                        lang_lyrics in self.config[
+                        'bing_lang_from'].as_str_seq()):
+                    lyrics = self.append_translation(
+                        lyrics, self.config['bing_lang_to'])
         else:
             self._log.info(u'lyrics not found: {0}', item)
             fallback = self.config['fallback'].get()
@@ -668,3 +703,24 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'got lyrics from backend: {0}',
                                 backend.__class__.__name__)
                 return _scrape_strip_cruft(lyrics, True)
+
+    def append_translation(self, text, to_language):
+        import xml.etree.ElementTree as ET
+
+        if not self.bing_auth_token:
+            self.bing_auth_token = self.get_bing_access_token()
+        if self.bing_auth_token:
+            headers = {"Authorization ": self.bing_auth_token}
+            url = ('http://api.microsofttranslator.com/v2/Http.svc/'
+                   'Translate?text=%s&to=%s' % (text.replace('\n', '|'),
+                                                to_language))
+            r = requests.get(url, headers=headers)
+            if r.status_code != 200:
+                self._log.debug(r.text)
+                return text
+            translation = ET.fromstring(r.text.encode('utf8')).text
+            result = ''
+            for (orig, translated) in zip(text.split('\n'),
+                                          translation.split('|')):
+                result += '%s / %s\n' % (orig, translated)
+            return result
