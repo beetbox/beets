@@ -38,6 +38,14 @@ configuration file. The available options are:
 
 - **auto**: Fetch lyrics automatically during import.
   Default: ``yes``.
+- **bing_client_secret**: Your Bing Translation application password (to enable
+  on-the-fly translating)
+- **bing_lang_from**: By default all lyrics with a language other than
+  ``bing_lang_to`` are translated. Use a list of lang codes to restrict the set
+  of source languages to translate.
+  Default: ``[]``
+- **bing_lang_to**: Language to translate lyrics into.
+  Default: None.
 - **fallback**: By default, the file will be left unchanged when no lyrics are
   found. Use the empty string ``''`` to reset the lyrics in such a case.
   Default: None.
@@ -113,3 +121,19 @@ After that, the lyrics plugin will fall back on other declared data sources.
 
 .. _pip: http://www.pip-installer.org/
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/
+
+Activate on-the-fly translation
+-------------------------------
+
+Using the Bing Translation API requires `langdetect`_, which you can install
+using `pip`_ by typing::
+
+    pip install langdetect
+
+You also need to register for a Microsoft Azure Marketplace free account and
+to the `Microsoft Translator API`_.
+Set the ``bing_client_secret`` configuration option to your registered
+application password, alongside ``bing_lang_to`` target `language code`_.
+
+.. _Microsoft Translator API: https://www.microsoft.com/en-us/translator/getstarted.aspx
+.. _language code: https://msdn.microsoft.com/en-us/library/hh456380.aspx
