@@ -59,17 +59,18 @@ class FetchImageTest(UseThePlugin):
         super(FetchImageTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, 'arttest')
         self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
+        self.extra = {'maxwidth': 0}
 
     def test_invalid_type_returns_none(self):
         self.mock_response('image/watercolour')
-        candidate = fetchart.Candidate(url=self.URL)
-        self.source.fetch_image(candidate)
+        candidate = fetchart.Candidate(logger, url=self.URL)
+        self.source.fetch_image(candidate, self.extra)
         self.assertEqual(candidate.path, None)
 
     def test_jpeg_type_returns_path(self):
         self.mock_response('image/jpeg')
-        candidate = fetchart.Candidate(url=self.URL)
-        self.source.fetch_image(candidate)
+        candidate = fetchart.Candidate(logger, url=self.URL)
+        self.source.fetch_image(candidate, self.extra)
         self.assertNotEqual(candidate.path, None)
 
 
@@ -82,7 +83,7 @@ class FSArtTest(UseThePlugin):
         self.source = fetchart.FileSystem(logger, self.plugin.config)
         self.extra = {'cautious': False,
                       'cover_names': ('art',),
-                      'paths': self.dpath}
+                      'paths': [self.dpath]}
 
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
@@ -152,7 +153,7 @@ class CombinedTest(UseThePlugin):
     def test_main_interface_returns_none_for_missing_asin_and_path(self):
         album = _common.Bag()
         candidate = self.plugin.art_for_album(album, None)
-        self.assertIsNotNone(candidate)
+        self.assertIsNone(candidate)
 
     def test_main_interface_gives_precedence_to_fs_art(self):
         _common.touch(os.path.join(self.dpath, 'art.jpg'))
@@ -192,8 +193,7 @@ class CombinedTest(UseThePlugin):
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
-        with self.assertRaises(StopIteration):
-            self.plugin.art_for_album(album, local_only=True)
+        self.plugin.art_for_album(album, None, local_only=True)
         self.assertEqual(len(responses.calls), 0)
 
     def test_local_only_gets_fs_image(self):
@@ -288,7 +288,7 @@ class ArtImporterTest(UseThePlugin):
         self.art_file = os.path.join(self.temp_dir, 'tmpcover.jpg')
         _common.touch(self.art_file)
         self.old_afa = self.plugin.art_for_album
-        self.afa_response = fetchart.Candidate(path=self.art_file)
+        self.afa_response = fetchart.Candidate(logger, path=self.art_file)
 
         def art_for_album(i, p, local_only=False):
             return self.afa_response
@@ -379,7 +379,7 @@ class ArtImporterTest(UseThePlugin):
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
         shutil.copyfile(self.art_file, artdest)
-        self.afa_response = fetchart.Candidate(path=artdest)
+        self.afa_response = fetchart.Candidate(logger, path=artdest)
         self._fetch_art(True)
 
     def test_fetch_art_if_imported_file_deleted(self):
@@ -409,9 +409,9 @@ class ArtForAlbumTest(UseThePlugin):
 
         self.old_fs_source_get = fetchart.FileSystem.get
 
-        def fs_source_get(album, paths, *_):
-            if paths:
-                yield fetchart.Candidate(path=self.image_file)
+        def fs_source_get(_self, album, extra):
+            if extra['paths']:
+                yield fetchart.Candidate(logger, path=self.image_file)
 
         fetchart.FileSystem.get = fs_source_get
 
@@ -429,7 +429,6 @@ class ArtForAlbumTest(UseThePlugin):
             self.assertNotEqual(candidate, None)
             self.assertEqual(candidate.path, self.image_file)
             self.assertExists(candidate.path)
-            return candidate.path
         else:
             self.assertIsNone(candidate)
 

@@ -53,7 +53,8 @@ class Candidate():
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
 
-    def __init__(self, path=None, url=None, source=u'', match=None):
+    def __init__(self, log, path=None, url=None, source=u'', match=None):
+        self._log = log
         self.path = path
         self.url = url
         self.source = source
@@ -173,6 +174,9 @@ class ArtSource(RequestMixin):
     def get(self, album, extra):
         raise NotImplementedError()
 
+    def _candidate(self, **kwargs):
+        return Candidate(source=self.NAME, log=self._log, **kwargs)
+
     def fetch_image(self, candidate, extra):
         raise NotImplementedError()
 
@@ -228,7 +232,8 @@ class RemoteArtSource(ArtSource):
 
 
 class CoverArtArchive(RemoteArtSource):
-    """Cover Art Archive"""
+    NAME = u"Cover Art Archive"
+
     URL = 'http://coverartarchive.org/release/{mbid}/front'
     GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
@@ -237,17 +242,16 @@ class CoverArtArchive(RemoteArtSource):
         using album MusicBrainz release ID and release group ID.
         """
         if album.mb_albumid:
-            yield Candidate(url=self.URL.format(mbid=album.mb_albumid),
-                            source=u'coverartarchive.org',
-                            match=Candidate.MATCH_EXACT)
+            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
+                                  match=Candidate.MATCH_EXACT)
         if album.mb_releasegroupid:
-            yield Candidate(
+            yield self._candidate(
                 url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                source=u'coverartarchive.org',
                 match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
+    NAME = u"Amazon"
     URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
     INDICES = (1, 2)
 
@@ -256,13 +260,12 @@ class Amazon(RemoteArtSource):
         """
         if album.asin:
             for index in self.INDICES:
-                yield Candidate(url=self.URL % (album.asin, index),
-                                source=u'Amazon',
-                                match=Candidate.MATCH_EXACT)
+                yield self._candidate(url=self.URL % (album.asin, index),
+                                      match=Candidate.MATCH_EXACT)
 
 
 class AlbumArtOrg(RemoteArtSource):
-    """AlbumArt.org scraper"""
+    NAME = u"AlbumArt.org scraper"
     URL = 'http://www.albumart.org/index_detail.php'
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
@@ -283,14 +286,13 @@ class AlbumArtOrg(RemoteArtSource):
         m = re.search(self.PAT, resp.text)
         if m:
             image_url = m.group(1)
-            yield Candidate(url=image_url,
-                            source=u'AlbumArt.org',
-                            match=Candidate.MATCH_EXACT)
+            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
         else:
             self._log.debug(u'no image found on page')
 
 
 class GoogleImages(RemoteArtSource):
+    NAME = u"Google Images"
     URL = u'https://www.googleapis.com/customsearch/v1'
 
     def get(self, album, extra):
@@ -322,13 +324,13 @@ class GoogleImages(RemoteArtSource):
 
         if 'items' in data.keys():
             for item in data['items']:
-                yield Candidate(url=item['link'],
-                                source=u'Google images',
-                                match=Candidate.MATCH_EXACT)
+                yield self._candidate(url=item['link'],
+                                      match=Candidate.MATCH_EXACT)
 
 
 class ITunesStore(RemoteArtSource):
-    # Art from the iTunes Store.
+    NAME = u"iTunes Store"
+
     def get(self, album, extra):
         """Return art URL from iTunes Store given an album title.
         """
@@ -354,9 +356,7 @@ class ITunesStore(RemoteArtSource):
             if itunes_album.get_artwork()['100']:
                 small_url = itunes_album.get_artwork()['100']
                 big_url = small_url.replace('100x100', '1200x1200')
-                yield Candidate(url=big_url,
-                                source=u'iTunes Store',
-                                match=Candidate.MATCH_EXACT)
+                yield self._candidate(url=big_url, match=Candidate.MATCH_EXACT)
             else:
                 self._log.debug(u'album has no artwork in iTunes Store')
         except IndexError:
@@ -364,7 +364,7 @@ class ITunesStore(RemoteArtSource):
 
 
 class Wikipedia(RemoteArtSource):
-    # Art from Wikipedia (queried through DBpedia)
+    NAME = u"Wikipedia (queried through DBpedia)"
     DBPEDIA_URL = 'http://dbpedia.org/sparql'
     WIKIPEDIA_URL = 'http://en.wikipedia.org/w/api.php'
     SPARQL_QUERY = '''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -481,16 +481,16 @@ class Wikipedia(RemoteArtSource):
             results = data['query']['pages']
             for _, result in results.iteritems():
                 image_url = result['imageinfo'][0]['url']
-                yield Candidate(url=image_url,
-                                source=u'Wikipedia',
-                                match=Candidate.MATCH_EXACT)
+                yield self._candidate(url=image_url,
+                                      match=Candidate.MATCH_EXACT)
         except (ValueError, KeyError, IndexError):
             self._log.debug(u'wikipedia: error scraping imageinfo')
             return
 
 
 class FileSystem(LocalArtSource):
-    """Art from the filesystem"""
+    NAME = u"Filesystem"
+
     @staticmethod
     def filename_priority(filename, cover_names):
         """Sort order for image names.
@@ -505,6 +505,8 @@ class FileSystem(LocalArtSource):
         """Look for album art files in the specified directories.
         """
         paths = extra['paths']
+        if not paths:
+            return
         cover_names = extra['cover_names']
         cover_pat = br"(\b|_)({0})(\b|_)".format(b'|'.join(cover_names))
         cautious = extra['cautious']
@@ -523,27 +525,29 @@ class FileSystem(LocalArtSource):
 
             # Look for "preferred" filenames.
             images = sorted(images,
-                            lambda x: self.filename_priority(x, cover_names))
+                            key=lambda x:
+                                self.filename_priority(x, cover_names))
+            remaining = []
             for fn in images:
                 if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
                     self._log.debug(u'using well-named art file {0}',
                                     util.displayable_path(fn))
-                    yield Candidate(path=os.path.join(path, fn),
-                                    source=u'Filesystem',
-                                    match=Candidate.MATCH_EXACT)
+                    yield self._candidate(path=os.path.join(path, fn),
+                                          match=Candidate.MATCH_EXACT)
+                else:
+                    remaining.append(fn)
 
             # Fall back to any image in the folder.
-            if images and not cautious:
+            if remaining and not cautious:
                 self._log.debug(u'using fallback art file {0}',
-                                util.displayable_path(images[0]))
-                yield Candidate(path=os.path.join(path, images[0]),
-                                source=u'Filesystem',
-                                match=Candidate.MATCH_FALLBACK)
+                                util.displayable_path(remaining[0]))
+                yield self._candidate(path=os.path.join(path, remaining[0]),
+                                      match=Candidate.MATCH_FALLBACK)
 
 
 # Try each source in turn.
 
-SOURCES_ALL = [u'filesysytem',
+SOURCES_ALL = [u'filesystem',
                u'coverart', u'itunes', u'amazon', u'albumart',
                u'wikipedia', u'google']
 
@@ -698,8 +702,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     source.fetch_image(candidate, extra)
                     if candidate.validate(extra):
                         out = candidate
-                        self._log.debug(u'using {0.LOC_STR} image {1}'
-                                        .format(source, out.path))
+                        self._log.debug(
+                            u'using {0.LOC_STR} image {1}'.format(
+                                source, util.displayable_path(out.path)))
                         break
                 if out:
                     break
