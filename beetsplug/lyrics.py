@@ -721,6 +721,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             if r.status_code != 200:
                 self._log.debug('translation API error {}: {}', r.status_code,
                                 r.text)
+                if 'token has expired' in r.text:
+                    self.bing_auth_token = None
+                    return self.append_translation(text, to_lang)
                 return text
             lines_translated = ET.fromstring(r.text.encode('utf8')).text
             # Use a translation mapping dict to build resulting lyrics
