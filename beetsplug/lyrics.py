@@ -692,6 +692,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         item.lyrics = lyrics
         if write:
             item.try_write()
+        print(lyrics)
         item.store()
 
     def get_lyrics(self, artist, title):
@@ -717,7 +718,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
                                                 to_language))
             r = requests.get(url, headers=headers)
             if r.status_code != 200:
-                self._log.debug(r.text)
+                self._log.debug('translation API error {}: {}', r.status_code,
+                                r.text)
                 return text
             translation = ET.fromstring(r.text.encode('utf8')).text
             result = ''
