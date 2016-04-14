@@ -297,8 +297,8 @@ class GoogleImages(RemoteArtSource):
 
     def __init__(self, *args, **kwargs):
         super(RemoteArtSource, self).__init__(*args, **kwargs)
-            self.key: self._config['google_key'].get(),
-            self.cx: self._config['google_engine'].get(),
+        self.key = self._config['google_key'].get(),
+        self.cx = self._config['google_engine'].get(),
 
     def get(self, album, extra):
         """Return art URL from google custom search engine
