@@ -367,12 +367,7 @@ class ArtImporterTest(UseThePlugin):
         self.assertExists(self.art_file)
 
     def test_delete_original_file(self):
-        config['import']['delete'] = True
-        self._fetch_art(True)
-        self.assertNotExists(self.art_file)
-
-    def test_move_original_file(self):
-        config['import']['move'] = True
+        self.plugin.src_removed = True
         self._fetch_art(True)
         self.assertNotExists(self.art_file)
 
