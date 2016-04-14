@@ -615,8 +615,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
         if 'access_token' in oauth_token:
             return "Bearer " + oauth_token['access_token']
         else:
-            self._log.warning(u'Could not get Bing Translate API access token. '
-                              u'Check your "bing_client_secret" password')
+            self._log.warning(u'Could not get Bing Translate API access token.'
+                              u' Check your "bing_client_secret" password')
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
@@ -706,24 +706,26 @@ class LyricsPlugin(plugins.BeetsPlugin):
                                 backend.__class__.__name__)
                 return _scrape_strip_cruft(lyrics, True)
 
-    def append_translation(self, text, to_language):
+    def append_translation(self, text, to_lang):
         import xml.etree.ElementTree as ET
 
         if not self.bing_auth_token:
             self.bing_auth_token = self.get_bing_access_token()
         if self.bing_auth_token:
-            headers = {"Authorization ": self.bing_auth_token}
+            # Extract unique lines to limit API request size per song
+            text_lines = set(text.split('\n'))
             url = ('http://api.microsofttranslator.com/v2/Http.svc/'
-                   'Translate?text=%s&to=%s' % (text.replace('\n', '|'),
-                                                to_language))
-            r = requests.get(url, headers=headers)
+                   'Translate?text=%s&to=%s' % ('|'.join(text_lines), to_lang))
+            r = requests.get(url,
+                             headers={"Authorization ": self.bing_auth_token})
             if r.status_code != 200:
                 self._log.debug('translation API error {}: {}', r.status_code,
                                 r.text)
                 return text
-            translation = ET.fromstring(r.text.encode('utf8')).text
+            lines_translated = ET.fromstring(r.text.encode('utf8')).text
+            # Use a translation mapping dict to build resulting lyrics
+            translations = dict(zip(text_lines, lines_translated.split('|')))
             result = ''
-            for (orig, translated) in zip(text.split('\n'),
-                                          translation.split('|')):
-                result += '%s / %s\n' % (orig, translated)
+            for line in text.split('\n'):
+                result += '%s / %s\n' % (line, translations[line])
             return result
