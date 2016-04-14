@@ -415,6 +415,8 @@ class ArtForAlbumTest(UseThePlugin):
 
         fetchart.FileSystem.get = fs_source_get
 
+        self.album = _common.Bag()
+
     def tearDown(self):
         fetchart.FileSystem.get = self.old_fs_source_get
         super(ArtForAlbumTest, self).tearDown()
@@ -423,7 +425,7 @@ class ArtForAlbumTest(UseThePlugin):
         self.assertExists(image_file)
         self.image_file = image_file
 
-        candidate = self.plugin.art_for_album(None, [''], True)
+        candidate = self.plugin.art_for_album(self.album, [''], True)
 
         if should_exist:
             self.assertNotEqual(candidate, None)
@@ -435,7 +437,7 @@ class ArtForAlbumTest(UseThePlugin):
     def _assertImageResized(self, image_file, should_resize):
         self.image_file = image_file
         with patch.object(ArtResizer.shared, 'resize') as mock_resize:
-            self.plugin.art_for_album(None, [''], True)
+            self.plugin.art_for_album(self.album, [''], True)
             self.assertEqual(mock_resize.called, should_resize)
 
     def _require_backend(self):
