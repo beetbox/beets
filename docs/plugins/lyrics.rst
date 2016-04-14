@@ -38,7 +38,7 @@ configuration file. The available options are:
 
 - **auto**: Fetch lyrics automatically during import.
   Default: ``yes``.
-- **bing_client_secret**: Your `Bing Translation application password`_
+- **bing_client_secret**: Your Bing Translation application password
   (to :ref:`lyrics-translation`)
 - **bing_lang_from**: By default all lyrics with a language other than
   ``bing_lang_to`` are translated. Use a list of lang codes to restrict the set
