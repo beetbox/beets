@@ -16,15 +16,15 @@
 """Fetches, embeds, and displays lyrics.
 """
 
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
-import re
-import requests
-import json
-import unicodedata
-import urllib
 import difflib
 import itertools
+import json
+import re
+import requests
+import unicodedata
+import urllib
 import warnings
 from HTMLParser import HTMLParseError
 
@@ -56,7 +56,7 @@ URL_CHARACTERS = {
 
 
 def unescape(text):
-    """Resolves &#xxx; HTML entities (and some others)."""
+    """Resolve &#xxx; HTML entities (and some others)."""
     if isinstance(text, bytes):
         text = text.decode('utf8', 'ignore')
     out = text.replace(u'&nbsp;', u' ')
@@ -455,29 +455,29 @@ class Google(Backend):
         """
         if not text:
             return False
-        badTriggersOcc = []
-        nbLines = text.count('\n')
-        if nbLines <= 1:
+        bad_triggers_occ = []
+        nb_lines = text.count('\n')
+        if nb_lines <= 1:
             self._log.debug(u"Ignoring too short lyrics '{0}'", text)
             return False
-        elif nbLines < 5:
-            badTriggersOcc.append('too_short')
+        elif nb_lines < 5:
+            bad_triggers_occ.append('too_short')
         else:
             # Lyrics look legit, remove credits to avoid being penalized
             # further down
             text = remove_credits(text)
 
-        badTriggers = ['lyrics', 'copyright', 'property', 'links']
+        bad_triggers = ['lyrics', 'copyright', 'property', 'links']
         if artist:
-            badTriggersOcc += [artist]
+            bad_triggers_occ += [artist]
 
-        for item in badTriggers:
-            badTriggersOcc += [item] * len(re.findall(r'\W%s\W' % item,
-                                                      text, re.I))
+        for item in bad_triggers:
+            bad_triggers_occ += [item] * len(re.findall(r'\W%s\W' % item,
+                                                        text, re.I))
 
-        if badTriggersOcc:
-            self._log.debug(u'Bad triggers detected: {0}', badTriggersOcc)
-        return len(badTriggersOcc) < 2
+        if bad_triggers_occ:
+            self._log.debug(u'Bad triggers detected: {0}', bad_triggers_occ)
+        return len(bad_triggers_occ) < 2
 
     def slugify(self, text):
         """Normalize a string and remove non-alphanumeric characters.
@@ -570,6 +570,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.import_stages = [self.imported]
         self.config.add({
             'auto': True,
+            'bing_client_secret': None,
+            'bing_lang_from': [],
+            'bing_lang_to': None,
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
             'genius_api_key':
@@ -579,6 +582,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'force': False,
             'sources': self.SOURCES,
         })
+        self.config['bing_client_secret'].redact = True
         self.config['google_API_key'].redact = True
         self.config['google_engine_ID'].redact = True
         self.config['genius_api_key'].redact = True
@@ -592,6 +596,27 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         self.backends = [self.SOURCE_BACKENDS[key](self.config, self._log)
                          for key in self.config['sources'].as_str_seq()]
+        self.config['bing_lang_from'] = [
+            x.lower() for x in self.config['bing_lang_from'].as_str_seq()]
+        self.bing_auth_token = None
+
+    def get_bing_access_token(self):
+        params = {
+            'client_id': 'beets',
+            'client_secret': self.config['bing_client_secret'],
+            'scope': 'http://api.microsofttranslator.com',
+            'grant_type': 'client_credentials',
+        }
+
+        oauth_url = 'https://datamarket.accesscontrol.windows.net/v2/OAuth2-13'
+        oauth_token = json.loads(requests.post(
+            oauth_url,
+            data=urllib.urlencode(params)).content)
+        if 'access_token' in oauth_token:
+            return "Bearer " + oauth_token['access_token']
+        else:
+            self._log.warning(u'Could not get Bing Translate API access token.'
+                              u' Check your "bing_client_secret" password')
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
@@ -647,6 +672,16 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         if lyrics:
             self._log.info(u'fetched lyrics: {0}', item)
+            if self.config['bing_client_secret'].get():
+                from langdetect import detect
+
+                lang_from = detect(lyrics)
+                if self.config['bing_lang_to'].get() != lang_from and (
+                    not self.config['bing_lang_from'] or (
+                        lang_from in self.config[
+                        'bing_lang_from'].as_str_seq())):
+                    lyrics = self.append_translation(
+                        lyrics, self.config['bing_lang_to'])
         else:
             self._log.info(u'lyrics not found: {0}', item)
             fallback = self.config['fallback'].get()
@@ -654,11 +689,10 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 lyrics = fallback
             else:
                 return
-
         item.lyrics = lyrics
-
         if write:
             item.try_write()
+        print(lyrics)
         item.store()
 
     def get_lyrics(self, artist, title):
@@ -671,3 +705,30 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'got lyrics from backend: {0}',
                                 backend.__class__.__name__)
                 return _scrape_strip_cruft(lyrics, True)
+
+    def append_translation(self, text, to_lang):
+        import xml.etree.ElementTree as ET
+
+        if not self.bing_auth_token:
+            self.bing_auth_token = self.get_bing_access_token()
+        if self.bing_auth_token:
+            # Extract unique lines to limit API request size per song
+            text_lines = set(text.split('\n'))
+            url = ('http://api.microsofttranslator.com/v2/Http.svc/'
+                   'Translate?text=%s&to=%s' % ('|'.join(text_lines), to_lang))
+            r = requests.get(url,
+                             headers={"Authorization ": self.bing_auth_token})
+            if r.status_code != 200:
+                self._log.debug('translation API error {}: {}', r.status_code,
+                                r.text)
+                if 'token has expired' in r.text:
+                    self.bing_auth_token = None
+                    return self.append_translation(text, to_lang)
+                return text
+            lines_translated = ET.fromstring(r.text.encode('utf8')).text
+            # Use a translation mapping dict to build resulting lyrics
+            translations = dict(zip(text_lines, lines_translated.split('|')))
+            result = ''
+            for line in text.split('\n'):
+                result += '%s / %s\n' % (line, translations[line])
+            return result

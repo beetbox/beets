@@ -10,6 +10,9 @@ New features:
   art while copying it.
 * :doc:`/plugins/importadded`: A new `preserve_write_mtimes` option
   lets you preserve mtime of files after each write.
+* :doc:`/plugins/lyrics`: The plugin can now translate the fetched lyrics to a
+  configured `bing_lang_to` langage. Enabling translation require to register
+  for a Microsoft Azure Marketplace free account. Thanks to :user:`Kraymer`.
 
 Fixes:
 
