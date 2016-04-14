@@ -138,5 +138,6 @@ at step 3 enter `beets`` as *Client ID* and copy the generated *Client secret*.
 Paste it into your ``bing_client_secret`` configuration, alongside
 ``bing_lang_to`` target `language code`_.
 
+.. _langdetect: https://pypi.python.org/pypi/langdetect
 .. _Microsoft Translator API: https://www.microsoft.com/en-us/translator/getstarted.aspx
 .. _language code: https://msdn.microsoft.com/en-us/library/hh456380.aspx
