@@ -295,6 +295,11 @@ class GoogleImages(RemoteArtSource):
     NAME = u"Google Images"
     URL = u'https://www.googleapis.com/customsearch/v1'
 
+    def __init__(self, *args, **kwargs):
+        super(RemoteArtSource, self).__init__(*args, **kwargs)
+            self.key: self._config['google_key'].get(),
+            self.cx: self._config['google_engine'].get(),
+
     def get(self, album, extra):
         """Return art URL from google custom search engine
         given an album title and interpreter.
@@ -303,8 +308,8 @@ class GoogleImages(RemoteArtSource):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
         response = self.request(self.URL, params={
-            'key': self._config['google_key'].get(),
-            'cx': self._config['google_engine'].get(),
+            'key': self.key,
+            'cx': self.cx,
             'q': search_string,
             'searchType': 'image'
         })
@@ -591,6 +596,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.maxwidth = self.config['maxwidth'].get(int)
         self.enforce_ratio = self.config['enforce_ratio'].get(bool)
 
+        cover_names = self.config['cover_names'].as_str_seq()
+        self.cover_names = map(util.bytestring_path, cover_names)
+        self.cautious = self.config['cautious'].get(bool)
+
+        self.src_removed = (config['import']['delete'].get(bool) or
+                            config['import']['move'].get(bool))
+
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
@@ -646,11 +658,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             path = self.art_paths.pop(task)
 
             album = task.album
-            src_removed = (config['import']['delete'].get(bool) or
-                           config['import']['move'].get(bool))
-            album.set_art(path, not src_removed)
+            album.set_art(path, not self.src_removed)
             album.store()
-            if src_removed:
+            if self.src_removed:
                 task.prune(path)
 
     # Manual album art fetching.
@@ -679,12 +689,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         out = None
 
         # all the information any of the sources might need
-        cover_names = self.config['cover_names'].as_str_seq()
-        cover_names = map(util.bytestring_path, cover_names)
-        cautious = self.config['cautious'].get(bool)
         extra = {'paths': paths,
-                 'cover_names': cover_names,
-                 'cautious': cautious,
+                 'cover_names': self.cover_names,
+                 'cautious': self.cautious,
                  'enforce_ratio': self.enforce_ratio,
                  'minwidth': self.minwidth,
                  'maxwidth': self.maxwidth}
