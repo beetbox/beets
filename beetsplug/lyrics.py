@@ -27,7 +27,6 @@ import unicodedata
 import urllib
 import warnings
 from HTMLParser import HTMLParseError
-from langdetect import detect
 
 from beets import plugins
 from beets import ui
@@ -673,12 +672,14 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         if lyrics:
             self._log.info(u'fetched lyrics: {0}', item)
-            lang_from = detect(lyrics)
-            if self.config['bing_client_secret'].get() and \
-                    self.config['bing_lang_to'].get() != lang_from:
-                if not self.config['bing_lang_from'] or (
+            if self.config['bing_client_secret'].get():
+                from langdetect import detect
+
+                lang_from = detect(lyrics)
+                if self.config['bing_lang_to'].get() != lang_from and (
+                    not self.config['bing_lang_from'] or (
                         lang_from in self.config[
-                        'bing_lang_from'].as_str_seq()):
+                        'bing_lang_from'].as_str_seq())):
                     lyrics = self.append_translation(
                         lyrics, self.config['bing_lang_to'])
         else:
