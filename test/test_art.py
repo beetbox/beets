@@ -29,7 +29,6 @@ from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import library
 from beets import importer
-from beets import config
 from beets import logging
 from beets import util
 from beets.util.artresizer import ArtResizer, WEBPROXY
