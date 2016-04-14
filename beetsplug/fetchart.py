@@ -42,7 +42,7 @@ CONTENT_TYPES = ('image/jpeg', 'image/png')
 DOWNLOAD_EXTENSION = '.jpg'
 
 
-class Candidate():
+class Candidate(object):
     """Holds information about a matching artwork, deals with validation of
     dimension restrictions and resizing.
     """
