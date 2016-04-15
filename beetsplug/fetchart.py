@@ -196,7 +196,7 @@ class FanartTV(ArtSource):
     """Art from fanart.tv requested using their API"""
     API_URL = 'http://webservice.fanart.tv/v3/'
     API_ALBUMS = API_URL + 'music/albums/'
-    PROJECT_KEY = ''
+    PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
 
     def get(self, album):
         if not album.mb_releasegroupid:
