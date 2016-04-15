@@ -196,6 +196,7 @@ class FanartTV(ArtSource):
     """Art from fanart.tv requested using their API"""
     API_URL = 'http://webservice.fanart.tv/v3/'
     API_ALBUMS = API_URL + 'music/albums/'
+    PROJECT_KEY = ''
 
     def get(self, album):
         if not album.mb_releasegroupid:
@@ -204,8 +205,8 @@ class FanartTV(ArtSource):
         response = self.request(
             self.API_ALBUMS + album.mb_releasegroupid,
             headers={
-                'api-key': self._config['fanarttv_project_key'].get(),
-                'client-key': self._config['fanarttv_personal_key'].get()
+                'api-key': self.PROJECT_KEY,
+                'client-key': self._config['fanarttv_key'].get()
             })
 
         try:
@@ -215,16 +216,11 @@ class FanartTV(ArtSource):
                             response.text)
             return
 
-        def escapeforlog(s):
+        def escape_for_log(s):
             # the logger will eventually try to .format() the message, and
             # interpret the dict as format spec...
-            r = []
-            for c in s:
-                if c in ['{', '}']:
-                    r.append(c)
-                r.append(c)
-            return ''.join(r)
-        self._log.debug(escapeforlog(str(data)))
+            return ''.join((2 * c if c in '{}' else c for c in s))
+        self._log.debug(escape_for_log(str(data)))
 
         if u'status' in data and data[u'status'] == u'error':
             if u'not found' in data[u'error message'].lower():
@@ -413,7 +409,7 @@ class Wikipedia(ArtSource):
 
 
 class FileSystem(ArtSource):
-    """Art from the fileszystem"""
+    """Art from the filesystem"""
     @staticmethod
     def filename_priority(filename, cover_names):
         """Sort order for image names.
@@ -488,11 +484,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'sources': ['coverart', 'itunes', 'amazon', 'albumart'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
-            'fanarttv_project_key': None,
-            'fanarttv_personal_key': None
+            'fanarttv_key': None
         })
         self.config['google_key'].redact = True
-        self.config['fanarttv_personal_key'].redact = True
+        self.config['fanarttv_key'].redact = True
 
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
@@ -513,7 +508,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
-        if not self.config['fanarttv_personal_key'].get() and \
+        if not self.config['fanarttv_key'].get() and \
                 u'fanarttv' in available_sources:
             self._log.warn(
                 u'fanart.tv source enabled, but no personal API given. This '

@@ -57,7 +57,7 @@ file. The available options are:
   Default: None.
 - **google_engine**: The custom search engine to use.
   Default: The `beets custom search engine`_, which searches the entire web.
-  **fanarttv_personal_key**: The personal API key for requesting art from
+  **fanarttv_key**: The personal API key for requesting art from
   fanart.tv. See below.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
@@ -167,8 +167,8 @@ After that, the fetchart plugin will fall back on other declared data sources.
 Fanart.tv
 '''''''''
 
-Although not strictly necesarry right now, you might think about
-`registering a personal fanart.tv API key`_. Set the ``fanarttv_personal_key``
+Although not strictly necessary right now, you might think about
+`registering a personal fanart.tv API key`_. Set the ``fanarttv_key``
 configuration option to your key, then add ``fanarttv`` to the list of sources
 in your configuration.
 
