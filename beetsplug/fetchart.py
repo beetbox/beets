@@ -192,6 +192,58 @@ class GoogleImages(ArtSource):
                 yield item['link']
 
 
+class FanartTV(ArtSource):
+    """Art from fanart.tv requested using their API"""
+    API_URL = 'http://webservice.fanart.tv/v3/'
+    API_ALBUMS = API_URL + 'music/albums/'
+    PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
+
+    def get(self, album):
+        if not album.mb_releasegroupid:
+            return
+
+        response = self.request(
+            self.API_ALBUMS + album.mb_releasegroupid,
+            headers={
+                'api-key': self.PROJECT_KEY,
+                'client-key': self._config['fanarttv_key'].get()
+            })
+
+        try:
+            data = response.json()
+        except ValueError:
+            self._log.debug(u'fanart.tv: error loading response: {}',
+                            response.text)
+            return
+
+        if u'status' in data and data[u'status'] == u'error':
+            if u'not found' in data[u'error message'].lower():
+                self._log.debug(u'fanart.tv: no image found')
+            elif u'api key' in data[u'error message'].lower():
+                self._log.warning(u'fanart.tv: Invalid API key given, please '
+                                  u'enter a valid one in your config file.')
+            else:
+                self._log.debug(u'fanart.tv: error on request: {}',
+                                data[u'error message'])
+            return
+
+        matches = []
+        # can there be more than one releasegroupid per responce?
+        for mb_releasegroupid in data.get(u'albums', dict()):
+            if album.mb_releasegroupid == mb_releasegroupid:
+                # note: there might be more art referenced, e.g. cdart
+                matches.extend(
+                    data[u'albums'][mb_releasegroupid][u'albumcover'])
+            # can this actually occur?
+            else:
+                self._log.debug(u'fanart.tv: unexpected mb_releasegroupid in '
+                                u'response!')
+
+        matches.sort(key=lambda x: x[u'likes'], reverse=True)
+        for item in matches:
+            yield item[u'url']
+
+
 class ITunesStore(ArtSource):
     # Art from the iTunes Store.
     def get(self, album):
@@ -396,7 +448,7 @@ class FileSystem(ArtSource):
 # Try each source in turn.
 
 SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart',
-               u'wikipedia', u'google']
+               u'wikipedia', u'google', u'fanarttv']
 
 ART_SOURCES = {
     u'coverart': CoverArtArchive,
@@ -405,6 +457,7 @@ ART_SOURCES = {
     u'amazon': Amazon,
     u'wikipedia': Wikipedia,
     u'google': GoogleImages,
+    u'fanarttv': FanartTV,
 }
 
 # PLUGIN LOGIC ###############################################################
@@ -425,8 +478,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'sources': ['coverart', 'itunes', 'amazon', 'albumart'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
+            'fanarttv_key': None
         })
         self.config['google_key'].redact = True
+        self.config['fanarttv_key'].redact = True
 
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
@@ -447,6 +502,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
+        if not self.config['fanarttv_key'].get() and \
+                u'fanarttv' in available_sources:
+            self._log.warn(
+                u'fanart.tv source enabled, but no personal API given. This '
+                u'works as of now, however, fanart.tv prefers users to '
+                u'register a personal key. Additionaly this makes new art '
+                u'available shorter after its upload. See the documentation.')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
         self.sources = [ART_SOURCES[s](self._log, self.config)

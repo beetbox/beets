@@ -13,6 +13,10 @@ New features:
 * :doc:`/plugins/lyrics`: The plugin can now translate the fetched lyrics to a
   configured `bing_lang_to` langage. Enabling translation require to register
   for a Microsoft Azure Marketplace free account. Thanks to :user:`Kraymer`.
+* :doc:`/plugins/fetchart`: Album art can now be fetched from `fanart.tv`_.
+  Albums are matched using the ``mb_releasegroupid`` tag.
+
+.. _fanart.tv: https://fanart.tv/
 
 Fixes:
 
