@@ -169,8 +169,8 @@ Fanart.tv
 
 Although not strictly necesarry right now, you might think about
 `registering a personal fanart.tv API key`_. Set the ``fanarttv_personal_key``
-configurati option to your key, then add ``fanarttv`` to the list of sources in
-your configuration.
+configuration option to your key, then add ``fanarttv`` to the list of sources
+in your configuration.
 
 .. _registering a personal fanart.tv API key: https://fanart.tv/get-an-api-key/
 

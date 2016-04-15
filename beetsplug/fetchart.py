@@ -204,7 +204,7 @@ class FanartTV(ArtSource):
         response = self.request(
             self.API_ALBUMS + album.mb_releasegroupid,
             headers={
-                'api-key': self._config['fanarttv_api_key'].get(),
+                'api-key': self._config['fanarttv_project_key'].get(),
                 'client-key': self._config['fanarttv_personal_key'].get()
             })
 
@@ -488,7 +488,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'sources': ['coverart', 'itunes', 'amazon', 'albumart'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
-            'fanarttv_api_key': None,
+            'fanarttv_project_key': None,
             'fanarttv_personal_key': None
         })
         self.config['google_key'].redact = True
