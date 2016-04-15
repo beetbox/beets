@@ -10,6 +10,10 @@ New features:
   art while copying it.
 * :doc:`/plugins/importadded`: A new `preserve_write_mtimes` option
   lets you preserve mtime of files after each write.
+* :doc:`/plugins/fetchart`: Album art can now be fetched from `fanart.tv`_.
+  Albums are matched using the ``mb_releasegroupid`` tag.
+
+.. _fanart.tv: https://fanart.tv/
 
 Fixes:
 
