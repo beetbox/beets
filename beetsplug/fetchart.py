@@ -216,12 +216,6 @@ class FanartTV(ArtSource):
                             response.text)
             return
 
-        def escape_for_log(s):
-            # the logger will eventually try to .format() the message, and
-            # interpret the dict as format spec...
-            return ''.join((2 * c if c in '{}' else c for c in s))
-        self._log.debug(escape_for_log(str(data)))
-
         if u'status' in data and data[u'status'] == u'error':
             if u'not found' in data[u'error message'].lower():
                 self._log.debug(u'fanart.tv: no image found')
