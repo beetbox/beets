@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 AUTHOR = u'Adrian Sampson'
 
 # General configuration

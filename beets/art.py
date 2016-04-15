@@ -17,6 +17,8 @@
 music and items' embedded album art.
 """
 
+from __future__ import print_function
+
 import subprocess
 import platform
 from tempfile import NamedTemporaryFile

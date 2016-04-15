@@ -15,6 +15,9 @@
 
 """Test module for file ui/__init__.py
 """
+
+from __future__ import print_function
+
 from test import _common
 from test._common import unittest
 
