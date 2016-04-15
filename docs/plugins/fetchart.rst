@@ -165,7 +165,7 @@ Note that the Google custom search API is limited to 100 queries per day.
 After that, the fetchart plugin will fall back on other declared data sources.
 
 Fanart.tv
-.........
+'''''''''
 
 Although not strictly necesarry right now, you might think about
 `registering a personal fanart.tv API key`_. Set the ``fanarttv_personal_key``
