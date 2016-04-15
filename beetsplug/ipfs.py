@@ -14,6 +14,9 @@
 
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
 """
+
+from __future__ import print_function
+
 from beets import ui, util, library, config
 from beets.plugins import BeetsPlugin
 

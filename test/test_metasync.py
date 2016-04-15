@@ -12,6 +12,9 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
+
+from __future__ import print_function
+
 import os
 import platform
 import time

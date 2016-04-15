@@ -15,6 +15,9 @@
 
 """Synchronize information from iTunes's library
 """
+
+from __future__ import print_function
+
 from contextlib import contextmanager
 import os
 import shutil
