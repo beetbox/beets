@@ -16,19 +16,19 @@
 """Tests for the `filefilter` plugin.
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import os
 import shutil
 
-from _common import unittest
+from test import _common
+from test._common import unittest
+from test.helper import capture_log
+from test.test_importer import ImportHelper
 from beets import config
 from beets.mediafile import MediaFile
 from beets.util import displayable_path
 from beetsplug.filefilter import FileFilterPlugin
-from test import _common
-from test.helper import capture_log
-from test.test_importer import ImportHelper
 
 
 class FileFilterPluginTest(unittest.TestCase, ImportHelper):
