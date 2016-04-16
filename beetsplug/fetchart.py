@@ -660,9 +660,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
 
-        # Holds paths to downloaded images between fetching them and
-        # placing them in the filesystem.
-        self.art_paths = {}
+        # Holds candidates corresponding to downloaded images between
+        # fetching them and placing them in the filesystem.
+        self.art_candidates = {}
 
         self.config.add({
             'auto': True,
@@ -675,7 +675,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                         'coverart', 'itunes', 'amazon', 'albumart'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
-            'fanarttv_key': None
+            'fanarttv_key': None,
+            'store_origin': False
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
@@ -703,6 +704,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cover_names = self.config['cover_names'].as_str_seq()
         self.cover_names = map(util.bytestring_path, cover_names)
         self.cautious = self.config['cautious'].get(bool)
+        self.store_origin = self.config['store_origin'].get(bool)
 
         self.src_removed = (config['import']['delete'].get(bool) or
                             config['import']['move'].get(bool))
@@ -753,19 +755,28 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             candidate = self.art_for_album(task.album, task.paths, local)
 
             if candidate:
-                self.art_paths[task] = candidate.path
+                self.art_candidates[task] = candidate
+
+    def _set_art(self, album, candidate, delete=False):
+        album.set_art(candidate.path, delete)
+        if self.store_origin:
+            # store the origin of the chosen artwork in a flexible field
+            self._log.debug(
+                u"Storing artorigin for {0.albumartist} - {0.album}",
+                album)
+            album.artorigin = candidate.source
+        album.store()
 
     # Synchronous; after music files are put in place.
     def assign_art(self, session, task):
         """Place the discovered art in the filesystem."""
-        if task in self.art_paths:
-            path = self.art_paths.pop(task)
+        if task in self.art_candidates:
+            candidate = self.art_candidates.pop(task)
 
-            album = task.album
-            album.set_art(path, not self.src_removed)
-            album.store()
+            self._set_art(task.album, candidate, not self.src_removed)
+
             if self.src_removed:
-                task.prune(path)
+                task.prune(candidate.path)
 
     # Manual album art fetching.
     def commands(self):
@@ -842,8 +853,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
                 candidate = self.art_for_album(album, local_paths)
                 if candidate:
-                    album.set_art(candidate.path, False)
-                    album.store()
+                    self._set_art(album, candidate)
                     message = ui.colorize('text_success', u'found album art')
                 else:
                     message = ui.colorize('text_error', u'no art found')
