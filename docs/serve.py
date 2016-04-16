@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, print_function
+from __future__ import division, absolute_import, print_function
 
 from livereload import Server, shell
 
