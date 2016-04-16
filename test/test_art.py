@@ -278,6 +278,82 @@ class GoogleImageTest(UseThePlugin):
             next(self.source.get(album, self.extra))
 
 
+class FanartTVTest(UseThePlugin):
+    RESPONSE_MULTIPLE = u"""{
+        "name": "artistname",
+        "mbid_id": "artistid",
+        "albums": {
+            "thereleasegroupid": {
+                "albumcover": [
+                    {
+                        "id": "24",
+                        "url": "http://example.com/1.jpg",
+                        "likes": "0"
+                    },
+                    {
+                        "id": "42",
+                        "url": "http://example.com/2.jpg",
+                        "likes": "0"
+                    },
+                    {
+                        "id": "23",
+                        "url": "http://example.com/3.jpg",
+                        "likes": "0"
+                    }
+                ],
+                "cdart": [
+                    {
+                        "id": "123",
+                        "url": "http://example.com/4.jpg",
+                        "likes": "0",
+                        "disc": "1",
+                        "size": "1000"
+                    }
+                ]
+            }
+        }
+    }"""
+    RESPONSE_ERROR = u"""{
+        "status": "error",
+        "error message": "the error message"
+    }"""
+    RESPONSE_MALFORMED = u"bla blup"
+
+    def setUp(self):
+        super(FanartTVTest, self).setUp()
+        self.source = fetchart.FanartTV(logger, self.plugin.config)
+        self.extra = dict()
+
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super(FanartTVTest, self).run(*args, **kwargs)
+
+    def mock_response(self, url, json):
+        responses.add(responses.GET, url, body=json,
+                      content_type='application/json')
+
+    def test_fanarttv_finds_image(self):
+        album = _common.Bag(mb_releasegroupid=u'thereleasegroupid')
+        self.mock_response(fetchart.FanartTV.API_ALBUMS + u'thereleasegroupid',
+                           self.RESPONSE_MULTIPLE)
+        candidate = next(self.source.get(album, self.extra))
+        self.assertEqual(candidate.url, 'http://example.com/1.jpg')
+
+    def test_fanarttv_returns_no_result_when_error_received(self):
+        album = _common.Bag(mb_releasegroupid=u'thereleasegroupid')
+        self.mock_response(fetchart.FanartTV.API_ALBUMS + u'thereleasegroupid',
+                           self.RESPONSE_ERROR)
+        with self.assertRaises(StopIteration):
+            next(self.source.get(album, self.extra))
+
+    def test_fanarttv_returns_no_result_with_malformed_response(self):
+        album = _common.Bag(mb_releasegroupid=u'thereleasegroupid')
+        self.mock_response(fetchart.FanartTV.API_ALBUMS + u'thereleasegroupid',
+                           self.RESPONSE_MALFORMED)
+        with self.assertRaises(StopIteration):
+            next(self.source.get(album, self.extra))
+
+
 @_common.slow_test()
 class ArtImporterTest(UseThePlugin):
     def setUp(self):

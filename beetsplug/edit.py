@@ -40,12 +40,18 @@ class ParseError(Exception):
     """
 
 
-def edit(filename):
+def edit(filename, log):
     """Open `filename` in a text editor.
     """
     cmd = util.shlex_split(util.editor_command())
     cmd.append(filename)
-    subprocess.call(cmd)
+    log.debug(u'invoking editor command: {!r}', cmd)
+    try:
+        subprocess.call(cmd)
+    except OSError as exc:
+        raise ui.UserError(u'could not run editor command {!r}: {}'.format(
+            cmd[0], exc
+        ))
 
 
 def dump(arg):
@@ -245,7 +251,7 @@ class EditPlugin(plugins.BeetsPlugin):
         try:
             while True:
                 # Ask the user to edit the data.
-                edit(new.name)
+                edit(new.name, self._log)
 
                 # Read the data back after editing and check whether anything
                 # changed.
