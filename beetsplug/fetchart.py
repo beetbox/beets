@@ -335,7 +335,7 @@ class GoogleImages(RemoteArtSource):
                                       match=Candidate.MATCH_EXACT)
 
 
-class FanartTV(ArtSource):
+class FanartTV(RemoteArtSource):
     """Art from fanart.tv requested using their API"""
     NAME = u"fanart.tv"
 
