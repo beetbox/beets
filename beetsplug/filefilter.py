@@ -16,6 +16,8 @@
 """Filter imported files using a regular expression.
 """
 
+from __future__ import division, absolute_import, print_function
+
 import re
 from beets import config
 from beets.plugins import BeetsPlugin
