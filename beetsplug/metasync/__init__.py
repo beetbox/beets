@@ -15,6 +15,9 @@
 
 """Synchronize information from music player libraries
 """
+
+from __future__ import division, absolute_import, print_function
+
 from abc import abstractmethod, ABCMeta
 from importlib import import_module
 

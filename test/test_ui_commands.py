@@ -15,6 +15,9 @@
 
 """Test module for file ui/commands.py
 """
+
+from __future__ import division, absolute_import, print_function
+
 import os
 import shutil
 
