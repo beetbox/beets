@@ -2,7 +2,7 @@
 # Copyright 2016 Bruno Cauet
 # Split an album-file in tracks thanks a cue file
 
-from __future__ import absolute_import, print_function
+from __future__ import division, absolute_import, print_function
 
 import subprocess
 from os import path
