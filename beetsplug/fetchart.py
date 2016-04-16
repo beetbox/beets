@@ -53,14 +53,15 @@ class Candidate(object):
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
 
-    def __init__(self, log, path=None, url=None, source=u'', match=None):
+    def __init__(self, log, path=None, url=None, source=u'',
+                 match=None, size=None):
         self._log = log
         self.path = path
         self.url = url
         self.source = source
         self.check = None
         self.match = match
-        self.size = None
+        self.size = size
 
     def _validate(self, extra):
         """Determine whether the candidate artwork is valid based on
@@ -79,7 +80,8 @@ class Candidate(object):
             return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
-        self.size = ArtResizer.shared.get_size(self.path)
+        if not self.size:
+            self.size = ArtResizer.shared.get_size(self.path)
         self._log.debug(u'image size: {}', self.size)
 
         if not self.size:
@@ -296,7 +298,7 @@ class GoogleImages(RemoteArtSource):
     URL = u'https://www.googleapis.com/customsearch/v1'
 
     def __init__(self, *args, **kwargs):
-        super(RemoteArtSource, self).__init__(*args, **kwargs)
+        super(GoogleImages, self).__init__(*args, **kwargs)
         self.key = self._config['google_key'].get(),
         self.cx = self._config['google_engine'].get(),
 
@@ -331,6 +333,66 @@ class GoogleImages(RemoteArtSource):
             for item in data['items']:
                 yield self._candidate(url=item['link'],
                                       match=Candidate.MATCH_EXACT)
+
+
+class FanartTV(ArtSource):
+    """Art from fanart.tv requested using their API"""
+    NAME = u"fanart.tv"
+
+    API_URL = 'http://webservice.fanart.tv/v3/'
+    API_ALBUMS = API_URL + 'music/albums/'
+    PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
+
+    def __init__(self, *args, **kwargs):
+        super(FanartTV, self).__init__(*args, **kwargs)
+        self.client_key = self._config['fanarttv_key'].get()
+
+    def get(self, album, extra):
+        if not album.mb_releasegroupid:
+            return
+
+        response = self.request(
+            self.API_ALBUMS + album.mb_releasegroupid,
+            headers={'api-key': self.PROJECT_KEY,
+                     'client-key': self.client_key})
+
+        try:
+            data = response.json()
+        except ValueError:
+            self._log.debug(u'fanart.tv: error loading response: {}',
+                            response.text)
+            return
+
+        if u'status' in data and data[u'status'] == u'error':
+            if u'not found' in data[u'error message'].lower():
+                self._log.debug(u'fanart.tv: no image found')
+            elif u'api key' in data[u'error message'].lower():
+                self._log.warning(u'fanart.tv: Invalid API key given, please '
+                                  u'enter a valid one in your config file.')
+            else:
+                self._log.debug(u'fanart.tv: error on request: {}',
+                                data[u'error message'])
+            return
+
+        matches = []
+        # can there be more than one releasegroupid per responce?
+        for mb_releasegroupid in data.get(u'albums', dict()):
+            if album.mb_releasegroupid == mb_releasegroupid:
+                # note: there might be more art referenced, e.g. cdart
+                matches.extend(
+                    data[u'albums'][mb_releasegroupid][u'albumcover'])
+            # can this actually occur?
+            else:
+                self._log.debug(u'fanart.tv: unexpected mb_releasegroupid in '
+                                u'response!')
+
+        matches.sort(key=lambda x: x[u'likes'], reverse=True)
+        for item in matches:
+            # fanart.tv has a strict size requirement for album art to be
+            # uploaded
+            yield self._candidate(url=item[u'url'],
+                                  match=Candidate.MATCH_EXACT,
+                                  size=(1000, 1000))
 
 
 class ITunesStore(RemoteArtSource):
@@ -554,7 +616,7 @@ class FileSystem(LocalArtSource):
 
 SOURCES_ALL = [u'filesystem',
                u'coverart', u'itunes', u'amazon', u'albumart',
-               u'wikipedia', u'google']
+               u'wikipedia', u'google', u'fanarttv']
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
@@ -564,6 +626,7 @@ ART_SOURCES = {
     u'amazon': Amazon,
     u'wikipedia': Wikipedia,
     u'google': GoogleImages,
+    u'fanarttv': FanartTV,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
@@ -585,8 +648,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                         'coverart', 'itunes', 'amazon', 'albumart'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
+            'fanarttv_key': None
         })
         self.config['google_key'].redact = True
+        self.config['fanarttv_key'].redact = True
 
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
@@ -614,6 +679,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
+        if not self.config['fanarttv_key'].get() and \
+                u'fanarttv' in available_sources:
+            self._log.warn(
+                u'fanart.tv source enabled, but no personal API given. This '
+                u'works as of now, however, fanart.tv prefers users to '
+                u'register a personal key. Additionaly this makes new art '
+                u'available shorter after its upload. See the documentation.')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
         if 'remote_priority' in self.config:

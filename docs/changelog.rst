@@ -8,6 +8,15 @@ New features:
 
 * :doc:`/plugins/convert`: A new `album_art_maxwidth` lets you resize album
   art while copying it.
+* :doc:`/plugins/importadded`: A new `preserve_write_mtimes` option
+  lets you preserve mtime of files after each write.
+* :doc:`/plugins/lyrics`: The plugin can now translate the fetched lyrics to a
+  configured `bing_lang_to` langage. Enabling translation require to register
+  for a Microsoft Azure Marketplace free account. Thanks to :user:`Kraymer`.
+* :doc:`/plugins/fetchart`: Album art can now be fetched from `fanart.tv`_.
+  Albums are matched using the ``mb_releasegroupid`` tag.
+
+.. _fanart.tv: https://fanart.tv/
 
 Fixes:
 
@@ -22,6 +31,8 @@ Fixes:
   LyricsWiki page markup. :bug:`1912` :bug:`1909`
 * :doc:`/plugins/lyrics`: Also fix retrieval from Musixmatch and the way we
   guess the URL for lyrics. :bug:`1880`
+* :doc:`/plugins/edit`: Fail gracefully when the configured text editor
+  command can't be invoked. :bug:`1927`
 
 
 1.3.17 (February 7, 2016)

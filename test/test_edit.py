@@ -47,7 +47,9 @@ class ModifyFileMocker(object):
         if replacements:
             self.action = self.replace_contents
 
-    def overwrite_contents(self, filename):
+    # The two methods below mock the `edit` utility function in the plugin.
+
+    def overwrite_contents(self, filename, log):
         """Modify `filename`, replacing its contents with `self.contents`. If
         `self.contents` is empty, the file remains unchanged.
         """
@@ -55,7 +57,7 @@ class ModifyFileMocker(object):
             with codecs.open(filename, 'w', encoding='utf8') as f:
                 f.write(self.contents)
 
-    def replace_contents(self, filename):
+    def replace_contents(self, filename, log):
         """Modify `filename`, reading its contents and replacing the strings
         specified in `self.replacements`.
         """
