@@ -16,7 +16,7 @@
 """Synchronize information from amarok's library via dbus
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 from os.path import basename
 from datetime import datetime
