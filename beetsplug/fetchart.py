@@ -676,7 +676,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
-            'store_origin': False
+            'store_source': False,
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
@@ -704,7 +704,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cover_names = self.config['cover_names'].as_str_seq()
         self.cover_names = map(util.bytestring_path, cover_names)
         self.cautious = self.config['cautious'].get(bool)
-        self.store_origin = self.config['store_origin'].get(bool)
+        self.store_source = self.config['store_source'].get(bool)
 
         self.src_removed = (config['import']['delete'].get(bool) or
                             config['import']['move'].get(bool))
@@ -759,12 +759,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
     def _set_art(self, album, candidate, delete=False):
         album.set_art(candidate.path, delete)
-        if self.store_origin:
-            # store the origin of the chosen artwork in a flexible field
+        if self.store_source:
+            # store the source of the chosen artwork in a flexible field
             self._log.debug(
-                u"Storing artorigin for {0.albumartist} - {0.album}",
+                u"Storing art_source for {0.albumartist} - {0.album}",
                 album)
-            album.artorigin = candidate.source
+            album.art_source = candidate.source
         album.store()
 
     # Synchronous; after music files are put in place.
