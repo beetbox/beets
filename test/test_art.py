@@ -33,6 +33,7 @@ from beets import importer
 from beets import logging
 from beets import util
 from beets.util.artresizer import ArtResizer, WEBPROXY
+from beets.util import confit
 
 
 logger = logging.getLogger('beets.test_art')
@@ -534,6 +535,26 @@ class ArtForAlbumTest(UseThePlugin):
         self.plugin.enforce_ratio = False
         self._assertImageIsValidArt(self.IMG_500x490, True)
 
+    def test_respect_enforce_ratio_px_above(self):
+        self.plugin.enforce_ratio = True
+        self.plugin.margin_px = 5
+        self._assertImageIsValidArt(self.IMG_500x490, False)
+
+    def test_respect_enforce_ratio_px_below(self):
+        self.plugin.enforce_ratio = True
+        self.plugin.margin_px = 15
+        self._assertImageIsValidArt(self.IMG_500x490, True)
+
+    def test_respect_enforce_ratio_percent_above(self):
+        self.plugin.enforce_ratio = True
+        self.plugin.margin_percent = (500 - 490) / 500 * 0.5
+        self._assertImageIsValidArt(self.IMG_500x490, False)
+
+    def test_respect_enforce_ratio_percent_below(self):
+        self.plugin.enforce_ratio = True
+        self.plugin.margin_percent = (500 - 490) / 500 * 1.5
+        self._assertImageIsValidArt(self.IMG_500x490, True)
+
     def test_resize_if_necessary(self):
         self._require_backend()
         self.plugin.maxwidth = 300
@@ -557,6 +578,29 @@ class DeprecatedConfigTest(_common.TestCase):
 
     def test_moves_filesystem_to_end(self):
         self.assertEqual(type(self.plugin.sources[-1]), fetchart.FileSystem)
+
+
+class EnforceRatioConfigTest(_common.TestCase):
+    """Throw some data at the regexes."""
+
+    def _load_with_config(self, values, should_raise):
+        if should_raise:
+            for v in values:
+                config['fetchart']['enforce_ratio'] = v
+                with self.assertRaises(confit.ConfigValueError):
+                    fetchart.FetchArtPlugin()
+        else:
+            for v in values:
+                config['fetchart']['enforce_ratio'] = v
+                fetchart.FetchArtPlugin()
+
+    def test_px(self):
+        self._load_with_config(u'0px 4px 12px 123px'.split(), False)
+        self._load_with_config(u'00px stuff5px'.split(), True)
+
+    def test_percent(self):
+        self._load_with_config(u'0% 0.00% 5.1% 5% 100%'.split(), False)
+        self._load_with_config(u'00% 1.234% foo5% 100.1%'.split(), True)
 
 
 def suite():

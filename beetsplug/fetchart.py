@@ -30,6 +30,7 @@ from beets import ui
 from beets import util
 from beets import config
 from beets.util.artresizer import ArtResizer
+from beets.util import confit
 
 try:
     import itunes
@@ -91,6 +92,9 @@ class Candidate(object):
                               u'`enforce_ratio` may be violated.')
             return self.CANDIDATE_EXACT
 
+        short_edge = min(self.size)
+        long_edge = max(self.size)
+
         # Check minimum size.
         if extra['minwidth'] and self.size[0] < extra['minwidth']:
             self._log.debug(u'image too small ({} < {})',
@@ -98,10 +102,23 @@ class Candidate(object):
             return self.CANDIDATE_BAD
 
         # Check aspect ratio.
-        if extra['enforce_ratio'] and self.size[0] != self.size[1]:
-            self._log.debug(u'image is not square ({} != {})',
-                            self.size[0], self.size[1])
-            return self.CANDIDATE_BAD
+        edge_diff = long_edge - short_edge
+        if extra['enforce_ratio']:
+            if extra['margin_px'] and edge_diff > extra['margin_px']:
+                self._log.debug(u'image is notblablapxsquare ({} != {})',
+                                self.size[0], self.size[1])
+                return self.CANDIDATE_BAD
+            elif extra['margin_percent'] and \
+                    edge_diff > extra['margin_percent'] * long_edge:
+                self._log.debug(u'image is notblablapercentsquare ({} != {})',
+                                self.size[0], self.size[1])
+                return self.CANDIDATE_BAD
+            elif not extra['margin_px'] and not extra['margin_percent'] and \
+                    edge_diff:
+                # also reached for margin_px == 0 and margin_percent == 0.0
+                self._log.debug(u'image is not square ({} != {})',
+                                self.size[0], self.size[1])
+                return self.CANDIDATE_BAD
 
         # Check maximum size.
         if extra['maxwidth'] and self.size[0] > extra['maxwidth']:
@@ -634,8 +651,15 @@ SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
 
 class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
+    PAT_PX = r"(0|[1-9][0-9]*)px"
+    PAT_PERCENT = r"(100(\.00?)?|[1-9]?[0-9](\.[0-9]{1,2})?)%"
+
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
+
+        # Holds paths to downloaded images between fetching them and
+        # placing them in the filesystem.
+        self.art_paths = {}
 
         self.config.add({
             'auto': True,
@@ -653,13 +677,25 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
 
-        # Holds paths to downloaded images between fetching them and
-        # placing them in the filesystem.
-        self.art_paths = {}
-
         self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
-        self.enforce_ratio = self.config['enforce_ratio'].get(bool)
+
+        # allow both pixel and percentage-based margin specifications
+        self.enforce_ratio = self.config['enforce_ratio'].get(
+            confit.OneOf([bool,
+                          confit.String(pattern=self.PAT_PX),
+                          confit.String(pattern=self.PAT_PERCENT)]))
+        self.margin_px = None
+        self.margin_percent = None
+        if type(self.enforce_ratio) is unicode:
+            if self.enforce_ratio[-1] == u'%':
+                self.margin_percent = float(self.enforce_ratio[:-1]) / 100
+            elif self.enforce_ratio[-2:] == u'px':
+                self.margin_px = int(self.enforce_ratio[:-2])
+            else:
+                # shouldn't happen
+                raise confit.ConfigValueError()
+            self.enforce_ratio = True
 
         cover_names = self.config['cover_names'].as_str_seq()
         self.cover_names = map(util.bytestring_path, cover_names)
@@ -765,6 +801,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                  'cover_names': self.cover_names,
                  'cautious': self.cautious,
                  'enforce_ratio': self.enforce_ratio,
+                 'margin_px': self.margin_px,
+                 'margin_percent': self.margin_percent,
                  'minwidth': self.minwidth,
                  'maxwidth': self.maxwidth}
 
