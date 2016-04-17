@@ -62,7 +62,7 @@ file. The available options are:
   Default: The `beets custom search engine`_, which searches the entire web.
   **fanarttv_key**: The personal API key for requesting art from
   fanart.tv. See below.
-- **store_source**: If enabled, fetchart store the artwork's source in a
+- **store_source**: If enabled, fetchart stores the artwork's source in a
   flexible tag named ``art_source``. See below for the rationale behind this.
   Default: ``no``.
 
@@ -188,18 +188,15 @@ personal key will give you earlier access to new art.
 Storing the Artwork's Source
 ----------------------------
 
-Storing the current artwork's source gives the opportunity to selectively
-search for new art. For example, if some albums have artwork placed manually in
-their directories that should not be replaced by a forced album art fetch, you
-could do
+Storing the current artwork's source might be used to narrow down
+``fetchart`` commands. For example, if some albums have artwork placed
+manually in their directories that should not be replaced by a forced
+album art fetch, you could do
 
 ``beet fetchart -f ^art_source:filesystem``
 
-The values written to ``art_source`` are:
-
-``'Cover Art Archive'``, ``'Amazon'``, ``'AlbumArt.org scraper'``, ``'Google Images'``,
-``'fanart.tv'``, ``'iTunes Store'``, ``'Wikipedia (queried through DBpedia)'``,
-``'Filesystem'``
+The values written to ``art_source`` are the same names used in the ``sources``
+configuration value.
 
 Embedding Album Art
 -------------------

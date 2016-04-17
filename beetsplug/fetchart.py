@@ -197,7 +197,7 @@ class ArtSource(RequestMixin):
         raise NotImplementedError()
 
     def _candidate(self, **kwargs):
-        return Candidate(source=self.NAME, log=self._log, **kwargs)
+        return Candidate(source=self, log=self._log, **kwargs)
 
     def fetch_image(self, candidate, extra):
         raise NotImplementedError()
@@ -764,7 +764,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self._log.debug(
                 u"Storing art_source for {0.albumartist} - {0.album}",
                 album)
-            album.art_source = candidate.source
+            album.art_source = SOURCE_NAMES[type(candidate.source)]
         album.store()
 
     # Synchronous; after music files are put in place.
