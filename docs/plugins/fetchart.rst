@@ -195,6 +195,12 @@ could do
 
 ``beet fetchart -f ^art_source:filesystem``
 
+The values written to ``art_source`` are:
+
+``'Cover Art Archive'``, ``'Amazon'``, ``'AlbumArt.org scraper'``, ``'Google Images'``,
+``'fanart.tv'``, ``'iTunes Store'``, ``'Wikipedia (queried through DBpedia)'``,
+``'Filesystem'``
+
 Embedding Album Art
 -------------------
 
