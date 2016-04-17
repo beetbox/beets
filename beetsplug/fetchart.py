@@ -694,8 +694,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 u'been deprecated, see the documentation.')
             if self.config['remote_priority'].get(bool):
                 try:
-                    self.sources_name.remove[u'filesystem']
-                    sources_name.append[u'filesystem']
+                    sources_name.remove(u'filesystem')
+                    sources_name.append(u'filesystem')
                 except ValueError:
                     pass
         self.sources = [ART_SOURCES[s](self._log, self.config)
