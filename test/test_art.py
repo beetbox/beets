@@ -27,6 +27,7 @@ from test import _common
 from test._common import unittest
 from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
+from beets import config
 from beets import library
 from beets import importer
 from beets import logging
@@ -538,6 +539,24 @@ class ArtForAlbumTest(UseThePlugin):
         self.plugin.maxwidth = 300
         self._assertImageResized(self.IMG_225x225, False)
         self._assertImageResized(self.IMG_348x348, True)
+
+
+class DeprecatedConfigTest(_common.TestCase):
+    """While refactoring the plugin, the remote_priority option was deprecated,
+    and a new codepath should translate its effect. Check that it actually does
+    so.
+    """
+
+    # If we subclassed UseThePlugin, the configuration change would either be
+    # overwritten by _common.TestCase or be set after constructing the
+    # plugin object
+    def setUp(self):
+        super(DeprecatedConfigTest, self).setUp()
+        config['fetchart']['remote_priority'] = True
+        self.plugin = fetchart.FetchArtPlugin()
+
+    def test_moves_filesystem_to_end(self):
+        self.assertEqual(type(self.plugin.sources[-1]), fetchart.FileSystem)
 
 
 def suite():
