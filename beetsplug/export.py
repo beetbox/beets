@@ -120,10 +120,10 @@ class ExportFormat(object):
                 return JsonFileFormat(**kwargs)
             else:
                 return JsonPrintFormat()
-        raise NotImplemented("")
+        raise NotImplementedError()
 
     def export(self, data, **kwargs):
-        raise NotImplemented("")
+        raise NotImplementedError()
 
 
 class JsonPrintFormat(ExportFormat):
