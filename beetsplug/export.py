@@ -74,14 +74,14 @@ class ExportPlugin(BeetsPlugin):
             help=u'comma separated list of keys to show',
         )
         cmd.parser.add_option(
-            u'-p', u'--path',
+            u'-o', u'--output',
             help=u'path for the output file. If not given, will print the data'
         )
         return [cmd]
 
     def run(self, lib, opts, args):
 
-        file_path = opts.path
+        file_path = opts.output
         file_format = self.config['default_format'].get(str)
         file_mode = 'a' if opts.append else 'w'
         format_options = self.config[file_format]['formatting'].get(dict)
