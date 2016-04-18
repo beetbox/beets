@@ -8,27 +8,18 @@ allows you to run commands when an event is emitted by beets, such as syncing
 your library with another drive when the library is updated.
 
 Hooks are currently run in the order defined in the configuration, however this
-is dependent on beets itself (may change in the future) and cannot be controlled
-by this plugin.
+is dependent on beets itself and it's consistency should not be depended upon.
 
 .. _hook-configuration:
 
 Configuration
 -------------
 
-To configure the plugin, make a ``hook:`` section in your configuration
+To configure the plugin, make a ``hook`` section in your configuration
 file. The available options are:
 
-- **hooks**: A list of events and the commands to run (see :ref:`individual-hook-configuration`)
-  Default: Empty.
-- **substitute_event**: The string to replace in each command with the name of
-  the event executing it. This can be used to allow one script to act
-  differently depending on the event it was called by. Can be individually
-  overridden (see :ref:`individual-hook-configuration`).
-  Default: ``%EVENT%``
-- **shell**: Run each command in a shell. Can be individually overridden (see
-  :ref:`individual-hook-configuration`).
-  Default: ``yes``
+- **hooks**: A list of events and the commands to run
+  (see :ref:`individual-hook-configuration`). Default: Empty.
 
 .. _individual-hook-configuration:
 
@@ -38,20 +29,24 @@ Individual Hook Configuration
 Each element of the ``hooks`` configuration option can be configured separately.
 The available options are:
 
-- **event** (required): The name of the event that should cause this hook to execute. See
-  :ref:`Plugin Events <plugin_events>` for a list of possible values.
-- **command** (required): The command to run when this hook executes.
-- **substitute_event**: Hook-level override for ``substitute_event`` option in
-  :ref:`hook-configuration`.
-  Default: Value of top level ``substitute_event`` option (see :ref:`hook-configuration`)
-- **shell**: Hook-level override for ``shell`` option in :ref:`hook-configuration`.
-  Default: Value of top level ``shell`` option (see :ref:`hook-configuration`).
-- **substitute_args**: A key/value set where the key is the name of the an
-  argument passed to the event (see :ref:`Plugin Events <plugin_events>` for
-  a list of arguments for each event) and the value is the string to replace
-  in the command with the value of the argument. Note that any arguments that
-  are not strings will be converted to strings (e.g. Python objects).
-  Default: Empty.
+- **event**: The name of the event that should cause this hook to
+  execute. See the :ref:`plugin events <plugin_events>` documentation for a list
+  of possible values.
+- **command**: The command to run when this hook executes.
+
+.. _command-substitution:
+
+Command Substitution
+--------------------
+
+Certain key words can be replaced in commands, allowing access to event
+information such as the path of an album or the name of a song. This information
+is accessed using the syntax ``{property_name}``, where ``property_name`` is the
+name of an argument passed to the event. ``property_name`` can also be a key on
+an argument passed to the event, such as ``{album.path}``.
+
+You can find a list of all available events and their arguments in the
+:ref:`plugin events <plugin_events>` documentation.
 
 Example Configuration
 ---------------------
@@ -68,10 +63,14 @@ Example Configuration
         - event: cli_exit
           command: echo "have a nice day!"
 
-        # Output on write
+        # Output on item import:
+        #   importing "<file_name_here>"
+        # Where <file_name_here> is the item being imported
+        - event: item_imported
+          command: echo "importing \"{item.path}\""
+
+        # Output on write:
         #   writing to "<file_name_here>"
         # Where <file_name_here> is the file being written to
         - event: write
-          command: echo "writing to \"%FILE_NAME%\""
-          substitute_args:
-            path: %FILE_NAME%
+          command: echo "writing to {path}"
