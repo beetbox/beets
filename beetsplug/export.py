@@ -17,6 +17,7 @@
 
 from __future__ import division, absolute_import, print_function
 
+import sys
 import json
 import codecs
 
@@ -129,7 +130,7 @@ class JsonPrintFormat(ExportFormat):
     """Outputs to the console"""
 
     def export(self, data, **kwargs):
-        ui.print_(json.dumps(data, **kwargs))
+        json.dump(data, sys.stdout, **kwargs)
 
 
 class JsonFileFormat(ExportFormat):
