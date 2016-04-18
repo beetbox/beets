@@ -17,11 +17,9 @@ from __future__ import division, absolute_import, print_function
 
 import shlex
 import subprocess
-import sys
 
 from beets.plugins import BeetsPlugin
 from beets.ui import _arg_encoding
-from beets.util.confit import ConfigValueError
 
 
 class HookPlugin(BeetsPlugin):
