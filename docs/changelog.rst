@@ -18,6 +18,8 @@ New features:
 * :doc:`/plugins/fetchart`: The ``enforce_ratio`` option was enhanced and now
   allows specifying a certain deviation that a valid image may have from being
   exactly square.
+* :doc:`/plugins/export`: A new plugin to export the data from queries to a
+  json format. Thanks to :user:`GuilhermeHideki`.
 
 .. _fanart.tv: https://fanart.tv/
 
