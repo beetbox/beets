@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from collections import namedtuple
 import re
@@ -393,7 +393,7 @@ class Distance(object):
         """
         if not isinstance(dist, Distance):
             raise ValueError(
-                '`dist` must be a Distance object, not {0}'.format(type(dist))
+                u'`dist` must be a Distance object, not {0}'.format(type(dist))
             )
         for key, penalties in dist._penalties.iteritems():
             self._penalties.setdefault(key, []).extend(penalties)
@@ -417,7 +417,7 @@ class Distance(object):
         """
         if not 0.0 <= dist <= 1.0:
             raise ValueError(
-                '`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
+                u'`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
             )
         self._penalties.setdefault(key, []).append(dist)
 
@@ -511,7 +511,10 @@ def album_for_mbid(release_id):
     if the ID is not found.
     """
     try:
-        return mb.album_for_id(release_id)
+        album = mb.album_for_id(release_id)
+        if album:
+            plugins.send(u'albuminfo_received', info=album)
+        return album
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
@@ -521,7 +524,10 @@ def track_for_mbid(recording_id):
     if the ID is not found.
     """
     try:
-        return mb.track_for_id(recording_id)
+        track = mb.track_for_id(recording_id)
+        if track:
+            plugins.send(u'trackinfo_received', info=track)
+        return track
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
@@ -529,14 +535,20 @@ def track_for_mbid(recording_id):
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     candidates = [album_for_mbid(album_id)]
-    candidates.extend(plugins.album_for_id(album_id))
+    plugin_albums = plugins.album_for_id(album_id)
+    for a in plugin_albums:
+        plugins.send(u'albuminfo_received', info=a)
+    candidates.extend(plugin_albums)
     return filter(None, candidates)
 
 
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     candidates = [track_for_mbid(track_id)]
-    candidates.extend(plugins.track_for_id(track_id))
+    plugin_tracks = plugins.track_for_id(track_id)
+    for t in plugin_tracks:
+        plugins.send(u'trackinfo_received', info=t)
+    candidates.extend(plugin_tracks)
     return filter(None, candidates)
 
 
@@ -566,6 +578,10 @@ def album_candidates(items, artist, album, va_likely):
     # Candidates from plugins.
     out.extend(plugins.candidates(items, artist, album, va_likely))
 
+    # Notify subscribed plugins about fetched album info
+    for a in out:
+        plugins.send(u'albuminfo_received', info=a)
+
     return out
 
 
@@ -585,5 +601,9 @@ def item_candidates(item, artist, title):
 
     # Plugin candidates.
     out.extend(plugins.item_candidates(item, artist, title))
+
+    # Notify subscribed plugins about fetched track info
+    for i in out:
+        plugins.send(u'trackinfo_received', info=i)
 
     return out

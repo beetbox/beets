@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Test file manipulation functionality of Item.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import shutil
 import os
@@ -72,7 +72,7 @@ class MoveTest(_common.TestCase):
         old_path = self.i.path
         self.assertExists(old_path)
 
-        self.i.artist = 'newArtist'
+        self.i.artist = u'newArtist'
         self.i.move()
         self.assertNotExists(old_path)
         self.assertNotExists(os.path.dirname(old_path))
@@ -195,7 +195,7 @@ class AlbumFileTest(_common.TestCase):
         self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
     def test_albuminfo_move_changes_paths(self):
-        self.ai.album = 'newAlbumName'
+        self.ai.album = u'newAlbumName'
         self.ai.move()
         self.ai.store()
         self.i.load()
@@ -204,7 +204,7 @@ class AlbumFileTest(_common.TestCase):
 
     def test_albuminfo_move_moves_file(self):
         oldpath = self.i.path
-        self.ai.album = 'newAlbumName'
+        self.ai.album = u'newAlbumName'
         self.ai.move()
         self.ai.store()
         self.i.load()
@@ -214,7 +214,7 @@ class AlbumFileTest(_common.TestCase):
 
     def test_albuminfo_move_copies_file(self):
         oldpath = self.i.path
-        self.ai.album = 'newAlbumName'
+        self.ai.album = u'newAlbumName'
         self.ai.move(True)
         self.ai.store()
         self.i.load()
@@ -260,7 +260,7 @@ class ArtFileTest(_common.TestCase):
     def test_art_moves_with_album(self):
         self.assertTrue(os.path.exists(self.art))
         oldpath = self.i.path
-        self.ai.album = 'newAlbum'
+        self.ai.album = u'newAlbum'
         self.ai.move()
         self.i.load()
 
@@ -288,7 +288,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = 'someArtist'
+        i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(True)
 
@@ -304,7 +304,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = 'someArtist'
+        i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(True)
         ai.set_art(newart)
@@ -318,7 +318,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = 'someArtist'
+        i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(True)
 
@@ -335,7 +335,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = 'someArtist'
+        i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(True)
 
@@ -359,7 +359,7 @@ class ArtFileTest(_common.TestCase):
         try:
             i2 = item()
             i2.path = self.i.path
-            i2.artist = 'someArtist'
+            i2.artist = u'someArtist'
             ai = self.lib.add_album((i2,))
             i2.move(True)
             ai.set_art(newart)
@@ -377,12 +377,12 @@ class ArtFileTest(_common.TestCase):
         oldartpath = self.lib.albums()[0].artpath
         self.assertExists(oldartpath)
 
-        self.ai.album = 'different_album'
+        self.ai.album = u'different_album'
         self.ai.store()
         self.ai.items()[0].move()
 
         artpath = self.lib.albums()[0].artpath
-        self.assertTrue('different_album' in artpath)
+        self.assertTrue(u'different_album' in artpath)
         self.assertExists(artpath)
         self.assertNotExists(oldartpath)
 
@@ -394,12 +394,12 @@ class ArtFileTest(_common.TestCase):
         oldartpath = self.lib.albums()[0].artpath
         self.assertExists(oldartpath)
 
-        self.i.album = 'different_album'
+        self.i.album = u'different_album'
         self.i.album_id = None  # detach from album
         self.i.move()
 
         artpath = self.lib.albums()[0].artpath
-        self.assertFalse('different_album' in artpath)
+        self.assertFalse(u'different_album' in artpath)
         self.assertEqual(artpath, oldartpath)
         self.assertExists(oldartpath)
 
@@ -480,7 +480,7 @@ class SoftRemoveTest(_common.TestCase):
         try:
             util.remove(self.path + 'XXX', True)
         except OSError:
-            self.fail('OSError when removing path')
+            self.fail(u'OSError when removing path')
 
 
 class SafeMoveCopyTest(_common.TestCase):

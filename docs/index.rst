@@ -17,9 +17,9 @@ Freenode, send email to `the mailing list`_, or `file a bug`_ in the issue
 tracker. Please let us know where you think this documentation can be
 improved.
 
-.. _beets: http://beets.radbox.org/
+.. _beets: http://beets.io/
 .. _the mailing list: http://groups.google.com/group/beets-users
-.. _file a bug: https://github.com/sampsyo/beets/issues
+.. _file a bug: https://github.com/beetbox/beets/issues
 
 Contents
 --------

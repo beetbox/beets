@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Fabrice Laporte.
+# Copyright 2016, Fabrice Laporte.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 """Write paths of imported files in various formats to ease later import in a
 music player. Also allow printing the new file locations to stdout in case
@@ -134,9 +134,9 @@ class ImportFeedsPlugin(BeetsPlugin):
                     os.symlink(syspath(path), syspath(dest))
 
         if 'echo' in formats:
-            self._log.info("Location of imported music:")
+            self._log.info(u"Location of imported music:")
             for path in paths:
-                self._log.info("  {0}", path)
+                self._log.info(u"  {0}", path)
 
     def library_opened(self, lib):
         if self.config['dir'].get() is None:

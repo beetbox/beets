@@ -78,7 +78,7 @@ including a beets server. Just download Tomahawk and open its settings to
 connect it to beets. `A post on the beets blog`_ has a more detailed guide.
 
 .. _A post on the beets blog:
-    http://beets.radbox.org/blog/tomahawk-resolver.html
+    http://beets.io/blog/tomahawk-resolver.html
 .. _Tomahawk: http://www.tomahawk-player.org
 
 
@@ -117,7 +117,12 @@ using the :ref:`modify-cmd` command::
 
     beet modify context=party artist:'beastie boys'
 
-And then :doc:`query </reference/query>` your music just as you would with any
+By default beets will show you the changes that are about to be applied and ask
+if you really want to apply them to all, some or none of the items or albums.
+You can type y for "yes", n for "no", or s for "select". If you choose the latter,
+the command will prompt you for each individual matching item or album.
+
+Then :doc:`query </reference/query>` your music just as you would with any
 other field::
 
     beet ls context:mope
@@ -132,7 +137,7 @@ And, unlike :ref:`built-in fields <itemfields>`, such fields can be removed::
 Read more than you ever wanted to know about the *flexible attributes*
 feature `on the beets blog`_.
 
-.. _on the beets blog: http://beets.radbox.org/blog/flexattr.html
+.. _on the beets blog: http://beets.io/blog/flexattr.html
 
 
 Choose a path style manually for some music

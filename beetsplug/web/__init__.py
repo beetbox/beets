@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """A Web interface to beets."""
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -263,9 +263,9 @@ class WebPlugin(BeetsPlugin):
         })
 
     def commands(self):
-        cmd = ui.Subcommand('web', help='start a Web interface')
-        cmd.parser.add_option('-d', '--debug', action='store_true',
-                              default=False, help='debug mode')
+        cmd = ui.Subcommand('web', help=u'start a Web interface')
+        cmd.parser.add_option(u'-d', u'--debug', action='store_true',
+                              default=False, help=u'debug mode')
 
         def func(lib, opts, args):
             args = ui.decargs(args)
@@ -277,7 +277,7 @@ class WebPlugin(BeetsPlugin):
             app.config['lib'] = lib
             # Enable CORS if required.
             if self.config['cors']:
-                self._log.info('Enabling CORS with origin: {0}',
+                self._log.info(u'Enabling CORS with origin: {0}',
                                self.config['cors'])
                 from flask.ext.cors import CORS
                 app.config['CORS_ALLOW_HEADERS'] = "Content-Type"

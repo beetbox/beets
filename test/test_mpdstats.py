@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015
+# Copyright 2016
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,11 +13,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
-
-from mock import Mock
+from mock import Mock, patch, call, ANY
 from test._common import unittest
 from test.helper import TestHelper
 
@@ -34,7 +33,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def test_update_rating(self):
-        item = Item(title='title', path='', id=1)
+        item = Item(title=u'title', path='', id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -42,6 +41,44 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
 
         self.assertFalse(mpdstats.update_rating(item, True))
         self.assertFalse(mpdstats.update_rating(None, True))
+
+    def test_get_item(self):
+        ITEM_PATH = '/foo/bar.flac'
+        item = Item(title=u'title', path=ITEM_PATH, id=1)
+        item.add(self.lib)
+
+        log = Mock()
+        mpdstats = MPDStats(self.lib, log)
+
+        self.assertEqual(str(mpdstats.get_item(ITEM_PATH)), str(item))
+        self.assertIsNone(mpdstats.get_item('/some/non-existing/path'))
+        self.assertIn(u'item not found:', log.info.call_args[0][0])
+
+    FAKE_UNKNOWN_STATE = 'some-unknown-one'
+    STATUSES = [{'state': FAKE_UNKNOWN_STATE},
+                {'state': u'pause'},
+                {'state': u'play', 'songid': 1, 'time': u'0:1'},
+                {'state': u'stop'}]
+    EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
+    ITEM_PATH = '/foo/bar.flac'
+
+    @patch("beetsplug.mpdstats.MPDClientWrapper", return_value=Mock(**{
+        "events.side_effect": EVENTS, "status.side_effect": STATUSES,
+        "playlist.return_value": {1: ITEM_PATH}}))
+    def test_run_MPDStats(self, mpd_mock):
+        item = Item(title=u'title', path=self.ITEM_PATH, id=1)
+        item.add(self.lib)
+
+        log = Mock()
+        try:
+            MPDStats(self.lib, log).run()
+        except KeyboardInterrupt:
+            pass
+
+        log.debug.assert_has_calls(
+            [call(u'unhandled status "{0}"', ANY)])
+        log.info.assert_has_calls(
+            [call(u'pause'), call(u'playing {0}', ANY), call(u'stop')])
 
 
 def suite():

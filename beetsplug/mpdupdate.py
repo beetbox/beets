@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -20,8 +21,7 @@ Put something like the following in your config.yaml to configure:
         port: 6600
         password: seekrit
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 import os
@@ -125,4 +125,4 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         s.send('close\n')
         s.close()
-        self._log.info('Database updated.')
+        self._log.info(u'Database updated.')

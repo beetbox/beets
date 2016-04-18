@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
+# Copyright 2016, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -30,8 +31,7 @@ information or mock the environment.
 """
 
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import sys
 import os
@@ -243,7 +243,7 @@ class TestHelper(object):
             track_no = 0
             album_item_count = item_count
             while album_item_count:
-                title = 'track {0}'.format(track_no)
+                title = u'track {0}'.format(track_no)
                 src = os.path.join(_common.RSRC, 'full.mp3')
                 dest = os.path.join(album_dir, '{0}.mp3'.format(title))
                 if os.path.exists(dest):
@@ -526,14 +526,14 @@ def generate_album_info(album_id, track_ids):
     """
     tracks = [generate_track_info(id) for id in track_ids]
     album = AlbumInfo(
-        album_id='album info',
-        album='album info',
-        artist='album info',
-        artist_id='album info',
+        album_id=u'album info',
+        album=u'album info',
+        artist=u'album info',
+        artist_id=u'album info',
         tracks=tracks,
     )
     for field in ALBUM_INFO_FIELDS:
-        setattr(album, field, 'album info')
+        setattr(album, field, u'album info')
 
     return album
 
@@ -552,11 +552,11 @@ def generate_track_info(track_id='track info', values={}):
     string fields are set to "track info".
     """
     track = TrackInfo(
-        title='track info',
+        title=u'track info',
         track_id=track_id,
     )
     for field in TRACK_INFO_FIELDS:
-        setattr(track, field, 'track info')
+        setattr(track, field, u'track info')
     for field, value in values.items():
         setattr(track, field, value)
     return track

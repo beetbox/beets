@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
+
 """Tests for the 'web' plugin"""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from test import _common
@@ -20,10 +21,10 @@ class WebPluginTest(_common.LibTestCase):
         # Add fixtures
         for track in self.lib.items():
             track.remove()
-        self.lib.add(Item(title='title', path='', id=1))
-        self.lib.add(Item(title='another title', path='', id=2))
-        self.lib.add(Album(album='album', id=3))
-        self.lib.add(Album(album='another album', id=4))
+        self.lib.add(Item(title=u'title', path='', id=1))
+        self.lib.add(Item(title=u'another title', path='', id=2))
+        self.lib.add(Album(album=u'album', id=3))
+        self.lib.add(Album(album=u'another album', id=4))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -42,7 +43,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['id'], 1)
-        self.assertEqual(response.json['title'], 'title')
+        self.assertEqual(response.json['title'], u'title')
 
     def test_get_multiple_items_by_id(self):
         response = self.client.get('/item/1,2')
@@ -51,7 +52,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json['items']), 2)
         response_titles = [item['title'] for item in response.json['items']]
-        self.assertItemsEqual(response_titles, ['title', 'another title'])
+        self.assertItemsEqual(response_titles, [u'title', u'another title'])
 
     def test_get_single_item_not_found(self):
         response = self.client.get('/item/3')
@@ -70,7 +71,8 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json['results']), 1)
-        self.assertEqual(response.json['results'][0]['title'], 'another title')
+        self.assertEqual(response.json['results'][0]['title'],
+                         u'another title')
 
     def test_get_all_albums(self):
         response = self.client.get('/album/')
@@ -78,7 +80,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         response_albums = [album['album'] for album in response.json['albums']]
-        self.assertItemsEqual(response_albums, ['album', 'another album'])
+        self.assertItemsEqual(response_albums, [u'album', u'another album'])
 
     def test_get_single_album_by_id(self):
         response = self.client.get('/album/2')
@@ -86,7 +88,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['id'], 2)
-        self.assertEqual(response.json['album'], 'another album')
+        self.assertEqual(response.json['album'], u'another album')
 
     def test_get_multiple_albums_by_id(self):
         response = self.client.get('/album/1,2')
@@ -94,7 +96,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         response_albums = [album['album'] for album in response.json['albums']]
-        self.assertItemsEqual(response_albums, ['album', 'another album'])
+        self.assertItemsEqual(response_albums, [u'album', u'another album'])
 
     def test_get_album_empty_query(self):
         response = self.client.get('/album/query/')

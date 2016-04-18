@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Tom Jaspers.
+# Copyright 2016, Tom Jaspers.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,6 +15,9 @@
 
 """Synchronize information from iTunes's library
 """
+
+from __future__ import division, absolute_import, print_function
+
 from contextlib import contextmanager
 import os
 import shutil
@@ -94,7 +98,8 @@ class Itunes(MetaSource):
 
         # Make the iTunes library queryable using the path
         self.collection = {_norm_itunes_path(track['Location']): track
-                           for track in raw_library['Tracks'].values()}
+                           for track in raw_library['Tracks'].values()
+                           if 'Location' in track}
 
     def sync_from_source(self, item):
         result = self.collection.get(util.bytestring_path(item.path).lower())

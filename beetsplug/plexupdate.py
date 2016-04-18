@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Updates an Plex library whenever the beets library is changed.
 
 Plex Home users enter the Plex Token to enable updating.
@@ -7,8 +9,7 @@ Put something like the following in your config.yaml to configure:
         port: 32400
         token: token
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import requests
 from urlparse import urljoin
@@ -28,7 +29,7 @@ def get_music_section(host, port, token, library_name):
     r = requests.get(url)
 
     # Parse xml tree and extract music section key.
-    tree = ET.fromstring(r.text)
+    tree = ET.fromstring(r.content)
     for child in tree.findall('Directory'):
         if child.get('title') == library_name:
             return child.get('key')
@@ -76,7 +77,7 @@ class PlexUpdate(BeetsPlugin):
     def update(self, lib):
         """When the client exists try to send refresh request to Plex server.
         """
-        self._log.info('Updating Plex library...')
+        self._log.info(u'Updating Plex library...')
 
         # Try to send update request.
         try:
@@ -85,7 +86,7 @@ class PlexUpdate(BeetsPlugin):
                 config['plex']['port'].get(),
                 config['plex']['token'].get(),
                 config['plex']['library_name'].get())
-            self._log.info('... started.')
+            self._log.info(u'... started.')
 
         except requests.exceptions.RequestException:
-            self._log.warning('Update failed.')
+            self._log.warning(u'Update failed.')

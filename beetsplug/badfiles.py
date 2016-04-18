@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, François-Xavier Thomas.
+# Copyright 2016, François-Xavier Thomas.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,8 +16,7 @@
 """Use command-line tools to check for audio file corruption.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -31,7 +31,7 @@ import sys
 
 class BadFiles(BeetsPlugin):
     def run_command(self, cmd):
-        self._log.debug("running command: {}",
+        self._log.debug(u"running command: {}",
                         displayable_path(list2cmdline(cmd)))
         try:
             output = check_output(cmd, stderr=STDOUT)
@@ -43,7 +43,7 @@ class BadFiles(BeetsPlugin):
             status = e.returncode
         except OSError as e:
             if e.errno == errno.ENOENT:
-                ui.print_("command not found: {}".format(cmd[0]))
+                ui.print_(u"command not found: {}".format(cmd[0]))
                 sys.exit(1)
             else:
                 raise
@@ -86,9 +86,9 @@ class BadFiles(BeetsPlugin):
             # First, check whether the path exists. If not, the user
             # should probably run `beet update` to cleanup your library.
             dpath = displayable_path(item.path)
-            self._log.debug("checking path: {}", dpath)
+            self._log.debug(u"checking path: {}", dpath)
             if not os.path.exists(item.path):
-                ui.print_("{}: file does not exist".format(
+                ui.print_(u"{}: file does not exist".format(
                     ui.colorize('text_error', dpath)))
 
             # Run the checker against the file if one is found
@@ -101,20 +101,20 @@ class BadFiles(BeetsPlugin):
                 path = item.path.decode(sys.getfilesystemencoding())
             status, errors, output = checker(path)
             if status > 0:
-                ui.print_("{}: checker exited withs status {}"
+                ui.print_(u"{}: checker exited withs status {}"
                           .format(ui.colorize('text_error', dpath), status))
                 for line in output:
                     ui.print_("  {}".format(displayable_path(line)))
             elif errors > 0:
-                ui.print_("{}: checker found {} errors or warnings"
+                ui.print_(u"{}: checker found {} errors or warnings"
                           .format(ui.colorize('text_warning', dpath), errors))
                 for line in output:
-                    ui.print_("  {}".format(displayable_path(line)))
+                    ui.print_(u"  {}".format(displayable_path(line)))
             else:
-                ui.print_("{}: ok".format(ui.colorize('text_success', dpath)))
+                ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
 
     def commands(self):
         bad_command = Subcommand('bad',
-                                 help='check for corrupt or missing files')
+                                 help=u'check for corrupt or missing files')
         bad_command.func = self.check_bad
         return [bad_command]

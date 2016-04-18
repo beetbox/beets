@@ -64,6 +64,12 @@ plugins
 A space-separated list of plugin module names to load. See
 :ref:`using-plugins`.
 
+include
+~~~~~~~
+
+A space-separated list of extra configuration files to include.
+Filenames are relative to the directory containing ``config.yaml``.
+
 pluginpath
 ~~~~~~~~~~
 
@@ -298,6 +304,15 @@ By default, beets writes MP3 tags using the ID3v2.4 standard, the latest
 version of ID3. Enable this option to instead use the older ID3v2.3 standard,
 which is preferred by certain older software such as Windows Media Player.
 
+.. _va_name:
+
+va_name
+~~~~~~~
+
+Sets the albumartist for various-artist compilations. Defaults to ``'Various
+Artists'`` (the MusicBrainz standard). Affects other sources, such as
+:doc:`/plugins/discogs`, too.
+
 
 UI Options
 ----------
@@ -364,6 +379,8 @@ Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
 written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
 and ``-W`` command-line options override this setting.
 
+.. _config-import-copy:
+
 copy
 ~~~~
 
@@ -373,6 +390,8 @@ overridden with the ``-c`` and ``-C`` command-line options.
 
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
+
+.. _config-import-move:
 
 move
 ~~~~
@@ -696,7 +715,7 @@ defaults look like this::
         singleton: Non-Album/$artist/$title
         comp: Compilations/$album%aunique{}/$track $title
 
-Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
+Note the use of ``$albumartist`` instead of ``$artist``; this ensures that albums
 will be well-organized. For more about these format strings, see
 :doc:`pathformat`. The ``aunique{}`` function ensures that identically-named
 albums are placed in different directories; see :ref:`aunique` for details.
@@ -783,7 +802,8 @@ Here's an example file::
     plugins: bpd
     pluginpath: ~/beets/myplugins
     threaded: yes
-    color: yes
+    ui:
+        color: yes
 
     paths:
         default: $genre/$albumartist/$album/$track $title

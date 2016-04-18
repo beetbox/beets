@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -26,8 +27,7 @@ This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 import ast
@@ -78,7 +78,7 @@ def ex_literal(val):
         return ast.Name(bytes(val), ast.Load())
     elif isinstance(val, basestring):
         return ast.Str(val)
-    raise TypeError('no literal for {0}'.format(type(val)))
+    raise TypeError(u'no literal for {0}'.format(type(val)))
 
 
 def ex_varassign(name, expr):
@@ -570,4 +570,4 @@ if __name__ == b'__main__':
                               'from __main__ import _tmpl, _vars, _funcs',
                               number=10000)
     print(comp_time)
-    print('Speedup:', interp_time / comp_time)
+    print(u'Speedup:', interp_time / comp_time)

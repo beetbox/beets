@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Heinz Wiesinger.
+# Copyright 2016, Heinz Wiesinger.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,6 +15,9 @@
 
 """Synchronize information from music player libraries
 """
+
+from __future__ import division, absolute_import, print_function
+
 from abc import abstractmethod, ABCMeta
 from importlib import import_module
 
@@ -111,11 +115,13 @@ class MetaSyncPlugin(BeetsPlugin):
         # Instantiate the meta sources
         for player in sources:
             try:
-                meta_source_instances[player] = \
-                    META_SOURCES[player](self.config, self._log)
+                cls = META_SOURCES[player]
             except KeyError:
                 self._log.error(u'Unknown metadata source \'{0}\''.format(
                     player))
+
+            try:
+                meta_source_instances[player] = cls(self.config, self._log)
             except (ImportError, ConfigValueError) as e:
                 self._log.error(u'Failed to instantiate metadata source '
                                 u'\'{0}\': {1}'.format(player, e))

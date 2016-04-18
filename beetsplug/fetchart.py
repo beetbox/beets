@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Fetches album art.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from contextlib import closing
 import os
@@ -40,6 +40,84 @@ except ImportError:
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg', 'image/png')
 DOWNLOAD_EXTENSION = '.jpg'
+
+
+class Candidate(object):
+    """Holds information about a matching artwork, deals with validation of
+    dimension restrictions and resizing.
+    """
+    CANDIDATE_BAD = 0
+    CANDIDATE_EXACT = 1
+    CANDIDATE_DOWNSCALE = 2
+
+    MATCH_EXACT = 0
+    MATCH_FALLBACK = 1
+
+    def __init__(self, log, path=None, url=None, source=u'',
+                 match=None, size=None):
+        self._log = log
+        self.path = path
+        self.url = url
+        self.source = source
+        self.check = None
+        self.match = match
+        self.size = size
+
+    def _validate(self, extra):
+        """Determine whether the candidate artwork is valid based on
+        its dimensions (width and ratio).
+
+        Return `CANDIDATE_BAD` if the file is unusable.
+        Return `CANDIDATE_EXACT` if the file is usable as-is.
+        Return `CANDIDATE_DOWNSCALE` if the file must be resized.
+        """
+        if not self.path:
+            return self.CANDIDATE_BAD
+
+        if not (extra['enforce_ratio'] or
+                extra['minwidth'] or
+                extra['maxwidth']):
+            return self.CANDIDATE_EXACT
+
+        # get_size returns None if no local imaging backend is available
+        if not self.size:
+            self.size = ArtResizer.shared.get_size(self.path)
+        self._log.debug(u'image size: {}', self.size)
+
+        if not self.size:
+            self._log.warning(u'Could not get size of image (please see '
+                              u'documentation for dependencies). '
+                              u'The configuration options `minwidth` and '
+                              u'`enforce_ratio` may be violated.')
+            return self.CANDIDATE_EXACT
+
+        # Check minimum size.
+        if extra['minwidth'] and self.size[0] < extra['minwidth']:
+            self._log.debug(u'image too small ({} < {})',
+                            self.size[0], extra['minwidth'])
+            return self.CANDIDATE_BAD
+
+        # Check aspect ratio.
+        if extra['enforce_ratio'] and self.size[0] != self.size[1]:
+            self._log.debug(u'image is not square ({} != {})',
+                            self.size[0], self.size[1])
+            return self.CANDIDATE_BAD
+
+        # Check maximum size.
+        if extra['maxwidth'] and self.size[0] > extra['maxwidth']:
+            self._log.debug(u'image needs resizing ({} > {})',
+                            self.size[0], extra['maxwidth'])
+            return self.CANDIDATE_DOWNSCALE
+
+        return self.CANDIDATE_EXACT
+
+    def validate(self, extra):
+        self.check = self._validate(extra)
+        return self.check
+
+    def resize(self, extra):
+        if extra['maxwidth'] and self.check == self.CANDIDATE_DOWNSCALE:
+            self.path = ArtResizer.shared.resize(extra['maxwidth'], self.path)
 
 
 def _logged_get(log, *args, **kwargs):
@@ -67,9 +145,9 @@ def _logged_get(log, *args, **kwargs):
     else:
         message = 'getting URL'
 
-    req = requests.Request('GET', *args, **req_kwargs)
+    req = requests.Request(b'GET', *args, **req_kwargs)
     with requests.Session() as s:
-        s.headers = {'User-Agent': 'beets'}
+        s.headers = {b'User-Agent': b'beets'}
         prepped = s.prepare_request(req)
         log.debug('{}: {}', message, prepped.url)
         return s.send(prepped, **send_kwargs)
@@ -91,46 +169,109 @@ class RequestMixin(object):
 # ART SOURCES ################################################################
 
 class ArtSource(RequestMixin):
-    def __init__(self, log):
+    def __init__(self, log, config):
         self._log = log
+        self._config = config
 
-    def get(self, album):
+    def get(self, album, extra):
+        raise NotImplementedError()
+
+    def _candidate(self, **kwargs):
+        return Candidate(source=self.NAME, log=self._log, **kwargs)
+
+    def fetch_image(self, candidate, extra):
         raise NotImplementedError()
 
 
-class CoverArtArchive(ArtSource):
-    """Cover Art Archive"""
+class LocalArtSource(ArtSource):
+    IS_LOCAL = True
+    LOC_STR = u'local'
+
+    def fetch_image(self, candidate, extra):
+        pass
+
+
+class RemoteArtSource(ArtSource):
+    IS_LOCAL = False
+    LOC_STR = u'remote'
+
+    def fetch_image(self, candidate, extra):
+        """Downloads an image from a URL and checks whether it seems to
+        actually be an image. If so, returns a path to the downloaded image.
+        Otherwise, returns None.
+        """
+        if extra['maxwidth']:
+            candidate.url = ArtResizer.shared.proxy_url(extra['maxwidth'],
+                                                        candidate.url)
+        try:
+            with closing(self.request(candidate.url, stream=True,
+                                      message=u'downloading image')) as resp:
+                if 'Content-Type' not in resp.headers \
+                        or resp.headers['Content-Type'] not in CONTENT_TYPES:
+                    self._log.debug(
+                        u'not a supported image: {}',
+                        resp.headers.get('Content-Type') or u'no content type',
+                    )
+                    candidate.path = None
+                    return
+
+                # Generate a temporary file with the correct extension.
+                with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION,
+                                        delete=False) as fh:
+                    for chunk in resp.iter_content(chunk_size=1024):
+                        fh.write(chunk)
+                self._log.debug(u'downloaded art to: {0}',
+                                util.displayable_path(fh.name))
+                candidate.path = fh.name
+                return
+
+        except (IOError, requests.RequestException, TypeError) as exc:
+            # Handling TypeError works around a urllib3 bug:
+            # https://github.com/shazow/urllib3/issues/556
+            self._log.debug(u'error fetching art: {}', exc)
+            candidate.path = None
+            return
+
+
+class CoverArtArchive(RemoteArtSource):
+    NAME = u"Cover Art Archive"
+
     URL = 'http://coverartarchive.org/release/{mbid}/front'
     GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
-    def get(self, album):
+    def get(self, album, extra):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
         if album.mb_albumid:
-            yield self.URL.format(mbid=album.mb_albumid)
+            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
+                                  match=Candidate.MATCH_EXACT)
         if album.mb_releasegroupid:
-            yield self.GROUP_URL.format(mbid=album.mb_releasegroupid)
+            yield self._candidate(
+                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
+                match=Candidate.MATCH_FALLBACK)
 
 
-class Amazon(ArtSource):
+class Amazon(RemoteArtSource):
+    NAME = u"Amazon"
     URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
     INDICES = (1, 2)
 
-    def get(self, album):
+    def get(self, album, extra):
         """Generate URLs using Amazon ID (ASIN) string.
         """
         if album.asin:
             for index in self.INDICES:
-                yield self.URL % (album.asin, index)
+                yield self._candidate(url=self.URL % (album.asin, index),
+                                      match=Candidate.MATCH_EXACT)
 
 
-class AlbumArtOrg(ArtSource):
-    """AlbumArt.org scraper"""
+class AlbumArtOrg(RemoteArtSource):
+    NAME = u"AlbumArt.org scraper"
     URL = 'http://www.albumart.org/index_detail.php'
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
-    def get(self, album):
+    def get(self, album, extra):
         """Return art URL from AlbumArt.org using album ASIN.
         """
         if not album.asin:
@@ -147,42 +288,117 @@ class AlbumArtOrg(ArtSource):
         m = re.search(self.PAT, resp.text)
         if m:
             image_url = m.group(1)
-            yield image_url
+            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
         else:
             self._log.debug(u'no image found on page')
 
 
-class GoogleImages(ArtSource):
-    URL = 'https://ajax.googleapis.com/ajax/services/search/images'
+class GoogleImages(RemoteArtSource):
+    NAME = u"Google Images"
+    URL = u'https://www.googleapis.com/customsearch/v1'
 
-    def get(self, album):
-        """Return art URL from google.org given an album title and
-        interpreter.
+    def __init__(self, *args, **kwargs):
+        super(GoogleImages, self).__init__(*args, **kwargs)
+        self.key = self._config['google_key'].get(),
+        self.cx = self._config['google_engine'].get(),
+
+    def get(self, album, extra):
+        """Return art URL from google custom search engine
+        given an album title and interpreter.
         """
         if not (album.albumartist and album.album):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
         response = self.request(self.URL, params={
-            'v': '1.0',
+            'key': self.key,
+            'cx': self.cx,
             'q': search_string,
-            'start': '0',
+            'searchType': 'image'
         })
 
         # Get results using JSON.
         try:
-            results = response.json()
-            data = results['responseData']
-            dataInfo = data['results']
-            for myUrl in dataInfo:
-                yield myUrl['unescapedUrl']
-        except:
-            self._log.debug(u'error scraping art page')
+            data = response.json()
+        except ValueError:
+            self._log.debug(u'google: error loading response: {}'
+                            .format(response.text))
             return
 
+        if 'error' in data:
+            reason = data['error']['errors'][0]['reason']
+            self._log.debug(u'google fetchart error: {0}', reason)
+            return
 
-class ITunesStore(ArtSource):
-    # Art from the iTunes Store.
-    def get(self, album):
+        if 'items' in data.keys():
+            for item in data['items']:
+                yield self._candidate(url=item['link'],
+                                      match=Candidate.MATCH_EXACT)
+
+
+class FanartTV(RemoteArtSource):
+    """Art from fanart.tv requested using their API"""
+    NAME = u"fanart.tv"
+
+    API_URL = 'http://webservice.fanart.tv/v3/'
+    API_ALBUMS = API_URL + 'music/albums/'
+    PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
+
+    def __init__(self, *args, **kwargs):
+        super(FanartTV, self).__init__(*args, **kwargs)
+        self.client_key = self._config['fanarttv_key'].get()
+
+    def get(self, album, extra):
+        if not album.mb_releasegroupid:
+            return
+
+        response = self.request(
+            self.API_ALBUMS + album.mb_releasegroupid,
+            headers={'api-key': self.PROJECT_KEY,
+                     'client-key': self.client_key})
+
+        try:
+            data = response.json()
+        except ValueError:
+            self._log.debug(u'fanart.tv: error loading response: {}',
+                            response.text)
+            return
+
+        if u'status' in data and data[u'status'] == u'error':
+            if u'not found' in data[u'error message'].lower():
+                self._log.debug(u'fanart.tv: no image found')
+            elif u'api key' in data[u'error message'].lower():
+                self._log.warning(u'fanart.tv: Invalid API key given, please '
+                                  u'enter a valid one in your config file.')
+            else:
+                self._log.debug(u'fanart.tv: error on request: {}',
+                                data[u'error message'])
+            return
+
+        matches = []
+        # can there be more than one releasegroupid per responce?
+        for mb_releasegroupid in data.get(u'albums', dict()):
+            if album.mb_releasegroupid == mb_releasegroupid:
+                # note: there might be more art referenced, e.g. cdart
+                matches.extend(
+                    data[u'albums'][mb_releasegroupid][u'albumcover'])
+            # can this actually occur?
+            else:
+                self._log.debug(u'fanart.tv: unexpected mb_releasegroupid in '
+                                u'response!')
+
+        matches.sort(key=lambda x: x[u'likes'], reverse=True)
+        for item in matches:
+            # fanart.tv has a strict size requirement for album art to be
+            # uploaded
+            yield self._candidate(url=item[u'url'],
+                                  match=Candidate.MATCH_EXACT,
+                                  size=(1000, 1000))
+
+
+class ITunesStore(RemoteArtSource):
+    NAME = u"iTunes Store"
+
+    def get(self, album, extra):
         """Return art URL from iTunes Store given an album title.
         """
         if not (album.albumartist and album.album):
@@ -191,23 +407,31 @@ class ITunesStore(ArtSource):
         try:
             # Isolate bugs in the iTunes library while searching.
             try:
-                itunes_album = itunes.search_album(search_string)[0]
+                results = itunes.search_album(search_string)
             except Exception as exc:
-                self._log.debug('iTunes search failed: {0}', exc)
+                self._log.debug(u'iTunes search failed: {0}', exc)
+                return
+
+            # Get the first match.
+            if results:
+                itunes_album = results[0]
+            else:
+                self._log.debug(u'iTunes search for {:r} got no results',
+                                search_string)
                 return
 
             if itunes_album.get_artwork()['100']:
                 small_url = itunes_album.get_artwork()['100']
                 big_url = small_url.replace('100x100', '1200x1200')
-                yield big_url
+                yield self._candidate(url=big_url, match=Candidate.MATCH_EXACT)
             else:
                 self._log.debug(u'album has no artwork in iTunes Store')
         except IndexError:
             self._log.debug(u'album not found in iTunes Store')
 
 
-class Wikipedia(ArtSource):
-    # Art from Wikipedia (queried through DBpedia)
+class Wikipedia(RemoteArtSource):
+    NAME = u"Wikipedia (queried through DBpedia)"
     DBPEDIA_URL = 'http://dbpedia.org/sparql'
     WIKIPEDIA_URL = 'http://en.wikipedia.org/w/api.php'
     SPARQL_QUERY = '''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -232,7 +456,7 @@ class Wikipedia(ArtSource):
                   }}
                  Limit 1'''
 
-    def get(self, album):
+    def get(self, album, extra):
         if not (album.albumartist and album.album):
             return
 
@@ -255,9 +479,9 @@ class Wikipedia(ArtSource):
                 cover_filename = 'File:' + results[0]['coverFilename']['value']
                 page_id = results[0]['pageId']['value']
             else:
-                self._log.debug('wikipedia: album not found on dbpedia')
+                self._log.debug(u'wikipedia: album not found on dbpedia')
         except (ValueError, KeyError, IndexError):
-            self._log.debug('wikipedia: error scraping dbpedia response: {}',
+            self._log.debug(u'wikipedia: error scraping dbpedia response: {}',
                             dbpedia_response.text)
 
         # Ensure we have a filename before attempting to query wikipedia
@@ -272,7 +496,7 @@ class Wikipedia(ArtSource):
         if ' .' in cover_filename and \
            '.' not in cover_filename.split(' .')[-1]:
             self._log.debug(
-                'wikipedia: dbpedia provided incomplete cover_filename'
+                u'wikipedia: dbpedia provided incomplete cover_filename'
             )
             lpart, rpart = cover_filename.rsplit(' .', 1)
 
@@ -301,7 +525,7 @@ class Wikipedia(ArtSource):
                         break
             except (ValueError, KeyError):
                 self._log.debug(
-                    'wikipedia: failed to retrieve a cover_filename'
+                    u'wikipedia: failed to retrieve a cover_filename'
                 )
                 return
 
@@ -324,14 +548,16 @@ class Wikipedia(ArtSource):
             results = data['query']['pages']
             for _, result in results.iteritems():
                 image_url = result['imageinfo'][0]['url']
-                yield image_url
+                yield self._candidate(url=image_url,
+                                      match=Candidate.MATCH_EXACT)
         except (ValueError, KeyError, IndexError):
-            self._log.debug('wikipedia: error scraping imageinfo')
+            self._log.debug(u'wikipedia: error scraping imageinfo')
             return
 
 
-class FileSystem(ArtSource):
-    """Art from the filesystem"""
+class FileSystem(LocalArtSource):
+    NAME = u"Filesystem"
+
     @staticmethod
     def filename_priority(filename, cover_names):
         """Sort order for image names.
@@ -342,50 +568,67 @@ class FileSystem(ArtSource):
         """
         return [idx for (idx, x) in enumerate(cover_names) if x in filename]
 
-    def get(self, path, cover_names, cautious):
-        """Look for album art files in a specified directory.
+    def get(self, album, extra):
+        """Look for album art files in the specified directories.
         """
-        if not os.path.isdir(path):
+        paths = extra['paths']
+        if not paths:
             return
-
-        # Find all files that look like images in the directory.
-        images = []
-        for fn in os.listdir(path):
-            for ext in IMAGE_EXTENSIONS:
-                if fn.lower().endswith(b'.' + ext.encode('utf8')) and \
-                   os.path.isfile(os.path.join(path, fn)):
-                    images.append(fn)
-
-        # Look for "preferred" filenames.
-        images = sorted(images,
-                        key=lambda x: self.filename_priority(x, cover_names))
+        cover_names = extra['cover_names']
         cover_pat = br"(\b|_)({0})(\b|_)".format(b'|'.join(cover_names))
-        for fn in images:
-            if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
-                self._log.debug(u'using well-named art file {0}',
-                                util.displayable_path(fn))
-                return os.path.join(path, fn)
+        cautious = extra['cautious']
 
-        # Fall back to any image in the folder.
-        if images and not cautious:
-            self._log.debug(u'using fallback art file {0}',
-                            util.displayable_path(images[0]))
-            return os.path.join(path, images[0])
+        for path in paths:
+            if not os.path.isdir(path):
+                continue
+
+            # Find all files that look like images in the directory.
+            images = []
+            for fn in os.listdir(path):
+                for ext in IMAGE_EXTENSIONS:
+                    if fn.lower().endswith(b'.' + ext.encode('utf8')) and \
+                       os.path.isfile(os.path.join(path, fn)):
+                        images.append(fn)
+
+            # Look for "preferred" filenames.
+            images = sorted(images,
+                            key=lambda x:
+                                self.filename_priority(x, cover_names))
+            remaining = []
+            for fn in images:
+                if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
+                    self._log.debug(u'using well-named art file {0}',
+                                    util.displayable_path(fn))
+                    yield self._candidate(path=os.path.join(path, fn),
+                                          match=Candidate.MATCH_EXACT)
+                else:
+                    remaining.append(fn)
+
+            # Fall back to any image in the folder.
+            if remaining and not cautious:
+                self._log.debug(u'using fallback art file {0}',
+                                util.displayable_path(remaining[0]))
+                yield self._candidate(path=os.path.join(path, remaining[0]),
+                                      match=Candidate.MATCH_FALLBACK)
 
 
 # Try each source in turn.
 
-SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart', u'google',
-               u'wikipedia']
+SOURCES_ALL = [u'filesystem',
+               u'coverart', u'itunes', u'amazon', u'albumart',
+               u'wikipedia', u'google', u'fanarttv']
 
 ART_SOURCES = {
+    u'filesystem': FileSystem,
     u'coverart': CoverArtArchive,
     u'itunes': ITunesStore,
     u'albumart': AlbumArtOrg,
     u'amazon': Amazon,
-    u'google': GoogleImages,
     u'wikipedia': Wikipedia,
+    u'google': GoogleImages,
+    u'fanarttv': FanartTV,
 }
+SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
 # PLUGIN LOGIC ###############################################################
 
@@ -399,11 +642,16 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'minwidth': 0,
             'maxwidth': 0,
             'enforce_ratio': False,
-            'remote_priority': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': ['coverart', 'itunes', 'amazon', 'albumart'],
+            'sources': ['filesystem',
+                        'coverart', 'itunes', 'amazon', 'albumart'],
+            'google_key': None,
+            'google_engine': u'001442825323518660753:hrh5ch1gjzm',
+            'fanarttv_key': None
         })
+        self.config['google_key'].redact = True
+        self.config['fanarttv_key'].redact = True
 
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
@@ -413,6 +661,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.maxwidth = self.config['maxwidth'].get(int)
         self.enforce_ratio = self.config['enforce_ratio'].get(bool)
 
+        cover_names = self.config['cover_names'].as_str_seq()
+        self.cover_names = map(util.bytestring_path, cover_names)
+        self.cautious = self.config['cautious'].get(bool)
+
+        self.src_removed = (config['import']['delete'].get(bool) or
+                            config['import']['move'].get(bool))
+
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
@@ -421,15 +676,38 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         available_sources = list(SOURCES_ALL)
         if not HAVE_ITUNES and u'itunes' in available_sources:
             available_sources.remove(u'itunes')
+        if not self.config['google_key'].get() and \
+                u'google' in available_sources:
+            available_sources.remove(u'google')
         sources_name = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
-        self.sources = [ART_SOURCES[s](self._log) for s in sources_name]
-        self.fs_source = FileSystem(self._log)
+        if not self.config['fanarttv_key'].get() and \
+                u'fanarttv' in sources_name:
+            self._log.warn(
+                u'fanart.tv source enabled, but no personal API given. This '
+                u'works as of now, however, fanart.tv prefers users to '
+                u'register a personal key. Additionaly this makes new art '
+                u'available shorter after its upload. See the documentation.')
+        if 'remote_priority' in self.config:
+            self._log.warning(
+                u'The `fetch_art.remote_priority` configuration option has '
+                u'been deprecated, see the documentation.')
+            if self.config['remote_priority'].get(bool):
+                try:
+                    sources_name.remove(u'filesystem')
+                    sources_name.append(u'filesystem')
+                except ValueError:
+                    pass
+        self.sources = [ART_SOURCES[s](self._log, self.config)
+                        for s in sources_name]
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
+            if task.album.artpath and os.path.isfile(task.album.artpath):
+                # Album already has art (probably a re-import); skip it.
+                return
             if task.choice_flag == importer.action.ASIS:
                 # For as-is imports, don't search Web sources for art.
                 local = True
@@ -440,10 +718,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            path = self.art_for_album(task.album, task.paths, local)
+            candidate = self.art_for_album(task.album, task.paths, local)
 
-            if path:
-                self.art_paths[task] = path
+            if candidate:
+                self.art_paths[task] = candidate.path
 
     # Synchronous; after music files are put in place.
     def assign_art(self, session, task):
@@ -452,19 +730,19 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             path = self.art_paths.pop(task)
 
             album = task.album
-            src_removed = (config['import']['delete'].get(bool) or
-                           config['import']['move'].get(bool))
-            album.set_art(path, not src_removed)
+            album.set_art(path, not self.src_removed)
             album.store()
-            if src_removed:
+            if self.src_removed:
                 task.prune(path)
 
     # Manual album art fetching.
     def commands(self):
         cmd = ui.Subcommand('fetchart', help='download album art')
-        cmd.parser.add_option('-f', '--force', dest='force',
-                              action='store_true', default=False,
-                              help='re-download art when already present')
+        cmd.parser.add_option(
+            u'-f', u'--force', dest='force',
+            action='store_true', default=False,
+            help=u're-download art when already present'
+        )
 
         def func(lib, opts, args):
             self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)
@@ -472,57 +750,6 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         return [cmd]
 
     # Utilities converted from functions to methods on logging overhaul
-
-    def _fetch_image(self, url):
-        """Downloads an image from a URL and checks whether it seems to
-        actually be an image. If so, returns a path to the downloaded image.
-        Otherwise, returns None.
-        """
-        try:
-            with closing(self.request(url, stream=True,
-                                      message='downloading image')) as resp:
-                if 'Content-Type' not in resp.headers \
-                        or resp.headers['Content-Type'] not in CONTENT_TYPES:
-                    self._log.debug(
-                        'not a supported image: {}',
-                        resp.headers.get('Content-Type') or 'no content type',
-                    )
-                    return None
-
-                # Generate a temporary file with the correct extension.
-                with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION,
-                                        delete=False) as fh:
-                    for chunk in resp.iter_content(chunk_size=1024):
-                        fh.write(chunk)
-                self._log.debug(u'downloaded art to: {0}',
-                                util.displayable_path(fh.name))
-                return fh.name
-
-        except (IOError, requests.RequestException, TypeError) as exc:
-            # Handling TypeError works around a urllib3 bug:
-            # https://github.com/shazow/urllib3/issues/556
-            self._log.debug('error fetching art: {}', exc)
-            return None
-
-    def _is_valid_image_candidate(self, candidate):
-        if not candidate:
-            return False
-
-        if not (self.enforce_ratio or self.minwidth):
-            return True
-
-        # get_size returns None if no local imaging backend is available
-        size = ArtResizer.shared.get_size(candidate)
-
-        if not size:
-            self._log.warning(u'could not verify size of image: please see '
-                              u'documentation for dependencies. '
-                              u'The configuration options `minwidth` and '
-                              u'`enforce_ratio` may be violated.')
-            return True
-
-        return size and size[0] >= self.minwidth and \
-            (not self.enforce_ratio or size[0] == size[1])
 
     def art_for_album(self, album, paths, local_only=False):
         """Given an Album object, returns a path to downloaded art for the
@@ -533,32 +760,36 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """
         out = None
 
-        # Local art.
-        cover_names = self.config['cover_names'].as_str_seq()
-        cover_names = map(util.bytestring_path, cover_names)
-        cautious = self.config['cautious'].get(bool)
-        if paths:
-            for path in paths:
-                candidate = self.fs_source.get(path, cover_names, cautious)
-                if self._is_valid_image_candidate(candidate):
-                    out = candidate
-                    self._log.debug('found local image {}', out)
+        # all the information any of the sources might need
+        extra = {'paths': paths,
+                 'cover_names': self.cover_names,
+                 'cautious': self.cautious,
+                 'enforce_ratio': self.enforce_ratio,
+                 'minwidth': self.minwidth,
+                 'maxwidth': self.maxwidth}
+
+        for source in self.sources:
+            if source.IS_LOCAL or not local_only:
+                self._log.debug(
+                    u'trying source {0} for album {1.albumartist} - {1.album}',
+                    SOURCE_NAMES[type(source)],
+                    album,
+                )
+                # URLs might be invalid at this point, or the image may not
+                # fulfill the requirements
+                for candidate in source.get(album, extra):
+                    source.fetch_image(candidate, extra)
+                    if candidate.validate(extra):
+                        out = candidate
+                        self._log.debug(
+                            u'using {0.LOC_STR} image {1}'.format(
+                                source, util.displayable_path(out.path)))
+                        break
+                if out:
                     break
 
-        # Web art sources.
-        remote_priority = self.config['remote_priority'].get(bool)
-        if not local_only and (remote_priority or not out):
-            for url in self._source_urls(album):
-                if self.maxwidth:
-                    url = ArtResizer.shared.proxy_url(self.maxwidth, url)
-                candidate = self._fetch_image(url)
-                if self._is_valid_image_candidate(candidate):
-                    out = candidate
-                    self._log.debug('using remote image {}', out)
-                    break
-
-        if self.maxwidth and out:
-            out = ArtResizer.shared.resize(self.maxwidth, out)
+        if out:
+            out.resize(extra)
 
         return out
 
@@ -567,38 +798,20 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         fetchart CLI command.
         """
         for album in albums:
-            if album.artpath and not force:
-                message = ui.colorize('text_highlight_minor', 'has album art')
+            if album.artpath and not force and os.path.isfile(album.artpath):
+                message = ui.colorize('text_highlight_minor', u'has album art')
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
                 # sources.
                 local_paths = None if force else [album.path]
 
-                path = self.art_for_album(album, local_paths)
-                if path:
-                    album.set_art(path, False)
+                candidate = self.art_for_album(album, local_paths)
+                if candidate:
+                    album.set_art(candidate.path, False)
                     album.store()
-                    message = ui.colorize('text_success', 'found album art')
+                    message = ui.colorize('text_success', u'found album art')
                 else:
-                    message = ui.colorize('text_error', 'no art found')
+                    message = ui.colorize('text_error', u'no art found')
 
             self._log.info(u'{0}: {1}', album, message)
-
-    def _source_urls(self, album):
-        """Generate possible source URLs for an album's art. The URLs are
-        not guaranteed to work so they each need to be attempted in turn.
-        This allows the main `art_for_album` function to abort iteration
-        through this sequence early to avoid the cost of scraping when not
-        necessary.
-        """
-        source_names = {v: k for k, v in ART_SOURCES.items()}
-        for source in self.sources:
-            self._log.debug(
-                'trying source {0} for album {1.albumartist} - {1.album}',
-                source_names[type(source)],
-                album,
-            )
-            urls = source.get(album)
-            for url in urls:
-                yield url

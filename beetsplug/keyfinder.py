@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
+# Copyright 2016, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,15 +16,13 @@
 """Uses the `KeyFinder` program to add the `initial_key` field.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import subprocess
 
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
-from beets import config
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -41,13 +40,12 @@ class KeyFinderPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('keyfinder',
-                            help='detect and add initial key from audio')
+                            help=u'detect and add initial key from audio')
         cmd.func = self.command
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.find_key(lib.items(ui.decargs(args)),
-                      write=config['import']['write'].get(bool))
+        self.find_key(lib.items(ui.decargs(args)), write=ui.should_write())
 
     def imported(self, session, task):
         self.find_key(task.items)
@@ -64,12 +62,12 @@ class KeyFinderPlugin(BeetsPlugin):
                 output = util.command_output([bin, b'-f',
                                               util.syspath(item.path)])
             except (subprocess.CalledProcessError, OSError) as exc:
-                self._log.error('execution failed: {0}', exc)
+                self._log.error(u'execution failed: {0}', exc)
                 continue
             except UnicodeEncodeError:
                 # Workaround for Python 2 Windows bug.
                 # http://bugs.python.org/issue1759845
-                self._log.error('execution failed for Unicode path: {0!r}',
+                self._log.error(u'execution failed for Unicode path: {0!r}',
                                 item.path)
                 continue
 

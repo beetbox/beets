@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Tests for autotagging functionality.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 import copy
@@ -635,7 +635,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         trackinfo = []
         trackinfo.append(TrackInfo(
             u'oneNew',
-            'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
             medium=1,
             medium_index=1,
             medium_total=1,
@@ -645,7 +645,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         ))
         trackinfo.append(TrackInfo(
             u'twoNew',
-            '40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
             medium=2,
             medium_index=1,
             index=2,
@@ -807,16 +807,16 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
         trackinfo = []
         trackinfo.append(TrackInfo(
             u'oneNew',
-            'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
             u'artistOneNew',
-            'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+            u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
             index=1,
         ))
         trackinfo.append(TrackInfo(
             u'twoNew',
-            '40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
             u'artistTwoNew',
-            '80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+            u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
             index=2,
         ))
         self.info = AlbumInfo(

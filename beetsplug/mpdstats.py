@@ -1,6 +1,6 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Peter Schnebel and Johann Klähn.
+# Copyright 2016, Peter Schnebel and Johann Klähn.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import mpd
 import socket
@@ -80,7 +79,7 @@ class MPDClientWrapper(object):
         try:
             self.client.connect(host, port)
         except socket.error as e:
-            raise ui.UserError('could not connect to MPD: {0}'.format(e))
+            raise ui.UserError(u'could not connect to MPD: {0}'.format(e))
 
         password = mpd_config['password'].get(unicode)
         if password:
@@ -88,7 +87,7 @@ class MPDClientWrapper(object):
                 self.client.password(password)
             except mpd.CommandError as e:
                 raise ui.UserError(
-                    'could not authenticate to MPD: {0}'.format(e)
+                    u'could not authenticate to MPD: {0}'.format(e)
                 )
 
     def disconnect(self):
@@ -338,16 +337,16 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand(
             'mpdstats',
-            help='run a MPD client to gather play statistics')
+            help=u'run a MPD client to gather play statistics')
         cmd.parser.add_option(
-            '--host', dest='host', type='string',
-            help='set the hostname of the server to connect to')
+            u'--host', dest='host', type='string',
+            help=u'set the hostname of the server to connect to')
         cmd.parser.add_option(
-            '--port', dest='port', type='int',
-            help='set the port of the MPD server to connect to')
+            u'--port', dest='port', type='int',
+            help=u'set the port of the MPD server to connect to')
         cmd.parser.add_option(
-            '--password', dest='password', type='string',
-            help='set the password of the MPD server to connect to')
+            u'--password', dest='password', type='string',
+            help=u'set the password of the MPD server to connect to')
 
         def func(lib, opts, args):
             mpd_config.set_args(opts)

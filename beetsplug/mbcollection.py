@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2011, Jeffrey Aylesworth <jeffrey@aylesworth.ca>
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -12,8 +13,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -33,11 +33,11 @@ def mb_call(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except musicbrainzngs.AuthenticationError:
-        raise ui.UserError('authentication with MusicBrainz failed')
+        raise ui.UserError(u'authentication with MusicBrainz failed')
     except (musicbrainzngs.ResponseError, musicbrainzngs.NetworkError) as exc:
-        raise ui.UserError('MusicBrainz API error: {0}'.format(exc))
+        raise ui.UserError(u'MusicBrainz API error: {0}'.format(exc))
     except musicbrainzngs.UsageError:
-        raise ui.UserError('MusicBrainz credentials missing')
+        raise ui.UserError(u'MusicBrainz credentials missing')
 
 
 def submit_albums(collection_id, release_ids):
@@ -55,6 +55,7 @@ def submit_albums(collection_id, release_ids):
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self):
         super(MusicBrainzCollectionPlugin, self).__init__()
+        config['musicbrainz']['pass'].redact = True
         musicbrainzngs.auth(
             config['musicbrainz']['user'].get(unicode),
             config['musicbrainz']['pass'].get(unicode),
@@ -64,7 +65,8 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             self.import_stages = [self.imported]
 
     def commands(self):
-        mbupdate = Subcommand('mbupdate', help='Update MusicBrainz collection')
+        mbupdate = Subcommand('mbupdate',
+                              help=u'Update MusicBrainz collection')
         mbupdate.func = self.update_collection
         return [mbupdate]
 
@@ -83,7 +85,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         # Get the available collections.
         collections = mb_call(musicbrainzngs.get_collections)
         if not collections['collection-list']:
-            raise ui.UserError('no collections exist for user')
+            raise ui.UserError(u'no collections exist for user')
 
         # Get the first release collection. MusicBrainz also has event
         # collections, so we need to avoid adding to those.
@@ -92,7 +94,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                 collection_id = collection['id']
                 break
         else:
-            raise ui.UserError('No collection found.')
+            raise ui.UserError(u'No collection found.')
 
         # Get a list of all the album IDs.
         album_ids = []
@@ -105,6 +107,8 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                     self._log.info(u'skipping invalid MBID: {0}', aid)
 
         # Submit to MusicBrainz.
-        self._log.info('Updating MusicBrainz collection {0}...', collection_id)
+        self._log.info(
+            u'Updating MusicBrainz collection {0}...', collection_id
+        )
         submit_albums(collection_id, album_ids)
-        self._log.info('...MusicBrainz collection updated.')
+        self._log.info(u'...MusicBrainz collection updated.')

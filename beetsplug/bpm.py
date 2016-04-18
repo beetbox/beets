@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, aroquen
+# Copyright 2016, aroquen
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Determine BPM by pressing a key to the rhythm."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import time
 
@@ -58,8 +58,8 @@ class BPMPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('bpm',
-                            help='determine bpm of a song by pressing \
-                            a key to the rhythm')
+                            help=u'determine bpm of a song by pressing '
+                            u'a key to the rhythm')
         cmd.func = self.command
         return [cmd]
 
@@ -69,7 +69,7 @@ class BPMPlugin(BeetsPlugin):
     def get_bpm(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
         if len(items) > 1:
-            raise ValueError('Can only get bpm of one song at time')
+            raise ValueError(u'Can only get bpm of one song at time')
 
         item = items[0]
         if item['bpm']:

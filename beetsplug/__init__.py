@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,8 @@
 
 """A namespace package for beets plugins."""
 
-# Make this a namespace package.
-from __future__ import absolute_import
+from __future__ import division, absolute_import, print_function
 
+# Make this a namespace package.
 from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)

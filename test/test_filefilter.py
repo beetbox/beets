@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Malte Ried.
+# Copyright 2016, Malte Ried.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,17 +15,20 @@
 
 """Tests for the `filefilter` plugin.
 """
+
+from __future__ import division, absolute_import, print_function
+
 import os
 import shutil
 
-from _common import unittest
+from test import _common
+from test._common import unittest
+from test.helper import capture_log
+from test.test_importer import ImportHelper
 from beets import config
 from beets.mediafile import MediaFile
 from beets.util import displayable_path
 from beetsplug.filefilter import FileFilterPlugin
-from test import _common
-from test.helper import capture_log
-from test.test_importer import ImportHelper
 
 
 class FileFilterPluginTest(unittest.TestCase, ImportHelper):

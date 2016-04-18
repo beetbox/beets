@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Bruno Cauet.
+# Copyright 2016, Bruno Cauet.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from os import path, remove
 from tempfile import mkdtemp
@@ -45,36 +45,42 @@ class SmartPlaylistTest(unittest.TestCase):
         self.assertEqual(spl._unmatched_playlists, set())
 
         config['smartplaylist']['playlists'].set([
-            {'name': 'foo',
-             'query': 'FOO foo'},
-            {'name': 'bar',
-             'album_query': ['BAR bar1', 'BAR bar2']},
-            {'name': 'baz',
-             'query': 'BAZ baz',
-             'album_query': 'BAZ baz'}
+            {'name': u'foo',
+             'query': u'FOO foo'},
+            {'name': u'bar',
+             'album_query': [u'BAR bar1', u'BAR bar2']},
+            {'name': u'baz',
+             'query': u'BAZ baz',
+             'album_query': u'BAZ baz'}
         ])
         spl.build_queries()
         self.assertEqual(spl._matched_playlists, set())
-        foo_foo = parse_query_string('FOO foo', Item)
-        baz_baz = parse_query_string('BAZ baz', Item)
-        baz_baz2 = parse_query_string('BAZ baz', Album)
-        bar_bar = OrQuery((parse_query_string('BAR bar1', Album)[0],
-                           parse_query_string('BAR bar2', Album)[0]))
+        foo_foo = parse_query_string(u'FOO foo', Item)
+        baz_baz = parse_query_string(u'BAZ baz', Item)
+        baz_baz2 = parse_query_string(u'BAZ baz', Album)
+        bar_bar = OrQuery((parse_query_string(u'BAR bar1', Album)[0],
+                           parse_query_string(u'BAR bar2', Album)[0]))
         self.assertEqual(spl._unmatched_playlists, set([
-            ('foo', foo_foo, (None, None)),
-            ('baz', baz_baz, baz_baz2),
-            ('bar', (None, None), (bar_bar, None)),
+            (u'foo', foo_foo, (None, None)),
+            (u'baz', baz_baz, baz_baz2),
+            (u'bar', (None, None), (bar_bar, None)),
         ]))
 
     def test_build_queries_with_sorts(self):
         spl = SmartPlaylistPlugin()
         config['smartplaylist']['playlists'].set([
-            {'name': 'no_sort', 'query': 'foo'},
-            {'name': 'one_sort', 'query': 'foo year+'},
-            {'name': 'only_empty_sorts', 'query': ['foo', 'bar']},
-            {'name': 'one_non_empty_sort', 'query': ['foo year+', 'bar']},
-            {'name': 'multiple_sorts', 'query': ['foo year+', 'bar genre-']},
-            {'name': 'mixed', 'query': ['foo year+', 'bar', 'baz genre+ id-']}
+            {'name': u'no_sort',
+             'query': u'foo'},
+            {'name': u'one_sort',
+             'query': u'foo year+'},
+            {'name': u'only_empty_sorts',
+             'query': [u'foo', u'bar']},
+            {'name': u'one_non_empty_sort',
+             'query': [u'foo year+', u'bar']},
+            {'name': u'multiple_sorts',
+             'query': [u'foo year+', u'bar genre-']},
+            {'name': u'mixed',
+             'query': [u'foo year+', u'bar', u'baz genre+ id-']}
         ])
 
         spl.build_queries()
@@ -84,13 +90,13 @@ class SmartPlaylistTest(unittest.TestCase):
         asseq = self.assertEqual  # less cluttered code
         S = FixedFieldSort  # short cut since we're only dealing with this
         asseq(sorts["no_sort"], NullSort())
-        asseq(sorts["one_sort"], S('year'))
+        asseq(sorts["one_sort"], S(u'year'))
         asseq(sorts["only_empty_sorts"], None)
-        asseq(sorts["one_non_empty_sort"], S('year'))
+        asseq(sorts["one_non_empty_sort"], S(u'year'))
         asseq(sorts["multiple_sorts"],
-              MultipleSort([S('year'), S('genre', False)]))
+              MultipleSort([S('year'), S(u'genre', False)]))
         asseq(sorts["mixed"],
-              MultipleSort([S('year'), S('genre'), S('id', False)]))
+              MultipleSort([S('year'), S(u'genre'), S(u'id', False)]))
 
     def test_matches(self):
         spl = SmartPlaylistPlugin()
@@ -118,25 +124,25 @@ class SmartPlaylistTest(unittest.TestCase):
         spl = SmartPlaylistPlugin()
 
         nones = None, None
-        pl1 = '1', ('q1', None), nones
-        pl2 = '2', ('q2', None), nones
-        pl3 = '3', ('q3', None), nones
+        pl1 = '1', (u'q1', None), nones
+        pl2 = '2', (u'q2', None), nones
+        pl3 = '3', (u'q3', None), nones
 
         spl._unmatched_playlists = set([pl1, pl2, pl3])
         spl._matched_playlists = set()
 
         spl.matches = Mock(return_value=False)
-        spl.db_change(None, "nothing")
+        spl.db_change(None, u"nothing")
         self.assertEqual(spl._unmatched_playlists, set([pl1, pl2, pl3]))
         self.assertEqual(spl._matched_playlists, set())
 
-        spl.matches.side_effect = lambda _, q, __: q == 'q3'
-        spl.db_change(None, "matches 3")
+        spl.matches.side_effect = lambda _, q, __: q == u'q3'
+        spl.db_change(None, u"matches 3")
         self.assertEqual(spl._unmatched_playlists, set([pl1, pl2]))
         self.assertEqual(spl._matched_playlists, set([pl3]))
 
-        spl.matches.side_effect = lambda _, q, __: q == 'q1'
-        spl.db_change(None, "matches 3")
+        spl.matches.side_effect = lambda _, q, __: q == u'q1'
+        spl.db_change(None, u"matches 3")
         self.assertEqual(spl._matched_playlists, set([pl1, pl3]))
         self.assertEqual(spl._unmatched_playlists, set([pl2]))
 
@@ -183,7 +189,7 @@ class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
             {'name': 'my_playlist.m3u',
              'query': self.item.title},
             {'name': 'all.m3u',
-             'query': ''}
+             'query': u''}
         ])
         config['smartplaylist']['playlist_dir'].set(self.temp_dir)
         self.load_plugins('smartplaylist')
@@ -194,22 +200,22 @@ class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
 
     def test_splupdate(self):
         with self.assertRaises(UserError):
-            self.run_with_output('splupdate', 'tagada')
+            self.run_with_output(u'splupdate', u'tagada')
 
-        self.run_with_output('splupdate', 'my_playlist')
+        self.run_with_output(u'splupdate', u'my_playlist')
         m3u_path = path.join(self.temp_dir, 'my_playlist.m3u')
         self.assertTrue(path.exists(m3u_path))
         with open(m3u_path, 'r') as f:
             self.assertEqual(f.read(), self.item.path + b"\n")
         remove(m3u_path)
 
-        self.run_with_output('splupdate', 'my_playlist.m3u')
+        self.run_with_output(u'splupdate', u'my_playlist.m3u')
         with open(m3u_path, 'r') as f:
             self.assertEqual(f.read(), self.item.path + b"\n")
         remove(m3u_path)
 
-        self.run_with_output('splupdate')
-        for name in ('my_playlist.m3u', 'all.m3u'):
+        self.run_with_output(u'splupdate')
+        for name in (u'my_playlist.m3u', u'all.m3u'):
             with open(path.join(self.temp_dir, name), 'r') as f:
                 self.assertEqual(f.read(), self.item.path + b"\n")
 

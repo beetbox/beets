@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
+# Copyright 2016, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from test.helper import TestHelper
@@ -51,6 +51,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn('disctitle: DDD', out)
         self.assertIn('genres: a; b; c', out)
         self.assertNotIn('composer:', out)
+        self.remove_mediafile_fixtures()
 
     def test_item_query(self):
         item1, item2 = self.add_item_fixtures(count=2)
@@ -92,6 +93,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn(u'album: AAA', out)
         self.assertIn(u'tracktotal: 5', out)
         self.assertIn(u'title: [various]', out)
+        self.remove_mediafile_fixtures()
 
     def test_include_pattern(self):
         item, = self.add_item_fixtures()
@@ -103,6 +105,12 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn(displayable_path(item.path), out)
         self.assertNotIn(u'title:', out)
         self.assertIn(u'album: xxxx', out)
+
+    def test_custom_format(self):
+        self.add_item_fixtures()
+        out = self.run_with_output('--library', '--format',
+                                   '$track. $title - $artist ($length)')
+        self.assertEqual(u'02. tïtle 0 - the artist (0:01)\n', out)
 
 
 def suite():

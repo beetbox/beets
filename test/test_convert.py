@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
+# Copyright 2016, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 import os.path
@@ -63,6 +63,7 @@ class TestHelper(helper.TestHelper):
                                 .format(path, tag))
 
 
+@_common.slow_test()
 class ImportConvertTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -98,6 +99,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.assertTrue(os.path.isfile(item.path))
 
 
+@_common.slow_test()
 class ConvertCliTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -179,7 +181,13 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         with open(converted, 'r') as f:
             self.assertEqual(f.read(), 'XXX')
 
+    def test_pretend(self):
+        self.run_command('convert', '--pretend', self.item.path)
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertFalse(os.path.exists(converted))
 
+
+@_common.slow_test()
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper):
     """Test the effect of the `never_convert_lossy_files` option.
     """

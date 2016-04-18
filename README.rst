@@ -1,8 +1,8 @@
-.. image:: https://travis-ci.org/sampsyo/beets.svg?branch=master
-    :target: https://travis-ci.org/sampsyo/beets
+.. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
+    :target: https://travis-ci.org/beetbox/beets
 
-.. image:: http://img.shields.io/codecov/c/github/sampsyo/beets.svg
-    :target: https://codecov.io/github/sampsyo/beets
+.. image:: http://img.shields.io/codecov/c/github/beetbox/beets.svg
+    :target: https://codecov.io/github/beetbox/beets
 
 .. image:: http://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
@@ -79,7 +79,7 @@ news and updates.
 You can install beets by typing ``pip install beets``. Then check out the
 `Getting Started`_ guide.
 
-.. _its Web site: http://beets.radbox.org/
+.. _its Web site: http://beets.io/
 .. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
 
