@@ -679,15 +679,15 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
+        sources_name = plugins.sanitize_choices(
+            self.config['sources'].as_str_seq(), available_sources)
         if not self.config['fanarttv_key'].get() and \
-                u'fanarttv' in available_sources:
+                u'fanarttv' in sources_name:
             self._log.warn(
                 u'fanart.tv source enabled, but no personal API given. This '
                 u'works as of now, however, fanart.tv prefers users to '
                 u'register a personal key. Additionaly this makes new art '
                 u'available shorter after its upload. See the documentation.')
-        sources_name = plugins.sanitize_choices(
-            self.config['sources'].as_str_seq(), available_sources)
         if 'remote_priority' in self.config:
             self._log.warning(
                 u'The `fetch_art.remote_priority` configuration option has '
