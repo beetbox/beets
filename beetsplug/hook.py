@@ -51,10 +51,10 @@ class HookPlugin(BeetsPlugin):
                 command_pieces = shlex.split(encoded_command)
 
                 if len(command_pieces) == 0:
-                    raise ConfigValueError('invalid command \"{0}\"'.format(
+                    raise ConfigValueError('invalid command "{0}"'.format(
                                            command))
 
-                self._log.debug('Running command \"{0}\" for event \"{1}\"',
+                self._log.debug('Running command "{0}" for event "{1}"',
                                 encoded_command, event)
 
                 try:
