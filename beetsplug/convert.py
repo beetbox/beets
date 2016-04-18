@@ -51,7 +51,7 @@ def replace_ext(path, ext):
 
 
 def get_format(fmt=None):
-    """Return the command tempate and the extension from the config.
+    """Return the command template and the extension from the config.
     """
     if not fmt:
         fmt = config['convert']['format'].get(unicode).lower()
