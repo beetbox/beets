@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Malte Ried.
+# Copyright 2016, Malte Ried.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,6 +15,8 @@
 
 """Filter imported files using a regular expression.
 """
+
+from __future__ import division, absolute_import, print_function
 
 import re
 from beets import config

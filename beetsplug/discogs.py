@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,11 +16,11 @@
 """Adds Discogs album search support to the autotagger. Requires the
 discogs-client library.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import beets.ui
 from beets import logging
+from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
 from beets.util import confit
@@ -39,7 +40,7 @@ import os
 urllib3_logger = logging.getLogger('requests.packages.urllib3')
 urllib3_logger.setLevel(logging.CRITICAL)
 
-USER_AGENT = u'beets/{0} +http://beets.radbox.org/'.format(beets.__version__)
+USER_AGENT = u'beets/{0} +http://beets.io/'.format(beets.__version__)
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (ConnectionError, socket.error, httplib.HTTPException,
@@ -99,24 +100,24 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             _, _, url = auth_client.get_authorize_url()
         except CONNECTION_ERRORS as e:
-            self._log.debug('connection error: {0}', e)
-            raise beets.ui.UserError('communication with Discogs failed')
+            self._log.debug(u'connection error: {0}', e)
+            raise beets.ui.UserError(u'communication with Discogs failed')
 
-        beets.ui.print_("To authenticate with Discogs, visit:")
+        beets.ui.print_(u"To authenticate with Discogs, visit:")
         beets.ui.print_(url)
 
         # Ask for the code and validate it.
-        code = beets.ui.input_("Enter the code:")
+        code = beets.ui.input_(u"Enter the code:")
         try:
             token, secret = auth_client.get_access_token(code)
         except DiscogsAPIError:
-            raise beets.ui.UserError('Discogs authorization failed')
+            raise beets.ui.UserError(u'Discogs authorization failed')
         except CONNECTION_ERRORS as e:
             self._log.debug(u'connection error: {0}', e)
-            raise beets.ui.UserError('Discogs token request failed')
+            raise beets.ui.UserError(u'Discogs token request failed')
 
         # Save the token for later use.
-        self._log.debug('Discogs token {0}, secret {1}', token, secret)
+        self._log.debug(u'Discogs token {0}, secret {1}', token, secret)
         with open(self._tokenfile(), 'w') as f:
             json.dump({'token': token, 'secret': secret}, f)
 
@@ -150,8 +151,8 @@ class DiscogsPlugin(BeetsPlugin):
                 return self.candidates(items, artist, album, va_likely)
             else:
                 return []
-        except CONNECTION_ERRORS as e:
-            self._log.debug(u'HTTP Connection Error: {0}', e)
+        except CONNECTION_ERRORS:
+            self._log.debug(u'Connection error in album search', exc_info=True)
             return []
 
     def album_for_id(self, album_id):
@@ -181,8 +182,8 @@ class DiscogsPlugin(BeetsPlugin):
                     self.reset_auth()
                     return self.album_for_id(album_id)
             return None
-        except CONNECTION_ERRORS as e:
-            self._log.debug(u'HTTP Connection Error: {0}', e)
+        except CONNECTION_ERRORS:
+            self._log.debug(u'Connection error in album lookup', exc_info=True)
             return None
         return self.get_album_info(result)
 
@@ -194,7 +195,7 @@ class DiscogsPlugin(BeetsPlugin):
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
         # word characters.
         # TEMPORARY: Encode as ASCII to work around a bug:
-        # https://github.com/sampsyo/beets/issues/1051
+        # https://github.com/beetbox/beets/issues/1051
         # When the library is fixed, we should encode as UTF-8.
         query = re.sub(r'(?u)\W+', ' ', query).encode('ascii', "replace")
         # Strip medium information from query, Things like "CD1" and "disk 1"
@@ -203,9 +204,9 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             releases = self.discogs_client.search(query,
                                                   type='release').page(1)
-        except CONNECTION_ERRORS as exc:
-            self._log.debug("Communication error while searching for {0!r}: "
-                            "{1}".format(query, exc))
+        except CONNECTION_ERRORS:
+            self._log.debug(u"Communication error while searching for {0!r}",
+                            query, exc_info=True)
             return []
         return [self.get_album_info(release) for release in releases[:5]]
 
@@ -223,6 +224,8 @@ class DiscogsPlugin(BeetsPlugin):
         albumtype = ', '.join(
             result.data['formats'][0].get('descriptions', [])) or None
         va = result.data['artists'][0]['name'].lower() == 'various'
+        if va:
+            artist = config['va_name'].get(unicode)
         year = result.data['year']
         label = result.data['labels'][0]['name']
         mediums = len(set(t.medium for t in tracks))

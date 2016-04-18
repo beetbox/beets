@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
@@ -44,11 +44,13 @@ from beets import mediafile
 
 action = Enum('action',
               ['SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
-               'ALBUMS'])
+               'ALBUMS', 'RETAG'])
+# The RETAG action represents "don't apply any match, but do record
+# new metadata". It's not reachable via the standard command prompt but
+# can be used by plugins.
 
 QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
-VARIOUS_ARTISTS = u'Various Artists'
 PROGRESS_KEY = 'tagprogress'
 HISTORY_KEY = 'taghistory'
 
@@ -186,7 +188,6 @@ class ImportSession(object):
         self.logger = self._setup_logging(loghandler)
         self.paths = paths
         self.query = query
-        self.seen_idents = set()
         self._is_resuming = dict()
 
         # Normalize the paths.
@@ -249,17 +250,17 @@ class ImportSession(object):
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.should_remove_duplicates:
-                self.tag_log('duplicate-replace', paths)
+                self.tag_log(u'duplicate-replace', paths)
             elif task.choice_flag in (action.ASIS, action.APPLY):
-                self.tag_log('duplicate-keep', paths)
+                self.tag_log(u'duplicate-keep', paths)
             elif task.choice_flag is (action.SKIP):
-                self.tag_log('duplicate-skip', paths)
+                self.tag_log(u'duplicate-skip', paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is action.ASIS:
-                self.tag_log('asis', paths)
+                self.tag_log(u'asis', paths)
             elif task.choice_flag is action.SKIP:
-                self.tag_log('skip', paths)
+                self.tag_log(u'skip', paths)
 
     def should_resume(self, path):
         raise NotImplementedError
@@ -294,12 +295,15 @@ class ImportSession(object):
                 # Split directory tasks into one task for each album.
                 stages += [group_albums(self)]
 
+            # These stages either talk to the user to get a decision or,
+            # in the case of a non-autotagged import, just choose to
+            # import everything as-is. In *both* cases, these stages
+            # also add the music to the library database, so later
+            # stages need to read and write data from there.
             if self.config['autotag']:
                 stages += [lookup_candidates(self), user_query(self)]
             else:
                 stages += [import_asis(self)]
-
-            stages += [apply_choices(self)]
 
             # Plugin stages.
             for stage_func in plugins.import_stages():
@@ -432,6 +436,7 @@ class ImportTask(BaseImportTask):
         self.rec = None
         self.should_remove_duplicates = False
         self.is_album = True
+        self.search_ids = []  # user-supplied candidate IDs.
 
     def set_choice(self, choice):
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -440,7 +445,8 @@ class ImportTask(BaseImportTask):
         # Not part of the task structure:
         assert choice not in (action.MANUAL, action.MANUAL_ID)
         assert choice != action.APPLY  # Only used internally.
-        if choice in (action.SKIP, action.ASIS, action.TRACKS, action.ALBUMS):
+        if choice in (action.SKIP, action.ASIS, action.TRACKS, action.ALBUMS,
+                      action.RETAG):
             self.choice_flag = choice
             self.match = None
         else:
@@ -476,10 +482,10 @@ class ImportTask(BaseImportTask):
         """Returns identifying metadata about the current choice. For
         albums, this is an (artist, album) pair. For items, this is
         (artist, title). May only be called when the choice flag is ASIS
-        (in which case the data comes from the files' current metadata)
-        or APPLY (data comes from the choice).
+        or RETAG (in which case the data comes from the files' current
+        metadata) or APPLY (data comes from the choice).
         """
-        if self.choice_flag is action.ASIS:
+        if self.choice_flag in (action.ASIS, action.RETAG):
             return (self.cur_artist, self.cur_album)
         elif self.choice_flag is action.APPLY:
             return (self.match.info.artist, self.match.info.album)
@@ -490,7 +496,7 @@ class ImportTask(BaseImportTask):
         If the tasks applies an album match the method only returns the
         matched items.
         """
-        if self.choice_flag == action.ASIS:
+        if self.choice_flag in (action.ASIS, action.RETAG):
             return list(self.items)
         elif self.choice_flag == action.APPLY:
             return self.match.mapping.keys()
@@ -577,10 +583,12 @@ class ImportTask(BaseImportTask):
         return tasks
 
     def lookup_candidates(self):
-        """Retrieve and store candidates for this album.
+        """Retrieve and store candidates for this album. User-specified
+        candidate IDs are stored in self.search_ids: if present, the
+        initial lookup is restricted to only those IDs.
         """
         artist, album, candidates, recommendation = \
-            autotag.tag_album(self.items)
+            autotag.tag_album(self.items, search_ids=self.search_ids)
         self.cur_artist = artist
         self.cur_album = album
         self.candidates = candidates
@@ -612,7 +620,10 @@ class ImportTask(BaseImportTask):
         return duplicates
 
     def align_album_level_fields(self):
-        """Make the some album fields equal across `self.items`
+        """Make some album fields equal across `self.items`. For the
+        RETAG action, we assume that the responsible for returning it
+        (ie. a plugin) always ensures that the first item contains
+        valid data on the relevant fields.
         """
         changes = {}
 
@@ -629,10 +640,10 @@ class ImportTask(BaseImportTask):
                 changes['comp'] = False
             else:
                 # VA.
-                changes['albumartist'] = VARIOUS_ARTISTS
+                changes['albumartist'] = config['va_name'].get(unicode)
                 changes['comp'] = True
 
-        elif self.choice_flag == action.APPLY:
+        elif self.choice_flag in (action.APPLY, action.RETAG):
             # Applying autotagged metadata. Just get AA from the first
             # item.
             if not self.items[0].albumartist:
@@ -667,7 +678,7 @@ class ImportTask(BaseImportTask):
                     # old paths.
                     item.move(copy, link)
 
-            if write and self.apply:
+            if write and (self.apply or self.choice_flag == action.RETAG):
                 item.try_write()
 
         with session.lib.transaction():
@@ -716,6 +727,7 @@ class ImportTask(BaseImportTask):
             if replaced_album:
                 self.album.added = replaced_album.added
                 self.album.update(replaced_album._values_flex)
+                self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
                     u'Reimported album: added {0}, flexible '
@@ -801,8 +813,8 @@ class SingletonImportTask(ImportTask):
         self.paths = [item.path]
 
     def chosen_ident(self):
-        assert self.choice_flag in (action.ASIS, action.APPLY)
-        if self.choice_flag is action.ASIS:
+        assert self.choice_flag in (action.ASIS, action.APPLY, action.RETAG)
+        if self.choice_flag in (action.ASIS, action.RETAG):
             return (self.item.artist, self.item.title)
         elif self.choice_flag is action.APPLY:
             return (self.match.info.artist, self.match.info.title)
@@ -818,7 +830,8 @@ class SingletonImportTask(ImportTask):
             plugins.send('item_imported', lib=lib, item=item)
 
     def lookup_candidates(self):
-        candidates, recommendation = autotag.tag_item(self.item)
+        candidates, recommendation = autotag.tag_item(
+            self.item, search_ids=self.search_ids)
         self.candidates = candidates
         self.rec = recommendation
 
@@ -1136,7 +1149,7 @@ class ImportTaskFactory(object):
         if not (self.session.config['move'] or
                 self.session.config['copy']):
             log.warn(u"Archive importing requires either "
-                     "'copy' or 'move' to be enabled.")
+                     u"'copy' or 'move' to be enabled.")
             return
 
         log.debug(u'Extracting archive: {0}',
@@ -1243,6 +1256,11 @@ def lookup_candidates(session, task):
 
     plugins.send('import_task_start', session=session, task=task)
     log.debug(u'Looking up: {0}', displayable_path(task.paths))
+
+    # Restrict the initial lookup to IDs specified by the user via the -m
+    # option. Currently all the IDs are passed onto the tasks directly.
+    task.search_ids = session.config['search_ids'].as_str_seq()
+
     task.lookup_candidates()
 
 
@@ -1295,6 +1313,7 @@ def user_query(session, task):
         return pipeline.multiple(ipl.pull())
 
     resolve_duplicates(session, task)
+    apply_choice(session, task)
     return task
 
 
@@ -1302,13 +1321,14 @@ def resolve_duplicates(session, task):
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """
-    if task.choice_flag in (action.ASIS, action.APPLY):
-        ident = task.chosen_ident()
+    if task.choice_flag in (action.ASIS, action.APPLY, action.RETAG):
         found_duplicates = task.find_duplicates(session.lib)
-        if ident in session.seen_idents or found_duplicates:
+        if found_duplicates:
+            log.debug(u'found duplicates: {}'.format(
+                [o.id for o in found_duplicates]
+            ))
             session.resolve_duplicate(task, found_duplicates)
             session.log_choice(task, True)
-        session.seen_idents.add(ident)
 
 
 @pipeline.mutator_stage
@@ -1321,14 +1341,14 @@ def import_asis(session, task):
     if task.skip:
         return
 
-    log.info('{}', displayable_path(task.paths))
+    log.info(u'{}', displayable_path(task.paths))
     task.set_choice(action.ASIS)
+    apply_choice(session, task)
 
 
-@pipeline.mutator_stage
-def apply_choices(session, task):
-    """A coroutine for applying changes to albums and singletons during
-    the autotag process.
+def apply_choice(session, task):
+    """Apply the task's choice to the Album or Item it contains and add
+    it to the library.
     """
     if task.skip:
         return

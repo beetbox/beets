@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
+
 """Populate an item's `added` and `mtime` fields by using the file
 modification time (mtime) of the item's source file before import.
 
 Reimported albums and items are skipped.
 """
-from __future__ import (unicode_literals, absolute_import, print_function,
-                        division)
+from __future__ import division, absolute_import, print_function
 
 import os
 
@@ -18,6 +19,7 @@ class ImportAddedPlugin(BeetsPlugin):
         super(ImportAddedPlugin, self).__init__()
         self.config.add({
             'preserve_mtimes': False,
+            'preserve_write_mtimes': False,
         })
 
         # item.id for new items that were reimported
@@ -36,6 +38,7 @@ class ImportAddedPlugin(BeetsPlugin):
         register('item_linked', self.record_import_mtime)
         register('album_imported', self.update_album_times)
         register('item_imported', self.update_item_times)
+        register('after_write', self.update_after_write_time)
 
     def check_config(self, task, session):
         self.config['preserve_mtimes'].get(bool)
@@ -73,11 +76,6 @@ class ImportAddedPlugin(BeetsPlugin):
         """Write the given mtime to an item's `mtime` field and to the mtime
         of the item's file.
         """
-        if mtime is None:
-            self._log.warn(u"No mtime to be preserved for item '{0}'",
-                           util.displayable_path(item.path))
-            return
-
         # The file's mtime on disk must be in sync with the item's mtime
         self.write_file_mtime(util.syspath(item.path), mtime)
         item.mtime = mtime
@@ -124,3 +122,13 @@ class ImportAddedPlugin(BeetsPlugin):
             self._log.debug(u"Import of item '{0}', selected item.added={1}",
                             util.displayable_path(item.path), item.added)
             item.store()
+
+    def update_after_write_time(self, item):
+        """Update the mtime of the item's file with the item.added value
+        after each write of the item if `preserve_write_mtimes` is enabled.
+        """
+        if item.added:
+            if self.config['preserve_write_mtimes'].get(bool):
+                self.write_item_mtime(item, item.added)
+            self._log.debug(u"Write of item '{0}', selected item.added={1}",
+                            util.displayable_path(item.path), item.added)

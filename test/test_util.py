@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,8 +14,7 @@
 # included in all copies or substantial portions of the Software.
 """Tests for base utils from the beets.util package.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import sys
 import re
@@ -42,39 +42,39 @@ class UtilTest(unittest.TestCase):
     @patch('os.execlp')
     @patch('beets.util.open_anything')
     def test_interactive_open(self, mock_open, mock_execlp):
-        mock_open.return_value = 'tagada'
-        util.interactive_open(['foo'])
-        mock_execlp.assert_called_once_with('tagada', 'tagada', 'foo')
+        mock_open.return_value = u'tagada'
+        util.interactive_open(['foo'], util.open_anything())
+        mock_execlp.assert_called_once_with(u'tagada', u'tagada', u'foo')
         mock_execlp.reset_mock()
 
-        util.interactive_open(['foo'], 'bar')
-        mock_execlp.assert_called_once_with('bar', 'bar', 'foo')
+        util.interactive_open(['foo'], u'bar')
+        mock_execlp.assert_called_once_with(u'bar', u'bar', u'foo')
 
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'one/.two/three')
-        self.assertFalse('.' in p)
+        self.assertFalse(u'.' in p)
 
     def test_sanitize_windows_replaces_trailing_dot(self):
         with _common.platform_windows():
             p = util.sanitize_path(u'one/two./three')
-        self.assertFalse('.' in p)
+        self.assertFalse(u'.' in p)
 
     def test_sanitize_windows_replaces_illegal_chars(self):
         with _common.platform_windows():
             p = util.sanitize_path(u':*?"<>|')
-        self.assertFalse(':' in p)
-        self.assertFalse('*' in p)
-        self.assertFalse('?' in p)
-        self.assertFalse('"' in p)
-        self.assertFalse('<' in p)
-        self.assertFalse('>' in p)
-        self.assertFalse('|' in p)
+        self.assertFalse(u':' in p)
+        self.assertFalse(u'*' in p)
+        self.assertFalse(u'?' in p)
+        self.assertFalse(u'"' in p)
+        self.assertFalse(u'<' in p)
+        self.assertFalse(u'>' in p)
+        self.assertFalse(u'|' in p)
 
     def test_sanitize_windows_replaces_trailing_space(self):
         with _common.platform_windows():
             p = util.sanitize_path(u'one/two /three')
-        self.assertFalse(' ' in p)
+        self.assertFalse(u' ' in p)
 
     def test_sanitize_path_works_on_empty_string(self):
         with _common.platform_posix():
@@ -95,7 +95,7 @@ class UtilTest(unittest.TestCase):
             ])
         self.assertEqual(p, u'bar/bar')
 
-    @unittest.skip('unimplemented: #359')
+    @unittest.skip(u'unimplemented: #359')
     def test_sanitize_empty_component(self):
         with _common.platform_posix():
             p = util.sanitize_path(u'foo//bar', [
@@ -107,7 +107,7 @@ class UtilTest(unittest.TestCase):
     def test_command_output(self, mock_popen):
         def popen_fail(*args, **kwargs):
             m = Mock(returncode=1)
-            m.communicate.return_value = None, None
+            m.communicate.return_value = u'foo', u'bar'
             return m
 
         mock_popen.side_effect = popen_fail
@@ -120,7 +120,7 @@ class UtilTest(unittest.TestCase):
 class PathConversionTest(_common.TestCase):
     def test_syspath_windows_format(self):
         with _common.platform_windows():
-            path = os.path.join('a', 'b', 'c')
+            path = os.path.join(u'a', u'b', u'c')
             outpath = util.syspath(path)
         self.assertTrue(isinstance(outpath, unicode))
         self.assertTrue(outpath.startswith(u'\\\\?\\'))
@@ -136,7 +136,7 @@ class PathConversionTest(_common.TestCase):
 
     def test_syspath_posix_unchanged(self):
         with _common.platform_posix():
-            path = os.path.join('a', 'b', 'c')
+            path = os.path.join(u'a', u'b', u'c')
             outpath = util.syspath(path)
         self.assertEqual(path, outpath)
 

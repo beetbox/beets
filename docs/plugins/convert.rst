@@ -62,6 +62,9 @@ file. The available options are:
   Default: none (system default),
 - **copy_album_art**: Copy album art when copying or transcoding albums matched
   using the ``-a`` option. Default: ``no``.
+- **album_art_maxwidth**: Downscale album art if it's too big. The resize
+  operation reduces image width to at most ``maxwidth`` pixels while
+  preserving the aspect ratio.
 - **dest**: The directory where the files will be converted (or copied) to.
   Default: none.
 - **embed**: Embed album art in converted items. Default: ``yes``.

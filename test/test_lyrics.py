@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Fabrice Laporte.
+# Copyright 2016, Fabrice Laporte.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Tests for the 'lyrics' plugin."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
 from test import _common
@@ -374,6 +374,17 @@ class LyricsGooglePluginTest(unittest.TestCase):
         urlTitle = u'example.com | seets bong lyrics by John doe'
         self.assertEqual(google.is_page_candidate(url, urlTitle, s['title'],
                          s['artist']), False, url)
+
+    def test_is_page_candidate_special_chars(self):
+        """Ensure that `is_page_candidate` doesn't crash when the artist
+        and such contain special regular expression characters.
+        """
+        # https://github.com/beetbox/beets/issues/1673
+        s = self.source
+        url = s['url'] + s['path']
+        url_title = u'foo'
+
+        google.is_page_candidate(url, url_title, s['title'], u'Sunn O)))')
 
 
 def suite():

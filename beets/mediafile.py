@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -32,11 +33,11 @@ Internally ``MediaFile`` uses ``MediaField`` descriptors to access the
 data from the tags. In turn ``MediaField`` uses a number of
 ``StorageStyle`` strategies to handle format specific logic.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import mutagen
 import mutagen.mp3
+import mutagen.id3
 import mutagen.oggopus
 import mutagen.oggvorbis
 import mutagen.mp4
@@ -209,15 +210,20 @@ def _pack_asf_image(mime, data, type=3, description=""):
 # iTunes Sound Check encoding.
 
 def _sc_decode(soundcheck):
-    """Convert a Sound Check string value to a (gain, peak) tuple as
+    """Convert a Sound Check bytestring value to a (gain, peak) tuple as
     used by ReplayGain.
     """
+    # We decode binary data. If one of the formats gives us a text
+    # string, interpret it as UTF-8.
+    if isinstance(soundcheck, unicode):
+        soundcheck = soundcheck.encode('utf8')
+
     # SoundCheck tags consist of 10 numbers, each represented by 8
     # characters of ASCII hex preceded by a space.
     try:
-        soundcheck = soundcheck.replace(' ', '').decode('hex')
+        soundcheck = soundcheck.replace(b' ', b'').decode('hex')
         soundcheck = struct.unpack(b'!iiiiiiiiii', soundcheck)
-    except (struct.error, TypeError, UnicodeEncodeError):
+    except (struct.error, TypeError):
         # SoundCheck isn't in the format we expect, so return default
         # values.
         return 0.0, 0.0
@@ -643,13 +649,13 @@ class MP4BoolStorageStyle(MP4StorageStyle):
             return None
 
     def get_list(self, mutagen_file):
-        raise NotImplementedError('MP4 bool storage does not support lists')
+        raise NotImplementedError(u'MP4 bool storage does not support lists')
 
     def set(self, mutagen_file, value):
         mutagen_file[self.key] = value
 
     def set_list(self, mutagen_file, values):
-        raise NotImplementedError('MP4 bool storage does not support lists')
+        raise NotImplementedError(u'MP4 bool storage does not support lists')
 
 
 class MP4ImageStorageStyle(MP4ListStorageStyle):
@@ -667,7 +673,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
         elif image.mime_type == 'image/jpeg':
             kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
         else:
-            raise ValueError('MP4 files only supports PNG and JPEG images')
+            raise ValueError(u'MP4 files only supports PNG and JPEG images')
         return mutagen.mp4.MP4Cover(image.data, kind)
 
 
@@ -746,19 +752,20 @@ class MP3DescStorageStyle(MP3StorageStyle):
         if self.key != 'USLT':
             value = [value]
 
-        # try modifying in place
+        # Try modifying in place.
         found = False
         for frame in frames:
             if frame.desc.lower() == self.description.lower():
                 frame.text = value
+                frame.encoding = mutagen.id3.Encoding.UTF8
                 found = True
 
-        # need to make a new frame?
+        # Try creating a new frame.
         if not found:
             frame = mutagen.id3.Frames[self.key](
                 desc=bytes(self.description),
                 text=value,
-                encoding=3
+                encoding=mutagen.id3.Encoding.UTF8,
             )
             if self.id3_lang:
                 frame.lang = self.id3_lang
@@ -1356,11 +1363,11 @@ class MediaFile(object):
                 # anywhere else.
                 raise
             else:
-                log.debug('{}', traceback.format_exc())
+                log.debug(u'{}', traceback.format_exc())
                 raise MutagenError(path, exc)
         except Exception as exc:
             # Isolate bugs in Mutagen.
-            log.debug('{}', traceback.format_exc())
+            log.debug(u'{}', traceback.format_exc())
             log.error(u'uncaught Mutagen exception in open: {0}', exc)
             raise MutagenError(path, exc)
 
@@ -1433,7 +1440,7 @@ class MediaFile(object):
             # Propagate these through: they don't represent Mutagen bugs.
             raise
         except Exception as exc:
-            log.debug('{}', traceback.format_exc())
+            log.debug(u'{}', traceback.format_exc())
             log.error(u'uncaught Mutagen exception in save: {0}', exc)
             raise MutagenError(self.path, exc)
 

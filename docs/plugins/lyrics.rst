@@ -3,11 +3,12 @@ Lyrics Plugin
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses `Lyric Wiki`_, `Lyrics.com`_,
-`Musixmatch`_, and, optionally, the Google custom search API.
+`Musixmatch`_, `Genius.com`_, and, optionally, the Google custom search API.
 
 .. _Lyric Wiki: http://lyrics.wikia.com/
 .. _Lyrics.com: http://www.lyrics.com/
 .. _Musixmatch: https://www.musixmatch.com/
+.. _Genius.com: http://genius.com/
 
 
 Fetch Lyrics During Import
@@ -37,6 +38,14 @@ configuration file. The available options are:
 
 - **auto**: Fetch lyrics automatically during import.
   Default: ``yes``.
+- **bing_client_secret**: Your Bing Translation application password
+  (to :ref:`lyrics-translation`)
+- **bing_lang_from**: By default all lyrics with a language other than
+  ``bing_lang_to`` are translated. Use a list of lang codes to restrict the set
+  of source languages to translate.
+  Default: ``[]``
+- **bing_lang_to**: Language to translate lyrics into.
+  Default: None.
 - **fallback**: By default, the file will be left unchanged when no lyrics are
   found. Use the empty string ``''`` to reset the lyrics in such a case.
   Default: None.
@@ -51,9 +60,9 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all sources.
-  *google* source will be automatically deactivated if no ``google_API_key`` is
-  setup.
+  Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all the
+  sources except for `genius`. The `google` source will be automatically
+  deactivated if no ``google_API_key`` is setup.
 
 Here's an example of ``config.yaml``::
 
@@ -112,3 +121,23 @@ After that, the lyrics plugin will fall back on other declared data sources.
 
 .. _pip: http://www.pip-installer.org/
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/
+
+.. _lyrics-translation:
+
+Activate On-the-Fly Translation
+-------------------------------
+
+Using the Bing Translation API requires `langdetect`_, which you can install
+using `pip`_ by typing::
+
+    pip install langdetect
+
+You also need to register for a Microsoft Azure Marketplace free account and
+to the `Microsoft Translator API`_. Follow the four steps process, specifically
+at step 3 enter `beets`` as *Client ID* and copy/paste the generated
+*Client secret*. into your ``bing_client_secret`` configuration, alongside
+``bing_lang_to`` target `language code`_.
+
+.. _langdetect: https://pypi.python.org/pypi/langdetect
+.. _Microsoft Translator API: https://www.microsoft.com/en-us/translator/getstarted.aspx
+.. _language code: https://msdn.microsoft.com/en-us/library/hh456380.aspx

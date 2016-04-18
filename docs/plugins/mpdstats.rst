@@ -95,4 +95,4 @@ Warning
 This has only been tested with MPD versions >= 0.16.  It may not work
 on older versions.  If that is the case, please report an `issue`_.
 
-.. _issue: https://github.com/sampsyo/beets/issues
+.. _issue: https://github.com/beetbox/beets/issues

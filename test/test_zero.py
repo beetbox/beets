@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
+
 """Tests for the 'zero' plugin"""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from test.helper import TestHelper
@@ -22,7 +23,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
     def test_no_patterns(self):
         tags = {
-            'comments': 'test comment',
+            'comments': u'test comment',
             'day': 13,
             'month': 3,
             'year': 2012,
@@ -30,9 +31,9 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         z = ZeroPlugin()
         z.debug = False
         z.fields = ['comments', 'month', 'day']
-        z.patterns = {'comments': ['.'],
-                      'month': ['.'],
-                      'day': ['.']}
+        z.patterns = {'comments': [u'.'],
+                      'month': [u'.'],
+                      'day': [u'.']}
         z.write_event(None, None, tags)
         self.assertEqual(tags['comments'], None)
         self.assertEqual(tags['day'], None)
@@ -43,11 +44,11 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         z = ZeroPlugin()
         z.debug = False
         z.fields = ['comments', 'year']
-        z.patterns = {'comments': 'eac lame'.split(),
-                      'year': '2098 2099'.split()}
+        z.patterns = {'comments': u'eac lame'.split(),
+                      'year': u'2098 2099'.split()}
 
         tags = {
-            'comments': 'from lame collection, ripped by eac',
+            'comments': u'from lame collection, ripped by eac',
             'year': 2012,
         }
         z.write_event(None, None, tags)
@@ -95,7 +96,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(2000, mediafile.year)
 
         config['zero'] = {
-            'fields': ['year'],
+            'fields': [u'year'],
             'update_database': True,
         }
         self.load_plugins('zero')
@@ -112,7 +113,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(item.path)
         self.assertNotEqual(0, len(mediafile.images))
 
-        config['zero'] = {'fields': ['images']}
+        config['zero'] = {'fields': [u'images']}
         self.load_plugins('zero')
 
         item.write()

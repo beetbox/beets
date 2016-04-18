@@ -1,5 +1,6 @@
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+# -*- coding: utf-8 -*-
+
+from __future__ import division, absolute_import, print_function
 
 """Fixes file permissions after the file gets written on import. Put something
 like the following in your config.yaml to configure:
@@ -80,7 +81,7 @@ def permissions(lib, item=None, album=None):
 
         # Checks if the destination path has the permissions configured.
         if not check_permissions(util.bytestring_path(path), file_perm):
-            message = 'There was a problem setting permission on {}'.format(
+            message = u'There was a problem setting permission on {}'.format(
                 path)
             print(message)
 
@@ -96,6 +97,6 @@ def permissions(lib, item=None, album=None):
 
         # Checks if the destination path has the permissions configured.
         if not check_permissions(util.bytestring_path(path), dir_perm):
-            message = 'There was a problem setting permission on {}'.format(
+            message = u'There was a problem setting permission on {}'.format(
                 path)
             print(message)

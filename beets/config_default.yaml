@@ -22,6 +22,7 @@ import:
     flat: no
     group_albums: no
     pretend: false
+    search_ids: []
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information"]
@@ -47,6 +48,7 @@ verbose: 0
 terminal_encoding:
 original_date: no
 id3v23: no
+va_name: "Various Artists"
 
 ui:
     terminal_width: 80
@@ -64,6 +66,7 @@ ui:
 format_item: $artist - $album - $title
 format_album: $albumartist - $album
 time_format: '%Y-%m-%d %H:%M:%S'
+format_raw_length: no
 
 sort_album: albumartist+ album+
 sort_item: artist+ album+ disc+ track+

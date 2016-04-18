@@ -1,6 +1,6 @@
 #compdef beet
 
-# Completion for beets music library manager and MusicBrainz tagger: http://beets.radbox.org/
+# Completion for beets music library manager and MusicBrainz tagger: http://beets.io/
 
 # useful: argument to _regex_arguments for matching any word
 local matchany=/$'[^\0]##\0'/
@@ -154,7 +154,7 @@ function _beet_subcmd_options()
 # Now build the arguments to _regex_arguments for each subcommand.
 local -a options regex_words_subcmds regex_words_help
 local subcmd cmddesc
-for i in ${${(f)"$(beet help | awk 'f;/Commands:/{f=1}')"[@]}[@]}
+for i in ${${(f)"$(beet help | awk 'f;/Commands:/{f=1}' | grep '^  \w.*')"[@]}[@]}
 do
     subcmd="${i[(w)1]}"
     cmddesc="${${${${${i[(w)2,-1]##\(*\) #}//:/-}//\[/(}//\]/)}//\'/}"

@@ -144,6 +144,11 @@ and this command finds MP3 files with bitrates of 128k or lower::
 
     $ beet list format:MP3 bitrate:..128000
 
+The ``length`` field also lets you use a "M:SS" format. For example, this
+query finds tracks that are less than four and a half minutes in length::
+
+    $ beet list length:..4:30
+
 
 .. _datequery:
 
@@ -181,6 +186,33 @@ Find all items with a file modification time between 2008-12-01 and
 
     $ beet ls 'mtime:2008-12-01..2008-12-02'
 
+.. _not_query:
+
+Query Term Negation
+-------------------
+
+Query terms can also be negated, acting like a Boolean "not," by prefixing
+them with ``-`` or ``^``. This has the effect of returning all the items that
+do **not** match the query term. For example, this command::
+
+    $ beet list ^love
+
+matches all the songs in the library that do not have "love" in any of their
+fields.
+
+Negation can be combined with the rest of the query mechanisms, so you can
+negate specific fields, regular expressions, etc. For example, this command::
+
+    $ beet list -a artist:dylan ^year:1980..1989 "^album::the(y)?"
+
+matches all the albums with an artist containing "dylan", but excluding those
+released in the eighties and those that have "the" or "they" on the title.
+
+The syntax supports both ``^`` and ``-`` as synonyms because the latter
+indicates flags on the command line. To use a minus sign in a command-line
+query, use a double dash ``--`` to separate the options from the query::
+
+    $ beet list -a -- artist:dylan -year:1980..1990 "-album::the(y)?"
 
 .. _pathquery:
 
@@ -202,8 +234,8 @@ Note that this only matches items that are *already in your library*, so a path
 query won't necessarily find *all* the audio files in a directory---just the
 ones you've already added to your beets library.
 
-Path queries are case-sensitive on most platforms but case-insensitive on
-Windows.
+Path queries are case sensitive if the queried path is on a case-sensitive
+filesystem.
 
 .. _query-sort:
 
@@ -233,6 +265,10 @@ sort order: ``Bar foo Qux``. This behavior can be changed with the
 :ref:`sort_case_insensitive` configuration option. Case sensitive sort will
 result in lower-case values being placed after upper-case values, e.g.,
 ``Bar Qux foo``.
+
+Note that when sorting by fields that are not present on all items (such as
+flexible fields, or those defined by plugins) in *ascending* order,  the items
+that lack that particular field will be listed at the *beginning* of the list.
 
 You can set the default sorting behavior with the :ref:`sort_item` and
 :ref:`sort_album` configuration options.

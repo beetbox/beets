@@ -77,8 +77,8 @@ You will also need a mechanism for decoding audio files supported by the
 
 * On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
-.. _audioread: https://github.com/sampsyo/audioread
-.. _pyacoustid: http://github.com/sampsyo/pyacoustid
+.. _audioread: https://github.com/beetbox/audioread
+.. _pyacoustid: http://github.com/beetbox/pyacoustid
 .. _FFmpeg: http://ffmpeg.org/
 .. _MAD: http://spacepants.org/src/pymad/
 .. _pymad: http://www.underbit.com/products/mad/

@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Jan-Erik Dahlin
+# Copyright 2016, Jan-Erik Dahlin
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,8 +16,7 @@
 """If the title is empty, try to extract track and title from the
 filename.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets.util import displayable_path

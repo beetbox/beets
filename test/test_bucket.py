@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Fabrice Laporte.
+# Copyright 2016, Fabrice Laporte.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,8 +15,7 @@
 
 """Tests for the 'bucket' plugin."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test._common import unittest
 from beetsplug import bucket
@@ -149,6 +148,17 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         """
         with self.assertRaises(ui.UserError):
             self._setup_config(bucket_year=['nodigits'])
+
+    def check_span_from_str(self, sstr, dfrom, dto):
+        d = bucket.span_from_str(sstr)
+        self.assertEqual(dfrom, d['from'])
+        self.assertEqual(dto, d['to'])
+
+    def test_span_from_str(self):
+        self.check_span_from_str("1980 2000", 1980, 2000)
+        self.check_span_from_str("1980 00", 1980, 2000)
+        self.check_span_from_str("1930 00", 1930, 2000)
+        self.check_span_from_str("1930 50", 1930, 1950)
 
 
 def suite():

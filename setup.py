@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -55,11 +56,11 @@ if 'sdist' in sys.argv:
 
 setup(
     name='beets',
-    version='1.3.15',
+    version='1.3.18',
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
-    url='http://beets.radbox.org/',
+    url='http://beets.io/',
     license='MIT',
     platforms='ALL',
     long_description=_read('README.rst'),

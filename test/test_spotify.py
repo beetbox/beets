@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
+
 """Tests for the 'spotify' plugin"""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test import _common
 import responses
@@ -44,7 +45,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.assertEqual(True, self.spotify.parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertEqual(None, self.spotify.query_spotify(self.lib, "1=2"))
+        self.assertEqual(None, self.spotify.query_spotify(self.lib, u"1=2"))
 
     @responses.activate
     def test_missing_request(self):
@@ -66,21 +67,21 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
                       body=response_body, status=200,
                       content_type='application/json')
         item = Item(
-            mb_trackid='01234',
-            album='lkajsdflakjsd',
-            albumartist='ujydfsuihse',
-            title='duifhjslkef',
+            mb_trackid=u'01234',
+            album=u'lkajsdflakjsd',
+            albumartist=u'ujydfsuihse',
+            title=u'duifhjslkef',
             length=10
         )
         item.add(self.lib)
-        self.assertEqual([], self.spotify.query_spotify(self.lib, ""))
+        self.assertEqual([], self.spotify.query_spotify(self.lib, u""))
 
         params = _params(responses.calls[0].request.url)
         self.assertEqual(
             params['q'],
-            ['duifhjslkef album:lkajsdflakjsd artist:ujydfsuihse'],
+            [u'duifhjslkef album:lkajsdflakjsd artist:ujydfsuihse'],
         )
-        self.assertEqual(params['type'], ['track'])
+        self.assertEqual(params['type'], [u'track'])
 
     @responses.activate
     def test_track_request(self):
@@ -184,24 +185,24 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
                       body=response_body, status=200,
                       content_type='application/json')
         item = Item(
-            mb_trackid='01234',
-            album='Despicable Me 2',
-            albumartist='Pharrell Williams',
-            title='Happy',
+            mb_trackid=u'01234',
+            album=u'Despicable Me 2',
+            albumartist=u'Pharrell Williams',
+            title=u'Happy',
             length=10
         )
         item.add(self.lib)
-        results = self.spotify.query_spotify(self.lib, "Happy")
+        results = self.spotify.query_spotify(self.lib, u"Happy")
         self.assertEqual(1, len(results))
-        self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
+        self.assertEqual(u"6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
         self.spotify.output_results(results)
 
         params = _params(responses.calls[0].request.url)
         self.assertEqual(
             params['q'],
-            ['Happy album:Despicable Me 2 artist:Pharrell Williams'],
+            [u'Happy album:Despicable Me 2 artist:Pharrell Williams'],
         )
-        self.assertEqual(params['type'], ['track'])
+        self.assertEqual(params['type'], [u'track'])
 
 
 def suite():

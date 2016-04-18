@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Verrus, <github.com/Verrus/beets-plugin-featInTitle>
+# Copyright 2016, Verrus, <github.com/Verrus/beets-plugin-featInTitle>
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,15 +15,13 @@
 
 """Moves "featured" artists to the title from the artist field.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 
 from beets import plugins
 from beets import ui
 from beets.util import displayable_path
-from beets import config
 
 
 def split_on_feat(artist):
@@ -87,12 +86,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         self._command = ui.Subcommand(
             'ftintitle',
-            help='move featured artists to the title field')
+            help=u'move featured artists to the title field')
 
         self._command.parser.add_option(
-            '-d', '--drop', dest='drop',
+            u'-d', u'--drop', dest='drop',
             action='store_true', default=False,
-            help='drop featuring from artists and ignore title update')
+            help=u'drop featuring from artists and ignore title update')
 
         if self.config['auto']:
             self.import_stages = [self.imported]
@@ -102,7 +101,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         def func(lib, opts, args):
             self.config.set_args(opts)
             drop_feat = self.config['drop'].get(bool)
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
 
             for item in lib.items(ui.decargs(args)):
                 self.ft_in_title(item, drop_feat)

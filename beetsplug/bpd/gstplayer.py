@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,8 +17,7 @@
 music player.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import sys
 import time
@@ -90,7 +90,7 @@ class GstPlayer(object):
             # error
             self.player.set_state(gst.STATE_NULL)
             err, debug = message.parse_error()
-            print("Error: {0}".format(err))
+            print(u"Error: {0}".format(err))
             self.playing = False
 
     def _set_volume(self, volume):

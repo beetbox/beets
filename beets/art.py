@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,6 +16,8 @@
 """High-level utilities for manipulating image files associated with
 music and items' embedded album art.
 """
+
+from __future__ import division, absolute_import, print_function
 
 import subprocess
 import platform

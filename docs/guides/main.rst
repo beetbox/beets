@@ -4,7 +4,7 @@ Getting Started
 Welcome to `beets`_! This guide will help you begin using it to make your music
 collection better.
 
-.. _beets: http://beets.radbox.org/
+.. _beets: http://beets.io/
 
 Installing
 ----------
@@ -34,21 +34,16 @@ dropped, and Python 3.x is not yet supported.)
 
 * On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
 
-* On **OpenBSD-current**, beets is available in ports (at ``audio/beets``) and
-  as a package, which can be installed with ``pkg_add beets``.
+* On **OpenBSD**, beets can be installed with ``pkg_add beets``.
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
-* On **Fedora 21**, you there is a `copr`_ for beets, which you can install
-  using `DNF`_ like so::
+* On **Fedora** 22 or later, there is a `DNF package`_ (or three)::
 
-      $ yum install dnf dnf-plugins-core
-      $ dnf copr enable afreof/beets
-      $ yum update
-      $ yum install beets
+      $ sudo dnf install beets beets-plugins beets-doc
 
 .. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
-.. _dnf: http://fedoraproject.org/wiki/Features/DNF
+.. _dnf package: https://apps.fedoraproject.org/packages/beets
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: https://aur.archlinux.org/packages/beets-git/
@@ -106,7 +101,7 @@ trouble or you have more detail to contribute here, please direct it to
 `the mailing list`_.
 
 .. _install Python: http://python.org/download/
-.. _beets.reg: https://github.com/sampsyo/beets/blob/master/extra/beets.reg
+.. _beets.reg: https://github.com/beetbox/beets/blob/master/extra/beets.reg
 .. _install pip: http://www.pip-installer.org/en/latest/installing.html#install-pip
 .. _get-pip.py: https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 

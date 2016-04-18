@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
+# Copyright 2016, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os.path
 import shutil
@@ -100,7 +100,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         if os.path.isfile(tmp_path):
             os.remove(tmp_path)
-            self.fail('Artwork file {0} was not deleted'.format(tmp_path))
+            self.fail(u'Artwork file {0} was not deleted'.format(tmp_path))
 
     def test_art_file_missing(self):
         self.add_album_fixture()
@@ -113,7 +113,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
-        os.write(handle, 'I am not an image.')
+        os.write(handle, u'I am not an image.')
         os.close(handle)
 
         try:
@@ -135,7 +135,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         mediafile = MediaFile(syspath(item.path))
 
         self.assertEqual(mediafile.images[0].data, self.image_data,
-                         'Image written is not {0}'.format(
+                         u'Image written is not {0}'.format(
                          self.abbey_artpath))
 
     @require_artresizer_compare
@@ -149,7 +149,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         mediafile = MediaFile(syspath(item.path))
 
         self.assertEqual(mediafile.images[0].data, self.image_data,
-                         'Image written is not {0}'.format(
+                         u'Image written is not {0}'.format(
                          self.abbey_similarpath))
 
     def test_non_ascii_album_path(self):

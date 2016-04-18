@@ -1,5 +1,6 @@
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+# -*- coding: utf-8 -*-
+
+from __future__ import division, absolute_import, print_function
 
 import re
 import webbrowser
@@ -39,17 +40,17 @@ class SpotifyPlugin(BeetsPlugin):
                 self.output_results(results)
         spotify_cmd = ui.Subcommand(
             'spotify',
-            help='build a Spotify playlist'
+            help=u'build a Spotify playlist'
         )
         spotify_cmd.parser.add_option(
-            '-m', '--mode', action='store',
-            help='"open" to open Spotify with playlist, '
-                 '"list" to print (default)'
+            u'-m', u'--mode', action='store',
+            help=u'"open" to open Spotify with playlist, '
+                 u'"list" to print (default)'
         )
         spotify_cmd.parser.add_option(
-            '-f', '--show-failures', action='store_true',
-            help='list tracks that did not match a Spotify ID',
-            dest='show_failures',
+            u'-f', u'--show-failures',
+            action='store_true', dest='show_failures',
+            help=u'list tracks that did not match a Spotify ID'
         )
         spotify_cmd.func = queries
         return [spotify_cmd]

@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Fetch a variety of acoustic metrics from The Echo Nest.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import time
 import socket
@@ -24,7 +24,7 @@ import tempfile
 from string import Template
 import subprocess
 
-from beets import util, config, plugins, ui
+from beets import util, plugins, ui
 from beets.dbcore import types
 import pyechonest
 import pyechonest.song
@@ -464,15 +464,16 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         fetch_cmd = ui.Subcommand('echonest',
-                                  help='Fetch metadata from the EchoNest')
+                                  help=u'fetch metadata from The Echo Nest')
         fetch_cmd.parser.add_option(
-            '-f', '--force', dest='force', action='store_true', default=False,
-            help='(re-)download information from the EchoNest'
+            u'-f', u'--force', dest='force',
+            action='store_true', default=False,
+            help=u'(re-)download information from the EchoNest'
         )
 
         def fetch_func(lib, opts, args):
             self.config.set_args(opts)
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
             for item in lib.items(ui.decargs(args)):
                 self._log.info(u'{0}', item)
                 if self.config['force'] or self.requires_update(item):
@@ -482,10 +483,10 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         fetch_cmd.func = fetch_func
 
-        sim_cmd = ui.Subcommand('echosim', help='show related files')
+        sim_cmd = ui.Subcommand('echosim', help=u'show related files')
         sim_cmd.parser.add_option(
-            '-t', '--threshold', dest='threshold', action='store',
-            type='float', default=0.15, help='Set difference threshold'
+            u'-t', u'--threshold', dest='threshold', action='store',
+            type='float', default=0.15, help=u'Set difference threshold'
         )
         sim_cmd.parser.add_format_option()
 

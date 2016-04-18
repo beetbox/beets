@@ -13,7 +13,7 @@ Using Plugins
 -------------
 
 To use one of the plugins included with beets (see the rest of this page for a
-list), just use the `plugins` option in your :doc:`config.yaml </reference/config>`: file, like so::
+list), just use the `plugins` option in your :doc:`config.yaml </reference/config>` file, like so::
 
     plugins: inline convert web
 
@@ -31,6 +31,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
 .. toctree::
    :hidden:
 
+   acousticbrainz
    badfiles
    bpd
    bpm
@@ -40,7 +41,9 @@ Each plugin has its own set of options that can be defined in a section bearing 
    discogs
    duplicates
    echonest
+   edit
    embedart
+   embyupdate
    fetchart
    fromfilename
    ftintitle
@@ -58,6 +61,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    lastimport
    lyrics
    mbcollection
+   mbsubmit
    mbsync
    metasync
    missing
@@ -93,9 +97,11 @@ Autotagger Extensions
 Metadata
 --------
 
+* :doc:`acousticbrainz`: Fetch various AcousticBrainz metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
 * :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
   `the Echo Nest`_ (tempo, energy, danceability, ...).
+* :doc:`edit`: Edit metadata from a texteditor.
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`ftintitle`: Move "featured" artists from the artist field to the title
@@ -132,6 +138,7 @@ Path Formats
 Interoperability
 ----------------
 
+* :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
@@ -144,6 +151,7 @@ Interoperability
 * :doc:`badfiles`: Check audio file integrity.
 
 
+.. _Emby: http://emby.media
 .. _Plex: http://plex.tv
 
 Miscellaneous
@@ -159,6 +167,7 @@ Miscellaneous
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
+* :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`filefilter`: Automatically skip files during the import process based
@@ -215,6 +224,10 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-noimport`_ adds and removes directories from the incremental import skip list.
 
+* `whatlastgenre`_ fetches genres from various music sites.
+
+* `beets-usertag`_ lets you use keywords to tag and organize your music.
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -230,3 +243,5 @@ Here are a few of the plugins written by the beets community:
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://github.com/ttsda/beets-noimport
+.. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
+.. _beets-usertag: https://github.com/igordertigor/beets-usertag

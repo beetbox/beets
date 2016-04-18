@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Specific, edge-case tests for the MediaFile metadata layer.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
@@ -89,32 +89,39 @@ class EdgeTest(unittest.TestCase):
             beets.mediafile._image_mime_type(jpg_data),
             'image/jpeg')
 
+    def test_soundcheck_non_ascii(self):
+        # Make sure we don't crash when the iTunes SoundCheck field contains
+        # non-ASCII binary data.
+        f = beets.mediafile.MediaFile(os.path.join(_common.RSRC,
+                                                   'soundcheck-nonascii.m4a'))
+        self.assertEqual(f.rg_track_gain, 0.0)
+
 
 class InvalidValueToleranceTest(unittest.TestCase):
 
     def test_safe_cast_string_to_int(self):
-        self.assertEqual(_sc(int, 'something'), 0)
+        self.assertEqual(_sc(int, u'something'), 0)
 
     def test_safe_cast_int_string_to_int(self):
-        self.assertEqual(_sc(int, '20'), 20)
+        self.assertEqual(_sc(int, u'20'), 20)
 
     def test_safe_cast_string_to_bool(self):
-        self.assertEqual(_sc(bool, 'whatever'), False)
+        self.assertEqual(_sc(bool, u'whatever'), False)
 
     def test_safe_cast_intstring_to_bool(self):
-        self.assertEqual(_sc(bool, '5'), True)
+        self.assertEqual(_sc(bool, u'5'), True)
 
     def test_safe_cast_string_to_float(self):
-        self.assertAlmostEqual(_sc(float, '1.234'), 1.234)
+        self.assertAlmostEqual(_sc(float, u'1.234'), 1.234)
 
     def test_safe_cast_int_to_float(self):
         self.assertAlmostEqual(_sc(float, 2), 2.0)
 
     def test_safe_cast_string_with_cruft_to_float(self):
-        self.assertAlmostEqual(_sc(float, '1.234stuff'), 1.234)
+        self.assertAlmostEqual(_sc(float, u'1.234stuff'), 1.234)
 
     def test_safe_cast_negative_string_to_float(self):
-        self.assertAlmostEqual(_sc(float, '-1.234'), -1.234)
+        self.assertAlmostEqual(_sc(float, u'-1.234'), -1.234)
 
     def test_safe_cast_special_chars_to_unicode(self):
         us = _sc(unicode, 'caf\xc3\xa9')
@@ -122,7 +129,7 @@ class InvalidValueToleranceTest(unittest.TestCase):
         self.assertTrue(us.startswith(u'caf'))
 
     def test_safe_cast_float_with_no_numbers(self):
-        v = _sc(float, '+')
+        v = _sc(float, u'+')
         self.assertEqual(v, 0.0)
 
 
@@ -169,7 +176,7 @@ class SafetyTest(unittest.TestCase, TestHelper):
         self._exccheck('nothing.xml', beets.mediafile.UnreadableFileError,
                        "ftyp")
 
-    @unittest.skipIf(not hasattr(os, 'symlink'), 'platform lacks symlink')
+    @unittest.skipIf(not hasattr(os, 'symlink'), u'platform lacks symlink')
     def test_broken_symlink(self):
         fn = os.path.join(_common.RSRC, 'brokenlink')
         os.symlink('does_not_exist', fn)
@@ -191,7 +198,7 @@ class SideEffectsTest(unittest.TestCase):
         self.assertEqual(old_mtime, new_mtime)
 
 
-class EncodingTest(unittest.TestCase, TestHelper):
+class MP4EncodingTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.create_temp_dir()
         src = os.path.join(_common.RSRC, 'full.m4a')
@@ -208,6 +215,26 @@ class EncodingTest(unittest.TestCase, TestHelper):
         self.mf.save()
         new_mf = beets.mediafile.MediaFile(self.path)
         self.assertEqual(new_mf.label, u'foo\xe8bar')
+
+
+class MP3EncodingTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.create_temp_dir()
+        src = os.path.join(_common.RSRC, 'full.mp3')
+        self.path = os.path.join(self.temp_dir, 'test.mp3')
+        shutil.copy(src, self.path)
+
+        self.mf = beets.mediafile.MediaFile(self.path)
+
+    def test_comment_with_latin1_encoding(self):
+        # Set up the test file with a Latin1-encoded COMM frame. The encoding
+        # indices defined by MP3 are listed here:
+        # http://id3.org/id3v2.4.0-structure
+        self.mf.mgfile['COMM::eng'].encoding = 0
+
+        # Try to store non-Latin1 text.
+        self.mf.comments = u'\u2028'
+        self.mf.save()
 
 
 class ZeroLengthMediaFile(beets.mediafile.MediaFile):
@@ -234,7 +261,7 @@ class TypeTest(unittest.TestCase):
         self.mf = beets.mediafile.MediaFile(path)
 
     def test_year_integer_in_string(self):
-        self.mf.year = '2009'
+        self.mf.year = u'2009'
         self.assertEqual(self.mf.year, 2009)
 
     def test_set_replaygain_gain_to_none(self):
@@ -269,18 +296,25 @@ class SoundCheckTest(unittest.TestCase):
         self.assertEqual(peak, 1.0)
 
     def test_decode_zero(self):
-        data = u' 80000000 80000000 00000000 00000000 00000000 00000000 ' \
-               u'00000000 00000000 00000000 00000000'
+        data = b' 80000000 80000000 00000000 00000000 00000000 00000000 ' \
+               b'00000000 00000000 00000000 00000000'
         gain, peak = beets.mediafile._sc_decode(data)
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 
     def test_malformatted(self):
-        gain, peak = beets.mediafile._sc_decode(u'foo')
+        gain, peak = beets.mediafile._sc_decode(b'foo')
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 
     def test_special_characters(self):
+        gain, peak = beets.mediafile._sc_decode(u'caf\xe9'.encode('utf8'))
+        self.assertEqual(gain, 0.0)
+        self.assertEqual(peak, 0.0)
+
+    def test_decode_handles_unicode(self):
+        # Most of the time, we expect to decode the raw bytes. But some formats
+        # might give us text strings, which we need to handle.
         gain, peak = beets.mediafile._sc_decode(u'caf\xe9')
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)

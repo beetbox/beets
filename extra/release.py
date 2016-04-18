@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """A utility script for automating the beets release process.
 """
 import click
@@ -61,6 +63,9 @@ VERSION_LOCS = [
         ]
     ),
 ]
+
+GITHUB_USER = 'beetbox'
+GITHUB_REPO = 'beets'
 
 
 def bump_version(version):
@@ -308,6 +313,41 @@ def publish():
     # Upload to PyPI.
     path = os.path.join(BASE, 'dist', 'beets-{}.tar.gz'.format(version))
     subprocess.check_call(['twine', 'upload', path])
+
+
+@release.command()
+def ghrelease():
+    """Create a GitHub release using the `github-release` command-line
+    tool.
+
+    Reads the changelog to upload from `changelog.md`. Uploads the
+    tarball from the `dist` directory.
+    """
+    version = get_version(1)
+    tag = 'v' + version
+
+    # Load the changelog.
+    with open(os.path.join(BASE, 'changelog.md')) as f:
+        cl_md = f.read()
+
+    # Create the release.
+    subprocess.check_call([
+        'github-release', 'release',
+        '-u', GITHUB_USER, '-r', GITHUB_REPO,
+        '--tag', tag,
+        '--name', '{} {}'.format(GITHUB_REPO, version),
+        '--description', cl_md,
+    ])
+
+    # Attach the release tarball.
+    tarball = os.path.join(BASE, 'dist', 'beets-{}.tar.gz'.format(version))
+    subprocess.check_call([
+        'github-release', 'upload',
+        '-u', GITHUB_USER, '-r', GITHUB_REPO,
+        '--tag', tag,
+        '--name', os.path.basename(tarball),
+        '--file', tarball,
+    ])
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
+# Copyright 2016, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Moves patterns in path formats (suitable for moving articles)."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 from beets.plugins import BeetsPlugin
