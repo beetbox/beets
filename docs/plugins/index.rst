@@ -44,6 +44,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    edit
    embedart
    embyupdate
+   export
    fetchart
    fromfilename
    ftintitle
@@ -161,6 +162,7 @@ Miscellaneous
 * :doc:`convert`: Transcode music and embed album art while exporting to
   a different directory.
 * :doc:`duplicates`: List duplicate tracks or albums.
+* :doc:`export`: Export data from queries to a format.
 * :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
