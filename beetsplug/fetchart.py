@@ -104,17 +104,20 @@ class Candidate(object):
         # Check aspect ratio.
         edge_diff = long_edge - short_edge
         if extra['enforce_ratio']:
-            if extra['margin_px'] and edge_diff > extra['margin_px']:
-                self._log.debug(u'image is notblablapxsquare ({} != {})',
-                                self.size[0], self.size[1])
-                return self.CANDIDATE_BAD
-            elif extra['margin_percent'] and \
-                    edge_diff > extra['margin_percent'] * long_edge:
-                self._log.debug(u'image is notblablapercentsquare ({} != {})',
-                                self.size[0], self.size[1])
-                return self.CANDIDATE_BAD
-            elif not extra['margin_px'] and not extra['margin_percent'] and \
-                    edge_diff:
+            if extra['margin_px']:
+                if edge_diff > extra['margin_px']:
+                    self._log.debug(u'image is not close enough to being '
+                                    u'square, ({} - {} > {})',
+                                    long_edge, short_edge, extra['margin_px'])
+                    return self.CANDIDATE_BAD
+            elif extra['margin_percent']:
+                margin_px = extra['margin_percent'] * long_edge
+                if edge_diff > margin_px:
+                    self._log.debug(u'image is not close enough to being '
+                                    u'square, ({} - {} > {})',
+                                    long_edge, short_edge, margin_px)
+                    return self.CANDIDATE_BAD
+            elif edge_diff:
                 # also reached for margin_px == 0 and margin_percent == 0.0
                 self._log.debug(u'image is not square ({} != {})',
                                 self.size[0], self.size[1])
