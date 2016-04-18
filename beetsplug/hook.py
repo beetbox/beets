@@ -61,7 +61,7 @@ class HookPlugin(BeetsPlugin):
                     subprocess.Popen(command_pieces).wait()
                 except OSError as e:
                     _, _, trace = sys.exc_info()
-                    message = "{0}: {1}".format(e, command_pieces[0])
+                    message = '{0}: {1}'.format(e, command_pieces[0])
 
                     raise OSError, message, trace
 
