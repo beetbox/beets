@@ -44,6 +44,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
    edit
    embedart
    embyupdate
+   export
    fetchart
    fromfilename
    ftintitle
@@ -100,7 +101,7 @@ Metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
 * :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
   `the Echo Nest`_ (tempo, energy, danceability, ...).
-* :doc:`edit`: Edit metadata from a texteditor.
+* :doc:`edit`: Edit metadata from a text editor.
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`ftintitle`: Move "featured" artists from the artist field to the title
@@ -161,6 +162,7 @@ Miscellaneous
 * :doc:`convert`: Transcode music and embed album art while exporting to
   a different directory.
 * :doc:`duplicates`: List duplicate tracks or albums.
+* :doc:`export`: Export data from queries to a format.
 * :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
