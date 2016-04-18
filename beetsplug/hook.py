@@ -13,8 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Allows custom commands to be run when an event is emitted by beets"""
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import shlex
 import subprocess
