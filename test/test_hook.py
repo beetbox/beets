@@ -33,7 +33,6 @@ def get_temporary_path():
     return os.path.join(temporary_directory, temporary_name)
 
 
-# TODO: Find a good way to test shell option
 class HookTest(_common.TestCase, TestHelper):
     TEST_HOOK_COUNT = 5
 
@@ -44,22 +43,11 @@ class HookTest(_common.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def _add_hook(self, event, command, substitute_event=None, shell=None,
-                  substitute_args=None):
-
+    def _add_hook(self, event, command):
         hook = {
             'event': event,
             'command': command
         }
-
-        if substitute_event is not None:
-            hook['substitute_event'] = substitute_event
-
-        if shell is not None:
-            hook['shell'] = shell
-
-        if substitute_args is not None:
-            hook['substitute_args'] = substitute_args
 
         hooks = config['hook']['hooks'].get(list) if 'hook' in config else []
         hooks.append(hook)
@@ -72,29 +60,26 @@ class HookTest(_common.TestCase, TestHelper):
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_event_{0}'.format(index),
-                           'echo > "{0}"'.format(path))
+            self._add_hook('test_no_argument_event_{0}'.format(index),
+                           'touch "{0}"'.format(path))
 
         self.load_plugins('hook')
 
         for index in range(len(temporary_paths)):
-            plugins.send('test_event_{0}'.format(index))
+            plugins.send('test_no_argument_event_{0}'.format(index))
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
             os.remove(path)
 
     def test_hook_event_substitution(self):
-
         temporary_directory = tempfile._get_default_tempdir()
-        event_names = ['test_event_{0}'.format(i) for i in
+        event_names = ['test_event_event_{0}'.format(i) for i in
                        range(self.TEST_HOOK_COUNT)]
 
         for event in event_names:
             self._add_hook(event,
-                           'echo > "{0}"'.format(
-                               os.path.join(temporary_directory, '%EVENT%')
-                           ))
+                           'touch "{0}/{{event}}"'.format(temporary_directory))
 
         self.load_plugins('hook')
 
@@ -113,14 +98,13 @@ class HookTest(_common.TestCase, TestHelper):
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_event_{0}'.format(index),
-                           'echo > "%PATH%"'.format(path),
-                           substitute_args={'path': '%PATH%'})
+            self._add_hook('test_argument_event_{0}'.format(index),
+                           'touch "{path}"')
 
         self.load_plugins('hook')
 
         for index, path in enumerate(temporary_paths):
-            plugins.send('test_event_{0}'.format(index), path=path)
+            plugins.send('test_argument_event_{0}'.format(index), path=path)
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
