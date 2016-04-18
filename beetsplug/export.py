@@ -27,9 +27,13 @@ from beets import ui
 from beets import mediafile
 from beetsplug.info import make_key_filter, library_data, tag_data
 
-json.JSONEncoder.default = lambda self, obj: \
-    (obj.isoformat() if isinstance(obj, datetime) or isinstance(obj, date)
-     else None)
+
+class ExportEncoder(json.JSONEncoder):
+    """Deals with dates because JSON doesn't have a standard"""
+    def default(self, o):
+        if isinstance(o, datetime) or isinstance(o, date):
+            return o.isoformat()
+        return json.JSONEncoder.default(self, o)
 
 
 class ExportPlugin(BeetsPlugin):
@@ -130,7 +134,7 @@ class JsonPrintFormat(ExportFormat):
     """Outputs to the console"""
 
     def export(self, data, **kwargs):
-        json.dump(data, sys.stdout, **kwargs)
+        json.dump(data, sys.stdout, cls=ExportEncoder, **kwargs)
 
 
 class JsonFileFormat(ExportFormat):
@@ -143,4 +147,4 @@ class JsonFileFormat(ExportFormat):
 
     def export(self, data, **kwargs):
         with codecs.open(self.path, self.mode, self.encoding) as f:
-            json.dump(data, f, **kwargs)
+            json.dump(data, f, cls=ExportEncoder, **kwargs)
