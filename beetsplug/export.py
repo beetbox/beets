@@ -49,6 +49,7 @@ class ExportPlugin(BeetsPlugin):
                     'ensure_ascii': False,
                     'indent': 4,
                     'separators': (',', ': '),
+                    'sort_keys': True
                 }
             },
             # TODO: Use something like the edit plugin
