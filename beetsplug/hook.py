@@ -16,27 +16,13 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
+import shlex
 import subprocess
+import sys
 
-from beets.ui import _arg_encoding
 from beets.plugins import BeetsPlugin
-
-
-def create_hook_function(log, event, command, shell, substitute_args):
-    def hook_function(**kwargs):
-        hook_command = command
-
-        for key in substitute_args:
-            if key in kwargs:
-                hook_command = hook_command.replace(substitute_args[key],
-                                                    unicode(kwargs[key],
-                                                            _arg_encoding()))
-
-        log.debug('Running command {0} for event {1}', hook_command, event)
-
-        subprocess.Popen(hook_command, shell=shell).wait()
-
-    return hook_function
+from beets.ui import _arg_encoding
+from beets.util.confit import ConfigValueError
 
 
 class HookPlugin(BeetsPlugin):
@@ -45,14 +31,10 @@ class HookPlugin(BeetsPlugin):
         super(HookPlugin, self).__init__()
 
         self.config.add({
-            'hooks': [],
-            'substitute_event': '%EVENT%',
-            'shell': True
+            'hooks': []
         })
 
         hooks = self.config['hooks'].get(list)
-        global_substitute_event = self.config['substitute_event'].get()
-        global_shell = self.config['shell'].get(bool)
 
         for hook_index in range(len(hooks)):
             hook = self.config['hooks'][hook_index]
@@ -60,24 +42,27 @@ class HookPlugin(BeetsPlugin):
             hook_event = hook['event'].get()
             hook_command = hook['command'].get()
 
-            if 'substitute_event' in hook:
-                original = hook['substitute_event'].get()
-            else:
-                original = global_substitute_event
+            self.create_and_register_hook(hook_event, hook_command)
 
-            if 'shell' in hook:
-                shell = hook['shell'].get(bool)
-            else:
-                shell = global_shell
+    def create_and_register_hook(self, event, command):
+        def hook_function(**kwargs):
+                formatted_command = command.format(event=event, **kwargs)
+                encoded_command = formatted_command.decode(_arg_encoding())
+                command_pieces = shlex.split(encoded_command)
 
-            if 'substitute_args' in hook:
-                substitute_args = hook['substitute_args'].get(dict)
-            else:
-                substitute_args = {}
+                if len(command_pieces) == 0:
+                    raise ConfigValueError('invalid command \"{0}\"'.format(
+                                           command))
 
-            hook_command = hook_command.replace(original, hook_event)
-            hook_function = create_hook_function(self._log, hook_event,
-                                                 hook_command, shell,
-                                                 substitute_args)
+                self._log.debug('Running command \"{0}\" for event \"{1}\"',
+                                encoded_command, event)
 
-            self.register_listener(hook_event, hook_function)
+                try:
+                    subprocess.Popen(command_pieces).wait()
+                except OSError as e:
+                    _, _, trace = sys.exc_info()
+                    message = "{0}: {1}".format(e, command_pieces[0])
+
+                    raise OSError, message, trace
+
+        self.register_listener(event, hook_function)
