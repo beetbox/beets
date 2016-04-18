@@ -31,7 +31,7 @@ class ModifyFileMocker(object):
     """
 
     def __init__(self, contents=None, replacements=None):
-        """ `self.contents` and `self.replacements` are initalized here, in
+        """ `self.contents` and `self.replacements` are initialized here, in
         order to keep the rest of the functions of this class with the same
         signature as `EditPlugin.get_editor()`, making mocking easier.
             - `contents`: string with the contents of the file to be used for

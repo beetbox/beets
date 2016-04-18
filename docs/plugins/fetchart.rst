@@ -42,7 +42,11 @@ file. The available options are:
   too big. The resize operation reduces image width to at most ``maxwidth``
   pixels. The height is recomputed so that the aspect ratio is preserved.
 - **enforce_ratio**: Only images with a width:height ratio of 1:1 are
-  considered as valid album art candidates. Default: ``no``.
+  considered as valid album art candidates if set to ``yes``.
+  It is also possible to specify a certain deviation to the exact ratio to
+  still be considered valid. This can be done either in pixels
+  (``enforce_ratio: 10px``) or as a percentage of the longer edge
+  (``enforce_ratio: 0.5%``). Default: ``no``.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
   Default: ``filesystem coverart itunes amazon albumart``, i.e., everything but
