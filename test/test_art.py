@@ -315,6 +315,23 @@ class FanartTVTest(UseThePlugin):
             }
         }
     }"""
+    RESPONSE_NO_ART = u"""{
+        "name": "artistname",
+        "mbid_id": "artistid",
+        "albums": {
+            "thereleasegroupid": {
+               "cdart": [
+                    {
+                        "id": "123",
+                        "url": "http://example.com/4.jpg",
+                        "likes": "0",
+                        "disc": "1",
+                        "size": "1000"
+                    }
+                ]
+            }
+        }
+    }"""
     RESPONSE_ERROR = u"""{
         "status": "error",
         "error message": "the error message"
@@ -352,6 +369,14 @@ class FanartTVTest(UseThePlugin):
         album = _common.Bag(mb_releasegroupid=u'thereleasegroupid')
         self.mock_response(fetchart.FanartTV.API_ALBUMS + u'thereleasegroupid',
                            self.RESPONSE_MALFORMED)
+        with self.assertRaises(StopIteration):
+            next(self.source.get(album, self.extra))
+
+    def test_fanarttv_only_other_images(self):
+        # The source used to fail when there were images present, but no cover
+        album = _common.Bag(mb_releasegroupid=u'thereleasegroupid')
+        self.mock_response(fetchart.FanartTV.API_ALBUMS + u'thereleasegroupid',
+                           self.RESPONSE_NO_ART)
         with self.assertRaises(StopIteration):
             next(self.source.get(album, self.extra))
 
