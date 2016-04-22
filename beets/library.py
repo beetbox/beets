@@ -1482,15 +1482,16 @@ class DefaultTemplateFunctions(object):
         return join_str.join(s.split(sep)[skip:count])
 
     def tmpl_ifdef(self, field, trueval=u'', falseval=u' '):
-        """
+        """ If field exists return trueval or the field (default)
+        otherwise, emit return falseval (if provided).
 
         :param field: The name of the field
         :param trueval: The string if the condition is true
         :param falseval: The string if the condition is false
         :return: The string, based on condition
         """
-        if self.item.get(field):
-            return trueval if trueval else self.item.get(field)
+        if self.item.formatted().get(field):
+            return trueval if trueval else self.item.formatted().get(field)
         else:
             return falseval
 
