@@ -692,7 +692,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
         item.lyrics = lyrics
         if write:
             item.try_write()
-        print(lyrics)
         item.store()
 
     def get_lyrics(self, artist, title):
