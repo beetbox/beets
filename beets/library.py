@@ -1481,7 +1481,7 @@ class DefaultTemplateFunctions(object):
         count = skip + int(count)
         return join_str.join(s.split(sep)[skip:count])
 
-    def tmpl_ifdef(self, field, trueval=u'', falseval=u' '):
+    def tmpl_ifdef(self, field, trueval=u'', falseval=u''):
         """ If field exists return trueval or the field (default)
         otherwise, emit return falseval (if provided).
 

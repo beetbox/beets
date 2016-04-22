@@ -623,7 +623,7 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest('/base/3')
 
     def test_if_def_field_not_defined(self):
-        self._setf(u'%ifdef{bar}/$artist')
+        self._setf(u' %ifdef{bar}/$artist')
         self._assert_dest('/base/the artist')
 
     def test_if_def_field_not_defined_2(self):
