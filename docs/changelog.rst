@@ -22,6 +22,7 @@ New features:
   source in a flexible field; for a usecase see the documentation.
 * :doc:`/plugins/export`: A new plugin to export the data from queries to a
   json format. Thanks to :user:`GuilhermeHideki`.
+* :doc:`/reference/pathformat`: new functions: %first{} and %ifdef{}
 
 .. _fanart.tv: https://fanart.tv/
 
