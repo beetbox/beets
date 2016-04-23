@@ -420,7 +420,7 @@ def scrape_lyrics_from_html(html):
     except ImportError:
         # TODO: refactor the plugin to get access to a logger here and log
         # a warning
-        pass
+        return None
 
     if not html:
         return None
@@ -675,16 +675,19 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
 
+        has_langdetect = False
+        if self.config['bing_client_secret'].get():
+            try:
+                from langdetect import detect
+                has_langdetect = True
+            except ImportError:
+                self._log.warn(u'To use bing translations, you need to '
+                               u'install the langdetect module. See the '
+                               u'documentation for further details.')
+
         if lyrics:
             self._log.info(u'fetched lyrics: {0}', item)
-            if self.config['bing_client_secret'].get():
-                try:
-                    from langdetect import detect
-                except ImportError:
-                    self._log.warn(u'To use bing translations, you need to '
-                                   u'install the langdetect module. See the '
-                                   u'documentation for further details.')
-
+            if has_langdetect:
                 lang_from = detect(lyrics)
                 if self.config['bing_lang_to'].get() != lang_from and (
                     not self.config['bing_lang_from'] or (
