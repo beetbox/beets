@@ -134,6 +134,7 @@ using `pip`_ by typing::
 
 You also need to register for a Microsoft Azure Marketplace free account and
 to the `Microsoft Translator API`_.  
+
 Follow the four steps process, specifically at step 3 enter `beets` as 
 *Client ID* and copy/paste the generated *Client secret* into your 
 ``bing_client_secret`` configuration, alongside ``bing_lang_to`` target 
