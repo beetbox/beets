@@ -435,7 +435,10 @@ later on you will want to re-generate the script.
 zsh
 ```
 
-If you use zsh, take a look at the included `completion script`_.
+If you use zsh, take a look at the included `completion script`_. The script
+should be placed in a directory that is part of your ``fpath``, and `not`
+sourced in your ``.zshrc``. Running ``echo $fpath`` will give you a list of
+valid directories.
 
 Another approach is to use zsh's bash completion compatibility. This snippet
 defines some bash-specific functions to make this work without errors::
