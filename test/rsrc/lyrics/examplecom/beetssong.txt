@@ -1,0 +1,360 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>John Doe - beets song Lyrics</title>
+  <!--//
+  John Doe beets song lyrics
+  //-->
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <META HTTP-EQUIV="Window-Target" CONTENT="_top">
+  <META NAME="ROBOTS" CONTENT="INDEX,FOLLOW">
+  <META NAME="Description" CONTENT="John Doe beets song lyrics starting with beets song, children at your feet  Wonder how you manage to make ends meet  Who find the money when yo">
+  <META NAME="Title" CONTENT="John Doe - beets song Lyrics">
+  <META NAME="Keywords" CONTENT="John Doe - beets song lyrics, John Doe lyrics, beets song lyrics, lyrics, song lyric, music lyric, mp3 search, mp3 downloads, music videos">
+<link rel="stylesheet" href="Styles.css" type="text/css">
+<SCRIPT LANGUAGE="JavaScript" type="text/javascript">
+<!--
+
+//Function creates new image object
+var url="http://www.example.com/Song18148.aspx";
+var title="John Doe - beets song lyrics";
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+//Function will flip the button image
+function changeImages() {
+    if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+function favorites(){
+if(document.all)
+window.external.AddFavorite(url,title);
+}
+//Function preloads the image specified
+var preloadFlag = false;
+function preloadImages() {
+		preloadFlag = true;
+	if (document.images) {
+	}
+}
+
+function emoticon(text) {
+	var txtarea = document.post.message;
+	text = ' ' + text + ' ';
+	if (txtarea.createTextRange && txtarea.caretPos) {
+		var caretPos = txtarea.caretPos;
+		caretPos.text = caretPos.text.charAt(caretPos.text.length - 1) == ' ' ? caretPos.text + text + ' ' : caretPos.text + text;
+		txtarea.focus();
+	} else {
+		txtarea.value  += text;
+		txtarea.focus();
+	}
+}
+function storeCaret(textEl) {
+	if (textEl.createTextRange) textEl.caretPos = document.selection.createRange().duplicate();
+}
+function callSelect(controlID)
+{
+   var control = document.getElementById(controlID);
+	if (control) control.select();
+}
+
+-->
+</SCRIPT>
+<script src="functions.js" type="text/javascript">
+</script>
+
+<style type="text/css">
+.black {font:8pt arial; color:#000000;}
+.grey {font:8pt arial; color:#989898;}
+</style>
+</head>
+<body onLoad="">
+<div style="width:100%; float:left" align="center"><div style="width:1003px; text-align:left"><h1 class="Text2">beets song Lyrics</h1><div id="logo"> <div id="logoimg"><a href="http://www.example.com"><img src="images/example.gif" alt="Music Lyrics" width="193" height="89"></a></div><div id="menuads" align="center" ><script type="text/javascript"><!--
+e9 = new Object();
+e9.size = "728x90,468x60";
+//--></script>
+
+</div>  <script type="text/javascript">
+function hidePass()
+{
+  document.getElementById('first').style.display = "none";
+  document.getElementById('sec').style.display = "block";
+  document.getElementById('pass1').focus();
+}
+function hideUsername()
+{
+  if(document.getElementById('uname').value == "Username")
+  {
+      document.getElementById('uname').value = "";
+      document.getElementById('uname').className = 'black';
+  }
+}
+function showUsername()
+{
+  if(document.getElementById('uname').value.length == 0)
+  {
+      document.getElementById('uname').className = 'grey';
+      document.getElementById('uname').value = "Username";
+  }
+}
+function showPass()
+{
+  if(document.getElementById('pass1').value.length == 0)
+  {
+      document.getElementById('sec').style.display = "none";
+      document.getElementById('first').style.display = "block";
+  }
+}
+</script>
+      <table width="69px" cellspacing=0 style="border-color:#BDCCDC; padding-left:2px;" border="0">
+        <tr>
+          <td>
+            <form name="login" action="Login.aspx" method="post"><table width="100%" cellspacing="0">
+              <tr><td><input type="hidden" name="Submitted" value="1">
+                <input type="text" id="uname"  class="grey" name="Username" value="Username" style="width:66px" onFocus="hideUsername()" onBlur="showUsername()">
+              </td></tr><tr>
+                <td><div id="first"><input type="text" name="ptext" value="Password" id="pass" class="grey" style="width:66px" onFocus="hidePass()"></div><div id="sec" style="display:none"><input type="password"  class="black" name="Password" value="" style="width:66px;" id="pass1" onBlur="showPass()">
+              </div></td></tr><tr><td align="left"><input type="submit" value="LOGIN" id="Button">
+            </td></tr><tr>
+                <td align="left">
+                  <a href="Default.aspx?Page=Login&amp;Cmd=Register" class="FrmLink" style="font-size:8pt;">Register</a>
+                </td></tr></table></form></td></tr>
+      </table>
+</div><div id="maindiv">
+
+
+
+
+
+
+
+
+
+        <div id="leftdiv">
+        <div id="b2"><ul><li><div class="bhz"><span class="ht1">&nbsp;</span><span class="hw2">Navigation </span></div></li>     <li><a href="http://www.example.com/" title="Music Lyrics"
+       >Music Lyrics</a></li>
+      <li><a href="New50.aspx" title="New Lyrics"
+       >New Lyrics</a></li>
+      <li><a href="Popular50.aspx" title="Most Popular"
+       >Most Popular</a></li>
+      <li><a href="Add.aspx" title="Add Lyrics"
+       >Add Lyrics</a></li>
+      <li><a href="About.aspx" title="About"
+       >About</a></li>
+      <li><a href="Contact.aspx" title="Contact"
+       >Contact</a></li>
+                  </ul>
+
+
+
+        <br>
+
+
+         <table cellpadding="0" cellspacing="0" border="0" width="160px"  style="border: 0px solid #D60000; font-family: verdana; color: #333333; text-align: justify">
+         <tr>
+           <td>
+                    <iframe align="middle" width="163px" scrolling="no" height="220" frameborder="0"
+                        marginwidth="0" marginheight="0" style="border: 0px none; padding-left:4px"
+                      src="http://jmn.jangonetwork.com/sm?cust_params=j_artist=John Doe&amp;j_title=beets song"></iframe>
+                    </td>
+             </tr>
+         </table><br>
+
+         <div id="leftsideadtext"></div>
+
+          </div>
+
+        <div style="width:163px;" align="center">
+       <div style="padding-bottom:10px;padding-left:5px;">
+
+           <script type="text/javascript"><!--
+e9 = new Object();
+e9.size = "120x600, 160x600";
+//--></script>
+<script type="text/javascript" src="http://somelink.com/tags/lyricsbaycom/examplecom/tags.js">
+</script>
+
+       </div>
+       </div>
+    <br><table width="157px" align="center" style="border-color:#BDCCDC" border="1"><tr><td colspan="2" class="SubTitle" bgcolor="#BDCCDC" align="center">Other lyrics by John Doe</td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">1. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Boys Lyrics" href="Song18045-The-John Doe-Boys-lyrics.aspx"><font color="black" face="arial" size="2">Boys lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">2. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Crying, Waiting, Hoping Lyrics" href="Song18054-The-John Doe-Crying-Waiting-Hoping-lyrics.aspx"><font color="black" face="arial" size="2">Crying, Waiting, Hoping lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">3. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Helter Skelter Lyrics" href="Song18092-The-John Doe-Helter-Skelter-lyrics.aspx"><font color="black" face="arial" size="2">Helter Skelter lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">4. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="I Forgot To Remember To Forget Lyrics" href="Song18107-The-John Doe-I-Forgot-To-Remember-To-Forget-lyrics.aspx"><font color="black" face="arial" size="2">I Forgot To Remember To Forget lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">5. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Johnny B. Goode Lyrics" href="Song18142-The-John Doe-Johnny-B-Goode-lyrics.aspx"><font color="black" face="arial" size="2">Johnny B. Goode lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">6. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Maggie Mae Lyrics" href="Song18163-The-John Doe-Maggie-Mae-lyrics.aspx"><font color="black" face="arial" size="2">Maggie Mae lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">7. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Mailman, Bring Me No More Blues Lyrics" href="Song18165-The-John Doe-Mailman-Bring-Me-No-More-Blues-lyrics.aspx"><font color="black" face="arial" size="2">Mailman, Bring Me No More Blues lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">8. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Memphis, Tennessee Lyrics" href="Song18170-The-John Doe-Memphis-Tennessee-lyrics.aspx"><font color="black" face="arial" size="2">Memphis, Tennessee lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">9. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Oh Darling Lyrics" href="Song18187-The-John Doe-Oh-Darling-lyrics.aspx"><font color="black" face="arial" size="2">Oh Darling lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">10. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Till There Was You Lyrics" href="Song18258-The-John Doe-Till-There-Was-You-lyrics.aspx"><font color="black" face="arial" size="2">Till There Was You lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">11. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Yesterday Lyrics" href="Song18281-The-John Doe-Yesterday-lyrics.aspx"><font color="black" face="arial" size="2">Yesterday lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">12. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="The Streets Of London Lyrics" href="Song155676-The-John Doe-The-Streets-Of-London-lyrics.aspx"><font color="black" face="arial" size="2">The Streets Of London lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">13. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="When I'm Sixty-Four (Lennon/McCartney) Lyrics" href="Song478768-The-John Doe-When-Im-Sixty-Four-LennonMcCartney-lyrics.aspx"><font color="black" face="arial" size="2">When I'm Sixty-Four (Lennon/McCartney) lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">14. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Being for the Benefit of Mr. Kite! (Lennon/McCartney) Lyrics" href="Song478833-The-John Doe-Being-for-the-Benefit-of-Mr-Kite-LennonMcCartney-lyrics.aspx"><font color="black" face="arial" size="2">Being for the Benefit of Mr. Kite! (Lennon/McCartney) lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">15. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Blue Jay Way (Harrison) Lyrics" href="Song478837-The-John Doe-Blue-Jay-Way-Harrison-lyrics.aspx"><font color="black" face="arial" size="2">Blue Jay Way (Harrison) lyrics</font></a></td></tr></table><br>
+    </div>
+    <div id="centertdivNew">
+    <div align="center" style="margin-left:0px;margin-bottom:5px;">
+
+        <div style="margin-left:0px;margin-bottom:5px;width:100%;" align="center">
+
+          </div>
+            <div style="width:100%;" align="center">
+                <div>
+
+    </div>
+    <div style="width:100%;" align="center">
+                    [<a class="regular" href="http://www.example.com/New50.aspx" >New lyrics</a>]
+                   </div></div></div>
+    <br><br><strong>John Doe beets song lyrics</strong>
+
+
+
+                    <form action="Default.aspx" method="get">
+                    <input type="hidden" name="Page" value="Search">
+                    <input type="radio" name="W" value="Lyrics" checked> Lyrics
+                    search for Artist - Song: <input type="text" name="Criteria" size=15>
+                    <input type="button" onClick="verify2()" value="SEARCH" id="Button2">
+                    </form>
+
+        <hr><strong>Back to the: <a title="Music Lyrics" href="http://www.example.com/">Music Lyrics</a></strong> <strong> > </strong> <a class="" href="Artist1638-The-John Doe-lyrics.aspx" title="John Doe Lyrics"> <strong>John Doe lyrics</strong></a><strong> > </strong><strong>beets song lyrics</strong><br>
+        <table width="100%">
+                      <tr>
+                       <td class="Text" valign="top" align="center">
+
+        <h2>John Doe <br> beets song lyrics</h2>
+<img src="images/phone-left.gif" alt="Ringtones left icon" width="16" height="17"> <a href="http://www.ringtonematcher.com/go/?sid=LBSMros&amp;artist=The+John Doe&amp;song=Beets+Song" target="_blank"><b><font size="+1" color="red" face="arial">Send "beets song" Ringtone to your Cell</font></b></a> <img src="images/phone-right.gif" alt="Ringtones right icon" width="16" height="17"><br><br><center>Beets is the media library management system for obsessive-compulsive music geeks.<br>
+The purpose of beets is to get your music collection right once and for all. It catalogs your collection, automatically improving its metadata as it goes. It then provides a bouquet of tools for manipulating and accessing your music.<br>
+<div class='flow breaker'>           </div>
+Here's an example of beets' brainy tag corrector doing its thing:
+Because beets is designed as a library, it can do almost anything you can imagine for your music collection. Via plugins, beets becomes a panacea</center>
+<img src="images/phone-left.gif" alt="Ringtones left icon" width="16" height="17"> <a href="http://www.ringtonematcher.com/go/?sid=LBSMros&amp;artist=The+John Doe&amp;song=Beets+Song" target="_blank"><b><font size="+1" color="red" face="arial">Send "beets song" Ringtone to your Cell</font></b></a> <img src="images/phone-right.gif" alt="Ringtones right icon" width="16" height="17"><br><br>
+        <center>
+         <font color="black" size="2" face="arial">Share <strong>beets song lyrics</strong></font><br><p style="height: 1px; margin: 3pt; padding: 0pt;"></p>
+
+                    <iframe src="http://www.facebook.com/plugins/like.php?href=&amp;layout=standard&amp;show_faces=true&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=40" scrolling="no" frameborder="0" style="border:none; overflow:hidden;height:67px;"></iframe>
+
+                    </center>&nbsp;
+
+                                 RATE THIS SONG! <form action="Default.aspx?Page=Vote" method="post">
+                    </select>
+                    <input type="submit" value="RATE" id="Submit1" style="width:60px;height:26px;background-color:#28414B;color:White;font-size:7pt;text-align:center;vertical-align:middle;font-weight:bold;"></form><br>
+
+
+       <center style="margin-bottom: 10px;">
+       <table cellpadding="0" cellspacing="0">
+                      <tr>
+                       <td width="30"></td>
+                        <td width="25" align="center"><a href="javascript:favorites();"><img src="images/favorites.gif" width="20" height="20" border="0" alt="Add to Favorites Lyrics"></a></td>
+
+
+
+                        <td width=25 align="center"><a href="Default.aspx?Page=Email&amp;URL=/Song18148-The-John Doe-Lady-Madonna.aspx"><img src="images/email.gif" width="20" height="20" border=0 alt="Email to a Friend John Doe - beets song Lyrics"></a></td>
+                        <td width="30"></td></tr>
+                     <tr>
+                       <td height="15" colspan="7"></td></tr>
+                      <tr>
+
+
+                    <td valign="top" align="center" class="Text" colspan="7">Rating:
+<img height="20" width="20" src="images/vote.gif" alt=""><img height="20" width="20" src="images/vote.gif" alt=""><img height="20" width="20" src="images/vote.gif" alt=""><img height="20" width="20" src="images/vote.gif" alt=""></td></tr>
+
+                    </table></center>
+
+
+
+                    <br><center> Use the following form to post your meaning of this song, rate it, or submit comments about this song.</center><br><br>
+
+                           0<input type="hidden" name="ID" value="18148">
+
+                    <form  method="post" action="">
+                    <table width="100%">
+                      <tr>
+                    <td></td>
+                  </tr>
+                  <tr>
+                   <td class="Text" align="right" width="50%">Name: </td>
+                    <td><input type="text" name="Name" maxlength="50"></td>
+                 </tr>
+                 <tr>
+                   <td class="Text" align="right" width="50%">Comment: </td>
+                   <td><textarea name="Comment" rows="5" cols="40"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td class="Text" align="right" width="0%">Type <b>maps</b> backwards (spam prevention): </td>
+                    <td><input type="text" name="SP" maxlength="50"></td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                   <td><input type="submit" value="SEND COMMENTS" id="Button1"><br></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><hr size="1"></td></tr>
+                      <tr>
+    <td align="center" colspan=2 class="Text">There are no comments for this song yet.
+
+
+                                    </td></tr></table></form>
+                    </table>
+
+    </div>
+
+    <div style="width:29%;float:left;">
+     <div style="width:100%;float:left;margin-bottom:5px;">
+
+
+         <script type="text/javascript"><!--
+e9 = new Object();
+e9.size = "336x280,300x250";
+//--></script>
+<script type="text/javascript" src="http://example.com/tags/lyricsbaycom/examplecom/tags.js">
+</script>
+
+     </div>
+
+     <!--<div style="width:100%;float:left;margin-bottom:5px;">
+
+
+        <iframe src=""  frameborder="0" height="500" width="300" scrolling="no"></iframe>
+       </div>-->
+
+        <div style="width:100%;float:left;padding-bottom:10px;">
+
+           <table width="100%" align="left" style="border-color:#BDCCDC" border="0"><tr><td><table width="100%" style="border-color:#BDCCDC" border="1"><tr>   <td colspan="2" class="SubTitle" bgcolor="#BDCCDC" align="center">People who viewed John Doe lyrics have also visited</td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">1. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Luther Vandross % Janet Jackson Lyrics" href="Artist241-Luther-Vandross--Janet-Jackson-lyrics.aspx"><font color="black" face="arial" size="2">Luther Vandross % Janet Jackson lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">2. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Baby Lyrics" href="Artist7594-Baby-lyrics.aspx"><font color="black" face="arial" size="2">Baby lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">3. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Edie Brickell & The New Bohemians Lyrics" href="Artist9570-Edie-Brickell--The-New-Bohemians-lyrics.aspx"><font color="black" face="arial" size="2">Edie Brickell & The New Bohemians lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">4. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Al Tariq Lyrics" href="Artist16911-Al-Tariq-lyrics.aspx"><font color="black" face="arial" size="2">Al Tariq lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">5. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Defari feat Xzibit The Alkaholiks Phil Da Agony Lyrics" href="Artist20357-Defari-feat-Xzibit-The-Alkaholiks_Phil-Da-Agony-lyrics.aspx"><font color="black" face="arial" size="2">Defari feat Xzibit The Alkaholiks Phil Da Agony lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">6. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Ferradini Marco Lyrics" href="Artist21790-Ferradini-Marco-lyrics.aspx"><font color="black" face="arial" size="2">Ferradini Marco lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">7. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Orkest Klein Lyrics" href="Artist27414-Orkest-Klein-lyrics.aspx"><font color="black" face="arial" size="2">Orkest Klein lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">8. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Missey Elliot f/ Ciara Lyrics" href="Artist32978-Missey-Elliot-f-Ciara-lyrics.aspx"><font color="black" face="arial" size="2">Missey Elliot f/ Ciara lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">9. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="MC Ren f/ RBX, Snoop Dogg Lyrics" href="Artist40126-MC-Ren-f-RBX-Snoop-Dogg-lyrics.aspx"><font color="black" face="arial" size="2">MC Ren f/ RBX, Snoop Dogg lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">10. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="DJ Paul f/ Crunchy Black, Lord Infamous Lyrics" href="Artist40793-DJ_Paul-f-Crunchy-Black-Lord-Infamous-lyrics.aspx"><font color="black" face="arial" size="2">DJ Paul f/ Crunchy Black, Lord Infamous lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">11. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Figurines Lyrics" href="Artist45605-Figurines-lyrics.aspx"><font color="black" face="arial" size="2">Figurines lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">12. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Asher Roth f/ Miguel Lyrics" href="Artist47431-Asher-Roth-f-Miguel-lyrics.aspx"><font color="black" face="arial" size="2">Asher Roth f/ Miguel lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">13. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Barton Fink Lyrics" href="Artist50836-Barton-Fink-lyrics.aspx"><font color="black" face="arial" size="2">Barton Fink lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">14. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Chloe Lyrics" href="Artist54874-Chloe-lyrics.aspx"><font color="black" face="arial" size="2">Chloe lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">15. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Stack Bundles Lyrics" href="Artist55155-Stack-Bundles-lyrics.aspx"><font color="black" face="arial" size="2">Stack Bundles lyrics</font></a></td></tr></table></td> </tr>
+                      </table></div>
+
+
+   <br><br>
+               <object id="final" align="middle"type="application/x-shockwave-flash" style="width:240px; height:250px;" data="http://www.example.com/scrollsongs.swf?lid=18148"><param name="movie" value="http://www.example.com/scrollsongs.swf?lid=18148"></object>
+
+               <table align="center" cellpadding="0" cellspacing="0" border="0" width="292px"  style="padding-top:10px;border: 0px solid #D60000; font-family: verdana; color: #333333; text-align: justify">
+                   <tr>
+                       <td>
+                           <font color="black" size="2" face="arial"><b>Put this scroller on your page!</b></font><br><br>
+
+                       <input type="text" name="embedcpy" id="embedid" onclick="javascript:document.getElementById('embedid').select();" value="&lt;object codebase='http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0' width='152' height='210' id='final' align='middle'&gt;&lt;embed src='http://www.example.com/scrollsongs.swf?lid=18148' quality='high' width='200' height='210' name='Songs' align='middle' allowScriptAccess='sameDomain' type='application/x-shockwave-flash' pluginspage='http://www.example.com/go/getflashplayer' /&gt; &lt;/object&gt;&lt;br&gt;&lt;a href='http://www.example.com' target='window.open(this.href); return false;'&gt;example&lt;/a&gt; | &lt;a href=&quot;http://www.example.com/Song18148-The-John Doe-Lady-Madonna.aspx&quot; onclick='window.open(this.href); return false;'&gt;beets song lyrics&lt;/a&gt;" style="width: 292px;" READONLY>
+                       </td>
+                   </tr>
+               </table>
+
+                </div>
+
+
+
+
+    </div></div></div>
+</div>
+<script type="text/javascript">
+var _gaq = _gaq || [];_gaq.push(['_setAccount', 'xxxxxx']);_gaq.push(['_trackPageview']);(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();
+</script>
+<script type="text/javascript">
+var pageTracker = _gaq._getTracker("xxxxx");
+pageTracker._initData();
+pageTracker._trackPageview();
+</script>
+<script type="text/javascript">
+cf_page_artist = 'John Doe';
+cf_page_song = 'beets song';
+cf_adunit_id = '39381388';
+cf_flex = true
+</script><script type="text/javascript" src="//example.com/showads/showad.php"></script>
+<center><img src="images/example.jpg" alt="ToneFuse Music" title="ToneFuse Music" width="150" height="30"><p style="height: 5px; margin: 0pt; padding: 0pt;"></p></center>
+</body>
+</html>

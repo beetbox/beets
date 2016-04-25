@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,7 +16,8 @@
 """A wrapper for the GStreamer Python bindings that exposes a simple
 music player.
 """
-from __future__ import print_function
+
+from __future__ import division, absolute_import, print_function
 
 import sys
 import time
@@ -27,7 +29,8 @@ import urllib
 
 import pygst
 pygst.require('0.10')
-import gst
+import gst  # noqa
+
 
 class GstPlayer(object):
     """A music player abstracting GStreamer's Playbin element.
@@ -87,7 +90,7 @@ class GstPlayer(object):
             # error
             self.player.set_state(gst.STATE_NULL)
             err, debug = message.parse_error()
-            print("Error: " + str(err))
+            print(u"Error: {0}".format(err))
             self.playing = False
 
     def _set_volume(self, volume):
@@ -138,6 +141,7 @@ class GstPlayer(object):
         """
         # If we don't use the MainLoop, messages are never sent.
         gobject.threads_init()
+
         def start():
             loop = gobject.MainLoop()
             loop.run()
@@ -150,8 +154,8 @@ class GstPlayer(object):
         """
         fmt = gst.Format(gst.FORMAT_TIME)
         try:
-            pos = self.player.query_position(fmt, None)[0]/(10**9)
-            length = self.player.query_duration(fmt, None)[0]/(10**9)
+            pos = self.player.query_position(fmt, None)[0] / (10 ** 9)
+            length = self.player.query_duration(fmt, None)[0] / (10 ** 9)
             self.cached_time = (pos, length)
             return (pos, length)
 
@@ -172,7 +176,7 @@ class GstPlayer(object):
             return
 
         fmt = gst.Format(gst.FORMAT_TIME)
-        ns = position * 10**9 # convert to nanoseconds
+        ns = position * 10 ** 9  # convert to nanoseconds
         self.player.seek_simple(fmt, gst.SEEK_FLAG_FLUSH, ns)
 
         # save new cached time
@@ -194,11 +198,13 @@ def play_simple(paths):
         p.play_file(path)
         p.block()
 
+
 def play_complicated(paths):
     """Play the files in the path one after the other by using the
     callback function to advance to the next song.
     """
     my_paths = copy.copy(paths)
+
     def next_song():
         my_paths.pop(0)
         p.play_file(my_paths[0])
@@ -208,11 +214,10 @@ def play_complicated(paths):
     while my_paths:
         time.sleep(1)
 
-if __name__ == '__main__':
+if __name__ == b'__main__':
     # A very simple command-line player. Just give it names of audio
     # files on the command line; these are all played in sequence.
     paths = [os.path.abspath(os.path.expanduser(p))
              for p in sys.argv[1:]]
     # play_simple(paths)
     play_complicated(paths)
-

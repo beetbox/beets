@@ -43,28 +43,40 @@ all of these limitations.
   assumes that each album is in a single directory. These directories can be
   arbitrarily deep (like ``music/2010/hiphop/seattle/freshespresso/glamour``),
   but any directory with music files in it is interpreted as a separate album.
-  This means that your flat directory of six thousand uncategorized MP3s won't
-  currently be autotaggable. (This will change eventually.)
 
-  There is one exception to this rule: directories that look like separate parts
-  of a *multi-disc album* are tagged together as a single release. If two
-  adjacent albums have a common prefix, followed by "disc," "disk," or "CD"
-  and then a number, they are tagged together.
+  There are, however, a couple of exceptions to this rule:
 
-* The music may have bad tags, but it's not completely untagged. (This is
-  actually not a hard-and-fast rule: using the *E* option described below, it's
-  entirely possible to search for a release to tag a given album.) This is
-  because beets by default infers tags based on existing metadata. The
-  :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to use
-  acoustic fingerprinting to find information for arbitrary audio. Install that
-  plugin if you're willing to spend a little more CPU power to get tags for
-  unidentified albums.
+  First, directories that look like separate parts of a *multi-disc album* are
+  tagged together as a single release. If two adjacent albums have a common
+  prefix, followed by "disc," "disk," or "CD" and then a number, they are
+  tagged together.
+
+  Second, if you have jumbled directories containing more than one album, you
+  can ask beets to split them apart for you based on their metadata. Use
+  either the ``--group-albums`` command-line flag or the *G* interactive
+  option described below.
+
+* The music may have bad tags, but it's not completely untagged. This is
+  because beets by default infers tags based on existing metadata. But this is
+  not a hard and fast rule---there are a few ways to tag metadata-poor music:
+
+    * You can use the *E* or *I* options described below to search in
+      MusicBrainz for a specific album or song.
+    * The :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to
+      use acoustic fingerprinting to find information for arbitrary audio.
+      Install that plugin if you're willing to spend a little more CPU power
+      to get tags for unidentified albums. (But be aware that it does slow
+      down the process.)
+    * The :doc:`FromFilename plugin </plugins/fromfilename>` adds the ability
+      to guess tags from the filenames. Use this plugin if your tracks have
+      useful names (like "03 Call Me Maybe.mp3") but their tags don't reflect
+      that.
 
 * Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
-  Musepack, and Windows Media files are supported. (Do you use some other
-  format? `Let me know!`_)
+  Musepack, Windows Media, Opus, and AIFF files are supported. (Do you use
+  some other format? Please `file a feature request`_!)
 
-.. _Let me know!: mailto:adrian@radbox.org
+.. _file a feature request: https://github.com/beetbox/beets/issues/new
 
 Now that that's out of the way, let's tag some music.
 
@@ -107,6 +119,11 @@ command-line options you should know:
   can use ``beet import -AC`` to quickly add a bunch of files to your library
   without doing anything to them.
 
+* ``beet import -g``: assume there are multiple albums contained in each
+  directory. The tracks contained a directory are grouped by album artist and
+  album name and you will be asked to import each of these groups separately.
+  See the "Group albums" choice below.
+
 Similarity
 ----------
 
@@ -143,9 +160,11 @@ When beets needs your input about a match, it says something like this::
         Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
-    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, or aBort?
+    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, enter Id, or aBort?
 
-When beets asks you this question, it wants you to enter one of the capital letters: A, M, S, U, T, E, or B. That is, you can choose one of the following:
+When beets asks you this question, it wants you to enter one of the capital
+letters: A, M, S, U, T, G, E, I or B. That is, you can choose one of the
+following:
 
 * *A*: Apply the suggested changes shown and move on.
 
@@ -162,9 +181,19 @@ When beets asks you this question, it wants you to enter one of the capital lett
   tracks that aren't a full album. This will temporarily flip the tagger into
   *singleton* mode, which attempts to match each track individually.
 
+* *G*: Group tracks in this directory by *album artist* and *album* and import
+  groups as albums. If the album artist for a track is not set then the artist
+  is used to group that track. For each group importing proceeds as for
+  directories. This is helpful if a directory contains multiple albums.
+
 * *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
   or untagged.
+
+* *I*: Enter a metadata backend ID to use as search in the database. Use this
+  option to specify a backend entity (for example, a MusicBrainz release or
+  recording) directly, by pasting its ID or the full URL. You can also specify
+  several IDs by separating them by a space.
 
 * *B*: Cancel this import task altogether. No further albums will be tagged;
   beets shuts down immediately. The next time you attempt to import the same
@@ -185,7 +214,7 @@ candidates), like so::
     Candidates:
     1. Panther - Yourself (66.8%)
     2. Tav Falco's Panther Burns - Return of the Blue Panther (30.4%)
-    # selection (default 1), Skip, Use as-is, or Enter search, or aBort? 
+    # selection (default 1), Skip, Use as-is, or Enter search, or aBort?
 
 Here, you have many of the same options as before, but you can also enter a
 number to choose one of the options that beets has found. Don't worry about
@@ -257,12 +286,12 @@ MusicBrainz---so consider adding the data yourself.
 If you think beets is ignoring an album that's listed in MusicBrainz, please
 `file a bug report`_.
 
-.. _file a bug report: https://github.com/sampsyo/beets/issues
+.. _file a bug report: https://github.com/beetbox/beets/issues
 
 I Hope That Makes Sense
 -----------------------
 
-If I haven't made the process clear, please `drop me an email`_ and I'll try to
-improve this guide.
+If I haven't made the process clear, please send an email to `the mailing
+list`_ and I'll try to improve this guide.
 
-.. _drop me an email: mailto:adrian@radbox.org
+.. _the mailing list: http://groups.google.com/group/beets-users

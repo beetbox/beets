@@ -1,6 +1,0 @@
-^dist/
-^beets\.egg-info/
-^build/
-^MANIFEST$
-^docs/_build/
-^\.tox/

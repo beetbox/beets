@@ -146,7 +146,8 @@ var BeetsRouter = Backbone.Router.extend({
         "item/query/:query": "itemQuery",
     },
     itemQuery: function(query) {
-        $.getJSON('/item/query/' + query, function(data) {
+        var queryURL = query.split(/\s+/).map(encodeURIComponent).join('/');
+        $.getJSON('/item/query/' + queryURL, function(data) {
             var models = _.map(
                 data['results'],
                 function(d) { return new Item(d); }
@@ -196,9 +197,10 @@ var ItemEntryView = Backbone.View.extend({
             this.$('.playing').hide();
     }
 });
-var ItemDetailView = Backbone.View.extend({
+//Holds Title, Artist, Album etc.
+var ItemMainDetailView = Backbone.View.extend({
     tagName: "div",
-    template: _.template($('#item-detail-template').html()),
+    template: _.template($('#item-main-detail-template').html()),
     events: {
         'click .play': 'play',
     },
@@ -210,7 +212,15 @@ var ItemDetailView = Backbone.View.extend({
         app.playItem(this.model);
     }
 });
-
+// Holds Track no., Format, MusicBrainz link, Lyrics, Comments etc.
+var ItemExtraDetailView = Backbone.View.extend({
+    tagName: "div",
+    template: _.template($('#item-extra-detail-template').html()),
+    render: function() {
+        $(this.el).html(this.template(this.model.toJSON()));
+        return this;
+    }
+});
 // Main app view.
 var AppView = Backbone.View.extend({
     el: $('body'),
@@ -219,7 +229,7 @@ var AppView = Backbone.View.extend({
     },
     querySubmit: function(ev) {
         ev.preventDefault();
-        router.navigate('item/query/' + escape($('#query').val()), true);
+        router.navigate('item/query/' + encodeURIComponent($('#query').val()), true);
     },
     initialize: function() {
         this.playingItem = null;
@@ -246,9 +256,12 @@ var AppView = Backbone.View.extend({
         $('#results li').removeClass("selected");
         $(view.el).addClass("selected");
 
-        // Show detail.
-        var detailView = new ItemDetailView({model: view.model});
-        $('#detail').empty().append(detailView.render().el);
+        // Show main and extra detail.
+        var mainDetailView = new ItemMainDetailView({model: view.model});
+        $('#main-detail').empty().append(mainDetailView.render().el);
+
+        var extraDetailView = new ItemExtraDetailView({model: view.model});
+        $('#extra-detail').empty().append(extraDetailView.render().el);
     },
     playItem: function(item) {
         var url = '/item/' + item.get('id') + '/file';

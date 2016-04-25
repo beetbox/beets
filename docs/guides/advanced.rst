@@ -20,7 +20,7 @@ comes from MusicBrainz. Plugins can provide :doc:`album art
 
 If you want beets to get any of this data automatically during the import
 process, just enable any of the three relevant plugins (see
-:ref:`using-plugins`). For example, put this line in your :doc:`config file
+:doc:`/plugins/index`). For example, put this line in your :doc:`config file
 </reference/config>` to enable all three::
 
     plugins: fetchart lyrics lastgenre
@@ -67,7 +67,7 @@ but play it at work (without copying my whole library locally). The
 :doc:`/plugins/web` makes streaming your music easy---it's sort of like having
 your own personal Spotify.
 
-First, enable the ``web`` plugin (see :ref:`using-plugins`). Run the server by
+First, enable the ``web`` plugin (see :doc:`/plugins/index`). Run the server by
 typing ``beet web`` and head to http://localhost:8337 in a browser. You can
 browse your collection with queries and, if your browser supports it, play
 music using HTML5 audio.
@@ -78,7 +78,7 @@ including a beets server. Just download Tomahawk and open its settings to
 connect it to beets. `A post on the beets blog`_ has a more detailed guide.
 
 .. _A post on the beets blog:
-    http://beets.radbox.org/blog/tomahawk-resolver.html
+    http://beets.io/blog/tomahawk-resolver.html
 .. _Tomahawk: http://www.tomahawk-player.org
 
 
@@ -104,3 +104,60 @@ The plugin has many more dials you can fiddle with to get your conversions how
 you like them. Check out :doc:`its documentation </plugins/convert>`.
 
 .. _ffmpeg: http://www.ffmpeg.org
+
+
+Store any data you like
+-----------------------
+
+The beets database keeps track of a long list of :ref:`built-in fields
+<itemfields>`, but you're not limited to just that list. Say, for example,
+that you like to categorize your music by the setting where it should be
+played. You can invent a new ``context`` attribute to store this. Set the field
+using the :ref:`modify-cmd` command::
+
+    beet modify context=party artist:'beastie boys'
+
+By default beets will show you the changes that are about to be applied and ask
+if you really want to apply them to all, some or none of the items or albums.
+You can type y for "yes", n for "no", or s for "select". If you choose the latter,
+the command will prompt you for each individual matching item or album.
+
+Then :doc:`query </reference/query>` your music just as you would with any
+other field::
+
+    beet ls context:mope
+
+You can even use these fields in your filenames (see
+:ref:`path-format-config`).
+
+And, unlike :ref:`built-in fields <itemfields>`, such fields can be removed::
+
+    beet modify context! artist:'beastie boys'
+
+Read more than you ever wanted to know about the *flexible attributes*
+feature `on the beets blog`_.
+
+.. _on the beets blog: http://beets.io/blog/flexattr.html
+
+
+Choose a path style manually for some music
+-------------------------------------------
+
+Sometimes, you need to categorize some songs differently in your file system.
+For example, you might want to group together all the music you don't really
+like but keep around to play for friends and family. This is, of course,
+impossible to determine automatically using metadata from MusicBrainz.
+
+Instead, use a flexible attribute (see above) to store a flag on the music you
+want to categorize, like so::
+
+    beet modify bad=1 christmas
+
+Then, you can query on this field in your path formats to sort this music
+differently. Put something like this in your configuration file::
+
+    paths:
+        bad:1: Bad/$artist/$title
+
+Used together, flexible attributes and path format conditions let you sort
+your music by any criteria you can imagine.

@@ -27,56 +27,77 @@ To get fingerprinting working, you'll need to install three things: the
 `Chromaprint`_ library or command-line tool, an audio decoder, and the
 `pyacoustid`_ Python library (version 0.6 or later).
 
-First, you will need to install `Chromaprint`_, either as a dynamic library or
-in the form of a command-line tool (``fpcalc``). The Chromaprint site has links
-to packages for major Linux distributions. If you use `Homebrew`_ on Mac OS X,
-you can install the library with ``brew install chromaprint``. Otherwise, on Mac
-OS X and Windows, download the appropriate binary package and place the
-``fpcalc`` (or ``fpcalc.exe``) on your shell search path (e.g., in
-``/usr/local/bin`` on Mac OS X or ``C:\\Program Files`` on Windows).
+First, install pyacoustid itself. You can do this using `pip`_, like so::
+
+    $ pip install pyacoustid
+
+.. _pip: http://pip.openplans.org/
+
+Then, you will need to install `Chromaprint`_, either as a dynamic library or
+in the form of a command-line tool (``fpcalc``).
+
+Installing the Binary Command-Line Tool
+'''''''''''''''''''''''''''''''''''''''
+
+The simplest way to get up and running, especially on Windows, is to
+`download`_ the appropriate Chromaprint binary package and place the
+``fpcalc`` (or ``fpcalc.exe``) on your shell search path. On Windows, this
+means something like ``C:\\Program Files``. On OS X or Linux, put the
+executable somewhere like ``/usr/local/bin``.
+
+.. _download: http://acoustid.org/chromaprint
+
+Installing the Library
+''''''''''''''''''''''
+
+On OS X and Linux, you can also use a library installed by your package
+manager, which has some advantages (automatic upgrades, etc.). The Chromaprint
+site has links to packages for major Linux distributions. If you use
+`Homebrew`_ on Mac OS X, you can install the library with ``brew install
+chromaprint``.
 
 .. _Homebrew: http://mxcl.github.com/homebrew/
 
-Next, you will need a mechanism for decoding audio files supported by the
+You will also need a mechanism for decoding audio files supported by the
 `audioread`_ library:
 
-* Mac OS X has a number of decoders already built into Core Audio
+* OS X has a number of decoders already built into Core Audio, so there's no
+  need to install anything.
 
-* On Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_ and
-  `pymad`_. How you install these will depend on your distribution. For example,
-  on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch Linux, you want
-  ``pacman -S gstreamer0.10-python``.
+* On Linux, you can install `GStreamer`_ with `PyGObject`_, `FFmpeg`_, or
+  `MAD`_ with `pymad`_. How you install these will depend on your
+  distribution.
+  For example, on Ubuntu, run ``apt-get install gstreamer1.0 python-gi``. On
+  Arch Linux, you want ``pacman -S gstreamer python2-gobject``. If you use
+  GStreamer, be sure to install its codec plugins also (``gst-plugins-good``,
+  etc.).
+
+  Note that if you install beets in a virtualenv, you'll need it to have
+  ``--system-site-packages`` enabled for Python to see the GStreamer bindings.
 
 * On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
-.. _audioread: https://github.com/sampsyo/audioread
-.. _pyacoustid: http://github.com/sampsyo/pyacoustid
-.. _GStreamer for Python:
-    http://gstreamer.freedesktop.org/modules/gst-python.html
+.. _audioread: https://github.com/beetbox/audioread
+.. _pyacoustid: http://github.com/beetbox/pyacoustid
 .. _FFmpeg: http://ffmpeg.org/
 .. _MAD: http://spacepants.org/src/pymad/
 .. _pymad: http://www.underbit.com/products/mad/
 .. _Core Audio: http://developer.apple.com/technologies/mac/audio-and-video.html
 .. _OSSBuild: http://code.google.com/p/ossbuild/
+.. _Gstreamer: http://gstreamer.freedesktop.org/
+.. _PyGObject: https://wiki.gnome.org/Projects/PyGObject
 
 To decode audio formats (MP3, FLAC, etc.) with GStreamer, you'll need the
 standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
 ``gstreamer0.10-plugins-good``, ``gstreamer0.10-plugins-bad``, and
 ``gstreamer0.10-plugins-ugly``.
 
-Then, install pyacoustid itself. You can do this using `pip`_, like so::
-
-    $ pip install pyacoustid
-
-.. _pip: http://pip.openplans.org/
-
-Using
+Usage
 -----
 
-Once you have all the dependencies sorted out, you can enable fingerprinting by
-editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
-your ``plugins:`` line. With that, beets will use fingerprinting the next time
-you run ``beet import``.
+Once you have all the dependencies sorted out, enable the ``chroma`` plugin in
+your configuration (see :ref:`using-plugins`) to benefit from fingerprinting
+the next time you run ``beet import``.
 
 You can also use the ``beet fingerprint`` command to generate fingerprints for
 items already in your library. (Provide a query to fingerprint a subset of your
@@ -86,8 +107,18 @@ written to files' metadata.
 
 .. _submitfp:
 
+Configuration
+-------------
+
+There is one configuration option in the ``chroma:`` section, ``auto``, which
+controls whether to fingerprint files during the import process. To disable
+fingerprint-based autotagging, set it to ``no``, like so::
+
+    chroma:
+        auto: no
+
 Submitting Fingerprints
-'''''''''''''''''''''''
+-----------------------
 
 You can help expand the `Acoustid`_ database by submitting fingerprints for the
 music in your collection. To do this, first `get an API key`_ from the Acoustid

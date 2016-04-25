@@ -1,0 +1,20 @@
+version: "{build}"
+build: off
+deploy: off
+
+environment:
+    matrix:
+        - PYTHON: "C:\\Python27"
+          TOXENV: py27
+
+# Install Tox for running tests.
+install:
+    - "%PYTHON%/Scripts/pip.exe install tox"
+
+test_script:
+    - "%PYTHON%/Scripts/tox.exe"
+
+# Allow all failures for now: the tests don't yet pass!
+matrix:
+    allow_failures:
+        - TOXENV: py27

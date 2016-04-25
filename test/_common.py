@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,12 +14,14 @@
 # included in all copies or substantial portions of the Software.
 
 """Some common functionality for beets' test cases."""
+from __future__ import division, absolute_import, print_function
+
 import time
 import sys
 import os
-import logging
 import tempfile
 import shutil
+from contextlib import contextmanager
 
 # Use unittest2 on Python < 2.7.
 try:
@@ -27,58 +30,101 @@ except ImportError:
     import unittest
 
 # Mangle the search path to include the beets sources.
-sys.path.insert(0, '..')
+sys.path.insert(0, '..')  # noqa
 import beets.library
-from beets import importer
+from beets import importer, logging
 from beets.ui import commands
 import beets
 
-# Suppress logging output.
-log = logging.getLogger('beets')
-log.setLevel(logging.CRITICAL)
+# Make sure the development versions of the plugins are used
+import beetsplug
+beetsplug.__path__ = [os.path.abspath(
+    os.path.join(__file__, '..', '..', 'beetsplug')
+)]
 
-# Test resources/sandbox path.
-RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
+# Test resources path.
+RSRC = os.path.join(os.path.dirname(__file__), b'rsrc')
+
+# Propagate to root loger so nosetest can capture it
+log = logging.getLogger('beets')
+log.propagate = True
+log.setLevel(logging.DEBUG)
 
 # Dummy item creation.
 _item_ident = 0
-def item():
+
+# OS feature test.
+HAVE_SYMLINK = hasattr(os, 'symlink')
+
+
+def item(lib=None):
     global _item_ident
     _item_ident += 1
-    return beets.library.Item(
-        title =            u'the title',
-        artist =           u'the artist',
-        albumartist =      u'the album artist',
-        album =            u'the album',
-        genre =            u'the genre',
-        composer =         u'the composer',
-        grouping =         u'the grouping',
-        year =             1,
-        month =            2,
-        day =              3,
-        track =            4,
-        tracktotal =       5,
-        disc =             6,
-        disctotal =        7,
-        lyrics =           u'the lyrics',
-        comments =         u'the comments',
-        bpm =              8,
-        comp =             True,
-        path =             'somepath' + str(_item_ident),
-        length =           60.0,
-        bitrate =          128000,
-        format =           'FLAC',
-        mb_trackid =       'someID-1',
-        mb_albumid =       'someID-2',
-        mb_artistid =      'someID-3',
-        mb_albumartistid = 'someID-4',
-        album_id =         None,
+    i = beets.library.Item(
+        title=u'the title',
+        artist=u'the artist',
+        albumartist=u'the album artist',
+        album=u'the album',
+        genre=u'the genre',
+        composer=u'the composer',
+        grouping=u'the grouping',
+        year=1,
+        month=2,
+        day=3,
+        track=4,
+        tracktotal=5,
+        disc=6,
+        disctotal=7,
+        lyrics=u'the lyrics',
+        comments=u'the comments',
+        bpm=8,
+        comp=True,
+        path='somepath{0}'.format(_item_ident),
+        length=60.0,
+        bitrate=128000,
+        format='FLAC',
+        mb_trackid='someID-1',
+        mb_albumid='someID-2',
+        mb_artistid='someID-3',
+        mb_albumartistid='someID-4',
+        album_id=None,
     )
+    if lib:
+        lib.add(i)
+    return i
+
+_album_ident = 0
+
+
+def album(lib=None):
+    global _item_ident
+    _item_ident += 1
+    i = beets.library.Album(
+        artpath=None,
+        albumartist=u'some album artist',
+        albumartist_sort=u'some sort album artist',
+        albumartist_credit=u'some album artist credit',
+        album=u'the album',
+        genre=u'the genre',
+        year=2014,
+        month=2,
+        day=5,
+        tracktotal=0,
+        disctotal=1,
+        comp=False,
+        mb_albumid='someID-1',
+        mb_albumartistid='someID-1'
+    )
+    if lib:
+        lib.add(i)
+    return i
+
 
 # Dummy import session.
-def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
+def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     cls = commands.TerminalImportSession if cli else importer.ImportSession
-    return cls(lib, logfile, paths, query)
+    return cls(lib, loghandler, paths, query)
+
 
 # A test harness for all beets tests.
 # Provides temporary, isolated configuration.
@@ -112,17 +158,36 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         if os.path.isdir(self.temp_dir):
             shutil.rmtree(self.temp_dir)
-        os.environ['HOME'] = self._old_home
+        if self._old_home is None:
+            del os.environ['HOME']
+        else:
+            os.environ['HOME'] = self._old_home
         self.io.restore()
+
+        beets.config.clear()
+        beets.config._materialized = False
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),
-                        'file does not exist: %s' % path)
+                        u'file does not exist: {!r}'.format(path))
 
     def assertNotExists(self, path):
         self.assertFalse(os.path.exists(path),
-                        'file exists: %s' % path)
+                         u'file exists: {!r}'.format((path)))
 
+
+class LibTestCase(TestCase):
+    """A test case that includes an in-memory library object (`lib`) and
+    an item added to the library (`i`).
+    """
+    def setUp(self):
+        super(LibTestCase, self).setUp()
+        self.lib = beets.library.Library(':memory:')
+        self.i = item(self.lib)
+
+    def tearDown(self):
+        self.lib._connection().close()
+        super(LibTestCase, self).tearDown()
 
 
 # Mock timing.
@@ -158,29 +223,41 @@ class Timecop(object):
 class InputException(Exception):
     def __init__(self, output=None):
         self.output = output
+
     def __str__(self):
         msg = "Attempt to read with no input provided."
         if self.output is not None:
-            msg += " Output: %s" % repr(self.output)
+            msg += " Output: {!r}".format(self.output)
         return msg
+
+
 class DummyOut(object):
     encoding = 'utf8'
+
     def __init__(self):
         self.buf = []
+
     def write(self, s):
         self.buf.append(s)
+
     def get(self):
-        return ''.join(self.buf)
+        return b''.join(self.buf)
+
     def clear(self):
         self.buf = []
+
+
 class DummyIn(object):
     encoding = 'utf8'
+
     def __init__(self, out=None):
         self.buf = []
         self.reads = 0
         self.out = out
+
     def add(self, s):
-        self.buf.append(s + '\n')
+        self.buf.append(s + b'\n')
+
     def readline(self):
         if not self.buf:
             if self.out:
@@ -189,6 +266,8 @@ class DummyIn(object):
                 raise InputException()
         self.reads += 1
         return self.buf.pop(0)
+
+
 class DummyIO(object):
     """Mocks input and output streams for testing UI code."""
     def __init__(self):
@@ -220,6 +299,7 @@ class DummyIO(object):
 def touch(path):
     open(path, 'a').close()
 
+
 class Bag(object):
     """An object that exposes a set of fields given as keyword
     arguments. Any field not found in the dictionary appears to be None.
@@ -230,3 +310,46 @@ class Bag(object):
 
     def __getattr__(self, key):
         return self.fields.get(key)
+
+
+# Platform mocking.
+
+@contextmanager
+def platform_windows():
+    import ntpath
+    old_path = os.path
+    try:
+        os.path = ntpath
+        yield
+    finally:
+        os.path = old_path
+
+
+@contextmanager
+def platform_posix():
+    import posixpath
+    old_path = os.path
+    try:
+        os.path = posixpath
+        yield
+    finally:
+        os.path = old_path
+
+
+@contextmanager
+def system_mock(name):
+    import platform
+    old_system = platform.system
+    platform.system = lambda: name
+    try:
+        yield
+    finally:
+        platform.system = old_system
+
+
+def slow_test(unused=None):
+    def _id(obj):
+        return obj
+    if 'SKIP_SLOW_TESTS' in os.environ:
+        return unittest.skip(u'test is slow')
+    return _id
