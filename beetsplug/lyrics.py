@@ -334,8 +334,8 @@ class LyricsWiki(SymbolsReplaced):
 
         # Get the HTML fragment inside the appropriate HTML element and then
         # extract the text from it.
-        html_frag = extract_text_in(unescape(html), u"<div class='lyricbox'>")
-        lyrics = scrape_lyrics_from_html(html_frag)
+        html_frag = extract_text_in(html, u"<div class='lyricbox'>")
+        lyrics = _scrape_strip_cruft(html_frag, True)
 
         if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
             return lyrics
