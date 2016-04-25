@@ -37,6 +37,7 @@ from __future__ import division, absolute_import, print_function
 import Queue
 from threading import Thread, Lock
 import sys
+import time
 
 BUBBLE = b'__PIPELINE_BUBBLE__'
 POISON = b'__PIPELINE_POISON__'
@@ -197,6 +198,33 @@ def _allmsgs(obj):
         return [obj]
 
 
+_interrupt_timestamp = None
+_interrupt_count = 0
+
+
+class ForceQuit(BaseException):
+    pass
+
+
+def _handle_interrupt(e):
+    """Allow force-quitting beets by pressing Ctrl-C several times in a row.
+    """
+    global _interrupt_timestamp
+    global _interrupt_count
+    if isinstance(e, KeyboardInterrupt):
+        t = time.clock()
+        if _interrupt_timestamp is None or (t - _interrupt_timestamp) > 1.5:
+            print(u'Aborting, this might take a bit while active threads '
+                  u'terminate. Press Ctrl-C thrice in a row to force-quit, '
+                  u'but consider that this can cause data corruption!')
+            _interrupt_timestamp = t
+            _interrupt_count = 0
+        else:
+            _interrupt_count += 1
+            if _interrupt_count > 3:
+                raise SystemExit("Force quit.")
+
+
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
     def __init__(self, all_threads):
@@ -228,8 +256,8 @@ class PipelineThread(Thread):
     def run(self):
         try:
             self._run()
-
-        except BaseException:
+        except BaseException as e:
+            _handle_interrupt(e)
             self.abort_all(sys.exc_info())
             return
 
@@ -396,6 +424,9 @@ class Pipeline(object):
 
         # Start threads.
         for thread in threads:
+            # non-daemon threads would keep the process alive
+            # when force-quitting
+            thread.daemon = True
             thread.start()
 
         # Wait for termination. The final thread lasts the longest.
@@ -403,9 +434,9 @@ class Pipeline(object):
             # Using a timeout allows us to receive KeyboardInterrupt
             # exceptions during the join().
             while threads[-1].isAlive():
-                threads[-1].join(1)
+                threads[-1].join(0.5)
 
-        except BaseException:
+        except BaseException as e:
             # Stop all the threads immediately.
             for thread in threads:
                 thread.abort()
@@ -415,8 +446,18 @@ class Pipeline(object):
             # Make completely sure that all the threads have finished
             # before we return. They should already be either finished,
             # in normal operation, or aborted, in case of an exception.
-            for thread in threads[:-1]:
-                thread.join()
+            try:
+                for thread in threads[:-1]:
+                    while thread.isAlive():
+                        try:
+                            # Join blocks KeyboardInterrupt, so choose a short
+                            # delay to enable the force-quit combo
+                            thread.join(0.1)
+                        except BaseException as e:
+                            _handle_interrupt(e)
+            except ForceQuit:
+                # Nevertheless print thread.exc_info!
+                pass
 
         for thread in threads:
             exc_info = thread.exc_info
