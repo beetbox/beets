@@ -225,6 +225,18 @@ class PipelineThread(Thread):
         for thread in self.all_threads:
             thread.abort()
 
+    def run(self):
+        try:
+            self._run()
+
+        except BaseException:
+            self.abort_all(sys.exc_info())
+            return
+
+        # Generator finished; shut down the pipeline.
+        if hasattr(self, 'out_queue'):
+            self.out_queue.release()
+
 
 class FirstPipelineThread(PipelineThread):
     """The thread running the first stage in a parallel pipeline setup.
@@ -239,32 +251,24 @@ class FirstPipelineThread(PipelineThread):
         self.abort_lock = Lock()
         self.abort_flag = False
 
-    def run(self):
-        try:
-            while True:
+    def _run(self):
+        while True:
+            with self.abort_lock:
+                if self.abort_flag:
+                    return
+
+            # Get the value from the generator.
+            try:
+                msg = self.coro.next()
+            except StopIteration:
+                break
+
+            # Send messages to the next stage.
+            for msg in _allmsgs(msg):
                 with self.abort_lock:
                     if self.abort_flag:
                         return
-
-                # Get the value from the generator.
-                try:
-                    msg = self.coro.next()
-                except StopIteration:
-                    break
-
-                # Send messages to the next stage.
-                for msg in _allmsgs(msg):
-                    with self.abort_lock:
-                        if self.abort_flag:
-                            return
-                    self.out_queue.put(msg)
-
-        except BaseException:
-            self.abort_all(sys.exc_info())
-            return
-
-        # Generator finished; shut down the pipeline.
-        self.out_queue.release()
+                self.out_queue.put(msg)
 
 
 class MiddlePipelineThread(PipelineThread):
@@ -278,41 +282,33 @@ class MiddlePipelineThread(PipelineThread):
         self.out_queue = out_queue
         self.out_queue.acquire()
 
-    def run(self):
-        try:
-            # Prime the coroutine.
-            self.coro.next()
+    def _run(self):
+        # Prime the coroutine.
+        self.coro.next()
 
-            while True:
+        while True:
+            with self.abort_lock:
+                if self.abort_flag:
+                    return
+
+            # Get the message from the previous stage.
+            msg = self.in_queue.get()
+            if msg is POISON:
+                break
+
+            with self.abort_lock:
+                if self.abort_flag:
+                    return
+
+            # Invoke the current stage.
+            out = self.coro.send(msg)
+
+            # Send messages to next stage.
+            for msg in _allmsgs(out):
                 with self.abort_lock:
                     if self.abort_flag:
                         return
-
-                # Get the message from the previous stage.
-                msg = self.in_queue.get()
-                if msg is POISON:
-                    break
-
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
-
-                # Invoke the current stage.
-                out = self.coro.send(msg)
-
-                # Send messages to next stage.
-                for msg in _allmsgs(out):
-                    with self.abort_lock:
-                        if self.abort_flag:
-                            return
-                    self.out_queue.put(msg)
-
-        except BaseException:
-            self.abort_all(sys.exc_info())
-            return
-
-        # Pipeline is shutting down normally.
-        self.out_queue.release()
+                self.out_queue.put(msg)
 
 
 class LastPipelineThread(PipelineThread):
@@ -324,31 +320,26 @@ class LastPipelineThread(PipelineThread):
         self.coro = coro
         self.in_queue = in_queue
 
-    def run(self):
+    def _run(self):
         # Prime the coroutine.
         self.coro.next()
 
-        try:
-            while True:
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
+        while True:
+            with self.abort_lock:
+                if self.abort_flag:
+                    return
 
-                # Get the message from the previous stage.
-                msg = self.in_queue.get()
-                if msg is POISON:
-                    break
+            # Get the message from the previous stage.
+            msg = self.in_queue.get()
+            if msg is POISON:
+                break
 
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
+            with self.abort_lock:
+                if self.abort_flag:
+                    return
 
-                # Send to consumer.
-                self.coro.send(msg)
-
-        except BaseException:
-            self.abort_all(sys.exc_info())
-            return
+            # Send to consumer.
+            self.coro.send(msg)
 
 
 class Pipeline(object):
