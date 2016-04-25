@@ -1,25 +1,24 @@
 Fuzzy Search Plugin
 ===================
 
-The ``fuzzy`` plugin provides a prefixed query that search you library using
+The ``fuzzy`` plugin provides a prefixed query that searches your library using
 fuzzy pattern matching. This can be useful if you want to find a track with
 complicated characters in the title.
 
-First, enable the plugin named ``fuzzy`` (see :doc:`/plugins/index`).
+First, enable the plugin named ``fuzzy`` (see :ref:`using-plugins`).
 You'll then be able to use the ``~`` prefix to use fuzzy matching::
 
     $ beet ls '~Vareoldur'
     Sigur Rós - Valtari - Varðeldur
 
-The plugin provides config options that let you choose the prefix and the
-threshold.::
+Configuration
+-------------
 
-    fuzzy:
-        threshold: 0.8
-        prefix: '@'
+To configure the plugin, make a ``fuzzy:`` section in your configuration
+file. The available options are:
 
-A threshold value of 1.0 will show only perfect matches and a value of 0.0
-will match everything.
-
-The default prefix ``~`` needs to be escaped or quoted in most shells. If this
-bothers you, you can change the prefix in your config file.
+- **threshold**: The "sensitivity" of the fuzzy match. A value of 1.0 will
+  show only perfect matches and a value of 0.0 will match everything.
+  Default: 0.7.
+- **prefix**: The character used to designate fuzzy queries.
+  Default: ``~``, which may need to be escaped in some shells.

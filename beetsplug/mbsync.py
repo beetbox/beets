@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2013, Jakob Schnitzer.
+# Copyright 2016, Jakob Schnitzer.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,134 +15,25 @@
 
 """Update library's tags using MusicBrainz.
 """
-import logging
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
-from beets import config
-
-log = logging.getLogger('beets')
+from collections import defaultdict
 
 
-def _print_and_apply_changes(lib, item, old_data, move, pretend, write):
-    """Apply changes to an Item and preview them in the console. Return
-    a boolean indicating whether any changes were made.
+def apply_item_changes(lib, item, move, pretend, write):
+    """Store, move and write the item according to the arguments.
     """
-    changes = {}
-    for key in library.ITEM_KEYS_META:
-        if key in item._dirty:
-            changes[key] = old_data[key], getattr(item, key)
-    if not changes:
-        return False
-
-    # Something changed.
-    ui.print_obj(item, lib)
-    for key, (oldval, newval) in changes.iteritems():
-        ui.commands._showdiff(key, oldval, newval)
-
-    # If we're just pretending, then don't move or save.
     if not pretend:
         # Move the item if it's in the library.
         if move and lib.directory in util.ancestry(item.path):
-            lib.move(item, with_album=False)
+            item.move(with_album=False)
 
         if write:
-            try:
-                item.write()
-            except Exception as exc:
-                log.error(u'could not sync {0}: {1}'.format(
-                    util.displayable_path(item.path), exc))
-                return False
+            item.try_write()
         item.store()
-
-    return True
-
-
-def mbsync_singletons(lib, query, move, pretend, write):
-    """Synchronize matching singleton items.
-    """
-    singletons_query = library.get_query(query, False)
-    singletons_query.subqueries.append(library.SingletonQuery(True))
-    for s in lib.items(singletons_query):
-        if not s.mb_trackid:
-            log.info(u'Skipping singleton {0}: has no mb_trackid'
-                     .format(s.title))
-            continue
-
-        old_data = dict(s)
-
-        # Get the MusicBrainz recording info.
-        track_info = hooks.track_for_mbid(s.mb_trackid)
-        if not track_info:
-            log.info(u'Recording ID not found: {0}'.format(s.mb_trackid))
-            continue
-
-        # Apply.
-        with lib.transaction():
-            autotag.apply_item_metadata(s, track_info)
-            _print_and_apply_changes(lib, s, old_data, move, pretend, write)
-
-
-def mbsync_albums(lib, query, move, pretend, write):
-    """Synchronize matching albums.
-    """
-    # Process matching albums.
-    for a in lib.albums(query):
-        if not a.mb_albumid:
-            log.info(u'Skipping album {0}: has no mb_albumid'.format(a.id))
-            continue
-
-        items = list(a.items())
-        old_data = dict((item, dict(item)) for item in items)
-
-        # Get the MusicBrainz album information.
-        album_info = hooks.album_for_mbid(a.mb_albumid)
-        if not album_info:
-            log.info(u'Release ID not found: {0}'.format(a.mb_albumid))
-            continue
-
-        # Construct a track mapping according to MBIDs. This should work
-        # for albums that have missing or extra tracks.
-        mapping = {}
-        for item in items:
-            for track_info in album_info.tracks:
-                if item.mb_trackid == track_info.track_id:
-                    mapping[item] = track_info
-                    break
-
-        # Apply.
-        with lib.transaction():
-            autotag.apply_metadata(album_info, mapping)
-            changed = False
-            for item in items:
-                changed |= _print_and_apply_changes(lib, item, old_data[item],
-                                                    move, pretend, write)
-            if not changed:
-                # No change to any item.
-                continue
-
-            if not pretend:
-                # Update album structure to reflect an item in it.
-                for key in library.ALBUM_KEYS_ITEM:
-                    setattr(a, key, getattr(items[0], key))
-
-                # Move album art (and any inconsistent items).
-                if move and lib.directory in util.ancestry(items[0].path):
-                    log.debug(u'moving album {0}'.format(a.id))
-                    a.move()
-
-
-def mbsync_func(lib, opts, args):
-    """Command handler for the mbsync function.
-    """
-    move = opts.move
-    pretend = opts.pretend
-    write = opts.write
-    query = ui.decargs(args)
-
-    mbsync_singletons(lib, query, move, pretend, write)
-    mbsync_albums(lib, query, move, pretend, write)
 
 
 class MBSyncPlugin(BeetsPlugin):
@@ -150,14 +42,126 @@ class MBSyncPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('mbsync',
-                            help='update metadata from musicbrainz')
-        cmd.parser.add_option('-p', '--pretend', action='store_true',
-                              help='show all changes but do nothing')
-        cmd.parser.add_option('-M', '--nomove', action='store_false',
-                              default=True, dest='move',
-                              help="don't move files in library")
-        cmd.parser.add_option('-W', '--nowrite', action='store_false',
-                              default=config['import']['write'], dest='write',
-                              help="don't write updated metadata to files")
-        cmd.func = mbsync_func
+                            help=u'update metadata from musicbrainz')
+        cmd.parser.add_option(
+            u'-p', u'--pretend', action='store_true',
+            help=u'show all changes but do nothing')
+        cmd.parser.add_option(
+            u'-m', u'--move', action='store_true', dest='move',
+            help=u"move files in the library directory")
+        cmd.parser.add_option(
+            u'-M', u'--nomove', action='store_false', dest='move',
+            help=u"don't move files in library")
+        cmd.parser.add_option(
+            u'-W', u'--nowrite', action='store_false',
+            default=None, dest='write',
+            help=u"don't write updated metadata to files")
+        cmd.parser.add_format_option()
+        cmd.func = self.func
         return [cmd]
+
+    def func(self, lib, opts, args):
+        """Command handler for the mbsync function.
+        """
+        move = ui.should_move(opts.move)
+        pretend = opts.pretend
+        write = ui.should_write(opts.write)
+        query = ui.decargs(args)
+
+        self.singletons(lib, query, move, pretend, write)
+        self.albums(lib, query, move, pretend, write)
+
+    def singletons(self, lib, query, move, pretend, write):
+        """Retrieve and apply info from the autotagger for items matched by
+        query.
+        """
+        for item in lib.items(query + [u'singleton:true']):
+            item_formatted = format(item)
+            if not item.mb_trackid:
+                self._log.info(u'Skipping singleton with no mb_trackid: {0}',
+                               item_formatted)
+                continue
+
+            # Get the MusicBrainz recording info.
+            track_info = hooks.track_for_mbid(item.mb_trackid)
+            if not track_info:
+                self._log.info(u'Recording ID not found: {0} for track {0}',
+                               item.mb_trackid,
+                               item_formatted)
+                continue
+
+            # Apply.
+            with lib.transaction():
+                autotag.apply_item_metadata(item, track_info)
+                apply_item_changes(lib, item, move, pretend, write)
+
+    def albums(self, lib, query, move, pretend, write):
+        """Retrieve and apply info from the autotagger for albums matched by
+        query and their items.
+        """
+        # Process matching albums.
+        for a in lib.albums(query):
+            album_formatted = format(a)
+            if not a.mb_albumid:
+                self._log.info(u'Skipping album with no mb_albumid: {0}',
+                               album_formatted)
+                continue
+
+            items = list(a.items())
+
+            # Get the MusicBrainz album information.
+            album_info = hooks.album_for_mbid(a.mb_albumid)
+            if not album_info:
+                self._log.info(u'Release ID {0} not found for album {1}',
+                               a.mb_albumid,
+                               album_formatted)
+                continue
+
+            # Map recording MBIDs to their information. Recordings can appear
+            # multiple times on a release, so each MBID maps to a list of
+            # TrackInfo objects.
+            track_index = defaultdict(list)
+            for track_info in album_info.tracks:
+                track_index[track_info.track_id].append(track_info)
+
+            # Construct a track mapping according to MBIDs. This should work
+            # for albums that have missing or extra tracks. If there are
+            # multiple copies of a recording, they are disambiguated using
+            # their disc and track number.
+            mapping = {}
+            for item in items:
+                candidates = track_index[item.mb_trackid]
+                if len(candidates) == 1:
+                    mapping[item] = candidates[0]
+                else:
+                    for c in candidates:
+                        if (c.medium_index == item.track and
+                                c.medium == item.disc):
+                            mapping[item] = c
+                            break
+
+            # Apply.
+            self._log.debug(u'applying changes to {}', album_formatted)
+            with lib.transaction():
+                autotag.apply_metadata(album_info, mapping)
+                changed = False
+                for item in items:
+                    item_changed = ui.show_model_changes(item)
+                    changed |= item_changed
+                    if item_changed:
+                        apply_item_changes(lib, item, move, pretend, write)
+
+                if not changed:
+                    # No change to any item.
+                    continue
+
+                if not pretend:
+                    # Update album structure to reflect an item in it.
+                    for key in library.Album.item_keys:
+                        a[key] = items[0][key]
+                    a.store()
+
+                    # Move album art (and any inconsistent items).
+                    if move and lib.directory in util.ancestry(items[0].path):
+                        self._log.debug(u'moving album {0}', album_formatted)
+                        a.move()

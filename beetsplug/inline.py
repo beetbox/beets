@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,25 +15,26 @@
 
 """Allows inline path template customization code in the config file.
 """
-import logging
+from __future__ import division, absolute_import, print_function
+
 import traceback
 import itertools
 
 from beets.plugins import BeetsPlugin
 from beets import config
 
-log = logging.getLogger('beets')
-
 FUNC_NAME = u'__INLINE_FUNC__'
+
 
 class InlineError(Exception):
     """Raised when a runtime error occurs in an inline expression.
     """
     def __init__(self, code, exc):
         super(InlineError, self).__init__(
-            (u"error in inline path field code:\n" \
+            (u"error in inline path field code:\n"
              u"%s\n%s: %s") % (code, type(exc).__name__, unicode(exc))
         )
+
 
 def _compile_func(body):
     """Given Python code for a function body, return a compiled
@@ -47,53 +49,6 @@ def _compile_func(body):
     eval(code, env)
     return env[FUNC_NAME]
 
-def compile_inline(python_code, album):
-    """Given a Python expression or function body, compile it as a path
-    field function. The returned function takes a single argument, an
-    Item, and returns a Unicode string. If the expression cannot be
-    compiled, then an error is logged and this function returns None.
-    """
-    # First, try compiling as a single function.
-    try:
-        code = compile(u'({0})'.format(python_code), 'inline', 'eval')
-    except SyntaxError:
-        # Fall back to a function body.
-        try:
-            func = _compile_func(python_code)
-        except SyntaxError:
-            log.error(u'syntax error in inline field definition:\n%s' %
-                      traceback.format_exc())
-            return
-        else:
-            is_expr = False
-    else:
-        is_expr = True
-
-    def _dict_for(obj):
-        out = dict(obj)
-        if album:
-            out['items'] = list(obj.items())
-        return out
-
-    if is_expr:
-        # For expressions, just evaluate and return the result.
-        def _expr_func(obj):
-            values = _dict_for(obj)
-            try:
-                return eval(code, values)
-            except Exception as exc:
-                raise InlineError(python_code, exc)
-        return _expr_func
-    else:
-        # For function bodies, invoke the function with values as global
-        # variables.
-        def _func_func(obj):
-            func.__globals__.update(_dict_for(obj))
-            try:
-                return func()
-            except Exception as exc:
-                raise InlineError(python_code, exc)
-        return _func_func
 
 class InlinePlugin(BeetsPlugin):
     def __init__(self):
@@ -108,14 +63,62 @@ class InlinePlugin(BeetsPlugin):
         # Item fields.
         for key, view in itertools.chain(config['item_fields'].items(),
                                          config['pathfields'].items()):
-            log.debug(u'inline: adding item field %s' % key)
-            func = compile_inline(view.get(unicode), False)
+            self._log.debug(u'adding item field {0}', key)
+            func = self.compile_inline(view.get(unicode), False)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config['album_fields'].items():
-            log.debug(u'inline: adding album field %s' % key)
-            func = compile_inline(view.get(unicode), True)
+            self._log.debug(u'adding album field {0}', key)
+            func = self.compile_inline(view.get(unicode), True)
             if func is not None:
                 self.album_template_fields[key] = func
+
+    def compile_inline(self, python_code, album):
+        """Given a Python expression or function body, compile it as a path
+        field function. The returned function takes a single argument, an
+        Item, and returns a Unicode string. If the expression cannot be
+        compiled, then an error is logged and this function returns None.
+        """
+        # First, try compiling as a single function.
+        try:
+            code = compile(u'({0})'.format(python_code), 'inline', 'eval')
+        except SyntaxError:
+            # Fall back to a function body.
+            try:
+                func = _compile_func(python_code)
+            except SyntaxError:
+                self._log.error(u'syntax error in inline field definition:\n'
+                                u'{0}', traceback.format_exc())
+                return
+            else:
+                is_expr = False
+        else:
+            is_expr = True
+
+        def _dict_for(obj):
+            out = dict(obj)
+            if album:
+                out['items'] = list(obj.items())
+            return out
+
+        if is_expr:
+            # For expressions, just evaluate and return the result.
+            def _expr_func(obj):
+                values = _dict_for(obj)
+                try:
+                    return eval(code, values)
+                except Exception as exc:
+                    raise InlineError(python_code, exc)
+            return _expr_func
+        else:
+            # For function bodies, invoke the function with values as global
+            # variables.
+            def _func_func(obj):
+                func.__globals__.update(_dict_for(obj))
+                try:
+                    return func()
+                except Exception as exc:
+                    raise InlineError(python_code, exc)
+            return _func_func

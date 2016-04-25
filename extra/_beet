@@ -1,0 +1,246 @@
+#compdef beet
+
+# Completion for beets music library manager and MusicBrainz tagger: http://beets.io/
+
+# useful: argument to _regex_arguments for matching any word
+local matchany=/$'[^\0]##\0'/
+
+# Deal with completions for querying and modifying fields..
+local fieldargs matchquery matchmodify
+local -a fields
+# get list of all fields
+fields=(`beet fields | grep -G '^  ' | sort -u | colrm 1 2`)
+# regexps for matching query and modify terms on the command line
+matchquery=/"(${(j/|/)fields[@]})"$':[^\0]##\0'/
+matchmodify=/"(${(j/|/)fields[@]})"$'(=[^\0]##|!)\0'/
+# Function for getting unique values for field from database (you may need to change the path to the database).
+function _beet_field_values()
+{
+    local -a output fieldvals
+    local library="$(beet config|grep library|cut -f 2 -d ' ')"
+    if [ -z "$library" ]; then
+        # Use default library location if there is no user defined one
+        library="~/.config/beets/library.db"
+    fi
+    output=$(sqlite3 ${~library} "select distinct $1 from items;")
+    case $1
+        in
+        lyrics)
+            fieldvals=
+            ;;
+        *)
+            fieldvals=("${(f)output[@]}")
+            ;;
+    esac
+    compadd -P \" -S \" -M 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' -Q -a fieldvals
+}
+# store call to _values function for completing query terms
+# (first build arguments for completing field values)
+local field
+for field in "${fields[@]}"
+do
+    fieldargs="$fieldargs '$field:::{_beet_field_values $field}'"
+done
+local queryelem modifyelem
+queryelem="_values -S : 'query field (add an extra : to match by regexp)' '::' $fieldargs"
+# store call to _values function for completing modify terms (no need to complete field values)
+modifyelem="_values -S = 'modify field (replace = with ! to remove field)' $(echo "'${^fields[@]}:: '")"
+# Create completion function for queries
+_regex_arguments _beet_query "$matchany" \# \( "$matchquery" ":query:query string:$queryelem" \) \
+    \( "$matchquery" ":query:query string:$queryelem" \) \#
+# store regexps for completing lists of queries and modifications
+local -a query modify
+query=( \( "$matchquery" ":query:query string:{_beet_query}" \) \( "$matchquery" ":query:query string:{_beet_query}" \) \# )
+modify=( \( "$matchmodify" ":modify:modify string:$modifyelem" \) \( "$matchmodify" ":modify:modify string:$modifyelem" \) \# )
+
+# arguments to _regex_arguments for completing files and directories
+local -a files dirs
+files=("$matchany" ':file:file:_files')
+dirs=("$matchany" ':dir:directory:_dirs')
+
+# Individual options used by subcommands, and global options (must be single quoted).
+# Its much faster if these are hard-coded rather generated using _beet_subcmd_options
+local helpopt formatopt albumopt dontmoveopt writeopt nowriteopt pretendopt pathopt destopt copyopt nocopyopt
+local inferopt noinferopt resumeopt noresumeopt nopromptopt logopt individualopt confirmopt retagopt skipopt noskipopt
+local flatopt groupopt editopt defaultopt noconfirmopt exactopt removeopt configopt debugopt
+helpopt='-h:show this help message and exit'
+formatopt='-f:print with custom format:$matchany'
+albumopt='-a:match albums instead of tracks'
+dontmoveopt='-M:dont move files in library'
+writeopt='-w:write new metadata to files tags (default)'
+nowriteopt='-W:dont write metadata (opposite of -w)'
+pretendopt='-p:show all changes but do nothing'
+pathopt='-p:print paths for matched items or albums'
+destopt='-d:destination music directory:$dirs'
+copyopt='-c:copy tracks into library directory (default)'
+nocopyopt='-C:dont copy tracks (opposite of -c)'
+inferopt='-a:infer tags for imported files (default)'
+noinferopt='-A:dont infer tags for imported files (opposite of -a)'
+resumeopt='-p:resume importing if interrupted'
+noresumeopt='-P:do not try to resume importing'
+nopromptopt='-q:never prompt for input, skip albums instead'
+logopt='-l:file to log untaggable albums for later review:$files'
+individualopt='-s:import individual tracks instead of full albums'
+confirmopt='-t:always confirm all actions'
+retagopt='-L:retag items matching a query:${query[@]}'
+skipopt='-i:skip already-imported directories'
+noskipopt='-I:do not skip already-imported directories'
+flatopt='--flat:import an entire tree as a single album'
+groupopt='-g:group tracks in a folder into seperate albums'
+editopt='-e:edit user configuration with $EDITOR'
+defaultopt='-d:include the default configuration'
+copynomoveopt='-c:copy instead of moving'
+noconfirmopt='-y:skip confirmation'
+exactopt='-e:get exact file sizes'
+removeopt='-d:also remove files from disk'
+configopt='-c:path to configuration file:$files'
+debugopt='-v:print debugging information'
+libopt='-l:library database file to use:$files'
+
+# This function takes a beet subcommand as its first argument, and then uses _regex_words to set ${reply[@]}
+# to an array containing arguments for the _regex_arguments function.
+function _beet_subcmd_options()
+{
+    local shortopt optarg optdesc
+    local -a regex_words
+    regex_words=()
+    for i in ${${(f)"$(beet help $1 | awk '/^ +-/{if(x)print x;x=$0;next}/^ *$/{if(x) exit}{if(x) x=x$0}END{print x}')"}[@]}
+    do
+        shortopt="${i[(w)1]/,/}"
+        optarg="${$(echo ${i[(w)2]}|grep -o '[A-Z]\+')[(w)1]}"
+        optdesc="${${${${${i[(w)2,-1]/[A-Z, ]#--[a-z]##[=A-Z]# #/}//:/-}//\[/(}//\]/)}//\'/}"
+        case $optarg
+            in
+            ("")
+                if [[ "$1" == "import" && "$shortopt" == "-L" ]]; then
+                    regex_words+=("$shortopt:$optdesc:\${query[@]}")
+                else
+                    regex_words+=("$shortopt:$optdesc")
+                fi
+                ;;
+            (LOG)
+                regex_words+=("$shortopt:$optdesc:\$files")
+                ;;
+            (CONFIG)
+                local -a configfile
+                configfile=("$matchany" ':file:config file:{_files -g *.yaml}')
+                regex_words+=("$shortopt:$optdesc:\$configfile")
+                ;;
+            (LIB|LIBRARY)
+                local -a libfile
+                libfile=("$matchany" ':file:database file:{_files -g *.db}')
+                regex_words+=("$shortopt:$optdesc:\$libfile")
+                ;;
+            (DIR|DIRECTORY)
+                regex_words+=("$shortopt:$optdesc:\$dirs")
+                ;;
+            (SOURCE)
+                if [[ $1 -eq lastgenre ]]; then
+                    local -a lastgenresource
+                    lastgenresource=(/$'(artist|album|track)\0'/ ':source:genre source:(artist album track)')
+                    regex_words+=("$shortopt:$optdesc:\$lastgenresource")
+                else
+                    regex_words+=("$shortopt:$optdesc:\$matchany")
+                fi
+                ;;
+            (*)
+                regex_words+=("$shortopt:$optdesc:\$matchany")
+                ;;
+        esac
+    done
+    _regex_words options "$1 options" "${regex_words[@]}"
+}
+
+# Now build the arguments to _regex_arguments for each subcommand.
+local -a options regex_words_subcmds regex_words_help
+local subcmd cmddesc
+for i in ${${(f)"$(beet help | awk 'f;/Commands:/{f=1}' | grep '^  \w.*')"[@]}[@]}
+do
+    subcmd="${i[(w)1]}"
+    cmddesc="${${${${${i[(w)2,-1]##\(*\) #}//:/-}//\[/(}//\]/)}//\'/}"
+    case $subcmd
+        in
+        (config)
+            _regex_words options "config options" "$helpopt" "$pathopt"  "$editopt" "$defaultopt"
+            options=("${reply[@]}")
+            ;;
+        (import)
+            _regex_words options "import options" "$helpopt" "$writeopt" "$nowriteopt" "$copyopt" "$nocopyopt" "$inferopt" \
+                "$noinferopt" "$resumeopt" "$noresumeopt" "$nopromptopt" "$logopt" "$individualopt" "$confirmopt" "$retagopt" \
+                "$skipopt" "$noskipopt" "$flatopt" "$groupopt"
+            options=( "${reply[@]}" \# "${files[@]}" \# )
+            ;;
+        (list)
+            _regex_words options "list options" "$helpopt" "$pathopt" "$albumopt" "$formatopt"
+            options=( "$reply[@]" \# "${query[@]}" )
+            ;;
+        (modify)
+            _regex_words options "modify options" "$helpopt" "$dontmoveopt" "$writeopt" "$nowriteopt" "$albumopt" \
+                "$noconfirmopt" "$formatopt"
+            options=( "${reply[@]}" \# "${query[@]}" "${modify[@]}" )
+            ;;
+        (move)
+            _regex_words options "move options" "$helpopt" "$albumopt" "$destopt" "$copynomoveopt"
+            options=( "${reply[@]}" \# "${query[@]}")
+            ;;
+        (remove)
+            _regex_words options "remove options" "$helpopt" "$albumopt" "$removeopt"
+            options=( "${reply[@]}" \# "${query[@]}" )
+            ;;
+        (stats)
+            _regex_words options "stats options" "$helpopt" "$exactopt"
+            options=( "${reply[@]}" \# "${query[@]}" )
+            ;;
+        (update)
+            _regex_words options "update options" "$helpopt" "$albumopt" "$dontmoveopt" "$pretendopt" "$formatopt"
+            options=( "${reply[@]}" \# "${query[@]}" )
+            ;;
+        (write)
+            _regex_words options "write options" "$helpopt" "$pretendopt"
+            options=( "${reply[@]}" \# "${query[@]}" )
+            ;;
+        (fields|migrate|version)
+            options=()
+            ;;
+        (help)
+            # The help subcommand is treated separately
+            continue
+            ;;
+        (*) # completions for plugin commands are generated using _beet_subcmd_options
+            _beet_subcmd_options "$subcmd"
+            options=( \( "${reply[@]}" \# "${query[@]}" \) )
+            ;;
+    esac
+    # Create variable for holding option for this subcommand, and assign to it (needs to have a unique name).
+    typeset -a opts_for_$subcmd
+    set -A opts_for_$subcmd ${options[@]} # Assignment MUST be done using set (other methods fail).
+    regex_words_subcmds+=("$subcmd:$cmddesc:\${(@)opts_for_$subcmd}")
+    # Add to regex_words args for help subcommand
+    regex_words_help+=("$subcmd:$cmddesc")
+done
+
+local -a opts_for_help
+_regex_words subcmds "subcommands" "${regex_words_help[@]}"
+opts_for_help=("${reply[@]}")
+regex_words_subcmds+=('help:show help:$opts_for_help')
+
+# Argument for global options
+local -a globalopts
+_regex_words options "global options" "$configopt" "$debugopt" "$libopt" "$helpopt" "$destopt"
+globalopts=("${reply[@]}")
+
+# Create main completion function
+#local -a subcmds
+_regex_words subcmds "subcommands" "${regex_words_subcmds[@]}"
+subcmds=("${reply[@]}")
+_regex_arguments _beet "$matchany" \( "${globalopts[@]}" \# \) "${subcmds[@]}"
+
+# Set tag-order so that options are completed separately from arguments
+zstyle ":completion:${curcontext}:" tag-order '! options'
+
+# Execute the completion function
+_beet "$@"
+
+# Local Variables:
+# mode:shell-script
+# End:

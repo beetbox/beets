@@ -4,23 +4,25 @@ Getting Started
 Welcome to `beets`_! This guide will help you begin using it to make your music
 collection better.
 
-.. _beets: http://beets.radbox.org/
+.. _beets: http://beets.io/
 
 Installing
 ----------
 
-You will need Python. (Beets is written for `Python 2.7`_, but it works with
-2.6 as well. Python 3.x is not yet supported.)
+You will need Python. (Beets is written for `Python 2.7`_. 2.6 support has been
+dropped, and Python 3.x is not yet supported.)
 
-.. _Python 2.7: http://www.python.org/download/releases/2.7.2/
+.. _Python 2.7: http://www.python.org/download/
 
-* **Mac OS X** v10.7 (Lion) and 10.8 (Mountain Lion) include Python 2.7 out of
-  the box; Snow Leopard ships with Python 2.6.
+* **Mac OS X** v10.7 (Lion) and later include Python 2.7 out of the box.
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
-  ``apt-get install beets``. To build from source, you can get everything you
-  need by running: ``apt-get install python-dev python-setuptools python-pip``
+  ``apt-get install beets``. But the version in the repositories might lag
+  behind, so make sure you read the right version of these docs. If you want
+  the latest version, you can get everything you need to install with pip
+  as described below by running:
+  ``apt-get install python-dev python-pip``
 
 * On **Arch Linux**, `beets is in [community]`_, so just run ``pacman -S
   beets``. (There's also a bleeding-edge `dev package`_ in the AUR, which will
@@ -32,9 +34,20 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 * On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
 
+* On **OpenBSD**, beets can be installed with ``pkg_add beets``.
+
+* For **Slackware**, there's a `SlackBuild`_ available.
+
+* On **Fedora** 22 or later, there is a `DNF package`_ (or three)::
+
+      $ sudo dnf install beets beets-plugins beets-doc
+
+.. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
+.. _dnf package: https://apps.fedoraproject.org/packages/beets
+.. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
-.. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
-.. _dev package: http://aur.archlinux.org/packages.php?ID=48617
+.. _beets from AUR: https://aur.archlinux.org/packages/beets-git/
+.. _dev package: https://aur.archlinux.org/packages/beets-git/
 .. _Debian details: http://packages.qa.debian.org/b/beets.html
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
 .. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/
@@ -62,22 +75,19 @@ get it right:
 
 1. If you don't have it, `install Python`_ (you want Python 2.7).
 
-2. Install `Setuptools`_ from PyPI. To do this, scroll to the bottom of that
-   page and download the Windows installer (``.exe``, not ``.egg``) for your
-   Python version (for example: ``setuptools-0.6c11.win32-py2.7.exe``).
-
-3. If you haven't done so already, set your ``PATH`` environment variable to
+2. If you haven't done so already, set your ``PATH`` environment variable to
    include Python and its scripts. To do so, you have to get the "Properties"
    window for "My Computer", then choose the "Advanced" tab, then hit the
    "Environment Variables" button, and then look for the ``PATH`` variable in
    the table. Add the following to the end of the variable's value:
    ``;C:\Python27;C:\Python27\Scripts``.
 
-4. Open a command prompt and install pip by running: ``easy_install pip``
+3. Next, `install pip`_ (if you don't have it already) by downloading and
+   running the `get-pip.py`_ script.
 
-5. Now install beets by running: ``pip install beets``
+4. Now install beets by running: ``pip install beets``
 
-6. You're all set! Type ``beet`` at the command prompt to make sure everything's
+5. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
 Windows users may also want to install a context menu item for importing files
@@ -87,30 +97,33 @@ If Python is in a nonstandard location on your system, you may have to edit the
 command path manually.
 
 Because I don't use Windows myself, I may have missed something. If you have
-trouble or you have more detail to contribute here, please `let me know`_.
+trouble or you have more detail to contribute here, please direct it to
+`the mailing list`_.
 
-.. _let me know: mailto:adrian@radbox.org
 .. _install Python: http://python.org/download/
-.. _Setuptools: http://pypi.python.org/pypi/setuptools
-.. _beets.reg: https://github.com/sampsyo/beets/blob/master/extra/beets.reg
+.. _beets.reg: https://github.com/beetbox/beets/blob/master/extra/beets.reg
+.. _install pip: http://www.pip-installer.org/en/latest/installing.html#install-pip
+.. _get-pip.py: https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 
 
 Configuring
 -----------
 
 You'll want to set a few basic options before you start using beets. The
-configuration is stored in a text file: on Unix-like OSes, the config file is
-at ``~/.config/beets/config.yaml``; on Windows, it's at
-``%APPDATA%\beets\config.yaml``. Create and edit the appropriate file with your
-favorite text editor. (You may need to create the enclosing directories also.)
-The file will start out empty, but here's good place to start::
+:doc:`configuration </reference/config>` is stored in a text file. You
+can show its location by running ``beet config -p``, though it may not
+exist yet. Run ``beet config -e`` to edit the configuration in your
+favorite text editor. The file will start out empty, but here's good
+place to start::
 
     directory: ~/music
     library: ~/data/musiclibrary.blb
 
 Change that first path to a directory where you'd like to keep your music. Then,
 for ``library``, choose a good place to keep a database file that keeps an index
-of your music.
+of your music. (The config's format is `YAML`_. You'll want to configure your
+text editor to use spaces, not real tabs, for indentation.)
+
 
 The default configuration assumes you want to start a new organized music folder
 (that ``directory`` above) and that you'll *copy* cleaned-up music into that
@@ -143,6 +156,8 @@ beets to behave many other ways:
 There are approximately six million other configuration options you can set
 here, including the directory and file naming scheme. See
 :doc:`/reference/config` for a full reference.
+
+.. _YAML: http://yaml.org/
 
 Importing Your Library
 ----------------------
@@ -238,7 +253,7 @@ is possible. You'll also want to glance over the :doc:`/reference/cli` page
 for a more detailed description of all of beets' functionality.  (Like
 deleting music! That's important.)
 
-Also, check out :ref:`included-plugins` as well as :ref:`other-plugins`.  The
+Also, check out :doc:`beets' plugins </plugins/index>`.  The
 real power of beets is in its extensibility---with plugins, beets can do almost
 anything for your music collection.
 
@@ -246,7 +261,8 @@ You can always get help using the ``beet help`` command. The plain ``beet help``
 command lists all the available commands; then, for example, ``beet help
 import`` gives more specific help about the ``import`` command.
 
-Please let me know what you think of beets via `email`_ or `Twitter`_.
+Please let me know what you think of beets via `the mailing list`_ or
+`Twitter`_.
 
-.. _email: mailto:adrian@radbox.org
+.. _the mailing list: http://groups.google.com/group/beets-users
 .. _twitter: http://twitter.com/b33ts

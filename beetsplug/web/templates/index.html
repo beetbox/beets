@@ -37,7 +37,10 @@
             </ul>
         </div>
 
-        <div id="detail">
+        <div id="main-detail">
+        </div>
+
+        <div id="extra-detail">
         </div>
 
         <!-- Templates. -->
@@ -45,7 +48,7 @@
             <%= title %>
             <span class="playing">&#9654;</span>
         </script>
-        <script type="text/template" id="item-detail-template">
+        <script type="text/template" id="item-main-detail-template">
             <span class="artist"><%= artist %></span>
             <span class="album">
                 <span class="albumtitle"><%= album %></span>
@@ -55,6 +58,9 @@
 
             <button class="play">&#9654;</button>
 
+            
+        </script>
+        <script type="text/template" id="item-extra-detail-template">
             <dl>
                 <dt>Track</dt>
                 <dd><%= track %>/<%= tracktotal %></dd>
@@ -80,7 +86,7 @@
                 </dd>
                 <% if (lyrics) { %>
                     <dt>Lyrics</dt>
-                    <dd><%= lyrics %></dd>
+                    <dd class="lyrics"><%= lyrics %></dd>
                 <% } %>
                 <% if (comments) { %>
                     <dt>Comments</dt>

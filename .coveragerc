@@ -1,0 +1,11 @@
+[report]
+omit =
+    */pyshared/*
+    */python?.?/*
+    */site-packages/nose/*
+    */test/*
+exclude_lines =
+    assert False
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    def __repr__

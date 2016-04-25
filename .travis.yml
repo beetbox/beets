@@ -1,12 +1,43 @@
 language: python
-python:
-    - "2.7"
-    - "2.6"
+sudo: false
+
+matrix:
+    include:
+        - python: 2.7
+          env: {TOX_ENV: py27cov, COVERAGE: 1}
+        - python: pypy
+          env: {TOX_ENV: pypy}
+        - python: 2.7
+          env: {TOX_ENV: docs, NONTEST: 1}
+        - python: 2.7
+          env: {TOX_ENV: flake8, NONTEST: 1}
+
+# Non-Python dependencies.
+addons:
+    apt:
+        packages:
+            - bash-completion
+            - mp3gain
+
+# To install dependencies, tell tox to do everything but actually running the
+# test.
 install:
-    - travis_retry pip install .
-    - travis_retry pip install pylast flask
-    - "if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi"
-script: nosetests
-branches:
-    only:
-        - master
+    - travis_retry pip install tox sphinx
+    - travis_retry tox -e $TOX_ENV --notest
+
+script: tox -e $TOX_ENV
+
+# Report coverage to codecov.io.
+before_install:
+    - "[ ! -z $COVERAGE ] && travis_retry pip install codecov || true"
+after_success:
+    - "[ ! -z $COVERAGE ] && codecov || true"
+
+notifications:
+    irc:
+        channels:
+            - "irc.freenode.org#beets"
+        use_notice: true
+        skip_join: true
+        on_success: change
+        on_failure: always

@@ -15,9 +15,9 @@ configuration.
 Usage
 -----
 
-Enable the plugin and then run ``beet mbsync QUERY`` to fetch updated metadata
-for a part of your collection (or omit the query to run over your whole
-library).
+Enable the ``mbsync`` plugin in your configuration (see :ref:`using-plugins`)
+and then run ``beet mbsync QUERY`` to fetch updated metadata for a part of your
+collection (or omit the query to run over your whole library).
 
 This plugin treats albums and singletons (non-album tracks) separately. It
 first processes all matching singletons and then proceeds on to full albums.
@@ -33,3 +33,6 @@ The command has a few command-line options:
 * If you have the `import.write` configuration option enabled, then this
   plugin will write new metadata to files' tags. To disable this, use the
   ``-W`` (``--nowrite``) option.
+* To customize the output of unrecognized items, use the ``-f``
+  (``--format``) option. The default output is ``format_item`` or
+  ``format_album`` for items and albums, respectively.

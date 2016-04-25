@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,6 +14,8 @@
 # included in all copies or substantial portions of the Software.
 
 """A namespace package for beets plugins."""
+
+from __future__ import division, absolute_import, print_function
 
 # Make this a namespace package.
 from pkgutil import extend_path

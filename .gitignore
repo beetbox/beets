@@ -5,6 +5,9 @@
 .sconsign*
 .svn
 .tox
+.coverage
+.idea
+.ackrc
 
 # file patterns
 
@@ -20,6 +23,8 @@
 *~
 *.project
 *.pydevproject
+*.ropeproject
+*.orig
 
 # Project Specific patterns
 
@@ -27,4 +32,8 @@ dist/*
 beets.egg-info/*
 build/*
 docs/_build/*
-
+man
+htmlcov/*
+.noseids
+*.egg
+test/rsrc/lyrics/*

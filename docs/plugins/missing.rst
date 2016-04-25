@@ -6,59 +6,46 @@ and lists, for every album in your collection, which or how many
 tracks are missing. Listing missing files requires one network call to
 MusicBrainz. Merely counting missing files avoids any network calls.
 
+Usage
+-----
 
-Installation
-------------
-
-Enable the plugin by putting ``missing`` on your ``plugins`` line in
-:doc:`config file </reference/config>`::
-
-    plugins:
-        missing
-        ...
-
-Configuration
--------------
-
+Add the ``missing`` plugin to your configuration (see :ref:`using-plugins`).
 By default, the ``beet missing`` command lists the names of tracks that your
-library is missing from each album. You can customize the output format, count
+library is missing from each album.
+You can customize the output format, count
 the number of missing tracks per album, or total up the number of missing
-tracks over your whole library. These options can either be specified in the
-config file::
-
-    missing:
-        format: $albumartist - $album - $title
-        count: no
-        total: no
-
-or on the command-line::
+tracks over your whole library, using command-line switches::
 
       -f FORMAT, --format=FORMAT
                             print with custom FORMAT
       -c, --count           count missing tracks per album
       -t, --total           count total of missing tracks
 
+…or by editing corresponding options.
 
-format
-~~~~~~
+Configuration
+-------------
 
-The ``format`` option (default: :ref:`list_format_item`) lets you specify a
-specific format with which to print every track. This uses the same template
-syntax as beets’ :doc:`path formats </reference/pathformat>`.  The usage is
-inspired by, and therefore similar to, the :ref:`list <list-cmd>` command.
+To configure the plugin, make a ``missing:`` section in your
+configuration file. The available options are:
 
-count
-~~~~~
+- **count**: Print a count of missing tracks per album, with ``format``
+  defaulting to ``$albumartist - $album: $missing``.
+  Default: ``no``.
+- **format**: A specific format with which to print every
+  track. This uses the same template syntax as beets'
+  :doc:`path formats </reference/pathformat>`. The usage is inspired by, and
+  therefore similar to, the :ref:`list <list-cmd>` command.
+  Default: :ref:`format_item`.
+- **total**: Print a single count of missing tracks in all albums.
+  Default: ``no``.
 
-The ``count`` option (default: false) prints a count of missing tracks
-per album, with ``format`` defaulting to ``$albumartist - $album:
-$missing``.
+Here's an example ::
 
-total
-~~~~~
-
-The ``total`` option (default: false) prints a single
-count of missing tracks in all albums
+    missing:
+        format: $albumartist - $album - $title
+        count: no
+        total: no
 
 Template Fields
 ---------------
@@ -93,10 +80,5 @@ Print out a count of the total number of missing tracks::
 Call this plugin from other beet commands::
 
   beet ls -a -f '$albumartist - $album: $missing'
-
-TODO
-----
-
-- Add caching.
 
 .. _spark: https://github.com/holman/spark
