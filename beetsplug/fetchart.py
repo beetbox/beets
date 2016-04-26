@@ -454,7 +454,7 @@ class Wikipedia(RemoteArtSource):
     NAME = u"Wikipedia (queried through DBpedia)"
     DBPEDIA_URL = 'http://dbpedia.org/sparql'
     WIKIPEDIA_URL = 'http://en.wikipedia.org/w/api.php'
-    SPARQL_QUERY = '''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    SPARQL_QUERY = u'''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                  PREFIX dbpprop: <http://dbpedia.org/property/>
                  PREFIX owl: <http://dbpedia.org/ontology/>
                  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
