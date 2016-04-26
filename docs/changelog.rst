@@ -41,6 +41,8 @@ Fixes:
   guess the URL for lyrics. :bug:`1880`
 * :doc:`/plugins/edit`: Fail gracefully when the configured text editor
   command can't be invoked. :bug:`1927`
+* :doc:`/plugins/fetchart`: Fix a crash in the Wikipedia backend on non-ASCII
+  artist and album names. :bug:`1960`
 
 
 1.3.17 (February 7, 2016)
