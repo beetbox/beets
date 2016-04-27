@@ -79,7 +79,7 @@ def _in_encoding(default=u'utf-8'):
     :param default: the fallback sys.stdin encoding
     """
 
-    return config['terminal_decoding'].get() or getattr(sys.stdin, 'encoding',
+    return config['terminal_encoding'].get() or getattr(sys.stdin, 'encoding',
                                                         default)
 
 

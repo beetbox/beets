@@ -46,7 +46,6 @@ timeout: 5.0
 per_disc_numbering: no
 verbose: 0
 terminal_encoding:
-terminal_decoding:
 original_date: no
 id3v23: no
 va_name: "Various Artists"
