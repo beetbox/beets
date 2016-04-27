@@ -23,6 +23,9 @@ New features:
 * :doc:`/plugins/export`: A new plugin to export the data from queries to a
   json format. Thanks to :user:`GuilhermeHideki`.
 * :doc:`/reference/pathformat`: new functions: %first{} and %ifdef{}
+* :doc:`/reference/config`: new option ``terminal_decoding`` for overriding
+  the encoding from the input. Solves the problem with invalid Python 2 codecs,
+  like ``cp65001`` (fixed on Python 3.3) by setting ``terminal_decoding: utf-8``
 
 .. _fanart.tv: https://fanart.tv/
 

@@ -273,6 +273,14 @@ environment variables.
 
 .. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
 
+.. _terminal_decoding:
+
+terminal_decoding
+~~~~~~~~~~~~~~~~~
+
+Like the ``terminal_encoding``, but for inputs
+
+
 .. _clutter:
 
 clutter
