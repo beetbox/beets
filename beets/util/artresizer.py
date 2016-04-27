@@ -218,7 +218,7 @@ class ArtResizer(object):
     @staticmethod
     def _check_method():
         """Return a tuple indicating an available method and its version."""
-        version = get_image_magick_version()
+        version = get_im_version()
         if version:
             return IMAGEMAGICK, version
 
@@ -229,7 +229,7 @@ class ArtResizer(object):
         return WEBPROXY, (0)
 
 
-def get_image_magick_version():
+def get_im_version():
     """Return Image Magick version or None if it is unavailable
     Try invoking ImageMagick's "convert"."""
     try:
