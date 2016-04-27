@@ -146,9 +146,9 @@ class NoneQuery(FieldQuery):
         return self.field + " IS NULL", ()
 
     @classmethod
-    def match(self, item):
+    def match(cls, item):
         try:
-            return item[self.field] is None
+            return item[cls.field] is None
         except KeyError:
             return True
 
@@ -841,8 +841,8 @@ class SlowFieldSort(FieldSort):
 
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
-    def sort(items):
-        return items
+    def sort(self):
+        return self
 
     def __nonzero__(self):
         return self.__bool__()

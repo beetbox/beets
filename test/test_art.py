@@ -518,7 +518,7 @@ class ArtForAlbumTest(UseThePlugin):
         fetchart.FileSystem.get = self.old_fs_source_get
         super(ArtForAlbumTest, self).tearDown()
 
-    def _assertImageIsValidArt(self, image_file, should_exist):
+    def _assertImageIsValidArt(self, image_file, should_exist):  # noqa
         self.assertExists(image_file)
         self.image_file = image_file
 
@@ -531,7 +531,7 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(candidate)
 
-    def _assertImageResized(self, image_file, should_resize):
+    def _assertImageResized(self, image_file, should_resize):  # noqa
         self.image_file = image_file
         with patch.object(ArtResizer.shared, 'resize') as mock_resize:
             self.plugin.art_for_album(self.album, [''], True)
