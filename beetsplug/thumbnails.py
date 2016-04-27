@@ -34,7 +34,7 @@ from xdg import BaseDirectory
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets import util
-from beets.util.artresizer import ArtResizer, has_IM, has_PIL
+from beets.util.artresizer import ArtResizer, get_im_version, get_pil_version
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
