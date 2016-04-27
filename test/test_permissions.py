@@ -38,7 +38,7 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
     def test_failing_to_set_permissions(self):
         self.do_thing(False)
 
-    def do_thing(self, expectSuccess):
+    def do_thing(self, expect_success):
         def get_stat(v):
             return os.stat(
                 os.path.join(self.temp_dir, 'import', *v)).st_mode & 0o777
@@ -53,14 +53,14 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         self.importer.run()
         item = self.lib.items().get()
 
-        self.assertPerms(item.path, 'file', expectSuccess)
+        self.assertPerms(item.path, 'file', expect_success)
 
         for path in dirs_in_library(self.lib.directory, item.path):
-            self.assertPerms(path, 'dir', expectSuccess)
+            self.assertPerms(path, 'dir', expect_success)
 
-    def assertPerms(self, path, typ, expectSuccess):
-        for x in [(True, self.exp_perms[expectSuccess][typ], '!='),
-                  (False, self.exp_perms[not expectSuccess][typ], '==')]:
+    def assertPerms(self, path, typ, expect_success):  # noqa
+        for x in [(True, self.exp_perms[expect_success][typ], '!='),
+                  (False, self.exp_perms[not expect_success][typ], '==')]:
             self.assertEqual(x[0], check_permissions(path, x[1]),
                              msg=u'{} : {} {} {}'.format(
                 path, oct(os.stat(path).st_mode), x[2], oct(x[1])))

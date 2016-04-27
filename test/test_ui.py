@@ -233,18 +233,18 @@ class ModifyTest(unittest.TestCase, TestHelper):
     def test_selective_modify(self):
         title = u"Tracktitle"
         album = u"album"
-        origArtist = u"composer"
-        newArtist = u"coverArtist"
+        original_artist = u"composer"
+        new_artist = u"coverArtist"
         for i in range(0, 10):
             self.add_item_fixture(title=u"{0}{1}".format(title, i),
-                                  artist=origArtist,
+                                  artist=original_artist,
                                   album=album)
         self.modify_inp('s\ny\ny\ny\nn\nn\ny\ny\ny\ny\nn',
-                        title, u"artist={0}".format(newArtist))
-        origItems = self.lib.items(u"artist:{0}".format(origArtist))
-        newItems = self.lib.items(u"artist:{0}".format(newArtist))
-        self.assertEqual(len(list(origItems)), 3)
-        self.assertEqual(len(list(newItems)), 7)
+                        title, u"artist={0}".format(new_artist))
+        original_items = self.lib.items(u"artist:{0}".format(original_artist))
+        new_items = self.lib.items(u"artist:{0}".format(new_artist))
+        self.assertEqual(len(list(original_items)), 3)
+        self.assertEqual(len(list(new_items)), 7)
 
     # Album Tests
 
