@@ -149,15 +149,15 @@ class Shareable(type):
     lazily-created shared instance of ``MyClass`` while calling
     ``MyClass()`` to construct a new object works as usual.
     """
-    def __init__(cls, name, bases, dict):
-        super(Shareable, cls).__init__(name, bases, dict)
-        cls._instance = None
+    def __init__(self, name, bases, dict):
+        super(Shareable, self).__init__(name, bases, dict)
+        self._instance = None
 
     @property
-    def shared(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
+    def shared(self):
+        if self._instance is None:
+            self._instance = self()
+        return self._instance
 
 
 class ArtResizer(object):
@@ -218,18 +218,18 @@ class ArtResizer(object):
     @staticmethod
     def _check_method():
         """Return a tuple indicating an available method and its version."""
-        version = has_IM()
+        version = get_im_version()
         if version:
             return IMAGEMAGICK, version
 
-        version = has_PIL()
+        version = get_pil_version()
         if version:
             return PIL, version
 
         return WEBPROXY, (0)
 
 
-def has_IM():
+def get_im_version():
     """Return Image Magick version or None if it is unavailable
     Try invoking ImageMagick's "convert"."""
     try:
@@ -248,7 +248,7 @@ def has_IM():
         return None
 
 
-def has_PIL():
+def get_pil_version():
     """Return Image Magick version or None if it is unavailable
     Try importing PIL."""
     try:

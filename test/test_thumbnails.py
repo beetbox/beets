@@ -66,8 +66,8 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
     @patch('beetsplug.thumbnails.os')
     @patch('beetsplug.thumbnails.ArtResizer')
-    @patch('beetsplug.thumbnails.has_IM')
-    @patch('beetsplug.thumbnails.has_PIL')
+    @patch('beetsplug.thumbnails.get_im_version')
+    @patch('beetsplug.thumbnails.get_pil_version')
     @patch('beetsplug.thumbnails.GioURI')
     def test_check_local_ok(self, mock_giouri, mock_pil, mock_im,
                             mock_artresizer, mock_os):

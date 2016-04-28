@@ -126,7 +126,7 @@ my_manager = copy(Logger.manager)
 my_manager.loggerClass = BeetsLogger
 
 
-def getLogger(name=None):
+def getLogger(name=None):  # noqa
     if name:
         return my_manager.getLogger(name)
     else:

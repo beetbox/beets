@@ -365,14 +365,14 @@ class LyricsGooglePluginTest(unittest.TestCase):
         not present in the title."""
         s = self.source
         url = s['url'] + s['path']
-        urlTitle = u'example.com | Beats song by John doe'
+        url_title = u'example.com | Beats song by John doe'
 
         # very small diffs (typo) are ok eg 'beats' vs 'beets' with same artist
-        self.assertEqual(google.is_page_candidate(url, urlTitle, s['title'],
+        self.assertEqual(google.is_page_candidate(url, url_title, s['title'],
                          s['artist']), True, url)
         # reject different title
-        urlTitle = u'example.com | seets bong lyrics by John doe'
-        self.assertEqual(google.is_page_candidate(url, urlTitle, s['title'],
+        url_title = u'example.com | seets bong lyrics by John doe'
+        self.assertEqual(google.is_page_candidate(url, url_title, s['title'],
                          s['artist']), False, url)
 
     def test_is_page_candidate_special_chars(self):
