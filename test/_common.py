@@ -167,11 +167,11 @@ class TestCase(unittest.TestCase):
         beets.config.clear()
         beets.config._materialized = False
 
-    def assertExists(self, path):
+    def assertExists(self, path):  # noqa
         self.assertTrue(os.path.exists(path),
                         u'file does not exist: {!r}'.format(path))
 
-    def assertNotExists(self, path):
+    def assertNotExists(self, path):  # noqa
         self.assertFalse(os.path.exists(path),
                          u'file exists: {!r}'.format((path)))
 

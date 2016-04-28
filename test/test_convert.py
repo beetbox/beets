@@ -40,7 +40,7 @@ class TestHelper(helper.TestHelper):
         return u'sh -c "cp \'$source\' \'$dest\'; ' \
                u'printf {0} >> \'$dest\'"'.format(tag)
 
-    def assertFileTag(self, path, tag):
+    def assertFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content ends with `tag`.
         """
         self.assertTrue(os.path.isfile(path),
@@ -50,7 +50,7 @@ class TestHelper(helper.TestHelper):
             self.assertEqual(f.read(), tag,
                              u'{0} is not tagged with {1}'.format(path, tag))
 
-    def assertNoFileTag(self, path, tag):
+    def assertNoFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content does not
         end with `tag`.
         """

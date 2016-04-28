@@ -119,7 +119,7 @@ class ExportFormat(object):
     """The output format type"""
 
     @classmethod
-    def factory(self, type, **kwargs):
+    def factory(cls, type, **kwargs):
         if type == "json":
             if kwargs['file_path']:
                 return JsonFileFormat(**kwargs)

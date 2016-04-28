@@ -62,14 +62,14 @@ class DateIntervalTest(unittest.TestCase):
         self.assertContains('..', date=datetime.min)
         self.assertContains('..', '1000-01-01T00:00:00')
 
-    def assertContains(self, interval_pattern, date_pattern=None, date=None):
+    def assertContains(self, interval_pattern, date_pattern=None, date=None):  # noqa
         if date is None:
             date = _date(date_pattern)
         (start, end) = _parse_periods(interval_pattern)
         interval = DateInterval.from_periods(start, end)
         self.assertTrue(interval.contains(date))
 
-    def assertExcludes(self, interval_pattern, date_pattern):
+    def assertExcludes(self, interval_pattern, date_pattern):  # noqa
         date = _date(date_pattern)
         (start, end) = _parse_periods(interval_pattern)
         interval = DateInterval.from_periods(start, end)
