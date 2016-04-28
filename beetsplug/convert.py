@@ -26,7 +26,7 @@ from string import Template
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from beets.util.confit import ConfigTypeError
+from confuse import ConfigTypeError
 from beets import art
 from beets.util.artresizer import ArtResizer
 

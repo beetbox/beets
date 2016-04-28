@@ -38,7 +38,7 @@ from beets import plugins
 from beets import util
 from beets.util.functemplate import Template
 from beets import config
-from beets.util import confit
+import confuse
 from beets.autotag import mb
 from beets.dbcore import query as db_query
 
@@ -608,7 +608,7 @@ def get_path_formats(subview=None):
 
 
 def get_replacements():
-    """Confit validation function that reads regex/string pairs.
+    """Confuse validation function that reads regex/string pairs.
     """
     replacements = []
     for pattern, repl in config['replace'].get(dict).items():
@@ -1090,7 +1090,7 @@ def vararg_callback(option, opt_str, value, parser):
 def _load_plugins(config):
     """Load the plugins specified in the configuration.
     """
-    paths = config['pluginpath'].get(confit.StrSeq(split=False))
+    paths = config['pluginpath'].get(confuse.StrSeq(split=False))
     paths = list(map(util.normpath, paths))
     log.debug(u'plugin paths: {0}', util.displayable_path(paths))
 
@@ -1270,7 +1270,7 @@ def main(args=None):
         log.debug('{}', traceback.format_exc())
         log.error('{}', exc)
         sys.exit(1)
-    except confit.ConfigError as exc:
+    except confuse.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
         sys.exit(1)
     except db_query.InvalidQueryError as exc:

@@ -22,7 +22,7 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets import config
-from beets.util import confit
+import confuse
 from beets.autotag import hooks
 import acoustid
 from collections import defaultdict
@@ -182,7 +182,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         def submit_cmd_func(lib, opts, args):
             try:
                 apikey = config['acoustid']['apikey'].get(unicode)
-            except confit.NotFoundError:
+            except confuse.NotFoundError:
                 raise ui.UserError(u'no Acoustid user API key provided')
             submit_items(self._log, apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func

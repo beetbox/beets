@@ -93,6 +93,7 @@ setup(
         'musicbrainzngs>=0.4',
         'pyyaml',
         'jellyfish',
+        'confuse>=0.4.0',
     ] + (['colorama'] if (sys.platform == 'win32') else []),
 
     tests_require=[

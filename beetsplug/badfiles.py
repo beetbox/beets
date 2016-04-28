@@ -20,9 +20,10 @@ from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets.util import displayable_path, confit
+from beets.util import displayable_path
 from beets import ui
 from subprocess import check_output, CalledProcessError, list2cmdline, STDOUT
+import confuse
 import shlex
 import os
 import errno
@@ -71,7 +72,7 @@ class BadFiles(BeetsPlugin):
         ext = ext.lower()
         try:
             command = self.config['commands'].get(dict).get(ext)
-        except confit.NotFoundError:
+        except confuse.NotFoundError:
             command = None
         if command:
             return self.check_custom(command)

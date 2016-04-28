@@ -21,7 +21,7 @@ from datetime import datetime
 from test._common import unittest
 from test.helper import TestHelper
 
-from beets.util.confit import ConfigValueError
+from confuse import ConfigValueError
 
 
 class TypesPluginTest(unittest.TestCase, TestHelper):

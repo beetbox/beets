@@ -17,7 +17,7 @@ from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.dbcore import types
-from beets.util.confit import ConfigValueError
+from confuse import ConfigValueError
 from beets import library
 
 

@@ -34,7 +34,7 @@ import ast
 import dis
 import types
 
-from .confit import NUMERIC_TYPES
+from confuse import NUMERIC_TYPES
 
 SYMBOL_DELIM = u'$'
 FUNC_DELIM = u'%'

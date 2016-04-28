@@ -21,7 +21,7 @@ from __future__ import division, absolute_import, print_function
 from abc import abstractmethod, ABCMeta
 from importlib import import_module
 
-from beets.util.confit import ConfigValueError
+from confuse import ConfigValueError
 from beets import ui
 from beets.plugins import BeetsPlugin
 
