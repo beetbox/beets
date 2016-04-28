@@ -71,6 +71,15 @@ class UserError(Exception):
 
 
 # Encoding utilities.
+def _in_encoding():
+    """Get the encoding to use for *inputting* strings to the console.
+    """
+    try:
+        return sys.stdin.encoding or 'utf-8'
+    except LookupError:
+        # TODO: create user config
+        return 'utf-8'
+
 
 def _out_encoding():
     """Get the encoding to use for *outputting* strings to the console.
@@ -193,7 +202,7 @@ def input_(prompt=None):
     except EOFError:
         raise UserError(u'stdin stream ended while input required')
 
-    return resp.decode(sys.stdin.encoding or 'utf8', 'ignore')
+    return resp.decode(_in_encoding(), 'ignore')
 
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,

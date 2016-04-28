@@ -19,8 +19,11 @@ New features:
 * :doc:`/plugins/fetchart`: The ``enforce_ratio`` option was enhanced and now
   allows specifying a certain deviation that a valid image may have from being
   exactly square.
+* :doc:`/plugins/fetchart`: The plugin can now optionally save the artwork's
+  source in a flexible field; for a usecase see the documentation.
 * :doc:`/plugins/export`: A new plugin to export the data from queries to a
   json format. Thanks to :user:`GuilhermeHideki`.
+* :doc:`/reference/pathformat`: new functions: %first{} and %ifdef{}
 * New :doc:`/plugins/hook` that allows commands to be executed when an event is
   emitted by beets. :bug:`1561` :bug:`1603`
 
@@ -41,6 +44,8 @@ Fixes:
   guess the URL for lyrics. :bug:`1880`
 * :doc:`/plugins/edit`: Fail gracefully when the configured text editor
   command can't be invoked. :bug:`1927`
+* :doc:`/plugins/fetchart`: Fix a crash in the Wikipedia backend on non-ASCII
+  artist and album names. :bug:`1960`
 
 
 1.3.17 (February 7, 2016)

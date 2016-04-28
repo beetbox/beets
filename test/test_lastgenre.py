@@ -167,16 +167,16 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(res, [u'pop'])
 
     def test_get_genre(self):
-        MOCK_GENRES = {'track': u'1', 'album': u'2', 'artist': u'3'}
+        mock_genres = {'track': u'1', 'album': u'2', 'artist': u'3'}
 
         def mock_fetch_track_genre(self, obj=None):
-            return MOCK_GENRES['track']
+            return mock_genres['track']
 
         def mock_fetch_album_genre(self, obj):
-            return MOCK_GENRES['album']
+            return mock_genres['album']
 
         def mock_fetch_artist_genre(self, obj):
-            return MOCK_GENRES['artist']
+            return mock_genres['artist']
 
         lastgenre.LastGenrePlugin.fetch_track_genre = mock_fetch_track_genre
         lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
@@ -184,7 +184,7 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
 
         self._setup_config(whitelist=False)
         item = _common.item()
-        item.genre = MOCK_GENRES['track']
+        item.genre = mock_genres['track']
 
         config['lastgenre'] = {'force': False}
         res = self.plugin._get_genre(item)
@@ -192,17 +192,17 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
 
         config['lastgenre'] = {'force': True, 'source': u'track'}
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (MOCK_GENRES['track'], u'track'))
+        self.assertEqual(res, (mock_genres['track'], u'track'))
 
         config['lastgenre'] = {'source': u'album'}
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (MOCK_GENRES['album'], u'album'))
+        self.assertEqual(res, (mock_genres['album'], u'album'))
 
         config['lastgenre'] = {'source': u'artist'}
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (MOCK_GENRES['artist'], u'artist'))
+        self.assertEqual(res, (mock_genres['artist'], u'artist'))
 
-        MOCK_GENRES['artist'] = None
+        mock_genres['artist'] = None
         res = self.plugin._get_genre(item)
         self.assertEqual(res, (item.genre, u'original'))
 

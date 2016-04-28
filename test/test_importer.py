@@ -125,14 +125,14 @@ class AutotagStub(object):
             artist = artist.replace('Tag', 'Applied') + id
         album = album.replace('Tag', 'Applied') + id
 
-        trackInfos = []
+        track_infos = []
         for i in range(tracks - missing):
-            trackInfos.append(self._make_track_match(artist, album, i + 1))
+            track_infos.append(self._make_track_match(artist, album, i + 1))
 
         return AlbumInfo(
             artist=artist,
             album=album,
-            tracks=trackInfos,
+            tracks=track_infos,
             va=False,
             album_id=u'albumid' + id,
             artist_id=u'artistid' + id,

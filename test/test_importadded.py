@@ -67,7 +67,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.teardown_beets()
         self.matcher.restore()
 
-    def findMediaFile(self, item):
+    def find_media_file(self, item):
         """Find the pre-import MediaFile for an Item"""
         for m in self.media_files:
             if m.title.replace('Tag', 'Applied') == item.title:
@@ -75,11 +75,11 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         raise AssertionError(u"No MediaFile found for Item " +
                              util.displayable_path(item.path))
 
-    def assertEqualTimes(self, first, second, msg=None):
+    def assertEqualTimes(self, first, second, msg=None):  # noqa
         """For comparing file modification times at a sufficient precision"""
         self.assertAlmostEqual(first, second, places=4, msg=msg)
 
-    def assertAlbumImport(self):
+    def assertAlbumImport(self):  # noqa
         self.importer.run()
         album = self.lib.albums().get()
         self.assertEqual(album.added, self.min_mtime)
@@ -102,7 +102,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.assertEqual(album.added, self.min_mtime)
         for item in album.items():
             self.assertEqualTimes(item.added, self.min_mtime)
-            mediafile_mtime = os.path.getmtime(self.findMediaFile(item).path)
+            mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
             self.assertEqualTimes(item.mtime, mediafile_mtime)
             self.assertEqualTimes(os.path.getmtime(item.path),
                                   mediafile_mtime)
@@ -133,7 +133,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.config['import']['singletons'] = True
         self.importer.run()
         for item in self.lib.items():
-            mfile = self.findMediaFile(item)
+            mfile = self.find_media_file(item)
             self.assertEqualTimes(item.added, os.path.getmtime(mfile.path))
 
     def test_import_singletons_with_preserved_mtimes(self):
@@ -141,7 +141,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.config['importadded']['preserve_mtimes'] = True
         self.importer.run()
         for item in self.lib.items():
-            mediafile_mtime = os.path.getmtime(self.findMediaFile(item).path)
+            mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
             self.assertEqualTimes(item.added, mediafile_mtime)
             self.assertEqualTimes(item.mtime, mediafile_mtime)
             self.assertEqualTimes(os.path.getmtime(item.path),

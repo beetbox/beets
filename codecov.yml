@@ -1,0 +1,12 @@
+# Don't post a comment on pull requests.
+comment: off
+
+# I think this disables commit statuses?
+coverage:
+    status:
+        project:
+            enabled: no
+        patch:
+            enabled: no
+        changes:
+            enabled: no

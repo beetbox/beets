@@ -26,6 +26,9 @@ from itertools import tee, izip
 from beets import plugins, ui
 
 
+ASCII_DIGITS = string.digits + string.ascii_lowercase
+
+
 class BucketError(Exception):
     pass
 
@@ -155,23 +158,23 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
     [from...to]
     """
     spans = []
-    ASCII_DIGITS = string.digits + string.ascii_lowercase
+
     for elem in alpha_spans_str:
         if elem in alpha_regexs:
             spans.append(re.compile(alpha_regexs[elem]))
         else:
             bucket = sorted([x for x in elem.lower() if x.isalnum()])
             if bucket:
-                beginIdx = ASCII_DIGITS.index(bucket[0])
-                endIdx = ASCII_DIGITS.index(bucket[-1])
+                begin_index = ASCII_DIGITS.index(bucket[0])
+                end_index = ASCII_DIGITS.index(bucket[-1])
             else:
                 raise ui.UserError(u"invalid range defined for alpha bucket "
                                    u"'%s': no alphanumeric character found" %
                                    elem)
             spans.append(
                 re.compile(
-                    "^[" + ASCII_DIGITS[beginIdx:endIdx + 1] +
-                    ASCII_DIGITS[beginIdx:endIdx + 1].upper() + "]"
+                    "^[" + ASCII_DIGITS[begin_index:end_index + 1] +
+                    ASCII_DIGITS[begin_index:end_index + 1].upper() + "]"
                 )
             )
     return spans
