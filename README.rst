@@ -1,11 +1,15 @@
-.. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
-    :target: https://travis-ci.org/beetbox/beets
+.. image:: http://img.shields.io/pypi/v/beets.svg
+    :target: https://pypi.python.org/pypi/beets
+
+.. image:: https://img.shields.io/pypi/dw/beets.svg
+    :target: https://pypi.python.org/pypi/beets#downloads
 
 .. image:: http://img.shields.io/codecov/c/github/beetbox/beets.svg
     :target: https://codecov.io/github/beetbox/beets
 
-.. image:: http://img.shields.io/pypi/v/beets.svg
-    :target: https://pypi.python.org/pypi/beets
+.. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
+    :target: https://travis-ci.org/beetbox/beets
+
 
 Beets is the media library management system for obsessive-compulsive music
 geeks.
