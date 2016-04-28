@@ -1,9 +1,3 @@
-.. image:: https://img.shields.io/github/license/beetbox/beets.svg
-    :target: https://github.com/beetbox/beets/blob/master/LICENSE
-
-.. image:: https://img.shields.io/github/issues/beetbox/beets.svg
-    :target: https://github.com/beetbox/beets/issues
-
 .. image:: http://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
 
