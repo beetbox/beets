@@ -268,7 +268,8 @@ terminal_encoding
 ~~~~~~~~~~~~~~~~~
 
 The text encoding, as `known to Python`_, to use for messages printed to the
-standard output. By default, this is determined automatically from the locale
+standard output. It's also used to read messages from the standard input.
+By default, this is determined automatically from the locale
 environment variables.
 
 .. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
