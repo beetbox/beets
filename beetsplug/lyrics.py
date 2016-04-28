@@ -334,8 +334,8 @@ class LyricsWiki(SymbolsReplaced):
 
         # Get the HTML fragment inside the appropriate HTML element and then
         # extract the text from it.
-        html_frag = extract_text_in(unescape(html), u"<div class='lyricbox'>")
-        lyrics = scrape_lyrics_from_html(html_frag)
+        html_frag = extract_text_in(html, u"<div class='lyricbox'>")
+        lyrics = _scrape_strip_cruft(html_frag, True)
 
         if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
             return lyrics
@@ -415,7 +415,12 @@ def scrape_lyrics_from_html(html):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
     """
-    from bs4 import SoupStrainer, BeautifulSoup
+    try:
+        from bs4 import SoupStrainer, BeautifulSoup
+    except ImportError:
+        # TODO: refactor the plugin to get access to a logger here and log
+        # a warning
+        return None
 
     if not html:
         return None
@@ -670,11 +675,19 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
 
+        has_langdetect = False
+        if self.config['bing_client_secret'].get():
+            try:
+                from langdetect import detect
+                has_langdetect = True
+            except ImportError:
+                self._log.warn(u'To use bing translations, you need to '
+                               u'install the langdetect module. See the '
+                               u'documentation for further details.')
+
         if lyrics:
             self._log.info(u'fetched lyrics: {0}', item)
-            if self.config['bing_client_secret'].get():
-                from langdetect import detect
-
+            if has_langdetect:
                 lang_from = detect(lyrics)
                 if self.config['bing_lang_to'].get() != lang_from and (
                     not self.config['bing_lang_from'] or (
@@ -692,7 +705,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
         item.lyrics = lyrics
         if write:
             item.try_write()
-        print(lyrics)
         item.store()
 
     def get_lyrics(self, artist, title):

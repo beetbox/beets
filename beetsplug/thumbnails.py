@@ -34,7 +34,7 @@ from xdg import BaseDirectory
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets import util
-from beets.util.artresizer import ArtResizer, has_IM, has_PIL
+from beets.util.artresizer import ArtResizer, get_im_version, get_pil_version
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
@@ -92,11 +92,11 @@ class ThumbnailsPlugin(BeetsPlugin):
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
-        if has_IM():
+        if get_im_version():
             self.write_metadata = write_metadata_im
             tool = "IM"
         else:
-            assert has_PIL()  # since we're local
+            assert get_pil_version()  # since we're local
             self.write_metadata = write_metadata_pil
             tool = "PIL"
         self._log.debug(u"using {0} to write metadata", tool)

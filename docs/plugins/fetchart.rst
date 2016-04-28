@@ -62,6 +62,9 @@ file. The available options are:
   Default: The `beets custom search engine`_, which searches the entire web.
   **fanarttv_key**: The personal API key for requesting art from
   fanart.tv. See below.
+- **store_source**: If enabled, fetchart stores the artwork's source in a
+  flexible tag named ``art_source``. See below for the rationale behind this.
+  Default: ``no``.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
@@ -181,6 +184,19 @@ More detailed information can be found `on their blog`_. Specifically, the
 personal key will give you earlier access to new art.
 
 .. _on their blog: https://fanart.tv/2015/01/personal-api-keys/
+
+Storing the Artwork's Source
+----------------------------
+
+Storing the current artwork's source might be used to narrow down
+``fetchart`` commands. For example, if some albums have artwork placed
+manually in their directories that should not be replaced by a forced
+album art fetch, you could do
+
+``beet fetchart -f ^art_source:filesystem``
+
+The values written to ``art_source`` are the same names used in the ``sources``
+configuration value.
 
 Embedding Album Art
 -------------------

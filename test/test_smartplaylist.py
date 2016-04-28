@@ -88,15 +88,15 @@ class SmartPlaylistTest(unittest.TestCase):
                      for name, (_, sort), _ in spl._unmatched_playlists)
 
         asseq = self.assertEqual  # less cluttered code
-        S = FixedFieldSort  # short cut since we're only dealing with this
+        sort = FixedFieldSort  # short cut since we're only dealing with this
         asseq(sorts["no_sort"], NullSort())
-        asseq(sorts["one_sort"], S(u'year'))
+        asseq(sorts["one_sort"], sort(u'year'))
         asseq(sorts["only_empty_sorts"], None)
-        asseq(sorts["one_non_empty_sort"], S(u'year'))
+        asseq(sorts["one_non_empty_sort"], sort(u'year'))
         asseq(sorts["multiple_sorts"],
-              MultipleSort([S('year'), S(u'genre', False)]))
+              MultipleSort([sort('year'), sort(u'genre', False)]))
         asseq(sorts["mixed"],
-              MultipleSort([S('year'), S(u'genre'), S(u'id', False)]))
+              MultipleSort([sort('year'), sort(u'genre'), sort(u'id', False)]))
 
     def test_matches(self):
         spl = SmartPlaylistPlugin()
