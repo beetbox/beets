@@ -841,8 +841,8 @@ class SlowFieldSort(FieldSort):
 
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
-    def sort(self):
-        return self
+    def sort(self, items):
+        return items
 
     def __nonzero__(self):
         return self.__bool__()
