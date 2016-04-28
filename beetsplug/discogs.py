@@ -23,7 +23,7 @@ from beets import logging
 from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
-from beets.util import confit
+import confuse
 from discogs_client import Release, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
@@ -92,7 +92,7 @@ class DiscogsPlugin(BeetsPlugin):
     def _tokenfile(self):
         """Get the path to the JSON file for storing the OAuth token.
         """
-        return self.config['tokenfile'].get(confit.Filename(in_app_dir=True))
+        return self.config['tokenfile'].get(confuse.Filename(in_app_dir=True))
 
     def authenticate(self, c_key, c_secret):
         # Get the link for the OAuth page.

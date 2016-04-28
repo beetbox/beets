@@ -27,7 +27,7 @@ from mock import MagicMock
 from test._common import unittest
 from beetsplug import lyrics
 from beets.library import Item
-from beets.util import confit
+import confuse
 from beets import logging
 
 log = logging.getLogger('beets.test_lyrics')
@@ -212,7 +212,7 @@ def is_lyrics_content_ok(title, text):
     return all(x in text.lower() for x in keywords)
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, 'lyrics')
-LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, 'lyricstext.yaml'))
+LYRICS_TEXTS = confuse.load_yaml(os.path.join(_common.RSRC, 'lyricstext.yaml'))
 DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
 
 DEFAULT_SOURCES = [

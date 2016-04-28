@@ -30,8 +30,8 @@ from beets import ui
 from beets import util
 from beets import config
 from beets.util.artresizer import ArtResizer
-from beets.util import confit
 from beets.util import syspath, bytestring_path
+import confuse
 
 try:
     import itunes
@@ -688,9 +688,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         # allow both pixel and percentage-based margin specifications
         self.enforce_ratio = self.config['enforce_ratio'].get(
-            confit.OneOf([bool,
-                          confit.String(pattern=self.PAT_PX),
-                          confit.String(pattern=self.PAT_PERCENT)]))
+            confuse.OneOf([bool,
+                           confuse.String(pattern=self.PAT_PX),
+                           confuse.String(pattern=self.PAT_PERCENT)]))
         self.margin_px = None
         self.margin_percent = None
         if type(self.enforce_ratio) is unicode:
@@ -700,7 +700,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 self.margin_px = int(self.enforce_ratio[:-2])
             else:
                 # shouldn't happen
-                raise confit.ConfigValueError()
+                raise confuse.ConfigValueError()
             self.enforce_ratio = True
 
         cover_names = self.config['cover_names'].as_str_seq()

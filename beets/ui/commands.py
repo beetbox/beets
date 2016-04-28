@@ -37,7 +37,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path
 from beets import library
 from beets import config
 from beets import logging
-from beets.util.confit import _package_path
+from confuse import _package_path
 
 VARIOUS_ARTISTS = u'Various Artists'
 PromptChoice = namedtuple('ExtraChoice', ['short', 'long', 'callback'])

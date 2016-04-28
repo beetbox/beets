@@ -166,7 +166,7 @@ class TestCase(unittest.TestCase, Assertions):
         beets.config['library'] = os.path.join(self.temp_dir, 'library.db')
         beets.config['directory'] = os.path.join(self.temp_dir, 'libdir')
 
-        # Set $HOME, which is used by confit's `config_dir()` to create
+        # Set $HOME, which is used by confuse's `config_dir()` to create
         # directories.
         self._old_home = os.environ.get('HOME')
         os.environ['HOME'] = self.temp_dir

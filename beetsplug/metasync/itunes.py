@@ -30,7 +30,7 @@ from time import mktime
 from beets import util
 from beets.dbcore import types
 from beets.library import DateType
-from beets.util.confit import ConfigValueError
+from confuse import ConfigValueError
 from beetsplug.metasync import MetaSource
 
 

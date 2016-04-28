@@ -21,7 +21,7 @@ import re
 from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action
-from beets.util import confit
+import confuse
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '0.10'
@@ -94,7 +94,7 @@ class ZeroPlugin(BeetsPlugin):
         """
         try:
             self.patterns[field] = self.config[field].as_str_seq()
-        except confit.NotFoundError:
+        except confuse.NotFoundError:
             # Matches everything
             self.patterns[field] = True
 
