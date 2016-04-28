@@ -71,14 +71,16 @@ class UserError(Exception):
 
 
 # Encoding utilities.
-def _in_encoding():
-    """Get the encoding to use for *inputting* strings to the console.
+
+
+def _in_encoding(default=u'utf-8'):
+    """Get the encoding to use for *inputting* strings from the console.
+
+    :param default: the fallback sys.stdin encoding
     """
-    try:
-        return sys.stdin.encoding or 'utf-8'
-    except LookupError:
-        # TODO: create user config
-        return 'utf-8'
+
+    return config['terminal_encoding'].get() or getattr(sys.stdin, 'encoding',
+                                                        default)
 
 
 def _out_encoding():
@@ -90,7 +92,7 @@ def _out_encoding():
         return encoding
 
     # For testing: When sys.stdout is a StringIO under the test harness,
-    # it doesn't have an `encodiing` attribute. Just use UTF-8.
+    # it doesn't have an `encoding` attribute. Just use UTF-8.
     if not hasattr(sys.stdout, 'encoding'):
         return 'utf8'
 
