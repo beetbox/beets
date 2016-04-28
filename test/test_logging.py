@@ -257,7 +257,7 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
             t2.join(.1)
             self.assertFalse(t2.is_alive())
 
-        except:
+        except Exception:
             print(u"Alive threads:", threading.enumerate())
             if dp.lock1.locked():
                 print(u"Releasing lock1 after exception in test")

@@ -913,7 +913,7 @@ class AIFFTest(ReadWriteTestBase, unittest.TestCase):
 # remove this once we require a version that includes the feature.
 try:
     import mutagen.dsf  # noqa
-except:
+except ImportError:
     HAVE_DSF = False
 else:
     HAVE_DSF = True
