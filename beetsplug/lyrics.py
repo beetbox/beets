@@ -700,7 +700,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         if lyrics:
             self._log.info(u'fetched lyrics: {0}', item)
-            if self.config['bing_client_secret'].get():
+            if HAS_LANGDETECT and self.config['bing_client_secret'].get():
                 lang_from = langdetect.detect(lyrics)
                 if self.config['bing_lang_to'].get() != lang_from and (
                     not self.config['bing_lang_from'] or (
