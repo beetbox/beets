@@ -136,7 +136,7 @@ class ConfigSource(dict):
         )
 
     @classmethod
-    def of(self, value):
+    def of(cls, value):
         """Given either a dictionary or a `ConfigSource` object, return
         a `ConfigSource` object. This lets a function accept either type
         of object as an argument.

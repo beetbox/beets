@@ -168,7 +168,7 @@ class ImageStructureTestMixin(ArtTestMixin):
         self.assertEqual(cover.desc, u'album cover')
         self.assertEqual(mediafile.art, cover.data)
 
-    def assertExtendedImageAttributes(self, image, **kwargs):
+    def assertExtendedImageAttributes(self, image, **kwargs):  # noqa
         """Ignore extended image attributes in the base tests.
         """
         pass
@@ -177,7 +177,7 @@ class ImageStructureTestMixin(ArtTestMixin):
 class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
     """Checks for additional attributes in the image structure."""
 
-    def assertExtendedImageAttributes(self, image, desc=None, type=None):
+    def assertExtendedImageAttributes(self, image, desc=None, type=None):  # noqa
         self.assertEqual(image.desc, desc)
         self.assertEqual(image.type, type)
 
@@ -660,7 +660,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         self.assertIsNone(mediafile.date)
         self.assertIsNone(mediafile.year)
 
-    def assertTags(self, mediafile, tags):
+    def assertTags(self, mediafile, tags):  # noqa
         errors = []
         for key, value in tags.items():
             try:

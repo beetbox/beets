@@ -940,13 +940,13 @@ class EnumTest(_common.TestCase):
     Test Enum Subclasses defined in beets.util.enumeration
     """
     def test_ordered_enum(self):
-        OrderedEnumTest = match.OrderedEnum('OrderedEnumTest', ['a', 'b', 'c'])
-        self.assertLess(OrderedEnumTest.a, OrderedEnumTest.b)
-        self.assertLess(OrderedEnumTest.a, OrderedEnumTest.c)
-        self.assertLess(OrderedEnumTest.b, OrderedEnumTest.c)
-        self.assertGreater(OrderedEnumTest.b, OrderedEnumTest.a)
-        self.assertGreater(OrderedEnumTest.c, OrderedEnumTest.a)
-        self.assertGreater(OrderedEnumTest.c, OrderedEnumTest.b)
+        OrderedEnumClass = match.OrderedEnum('OrderedEnumTest', ['a', 'b', 'c'])  # noqa
+        self.assertLess(OrderedEnumClass.a, OrderedEnumClass.b)
+        self.assertLess(OrderedEnumClass.a, OrderedEnumClass.c)
+        self.assertLess(OrderedEnumClass.b, OrderedEnumClass.c)
+        self.assertGreater(OrderedEnumClass.b, OrderedEnumClass.a)
+        self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.a)
+        self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.b)
 
 
 def suite():

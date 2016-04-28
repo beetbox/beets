@@ -43,14 +43,14 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         self.assertFalse(mpdstats.update_rating(None, True))
 
     def test_get_item(self):
-        ITEM_PATH = '/foo/bar.flac'
-        item = Item(title=u'title', path=ITEM_PATH, id=1)
+        item_path = '/foo/bar.flac'
+        item = Item(title=u'title', path=item_path, id=1)
         item.add(self.lib)
 
         log = Mock()
         mpdstats = MPDStats(self.lib, log)
 
-        self.assertEqual(str(mpdstats.get_item(ITEM_PATH)), str(item))
+        self.assertEqual(str(mpdstats.get_item(item_path)), str(item))
         self.assertIsNone(mpdstats.get_item('/some/non-existing/path'))
         self.assertIn(u'item not found:', log.info.call_args[0][0])
 
@@ -60,13 +60,13 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
                 {'state': u'play', 'songid': 1, 'time': u'0:1'},
                 {'state': u'stop'}]
     EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
-    ITEM_PATH = '/foo/bar.flac'
+    item_path = '/foo/bar.flac'
 
     @patch("beetsplug.mpdstats.MPDClientWrapper", return_value=Mock(**{
         "events.side_effect": EVENTS, "status.side_effect": STATUSES,
-        "playlist.return_value": {1: ITEM_PATH}}))
-    def test_run_MPDStats(self, mpd_mock):
-        item = Item(title=u'title', path=self.ITEM_PATH, id=1)
+        "playlist.return_value": {1: item_path}}))
+    def test_run_mpdstats(self, mpd_mock):
+        item = Item(title=u'title', path=self.item_path, id=1)
         item.add(self.lib)
 
         log = Mock()
