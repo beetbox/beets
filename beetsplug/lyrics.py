@@ -609,12 +609,12 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 self._log.warn(u'To use the google lyrics source, you must '
                                u'provide an API key in the configuration. '
                                u'See the documentation for further details.')
-                available_sources.remove('google')
+                sources.remove('google')
             if not HAS_BEAUTIFUL_SOUP:
                 self._log.warn(u'To use the google lyrics source, you must '
                                u'install the beautifulsoup4 module. See the '
                                u'documentation for further details.')
-                available_sources.remove('google')
+                sources.remove('google')
 
         self.config['bing_lang_from'] = [
             x.lower() for x in self.config['bing_lang_from'].as_str_seq()]
@@ -626,7 +626,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                            u'documentation for further details.')
 
         self.backends = [self.SOURCE_BACKENDS[source](self.config, self._log)
-                         for source in sources if source in available_sources]
+                         for source in sources]
 
     def get_bing_access_token(self):
         params = {
