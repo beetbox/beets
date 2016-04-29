@@ -61,6 +61,7 @@ def get_format(fmt=None):
         format_info = config['convert']['formats'][fmt].get(dict)
         command = format_info['command']
         extension = format_info['extension']
+        shell = format_info.get('shell', False)
     except KeyError:
         raise ui.UserError(
             u'convert: format {0} needs "command" and "extension" fields'
@@ -69,6 +70,7 @@ def get_format(fmt=None):
     except ConfigTypeError:
         command = config['convert']['formats'][fmt].get(bytes)
         extension = fmt
+        shell = False
 
     # Convenience and backwards-compatibility shortcuts.
     keys = config['convert'].keys()
@@ -81,8 +83,10 @@ def get_format(fmt=None):
         )
     if 'extension' in keys:
         extension = config['convert']['extension'].get(unicode)
+    if 'shell' in keys:
+        shell = config['convert']['shell'].get(bool)
 
-    return (command.encode('utf8'), extension.encode('utf8'))
+    return (command.encode('utf8'), extension.encode('utf8'), shell)
 
 
 def should_transcode(item, fmt):
@@ -165,7 +169,7 @@ class ConvertPlugin(BeetsPlugin):
 
     # Utilities converted from functions to methods on logging overhaul
 
-    def encode(self, command, source, dest, pretend=False):
+    def encode(self, command, shell, source, dest, pretend=False):
         """Encode `source` to `dest` using command template `command`.
 
         Raises `subprocess.CalledProcessError` if the command exited with a
@@ -182,7 +186,11 @@ class ConvertPlugin(BeetsPlugin):
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
         # Substitute $source and $dest in the argument list.
-        args = shlex.split(command)
+        if shell:
+            args = [command]
+        else:
+            args = shlex.split(command)
+
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
                 b'source': source,
@@ -194,7 +202,7 @@ class ConvertPlugin(BeetsPlugin):
             return
 
         try:
-            util.command_output(args)
+            util.command_output(args, shell)
         except subprocess.CalledProcessError as exc:
             # Something went wrong (probably Ctrl+C), remove temporary files
             self._log.info(u'Encoding {0} failed. Cleaning up...',
@@ -218,7 +226,7 @@ class ConvertPlugin(BeetsPlugin):
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
                      pretend=False):
-        command, ext = get_format(fmt)
+        command, ext, shell = get_format(fmt)
         item, original, converted = None, None, None
         while True:
             item = yield (item, original, converted)
@@ -263,7 +271,7 @@ class ConvertPlugin(BeetsPlugin):
 
             if should_transcode(item, fmt):
                 try:
-                    self.encode(command, original, converted, pretend)
+                    self.encode(command, shell, original, converted, pretend)
                 except subprocess.CalledProcessError:
                     continue
             else:
@@ -419,7 +427,7 @@ class ConvertPlugin(BeetsPlugin):
         """
         fmt = self.config['format'].get(unicode).lower()
         if should_transcode(item, fmt):
-            command, ext = get_format()
+            command, ext, shell = get_format()
 
             # Create a temporary file for the conversion.
             tmpdir = self.config['tmpdir'].get()
@@ -430,7 +438,7 @@ class ConvertPlugin(BeetsPlugin):
 
             # Convert.
             try:
-                self.encode(command, item.path, dest)
+                self.encode(command, shell, item.path, dest)
             except subprocess.CalledProcessError:
                 return
 

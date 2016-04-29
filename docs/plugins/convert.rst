@@ -120,13 +120,19 @@ defaults to the format's name. ``command`` is the command-line to use
 to transcode audio. The tokens ``$source`` and ``$dest`` in the command
 are replaced with the paths to the existing and new file.
 
+Each entry can also have a ``shell`` option, which changes whether or not the
+provided command will run in a shell. By default this is disabled and for most
+commands (i.e. commands that don't use shell features) this works fine, however
+``shell`` needs to be enabled to use shell features such as pipes or shell
+builtins.
+
 The plugin in comes with default commands for the most common audio
 formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wmv`. For
 details have a look at the output of ``beet config -d``.
 
-For a one-command-fits-all solution use the ``convert.command`` and
-``convert.extension`` options. If these are set, the formats are ignored
-and the given command is used for all conversions.
+For a one-command-fits-all solution use the ``convert.command``,
+``convert.extension`` and ``convert.shell`` options. If these are set, the
+formats are ignored and the given command is used for all conversions.
 
 ::
 
