@@ -11,6 +11,8 @@ matrix:
           env: {TOX_ENV: docs, NONTEST: 1}
         - python: 2.7
           env: {TOX_ENV: flake8, NONTEST: 1}
+        - python: 2.7
+          env: {TOX_ENV: pydocstyle, NONTEST: 1}
 
 # Non-Python dependencies.
 addons:
