@@ -113,12 +113,12 @@ default. To convert the audio to `wav`, run ``beet convert -f wav``.
 This will also use the format key (`wav`) as the file extension.
 
 Each entry in the ``formats`` map consists of a key (the name of the
-format) as well as the command and the possibly the file extension.
+format) as well as the command and optionally the file extension.
 ``extension`` is the filename extension to be used for newly transcoded
-files.  If only the command is given as a string, the file extension
-defaults to the format's name. ``command`` is the command-line to use
-to transcode audio. The tokens ``$source`` and ``$dest`` in the command
-are replaced with the paths to the existing and new file.
+files.  If only the command is given as a string or the extension is not
+provided, the file extension defaults to the format's name. ``command`` is the
+command to use to transcode audio. The tokens ``$source`` and ``$dest`` in the
+command are replaced with the paths to the existing and new file.
 
 The plugin in comes with default commands for the most common audio
 formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wmv`. For
