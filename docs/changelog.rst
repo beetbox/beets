@@ -15,6 +15,7 @@ New features:
   for a Microsoft Azure Marketplace free account. Thanks to :user:`Kraymer`.
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `fanart.tv`_.
   Albums are matched using the ``mb_releasegroupid`` tag.
+
 * :doc:`/plugins/fetchart`: The ``enforce_ratio`` option was enhanced and now
   allows specifying a certain deviation that a valid image may have from being
   exactly square.
@@ -25,6 +26,8 @@ New features:
 * :doc:`/reference/pathformat`: new functions: %first{} and %ifdef{}
 * :doc:`/reference/config`: option ``terminal_encoding`` now works for some
   inputs
+* New :doc:`/plugins/hook` that allows commands to be executed when an event is
+  emitted by beets. :bug:`1561` :bug:`1603`
 
 .. _fanart.tv: https://fanart.tv/
 
