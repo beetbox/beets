@@ -15,7 +15,6 @@ New features:
   for a Microsoft Azure Marketplace free account. Thanks to :user:`Kraymer`.
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `fanart.tv`_.
   Albums are matched using the ``mb_releasegroupid`` tag.
-
 * :doc:`/plugins/fetchart`: The ``enforce_ratio`` option was enhanced and now
   allows specifying a certain deviation that a valid image may have from being
   exactly square.
