@@ -190,7 +190,7 @@ class ConvertPlugin(BeetsPlugin):
             })
 
         if pretend:
-            self._log.info(' '.join(ui.decargs(args)))
+            self._log.info(u' '.join(ui.decargs(args)))
             return
 
         try:
@@ -207,8 +207,8 @@ class ConvertPlugin(BeetsPlugin):
             raise
         except OSError as exc:
             raise ui.UserError(
-                u"convert: could invoke '{0}': {1}".format(
-                    ' '.join(ui.decargs(args)), exc
+                u"convert: couldn't invoke '{0}': {1}".format(
+                    u' '.join(ui.decargs(args)), exc
                 )
             )
 
