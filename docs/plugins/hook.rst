@@ -1,14 +1,10 @@
 Hook Plugin
-===============
+===========
 
-Internally, beets sends events to plugins when an action finishes. These can
-range from importing a song (``import``) to beets exiting (``cli_exit``), and
-provide a very flexible way to perform actions based on the events. This plugin
-allows you to run commands when an event is emitted by beets, such as syncing
-your library with another drive when the library is updated.
-
-Hooks are currently run in the order defined in the configuration, however this
-is dependent on beets itself and it's consistency should not be depended upon.
+Internally, beets uses *events* to tell plugins when something happens. For
+example, one event fires when the importer finishes processes a song, and
+another triggers just before the ``beet`` command exits.
+The ``hook`` plugin lets you run commands in response to these events.
 
 .. _hook-configuration:
 
@@ -23,27 +19,27 @@ file. The available options are:
 
 .. _individual-hook-configuration:
 
-Individual Hook Configuration
------------------------------
+Configuring Each Hook
+'''''''''''''''''''''
 
-Each element of the ``hooks`` configuration option can be configured separately.
-The available options are:
+Each element under ``hooks`` should have these keys:
 
-- **event**: The name of the event that should cause this hook to
-  execute. See the :ref:`plugin events <plugin_events>` documentation for a list
+- **event**: The name of the event that will trigger this hook.
+  See the :ref:`plugin events <plugin_events>` documentation for a list
   of possible values.
 - **command**: The command to run when this hook executes.
 
 .. _command-substitution:
 
 Command Substitution
---------------------
+''''''''''''''''''''
 
-Certain key words can be replaced in commands, allowing access to event
-information such as the path of an album or the name of a song. This information
-is accessed using the syntax ``{property_name}``, where ``property_name`` is the
-name of an argument passed to the event. ``property_name`` can also be a key on
-an argument passed to the event, such as ``{album.path}``.
+Commands can access the parameters of events using `Python string
+formatting`_. Use ``{name}`` in your command and the plugin will substitute it
+with the named value. The name can also refer to a field, as in
+``{album.path}``.
+
+.. _Python string formatting: https://www.python.org/dev/peps/pep-3101/
 
 You can find a list of all available events and their arguments in the
 :ref:`plugin events <plugin_events>` documentation.
