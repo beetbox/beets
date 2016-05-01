@@ -36,8 +36,8 @@ class HookPlugin(BeetsPlugin):
         for hook_index in range(len(hooks)):
             hook = self.config['hooks'][hook_index]
 
-            hook_event = hook['event'].get()
-            hook_command = hook['command'].get()
+            hook_event = hook['event'].get(unicode)
+            hook_command = hook['command'].get(unicode)
 
             self.create_and_register_hook(hook_event, hook_command)
 
