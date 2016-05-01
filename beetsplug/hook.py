@@ -23,65 +23,7 @@ from beets.ui import _arg_encoding
 from beets.util import shlex_split
 
 
-# Sadly we need this class for {} support due to issue 13598
-# https://bugs.python.org/issue13598
-# https://bugs.python.org/file25816/issue13598.diff
-class AutoFieldCountFormatter(string.Formatter):
-    def _vformat(self, format_string, args, kwargs, used_args,
-                 recursion_depth):
-        if recursion_depth < 0:
-            raise ValueError('Max string recursion exceeded')
-        auto_field_count = 0
-        # manual numbering
-        manual = None
-        result = []
-        for literal_text, field_name, format_spec, conversion in \
-                self.parse(format_string):
-
-            # output the literal text
-            if literal_text:
-                result.append(literal_text)
-
-            # if there's a field, output it
-            if field_name is not None:
-                # this is some markup, find the object and do
-                #  the formatting
-
-                # ensure we are consistent with numbering
-                if (field_name == "" and manual) or manual is False:
-                    raise ValueError("cannot switch from manual field " +
-                                     "specification to automatic field " +
-                                     "numbering")
-
-                # automatic numbering
-                if field_name == "":
-                    manual = False
-                    field_name = str(auto_field_count)
-                    auto_field_count += 1
-
-                # manual numbering
-                else:
-                    manual = True
-
-                # given the field_name, find the object it references
-                #  and the argument it came from
-                obj, arg_used = self.get_field(field_name, args, kwargs)
-                used_args.add(arg_used)
-
-                # do any conversion on the resulting object
-                obj = self.convert_field(obj, conversion)
-
-                # expand the format spec, if needed
-                format_spec = self._vformat(format_spec, args, kwargs,
-                                            used_args, recursion_depth - 1)
-
-                # format the object and append to the result
-                result.append(self.format_field(obj, format_spec))
-
-        return ''.join(result)
-
-
-class CodingFormatter(AutoFieldCountFormatter):
+class CodingFormatter(string.Formatter):
     def __init__(self, coding):
         self._coding = coding
 
