@@ -29,6 +29,7 @@ from beets.plugins import BeetsPlugin
 from beets.util.confit import ConfigTypeError
 from beets import art
 from beets.util.artresizer import ArtResizer
+from beets import logging
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -176,9 +177,7 @@ class ConvertPlugin(BeetsPlugin):
         assert isinstance(source, bytes)
         assert isinstance(dest, bytes)
 
-        quiet = self.config['quiet'].get(bool)
-
-        if not quiet and not pretend:
+        if not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
         # Substitute $source and $dest in the argument list.
@@ -212,12 +211,13 @@ class ConvertPlugin(BeetsPlugin):
                 )
             )
 
-        if not quiet and not pretend:
+        if not pretend:
             self._log.info(u'Finished encoding {0}',
                            util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
                      pretend=False):
+
         command, ext = get_format(fmt)
         item, original, converted = None, None, None
         while True:
@@ -394,6 +394,9 @@ class ConvertPlugin(BeetsPlugin):
 
             if not (opts.yes or ui.input_yn(u"Convert? (Y/n)")):
                 return
+
+        if self.config['quiet'].get(bool):
+            self._log.set_global_level(logging.WARNING)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))
