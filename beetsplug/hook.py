@@ -96,7 +96,7 @@ class CodingFormatter(AutoFieldCountFormatter):
 
     def convert_field(self, value, conversion):
         converted = super(CodingFormatter, self).convert_field(value,
-                                                                conversion)
+                                                               conversion)
         try:
             converted = converted.decode(self._coding)
         except UnicodeEncodeError:
