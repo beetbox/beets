@@ -16,11 +16,11 @@
 from __future__ import division, absolute_import, print_function
 
 import string
-import shlex
 import subprocess
 
 from beets.plugins import BeetsPlugin
 from beets.ui import _arg_encoding
+from beets.util import shlex_split
 
 
 # Sadly we need this class for {} support due to issue 13598
@@ -134,17 +134,13 @@ class HookPlugin(BeetsPlugin):
                 formatter = CodingFormatter(encoding)
                 formatted_command = formatter.format(command, event=event,
                                                      **kwargs)
-                encoded_formatted_command = formatted_command.encode(encoding)
-                command_pieces = shlex.split(encoded_formatted_command)
-                decoded_command_pieces = map(lambda piece:
-                                             piece.decode(encoding),
-                                             command_pieces)
+                command_pieces = shlex_split(formatted_command)
 
                 self._log.debug(u'running command "{0}" for event {1}',
                                 formatted_command, event)
 
                 try:
-                    subprocess.Popen(decoded_command_pieces).wait()
+                    subprocess.Popen(command_pieces).wait()
                 except OSError as exc:
                     self._log.error(u'hook for {0} failed: {1}', event, exc)
 
