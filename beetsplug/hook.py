@@ -91,12 +91,14 @@ class HookPlugin(BeetsPlugin):
                     return
 
                 formatter = CodingFormatter(_arg_encoding())
-                formatted_command = formatter.format(command, event=event,
-                                                     **kwargs)
-                command_pieces = shlex_split(formatted_command)
+                command_pieces = shlex_split(command)
+
+                for i, piece in enumerate(command_pieces):
+                    command_pieces[i] = formatter.format(piece, event=event,
+                                                         **kwargs)
 
                 self._log.debug(u'running command "{0}" for event {1}',
-                                formatted_command, event)
+                                u' '.join(command_pieces), event)
 
                 try:
                     subprocess.Popen(command_pieces).wait()
