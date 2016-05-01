@@ -24,10 +24,22 @@ from beets.util import shlex_split
 
 
 class CodingFormatter(string.Formatter):
+    """A custom string formatter that decodes the format string and it's
+    fields.
+    """
+
     def __init__(self, coding):
+        """Creates a new coding formatter with the provided coding."""
         self._coding = coding
 
     def format(self, format_string, *args, **kwargs):
+        """Formats the provided string using the provided arguments and keyword
+        arguments.
+
+        This method decodes the format string using the formatter's coding.
+
+        See str.format and string.Formatter.format.
+        """
         try:
             format_string = format_string.decode(self._coding)
         except UnicodeEncodeError:
@@ -37,6 +49,12 @@ class CodingFormatter(string.Formatter):
                                                    **kwargs)
 
     def convert_field(self, value, conversion):
+        """Converts the provided value given a conversion type.
+
+        This method decodes the converted value using the formatter's coding.
+
+        See string.Formatter.convert_field.
+        """
         converted = super(CodingFormatter, self).convert_field(value,
                                                                conversion)
         try:
