@@ -47,7 +47,9 @@ class HookPlugin(BeetsPlugin):
                     self._log.error('invalid command "{0}"', command)
                     return
 
-                formatted_command = command.format(event=event, **kwargs)
+                unicode_command = command.decode('utf-8')
+                formatted_command = unicode_command.format(event=event,
+                                                           **kwargs)
                 encoded_command = formatted_command.decode(_arg_encoding())
                 command_pieces = shlex.split(encoded_command)
 
