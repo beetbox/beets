@@ -120,7 +120,7 @@ class ConvertPlugin(BeetsPlugin):
                 u'opus':
                     u'ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest',
                 u'ogg':
-                    u'ffmpeg -i $source -y -vn -acodec libvorbis -aq 2 $dest',
+                    u'ffmpeg -i $source -y -vn -acodec libvorbis -aq 3 $dest',
                 u'wma':
                     u'ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest',
             },
