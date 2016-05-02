@@ -47,6 +47,8 @@ Fixes:
   command can't be invoked. :bug:`1927`
 * :doc:`/plugins/fetchart`: Fix a crash in the Wikipedia backend on non-ASCII
   artist and album names. :bug:`1960`
+* :doc:`/plugins/convert`: Change default `ogg` encoding quality from 2 to 3
+  (to fit the default from the `oggenc(1)` manpage). :bug:`1982`
 
 
 1.3.17 (February 7, 2016)
