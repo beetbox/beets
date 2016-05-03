@@ -15,11 +15,54 @@
 """Allows custom commands to be run when an event is emitted by beets"""
 from __future__ import division, absolute_import, print_function
 
-import shlex
+import string
 import subprocess
 
 from beets.plugins import BeetsPlugin
 from beets.ui import _arg_encoding
+from beets.util import shlex_split
+
+
+class CodingFormatter(string.Formatter):
+    """A custom string formatter that decodes the format string and it's
+    fields.
+    """
+
+    def __init__(self, coding):
+        """Creates a new coding formatter with the provided coding."""
+        self._coding = coding
+
+    def format(self, format_string, *args, **kwargs):
+        """Formats the provided string using the provided arguments and keyword
+        arguments.
+
+        This method decodes the format string using the formatter's coding.
+
+        See str.format and string.Formatter.format.
+        """
+        try:
+            format_string = format_string.decode(self._coding)
+        except UnicodeEncodeError:
+            pass
+
+        return super(CodingFormatter, self).format(format_string, *args,
+                                                   **kwargs)
+
+    def convert_field(self, value, conversion):
+        """Converts the provided value given a conversion type.
+
+        This method decodes the converted value using the formatter's coding.
+
+        See string.Formatter.convert_field.
+        """
+        converted = super(CodingFormatter, self).convert_field(value,
+                                                               conversion)
+        try:
+            converted = converted.decode(self._coding)
+        except UnicodeEncodeError:
+            pass
+
+        return converted
 
 
 class HookPlugin(BeetsPlugin):
@@ -47,18 +90,19 @@ class HookPlugin(BeetsPlugin):
                     self._log.error('invalid command "{0}"', command)
                     return
 
-                unicode_command = command.decode('utf-8')
-                formatted_command = unicode_command.format(event=event,
-                                                           **kwargs)
-                encoded_command = formatted_command.decode(_arg_encoding())
-                command_pieces = shlex.split(encoded_command)
+                formatter = CodingFormatter(_arg_encoding())
+                command_pieces = shlex_split(command)
 
-                self._log.debug('Running command "{0}" for event {1}',
-                                encoded_command, event)
+                for i, piece in enumerate(command_pieces):
+                    command_pieces[i] = formatter.format(piece, event=event,
+                                                         **kwargs)
+
+                self._log.debug(u'running command "{0}" for event {1}',
+                                u' '.join(command_pieces), event)
 
                 try:
                     subprocess.Popen(command_pieces).wait()
                 except OSError as exc:
-                    self._log.error('hook for {0} failed: {1}', event, exc)
+                    self._log.error(u'hook for {0} failed: {1}', event, exc)
 
         self.register_listener(event, hook_function)
