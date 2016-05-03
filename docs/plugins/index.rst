@@ -244,6 +244,6 @@ Here are a few of the plugins written by the beets community:
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
-.. _beets-noimport: https://github.com/ttsda/beets-noimport
+.. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
 .. _beets-usertag: https://github.com/igordertigor/beets-usertag
