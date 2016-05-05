@@ -70,5 +70,5 @@ class HiddenFileTest(unittest.TestCase):
             self.skipTest('sys.platform is known')
             return
 
-        with temfile.NamedTemporaryFile(prefix='.tmp') as f:
+        with tempfile.NamedTemporaryFile(prefix='.tmp') as f:
             self.assertTrue(hidden.is_hidden(f.name))
