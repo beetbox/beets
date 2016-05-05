@@ -1451,8 +1451,11 @@ def albums_in_dir(path):
     """
     collapse_pat = collapse_paths = collapse_items = None
     ignore = config['ignore'].as_str_seq()
+    ignore_hidden = config['ignore_hidden'].get(bool)
 
-    for root, dirs, files in sorted_walk(path, ignore=ignore, logger=log):
+    for root, dirs, files in sorted_walk(path, ignore=ignore,
+                                         ignore_hidden=ignore_hidden,
+                                         logger=log):
         items = [os.path.join(root, f) for f in files]
         # If we're currently collapsing the constituent directories in a
         # multi-disc album, check whether we should continue collapsing
