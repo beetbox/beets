@@ -1,91 +1,20 @@
 """Simple library to work out if a file is hidden on different platforms."""
 
+import os
+import stat
 import ctypes
-import ctypes.util
-import os.path
 import sys
-
-
-# Adjustments for CoreFoundation functions on OS X.
-_CF_FUNCTION_MAPPINGS = {
-    'CFRelease': {
-        'argtypes': [ctypes.c_void_p],
-        'restype': None
-    },
-    'CFURLCreateFromFileSystemRepresentation': {
-        'argtypes': [
-            ctypes.c_void_p,
-            ctypes.c_char_p,
-            ctypes.c_long,
-            ctypes.c_int
-        ],
-        'restype': ctypes.c_void_p
-    },
-    'CFURLCopyResourcePropertyForKey': {
-        'argtypes':  [
-            ctypes.c_void_p,
-            ctypes.c_void_p,
-            ctypes.c_void_p,
-            ctypes.c_void_p
-        ],
-        'restype': ctypes.c_void_p
-    },
-    'CFBooleanGetValue': {
-        'argtypes': [ctypes.c_void_p],
-        'restype': ctypes.c_int
-    }
-}
-
-
-def _dict_attr_copy(source, destination):
-    """Copy dict values from source on to destination as attributes."""
-    for k, v in source.iteritems():
-        if isinstance(v, dict):
-            _dict_attr_copy(v, getattr(destination, k))
-        else:
-            setattr(destination, k, v)
 
 
 def _is_hidden_osx(path):
     """Return whether or not a file is hidden on OS X.
 
-    This uses CoreFoundation alongside CFURL to work out if a file has the
-    "hidden" flag.
+    This uses os.lstat to work out if a file has the "hidden" flag.
     """
-    # Load CoreFoundation.
-    cf_path = ctypes.util.find_library('CoreFoundation')
-    cf = ctypes.cdll.LoadLibrary(cf_path)
+    file_stat = os.lstat(path)
 
-    # Copy the adjustments on to the library.
-    _dict_attr_copy(_CF_FUNCTION_MAPPINGS, cf)
-
-    # Create a URL from the path.
-    url = cf.CFURLCreateFromFileSystemRepresentation(None, path, len(path),
-                                                     False)
-
-    # Retrieve the hidden key.
-    is_hidden_key = ctypes.c_void_p.in_dll(cf, 'kCFURLIsHiddenKey')
-
-    # Create a void pointer and get the address of it.
-    val = ctypes.c_void_p(0)
-    val_address = ctypes.addressof(val)
-
-    # Get the value (whether or not the file is hidden) for the hidden key and
-    # store it in val.
-    success = cf.CFURLCopyResourcePropertyForKey(url, is_hidden_key,
-                                                 val_address, None)
-
-    # Check if we were able to get the value for the hidden key.
-    if success:
-
-        # Retrieve the result as a boolean.
-        result = cf.CFBooleanGetValue(val)
-
-        # Release the value and URL.
-        cf.CFRelease(val)
-        cf.CFRelease(url)
-
-        return bool(result)
+    if hasattr(file_stat, 'st_flags') and hasattr(stat, 'UF_HIDDEN'):
+        return (file_stat.st_flags & stat.UF_HIDDEN) == stat.UF_HIDDEN
     else:
         return False
 
