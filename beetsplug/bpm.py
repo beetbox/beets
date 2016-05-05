@@ -54,6 +54,7 @@ class BPMPlugin(BeetsPlugin):
         self.config.add({
             u'max_strokes': 3,
             u'overwrite': True,
+            u'write': False
         })
 
     def commands(self):
@@ -64,7 +65,9 @@ class BPMPlugin(BeetsPlugin):
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.get_bpm(lib.items(ui.decargs(args)))
+        items = lib.items(ui.decargs(args))
+        write = self.config['write'].get(bool)
+        self.get_bpm(items, write)
 
     def get_bpm(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
