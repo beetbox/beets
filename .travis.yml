@@ -33,6 +33,11 @@ before_install:
 after_success:
     - "[ ! -z $COVERAGE ] && codecov || true"
 
+cache:
+    pip: true
+    directories:
+        - .tox
+
 notifications:
     irc:
         channels:
