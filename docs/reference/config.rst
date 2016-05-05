@@ -91,6 +91,15 @@ importing. By default, this consists of ``.*``,  ``*~``, and ``System Volume
 Information`` (i.e., beets ignores Unix-style hidden files, backup files, and
 a directory that appears at the root of some Windows filesystems).
 
+ignore_hidden
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``; whether to ignore hidden files when importing. On
+Windows, the "Hidden" property of files is used to detect whether or not a file
+is hidden. On OS X, the file's "IsHidden" flag is used to detect whether or not
+a file is hidden. On both OS X and other platforms (excluding Windows), files
+(and directories) starting with a dot are detected as hidden files.
+
 .. _replace:
 
 replace
@@ -799,6 +808,7 @@ Here's an example file::
         timid: no
         log: beetslog.txt
     ignore: .AppleDouble ._* *~ .DS_Store
+    ignore_hidden: yes
     art_filename: albumart
     plugins: bpd
     pluginpath: ~/beets/myplugins
