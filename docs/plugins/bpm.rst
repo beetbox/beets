@@ -22,6 +22,20 @@ for instance, with ``mpc`` you can do something like::
 
      beet bpm $(mpc |head -1|tr -d "-")
 
+Configuration
+-------------
+
+To configure the plugin, make a ``bpm:`` section in your configuration file.
+The available options are:
+
+- **max_strokes**: The maximum number of strokes to accept when tapping out the
+  BPM.
+  Default: 3.
+- **overwrite**: Overwrite the track's existing BPM.
+  Default: ``yes``.
+- **write**: Write the song's tags to file when the BPM is updated.
+  Default: ``no``.
+
 Credit
 ------
 
