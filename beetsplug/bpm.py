@@ -53,7 +53,7 @@ class BPMPlugin(BeetsPlugin):
         super(BPMPlugin, self).__init__()
         self.config.add({
             u'max_strokes': 3,
-            u'overwrite': True
+            u'overwrite': True,
         })
 
     def commands(self):
