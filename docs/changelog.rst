@@ -22,8 +22,8 @@ New features:
   source in a flexible field; for a usecase see the documentation.
 * :doc:`/plugins/export`: A new plugin to export the data from queries to a
   json format. Thanks to :user:`GuilhermeHideki`.
-* :doc:`/plugins/bpm`: Add ``write`` option to write tracks after updating
-  their BPM.
+* :doc:`/plugins/bpm`: Now uses ``import.write`` option to write tracks after
+  updating their BPM.
 * :doc:`/reference/pathformat`: new functions: %first{} and %ifdef{}
 * :doc:`/reference/config`: option ``terminal_encoding`` now works for some
   inputs
