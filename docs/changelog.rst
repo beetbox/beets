@@ -29,6 +29,8 @@ New features:
   emitted by beets. :bug:`1561` :bug:`1603`
 * :doc:`/reference/config`: New ``ignore_hidden`` configuration option allowing
   platform-specific hidden files to be ignored on import.
+* :doc:`/reference/config`: option ``ignore`` now includes ``lost+found``
+  directory by default
 
 .. _fanart.tv: https://fanart.tv/
 
