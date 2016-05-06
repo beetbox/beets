@@ -30,7 +30,7 @@ def _is_hidden_osx(path):
     file_stat = os.lstat(path)
 
     if hasattr(file_stat, 'st_flags') and hasattr(stat, 'UF_HIDDEN'):
-        return (file_stat.st_flags & stat.UF_HIDDEN) == stat.UF_HIDDEN
+        return bool(file_stat.st_flags & stat.UF_HIDDEN)
     else:
         return False
 
@@ -48,7 +48,7 @@ def _is_hidden_win(path):
     attrs = ctypes.windll.kernel32.GetFileAttributesW(path)
 
     # Ensure we have valid attribues and compare them against the mask.
-    return attrs >= 0 and bool(attrs & hidden_mask)
+    return attrs >= 0 and attrs & hidden_mask
 
 
 def _is_hidden_dot(path):
