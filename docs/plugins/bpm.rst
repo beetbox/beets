@@ -22,6 +22,9 @@ for instance, with ``mpc`` you can do something like::
 
      beet bpm $(mpc |head -1|tr -d "-")
 
+If :ref:`import.write <config-import-write>` is ``yes``, the song's tags are
+written to disk.
+
 Configuration
 -------------
 
@@ -33,8 +36,6 @@ The available options are:
   Default: 3.
 - **overwrite**: Overwrite the track's existing BPM.
   Default: ``yes``.
-- **write**: Write the song's tags to file when the BPM is updated.
-  Default: ``no``.
 
 Credit
 ------
