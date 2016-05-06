@@ -26,6 +26,7 @@ import traceback
 import subprocess
 import platform
 import shlex
+from beets.util import hidden
 
 
 MAX_FILENAME_LENGTH = 200
@@ -151,7 +152,7 @@ def ancestry(path):
     return out
 
 
-def sorted_walk(path, ignore=(), logger=None):
+def sorted_walk(path, ignore=(), ignore_hidden=False, logger=None):
     """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
     pattern in `ignore` are skipped. If `logger` is provided, then
@@ -185,10 +186,11 @@ def sorted_walk(path, ignore=(), logger=None):
 
         # Add to output as either a file or a directory.
         cur = os.path.join(path, base)
-        if os.path.isdir(syspath(cur)):
-            dirs.append(base)
-        else:
-            files.append(base)
+        if (ignore_hidden and not hidden.is_hidden(cur)) or not ignore_hidden:
+            if os.path.isdir(syspath(cur)):
+                dirs.append(base)
+            else:
+                files.append(base)
 
     # Sort lists (case-insensitive) and yield the current level.
     dirs.sort(key=bytes.lower)
@@ -199,7 +201,7 @@ def sorted_walk(path, ignore=(), logger=None):
     for base in dirs:
         cur = os.path.join(path, base)
         # yield from sorted_walk(...)
-        for res in sorted_walk(cur, ignore, logger):
+        for res in sorted_walk(cur, ignore, ignore_hidden, logger):
             yield res
 
 

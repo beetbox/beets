@@ -27,6 +27,8 @@ New features:
   inputs
 * New :doc:`/plugins/hook` that allows commands to be executed when an event is
   emitted by beets. :bug:`1561` :bug:`1603`
+* :doc:`/reference/config`: New ``ignore_hidden`` configuration option allowing
+  platform-specific hidden files to be ignored on import.
 
 .. _fanart.tv: https://fanart.tv/
 
