@@ -25,8 +25,9 @@ import:
     search_ids: []
 
 clutter: ["Thumbs.DB", ".DS_Store"]
-ignore: [".*", "*~", "System Volume Information"]
+ignore: [".*", "*~", "System Volume Information", "lost+found"]
 ignore_hidden: yes
+
 replace:
     '[\\/]': _
     '^\.': _

@@ -87,9 +87,10 @@ ignore
 ~~~~~~
 
 A list of glob patterns specifying file and directory names to be ignored when
-importing. By default, this consists of ``.*``,  ``*~``, and ``System Volume
-Information`` (i.e., beets ignores Unix-style hidden files, backup files, and
-a directory that appears at the root of some Windows filesystems).
+importing. By default, this consists of ``.*``,  ``*~``,  ``System Volume
+Information``, ``lost+found`` (i.e., beets ignores Unix-style hidden files,
+backup files, and directories that appears at the root of some Linux and Windows
+filesystems).
 
 ignore_hidden
 ~~~~~~~~~~~~~
