@@ -989,7 +989,8 @@ class SubcommandsOptionParser(CommonOptionsParser):
             result.append(name)
             help_width = formatter.width - help_position
             help_lines = textwrap.wrap(subcommand.help, help_width)
-            result.append("%*s%s\n" % (indent_first, "", help_lines[0]))
+            help_line = help_lines[0] if help_lines else ''
+            result.append("%*s%s\n" % (indent_first, "", help_line))
             result.extend(["%*s%s\n" % (help_position, "", line)
                            for line in help_lines[1:]])
         formatter.dedent()
