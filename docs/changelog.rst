@@ -8,6 +8,7 @@ New features:
 
 * :doc:`/plugins/convert`: A new `album_art_maxwidth` lets you resize album
   art while copying it.
+* :doc:`/plugins/convert`: Make `extension` optional for conversion formats.
 * :doc:`/plugins/importadded`: A new `preserve_write_mtimes` option
   lets you preserve mtime of files after each write.
 * :doc:`/plugins/lyrics`: The plugin can now translate the fetched lyrics to a
