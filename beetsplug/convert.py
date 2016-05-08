@@ -60,10 +60,10 @@ def get_format(fmt=None):
     try:
         format_info = config['convert']['formats'][fmt].get(dict)
         command = format_info['command']
-        extension = format_info['extension']
+        extension = format_info.get('extension', fmt)
     except KeyError:
         raise ui.UserError(
-            u'convert: format {0} needs "command" and "extension" fields'
+            u'convert: format {0} needs the "command" field'
             .format(fmt)
         )
     except ConfigTypeError:
