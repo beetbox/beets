@@ -54,6 +54,8 @@ Fixes:
   artist and album names. :bug:`1960`
 * :doc:`/plugins/convert`: Change default `ogg` encoding quality from 2 to 3
   (to fit the default from the `oggenc(1)` manpage). :bug:`1982`
+* :doc:`/plugins/convert`: The `never_convert_lossy_files` option now
+  considers AIFF a lossless format. :bug:`2005`
 
 
 1.3.17 (February 7, 2016)
