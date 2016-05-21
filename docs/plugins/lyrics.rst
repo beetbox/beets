@@ -108,7 +108,7 @@ If you use default ``google_engine_ID``, we recommend limiting the sources to
 ``musixmatch google`` as the other sources are already included in the Google
 results.
 
-.. _register for a Google API key: https://code.google.com/apis/console.
+.. _register for a Google API key: https://code.google.com/apis/console
 
 Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine_ID`` configuration option. By
