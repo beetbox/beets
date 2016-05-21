@@ -57,6 +57,11 @@ Fixes:
 * :doc:`/plugins/convert`: The `never_convert_lossy_files` option now
   considers AIFF a lossless format. :bug:`2005`
 
+Other changes:
+
+* :doc:`/plugins/acousticbrainz`: AcousticBrainz lookups are now done over
+  HTTPS. Thanks to :user:`Freso`. :bug:`2007`
+
 
 1.3.17 (February 7, 2016)
 -------------------------
