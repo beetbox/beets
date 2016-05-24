@@ -218,7 +218,10 @@ def album_query(queries):
 @app.route('/album/<int:album_id>/art')
 def album_art(album_id):
     album = g.lib.get_album(album_id)
-    return flask.send_file(album.artpath)
+    if album.artpath:
+        return flask.send_file(album.artpath)
+    else:
+        return flask.abort(404)
 
 
 # Artists.
