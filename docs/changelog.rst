@@ -56,6 +56,9 @@ Fixes:
   (to fit the default from the `oggenc(1)` manpage). :bug:`1982`
 * :doc:`/plugins/convert`: The `never_convert_lossy_files` option now
   considers AIFF a lossless format. :bug:`2005`
+* :doc:`/plugins/web`: A proper 404 error, instead of an internal exception,
+  is returned when missing album art is requested. Thanks to
+  :user:`sumpfralle`. :bug:`2011`
 
 Other changes:
 
