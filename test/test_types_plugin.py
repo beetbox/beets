@@ -114,7 +114,7 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
         self.modify(u'mydate=1999-01-01', u'artist:prince')
         old.load()
-        self.assertEqual(old['mydate'], mktime(1999, 01, 01))
+        self.assertEqual(old['mydate'], mktime(1999, 1, 1))
 
         self.modify(u'mydate=1999-12-30', u'artist:britney')
         new.load()
