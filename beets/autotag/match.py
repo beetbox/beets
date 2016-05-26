@@ -29,6 +29,7 @@ from beets import config
 from beets.util import plurality
 from beets.autotag import hooks
 from beets.util.enumeration import OrderedEnum
+from functools import reduce
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA

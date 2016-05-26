@@ -22,6 +22,7 @@ from operator import mul
 from beets import util
 from datetime import datetime, timedelta
 import unicodedata
+from functools import reduce
 
 
 class ParsingError(ValueError):
