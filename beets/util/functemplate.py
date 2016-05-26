@@ -134,7 +134,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
                 dis.dis(const)
 
     the_locals = {}
-    exec prog in {}, the_locals
+    exec(prog, {}, the_locals)
     return the_locals[name]
 
 
