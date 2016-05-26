@@ -158,7 +158,8 @@ def _safe_cast(out_type, val):
         else:
             if not isinstance(val, basestring):
                 val = unicode(val)
-            match = re.match(r'[\+-]?[0-9\.]+', val.strip())
+            match = re.match(r'[\+-]?([0-9]+\.?[0-9]*|[0-9]*\.[0-9]+)',
+                             val.strip())
             if match:
                 val = match.group(0)
                 if val:
