@@ -153,20 +153,12 @@ def _safe_cast(out_type, val):
             return unicode(val)
 
     elif out_type == float:
-        if isinstance(val, int) or isinstance(val, float):
-            return float(val)
-        else:
-            if not isinstance(val, basestring):
+        try:
+            if not isinstance(val, (int, float, basestring)):
                 val = unicode(val)
-            match = re.match(r'[\+-]?[0-9\.]+', val.strip())
-            if match:
-                val = match.group(0)
-                if val:
-                    return float(val)
+            return float(val)
+        except ValueError:
             return 0.0
-
-    else:
-        return val
 
 
 # Image coding for ASF/WMA.
