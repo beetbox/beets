@@ -132,6 +132,14 @@ class InvalidValueToleranceTest(unittest.TestCase):
         v = _sc(float, u'+')
         self.assertEqual(v, 0.0)
 
+    def test_safe_cast_float_with_dot_only(self):
+        v = _sc(float, u'.')
+        self.assertEqual(v, 0.0)
+
+    def test_safe_cast_float_with_multiple_dots(self):
+        v = _sc(float, u'1.0.0')
+        self.assertEqual(v, 0.0)
+
 
 class SafetyTest(unittest.TestCase, TestHelper):
     def setUp(self):
