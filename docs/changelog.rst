@@ -59,6 +59,7 @@ Fixes:
 * :doc:`/plugins/web`: A proper 404 error, instead of an internal exception,
   is returned when missing album art is requested. Thanks to
   :user:`sumpfralle`. :bug:`2011`
+* Handle more float edge cases in ``safe_cast``. :bug:`2014`
 
 Other changes:
 
