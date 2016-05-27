@@ -34,6 +34,8 @@ import ast
 import dis
 import types
 
+from .confit import NUMERIC_TYPES
+
 SYMBOL_DELIM = u'$'
 FUNC_DELIM = u'%'
 GROUP_OPEN = u'{'
@@ -72,7 +74,7 @@ def ex_literal(val):
     """
     if val is None:
         return ast.Name(b'None', ast.Load())
-    elif isinstance(val, (int, float, long)):
+    elif isinstance(val, NUMERIC_TYPES):
         return ast.Num(val)
     elif isinstance(val, bool):
         return ast.Name(bytes(val), ast.Load())

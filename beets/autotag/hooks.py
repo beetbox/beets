@@ -349,7 +349,10 @@ class Distance(object):
         # Convert distance into a negative float we can sort items in
         # ascending order (for keys, when the penalty is equal) and
         # still get the items with the biggest distance first.
-        return sorted(list_, key=lambda (key, dist): (0 - dist, key))
+        return sorted(
+            list_,
+            key=lambda key_and_dist: (-key_and_dist[1], key_and_dist[0])
+        )
 
     # Behave like a float.
 
