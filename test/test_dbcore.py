@@ -609,7 +609,7 @@ class ResultsIteratorTest(unittest.TestCase):
         results = self.db._fetch(TestModel1)
         it1 = iter(results)
         it2 = iter(results)
-        it1.next()
+        next(it1)
         list(it2)
         self.assertEqual(len(list(it1)), 1)
 

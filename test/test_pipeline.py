@@ -133,7 +133,7 @@ class ExceptionTest(unittest.TestCase):
         pl = pipeline.Pipeline((_produce(), _exc_work()))
         pull = pl.pull()
         for i in range(3):
-            pull.next()
+            next(pull)
         self.assertRaises(TestException, pull.next)
 
 
