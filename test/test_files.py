@@ -103,15 +103,15 @@ class MoveTest(_common.TestCase):
 
     def test_read_only_file_copied_writable(self):
         # Make the source file read-only.
-        os.chmod(self.path, 0444)
+        os.chmod(self.path, 0o444)
 
         try:
             self.i.move(copy=True)
             self.assertTrue(os.access(self.i.path, os.W_OK))
         finally:
             # Make everything writable so it can be cleaned up.
-            os.chmod(self.path, 0777)
-            os.chmod(self.i.path, 0777)
+            os.chmod(self.path, 0o777)
+            os.chmod(self.i.path, 0o777)
 
     def test_move_avoids_collision_with_existing_file(self):
         # Make a conflicting file at the destination.
@@ -354,7 +354,7 @@ class ArtFileTest(_common.TestCase):
 
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
-        os.chmod(newart, 0400)  # read-only
+        os.chmod(newart, 0o400)  # read-only
 
         try:
             i2 = item()
@@ -370,8 +370,8 @@ class ArtFileTest(_common.TestCase):
 
         finally:
             # Make everything writable so it can be cleaned up.
-            os.chmod(newart, 0777)
-            os.chmod(ai.artpath, 0777)
+            os.chmod(newart, 0o777)
+            os.chmod(ai.artpath, 0o777)
 
     def test_move_last_file_moves_albumart(self):
         oldartpath = self.lib.albums()[0].artpath
