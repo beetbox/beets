@@ -72,7 +72,7 @@ def ex_literal(val):
     """
     if val is None:
         return ast.Name(b'None', ast.Load())
-    elif isinstance(val, (int, float, long)):
+    elif isinstance(val, (int, float, int)):
         return ast.Num(val)
     elif isinstance(val, bool):
         return ast.Name(bytes(val), ast.Load())
