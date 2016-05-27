@@ -280,7 +280,7 @@ def show_change(cur_artist, cur_album, match):
 
     # Tracks.
     pairs = match.mapping.items()
-    pairs.sort(key=lambda (_, track_info): track_info.index)
+    pairs.sort(key=lambda __track_info: __track_info[1].index)
 
     # Build up LHS and RHS for track difference display. The `lines` list
     # contains ``(lhs, rhs, width)`` tuples where `width` is the length (in
@@ -442,7 +442,7 @@ def summarize_items(items, singleton):
     else:
         # Enumerate all the formats by decreasing frequencies:
         for fmt, count in sorted(format_counts.items(),
-                                 key=lambda (f, c): (-c, f)):
+                                 key=lambda f_c: (-f_c[1], f_c[0])):
             summary_parts.append('{0} {1}'.format(fmt, count))
 
     if items:

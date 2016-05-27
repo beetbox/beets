@@ -114,7 +114,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         self.assertEqual(ThumbnailsPlugin().get_uri, giouri_inst.uri)
 
         giouri_inst.available = False
-        self.assertEqual(ThumbnailsPlugin().get_uri.im_class, PathlibURI)
+        self.assertEqual(ThumbnailsPlugin().get_uri.__self__.__class__, PathlibURI)
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     @patch('beetsplug.thumbnails.ArtResizer')
