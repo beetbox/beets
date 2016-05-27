@@ -35,8 +35,6 @@ after_success:
 
 cache:
     pip: true
-    directories:
-        - .tox
 
 notifications:
     irc:
