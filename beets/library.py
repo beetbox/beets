@@ -559,7 +559,7 @@ class Item(LibModel):
 
         for key in self._media_fields:
             value = getattr(mediafile, key)
-            if isinstance(value, (int, int)):
+            if isinstance(value, (int, long)):
                 if value.bit_length() > 63:
                     value = 0
             self[key] = value
