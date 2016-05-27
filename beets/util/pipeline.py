@@ -248,7 +248,7 @@ class FirstPipelineThread(PipelineThread):
 
                 # Get the value from the generator.
                 try:
-                    msg = self.coro.next()
+                    msg = next(self.coro)
                 except StopIteration:
                     break
 
@@ -281,7 +281,7 @@ class MiddlePipelineThread(PipelineThread):
     def run(self):
         try:
             # Prime the coroutine.
-            self.coro.next()
+            next(self.coro)
 
             while True:
                 with self.abort_lock:
@@ -326,7 +326,7 @@ class LastPipelineThread(PipelineThread):
 
     def run(self):
         # Prime the coroutine.
-        self.coro.next()
+        next(self.coro)
 
         try:
             while True:
@@ -444,7 +444,7 @@ class Pipeline(object):
 
         # "Prime" the coroutines.
         for coro in coros[1:]:
-            coro.next()
+            next(coro)
 
         # Begin the pipeline.
         for out in coros[0]:

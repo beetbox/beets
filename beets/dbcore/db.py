@@ -609,8 +609,8 @@ class Results(object):
         it = iter(self)
         try:
             for i in range(n):
-                it.next()
-            return it.next()
+                next(it)
+            return next(it)
         except StopIteration:
             raise IndexError(u'result index {0} out of range'.format(n))
 
@@ -620,7 +620,7 @@ class Results(object):
         """
         it = iter(self)
         try:
-            return it.next()
+            return next(it)
         except StopIteration:
             return None
 
