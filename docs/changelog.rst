@@ -32,6 +32,8 @@ New features:
   platform-specific hidden files to be ignored on import.
 * :doc:`/reference/config`: option ``ignore`` now includes ``lost+found``
   directory by default
+* :doc:`/plugins/web`: A new `values` endpoint lets you get the distinct values
+  of a field. Thanks to :user:`sumpfralle`. :bug:`2010`
 
 .. _fanart.tv: https://fanart.tv/
 
