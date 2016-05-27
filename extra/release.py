@@ -112,7 +112,7 @@ def bump_version(version):
                     out_lines.append(line)
 
             if not found:
-                print(("No pattern found in {}".format(filename)))
+                print("No pattern found in {}".format(filename))
 
         # Write the file back.
         with open(filename, 'w') as f:
@@ -214,7 +214,7 @@ def changelog_as_markdown():
 def changelog():
     """Get the most recent version's changelog as Markdown.
     """
-    print((changelog_as_markdown()))
+    print(changelog_as_markdown())
 
 
 def get_version(index=0):
@@ -235,7 +235,7 @@ def get_version(index=0):
 def version():
     """Display the current version.
     """
-    print((get_version()))
+    print(get_version())
 
 
 @release.command()
