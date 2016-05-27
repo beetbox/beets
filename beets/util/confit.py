@@ -49,7 +49,7 @@ REDACTED_TOMBSTONE = 'REDACTED'
 PY3 = sys.version_info[0] == 3
 STRING = str if PY3 else unicode
 BASESTRING = str if PY3 else basestring
-NUMERIC_TYPES = (int, float) if PY3 else (int, float, int)
+NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)
 
 
 def iter_first(sequence):
