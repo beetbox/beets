@@ -21,13 +21,9 @@ import sys
 import os
 import tempfile
 import shutil
+import unittest
 from contextlib import contextmanager
 
-# Use unittest2 on Python < 2.7.
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')  # noqa
