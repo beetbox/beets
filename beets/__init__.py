@@ -17,13 +17,10 @@ from __future__ import division, absolute_import, print_function
 
 import os
 
-import beets.library
 from beets.util import confit
 
 __version__ = u'1.3.18'
 __author__ = u'Adrian Sampson <adrian@radbox.org>'
-
-Library = beets.library.Library
 
 
 class IncludeLazyConfig(confit.LazyConfig):
