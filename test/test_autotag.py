@@ -47,7 +47,7 @@ class PluralityTest(_common.TestCase):
     def test_plurality_conflict(self):
         objs = [1, 1, 2, 2, 3]
         obj, freq = plurality(objs)
-        self.assert_(obj in (1, 2))
+        self.assertTrue(obj in (1, 2))
         self.assertEqual(freq, 2)
 
     def test_plurality_empty_sequence_raises_error(self):
@@ -879,17 +879,17 @@ class StringDistanceTest(unittest.TestCase):
     def test_leading_the_has_lower_weight(self):
         dist1 = string_dist(u'XXX Band Name', u'Band Name')
         dist2 = string_dist(u'The Band Name', u'Band Name')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_parens_have_lower_weight(self):
         dist1 = string_dist(u'One .Two.', u'One')
         dist2 = string_dist(u'One (Two)', u'One')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_brackets_have_lower_weight(self):
         dist1 = string_dist(u'One .Two.', u'One')
         dist2 = string_dist(u'One [Two]', u'One')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_ep_label_has_zero_weight(self):
         dist = string_dist(u'My Song (EP)', u'My Song')
@@ -898,7 +898,7 @@ class StringDistanceTest(unittest.TestCase):
     def test_featured_has_lower_weight(self):
         dist1 = string_dist(u'My Song blah Someone', u'My Song')
         dist2 = string_dist(u'My Song feat Someone', u'My Song')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_postfix_the(self):
         dist = string_dist(u'The Song Title', u'Song Title, The')

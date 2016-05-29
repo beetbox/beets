@@ -244,7 +244,7 @@ class DestinationTest(_common.TestCase):
     def test_path_with_format(self):
         self.lib.path_formats = [(u'default', u'$artist/$album ($format)')]
         p = self.i.destination()
-        self.assert_('(FLAC)' in p)
+        self.assertTrue('(FLAC)' in p)
 
     def test_heterogeneous_album_gets_single_directory(self):
         i1, i2 = item(), item()
@@ -883,7 +883,7 @@ class ArtDestinationTest(_common.TestCase):
 
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination('something.jpg')
-        self.assert_('%sartimage.jpg' % os.path.sep in art)
+        self.assertTrue('%sartimage.jpg' % os.path.sep in art)
 
     def test_art_path_in_item_dir(self):
         art = self.ai.art_destination('something.jpg')
@@ -893,7 +893,7 @@ class ArtDestinationTest(_common.TestCase):
     def test_art_path_sanitized(self):
         config['art_filename'] = u'artXimage'
         art = self.ai.art_destination('something.jpg')
-        self.assert_('artYimage' in art)
+        self.assertTrue('artYimage' in art)
 
 
 class PathStringTest(_common.TestCase):
@@ -903,22 +903,22 @@ class PathStringTest(_common.TestCase):
         self.i = item(self.lib)
 
     def test_item_path_is_bytestring(self):
-        self.assert_(isinstance(self.i.path, bytes))
+        self.assertTrue(isinstance(self.i.path, bytes))
 
     def test_fetched_item_path_is_bytestring(self):
         i = list(self.lib.items())[0]
-        self.assert_(isinstance(i.path, bytes))
+        self.assertTrue(isinstance(i.path, bytes))
 
     def test_unicode_path_becomes_bytestring(self):
         self.i.path = u'unicodepath'
-        self.assert_(isinstance(self.i.path, bytes))
+        self.assertTrue(isinstance(self.i.path, bytes))
 
     def test_unicode_in_database_becomes_bytestring(self):
         self.lib._connection().execute("""
         update items set path=? where id=?
         """, (self.i.id, u'somepath'))
         i = list(self.lib.items())[0]
-        self.assert_(isinstance(i.path, bytes))
+        self.assertTrue(isinstance(i.path, bytes))
 
     def test_special_chars_preserved_in_database(self):
         path = u'b\xe1r'.encode('utf8')
@@ -939,13 +939,13 @@ class PathStringTest(_common.TestCase):
     def test_destination_returns_bytestring(self):
         self.i.artist = u'b\xe1r'
         dest = self.i.destination()
-        self.assert_(isinstance(dest, bytes))
+        self.assertTrue(isinstance(dest, bytes))
 
     def test_art_destination_returns_bytestring(self):
         self.i.artist = u'b\xe1r'
         alb = self.lib.add_album([self.i])
         dest = alb.art_destination(u'image.jpg')
-        self.assert_(isinstance(dest, bytes))
+        self.assertTrue(isinstance(dest, bytes))
 
     def test_artpath_stores_special_chars(self):
         path = b'b\xe1r'
@@ -958,17 +958,17 @@ class PathStringTest(_common.TestCase):
     def test_sanitize_path_with_special_chars(self):
         path = u'b\xe1r?'
         new_path = util.sanitize_path(path)
-        self.assert_(new_path.startswith(u'b\xe1r'))
+        self.assertTrue(new_path.startswith(u'b\xe1r'))
 
     def test_sanitize_path_returns_unicode(self):
         path = u'b\xe1r?'
         new_path = util.sanitize_path(path)
-        self.assert_(isinstance(new_path, unicode))
+        self.assertTrue(isinstance(new_path, unicode))
 
     def test_unicode_artpath_becomes_bytestring(self):
         alb = self.lib.add_album([self.i])
         alb.artpath = u'somep\xe1th'
-        self.assert_(isinstance(alb.artpath, bytes))
+        self.assertTrue(isinstance(alb.artpath, bytes))
 
     def test_unicode_artpath_in_database_decoded(self):
         alb = self.lib.add_album([self.i])
@@ -977,7 +977,7 @@ class PathStringTest(_common.TestCase):
             (u'somep\xe1th', alb.id)
         )
         alb = self.lib.get_album(alb.id)
-        self.assert_(isinstance(alb.artpath, bytes))
+        self.assertTrue(isinstance(alb.artpath, bytes))
 
 
 class MtimeTest(_common.TestCase):
