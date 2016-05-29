@@ -1148,7 +1148,7 @@ class FilesizeTest(unittest.TestCase, TestHelper):
 
     def test_filesize(self):
         item = self.add_item_fixture()
-        self.assertNotEquals(item.filesize, 0)
+        self.assertNotEqual(item.filesize, 0)
 
     def test_nonexistent_file(self):
         item = beets.library.Item()
