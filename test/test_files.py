@@ -200,7 +200,7 @@ class AlbumFileTest(_common.TestCase):
         self.ai.store()
         self.i.load()
 
-        self.assert_('newAlbumName' in self.i.path)
+        self.assertTrue('newAlbumName' in self.i.path)
 
     def test_albuminfo_move_moves_file(self):
         oldpath = self.i.path
