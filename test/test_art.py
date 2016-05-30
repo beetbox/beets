@@ -225,7 +225,7 @@ class AAOTest(UseThePlugin):
                       match_querystring=True)
 
     def test_aao_scraper_finds_image(self):
-        body = b"""
+        body = """
         <br />
         <a href=\"TARGET_URL\" title=\"View larger image\"
            class=\"thickbox\" style=\"color: #7E9DA2; text-decoration:none;\">
@@ -238,7 +238,7 @@ class AAOTest(UseThePlugin):
         self.assertEqual(candidate.url, 'TARGET_URL')
 
     def test_aao_scraper_returns_no_result_when_no_image_present(self):
-        self.mock_response(self.AAO_URL, b'blah blah')
+        self.mock_response(self.AAO_URL, 'blah blah')
         album = _common.Bag(asin=self.ASIN)
         with self.assertRaises(StopIteration):
             next(self.source.get(album, self.extra))
@@ -260,21 +260,21 @@ class GoogleImageTest(UseThePlugin):
 
     def test_google_art_finds_image(self):
         album = _common.Bag(albumartist="some artist", album="some album")
-        json = b'{"items": [{"link": "url_to_the_image"}]}'
+        json = '{"items": [{"link": "url_to_the_image"}]}'
         self.mock_response(fetchart.GoogleImages.URL, json)
         candidate = next(self.source.get(album, self.extra))
         self.assertEqual(candidate.url, 'url_to_the_image')
 
     def test_google_art_returns_no_result_when_error_received(self):
         album = _common.Bag(albumartist="some artist", album="some album")
-        json = b'{"error": {"errors": [{"reason": "some reason"}]}}'
+        json = '{"error": {"errors": [{"reason": "some reason"}]}}'
         self.mock_response(fetchart.GoogleImages.URL, json)
         with self.assertRaises(StopIteration):
             next(self.source.get(album, self.extra))
 
     def test_google_art_returns_no_result_with_malformed_response(self):
         album = _common.Bag(albumartist="some artist", album="some album")
-        json = b"""bla blup"""
+        json = """bla blup"""
         self.mock_response(fetchart.GoogleImages.URL, json)
         with self.assertRaises(StopIteration):
             next(self.source.get(album, self.extra))
