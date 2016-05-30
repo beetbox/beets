@@ -85,7 +85,7 @@ def _print_keys(query):
     returned row, with identation of 2 spaces.
     """
     for row in query:
-        print_(' ' * 2 + row[b'key'])
+        print_(' ' * 2 + row['key'])
 
 
 def fields_func(lib, opts, args):

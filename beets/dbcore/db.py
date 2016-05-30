@@ -562,13 +562,13 @@ class Results(object):
                 'SELECT * FROM {0} WHERE entity_id=?'.format(
                     self.model_class._flex_table
                 ),
-                (row[b'id'],)
+                (row['id'],)
             )
 
         cols = dict(row)
         values = dict((k, v) for (k, v) in cols.items()
                       if not k[:4] == 'flex')
-        flex_values = dict((row[b'key'], row[b'value']) for row in flex_rows)
+        flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
