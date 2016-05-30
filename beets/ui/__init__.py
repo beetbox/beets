@@ -43,7 +43,7 @@ from beets.autotag import mb
 from beets.dbcore import query as db_query
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
-if sys.platform == b'win32':
+if sys.platform == 'win32':
     try:
         import colorama
     except ImportError:
