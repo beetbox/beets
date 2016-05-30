@@ -192,7 +192,7 @@ class ImportSession(object):
 
         # Normalize the paths.
         if self.paths:
-            self.paths = map(normpath, self.paths)
+            self.paths = list(map(normpath, self.paths))
 
     def _setup_logging(self, loghandler):
         logger = logging.getLogger(__name__)
