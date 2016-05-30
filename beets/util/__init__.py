@@ -303,13 +303,13 @@ def _fsencoding():
     UTF-8 (not MBCS).
     """
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    if encoding == b'mbcs':
+    if encoding == 'mbcs':
         # On Windows, a broken encoding known to Python as "MBCS" is
         # used for the filesystem. However, we only use the Unicode API
         # for Windows paths, so the encoding is actually immaterial so
         # we can avoid dealing with this nastiness. We arbitrarily
         # choose UTF-8.
-        encoding = b'utf8'
+        encoding = 'utf8'
     return encoding
 
 
@@ -324,7 +324,7 @@ def bytestring_path(path):
     # On Windows, remove the magic prefix added by `syspath`. This makes
     # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
     # round-trip through `syspath`.
-    if os.path.__name__ == b'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
+    if os.path.__name__ == 'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
         path = path[len(WINDOWS_MAGIC_PREFIX):]
 
     # Try to encode with default encodings, but fall back to UTF8.
@@ -361,7 +361,7 @@ def syspath(path, prefix=True):
     *really* know what you're doing.
     """
     # Don't do anything if we're not on windows
-    if os.path.__name__ != b'ntpath':
+    if os.path.__name__ != 'ntpath':
         return path
 
     if not isinstance(path, unicode):
@@ -654,19 +654,19 @@ def cpu_count():
     """
     # Adapted from the soundconverter project:
     # https://github.com/kassoulet/soundconverter
-    if sys.platform == b'win32':
+    if sys.platform == 'win32':
         try:
             num = int(os.environ['NUMBER_OF_PROCESSORS'])
         except (ValueError, KeyError):
             num = 0
-    elif sys.platform == b'darwin':
+    elif sys.platform == 'darwin':
         try:
             num = int(command_output([b'/usr/sbin/sysctl', b'-n', b'hw.ncpu']))
         except (ValueError, OSError, subprocess.CalledProcessError):
             num = 0
     else:
         try:
-            num = os.sysconf(b'SC_NPROCESSORS_ONLN')
+            num = os.sysconf('SC_NPROCESSORS_ONLN')
         except (ValueError, OSError, AttributeError):
             num = 0
     if num >= 1:
@@ -693,7 +693,7 @@ def command_output(cmd, shell=False):
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        close_fds=platform.system() != b'Windows',
+        close_fds=platform.system() != 'Windows',
         shell=shell
     )
     stdout, stderr = proc.communicate()
