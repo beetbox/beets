@@ -279,8 +279,8 @@ def _sc_encode(gain, peak):
 
 def _wider_test_jpeg(data):
     """Test for a jpeg file following the UNIX file implementation which
-    uses the magic bytes rather than just looking for the bytes b'JFIF'
-    or b'EXIF' at a fixed position.
+    uses the magic bytes rather than just looking for the bytes that
+    represent'JFIF' or 'EXIF' at a fixed position.
     """
     if data[:2] == b'\xff\xd8':
         return 'jpeg'
