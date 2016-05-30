@@ -636,7 +636,7 @@ def term_width():
     except IOError:
         return fallback
     try:
-        height, width = struct.unpack(b'hh', buf)
+        height, width = struct.unpack('hh', buf)
     except struct.error:
         return fallback
     return width
