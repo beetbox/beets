@@ -214,7 +214,7 @@ def play_complicated(paths):
     while my_paths:
         time.sleep(1)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     # A very simple command-line player. Just give it names of audio
     # files on the command line; these are all played in sequence.
     paths = [os.path.abspath(os.path.expanduser(p))

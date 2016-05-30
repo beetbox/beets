@@ -171,5 +171,5 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

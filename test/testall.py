@@ -46,5 +46,5 @@ def suite():
             s.addTest(__import__(modname).suite())
     return s
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')
