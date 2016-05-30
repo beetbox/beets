@@ -63,7 +63,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_year = self.lib._connection().execute(
             'select year from items where '
-            'title="the title"').fetchone()[b'year']
+            'title="the title"').fetchone()['year']
         self.assertEqual(new_year, 1987)
 
     def test_store_only_writes_dirty_fields(self):
@@ -72,7 +72,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
-            'title="the title"').fetchone()[b'genre']
+            'title="the title"').fetchone()['genre']
         self.assertEqual(new_genre, original_genre)
 
     def test_store_clears_dirty_flags(self):
@@ -91,7 +91,7 @@ class AddTest(_common.TestCase):
         self.lib.add(self.i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()[b'grouping']
+            'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
     def test_library_add_path_inserts_row(self):
@@ -101,7 +101,7 @@ class AddTest(_common.TestCase):
         self.lib.add(i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()[b'grouping']
+            'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
 
