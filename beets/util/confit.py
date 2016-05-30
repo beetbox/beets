@@ -538,7 +538,8 @@ def _package_path(name):
     ``name == "__main__"``).
     """
     loader = pkgutil.get_loader(name)
-    if loader is None or name == '__main__':
+    # name == b'main' is deprecated
+    if loader is None or name == '__main__' or name == b'main':
         return None
 
     if hasattr(loader, 'get_filename'):
