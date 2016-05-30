@@ -1132,7 +1132,7 @@ def _configure(options):
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
-    if getattr(options, b'config', None) is not None:
+    if getattr(options, 'config', None) is not None:
         config_path = options.config
         del options.config
         config.set_file(config_path)

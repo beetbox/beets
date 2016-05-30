@@ -713,7 +713,7 @@ def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
     misreports its capacity). If it cannot be determined (e.g., on
     Windows), return `limit`.
     """
-    if hasattr(os, b'statvfs'):
+    if hasattr(os, 'statvfs'):
         try:
             res = os.statvfs(path)
         except OSError:

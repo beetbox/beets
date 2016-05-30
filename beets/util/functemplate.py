@@ -43,8 +43,8 @@ GROUP_CLOSE = u'}'
 ARG_SEP = u','
 ESCAPE_CHAR = u'$'
 
-VARIABLE_PREFIX = b'__var_'
-FUNCTION_PREFIX = b'__func_'
+VARIABLE_PREFIX = '__var_'
+FUNCTION_PREFIX = '__func_'
 
 
 class Environment(object):
@@ -73,7 +73,7 @@ def ex_literal(val):
     value.
     """
     if val is None:
-        return ast.Name(b'None', ast.Load())
+        return ast.Name('None', ast.Load())
     elif isinstance(val, NUMERIC_TYPES):
         return ast.Num(val)
     elif isinstance(val, bool):
@@ -126,7 +126,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     mod = ast.Module([func_def])
     ast.fix_missing_locations(mod)
 
-    prog = compile(mod, b'<generated>', b'exec')
+    prog = compile(mod, '<generated>', 'exec')
 
     # Debug: show bytecode.
     if debug:
@@ -209,11 +209,11 @@ class Call(object):
             # Create a subexpression that joins the result components of
             # the arguments.
             arg_exprs.append(ex_call(
-                ast.Attribute(ex_literal(u''), b'join', ast.Load()),
+                ast.Attribute(ex_literal(u''), 'join', ast.Load()),
                 [ex_call(
-                    b'map',
+                    'map',
                     [
-                        ex_rvalue(b'unicode'),
+                        ex_rvalue('unicode'),
                         ast.List(subexprs, ast.Load()),
                     ]
                 )],

@@ -1325,7 +1325,7 @@ class DefaultTemplateFunctions(object):
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
-    _prefix = b'tmpl_'
+    _prefix = 'tmpl_'
 
     def __init__(self, item=None, lib=None):
         """Parametrize the functions. If `item` or `lib` is None, then

@@ -28,7 +28,7 @@ import beets
 from beets import logging
 from beets import mediafile
 
-PLUGIN_NAMESPACE = b'beetsplug'
+PLUGIN_NAMESPACE = 'beetsplug'
 
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
@@ -72,7 +72,7 @@ class BeetsPlugin(object):
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
-        self.name = name or self.__module__.decode('utf8').split('.')[-1]
+        self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
         if not self.template_funcs:
             self.template_funcs = {}
@@ -247,8 +247,7 @@ def load_plugins(names=()):
     BeetsPlugin subclasses desired.
     """
     for name in names:
-        bname = name.encode('utf8')
-        modname = b'%s.%s' % (PLUGIN_NAMESPACE, bname)
+        modname = '{0}.{1}'.format(PLUGIN_NAMESPACE, name)
         try:
             try:
                 namespace = __import__(modname, None, None)
@@ -259,7 +258,7 @@ def load_plugins(names=()):
                 else:
                     raise
             else:
-                for obj in getattr(namespace, bname).__dict__.values():
+                for obj in getattr(namespace, name).__dict__.values():
                     if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
                             and obj != BeetsPlugin and obj not in _classes:
                         _classes.add(obj)
@@ -313,7 +312,7 @@ def queries():
 
 def types(model_cls):
     # Gives us `item_types` and `album_types`
-    attr_name = b'{0}_types'.format(model_cls.__name__.lower())
+    attr_name = '{0}_types'.format(model_cls.__name__.lower())
     types = {}
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
