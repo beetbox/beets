@@ -181,7 +181,7 @@ def _unpack_asf_image(data):
     of exceptions (out-of-bounds, etc.). We should clean this up
     sometime so that the failure modes are well-defined.
     """
-    type, size = struct.unpack_from(b'<bi', data)
+    type, size = struct.unpack_from('<bi', data)
     pos = 5
     mime = ""
     while data[pos:pos + 2] != b'\x00\x00':
@@ -201,7 +201,7 @@ def _unpack_asf_image(data):
 def _pack_asf_image(mime, data, type=3, description=""):
     """Pack image data for a WM/Picture tag.
     """
-    tag_data = struct.pack(b'<bi', type, len(data))
+    tag_data = struct.pack('<bi', type, len(data))
     tag_data += mime.encode("utf-16-le") + b'\x00\x00'
     tag_data += description.encode("utf-16-le") + b'\x00\x00'
     tag_data += data
@@ -223,7 +223,7 @@ def _sc_decode(soundcheck):
     # characters of ASCII hex preceded by a space.
     try:
         soundcheck = soundcheck.replace(b' ', b'').decode('hex')
-        soundcheck = struct.unpack(b'!iiiiiiiiii', soundcheck)
+        soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
     except (struct.error, TypeError):
         # SoundCheck isn't in the format we expect, so return default
         # values.
