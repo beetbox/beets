@@ -323,9 +323,9 @@ class ListenersTest(unittest.TestCase, TestHelper):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super(DummyPlugin, self).__init__()
-                self.foo = Mock(__name__=b'foo')
+                self.foo = Mock(__name__='foo')
                 self.register_listener('event_foo', self.foo)
-                self.bar = Mock(__name__=b'bar')
+                self.bar = Mock(__name__='bar')
                 self.register_listener('event_bar', self.bar)
 
         d = DummyPlugin()
