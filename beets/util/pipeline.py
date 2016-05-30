@@ -38,8 +38,8 @@ import Queue
 from threading import Thread, Lock
 import sys
 
-BUBBLE = b'__PIPELINE_BUBBLE__'
-POISON = b'__PIPELINE_POISON__'
+BUBBLE = '__PIPELINE_BUBBLE__'
+POISON = '__PIPELINE_POISON__'
 
 DEFAULT_QUEUE_SIZE = 16
 
