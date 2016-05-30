@@ -736,8 +736,8 @@ def show_path_changes(path_changes):
     sources, destinations = zip(*path_changes)
 
     # Ensure unicode output
-    sources = map(util.displayable_path, sources)
-    destinations = map(util.displayable_path, destinations)
+    sources = list(map(util.displayable_path, sources))
+    destinations = list(map(util.displayable_path, destinations))
 
     # Calculate widths for terminal split
     col_width = (term_width() - len(' -> ')) // 2
