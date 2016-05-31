@@ -1,65 +1,32 @@
 Export Plugin
 =============
 
-The ``export`` plugin lets you get data from the items and export the content to
-a ``json`` file.
+The ``export`` plugin lets you get data from the items and export the content
+as `JSON`_.
 
-Configuration
--------------
-To configure the plugin, make a ``export:`` section in your configuration
-file. The default options are::
+.. _JSON: http://www.json.org
 
-  export:
-    default_format: json
-    json:
-      formatting:
-        ensure_ascii: False
-        indent: 4
-        separators: [',' , ': ']
-        sort_keys: true
-
-- **default_format**: Choose the format of the exported content.
-  Supports json only for now.
-
-Each format have their own options.
-
-The ``json`` formatting uses the `json`_ standard library options.
-Using custom options overwrites all options at the same level.
-The default options used here are:
-
-- **ensure_ascii**: All non-ASCII characters are escaped with `\uXXXX`, if true.
-
-- **indent**: The number of spaces for indentation.
-
-- **separators**: A ``(item_separator, dict_separator)`` tuple
-
-- **sort_keys**: Sorts the keys of the json
-
-.. _json: https://docs.python.org/2/library/json.html#basic-usage
-
-Using
------
-
-Enable the ``export`` plugin (see :ref:`using-plugins` for help) and then add a
-``export`` section to your :doc:`configuration file </reference/config>`
-
-To use, you can enter a :doc:`query </reference/query>` to get the data from
-your library::
+Enable the ``export`` plugin (see :ref:`using-plugins` for help). Then, type ``beet export`` followed by a :doc:`query </reference/query>` to get the data from
+your library. For example, run this::
 
     $ beet export beatles
 
-If you just want to see specific properties you can use the
-``--include-keys`` option to filter them. The argument is a
-comma-separated list of simple glob patterns where ``*`` matches any
-string. For example::
+to print a JSON file containing information about your Beatles tracks.
 
-    $ beet export -i 'title,mb*' beatles
+Command-Line Options
+--------------------
 
-Will only show the ``title`` property and all properties starting with
-``mb``. You can add the ``-i`` option multiple times to the command
-line.
+The ``export`` command has these command-line options:
 
-Additional command-line options include:
+* ``--include-keys`` or ``-i``: Choose the properties to include in the output
+  data. The argument is a comma-separated list of simple glob patterns where
+  ``*`` matches any string. For example::
+
+      $ beet export -i 'title,mb*' beatles
+
+  will include the ``title`` property and all properties starting with
+  ``mb``. You can add the ``-i`` option multiple times to the command
+  line.
 
 * ``--library`` or ``-l``: Show data from the library database instead of the
   files' tags.
@@ -68,3 +35,31 @@ Additional command-line options include:
   the data in the console.
 
 * ``--append``: Appends the data to the file instead of writing.
+
+Configuration
+-------------
+
+To configure the plugin, make a ``export:`` section in your configuration
+file. Under the ``json`` key, these options are available:
+
+- **ensure_ascii**: Escape non-ASCII characters with `\uXXXX` entities.
+
+- **indent**: The number of spaces for indentation.
+
+- **separators**: A ``[item_separator, dict_separator]`` tuple.
+
+- **sort_keys**: Sorts the keys in JSON dictionaries.
+
+These options match the options from the `Python json module`_.
+
+.. _Python json module: https://docs.python.org/2/library/json.html#basic-usage
+
+The default options look like this::
+
+    export:
+        json:
+            formatting:
+                ensure_ascii: False
+                indent: 4
+                separators: [',' , ': ']
+                sort_keys: true
