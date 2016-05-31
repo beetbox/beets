@@ -20,5 +20,5 @@ test_script:
 # Allow all failures for now: the tests don't yet pass!
 matrix:
     allow_failures:
-        - TOXENV: py27cov
-        - TOXENV: py35cov
+        - TOX_ENV: py27cov
+        - TOX_ENV: py35cov
