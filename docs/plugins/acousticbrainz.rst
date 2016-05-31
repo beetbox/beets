@@ -2,8 +2,7 @@ AcousticBrainz Plugin
 =====================
 
 The ``acousticbrainz`` plugin gets acoustic-analysis information from the
-`AcousticBrainz`_ project. The spirit is similar to the
-:doc:`/plugins/echonest`.
+`AcousticBrainz`_ project.
 
 .. _AcousticBrainz: http://acousticbrainz.org/
 

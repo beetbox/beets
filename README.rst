@@ -68,7 +68,7 @@ shockingly simple if you know a little Python.
 .. _acoustic fingerprints:
     http://beets.readthedocs.org/page/plugins/chroma.html
 .. _ReplayGain: http://beets.readthedocs.org/page/plugins/replaygain.html
-.. _tempos: http://beets.readthedocs.org/page/plugins/echonest.html
+.. _tempos: http://beets.readthedocs.org/page/plugins/acousticbrainz.html
 .. _genres: http://beets.readthedocs.org/page/plugins/lastgenre.html
 .. _album art: http://beets.readthedocs.org/page/plugins/fetchart.html
 .. _lyrics: http://beets.readthedocs.org/page/plugins/lyrics.html

@@ -67,6 +67,10 @@ Other changes:
 
 * :doc:`/plugins/acousticbrainz`: AcousticBrainz lookups are now done over
   HTTPS. Thanks to :user:`Freso`. :bug:`2007`
+* The :doc:`/plugins/echonest` has been removed. The API is `shutting down`_.
+  You might want to try the :doc:`/plugins/acousticbrainz` instead.
+
+.. _shutting down: https://developer.spotify.com/news-stories/2016/03/29/api-improvements-update/
 
 
 1.3.17 (February 7, 2016)

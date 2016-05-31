@@ -40,7 +40,6 @@ Each plugin has its own set of options that can be defined in a section bearing 
    convert
    discogs
    duplicates
-   echonest
    edit
    embedart
    embyupdate
@@ -100,8 +99,6 @@ Metadata
 
 * :doc:`acousticbrainz`: Fetch various AcousticBrainz metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
-* :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
-  `the Echo Nest`_ (tempo, energy, danceability, ...).
 * :doc:`edit`: Edit metadata from a text editor.
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`fetchart`: Fetch album cover art from various sources.
@@ -122,8 +119,6 @@ Metadata
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 
-.. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
-.. _the Echo Nest: http://www.echonest.com
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
 
 Path Formats
