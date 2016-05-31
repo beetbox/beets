@@ -83,6 +83,8 @@ have multiple paths, format them as a YAML list like so::
         - /path/one
         - /path/two
 
+.. _ignore:
+
 ignore
 ~~~~~~
 
@@ -91,6 +93,8 @@ importing. By default, this consists of ``.*``,  ``*~``,  ``System Volume
 Information``, ``lost+found`` (i.e., beets ignores Unix-style hidden files,
 backup files, and directories that appears at the root of some Linux and Windows
 filesystems).
+
+.. _ignore_hidden:
 
 ignore_hidden
 ~~~~~~~~~~~~~

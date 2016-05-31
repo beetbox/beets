@@ -4,34 +4,40 @@ Changelog
 1.3.18 (in development)
 -----------------------
 
+The ``echonest`` plugin has been removed in this version because the API it
+used is `shutting down`_. You might want to try the
+:doc:`/plugins/acousticbrainz` instead.
+
+.. _shutting down: https://developer.spotify.com/news-stories/2016/03/29/api-improvements-update/
+
 New features:
 
-* :doc:`/plugins/convert`: A new `album_art_maxwidth` lets you resize album
-  art while copying it.
+* :doc:`/plugins/convert`: A new `album_art_maxwidth` setting lets you resize
+  album art while copying it.
 * :doc:`/plugins/convert`: Make `extension` optional for conversion formats.
+  By default, the extension is the same as the name of the configured format.
 * :doc:`/plugins/importadded`: A new `preserve_write_mtimes` option
-  lets you preserve mtime of files after each write.
-* :doc:`/plugins/lyrics`: The plugin can now translate the fetched lyrics to a
-  configured `bing_lang_to` langage. Enabling translation require to register
-  for a Microsoft Azure Marketplace free account. Thanks to :user:`Kraymer`.
+  lets you preserve mtime of files even when beets updates their metadata.
+* :doc:`/plugins/lyrics`: The plugin can now translate the fetched lyrics to
+  your native language using the Bing translation API. Thanks to
+  :user:`Kraymer`.
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `fanart.tv`_.
-  Albums are matched using the ``mb_releasegroupid`` tag.
-* :doc:`/plugins/fetchart`: The ``enforce_ratio`` option was enhanced and now
-  allows specifying a certain deviation that a valid image may have from being
-  exactly square.
+* :doc:`/plugins/fetchart`: The `enforce_ratio` option now lets you tolerate
+  images that are *almost* square but differ slightly from an exact 1:1
+  aspect ratio.
 * :doc:`/plugins/fetchart`: The plugin can now optionally save the artwork's
-  source in a flexible field; for a usecase see the documentation.
-* :doc:`/plugins/export`: A new plugin to export the data from queries to a
-  json format. Thanks to :user:`GuilhermeHideki`.
-* :doc:`/reference/pathformat`: new functions: %first{} and %ifdef{}
-* :doc:`/reference/config`: option ``terminal_encoding`` now works for some
-  inputs
-* New :doc:`/plugins/hook` that allows commands to be executed when an event is
-  emitted by beets. :bug:`1561` :bug:`1603`
-* :doc:`/reference/config`: New ``ignore_hidden`` configuration option allowing
-  platform-specific hidden files to be ignored on import.
-* :doc:`/reference/config`: option ``ignore`` now includes ``lost+found``
-  directory by default
+  source in an attribute in the database.
+* The new :doc:`/plugins/export` can export data from beets' database as
+  JSON. Thanks to :user:`GuilhermeHideki`.
+* There are two new functions for use in templates: ``%first`` and ``%ifdef``.
+  See :ref:`template-functions`.
+* The :ref:`terminal_encoding` configuration option can now also override the
+  *input* encoding. (Previously, it only affected the encoding of the standard
+  *output* stream.)
+* The new :doc:`/plugins/hook` lets you execute commands in response to beets
+  events.
+* A new :ref:`ignore_hidden` configuration option lets you ignore files that
+  your OS marks as invisible.
 * :doc:`/plugins/web`: A new `values` endpoint lets you get the distinct values
   of a field. Thanks to :user:`sumpfralle`. :bug:`2010`
 
@@ -39,38 +45,33 @@ New features:
 
 Fixes:
 
-* Fix a problem with the :ref:`stats-cmd` in exact mode when filenames on
-  Windows use non-ASCII characters. :bug:`1891`
+* Fix a problem with the :ref:`stats-cmd` command in exact mode when filenames
+  on Windows use non-ASCII characters. :bug:`1891`
 * Fix a crash when iTunes Sound Check tags contained invalid data. :bug:`1895`
 * :doc:`/plugins/mbcollection`: The plugin now redacts your MusicBrainz
   password in the ``beet config`` output. :bug:`1907`
 * :doc:`/plugins/scrub`: Fix an occasional problem where scrubbing on import
-  could undo the ``id3v23`` setting. :bug:`1903`
+  could undo the :ref:`id3v23` setting. :bug:`1903`
 * :doc:`/plugins/lyrics`: Add compatibility with some changes to the
   LyricsWiki page markup. :bug:`1912` :bug:`1909`
-* :doc:`/plugins/lyrics`: Also fix retrieval from Musixmatch and the way we
-  guess the URL for lyrics. :bug:`1880`
+* :doc:`/plugins/lyrics`: Fix retrieval from Musixmatch by improving the way
+  we guess the URL for lyrics on that service. :bug:`1880`
 * :doc:`/plugins/edit`: Fail gracefully when the configured text editor
   command can't be invoked. :bug:`1927`
 * :doc:`/plugins/fetchart`: Fix a crash in the Wikipedia backend on non-ASCII
   artist and album names. :bug:`1960`
-* :doc:`/plugins/convert`: Change default `ogg` encoding quality from 2 to 3
-  (to fit the default from the `oggenc(1)` manpage). :bug:`1982`
+* :doc:`/plugins/convert`: Change the default `ogg` encoding quality from 2 to
+  3 (to fit the default from the `oggenc(1)` manpage). :bug:`1982`
 * :doc:`/plugins/convert`: The `never_convert_lossy_files` option now
   considers AIFF a lossless format. :bug:`2005`
 * :doc:`/plugins/web`: A proper 404 error, instead of an internal exception,
   is returned when missing album art is requested. Thanks to
   :user:`sumpfralle`. :bug:`2011`
-* Handle more float edge cases in ``safe_cast``. :bug:`2014`
-
-Other changes:
-
+* Tolerate more malformed floating-point numbers in metadata tags. :bug:`2014`
+* The :ref:`ignore` configuration option now includes the ``lost+found``
+  directory by default.
 * :doc:`/plugins/acousticbrainz`: AcousticBrainz lookups are now done over
   HTTPS. Thanks to :user:`Freso`. :bug:`2007`
-* The ``echonest`` plugin has been removed. The API is `shutting down`_.
-  You might want to try the :doc:`/plugins/acousticbrainz` instead.
-
-.. _shutting down: https://developer.spotify.com/news-stories/2016/03/29/api-improvements-update/
 
 
 1.3.17 (February 7, 2016)
