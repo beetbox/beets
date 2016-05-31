@@ -204,7 +204,8 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
 
 
 @_common.slow_test()
-class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper, ConvertCommand):
+class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
+                                 ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option.
     """
 
