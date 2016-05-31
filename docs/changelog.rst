@@ -67,7 +67,7 @@ Other changes:
 
 * :doc:`/plugins/acousticbrainz`: AcousticBrainz lookups are now done over
   HTTPS. Thanks to :user:`Freso`. :bug:`2007`
-* The :doc:`/plugins/echonest` has been removed. The API is `shutting down`_.
+* The ``echonest`` plugin has been removed. The API is `shutting down`_.
   You might want to try the :doc:`/plugins/acousticbrainz` instead.
 
 .. _shutting down: https://developer.spotify.com/news-stories/2016/03/29/api-improvements-update/
@@ -749,10 +749,10 @@ As usual, there are loads of little fixes and improvements:
   the field cannot be removed (i.e., when it does not exist, when it is a
   built-in field, or when it is a computed field). :bug:`1124`
 * The deprecated ``echonest_tempo`` plugin has been removed. Please use the
-  :doc:`/plugins/echonest` instead.
-* :doc:`/plugins/echonest`: Fingerprint-based lookup has been removed in
+  ``echonest`` plugin instead.
+* ``echonest`` plugin: Fingerprint-based lookup has been removed in
   accordance with `API changes`_. :bug:`1121`
-* :doc:`/plugins/echonest`: Avoid a crash when the song has no duration
+* ``echonest`` plugin: Avoid a crash when the song has no duration
   information. :bug:`896`
 * :doc:`/plugins/lyrics`: Avoid a crash when retrieving non-ASCII lyrics from
   the Google backend. :bug:`1135` :bug:`1136`
@@ -886,7 +886,7 @@ And countless little improvements and fixes:
 * Fix an issue where modifying an album's field without actually changing it
   would not update the corresponding tracks to bring differing tracks back in
   line with the album. :bug:`856`
-* :doc:`/plugins/echonest`: When communicating with the Echo Nest servers
+* ``echonest`` plugin: When communicating with the Echo Nest servers
   fails repeatedly, log an error instead of exiting. :bug:`1096`
 * :doc:`/plugins/lyrics`: Avoid an error when the Google source returns a
   result without a title. Thanks to Alberto Leal. :bug:`1097`
@@ -906,7 +906,7 @@ If you want to see all your songs in reverse chronological order, just type
 
 Flexible field types mean that some functionality that has previously only
 worked for built-in fields, like range queries, can now work with plugin- and
-user-defined fields too. For starters, the :doc:`/plugins/echonest/` and
+user-defined fields too. For starters, the ``echonest`` plugin and
 :doc:`/plugins/mpdstats` now mark the types of the fields they provide---so
 you can now say, for example, ``beet ls liveness:0.5..1.5`` for the Echo Nest
 "liveness" attribute. The :doc:`/plugins/types` makes it easy to specify field
@@ -1150,14 +1150,14 @@ new in this release:
 * A new `initial_key` field is available in the database and files' tags. You
   can set the field manually using a command like ``beet modify
   initial_key=Am``.
-* The :doc:`/plugins/echonest` sets the `initial_key` field if the data is
+* The ``echonest`` plugin sets the `initial_key` field if the data is
   available.
 * A new :doc:`/plugins/keyfinder` runs a command-line tool to get the key from
   audio data and store it in the `initial_key` field.
 
 There are also many bug fixes and little enhancements:
 
-* :doc:`/plugins/echonest`: Truncate files larger than 50MB before uploading for
+* ``echonest`` plugin: Truncate files larger than 50MB before uploading for
   analysis.
 * :doc:`/plugins/fetchart`: Fix a crash when the server does not specify a
   content type. Thanks to Lee Reinhardt.
@@ -1214,7 +1214,7 @@ New stuff:
   queries (combined with "or" logic). Album-level queries are also now
   possible and automatic playlist regeneration can now be disabled. Thanks to
   brilnius.
-* :doc:`/plugins/echonest`: Echo Nest similarity now weights the tempo in
+* ``echonest`` plugin: Echo Nest similarity now weights the tempo in
   better proportion to other metrics. Also, options were added to specify
   custom thresholds and output formats. Thanks to Adam M.
 * Added the :ref:`after_write <plugin_events>` plugin event.
@@ -1235,7 +1235,7 @@ Fixes:
   legibility).
 * Fixed a regression that made it impossible to use the :ref:`modify-cmd`
   command to add new flexible fields. Thanks to brilnius.
-* :doc:`/plugins/echonest`: Avoid crashing when the audio analysis fails.
+* ``echonest`` plugin: Avoid crashing when the audio analysis fails.
   Thanks to Pedro Silva.
 * :doc:`/plugins/duplicates`: Fix checksumming command execution for files
   with quotation marks in their names. Thanks again to Pedro Silva.
@@ -1311,7 +1311,7 @@ Unrelated new stuff:
 
 Other little fixes:
 
-* :doc:`/plugins/echonest`: Tempo (BPM) is now always stored as an integer.
+* ``echonest`` plugin: Tempo (BPM) is now always stored as an integer.
   Thanks to Heinz Wiesinger.
 * Fix Python 2.6 compatibility in some logging statements in
   :doc:`/plugins/chroma` and :doc:`/plugins/lastgenre`.
@@ -1352,7 +1352,7 @@ Other little fixes:
   no changes are necessary. Thanks to brilnius.
 * :doc:`/plugins/fetchart`: When using the ``remote_priority`` config option,
   local image files are no longer completely ignored.
-* :doc:`/plugins/echonest`: Fix an issue causing the plugin to appear twice in
+* ``echonest`` plugin: Fix an issue causing the plugin to appear twice in
   the output of the ``beet version`` command.
 * :doc:`/plugins/lastgenre`: Fix an occasional crash when no tag weight was
   returned by Last.fm.
@@ -1377,7 +1377,7 @@ into sync with your database. Thanks to Heinz Wiesinger.
 
 We added some plugins and overhauled some existing ones:
 
-* The new :doc:`/plugins/echonest` plugin can fetch a wide range of `acoustic
+* The new ``echonest`` plugin plugin can fetch a wide range of `acoustic
   attributes`_ from `The Echo Nest`_, including the "speechiness" and
   "liveness" of each track. The new plugin supersedes an older version
   (``echonest_tempo``) that only fetched the BPM field. Thanks to Pedro Silva
