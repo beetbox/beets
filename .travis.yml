@@ -13,8 +13,6 @@ matrix:
           env: {TOX_ENV: py35-test}
         - python: pypy
           env: {TOX_ENV: pypy-test}
-        - python: pypy3
-          env: {TOX_ENV: pypy3-test}
         - python: 2.7
           env: {TOX_ENV: py27-flake8}
         - python: 3.3
