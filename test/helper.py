@@ -52,6 +52,7 @@ from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
 from beets.ui import _arg_encoding
+from beets import util
 
 # TODO Move AutotagMock here
 from test import _common
@@ -306,11 +307,19 @@ class TestHelper(object):
 
         If `path` is not set in `values` it is set to `item.destination()`.
         """
+        # When specifying a path, store it normalized (as beets does
+        # ordinarily).
+        if 'path' in values:
+            values['path'] = util.normpath(values['path'])
+
         item = self.create_item(**values)
         item.add(self.lib)
+
+        # Ensure every item has a path.
         if 'path' not in values:
             item['path'] = item.destination()
             item.store()
+
         return item
 
     def add_item_fixture(self, **values):

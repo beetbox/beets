@@ -31,6 +31,7 @@ from beets.dbcore import types
 from beets.dbcore.query import (NoneQuery, ParsingError,
                                 InvalidQueryArgumentTypeError)
 from beets.library import Library, Item
+from beets import util
 
 
 class TestHelper(helper.TestHelper):
@@ -372,7 +373,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         super(PathQueryTest, self).setUp()
 
         # This is the item we'll try to match.
-        self.i.path = '/a/b/c.mp3'
+        self.i.path = util.normpath('/a/b/c.mp3')
         self.i.title = u'path item'
         self.i.album = u'path album'
         self.i.store()
@@ -380,7 +381,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
         # A second item for testing exclusion.
         i2 = _common.item()
-        i2.path = '/x/y/z.mp3'
+        i2.path = util.normpath('/x/y/z.mp3')
         i2.title = 'another item'
         i2.album = 'another album'
         self.lib.add(i2)
