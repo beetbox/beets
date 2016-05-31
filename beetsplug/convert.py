@@ -199,9 +199,10 @@ class ConvertPlugin(BeetsPlugin):
             # Something went wrong (probably Ctrl+C), remove temporary files
             self._log.info(u'Encoding {0} failed. Cleaning up...',
                            util.displayable_path(source))
-            self._log.debug(u'Command {0} exited with status {1}',
-                            exc.cmd.decode('utf8', 'ignore'),
-                            exc.returncode)
+            self._log.debug(u'Command {0} exited with status {1}: {2}',
+                            args,
+                            exc.returncode,
+                            exc.output)
             util.remove(dest)
             util.prune_dirs(os.path.dirname(dest))
             raise
