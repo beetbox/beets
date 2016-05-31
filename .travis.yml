@@ -16,7 +16,9 @@ matrix:
         - python: pypy3
           env: {TOX_ENV: pypy3-test}
         - python: 2.7
-          env: {TOX_ENV: flake8}
+          env: {TOX_ENV: py27-flake8}
+        - python: 3.3
+          env: {TOX_ENV: py27-flake8}
         - python: 2.7
           env: {TOX_ENV: docs}
     allow_failures:
