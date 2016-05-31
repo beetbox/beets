@@ -4,38 +4,47 @@ Changelog
 1.3.18 (in development)
 -----------------------
 
+This update adds a new :doc:`/plugins/hook` that lets you integrate beets with
+command-line tools and an :doc:`/plugins/export` that can dump data from the
+beets database as JSON. You can also automatically translate lyrics using a
+machine translation service.
+
 The ``echonest`` plugin has been removed in this version because the API it
 used is `shutting down`_. You might want to try the
 :doc:`/plugins/acousticbrainz` instead.
 
 .. _shutting down: https://developer.spotify.com/news-stories/2016/03/29/api-improvements-update/
 
-New features:
+Some of the larger new features:
 
-* :doc:`/plugins/convert`: A new `album_art_maxwidth` setting lets you resize
-  album art while copying it.
-* :doc:`/plugins/convert`: Make `extension` optional for conversion formats.
-  By default, the extension is the same as the name of the configured format.
-* :doc:`/plugins/importadded`: A new `preserve_write_mtimes` option
-  lets you preserve mtime of files even when beets updates their metadata.
+* The new :doc:`/plugins/hook` lets you execute commands in response to beets
+  events.
+* The new :doc:`/plugins/export` can export data from beets' database as
+  JSON. Thanks to :user:`GuilhermeHideki`.
 * :doc:`/plugins/lyrics`: The plugin can now translate the fetched lyrics to
   your native language using the Bing translation API. Thanks to
   :user:`Kraymer`.
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `fanart.tv`_.
+
+Smaller new things:
+
+* There are two new functions available in templates: ``%first`` and ``%ifdef``.
+  See :ref:`template-functions`.
+* :doc:`/plugins/convert`: A new `album_art_maxwidth` setting lets you resize
+  album art while copying it.
+* :doc:`/plugins/convert`: The `extension` setting is now optional for
+  conversion formats. By default, the extension is the same as the name of the
+  configured format.
+* :doc:`/plugins/importadded`: A new `preserve_write_mtimes` option
+  lets you preserve mtime of files even when beets updates their metadata.
 * :doc:`/plugins/fetchart`: The `enforce_ratio` option now lets you tolerate
   images that are *almost* square but differ slightly from an exact 1:1
   aspect ratio.
 * :doc:`/plugins/fetchart`: The plugin can now optionally save the artwork's
   source in an attribute in the database.
-* The new :doc:`/plugins/export` can export data from beets' database as
-  JSON. Thanks to :user:`GuilhermeHideki`.
-* There are two new functions for use in templates: ``%first`` and ``%ifdef``.
-  See :ref:`template-functions`.
 * The :ref:`terminal_encoding` configuration option can now also override the
   *input* encoding. (Previously, it only affected the encoding of the standard
   *output* stream.)
-* The new :doc:`/plugins/hook` lets you execute commands in response to beets
-  events.
 * A new :ref:`ignore_hidden` configuration option lets you ignore files that
   your OS marks as invisible.
 * :doc:`/plugins/web`: A new `values` endpoint lets you get the distinct values
