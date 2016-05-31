@@ -59,7 +59,7 @@ class KeyFinderPlugin(BeetsPlugin):
                 continue
 
             try:
-                output = util.command_output([bin, '-f',
+                output = util.command_output([bin, b'-f',
                                               util.syspath(item.path)])
             except (subprocess.CalledProcessError, OSError) as exc:
                 self._log.error(u'execution failed: {0}', exc)
