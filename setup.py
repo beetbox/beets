@@ -22,6 +22,29 @@ import sys
 import subprocess
 import shutil
 from setuptools import setup
+from setuptools.command.test import test as default_test
+
+
+class test(default_test):
+    user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
+
+    def initialize_options(self):
+        default_test.initialize_options(self)
+        self.tox_args = None
+
+    def finalize_options(self):
+        default_test.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import shlex
+        import tox
+        args = self.tox_args
+        if args:
+            args = shlex.split(self.tox_args)
+        errno = tox.cmdline(args=args)
+        sys.exit(errno)
 
 
 def _read(fn):
@@ -96,16 +119,12 @@ setup(
     ] + (['colorama'] if (sys.platform == 'win32') else []),
 
     tests_require=[
-        'beautifulsoup4',
-        'flask',
-        'mock',
-        'pylast',
-        'rarfile',
-        'responses',
-        'pyxdg',
-        'pathlib',
-        'python-mpd2',
+        'tox',
     ],
+
+    cmdclass = {
+        'test': test
+    },
 
     # Plugin (optional) dependencies:
     extras_require={
