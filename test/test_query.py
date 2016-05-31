@@ -569,7 +569,10 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
     @patch('beets.library.os')
     def test_path_sep_detection(self, mock_os):
         mock_os.sep = '/'
+        mock_os.altsep = None
+        mock_os.path.exists = lambda p: True
         is_path = beets.library.PathQuery.is_path_query
+
         self.assertTrue(is_path('/foo/bar'))
         self.assertTrue(is_path('foo/bar'))
         self.assertTrue(is_path('foo/'))
