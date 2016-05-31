@@ -798,6 +798,7 @@ def _windows_long_path_name(short_path):
     """
     if not isinstance(short_path, unicode):
         short_path = unicode(short_path)
+        short_path = short_path.decode(_fsencoding())
 
     import ctypes
     buf = ctypes.create_unicode_buffer(260)
