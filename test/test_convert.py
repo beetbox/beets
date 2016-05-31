@@ -185,7 +185,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
             image_data = f.read()
 
         with control_stdin('y'):
-            self.run_convert(self.item.path)
+            self.run_convert()
         converted = os.path.join(self.convert_dest, 'converted.mp3')
         mediafile = MediaFile(converted)
         self.assertEqual(mediafile.images[0].data, image_data)
