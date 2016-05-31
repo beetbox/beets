@@ -185,8 +185,8 @@ class ConvertPlugin(BeetsPlugin):
         args = shlex.split(command)
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
-                b'source': source,
-                b'dest': dest,
+                'source': source,
+                'dest': dest,
             })
 
         if pretend:
