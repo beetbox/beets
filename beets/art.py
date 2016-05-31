@@ -126,13 +126,13 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             # Converting images to grayscale tends to minimize the weight
             # of colors in the diff score.
             convert_proc = subprocess.Popen(
-                [b'convert', syspath(imagepath), syspath(art),
-                 b'-colorspace', b'gray', b'MIFF:-'],
+                ['convert', syspath(imagepath), syspath(art),
+                 '-colorspace', 'gray', 'MIFF:-'],
                 stdout=subprocess.PIPE,
                 close_fds=not is_windows,
             )
             compare_proc = subprocess.Popen(
-                [b'compare', b'-metric', b'PHASH', b'-', b'null:'],
+                ['compare', '-metric', 'PHASH', '-', 'null:'],
                 stdin=convert_proc.stdout,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

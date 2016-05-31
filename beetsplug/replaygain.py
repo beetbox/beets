@@ -102,9 +102,9 @@ class Bs1770gainBackend(Backend):
             'method': 'replaygain',
         })
         self.chunk_at = config['chunk_at'].as_number()
-        self.method = b'--' + bytes(config['method'].get(unicode))
+        self.method = '--' + config['method'].get(unicode)
 
-        cmd = b'bs1770gain'
+        cmd = 'bs1770gain'
         try:
             call([cmd, self.method])
             self.command = cmd
@@ -195,7 +195,7 @@ class Bs1770gainBackend(Backend):
         # Construct shell command.
         cmd = [self.command]
         cmd = cmd + [self.method]
-        cmd = cmd + [b'-it']
+        cmd = cmd + ['-it']
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
@@ -267,9 +267,9 @@ class CommandBackend(Backend):
                 )
         else:
             # Check whether the program is in $PATH.
-            for cmd in (b'mp3gain', b'aacgain'):
+            for cmd in ('mp3gain', 'aacgain'):
                 try:
-                    call([cmd, b'-v'])
+                    call([cmd, '-v'])
                     self.command = cmd
                 except OSError:
                     pass
@@ -334,14 +334,14 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd = [self.command, b'-o', b'-s', b's']
+        cmd = [self.command, '-o', '-s', 's']
         if self.noclip:
             # Adjust to avoid clipping.
-            cmd = cmd + [b'-k']
+            cmd = cmd + ['-k']
         else:
             # Disable clipping warning.
-            cmd = cmd + [b'-c']
-        cmd = cmd + [b'-d', bytes(self.gain_offset)]
+            cmd = cmd + ['-c']
+        cmd = cmd + ['-d', self.gain_offset]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug(u'analyzing {0} files', len(items))
