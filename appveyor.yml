@@ -4,17 +4,21 @@ deploy: off
 
 environment:
     matrix:
-        - PYTHON: "C:\\Python27"
-          TOXENV: py27
+        - PYTHON: C:\Python27
+          TOX_ENV: py27cov
+        - PYTHON: C:\Python35
+          TOX_ENV: py35cov
 
 # Install Tox for running tests.
 install:
     - "%PYTHON%/Scripts/pip.exe install tox"
+    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
 test_script:
-    - "%PYTHON%/Scripts/tox.exe"
+    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV%"
 
 # Allow all failures for now: the tests don't yet pass!
 matrix:
     allow_failures:
-        - TOXENV: py27
+        - TOXENV: py27cov
+        - TOXENV: py35cov
