@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.18 (in development)
------------------------
+1.3.18 (May 31, 2016)
+---------------------
 
 This update adds a new :doc:`/plugins/hook` that lets you integrate beets with
 command-line tools and an :doc:`/plugins/export` that can dump data from the
