@@ -4,13 +4,26 @@ sudo: false
 matrix:
     include:
         - python: 2.7
-          env: {TOX_ENV: py27cov, COVERAGE: 1}
+          env: {TOX_ENV: py27-test, TOX_ARGS: --show-skipped --with-coverage, COVERAGE: 1}
+        - python: 3.3
+          env: {TOX_ENV: py33-test, TOX_ARGS: --show-skipped}
+        - python: 3.4
+          env: {TOX_ENV: py34-test, TOX_ARGS: --show-skipped}
+        - python: 3.5
+          env: {TOX_ENV: py35-test, TOX_ARGS: --show-skipped}
         - python: pypy
-          env: {TOX_ENV: pypy}
+          env: {TOX_ENV: pypy-test, TOX_ARGS: --show-skipped}
         - python: 2.7
-          env: {TOX_ENV: docs, NONTEST: 1}
+          env: {TOX_ENV: py27-flake8, TOX_ARGS: --min-version=2.7}
+        - python: 3.3
+          env: {TOX_ENV: py33-flake8, TOX_ARGS: --min-version=3.3}
         - python: 2.7
-          env: {TOX_ENV: flake8, NONTEST: 1}
+          env: {TOX_ENV: docs}
+    allow_failures:
+        - python: 3.3
+        - python: 3.4
+        - python: 3.5
+        - python: pypy3
 
 # Non-Python dependencies.
 addons:
@@ -25,7 +38,7 @@ install:
     - travis_retry pip install tox sphinx
     - travis_retry tox -e $TOX_ENV --notest
 
-script: tox -e $TOX_ENV
+script: tox -e $TOX_ENV -- $TOX_ARGS
 
 # Report coverage to codecov.io.
 before_install:
