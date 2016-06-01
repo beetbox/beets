@@ -195,7 +195,7 @@ class Bs1770gainBackend(Backend):
         # Construct shell command.
         cmd = [self.command]
         cmd = cmd + [self.method]
-        cmd = cmd + [b'-it']
+        cmd = cmd + [b'-p']
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
