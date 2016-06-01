@@ -39,7 +39,7 @@ class TestHelper(helper.TestHelper):
 
         # A Python script that copies the file and appends a tag.
         stub = os.path.join(_common.RSRC, 'convert_stub.py')
-        return u'python {} $source $dest {}'.format(stub, tag)
+        return u"python '{}' $source $dest {}".format(stub, tag)
 
     def assertFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content ends with `tag`.
