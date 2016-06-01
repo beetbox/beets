@@ -38,10 +38,8 @@ class TestHelper(helper.TestHelper):
                              .format(tag))
 
         # A Python script that copies the file and appends a tag.
-        return u'python -c \'import sys; inf = open(sys.argv[1], "rb"); ' \
-               u'outf = open(sys.argv[2], "wb"); ' \
-               u'outf.write(inf.read()); ' \
-               u'outf.write(b"{}")\' $source $dest'.format(tag)
+        stub = os.path.join(_common.RSRC, 'convert_stub.py')
+        return u'python {} $source $dest {}'.format(stub, tag)
 
     def assertFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content ends with `tag`.
