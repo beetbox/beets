@@ -20,7 +20,7 @@ def convert(in_file, out_file, tag):
     # as UTF-8 bytes.)
     if platform.system() == 'Windows':
         in_file = in_file.decode('utf8')
-        out_file = in_file.decode('utf8')
+        out_file = out_file.decode('utf8')
 
     with open(out_file, 'wb') as out_f:
         with open(in_file, 'rb') as in_f:
