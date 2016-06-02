@@ -595,6 +595,11 @@ class Results(object):
     def __nonzero__(self):
         """Does this result contain any objects?
         """
+        return self.__bool__()
+
+    def __bool__(self):
+        """Does this result contain any objects?
+        """
         return bool(len(self))
 
     def __getitem__(self, n):
