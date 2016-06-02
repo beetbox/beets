@@ -412,7 +412,7 @@ def tag_album(items, search_artist=None, search_album=None,
         id_info = match_by_id(items)
         if id_info:
             _add_candidate(items, candidates, id_info)
-            rec = _recommendation(candidates.values())
+            rec = _recommendation(list(candidates.values()))
             log.debug(u'Album ID match recommendation is {0}', rec)
             if candidates and not config['import']['timid']:
                 # If we have a very good MBID match, return immediately.
