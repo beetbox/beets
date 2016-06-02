@@ -184,7 +184,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         image_path = os.path.join(_common.RSRC, 'image-2x3.jpg')
         self.album.artpath = image_path
         self.album.store()
-        with open(os.path.join(image_path)) as f:
+        with open(os.path.join(image_path), 'rb') as f:
             image_data = f.read()
 
         with control_stdin('y'):
