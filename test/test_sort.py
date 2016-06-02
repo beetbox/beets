@@ -153,10 +153,10 @@ class SortFixedFieldTest(DummyDataTestCase):
         q = u''
         sort = dbcore.query.FixedFieldSort('path', True)
         results = self.lib.items(q, sort)
-        self.assertEqual(results[0]['path'], '/path0.mp3')
-        self.assertEqual(results[1]['path'], '/patH1.mp3')
-        self.assertEqual(results[2]['path'], '/paTH2.mp3')
-        self.assertEqual(results[3]['path'], '/PATH3.mp3')
+        self.assertEqual(results[0]['path'], b'/path0.mp3')
+        self.assertEqual(results[1]['path'], b'/patH1.mp3')
+        self.assertEqual(results[2]['path'], b'/paTH2.mp3')
+        self.assertEqual(results[3]['path'], b'/PATH3.mp3')
 
 
 class SortFlexFieldTest(DummyDataTestCase):
