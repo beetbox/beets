@@ -23,7 +23,6 @@ matrix:
         - python: 3.3
         - python: 3.4
         - python: 3.5
-        - python: pypy3
 
 # Non-Python dependencies.
 addons:
