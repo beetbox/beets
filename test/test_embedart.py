@@ -57,7 +57,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
     def _setup_data(self, artpath=None):
         if not artpath:
             artpath = self.small_artpath
-        with open(syspath(artpath)) as f:
+        with open(syspath(artpath), 'rb') as f:
             self.image_data = f.read()
 
     def tearDown(self):
