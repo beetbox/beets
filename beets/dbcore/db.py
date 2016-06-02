@@ -267,9 +267,9 @@ class Model(object):
         `computed` parameter controls whether computed (plugin-provided)
         fields are included in the key list.
         """
-        base_keys = list(self._fields) + self._values_flex.keys()
+        base_keys = list(self._fields) + list(self._values_flex.keys())
         if computed:
-            return base_keys + self._getters().keys()
+            return base_keys + list(self._getters().keys())
         else:
             return base_keys
 
@@ -278,7 +278,7 @@ class Model(object):
         """Get a list of available keys for objects of this type.
         Includes fixed and computed fields.
         """
-        return list(cls._fields) + cls._getters().keys()
+        return list(cls._fields) + list(cls._getters().keys())
 
     # Act like a dictionary.
 

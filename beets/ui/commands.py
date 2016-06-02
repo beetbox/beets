@@ -279,7 +279,7 @@ def show_change(cur_artist, cur_album, match):
     print_(' '.join(info))
 
     # Tracks.
-    pairs = match.mapping.items()
+    pairs = list(match.mapping.items())
     pairs.sort(key=lambda item_and_track_info: item_and_track_info[1].index)
 
     # Build up LHS and RHS for track difference display. The `lines` list
@@ -1730,7 +1730,10 @@ def completion_script(commands):
 
     # Fields
     yield u"  fields='%s'\n" % ' '.join(
-        set(library.Item._fields.keys() + library.Album._fields.keys())
+        set(
+            list(library.Item._fields.keys()) +
+            list(library.Album._fields.keys())
+        )
     )
 
     # Command options
