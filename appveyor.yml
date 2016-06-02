@@ -6,12 +6,16 @@ environment:
     matrix:
         - PYTHON: C:\Python27
           TOX_ENV: py27-test
+          TOX_ARGS: --show-skipped
         - PYTHON: C:\Python33
           TOX_ENV: py33-test
+          TOX_ARGS: --show-skipped
         - PYTHON: C:\Python34
           TOX_ENV: py34-test
+          TOX_ARGS: --show-skipped
         - PYTHON: C:\Python35
           TOX_ENV: py35-test
+          TOX_ARGS: --show-skipped
 
 # Install Tox for running tests.
 install:
@@ -19,7 +23,7 @@ install:
     - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
 test_script:
-    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV%"
+    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% -- %TOX_ARGS%"
 
 # Allow all failures for now: the tests don't yet pass!
 matrix:
