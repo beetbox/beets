@@ -11,6 +11,12 @@ Some fixes for Windows:
 * Queries are now detected as paths when they contain backslashes (in
   addition to forward slashes). This only applies on Windows.
 
+Fixes:
+
+* :doc:`/plugins/replaygain`: The ``bs1770gain`` backend now correctly
+  calculates sample peak instead of true peak. This comes with a major
+  speed increase. :bug:`2031`
+
 
 1.3.18 (May 31, 2016)
 ---------------------
