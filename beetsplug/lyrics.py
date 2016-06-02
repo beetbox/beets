@@ -611,7 +611,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                                u'provide an API key in the configuration. '
                                u'See the documentation for further details.')
                 sources.remove('google')
-            if not HAS_BEAUTIFUL_SOUP:
+            elif not HAS_BEAUTIFUL_SOUP:
                 self._log.warn(u'To use the google lyrics source, you must '
                                u'install the beautifulsoup4 module. See the '
                                u'documentation for further details.')
