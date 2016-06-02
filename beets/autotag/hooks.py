@@ -17,6 +17,7 @@
 from __future__ import division, absolute_import, print_function
 
 from collections import namedtuple
+from functools import total_ordering
 import re
 
 from beets import logging
@@ -288,6 +289,7 @@ class LazyClassProperty(object):
         return self.value
 
 
+@total_ordering
 class Distance(object):
     """Keeps track of multiple distance penalties. Provides a single
     weighted distance for all penalties as well as a weighted distance
@@ -354,10 +356,13 @@ class Distance(object):
             key=lambda key_and_dist: (-key_and_dist[1], key_and_dist[0])
         )
 
+    def __eq__(self, other):
+        return self.distance == other
+
     # Behave like a float.
 
-    def __cmp__(self, other):
-        return cmp(self.distance, other)
+    def __lt__(self, other):
+        return self.distance < other
 
     def __float__(self):
         return self.distance
