@@ -561,21 +561,25 @@ class ArtForAlbumTest(UseThePlugin):
         self._assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_respect_enforce_ratio_px_above(self):
+        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 5
         self._assertImageIsValidArt(self.IMG_500x490, False)
 
     def test_respect_enforce_ratio_px_below(self):
+        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 15
         self._assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_respect_enforce_ratio_percent_above(self):
+        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 0.5
         self._assertImageIsValidArt(self.IMG_500x490, False)
 
     def test_respect_enforce_ratio_percent_below(self):
+        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 1.5
         self._assertImageIsValidArt(self.IMG_500x490, True)
