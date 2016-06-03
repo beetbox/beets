@@ -45,6 +45,7 @@ import mutagen.flac
 import mutagen.monkeysaudio
 import mutagen.asf
 import mutagen.aiff
+import codecs
 import datetime
 import re
 import base64
@@ -222,7 +223,7 @@ def _sc_decode(soundcheck):
     # SoundCheck tags consist of 10 numbers, each represented by 8
     # characters of ASCII hex preceded by a space.
     try:
-        soundcheck = soundcheck.replace(b' ', b'').decode('hex')
+        soundcheck = codecs.decode(soundcheck.replace(b' ', b''), 'hex')
         soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
     except (struct.error, TypeError):
         # SoundCheck isn't in the format we expect, so return default
