@@ -16,9 +16,9 @@ Fixes:
 * :doc:`/plugins/replaygain`: The ``bs1770gain`` backend now correctly
   calculates sample peak instead of true peak. This comes with a major
   speed increase. :bug:`2031`
-* :doc:`/plugins/lyrics`: Turn off a spurious warning introduced in the last
-  version about a Google API key, which appeared even when you hadn't tried to
-  enable the Google lyrics source.
+* :doc:`/plugins/lyrics`: Avoid a crash and a spurious warning introduced in
+  the last version about a Google API key, which appeared even when you hadn't
+  tried to enable the Google lyrics source.
 
 
 1.3.18 (May 31, 2016)
