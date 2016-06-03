@@ -236,7 +236,7 @@ def get_im_version():
         out = util.command_output([b'identify', b'--version'])
 
         if b'imagemagick' in out.lower():
-            pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
+            pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
             match = re.search(pattern, out)
             if match:
                 return (int(match.group(1)),
