@@ -1,22 +1,27 @@
 language: python
 sudo: false
 
+env:
+    global:
+        # Undocumented feature of nose-show-skipped.
+        NOSE_SHOW_SKIPPED: 1
+
 matrix:
     include:
         - python: 2.7
-          env: {TOX_ENV: py27-test, TOX_ARGS: --show-skipped --with-coverage, COVERAGE: 1}
+          env: {TOX_ENV: py27-cov, COVERAGE: 1}
         - python: 3.3
-          env: {TOX_ENV: py33-test, TOX_ARGS: --show-skipped}
+          env: {TOX_ENV: py33-test}
         - python: 3.4
-          env: {TOX_ENV: py34-test, TOX_ARGS: --show-skipped}
+          env: {TOX_ENV: py34-test}
         - python: 3.5
-          env: {TOX_ENV: py35-test, TOX_ARGS: --show-skipped}
+          env: {TOX_ENV: py35-test}
         - python: pypy
-          env: {TOX_ENV: pypy-test, TOX_ARGS: --show-skipped}
+          env: {TOX_ENV: pypy-test}
         - python: 2.7
-          env: {TOX_ENV: py27-flake8, TOX_ARGS: --min-version=2.7}
+          env: {TOX_ENV: py27-flake8}
         - python: 3.3
-          env: {TOX_ENV: py33-flake8, TOX_ARGS: --min-version=3.3}
+          env: {TOX_ENV: py33-flake8}
         - python: 2.7
           env: {TOX_ENV: docs}
     allow_failures:
@@ -37,7 +42,7 @@ install:
     - travis_retry pip install tox sphinx
     - travis_retry tox -e $TOX_ENV --notest
 
-script: tox -e $TOX_ENV -- $TOX_ARGS
+script: tox -e $TOX_ENV
 
 # Report coverage to codecov.io.
 before_install:
