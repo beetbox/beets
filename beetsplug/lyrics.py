@@ -607,9 +607,12 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         if 'google' in sources:
             if not self.config['google_API_key'].get():
-                self._log.warn(u'To use the google lyrics source, you must '
-                               u'provide an API key in the configuration. '
-                               u'See the documentation for further details.')
+                # We log a *debug* message here because the default
+                # configuration includes `google`. This way, the source
+                # is silent by default but can be enabled just by
+                # setting an API key.
+                self._log.debug(u'Disabling google source: '
+                                u'no API key configured.')
                 sources.remove('google')
             elif not HAS_BEAUTIFUL_SOUP:
                 self._log.warn(u'To use the google lyrics source, you must '
