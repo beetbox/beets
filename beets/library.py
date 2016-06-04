@@ -976,6 +976,13 @@ class Album(LibModel):
         if not old_art:
             return
 
+        if not os.path.isfile(syspath(self.artpath)):
+            log.warn(u'album art gone missing: {0} - {1}',
+                     self.albumartist, self.album)
+            self.artpath = None
+            plugins.send('art_set', album=self)
+            return
+
         new_art = self.art_destination(old_art)
         if new_art == old_art:
             return
