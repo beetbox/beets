@@ -1467,6 +1467,19 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False):
     isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
 
+    # Check if all files actually exist
+    log.debug(u'testing if files exist')
+    if album:
+        missing = []
+        for a in objs:
+            missing.extend([o for o in a.items() if not os.path.isfile(syspath(o.path))])
+    else:
+        missing = [o for o in objs if not os.path.isfile(syspath(o.path))]
+    if missing:
+        for o in missing:
+            log.error(u'file missing: {0}', o.path)
+        raise ui.UserError(u'missing files, replace them or update the library')
+
     action = u'Copying' if copy else u'Moving'
     act = u'copy' if copy else u'move'
     entity = u'album' if album else u'item'
