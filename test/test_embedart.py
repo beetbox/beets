@@ -171,30 +171,31 @@ class ArtSimilarityTest(unittest.TestCase):
         mock_extract.return_value = True
         proc = mock_subprocess.Popen.return_value
         log = logging.getLogger('beets.embedart')
+        item = _common.item()
 
         # everything is fine
         proc.returncode = 0
         proc.communicate.return_value = "10", "tagada"
-        self.assertTrue(art.check_art_similarity(log, b'path', b'path', 20))
-        self.assertFalse(art.check_art_similarity(log, b'path', b'path', 5))
+        self.assertTrue(art.check_art_similarity(log, item, b'path', 20))
+        self.assertFalse(art.check_art_similarity(log, item, b'path', 5))
 
         # small failure
         proc.returncode = 1
         proc.communicate.return_value = "tagada", "10"
-        self.assertTrue(art.check_art_similarity(log, b'path', b'path', 20))
-        self.assertFalse(art.check_art_similarity(log, b'path', b'path', 5))
+        self.assertTrue(art.check_art_similarity(log, item, b'path', 20))
+        self.assertFalse(art.check_art_similarity(log, item, b'path', 5))
 
         # bigger failure
         proc.returncode = 2
-        self.assertIsNone(art.check_art_similarity(log, b'path', b'path', 20))
+        self.assertIsNone(art.check_art_similarity(log, item, b'path', 20))
 
         # IM result parsing problems
         proc.returncode = 0
         proc.communicate.return_value = "foo", "bar"
-        self.assertIsNone(art.check_art_similarity(log, b'path', b'path', 20))
+        self.assertIsNone(art.check_art_similarity(log, item, b'path', 20))
 
         proc.returncode = 1
-        self.assertIsNone(art.check_art_similarity(log, b'path', b'path', 20))
+        self.assertIsNone(art.check_art_similarity(log, item, b'path', 20))
 
 
 def suite():
