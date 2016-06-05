@@ -734,7 +734,9 @@ class Database(object):
                 return conn
 
     def _close(self):
-        """Close the all connections to the underlying SQLite database.
+        """Close the all connections to the underlying SQLite database
+        from all threads. This does not render the database object
+        unusable; new connections can still be opened on demand.
         """
         thread_id = threading.current_thread().ident
         with self._shared_map_lock:
