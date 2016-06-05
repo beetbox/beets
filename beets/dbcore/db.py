@@ -733,6 +733,16 @@ class Database(object):
                 self._connections[thread_id] = conn
                 return conn
 
+    def _close(self):
+        """Close the current thread's connection to the underlying
+        SQLite database.
+        """
+        thread_id = threading.current_thread().ident
+        with self._shared_map_lock:
+            if thread_id in self._connections:
+                self._connections[thread_id].close()
+                del self._connections[thread_id]
+
     @contextlib.contextmanager
     def _tx_stack(self):
         """A context manager providing access to the current thread's
