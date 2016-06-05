@@ -20,7 +20,7 @@ This means that your operating system can, and does, lie about its filesystem en
 
 So, we must conclude that paths are bytes. But here's the other thing: on Windows, *paths are fundamentally text*. The equivalent interfaces on Windows accept and return [wide character strings][winstrings]---and on Python, that means [`unicode`][unicode] objects. So our grand plan to use bytes as the one true path representation is foiled.
 
-It gets worse: to use full-length paths on Windows, you need to [prefix them with the four characters `\\\\?\\`][win-prefix]. Every time. I know.
+It gets worse: to use full-length paths on Windows, you need to [prefix them with the four characters `\\?\`][win-prefix]. Every time. I know.
 
 [winstrings]: https://msdn.microsoft.com/en-us/library/windows/desktop/ff381407(v=vs.85).aspx
 [cstring]: https://en.wikibooks.org/wiki/C_Programming/Strings
@@ -43,7 +43,7 @@ To make this all work, we use three pervasive little utility functions:
 
 * We use [`bytestring_path`][bytestring_path] to force all paths to our consistent representation. If you don't know where a path came from, you can just pass it through `bytestring_path` to rectify it before proceeding.
 * The opposite function, [`displayable_path`][displayable_path], must be used to format error messages and log output. It does its best to decode the path to human-readable Unicode text, and it's not allowed to fail---but it's *lossy*. The result is only good for human consumption, not for returning back to the OS. Hence the name, which is intentionally not `unicode_path`.
-* Every argument to an OS function like [`open`][open] or [`listdir`][listdir] must pass through the third utility: [`syspath`][syspath]. Think of this as converting from beets's internal representation to the OS's own representation. On Unix, this is a no-op: the representations are the same. On Windows, this returns a bytestring path back to Unicode and then adds the ridiculous [`\\\\?\\` prefix][win-prefix], which avoids problems with long names.
+* Every argument to an OS function like [`open`][open] or [`listdir`][listdir] must pass through the third utility: [`syspath`][syspath]. Think of this as converting from beets's internal representation to the OS's own representation. On Unix, this is a no-op: the representations are the same. On Windows, this returns a bytestring path back to Unicode and then adds the ridiculous [`\\?\` prefix][win-prefix], which avoids problems with long names.
 
 It's not fun to force everybody to use these utilities everywhere, but it does work. Since we instated this policy, Unicode errors do happen but they're not nearly as pervasive as they were in the project's early days.
 
@@ -58,7 +58,7 @@ Although our solution works, I won't pretend to love it. Here are a few alternat
 
 ### Python 3's Surrogate Escape
 
-Python 3 chose the opposite answer to the root-of-all-evil contradiction: paths are always Unicode. Instead, it uses [surrogate escapes][] to represent bytes that didn't fit the platform's purported filesystem encoding. This way, Python 3's Unicode [`str`][str] can represent arbitrary bytes in filenames. (The first commit to beets happened a bit before Python 3.0 was released, so perhaps the project can be forgiven for not adopting this approach in the first place.)
+Python 3 chose the opposite answer to the root-of-all-evil contradiction: paths are always Unicode. Instead, it uses [surrogate escapes][pep383] to represent bytes that didn't fit the platform's purported filesystem encoding. This way, Python 3's Unicode [`str`][str] can represent arbitrary bytes in filenames. (The first commit to beets happened a bit before Python 3.0 was released, so perhaps the project can be forgiven for not adopting this approach in the first place.)
 
 We could switch to this approach, but a few lingering details worry me:
 
@@ -78,3 +78,4 @@ We could switch to Python 3's [pathlib][] module. We'd still need to choose a un
 
 [pathlib-ticket]: https://github.com/beetbox/beets/issues/1409
 [pathlib]: https://docs.python.org/3/library/pathlib.html
+[pep383]: https://www.python.org/dev/peps/pep-0383/
