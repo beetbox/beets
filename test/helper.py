@@ -188,7 +188,7 @@ class TestHelper(object):
         self.lib = Library(dbpath, self.libdir)
 
     def teardown_beets(self):
-        del self.lib._connections
+        self.lib._close()
         if 'BEETSDIR' in os.environ:
             del os.environ['BEETSDIR']
         self.remove_temp_dir()
