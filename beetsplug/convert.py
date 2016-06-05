@@ -219,6 +219,9 @@ class ConvertPlugin(BeetsPlugin):
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
                      pretend=False):
+        """A pipeline thread that converts `Item` objects from a
+        library.
+        """
         command, ext = get_format(fmt)
         item, original, converted = None, None, None
         while True:
