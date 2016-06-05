@@ -738,7 +738,6 @@ class Database(object):
         from all threads. This does not render the database object
         unusable; new connections can still be opened on demand.
         """
-        thread_id = threading.current_thread().ident
         with self._shared_map_lock:
             self._connections.clear()
 
