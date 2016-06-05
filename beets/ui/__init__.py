@@ -1233,6 +1233,7 @@ def _raw_main(args, lib=None):
         from beets.ui.commands import config_edit
         return config_edit()
 
+    test_lib = bool(lib)
     subcommands, plugins, lib = _setup(options, lib)
     parser.add_subcommand(*subcommands)
 
@@ -1240,6 +1241,9 @@ def _raw_main(args, lib=None):
     subcommand.func(lib, suboptions, subargs)
 
     plugins.send('cli_exit', lib=lib)
+    if not test_lib:
+        # Clean up the library unless it came from the test harness.
+        lib._close()
 
 
 def main(args=None):
