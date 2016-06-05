@@ -194,8 +194,8 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
         self.assertEqual(len(mediafile.images), 3)
 
         # WMA does not preserve the order, so we have to work around this
-        image = filter(lambda i: i.mime_type == 'image/tiff',
-                       mediafile.images)[0]
+        image = list(filter(lambda i: i.mime_type == 'image/tiff',
+                     mediafile.images))[0]
         self.assertExtendedImageAttributes(
             image, desc=u'the composer', type=ImageType.composer)
 
