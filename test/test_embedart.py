@@ -17,7 +17,7 @@ from __future__ import division, absolute_import, print_function
 
 import os.path
 import shutil
-from mock import patch
+from mock import patch, MagicMock
 import tempfile
 
 from test import _common
@@ -167,35 +167,58 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 @patch('beets.art.subprocess')
 @patch('beets.art.extract')
 class ArtSimilarityTest(unittest.TestCase):
-    def test_imagemagick_response(self, mock_extract, mock_subprocess):
+    def setUp(self):
+        self.item = _common.item()
+        self.log = logging.getLogger('beets.embedart')
+
+    def _similarity(self, threshold):
+        return art.check_art_similarity(self.log, self.item, b'path',
+                                        threshold)
+
+    def _popen(self, status=0, stdout="", stderr=""):
+        """Create a mock `Popen` object."""
+        popen = MagicMock(returncode=status)
+        popen.communicate.return_value = stdout, stderr
+        return popen
+
+    def _mock_popens(self, mock_extract, mock_subprocess, convert_status=0,
+                     convert_stdout="", convert_stderr=""):
         mock_extract.return_value = b'extracted_path'
-        proc = mock_subprocess.Popen.return_value
-        log = logging.getLogger('beets.embedart')
-        item = _common.item()
+        mock_subprocess.Popen.side_effect = [
+            # The `convert` call.
+            self._popen(),
+            # The `compare` call.
+            self._popen(convert_status, convert_stdout, convert_stderr),
+        ]
 
-        # everything is fine
-        proc.returncode = 0
-        proc.communicate.return_value = "10", "tagada"
-        self.assertTrue(art.check_art_similarity(log, item, b'path', 20))
-        self.assertFalse(art.check_art_similarity(log, item, b'path', 5))
+    def test_compare_success_similar(self, mock_extract, mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, 0, "10", "err")
+        self.assertTrue(self._similarity(20))
 
-        # small failure
-        proc.returncode = 1
-        proc.communicate.return_value = "tagada", "10"
-        self.assertTrue(art.check_art_similarity(log, item, b'path', 20))
-        self.assertFalse(art.check_art_similarity(log, item, b'path', 5))
+    def test_compare_success_different(self, mock_extract, mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, 0, "10", "err")
+        self.assertFalse(self._similarity(5))
 
-        # bigger failure
-        proc.returncode = 2
-        self.assertIsNone(art.check_art_similarity(log, item, b'path', 20))
+    def test_compare_status1_similar(self, mock_extract, mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")
+        self.assertTrue(self._similarity(20))
 
-        # IM result parsing problems
-        proc.returncode = 0
-        proc.communicate.return_value = "foo", "bar"
-        self.assertIsNone(art.check_art_similarity(log, item, b'path', 20))
+    def test_compare_status1_different(self, mock_extract, mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")
+        self.assertFalse(self._similarity(5))
 
-        proc.returncode = 1
-        self.assertIsNone(art.check_art_similarity(log, item, b'path', 20))
+    def test_compare_failed(self, mock_extract, mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, 2, "out", "10")
+        self.assertIsNone(self._similarity(20))
+
+    def test_compare_parsing_error(self, mock_extract, mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, 0, "foo", "bar")
+        self.assertIsNone(self._similarity(20))
+
+    def test_compare_parsing_error_and_failure(self, mock_extract,
+                                               mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, 1, "foo", "bar")
+        self.assertIsNone(self._similarity(20))
 
 
 def suite():
