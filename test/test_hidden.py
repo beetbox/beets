@@ -48,7 +48,7 @@ class HiddenFileTest(unittest.TestCase):
             self.assertTrue(hidden.is_hidden(f.name))
 
     def test_windows_hidden(self):
-        if not sys.platform == 'windows':
+        if not sys.platform == 'win32':
             self.skipTest('sys.platform is not windows')
             return
 
