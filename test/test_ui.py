@@ -635,7 +635,7 @@ class InputTest(_common.TestCase):
 
 
 @_common.slow_test()
-class ConfigTest(unittest.TestCase, TestHelper):
+class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
     def setUp(self):
         self.setup_beets()
 
@@ -821,10 +821,14 @@ class ConfigTest(unittest.TestCase, TestHelper):
             file.write('statefile: state')
 
         ui._raw_main(['--config', cli_config_path, 'test'])
-        self.assertEqual(config['library'].as_filename(),
-                         os.path.join(self.user_config_dir, 'beets.db'))
-        self.assertEqual(config['statefile'].as_filename(),
-                         os.path.join(self.user_config_dir, 'state'))
+        self.assert_equal_path(
+            config['library'].as_filename(),
+            os.path.join(self.user_config_dir, 'beets.db')
+        )
+        self.assert_equal_path(
+            config['statefile'].as_filename(),
+            os.path.join(self.user_config_dir, 'state')
+        )
 
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
         os.environ['BEETSDIR'] = self.beetsdir
@@ -835,16 +839,16 @@ class ConfigTest(unittest.TestCase, TestHelper):
             file.write('statefile: state')
 
         ui._raw_main(['--config', cli_config_path, 'test'])
-        self.assertEqual(config['library'].as_filename(),
-                         os.path.join(self.beetsdir, 'beets.db'))
-        self.assertEqual(config['statefile'].as_filename(),
-                         os.path.join(self.beetsdir, 'state'))
+        self.assert_equal_path(config['library'].as_filename(),
+                               os.path.join(self.beetsdir, 'beets.db'))
+        self.assert_equal_path(config['statefile'].as_filename(),
+                               os.path.join(self.beetsdir, 'state'))
 
     def test_command_line_option_relative_to_working_dir(self):
         os.chdir(self.temp_dir)
         ui._raw_main(['--library', 'foo.db', 'test'])
-        self.assertEqual(config['library'].as_filename(),
-                         os.path.join(os.getcwd(), 'foo.db'))
+        self.assert_equal_path(config['library'].as_filename(),
+                               os.path.join(os.getcwd(), 'foo.db'))
 
     def test_cli_config_file_loads_plugin_commands(self):
         plugin_path = os.path.join(_common.RSRC, 'beetsplug')
