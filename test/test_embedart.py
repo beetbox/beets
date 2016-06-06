@@ -168,7 +168,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 @patch('beets.art.extract')
 class ArtSimilarityTest(unittest.TestCase):
     def test_imagemagick_response(self, mock_extract, mock_subprocess):
-        mock_extract.return_value = True
+        mock_extract.return_value = b'extracted_path'
         proc = mock_subprocess.Popen.return_value
         log = logging.getLogger('beets.embedart')
         item = _common.item()
