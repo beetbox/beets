@@ -123,9 +123,30 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     return cls(lib, loghandler, paths, query)
 
 
+class Assertions(object):
+    """A mixin with additional unit test assertions."""
+
+    def assertExists(self, path):  # noqa
+        self.assertTrue(os.path.exists(path),
+                        u'file does not exist: {!r}'.format(path))
+
+    def assertNotExists(self, path):  # noqa
+        self.assertFalse(os.path.exists(path),
+                         u'file exists: {!r}'.format((path)))
+
+    def assert_equal_path(self, a, b):
+        """Check that two paths are equal."""
+        # The common case.
+        if a == b:
+            return
+
+        self.assertEqual(util.normpath(a), util.normpath(b),
+                         u'paths are not equal: {!r} and {!r}'.format(a, b))
+
+
 # A test harness for all beets tests.
 # Provides temporary, isolated configuration.
-class TestCase(unittest.TestCase):
+class TestCase(unittest.TestCase, Assertions):
     """A unittest.TestCase subclass that saves and restores beets'
     global configuration. This allows tests to make temporary
     modifications that will then be automatically removed when the test
@@ -163,23 +184,6 @@ class TestCase(unittest.TestCase):
 
         beets.config.clear()
         beets.config._materialized = False
-
-    def assertExists(self, path):  # noqa
-        self.assertTrue(os.path.exists(path),
-                        u'file does not exist: {!r}'.format(path))
-
-    def assertNotExists(self, path):  # noqa
-        self.assertFalse(os.path.exists(path),
-                         u'file exists: {!r}'.format((path)))
-
-    def assert_equal_path(self, a, b):
-        """Check that two paths are equal."""
-        # The common case.
-        if a == b:
-            return
-
-        self.assertEqual(util.normpath(a), util.normpath(b),
-                         u'paths not equal: {!r} and {!r}'.format(a, b))
 
 
 class LibTestCase(TestCase):
