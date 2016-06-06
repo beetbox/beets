@@ -30,6 +30,7 @@ sys.path.insert(0, '..')  # noqa
 import beets.library
 from beets import importer, logging
 from beets.ui import commands
+from beets import util
 import beets
 
 # Make sure the development versions of the plugins are used
@@ -170,6 +171,15 @@ class TestCase(unittest.TestCase):
     def assertNotExists(self, path):  # noqa
         self.assertFalse(os.path.exists(path),
                          u'file exists: {!r}'.format((path)))
+
+    def assert_equal_path(self, a, b):
+        """Check that two paths are equal."""
+        # The common case.
+        if a == b:
+            return
+
+        self.assertEqual(util.normpath(a), util.normpath(b),
+                         u'paths not equal: {!r} and {!r}'.format(a, b))
 
 
 class LibTestCase(TestCase):
