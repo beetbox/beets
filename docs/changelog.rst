@@ -10,6 +10,8 @@ Some fixes for Windows:
 
 * Queries are now detected as paths when they contain backslashes (in
   addition to forward slashes). This only applies on Windows.
+* :doc:`/plugins/embedart`: Image similarity comparison with ImageMagick
+  should now work on Windows.
 
 Fixes:
 
