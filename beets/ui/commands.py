@@ -1664,9 +1664,12 @@ BASH_COMPLETION_PATHS = map(syspath, [
     u'/etc/bash_completion',
     u'/usr/share/bash-completion/bash_completion',
     u'/usr/share/local/bash-completion/bash_completion',
-    u'/opt/local/share/bash-completion/bash_completion',  # SmartOS
-    u'/usr/local/etc/bash_completion',  # Homebrew
-    u'/usr/local/share/bash-completion/bash_completion',  # Homebrew bash-completion2
+    # SmartOS
+    u'/opt/local/share/bash-completion/bash_completion',
+    # Homebrew
+    u'/usr/local/etc/bash_completion',
+    # Homebrew bash-completion2
+    u'/usr/local/share/bash-completion/bash_completion',
 ])
 
 
