@@ -1189,8 +1189,9 @@ class LibraryFieldTypesTest(unittest.TestCase):
         self.assertEqual('/tmp', t.format('/tmp'))
         self.assertEqual(u'/tmp/\xe4lbum', t.format(u'/tmp/\u00e4lbum'))
         # parse
-        self.assertEqual(b'/tmp', t.parse('/tmp'))
-        self.assertEqual(b'/tmp/\xc3\xa4lbum', t.parse(u'/tmp/\u00e4lbum/'))
+        self.assertEqual(np(b'/tmp'), t.parse('/tmp'))
+        self.assertEqual(np(b'/tmp/\xc3\xa4lbum'),
+                         t.parse(u'/tmp/\u00e4lbum/'))
 
     def test_musicalkey(self):
         t = beets.library.MusicalKey()
