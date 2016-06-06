@@ -137,6 +137,7 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             convert_proc = subprocess.Popen(
                 convert_cmd,
                 stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 close_fds=not is_windows,
             )
             compare_proc = subprocess.Popen(
@@ -146,15 +147,23 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
                 stderr=subprocess.PIPE,
                 close_fds=not is_windows,
             )
-            convert_proc.stdout.close()
 
-            stdout, stderr = compare_proc.communicate()
+            # Check the convert output. We're not interested in the
+            # standard output; that gets piped to the next stage.
+            convert_proc.stdout.close()
+            convert_stderr = convert_proc.stderr.read()
+            convert_proc.stderr.close()
+            convert_proc.wait()
             if convert_proc.returncode:
                 log.debug(
-                    u'ImageMagick convert failed with status {}',
+                    u'ImageMagick convert failed with status {}: {!r}',
                     convert_proc.returncode,
+                    convert_stderr,
                 )
                 return
+
+            # Check the compare output.
+            stdout, stderr = compare_proc.communicate()
             if compare_proc.returncode:
                 if compare_proc.returncode != 1:
                     log.debug(u'ImageMagick compare failed: {0}, {1}',
