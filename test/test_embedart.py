@@ -181,14 +181,14 @@ class ArtSimilarityTest(unittest.TestCase):
         popen.communicate.return_value = stdout, stderr
         return popen
 
-    def _mock_popens(self, mock_extract, mock_subprocess, convert_status=0,
-                     convert_stdout="", convert_stderr=""):
+    def _mock_popens(self, mock_extract, mock_subprocess, compare_status=0,
+                     compare_stdout="", compare_stderr="", convert_status=0):
         mock_extract.return_value = b'extracted_path'
         mock_subprocess.Popen.side_effect = [
             # The `convert` call.
-            self._popen(),
+            self._popen(convert_status),
             # The `compare` call.
-            self._popen(convert_status, convert_stdout, convert_stderr),
+            self._popen(compare_status, compare_stdout, compare_stderr),
         ]
 
     def test_compare_success_similar(self, mock_extract, mock_subprocess):
@@ -218,6 +218,10 @@ class ArtSimilarityTest(unittest.TestCase):
     def test_compare_parsing_error_and_failure(self, mock_extract,
                                                mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 1, "foo", "bar")
+        self.assertIsNone(self._similarity(20))
+
+    def test_convert_failure(self, mock_extract, mock_subprocess):
+        self._mock_popens(mock_extract, mock_subprocess, convert_status=1)
         self.assertIsNone(self._similarity(20))
 
 
