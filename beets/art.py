@@ -149,9 +149,15 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             convert_proc.stdout.close()
 
             stdout, stderr = compare_proc.communicate()
+            if convert_proc.returncode:
+                log.debug(
+                    u'ImageMagick convert failed with status {}',
+                    convert_proc.returncode,
+                )
+                return
             if compare_proc.returncode:
                 if compare_proc.returncode != 1:
-                    log.debug(u'IM phashes compare failed for {0}, {1}',
+                    log.debug(u'ImageMagick compare failed: {0}, {1}',
                               displayable_path(imagepath),
                               displayable_path(art))
                     return
@@ -165,7 +171,7 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
                 log.debug(u'IM output is not a number: {0!r}', out_str)
                 return
 
-            log.debug(u'compare PHASH score is {0}', phash_diff)
+            log.debug(u'ImageMagick copmare score: {0}', phash_diff)
             return phash_diff <= compare_threshold
 
     return True
