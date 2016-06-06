@@ -5,6 +5,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import platform
 from mock import patch, Mock
 
 from test._common import unittest
@@ -39,6 +40,9 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
         self.do_thing(False)
 
     def do_thing(self, expect_success):
+        if platform.system() == 'Windows':
+            self.skipTest('permissions not available on Windows')
+
         def get_stat(v):
             return os.stat(
                 os.path.join(self.temp_dir, 'import', *v)).st_mode & 0o777
