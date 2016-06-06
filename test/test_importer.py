@@ -341,7 +341,7 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
             )
             self.assertExists(filename)
             self.assertTrue(os.path.islink(filename))
-            self.assertEqual(os.readlink(filename), mediafile.path)
+            self.assert_equal_path(os.readlink(filename), mediafile.path)
 
 
 def create_archive(session):
@@ -836,8 +836,8 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
     def test_outside_file_is_copied(self):
         config['import']['copy'] = False
         self.setup_importer.run()
-        self.assertEqual(self.lib.items().get().path,
-                         self.import_media[0].path)
+        self.assert_equal_path(self.lib.items().get().path,
+                               self.import_media[0].path)
 
         config['import']['copy'] = True
         self._setup_import_session()
@@ -847,14 +847,14 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
                                 'Applied Title 1.mp3')
 
         self.assert_file_in_lib(new_path)
-        self.assertEqual(self.lib.items().get().path,
-                         os.path.join(self.libdir, new_path))
+        self.assert_equal_path(self.lib.items().get().path,
+                               os.path.join(self.libdir, new_path))
 
     def test_outside_file_is_moved(self):
         config['import']['copy'] = False
         self.setup_importer.run()
-        self.assertEqual(self.lib.items().get().path,
-                         self.import_media[0].path)
+        self.assert_equal_path(self.lib.items().get().path,
+                               self.import_media[0].path)
 
         self._setup_import_session(move=True)
         self.importer.add_choice(importer.action.APPLY)
