@@ -17,29 +17,80 @@
 
 from __future__ import division, absolute_import, print_function
 
-import os
+import os.path as path
 import sys
 import subprocess
 import shutil
-from setuptools import setup
-from setuptools.command.test import test as default_test
+from setuptools.dist import Distribution
+from setuptools.command.sdist import sdist as default_sdist
+import warnings
+from setuptools import setup, Command
 
 
-class test(default_test):
+class BeetsDistribution(Distribution):
+    def __init__(self, *args, **kwargs):
+        self.sdist_requires = None
+        Distribution.__init__(self, *args, **kwargs)
+
+
+class sdist(default_sdist):
+    def __init__(self, *args, **kwargs):
+        default_sdist.__init__(self, *args, **kwargs)
+
+    def _build_man_pages(self):
+        # Work out directories.
+        setup_directory = path.dirname(__file__)
+        docs_directory = path.join(setup_directory, 'docs')
+        man_directory = path.join(setup_directory, 'man')
+        built_man_directory = path.join(docs_directory, '_build', 'man')
+
+        # Build man pages.
+        try:
+            subprocess.check_call(['make', 'man'], cwd=docs_directory)
+        except OSError:
+            warnings.warn('Could not build man pages')
+            return
+
+        if path.exists(man_directory):
+            shutil.rmtree(man_directory)
+
+        # Copy built man pages.
+        shutil.copytree(built_man_directory, man_directory)
+
+    def run(self, *args, **kwargs):
+        sdist_requires = self.distribution.sdist_requires
+
+        # Install sdist dependencies if needed.
+        if sdist_requires:
+            self.distribution.fetch_build_eggs(sdist_requires)
+
+        self._build_man_pages()
+
+        # Run the default sdist task
+        default_sdist.run(self, *args, **kwargs)
+
+
+class test(Command):
+    """Command to run tox."""
+
+    description = "run tox tests"
+
     user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
 
     def initialize_options(self):
-        default_test.initialize_options(self)
-        self.tox_args = None
+        self.tox_args = ''
 
     def finalize_options(self):
-        default_test.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
+        pass
 
-    def run_tests(self):
+    def run(self):
+        # Install test dependencies if needed.
+        if self.distribution.tests_require:
+            self.distribution.fetch_build_eggs(self.distribution.tests_require)
+
         import shlex
         import tox
+
         args = self.tox_args
         if args:
             args = shlex.split(self.tox_args)
@@ -47,34 +98,9 @@ class test(default_test):
         sys.exit(errno)
 
 
-def _read(fn):
-    path = os.path.join(os.path.dirname(__file__), fn)
-    return open(path).read()
-
-
-def build_manpages():
-    # Go into the docs directory and build the manpage.
-    docdir = os.path.join(os.path.dirname(__file__), 'docs')
-    curdir = os.getcwd()
-    os.chdir(docdir)
-    try:
-        subprocess.check_call(['make', 'man'])
-    except OSError:
-        print("Could not build manpages (make man failed)!", file=sys.stderr)
-        return
-    finally:
-        os.chdir(curdir)
-
-    # Copy resulting manpages.
-    mandir = os.path.join(os.path.dirname(__file__), 'man')
-    if os.path.exists(mandir):
-        shutil.rmtree(mandir)
-    shutil.copytree(os.path.join(docdir, '_build', 'man'), mandir)
-
-
-# Build manpages if we're making a source distribution tarball.
-if 'sdist' in sys.argv:
-    build_manpages()
+def _read(filename):
+    relative_path = path.join(path.dirname(__file__), filename)
+    return open(relative_path).read()
 
 
 setup(
@@ -87,7 +113,6 @@ setup(
     license='MIT',
     platforms='ALL',
     long_description=_read('README.rst'),
-    test_suite='test.testall.suite',
     include_package_data=True,  # Install plugin resources.
 
     packages=[
@@ -119,11 +144,15 @@ setup(
     ] + (['colorama'] if (sys.platform == 'win32') else []),
 
     tests_require=[
-        'sphinx',
         'tox',
     ],
 
-    cmdclass = {
+    sdist_requires=[
+        'sphinx',
+    ],
+
+    cmdclass={
+        'sdist': sdist,
         'test': test
     },
 
@@ -152,4 +181,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
     ],
+
+    distclass=BeetsDistribution
 )
