@@ -3,14 +3,9 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = python -m sphinx
 PAPER         =
 BUILDDIR      = _build
-
-# When both are available, use Sphinx 2.x for autodoc compatibility.
-ifeq ($(shell which sphinx-build2 >/dev/null 2>&1 ; echo $$?),0)
-	SPHINXBUILD = sphinx-build2
-endif
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
