@@ -33,7 +33,7 @@ class BeetsDistribution(Distribution):
         Distribution.__init__(self, *args, **kwargs)
 
 
-class sdist(default_sdist):
+class sdist(default_sdist):  # noqa: ignore=N801
     def __init__(self, *args, **kwargs):
         default_sdist.__init__(self, *args, **kwargs)
 
@@ -70,7 +70,7 @@ class sdist(default_sdist):
         default_sdist.run(self, *args, **kwargs)
 
 
-class test(Command):
+class test(Command):  # noqa: ignore=N801
     """Command to run tox."""
 
     description = "run tox tests"
