@@ -119,6 +119,7 @@ setup(
     ] + (['colorama'] if (sys.platform == 'win32') else []),
 
     tests_require=[
+        'sphinx',
         'tox',
     ],
 
