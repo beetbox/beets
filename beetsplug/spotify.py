@@ -124,9 +124,8 @@ class SpotifyPlugin(BeetsPlugin):
             # Apply market filter if requested
             region_filter = self.config['region_filter'].get()
             if region_filter:
-                r_data = filter(
-                    lambda x: region_filter in x['available_markets'], r_data
-                )
+                r_data = [x for x in r_data if region_filter
+                          in x['available_markets']]
 
             # Simplest, take the first result
             chosen_result = None
@@ -163,7 +162,7 @@ class SpotifyPlugin(BeetsPlugin):
 
     def output_results(self, results):
         if results:
-            ids = map(lambda x: x['id'], results)
+            ids = [x['id'] for x in results]
             if self.config['mode'].get() == "open":
                 self._log.info(u'Attempting to open Spotify with playlist')
                 spotify_url = self.playlist_partial + ",".join(ids)

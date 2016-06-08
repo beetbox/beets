@@ -547,7 +547,7 @@ def albums_for_id(album_id):
     for a in plugin_albums:
         plugins.send(u'albuminfo_received', info=a)
     candidates.extend(plugin_albums)
-    return filter(None, candidates)
+    return [a for a in candidates if a]
 
 
 def tracks_for_id(track_id):
@@ -557,7 +557,7 @@ def tracks_for_id(track_id):
     for t in plugin_tracks:
         plugins.send(u'trackinfo_received', info=t)
     candidates.extend(plugin_tracks)
-    return filter(None, candidates)
+    return [t for t in candidates if t]
 
 
 def album_candidates(items, artist, album, va_likely):
