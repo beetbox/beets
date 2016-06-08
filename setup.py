@@ -17,7 +17,7 @@
 
 from __future__ import division, absolute_import, print_function
 
-import os.path as path
+from os import path
 import sys
 import subprocess
 import shutil
