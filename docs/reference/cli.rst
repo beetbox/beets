@@ -211,7 +211,7 @@ remove
 ``````
 ::
 
-    beet remove [-ad] QUERY
+    beet remove [-adf] QUERY
 
 Remove music from your library.
 
@@ -219,6 +219,7 @@ This command uses the same :doc:`query <query>` syntax as the ``list`` command.
 You'll be shown a list of the files that will be removed and asked to confirm.
 By default, this just removes entries from the library database; it doesn't
 touch the files on disk. To actually delete the files, use ``beet remove -d``.
+If you do not want to be prompted to remove the files, use ``beet remove -f``.
 
 .. _modify-cmd:
 
