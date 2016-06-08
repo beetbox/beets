@@ -7,6 +7,11 @@ SPHINXBUILD   = python -m sphinx
 PAPER         =
 BUILDDIR      = _build
 
+# When both are available, use Sphinx 2.x for autodoc compatibility.
+ifeq ($(shell python2 -c "import sphinx" >/dev/null 2>&1; echo $$?), 0)
+	SPHINXBUILD = python2 -m sphinx
+endif
+
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
