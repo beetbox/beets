@@ -4,7 +4,10 @@ Changelog
 1.3.19 (in development)
 -----------------------
 
-Changelog goes here!
+New features:
+
+* A new ``--force`` option for :ref:`remove-cmd` allows removal of items
+  without prompting beforehand. :bug:`2042`
 
 Some fixes for Windows:
 

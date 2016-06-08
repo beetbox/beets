@@ -134,14 +134,26 @@ class RemoveTest(_common.TestCase):
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, u'', False, False)
+        commands.remove_items(self.lib, u'', False, False, False)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertTrue(os.path.exists(self.i.path))
 
     def test_remove_items_with_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, u'', False, True)
+        commands.remove_items(self.lib, u'', False, True, False)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 0)
+        self.assertFalse(os.path.exists(self.i.path))
+
+    def test_remove_items_with_force_no_delete(self):
+        commands.remove_items(self.lib, u'', False, False, True)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 0)
+        self.assertTrue(os.path.exists(self.i.path))
+
+    def test_remove_items_with_force_delete(self):
+        commands.remove_items(self.lib, u'', False, True, True)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
