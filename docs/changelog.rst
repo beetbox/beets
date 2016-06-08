@@ -12,6 +12,8 @@ Some fixes for Windows:
   addition to forward slashes). This only applies on Windows.
 * :doc:`/plugins/embedart`: Image similarity comparison with ImageMagick
   should now work on Windows.
+* :doc:`/plugins/fetchart`: The plugin should work more reliably with
+  non-ASCII paths.
 
 Fixes:
 

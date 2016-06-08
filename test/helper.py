@@ -454,9 +454,9 @@ class TestHelper(object):
 
         parent = os.path.dirname(path)
         if not os.path.isdir(parent):
-            os.makedirs(parent)
+            os.makedirs(util.syspath(parent))
 
-        with open(path, 'a+') as f:
+        with open(util.syspath(path), 'a+') as f:
             f.write(content)
         return path
 
