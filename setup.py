@@ -23,7 +23,7 @@ import subprocess
 import shutil
 from setuptools.dist import Distribution
 from setuptools.command.sdist import sdist as default_sdist
-import warnings
+from distutils.errors import DistutilsExecError
 from setuptools import setup, Command
 
 
@@ -36,26 +36,27 @@ class BeetsDistribution(Distribution):
 class sdist(default_sdist):  # noqa: ignore=N801
     def __init__(self, *args, **kwargs):
         default_sdist.__init__(self, *args, **kwargs)
+        self._setup_directory = path.dirname(__file__)
+        self._docs_directory = path.join(self._setup_directory, 'docs')
+        self._man_directory = path.join(self._setup_directory, 'man')
+        self._built_man_directory = path.join(self._docs_directory, '_build',
+                                              'man')
 
-    def _build_man_pages(self):
-        # Work out directories.
-        setup_directory = path.dirname(__file__)
-        docs_directory = path.join(setup_directory, 'docs')
-        man_directory = path.join(setup_directory, 'man')
-        built_man_directory = path.join(docs_directory, '_build', 'man')
-
-        # Build man pages.
-        try:
-            subprocess.check_call(['make', 'man'], cwd=docs_directory)
-        except OSError:
-            warnings.warn('Could not build man pages')
-            return
-
-        if path.exists(man_directory):
-            shutil.rmtree(man_directory)
+    def _copy_man_pages(self):
+        if path.exists(self._man_directory):
+            shutil.rmtree(self._man_directory)
 
         # Copy built man pages.
-        shutil.copytree(built_man_directory, man_directory)
+        shutil.copytree(self._built_man_directory, self._man_directory)
+
+    def _build_man_pages(self):
+        try:
+            # Build man pages using make.
+            subprocess.check_call(['make', 'man'], cwd=self._docs_directory)
+        except (subprocess.CalledProcessError, OSError):
+            return False
+
+        return True
 
     def run(self, *args, **kwargs):
         sdist_requires = self.distribution.sdist_requires
@@ -64,7 +65,10 @@ class sdist(default_sdist):  # noqa: ignore=N801
         if sdist_requires:
             self.distribution.fetch_build_eggs(sdist_requires)
 
-        self._build_man_pages()
+        if self._build_man_pages():
+            self._copy_man_pages()
+        else:
+            raise DistutilsExecError('could not build man pages')
 
         # Run the default sdist task.
         default_sdist.run(self, *args, **kwargs)
