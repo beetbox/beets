@@ -17,11 +17,13 @@
 
 from __future__ import division, absolute_import, print_function
 
+import os
 from os import path
 import sys
 import subprocess
 import shutil
 from setuptools.dist import Distribution
+import glob
 from setuptools.command.sdist import sdist as default_sdist
 from distutils.errors import DistutilsExecError
 from setuptools import setup, Command
@@ -31,6 +33,13 @@ class BeetsDistribution(Distribution):
     def __init__(self, *args, **kwargs):
         self.sdist_requires = None
         Distribution.__init__(self, *args, **kwargs)
+
+    def get_eggs(self):
+        cache_dir = self.get_egg_cache_dir()
+        cache_glob = path.join(cache_dir, '*.egg')
+        files = glob.glob(cache_glob)
+
+        return map(path.abspath, files)
 
 
 class sdist(default_sdist):  # noqa: ignore=N801
@@ -50,6 +59,10 @@ class sdist(default_sdist):  # noqa: ignore=N801
         shutil.copytree(self._built_man_directory, self._man_directory)
 
     def _build_man_pages(self):
+        # Add eggs to PYTHONPATH. We need to do this to ensure our eggs are
+        # seen by the new python instance.
+        os.environ['PYTHONPATH'] = ':'.join(self.distribution.get_eggs())
+
         try:
             # Build man pages using make.
             subprocess.check_call(['make', 'man'], cwd=self._docs_directory)
@@ -97,14 +110,17 @@ class test(Command):  # noqa: ignore=N801
         if self.distribution.tests_require:
             self.distribution.fetch_build_eggs(self.distribution.tests_require)
 
+        # Add eggs to PYTHONPATH. We need to do this to ensure our eggs are
+        # seen by Tox.
+        os.environ['PYTHONPATH'] = ':'.join(self.distribution.get_eggs())
+
         import shlex
         import tox
 
-        args = self.tox_args
-        if args:
-            args = shlex.split(self.tox_args)
-        errno = tox.cmdline(args=args)
-        sys.exit(errno)
+        parsed_args = shlex.split(self.tox_args)
+        result = tox.cmdline(args=parsed_args)
+
+        sys.exit(result)
 
 
 def _read(filename):
