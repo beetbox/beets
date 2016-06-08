@@ -39,10 +39,9 @@ addons:
 # To install dependencies, tell tox to do everything but actually running the
 # test.
 install:
-    - travis_retry pip install tox sphinx
-    - travis_retry tox -e $TOX_ENV --notest
+    - travis_retry python setup.py test -a "-e $TOX_ENV --notest"
 
-script: tox -e $TOX_ENV
+script: python setup.py test -a "-e $TOX_ENV"
 
 # Report coverage to codecov.io.
 before_install:

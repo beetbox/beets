@@ -18,11 +18,10 @@ environment:
 
 # Install Tox for running tests.
 install:
-    - "%PYTHON%/Scripts/pip.exe install tox"
-    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
+    - python setup.py test -a "-e %TOX_ENV% --notest"
 
 test_script:
-    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV%"
+    - python setup.py test -a "-e %TOX_ENV%"
 
 # Allow all failures for now: the tests don't yet pass!
 matrix:
