@@ -31,6 +31,7 @@ from beets import util
 from beets import config
 from beets.util.artresizer import ArtResizer
 from beets.util import confit
+from beets.util import syspath, bytestring_path
 
 try:
     import itunes
@@ -599,15 +600,16 @@ class FileSystem(LocalArtSource):
         cautious = extra['cautious']
 
         for path in paths:
-            if not os.path.isdir(path):
+            if not os.path.isdir(syspath(path)):
                 continue
 
             # Find all files that look like images in the directory.
             images = []
-            for fn in os.listdir(path):
+            for fn in os.listdir(syspath(path)):
+                fn = bytestring_path(fn)
                 for ext in IMAGE_EXTENSIONS:
                     if fn.lower().endswith(b'.' + ext.encode('utf8')) and \
-                       os.path.isfile(os.path.join(path, fn)):
+                       os.path.isfile(syspath(os.path.join(path, fn))):
                         images.append(fn)
 
             # Look for "preferred" filenames.

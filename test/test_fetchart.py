@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 import os
 from test._common import unittest
 from test.helper import TestHelper
+from beets import util
 
 
 class FetchartCliTest(unittest.TestCase, TestHelper):
@@ -41,7 +42,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
 
         self.album.load()
         self.assertEqual(self.album['artpath'], cover_path)
-        with open(cover_path, 'r') as f:
+        with open(util.syspath(cover_path), 'r') as f:
             self.assertEqual(f.read(), 'IMAGE')
 
     def test_filesystem_does_not_pick_up_folder(self):
