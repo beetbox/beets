@@ -581,18 +581,31 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assertFalse(is_path('foo:bar/'))
         self.assertFalse(is_path('foo:/bar'))
 
-    def test_path_detection(self):
-        # cover existence test
+    def test_detect_absolute_path(self):
+        # Don't patch `os.path.exists`; we'll actually create a file when
+        # it exists.
         self.patcher_exists.stop()
         is_path = beets.library.PathQuery.is_path_query
 
         try:
-            self.touch(b'foo/bar')
-            # test absolute
+            self.touch(os.path.join('foo', 'bar'))
+
             self.assertTrue(is_path(os.path.join(self.temp_dir, b'foo/bar')))
             self.assertTrue(is_path(os.path.join(self.temp_dir, b'foo')))
             self.assertFalse(is_path(b'foo/bar'))
 
+        finally:
+            # Restart the `os.path.exists` patch.
+            self.patcher_exists.start()
+
+    def test_detect_relative_path(self):
+        self.patcher_exists.stop()
+        is_path = beets.library.PathQuery.is_path_query
+
+        try:
+            self.touch(os.path.join('foo', 'bar'))
+
+            # Temporarily change directory so relative paths work.
             cur_dir = os.getcwd()
             try:
                 os.chdir(self.temp_dir)
@@ -602,6 +615,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
                 self.assertFalse(is_path(b'bar'))
             finally:
                 os.chdir(cur_dir)
+
         finally:
             self.patcher_exists.start()
 
