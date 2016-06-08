@@ -7,7 +7,7 @@ Changelog
 New features:
 
 * A new ``--force`` option for :ref:`remove-cmd` allows removal of items
-  without prompting beforehand.
+  without prompting beforehand. :bug:`2042`
 
 Some fixes for Windows:
 
