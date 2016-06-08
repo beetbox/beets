@@ -32,6 +32,7 @@ from beets.dbcore.query import (NoneQuery, ParsingError,
                                 InvalidQueryArgumentTypeError)
 from beets.library import Library, Item
 from beets import util
+import platform
 
 
 class TestHelper(helper.TestHelper):
@@ -582,6 +583,11 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assertFalse(is_path('foo:/bar'))
 
     def test_detect_absolute_path(self):
+        if platform.system() == 'Windows':
+            # Because the absolute path begins with something like C:, we
+            # can't disambiguate it from an ordinary query.
+            self.skipTest('Windows absolute paths do not work as queries')
+
         # Don't patch `os.path.exists`; we'll actually create a file when
         # it exists.
         self.patcher_exists.stop()
