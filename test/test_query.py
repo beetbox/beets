@@ -37,11 +37,11 @@ from beets import util
 class TestHelper(helper.TestHelper):
 
     def assertInResult(self, item, results):  # noqa
-        result_ids = map(lambda i: i.id, results)
+        result_ids = [i.id for i in results]
         self.assertIn(item.id, result_ids)
 
     def assertNotInResult(self, item, results):  # noqa
-        result_ids = map(lambda i: i.id, results)
+        result_ids = [i.id for i in results]
         self.assertNotIn(item.id, result_ids)
 
 
