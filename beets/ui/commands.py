@@ -1663,13 +1663,11 @@ def print_completion(*args):
 BASH_COMPLETION_PATHS = map(syspath, [
     u'/etc/bash_completion',
     u'/usr/share/bash-completion/bash_completion',
-    u'/usr/share/local/bash-completion/bash_completion',
+    u'/usr/local/share/bash-completion/bash_completion',
     # SmartOS
     u'/opt/local/share/bash-completion/bash_completion',
-    # Homebrew
+    # Homebrew (before bash-completion2)
     u'/usr/local/etc/bash_completion',
-    # Homebrew bash-completion2
-    u'/usr/local/share/bash-completion/bash_completion',
 ])
 
 
