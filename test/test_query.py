@@ -588,11 +588,17 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         is_path = beets.library.PathQuery.is_path_query
 
         try:
-            self.touch(os.path.join('foo', 'bar'))
+            path = self.touch(os.path.join('foo', 'bar'))
 
-            self.assertTrue(is_path(os.path.join(self.temp_dir, b'foo/bar')))
-            self.assertTrue(is_path(os.path.join(self.temp_dir, b'foo')))
-            self.assertFalse(is_path(b'foo/bar'))
+            # The file itself.
+            self.assertTrue(is_path(path))
+
+            # The parent directory.
+            parent = os.path.dirname(path)
+            self.assertTrue(is_path(parent))
+
+            # Some non-existent path.
+            self.assertFalse(is_path(path + b'baz'))
 
         finally:
             # Restart the `os.path.exists` patch.
