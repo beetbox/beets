@@ -21,6 +21,7 @@ from test.helper import TestHelper
 
 from beets.library import Item
 from beetsplug.mpdstats import MPDStats
+from beets import util
 
 
 class MPDStatsTest(unittest.TestCase, TestHelper):
@@ -43,7 +44,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         self.assertFalse(mpdstats.update_rating(None, True))
 
     def test_get_item(self):
-        item_path = '/foo/bar.flac'
+        item_path = util.normpath('/foo/bar.flac')
         item = Item(title=u'title', path=item_path, id=1)
         item.add(self.lib)
 
@@ -60,7 +61,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
                 {'state': u'play', 'songid': 1, 'time': u'0:1'},
                 {'state': u'stop'}]
     EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
-    item_path = '/foo/bar.flac'
+    item_path = util.normpath('/foo/bar.flac')
 
     @patch("beetsplug.mpdstats.MPDClientWrapper", return_value=Mock(**{
         "events.side_effect": EVENTS, "status.side_effect": STATUSES,
