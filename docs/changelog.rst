@@ -21,6 +21,8 @@ Fixes:
 * :doc:`/plugins/lyrics`: Avoid a crash and a spurious warning introduced in
   the last version about a Google API key, which appeared even when you hadn't
   tried to enable the Google lyrics source.
+* Fix a hard-coded path to ``bash-completion`` to work better with Homebrew
+  installations. Thanks to :user:`bismark`. :bug:`2038`
 
 
 1.3.18 (May 31, 2016)
