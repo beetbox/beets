@@ -73,32 +73,37 @@ class UserError(Exception):
 # Encoding utilities.
 
 
-def _in_encoding(default=u'utf-8'):
+def _in_encoding():
     """Get the encoding to use for *inputting* strings from the console.
-
-    :param default: the fallback sys.stdin encoding
     """
-
-    return config['terminal_encoding'].get() or getattr(sys.stdin, 'encoding',
-                                                        default)
+    return _stream_encoding(sys.stdin)
 
 
 def _out_encoding():
     """Get the encoding to use for *outputting* strings to the console.
+    """
+    return _stream_encoding(sys.stdout)
+
+
+def _stream_encoding(stream, default='utf8'):
+    """A helper for `_in_encoding` and `_out_encoding`: get the stream's
+    preferred encoding, using a configured override or a default
+    fallback if neither is not specified.
     """
     # Configured override?
     encoding = config['terminal_encoding'].get()
     if encoding:
         return encoding
 
-    # For testing: When sys.stdout is a StringIO under the test harness,
-    # it doesn't have an `encoding` attribute. Just use UTF-8.
-    if not hasattr(sys.stdout, 'encoding'):
-        return 'utf8'
+    # For testing: When sys.stdout or sys.stdin is a StringIO under the
+    # test harness, it doesn't have an `encoding` attribute. Just use
+    # UTF-8.
+    if not hasattr(stream, 'encoding'):
+        return default
 
     # Python's guessed output stream encoding, or UTF-8 as a fallback
     # (e.g., when piped to a file).
-    return sys.stdout.encoding or 'utf8'
+    return stream.encoding or default
 
 
 def _arg_encoding():

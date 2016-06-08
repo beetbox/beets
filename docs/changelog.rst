@@ -23,6 +23,8 @@ Fixes:
   tried to enable the Google lyrics source.
 * Fix a hard-coded path to ``bash-completion`` to work better with Homebrew
   installations. Thanks to :user:`bismark`. :bug:`2038`
+* Fix a crash introduced in the previous version when the standard input was
+  connected to a Unix pipe. :bug:`2041`
 
 
 1.3.18 (May 31, 2016)
