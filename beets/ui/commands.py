@@ -1194,31 +1194,33 @@ default_commands.append(update_cmd)
 
 # remove: Remove items from library, delete files.
 
-def remove_items(lib, query, album, delete):
+def remove_items(lib, query, album, delete, force):
     """Remove items matching query from lib. If album, then match and
     remove whole albums. If delete, also remove files from disk.
     """
     # Get the matching items.
     items, albums = _do_query(lib, query, album)
 
-    # Prepare confirmation with user.
-    print_()
-    if delete:
-        fmt = u'$path - $title'
-        prompt = u'Really DELETE %i file%s (y/n)?' % \
-                 (len(items), 's' if len(items) > 1 else '')
-    else:
-        fmt = ''
-        prompt = u'Really remove %i item%s from the library (y/n)?' % \
-                 (len(items), 's' if len(items) > 1 else '')
+    # Confirm file removal if not forcing removal.
+    if not force:
+        # Prepare confirmation with user.
+        print_()
+        if delete:
+            fmt = u'$path - $title'
+            prompt = u'Really DELETE %i file%s (y/n)?' % \
+                     (len(items), 's' if len(items) > 1 else '')
+        else:
+            fmt = ''
+            prompt = u'Really remove %i item%s from the library (y/n)?' % \
+                     (len(items), 's' if len(items) > 1 else '')
 
-    # Show all the items.
-    for item in items:
-        ui.print_(format(item, fmt))
+        # Show all the items.
+        for item in items:
+            ui.print_(format(item, fmt))
 
-    # Confirm with user.
-    if not ui.input_yn(prompt, True):
-        return
+        # Confirm with user.
+        if not ui.input_yn(prompt, True):
+            return
 
     # Remove (and possibly delete) items.
     with lib.transaction():
@@ -1227,7 +1229,7 @@ def remove_items(lib, query, album, delete):
 
 
 def remove_func(lib, opts, args):
-    remove_items(lib, decargs(args), opts.album, opts.delete)
+    remove_items(lib, decargs(args), opts.album, opts.delete, opts.force)
 
 
 remove_cmd = ui.Subcommand(
@@ -1236,6 +1238,10 @@ remove_cmd = ui.Subcommand(
 remove_cmd.parser.add_option(
     u"-d", u"--delete", action="store_true",
     help=u"also remove files from disk"
+)
+remove_cmd.parser.add_option(
+    u"-f", u"--force", action="store_true",
+    help=u"do not ask when removing items"
 )
 remove_cmd.parser.add_album_option()
 remove_cmd.func = remove_func
