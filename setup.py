@@ -59,7 +59,12 @@ class sdist(default_sdist):  # noqa: ignore=N801
         return True
 
     def run(self, *args, **kwargs):
+        install_requires = self.distribution.install_requires
         sdist_requires = self.distribution.sdist_requires
+
+        # Install install dependencies if needed.
+        if install_requires:
+            self.distribution.fetch_build_eggs(install_requires)
 
         # Install sdist dependencies if needed.
         if sdist_requires:
