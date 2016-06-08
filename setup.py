@@ -66,7 +66,7 @@ class sdist(default_sdist):  # noqa: ignore=N801
 
         self._build_man_pages()
 
-        # Run the default sdist task
+        # Run the default sdist task.
         default_sdist.run(self, *args, **kwargs)
 
 
