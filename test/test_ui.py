@@ -1300,6 +1300,30 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
                          ({'album': None, 'path': None, 'format': None}, []))
 
 
+class EncodingTest(_common.TestCase):
+    """Tests for the `terminal_encoding` config option and our
+    `_in_encoding` and `_out_encoding` utility functions.
+    """
+
+    def out_encoding_overridden(self):
+        config['terminal_encoding'] = 'fake_encoding'
+        self.assertEqual(ui._out_encoding(), 'fake_encoding')
+
+    def in_encoding_overridden(self):
+        config['terminal_encoding'] = 'fake_encoding'
+        self.assertEqual(ui._in_encoding(), 'fake_encoding')
+
+    def out_encoding_default_utf8(self):
+        with patch('sys.stdout') as stdout:
+            stdout.encoding = None
+            self.assertEqual(ui._out_encoding(), 'utf8')
+
+    def in_encoding_default_utf8(self):
+        with patch('sys.stdin') as stdin:
+            stdin.encoding = None
+            self.assertEqual(ui._in_encoding(), 'utf8')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
