@@ -42,7 +42,7 @@ class BeetsDistribution(Distribution):
         return map(path.abspath, files)
 
     def update_path_with_eggs(self):
-        os.environ['PYTHONPATH'] = ':'.join(self.distribution.get_eggs())
+        os.environ['PYTHONPATH'] = ':'.join(self.get_eggs())
 
 
 class sdist(default_sdist):  # noqa: ignore=N801
