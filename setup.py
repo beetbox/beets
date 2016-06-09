@@ -41,6 +41,9 @@ class BeetsDistribution(Distribution):
 
         return map(path.abspath, files)
 
+    def update_path_with_eggs(self):
+        os.environ['PYTHONPATH'] = ':'.join(self.distribution.get_eggs())
+
 
 class sdist(default_sdist):  # noqa: ignore=N801
     def __init__(self, *args, **kwargs):
@@ -61,7 +64,7 @@ class sdist(default_sdist):  # noqa: ignore=N801
     def _build_man_pages(self):
         # Add eggs to PYTHONPATH. We need to do this to ensure our eggs are
         # seen by the new python instance.
-        os.environ['PYTHONPATH'] = ':'.join(self.distribution.get_eggs())
+        self.distribution.update_path_with_eggs()
 
         try:
             # Build man pages using make.
@@ -112,7 +115,7 @@ class test(Command):  # noqa: ignore=N801
 
         # Add eggs to PYTHONPATH. We need to do this to ensure our eggs are
         # seen by Tox.
-        os.environ['PYTHONPATH'] = ':'.join(self.distribution.get_eggs())
+        self.distribution.update_path_with_eggs()
 
         import shlex
         import tox
