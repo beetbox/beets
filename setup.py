@@ -33,20 +33,45 @@ class BeetsDistribution(Distribution):
         self.sdist_requires = None
         Distribution.__init__(self, *args, **kwargs)
 
-    def _get_path(self, env=False):
-        """Return an array of paths currently in the python path."""
-        if env:
-            path = os.environ.get('PYTHONPATH', '').split(':')
-        else:
-            path = sys.path
-
-        return set([p for p in path if len(p) > 0])
+    def get_finalized_command(self, command, create=1):
+        cmd_obj = self.get_command_obj(command, create)
+        cmd_obj.ensure_finalized()
+        return cmd_obj
 
     def export_live_eggs(self, env=False):
         """Adds all of the eggs in the current environment to PYTHONPATH."""
-        path_eggs = [p for p in self._get_path(env) if p.endswith('.egg')]
+        path_eggs = [p for p in sys.path if p.endswith('.egg')]
 
-        os.environ['PYTHONPATH'] = ':'.join(path_eggs)
+        command = self.get_finalized_command("egg_info")
+        egg_base = path.abspath(command.egg_base)
+
+        unique_path_eggs = set(path_eggs + [egg_base])
+
+        os.environ['PYTHONPATH'] = ':'.join(unique_path_eggs)
+
+    def run_with_dependencies(self, func, dependencies, *args, **kwargs):
+        old_path = sys.path[:]
+        old_modules = sys.modules.copy()
+        old_python_path = os.environ.get('PYTHONPATH')
+        result = None
+
+        try:
+            if dependencies is not None:
+                self.fetch_build_eggs(dependencies)
+
+            self.export_live_eggs()
+
+            result = func(*args, **kwargs)
+        finally:
+            sys.path[:] = old_path
+
+            sys.modules.clear()
+            sys.modules.update(old_modules)
+
+            if old_python_path is not None:
+                os.environ['PYTHONPATH'] = old_python_path
+
+        return result
 
 
 class sdist(default_sdist):  # noqa: ignore=N801
@@ -82,7 +107,7 @@ class sdist(default_sdist):  # noqa: ignore=N801
 
         return True
 
-    def run(self, *args, **kwargs):
+    def run_sdist(self):
         install_requires = self.distribution.install_requires
         sdist_requires = self.distribution.sdist_requires
 
@@ -98,6 +123,19 @@ class sdist(default_sdist):  # noqa: ignore=N801
             self._copy_man_pages()
         else:
             raise DistutilsExecError('could not build man pages')
+
+    def run(self, *args, **kwargs):
+        requires = []
+        install_requires = self.distribution.install_requires
+        sdist_requires = self.distribution.sdist_requires
+
+        if install_requires:
+            requires.extend(install_requires)
+
+        if sdist_requires:
+            requires.extend(sdist_requires)
+
+        self.distribution.run_with_dependencies(self.run_sdist, requires)
 
         # Run the default sdist task.
         default_sdist.run(self, *args, **kwargs)
