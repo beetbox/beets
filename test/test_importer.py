@@ -1104,7 +1104,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        self.assertExists(item.path)
+        self.assertNotExists(item.path)
         self.assertEqual(len(self.lib.albums()), 1)
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
@@ -1200,7 +1200,7 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        self.assertExists(item.path)
+        self.assertNotExists(item.path)
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.mb_trackid, u'new trackid')
