@@ -35,6 +35,7 @@ class BeetsDistribution(Distribution):
         Distribution.__init__(self, *args, **kwargs)
 
     def get_eggs(self):
+        """Returns the paths of all egg files in the egg cache directory."""
         cache_dir = self.get_egg_cache_dir()
         cache_glob = path.join(cache_dir, '*.egg')
         files = glob.glob(cache_glob)
@@ -46,6 +47,8 @@ class BeetsDistribution(Distribution):
 
 
 class sdist(default_sdist):  # noqa: ignore=N801
+    """Custom sdist that builds the man pages before the normal sdist build."""
+
     def __init__(self, *args, **kwargs):
         default_sdist.__init__(self, *args, **kwargs)
         self._setup_directory = path.dirname(__file__)
@@ -55,6 +58,7 @@ class sdist(default_sdist):  # noqa: ignore=N801
                                               'man')
 
     def _copy_man_pages(self):
+        """Copy the built man pages to the output directory."""
         if path.exists(self._man_directory):
             shutil.rmtree(self._man_directory)
 
@@ -62,6 +66,7 @@ class sdist(default_sdist):  # noqa: ignore=N801
         shutil.copytree(self._built_man_directory, self._man_directory)
 
     def _build_man_pages(self):
+        """Build the man pages using make."""
         # Add eggs to PYTHONPATH. We need to do this to ensure our eggs are
         # seen by the new python instance.
         self.distribution.update_path_with_eggs()
