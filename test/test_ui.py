@@ -652,10 +652,15 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.setup_beets()
 
         # Don't use the BEETSDIR from `helper`. Instead, we point the home
-        # directory there. Some tests will set `BEETSDIR` themselves.
+        # directory there. Some tests will set `BEETSDIR` themselves. 
         del os.environ['BEETSDIR']
         self._old_home = os.environ.get('HOME')
         os.environ['HOME'] = self.temp_dir
+
+        # Also set APPDATA, the Windows equivalent of setting $HOME.
+        self._old_appdata = os.environ.get('APPDATA')
+        os.environ['APPDATA'] = \
+            os.path.join(self.temp_dir, 'AppData', 'Roaming')
 
         self._orig_cwd = os.getcwd()
         self.test_cmd = self._make_test_cmd()
@@ -685,6 +690,10 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         os.chdir(self._orig_cwd)
         if self._old_home is not None:
             os.environ['HOME'] = self._old_home
+        if self._old_appdata is None:
+            del os.environ['APPDATA']
+        else:
+            os.environ['APPDATA'] = self._old_appdata
         self.teardown_beets()
 
     def _make_test_cmd(self):
