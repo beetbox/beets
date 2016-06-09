@@ -23,7 +23,6 @@ import sys
 import subprocess
 import shutil
 from setuptools.dist import Distribution
-import glob
 from setuptools.command.sdist import sdist as default_sdist
 from distutils.errors import DistutilsExecError
 from setuptools import setup, Command
@@ -34,21 +33,20 @@ class BeetsDistribution(Distribution):
         self.sdist_requires = None
         Distribution.__init__(self, *args, **kwargs)
 
-    def get_eggs(self):
-        """Returns the paths of all egg files in the egg cache directory."""
-        cache_dir = self.get_egg_cache_dir()
-        cache_glob = path.join(cache_dir, '*.egg')
-        files = glob.glob(cache_glob)
+    def _get_path(self, env=False):
+        """Return an array of paths currently in the python path."""
+        if env:
+            path = os.environ.get('PYTHONPATH', '').split(':')
+        else:
+            path = sys.path
 
-        return [path.abspath(f) for f in files]
+        return set([p for p in path if len(p) > 0])
 
-    def update_path_with_eggs(self):
-        """Adds all of the eggs returned by get_eggs to PYTHONPATH."""
-        original_path = os.environ.get('PYTHONPATH', '').split(':')
-        full_path = original_path + self.get_eggs()
-        unique_path = set(filter(len, full_path))
+    def export_live_eggs(self, env=False):
+        """Adds all of the eggs in the current environment to PYTHONPATH."""
+        path_eggs = [p for p in self._get_path(env) if p.endswith('.egg')]
 
-        os.environ['PYTHONPATH'] = ':'.join(unique_path)
+        os.environ['PYTHONPATH'] = ':'.join(path_eggs)
 
 
 class sdist(default_sdist):  # noqa: ignore=N801
@@ -74,7 +72,7 @@ class sdist(default_sdist):  # noqa: ignore=N801
         """Build the man pages using make."""
         # Add eggs to PYTHONPATH. We need to do this to ensure our eggs are
         # seen by the new python instance.
-        self.distribution.update_path_with_eggs()
+        self.distribution.export_live_eggs()
 
         try:
             # Build man pages using make.
@@ -125,7 +123,7 @@ class test(Command):  # noqa: ignore=N801
 
         # Add eggs to PYTHONPATH. We need to do this to ensure our eggs are
         # seen by Tox.
-        self.distribution.update_path_with_eggs()
+        self.distribution.export_live_eggs()
 
         import shlex
         import tox
