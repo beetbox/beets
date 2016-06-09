@@ -127,11 +127,11 @@ class Assertions(object):
     """A mixin with additional unit test assertions."""
 
     def assertExists(self, path):  # noqa
-        self.assertTrue(os.path.exists(path),
+        self.assertTrue(os.path.exists(util.syspath(path)),
                         u'file does not exist: {!r}'.format(path))
 
     def assertNotExists(self, path):  # noqa
-        self.assertFalse(os.path.exists(path),
+        self.assertFalse(os.path.exists(util.syspath(path)),
                          u'file exists: {!r}'.format((path)))
 
     def assert_equal_path(self, a, b):
