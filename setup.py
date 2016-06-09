@@ -40,7 +40,7 @@ class BeetsDistribution(Distribution):
         cache_glob = path.join(cache_dir, '*.egg')
         files = glob.glob(cache_glob)
 
-        return map(path.abspath, files)
+        return [path.abspath(f) for f in files]
 
     def update_path_with_eggs(self):
         """Adds all of the eggs returned by get_eggs to PYTHONPATH."""
