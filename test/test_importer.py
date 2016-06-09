@@ -354,7 +354,7 @@ def create_archive(session):
     return path
 
 
-class RmTempTest(unittest.TestCase, ImportHelper):
+class RmTempTest(unittest.TestCase, ImportHelper, _common.Assertions):
     """Tests that temporarily extracted archives are properly removed
     after usage.
     """
@@ -374,9 +374,9 @@ class RmTempTest(unittest.TestCase, ImportHelper):
         archive_task.extract()
         tmp_path = archive_task.toppath
         self._setup_import_session(autotag=False, import_dir=tmp_path)
-        self.assertTrue(os.path.exists(tmp_path))
+        self.assertExists(tmp_path)
         archive_task.finalize(self)
-        self.assertFalse(os.path.exists(tmp_path))
+        self.assertNotExists(tmp_path)
 
 
 class ImportZipTest(unittest.TestCase, ImportHelper):
@@ -1074,7 +1074,8 @@ def test_album_info():
     return album_info
 
 
-class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
+class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
+                               _common.Assertions):
 
     def setUp(self):
         self.setup_beets()
@@ -1098,12 +1099,12 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
     def test_remove_duplicate_album(self):
         item = self.lib.items().get()
         self.assertEqual(item.title, u't\xeftle 0')
-        self.assertTrue(os.path.isfile(item.path))
+        self.assertExists(item.path)
 
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        self.assertFalse(os.path.isfile(item.path))
+        self.assertExists(item.path)
         self.assertEqual(len(self.lib.albums()), 1)
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
@@ -1113,7 +1114,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         config['import']['autotag'] = False
         item = self.lib.items().get()
         self.assertEqual(item.title, u't\xeftle 0')
-        self.assertTrue(os.path.isfile(item.path))
+        self.assertExists(item.path)
 
         # Imported item has the same artist and album as the one in the
         # library.
@@ -1128,7 +1129,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        self.assertTrue(os.path.isfile(item.path))
+        self.assertExists(item.path)
         self.assertEqual(len(self.lib.albums()), 2)
         self.assertEqual(len(self.lib.items()), 2)
 
@@ -1162,7 +1163,8 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         return album
 
 
-class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
+class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
+                                   _common.Assertions):
 
     def setUp(self):
         self.setup_beets()
@@ -1193,12 +1195,12 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
     def test_remove_duplicate(self):
         item = self.lib.items().get()
         self.assertEqual(item.mb_trackid, u'old trackid')
-        self.assertTrue(os.path.isfile(item.path))
+        self.assertExists(item.path)
 
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        self.assertFalse(os.path.isfile(item.path))
+        self.assertExists(item.path)
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.mb_trackid, u'new trackid')
@@ -1511,7 +1513,7 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         self.assertEqual(len(items), 3)
 
 
-class ReimportTest(unittest.TestCase, ImportHelper):
+class ReimportTest(unittest.TestCase, ImportHelper, _common.Assertions):
     """Test "re-imports", in which the autotagging machinery is used for
     music that's already in the library.
 
@@ -1604,9 +1606,9 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         new_album = self._album()
         new_artpath = new_album.art_destination(art_source)
         self.assertEqual(new_album.artpath, new_artpath)
-        self.assertTrue(os.path.exists(new_artpath))
+        self.assertExists(new_artpath)
         if new_artpath != old_artpath:
-            self.assertFalse(os.path.exists(old_artpath))
+            self.assertNotExists(old_artpath)
 
 
 class ImportPretendTest(_common.TestCase, ImportHelper):
