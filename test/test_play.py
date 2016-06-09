@@ -44,11 +44,12 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def do_test(self, args=('title:aNiceTitle',), expected_cmd='echo',
-                expected_playlist=u'{}\n'):
+                expected_playlist=None):
         self.run_command('play', *args)
 
         self.open_mock.assert_called_once_with(ANY, expected_cmd)
-        exp_playlist = expected_playlist.format(self.item.path.decode('utf-8'))
+        expected_playlist = expected_playlist or self.item.path.decode('utf-8')
+        exp_playlist = expected_playlist + u'\n'
         with open(self.open_mock.call_args[0][0][0], 'r') as playlist:
             self.assertEqual(exp_playlist, playlist.read().decode('utf-8'))
 
@@ -70,7 +71,9 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.config['play']['command'] = 'echo'
         self.config['play']['relative_to'] = '/something'
 
-        self.do_test(expected_cmd='echo', expected_playlist=u'..{}\n')
+        path = os.path.relpath(self.item.path, '/something')
+        playlist = path.decode('utf8')
+        self.do_test(expected_cmd='echo', expected_playlist=playlist)
 
     def test_use_folders(self):
         self.config['play']['command'] = None
