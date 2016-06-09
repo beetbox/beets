@@ -161,7 +161,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         self.run_command('extractart', '-n', 'extracted')
 
-        self.assertExists(syspath(os.path.join(albumpath, b'extracted.png')))
+        self.assertExists(os.path.join(albumpath, b'extracted.png'))
 
 
 @patch('beets.art.subprocess')
