@@ -44,9 +44,9 @@ class BeetsDistribution(Distribution):
 
     def update_path_with_eggs(self):
         """Adds all of the eggs returned by get_eggs to PYTHONPATH."""
-        original_path = filter(len, os.environ['PYTHONPATH'].split(':'))
+        original_path = os.environ.get('PYTHONPATH', '').split(':')
         full_path = original_path + self.get_eggs()
-        unique_path = set(full_path)
+        unique_path = set(filter(len, full_path))
 
         os.environ['PYTHONPATH'] = ':'.join(unique_path)
 
