@@ -652,7 +652,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.setup_beets()
 
         # Don't use the BEETSDIR from `helper`. Instead, we point the home
-        # directory there. Some tests will set `BEETSDIR` themselves. 
+        # directory there. Some tests will set `BEETSDIR` themselves.
         del os.environ['BEETSDIR']
         self._old_home = os.environ.get('HOME')
         os.environ['HOME'] = self.temp_dir
