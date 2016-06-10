@@ -39,6 +39,7 @@ from beets import autotag
 from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch
 from beets import config
 from beets import logging
+from beets import util
 
 
 class AutotagStub(object):
@@ -1406,8 +1407,8 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         self.base = os.path.abspath(os.path.join(self.temp_dir, b'tempdir'))
         os.mkdir(self.base)
 
-        name = b'CAT' if ascii else u'C\xc1T'.encode('utf8')
-        name_alt_case = b'CAt' if ascii else u'C\xc1t'.encode('utf8')
+        name = b'CAT' if ascii else util.bytestring_path(u'C\xc1T')
+        name_alt_case = b'CAt' if ascii else util.bytestring_path(u'C\xc1t')
 
         self.dirs = [
             # Nested album, multiple subdirs.
@@ -1451,10 +1452,10 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
             self.files = [self._normalize_path(p) for p in self.files]
 
         for path in self.dirs:
-            os.mkdir(path)
+            os.mkdir(util.syspath(path))
         if files:
             for path in self.files:
-                _mkmp3(path)
+                _mkmp3(util.syspath(path))
 
     def _normalize_path(self, path):
         """Normalize a path's Unicode combining form according to the
