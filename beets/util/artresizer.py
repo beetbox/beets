@@ -231,9 +231,10 @@ class ArtResizer(object):
 
 def get_im_version():
     """Return Image Magick version or None if it is unavailable
-    Try invoking ImageMagick's "convert"."""
+    Try invoking ImageMagick's "convert".
+    """
     try:
-        out = util.command_output([b'identify', b'--version'])
+        out = util.command_output([b'convert', b'--version'])
 
         if b'imagemagick' in out.lower():
             pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
@@ -244,7 +245,8 @@ def get_im_version():
                         int(match.group(3)))
             return (0,)
 
-    except (subprocess.CalledProcessError, OSError):
+    except (subprocess.CalledProcessError, OSError) as exc:
+        log.debug(u'ImageMagick check `convert --version` failed: {}', exc)
         return None
 
 
