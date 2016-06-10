@@ -58,7 +58,7 @@ class FetchImageTest(UseThePlugin):
 
     def setUp(self):
         super(FetchImageTest, self).setUp()
-        self.dpath = os.path.join(self.temp_dir, 'arttest')
+        self.dpath = os.path.join(self.temp_dir, b'arttest')
         self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
         self.extra = {'maxwidth': 0}
 
@@ -78,7 +78,7 @@ class FetchImageTest(UseThePlugin):
 class FSArtTest(UseThePlugin):
     def setUp(self):
         super(FSArtTest, self).setUp()
-        self.dpath = os.path.join(self.temp_dir, 'arttest')
+        self.dpath = os.path.join(self.temp_dir, b'arttest')
         os.mkdir(self.dpath)
 
         self.source = fetchart.FileSystem(logger, self.plugin.config)
@@ -87,23 +87,23 @@ class FSArtTest(UseThePlugin):
                       'paths': [self.dpath]}
 
     def test_finds_jpg_in_directory(self):
-        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        _common.touch(os.path.join(self.dpath, b'a.jpg'))
         candidate = next(self.source.get(None, self.extra))
-        self.assertEqual(candidate.path, os.path.join(self.dpath, 'a.jpg'))
+        self.assertEqual(candidate.path, os.path.join(self.dpath, b'a.jpg'))
 
     def test_appropriately_named_file_takes_precedence(self):
-        _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        _common.touch(os.path.join(self.dpath, 'art.jpg'))
+        _common.touch(os.path.join(self.dpath, b'a.jpg'))
+        _common.touch(os.path.join(self.dpath, b'art.jpg'))
         candidate = next(self.source.get(None, self.extra))
-        self.assertEqual(candidate.path, os.path.join(self.dpath, 'art.jpg'))
+        self.assertEqual(candidate.path, os.path.join(self.dpath, b'art.jpg'))
 
     def test_non_image_file_not_identified(self):
-        _common.touch(os.path.join(self.dpath, 'a.txt'))
+        _common.touch(os.path.join(self.dpath, b'a.txt'))
         with self.assertRaises(StopIteration):
             next(self.source.get(None, self.extra))
 
     def test_cautious_skips_fallback(self):
-        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        _common.touch(os.path.join(self.dpath, b'a.jpg'))
         self.extra['cautious'] = True
         with self.assertRaises(StopIteration):
             next(self.source.get(None, self.extra))
@@ -135,7 +135,7 @@ class CombinedTest(UseThePlugin):
 
     def setUp(self):
         super(CombinedTest, self).setUp()
-        self.dpath = os.path.join(self.temp_dir, 'arttest')
+        self.dpath = os.path.join(self.temp_dir, b'arttest')
         os.mkdir(self.dpath)
 
     @responses.activate
@@ -157,12 +157,12 @@ class CombinedTest(UseThePlugin):
         self.assertIsNone(candidate)
 
     def test_main_interface_gives_precedence_to_fs_art(self):
-        _common.touch(os.path.join(self.dpath, 'art.jpg'))
+        _common.touch(os.path.join(self.dpath, b'art.jpg'))
         self.mock_response(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
         self.assertIsNotNone(candidate)
-        self.assertEqual(candidate.path, os.path.join(self.dpath, 'art.jpg'))
+        self.assertEqual(candidate.path, os.path.join(self.dpath, b'art.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         self.mock_response(self.AMAZON_URL)
@@ -198,12 +198,12 @@ class CombinedTest(UseThePlugin):
         self.assertEqual(len(responses.calls), 0)
 
     def test_local_only_gets_fs_image(self):
-        _common.touch(os.path.join(self.dpath, 'art.jpg'))
+        _common.touch(os.path.join(self.dpath, b'art.jpg'))
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath],
                                               local_only=True)
         self.assertIsNotNone(candidate)
-        self.assertEqual(candidate.path, os.path.join(self.dpath, 'art.jpg'))
+        self.assertEqual(candidate.path, os.path.join(self.dpath, b'art.jpg'))
         self.assertEqual(len(responses.calls), 0)
 
 
@@ -387,7 +387,7 @@ class ArtImporterTest(UseThePlugin):
         super(ArtImporterTest, self).setUp()
 
         # Mock the album art fetcher to always return our test file.
-        self.art_file = os.path.join(self.temp_dir, 'tmpcover.jpg')
+        self.art_file = os.path.join(self.temp_dir, b'tmpcover.jpg')
         _common.touch(self.art_file)
         self.old_afa = self.plugin.art_for_album
         self.afa_response = fetchart.Candidate(logger, path=self.art_file)
@@ -401,9 +401,9 @@ class ArtImporterTest(UseThePlugin):
         self.libpath = os.path.join(self.temp_dir, 'tmplib.blb')
         self.libdir = os.path.join(self.temp_dir, 'tmplib')
         os.mkdir(self.libdir)
-        os.mkdir(os.path.join(self.libdir, 'album'))
-        itempath = os.path.join(self.libdir, 'album', 'test.mp3')
-        shutil.copyfile(os.path.join(_common.RSRC, 'full.mp3'), itempath)
+        os.mkdir(os.path.join(self.libdir, b'album'))
+        itempath = os.path.join(self.libdir, b'album', b'test.mp3')
+        shutil.copyfile(os.path.join(_common.RSRC, b'full.mp3'), itempath)
         self.lib = library.Library(self.libpath)
         self.i = _common.item()
         self.i.path = itempath
@@ -445,7 +445,7 @@ class ArtImporterTest(UseThePlugin):
         if should_exist:
             self.assertEqual(
                 artpath,
-                os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
+                os.path.join(os.path.dirname(self.i.path), b'cover.jpg')
             )
             self.assertExists(artpath)
         else:
@@ -474,7 +474,7 @@ class ArtImporterTest(UseThePlugin):
         self.assertNotExists(self.art_file)
 
     def test_do_not_delete_original_if_already_in_place(self):
-        artdest = os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
+        artdest = os.path.join(os.path.dirname(self.i.path), b'cover.jpg')
         shutil.copyfile(self.art_file, artdest)
         self.afa_response = fetchart.Candidate(logger, path=artdest)
         self._fetch_art(True)
@@ -497,9 +497,9 @@ class ArtForAlbumTest(UseThePlugin):
     configuration (e.g., minwidth, enforce_ratio)
     """
 
-    IMG_225x225 = os.path.join(_common.RSRC, 'abbey.jpg')
-    IMG_348x348 = os.path.join(_common.RSRC, 'abbey-different.jpg')
-    IMG_500x490 = os.path.join(_common.RSRC, 'abbey-similar.jpg')
+    IMG_225x225 = os.path.join(_common.RSRC, b'abbey.jpg')
+    IMG_348x348 = os.path.join(_common.RSRC, b'abbey-different.jpg')
+    IMG_500x490 = os.path.join(_common.RSRC, b'abbey-similar.jpg')
 
     def setUp(self):
         super(ArtForAlbumTest, self).setUp()

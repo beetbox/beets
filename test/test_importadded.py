@@ -127,7 +127,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         for item_path, added_after in items_added_after.iteritems():
             self.assertEqualTimes(items_added_before[item_path], added_after,
                                   u"reimport modified Item.added for " +
-                                  item_path)
+                                  util.displayable_path(item_path))
 
     def test_import_singletons_with_added_dates(self):
         self.config['import']['singletons'] = True
@@ -165,7 +165,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         for item_path, added_after in items_added_after.iteritems():
             self.assertEqualTimes(items_added_before[item_path], added_after,
                                   u"reimport modified Item.added for " +
-                                  item_path)
+                                  util.displayable_path(item_path))
 
 
 def suite():

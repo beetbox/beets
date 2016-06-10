@@ -40,7 +40,8 @@ class ArtTestMixin(object):
     @property
     def png_data(self):
         if not self._png_data:
-            with open(os.path.join(_common.RSRC, 'image-2x3.png'), 'rb') as f:
+            image_file = os.path.join(_common.RSRC, b'image-2x3.png')
+            with open(image_file, 'rb') as f:
                 self._png_data = f.read()
         return self._png_data
     _png_data = None
@@ -48,7 +49,8 @@ class ArtTestMixin(object):
     @property
     def jpg_data(self):
         if not self._jpg_data:
-            with open(os.path.join(_common.RSRC, 'image-2x3.jpg'), 'rb') as f:
+            image_file = os.path.join(_common.RSRC, b'image-2x3.jpg')
+            with open(image_file, 'rb') as f:
                 self._jpg_data = f.read()
         return self._jpg_data
     _jpg_data = None
@@ -56,7 +58,8 @@ class ArtTestMixin(object):
     @property
     def tiff_data(self):
         if not self._jpg_data:
-            with open(os.path.join(_common.RSRC, 'image-2x3.tiff'), 'rb') as f:
+            image_file = os.path.join(_common.RSRC, b'image-2x3.tiff')
+            with open(image_file, 'rb') as f:
                 self._jpg_data = f.read()
         return self._jpg_data
     _jpg_data = None
@@ -931,13 +934,13 @@ class AIFFTest(ReadWriteTestBase, unittest.TestCase):
 class MediaFieldTest(unittest.TestCase):
 
     def test_properties_from_fields(self):
-        path = os.path.join(_common.RSRC, 'full.mp3')
+        path = os.path.join(_common.RSRC, b'full.mp3')
         mediafile = MediaFile(path)
         for field in MediaFile.fields():
             self.assertTrue(hasattr(mediafile, field))
 
     def test_properties_from_readable_fields(self):
-        path = os.path.join(_common.RSRC, 'full.mp3')
+        path = os.path.join(_common.RSRC, b'full.mp3')
         mediafile = MediaFile(path)
         for field in MediaFile.readable_fields():
             self.assertTrue(hasattr(mediafile, field))
