@@ -616,6 +616,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
+        import_dir = displayable_path(import_dir)
         self.assertIn(u'No files imported from {0}'.format(import_dir), logs)
 
     def test_empty_directory_singleton_warning(self):
@@ -625,6 +626,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         with capture_log() as logs:
             self.importer.run()
 
+        import_dir = displayable_path(import_dir)
         self.assertIn(u'No files imported from {0}'.format(import_dir), logs)
 
     def test_asis_no_data_source(self):
@@ -1671,17 +1673,17 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         logs = self.__run(self.import_paths)
 
         self.assertEqual(logs, [
-            'Singleton: %s' % self.import_files[0],
-            'Singleton: %s' % self.import_paths[1]])
+            'Singleton: %s' % displayable_path(self.import_files[0]),
+            'Singleton: %s' % displayable_path(self.import_paths[1])])
 
     def test_import_album_pretend(self):
         logs = self.__run(self.import_paths, singletons=False)
 
         self.assertEqual(logs, [
             'Album: %s' % displayable_path(self.import_paths[0]),
-            '  %s' % self.import_files[0],
+            '  %s' % displayable_path(self.import_files[0]),
             'Album: %s' % displayable_path(self.import_paths[1]),
-            '  %s' % self.import_paths[1]])
+            '  %s' % displayable_path(self.import_paths[1])])
 
     def test_import_pretend_empty(self):
         logs = self.__run([self.empty_path])
