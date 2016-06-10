@@ -194,7 +194,7 @@ class DiscogsPlugin(BeetsPlugin):
         # cause a query to return no results, even if they match the artist or
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
         # word characters.
-        # TEMPORARY: Encode as ASCII to work around a bug:
+        # FIXME: Encode as ASCII to work around a bug:
         # https://github.com/beetbox/beets/issues/1051
         # When the library is fixed, we should encode as UTF-8.
         query = re.sub(r'(?u)\W+', ' ', query).encode('ascii', "replace")
