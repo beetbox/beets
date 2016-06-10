@@ -35,7 +35,7 @@ def require_artresizer_compare(test):
 
     def wrapper(*args, **kwargs):
         if not ArtResizer.shared.can_compare:
-            raise unittest.SkipTest()
+            raise unittest.SkipTest("compare not available")
         else:
             return test(*args, **kwargs)
 
