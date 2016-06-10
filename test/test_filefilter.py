@@ -131,7 +131,8 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     def test_import_nothing(self):
         config['filefilter']['path'] = 'not_there'
-        self.__run(['No files imported from %s' % displayable_path(self.import_dir)])
+        self.__run(['No files imported from %s' % displayable_path(
+            self.import_dir)])
 
     # Global options
     def test_import_global(self):
