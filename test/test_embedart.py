@@ -113,7 +113,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
-        os.write(handle, u'I am not an image.')
+        os.write(handle, b'I am not an image.')
         os.close(handle)
 
         try:
