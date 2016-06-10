@@ -22,10 +22,12 @@ import itertools
 
 from beets.importer import SingletonImportTask, SentinelImportTask, \
     ArchiveImportTask, action
-from beets import plugins, config, ui, util
+from beets import plugins, config, ui
 from beets.library import Item
 from beets.dbcore import types
 from beets.mediafile import MediaFile
+from beets.util import displayable_path
+
 from test.test_importer import ImportHelper, AutotagStub
 from test.test_ui_importer import TerminalImportSessionSetup
 from test._common import unittest, RSRC
@@ -224,9 +226,10 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
         logs = [line for line in logs if not line.startswith(
             u'Sending event:')]
         self.assertEqual(logs, [
-            u'Album: {0}'.format(util.displayable_path(os.path.join(self.import_dir, b'album'))),
-            u'  {0}'.format(util.displayable_path(self.file_paths[0])),
-            u'  {0}'.format(util.displayable_path(self.file_paths[1])),
+            u'Album: {0}'.format(displayable_path(
+                os.path.join(self.import_dir, b'album'))),
+            u'  {0}'.format(displayable_path(self.file_paths[0])),
+            u'  {0}'.format(displayable_path(self.file_paths[1])),
         ])
 
     def test_import_task_created_with_plugin(self):
@@ -267,8 +270,8 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
         logs = [line for line in logs if not line.startswith(
             u'Sending event:')]
         self.assertEqual(logs, [
-            u'Singleton: {0}'.format(util.displayable_path(self.file_paths[0])),
-            u'Singleton: {0}'.format(util.displayable_path(self.file_paths[1])),
+            u'Singleton: {0}'.format(displayable_path(self.file_paths[0])),
+            u'Singleton: {0}'.format(displayable_path(self.file_paths[1])),
         ])
 
 
