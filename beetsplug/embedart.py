@@ -107,7 +107,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             else:
                 filename = bytestring_path(opts.filename or
                                            config['art_filename'].get())
-                if os.path.dirname(filename) != '':
+                if os.path.dirname(filename) != b'':
                     self._log.error(
                         u"Only specify a name rather than a path for -n")
                     return
