@@ -69,7 +69,7 @@ class ImportAbort(Exception):
 def _open_state():
     """Reads the state file, returning a dictionary."""
     try:
-        with open(config['statefile'].as_filename()) as f:
+        with open(config['statefile'].as_filename(), 'rb') as f:
             return pickle.load(f)
     except Exception as exc:
         # The `pickle` module can emit all sorts of exceptions during
@@ -83,7 +83,7 @@ def _open_state():
 def _save_state(state):
     """Writes the state dictionary out to disk."""
     try:
-        with open(config['statefile'].as_filename(), 'w') as f:
+        with open(config['statefile'].as_filename(), 'wb') as f:
             pickle.dump(state, f)
     except IOError as exc:
         log.error(u'state file could not be written: {0}', exc)
