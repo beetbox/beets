@@ -123,12 +123,13 @@ class RemoveTest(_common.TestCase):
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, b'testlibdir')
         os.mkdir(self.libdir)
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
-        self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
+        item_path = os.path.join(_common.RSRC, b'full.mp3')
+        self.i = library.Item.from_path(item_path)
         self.lib.add(self.i)
         self.i.move(True)
 
@@ -411,11 +412,11 @@ class MoveTest(_common.TestCase):
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, b'testlibdir')
         os.mkdir(self.libdir)
 
-        self.itempath = os.path.join(self.libdir, 'srcfile')
-        shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.itempath)
+        self.itempath = os.path.join(self.libdir, b'srcfile')
+        shutil.copy(os.path.join(_common.RSRC, b'full.mp3'), self.itempath)
 
         # Add a file to the library but don't copy it in yet.
         self.lib = library.Library(':memory:', self.libdir)
@@ -424,7 +425,7 @@ class MoveTest(_common.TestCase):
         self.album = self.lib.add_album([self.i])
 
         # Alternate destination directory.
-        self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
+        self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
 
     def _move(self, query=(), dest=None, copy=False, album=False,
               pretend=False):
@@ -433,54 +434,54 @@ class MoveTest(_common.TestCase):
     def test_move_item(self):
         self._move()
         self.i.load()
-        self.assertTrue('testlibdir' in self.i.path)
+        self.assertTrue(b'testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_item(self):
         self._move(copy=True)
         self.i.load()
-        self.assertTrue('testlibdir' in self.i.path)
+        self.assertTrue(b'testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_album(self):
         self._move(album=True)
         self.i.load()
-        self.assertTrue('testlibdir' in self.i.path)
+        self.assertTrue(b'testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_album(self):
         self._move(copy=True, album=True)
         self.i.load()
-        self.assertTrue('testlibdir' in self.i.path)
+        self.assertTrue(b'testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_item_custom_dir(self):
         self._move(dest=self.otherdir)
         self.i.load()
-        self.assertTrue('testotherdir' in self.i.path)
+        self.assertTrue(b'testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_move_album_custom_dir(self):
         self._move(dest=self.otherdir, album=True)
         self.i.load()
-        self.assertTrue('testotherdir' in self.i.path)
+        self.assertTrue(b'testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_pretend_move_item(self):
         self._move(dest=self.otherdir, pretend=True)
         self.i.load()
-        self.assertIn('srcfile', self.i.path)
+        self.assertIn(b'srcfile', self.i.path)
 
     def test_pretend_move_album(self):
         self._move(album=True, pretend=True)
         self.i.load()
-        self.assertIn('srcfile', self.i.path)
+        self.assertIn(b'srcfile', self.i.path)
 
 
 class UpdateTest(_common.TestCase):
@@ -489,17 +490,18 @@ class UpdateTest(_common.TestCase):
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, b'testlibdir')
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
-        self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
+        item_path = os.path.join(_common.RSRC, b'full.mp3')
+        self.i = library.Item.from_path(item_path)
         self.lib.add(self.i)
         self.i.move(True)
         self.album = self.lib.add_album([self.i])
 
         # Album art.
-        artfile = os.path.join(self.temp_dir, 'testart.jpg')
+        artfile = os.path.join(self.temp_dir, b'testart.jpg')
         _common.touch(artfile)
         self.album.set_art(artfile)
         self.album.store()
@@ -545,7 +547,7 @@ class UpdateTest(_common.TestCase):
         mf.save()
         self._update(move=True)
         item = self.lib.items().get()
-        self.assertTrue(u'differentTitle' in item.path)
+        self.assertTrue(b'differentTitle' in item.path)
 
     def test_modified_metadata_not_moved(self):
         mf = MediaFile(self.i.path)
@@ -553,7 +555,7 @@ class UpdateTest(_common.TestCase):
         mf.save()
         self._update(move=False)
         item = self.lib.items().get()
-        self.assertTrue(u'differentTitle' not in item.path)
+        self.assertTrue(b'differentTitle' not in item.path)
 
     def test_modified_album_metadata_moved(self):
         mf = MediaFile(self.i.path)
@@ -561,7 +563,7 @@ class UpdateTest(_common.TestCase):
         mf.save()
         self._update(move=True)
         item = self.lib.items().get()
-        self.assertTrue(u'differentAlbum' in item.path)
+        self.assertTrue(b'differentAlbum' in item.path)
 
     def test_modified_album_metadata_art_moved(self):
         artpath = self.album.artpath
@@ -758,7 +760,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
-        self.assertEqual(replacements, [(re.compile(ur'[xy]'), b'z')])
+        self.assertEqual(replacements, [(re.compile(ur'[xy]'), 'z')])
 
     def test_multiple_replacements_parsed(self):
         with self.write_config_file() as config:
@@ -988,7 +990,7 @@ class ShowChangeTest(_common.TestCase):
 
         self.items = [_common.item()]
         self.items[0].track = 1
-        self.items[0].path = '/path/to/file.mp3'
+        self.items[0].path = b'/path/to/file.mp3'
         self.info = autotag.AlbumInfo(
             u'the album', u'album id', u'the artist', u'artist id', [
                 autotag.TrackInfo(u'the title', u'track id', index=1)
@@ -1143,7 +1145,7 @@ class CompletionTest(_common.TestCase):
         tester.stdin.writelines(completion_script)
 
         # Load test suite.
-        test_script = os.path.join(_common.RSRC, 'test_completion.sh')
+        test_script = os.path.join(_common.RSRC, b'test_completion.sh')
         with open(test_script, 'r') as test_script:
             tester.stdin.writelines(test_script)
         (out, err) = tester.communicate()
@@ -1160,7 +1162,7 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
         self.setup_beets()
         self.lib = library.Library(':memory:')
         self.item = _common.item()
-        self.item.path = 'xxx/yyy'
+        self.item.path = b'xxx/yyy'
         self.lib.add(self.item)
         self.lib.add_album([self.item])
 

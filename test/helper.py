@@ -177,7 +177,7 @@ class TestHelper(object):
         self.config['ui']['color'] = False
         self.config['threaded'] = False
 
-        self.libdir = os.path.join(self.temp_dir, 'libdir')
+        self.libdir = os.path.join(self.temp_dir, b'libdir')
         os.mkdir(self.libdir)
         self.config['directory'] = self.libdir
 
@@ -227,13 +227,13 @@ class TestHelper(object):
         Copies the specified number of files to a subdirectory of
         `self.temp_dir` and creates a `TestImportSession` for this path.
         """
-        import_dir = os.path.join(self.temp_dir, 'import')
+        import_dir = os.path.join(self.temp_dir, b'import')
         if not os.path.isdir(import_dir):
             os.mkdir(import_dir)
 
         album_no = 0
         while album_count:
-            album = u'album {0}'.format(album_no)
+            album = util.bytestring_path(u'album {0}'.format(album_no))
             album_dir = os.path.join(import_dir, album)
             if os.path.exists(album_dir):
                 album_no += 1
@@ -245,8 +245,9 @@ class TestHelper(object):
             album_item_count = item_count
             while album_item_count:
                 title = u'track {0}'.format(track_no)
-                src = os.path.join(_common.RSRC, 'full.mp3')
-                dest = os.path.join(album_dir, '{0}.mp3'.format(title))
+                src = os.path.join(_common.RSRC, b'full.mp3')
+                title_file = util.bytestring_path('{0}.mp3'.format(title))
+                dest = os.path.join(album_dir, title_file)
                 if os.path.exists(dest):
                     track_no += 1
                     continue
@@ -342,7 +343,7 @@ class TestHelper(object):
         """
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, 'full.' + ext)
+        path = os.path.join(_common.RSRC, b'full.' + ext)
         for i in range(count):
             item = Item.from_path(bytes(path))
             item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
@@ -388,8 +389,8 @@ class TestHelper(object):
             mediafile = MediaFile(path)
             imgs = []
             for img_ext in images:
-                img_path = os.path.join(_common.RSRC,
-                                        'image-2x3.{0}'.format(img_ext))
+                file = util.bytestring_path('image-2x3.{0}'.format(img_ext))
+                img_path = os.path.join(_common.RSRC, file)
                 with open(img_path, 'rb') as f:
                     imgs.append(Image(f.read()))
             mediafile.images = imgs

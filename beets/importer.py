@@ -1439,8 +1439,8 @@ def group_albums(session):
         task = pipeline.multiple(tasks)
 
 
-MULTIDISC_MARKERS = (r'dis[ck]', r'cd')
-MULTIDISC_PAT_FMT = r'^(.*%s[\W_]*)\d'
+MULTIDISC_MARKERS = (br'dis[ck]', br'cd')
+MULTIDISC_PAT_FMT = br'^(.*%s[\W_]*)\d'
 
 
 def albums_in_dir(path):
@@ -1483,7 +1483,9 @@ def albums_in_dir(path):
         # named in this way.
         start_collapsing = False
         for marker in MULTIDISC_MARKERS:
-            marker_pat = re.compile(MULTIDISC_PAT_FMT % marker, re.I)
+            # We're using replace on %s due to lack of .format() on bytestrings
+            p = MULTIDISC_PAT_FMT.replace(b'%s', marker)
+            marker_pat = re.compile(p, re.I)
             match = marker_pat.match(os.path.basename(root))
 
             # Is this directory the root of a nested multi-disc album?
@@ -1497,8 +1499,10 @@ def albums_in_dir(path):
                     if not subdir_pat:
                         match = marker_pat.match(subdir)
                         if match:
+                            match_group = re.escape(match.group(1))
                             subdir_pat = re.compile(
-                                br'^%s\d' % re.escape(match.group(1)), re.I
+                                b''.join([b'^', match_group, br'\d']),
+                                re.I
                             )
                         else:
                             start_collapsing = False
@@ -1520,7 +1524,8 @@ def albums_in_dir(path):
                 # Set the current pattern to match directories with the same
                 # prefix as this one, followed by a digit.
                 collapse_pat = re.compile(
-                    br'^%s\d' % re.escape(match.group(1)), re.I
+                    b''.join([b'^', re.escape(match.group(1)), br'\d']),
+                    re.I
                 )
                 break
 

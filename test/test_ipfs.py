@@ -17,6 +17,7 @@ from __future__ import division, absolute_import, print_function
 from mock import patch
 
 from beets import library
+from beets.util import bytestring_path
 from beetsplug.ipfs import IPFSPlugin
 
 from test import _common
@@ -53,6 +54,7 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
                     want_path = '/ipfs/{0}/{1}'.format(test_album.ipfs,
                                                        os.path.basename(
                                                            want_item.path))
+                    want_path = bytestring_path(want_path)
                     self.assertEqual(check_item.path, want_path)
                     self.assertEqual(check_item.ipfs, want_item.ipfs)
                     self.assertEqual(check_item.title, want_item.title)

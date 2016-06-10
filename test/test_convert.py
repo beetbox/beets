@@ -38,7 +38,7 @@ class TestHelper(helper.TestHelper):
                              .format(tag))
 
         # A Python script that copies the file and appends a tag.
-        stub = os.path.join(_common.RSRC, 'convert_stub.py')
+        stub = os.path.join(_common.RSRC, b'convert_stub.py').decode('utf-8')
         return u"python '{}' $source $dest {}".format(stub, tag)
 
     def assertFileTag(self, path, tag):  # noqa
@@ -75,7 +75,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.load_plugins('convert')
 
         self.config['convert'] = {
-            'dest': os.path.join(self.temp_dir, 'convert'),
+            'dest': os.path.join(self.temp_dir, b'convert'),
             'command': self.tagged_copy_cmd('convert'),
             # Enforce running convert
             'max_bitrate': 1,
@@ -130,7 +130,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         self.load_plugins('convert')
 
         self.convert_dest = util.bytestring_path(
-            os.path.join(self.temp_dir, 'convert_dest')
+            os.path.join(self.temp_dir, b'convert_dest')
         )
         self.config['convert'] = {
             'dest': self.convert_dest,
@@ -152,38 +152,38 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
     def test_convert(self):
         with control_stdin('y'):
             self.run_convert()
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
     def test_convert_with_auto_confirmation(self):
         self.run_convert('--yes')
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
     def test_rejecet_confirmation(self):
         with control_stdin('n'):
             self.run_convert()
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFalse(os.path.isfile(converted))
 
     def test_convert_keep_new(self):
-        self.assertEqual(os.path.splitext(self.item.path)[1], '.ogg')
+        self.assertEqual(os.path.splitext(self.item.path)[1], b'.ogg')
 
         with control_stdin('y'):
             self.run_convert('--keep-new')
 
         self.item.load()
-        self.assertEqual(os.path.splitext(self.item.path)[1], '.mp3')
+        self.assertEqual(os.path.splitext(self.item.path)[1], b'.mp3')
 
     def test_format_option(self):
         with control_stdin('y'):
             self.run_convert('--format', 'opus')
-            converted = os.path.join(self.convert_dest, 'converted.ops')
+            converted = os.path.join(self.convert_dest, b'converted.ops')
         self.assertFileTag(converted, 'opus')
 
     def test_embed_album_art(self):
         self.config['convert']['embed'] = True
-        image_path = os.path.join(_common.RSRC, 'image-2x3.jpg')
+        image_path = os.path.join(_common.RSRC, b'image-2x3.jpg')
         self.album.artpath = image_path
         self.album.store()
         with open(os.path.join(image_path), 'rb') as f:
@@ -191,12 +191,12 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
 
         with control_stdin('y'):
             self.run_convert()
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         mediafile = MediaFile(converted)
         self.assertEqual(mediafile.images[0].data, image_data)
 
     def test_skip_existing(self):
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.touch(converted, content='XXX')
         self.run_convert('--yes')
         with open(converted, 'r') as f:
@@ -204,7 +204,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
 
     def test_pretend(self):
         self.run_convert('--pretend')
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFalse(os.path.exists(converted))
 
 
@@ -218,7 +218,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
         self.setup_beets(disk=True)  # Converter is threaded
         self.load_plugins('convert')
 
-        self.convert_dest = os.path.join(self.temp_dir, 'convert_dest')
+        self.convert_dest = os.path.join(self.temp_dir, b'convert_dest')
         self.config['convert'] = {
             'dest': self.convert_dest,
             'paths': {'default': 'converted'},
@@ -237,7 +237,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
         [item] = self.add_item_fixtures(ext='flac')
         with control_stdin('y'):
             self.run_convert_path(item.path)
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
     def test_transcode_from_lossy(self):
@@ -245,14 +245,14 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
         [item] = self.add_item_fixtures(ext='ogg')
         with control_stdin('y'):
             self.run_convert_path(item.path)
-        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
     def test_transcode_from_lossy_prevented(self):
         [item] = self.add_item_fixtures(ext='ogg')
         with control_stdin('y'):
             self.run_convert_path(item.path)
-        converted = os.path.join(self.convert_dest, 'converted.ogg')
+        converted = os.path.join(self.convert_dest, b'converted.ogg')
         self.assertNoFileTag(converted, 'mp3')
 
 
