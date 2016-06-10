@@ -704,7 +704,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.enforce_ratio = True
 
         cover_names = self.config['cover_names'].as_str_seq()
-        self.cover_names = map(util.bytestring_path, cover_names)
+        self.cover_names = list(map(util.bytestring_path, cover_names))
         self.cautious = self.config['cautious'].get(bool)
         self.store_source = self.config['store_source'].get(bool)
 
