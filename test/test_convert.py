@@ -44,9 +44,10 @@ class TestHelper(helper.TestHelper):
     def assertFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content ends with `tag`.
         """
+        tag = tag.encode('utf-8')
         self.assertTrue(os.path.isfile(path),
                         u'{0} is not a file'.format(path))
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f.seek(-len(tag), os.SEEK_END)
             self.assertEqual(f.read(), tag,
                              u'{0} is not tagged with {1}'.format(path, tag))
@@ -55,9 +56,10 @@ class TestHelper(helper.TestHelper):
         """Assert that the path is a file and the files content does not
         end with `tag`.
         """
+        tag = tag.encode('utf-8')
         self.assertTrue(os.path.isfile(path),
                         u'{0} is not a file'.format(path))
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f.seek(-len(tag), os.SEEK_END)
             self.assertNotEqual(f.read(), tag,
                                 u'{0} is unexpectedly tagged with {1}'
