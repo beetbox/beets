@@ -184,12 +184,12 @@ def _unpack_asf_image(data):
     """
     type, size = struct.unpack_from('<bi', data)
     pos = 5
-    mime = ""
+    mime = b''
     while data[pos:pos + 2] != b'\x00\x00':
         mime += data[pos:pos + 2]
         pos += 2
     pos += 2
-    description = ""
+    description = b''
     while data[pos:pos + 2] != b'\x00\x00':
         description += data[pos:pos + 2]
         pos += 2
