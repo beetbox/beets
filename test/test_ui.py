@@ -872,11 +872,9 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
                                os.path.join(os.getcwd(), 'foo.db'))
 
     def test_cli_config_file_loads_plugin_commands(self):
-        plugin_path = os.path.join(_common.RSRC, 'beetsplug')
-
         cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(cli_config_path, 'w') as file:
-            file.write('pluginpath: %s\n' % plugin_path)
+            file.write('pluginpath: %s\n' % _common.PLUGINPATH)
             file.write('plugins: test')
 
         ui._raw_main(['--config', cli_config_path, 'plugin'])
