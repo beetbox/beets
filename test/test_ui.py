@@ -1105,7 +1105,7 @@ class PathFormatTest(_common.TestCase):
 @_common.slow_test()
 class PluginTest(_common.TestCase):
     def test_plugin_command_from_pluginpath(self):
-        config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
+        config['pluginpath'] = [_common.PLUGINPATH]
         config['plugins'] = ['test']
         ui._raw_main(['test'])
 
@@ -1114,7 +1114,7 @@ class PluginTest(_common.TestCase):
 class CompletionTest(_common.TestCase):
     def test_completion(self):
         # Load plugin commands
-        config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
+        config['pluginpath'] = [_common.PLUGINPATH]
         config['plugins'] = ['test']
 
         # Tests run in bash
