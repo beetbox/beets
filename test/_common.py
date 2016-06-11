@@ -40,7 +40,7 @@ beetsplug.__path__ = [os.path.abspath(
 )]
 
 # Test resources path.
-RSRC = os.path.join(os.path.dirname(__file__), b'rsrc')
+RSRC = util.bytestring_path(os.path.join(os.path.dirname(__file__), 'rsrc'))
 
 # Propagate to root loger so nosetest can capture it
 log = logging.getLogger('beets')
