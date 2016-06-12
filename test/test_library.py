@@ -358,29 +358,29 @@ class DestinationTest(_common.TestCase):
         self.i.artist = u''
         self.i.albumartist = u'something'
         self.lib.path_formats = [(u'default', u'$artist')]
-        p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'something')
+        p = self.i.destination()
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], b'something')
 
     def test_albumartist_falls_back_to_artist(self):
         self.i.artist = u'trackartist'
         self.i.albumartist = u''
         self.lib.path_formats = [(u'default', u'$albumartist')]
-        p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'trackartist')
+        p = self.i.destination()
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], b'trackartist')
 
     def test_artist_overrides_albumartist(self):
         self.i.artist = u'theartist'
         self.i.albumartist = u'something'
         self.lib.path_formats = [(u'default', u'$artist')]
-        p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'theartist')
+        p = self.i.destination()
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], b'theartist')
 
     def test_albumartist_overrides_artist(self):
         self.i.artist = u'theartist'
         self.i.albumartist = u'something'
         self.lib.path_formats = [(u'default', u'$albumartist')]
-        p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'something')
+        p = self.i.destination()
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], b'something')
 
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize('NFC', u'caf\xe9')
