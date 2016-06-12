@@ -223,7 +223,7 @@ class DestinationTest(_common.TestCase):
     def test_destination_long_names_truncated(self):
         self.i.title = u'X' * 300
         self.i.artist = u'Y' * 300
-        for c in self.i.destination().split(os.path.sep):
+        for c in self.i.destination().split(util.PATH_SEP):
             self.assertTrue(len(c) <= 255)
 
     def test_destination_long_names_keep_extension(self):
@@ -359,28 +359,28 @@ class DestinationTest(_common.TestCase):
         self.i.albumartist = u'something'
         self.lib.path_formats = [(u'default', u'$artist')]
         p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(os.path.sep, 1)[1], u'something')
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'something')
 
     def test_albumartist_falls_back_to_artist(self):
         self.i.artist = u'trackartist'
         self.i.albumartist = u''
         self.lib.path_formats = [(u'default', u'$albumartist')]
         p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(os.path.sep, 1)[1], u'trackartist')
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'trackartist')
 
     def test_artist_overrides_albumartist(self):
         self.i.artist = u'theartist'
         self.i.albumartist = u'something'
         self.lib.path_formats = [(u'default', u'$artist')]
         p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(os.path.sep, 1)[1], u'theartist')
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'theartist')
 
     def test_albumartist_overrides_artist(self):
         self.i.artist = u'theartist'
         self.i.albumartist = u'something'
         self.lib.path_formats = [(u'default', u'$albumartist')]
         p = util.displayable_path(self.i.destination())
-        self.assertEqual(p.rsplit(os.path.sep, 1)[1], u'something')
+        self.assertEqual(p.rsplit(util.PATH_SEP, 1)[1], u'something')
 
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize('NFC', u'caf\xe9')
@@ -883,7 +883,7 @@ class ArtDestinationTest(_common.TestCase):
 
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination('something.jpg')
-        self.assertTrue('%sartimage.jpg' % os.path.sep in art)
+        self.assertTrue('%sartimage.jpg' % util.PATH_SEP in art)
 
     def test_art_path_in_item_dir(self):
         art = self.ai.art_destination('something.jpg')
