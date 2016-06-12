@@ -156,7 +156,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
-        import_dir = os.path.dirname(items_added_before.keys()[0])
+        import_dir = os.path.dirname(list(items_added_before.keys())[0])
         self._setup_import_session(import_dir=import_dir, singletons=True)
         self.importer.run()
         # Verify the reimported items
