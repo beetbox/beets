@@ -243,7 +243,7 @@ class RemoteArtSource(ArtSource):
                         fh.write(chunk)
                 self._log.debug(u'downloaded art to: {0}',
                                 util.displayable_path(fh.name))
-                candidate.path = fh.name
+                candidate.path = util.bytestring_path(fh.name)
                 return
 
         except (IOError, requests.RequestException, TypeError) as exc:
