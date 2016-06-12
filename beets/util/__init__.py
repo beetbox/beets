@@ -334,6 +334,9 @@ def bytestring_path(path):
         return path.encode('utf8')
 
 
+PATH_SEP = bytestring_path(os.sep)
+
+
 def displayable_path(path, separator=u'; '):
     """Attempts to decode a bytestring path to a unicode object for the
     purpose of displaying it to the user. If the `path` argument is a
