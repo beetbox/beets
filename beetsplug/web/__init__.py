@@ -75,8 +75,10 @@ def json_generator(items, root, expand=False):
     yield ']}'
 
 
-def is_expand(args):
-    return "expand" in args
+def is_expand():
+    """Returns whether the current request is for an expanded response."""
+
+    return flask.request.args.get('expand') is not None
 
 
 def resource(name):
@@ -88,9 +90,7 @@ def resource(name):
             entities = [entity for entity in entities if entity]
 
             if len(entities) == 1:
-                return flask.jsonify(
-                    _rep(entities[0], expand=is_expand(flask.request.args))
-                )
+                return flask.jsonify(_rep(entities[0], expand=is_expand()))
             elif entities:
                 return app.response_class(
                     json_generator(entities, root=name),
@@ -111,7 +111,7 @@ def resource_query(name):
             return app.response_class(
                 json_generator(
                     query_func(queries),
-                    root='results', expand=is_expand(flask.request.args)
+                    root='results', expand=is_expand()
                 ),
                 mimetype='application/json'
             )
@@ -127,8 +127,7 @@ def resource_list(name):
     def make_responder(list_all):
         def responder():
             return app.response_class(
-                json_generator(list_all(), root=name,
-                               expand=is_expand(flask.request.args)),
+                json_generator(list_all(), root=name, expand=is_expand()),
                 mimetype='application/json'
             )
         responder.__name__ = 'all_{0}'.format(name)
