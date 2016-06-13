@@ -61,7 +61,7 @@ def _write_m3u(m3u_path, items_paths):
     """Append relative paths to items into m3u file.
     """
     mkdirall(m3u_path)
-    with open(syspath(m3u_path), 'a') as f:
+    with open(syspath(m3u_path), 'ab') as f:
         for path in items_paths:
             f.write(path + b'\n')
 
