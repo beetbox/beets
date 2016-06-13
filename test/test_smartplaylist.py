@@ -173,7 +173,7 @@ class SmartPlaylistTest(unittest.TestCase):
 
         m3u_filepath = path.join(dir, pl[0])
         self.assertTrue(path.exists(m3u_filepath))
-        with open(syspath(m3u_filepath), 'r') as f:
+        with open(syspath(m3u_filepath), 'rb') as f:
             content = f.read()
         rmtree(dir)
 
@@ -205,18 +205,18 @@ class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
         self.run_with_output(u'splupdate', u'my_playlist')
         m3u_path = path.join(self.temp_dir, 'my_playlist.m3u')
         self.assertTrue(path.exists(m3u_path))
-        with open(m3u_path, 'r') as f:
+        with open(m3u_path, 'rb') as f:
             self.assertEqual(f.read(), self.item.path + b"\n")
         remove(m3u_path)
 
         self.run_with_output(u'splupdate', u'my_playlist.m3u')
-        with open(m3u_path, 'r') as f:
+        with open(m3u_path, 'rb') as f:
             self.assertEqual(f.read(), self.item.path + b"\n")
         remove(m3u_path)
 
         self.run_with_output(u'splupdate')
         for name in (u'my_playlist.m3u', u'all.m3u'):
-            with open(path.join(self.temp_dir, name), 'r') as f:
+            with open(path.join(self.temp_dir, name), 'rb') as f:
                 self.assertEqual(f.read(), self.item.path + b"\n")
 
 

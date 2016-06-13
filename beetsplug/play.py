@@ -148,7 +148,7 @@ class PlayPlugin(BeetsPlugin):
     def _create_tmp_playlist(self, paths_list):
         """Create a temporary .m3u file. Return the filename.
         """
-        m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
+        m3u = NamedTemporaryFile('wb', suffix='.m3u', delete=False)
         for item in paths_list:
             m3u.write(item + b'\n')
         m3u.close()
