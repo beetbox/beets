@@ -60,6 +60,8 @@ def json_generator(items, root, expand=False):
 
     :param root:  root key for JSON
     :param items: list of :class:`Item` or :class:`Album` to dump
+    :param expand: If true every :class:`Album` contains its items in the json
+                   representation
     :returns:     generator that yields strings
     """
     yield '{"%s":[' % root
