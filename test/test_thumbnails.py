@@ -23,6 +23,7 @@ from shutil import rmtree
 from test._common import unittest
 from test.helper import TestHelper
 
+from beets.util import bytestring_path
 from beetsplug.thumbnails import (ThumbnailsPlugin, NORMAL_DIR, LARGE_DIR,
                                   write_metadata_im, write_metadata_pil,
                                   PathlibURI, GioURI)
@@ -183,7 +184,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     def test_make_dolphin_cover_thumbnail(self, _):
         plugin = ThumbnailsPlugin()
-        tmp = mkdtemp()
+        tmp = bytestring_path(mkdtemp())
         album = Mock(path=tmp,
                      artpath=os.path.join(tmp, b"cover.jpg"))
         plugin.make_dolphin_cover_thumbnail(album)

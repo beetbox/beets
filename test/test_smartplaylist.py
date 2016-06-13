@@ -149,7 +149,7 @@ class SmartPlaylistTest(unittest.TestCase):
     def test_playlist_update(self):
         spl = SmartPlaylistPlugin()
 
-        i = Mock(path='/tagada.mp3')
+        i = Mock(path=b'/tagada.mp3')
         i.evaluate_template.side_effect = lambda x, _: x
         q = Mock()
         a_q = Mock()

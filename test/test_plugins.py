@@ -26,7 +26,7 @@ from beets import plugins, config, ui
 from beets.library import Item
 from beets.dbcore import types
 from beets.mediafile import MediaFile
-from beets.util import displayable_path
+from beets.util import displayable_path, bytestring_path
 
 from test.test_importer import ImportHelper, AutotagStub
 from test.test_ui_importer import TerminalImportSessionSetup
@@ -177,7 +177,7 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
 
     def __copy_file(self, dest_path, metadata):
         # Copy files
-        resource_path = os.path.join(RSRC, 'full.mp3')
+        resource_path = os.path.join(RSRC, b'full.mp3')
         shutil.copy(resource_path, dest_path)
         medium = MediaFile(dest_path)
         # Set metadata
@@ -186,11 +186,11 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
         medium.save()
 
     def __create_import_dir(self, count):
-        self.import_dir = os.path.join(self.temp_dir, 'testsrcdir')
+        self.import_dir = os.path.join(self.temp_dir, b'testsrcdir')
         if os.path.isdir(self.import_dir):
             shutil.rmtree(self.import_dir)
 
-        self.album_path = os.path.join(self.import_dir, 'album')
+        self.album_path = os.path.join(self.import_dir, b'album')
         os.makedirs(self.album_path)
 
         metadata = {
@@ -205,8 +205,8 @@ class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
         for i in range(count):
             metadata['track'] = i + 1
             metadata['title'] = u'Tag Title Album %d' % (i + 1)
-            dest_path = os.path.join(self.album_path,
-                                     '%02d - track.mp3' % (i + 1))
+            track_file = bytestring_path('%02d - track.mp3' % (i + 1))
+            dest_path = os.path.join(self.album_path, track_file)
             self.__copy_file(dest_path, metadata)
             self.file_paths.append(dest_path)
 
