@@ -50,7 +50,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.open_mock.assert_called_once_with(ANY, expected_cmd)
         expected_playlist = expected_playlist or self.item.path.decode('utf-8')
         exp_playlist = expected_playlist + u'\n'
-        with open(self.open_mock.call_args[0][0][0], 'r') as playlist:
+        with open(self.open_mock.call_args[0][0][0], 'rb') as playlist:
             self.assertEqual(exp_playlist, playlist.read().decode('utf-8'))
 
     def test_basic(self):
@@ -81,7 +81,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.run_command('play', '-a', 'nice')
 
         self.open_mock.assert_called_once_with(ANY, open_anything())
-        playlist = open(self.open_mock.call_args[0][0][0], 'r')
+        playlist = open(self.open_mock.call_args[0][0][0], 'rb')
         self.assertEqual(u'{}\n'.format(
             os.path.dirname(self.item.path.decode('utf-8'))),
             playlist.read().decode('utf-8'))
