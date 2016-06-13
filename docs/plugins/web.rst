@@ -197,6 +197,7 @@ The interface and response format is similar to the item API, except replacing
 the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/album/``
 or ``/album/5,7``. In addition we can request the cover art of an album with
 ``GET /album/5/art``.
+You can also add the '?expand' flag to get the individual items of an album.
 
 
 ``GET /stats``
