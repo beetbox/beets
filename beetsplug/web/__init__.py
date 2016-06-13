@@ -55,7 +55,7 @@ def _rep(obj, expand=False):
         return out
 
 
-def json_generator(items, root):
+def json_generator(items, root, expand=False):
     """Generator that dumps list of beets Items or Albums as JSON
 
     :param root:  root key for JSON
@@ -69,8 +69,12 @@ def json_generator(items, root):
             first = False
         else:
             yield ','
-        yield json.dumps(_rep(item))
+        yield json.dumps(_rep(item, expand=expand))
     yield ']}'
+
+
+def is_expand(args):
+    return "expand" in args
 
 
 def resource(name):
@@ -82,7 +86,7 @@ def resource(name):
             entities = [entity for entity in entities if entity]
 
             if len(entities) == 1:
-                return flask.jsonify(_rep(entities[0]))
+                return flask.jsonify(_rep(entities[0], expand=is_expand(flask.request.args)))
             elif entities:
                 return app.response_class(
                     json_generator(entities, root=name),
@@ -101,7 +105,7 @@ def resource_query(name):
     def make_responder(query_func):
         def responder(queries):
             return app.response_class(
-                json_generator(query_func(queries), root='results'),
+                json_generator(query_func(queries), root='results', expand=is_expand(flask.request.args)),
                 mimetype='application/json'
             )
         responder.__name__ = 'query_{0}'.format(name)
@@ -116,7 +120,7 @@ def resource_list(name):
     def make_responder(list_all):
         def responder():
             return app.response_class(
-                json_generator(list_all(), root=name),
+                json_generator(list_all(), root=name, expand=is_expand(flask.request.args)),
                 mimetype='application/json'
             )
         responder.__name__ = 'all_{0}'.format(name)
@@ -310,6 +314,9 @@ class WebPlugin(BeetsPlugin):
                 self.config['port'] = int(args.pop(0))
 
             app.config['lib'] = lib
+            # Normalizes json output
+            app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
             # Enable CORS if required.
             if self.config['cors']:
                 self._log.info(u'Enabling CORS with origin: {0}',
