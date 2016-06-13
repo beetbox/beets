@@ -492,7 +492,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_albums_matched(results, [u'path album'])
 
     def test_escape_underscore(self):
-        self.add_album(path='/a/_/title.mp3', title=u'with underscore',
+        self.add_album(path=b'/a/_/title.mp3', title=u'with underscore',
                        album=u'album with underscore')
         q = u'path:/a/_'
         results = self.lib.items(q)
@@ -502,7 +502,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_albums_matched(results, [u'album with underscore'])
 
     def test_escape_percent(self):
-        self.add_album(path='/a/%/title.mp3', title=u'with percent',
+        self.add_album(path=b'/a/%/title.mp3', title=u'with percent',
                        album=u'album with percent')
         q = u'path:/a/%'
         results = self.lib.items(q)
@@ -512,7 +512,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_albums_matched(results, [u'album with percent'])
 
     def test_escape_backslash(self):
-        self.add_album(path=r'/a/\x/title.mp3', title=u'with backslash',
+        self.add_album(path=br'/a/\x/title.mp3', title=u'with backslash',
                        album=u'album with backslash')
         q = u'path:/a/\\\\x'
         results = self.lib.items(q)
@@ -522,7 +522,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_albums_matched(results, [u'album with backslash'])
 
     def test_case_sensitivity(self):
-        self.add_album(path='/A/B/C2.mp3', title=u'caps path')
+        self.add_album(path=b'/A/B/C2.mp3', title=u'caps path')
 
         makeq = partial(beets.library.PathQuery, u'path', '/A/B')
 
@@ -615,7 +615,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         is_path = beets.library.PathQuery.is_path_query
 
         try:
-            self.touch(os.path.join('foo', 'bar'))
+            self.touch(os.path.join(b'foo', b'bar'))
 
             # Temporarily change directory so relative paths work.
             cur_dir = os.getcwd()

@@ -33,16 +33,16 @@ class QueryTest(_common.TestCase):
     def setUp(self):
         super(QueryTest, self).setUp()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, b'testlibdir')
         os.mkdir(self.libdir)
 
         # Add a file to the library but don't copy it in yet.
         self.lib = library.Library(':memory:', self.libdir)
 
         # Alternate destination directory.
-        self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
+        self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
 
-    def add_item(self, filename='srcfile', templatefile='full.mp3'):
+    def add_item(self, filename=b'srcfile', templatefile=b'full.mp3'):
         itempath = os.path.join(self.libdir, filename)
         shutil.copy(os.path.join(_common.RSRC, templatefile), itempath)
         item = library.Item.from_path(itempath)

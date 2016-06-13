@@ -48,7 +48,7 @@ class PathQuery(dbcore.FieldQuery):
     and case-sensitive otherwise.
     """
 
-    escape_re = re.compile(r'[\\_%]')
+    escape_re = re.compile(br'[\\_%]')
     escape_char = b'\\'
 
     def __init__(self, field, pattern, fast=True, case_sensitive=None):

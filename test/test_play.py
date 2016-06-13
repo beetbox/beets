@@ -71,7 +71,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.config['play']['command'] = 'echo'
         self.config['play']['relative_to'] = '/something'
 
-        path = os.path.relpath(self.item.path, '/something')
+        path = os.path.relpath(self.item.path, b'/something')
         playlist = path.decode('utf8')
         self.do_test(expected_cmd='echo', expected_playlist=playlist)
 
