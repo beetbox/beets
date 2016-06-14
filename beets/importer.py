@@ -1494,6 +1494,7 @@ def albums_in_dir(path):
                 start_collapsing = True
                 subdir_pat = None
                 for subdir in dirs:
+                    subdir = util.bytestring_path(subdir)
                     # The first directory dictates the pattern for
                     # the remaining directories.
                     if not subdir_pat:
