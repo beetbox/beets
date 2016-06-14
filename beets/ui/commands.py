@@ -754,7 +754,7 @@ class TerminalImportSession(importer.ImportSession):
                     _, _, candidates, rec = autotag.tag_album(
                         task.items, search_ids=search_id.split()
                     )
-            elif choice in extra_ops.keys():
+            elif choice in list(extra_ops.keys()):
                 # Allow extra ops to automatically set the post-choice.
                 post_choice = extra_ops[choice](self, task)
                 if isinstance(post_choice, importer.action):
