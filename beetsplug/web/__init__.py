@@ -37,7 +37,7 @@ def _rep(obj, expand=False):
     out = dict(obj)
 
     if isinstance(obj, beets.library.Item):
-        del out['path']
+        out['path'] = obj.destination(fragment=True)
 
         # Get the size (in bytes) of the backing file. This is useful
         # for the Tomahawk resolver API.
