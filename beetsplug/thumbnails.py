@@ -232,7 +232,7 @@ def copy_c_string(c_string):
     # work. A more surefire way would be to allocate a ctypes buffer and copy
     # the data with `memcpy` or somesuch.
     s = ctypes.cast(c_string, ctypes.c_char_p).value
-    return '' + s
+    return b'' + s
 
 
 class GioURI(URIGetter):
