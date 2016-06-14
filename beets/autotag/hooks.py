@@ -356,6 +356,9 @@ class Distance(object):
             key=lambda key_and_dist: (-key_and_dist[1], key_and_dist[0])
         )
 
+    def __hash__(self):
+        return id(self)
+
     def __eq__(self, other):
         return self.distance == other
 
