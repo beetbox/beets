@@ -45,8 +45,8 @@ class Permissions(BeetsPlugin):
 
         # Adding defaults.
         self.config.add({
-            u'file': 644,
-            u'dir': 755
+            u'file': '644',
+            u'dir': '755'
         })
 
         self.register_listener('item_imported', permissions)
