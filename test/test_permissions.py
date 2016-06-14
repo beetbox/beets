@@ -45,14 +45,16 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
 
         def get_stat(v):
             return os.stat(
-                os.path.join(self.temp_dir, 'import', *v)).st_mode & 0o777
+                os.path.join(self.temp_dir, b'import', *v)).st_mode & 0o777
         self.importer = self.create_importer()
         typs = ['file', 'dir']
+
+        track_file = (b'album 0', b'track 0.mp3')
         self.exp_perms = {
             True: {k: convert_perm(self.config['permissions'][k].get())
                    for k in typs},
-            False: {k: get_stat(v)
-                    for (k, v) in zip(typs, (('album 0', 'track 0.mp3'), ()))}}
+            False: {k: get_stat(v) for (k, v) in zip(typs, (track_file, ()))}
+        }
 
         self.importer.run()
         item = self.lib.items().get()
