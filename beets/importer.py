@@ -499,7 +499,7 @@ class ImportTask(BaseImportTask):
         if self.choice_flag in (action.ASIS, action.RETAG):
             return list(self.items)
         elif self.choice_flag == action.APPLY:
-            return self.match.mapping.keys()
+            return list(self.match.mapping.keys())
         else:
             assert False
 
