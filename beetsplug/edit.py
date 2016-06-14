@@ -242,7 +242,7 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # Set up a temporary file with the initial data for editing.
-        new = NamedTemporaryFile(suffix='.yaml', delete=False)
+        new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
         old_str = dump(old_data)
         new.write(old_str)
         new.close()
