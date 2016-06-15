@@ -137,9 +137,10 @@ def str2fmt(s):
 def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
     """Return a span string representation.
     """
-    args = (bytes(yearfrom)[-fromnchars:])
+    args = (str(yearfrom)[-fromnchars:])
     if tonchars:
-        args = (bytes(yearfrom)[-fromnchars:], bytes(yearto)[-tonchars:])
+        args = (str(yearfrom)[-fromnchars:], str(yearto)[-tonchars:])
+
     return fmt % args
 
 
