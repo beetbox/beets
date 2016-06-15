@@ -1,0 +1,11 @@
+{
+    "tracks" : {
+        "href" : "https://api.spotify.com/v1/search?query=duifhjslkef+album%3Alkajsdflakjsd+artist%3A&offset=0&limit=20&type=track",
+        "items" : [ ],
+        "limit" : 20,
+        "next" : null,
+        "offset" : 0,
+        "previous" : null,
+        "total" : 0
+    }
+}
