@@ -678,7 +678,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
             self.fail('\n  '.join(errors))
 
     def _mediafile_fixture(self, name):
-        name = name + '.' + self.extension
+        name = bytestring_path(name + '.' + self.extension)
         src = os.path.join(_common.RSRC, name)
         target = os.path.join(self.temp_dir, name)
         shutil.copy(src, target)
