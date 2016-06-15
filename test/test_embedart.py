@@ -45,10 +45,10 @@ def require_artresizer_compare(test):
 
 class EmbedartCliTest(_common.TestCase, TestHelper):
 
-    small_artpath = os.path.join(_common.RSRC, 'image-2x3.jpg')
-    abbey_artpath = os.path.join(_common.RSRC, 'abbey.jpg')
-    abbey_similarpath = os.path.join(_common.RSRC, 'abbey-similar.jpg')
-    abbey_differentpath = os.path.join(_common.RSRC, 'abbey-different.jpg')
+    small_artpath = os.path.join(_common.RSRC, b'image-2x3.jpg')
+    abbey_artpath = os.path.join(_common.RSRC, b'abbey.jpg')
+    abbey_similarpath = os.path.join(_common.RSRC, b'abbey-similar.jpg')
+    abbey_differentpath = os.path.join(_common.RSRC, b'abbey-different.jpg')
 
     def setUp(self):
         self.setup_beets()  # Converter is threaded
