@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 
 import re
 from beets import config
+from beets import util
 from beets.plugins import BeetsPlugin
 from beets.importer import SingletonImportTask
 
@@ -69,6 +70,7 @@ class FileFilterPlugin(BeetsPlugin):
         of the file given in full_path.
         """
         import_config = dict(config['import'])
+        full_path = util.bytestring_path(full_path)
         if 'singletons' not in import_config or not import_config[
                 'singletons']:
             # Album
