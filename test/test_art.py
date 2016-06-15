@@ -113,7 +113,7 @@ class FSArtTest(UseThePlugin):
             next(self.source.get(None, self.extra))
 
     def test_precedence_amongst_correct_files(self):
-        images = ['front-cover.jpg', 'front.jpg', 'back.jpg']
+        images = [b'front-cover.jpg', b'front.jpg', b'back.jpg']
         paths = [os.path.join(self.dpath, i) for i in images]
         for p in paths:
             _common.touch(p)
