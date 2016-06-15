@@ -158,8 +158,9 @@ def sorted_walk(path, ignore=(), ignore_hidden=False, logger=None):
     pattern in `ignore` are skipped. If `logger` is provided, then
     warning messages are logged there when a directory cannot be listed.
     """
-    # Make sure the path isn't a Unicode string.
+    # Make sure the pathes aren't Unicode strings.
     path = bytestring_path(path)
+    ignore = [bytestring_path(i) for i in ignore]
 
     # Get all the directories and files at this level.
     try:
@@ -264,6 +265,7 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
         if not os.path.exists(directory):
             # Directory gone already.
             continue
+        clutter = [bytestring_path(c) for c in clutter]
         if fnmatch_all(os.listdir(directory), clutter):
             # Directory contains only clutter (or nothing).
             try:
