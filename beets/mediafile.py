@@ -49,6 +49,7 @@ import codecs
 import datetime
 import re
 import base64
+import binascii
 import math
 import struct
 import imghdr
@@ -225,7 +226,7 @@ def _sc_decode(soundcheck):
     try:
         soundcheck = codecs.decode(soundcheck.replace(b' ', b''), 'hex')
         soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
-    except (struct.error, TypeError):
+    except (struct.error, TypeError, binascii.Error):
         # SoundCheck isn't in the format we expect, so return default
         # values.
         return 0.0, 0.0
