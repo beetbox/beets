@@ -13,7 +13,7 @@ This command::
 
     $ beet list love
 
-will show all tracks matching the query string ``love``. Any unadorned word like this matches *anywhere* in a track's metadata, so you'll see all the tracks with "love" in their title, in their album name, in the artist, and so on.
+will show all tracks matching the query string ``love``. By default any unadorned word like this matches in a track's  title, artist, album name, album artist, genre and comments. See below on how to search other fields.
 
 For example, this is what I might see when I run the command above::
 
