@@ -31,6 +31,7 @@ from beets.mediafile import MediaFile, MediaField, Image, \
     ASFStorageStyle, ImageType, CoverArtField
 from beets.library import Item
 from beets.plugins import BeetsPlugin
+from beets.util import bytestring_path
 
 
 class ArtTestMixin(object):
