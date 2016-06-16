@@ -20,7 +20,7 @@ from __future__ import division, absolute_import, print_function
 
 import re
 from beets import config
-from beets import util
+from beets.util import bytestring_path
 from beets.plugins import BeetsPlugin
 from beets.importer import SingletonImportTask
 
@@ -36,14 +36,15 @@ class FileFilterPlugin(BeetsPlugin):
 
         self.path_album_regex = \
             self.path_singleton_regex = \
-            re.compile(self.config['path'].get())
+            re.compile(bytestring_path(self.config['path'].get()))
 
         if 'album_path' in self.config:
-            self.path_album_regex = re.compile(self.config['album_path'].get())
+            self.path_album_regex = re.compile(
+                bytestring_path(self.config['album_path'].get()))
 
         if 'singleton_path' in self.config:
                 self.path_singleton_regex = re.compile(
-                    self.config['singleton_path'].get())
+                    bytestring_path(self.config['singleton_path'].get()))
 
     def import_task_created_event(self, session, task):
         if task.items and len(task.items) > 0:
@@ -70,7 +71,7 @@ class FileFilterPlugin(BeetsPlugin):
         of the file given in full_path.
         """
         import_config = dict(config['import'])
-        full_path = util.bytestring_path(full_path)
+        full_path = bytestring_path(full_path)
         if 'singletons' not in import_config or not import_config[
                 'singletons']:
             # Album
