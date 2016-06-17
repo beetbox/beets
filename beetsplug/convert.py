@@ -47,7 +47,8 @@ def replace_ext(path, ext):
 
     The new extension must not contain a leading dot.
     """
-    return os.path.splitext(path)[0] + b'.' + ext
+    path = os.path.splitext(path)[0] + '.' + ext
+    return util.bytestring_path(path)
 
 
 def get_format(fmt=None):
