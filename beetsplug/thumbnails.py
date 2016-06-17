@@ -183,7 +183,8 @@ class ThumbnailsPlugin(BeetsPlugin):
             return
         artfile = os.path.split(album.artpath)[1]
         with open(outfilename, 'w') as f:
-            f.write(b"[Desktop Entry]\nIcon=./{0}".format(artfile))
+            f.write('[Desktop Entry]\n')
+            f.write('Icon=./{0}'.format(artfile.decode('utf-8')))
             f.close()
         self._log.debug(u"Wrote file {0}", util.displayable_path(outfilename))
 
