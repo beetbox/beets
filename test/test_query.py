@@ -604,7 +604,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
             self.assertTrue(is_path(parent))
 
             # Some non-existent path.
-            self.assertFalse(is_path(path + b'baz'))
+            self.assertFalse(is_path(path + u'baz'))
 
         finally:
             # Restart the `os.path.exists` patch.
@@ -621,10 +621,10 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
             cur_dir = os.getcwd()
             try:
                 os.chdir(self.temp_dir)
-                self.assertTrue(is_path(b'foo/'))
-                self.assertTrue(is_path(b'foo/bar'))
-                self.assertTrue(is_path(b'foo/bar:tagada'))
-                self.assertFalse(is_path(b'bar'))
+                self.assertTrue(is_path(u'foo/'))
+                self.assertTrue(is_path(u'foo/bar'))
+                self.assertTrue(is_path(u'foo/bar:tagada'))
+                self.assertFalse(is_path(u'bar'))
             finally:
                 os.chdir(cur_dir)
 
