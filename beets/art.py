@@ -25,7 +25,7 @@ from tempfile import NamedTemporaryFile
 import imghdr
 import os
 
-from beets.util import displayable_path, syspath
+from beets.util import displayable_path, syspath, bytestring_path
 from beets.util.artresizer import ArtResizer
 from beets import mediafile
 
@@ -188,7 +188,7 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
 
 def extract(log, outpath, item):
     art = get_art(log, item)
-
+    outpath = bytestring_path(outpath)
     if not art:
         log.info(u'No album art present in {0}, skipping.', item)
         return
@@ -199,7 +199,7 @@ def extract(log, outpath, item):
         log.warning(u'Unknown image type in {0}.',
                     displayable_path(item.path))
         return
-    outpath += b'.' + ext
+    outpath += bytestring_path('.' + ext)
 
     log.info(u'Extracting album art from: {0} to: {1}',
              item, displayable_path(outpath))
