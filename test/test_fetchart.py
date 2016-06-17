@@ -26,7 +26,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
         self.load_plugins('fetchart')
-        self.config['fetchart']['cover_names'] = b'c\xc3\xb6ver.jpg'
+        self.config['fetchart']['cover_names'] = 'c\xc3\xb6ver.jpg'
         self.config['art_filename'] = 'mycover'
         self.album = self.add_album()
 
