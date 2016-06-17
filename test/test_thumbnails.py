@@ -59,7 +59,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         plugin.add_tags(album, b"/path/to/thumbnail")
 
-        metadata = {"Thumb::URI": b"COVER_URI",
+        metadata = {"Thumb::URI": "COVER_URI",
                     "Thumb::MTime": u"12345"}
         plugin.write_metadata.assert_called_once_with(b"/path/to/thumbnail",
                                                       metadata)
@@ -135,7 +135,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         album = Mock(artpath=path_to_art)
         mock_util.syspath.side_effect = lambda x: x
-        plugin.thumbnail_file_name = Mock(return_value="md5")
+        plugin.thumbnail_file_name = Mock(return_value=b'md5')
         mock_os.path.exists.return_value = False
 
         def os_stat(target):
@@ -268,7 +268,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def test_thumbnail_file_name(self, mock_basedir):
         plug = ThumbnailsPlugin()
         plug.get_uri = Mock(return_value=u"file:///my/uri")
-        self.assertEqual(plug.thumbnail_file_name("idontcare"),
+        self.assertEqual(plug.thumbnail_file_name(b'idontcare'),
                          b"9488f5797fbe12ffb316d607dfd93d04.png")
 
     def test_uri(self):
