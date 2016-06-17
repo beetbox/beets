@@ -595,8 +595,9 @@ class FileSystem(LocalArtSource):
         paths = extra['paths']
         if not paths:
             return
-        cover_names = extra['cover_names']
-        cover_pat = br"(\b|_)({0})(\b|_)".format(b'|'.join(cover_names))
+        cover_names = list(map(util.bytestring_path, extra['cover_names']))
+        cover_names_str = b'|'.join(cover_names)
+        cover_pat = br''.join([br"(\b|_)(", cover_names_str, br")(\b|_)"])
         cautious = extra['cautious']
 
         for path in paths:
