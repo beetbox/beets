@@ -44,6 +44,7 @@ def is_url(path):
         return False
     return path.split('://', 1)[0] in ['http', 'https']
 
+
 # Use the MPDClient internals to get unicode.
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
 class MPDClient(mpd.MPDClient):
