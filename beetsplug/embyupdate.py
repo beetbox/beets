@@ -36,8 +36,8 @@ def password_data(username, password):
     """
     return {
         'username': username,
-        'password': hashlib.sha1(password).hexdigest(),
-        'passwordMd5': hashlib.md5(password).hexdigest()
+        'password': hashlib.sha1(password.encode('utf-8')).hexdigest(),
+        'passwordMd5': hashlib.md5(password.encode('utf-8')).hexdigest()
     }
 
 
