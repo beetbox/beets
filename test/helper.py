@@ -327,8 +327,9 @@ class TestHelper(object):
         """Add an item with an actual audio file to the library.
         """
         item = self.create_item(**values)
-        extension = item['format'].lower()
-        item['path'] = os.path.join(_common.RSRC, 'min.' + extension)
+        extension = item['format'].lower().encode('utf-8')
+        item['path'] = os.path.join(_common.RSRC,
+                                    util.bytestring_path('min.' + extension))
         item.add(self.lib)
         item.move(copy=True)
         item.store()
@@ -343,9 +344,9 @@ class TestHelper(object):
         """
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, b'full.' + ext)
+        path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         for i in range(count):
-            item = Item.from_path(bytes(path))
+            item = Item.from_path(path)
             item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
@@ -358,7 +359,7 @@ class TestHelper(object):
         """Add an album with files to the database.
         """
         items = []
-        path = os.path.join(_common.RSRC, 'full.' + ext)
+        path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         for i in range(track_count):
             item = Item.from_path(bytes(path))
             item.album = u'\u00e4lbum'  # Check unicode paths
@@ -380,7 +381,7 @@ class TestHelper(object):
         specified extension a cover art image is added to the media
         file.
         """
-        src = os.path.join(_common.RSRC, 'full.' + ext)
+        src = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         handle, path = mkstemp()
         os.close(handle)
         shutil.copyfile(src, path)
