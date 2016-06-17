@@ -594,7 +594,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         is_path = beets.library.PathQuery.is_path_query
 
         try:
-            path = self.touch(os.path.join('foo', 'bar'))
+            path = self.touch(os.path.join(b'foo', b'bar'))
 
             # The file itself.
             self.assertTrue(is_path(path))
