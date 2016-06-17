@@ -36,9 +36,9 @@ def _is_windows():
 
 class MetaSyncTest(_common.TestCase, TestHelper):
     itunes_library_unix = os.path.join(_common.RSRC,
-                                       'itunes_library_unix.xml')
+                                       b'itunes_library_unix.xml')
     itunes_library_windows = os.path.join(_common.RSRC,
-                                          'itunes_library_windows.xml')
+                                          b'itunes_library_windows.xml')
 
     def setUp(self):
         self.setup_beets()
