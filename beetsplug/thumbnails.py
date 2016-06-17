@@ -162,7 +162,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         See http://standards.freedesktop.org/thumbnail-spec/latest/x227.html
         """
         uri = self.get_uri(path)
-        hash = md5(uri).hexdigest()
+        hash = md5(uri.encode('utf-8')).hexdigest()
         return b"{0}.png".format(hash)
 
     def add_tags(self, album, image_path):
