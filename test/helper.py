@@ -327,7 +327,7 @@ class TestHelper(object):
         """Add an item with an actual audio file to the library.
         """
         item = self.create_item(**values)
-        extension = item['format'].lower().encode('utf-8')
+        extension = item['format'].lower()
         item['path'] = os.path.join(_common.RSRC,
                                     util.bytestring_path('min.' + extension))
         item.add(self.lib)
