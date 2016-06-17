@@ -1052,7 +1052,7 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(u"{0}".format(album), u"foö bar")
         self.assertEqual(u"{0:$tagada}".format(album), u"togodo")
         self.assertEqual(unicode(album), u"foö bar")
-        self.assertEqual(str(album), b"fo\xc3\xb6 bar")
+        self.assertEqual(bytes(album), b"fo\xc3\xb6 bar")
 
         config['format_item'] = 'bar $foo'
         item = beets.library.Item()
