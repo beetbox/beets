@@ -481,11 +481,11 @@ class Subview(ConfigView):
                 self.name += '.'
         if isinstance(self.key, int):
             self.name += u'#{0}'.format(self.key)
-        elif isinstance(self.key, BASESTRING):
-            if isinstance(self.key, bytes):
-                self.name += self.key.decode('utf8')
-            else:
+        elif isinstance(self.key, (bytes, BASESTRING)):
+            if isinstance(self.key, STRING):
                 self.name += self.key
+            else:
+                self.name += self.key.decode('utf8')
         else:
             self.name += repr(self.key)
 
@@ -1341,7 +1341,7 @@ class Filename(Template):
 
     def value(self, view, template=None):
         path, source = view.first()
-        if not isinstance(path, BASESTRING):
+        if not isinstance(path, (bytes, BASESTRING)):
             self.fail(
                 u'must be a filename, not {0}'.format(type(path).__name__),
                 view,
