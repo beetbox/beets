@@ -297,10 +297,10 @@ class GenreListTestMixin(object):
 
 
 field_extension = MediaField(
-    MP3DescStorageStyle(b'customtag'),
-    MP4StorageStyle(b'----:com.apple.iTunes:customtag'),
-    StorageStyle(b'customtag'),
-    ASFStorageStyle(b'customtag'),
+    MP3DescStorageStyle('customtag'),
+    MP4StorageStyle('----:com.apple.iTunes:customtag'),
+    StorageStyle('customtag'),
+    ASFStorageStyle('customtag'),
 )
 
 
