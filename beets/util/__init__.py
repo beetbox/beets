@@ -67,7 +67,7 @@ class HumanReadableException(Exception):
         """Get the reason as a string."""
         if isinstance(self.reason, unicode):
             return self.reason
-        elif isinstance(self.reason, basestring):  # Byte string.
+        elif isinstance(self.reason, bytes):
             return self.reason.decode('utf8', 'ignore')
         elif hasattr(self.reason, 'strerror'):  # i.e., EnvironmentError
             return self.reason.strerror
