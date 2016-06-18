@@ -158,7 +158,9 @@ def _safe_cast(out_type, val):
         if isinstance(val, int) or isinstance(val, float):
             return float(val)
         else:
-            if not isinstance(val, basestring):
+            if isinstance(val, bytes):
+                val = val.decode('utf8', 'ignore')
+            else:
                 val = unicode(val)
             match = re.match(r'[\+-]?([0-9]+\.?[0-9]*|[0-9]*\.[0-9]+)',
                              val.strip())
