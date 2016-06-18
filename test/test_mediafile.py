@@ -695,7 +695,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
                 # ReplayGain is float
                 tags[key] = 1.0
             else:
-                tags[key] = b'value\u2010%s' % key
+                tags[key] = 'value\u2010%s' % key
 
         for key in ['disc', 'disctotal', 'track', 'tracktotal', 'bpm']:
             tags[key] = 1
