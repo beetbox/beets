@@ -824,19 +824,11 @@ class TerminalImportSession(importer.ImportSession):
         log.warn(u"This {0} is already in the library!",
                  (u"album" if task.is_album else u"item"))
 
-        # If set, get the action to follow from config.
-        sel = config['import']['duplicate_action'].as_choice({
-            u'skip': u's',
-            u'keep': u'k',
-            u'remove': u'r',
-            u'ask': None,
-        })
-
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
             log.info(u'Skipping.')
             sel = u's'
-        elif sel is None:
+        else:
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
             for duplicate in found_duplicates:
