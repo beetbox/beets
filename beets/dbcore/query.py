@@ -246,9 +246,7 @@ class BytesQuery(MatchQuery):
         # Use a buffer representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
         # rather than encoded Unicode.
-        if isinstance(self.pattern, basestring):
-            # Implicitly coerce Unicode strings to their bytes
-            # equivalents.
+        if isinstance(self.pattern, (unicode, bytes)):
             if isinstance(self.pattern, unicode):
                 self.pattern = self.pattern.encode('utf8')
             self.buf_pattern = buffer(self.pattern)
