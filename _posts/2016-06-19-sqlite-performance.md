@@ -10,17 +10,16 @@ There are three reasons I'm unenthusiastic about alternative DBMSes: I'm skeptic
 
 ## Workload
 
-Many people assume that Postgres or MySQL must be faster than SQLite. But performance depends on the workload, and SQLite is a [great match][whentouse] for the beets workload.
-
-[whentouse]: https://www.sqlite.org/whentouse.html
+Many people assume that Postgres or MySQL must be faster than SQLite. But performance depends on the workload, and SQLite is a great match for the beets workload.
 
 Specifically, serious client--server DBMSes are great for web applications, where writes are frequent and concurrency is paramount. In beets, we have the opposite workload: we're read-heavy and write-light, and we rarely need concurrent updates. The main case when beets writes to its database is on [import][], and import performance is dominated by I/O to the network and to music files. This mostly-read workload is exactly what SQLite was [made for][whentouse].
 
 [import]: http://docs.beets.io/en/latest/reference/cli.html#import
+[whentouse]: https://www.sqlite.org/whentouse.html
 
 ## Low-Hanging Fruit
 
-As [Prof. Knuth][knuth] tells us, optimization before measurement is the [root of all evil][knuth-goto]. Before we embark on a [change for performance's sake][performance], we should have some scrap of empirical evidence to suggest that it might pay off.
+As [Prof. Knuth][knuth] tells us, optimization before measurement is the [root of all evil][knuth-goto]. Before we embark on any [big change for performance's sake][performance], we should have some scrap of empirical evidence to suggest that it might pay off.
 
 [knuth]: http://www-cs-faculty.stanford.edu/~uno/
 [performance]: http://c2.com/cgi/wiki?PrematureOptimization
@@ -30,9 +29,9 @@ There's a better way to spend our limited developer attention. We haven't invest
 
 ## Hassle
 
-Even if everything else were equal, connecting to a new database backend would still incur friction. SQLite is built into Python; any other DBMS would mean a new dependency. The "real databases" people usually envision are client--server systems; these are many times more frustrating to use than an embedded library that uses a flat file. SQLite isn't perfect, of course, but it's pretty damn good for being hassle-free.
+Even if everything else were equal, connecting to a new database backend would incur inconvenience for users and developers. SQLite is built into Python; any other DBMS would mean a new dependency. The "real databases" people usually envision are client--server systems; these are many times more frustrating to use than an embedded library that uses a flat file. SQLite isn't perfect, of course, but it's pretty damn good for being hassle-free.
 
-If you're convinced that a real database would be good for beets, I'd love to be proven wrong. But you need to prove it: measure the bottlenecks in beets first, and think carefully about whether they might be query problems rather than DBMS problems.
+If you're convinced that a real database would be good for beets, I'd love to be proven wrong. But you need to prove it: measure the bottlenecks in beets first, think carefully about whether they might be query problems rather than DBMS problems, and be confident that the return in performance is worth the cost in hassle.
 
 [sqlite]: https://sqlite.org
 [postgresql]: https://www.postgresql.org
