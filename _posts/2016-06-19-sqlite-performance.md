@@ -1,5 +1,5 @@
 ---
-title: "we're pretty happy with SQLite & not urgently interested in a fancier DBMS"
+title: "we’re pretty happy with SQLite & not urgently interested in a fancier DBMS"
 ---
 
 Every once in a while, someone suggests that beets should use a "real database." I think this means storing music metadata in [PostgreSQL][] or [MySQL][] as an alternative to our current [SQLite][] database. The idea is that a more complicated DBMS should be faster, especially for huge music libraries.

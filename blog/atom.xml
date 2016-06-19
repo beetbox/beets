@@ -3,7 +3,7 @@ layout: null
 ---
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
- 
+
     <title>The beets blog.</title>
     <link href="{{ site.url }}/blog/" />
     <link href="{{ site.url }}/blog/atom.xml" rel="self" />
@@ -16,12 +16,12 @@ layout: null
 
     {% for post in site.posts %}
     <entry>
-        <title>{{ post.title }}</title>
+        <title>{{ post.title | xml_escape }}</title>
         <link href="{{ site.url }}{{ post.url }}"/>
         <updated>{{ post.date | date_to_xmlschema }}</updated>
         <id>{{site.url }}{{ post.id }}</id>
         <content type="html">{{ post.content | xml_escape }}</content>
     </entry>
     {% endfor %}
- 
+
 </feed>

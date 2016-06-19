@@ -2,8 +2,8 @@
 <html>
     <head>
         <title>
-            beets: {% if page.shorttitle %}{{ page.shorttitle }}
-            {% else %}{{ page.title }}{% endif %}
+            beets: {% if page.shorttitle %}{{ page.shorttitle | xml_escape }}
+            {% else %}{{ page.title | xml_escape }}{% endif %}
         </title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
@@ -58,9 +58,9 @@
                 <div class="col-md-12" id="header">
                     <h1>
                         {% if page.section == 'blog' %}
-                        The beets blog: {{ page.title }}.
+                        The beets blog: {{ page.title | xml_escape }}.
                         {% else %}
-                        {{ page.title }}
+                        {{ page.title | xml_escape }}
                         {% endif %}
                     </h1>
                 </div>
