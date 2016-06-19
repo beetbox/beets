@@ -6,3 +6,12 @@ highlighter: null
 
 url: http://beets.io
 permalink: /blog/:title.html
+
+defaults:
+    -
+        scope:
+            path: ""
+            type: posts
+        values:
+            layout: main
+            section: blog
