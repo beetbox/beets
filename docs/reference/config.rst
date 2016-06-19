@@ -550,7 +550,7 @@ with the ``-a`` flag to the :ref:`import-cmd` command.)
 
 Default: ``yes``.
 
-.. _duplicate_action
+.. _duplicate_action:
 
 duplicate_action
 ~~~~~~~~~~~~~~~~
