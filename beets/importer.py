@@ -1329,16 +1329,21 @@ def resolve_duplicates(session, task):
             ))
 
             # Get the default action to follow from config.
-            duplicate_action = config['import']['duplicate_action'].get()
+            duplicate_action = config['import']['duplicate_action'].as_choice({
+                u'skip': u's',
+                u'keep': u'k',
+                u'remove': u'r',
+                u'ask' : u'a',
+            })
             log.debug(u'default action for duplicates: {0}', duplicate_action)
 
-            if duplicate_action == 'skip':
+            if duplicate_action == u's':
                 # Skip new.
                 task.set_choice(action.SKIP)
-            elif duplicate_action == 'keep':
+            elif duplicate_action == u'k':
                 # Keep both. Do nothing; leave the choice intact.
                 pass
-            elif duplicate_action == 'remove':
+            elif duplicate_action == u'r':
                 # Remove old.
                 task.should_remove_duplicates = True
             else:
