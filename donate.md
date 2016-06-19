@@ -20,7 +20,7 @@ organization software. They need support more than I do.
 
 You can send Bitcoin donations to [1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo](bitcoin:1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo). Or you might prefer to donate using [Coinbase][]:
 
-<a class="coinbase-button" data-code="6e3e345d83540da9fddb4473386af9b9" data-button-style="custom_large" href="https://coinbase.com/checkouts/6e3e345d83540da9fddb4473386af9b9">Donate Bitcoins</a><script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
+<a class="coinbase-button" data-code="9e8a77248db8d522d6d699a11c1dc4c1" data-button-style="custom_small" href="https://www.coinbase.com/checkouts/9e8a77248db8d522d6d699a11c1dc4c1">Donate Bitcoins</a><script src="https://www.coinbase.com/assets/button.js" type="text/javascript"></script>
 
 [coinbase]: https://coinbase.com/
 
