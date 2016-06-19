@@ -6,7 +6,7 @@ Every once in a while, someone suggests that beets should use a "real database."
 
 The pseudo-official position of the beets project is that supporting a new DBMS is probably not worth your time. If you're interested in performance, please consider helping to optimize our database *queries* instead.
 
-There are three reasons I'm unenthusiastic about alternative DBMSes: I'm skeptical that they will actually help performance; it's a clear case of premature optimization; and SQLite is unbeatably convenient.
+There are three reasons I'm unenthusiastic about alternative DBMSes: I'm skeptical that they will actually help performance; it's a clear case of premature optimization; and SQLite is unbeatably convenient for desktop applications like beets.
 
 ## Workload
 
