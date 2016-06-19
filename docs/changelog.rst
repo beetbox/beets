@@ -8,6 +8,8 @@ New features:
 
 * A new ``--force`` option for :ref:`remove-cmd` allows removal of items
   without prompting beforehand. :bug:`2042`
+* A new importer configuration :ref:`duplicate_action` controls how
+  duplicate albums or tracks treated in import task. :bug:`185`
 
 Some fixes for Windows:
 
