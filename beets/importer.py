@@ -1333,7 +1333,7 @@ def resolve_duplicates(session, task):
                 u'skip': u's',
                 u'keep': u'k',
                 u'remove': u'r',
-                u'ask' : u'a',
+                u'ask': u'a',
             })
             log.debug(u'default action for duplicates: {0}', duplicate_action)
 
