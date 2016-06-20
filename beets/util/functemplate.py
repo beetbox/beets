@@ -508,7 +508,8 @@ class Template(object):
     def __init__(self, template):
         self.expr = _parse(template)
         self.original = template
-        self.compiled = self.translate()
+        if six.PY2:
+            self.compiled = self.translate()
 
     def __eq__(self, other):
         return self.original == other.original
@@ -524,9 +525,12 @@ class Template(object):
     def substitute(self, values={}, functions={}):
         """Evaluate the template given the values and functions.
         """
-        try:
-            res = self.compiled(values, functions)
-        except:  # Handle any exceptions thrown by compiled version.
+        if six.PY2:
+            try:
+                res = self.compiled(values, functions)
+            except:  # Handle any exceptions thrown by compiled version.
+                res = self.interpret(values, functions)
+        else:
             res = self.interpret(values, functions)
         return res
 
