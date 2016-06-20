@@ -23,6 +23,7 @@ from beets import config
 from beets.mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
+import six
 
 try:
     import gi
@@ -62,7 +63,7 @@ class ReplayGainCliTestBase(TestHelper):
                 # teardown operations may fail. In particular # {Item,Album}
                 # may not have the _original_types attribute in unload_plugins
                 pass
-            raise exc_info[1], None, exc_info[2]
+            six.reraise(exc_info[1], None, exc_info[2])
 
         album = self.add_album_fixture(2)
         for item in album.items():
