@@ -24,9 +24,9 @@ import json
 import re
 import requests
 import unicodedata
-import urllib
 import warnings
 from six.moves.html_parser import HTMLParseError
+from six.moves import urllib
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
@@ -181,7 +181,7 @@ class Backend(object):
             for char, repl in URL_CHARACTERS.items():
                 s = s.replace(char, repl)
             s = s.encode('utf8', 'ignore')
-        return urllib.quote(s)
+        return urllib.parse.quote(s)
 
     def build_url(self, artist, title):
         return self.URL_PATTERN % (self._encode(artist.title()),
@@ -256,7 +256,7 @@ class Genius(Backend):
     def search_genius(self, artist, title):
         query = u"%s %s" % (artist, title)
         url = u'https://api.genius.com/search?q=%s' \
-            % (urllib.quote(query.encode('utf8')))
+            % (urllib.parse.quote(query.encode('utf8')))
 
         self._log.debug(u'genius: requesting search {}', url)
         try:
@@ -542,9 +542,9 @@ class Google(Backend):
         query = u"%s %s" % (artist, title)
         url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' \
               % (self.api_key, self.engine_id,
-                 urllib.quote(query.encode('utf8')))
+                 urllib.parse.quote(query.encode('utf8')))
 
-        data = urllib.urlopen(url)
+        data = urllib.request.urlopen(url)
         data = json.load(data)
         if 'error' in data:
             reason = data['error']['errors'][0]['reason']
@@ -643,7 +643,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         oauth_url = 'https://datamarket.accesscontrol.windows.net/v2/OAuth2-13'
         oauth_token = json.loads(requests.post(
             oauth_url,
-            data=urllib.urlencode(params)).content)
+            data=urllib.parse.urlencode(params)).content)
         if 'access_token' in oauth_token:
             return "Bearer " + oauth_token['access_token']
         else:

@@ -12,8 +12,8 @@ from __future__ import division, absolute_import, print_function
 
 from beets import config
 from beets.plugins import BeetsPlugin
-from urllib import urlencode
-from urlparse import urljoin, parse_qs, urlsplit, urlunsplit
+from six.moves.urllib.parse import urlencode
+from six.moves.urllib.parse import urljoin, parse_qs, urlsplit, urlunsplit
 import hashlib
 import requests
 

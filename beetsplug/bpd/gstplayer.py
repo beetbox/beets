@@ -24,7 +24,7 @@ import time
 from six.moves import _thread
 import os
 import copy
-import urllib
+from six.moves import urllib
 from beets import ui
 
 import gi
@@ -130,7 +130,7 @@ class GstPlayer(object):
         self.player.set_state(Gst.State.NULL)
         if isinstance(path, unicode):
             path = path.encode('utf8')
-        uri = 'file://' + urllib.quote(path)
+        uri = 'file://' + urllib.parse.quote(path)
         self.player.set_property("uri", uri)
         self.player.set_state(Gst.State.PLAYING)
         self.playing = True
