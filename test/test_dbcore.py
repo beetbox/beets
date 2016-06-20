@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import shutil
 import sqlite3
+from six import assertRaisesRegex
 
 from test import _common
 from test._common import unittest
@@ -298,9 +299,9 @@ class ModelTest(unittest.TestCase):
         self.assertNotIn('flex_field', model2)
 
     def test_check_db_fails(self):
-        with self.assertRaisesRegexp(ValueError, 'no database'):
+        with assertRaisesRegex(self, ValueError, 'no database'):
             dbcore.Model()._check_db()
-        with self.assertRaisesRegexp(ValueError, 'no id'):
+        with assertRaisesRegex(self, ValueError, 'no id'):
             TestModel1(self.db)._check_db()
 
         dbcore.Model(self.db)._check_db(need_id=False)
@@ -312,7 +313,7 @@ class ModelTest(unittest.TestCase):
     def test_computed_field(self):
         model = TestModelWithGetters()
         self.assertEqual(model.aComputedField, 'thing')
-        with self.assertRaisesRegexp(KeyError, u'computed field .+ deleted'):
+        with assertRaisesRegex(self, KeyError, u'computed field .+ deleted'):
             del model.aComputedField
 
     def test_items(self):
@@ -328,7 +329,7 @@ class ModelTest(unittest.TestCase):
             model._db
 
     def test_parse_nonstring(self):
-        with self.assertRaisesRegexp(TypeError, u"must be a string"):
+        with assertRaisesRegex(self, TypeError, u"must be a string"):
             dbcore.Model._parse(None, 42)
 
 
