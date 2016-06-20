@@ -23,7 +23,6 @@ import unicodedata
 import time
 import re
 from unidecode import unidecode
-import six
 
 from beets import logging
 from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
@@ -566,7 +565,7 @@ class Item(LibModel):
 
         for key in self._media_fields:
             value = getattr(mediafile, key)
-            if isinstance(value, six.integer_types):
+            if isinstance(value, (int, long)):
                 if value.bit_length() > 63:
                     value = 0
             self[key] = value
