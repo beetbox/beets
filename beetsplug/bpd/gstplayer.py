@@ -21,15 +21,22 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import time
-import gobject
 import thread
 import os
 import copy
 import urllib
+from beets import ui
 
-import pygst
-pygst.require('0.10')
-import gst  # noqa
+import gi
+from gi.repository import GLib, Gst
+
+gi.require_version('Gst', '1.0')
+
+Gst.init(None)
+
+
+class QueryError(Exception):
+    pass
 
 
 class GstPlayer(object):
@@ -57,8 +64,19 @@ class GstPlayer(object):
 
         # Set up the Gstreamer player. From the pygst tutorial:
         # http://pygstdocs.berlios.de/pygst-tutorial/playbin.html
-        self.player = gst.element_factory_make("playbin2", "player")
-        fakesink = gst.element_factory_make("fakesink", "fakesink")
+        ####
+        # Updated to GStreamer 1.0 with:
+        # https://wiki.ubuntu.com/Novacut/GStreamer1.0
+        self.player = Gst.ElementFactory.make("playbin", "player")
+
+        if self.player is None:
+            raise ui.UserError("Could not create playbin")
+
+        fakesink = Gst.ElementFactory.make("fakesink", "fakesink")
+
+        if fakesink is None:
+            raise ui.UserError("Could not create fakesink")
+
         self.player.set_property("video-sink", fakesink)
         bus = self.player.get_bus()
         bus.add_signal_watch()
@@ -74,21 +92,21 @@ class GstPlayer(object):
         """Returns the current state flag of the playbin."""
         # gst's get_state function returns a 3-tuple; we just want the
         # status flag in position 1.
-        return self.player.get_state()[1]
+        return self.player.get_state(Gst.CLOCK_TIME_NONE)[1]
 
     def _handle_message(self, bus, message):
         """Callback for status updates from GStreamer."""
-        if message.type == gst.MESSAGE_EOS:
+        if message.type == Gst.MessageType.EOS:
             # file finished playing
-            self.player.set_state(gst.STATE_NULL)
+            self.player.set_state(Gst.State.NULL)
             self.playing = False
             self.cached_time = None
             if self.finished_callback:
                 self.finished_callback()
 
-        elif message.type == gst.MESSAGE_ERROR:
+        elif message.type == Gst.MessageType.ERROR:
             # error
-            self.player.set_state(gst.STATE_NULL)
+            self.player.set_state(Gst.State.NULL)
             err, debug = message.parse_error()
             print(u"Error: {0}".format(err))
             self.playing = False
@@ -109,27 +127,27 @@ class GstPlayer(object):
         """Immediately begin playing the audio file at the given
         path.
         """
-        self.player.set_state(gst.STATE_NULL)
+        self.player.set_state(Gst.State.NULL)
         if isinstance(path, unicode):
             path = path.encode('utf8')
         uri = 'file://' + urllib.quote(path)
         self.player.set_property("uri", uri)
-        self.player.set_state(gst.STATE_PLAYING)
+        self.player.set_state(Gst.State.PLAYING)
         self.playing = True
 
     def play(self):
         """If paused, resume playback."""
-        if self._get_state() == gst.STATE_PAUSED:
-            self.player.set_state(gst.STATE_PLAYING)
+        if self._get_state() == Gst.State.PAUSED:
+            self.player.set_state(Gst.State.PLAYING)
             self.playing = True
 
     def pause(self):
         """Pause playback."""
-        self.player.set_state(gst.STATE_PAUSED)
+        self.player.set_state(Gst.State.PAUSED)
 
     def stop(self):
         """Halt playback."""
-        self.player.set_state(gst.STATE_NULL)
+        self.player.set_state(Gst.State.NULL)
         self.playing = False
         self.cached_time = None
 
@@ -139,12 +157,13 @@ class GstPlayer(object):
         Call this function before trying to play any music with
         play_file() or play().
         """
+
         # If we don't use the MainLoop, messages are never sent.
-        gobject.threads_init()
 
         def start():
-            loop = gobject.MainLoop()
+            loop = GLib.MainLoop()
             loop.run()
+
         thread.start_new_thread(start, ())
 
     def time(self):
@@ -152,14 +171,22 @@ class GstPlayer(object):
         values are integers in seconds. If no stream is available,
         returns (0, 0).
         """
-        fmt = gst.Format(gst.FORMAT_TIME)
+        fmt = Gst.Format(Gst.Format.TIME)
         try:
-            pos = self.player.query_position(fmt, None)[0] / (10 ** 9)
-            length = self.player.query_duration(fmt, None)[0] / (10 ** 9)
+            posq = self.player.query_position(fmt)
+            if not posq[0]:
+                raise QueryError("query_position failed")
+            pos = posq[1] / (10 ** 9)
+
+            lengthq = self.player.query_duration(fmt)
+            if not lengthq[0]:
+                raise QueryError("query_duration failed")
+            length = lengthq[1] / (10 ** 9)
+
             self.cached_time = (pos, length)
             return (pos, length)
 
-        except gst.QueryError:
+        except QueryError:
             # Stream not ready. For small gaps of time, for instance
             # after seeking, the time values are unavailable. For this
             # reason, we cache recent.
@@ -175,9 +202,9 @@ class GstPlayer(object):
             self.stop()
             return
 
-        fmt = gst.Format(gst.FORMAT_TIME)
+        fmt = Gst.Format(Gst.Format.TIME)
         ns = position * 10 ** 9  # convert to nanoseconds
-        self.player.seek_simple(fmt, gst.SEEK_FLAG_FLUSH, ns)
+        self.player.seek_simple(fmt, Gst.SeekFlags.FLUSH, ns)
 
         # save new cached time
         self.cached_time = (position, cur_len)
@@ -208,11 +235,13 @@ def play_complicated(paths):
     def next_song():
         my_paths.pop(0)
         p.play_file(my_paths[0])
+
     p = GstPlayer(next_song)
     p.run()
     p.play_file(my_paths[0])
     while my_paths:
         time.sleep(1)
+
 
 if __name__ == '__main__':
     # A very simple command-line player. Just give it names of audio

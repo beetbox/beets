@@ -10,6 +10,7 @@ New features:
   without prompting beforehand. :bug:`2042`
 * A new importer configuration :ref:`duplicate_action` controls how
   duplicate albums or tracks treated in import task. :bug:`185`
+* The plugin `bpd` was upgraded from GStreamer 0.10 to 1.0 :bug:`2057`
 
 Some fixes for Windows:
 
@@ -32,7 +33,6 @@ Fixes:
   installations. Thanks to :user:`bismark`. :bug:`2038`
 * Fix a crash introduced in the previous version when the standard input was
   connected to a Unix pipe. :bug:`2041`
-
 
 1.3.18 (May 31, 2016)
 ---------------------
