@@ -37,6 +37,7 @@ from __future__ import division, absolute_import, print_function
 from six.moves import queue
 from threading import Thread, Lock
 import sys
+import six
 
 BUBBLE = '__PIPELINE_BUBBLE__'
 POISON = '__PIPELINE_POISON__'
@@ -431,7 +432,7 @@ class Pipeline(object):
             exc_info = thread.exc_info
             if exc_info:
                 # Make the exception appear as it was raised originally.
-                raise exc_info[0], exc_info[1], exc_info[2]
+                six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
     def pull(self):
         """Yield elements from the end of the pipeline. Runs the stages
