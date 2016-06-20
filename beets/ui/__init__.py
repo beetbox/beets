@@ -31,6 +31,7 @@ import re
 import struct
 import traceback
 import os.path
+from six.moves import input
 
 from beets import logging
 from beets import library
@@ -193,7 +194,7 @@ def should_move(move_opt=None):
 # Input prompts.
 
 def input_(prompt=None):
-    """Like `raw_input`, but decodes the result to a Unicode string.
+    """Like `input`, but decodes the result to a Unicode string.
     Raises a UserError if stdin is not available. The prompt is sent to
     stdout rather than stderr. A printed between the prompt and the
     input cursor.
@@ -205,7 +206,7 @@ def input_(prompt=None):
         print_(prompt, end=' ')
 
     try:
-        resp = raw_input()
+        resp = input()
     except EOFError:
         raise UserError(u'stdin stream ended while input required')
 
