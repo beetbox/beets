@@ -24,8 +24,7 @@ with its Python bindings) on your system.
 
 .. _homebrew-versions: https://github.com/Homebrew/homebrew-versions
 
-* On Linux, it's likely that you already have gst-python. (If not, your
-  distribution almost certainly has a package for it.)
+* On Linux, you need to install GStreamer 1.0 and the GObject bindings for python. Under ubuntu, they are called `python-gi` and `gstreamer1.0`.
 
 * On Windows, you may want to try `GStreamer WinBuilds`_ (cavet emptor: I
   haven't tried this).
