@@ -18,10 +18,10 @@ from __future__ import division, absolute_import, print_function
 import subprocess
 import os
 import collections
-import itertools
 import sys
 import warnings
 import re
+from six.moves import zip
 
 from beets import logging
 from beets import ui
@@ -883,8 +883,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 )
 
             self.store_album_gain(album, album_gain.album_gain)
-            for item, track_gain in itertools.izip(album.items(),
-                                                   album_gain.track_gains):
+            for item, track_gain in zip(album.items(), album_gain.track_gains):
                 self.store_track_gain(item, track_gain)
                 if write:
                     item.try_write()
