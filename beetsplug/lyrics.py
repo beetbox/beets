@@ -26,7 +26,7 @@ import requests
 import unicodedata
 import urllib
 import warnings
-from HTMLParser import HTMLParseError
+from six.moves.html_parser import HTMLParseError
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
