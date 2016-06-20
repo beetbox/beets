@@ -26,6 +26,7 @@ from test import _common
 from test._common import unittest
 from beets import dbcore
 from tempfile import mkstemp
+import six
 
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -350,7 +351,7 @@ class FormatTest(unittest.TestCase):
         model = TestModel1()
         model.other_field = u'caf\xe9'.encode('utf8')
         value = model.formatted().get('other_field')
-        self.assertTrue(isinstance(value, unicode))
+        self.assertTrue(isinstance(value, six.text_type))
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_unset_field(self):

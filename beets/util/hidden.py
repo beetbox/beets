@@ -20,6 +20,7 @@ import os
 import stat
 import ctypes
 import sys
+import six
 
 
 def _is_hidden_osx(path):
@@ -74,7 +75,7 @@ def is_hidden(path):
     work out if a file is hidden.
     """
     # Convert the path to unicode if it is not already.
-    if not isinstance(path, unicode):
+    if not isinstance(path, six.text_type):
         path = path.decode('utf-8')
 
     # Run platform specific functions depending on the platform

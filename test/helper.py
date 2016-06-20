@@ -56,6 +56,7 @@ from beets import util
 
 # TODO Move AutotagMock here
 from test import _common
+import six
 
 
 class LogCapture(logging.Handler):
@@ -65,7 +66,7 @@ class LogCapture(logging.Handler):
         self.messages = []
 
     def emit(self, record):
-        self.messages.append(unicode(record.msg))
+        self.messages.append(six.text_type(record.msg))
 
 
 @contextmanager
@@ -121,7 +122,7 @@ def has_program(cmd, args=['--version']):
     """
     full_cmd = [cmd] + args
     for i, elem in enumerate(full_cmd):
-        if isinstance(elem, unicode):
+        if isinstance(elem, six.text_type):
             full_cmd[i] = elem.encode(_arg_encoding())
     try:
         with open(os.devnull, 'wb') as devnull:

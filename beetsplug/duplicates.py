@@ -23,6 +23,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, vararg_callback, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess
 from beets.library import Item, Album
+import six
 
 PLUGIN = 'duplicates'
 
@@ -264,7 +265,7 @@ class DuplicatesPlugin(BeetsPlugin):
                     # between a bytes object and the empty Unicode
                     # string ''.
                     return v is not None and \
-                        (v != '' if isinstance(v, unicode) else True)
+                        (v != '' if isinstance(v, six.text_type) else True)
                 fields = kind.all_keys()
                 key = lambda x: sum(1 for f in fields if truthy(getattr(x, f)))
             else:

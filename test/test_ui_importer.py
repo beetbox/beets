@@ -26,6 +26,7 @@ from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer
 from beets import config
+import six
 
 
 class TestTerminalImportSession(TerminalImportSession):
@@ -69,7 +70,7 @@ class TestTerminalImportSession(TerminalImportSession):
             self.io.addinput(u'S')
         elif isinstance(choice, int):
             self.io.addinput(u'M')
-            self.io.addinput(unicode(choice))
+            self.io.addinput(six.text_type(choice))
             self._add_choice_input()
         else:
             raise Exception(u'Unknown choice %s' % choice)

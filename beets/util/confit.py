@@ -25,6 +25,7 @@ import yaml
 import collections
 import re
 from collections import OrderedDict
+import six
 
 UNIX_DIR_VAR = 'XDG_CONFIG_HOME'
 UNIX_DIR_FALLBACK = '~/.config'
@@ -44,7 +45,7 @@ REDACTED_TOMBSTONE = 'REDACTED'
 # Utilities.
 
 PY3 = sys.version_info[0] == 3
-STRING = str if PY3 else unicode  # noqa
+STRING = str if PY3 else six.text_type  # noqa
 BASESTRING = str if PY3 else basestring  # noqa
 NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)  # noqa
 

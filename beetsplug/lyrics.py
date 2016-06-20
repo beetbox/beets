@@ -27,6 +27,7 @@ import unicodedata
 import warnings
 from six.moves.html_parser import HTMLParseError
 from six.moves import urllib
+import six
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
@@ -177,7 +178,7 @@ class Backend(object):
     @staticmethod
     def _encode(s):
         """Encode the string for inclusion in a URL"""
-        if isinstance(s, unicode):
+        if isinstance(s, six.text_type):
             for char, repl in URL_CHARACTERS.items():
                 s = s.replace(char, repl)
             s = s.encode('utf8', 'ignore')
@@ -250,7 +251,7 @@ class Genius(Backend):
     """Fetch lyrics from Genius via genius-api."""
     def __init__(self, config, log):
         super(Genius, self).__init__(config, log)
-        self.api_key = config['genius_api_key'].get(unicode)
+        self.api_key = config['genius_api_key'].get(six.text_type)
         self.headers = {'Authorization': "Bearer %s" % self.api_key}
 
     def search_genius(self, artist, title):
@@ -461,8 +462,8 @@ class Google(Backend):
     """Fetch lyrics from Google search results."""
     def __init__(self, config, log):
         super(Google, self).__init__(config, log)
-        self.api_key = config['google_API_key'].get(unicode)
-        self.engine_id = config['google_engine_ID'].get(unicode)
+        self.api_key = config['google_API_key'].get(six.text_type)
+        self.engine_id = config['google_engine_ID'].get(six.text_type)
 
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics.
@@ -503,7 +504,7 @@ class Google(Backend):
         try:
             text = unicodedata.normalize('NFKD', text).encode('ascii',
                                                               'ignore')
-            text = unicode(re.sub('[-\s]+', ' ', text.decode('utf-8')))
+            text = six.text_type(re.sub('[-\s]+', ' ', text.decode('utf-8')))
         except UnicodeDecodeError:
             self._log.exception(u"Failing to normalize '{0}'", text)
         return text

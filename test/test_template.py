@@ -21,6 +21,7 @@ import warnings
 
 from test._common import unittest
 from beets.util import functemplate
+import six
 
 
 def _normexpr(expr):
@@ -227,7 +228,7 @@ class EvalTest(unittest.TestCase):
             u'baz': u'BaR',
         }
         functions = {
-            u'lower': unicode.lower,
+            u'lower': six.text_type.lower,
             u'len': len,
         }
         return functemplate.Template(template).substitute(values, functions)

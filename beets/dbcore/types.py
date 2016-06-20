@@ -19,6 +19,7 @@ from __future__ import division, absolute_import, print_function
 
 from . import query
 from beets.util import str2bool
+import six
 
 
 # Abstract base.
@@ -37,7 +38,7 @@ class Type(object):
     """The `Query` subclass to be used when querying the field.
     """
 
-    model_type = unicode
+    model_type = six.text_type
     """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
@@ -63,7 +64,7 @@ class Type(object):
         if isinstance(value, bytes):
             value = value.decode('utf8', 'ignore')
 
-        return unicode(value)
+        return six.text_type(value)
 
     def parse(self, string):
         """Parse a (possibly human-written) string and return the
@@ -102,7 +103,7 @@ class Type(object):
         """
         if isinstance(sql_value, buffer):
             sql_value = bytes(sql_value).decode('utf8', 'ignore')
-        if isinstance(sql_value, unicode):
+        if isinstance(sql_value, six.text_type):
             return self.parse(sql_value)
         else:
             return self.normalize(sql_value)
@@ -194,7 +195,7 @@ class Boolean(Type):
     model_type = bool
 
     def format(self, value):
-        return unicode(bool(value))
+        return six.text_type(bool(value))
 
     def parse(self, string):
         return str2bool(string)

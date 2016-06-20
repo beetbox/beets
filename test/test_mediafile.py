@@ -33,6 +33,7 @@ from beets.mediafile import MediaFile, MediaField, Image, \
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import bytestring_path
+import six
 
 
 class ArtTestMixin(object):
@@ -353,13 +354,13 @@ class ExtendedFieldTestMixin(object):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('somekey', True)
         self.assertIn(u'must be an instance of MediaField',
-                      unicode(cm.exception))
+                      six.text_type(cm.exception))
 
     def test_overwrite_property(self):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('artist', MediaField())
         self.assertIn(u'property "artist" already exists',
-                      unicode(cm.exception))
+                      six.text_type(cm.exception))
 
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,

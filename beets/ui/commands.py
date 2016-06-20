@@ -38,6 +38,7 @@ from beets import library
 from beets import config
 from beets import logging
 from beets.util.confit import _package_path
+import six
 
 VARIOUS_ARTISTS = u'Various Artists'
 PromptChoice = namedtuple('ExtraChoice', ['short', 'long', 'callback'])
@@ -163,7 +164,7 @@ def disambig_string(info):
             else:
                 disambig.append(info.media)
         if info.year:
-            disambig.append(unicode(info.year))
+            disambig.append(six.text_type(info.year))
         if info.country:
             disambig.append(info.country)
         if info.label:
@@ -236,9 +237,9 @@ def show_change(cur_artist, cur_album, match):
             if mediums > 1:
                 return u'{0}-{1}'.format(medium, medium_index)
             else:
-                return unicode(medium_index)
+                return six.text_type(medium_index)
         else:
-            return unicode(index)
+            return six.text_type(index)
 
     # Identify the album in question.
     if cur_artist != match.info.artist or \

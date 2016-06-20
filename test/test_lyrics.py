@@ -29,6 +29,7 @@ from beetsplug import lyrics
 from beets.library import Item
 from beets.util import confit, bytestring_path
 from beets import logging
+import six
 
 log = logging.getLogger('beets.test_lyrics')
 raw_backend = lyrics.Backend({}, log)
@@ -354,7 +355,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
         present in the title."""
         from bs4 import SoupStrainer, BeautifulSoup
         s = self.source
-        url = unicode(s['url'] + s['path'])
+        url = six.text_type(s['url'] + s['path'])
         html = raw_backend.fetch_url(url)
         soup = BeautifulSoup(html, "html.parser",
                              parse_only=SoupStrainer('title'))

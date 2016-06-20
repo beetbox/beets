@@ -27,6 +27,7 @@ import subprocess
 import platform
 import shlex
 from beets.util import hidden
+import six
 
 
 MAX_FILENAME_LENGTH = 200
@@ -65,14 +66,14 @@ class HumanReadableException(Exception):
 
     def _reasonstr(self):
         """Get the reason as a string."""
-        if isinstance(self.reason, unicode):
+        if isinstance(self.reason, six.text_type):
             return self.reason
         elif isinstance(self.reason, bytes):
             return self.reason.decode('utf8', 'ignore')
         elif hasattr(self.reason, 'strerror'):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
-            return u'"{0}"'.format(unicode(self.reason))
+            return u'"{0}"'.format(six.text_type(self.reason))
 
     def get_message(self):
         """Create the human-readable description of the error, sans
@@ -346,11 +347,11 @@ def displayable_path(path, separator=u'; '):
     """
     if isinstance(path, (list, tuple)):
         return separator.join(displayable_path(p) for p in path)
-    elif isinstance(path, unicode):
+    elif isinstance(path, six.text_type):
         return path
     elif not isinstance(path, bytes):
         # A non-string object: just get its unicode representation.
-        return unicode(path)
+        return six.text_type(path)
 
     try:
         return path.decode(_fsencoding(), 'ignore')
@@ -369,7 +370,7 @@ def syspath(path, prefix=True):
     if os.path.__name__ != 'ntpath':
         return path
 
-    if not isinstance(path, unicode):
+    if not isinstance(path, six.text_type):
         # Beets currently represents Windows paths internally with UTF-8
         # arbitrarily. But earlier versions used MBCS because it is
         # reported as the FS encoding by Windows. Try both.
@@ -639,7 +640,7 @@ def as_string(value):
     elif isinstance(value, bytes):
         return value.decode('utf8', 'ignore')
     else:
-        return unicode(value)
+        return six.text_type(value)
 
 
 def plurality(objs):
@@ -765,7 +766,7 @@ def shlex_split(s):
         # Shlex works fine.
         return shlex.split(s)
 
-    elif isinstance(s, unicode):
+    elif isinstance(s, six.text_type):
         # Work around a Python bug.
         # http://bugs.python.org/issue6988
         bs = s.encode('utf8')
@@ -801,7 +802,7 @@ def _windows_long_path_name(short_path):
     """Use Windows' `GetLongPathNameW` via ctypes to get the canonical,
     long path given a short filename.
     """
-    if not isinstance(short_path, unicode):
+    if not isinstance(short_path, six.text_type):
         short_path = short_path.decode(_fsencoding())
 
     import ctypes

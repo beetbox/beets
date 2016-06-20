@@ -23,6 +23,7 @@ from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
+import six
 
 
 class ParsingError(ValueError):
@@ -246,8 +247,8 @@ class BytesQuery(MatchQuery):
         # Use a buffer representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
         # rather than encoded Unicode.
-        if isinstance(self.pattern, (unicode, bytes)):
-            if isinstance(self.pattern, unicode):
+        if isinstance(self.pattern, (six.text_type, bytes)):
+            if isinstance(self.pattern, six.text_type):
                 self.pattern = self.pattern.encode('utf8')
             self.buf_pattern = buffer(self.pattern)
         elif isinstance(self.pattern, buffer):
@@ -793,7 +794,7 @@ class FieldSort(Sort):
 
         def key(item):
             field_val = item.get(self.field, '')
-            if self.case_insensitive and isinstance(field_val, unicode):
+            if self.case_insensitive and isinstance(field_val, six.text_type):
                 field_val = field_val.lower()
             return field_val
 

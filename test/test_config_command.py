@@ -14,6 +14,7 @@ from beets import config
 from test._common import unittest
 from test.helper import TestHelper, capture_stdout
 from beets.library import Library
+import six
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):
@@ -114,8 +115,8 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
                 execlp.side_effect = OSError('here is problem')
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
-                      unicode(user_error.exception))
-        self.assertIn('here is problem', unicode(user_error.exception))
+                      six.text_type(user_error.exception))
+        self.assertIn('here is problem', six.text_type(user_error.exception))
 
     def test_edit_invalid_config_file(self):
         self.lib = Library(':memory:')

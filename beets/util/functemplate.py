@@ -35,6 +35,7 @@ import dis
 import types
 
 from .confit import NUMERIC_TYPES
+import six
 
 SYMBOL_DELIM = u'$'
 FUNC_DELIM = u'%'
@@ -190,8 +191,8 @@ class Call(object):
             except Exception as exc:
                 # Function raised exception! Maybe inlining the name of
                 # the exception will help debug.
-                return u'<%s>' % unicode(exc)
-            return unicode(out)
+                return u'<%s>' % six.text_type(exc)
+            return six.text_type(out)
         else:
             return self.original
 
@@ -246,7 +247,7 @@ class Expression(object):
                 out.append(part)
             else:
                 out.append(part.evaluate(env))
-        return u''.join(map(unicode, out))
+        return u''.join(map(six.text_type, out))
 
     def translate(self):
         """Compile the expression to a list of Python AST expressions, a
@@ -563,7 +564,7 @@ if __name__ == '__main__':
     import timeit
     _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
     _vars = {'bar': 'qux'}
-    _funcs = {'baz': unicode.upper}
+    _funcs = {'baz': six.text_type.upper}
     interp_time = timeit.timeit('_tmpl.interpret(_vars, _funcs)',
                                 'from __main__ import _tmpl, _vars, _funcs',
                                 number=10000)

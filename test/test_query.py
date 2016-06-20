@@ -33,6 +33,7 @@ from beets.dbcore.query import (NoneQuery, ParsingError,
 from beets.library import Library, Item
 from beets import util
 import platform
+import six
 
 
 class TestHelper(helper.TestHelper):
@@ -301,12 +302,13 @@ class GetTest(DummyDataTestCase):
     def test_invalid_query(self):
         with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
             dbcore.query.NumericQuery('year', u'199a')
-        self.assertIn(u'not an int', unicode(raised.exception))
+        self.assertIn(u'not an int', six.text_type(raised.exception))
 
         with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
             dbcore.query.RegexpQuery('year', u'199(')
-        self.assertIn(u'not a regular expression', unicode(raised.exception))
-        self.assertIn(u'unbalanced parenthesis', unicode(raised.exception))
+        exception = six.text_type(raised.exception)
+        self.assertIn(u'not a regular expression', exception)
+        self.assertIn(u'unbalanced parenthesis', exception)
         self.assertIsInstance(raised.exception, ParsingError)
 
 

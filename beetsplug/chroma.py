@@ -26,6 +26,7 @@ from beets.util import confit
 from beets.autotag import hooks
 import acoustid
 from collections import defaultdict
+import six
 
 API_KEY = '1vOwZtEn'
 SCORE_THRESH = 0.5
@@ -181,7 +182,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
         def submit_cmd_func(lib, opts, args):
             try:
-                apikey = config['acoustid']['apikey'].get(unicode)
+                apikey = config['acoustid']['apikey'].get(six.text_type)
             except confit.NotFoundError:
                 raise ui.UserError(u'no Acoustid user API key provided')
             submit_items(self._log, apikey, lib.items(ui.decargs(args)))

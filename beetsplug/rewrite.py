@@ -24,6 +24,7 @@ from collections import defaultdict
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import library
+import six
 
 
 def rewriter(field, rules):
@@ -51,7 +52,7 @@ class RewritePlugin(BeetsPlugin):
         # Gather all the rewrite rules for each field.
         rules = defaultdict(list)
         for key, view in self.config.items():
-            value = view.get(unicode)
+            value = view.get(six.text_type)
             try:
                 fieldname, pattern = key.split(None, 1)
             except ValueError:

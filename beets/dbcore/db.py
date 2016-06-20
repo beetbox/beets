@@ -29,6 +29,7 @@ import beets
 from beets.util.functemplate import Template
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
+import six
 
 
 class FormattedMapping(collections.Mapping):
@@ -69,7 +70,7 @@ class FormattedMapping(collections.Mapping):
             value = value.decode('utf8', 'ignore')
 
         if self.for_path:
-            sep_repl = beets.config['path_sep_replace'].get(unicode)
+            sep_repl = beets.config['path_sep_replace'].get(six.text_type)
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
                     value = value.replace(sep, sep_repl)

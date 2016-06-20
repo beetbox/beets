@@ -22,6 +22,7 @@ from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action
 from beets.util import confit
+import six
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '0.10'
@@ -113,7 +114,7 @@ class ZeroPlugin(BeetsPlugin):
         if patterns is True:
             return True
         for p in patterns:
-            if re.search(p, unicode(field), flags=re.IGNORECASE):
+            if re.search(p, six.text_type(field), flags=re.IGNORECASE):
                 return True
         return False
 
