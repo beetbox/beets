@@ -29,6 +29,7 @@ from beets.library import Item
 from beets.util import plurality
 from beets.autotag import AlbumInfo, TrackInfo
 from beets import config
+import six
 
 
 class PluralityTest(_common.TestCase):
@@ -611,7 +612,7 @@ class AssignmentTest(unittest.TestCase):
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
         self.assertEqual(extra_tracks, [])
-        for item, info in mapping.iteritems():
+        for item, info in six.iteritems(mapping):
             self.assertEqual(items.index(item), trackinfo.index(info))
 
 
