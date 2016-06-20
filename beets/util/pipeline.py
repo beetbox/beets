@@ -34,7 +34,7 @@ in place of any single coroutine.
 
 from __future__ import division, absolute_import, print_function
 
-import Queue
+from six.moves import queue
 from threading import Thread, Lock
 import sys
 
@@ -75,13 +75,13 @@ def _invalidate_queue(q, val=None, sync=True):
             q.mutex.release()
 
 
-class CountedQueue(Queue.Queue):
+class CountedQueue(queue.Queue):
     """A queue that keeps track of the number of threads that are
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
     """
     def __init__(self, maxsize=0):
-        Queue.Queue.__init__(self, maxsize)
+        queue.Queue.__init__(self, maxsize)
         self.nthreads = 0
         self.poisoned = False
 
