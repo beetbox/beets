@@ -35,6 +35,7 @@ addons:
         packages:
             - bash-completion
             - mp3gain
+            - imagemagick
 
 # To install dependencies, tell tox to do everything but actually running the
 # test.
