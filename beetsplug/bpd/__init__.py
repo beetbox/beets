@@ -1167,7 +1167,7 @@ class BPDPlugin(BeetsPlugin):
             server.run()
         except NoGstreamerError:
             global_log.error(u'Gstreamer Python bindings not found.')
-            global_log.error(u'Install "python-gst-1.0" '
+            global_log.error(u'Install "gstreamer1.0" and "python-gi"'
                              u'or similar package to use BPD.')
 
     def commands(self):
