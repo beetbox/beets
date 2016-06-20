@@ -16,24 +16,21 @@ Dependencies
 Before you can use BPD, you'll need the media library called GStreamer (along
 with its Python bindings) on your system.
 
-* On Mac OS X, you can use `MacPorts`_ or `Homebrew`_. For MacPorts, just run
-  ``port install py27-gst-python``. For Homebrew, the appropriate formulae are
-  in `homebrew-versions`_, so run ``brew tap homebrew/versions`` and then
-  ``brew install gst-python010``. (Note that you'll need the Mac OS X
-  Developer Tools in either case.)
+* On Mac OS X, you can use `Homebrew`_. Run ``brew install gstreamer`` and then
+  ``brew install pygobject3``.
 
 .. _homebrew-versions: https://github.com/Homebrew/homebrew-versions
 
-* On Linux, you need to install GStreamer 1.0 and the GObject bindings for python. Under ubuntu, they are called `python-gi` and `gstreamer1.0`.
+* On Linux, you need to install GStreamer 1.0 and the GObject bindings for
+  python. Under Ubuntu, they are called `python-gi` and `gstreamer1.0`.
 
-* On Windows, you may want to try `GStreamer WinBuilds`_ (cavet emptor: I
+* On Windows, you may want to try `GStreamer WinBuilds`_ (caveat emptor: I
   haven't tried this).
 
 You will also need the various GStreamer plugin packages to make everything
 work. See the :doc:`/plugins/chroma` documentation for more information on
 installing GStreamer plugins.
 
-.. _MacPorts: http://www.macports.org/
 .. _GStreamer WinBuilds: http://www.gstreamer-winbuild.ylatuya.es/
 .. _Homebrew: http://mxcl.github.com/homebrew/
 
