@@ -34,8 +34,10 @@ gi.require_version('Gst', '1.0')
 GObject.threads_init()
 Gst.init(None)
 
+
 class QueryError(Exception):
     pass
+
 
 class GstPlayer(object):
     """A music player abstracting GStreamer's Playbin element.
