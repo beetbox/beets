@@ -21,7 +21,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import time
-import thread
+from six.moves import _thread
 import os
 import copy
 import urllib
@@ -164,7 +164,7 @@ class GstPlayer(object):
             loop = GLib.MainLoop()
             loop.run()
 
-        thread.start_new_thread(start, ())
+        _thread.start_new_thread(start, ())
 
     def time(self):
         """Returns a tuple containing (position, length) where both
