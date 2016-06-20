@@ -230,7 +230,7 @@ def make_key_filter(include):
     def filter_(data):
         filtered = dict()
         for key, value in data.items():
-            if any(map(lambda m: m.match(key), matchers)):
+            if any([m.match(key) for m in matchers]):
                 filtered[key] = value
         return filtered
 

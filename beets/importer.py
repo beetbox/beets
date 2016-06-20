@@ -331,7 +331,7 @@ class ImportSession(object):
         been imported in a previous session.
         """
         if self.is_resuming(toppath) \
-           and all(map(lambda p: progress_element(toppath, p), paths)):
+           and all([progress_element(toppath, p) for p in paths]):
             return True
         if self.config['incremental'] \
            and tuple(paths) in self.history_dirs:
