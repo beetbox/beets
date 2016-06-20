@@ -462,7 +462,7 @@ def tag_item(item, search_artist=None, search_title=None,
     candidates = {}
 
     # First, try matching by MusicBrainz ID.
-    trackids = search_ids or filter(None, [item.mb_trackid])
+    trackids = search_ids or [t for t in [item.mb_trackid] if t]
     if trackids:
         for trackid in trackids:
             log.debug(u'Searching for track ID: {0}', trackid)
