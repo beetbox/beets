@@ -131,7 +131,7 @@ def _safe_cast(out_type, val):
             return int(val)
         else:
             # Process any other type as a string.
-            if not isinstance(val, basestring):
+            if not isinstance(val, six.string_types):
                 val = six.text_type(val)
             # Get a number from the front of the string.
             val = re.match(r'[0-9]*', val.strip()).group(0)
@@ -1196,7 +1196,7 @@ class DateField(MediaField):
         """
         # Get the underlying data and split on hyphens and slashes.
         datestring = super(DateField, self).__get__(mediafile, None)
-        if isinstance(datestring, basestring):
+        if isinstance(datestring, six.string_types):
             datestring = re.sub(r'[Tt ].*$', '', six.text_type(datestring))
             items = re.split('[-/]', six.text_type(datestring))
         else:

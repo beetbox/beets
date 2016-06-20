@@ -230,7 +230,7 @@ class BooleanQuery(MatchQuery):
     """
     def __init__(self, field, pattern, fast=True):
         super(BooleanQuery, self).__init__(field, pattern, fast)
-        if isinstance(pattern, basestring):
+        if isinstance(pattern, six.string_types):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
 
@@ -303,7 +303,7 @@ class NumericQuery(FieldQuery):
         if self.field not in item:
             return False
         value = item[self.field]
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             value = self._convert(value)
 
         if self.point is not None:

@@ -1258,7 +1258,7 @@ class Library(dbcore.Database):
         # Parse the query, if necessary.
         try:
             parsed_sort = None
-            if isinstance(query, basestring):
+            if isinstance(query, six.string_types):
                 query, parsed_sort = parse_query_string(query, model_cls)
             elif isinstance(query, (list, tuple)):
                 query, parsed_sort = parse_query_parts(query, model_cls)

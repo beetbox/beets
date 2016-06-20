@@ -25,6 +25,7 @@ from beetsplug import lastgenre
 from beets import config
 
 from test.helper import TestHelper
+import six
 
 
 class LastGenrePluginTest(unittest.TestCase, TestHelper):
@@ -38,11 +39,11 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
     def _setup_config(self, whitelist=False, canonical=False, count=1):
         config['lastgenre']['canonical'] = canonical
         config['lastgenre']['count'] = count
-        if isinstance(whitelist, (bool, basestring)):
+        if isinstance(whitelist, (bool, six.string_types)):
             # Filename, default, or disabled.
             config['lastgenre']['whitelist'] = whitelist
         self.plugin.setup()
-        if not isinstance(whitelist, (bool, basestring)):
+        if not isinstance(whitelist, (bool, six.string_types)):
             # Explicit list of genres.
             self.plugin.whitelist = whitelist
 

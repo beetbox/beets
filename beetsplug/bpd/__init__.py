@@ -570,7 +570,7 @@ class Connection(object):
         added after every string. Returns a Bluelet event that sends
         the data.
         """
-        if isinstance(lines, basestring):
+        if isinstance(lines, six.string_types):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
         log.debug('{}', out[:-1])  # Don't log trailing newline.
