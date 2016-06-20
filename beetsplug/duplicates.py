@@ -330,7 +330,7 @@ class DuplicatesPlugin(BeetsPlugin):
         """Generate triples of keys, duplicate counts, and constituent objects.
         """
         offset = 0 if full else 1
-        for k, objs in self._group_by(objs, keys, strict).iteritems():
+        for k, objs in six.iteritems(self._group_by(objs, keys, strict)):
             if len(objs) > 1:
                 objs = self._order(objs, tiebreak)
                 if merge:

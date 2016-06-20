@@ -177,9 +177,9 @@ class Model(object):
         ordinary construction are bypassed.
         """
         obj = cls(db)
-        for key, value in fixed_values.iteritems():
+        for key, value in six.iteritems(fixed_values):
             obj._values_fixed[key] = cls._type(key).from_sql(value)
-        for key, value in flex_values.iteritems():
+        for key, value in six.iteritems(flex_values):
             obj._values_flex[key] = cls._type(key).from_sql(value)
         return obj
 

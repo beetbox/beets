@@ -570,7 +570,7 @@ class Wikipedia(RemoteArtSource):
         try:
             data = wikipedia_response.json()
             results = data['query']['pages']
-            for _, result in results.iteritems():
+            for _, result in six.iteritems(results):
                 image_url = result['imageinfo'][0]['url']
                 yield self._candidate(url=image_url,
                                       match=Candidate.MATCH_EXACT)

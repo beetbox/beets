@@ -25,6 +25,7 @@ from beets import config
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch  # noqa
 from .match import tag_item, tag_album  # noqa
 from .match import Recommendation  # noqa
+import six
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -52,7 +53,7 @@ def apply_metadata(album_info, mapping):
     """Set the items' metadata to match an AlbumInfo object using a
     mapping from Items to TrackInfo objects.
     """
-    for item, track_info in mapping.iteritems():
+    for item, track_info in six.iteritems(mapping):
         # Album, artist, track count.
         if track_info.artist:
             item.artist = track_info.artist

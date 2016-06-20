@@ -14,6 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 from __future__ import division, absolute_import, print_function
+import six
 
 """Tests for the `importadded` plugin."""
 
@@ -124,7 +125,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.assertEqualTimes(album.added, album_added_before)
         items_added_after = dict((item.path, item.added)
                                  for item in album.items())
-        for item_path, added_after in items_added_after.iteritems():
+        for item_path, added_after in six.iteritems(items_added_after):
             self.assertEqualTimes(items_added_before[item_path], added_after,
                                   u"reimport modified Item.added for " +
                                   util.displayable_path(item_path))
@@ -162,7 +163,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         # Verify the reimported items
         items_added_after = dict((item.path, item.added)
                                  for item in self.lib.items())
-        for item_path, added_after in items_added_after.iteritems():
+        for item_path, added_after in six.iteritems(items_added_after):
             self.assertEqualTimes(items_added_before[item_path], added_after,
                                   u"reimport modified Item.added for " +
                                   util.displayable_path(item_path))

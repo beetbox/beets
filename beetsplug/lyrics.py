@@ -224,7 +224,7 @@ class SymbolsReplaced(Backend):
 
     @classmethod
     def _encode(cls, s):
-        for old, new in cls.REPLACEMENTS.iteritems():
+        for old, new in six.iteritems(cls.REPLACEMENTS):
             s = re.sub(old, new, s)
 
         return super(SymbolsReplaced, cls)._encode(s)

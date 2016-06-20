@@ -853,7 +853,7 @@ class Server(BaseServer):
             for name, itemid in iter(sorted(node.files.items())):
                 item = self.lib.get_item(itemid)
                 yield self._item_info(item)
-            for name, _ in iter(sorted(node.dirs.iteritems())):
+            for name, _ in iter(sorted(six.iteritems(node.dirs))):
                 dirpath = self._path_join(path, name)
                 if dirpath.startswith(u"/"):
                     # Strip leading slash (libmpc rejects this).
@@ -873,12 +873,12 @@ class Server(BaseServer):
                 yield u'file: ' + basepath
         else:
             # List a directory. Recurse into both directories and files.
-            for name, itemid in sorted(node.files.iteritems()):
+            for name, itemid in sorted(six.iteritems(node.files)):
                 newpath = self._path_join(basepath, name)
                 # "yield from"
                 for v in self._listall(newpath, itemid, info):
                     yield v
-            for name, subdir in sorted(node.dirs.iteritems()):
+            for name, subdir in sorted(six.iteritems(node.dirs)):
                 newpath = self._path_join(basepath, name)
                 yield u'directory: ' + newpath
                 for v in self._listall(newpath, subdir, info):
@@ -903,11 +903,11 @@ class Server(BaseServer):
             yield self.lib.get_item(node)
         else:
             # Recurse into a directory.
-            for name, itemid in sorted(node.files.iteritems()):
+            for name, itemid in sorted(six.iteritems(node.files)):
                 # "yield from"
                 for v in self._all_items(itemid):
                     yield v
-            for name, subdir in sorted(node.dirs.iteritems()):
+            for name, subdir in sorted(six.iteritems(node.dirs)):
                 for v in self._all_items(subdir):
                     yield v
 
