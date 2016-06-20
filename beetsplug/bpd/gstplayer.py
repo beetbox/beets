@@ -19,6 +19,7 @@ music player.
 
 from __future__ import division, absolute_import, print_function
 
+import six
 import sys
 import time
 from six.moves import _thread
@@ -128,7 +129,7 @@ class GstPlayer(object):
         path.
         """
         self.player.set_state(Gst.State.NULL)
-        if isinstance(path, unicode):
+        if isinstance(path, six.text_type):
             path = path.encode('utf8')
         uri = 'file://' + urllib.parse.quote(path)
         self.player.set_property("uri", uri)

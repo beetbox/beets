@@ -124,14 +124,15 @@ class DateType(types.Float):
     query = dbcore.query.DateQuery
 
     def format(self, value):
-        return time.strftime(beets.config['time_format'].get(unicode),
+        return time.strftime(beets.config['time_format'].get(six.text_type),
                              time.localtime(value or 0))
 
     def parse(self, string):
         try:
             # Try a formatted date string.
             return time.mktime(
-                time.strptime(string, beets.config['time_format'].get(unicode))
+                time.strptime(string,
+                              beets.config['time_format'].get(six.text_type))
             )
         except ValueError:
             # Fall back to a plain timestamp number.
@@ -153,7 +154,7 @@ class PathType(types.Type):
         return normpath(bytestring_path(string))
 
     def normalize(self, value):
-        if isinstance(value, unicode):
+        if isinstance(value, six.text_type):
             # Paths stored internally as encoded bytes.
             return bytestring_path(value)
 
@@ -281,11 +282,11 @@ class FileOperationError(Exception):
         """
         return u'{0}: {1}'.format(
             util.displayable_path(self.path),
-            unicode(self.reason)
+            six.text_type(self.reason)
         )
 
     def __str__(self):
-        return unicode(self).encode('utf8')
+        return six.text_type(self).encode('utf8')
 
 
 class ReadError(FileOperationError):
@@ -331,7 +332,7 @@ class LibModel(dbcore.Model):
 
     def __format__(self, spec):
         if not spec:
-            spec = beets.config[self._format_config_key].get(unicode)
+            spec = beets.config[self._format_config_key].get(six.text_type)
         result = self.evaluate_template(spec)
         if isinstance(spec, bytes):
             # if spec is a byte string then we must return a one as well
@@ -517,7 +518,7 @@ class Item(LibModel):
         """
         # Encode unicode paths and read buffers.
         if key == 'path':
-            if isinstance(value, unicode):
+            if isinstance(value, six.text_type):
                 value = bytestring_path(value)
             elif isinstance(value, buffer):
                 value = bytes(value)
@@ -1061,7 +1062,8 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = Template(beets.config['art_filename'].get(unicode))
+        filename_tmpl = Template(
+            beets.config['art_filename'].get(six.text_type))
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config['asciify_paths']:
             subpath = unidecode(subpath)
@@ -1179,7 +1181,8 @@ def parse_query_string(s, model_cls):
 
     The string is split into components using shell-like syntax.
     """
-    assert isinstance(s, unicode), u"Query is not unicode: {0!r}".format(s)
+    message = u"Query is not unicode: {0!r}".format(s)
+    assert isinstance(s, six.text_type), message
     try:
         parts = util.shlex_split(s)
     except ValueError as exc:
@@ -1405,7 +1408,7 @@ class DefaultTemplateFunctions(object):
     def tmpl_time(s, fmt):
         """Format a time value using `strftime`.
         """
-        cur_fmt = beets.config['time_format'].get(unicode)
+        cur_fmt = beets.config['time_format'].get(six.text_type)
         return time.strftime(fmt, time.strptime(s, cur_fmt))
 
     def tmpl_aunique(self, keys=None, disam=None):

@@ -32,6 +32,7 @@ from beets import config
 from beets.util.artresizer import ArtResizer
 from beets.util import confit
 from beets.util import syspath, bytestring_path
+import six
 
 try:
     import itunes
@@ -696,7 +697,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                           confit.String(pattern=self.PAT_PERCENT)]))
         self.margin_px = None
         self.margin_percent = None
-        if type(self.enforce_ratio) is unicode:
+        if type(self.enforce_ratio) is six.text_type:
             if self.enforce_ratio[-1] == u'%':
                 self.margin_percent = float(self.enforce_ratio[:-1]) / 100
             elif self.enforce_ratio[-2:] == u'px':

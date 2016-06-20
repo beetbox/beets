@@ -22,6 +22,7 @@ import itertools
 
 from beets.plugins import BeetsPlugin
 from beets import config
+import six
 
 FUNC_NAME = u'__INLINE_FUNC__'
 
@@ -32,7 +33,7 @@ class InlineError(Exception):
     def __init__(self, code, exc):
         super(InlineError, self).__init__(
             (u"error in inline path field code:\n"
-             u"%s\n%s: %s") % (code, type(exc).__name__, unicode(exc))
+             u"%s\n%s: %s") % (code, type(exc).__name__, six.text_type(exc))
         )
 
 
@@ -64,14 +65,14 @@ class InlinePlugin(BeetsPlugin):
         for key, view in itertools.chain(config['item_fields'].items(),
                                          config['pathfields'].items()):
             self._log.debug(u'adding item field {0}', key)
-            func = self.compile_inline(view.get(unicode), False)
+            func = self.compile_inline(view.get(six.text_type), False)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config['album_fields'].items():
             self._log.debug(u'adding album field {0}', key)
-            func = self.compile_inline(view.get(unicode), True)
+            func = self.compile_inline(view.get(six.text_type), True)
             if func is not None:
                 self.album_template_fields[key] = func
 

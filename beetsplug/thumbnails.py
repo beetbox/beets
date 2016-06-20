@@ -35,6 +35,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets import util
 from beets.util.artresizer import ArtResizer, get_im_version, get_pil_version
+import six
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
@@ -169,8 +170,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         """Write required metadata to the thumbnail
         See http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
         """
+        mtime = os.stat(album.artpath).st_mtime
         metadata = {"Thumb::URI": self.get_uri(album.artpath),
-                    "Thumb::MTime": unicode(os.stat(album.artpath).st_mtime)}
+                    "Thumb::MTime": six.text_type(mtime)}
         try:
             self.write_metadata(image_path, metadata)
         except Exception:

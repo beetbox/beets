@@ -27,6 +27,7 @@ import subprocess
 import yaml
 from tempfile import NamedTemporaryFile
 import os
+import six
 
 
 # These "safe" types can avoid the format/parse cycle that most fields go
@@ -82,7 +83,7 @@ def load(s):
 
             # Convert all keys to strings. They started out as strings,
             # but the user may have inadvertently messed this up.
-            out.append({unicode(k): v for k, v in d.items()})
+            out.append({six.text_type(k): v for k, v in d.items()})
 
     except yaml.YAMLError as e:
         raise ParseError(u'invalid YAML: {}'.format(e))
@@ -141,7 +142,7 @@ def apply_(obj, data):
         else:
             # Either the field was stringified originally or the user changed
             # it from a safe type to an unsafe one. Parse it as a string.
-            obj.set_parse(key, unicode(value))
+            obj.set_parse(key, six.text_type(value))
 
 
 class EditPlugin(plugins.BeetsPlugin):

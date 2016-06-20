@@ -27,6 +27,7 @@ from beets import logging
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output, displayable_path
+import six
 
 
 # Utilities.
@@ -102,7 +103,7 @@ class Bs1770gainBackend(Backend):
             'method': 'replaygain',
         })
         self.chunk_at = config['chunk_at'].as_number()
-        self.method = b'--' + bytes(config['method'].get(unicode))
+        self.method = b'--' + bytes(config['method'].get(six.text_type))
 
         cmd = b'bs1770gain'
         try:
@@ -256,7 +257,7 @@ class CommandBackend(Backend):
             'noclip': True,
         })
 
-        self.command = config["command"].get(unicode)
+        self.command = config["command"].get(six.text_type)
 
         if self.command:
             # Explicit executable path.
@@ -809,7 +810,7 @@ class ReplayGainPlugin(BeetsPlugin):
         })
 
         self.overwrite = self.config['overwrite'].get(bool)
-        backend_name = self.config['backend'].get(unicode)
+        backend_name = self.config['backend'].get(six.text_type)
         if backend_name not in self.backends:
             raise ui.UserError(
                 u"Selected ReplayGain backend {0} is not supported. "

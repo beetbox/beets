@@ -42,6 +42,7 @@ from beets import config
 from beets.util import confit, as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
+import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == 'win32':
@@ -140,7 +141,7 @@ def print_(*strings, **kwargs):
     """
     end = kwargs.get('end')
 
-    if not strings or isinstance(strings[0], unicode):
+    if not strings or isinstance(strings[0], six.text_type):
         txt = u' '.join(strings)
         txt += u'\n' if end is None else end
     else:
@@ -148,7 +149,7 @@ def print_(*strings, **kwargs):
         txt += b'\n' if end is None else end
 
     # Always send bytes to the stdout stream.
-    if isinstance(txt, unicode):
+    if isinstance(txt, six.text_type):
         txt = txt.encode(_out_encoding(), 'replace')
 
     sys.stdout.write(txt)
@@ -298,11 +299,11 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         prompt_part_lengths = []
         if numrange:
             if isinstance(default, int):
-                default_name = unicode(default)
+                default_name = six.text_type(default)
                 default_name = colorize('action_default', default_name)
                 tmpl = '# selection (default %s)'
                 prompt_parts.append(tmpl % default_name)
-                prompt_part_lengths.append(len(tmpl % unicode(default)))
+                prompt_part_lengths.append(len(tmpl % six.text_type(default)))
             else:
                 prompt_parts.append('# selection')
                 prompt_part_lengths.append(len(prompt_parts[-1]))
@@ -522,7 +523,8 @@ def colorize(color_name, text):
     if config['ui']['color']:
         global COLORS
         if not COLORS:
-            COLORS = dict((name, config['ui']['colors'][name].get(unicode))
+            COLORS = dict((name,
+                           config['ui']['colors'][name].get(six.text_type))
                           for name in COLOR_NAMES)
         # In case a 3rd party plugin is still passing the actual color ('red')
         # instead of the abstract color name ('text_error')
@@ -544,8 +546,8 @@ def _colordiff(a, b, highlight='text_highlight',
     """
     if not isinstance(a, basestring) or not isinstance(b, basestring):
         # Non-strings: use ordinary equality.
-        a = unicode(a)
-        b = unicode(b)
+        a = six.text_type(a)
+        b = six.text_type(b)
         if a == b:
             return a, b
         else:
@@ -593,7 +595,7 @@ def colordiff(a, b, highlight='text_highlight'):
     if config['ui']['color']:
         return _colordiff(a, b, highlight)
     else:
-        return unicode(a), unicode(b)
+        return six.text_type(a), six.text_type(b)
 
 
 def get_path_formats(subview=None):
@@ -604,7 +606,7 @@ def get_path_formats(subview=None):
     subview = subview or config['paths']
     for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, Template(view.get(unicode))))
+        path_formats.append((query, Template(view.get(six.text_type))))
     return path_formats
 
 

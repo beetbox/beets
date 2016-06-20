@@ -23,6 +23,7 @@ from beets import dbcore
 from beets import config
 from beets import plugins
 from beets.dbcore import types
+import six
 
 API_URL = 'http://ws.audioscrobbler.com/2.0/'
 
@@ -111,7 +112,7 @@ class CustomUser(pylast.User):
 
 
 def import_lastfm(lib, log):
-    user = config['lastfm']['user'].get(unicode)
+    user = config['lastfm']['user'].get(six.text_type)
     per_page = config['lastimport']['per_page'].get(int)
 
     if not user:

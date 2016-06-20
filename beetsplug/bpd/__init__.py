@@ -35,6 +35,7 @@ from beets.util import bluelet
 from beets.library import Item
 from beets import dbcore
 from beets.mediafile import MediaFile
+import six
 
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
@@ -305,12 +306,12 @@ class BaseServer(object):
         playlist, playlistlength, and xfade.
         """
         yield (
-            u'volume: ' + unicode(self.volume),
-            u'repeat: ' + unicode(int(self.repeat)),
-            u'random: ' + unicode(int(self.random)),
-            u'playlist: ' + unicode(self.playlist_version),
-            u'playlistlength: ' + unicode(len(self.playlist)),
-            u'xfade: ' + unicode(self.crossfade),
+            u'volume: ' + six.text_type(self.volume),
+            u'repeat: ' + six.text_type(int(self.repeat)),
+            u'random: ' + six.text_type(int(self.random)),
+            u'playlist: ' + six.text_type(self.playlist_version),
+            u'playlistlength: ' + six.text_type(len(self.playlist)),
+            u'xfade: ' + six.text_type(self.crossfade),
         )
 
         if self.current_index == -1:
@@ -323,8 +324,8 @@ class BaseServer(object):
 
         if self.current_index != -1:  # i.e., paused or playing
             current_id = self._item_id(self.playlist[self.current_index])
-            yield u'song: ' + unicode(self.current_index)
-            yield u'songid: ' + unicode(current_id)
+            yield u'song: ' + six.text_type(self.current_index)
+            yield u'songid: ' + six.text_type(current_id)
 
         if self.error:
             yield u'error: ' + self.error
@@ -468,8 +469,8 @@ class BaseServer(object):
         Also a dummy implementation.
         """
         for idx, track in enumerate(self.playlist):
-            yield u'cpos: ' + unicode(idx)
-            yield u'Id: ' + unicode(track.id)
+            yield u'cpos: ' + six.text_type(idx)
+            yield u'Id: ' + six.text_type(track.id)
 
     def cmd_currentsong(self, conn):
         """Sends information about the currently-playing song.
@@ -573,7 +574,7 @@ class Connection(object):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
         log.debug('{}', out[:-1])  # Don't log trailing newline.
-        if isinstance(out, unicode):
+        if isinstance(out, six.text_type):
             out = out.encode('utf8')
         return self.sock.sendall(out)
 
@@ -771,28 +772,28 @@ class Server(BaseServer):
     def _item_info(self, item):
         info_lines = [
             u'file: ' + item.destination(fragment=True),
-            u'Time: ' + unicode(int(item.length)),
+            u'Time: ' + six.text_type(int(item.length)),
             u'Title: ' + item.title,
             u'Artist: ' + item.artist,
             u'Album: ' + item.album,
             u'Genre: ' + item.genre,
         ]
 
-        track = unicode(item.track)
+        track = six.text_type(item.track)
         if item.tracktotal:
-            track += u'/' + unicode(item.tracktotal)
+            track += u'/' + six.text_type(item.tracktotal)
         info_lines.append(u'Track: ' + track)
 
-        info_lines.append(u'Date: ' + unicode(item.year))
+        info_lines.append(u'Date: ' + six.text_type(item.year))
 
         try:
             pos = self._id_to_index(item.id)
-            info_lines.append(u'Pos: ' + unicode(pos))
+            info_lines.append(u'Pos: ' + six.text_type(pos))
         except ArgumentNotFoundError:
             # Don't include position if not in playlist.
             pass
 
-        info_lines.append(u'Id: ' + unicode(item.id))
+        info_lines.append(u'Id: ' + six.text_type(item.id))
 
         return info_lines
 
@@ -917,7 +918,7 @@ class Server(BaseServer):
         for item in self._all_items(self._resolve_path(path)):
             self.playlist.append(item)
             if send_id:
-                yield u'Id: ' + unicode(item.id)
+                yield u'Id: ' + six.text_type(item.id)
         self.playlist_version += 1
 
     def cmd_add(self, conn, path):
@@ -938,11 +939,11 @@ class Server(BaseServer):
         if self.current_index > -1:
             item = self.playlist[self.current_index]
 
-            yield u'bitrate: ' + unicode(item.bitrate / 1000)
+            yield u'bitrate: ' + six.text_type(item.bitrate / 1000)
             # Missing 'audio'.
 
             (pos, total) = self.player.time()
-            yield u'time: ' + unicode(pos) + u':' + unicode(total)
+            yield u'time: ' + six.text_type(pos) + u':' + six.text_type(total)
 
         # Also missing 'updating_db'.
 
@@ -957,13 +958,13 @@ class Server(BaseServer):
             artists, albums, songs, totaltime = tx.query(statement)[0]
 
         yield (
-            u'artists: ' + unicode(artists),
-            u'albums: ' + unicode(albums),
-            u'songs: ' + unicode(songs),
-            u'uptime: ' + unicode(int(time.time() - self.startup_time)),
+            u'artists: ' + six.text_type(artists),
+            u'albums: ' + six.text_type(albums),
+            u'songs: ' + six.text_type(songs),
+            u'uptime: ' + six.text_type(int(time.time() - self.startup_time)),
             u'playtime: ' + u'0',  # Missing.
-            u'db_playtime: ' + unicode(int(totaltime)),
-            u'db_update: ' + unicode(int(self.updated_time)),
+            u'db_playtime: ' + six.text_type(int(totaltime)),
+            u'db_update: ' + six.text_type(int(self.updated_time)),
         )
 
     # Searching.
@@ -1059,7 +1060,7 @@ class Server(BaseServer):
             rows = tx.query(statement, subvals)
 
         for row in rows:
-            yield show_tag_canon + u': ' + unicode(row[0])
+            yield show_tag_canon + u': ' + six.text_type(row[0])
 
     def cmd_count(self, conn, tag, value):
         """Returns the number and total time of songs matching the
@@ -1071,8 +1072,8 @@ class Server(BaseServer):
         for item in self.lib.items(dbcore.query.MatchQuery(key, value)):
             songs += 1
             playtime += item.length
-        yield u'songs: ' + unicode(songs)
-        yield u'playtime: ' + unicode(int(playtime))
+        yield u'songs: ' + six.text_type(songs)
+        yield u'playtime: ' + six.text_type(int(playtime))
 
     # "Outputs." Just a dummy implementation because we don't control
     # any outputs.
@@ -1180,11 +1181,12 @@ class BPDPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            host = args.pop(0) if args else self.config['host'].get(unicode)
+            host = self.config['host'].get(six.text_type)
+            host = args.pop(0) if args else host
             port = args.pop(0) if args else self.config['port'].get(int)
             if args:
                 raise beets.ui.UserError(u'too many arguments')
-            password = self.config['password'].get(unicode)
+            password = self.config['password'].get(six.text_type)
             volume = self.config['volume'].get(int)
             debug = opts.debug or False
             self.start_bpd(lib, host, int(port), password, volume, debug)
