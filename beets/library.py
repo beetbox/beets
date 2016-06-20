@@ -22,6 +22,7 @@ import sys
 import unicodedata
 import time
 import re
+import six
 from unidecode import unidecode
 
 from beets import logging
@@ -565,7 +566,7 @@ class Item(LibModel):
 
         for key in self._media_fields:
             value = getattr(mediafile, key)
-            if isinstance(value, (int, long)):
+            if isinstance(value, six.integer_types):
                 if value.bit_length() > 63:
                     value = 0
             self[key] = value
