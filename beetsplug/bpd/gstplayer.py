@@ -27,8 +27,9 @@ import copy
 import urllib
 
 import gi
-gi.require_version('Gst', '1.0')
 from gi.repository import GObject, Gst
+
+gi.require_version('Gst', '1.0')
 
 GObject.threads_init()
 Gst.init(None)
@@ -66,12 +67,12 @@ class GstPlayer(object):
         # https://wiki.ubuntu.com/Novacut/GStreamer1.0
         self.player = Gst.ElementFactory.make("playbin", "player")
 
-        if self.player == None:
+        if self.player is None:
             raise RuntimeError("Could not create playbin")
 
         fakesink = Gst.ElementFactory.make("fakesink", "fakesink")
 
-        if fakesink == None:
+        if fakesink is None:
             raise RuntimeError("Could not create fakesink")
 
         self.player.set_property("video-sink", fakesink)
@@ -154,11 +155,13 @@ class GstPlayer(object):
         Call this function before trying to play any music with
         play_file() or play().
         """
+
         # If we don't use the MainLoop, messages are never sent.
 
         def start():
             loop = GObject.MainLoop()
             loop.run()
+
         thread.start_new_thread(start, ())
 
     def time(self):
@@ -230,11 +233,13 @@ def play_complicated(paths):
     def next_song():
         my_paths.pop(0)
         p.play_file(my_paths[0])
+
     p = GstPlayer(next_song)
     p.run()
     p.play_file(my_paths[0])
     while my_paths:
         time.sleep(1)
+
 
 if __name__ == '__main__':
     # A very simple command-line player. Just give it names of audio
