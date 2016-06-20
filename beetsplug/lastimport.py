@@ -15,6 +15,7 @@
 
 from __future__ import division, absolute_import, print_function
 
+from six.moves import range
 import pylast
 from pylast import TopItem, _extract, _number
 from beets import ui
@@ -192,7 +193,7 @@ def process_tracks(lib, tracks, log):
     total_fails = 0
     log.info(u'Received {0} tracks in this page, processing...', total)
 
-    for num in xrange(0, total):
+    for num in range(0, total):
         song = None
         trackid = tracks[num]['mbid'].strip()
         artist = tracks[num]['artist'].get('name', '').strip()
