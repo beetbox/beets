@@ -12,9 +12,8 @@ Put something like the following in your config.yaml to configure:
 from __future__ import division, absolute_import, print_function
 
 import requests
-from urlparse import urljoin
-from urllib import urlencode
 import xml.etree.ElementTree as ET
+from six.moves.urllib.parse import urljoin, urlencode
 from beets import config
 from beets.plugins import BeetsPlugin
 

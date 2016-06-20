@@ -20,7 +20,7 @@ from __future__ import division, absolute_import, print_function
 import musicbrainzngs
 import re
 import traceback
-from urlparse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from beets import logging
 import beets.autotag.hooks

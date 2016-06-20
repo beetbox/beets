@@ -18,12 +18,11 @@ public resizing proxy if neither is available.
 """
 from __future__ import division, absolute_import, print_function
 
-import urllib
 import subprocess
 import os
 import re
 from tempfile import NamedTemporaryFile
-
+from six.moves.urllib.parse import urlencode
 from beets import logging
 from beets import util
 
@@ -41,7 +40,7 @@ def resize_url(url, maxwidth):
     """Return a proxied image URL that resizes the original image to
     maxwidth (preserving aspect ratio).
     """
-    return '{0}?{1}'.format(PROXY_URL, urllib.urlencode({
+    return '{0}?{1}'.format(PROXY_URL, urlencode({
         'url': url.replace('http://', ''),
         'w': bytes(maxwidth),
     }))
