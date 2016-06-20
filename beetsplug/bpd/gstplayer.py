@@ -25,13 +25,13 @@ import thread
 import os
 import copy
 import urllib
+from beets import ui
 
 import gi
-from gi.repository import GObject, Gst
+from gi.repository import GLib, Gst
 
 gi.require_version('Gst', '1.0')
 
-GObject.threads_init()
 Gst.init(None)
 
 
@@ -70,12 +70,12 @@ class GstPlayer(object):
         self.player = Gst.ElementFactory.make("playbin", "player")
 
         if self.player is None:
-            raise RuntimeError("Could not create playbin")
+            raise ui.UserError("Could not create playbin")
 
         fakesink = Gst.ElementFactory.make("fakesink", "fakesink")
 
         if fakesink is None:
-            raise RuntimeError("Could not create fakesink")
+            raise ui.UserError("Could not create fakesink")
 
         self.player.set_property("video-sink", fakesink)
         bus = self.player.get_bus()
@@ -161,7 +161,7 @@ class GstPlayer(object):
         # If we don't use the MainLoop, messages are never sent.
 
         def start():
-            loop = GObject.MainLoop()
+            loop = GLib.MainLoop()
             loop.run()
 
         thread.start_new_thread(start, ())
