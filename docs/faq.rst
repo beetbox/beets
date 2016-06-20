@@ -289,7 +289,7 @@ Also note that beets may take some time to quit after ^C is typed; it
 tries to clean up after itself briefly even when canceled.
 
 (For developers: this is because the UI thread is blocking on
-``raw_input`` and cannot be interrupted by the main thread, which is
+``input`` and cannot be interrupted by the main thread, which is
 trying to close all pipeline stages in the exception handler by setting
 a flag. There is no simple way to remedy this.)
 
