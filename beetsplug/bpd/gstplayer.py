@@ -33,6 +33,9 @@ from gi.repository import GObject, Gst
 GObject.threads_init()
 Gst.init(None)
 
+class QueryError(Exception):
+    pass
+
 class GstPlayer(object):
     """A music player abstracting GStreamer's Playbin element.
 
@@ -165,12 +168,20 @@ class GstPlayer(object):
         """
         fmt = Gst.Format(Gst.Format.TIME)
         try:
-            pos = self.player.query_position(fmt)[1] / (10 ** 9)
-            length = self.player.query_duration(fmt)[1] / (10 ** 9)
+            posq = self.player.query_position(fmt)
+            if not posq[0]:
+                raise QueryError("query_position failed")
+            pos = posq[1] / (10 ** 9)
+
+            lengthq = self.player.query_duration(fmt)
+            if not lengthq[0]:
+                raise QueryError("query_duration failed")
+            length = lengthq[1] / (10 ** 9)
+
             self.cached_time = (pos, length)
             return (pos, length)
 
-        except Exception:
+        except QueryError:
             # Stream not ready. For small gaps of time, for instance
             # after seeking, the time values are unavailable. For this
             # reason, we cache recent.
