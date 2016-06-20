@@ -27,12 +27,12 @@ from beets.util import confit
 from discogs_client import Release, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
+from six.moves import http_client
 import beets
 import re
 import time
 import json
 import socket
-import httplib
 import os
 
 
@@ -43,7 +43,7 @@ urllib3_logger.setLevel(logging.CRITICAL)
 USER_AGENT = u'beets/{0} +http://beets.io/'.format(beets.__version__)
 
 # Exceptions that discogs_client should really handle but does not.
-CONNECTION_ERRORS = (ConnectionError, socket.error, httplib.HTTPException,
+CONNECTION_ERRORS = (ConnectionError, socket.error, http_client.HTTPException,
                      ValueError,  # JSON decoding raises a ValueError.
                      DiscogsAPIError)
 
