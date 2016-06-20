@@ -31,7 +31,7 @@ def _normexpr(expr):
     """
     textbuf = []
     for part in expr.parts:
-        if isinstance(part, basestring):
+        if isinstance(part, six.string_types):
             textbuf.append(part)
         else:
             if textbuf:
@@ -259,7 +259,7 @@ class EvalTest(unittest.TestCase):
 
     def test_function_call_exception(self):
         res = self._eval(u"%lower{a,b,c,d,e}")
-        self.assertTrue(isinstance(res, basestring))
+        self.assertTrue(isinstance(res, six.string_types))
 
     def test_function_returning_integer(self):
         self.assertEqual(self._eval(u"%len{foo}"), u"3")

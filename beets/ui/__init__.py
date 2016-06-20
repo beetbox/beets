@@ -263,7 +263,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         # Mark the option's shortcut letter for display.
         if not require and (
             (default is None and not numrange and first) or
-            (isinstance(default, basestring) and
+            (isinstance(default, six.string_types) and
              found_letter.lower() == default.lower())):
             # The first option is the default; mark it.
             show_letter = '[%s]' % found_letter.upper()
@@ -544,7 +544,8 @@ def _colordiff(a, b, highlight='text_highlight',
     highlighted intelligently to show differences; other values are
     stringified and highlighted in their entirety.
     """
-    if not isinstance(a, basestring) or not isinstance(b, basestring):
+    if not isinstance(a, six.string_types) \
+       or not isinstance(b, six.string_types):
         # Non-strings: use ordinary equality.
         a = six.text_type(a)
         b = six.text_type(b)
@@ -674,7 +675,7 @@ def _field_diff(field, old, new):
 
     # For strings, highlight changes. For others, colorize the whole
     # thing.
-    if isinstance(oldval, basestring):
+    if isinstance(oldval, six.string_types):
         oldstr, newstr = colordiff(oldval, newstr)
     else:
         oldstr = colorize('text_error', oldstr)
@@ -867,7 +868,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         """
         kwargs = {}
         if target:
-            if isinstance(target, basestring):
+            if isinstance(target, six.string_types):
                 target = {'item': library.Item,
                           'album': library.Album}[target]
             kwargs['target'] = target

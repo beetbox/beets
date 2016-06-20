@@ -79,7 +79,7 @@ def ex_literal(val):
         return ast.Num(val)
     elif isinstance(val, bool):
         return ast.Name(bytes(val), ast.Load())
-    elif isinstance(val, basestring):
+    elif isinstance(val, six.string_types):
         return ast.Str(val)
     raise TypeError(u'no literal for {0}'.format(type(val)))
 
@@ -98,7 +98,7 @@ def ex_call(func, args):
     function may be an expression or the name of a function. Each
     argument may be an expression or a value to be used as a literal.
     """
-    if isinstance(func, basestring):
+    if isinstance(func, six.string_types):
         func = ex_rvalue(func)
 
     args = list(args)
@@ -243,7 +243,7 @@ class Expression(object):
         """
         out = []
         for part in self.parts:
-            if isinstance(part, basestring):
+            if isinstance(part, six.string_types):
                 out.append(part)
             else:
                 out.append(part.evaluate(env))
@@ -257,7 +257,7 @@ class Expression(object):
         varnames = set()
         funcnames = set()
         for part in self.parts:
-            if isinstance(part, basestring):
+            if isinstance(part, six.string_types):
                 expressions.append(ex_literal(part))
             else:
                 e, v, f = part.translate()

@@ -453,7 +453,7 @@ class Model(object):
         separators will be added to the template.
         """
         # Perform substitution.
-        if isinstance(template, basestring):
+        if isinstance(template, six.string_types):
             template = Template(template)
         return template.substitute(self.formatted(for_path),
                                    self._template_funcs())
@@ -464,7 +464,7 @@ class Model(object):
     def _parse(cls, key, string):
         """Parse a string as a value for the given key.
         """
-        if not isinstance(string, basestring):
+        if not isinstance(string, six.string_types):
             raise TypeError(u"_parse() argument must be a string")
 
         return cls._type(key).parse(string)

@@ -110,7 +110,7 @@ def _flatten_artist_credit(credit):
     artist_sort_parts = []
     artist_credit_parts = []
     for el in credit:
-        if isinstance(el, basestring):
+        if isinstance(el, six.string_types):
             # Join phrase.
             artist_parts.append(el)
             artist_credit_parts.append(el)
