@@ -34,7 +34,6 @@ import ast
 import dis
 import types
 
-from .confit import NUMERIC_TYPES
 import six
 
 SYMBOL_DELIM = u'$'
@@ -75,7 +74,7 @@ def ex_literal(val):
     """
     if val is None:
         return ast.Name('None', ast.Load())
-    elif isinstance(val, NUMERIC_TYPES):
+    elif isinstance(val, six.integer_types):
         return ast.Num(val)
     elif isinstance(val, bool):
         return ast.Name(bytes(val), ast.Load())
