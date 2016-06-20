@@ -23,6 +23,7 @@ import:
     group_albums: no
     pretend: false
     search_ids: []
+    duplicate_action: ask
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]
