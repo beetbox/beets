@@ -25,6 +25,7 @@ from tempfile import NamedTemporaryFile
 from six.moves.urllib.parse import urlencode
 from beets import logging
 from beets import util
+import six
 
 # Resizing methods
 PIL = 1
@@ -159,10 +160,9 @@ class Shareable(type):
         return self._instance
 
 
-class ArtResizer(object):
+class ArtResizer(six.with_metaclass(Shareable, object)):
     """A singleton class that performs image resizes.
     """
-    __metaclass__ = Shareable
 
     def __init__(self):
         """Create a resizer object with an inferred method.
