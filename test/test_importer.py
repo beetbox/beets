@@ -98,7 +98,8 @@ class AutotagStub(object):
             track_id=u'trackid',
             artist=artist.replace('Tag', 'Applied'),
             artist_id=u'artistid',
-            length=1
+            length=1,
+            index=0,
         )
 
     def album_for_id(self, mbid):
@@ -112,7 +113,8 @@ class AutotagStub(object):
             title=u'Applied Title %d' % number,
             track_id=u'match %d' % number,
             artist=artist,
-            length=1
+            length=1,
+            index=0,
         )
 
     def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
@@ -1072,6 +1074,7 @@ def test_album_info():
     track_info = TrackInfo(
         title=u'new title',
         track_id=u'trackid',
+        index=0,
     )
     album_info = AlbumInfo(
         artist=u'artist',
@@ -1189,6 +1192,7 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
             artist=u'artist',
             title=u'title',
             track_id=u'new trackid',
+            index=0,
         )
         self.match_track.return_value = iter([track_info])
 
