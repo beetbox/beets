@@ -12,6 +12,9 @@ New features:
   duplicate albums or tracks treated in import task. :bug:`185`
 * :doc:`/plugins/bpd`: The plugin now uses the modern GStreamer 1.0 instead of
   the old 0.10. Thanks to :user:`philippbeckmann`. :bug:`2057` :bug:`2062`
+* :doc:`/plugins/beatport`: This metadata source plugin has arisen from the
+  dead! It now works with Beatport's new OAuth-based API. Thanks to
+  :user:`jbaiter`. :bug:`1989` :bug:`2067`
 
 Some fixes for Windows:
 
