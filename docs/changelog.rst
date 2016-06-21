@@ -37,6 +37,8 @@ Fixes:
   installations. Thanks to :user:`bismark`. :bug:`2038`
 * Fix a crash introduced in the previous version when the standard input was
   connected to a Unix pipe. :bug:`2041`
+* Fix a crash when specifying non-ASCII format strings on the command line
+  with the ``-f`` option to many commands. :bug:`2063`
 
 1.3.18 (May 31, 2016)
 ---------------------

@@ -1184,11 +1184,16 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(l, u'xxx\n')
 
     def test_format_option(self):
-        l = self.run_with_output(u'ls', u'-f', '$artist')
+        l = self.run_with_output(u'ls', u'-f', u'$artist')
         self.assertEqual(l, u'the artist\n')
 
-        l = self.run_with_output(u'ls', u'-a', u'-f', '$albumartist')
+        l = self.run_with_output(u'ls', u'-a', u'-f', u'$albumartist')
         self.assertEqual(l, u'the album artist\n')
+
+    def test_format_option_unicode(self):
+        l = self.run_with_output(b'ls', b'-f',
+                                 u'caf\xe9'.encode(ui._arg_encoding()))
+        self.assertEqual(l, u'caf\xe9\n')
 
     def test_root_format_option(self):
         l = self.run_with_output(u'--format-item', u'$artist',

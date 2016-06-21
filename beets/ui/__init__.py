@@ -804,7 +804,14 @@ class CommonOptionsParser(optparse.OptionParser, object):
         if store_true:
             setattr(parser.values, option.dest, True)
 
-        value = fmt or value and unicode(value) or ''
+        # Use the explicitly specified format, or the string from the option.
+        if fmt:
+            value = fmt
+        elif value:
+            value, = decargs([value])
+        else:
+            value = u''
+
         parser.values.format = value
         if target:
             config[target._format_config_key].set(value)
