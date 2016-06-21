@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import threading
 import logging as log
-from StringIO import StringIO
+from six import StringIO
 
 import beets.logging as blog
 from beets import plugins, ui
