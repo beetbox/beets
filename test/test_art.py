@@ -46,7 +46,7 @@ class UseThePlugin(_common.TestCase):
 
 
 class FetchImageTest(UseThePlugin):
-    URL = 'http://example.com'
+    URL = 'http://example.com/test.jpg'
 
     @responses.activate
     def run(self, *args, **kwargs):
@@ -61,18 +61,23 @@ class FetchImageTest(UseThePlugin):
         self.dpath = os.path.join(self.temp_dir, b'arttest')
         self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
         self.extra = {'maxwidth': 0}
+        self.candidate = fetchart.Candidate(logger, url=self.URL)
 
     def test_invalid_type_returns_none(self):
         self.mock_response('image/watercolour')
-        candidate = fetchart.Candidate(logger, url=self.URL)
-        self.source.fetch_image(candidate, self.extra)
-        self.assertEqual(candidate.path, None)
+        self.source.fetch_image(self.candidate, self.extra)
+        self.assertEqual(self.candidate.path, None)
 
     def test_jpeg_type_returns_path(self):
         self.mock_response('image/jpeg')
-        candidate = fetchart.Candidate(logger, url=self.URL)
-        self.source.fetch_image(candidate, self.extra)
-        self.assertNotEqual(candidate.path, None)
+        self.source.fetch_image(self.candidate, self.extra)
+        self.assertNotEqual(self.candidate.path, None)
+
+    def test_extension_set_by_content_type(self):
+        self.mock_response('image/png')
+        self.source.fetch_image(self.candidate, self.extra)
+        self.assertEqual(os.path.splitext(self.candidate.path)[1], b'.png')
+        self.assertExists(self.candidate.path)
 
 
 class FSArtTest(UseThePlugin):
