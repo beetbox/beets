@@ -40,7 +40,7 @@ import shutil
 import subprocess
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
-from StringIO import StringIO
+from six import StringIO
 from enum import Enum
 
 import beets
