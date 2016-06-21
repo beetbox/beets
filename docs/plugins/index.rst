@@ -33,6 +33,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
 
    acousticbrainz
    badfiles
+   beatport
    bpd
    bpm
    bucket
