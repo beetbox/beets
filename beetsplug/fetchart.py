@@ -39,9 +39,11 @@ try:
 except ImportError:
     HAVE_ITUNES = False
 
-IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
-CONTENT_TYPES = ('image/jpeg', 'image/png')
-DOWNLOAD_EXTENSION = '.jpg'
+CONTENT_TYPES = {
+    'image/jpeg': [b'jpg', b'jpeg'],
+    'image/png': [b'png']
+}
+IMAGE_EXTENSIONS = [ext for exts in CONTENT_TYPES.values() for ext in exts]
 
 
 class Candidate(object):
@@ -227,8 +229,8 @@ class RemoteArtSource(ArtSource):
         try:
             with closing(self.request(candidate.url, stream=True,
                                       message=u'downloading image')) as resp:
-                if 'Content-Type' not in resp.headers \
-                        or resp.headers['Content-Type'] not in CONTENT_TYPES:
+                ct = resp.headers.get('Content-Type', None)
+                if ct not in CONTENT_TYPES:
                     self._log.debug(
                         u'not a supported image: {}',
                         resp.headers.get('Content-Type') or u'no content type',
@@ -237,7 +239,7 @@ class RemoteArtSource(ArtSource):
                     return
 
                 # Generate a temporary file with the correct extension.
-                with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION,
+                with NamedTemporaryFile(suffix=b'.' + CONTENT_TYPES[ct][0],
                                         delete=False) as fh:
                     for chunk in resp.iter_content(chunk_size=1024):
                         fh.write(chunk)
