@@ -58,6 +58,17 @@ class BeatportClient(object):
     _api_base = 'https://oauth-api.beatport.com'
 
     def __init__(self, c_key, c_secret, auth_key=None, auth_secret=None):
+        """ Initiate the client with OAuth information.
+
+        For the initial authentication with the backend `auth_key` and
+        `auth_secret` can be `None`. Use `get_authorize_url` and
+        `get_access_token` to obtain them for subsequent uses of the API.
+
+        :param c_key:       OAuth1 client key
+        :param c_secret:    OAuth1 client secret
+        :param auth_key:    OAuth1 resource owner key
+        :param auth_secret: OAuth1 resource owner secret
+        """
         self.api = OAuth1Session(
             client_key=c_key, client_secret=c_secret,
             resource_owner_key=auth_key,
@@ -66,12 +77,35 @@ class BeatportClient(object):
         self.api.headers = {'User-Agent': USER_AGENT}
 
     def get_authorize_url(self):
+        """ Generate the URL for the user to authorize the application.
+
+        Retrieves a request token from the Beatport API and returns the
+        corresponding authorization URL on their end that the user has
+        to visit.
+
+        This is the first step of the initial authorization process with the
+        API. Once the user has visited the URL, call
+        :py:method:`get_access_token` with the displayed data to complete
+        the process.
+
+        :returns:   Authorization URL for the user to visit
+        :rtype:     unicode
+        """
         self.api.fetch_request_token(
             self._make_url('/identity/1/oauth/request-token'))
         return self.api.authorization_url(
             self._make_url('/identity/1/oauth/authorize'))
 
     def get_access_token(self, auth_data):
+        """ Obtain the final access token and secret for the API.
+
+        :param auth_data:   URL-encoded authorization data as displayed at
+                            the authorization url (obtained via
+                            :py:meth:`get_authorize_url`) after signing in
+        :type auth_data:    unicode
+        :returns:           OAuth resource owner key and secret
+        :rtype:             (unicode, unicode) tuple
+        """
         self.api.parse_authorization_response(
             "http://beets.io/auth?" + auth_data)
         access_data = self.api.fetch_access_token(
@@ -79,6 +113,20 @@ class BeatportClient(object):
         return access_data['oauth_token'], access_data['oauth_token_secret']
 
     def search(self, query, release_type='release', details=True):
+        """ Perform a search of the Beatport catalogue.
+
+        :param query:           Query string
+        :param release_type:    Type of releases to search for, can be
+                                'release' or 'track'
+        :param details:         Retrieve additional information about the
+                                search results. Currently this will fetch
+                                the tracklist for releases and do nothing for
+                                tracks
+        :returns:               Search results
+        :rtype:                 generator that yields
+                                py:class:`BeatportRelease` or
+                                :py:class:`BeatportTrack`
+        """
         response = self._get('catalog/3/search',
                              query=query, perPage=5,
                              facets=['fieldType:{0}'.format(release_type)])
@@ -93,25 +141,49 @@ class BeatportClient(object):
                 yield BeatportTrack(item)
 
     def get_release(self, beatport_id):
+        """ Get information about a single release.
+
+        :param beatport_id:     Beatport ID of the release
+        :returns:               The matching release
+        :rtype:                 :py:class:`BeatportRelease`
+        """
         response = self._get('/catalog/3/releases', id=beatport_id)
         release = BeatportRelease(response[0])
         release.tracks = self.get_release_tracks(beatport_id)
         return release
 
     def get_release_tracks(self, beatport_id):
+        """ Get all tracks for a given release.
+
+        :param beatport_id:     Beatport ID of the release
+        :returns:               Tracks in the matching release
+        :rtype:                 list of :py:class:`BeatportTrack`
+        """
         response = self._get('/catalog/3/tracks', releaseId=beatport_id)
         return [BeatportTrack(t) for t in response]
 
     def get_track(self, beatport_id):
+        """ Get information about a single track.
+
+        :param beatport_id:     Beatport ID of the track
+        :returns:               The matching track
+        :rtype:                 :py:class:`BeatportTrack`
+        """
         response = self._get('/catalog/3/tracks', id=beatport_id)
         return BeatportTrack(response[0])
 
     def _make_url(self, endpoint):
+        """ Get complete URL for a given API endpoint. """
         if not endpoint.startswith('/'):
             endpoint = '/' + endpoint
         return self._api_base + endpoint
 
     def _get(self, endpoint, **kwargs):
+        """ Perform a GET request on a given API endpoint.
+
+        Automatically extracts result data from the response and converts HTTP
+        exceptions into :py:class:`BeatportAPIError` objects.
+        """
         try:
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
