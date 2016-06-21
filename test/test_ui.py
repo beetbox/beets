@@ -760,7 +760,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
-        self.assertEqual(replacements, [(re.compile(ur'[xy]'), 'z')])
+        self.assertEqual(replacements, [(re.compile(u'[xy]'), 'z')])
 
     def test_multiple_replacements_parsed(self):
         with self.write_config_file() as config:
@@ -769,8 +769,8 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         ui._raw_main(['test'])
         replacements = self.test_cmd.lib.replacements
         self.assertEqual(replacements, [
-            (re.compile(ur'[xy]'), u'z'),
-            (re.compile(ur'foo'), u'bar'),
+            (re.compile(u'[xy]'), u'z'),
+            (re.compile(u'foo'), u'bar'),
         ])
 
     def test_cli_config_option(self):

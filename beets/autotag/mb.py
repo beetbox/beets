@@ -376,7 +376,7 @@ def _parse_id(s):
     no ID can be found, return None.
     """
     # Find the first thing that looks like a UUID/MBID.
-    match = re.search(ur'[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
+    match = re.search(u'[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
     if match:
         return match.group()
 
