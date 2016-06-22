@@ -34,6 +34,10 @@ Fixes:
   installations. Thanks to :user:`bismark`. :bug:`2038`
 * Fix a crash introduced in the previous version when the standard input was
   connected to a Unix pipe. :bug:`2041`
+* :doc:`/plugins/fetchart`: Determine the file extension for downloaded images
+  based on the ``Content-Type`` header instead of hardcoding it to .jpg.
+  Reported in :bug:`2053`, which for now it does not fix due to
+  server-side issues, though.
 
 1.3.18 (May 31, 2016)
 ---------------------
