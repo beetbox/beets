@@ -266,7 +266,6 @@ class BeatportPlugin(BeetsPlugin):
         self.register_listener('import_begin', self.setup)
 
     def setup(self, session=None):
-        import pdb; pdb.set_trace()
         c_key = self.config['apikey'].get(unicode)
         c_secret = self.config['apisecret'].get(unicode)
 
