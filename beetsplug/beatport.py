@@ -266,6 +266,7 @@ class BeatportPlugin(BeetsPlugin):
         self.register_listener('import_begin', self.setup)
 
     def setup(self, session=None):
+        import pdb; pdb.set_trace()
         c_key = self.config['apikey'].get(unicode)
         c_secret = self.config['apisecret'].get(unicode)
 
@@ -393,7 +394,7 @@ class BeatportPlugin(BeetsPlugin):
         # can also negate an otherwise positive result.
         query = re.sub(r'\b(CD|disc)\s*\d+', '', query, re.I)
         albums = [self._get_album_info(x)
-                  for x in self.client.search(query).results]
+                  for x in self.client.search(query)]
         return albums
 
     def _get_album_info(self, release):
