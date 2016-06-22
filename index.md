@@ -1,7 +1,7 @@
 ---
 layout: main
 section: main
-shorttitle: the music geek&rsquo;s media organizer
+shorttitle: the music geek‘s media organizer
 ---
 The purpose of beets is to get your music collection right once and for all. It
 catalogs your collection, automatically improving its metadata as it goes using
