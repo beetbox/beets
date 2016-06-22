@@ -39,6 +39,10 @@ Fixes:
   connected to a Unix pipe. :bug:`2041`
 * Fix a crash when specifying non-ASCII format strings on the command line
   with the ``-f`` option to many commands. :bug:`2063`
+* :doc:`/plugins/fetchart`: Determine the file extension for downloaded images
+  based on the ``Content-Type`` header instead of hardcoding it to .jpg.
+  Reported in :bug:`2053`, which for now it does not fix due to
+  server-side issues, though.
 
 1.3.18 (May 31, 2016)
 ---------------------
