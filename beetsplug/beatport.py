@@ -262,7 +262,7 @@ class BeatportPlugin(BeetsPlugin):
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
-        self.discogs_client = None
+        self.client = None
         self.register_listener('import_begin', self.setup)
 
     def setup(self, session=None):
@@ -280,7 +280,7 @@ class BeatportPlugin(BeetsPlugin):
             token = tokendata['token']
             secret = tokendata['secret']
 
-        self.beatport_api = BeatportClient(c_key, c_secret, token, secret)
+        self.client = BeatportClient(c_key, c_secret, token, secret)
 
     def authenticate(self, c_key, c_secret):
         # Get the link for the OAuth page.
