@@ -23,6 +23,7 @@ import re
 from beets import logging
 from beets import plugins
 from beets import config
+from beets.util import as_string
 from beets.autotag import mb
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
@@ -206,8 +207,8 @@ def _string_dist_basic(str1, str2):
     """
     assert isinstance(str1, unicode)
     assert isinstance(str2, unicode)
-    str1 = unidecode(str1).decode('ascii')
-    str2 = unidecode(str2).decode('ascii')
+    str1 = as_string(unidecode(str1))
+    str2 = as_string(unidecode(str2))
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
     if not str1 and not str2:
