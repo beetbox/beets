@@ -25,7 +25,6 @@ import re
 import requests
 import unicodedata
 import warnings
-from six.moves.html_parser import HTMLParseError
 from six.moves import urllib
 import six
 
@@ -40,6 +39,15 @@ try:
     HAS_LANGDETECT = True
 except ImportError:
     HAS_LANGDETECT = False
+
+try:
+    # PY3: HTMLParseError was removed in 3.5 as strict mode
+    # was deprecated in 3.3.
+    # https://docs.python.org/3.3/library/html.parser.html
+    from six.moves.html_parser import HTMLParseError
+except ImportError:
+    class HTMLParseError(Exception):
+        pass
 
 from beets import plugins
 from beets import ui
