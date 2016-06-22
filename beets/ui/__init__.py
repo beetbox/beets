@@ -38,7 +38,7 @@ from beets import plugins
 from beets import util
 from beets.util.functemplate import Template
 from beets import config
-from beets.util import confit
+from beets.util import confit, as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
 
@@ -923,7 +923,7 @@ class Subcommand(object):
     def root_parser(self, root_parser):
         self._root_parser = root_parser
         self.parser.prog = '{0} {1}'.format(
-            root_parser.get_prog_name().decode('utf8'), self.name)
+            as_string(root_parser.get_prog_name()), self.name)
 
 
 class SubcommandsOptionParser(CommonOptionsParser):
