@@ -89,8 +89,7 @@ def control_stdin(input=None):
     """
     org = sys.stdin
     sys.stdin = StringIO(input)
-    if hasattr(sys.stdin, 'encoding'):
-        sys.stdin.encoding = 'utf8'
+    sys.stdin.encoding = 'utf8'
     try:
         yield sys.stdin
     finally:
@@ -109,8 +108,7 @@ def capture_stdout():
     """
     org = sys.stdout
     sys.stdout = capture = StringIO()
-    if not hasattr(sys.stdout, 'encoding'):
-        sys.stdout.encoding = 'utf8'
+    sys.stdout.encoding = 'utf8'
     try:
         yield sys.stdout
     finally:
