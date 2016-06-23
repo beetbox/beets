@@ -45,16 +45,26 @@ class UseThePlugin(_common.TestCase):
         self.plugin = fetchart.FetchArtPlugin()
 
 
-class FetchImageTest(UseThePlugin):
-    URL = 'http://example.com/test.jpg'
-
+class FetchImageHelper(_common.TestCase):
+    """Helper mixin for mocking requests when fetching images 
+    with remote art sources.
+    """
     @responses.activate
     def run(self, *args, **kwargs):
-        super(FetchImageTest, self).run(*args, **kwargs)
+        super(FetchImageHelper, self).run(*args, **kwargs)
 
-    def mock_response(self, content_type):
-        responses.add(responses.GET, self.URL,
-                      content_type=content_type)
+    def mock_response(self, url, content_type='image/jpeg', file_type=None):
+        IMAGEHEADER = {'image/jpeg': b'\x00' * 6 + b'JFIF',
+                       'image/png': b'\211PNG\r\n\032\n', }
+        if file_type is None:
+            file_type = content_type
+        responses.add(responses.GET, url,
+                      content_type=content_type,
+                      body=IMAGEHEADER.get(file_type, b'\x00' * 32))
+
+
+class FetchImageTest(FetchImageHelper, UseThePlugin):
+    URL = 'http://example.com/test.jpg'
 
     def setUp(self):
         super(FetchImageTest, self).setUp()
@@ -64,17 +74,23 @@ class FetchImageTest(UseThePlugin):
         self.candidate = fetchart.Candidate(logger, url=self.URL)
 
     def test_invalid_type_returns_none(self):
-        self.mock_response('image/watercolour')
+        self.mock_response(self.URL, 'image/watercolour')
         self.source.fetch_image(self.candidate, self.extra)
         self.assertEqual(self.candidate.path, None)
 
     def test_jpeg_type_returns_path(self):
-        self.mock_response('image/jpeg')
+        self.mock_response(self.URL, 'image/jpeg')
         self.source.fetch_image(self.candidate, self.extra)
         self.assertNotEqual(self.candidate.path, None)
 
     def test_extension_set_by_content_type(self):
-        self.mock_response('image/png')
+        self.mock_response(self.URL, 'image/png')
+        self.source.fetch_image(self.candidate, self.extra)
+        self.assertEqual(os.path.splitext(self.candidate.path)[1], b'.png')
+        self.assertExists(self.candidate.path)
+
+    def test_does_not_rely_on_server_content_type(self):
+        self.mock_response(self.URL, 'image/jpeg', 'image/png')
         self.source.fetch_image(self.candidate, self.extra)
         self.assertEqual(os.path.splitext(self.candidate.path)[1], b'.png')
         self.assertExists(self.candidate.path)
@@ -128,7 +144,7 @@ class FSArtTest(UseThePlugin):
         self.assertEqual(candidates, paths)
 
 
-class CombinedTest(UseThePlugin):
+class CombinedTest(FetchImageHelper, UseThePlugin):
     ASIN = 'xxxx'
     MBID = 'releaseid'
     AMAZON_URL = 'http://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
@@ -142,13 +158,6 @@ class CombinedTest(UseThePlugin):
         super(CombinedTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, b'arttest')
         os.mkdir(self.dpath)
-
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super(CombinedTest, self).run(*args, **kwargs)
-
-    def mock_response(self, url, content_type='image/jpeg'):
-        responses.add(responses.GET, url, content_type=content_type)
 
     def test_main_interface_returns_amazon_art(self):
         self.mock_response(self.AMAZON_URL)
