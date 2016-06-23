@@ -187,7 +187,7 @@ class BeatportClient(object):
         try:
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
-            raise BeatportAPIError("Error connection to Beatport API: {}"
+            raise BeatportAPIError("Error connecting to Beatport API: {}"
                                    .format(e.message))
         if not response:
             raise BeatportAPIError(
@@ -262,7 +262,7 @@ class BeatportPlugin(BeetsPlugin):
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
-        self.discogs_client = None
+        self.client = None
         self.register_listener('import_begin', self.setup)
 
     def setup(self, session=None):
@@ -280,7 +280,7 @@ class BeatportPlugin(BeetsPlugin):
             token = tokendata['token']
             secret = tokendata['secret']
 
-        self.beatport_api = BeatportClient(c_key, c_secret, token, secret)
+        self.client = BeatportClient(c_key, c_secret, token, secret)
 
     def authenticate(self, c_key, c_secret):
         # Get the link for the OAuth page.
@@ -393,7 +393,7 @@ class BeatportPlugin(BeetsPlugin):
         # can also negate an otherwise positive result.
         query = re.sub(r'\b(CD|disc)\s*\d+', '', query, re.I)
         albums = [self._get_album_info(x)
-                  for x in self.client.search(query).results]
+                  for x in self.client.search(query)]
         return albums
 
     def _get_album_info(self, release):
@@ -451,6 +451,6 @@ class BeatportPlugin(BeetsPlugin):
     def _get_tracks(self, query):
         """Returns a list of TrackInfo objects for a Beatport query.
         """
-        bp_tracks = self.client.search(query, release_type='track').results
+        bp_tracks = self.client.search(query, release_type='track')
         tracks = [self._get_track_info(x) for x in bp_tracks]
         return tracks
