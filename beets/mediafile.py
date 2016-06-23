@@ -58,7 +58,7 @@ import traceback
 import enum
 
 from beets import logging
-from beets.util import displayable_path, syspath
+from beets.util import displayable_path, syspath, as_string
 
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
@@ -1470,7 +1470,7 @@ class MediaFile(object):
         """
         for property, descriptor in cls.__dict__.items():
             if isinstance(descriptor, MediaField):
-                yield property.decode('utf8')
+                yield as_string(property)
 
     @classmethod
     def _field_sort_name(cls, name):
