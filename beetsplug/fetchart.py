@@ -231,11 +231,6 @@ class RemoteArtSource(ArtSource):
             with closing(self.request(candidate.url, stream=True,
                                       message=u'downloading image')) as resp:
                 ct = resp.headers.get('Content-Type', None)
-                if ct not in CONTENT_TYPES:
-                    self._log.debug(u'not a supported image: {}',
-                                    ct or u'no content type')
-                    candidate.path = None
-                    return
 
                 # Generate a temporary file and guess the extension based on
                 # the Content-Type header. This may be wrong for badly
@@ -251,12 +246,19 @@ class RemoteArtSource(ArtSource):
                     pass
                 else:
                     real_ct = _image_mime_type(chunk)
+                    if real_ct not in CONTENT_TYPES:
+                        self._log.debug(u'not a supported image: {}',
+                                        real_ct or u'unknown content type')
+                        candidate.path = None
+                        return
+
                     ext = b'.' + CONTENT_TYPES[real_ct][0]
                     if real_ct != ct:
                         self._log.warn(u'Server specified {}, but returned a '
                                        u'{} image. Correcting the extension '
                                        u'to {}',
                                        ct, real_ct, ext)
+
                     with NamedTemporaryFile(suffix=ext, delete=False) as fh:
                         fh.write(chunk)
                         for chunk in data:
