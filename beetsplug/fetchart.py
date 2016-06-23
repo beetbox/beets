@@ -611,7 +611,7 @@ class FileSystem(LocalArtSource):
             for fn in os.listdir(syspath(path)):
                 fn = bytestring_path(fn)
                 for ext in IMAGE_EXTENSIONS:
-                    if fn.lower().endswith(b'.' + ext.encode('utf8')) and \
+                    if fn.lower().endswith(b'.' + ext) and \
                        os.path.isfile(syspath(os.path.join(path, fn))):
                         images.append(fn)
 
