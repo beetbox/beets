@@ -29,6 +29,7 @@ from beets import importer
 from beets import ui
 from beets import util
 from beets import config
+from beets.mediafile import _image_mime_type
 from beets.util.artresizer import ArtResizer
 from beets.util import confit
 from beets.util import syspath, bytestring_path
@@ -231,21 +232,39 @@ class RemoteArtSource(ArtSource):
                                       message=u'downloading image')) as resp:
                 ct = resp.headers.get('Content-Type', None)
                 if ct not in CONTENT_TYPES:
-                    self._log.debug(
-                        u'not a supported image: {}',
-                        resp.headers.get('Content-Type') or u'no content type',
-                    )
+                    self._log.debug(u'not a supported image: {}',
+                                    ct or u'no content type')
                     candidate.path = None
                     return
 
-                # Generate a temporary file with the correct extension.
-                with NamedTemporaryFile(suffix=b'.' + CONTENT_TYPES[ct][0],
-                                        delete=False) as fh:
-                    for chunk in resp.iter_content(chunk_size=1024):
+                # Generate a temporary file and guess the extension based on
+                # the Content-Type header. This may be wrong for badly
+                # configured servers. E.g. fanart.tv only allows .jpg uploads
+                # and ALWAYS returns a image/jpeg Content-Type, but other
+                # formats with a erroneous .jp(e)g extension apparently can
+                # sneak through the upload filter. Therefore validate the type
+                # using the file magic.
+                data = resp.iter_content(chunk_size=1024)
+                try:
+                    chunk = next(data)
+                except StopIteration:
+                    pass
+                else:
+                    real_ct = _image_mime_type(chunk)
+                    ext = b'.' + CONTENT_TYPES[real_ct][0]
+                    if real_ct != ct:
+                        self._log.warn(u'Server specified {}, but returned a '
+                                       u'{} image. Correcting the extension '
+                                       u'to {}',
+                                       ct, real_ct, ext)
+                    with NamedTemporaryFile(suffix=ext, delete=False) as fh:
                         fh.write(chunk)
-                self._log.debug(u'downloaded art to: {0}',
-                                util.displayable_path(fh.name))
-                candidate.path = util.bytestring_path(fh.name)
+                        for chunk in data:
+                            fh.write(chunk)
+                    self._log.debug(u'downloaded art to: {0}',
+                                    util.displayable_path(fh.name))
+                    candidate.path = util.bytestring_path(fh.name)
+
                 return
 
         except (IOError, requests.RequestException, TypeError) as exc:
