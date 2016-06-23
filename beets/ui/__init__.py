@@ -199,7 +199,7 @@ def input_(prompt=None):
     input cursor.
     """
     # raw_input incorrectly sends prompts to stderr, not stdout, so we
-    # use print() explicitly to display prompts.
+    # use print_() explicitly to display prompts.
     # http://bugs.python.org/issue1927
     if prompt:
         print_(prompt, end=' ')
