@@ -839,7 +839,7 @@ class Item(LibModel):
             )
 
         if fragment:
-            return subpath
+            return util.as_string(subpath)
         else:
             return normpath(os.path.join(basedir, subpath))
 
