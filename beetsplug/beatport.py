@@ -197,8 +197,9 @@ class BeatportClient(object):
         return response.json()['results']
 
 
+@six.python_2_unicode_compatible
 class BeatportRelease(BeatportObject):
-    def __unicode__(self):
+    def __str__(self):
         if len(self.artists) < 4:
             artist_str = ", ".join(x[1] for x in self.artists)
         else:
@@ -225,8 +226,9 @@ class BeatportRelease(BeatportObject):
                 data['slug'], data['id'])
 
 
+@six.python_2_unicode_compatible
 class BeatportTrack(BeatportObject):
-    def __unicode__(self):
+    def __str__(self):
         artist_str = ", ".join(x[1] for x in self.artists)
         return (u"<BeatportTrack: {0} - {1} ({2})>"
                 .format(artist_str, self.name, self.mix_name))

@@ -292,6 +292,7 @@ class LazyClassProperty(object):
 
 
 @total_ordering
+@six.python_2_unicode_compatible
 class Distance(object):
     """Keeps track of multiple distance penalties. Provides a single
     weighted distance for all penalties as well as a weighted distance
@@ -378,7 +379,9 @@ class Distance(object):
     def __rsub__(self, other):
         return other - self.distance
 
-    def __unicode__(self):
+    # Behave like a string
+
+    def __str__(self):
         return "{0:.2f}".format(self.distance)
 
     # Behave like a dict.
