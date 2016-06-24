@@ -25,6 +25,9 @@ import unicodedata
 from functools import reduce
 import six
 
+if not six.PY2:
+    buffer = memoryview  # sqlite won't accept memoryview in python 2
+
 
 class ParsingError(ValueError):
     """Abstract class for any unparseable user-requested album/query
@@ -244,7 +247,7 @@ class BytesQuery(MatchQuery):
     def __init__(self, field, pattern):
         super(BytesQuery, self).__init__(field, pattern)
 
-        # Use a buffer representation of the pattern for SQLite
+        # Use a buffer/memoryview representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
         # rather than encoded Unicode.
         if isinstance(self.pattern, (six.text_type, bytes)):
