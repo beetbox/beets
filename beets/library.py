@@ -35,6 +35,8 @@ from beets import dbcore
 from beets.dbcore import types
 import beets
 
+if not six.PY2:
+    buffer = memoryview  # sqlite won't accept memoryview in python 2
 
 log = logging.getLogger('beets')
 
@@ -159,8 +161,8 @@ class PathType(types.Type):
             return bytestring_path(value)
 
         elif isinstance(value, buffer):
-            # SQLite must store bytestings as buffers to avoid decoding.
-            # We unwrap buffers to bytes.
+            # SQLite must store bytestings as buffers/memoryview
+            # to avoid decoding. We unwrap buffers to bytes.
             return bytes(value)
 
         else:

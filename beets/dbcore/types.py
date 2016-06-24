@@ -21,6 +21,9 @@ from . import query
 from beets.util import str2bool
 import six
 
+if not six.PY2:
+    buffer = memoryview  # sqlite won't accept memoryview in python 2
+
 
 # Abstract base.
 
@@ -98,8 +101,8 @@ class Type(object):
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
         Flexible fields have the type affinity `TEXT`. This means the
-        `sql_value` is either a `buffer` or a `unicode` object` and the
-        method must handle these in addition.
+        `sql_value` is either a `buffer`/`memoryview` or a `unicode` object`
+        and the method must handle these in addition.
         """
         if isinstance(sql_value, buffer):
             sql_value = bytes(sql_value).decode('utf8', 'ignore')
