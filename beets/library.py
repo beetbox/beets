@@ -264,7 +264,7 @@ PF_KEY_DEFAULT = 'default'
 
 
 # Exceptions.
-
+@six.python_2_unicode_compatible
 class FileOperationError(Exception):
     """Indicates an error when interacting with a file on disk.
     Possibilities include an unsupported media type, a permissions
@@ -278,7 +278,7 @@ class FileOperationError(Exception):
         self.path = path
         self.reason = reason
 
-    def __unicode__(self):
+    def text(self):
         """Get a string representing the error. Describes both the
         underlying reason and the file path in question.
         """
@@ -287,26 +287,30 @@ class FileOperationError(Exception):
             six.text_type(self.reason)
         )
 
-    def __str__(self):
-        return six.text_type(self).encode('utf8')
+    # define __str__ as text to avoid infinite loop on super() calls
+    # with @six.python_2_unicode_compatible
+    __str__ = text
 
 
+@six.python_2_unicode_compatible
 class ReadError(FileOperationError):
     """An error while reading a file (i.e. in `Item.read`).
     """
-    def __unicode__(self):
-        return u'error reading ' + super(ReadError, self).__unicode__()
+    def __str__(self):
+        return u'error reading ' + super(ReadError, self).text()
 
 
+@six.python_2_unicode_compatible
 class WriteError(FileOperationError):
     """An error while writing a file (i.e. in `Item.write`).
     """
-    def __unicode__(self):
-        return u'error writing ' + super(WriteError, self).__unicode__()
+    def __str__(self):
+        return u'error writing ' + super(WriteError, self).text()
 
 
 # Item and Album model classes.
 
+@six.python_2_unicode_compatible
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
@@ -343,9 +347,6 @@ class LibModel(dbcore.Model):
             return result
 
     def __str__(self):
-        return format(self).encode('utf8')
-
-    def __unicode__(self):
         return format(self)
 
 
