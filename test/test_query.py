@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 from functools import partial
 from mock import patch
 import os
+import sys
 
 from test import _common
 from test._common import unittest
@@ -305,8 +306,12 @@ class GetTest(DummyDataTestCase):
 
         with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
             dbcore.query.RegexpQuery('year', u'199(')
-        self.assertIn(u'not a regular expression', unicode(raised.exception))
-        self.assertIn(u'unbalanced parenthesis', unicode(raised.exception))
+        exception_text = unicode(raised.exception)
+        self.assertIn(u'not a regular expression', exception_text)
+        if sys.version_info >= (3, 5):
+            self.assertIn(u'unterminated subpattern', exception_text)
+        else:
+            self.assertIn(u'unbalanced parenthesis', exception_text)
         self.assertIsInstance(raised.exception, ParsingError)
 
 
