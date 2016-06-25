@@ -46,22 +46,24 @@ class UseThePlugin(_common.TestCase):
 
 
 class FetchImageHelper(_common.TestCase):
-    """Helper mixin for mocking requests when fetching images 
+    """Helper mixin for mocking requests when fetching images
     with remote art sources.
     """
     @responses.activate
     def run(self, *args, **kwargs):
         super(FetchImageHelper, self).run(*args, **kwargs)
 
+    IMAGEHEADER = {'image/jpeg': b'\x00' * 6 + b'JFIF',
+                   'image/png': b'\211PNG\r\n\032\n', }
+
     def mock_response(self, url, content_type='image/jpeg', file_type=None):
-        IMAGEHEADER = {'image/jpeg': b'\x00' * 6 + b'JFIF',
-                       'image/png': b'\211PNG\r\n\032\n', }
         if file_type is None:
             file_type = content_type
         responses.add(responses.GET, url,
                       content_type=content_type,
                       # imghdr reads 32 bytes
-                      body=IMAGEHEADER.get(file_type, b'').ljust(32, b'\x00'))
+                      body=self.IMAGEHEADER.get(
+                          file_type, b'').ljust(32, b'\x00'))
 
 
 class FetchImageTest(FetchImageHelper, UseThePlugin):
