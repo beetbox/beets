@@ -232,20 +232,25 @@ class RemoteArtSource(ArtSource):
                                       message=u'downloading image')) as resp:
                 ct = resp.headers.get('Content-Type', None)
 
-                # Generate a temporary file and guess the extension based on
-                # the Content-Type header. This may be wrong for badly
-                # configured servers. E.g. fanart.tv only allows .jpg uploads
-                # and ALWAYS returns a image/jpeg Content-Type, but other
-                # formats with a erroneous .jp(e)g extension apparently can
-                # sneak through the upload filter. Therefore validate the type
-                # using the file magic.
+                # Download the image to a temporary file. As some servers
+                # (notably fanart.tv) have proven to return wrong Content-Types
+                # when images were uploaded with a bad file extension, do not
+                # rely on it. Instead validate the type using the file magic
+                # and only then determine the extension.
                 data = resp.iter_content(chunk_size=1024)
                 try:
+                    # stream only a small part of the image to get its header
                     chunk = next(data)
                 except StopIteration:
                     pass
                 else:
                     real_ct = _image_mime_type(chunk)
+                    if real_ct is None:
+                        # detection by file magic failed, fall back to the
+                        # server-supplied Content-Type
+                        # Is our type detection failsafe enough to drop this?
+                        real_ct = ct
+
                     if real_ct not in CONTENT_TYPES:
                         self._log.debug(u'not a supported image: {}',
                                         real_ct or u'unknown content type')
@@ -260,7 +265,9 @@ class RemoteArtSource(ArtSource):
                                        ct, real_ct, ext)
 
                     with NamedTemporaryFile(suffix=ext, delete=False) as fh:
+                        # write the first already loaded part of the image
                         fh.write(chunk)
+                        # download the remaining part of the image
                         for chunk in data:
                             fh.write(chunk)
                     self._log.debug(u'downloaded art to: {0}',
