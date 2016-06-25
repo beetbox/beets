@@ -29,6 +29,7 @@ from beets import importer
 from beets import ui
 from beets import util
 from beets import config
+from beets.mediafile import _image_mime_type
 from beets.util.artresizer import ArtResizer
 from beets.util import confit
 from beets.util import syspath, bytestring_path
@@ -230,18 +231,49 @@ class RemoteArtSource(ArtSource):
             with closing(self.request(candidate.url, stream=True,
                                       message=u'downloading image')) as resp:
                 ct = resp.headers.get('Content-Type', None)
-                if ct not in CONTENT_TYPES:
-                    self._log.debug(
-                        u'not a supported image: {}',
-                        resp.headers.get('Content-Type') or u'no content type',
-                    )
-                    candidate.path = None
+
+                # Download the image to a temporary file. As some servers
+                # (notably fanart.tv) have proven to return wrong Content-Types
+                # when images were uploaded with a bad file extension, do not
+                # rely on it. Instead validate the type using the file magic
+                # and only then determine the extension.
+                data = resp.iter_content(chunk_size=1024)
+                header = b''
+                for chunk in data:
+                    header += chunk
+                    if len(header) >= 32:
+                        # The imghdr module will only read 32 bytes, and our
+                        # own additions in mediafile even less.
+                        break
+                else:
+                    # server didn't return enough data, i.e. corrupt image
                     return
 
-                # Generate a temporary file with the correct extension.
-                with NamedTemporaryFile(suffix=b'.' + CONTENT_TYPES[ct][0],
-                                        delete=False) as fh:
-                    for chunk in resp.iter_content(chunk_size=1024):
+                real_ct = _image_mime_type(header)
+                if real_ct is None:
+                    # detection by file magic failed, fall back to the
+                    # server-supplied Content-Type
+                    # Is our type detection failsafe enough to drop this?
+                    real_ct = ct
+
+                if real_ct not in CONTENT_TYPES:
+                    self._log.debug(u'not a supported image: {}',
+                                    real_ct or u'unknown content type')
+                    return
+
+                ext = b'.' + CONTENT_TYPES[real_ct][0]
+
+                if real_ct != ct:
+                    self._log.warn(u'Server specified {}, but returned a '
+                                   u'{} image. Correcting the extension '
+                                   u'to {}',
+                                   ct, real_ct, ext)
+
+                with NamedTemporaryFile(suffix=ext, delete=False) as fh:
+                    # write the first already loaded part of the image
+                    fh.write(header)
+                    # download the remaining part of the image
+                    for chunk in data:
                         fh.write(chunk)
                 self._log.debug(u'downloaded art to: {0}',
                                 util.displayable_path(fh.name))
@@ -252,7 +284,6 @@ class RemoteArtSource(ArtSource):
             # Handling TypeError works around a urllib3 bug:
             # https://github.com/shazow/urllib3/issues/556
             self._log.debug(u'error fetching art: {}', exc)
-            candidate.path = None
             return
 
 
