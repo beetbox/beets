@@ -184,7 +184,7 @@ class DuplicatesPlugin(BeetsPlugin):
         if tag:
             try:
                 k, v = tag.split('=')
-            except:
+            except Exception:
                 raise UserError(
                     u"{}: can't parse k=v tag: {}".format(PLUGIN, tag)
                 )

@@ -272,8 +272,6 @@ class GioURI(URIGetter):
 
         try:
             uri_ptr = self.libgio.g_file_get_uri(g_file_ptr)
-        except:
-            raise
         finally:
             self.libgio.g_object_unref(g_file_ptr)
         if not uri_ptr:
@@ -283,8 +281,6 @@ class GioURI(URIGetter):
 
         try:
             uri = copy_c_string(uri_ptr)
-        except:
-            raise
         finally:
             self.libgio.g_free(uri_ptr)
         return uri

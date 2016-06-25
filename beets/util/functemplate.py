@@ -526,7 +526,7 @@ class Template(object):
         """
         try:
             res = self.compiled(values, functions)
-        except:  # Handle any exceptions thrown by compiled version.
+        except Exception:  # Handle any exceptions thrown by compiled version.
             res = self.interpret(values, functions)
         return res
 
