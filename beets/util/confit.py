@@ -383,7 +383,7 @@ class ConfigView(object):
         """
         return as_template(template).value(self, template)
 
-    # Old validation methods (deprecated).
+    # Shortcuts
 
     def as_filename(self):
         return self.get(Filename())
