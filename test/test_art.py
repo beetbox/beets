@@ -60,7 +60,8 @@ class FetchImageHelper(_common.TestCase):
             file_type = content_type
         responses.add(responses.GET, url,
                       content_type=content_type,
-                      body=IMAGEHEADER.get(file_type, b'\x00' * 32))
+                      # imghdr reads 32 bytes
+                      body=IMAGEHEADER.get(file_type, b'').ljust(32, b'\x00'))
 
 
 class FetchImageTest(FetchImageHelper, UseThePlugin):
