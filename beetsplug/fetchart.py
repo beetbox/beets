@@ -259,7 +259,6 @@ class RemoteArtSource(ArtSource):
                 if real_ct not in CONTENT_TYPES:
                     self._log.debug(u'not a supported image: {}',
                                     real_ct or u'unknown content type')
-                    candidate.path = None
                     return
 
                 ext = b'.' + CONTENT_TYPES[real_ct][0]
@@ -285,7 +284,6 @@ class RemoteArtSource(ArtSource):
             # Handling TypeError works around a urllib3 bug:
             # https://github.com/shazow/urllib3/issues/556
             self._log.debug(u'error fetching art: {}', exc)
-            candidate.path = None
             return
 
 
