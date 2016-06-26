@@ -481,11 +481,10 @@ class Subview(ConfigView):
                 self.name += '.'
         if isinstance(self.key, int):
             self.name += u'#{0}'.format(self.key)
-        elif isinstance(self.key, (bytes, BASESTRING)):
-            if isinstance(self.key, STRING):
-                self.name += self.key
-            else:
-                self.name += self.key.decode('utf8')
+        elif isinstance(self.key, bytes):
+            self.name += self.key.decode('utf8')
+        elif isinstance(self.key, STRING):
+            self.name += self.key
         else:
             self.name += repr(self.key)
 
