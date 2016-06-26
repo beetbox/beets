@@ -349,6 +349,9 @@ class LibModel(dbcore.Model):
     def __str__(self):
         return format(self)
 
+    def __bytes__(self):
+        return self.__str__().encode('utf-8')
+
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
     """Add lookup for album-level fields.
