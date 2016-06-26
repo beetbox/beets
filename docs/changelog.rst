@@ -4,8 +4,15 @@ Changelog
 1.3.20 (in development)
 -----------------------
 
-Changelog goes here!
+New features:
 
+* :doc:`/plugins/web`: Added an option to show the items of an album and a
+  'path' tag to the json outpu of a file which shows the relative path to the
+  file. :bug:`2050`
+
+Other fixes:
+
+* :doc:`/plugins/web`: Normalized the json output
 
 1.3.19 (June 25, 2016)
 ----------------------
