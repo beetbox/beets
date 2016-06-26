@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# This file is part of Confit.
+# This file is part of Confuse.
 # Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -44,9 +44,9 @@ REDACTED_TOMBSTONE = 'REDACTED'
 # Utilities.
 
 PY3 = sys.version_info[0] == 3
-STRING = str if PY3 else unicode  # noqa
-BASESTRING = str if PY3 else basestring  # noqa
-NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)  # noqa
+STRING = str if PY3 else unicode  # noqa ignore=F821
+BASESTRING = str if PY3 else basestring  # noqa ignore=F821
+NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)  # noqa ignore=F821
 
 
 def iter_first(sequence):
@@ -383,7 +383,7 @@ class ConfigView(object):
         """
         return as_template(template).value(self, template)
 
-    # Shortcuts
+    # Shortcuts for common templates.
 
     def as_filename(self):
         return self.get(Filename())
@@ -950,7 +950,7 @@ should be raised when the value is missing.
 class Template(object):
     """A value template for configuration fields.
 
-    The template works like a type and instructs Confit about how to
+    The template works like a type and instructs Confuse about how to
     interpret a deserialized YAML value. This includes type conversions,
     providing a default value, and validating for errors. For example, a
     filepath type might expand tildes and check that the file exists.
