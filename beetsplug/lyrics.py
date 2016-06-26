@@ -259,7 +259,7 @@ class Genius(Backend):
     """Fetch lyrics from Genius via genius-api."""
     def __init__(self, config, log):
         super(Genius, self).__init__(config, log)
-        self.api_key = config['genius_api_key'].get(six.text_type)
+        self.api_key = config['genius_api_key'].as_str()
         self.headers = {'Authorization': "Bearer %s" % self.api_key}
 
     def search_genius(self, artist, title):
@@ -470,8 +470,8 @@ class Google(Backend):
     """Fetch lyrics from Google search results."""
     def __init__(self, config, log):
         super(Google, self).__init__(config, log)
-        self.api_key = config['google_API_key'].get(six.text_type)
-        self.engine_id = config['google_engine_ID'].get(six.text_type)
+        self.api_key = config['google_API_key'].as_str()
+        self.engine_id = config['google_engine_ID'].as_str()
 
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics.

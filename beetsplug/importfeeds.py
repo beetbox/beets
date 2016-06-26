@@ -14,7 +14,6 @@
 # included in all copies or substantial portions of the Software.
 
 from __future__ import division, absolute_import, print_function
-import six
 
 """Write paths of imported files in various formats to ease later import in a
 music player. Also allow printing the new file locations to stdout in case
@@ -120,7 +119,7 @@ class ImportFeedsPlugin(BeetsPlugin):
 
         if 'm3u' in formats:
             m3u_basename = bytestring_path(
-                self.config['m3u_name'].get(six.text_type))
+                self.config['m3u_name'].as_str())
             m3u_path = os.path.join(feedsdir, m3u_basename)
             _write_m3u(m3u_path, paths)
 

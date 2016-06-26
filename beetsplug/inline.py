@@ -65,14 +65,14 @@ class InlinePlugin(BeetsPlugin):
         for key, view in itertools.chain(config['item_fields'].items(),
                                          config['pathfields'].items()):
             self._log.debug(u'adding item field {0}', key)
-            func = self.compile_inline(view.get(six.text_type), False)
+            func = self.compile_inline(view.as_str(), False)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config['album_fields'].items():
             self._log.debug(u'adding album field {0}', key)
-            func = self.compile_inline(view.get(six.text_type), True)
+            func = self.compile_inline(view.as_str(), True)
             if func is not None:
                 self.album_template_fields[key] = func
 

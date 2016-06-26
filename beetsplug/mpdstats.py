@@ -65,14 +65,14 @@ class MPDClientWrapper(object):
         self._log = log
 
         self.music_directory = (
-            mpd_config['music_directory'].get(six.text_type))
+            mpd_config['music_directory'].as_str())
 
         self.client = MPDClient()
 
     def connect(self):
         """Connect to the MPD.
         """
-        host = mpd_config['host'].get(six.text_type)
+        host = mpd_config['host'].as_str()
         port = mpd_config['port'].get(int)
 
         if host[0] in ['/', '~']:
@@ -84,7 +84,7 @@ class MPDClientWrapper(object):
         except socket.error as e:
             raise ui.UserError(u'could not connect to MPD: {0}'.format(e))
 
-        password = mpd_config['password'].get(six.text_type)
+        password = mpd_config['password'].as_str()
         if password:
             try:
                 self.client.password(password)

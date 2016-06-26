@@ -524,7 +524,7 @@ def colorize(color_name, text):
         global COLORS
         if not COLORS:
             COLORS = dict((name,
-                           config['ui']['colors'][name].get(six.text_type))
+                           config['ui']['colors'][name].as_str())
                           for name in COLOR_NAMES)
         # In case a 3rd party plugin is still passing the actual color ('red')
         # instead of the abstract color name ('text_error')
@@ -607,7 +607,7 @@ def get_path_formats(subview=None):
     subview = subview or config['paths']
     for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, Template(view.get(six.text_type))))
+        path_formats.append((query, Template(view.as_str())))
     return path_formats
 
 

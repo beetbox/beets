@@ -23,7 +23,6 @@ import subprocess
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
-import six
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -53,7 +52,7 @@ class KeyFinderPlugin(BeetsPlugin):
 
     def find_key(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
-        bin = util.bytestring_path(self.config['bin'].get(six.text_type))
+        bin = util.bytestring_path(self.config['bin'].as_str())
 
         for item in items:
             if item['initial_key'] and not overwrite:

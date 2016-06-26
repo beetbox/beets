@@ -22,7 +22,6 @@ from beets.plugins import BeetsPlugin
 from beets.dbcore.query import StringFieldQuery
 from beets import config
 import difflib
-import six
 
 
 class FuzzyQuery(StringFieldQuery):
@@ -45,5 +44,5 @@ class FuzzyPlugin(BeetsPlugin):
         })
 
     def queries(self):
-        prefix = self.config['prefix'].get(six.text_type)
+        prefix = self.config['prefix'].as_str()
         return {prefix: FuzzyQuery}

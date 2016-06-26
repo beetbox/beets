@@ -126,7 +126,7 @@ class DateType(types.Float):
     query = dbcore.query.DateQuery
 
     def format(self, value):
-        return time.strftime(beets.config['time_format'].get(six.text_type),
+        return time.strftime(beets.config['time_format'].as_str(),
                              time.localtime(value or 0))
 
     def parse(self, string):
@@ -134,7 +134,7 @@ class DateType(types.Float):
             # Try a formatted date string.
             return time.mktime(
                 time.strptime(string,
-                              beets.config['time_format'].get(six.text_type))
+                              beets.config['time_format'].as_str())
             )
         except ValueError:
             # Fall back to a plain timestamp number.
@@ -338,7 +338,7 @@ class LibModel(dbcore.Model):
 
     def __format__(self, spec):
         if not spec:
-            spec = beets.config[self._format_config_key].get(six.text_type)
+            spec = beets.config[self._format_config_key].as_str()
         result = self.evaluate_template(spec)
         if isinstance(spec, bytes):
             # if spec is a byte string then we must return a one as well
@@ -1066,7 +1066,7 @@ class Album(LibModel):
         item_dir = item_dir or self.item_dir()
 
         filename_tmpl = Template(
-            beets.config['art_filename'].get(six.text_type))
+            beets.config['art_filename'].as_str())
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config['asciify_paths']:
             subpath = unidecode(subpath)
@@ -1411,7 +1411,7 @@ class DefaultTemplateFunctions(object):
     def tmpl_time(s, fmt):
         """Format a time value using `strftime`.
         """
-        cur_fmt = beets.config['time_format'].get(six.text_type)
+        cur_fmt = beets.config['time_format'].as_str()
         return time.strftime(fmt, time.strptime(s, cur_fmt))
 
     def tmpl_aunique(self, keys=None, disam=None):

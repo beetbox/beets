@@ -21,7 +21,6 @@ import subprocess
 from beets.plugins import BeetsPlugin
 from beets.ui import _arg_encoding
 from beets.util import shlex_split
-import six
 
 
 class CodingFormatter(string.Formatter):
@@ -80,8 +79,8 @@ class HookPlugin(BeetsPlugin):
         for hook_index in range(len(hooks)):
             hook = self.config['hooks'][hook_index]
 
-            hook_event = hook['event'].get(six.text_type)
-            hook_command = hook['command'].get(six.text_type)
+            hook_event = hook['event'].as_str()
+            hook_command = hook['command'].as_str()
 
             self.create_and_register_hook(hook_event, hook_command)
 

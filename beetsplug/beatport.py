@@ -269,8 +269,8 @@ class BeatportPlugin(BeetsPlugin):
         self.register_listener('import_begin', self.setup)
 
     def setup(self, session=None):
-        c_key = self.config['apikey'].get(six.text_type)
-        c_secret = self.config['apisecret'].get(six.text_type)
+        c_key = self.config['apikey'].as_str()
+        c_secret = self.config['apisecret'].as_str()
 
         # Get the OAuth token from a file or log in.
         try:

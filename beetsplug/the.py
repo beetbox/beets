@@ -19,7 +19,6 @@ from __future__ import division, absolute_import, print_function
 
 import re
 from beets.plugins import BeetsPlugin
-import six
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '1.1'
@@ -82,7 +81,7 @@ class ThePlugin(BeetsPlugin):
                 if self.config['strip']:
                     return r
                 else:
-                    fmt = self.config['format'].get(six.text_type)
+                    fmt = self.config['format'].as_str()
                     return fmt.format(r, t.strip()).strip()
         else:
             return u''
