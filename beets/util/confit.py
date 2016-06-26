@@ -386,16 +386,33 @@ class ConfigView(object):
     # Shortcuts for common templates.
 
     def as_filename(self):
+        """Get the value as a path. Equivalent to `get(Filename())`.
+        """
         return self.get(Filename())
 
     def as_choice(self, choices):
+        """Get the value from a list of choices. Equivalent to
+        `get(Choice(choices))`.
+        """
         return self.get(Choice(choices))
 
     def as_number(self):
+        """Get the value as any number type: int or float. Equivalent to
+        `get(Number())`.
+        """
         return self.get(Number())
 
     def as_str_seq(self):
+        """Get the value as a sequence of strings. Equivalent to
+        `get(StrSeq())`.
+        """
         return self.get(StrSeq())
+
+    def as_str(self):
+        """Get the value as a (Unicode) string. Equivalent to
+        `get(unicode)` on Python 2 and `get(str)` on Python 3.
+        """
+        return self.get(String())
 
     # Redaction.
 
