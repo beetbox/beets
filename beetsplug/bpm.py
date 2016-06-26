@@ -18,6 +18,7 @@
 from __future__ import division, absolute_import, print_function
 
 import time
+from six.moves import input
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -31,7 +32,7 @@ def bpm(max_strokes):
     dt = []
     for i in range(max_strokes):
         # Press enter to the rhythm...
-        s = raw_input()
+        s = input()
         if s == '':
             t1 = time.time()
             # Only start measuring at the second stroke

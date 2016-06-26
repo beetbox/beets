@@ -27,6 +27,7 @@ from functools import wraps
 import beets
 from beets import logging
 from beets import mediafile
+import six
 
 PLUGIN_NAMESPACE = 'beetsplug'
 
@@ -54,10 +55,10 @@ class PluginLogFilter(logging.Filter):
 
     def filter(self, record):
         if hasattr(record.msg, 'msg') and isinstance(record.msg.msg,
-                                                     basestring):
+                                                     six.string_types):
             # A _LogMessage from our hacked-up Logging replacement.
             record.msg.msg = self.prefix + record.msg.msg
-        elif isinstance(record.msg, basestring):
+        elif isinstance(record.msg, six.string_types):
             record.msg = self.prefix + record.msg
         return True
 

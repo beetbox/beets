@@ -29,6 +29,7 @@ import beets
 from beets.util.functemplate import Template
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
+import six
 
 
 class FormattedMapping(collections.Mapping):
@@ -69,7 +70,7 @@ class FormattedMapping(collections.Mapping):
             value = value.decode('utf8', 'ignore')
 
         if self.for_path:
-            sep_repl = beets.config['path_sep_replace'].get(unicode)
+            sep_repl = beets.config['path_sep_replace'].get(six.text_type)
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
                     value = value.replace(sep, sep_repl)
@@ -176,9 +177,9 @@ class Model(object):
         ordinary construction are bypassed.
         """
         obj = cls(db)
-        for key, value in fixed_values.iteritems():
+        for key, value in six.iteritems(fixed_values):
             obj._values_fixed[key] = cls._type(key).from_sql(value)
-        for key, value in flex_values.iteritems():
+        for key, value in six.iteritems(flex_values):
             obj._values_flex[key] = cls._type(key).from_sql(value)
         return obj
 
@@ -452,7 +453,7 @@ class Model(object):
         separators will be added to the template.
         """
         # Perform substitution.
-        if isinstance(template, basestring):
+        if isinstance(template, six.string_types):
             template = Template(template)
         return template.substitute(self.formatted(for_path),
                                    self._template_funcs())
@@ -463,7 +464,7 @@ class Model(object):
     def _parse(cls, key, string):
         """Parse a string as a value for the given key.
         """
-        if not isinstance(string, basestring):
+        if not isinstance(string, six.string_types):
             raise TypeError(u"_parse() argument must be a string")
 
         return cls._type(key).parse(string)

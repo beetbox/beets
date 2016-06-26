@@ -13,7 +13,7 @@ from beets import config
 from beets.library import Item
 from beetsplug import spotify
 from test.helper import TestHelper
-import urlparse
+from six.moves.urllib.parse import parse_qs, urlparse
 
 
 class ArgumentsMock(object):
@@ -25,7 +25,7 @@ class ArgumentsMock(object):
 
 def _params(url):
     """Get the query parameters from a URL."""
-    return urlparse.parse_qs(urlparse.urlparse(url).query)
+    return parse_qs(urlparse(url).query)
 
 
 class SpotifyPluginTest(_common.TestCase, TestHelper):

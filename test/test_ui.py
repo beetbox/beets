@@ -39,6 +39,7 @@ from beets import config
 from beets import plugins
 from beets.util.confit import ConfigError
 from beets import util
+import six
 
 
 class ListTest(unittest.TestCase):
@@ -1257,15 +1258,15 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
 
         config['format_item'].set('$foo')
         self.assertEqual(parser.parse_args([]), ({'path': None}, []))
-        self.assertEqual(config['format_item'].get(unicode), u'$foo')
+        self.assertEqual(config['format_item'].get(six.text_type), u'$foo')
 
         self.assertEqual(parser.parse_args([u'-p']),
                          ({'path': True, 'format': u'$path'}, []))
         self.assertEqual(parser.parse_args(['--path']),
                          ({'path': True, 'format': u'$path'}, []))
 
-        self.assertEqual(config['format_item'].get(unicode), u'$path')
-        self.assertEqual(config['format_album'].get(unicode), u'$path')
+        self.assertEqual(config['format_item'].get(six.text_type), u'$path')
+        self.assertEqual(config['format_album'].get(six.text_type), u'$path')
 
     def test_format_option(self):
         parser = ui.CommonOptionsParser()
@@ -1274,15 +1275,15 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
 
         config['format_item'].set('$foo')
         self.assertEqual(parser.parse_args([]), ({'format': None}, []))
-        self.assertEqual(config['format_item'].get(unicode), u'$foo')
+        self.assertEqual(config['format_item'].get(six.text_type), u'$foo')
 
         self.assertEqual(parser.parse_args([u'-f', u'$bar']),
                          ({'format': u'$bar'}, []))
         self.assertEqual(parser.parse_args([u'--format', u'$baz']),
                          ({'format': u'$baz'}, []))
 
-        self.assertEqual(config['format_item'].get(unicode), u'$baz')
-        self.assertEqual(config['format_album'].get(unicode), u'$baz')
+        self.assertEqual(config['format_item'].get(six.text_type), u'$baz')
+        self.assertEqual(config['format_album'].get(six.text_type), u'$baz')
 
     def test_format_option_with_target(self):
         with self.assertRaises(KeyError):
@@ -1297,8 +1298,8 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         self.assertEqual(parser.parse_args([u'-f', u'$bar']),
                          ({'format': u'$bar'}, []))
 
-        self.assertEqual(config['format_item'].get(unicode), u'$bar')
-        self.assertEqual(config['format_album'].get(unicode), u'$album')
+        self.assertEqual(config['format_item'].get(six.text_type), u'$bar')
+        self.assertEqual(config['format_album'].get(six.text_type), u'$album')
 
     def test_format_option_with_album(self):
         parser = ui.CommonOptionsParser()
@@ -1309,15 +1310,15 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         config['format_album'].set('$album')
 
         parser.parse_args([u'-f', u'$bar'])
-        self.assertEqual(config['format_item'].get(unicode), u'$bar')
-        self.assertEqual(config['format_album'].get(unicode), u'$album')
+        self.assertEqual(config['format_item'].get(six.text_type), u'$bar')
+        self.assertEqual(config['format_album'].get(six.text_type), u'$album')
 
         parser.parse_args([u'-a', u'-f', u'$foo'])
-        self.assertEqual(config['format_item'].get(unicode), u'$bar')
-        self.assertEqual(config['format_album'].get(unicode), u'$foo')
+        self.assertEqual(config['format_item'].get(six.text_type), u'$bar')
+        self.assertEqual(config['format_album'].get(six.text_type), u'$foo')
 
         parser.parse_args([u'-f', u'$foo2', u'-a'])
-        self.assertEqual(config['format_album'].get(unicode), u'$foo2')
+        self.assertEqual(config['format_album'].get(six.text_type), u'$foo2')
 
     def test_add_all_common_options(self):
         parser = ui.CommonOptionsParser()

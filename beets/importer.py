@@ -14,6 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 from __future__ import division, absolute_import, print_function
+import six
 
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
@@ -640,7 +641,7 @@ class ImportTask(BaseImportTask):
                 changes['comp'] = False
             else:
                 # VA.
-                changes['albumartist'] = config['va_name'].get(unicode)
+                changes['albumartist'] = config['va_name'].get(six.text_type)
                 changes['comp'] = True
 
         elif self.choice_flag in (action.APPLY, action.RETAG):

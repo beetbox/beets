@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import threading
 import logging as log
-from StringIO import StringIO
+from six import StringIO
 
 import beets.logging as blog
 from beets import plugins, ui
@@ -14,6 +14,7 @@ import beetsplug
 from test import _common
 from test._common import unittest, TestCase
 from test import helper
+import six
 
 
 class LoggingTest(TestCase):
@@ -218,7 +219,7 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
 
         def check_dp_exc():
             if dp.exc_info:
-                raise dp.exc_info[1], None, dp.exc_info[2]
+                six.reraise(dp.exc_info[1], None, dp.exc_info[2])
 
         try:
             dp.lock1.acquire()

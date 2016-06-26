@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 
 import json
 import re
+import six
 from datetime import datetime, timedelta
 
 from requests_oauthlib import OAuth1Session
@@ -42,15 +43,15 @@ class BeatportAPIError(Exception):
 class BeatportObject(object):
     def __init__(self, data):
         self.beatport_id = data['id']
-        self.name = unicode(data['name'])
+        self.name = six.text_type(data['name'])
         if 'releaseDate' in data:
             self.release_date = datetime.strptime(data['releaseDate'],
                                                   '%Y-%m-%d')
         if 'artists' in data:
-            self.artists = [(x['id'], unicode(x['name']))
+            self.artists = [(x['id'], six.text_type(x['name']))
                             for x in data['artists']]
         if 'genres' in data:
-            self.genres = [unicode(x['name'])
+            self.genres = [six.text_type(x['name'])
                            for x in data['genres']]
 
 
@@ -196,8 +197,9 @@ class BeatportClient(object):
         return response.json()['results']
 
 
+@six.python_2_unicode_compatible
 class BeatportRelease(BeatportObject):
-    def __unicode__(self):
+    def __str__(self):
         if len(self.artists) < 4:
             artist_str = ", ".join(x[1] for x in self.artists)
         else:
@@ -209,7 +211,7 @@ class BeatportRelease(BeatportObject):
         )
 
     def __repr__(self):
-        return unicode(self).encode('utf8')
+        return six.text_type(self).encode('utf8')
 
     def __init__(self, data):
         BeatportObject.__init__(self, data)
@@ -224,21 +226,22 @@ class BeatportRelease(BeatportObject):
                 data['slug'], data['id'])
 
 
+@six.python_2_unicode_compatible
 class BeatportTrack(BeatportObject):
-    def __unicode__(self):
+    def __str__(self):
         artist_str = ", ".join(x[1] for x in self.artists)
         return (u"<BeatportTrack: {0} - {1} ({2})>"
                 .format(artist_str, self.name, self.mix_name))
 
     def __repr__(self):
-        return unicode(self).encode('utf8')
+        return six.text_type(self).encode('utf8')
 
     def __init__(self, data):
         BeatportObject.__init__(self, data)
         if 'title' in data:
-            self.title = unicode(data['title'])
+            self.title = six.text_type(data['title'])
         if 'mixName' in data:
-            self.mix_name = unicode(data['mixName'])
+            self.mix_name = six.text_type(data['mixName'])
         self.length = timedelta(milliseconds=data.get('lengthMs', 0) or 0)
         if not self.length:
             try:
@@ -266,8 +269,8 @@ class BeatportPlugin(BeetsPlugin):
         self.register_listener('import_begin', self.setup)
 
     def setup(self, session=None):
-        c_key = self.config['apikey'].get(unicode)
-        c_secret = self.config['apisecret'].get(unicode)
+        c_key = self.config['apikey'].get(six.text_type)
+        c_secret = self.config['apisecret'].get(six.text_type)
 
         # Get the OAuth token from a file or log in.
         try:

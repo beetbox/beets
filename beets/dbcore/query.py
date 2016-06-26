@@ -23,6 +23,10 @@ from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
+import six
+
+if not six.PY2:
+    buffer = memoryview  # sqlite won't accept memoryview in python 2
 
 
 class ParsingError(ValueError):
@@ -229,7 +233,7 @@ class BooleanQuery(MatchQuery):
     """
     def __init__(self, field, pattern, fast=True):
         super(BooleanQuery, self).__init__(field, pattern, fast)
-        if isinstance(pattern, basestring):
+        if isinstance(pattern, six.string_types):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
 
@@ -243,11 +247,11 @@ class BytesQuery(MatchQuery):
     def __init__(self, field, pattern):
         super(BytesQuery, self).__init__(field, pattern)
 
-        # Use a buffer representation of the pattern for SQLite
+        # Use a buffer/memoryview representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
         # rather than encoded Unicode.
-        if isinstance(self.pattern, (unicode, bytes)):
-            if isinstance(self.pattern, unicode):
+        if isinstance(self.pattern, (six.text_type, bytes)):
+            if isinstance(self.pattern, six.text_type):
                 self.pattern = self.pattern.encode('utf8')
             self.buf_pattern = buffer(self.pattern)
         elif isinstance(self.pattern, buffer):
@@ -302,7 +306,7 @@ class NumericQuery(FieldQuery):
         if self.field not in item:
             return False
         value = item[self.field]
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             value = self._convert(value)
 
         if self.point is not None:
@@ -793,7 +797,7 @@ class FieldSort(Sort):
 
         def key(item):
             field_val = item.get(self.field, '')
-            if self.case_insensitive and isinstance(field_val, unicode):
+            if self.case_insensitive and isinstance(field_val, six.text_type):
                 field_val = field_val.lower()
             return field_val
 

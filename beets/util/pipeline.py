@@ -34,9 +34,10 @@ in place of any single coroutine.
 
 from __future__ import division, absolute_import, print_function
 
-import Queue
+from six.moves import queue
 from threading import Thread, Lock
 import sys
+import six
 
 BUBBLE = '__PIPELINE_BUBBLE__'
 POISON = '__PIPELINE_POISON__'
@@ -75,13 +76,13 @@ def _invalidate_queue(q, val=None, sync=True):
             q.mutex.release()
 
 
-class CountedQueue(Queue.Queue):
+class CountedQueue(queue.Queue):
     """A queue that keeps track of the number of threads that are
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
     """
     def __init__(self, maxsize=0):
-        Queue.Queue.__init__(self, maxsize)
+        queue.Queue.__init__(self, maxsize)
         self.nthreads = 0
         self.poisoned = False
 
@@ -431,7 +432,7 @@ class Pipeline(object):
             exc_info = thread.exc_info
             if exc_info:
                 # Make the exception appear as it was raised originally.
-                raise exc_info[0], exc_info[1], exc_info[2]
+                six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
     def pull(self):
         """Yield elements from the end of the pipeline. Runs the stages

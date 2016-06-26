@@ -20,13 +20,14 @@ from __future__ import division, absolute_import, print_function
 import musicbrainzngs
 import re
 import traceback
-from urlparse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from beets import logging
 import beets.autotag.hooks
 import beets
 from beets import util
 from beets import config
+import six
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 BASE_URL = 'http://musicbrainz.org/'
@@ -69,7 +70,8 @@ def configure():
     """Set up the python-musicbrainz-ngs module according to settings
     from the beets configuration. This should be called at startup.
     """
-    musicbrainzngs.set_hostname(config['musicbrainz']['host'].get(unicode))
+    hostname = config['musicbrainz']['host'].get(six.text_type)
+    musicbrainzngs.set_hostname(hostname)
     musicbrainzngs.set_rate_limit(
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),
@@ -108,7 +110,7 @@ def _flatten_artist_credit(credit):
     artist_sort_parts = []
     artist_credit_parts = []
     for el in credit:
-        if isinstance(el, basestring):
+        if isinstance(el, six.string_types):
             # Join phrase.
             artist_parts.append(el)
             artist_credit_parts.append(el)
@@ -260,7 +262,7 @@ def album_info(release):
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     if info.va:
-        info.artist = config['va_name'].get(unicode)
+        info.artist = config['va_name'].get(six.text_type)
     info.asin = release.get('asin')
     info.releasegroup_id = release['release-group']['id']
     info.country = release.get('country')
@@ -329,10 +331,10 @@ def match_album(artist, album, tracks=None):
         # Various Artists search.
         criteria['arid'] = VARIOUS_ARTISTS_ID
     if tracks is not None:
-        criteria['tracks'] = unicode(tracks)
+        criteria['tracks'] = six.text_type(tracks)
 
     # Abort if we have no search terms.
-    if not any(criteria.itervalues()):
+    if not any(six.itervalues(criteria)):
         return
 
     try:
@@ -358,7 +360,7 @@ def match_track(artist, title):
         'recording': title.lower().strip(),
     }
 
-    if not any(criteria.itervalues()):
+    if not any(six.itervalues(criteria)):
         return
 
     try:

@@ -26,6 +26,7 @@ from beets import ui
 from beets import mediafile
 from beets.library import Item
 from beets.util import displayable_path, normpath, syspath
+import six
 
 
 def tag_data(lib, args):
@@ -73,7 +74,7 @@ def library_data_emitter(item):
 
 
 def update_summary(summary, tags):
-    for key, value in tags.iteritems():
+    for key, value in six.iteritems(tags):
         if key not in summary:
             summary[key] = value
         elif summary[key] != value:
@@ -96,7 +97,7 @@ def print_data(data, item=None, fmt=None):
 
     path = displayable_path(item.path) if item else None
     formatted = {}
-    for key, value in data.iteritems():
+    for key, value in six.iteritems(data):
         if isinstance(value, list):
             formatted[key] = u'; '.join(value)
         if value is not None:
@@ -123,7 +124,7 @@ def print_data_keys(data, item=None):
     """
     path = displayable_path(item.path) if item else None
     formatted = []
-    for key, value in data.iteritems():
+    for key, value in six.iteritems(data):
         formatted.append(key)
 
     if len(formatted) == 0:

@@ -27,6 +27,7 @@ from beets.util import as_string
 from beets.autotag import mb
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
+import six
 
 log = logging.getLogger('beets')
 
@@ -205,8 +206,8 @@ def _string_dist_basic(str1, str2):
     transliteration/lowering to ASCII characters. Normalized by string
     length.
     """
-    assert isinstance(str1, unicode)
-    assert isinstance(str2, unicode)
+    assert isinstance(str1, six.text_type)
+    assert isinstance(str2, six.text_type)
     str1 = as_string(unidecode(str1))
     str2 = as_string(unidecode(str2))
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
@@ -291,6 +292,7 @@ class LazyClassProperty(object):
 
 
 @total_ordering
+@six.python_2_unicode_compatible
 class Distance(object):
     """Keeps track of multiple distance penalties. Provides a single
     weighted distance for all penalties as well as a weighted distance
@@ -326,7 +328,7 @@ class Distance(object):
         """Return the maximum distance penalty (normalization factor).
         """
         dist_max = 0.0
-        for key, penalty in self._penalties.iteritems():
+        for key, penalty in six.iteritems(self._penalties):
             dist_max += len(penalty) * self._weights[key]
         return dist_max
 
@@ -335,7 +337,7 @@ class Distance(object):
         """Return the raw (denormalized) distance.
         """
         dist_raw = 0.0
-        for key, penalty in self._penalties.iteritems():
+        for key, penalty in six.iteritems(self._penalties):
             dist_raw += sum(penalty) * self._weights[key]
         return dist_raw
 
@@ -377,7 +379,9 @@ class Distance(object):
     def __rsub__(self, other):
         return other - self.distance
 
-    def __unicode__(self):
+    # Behave like a string
+
+    def __str__(self):
         return "{0:.2f}".format(self.distance)
 
     # Behave like a dict.
@@ -407,7 +411,7 @@ class Distance(object):
             raise ValueError(
                 u'`dist` must be a Distance object, not {0}'.format(type(dist))
             )
-        for key, penalties in dist._penalties.iteritems():
+        for key, penalties in six.iteritems(dist._penalties):
             self._penalties.setdefault(key, []).extend(penalties)
 
     # Adding components.

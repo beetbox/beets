@@ -27,6 +27,7 @@ from beets.plugins import BeetsPlugin
 import os
 import socket
 from beets import config
+import six
 
 
 # No need to introduce a dependency on an MPD library for such a
@@ -86,9 +87,9 @@ class MPDUpdatePlugin(BeetsPlugin):
 
     def update(self, lib):
         self.update_mpd(
-            config['mpd']['host'].get(unicode),
+            config['mpd']['host'].get(six.text_type),
             config['mpd']['port'].get(int),
-            config['mpd']['password'].get(unicode),
+            config['mpd']['password'].get(six.text_type),
         )
 
     def update_mpd(self, host='localhost', port=6600, password=None):
@@ -101,7 +102,7 @@ class MPDUpdatePlugin(BeetsPlugin):
             s = BufferedSocket(host, port)
         except socket.error as e:
             self._log.warning(u'MPD connection failed: {0}',
-                              unicode(e.strerror))
+                              six.text_type(e.strerror))
             return
 
         resp = s.readline()

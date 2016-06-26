@@ -27,6 +27,7 @@ import shlex
 import os
 import errno
 import sys
+import six
 
 
 class BadFiles(BeetsPlugin):
@@ -97,7 +98,7 @@ class BadFiles(BeetsPlugin):
             if not checker:
                 continue
             path = item.path
-            if not isinstance(path, unicode):
+            if not isinstance(path, six.text_type):
                 path = item.path.decode(sys.getfilesystemencoding())
             status, errors, output = checker(path)
             if status > 0:

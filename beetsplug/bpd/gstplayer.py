@@ -19,12 +19,13 @@ music player.
 
 from __future__ import division, absolute_import, print_function
 
+import six
 import sys
 import time
-import thread
+from six.moves import _thread
 import os
 import copy
-import urllib
+from six.moves import urllib
 from beets import ui
 
 import gi
@@ -128,9 +129,9 @@ class GstPlayer(object):
         path.
         """
         self.player.set_state(Gst.State.NULL)
-        if isinstance(path, unicode):
+        if isinstance(path, six.text_type):
             path = path.encode('utf8')
-        uri = 'file://' + urllib.quote(path)
+        uri = 'file://' + urllib.parse.quote(path)
         self.player.set_property("uri", uri)
         self.player.set_state(Gst.State.PLAYING)
         self.playing = True
@@ -164,7 +165,7 @@ class GstPlayer(object):
             loop = GLib.MainLoop()
             loop.run()
 
-        thread.start_new_thread(start, ())
+        _thread.start_new_thread(start, ())
 
     def time(self):
         """Returns a tuple containing (position, length) where both

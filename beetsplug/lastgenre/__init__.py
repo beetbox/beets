@@ -14,6 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 from __future__ import division, absolute_import, print_function
+import six
 
 """Gets genres for imported music based on Last.fm tags.
 
@@ -71,7 +72,7 @@ def flatten_tree(elem, path, branches):
         for sub in elem:
             flatten_tree(sub, path, branches)
     else:
-        branches.append(path + [unicode(elem)])
+        branches.append(path + [six.text_type(elem)])
 
 
 def find_parents(candidate, branches):
@@ -186,7 +187,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         tags = [x.title() for x in tags if self._is_allowed(x)]
 
-        return self.config['separator'].get(unicode).join(
+        return self.config['separator'].get(six.text_type).join(
             tags[:self.config['count'].get(int)]
         )
 
@@ -221,7 +222,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if any(not s for s in args):
             return None
 
-        key = u'{0}.{1}'.format(entity, u'-'.join(unicode(a) for a in args))
+        key = u'{0}.{1}'.format(entity,
+                                u'-'.join(six.text_type(a) for a in args))
         if key in self._genre_cache:
             return self._genre_cache[key]
         else:
@@ -297,7 +299,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             result = None
             if isinstance(obj, library.Item):
                 result = self.fetch_artist_genre(obj)
-            elif obj.albumartist != config['va_name'].get(unicode):
+            elif obj.albumartist != config['va_name'].get(six.text_type):
                 result = self.fetch_album_artist_genre(obj)
             else:
                 # For "Various Artists", pick the most popular track genre.

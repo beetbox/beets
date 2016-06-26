@@ -15,6 +15,7 @@
 
 from __future__ import division, absolute_import, print_function
 
+from six.moves import range
 import pylast
 from pylast import TopItem, _extract, _number
 from beets import ui
@@ -22,6 +23,7 @@ from beets import dbcore
 from beets import config
 from beets import plugins
 from beets.dbcore import types
+import six
 
 API_URL = 'http://ws.audioscrobbler.com/2.0/'
 
@@ -110,7 +112,7 @@ class CustomUser(pylast.User):
 
 
 def import_lastfm(lib, log):
-    user = config['lastfm']['user'].get(unicode)
+    user = config['lastfm']['user'].get(six.text_type)
     per_page = config['lastimport']['per_page'].get(int)
 
     if not user:
@@ -192,7 +194,7 @@ def process_tracks(lib, tracks, log):
     total_fails = 0
     log.info(u'Received {0} tracks in this page, processing...', total)
 
-    for num in xrange(0, total):
+    for num in range(0, total):
         song = None
         trackid = tracks[num]['mbid'].strip()
         artist = tracks[num]['artist'].get('name', '').strip()
