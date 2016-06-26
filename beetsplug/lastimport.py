@@ -15,7 +15,6 @@
 
 from __future__ import division, absolute_import, print_function
 
-from six.moves import range
 import pylast
 from pylast import TopItem, _extract, _number
 from beets import ui
