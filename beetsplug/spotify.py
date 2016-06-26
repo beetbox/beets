@@ -9,7 +9,6 @@ from beets.plugins import BeetsPlugin
 from beets.ui import decargs
 from beets import ui
 from requests.exceptions import HTTPError
-import six
 
 
 class SpotifyPlugin(BeetsPlugin):
@@ -171,6 +170,6 @@ class SpotifyPlugin(BeetsPlugin):
 
             else:
                 for item in ids:
-                    print(six.text_type.encode(self.open_url + item))
+                    print(self.open_url + item)
         else:
             self._log.warn(u'No Spotify tracks found from beets query')
