@@ -21,7 +21,8 @@ from __future__ import division, absolute_import, print_function
 from datetime import datetime
 import re
 import string
-from itertools import tee, izip
+from six.moves import zip
+from itertools import tee
 
 from beets import plugins, ui
 
@@ -37,7 +38,7 @@ def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = tee(iterable)
     next(b, None)
-    return izip(a, b)
+    return zip(a, b)
 
 
 def span_from_str(span_str):

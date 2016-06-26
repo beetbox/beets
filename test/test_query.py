@@ -34,6 +34,7 @@ from beets.dbcore.query import (NoneQuery, ParsingError,
 from beets.library import Library, Item
 from beets import util
 import platform
+import six
 
 
 class TestHelper(helper.TestHelper):
@@ -302,11 +303,11 @@ class GetTest(DummyDataTestCase):
     def test_invalid_query(self):
         with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
             dbcore.query.NumericQuery('year', u'199a')
-        self.assertIn(u'not an int', unicode(raised.exception))
+        self.assertIn(u'not an int', six.text_type(raised.exception))
 
         with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
             dbcore.query.RegexpQuery('year', u'199(')
-        exception_text = unicode(raised.exception)
+        exception_text = six.text_type(raised.exception)
         self.assertIn(u'not a regular expression', exception_text)
         if sys.version_info >= (3, 5):
             self.assertIn(u'unterminated subpattern', exception_text)

@@ -26,6 +26,7 @@ from mock import patch, Mock
 from test._common import unittest
 from test import _common
 from beets import util
+import six
 
 
 class UtilTest(unittest.TestCase):
@@ -122,7 +123,7 @@ class PathConversionTest(_common.TestCase):
         with _common.platform_windows():
             path = os.path.join(u'a', u'b', u'c')
             outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, unicode))
+        self.assertTrue(isinstance(outpath, six.text_type))
         self.assertTrue(outpath.startswith(u'\\\\?\\'))
 
     def test_syspath_windows_format_unc_path(self):
@@ -131,7 +132,7 @@ class PathConversionTest(_common.TestCase):
         path = '\\\\server\\share\\file.mp3'
         with _common.platform_windows():
             outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, unicode))
+        self.assertTrue(isinstance(outpath, six.text_type))
         self.assertEqual(outpath, u'\\\\?\\UNC\\server\\share\\file.mp3')
 
     def test_syspath_posix_unchanged(self):

@@ -23,8 +23,8 @@ import os
 import shutil
 import tempfile
 import plistlib
-import urllib
-from urlparse import urlparse
+
+from six.moves.urllib.parse import urlparse, unquote
 from time import mktime
 
 from beets import util
@@ -57,7 +57,7 @@ def _norm_itunes_path(path):
     # E.g., '\\G:\\Music\\bar' needs to be stripped to 'G:\\Music\\bar'
 
     return util.bytestring_path(os.path.normpath(
-        urllib.unquote(urlparse(path).path)).lstrip('\\')).lower()
+        unquote(urlparse(path).path)).lstrip('\\')).lower()
 
 
 class Itunes(MetaSource):

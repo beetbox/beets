@@ -86,6 +86,7 @@ setup(
     },
 
     install_requires=[
+        'six',
         'enum34>=1.0.4',
         'mutagen>=1.27',
         'munkres',

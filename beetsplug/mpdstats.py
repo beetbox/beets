@@ -27,6 +27,7 @@ from beets import plugins
 from beets import library
 from beets.util import displayable_path
 from beets.dbcore import types
+import six
 
 # If we lose the connection, how many times do we want to retry and how
 # much time should we wait between retries?
@@ -49,7 +50,7 @@ def is_url(path):
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
 class MPDClient(mpd.MPDClient):
     def _write_command(self, command, args=[]):
-        args = [unicode(arg).encode('utf-8') for arg in args]
+        args = [six.text_type(arg).encode('utf-8') for arg in args]
         super(MPDClient, self)._write_command(command, args)
 
     def _read_line(self):
@@ -64,14 +65,14 @@ class MPDClientWrapper(object):
         self._log = log
 
         self.music_directory = (
-            mpd_config['music_directory'].get(unicode))
+            mpd_config['music_directory'].get(six.text_type))
 
         self.client = MPDClient()
 
     def connect(self):
         """Connect to the MPD.
         """
-        host = mpd_config['host'].get(unicode)
+        host = mpd_config['host'].get(six.text_type)
         port = mpd_config['port'].get(int)
 
         if host[0] in ['/', '~']:
@@ -83,7 +84,7 @@ class MPDClientWrapper(object):
         except socket.error as e:
             raise ui.UserError(u'could not connect to MPD: {0}'.format(e))
 
-        password = mpd_config['password'].get(unicode)
+        password = mpd_config['password'].get(six.text_type)
         if password:
             try:
                 self.client.password(password)

@@ -26,6 +26,7 @@ from test.helper import TestHelper
 
 from beets.util import bytestring_path
 import beets.mediafile
+import six
 
 
 _sc = beets.mediafile._safe_cast
@@ -127,8 +128,8 @@ class InvalidValueToleranceTest(unittest.TestCase):
         self.assertAlmostEqual(_sc(float, u'-1.234'), -1.234)
 
     def test_safe_cast_special_chars_to_unicode(self):
-        us = _sc(unicode, 'caf\xc3\xa9')
-        self.assertTrue(isinstance(us, unicode))
+        us = _sc(six.text_type, 'caf\xc3\xa9')
+        self.assertTrue(isinstance(us, six.text_type))
         self.assertTrue(us.startswith(u'caf'))
 
     def test_safe_cast_float_with_no_numbers(self):
@@ -350,7 +351,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
             mf.year = 2013
             mf.save()
             frame = mf.mgfile['TDRC']
-            self.assertTrue('2013' in unicode(frame))
+            self.assertTrue('2013' in six.text_type(frame))
             self.assertTrue('TYER' not in mf.mgfile)
         finally:
             self._delete_test()
@@ -361,7 +362,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
             mf.year = 2013
             mf.save()
             frame = mf.mgfile['TYER']
-            self.assertTrue('2013' in unicode(frame))
+            self.assertTrue('2013' in six.text_type(frame))
             self.assertTrue('TDRC' not in mf.mgfile)
         finally:
             self._delete_test()

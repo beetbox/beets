@@ -30,6 +30,7 @@ from beets.util import plurality
 from beets.autotag import hooks
 from beets.util.enumeration import OrderedEnum
 from functools import reduce
+import six
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -238,7 +239,7 @@ def distance(items, album_info, mapping):
 
     # Tracks.
     dist.tracks = {}
-    for item, track in mapping.iteritems():
+    for item, track in six.iteritems(mapping):
         dist.tracks[track] = track_distance(item, track, album_info.va)
         dist.add('tracks', dist.tracks[track].distance)
 
@@ -312,10 +313,10 @@ def _recommendation(results):
     keys = set(min_dist.keys())
     if isinstance(results[0], hooks.AlbumMatch):
         for track_dist in min_dist.tracks.values():
-            keys.update(track_dist.keys())
+            keys.update(list(track_dist.keys()))
     max_rec_view = config['match']['max_rec']
     for key in keys:
-        if key in max_rec_view.keys():
+        if key in list(max_rec_view.keys()):
             max_rec = max_rec_view[key].as_choice({
                 'strong': Recommendation.strong,
                 'medium': Recommendation.medium,
@@ -443,7 +444,7 @@ def tag_album(items, search_artist=None, search_album=None,
         _add_candidate(items, candidates, info)
 
     # Sort and get the recommendation.
-    candidates = sorted(candidates.itervalues())
+    candidates = sorted(six.itervalues(candidates))
     rec = _recommendation(candidates)
     return cur_artist, cur_album, candidates, rec
 
@@ -471,16 +472,16 @@ def tag_item(item, search_artist=None, search_title=None,
                 candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)
                 # If this is a good match, then don't keep searching.
-                rec = _recommendation(sorted(candidates.itervalues()))
+                rec = _recommendation(sorted(six.itervalues(candidates)))
                 if rec == Recommendation.strong and \
                         not config['import']['timid']:
                     log.debug(u'Track ID match.')
-                    return sorted(candidates.itervalues()), rec
+                    return sorted(six.itervalues(candidates)), rec
 
     # If we're searching by ID, don't proceed.
     if search_ids:
         if candidates:
-            return sorted(candidates.itervalues()), rec
+            return sorted(six.itervalues(candidates)), rec
         else:
             return [], Recommendation.none
 
@@ -496,6 +497,6 @@ def tag_item(item, search_artist=None, search_title=None,
 
     # Sort by distance and return with recommendation.
     log.debug(u'Found {0} candidates.', len(candidates))
-    candidates = sorted(candidates.itervalues())
+    candidates = sorted(six.itervalues(candidates))
     rec = _recommendation(candidates)
     return candidates, rec

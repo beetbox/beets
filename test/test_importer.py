@@ -20,9 +20,9 @@ from __future__ import division, absolute_import, print_function
 import os
 import re
 import shutil
-import StringIO
 import unicodedata
 import sys
+from six import StringIO
 from tempfile import mkstemp
 from zipfile import ZipFile
 from tarfile import TarFile
@@ -1250,14 +1250,14 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
 
 class TagLogTest(_common.TestCase):
     def test_tag_log_line(self):
-        sio = StringIO.StringIO()
+        sio = StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
         session.tag_log('status', 'path')
         self.assertIn('status path', sio.getvalue())
 
     def test_tag_log_unicode(self):
-        sio = StringIO.StringIO()
+        sio = StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
         session.tag_log('status', u'caf\xe9')  # send unicode

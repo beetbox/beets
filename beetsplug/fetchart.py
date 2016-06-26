@@ -33,6 +33,7 @@ from beets.mediafile import _image_mime_type
 from beets.util.artresizer import ArtResizer
 from beets.util import confit
 from beets.util import syspath, bytestring_path
+import six
 
 try:
     import itunes
@@ -600,7 +601,7 @@ class Wikipedia(RemoteArtSource):
         try:
             data = wikipedia_response.json()
             results = data['query']['pages']
-            for _, result in results.iteritems():
+            for _, result in six.iteritems(results):
                 image_url = result['imageinfo'][0]['url']
                 yield self._candidate(url=image_url,
                                       match=Candidate.MATCH_EXACT)
@@ -727,7 +728,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                           confit.String(pattern=self.PAT_PERCENT)]))
         self.margin_px = None
         self.margin_percent = None
-        if type(self.enforce_ratio) is unicode:
+        if type(self.enforce_ratio) is six.text_type:
             if self.enforce_ratio[-1] == u'%':
                 self.margin_percent = float(self.enforce_ratio[:-1]) / 100
             elif self.enforce_ratio[-2:] == u'px':

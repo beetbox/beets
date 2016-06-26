@@ -59,6 +59,7 @@ import enum
 
 from beets import logging
 from beets.util import displayable_path, syspath, as_string
+import six
 
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
@@ -130,8 +131,8 @@ def _safe_cast(out_type, val):
             return int(val)
         else:
             # Process any other type as a string.
-            if not isinstance(val, basestring):
-                val = unicode(val)
+            if not isinstance(val, six.string_types):
+                val = six.text_type(val)
             # Get a number from the front of the string.
             val = re.match(r'[0-9]*', val.strip()).group(0)
             if not val:
@@ -146,13 +147,13 @@ def _safe_cast(out_type, val):
         except ValueError:
             return False
 
-    elif out_type == unicode:
+    elif out_type == six.text_type:
         if isinstance(val, bytes):
             return val.decode('utf8', 'ignore')
-        elif isinstance(val, unicode):
+        elif isinstance(val, six.text_type):
             return val
         else:
-            return unicode(val)
+            return six.text_type(val)
 
     elif out_type == float:
         if isinstance(val, int) or isinstance(val, float):
@@ -161,7 +162,7 @@ def _safe_cast(out_type, val):
             if isinstance(val, bytes):
                 val = val.decode('utf8', 'ignore')
             else:
-                val = unicode(val)
+                val = six.text_type(val)
             match = re.match(r'[\+-]?([0-9]+\.?[0-9]*|[0-9]*\.[0-9]+)',
                              val.strip())
             if match:
@@ -220,7 +221,7 @@ def _sc_decode(soundcheck):
     """
     # We decode binary data. If one of the formats gives us a text
     # string, interpret it as UTF-8.
-    if isinstance(soundcheck, unicode):
+    if isinstance(soundcheck, six.text_type):
         soundcheck = soundcheck.encode('utf8')
 
     # SoundCheck tags consist of 10 numbers, each represented by 8
@@ -407,7 +408,8 @@ class StorageStyle(object):
     """List of mutagen classes the StorageStyle can handle.
     """
 
-    def __init__(self, key, as_type=unicode, suffix=None, float_places=2):
+    def __init__(self, key, as_type=six.text_type, suffix=None,
+                 float_places=2):
         """Create a basic storage strategy. Parameters:
 
         - `key`: The key on the Mutagen file object used to access the
@@ -426,8 +428,8 @@ class StorageStyle(object):
         self.float_places = float_places
 
         # Convert suffix to correct string type.
-        if self.suffix and self.as_type is unicode \
-           and not isinstance(self.suffix, unicode):
+        if self.suffix and self.as_type is six.text_type \
+           and not isinstance(self.suffix, six.text_type):
             self.suffix = self.suffix.decode('utf8')
 
     # Getter.
@@ -450,7 +452,7 @@ class StorageStyle(object):
         """Given a raw value stored on a Mutagen object, decode and
         return the represented value.
         """
-        if self.suffix and isinstance(mutagen_value, unicode) \
+        if self.suffix and isinstance(mutagen_value, six.text_type) \
            and mutagen_value.endswith(self.suffix):
             return mutagen_value[:-len(self.suffix)]
         else:
@@ -472,17 +474,17 @@ class StorageStyle(object):
         """Convert the external Python value to a type that is suitable for
         storing in a Mutagen file object.
         """
-        if isinstance(value, float) and self.as_type is unicode:
+        if isinstance(value, float) and self.as_type is six.text_type:
             value = u'{0:.{1}f}'.format(value, self.float_places)
             value = self.as_type(value)
-        elif self.as_type is unicode:
+        elif self.as_type is six.text_type:
             if isinstance(value, bool):
                 # Store bools as 1/0 instead of True/False.
-                value = unicode(int(bool(value)))
+                value = six.text_type(int(bool(value)))
             elif isinstance(value, bytes):
                 value = value.decode('utf8', 'ignore')
             else:
-                value = unicode(value)
+                value = six.text_type(value)
         else:
             value = self.as_type(value)
 
@@ -592,7 +594,7 @@ class MP4StorageStyle(StorageStyle):
 
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
-        if self.key.startswith('----:') and isinstance(value, unicode):
+        if self.key.startswith('----:') and isinstance(value, six.text_type):
             value = value.encode('utf8')
         return value
 
@@ -807,7 +809,7 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
     def _fetch_unpacked(self, mutagen_file):
         data = self.fetch(mutagen_file)
         if data:
-            items = unicode(data).split('/')
+            items = six.text_type(data).split('/')
         else:
             items = []
         packing_length = 2
@@ -823,7 +825,7 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
             items[0] = ''
         if items[1] is None:
             items.pop()  # Do not store last value
-        self.store(mutagen_file, '/'.join(map(unicode, items)))
+        self.store(mutagen_file, '/'.join(map(six.text_type, items)))
 
     def delete(self, mutagen_file):
         if self.pack_pos == 0:
@@ -1074,7 +1076,7 @@ class MediaField(object):
                          getting this property.
 
         """
-        self.out_type = kwargs.get('out_type', unicode)
+        self.out_type = kwargs.get('out_type', six.text_type)
         self._styles = styles
 
     def styles(self, mutagen_file):
@@ -1113,7 +1115,7 @@ class MediaField(object):
             return 0.0
         elif self.out_type == bool:
             return False
-        elif self.out_type == unicode:
+        elif self.out_type == six.text_type:
             return u''
 
 
@@ -1194,9 +1196,9 @@ class DateField(MediaField):
         """
         # Get the underlying data and split on hyphens and slashes.
         datestring = super(DateField, self).__get__(mediafile, None)
-        if isinstance(datestring, basestring):
-            datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
-            items = re.split('[-/]', unicode(datestring))
+        if isinstance(datestring, six.string_types):
+            datestring = re.sub(r'[Tt ].*$', '', six.text_type(datestring))
+            items = re.split('[-/]', six.text_type(datestring))
         else:
             items = []
 
@@ -1233,7 +1235,7 @@ class DateField(MediaField):
             date.append(u'{0:02d}'.format(int(month)))
         if month and day:
             date.append(u'{0:02d}'.format(int(day)))
-        date = map(unicode, date)
+        date = map(six.text_type, date)
         super(DateField, self).__set__(mediafile, u'-'.join(date))
 
         if hasattr(self, '_year_field'):
@@ -1360,7 +1362,7 @@ class MediaFile(object):
         try:
             self.mgfile = mutagen.File(path)
         except unreadable_exc as exc:
-            log.debug(u'header parsing failed: {0}', unicode(exc))
+            log.debug(u'header parsing failed: {0}', six.text_type(exc))
             raise UnreadableFileError(path)
         except IOError as exc:
             if type(exc) == IOError:

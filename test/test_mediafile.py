@@ -23,6 +23,7 @@ import shutil
 import tempfile
 import datetime
 import time
+from six import assertCountEqual
 
 from test import _common
 from test._common import unittest
@@ -32,6 +33,7 @@ from beets.mediafile import MediaFile, MediaField, Image, \
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import bytestring_path
+import six
 
 
 class ArtTestMixin(object):
@@ -268,7 +270,7 @@ class GenreListTestMixin(object):
 
     def test_read_genre_list(self):
         mediafile = self._mediafile_fixture('full')
-        self.assertItemsEqual(mediafile.genres, ['the genre'])
+        assertCountEqual(self, mediafile.genres, ['the genre'])
 
     def test_write_genre_list(self):
         mediafile = self._mediafile_fixture('empty')
@@ -276,7 +278,7 @@ class GenreListTestMixin(object):
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        self.assertItemsEqual(mediafile.genres, [u'one', u'two'])
+        assertCountEqual(self, mediafile.genres, [u'one', u'two'])
 
     def test_write_genre_list_get_first(self):
         mediafile = self._mediafile_fixture('empty')
@@ -293,7 +295,7 @@ class GenreListTestMixin(object):
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        self.assertItemsEqual(mediafile.genres, [u'the genre', u'another'])
+        assertCountEqual(self, mediafile.genres, [u'the genre', u'another'])
 
 
 field_extension = MediaField(
@@ -352,13 +354,13 @@ class ExtendedFieldTestMixin(object):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('somekey', True)
         self.assertIn(u'must be an instance of MediaField',
-                      unicode(cm.exception))
+                      six.text_type(cm.exception))
 
     def test_overwrite_property(self):
         with self.assertRaises(ValueError) as cm:
             MediaFile.add_field('artist', MediaField())
         self.assertIn(u'property "artist" already exists',
-                      unicode(cm.exception))
+                      six.text_type(cm.exception))
 
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
@@ -949,7 +951,7 @@ class MediaFieldTest(unittest.TestCase):
     def test_known_fields(self):
         fields = list(ReadWriteTestBase.tag_fields)
         fields.extend(('encoder', 'images', 'genres', 'albumtype'))
-        self.assertItemsEqual(MediaFile.fields(), fields)
+        assertCountEqual(self, MediaFile.fields(), fields)
 
     def test_fields_in_readable_fields(self):
         readable = MediaFile.readable_fields()

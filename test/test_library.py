@@ -38,6 +38,7 @@ from beets import config
 from beets.mediafile import MediaFile
 from beets.util import syspath, bytestring_path
 from test.helper import TestHelper
+import six
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -964,7 +965,7 @@ class PathStringTest(_common.TestCase):
     def test_sanitize_path_returns_unicode(self):
         path = u'b\xe1r?'
         new_path = util.sanitize_path(path)
-        self.assertTrue(isinstance(new_path, unicode))
+        self.assertTrue(isinstance(new_path, six.text_type))
 
     def test_unicode_artpath_becomes_bytestring(self):
         alb = self.lib.add_album([self.i])
@@ -1051,7 +1052,7 @@ class TemplateTest(_common.LibTestCase):
         album.tagada = u'togodo'
         self.assertEqual(u"{0}".format(album), u"foö bar")
         self.assertEqual(u"{0:$tagada}".format(album), u"togodo")
-        self.assertEqual(unicode(album), u"foö bar")
+        self.assertEqual(six.text_type(album), u"foö bar")
         self.assertEqual(bytes(album), b"fo\xc3\xb6 bar")
 
         config['format_item'] = 'bar $foo'
@@ -1174,7 +1175,8 @@ class LibraryFieldTypesTest(unittest.TestCase):
         t = beets.library.DateType()
 
         # format
-        time_local = time.strftime(beets.config['time_format'].get(unicode),
+        time_format = beets.config['time_format'].get(six.text_type)
+        time_local = time.strftime(time_format,
                                    time.localtime(123456789))
         self.assertEqual(time_local, t.format(123456789))
         # parse

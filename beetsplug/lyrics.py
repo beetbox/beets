@@ -24,9 +24,9 @@ import json
 import re
 import requests
 import unicodedata
-import urllib
 import warnings
-from HTMLParser import HTMLParseError
+from six.moves import urllib
+import six
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
@@ -39,6 +39,15 @@ try:
     HAS_LANGDETECT = True
 except ImportError:
     HAS_LANGDETECT = False
+
+try:
+    # PY3: HTMLParseError was removed in 3.5 as strict mode
+    # was deprecated in 3.3.
+    # https://docs.python.org/3.3/library/html.parser.html
+    from six.moves.html_parser import HTMLParseError
+except ImportError:
+    class HTMLParseError(Exception):
+        pass
 
 from beets import plugins
 from beets import ui
@@ -177,11 +186,11 @@ class Backend(object):
     @staticmethod
     def _encode(s):
         """Encode the string for inclusion in a URL"""
-        if isinstance(s, unicode):
+        if isinstance(s, six.text_type):
             for char, repl in URL_CHARACTERS.items():
                 s = s.replace(char, repl)
             s = s.encode('utf8', 'ignore')
-        return urllib.quote(s)
+        return urllib.parse.quote(s)
 
     def build_url(self, artist, title):
         return self.URL_PATTERN % (self._encode(artist.title()),
@@ -223,7 +232,7 @@ class SymbolsReplaced(Backend):
 
     @classmethod
     def _encode(cls, s):
-        for old, new in cls.REPLACEMENTS.iteritems():
+        for old, new in six.iteritems(cls.REPLACEMENTS):
             s = re.sub(old, new, s)
 
         return super(SymbolsReplaced, cls)._encode(s)
@@ -250,13 +259,13 @@ class Genius(Backend):
     """Fetch lyrics from Genius via genius-api."""
     def __init__(self, config, log):
         super(Genius, self).__init__(config, log)
-        self.api_key = config['genius_api_key'].get(unicode)
+        self.api_key = config['genius_api_key'].get(six.text_type)
         self.headers = {'Authorization': "Bearer %s" % self.api_key}
 
     def search_genius(self, artist, title):
         query = u"%s %s" % (artist, title)
         url = u'https://api.genius.com/search?q=%s' \
-            % (urllib.quote(query.encode('utf8')))
+            % (urllib.parse.quote(query.encode('utf8')))
 
         self._log.debug(u'genius: requesting search {}', url)
         try:
@@ -461,8 +470,8 @@ class Google(Backend):
     """Fetch lyrics from Google search results."""
     def __init__(self, config, log):
         super(Google, self).__init__(config, log)
-        self.api_key = config['google_API_key'].get(unicode)
-        self.engine_id = config['google_engine_ID'].get(unicode)
+        self.api_key = config['google_API_key'].get(six.text_type)
+        self.engine_id = config['google_engine_ID'].get(six.text_type)
 
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics.
@@ -503,7 +512,7 @@ class Google(Backend):
         try:
             text = unicodedata.normalize('NFKD', text).encode('ascii',
                                                               'ignore')
-            text = unicode(re.sub('[-\s]+', ' ', text.decode('utf-8')))
+            text = six.text_type(re.sub('[-\s]+', ' ', text.decode('utf-8')))
         except UnicodeDecodeError:
             self._log.exception(u"Failing to normalize '{0}'", text)
         return text
@@ -542,9 +551,9 @@ class Google(Backend):
         query = u"%s %s" % (artist, title)
         url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' \
               % (self.api_key, self.engine_id,
-                 urllib.quote(query.encode('utf8')))
+                 urllib.parse.quote(query.encode('utf8')))
 
-        data = urllib.urlopen(url)
+        data = urllib.request.urlopen(url)
         data = json.load(data)
         if 'error' in data:
             reason = data['error']['errors'][0]['reason']
@@ -643,7 +652,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         oauth_url = 'https://datamarket.accesscontrol.windows.net/v2/OAuth2-13'
         oauth_token = json.loads(requests.post(
             oauth_url,
-            data=urllib.urlencode(params)).content)
+            data=urllib.parse.urlencode(params)).content)
         if 'access_token' in oauth_token:
             return "Bearer " + oauth_token['access_token']
         else:
