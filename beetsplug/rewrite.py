@@ -69,7 +69,7 @@ class RewritePlugin(BeetsPlugin):
                 rules['albumartist'].append((pattern, value))
 
         # Replace each template field with the new rewriter function.
-        for fieldname, fieldrules in six.iteritems(rules):
+        for fieldname, fieldrules in rules.items():
             getter = rewriter(fieldname, fieldrules)
             self.template_fields[fieldname] = getter
             if fieldname in library.Album._fields:

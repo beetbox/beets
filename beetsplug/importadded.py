@@ -12,7 +12,6 @@ import os
 from beets import util
 from beets import importer
 from beets.plugins import BeetsPlugin
-import six
 
 
 class ImportAddedPlugin(BeetsPlugin):
@@ -63,7 +62,7 @@ class ImportAddedPlugin(BeetsPlugin):
 
     def record_reimported(self, task, session):
         self.reimported_item_ids = set(item.id for item, replaced_items
-                                       in six.iteritems(task.replaced_items)
+                                       in task.replaced_items.items()
                                        if replaced_items)
         self.replaced_album_paths = set(task.replaced_albums.keys())
 

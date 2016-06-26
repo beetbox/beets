@@ -23,7 +23,6 @@ from test.test_ui_importer import TerminalImportSessionSetup
 from test.test_importer import ImportHelper, AutotagStub
 from beets.library import Item
 from beetsplug.edit import EditPlugin
-import six
 
 
 class ModifyFileMocker(object):
@@ -64,7 +63,7 @@ class ModifyFileMocker(object):
         """
         with codecs.open(filename, 'r', encoding='utf8') as f:
             contents = f.read()
-        for old, new_ in six.iteritems(self.replacements):
+        for old, new_ in self.replacements.items():
             contents = contents.replace(old, new_)
         with codecs.open(filename, 'w', encoding='utf8') as f:
             f.write(contents)

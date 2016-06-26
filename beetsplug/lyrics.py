@@ -232,7 +232,7 @@ class SymbolsReplaced(Backend):
 
     @classmethod
     def _encode(cls, s):
-        for old, new in six.iteritems(cls.REPLACEMENTS):
+        for old, new in cls.REPLACEMENTS.items():
             s = re.sub(old, new, s)
 
         return super(SymbolsReplaced, cls)._encode(s)
