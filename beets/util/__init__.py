@@ -766,8 +766,7 @@ def shlex_split(s):
     Raise `ValueError` if the string is not a well-formed shell string.
     This is a workaround for a bug in some versions of Python.
     """
-    if isinstance(s, bytes):
-        # Shlex works fine.
+    if not six.PY2 or isinstance(s, bytes):  # Shlex works fine.
         return shlex.split(s)
 
     elif isinstance(s, six.text_type):
