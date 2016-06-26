@@ -122,7 +122,7 @@ setup(
     },
     # Non-Python/non-PyPI plugin dependencies:
     # convert: ffmpeg
-    # bpd: pygst
+    # bpd: python-gi and GStreamer
 
     classifiers=[
         'Topic :: Multimedia :: Sound/Audio',
