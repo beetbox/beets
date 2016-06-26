@@ -1175,7 +1175,7 @@ class LibraryFieldTypesTest(unittest.TestCase):
         t = beets.library.DateType()
 
         # format
-        time_format = beets.config['time_format'].get(six.text_type)
+        time_format = beets.config['time_format'].as_str()
         time_local = time.strftime(time_format,
                                    time.localtime(123456789))
         self.assertEqual(time_local, t.format(123456789))

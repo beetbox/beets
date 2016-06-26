@@ -87,9 +87,9 @@ class MPDUpdatePlugin(BeetsPlugin):
 
     def update(self, lib):
         self.update_mpd(
-            config['mpd']['host'].get(six.text_type),
+            config['mpd']['host'].as_str(),
             config['mpd']['port'].get(int),
-            config['mpd']['password'].get(six.text_type),
+            config['mpd']['password'].as_str(),
         )
 
     def update_mpd(self, host='localhost', port=6600, password=None):

@@ -25,7 +25,6 @@ from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
 import os
 import json
-import six
 
 
 # Utilities.
@@ -322,7 +321,7 @@ class WebPlugin(BeetsPlugin):
                 }
                 CORS(app)
             # Start the web application.
-            app.run(host=self.config['host'].get(six.text_type),
+            app.run(host=self.config['host'].as_str(),
                     port=self.config['port'].get(int),
                     debug=opts.debug, threaded=True)
         cmd.func = func

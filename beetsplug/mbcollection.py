@@ -22,7 +22,6 @@ from beets import config
 import musicbrainzngs
 
 import re
-import six
 
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
@@ -58,8 +57,8 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         super(MusicBrainzCollectionPlugin, self).__init__()
         config['musicbrainz']['pass'].redact = True
         musicbrainzngs.auth(
-            config['musicbrainz']['user'].get(six.text_type),
-            config['musicbrainz']['pass'].get(six.text_type),
+            config['musicbrainz']['user'].as_str(),
+            config['musicbrainz']['pass'].as_str(),
         )
         self.config.add({'auto': False})
         if self.config['auto']:

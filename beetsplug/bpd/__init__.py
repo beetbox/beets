@@ -1181,12 +1181,12 @@ class BPDPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            host = self.config['host'].get(six.text_type)
+            host = self.config['host'].as_str()
             host = args.pop(0) if args else host
             port = args.pop(0) if args else self.config['port'].get(int)
             if args:
                 raise beets.ui.UserError(u'too many arguments')
-            password = self.config['password'].get(six.text_type)
+            password = self.config['password'].as_str()
             volume = self.config['volume'].get(int)
             debug = opts.debug or False
             self.start_bpd(lib, host, int(port), password, volume, debug)

@@ -187,7 +187,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         tags = [x.title() for x in tags if self._is_allowed(x)]
 
-        return self.config['separator'].get(six.text_type).join(
+        return self.config['separator'].as_str().join(
             tags[:self.config['count'].get(int)]
         )
 
@@ -299,7 +299,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             result = None
             if isinstance(obj, library.Item):
                 result = self.fetch_artist_genre(obj)
-            elif obj.albumartist != config['va_name'].get(six.text_type):
+            elif obj.albumartist != config['va_name'].as_str():
                 result = self.fetch_album_artist_genre(obj)
             else:
                 # For "Various Artists", pick the most popular track genre.

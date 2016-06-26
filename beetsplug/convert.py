@@ -29,7 +29,6 @@ from beets.plugins import BeetsPlugin
 from beets.util.confit import ConfigTypeError
 from beets import art
 from beets.util.artresizer import ArtResizer
-import six
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -56,7 +55,7 @@ def get_format(fmt=None):
     """Return the command template and the extension from the config.
     """
     if not fmt:
-        fmt = config['convert']['format'].get(six.text_type).lower()
+        fmt = config['convert']['format'].as_str().lower()
     fmt = ALIASES.get(fmt, fmt)
 
     try:
@@ -75,14 +74,14 @@ def get_format(fmt=None):
     # Convenience and backwards-compatibility shortcuts.
     keys = config['convert'].keys()
     if 'command' in keys:
-        command = config['convert']['command'].get(six.text_type)
+        command = config['convert']['command'].as_str()
     elif 'opts' in keys:
         # Undocumented option for backwards compatibility with < 1.3.1.
         command = u'ffmpeg -i $source -y {0} $dest'.format(
-            config['convert']['opts'].get(six.text_type)
+            config['convert']['opts'].as_str()
         )
     if 'extension' in keys:
-        extension = config['convert']['extension'].get(six.text_type)
+        extension = config['convert']['extension'].as_str()
 
     return (command.encode('utf8'), extension.encode('utf8'))
 
@@ -390,7 +389,7 @@ class ConvertPlugin(BeetsPlugin):
             path_formats = ui.get_path_formats()
 
         if not opts.format:
-            opts.format = self.config['format'].get(six.text_type).lower()
+            opts.format = self.config['format'].as_str().lower()
 
         pretend = opts.pretend if opts.pretend is not None else \
             self.config['pretend'].get(bool)
@@ -423,7 +422,7 @@ class ConvertPlugin(BeetsPlugin):
         """Transcode a file automatically after it is imported into the
         library.
         """
-        fmt = self.config['format'].get(six.text_type).lower()
+        fmt = self.config['format'].as_str().lower()
         if should_transcode(item, fmt):
             command, ext = get_format()
 

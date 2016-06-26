@@ -70,7 +70,7 @@ def configure():
     """Set up the python-musicbrainz-ngs module according to settings
     from the beets configuration. This should be called at startup.
     """
-    hostname = config['musicbrainz']['host'].get(six.text_type)
+    hostname = config['musicbrainz']['host'].as_str()
     musicbrainzngs.set_hostname(hostname)
     musicbrainzngs.set_rate_limit(
         config['musicbrainz']['ratelimit_interval'].as_number(),
@@ -262,7 +262,7 @@ def album_info(release):
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     if info.va:
-        info.artist = config['va_name'].get(six.text_type)
+        info.artist = config['va_name'].as_str()
     info.asin = release.get('asin')
     info.releasegroup_id = release['release-group']['id']
     info.country = release.get('country')
