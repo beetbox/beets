@@ -1340,7 +1340,7 @@ class Filename(Template):
 
     def value(self, view, template=None):
         path, source = view.first()
-        if not isinstance(path, (bytes, BASESTRING)):
+        if not isinstance(path, BASESTRING):
             self.fail(
                 u'must be a filename, not {0}'.format(type(path).__name__),
                 view,
