@@ -334,7 +334,7 @@ def match_album(artist, album, tracks=None):
         criteria['tracks'] = six.text_type(tracks)
 
     # Abort if we have no search terms.
-    if not any(six.itervalues(criteria)):
+    if not any(criteria.values()):
         return
 
     try:
@@ -360,7 +360,7 @@ def match_track(artist, title):
         'recording': title.lower().strip(),
     }
 
-    if not any(six.itervalues(criteria)):
+    if not any(criteria.values()):
         return
 
     try:
