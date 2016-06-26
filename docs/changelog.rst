@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.19 (in development)
------------------------
+1.3.19 (June 25, 2016)
+----------------------
 
 This is primarily a bug fix release: it cleans up a couple of regressions that
 appeared in the last version. But it also features the triumphant return of the
