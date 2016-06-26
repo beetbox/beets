@@ -4,17 +4,24 @@ Changelog
 1.3.19 (in development)
 -----------------------
 
+This is primarily a bug fix release: it cleans up a couple of regressions that
+appeared in the last version. But it also features the triumphant return of the
+:doc:`/plugins/beatport` and a modernized :doc:`/plugins/bpd`.
+
+It's also the first version where beets passes all its tests on Windows! May
+this herald a new age of cross-platform reliability for beets.
+
 New features:
 
-* A new ``--force`` option for :ref:`remove-cmd` allows removal of items
-  without prompting beforehand. :bug:`2042`
-* A new importer configuration :ref:`duplicate_action` controls how
-  duplicate albums or tracks treated in import task. :bug:`185`
-* :doc:`/plugins/bpd`: The plugin now uses the modern GStreamer 1.0 instead of
-  the old 0.10. Thanks to :user:`philippbeckmann`. :bug:`2057` :bug:`2062`
 * :doc:`/plugins/beatport`: This metadata source plugin has arisen from the
   dead! It now works with Beatport's new OAuth-based API. Thanks to
   :user:`jbaiter`. :bug:`1989` :bug:`2067`
+* :doc:`/plugins/bpd`: The plugin now uses the modern GStreamer 1.0 instead of
+  the old 0.10. Thanks to :user:`philippbeckmann`. :bug:`2057` :bug:`2062`
+* A new ``--force`` option for the :ref:`remove-cmd` command allows removal of
+  items without prompting beforehand. :bug:`2042`
+* A new :ref:`duplicate_action` importer config option controls how duplicate
+  albums or tracks treated in import task. :bug:`185`
 
 Some fixes for Windows:
 
@@ -25,24 +32,26 @@ Some fixes for Windows:
 * :doc:`/plugins/fetchart`: The plugin should work more reliably with
   non-ASCII paths.
 
-Fixes:
+And other fixes:
 
 * :doc:`/plugins/replaygain`: The ``bs1770gain`` backend now correctly
   calculates sample peak instead of true peak. This comes with a major
   speed increase. :bug:`2031`
 * :doc:`/plugins/lyrics`: Avoid a crash and a spurious warning introduced in
   the last version about a Google API key, which appeared even when you hadn't
-  tried to enable the Google lyrics source.
+  enabled the Google lyrics source.
 * Fix a hard-coded path to ``bash-completion`` to work better with Homebrew
   installations. Thanks to :user:`bismark`. :bug:`2038`
 * Fix a crash introduced in the previous version when the standard input was
   connected to a Unix pipe. :bug:`2041`
 * Fix a crash when specifying non-ASCII format strings on the command line
-  with the ``-f`` option to many commands. :bug:`2063`
+  with the ``-f`` option for many commands. :bug:`2063`
 * :doc:`/plugins/fetchart`: Determine the file extension for downloaded images
-  based on the image's magic bytes and warn if result is not consistent with
-  the server-supplied ``Content-Type`` header instead of
-  hardcoding it to .jpg. :bug:`2053`
+  based on the image's magic bytes. The plugin prints a warning if result is
+  not consistent with the server-supplied ``Content-Type`` header. In previous
+  versions, the plugin would use a ``.jpg`` extension for all images.
+  :bug:`2053`
+
 
 1.3.18 (May 31, 2016)
 ---------------------
