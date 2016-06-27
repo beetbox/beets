@@ -1384,20 +1384,10 @@ class MediaFile(object):
         elif (type(self.mgfile).__name__ == 'M4A' or
               type(self.mgfile).__name__ == 'MP4'):
             info = self.mgfile.info
-            if hasattr(info, 'codec'):
-                if info.codec and info.codec.startswith('alac'):
-                    self.type = 'alac'
-                else:
-                    self.type = 'aac'
+            if info.codec and info.codec.startswith('alac'):
+                self.type = 'alac'
             else:
-                # This hack differentiates AAC and ALAC on versions of
-                # Mutagen < 1.26. Once Mutagen > 1.26 is out and
-                # required by beets, we can remove this.
-                if hasattr(self.mgfile.info, 'bitrate') and \
-                   self.mgfile.info.bitrate > 0:
-                    self.type = 'aac'
-                else:
-                    self.type = 'alac'
+                self.type = 'aac'
         elif (type(self.mgfile).__name__ == 'ID3' or
               type(self.mgfile).__name__ == 'MP3'):
             self.type = 'mp3'
