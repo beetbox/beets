@@ -119,7 +119,7 @@ class ScrubPlugin(BeetsPlugin):
             try:
                 mf = mediafile.MediaFile(util.syspath(item.path),
                                          config['id3v23'].get(bool))
-            except IOError as exc:
+            except mediafile.UnreadableFileError as exc:
                 self._log.error(u'could not open file to scrub: {0}',
                                 exc)
             art = mf.art
@@ -133,10 +133,13 @@ class ScrubPlugin(BeetsPlugin):
             item.try_write()
             if art:
                 self._log.debug(u'restoring art')
-                mf = mediafile.MediaFile(util.syspath(item.path),
-                                         config['id3v23'].get(bool))
-                mf.art = art
-                mf.save()
+                try:
+                    mf = mediafile.MediaFile(util.syspath(item.path),
+                                             config['id3v23'].get(bool))
+                    mf.art = art
+                    mf.save()
+                except mediafile.UnreadableFileError as exc:
+                    self._log.error(u'could not write tags: {0}', exc)
 
     def import_task_files(self, session, task):
         """Automatically scrub imported files."""
