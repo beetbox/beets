@@ -1457,6 +1457,7 @@ class MediaFile(object):
         try:
             self.mgfile.delete()
         except NotImplementedError:
+            # FIXME: This is fixed in mutagen >=1.31
             # For Mutagen types that don't support deletion (notably,
             # ASF), just delete each tag individually.
             for tag in self.mgfile.keys():
