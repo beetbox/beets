@@ -1960,6 +1960,7 @@ class MediaFile(object):
     def channels(self):
         """The number of channels in the audio (an int)."""
         if isinstance(self.mgfile.info, mutagen.mp3.MPEGInfo):
+            # FIXME: MPEGInfo.channels was added in mutagen 1.30
             return {
                 mutagen.mp3.STEREO: 2,
                 mutagen.mp3.JOINTSTEREO: 2,
