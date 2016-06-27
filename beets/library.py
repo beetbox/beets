@@ -26,7 +26,7 @@ import six
 from unidecode import unidecode
 
 from beets import logging
-from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
+from beets.mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile
@@ -568,7 +568,7 @@ class Item(LibModel):
             read_path = normpath(read_path)
         try:
             mediafile = MediaFile(syspath(read_path))
-        except (OSError, IOError, UnreadableFileError) as exc:
+        except UnreadableFileError as exc:
             raise ReadError(read_path, exc)
 
         for key in self._media_fields:
@@ -615,14 +615,14 @@ class Item(LibModel):
         try:
             mediafile = MediaFile(syspath(path),
                                   id3v23=beets.config['id3v23'].get(bool))
-        except (OSError, IOError, UnreadableFileError) as exc:
+        except UnreadableFileError as exc:
             raise ReadError(self.path, exc)
 
         # Write the tags to the file.
         mediafile.update(item_tags)
         try:
             mediafile.save()
-        except (OSError, IOError, MutagenError) as exc:
+        except UnreadableFileError as exc:
             raise WriteError(self.path, exc)
 
         # The file has a new mtime.

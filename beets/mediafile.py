@@ -1346,32 +1346,12 @@ class MediaFile(object):
         path = syspath(path)
         self.path = path
 
-        unreadable_exc = (
-            mutagen.mp3.error,
-            mutagen.id3.error,
-            mutagen.flac.error,
-            mutagen.monkeysaudio.MonkeysAudioHeaderError,
-            mutagen.mp4.error,
-            mutagen.oggopus.error,
-            mutagen.oggvorbis.error,
-            mutagen.ogg.error,
-            mutagen.asf.error,
-            mutagen.apev2.error,
-            mutagen.aiff.error,
-        )
         try:
             self.mgfile = mutagen.File(path)
-        except unreadable_exc as exc:
-            log.debug(u'header parsing failed: {0}', six.text_type(exc))
+        except (mutagen.MutagenError, IOError) as exc:
+            # Mutagen <1.33 could raise IOError
+            log.debug(u'parsing failed: {0}', six.text_type(exc))
             raise UnreadableFileError(path)
-        except IOError as exc:
-            if type(exc) == IOError:
-                # This is a base IOError, not a subclass from Mutagen or
-                # anywhere else.
-                raise
-            else:
-                log.debug(u'{}', traceback.format_exc())
-                raise MutagenError(path, exc)
         except Exception as exc:
             # Isolate bugs in Mutagen.
             log.debug(u'{}', traceback.format_exc())
@@ -1418,7 +1398,8 @@ class MediaFile(object):
         self.id3v23 = id3v23 and self.type == 'mp3'
 
     def save(self):
-        """Write the object's tags back to the file.
+        """Write the object's tags back to the file. May
+        throw `UnreadableFileError`.
         """
         # Possibly save the tags to ID3v2.3.
         kwargs = {}
@@ -1430,28 +1411,41 @@ class MediaFile(object):
             id3.update_to_v23()
             kwargs['v2_version'] = 3
 
-        # Isolate bugs in Mutagen.
         try:
             self.mgfile.save(**kwargs)
-        except (IOError, OSError):
-            # Propagate these through: they don't represent Mutagen bugs.
-            raise
+        except (mutagen.MutagenError, IOError) as exc:
+            # Mutagen <1.33 could raise IOError
+            log.debug(u'saving failed: {0}', six.text_type(exc))
+            raise UnreadableFileError(self.path)
         except Exception as exc:
+            # Isolate bugs in Mutagen.
             log.debug(u'{}', traceback.format_exc())
             log.error(u'uncaught Mutagen exception in save: {0}', exc)
             raise MutagenError(self.path, exc)
 
     def delete(self):
-        """Remove the current metadata tag from the file.
+        """Remove the current metadata tag from the file. May
+        throw `UnreadableFileError`.
         """
+
         try:
-            self.mgfile.delete()
-        except NotImplementedError:
-            # FIXME: This is fixed in mutagen >=1.31
-            # For Mutagen types that don't support deletion (notably,
-            # ASF), just delete each tag individually.
-            for tag in self.mgfile.keys():
-                del self.mgfile[tag]
+            try:
+                self.mgfile.delete()
+            except NotImplementedError:
+                # FIXME: This is fixed in mutagen >=1.31
+                # For Mutagen types that don't support deletion (notably,
+                # ASF), just delete each tag individually.
+                for tag in self.mgfile.keys():
+                    del self.mgfile[tag]
+        except (mutagen.MutagenError, IOError) as exc:
+            # Mutagen <1.33 could raise IOError
+            log.debug(u'deleting failed: {0}', six.text_type(exc))
+            raise UnreadableFileError(self.path)
+        except Exception as exc:
+            # Isolate bugs in Mutagen.
+            log.debug(u'{}', traceback.format_exc())
+            log.error(u'uncaught Mutagen exception in save: {0}', exc)
+            raise MutagenError(self.path, exc)
 
     # Convenient access to the set of available fields.
 
