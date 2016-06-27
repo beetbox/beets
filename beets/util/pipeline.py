@@ -412,7 +412,7 @@ class Pipeline(object):
         try:
             # Using a timeout allows us to receive KeyboardInterrupt
             # exceptions during the join().
-            while threads[-1].isAlive():
+            while threads[-1].is_alive():
                 threads[-1].join(1)
 
         except:
