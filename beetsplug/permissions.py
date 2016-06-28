@@ -96,6 +96,10 @@ class Permissions(BeetsPlugin):
 
         for path in file_chmod_queue:
             # Changing permissions on the destination file.
+            self._log.debug(
+                u'setting file permissions on {}',
+                util.displayable_path(path),
+            )
             os.chmod(util.syspath(path), file_perm)
 
             # Checks if the destination path has the permissions configured.
@@ -109,6 +113,10 @@ class Permissions(BeetsPlugin):
         # Change permissions for the directories.
         for path in dir_chmod_queue:
             # Chaning permissions on the destination directory.
+            self._log.debug(
+                u'setting directory permissions on {}',
+                util.displayable_path(path),
+            )
             os.chmod(util.syspath(path), dir_perm)
 
             # Checks if the destination path has the permissions configured.
