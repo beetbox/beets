@@ -1429,22 +1429,15 @@ class MediaFile(object):
         """
 
         try:
-            try:
-                self.mgfile.delete()
-            except NotImplementedError:
-                # FIXME: This is fixed in mutagen >=1.31
-                # For Mutagen types that don't support deletion (notably,
-                # ASF), just delete each tag individually.
-                for tag in self.mgfile.keys():
-                    del self.mgfile[tag]
+            self.mgfile.delete()
         except (mutagen.MutagenError, IOError) as exc:
-            # Mutagen <1.33 could raise IOError
+            # Mutagen <1.33 could raise IOError.
             log.debug(u'deleting failed: {0}', six.text_type(exc))
             raise UnreadableFileError(self.path)
         except Exception as exc:
             # Isolate bugs in Mutagen.
             log.debug(u'{}', traceback.format_exc())
-            log.error(u'uncaught Mutagen exception in save: {0}', exc)
+            log.error(u'uncaught Mutagen exception in delete: {0}', exc)
             raise MutagenError(self.path, exc)
 
     # Convenient access to the set of available fields.
@@ -1953,14 +1946,6 @@ class MediaFile(object):
     @property
     def channels(self):
         """The number of channels in the audio (an int)."""
-        if isinstance(self.mgfile.info, mutagen.mp3.MPEGInfo):
-            # FIXME: MPEGInfo.channels was added in mutagen 1.30
-            return {
-                mutagen.mp3.STEREO: 2,
-                mutagen.mp3.JOINTSTEREO: 2,
-                mutagen.mp3.DUALCHANNEL: 2,
-                mutagen.mp3.MONO: 1,
-            }[self.mgfile.info.mode]
         if hasattr(self.mgfile.info, 'channels'):
             return self.mgfile.info.channels
         return 0

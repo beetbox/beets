@@ -4,8 +4,12 @@ Changelog
 1.3.20 (in development)
 -----------------------
 
-This version of beets now depends on the `six`_ library. This is our first
-step toward supporting Python 3.
+Some dependency notes for packagers:
+
+* This version of beets now depends on the `six`_ library. This is our first
+  step toward supporting Python 3.
+* We also bumped our minimum required version of `Mutagen`_ to 1.31 (from
+  1.27).
 
 New features:
 
