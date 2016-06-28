@@ -29,7 +29,7 @@ from test import _common
 from test._common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
     MP3DescStorageStyle, StorageStyle, MP4StorageStyle, \
-    ASFStorageStyle, ImageType, CoverArtField
+    ASFStorageStyle, ImageType, CoverArtField, UnreadableFileError
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import bytestring_path
@@ -454,6 +454,27 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
     def tearDown(self):
         if os.path.isdir(self.temp_dir):
             shutil.rmtree(self.temp_dir)
+
+    def test_read_nonexisting(self):
+        mediafile = self._mediafile_fixture('full')
+        os.remove(mediafile.path)
+        self.assertRaises(UnreadableFileError, MediaFile, mediafile.path)
+
+    def test_save_nonexisting(self):
+        mediafile = self._mediafile_fixture('full')
+        os.remove(mediafile.path)
+        try:
+            mediafile.save()
+        except UnreadableFileError:
+            pass
+
+    def test_delete_nonexisting(self):
+        mediafile = self._mediafile_fixture('full')
+        os.remove(mediafile.path)
+        try:
+            mediafile.delete()
+        except UnreadableFileError:
+            pass
 
     def test_read_audio_properties(self):
         mediafile = self._mediafile_fixture('full')
