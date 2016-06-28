@@ -25,9 +25,27 @@ def convert_perm(perm):
 
 
 def check_permissions(path, permission):
-    """Checks the permissions of a path.
+    """Check whether the file's permissions equal the given vector.
+    Return a boolean.
     """
     return oct(os.stat(path).st_mode & 0o777) == oct(permission)
+
+
+def assert_permissions(path, permission, log):
+    """Check whether the file's permissions are as expected, otherwise,
+    log a warning message. Return a boolean indicating the match, like
+    `check_permissions`.
+    """
+    if not check_permissions(util.syspath(path), permission):
+        log.warn(
+            u'could not set permissions on {}',
+            util.displayable_path(path),
+        )
+        log.debug(
+            u'set permissions to {}, but permissions are now {}',
+            permission,
+            os.stat(util.syspath(path)).st_mode & 0o777,
+        )
 
 
 def dirs_in_library(library, item):
@@ -78,11 +96,7 @@ class Permissions(BeetsPlugin):
             os.chmod(util.syspath(path), file_perm)
 
             # Checks if the destination path has the permissions configured.
-            if not check_permissions(util.syspath(path), file_perm):
-                self._log.warn(
-                    u'There was a problem setting permissions on file {}',
-                    path,
-                )
+            assert_permissions(path, file_perm, self._log)
 
             # Adding directories to the directory chmod queue.
             dir_chmod_queue.update(
@@ -95,8 +109,4 @@ class Permissions(BeetsPlugin):
             os.chmod(util.syspath(path), dir_perm)
 
             # Checks if the destination path has the permissions configured.
-            if not check_permissions(util.syspath(path), dir_perm):
-                self._log.warn(
-                    u'There was a problem setting permissions on directory {}',
-                    path,
-                )
+            assert_permissions(path, dir_perm, self._log)
