@@ -249,6 +249,7 @@ class BeatportTrack(BeatportObject):
         if 'slug' in data:
             self.url = "http://beatport.com/track/{0}/{1}".format(data['slug'],
                                                                   data['id'])
+        self.track_number = data.get('trackNumber')
 
 
 class BeatportPlugin(BeetsPlugin):
@@ -403,8 +404,7 @@ class BeatportPlugin(BeetsPlugin):
         artist, artist_id = self._get_artist(release.artists)
         if va:
             artist = u"Various Artists"
-        tracks = [self._get_track_info(x, index=idx)
-                  for idx, x in enumerate(release.tracks, 1)]
+        tracks = [self._get_track_info(x) for x in release.tracks]
 
         return AlbumInfo(album=release.name, album_id=release.beatport_id,
                          artist=artist, artist_id=artist_id, tracks=tracks,
@@ -416,7 +416,7 @@ class BeatportPlugin(BeetsPlugin):
                          catalognum=release.catalog_number, media=u'Digital',
                          data_source=u'Beatport', data_url=release.url)
 
-    def _get_track_info(self, track, index=None):
+    def _get_track_info(self, track):
         """Returns a TrackInfo object for a Beatport Track object.
         """
         title = track.name
@@ -424,10 +424,9 @@ class BeatportPlugin(BeetsPlugin):
             title += u" ({0})".format(track.mix_name)
         artist, artist_id = self._get_artist(track.artists)
         length = track.length.total_seconds()
-
         return TrackInfo(title=title, track_id=track.beatport_id,
                          artist=artist, artist_id=artist_id,
-                         length=length, index=index,
+                         length=length, index=track.track_number,
                          data_source=u'Beatport', data_url=track.url)
 
     def _get_artist(self, artists):
