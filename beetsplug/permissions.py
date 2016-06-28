@@ -13,15 +13,17 @@ import os
 from beets import config, util
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry
+import six
 
 
 def convert_perm(perm):
-    """If the perm is a int then just return it, otherwise convert it to oct.
+    """Convert a string to an integer, interpreting the text as octal.
+    Or, if `perm` is an integer, reinterpret it as an octal number that
+    has been "misinterpreted" as decimal.
     """
-    if isinstance(perm, int):
-        return perm
-    else:
-        return int(perm, 8)
+    if isinstance(perm, six.integer_types):
+        perm = six.text_type(perm)
+    return int(perm, 8)
 
 
 def check_permissions(path, permission):
@@ -63,7 +65,7 @@ class Permissions(BeetsPlugin):
         # Adding defaults.
         self.config.add({
             u'file': '644',
-            u'dir': '755'
+            u'dir': '755',
         })
 
         self.register_listener('item_imported', self.fix)
@@ -72,11 +74,12 @@ class Permissions(BeetsPlugin):
     def fix(self, lib, item=None, album=None):
         """Fix the permissions for an imported Item or Album.
         """
-        # Getting the config.
+        # Get the configured permissions. The user can specify this either a
+        # string (in YAML quotes) or, for convenience, as an integer so the
+        # quotes can be omitted. In the latter case, we need to reinterpret the
+        # integer as octal, not decimal.
         file_perm = config['permissions']['file'].get()
         dir_perm = config['permissions']['dir'].get()
-
-        # Converts permissions to oct.
         file_perm = convert_perm(file_perm)
         dir_perm = convert_perm(dir_perm)
 
