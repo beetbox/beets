@@ -13,9 +13,15 @@ New features:
   'path' tag to the json outpu of a file which shows the relative path to the
   file. :bug:`2050`
 
-Other fixes:
+Fixes:
 
 * :doc:`/plugins/web`: Normalized the json output
+* :doc:`/plugins/permissions`: Fix a regression in the previous release where
+  the plugin would always fail to set permissions (and log a warning).
+  :bug:`2089`
+
+The last release, 1.3.19, also erroneously reported its version as "1.3.18"
+when you typed ``beet version``. This has been corrected.
 
 .. _six: https://pythonhosted.org/six/
 

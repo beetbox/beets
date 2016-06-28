@@ -74,6 +74,9 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
     def test_convert_perm_from_string(self):
         self.assertEqual(convert_perm('10'), 8)
 
+    def test_convert_perm_from_int(self):
+        self.assertEqual(convert_perm(10), 8)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
