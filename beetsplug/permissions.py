@@ -48,54 +48,55 @@ class Permissions(BeetsPlugin):
             u'dir': '755'
         })
 
-        self.register_listener('item_imported', permissions)
-        self.register_listener('album_imported', permissions)
+        self.register_listener('item_imported', self.fix)
+        self.register_listener('album_imported', self.fix)
 
+    def fix(self, lib, item=None, album=None):
+        """Fix the permissions for an imported Item or Album.
+        """
+        # Getting the config.
+        file_perm = config['permissions']['file'].get()
+        dir_perm = config['permissions']['dir'].get()
 
-def permissions(lib, item=None, album=None):
-    """Running the permission fixer.
-    """
-    # Getting the config.
-    file_perm = config['permissions']['file'].get()
-    dir_perm = config['permissions']['dir'].get()
+        # Converts permissions to oct.
+        file_perm = convert_perm(file_perm)
+        dir_perm = convert_perm(dir_perm)
 
-    # Converts permissions to oct.
-    file_perm = convert_perm(file_perm)
-    dir_perm = convert_perm(dir_perm)
+        # Create chmod_queue.
+        file_chmod_queue = []
+        if item:
+            file_chmod_queue.append(item.path)
+        elif album:
+            for album_item in album.items():
+                file_chmod_queue.append(album_item.path)
 
-    # Create chmod_queue.
-    file_chmod_queue = []
-    if item:
-        file_chmod_queue.append(item.path)
-    elif album:
-        for album_item in album.items():
-            file_chmod_queue.append(album_item.path)
+        # A set of directories to change permissions for.
+        dir_chmod_queue = set()
 
-    # A set of directories to change permissions for.
-    dir_chmod_queue = set()
+        for path in file_chmod_queue:
+            # Changing permissions on the destination file.
+            os.chmod(util.bytestring_path(path), file_perm)
 
-    for path in file_chmod_queue:
-        # Changing permissions on the destination file.
-        os.chmod(util.bytestring_path(path), file_perm)
+            # Checks if the destination path has the permissions configured.
+            if not check_permissions(util.bytestring_path(path), file_perm):
+                self._log.warn(
+                    u'There was a problem setting permissions on file {}',
+                    path,
+                )
 
-        # Checks if the destination path has the permissions configured.
-        if not check_permissions(util.bytestring_path(path), file_perm):
-            message = u'There was a problem setting permission on {}'.format(
-                path)
-            print(message)
+            # Adding directories to the directory chmod queue.
+            dir_chmod_queue.update(
+                dirs_in_library(lib.directory,
+                                path))
 
-        # Adding directories to the directory chmod queue.
-        dir_chmod_queue.update(
-            dirs_in_library(lib.directory,
-                            path))
+        # Change permissions for the directories.
+        for path in dir_chmod_queue:
+            # Chaning permissions on the destination directory.
+            os.chmod(util.bytestring_path(path), dir_perm)
 
-    # Change permissions for the directories.
-    for path in dir_chmod_queue:
-        # Chaning permissions on the destination directory.
-        os.chmod(util.bytestring_path(path), dir_perm)
-
-        # Checks if the destination path has the permissions configured.
-        if not check_permissions(util.bytestring_path(path), dir_perm):
-            message = u'There was a problem setting permission on {}'.format(
-                path)
-            print(message)
+            # Checks if the destination path has the permissions configured.
+            if not check_permissions(util.bytestring_path(path), dir_perm):
+                self._log.warn(
+                    u'There was a problem setting permissions on directory {}',
+                    path,
+                )
