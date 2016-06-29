@@ -23,6 +23,9 @@ Fixes:
 * :doc:`/plugins/permissions`: Fix a regression in the previous release where
   the plugin would always fail to set permissions (and log a warning).
   :bug:`2089`
+* With :ref:`per_disc_numbering` enabled, some metadata sources (notably, the
+  :doc:`/plugins/beatport`) would not set the track number at all. This is
+  fixed. :bug:`2085`
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
