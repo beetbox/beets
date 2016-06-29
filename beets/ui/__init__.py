@@ -135,25 +135,25 @@ def print_(*strings, **kwargs):
     is not in the terminal's encoding's character set, just silently
     replaces it.
 
-    If the arguments are strings then they're expected to share the same
-    type: either bytes or unicode.
+    The arguments must be unicode strings
 
     The `end` keyword argument behaves similarly to the built-in `print`
     (it defaults to a newline). The value should have the same string
     type as the arguments.
     """
+    if not strings:
+        strings = [u'']
+
     end = kwargs.get('end')
+    assert isinstance(strings[0], six.text_type)
 
-    if not strings or isinstance(strings[0], six.text_type):
-        txt = u' '.join(strings)
-        txt += u'\n' if end is None else end
-    else:
-        txt = b' '.join(strings)
-        txt += b'\n' if end is None else end
+    txt = u' '.join(strings)
+    txt += u'\n' if end is None else end
 
-    # Always send bytes to the stdout stream.
-    if isinstance(txt, six.text_type):
-        txt = txt.encode(_out_encoding(), 'replace')
+    # Always send bytes to the stdout stream on python 2.
+    if six.PY2:
+        if isinstance(txt, six.text_type):
+            txt = txt.encode(_out_encoding(), 'replace')
 
     sys.stdout.write(txt)
 
@@ -207,7 +207,7 @@ def input_(prompt=None):
     # use print_() explicitly to display prompts.
     # http://bugs.python.org/issue1927
     if prompt:
-        print_(prompt, end=' ')
+        print_(prompt, end=u' ')
 
     try:
         resp = input()
