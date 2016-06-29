@@ -754,6 +754,7 @@ class MP3DescStorageStyle(MP3StorageStyle):
     selected based its ``desc`` field.
     """
     def __init__(self, desc=u'', key='TXXX', **kwargs):
+        assert isinstance(desc, six.text_type)
         self.description = desc
         super(MP3DescStorageStyle, self).__init__(key=key, **kwargs)
 
@@ -1702,7 +1703,7 @@ class MediaFile(object):
         ASFStorageStyle('WM/Language'),
     )
     country = MediaField(
-        MP3DescStorageStyle('MusicBrainz Album Release Country'),
+        MP3DescStorageStyle(u'MusicBrainz Album Release Country'),
         MP4StorageStyle('----:com.apple.iTunes:MusicBrainz '
                         'Album Release Country'),
         StorageStyle('RELEASECOUNTRY'),
