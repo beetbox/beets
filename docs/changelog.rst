@@ -23,6 +23,9 @@ Fixes:
 * :doc:`/plugins/permissions`: Fix a regression in the previous release where
   the plugin would always fail to set permissions (and log a warning).
   :bug:`2089`
+* :doc:`/plugins/beatport`: Use track numbers from Beatport (instead of
+  determining them from the order of tracks) and set the `medium_index`
+  value.
 * With :ref:`per_disc_numbering` enabled, some metadata sources (notably, the
   :doc:`/plugins/beatport`) would not set the track number at all. This is
   fixed. :bug:`2085`
