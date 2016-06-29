@@ -214,7 +214,10 @@ def input_(prompt=None):
     except EOFError:
         raise UserError(u'stdin stream ended while input required')
 
-    return resp.decode(_in_encoding(), 'ignore')
+    if six.PY2:
+        return resp.decode(_in_encoding(), 'ignore')
+    else:
+        return resp
 
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
