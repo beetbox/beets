@@ -430,6 +430,7 @@ class BeatportPlugin(BeetsPlugin):
         return TrackInfo(title=title, track_id=track.beatport_id,
                          artist=artist, artist_id=artist_id,
                          length=length, index=track.track_number,
+                         medium_index=track.track_number,
                          data_source=u'Beatport', data_url=track.url)
 
     def _get_artist(self, artists):
