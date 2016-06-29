@@ -64,7 +64,17 @@ def _invalidate_queue(q, val=None, sync=True):
         q.mutex.acquire()
 
     try:
-        q.maxsize = 0
+        # Originally, we set `maxsize` to 0 here, which is supposed to mean
+        # an unlimited queue size. However, there is a race condition since
+        # Python 3.2 when this attribute is changed while another thread is
+        # waiting in put()/get() due to a full/empty queue.
+        # Setting it to 2 is still hacky because Python does not give any
+        # guarantee what happens if Queue methods/attributes are overwritten
+        # when it is already in use. However, because of our dummy _put()
+        # and _get() methods, it provides a workaround to let the queue appear
+        # to be never empty or full.
+        # See issue https://github.com/beetbox/beets/issues/2078
+        q.maxsize = 2
         q._qsize = _qsize
         q._put = _put
         q._get = _get
