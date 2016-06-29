@@ -128,7 +128,7 @@ class PlayPlugin(BeetsPlugin):
                 u'You are about to queue {0} {1}.'.format(
                     len(selection), item_type)))
 
-            if ui.input_options(('Continue', 'Abort')) == 'a':
+            if ui.input_options((u'Continue', u'Abort')) == 'a':
                 return
 
         ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
