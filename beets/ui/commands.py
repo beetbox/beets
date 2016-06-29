@@ -86,13 +86,13 @@ def _print_keys(query):
     returned row, with identation of 2 spaces.
     """
     for row in query:
-        print_(' ' * 2 + row['key'])
+        print_(u' ' * 2 + six.text_type(row['key']))
 
 
 def fields_func(lib, opts, args):
     def _print_rows(names):
         names.sort()
-        print_("  " + "\n  ".join(names))
+        print_(six.text_type('  ' + '\n  '.join(names)))
 
     print_(u"Item fields:")
     _print_rows(library.Item.all_keys())
@@ -1060,10 +1060,10 @@ def list_items(lib, query, album, fmt=''):
     """
     if album:
         for album in lib.albums(query):
-            ui.print_(format(album, fmt))
+            ui.print_(six.text_type(format(album, fmt)))
     else:
         for item in lib.items(query):
-            ui.print_(format(item, fmt))
+            ui.print_(six.text_type(format(item, fmt)))
 
 
 def list_func(lib, opts, args):
@@ -1211,7 +1211,7 @@ def remove_items(lib, query, album, delete, force):
             prompt = u'Really DELETE %i file%s (y/n)?' % \
                      (len(items), 's' if len(items) > 1 else '')
         else:
-            fmt = ''
+            fmt = u''
             prompt = u'Really remove %i item%s from the library (y/n)?' % \
                      (len(items), 's' if len(items) > 1 else '')
 
@@ -1608,7 +1608,7 @@ def config_func(lib, opts, args):
             filenames.insert(0, user_path)
 
         for filename in filenames:
-            print_(filename)
+            print_(displayable_path(filename))
 
     # Open in editor.
     elif opts.edit:
@@ -1616,7 +1616,8 @@ def config_func(lib, opts, args):
 
     # Dump configuration.
     else:
-        print_(config.dump(full=opts.defaults, redact=opts.redact))
+        config_out = config.dump(full=opts.defaults, redact=opts.redact)
+        print_(six.text_type(config_out))
 
 
 def config_edit():
@@ -1662,7 +1663,7 @@ default_commands.append(config_cmd)
 
 def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
-        print_(line, end='')
+        print_(six.text_type(line), end=u'')
     if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
         log.warn(u'Warning: Unable to find the bash-completion package. '
                  u'Command line completion might not work.')
