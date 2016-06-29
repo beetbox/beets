@@ -122,9 +122,12 @@ def _arg_encoding():
 
 def decargs(arglist):
     """Given a list of command-line argument bytestrings, attempts to
-    decode them to Unicode strings.
+    decode them to Unicode strings when running under Python 2.
     """
-    return [s.decode(_arg_encoding()) for s in arglist]
+    if six.PY2:
+        return [s.decode(_arg_encoding()) for s in arglist]
+    else:
+        return arglist
 
 
 def print_(*strings, **kwargs):
@@ -211,7 +214,10 @@ def input_(prompt=None):
     except EOFError:
         raise UserError(u'stdin stream ended while input required')
 
-    return resp.decode(_in_encoding(), 'ignore')
+    if six.PY2:
+        return resp.decode(_in_encoding(), 'ignore')
+    else:
+        return resp
 
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
