@@ -772,7 +772,7 @@ class TerminalImportSession(importer.ImportSession):
         either an action constant or a TrackMatch object.
         """
         print_()
-        print_(task.item.path)
+        print_(displayable_path(task.item.path))
         candidates, rec = task.candidates, task.rec
 
         # Take immediate action if appropriate.
