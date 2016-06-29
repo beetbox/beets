@@ -762,7 +762,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if 'remote_priority' in self.config:
             self._log.warning(
                 u'The `fetch_art.remote_priority` configuration option has '
-                u'been deprecated, see the documentation.')
+                u'been deprecated. Instead, place `filesystem` at the end of '
+                u'your `sources` list.')
             if self.config['remote_priority'].get(bool):
                 try:
                     sources_name.remove(u'filesystem')
