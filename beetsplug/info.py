@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import re
+import six
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -91,7 +92,7 @@ def print_data(data, item=None, fmt=None):
     """
     if fmt:
         # use fmt specified by the user
-        ui.print_(format(item, fmt))
+        ui.print_(six.text_type(format(item, fmt)))
         return
 
     path = displayable_path(item.path) if item else None
