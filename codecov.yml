@@ -4,9 +4,6 @@ comment: off
 # I think this disables commit statuses?
 coverage:
     status:
-        project:
-            enabled: no
-        patch:
-            enabled: no
-        changes:
-            enabled: no
+        project: no
+        patch: no
+        changes: no
