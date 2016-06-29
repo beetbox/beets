@@ -508,7 +508,7 @@ class Template(object):
     def __init__(self, template):
         self.expr = _parse(template)
         self.original = template
-        if six.PY2:
+        if six.PY2:  # FIXME Compiler is broken on Python 3.
             self.compiled = self.translate()
 
     def __eq__(self, other):
@@ -525,7 +525,7 @@ class Template(object):
     def substitute(self, values={}, functions={}):
         """Evaluate the template given the values and functions.
         """
-        if six.PY2:
+        if six.PY2:  # FIXME As above.
             try:
                 res = self.compiled(values, functions)
             except:  # Handle any exceptions thrown by compiled version.
