@@ -351,6 +351,9 @@ class Image(object):
                     the binary data
     """
     def __init__(self, data, desc=None, type=None):
+        assert isinstance(data, bytes)
+        if desc is not None:
+            assert isinstance(desc, six.text_type)
         self.data = data
         self.desc = desc
         if isinstance(type, int):
@@ -1026,8 +1029,11 @@ class APEv2ImageStorageStyle(ListStorageStyle):
             try:
                 frame = mutagen_file[cover_tag]
                 text_delimiter_index = frame.value.find(b'\x00')
-                comment = frame.value[0:text_delimiter_index] \
-                    if text_delimiter_index > 0 else None
+                if text_delimiter_index > 0:
+                    comment = frame.value[0:text_delimiter_index]
+                    comment = comment.decode('utf8', 'replace')
+                else:
+                    comment = None
                 image_data = frame.value[text_delimiter_index + 1:]
                 images.append(Image(data=image_data, type=cover_type,
                                     desc=comment))
