@@ -162,7 +162,6 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
         pl.run_parallel(1)
         self.assertEqual(l, [i * 2 for i in range(1000)])
 
-    @unittest.skipIf(six.PY3, u'freezes the test suite in py3')
     def test_constrained_exception(self):
         # Raise an exception in a constrained pipeline.
         l = []
