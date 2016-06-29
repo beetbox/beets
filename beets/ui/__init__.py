@@ -135,7 +135,8 @@ def print_(*strings, **kwargs):
     is not in the terminal's encoding's character set, just silently
     replaces it.
 
-    The arguments must be unicode strings
+    The arguments must be Unicode strings: `unicode` on Python 2; `str` on
+    Python 3.
 
     The `end` keyword argument behaves similarly to the built-in `print`
     (it defaults to a newline). The value should have the same string
@@ -143,17 +144,14 @@ def print_(*strings, **kwargs):
     """
     if not strings:
         strings = [u'']
-
-    end = kwargs.get('end')
     assert isinstance(strings[0], six.text_type)
 
     txt = u' '.join(strings)
-    txt += u'\n' if end is None else end
+    txt += kwargs.get('end', u'\n')
 
-    # Always send bytes to the stdout stream on python 2.
+    # Send bytes to the stdout stream on Python 2.
     if six.PY2:
-        if isinstance(txt, six.text_type):
-            txt = txt.encode(_out_encoding(), 'replace')
+        txt = txt.encode(_out_encoding(), 'replace')
 
     sys.stdout.write(txt)
 
