@@ -351,6 +351,9 @@ class Image(object):
                     the binary data
     """
     def __init__(self, data, desc=None, type=None):
+        assert isinstance(data, bytes)
+        if desc is not None:
+            assert isinstance(desc, six.text_type)
         self.data = data
         self.desc = desc
         if isinstance(type, int):
@@ -751,6 +754,7 @@ class MP3DescStorageStyle(MP3StorageStyle):
     selected based its ``desc`` field.
     """
     def __init__(self, desc=u'', key='TXXX', **kwargs):
+        assert isinstance(desc, six.text_type)
         self.description = desc
         super(MP3DescStorageStyle, self).__init__(key=key, **kwargs)
 
@@ -1026,8 +1030,11 @@ class APEv2ImageStorageStyle(ListStorageStyle):
             try:
                 frame = mutagen_file[cover_tag]
                 text_delimiter_index = frame.value.find(b'\x00')
-                comment = frame.value[0:text_delimiter_index] \
-                    if text_delimiter_index > 0 else None
+                if text_delimiter_index > 0:
+                    comment = frame.value[0:text_delimiter_index]
+                    comment = comment.decode('utf8', 'replace')
+                else:
+                    comment = None
                 image_data = frame.value[text_delimiter_index + 1:]
                 images.append(Image(data=image_data, type=cover_type,
                                     desc=comment))
@@ -1429,22 +1436,15 @@ class MediaFile(object):
         """
 
         try:
-            try:
-                self.mgfile.delete()
-            except NotImplementedError:
-                # FIXME: This is fixed in mutagen >=1.31
-                # For Mutagen types that don't support deletion (notably,
-                # ASF), just delete each tag individually.
-                for tag in self.mgfile.keys():
-                    del self.mgfile[tag]
+            self.mgfile.delete()
         except (mutagen.MutagenError, IOError) as exc:
-            # Mutagen <1.33 could raise IOError
+            # Mutagen <1.33 could raise IOError.
             log.debug(u'deleting failed: {0}', six.text_type(exc))
             raise UnreadableFileError(self.path)
         except Exception as exc:
             # Isolate bugs in Mutagen.
             log.debug(u'{}', traceback.format_exc())
-            log.error(u'uncaught Mutagen exception in save: {0}', exc)
+            log.error(u'uncaught Mutagen exception in delete: {0}', exc)
             raise MutagenError(self.path, exc)
 
     # Convenient access to the set of available fields.
@@ -1703,7 +1703,7 @@ class MediaFile(object):
         ASFStorageStyle('WM/Language'),
     )
     country = MediaField(
-        MP3DescStorageStyle('MusicBrainz Album Release Country'),
+        MP3DescStorageStyle(u'MusicBrainz Album Release Country'),
         MP4StorageStyle('----:com.apple.iTunes:MusicBrainz '
                         'Album Release Country'),
         StorageStyle('RELEASECOUNTRY'),
@@ -1953,14 +1953,6 @@ class MediaFile(object):
     @property
     def channels(self):
         """The number of channels in the audio (an int)."""
-        if isinstance(self.mgfile.info, mutagen.mp3.MPEGInfo):
-            # FIXME: MPEGInfo.channels was added in mutagen 1.30
-            return {
-                mutagen.mp3.STEREO: 2,
-                mutagen.mp3.JOINTSTEREO: 2,
-                mutagen.mp3.DUALCHANNEL: 2,
-                mutagen.mp3.MONO: 1,
-            }[self.mgfile.info.mode]
         if hasattr(self.mgfile.info, 'channels'):
             return self.mgfile.info.channels
         return 0

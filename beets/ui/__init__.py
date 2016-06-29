@@ -122,9 +122,12 @@ def _arg_encoding():
 
 def decargs(arglist):
     """Given a list of command-line argument bytestrings, attempts to
-    decode them to Unicode strings.
+    decode them to Unicode strings when running under Python 2.
     """
-    return [s.decode(_arg_encoding()) for s in arglist]
+    if six.PY2:
+        return [s.decode(_arg_encoding()) for s in arglist]
+    else:
+        return arglist
 
 
 def print_(*strings, **kwargs):
@@ -132,24 +135,22 @@ def print_(*strings, **kwargs):
     is not in the terminal's encoding's character set, just silently
     replaces it.
 
-    If the arguments are strings then they're expected to share the same
-    type: either bytes or unicode.
+    The arguments must be Unicode strings: `unicode` on Python 2; `str` on
+    Python 3.
 
     The `end` keyword argument behaves similarly to the built-in `print`
     (it defaults to a newline). The value should have the same string
     type as the arguments.
     """
-    end = kwargs.get('end')
+    if not strings:
+        strings = [u'']
+    assert isinstance(strings[0], six.text_type)
 
-    if not strings or isinstance(strings[0], six.text_type):
-        txt = u' '.join(strings)
-        txt += u'\n' if end is None else end
-    else:
-        txt = b' '.join(strings)
-        txt += b'\n' if end is None else end
+    txt = u' '.join(strings)
+    txt += kwargs.get('end', u'\n')
 
-    # Always send bytes to the stdout stream.
-    if isinstance(txt, six.text_type):
+    # Send bytes to the stdout stream on Python 2.
+    if six.PY2:
         txt = txt.encode(_out_encoding(), 'replace')
 
     sys.stdout.write(txt)
@@ -204,14 +205,17 @@ def input_(prompt=None):
     # use print_() explicitly to display prompts.
     # http://bugs.python.org/issue1927
     if prompt:
-        print_(prompt, end=' ')
+        print_(prompt, end=u' ')
 
     try:
         resp = input()
     except EOFError:
         raise UserError(u'stdin stream ended while input required')
 
-    return resp.decode(_in_encoding(), 'ignore')
+    if six.PY2:
+        return resp.decode(_in_encoding(), 'ignore')
+    else:
+        return resp
 
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,

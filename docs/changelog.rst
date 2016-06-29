@@ -4,8 +4,12 @@ Changelog
 1.3.20 (in development)
 -----------------------
 
-This version of beets now depends on the `six`_ library. This is our first
-step toward supporting Python 3.
+Some dependency notes for packagers:
+
+* This version of beets now depends on the `six`_ library. This is our first
+  step toward supporting Python 3.
+* We also bumped our minimum required version of `Mutagen`_ to 1.31 (from
+  1.27).
 
 New features:
 
@@ -21,7 +25,10 @@ Fixes:
   :bug:`2089`
 * :doc:`/plugins/beatport`: Use track numbers from Beatport (instead of
   determining them from the order of tracks) and set the `medium_index`
-  value. :bug:`2085`
+  value.
+* With :ref:`per_disc_numbering` enabled, some metadata sources (notably, the
+  :doc:`/plugins/beatport`) would not set the track number at all. This is
+  fixed. :bug:`2085`
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.

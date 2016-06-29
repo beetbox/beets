@@ -69,6 +69,14 @@ file. The available options are:
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
 
+.. note::
+
+    Previously, there was a `remote_priority` option to specify when to
+    look for art on the filesystem. This is
+    still respected, but a deprecation message will be shown until you
+    replace this configuration with the new `filesystem` value in the
+    `sources` array.
+
 .. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
 .. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
