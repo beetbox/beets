@@ -86,13 +86,13 @@ def _print_keys(query):
     returned row, with identation of 2 spaces.
     """
     for row in query:
-        print_(u' ' * 2 + six.text_type(row['key']))
+        print_(u' ' * 2 + row['key'].decode('utf8'))
 
 
 def fields_func(lib, opts, args):
     def _print_rows(names):
         names.sort()
-        print_(six.text_type('  ' + '\n  '.join(names)))
+        print_(u'  ' + u'\n  '.join(names))
 
     print_(u"Item fields:")
     _print_rows(library.Item.all_keys())
@@ -1054,16 +1054,16 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, fmt=''):
+def list_items(lib, query, album, fmt=u''):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
     if album:
         for album in lib.albums(query):
-            ui.print_(six.text_type(format(album, fmt)))
+            ui.print_(format(album, fmt))
     else:
         for item in lib.items(query):
-            ui.print_(six.text_type(format(item, fmt)))
+            ui.print_(format(item, fmt))
 
 
 def list_func(lib, opts, args):
@@ -1617,7 +1617,7 @@ def config_func(lib, opts, args):
     # Dump configuration.
     else:
         config_out = config.dump(full=opts.defaults, redact=opts.redact)
-        print_(six.text_type(config_out))
+        print_(config_out.decode('utf8'))
 
 
 def config_edit():
@@ -1663,7 +1663,7 @@ default_commands.append(config_cmd)
 
 def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
-        print_(six.text_type(line), end=u'')
+        print_(line, end=u'')
     if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
         log.warn(u'Warning: Unable to find the bash-completion package. '
                  u'Command line completion might not work.')
@@ -1687,7 +1687,7 @@ def completion_script(commands):
     """
     base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
     with open(base_script, 'r') as base_script:
-        yield base_script.read()
+        yield base_script.read().decode('utf8')
 
     options = {}
     aliases = {}
@@ -1702,12 +1702,12 @@ def completion_script(commands):
             if re.match(r'^\w+$', alias):
                 aliases[alias] = name
 
-        options[name] = {'flags': [], 'opts': []}
+        options[name] = {u'flags': [], u'opts': []}
         for opts in cmd.parser._get_all_options()[1:]:
             if opts.action in ('store_true', 'store_false'):
-                option_type = 'flags'
+                option_type = u'flags'
             else:
-                option_type = 'opts'
+                option_type = u'opts'
 
             options[name][option_type].extend(
                 opts._short_opts + opts._long_opts
@@ -1715,14 +1715,14 @@ def completion_script(commands):
 
     # Add global options
     options['_global'] = {
-        'flags': [u'-v', u'--verbose'],
-        'opts': u'-l --library -c --config -d --directory -h --help'.split(
-            u' ')
+        u'flags': [u'-v', u'--verbose'],
+        u'opts':
+            u'-l --library -c --config -d --directory -h --help'.split(u' ')
     }
 
     # Add flags common to all commands
     options['_common'] = {
-        'flags': [u'-h', u'--help']
+        u'flags': [u'-h', u'--help']
     }
 
     # Start generating the script
@@ -1750,7 +1750,7 @@ def completion_script(commands):
     for cmd, opts in options.items():
         for option_type, option_list in opts.items():
             if option_list:
-                option_list = ' '.join(option_list)
+                option_list = u' '.join(option_list)
                 yield u"  local %s__%s='%s'\n" % (
                     option_type, cmd, option_list)
 

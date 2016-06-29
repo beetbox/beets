@@ -49,7 +49,7 @@ class ListTest(unittest.TestCase):
         self.lib.add(self.item)
         self.lib.add_album([self.item])
 
-    def _run_list(self, query=u'', album=False, path=False, fmt=''):
+    def _run_list(self, query=u'', album=False, path=False, fmt=u''):
         commands.list_items(self.lib, query, album, fmt)
 
     def test_list_outputs_item(self):
@@ -69,7 +69,7 @@ class ListTest(unittest.TestCase):
 
     def test_list_item_path(self):
         with capture_stdout() as stdout:
-            self._run_list(fmt='$path')
+            self._run_list(fmt=u'$path')
         self.assertEqual(stdout.getvalue().strip(), u'xxx/yyy')
 
     def test_list_album_outputs_something(self):
@@ -79,7 +79,7 @@ class ListTest(unittest.TestCase):
 
     def test_list_album_path(self):
         with capture_stdout() as stdout:
-            self._run_list(album=True, fmt='$path')
+            self._run_list(album=True, fmt=u'$path')
         self.assertEqual(stdout.getvalue().strip(), u'xxx')
 
     def test_list_album_omits_title(self):
@@ -101,18 +101,18 @@ class ListTest(unittest.TestCase):
 
     def test_list_item_format_artist(self):
         with capture_stdout() as stdout:
-            self._run_list(fmt='$artist')
+            self._run_list(fmt=u'$artist')
         self.assertIn(u'the artist', stdout.getvalue())
 
     def test_list_item_format_multiple(self):
         with capture_stdout() as stdout:
-            self._run_list(fmt='$artist - $album - $year')
+            self._run_list(fmt=u'$artist - $album - $year')
         self.assertEqual(u'the artist - the album - 0001',
                          stdout.getvalue().strip())
 
     def test_list_album_format(self):
         with capture_stdout() as stdout:
-            self._run_list(album=True, fmt='$genre')
+            self._run_list(album=True, fmt=u'$genre')
         self.assertIn(u'the genre', stdout.getvalue())
         self.assertNotIn(u'the album', stdout.getvalue())
 
