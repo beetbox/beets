@@ -437,7 +437,8 @@ class TestHelper(object):
         """Create a temporary directory and assign it into
         `self.temp_dir`. Call `remove_temp_dir` later to delete it.
         """
-        self.temp_dir = mkdtemp()
+        temp_dir = mkdtemp()
+        self.temp_dir = util.bytestring_path(temp_dir)
 
     def remove_temp_dir(self):
         """Delete the temporary directory created by `create_temp_dir`.
