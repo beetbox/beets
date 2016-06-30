@@ -496,7 +496,8 @@ def unique_path(path):
         num = 0
     while True:
         num += 1
-        new_path = b'%s.%i%s' % (base, num, ext)
+        suffix = u'.{}'.format(num).encode() + ext
+        new_path = base + suffix
         if not os.path.exists(new_path):
             return new_path
 
