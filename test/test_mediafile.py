@@ -449,7 +449,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
     ]
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = bytestring_path(tempfile.mkdtemp())
 
     def tearDown(self):
         if os.path.isdir(self.temp_dir):

@@ -416,7 +416,7 @@ class ArtImporterTest(UseThePlugin):
 
         # Test library.
         self.libpath = os.path.join(self.temp_dir, 'tmplib.blb')
-        self.libdir = os.path.join(self.temp_dir, 'tmplib')
+        self.libdir = os.path.join(self.temp_dir, b'tmplib')
         os.mkdir(self.libdir)
         os.mkdir(os.path.join(self.libdir, b'album'))
         itempath = os.path.join(self.libdir, b'album', b'test.mp3')
