@@ -1208,8 +1208,6 @@ class Library(dbcore.Database):
                  path_formats=((PF_KEY_DEFAULT,
                                '$artist/$album/$track $title'),),
                  replacements=None):
-        if path != ':memory:':
-            self.path = bytestring_path(normpath(path))
         super(Library, self).__init__(path)
 
         self.directory = bytestring_path(normpath(directory))
