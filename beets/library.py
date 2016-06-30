@@ -30,6 +30,7 @@ from beets.mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util import py3_path
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
@@ -1208,9 +1209,10 @@ class Library(dbcore.Database):
                  path_formats=((PF_KEY_DEFAULT,
                                '$artist/$album/$track $title'),),
                  replacements=None):
-        if path != ':memory:':
-            self.path = bytestring_path(normpath(path))
-        super(Library, self).__init__(path)
+        self.path = path
+        if self.path != ':memory:':
+            self.path = py3_path(bytestring_path(normpath(path)))
+        super(Library, self).__init__(self.path)
 
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
