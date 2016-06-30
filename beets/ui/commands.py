@@ -1617,7 +1617,7 @@ def config_func(lib, opts, args):
     # Dump configuration.
     else:
         config_out = config.dump(full=opts.defaults, redact=opts.redact)
-        print_(config_out.decode('utf8'))
+        print_(util.as_string(config_out))
 
 
 def config_edit():
@@ -1687,7 +1687,7 @@ def completion_script(commands):
     """
     base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
     with open(base_script, 'r') as base_script:
-        yield base_script.read().decode('utf8')
+        yield util.as_string(base_script.read())
 
     options = {}
     aliases = {}
