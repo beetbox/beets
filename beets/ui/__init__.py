@@ -1109,9 +1109,15 @@ def _load_plugins(config):
     paths = [util.normpath(p) for p in paths]
     log.debug(u'plugin paths: {0}', util.displayable_path(paths))
 
+    # On Python 3, the search paths need to be unicode.
+    paths = [util.py3_path(p) for p in paths]
+
+    # Extend the `beetsplug` package to include the plugin paths.
     import beetsplug
     beetsplug.__path__ = paths + beetsplug.__path__
-    # For backwards compatibility.
+
+    # For backwards compatibility, also support plugin paths that
+    # *contain* a `beetsplug` package.
     sys.path += paths
 
     plugins.load_plugins(config['plugins'].as_str_seq())
