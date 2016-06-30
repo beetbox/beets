@@ -415,7 +415,7 @@ class ArtImporterTest(UseThePlugin):
         self.plugin.art_for_album = art_for_album
 
         # Test library.
-        self.libpath = os.path.join(self.temp_dir, 'tmplib.blb')
+        self.libpath = os.path.join(self.temp_dir, b'tmplib.blb')
         self.libdir = os.path.join(self.temp_dir, b'tmplib')
         os.mkdir(self.libdir)
         os.mkdir(os.path.join(self.libdir, b'album'))

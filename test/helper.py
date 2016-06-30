@@ -185,7 +185,7 @@ class TestHelper(object):
         self.config['directory'] = self.libdir
 
         if disk:
-            dbpath = self.config['library'].as_filename()
+            dbpath = util.bytestring_path(self.config['library'].as_filename())
         else:
             dbpath = ':memory:'
         self.lib = Library(dbpath, self.libdir)
