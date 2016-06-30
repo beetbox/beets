@@ -27,6 +27,7 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
+from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
@@ -727,9 +728,11 @@ class Database(object):
             if thread_id in self._connections:
                 return self._connections[thread_id]
             else:
-                # Make a new connection.
+                # Make a new connection. The `sqlite3` module can't use
+                # bytestring paths here on Python 3, so we need to
+                # provide a `str` using `py3_path`.
                 conn = sqlite3.connect(
-                    self.path,
+                    py3_path(self.path),
                     timeout=beets.config['timeout'].as_number(),
                 )
 

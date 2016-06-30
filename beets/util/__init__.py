@@ -635,6 +635,8 @@ def py3_path(path):
     it is. So this function helps us "smuggle" the true bytes data
     through APIs that took Python 3's Unicode mandate too seriously.
     """
+    if isinstance(path, six.text_type):
+        return path
     assert isinstance(path, bytes)
     if six.PY2:
         return path
