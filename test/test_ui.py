@@ -671,11 +671,11 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         # Default user configuration
         if platform.system() == 'Windows':
             self.user_config_dir = os.path.join(
-                self.temp_dir, 'AppData', 'Roaming', 'beets'
+                self.temp_dir, b'AppData', b'Roaming', b'beets'
             )
         else:
             self.user_config_dir = os.path.join(
-                self.temp_dir, '.config', 'beets'
+                self.temp_dir, b'.config', b'beets'
             )
         os.makedirs(self.user_config_dir)
         self.user_config_path = os.path.join(self.user_config_dir,
@@ -846,11 +846,11 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assert_equal_path(
             config['library'].as_filename(),
-            os.path.join(self.user_config_dir, 'beets.db')
+            os.path.join(self.user_config_dir, b'beets.db')
         )
         self.assert_equal_path(
             config['statefile'].as_filename(),
-            os.path.join(self.user_config_dir, 'state')
+            os.path.join(self.user_config_dir, b'state')
         )
 
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
@@ -863,9 +863,9 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assert_equal_path(config['library'].as_filename(),
-                               os.path.join(self.beetsdir, 'beets.db'))
+                               os.path.join(self.beetsdir, b'beets.db'))
         self.assert_equal_path(config['statefile'].as_filename(),
-                               os.path.join(self.beetsdir, 'state'))
+                               os.path.join(self.beetsdir, b'state'))
 
     def test_command_line_option_relative_to_working_dir(self):
         os.chdir(self.temp_dir)
@@ -885,7 +885,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
     def test_beetsdir_config(self):
         os.environ['BEETSDIR'] = self.beetsdir
 
-        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        env_config_path = os.path.join(self.beetsdir, b'config.yaml')
         with open(env_config_path, 'w') as file:
             file.write('anoption: overwrite')
 
@@ -893,7 +893,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.assertEqual(config['anoption'].get(), 'overwrite')
 
     def test_beetsdir_points_to_file_error(self):
-        beetsdir = os.path.join(self.temp_dir, 'beetsfile')
+        beetsdir = os.path.join(self.temp_dir, b'beetsfile')
         open(beetsdir, 'a').close()
         os.environ['BEETSDIR'] = beetsdir
         self.assertRaises(ConfigError, ui._raw_main, ['test'])
@@ -911,24 +911,24 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         os.environ['BEETSDIR'] = self.beetsdir
 
         config.read()
-        self.assertEqual(config['library'].as_filename(),
-                         os.path.join(self.beetsdir, 'library.db'))
-        self.assertEqual(config['statefile'].as_filename(),
-                         os.path.join(self.beetsdir, 'state.pickle'))
+        self.assert_equal_path(config['library'].as_filename(),
+                               os.path.join(self.beetsdir, b'library.db'))
+        self.assert_equal_path(config['statefile'].as_filename(),
+                               os.path.join(self.beetsdir, b'state.pickle'))
 
     def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
         os.environ['BEETSDIR'] = self.beetsdir
 
-        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        env_config_path = os.path.join(self.beetsdir, b'config.yaml')
         with open(env_config_path, 'w') as file:
             file.write('library: beets.db\n')
             file.write('statefile: state')
 
         config.read()
-        self.assertEqual(config['library'].as_filename(),
-                         os.path.join(self.beetsdir, 'beets.db'))
-        self.assertEqual(config['statefile'].as_filename(),
-                         os.path.join(self.beetsdir, 'state'))
+        self.assert_equal_path(config['library'].as_filename(),
+                               os.path.join(self.beetsdir, 'beets.db'))
+        self.assert_equal_path(config['statefile'].as_filename(),
+                               os.path.join(self.beetsdir, 'state'))
 
 
 class ShowModelChangeTest(_common.TestCase):
