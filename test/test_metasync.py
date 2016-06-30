@@ -20,6 +20,7 @@ import platform
 import time
 from datetime import datetime
 from beets.library import Item
+from beets.util import py3_path
 
 from test import _common
 from test._common import unittest
@@ -48,10 +49,10 @@ class MetaSyncTest(_common.TestCase, TestHelper):
 
         if _is_windows():
             self.config['metasync']['itunes']['library'] = \
-                self.itunes_library_windows
+                py3_path(self.itunes_library_windows)
         else:
             self.config['metasync']['itunes']['library'] = \
-                self.itunes_library_unix
+                py3_path(self.itunes_library_unix)
 
         self._set_up_data()
 

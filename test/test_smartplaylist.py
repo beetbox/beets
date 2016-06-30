@@ -25,7 +25,7 @@ from beetsplug.smartplaylist import SmartPlaylistPlugin
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import NullSort, MultipleSort, FixedFieldSort
-from beets.util import syspath, bytestring_path
+from beets.util import syspath, bytestring_path, py3_path
 from beets.ui import UserError
 from beets import config
 
@@ -161,7 +161,7 @@ class SmartPlaylistTest(unittest.TestCase):
 
         dir = bytestring_path(mkdtemp())
         config['smartplaylist']['relative_to'] = False
-        config['smartplaylist']['playlist_dir'] = dir
+        config['smartplaylist']['playlist_dir'] = py3_path(dir)
         try:
             spl.update_playlists(lib)
         except Exception:
@@ -191,7 +191,7 @@ class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
             {'name': 'all.m3u',
              'query': u''}
         ])
-        config['smartplaylist']['playlist_dir'].set(self.temp_dir)
+        config['smartplaylist']['playlist_dir'].set(py3_path(self.temp_dir))
         self.load_plugins('smartplaylist')
 
     def tearDown(self):

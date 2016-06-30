@@ -625,6 +625,22 @@ def legalize_path(path, replacements, length, extension, fragment):
     return second_stage_path, retruncated
 
 
+def py3_path(path):
+    """Convert a bytestring path to Unicode on Python 3 only. On Python
+    2, return the bytestring path unchanged.
+
+    This helps deal with APIs on Python 3 that *only* accept Unicode
+    (i.e., `str` objects). I philosophically disagree with this
+    decision, because paths are sadly bytes on Unix, but that's the way
+    it is. So this function helps us "smuggle" the true bytes data
+    through APIs that took Python 3's Unicode mandate too seriously.
+    """
+    assert isinstance(path, bytes)
+    if six.PY2:
+        return path
+    return os.fsdecode(path)
+
+
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
     return value.lower() in (u'yes', u'1', u'true', u't', u'y')
