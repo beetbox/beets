@@ -162,15 +162,18 @@ class TestCase(unittest.TestCase, Assertions):
         # Direct paths to a temporary directory. Tests can also use this
         # temporary directory.
         self.temp_dir = util.bytestring_path(tempfile.mkdtemp())
-        beets.config['statefile'] = os.path.join(self.temp_dir,
-                                                 b'state.pickle')
-        beets.config['library'] = os.path.join(self.temp_dir, b'library.db')
-        beets.config['directory'] = os.path.join(self.temp_dir, b'libdir')
+
+        beets.config['statefile'] = \
+            util.py3_path(os.path.join(self.temp_dir, b'state.pickle'))
+        beets.config['library'] = \
+            util.py3_path(os.path.join(self.temp_dir, b'library.db'))
+        beets.config['directory'] = \
+            util.py3_path(os.path.join(self.temp_dir, b'libdir'))
 
         # Set $HOME, which is used by confit's `config_dir()` to create
         # directories.
         self._old_home = os.environ.get('HOME')
-        os.environ['HOME'] = self.temp_dir
+        os.environ['HOME'] = util.py3_path(self.temp_dir)
 
         # Initialize, but don't install, a DummyIO.
         self.io = DummyIO()
