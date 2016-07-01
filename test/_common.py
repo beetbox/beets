@@ -161,7 +161,7 @@ class TestCase(unittest.TestCase, Assertions):
 
         # Direct paths to a temporary directory. Tests can also use this
         # temporary directory.
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = util.bytestring_path(tempfile.mkdtemp())
         beets.config['statefile'] = os.path.join(self.temp_dir,
                                                  b'state.pickle')
         beets.config['library'] = os.path.join(self.temp_dir, b'library.db')

@@ -662,7 +662,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         # Also set APPDATA, the Windows equivalent of setting $HOME.
         self._old_appdata = os.environ.get('APPDATA')
         os.environ['APPDATA'] = \
-            os.path.join(self.temp_dir, 'AppData', 'Roaming')
+            util.py3_path(os.path.join(self.temp_dir, b'AppData', b'Roaming'))
 
         self._orig_cwd = os.getcwd()
         self.test_cmd = self._make_test_cmd()
@@ -679,10 +679,10 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             )
         os.makedirs(self.user_config_dir)
         self.user_config_path = os.path.join(self.user_config_dir,
-                                             'config.yaml')
+                                             b'config.yaml')
 
         # Custom BEETSDIR
-        self.beetsdir = os.path.join(self.temp_dir, 'beetsdir')
+        self.beetsdir = os.path.join(self.temp_dir, b'beetsdir')
         os.makedirs(self.beetsdir)
 
         self._reset_config()
@@ -926,9 +926,9 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         config.read()
         self.assert_equal_path(config['library'].as_filename(),
-                               os.path.join(self.beetsdir, 'beets.db'))
+                               os.path.join(self.beetsdir, b'beets.db'))
         self.assert_equal_path(config['statefile'].as_filename(),
-                               os.path.join(self.beetsdir, 'state'))
+                               os.path.join(self.beetsdir, b'state'))
 
 
 class ShowModelChangeTest(_common.TestCase):
