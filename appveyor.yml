@@ -9,8 +9,6 @@ environment:
     matrix:
         - PYTHON: C:\Python27
           TOX_ENV: py27-test
-        - PYTHON: C:\Python33
-          TOX_ENV: py33-test
         - PYTHON: C:\Python34
           TOX_ENV: py34-test
         - PYTHON: C:\Python35
@@ -27,6 +25,5 @@ test_script:
 # Allow all failures for now: the tests don't yet pass!
 matrix:
     allow_failures:
-        - TOX_ENV: py33-test
         - TOX_ENV: py34-test
         - TOX_ENV: py35-test
