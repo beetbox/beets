@@ -778,7 +778,7 @@ class MP3DescStorageStyle(MP3StorageStyle):
         # Try creating a new frame.
         if not found:
             frame = mutagen.id3.Frames[self.key](
-                desc=self.description.encode('utf8'),
+                desc=self.description,
                 text=value,
                 encoding=mutagen.id3.Encoding.UTF8,
             )
