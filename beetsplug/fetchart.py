@@ -32,7 +32,7 @@ from beets import config
 from beets.mediafile import _image_mime_type
 from beets.util.artresizer import ArtResizer
 from beets.util import confit
-from beets.util import syspath, bytestring_path
+from beets.util import syspath, bytestring_path, py3_path
 import six
 
 try:
@@ -270,7 +270,8 @@ class RemoteArtSource(ArtSource):
                                    u'to {}',
                                    ct, real_ct, ext)
 
-                with NamedTemporaryFile(suffix=ext, delete=False) as fh:
+                suffix = py3_path(ext)
+                with NamedTemporaryFile(suffix=suffix, delete=False) as fh:
                     # write the first already loaded part of the image
                     fh.write(header)
                     # download the remaining part of the image
