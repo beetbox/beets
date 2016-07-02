@@ -654,7 +654,7 @@ def as_string(value):
     """
     buffer_types = memoryview
     if six.PY2:
-        buffer_types = (buffer, memoryview)
+        buffer_types = (buffer, memoryview)  # noqa ignore=F821
 
     if value is None:
         return u''
