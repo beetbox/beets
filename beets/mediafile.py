@@ -725,7 +725,7 @@ class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
 
 
 class MP3UFIDStorageStyle(MP3StorageStyle):
-    """Store data in a UFID ID3 frame with a particular owner.
+    """Store string data in a UFID ID3 frame with a particular owner.
     """
     def __init__(self, owner, **kwargs):
         self.owner = owner
@@ -738,6 +738,10 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
             return None
 
     def store(self, mutagen_file, value):
+        # This field type stores text data as encoded data.
+        assert isinstance(value, six.text_type)
+        value = value.encode('utf8')
+
         frames = mutagen_file.tags.getall(self.key)
         for frame in frames:
             # Replace existing frame data.
