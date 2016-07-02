@@ -1065,7 +1065,8 @@ class TemplateTest(_common.LibTestCase):
 
 class UnicodePathTest(_common.LibTestCase):
     def test_unicode_path(self):
-        self.i.path = os.path.join(_common.RSRC, u'unicode\u2019d.mp3')
+        self.i.path = os.path.join(_common.RSRC,
+                                   u'unicode\u2019d.mp3'.encode('utf-8'))
         # If there are any problems with unicode paths, we will raise
         # here and fail.
         self.i.read()
