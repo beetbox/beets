@@ -13,13 +13,14 @@ Some dependency notes for packagers:
 
 New features:
 
-* :doc:`/plugins/web`: Added an option to show the items of an album and a
-  'path' tag to the json outpu of a file which shows the relative path to the
-  file. :bug:`2050`
+* :doc:`/plugins/web`: Added an ``expand`` option to show the items of an
+  album and a ``path`` field to the JSON output of a file which shows the
+  filled-out path template for each file. :bug:`2050`
 
 Fixes:
 
-* :doc:`/plugins/web`: Normalized the json output
+* :doc:`/plugins/web`: The JSON output is no longer pretty-printed (for a
+  space savings). :bug:`2050`
 * :doc:`/plugins/permissions`: Fix a regression in the previous release where
   the plugin would always fail to set permissions (and log a warning).
   :bug:`2089`
