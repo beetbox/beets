@@ -355,9 +355,10 @@ def create_archive(session):
     (handle, path) = mkstemp(dir=session.temp_dir)
     os.close(handle)
     archive = ZipFile(path, mode='w')
-    archive.write(os.path.join(_common.RSRC, 'full.mp3'),
+    archive.write(os.path.join(_common.RSRC, b'full.mp3'),
                   'full.mp3')
     archive.close()
+    path = bytestring_path(path)
     return path
 
 
@@ -411,7 +412,7 @@ class ImportTarTest(ImportZipTest):
         (handle, path) = mkstemp(dir=self.temp_dir)
         os.close(handle)
         archive = TarFile(path, mode='w')
-        archive.add(os.path.join(_common.RSRC, 'full.mp3'),
+        archive.add(os.path.join(_common.RSRC, b'full.mp3'),
                     'full.mp3')
         archive.close()
         return path
@@ -421,14 +422,14 @@ class ImportTarTest(ImportZipTest):
 class ImportRarTest(ImportZipTest):
 
     def create_archive(self):
-        return os.path.join(_common.RSRC, 'archive.rar')
+        return os.path.join(_common.RSRC, b'archive.rar')
 
 
 @unittest.skip('Implement me!')
 class ImportPasswordRarTest(ImportZipTest):
 
     def create_archive(self):
-        return os.path.join(_common.RSRC, 'password.rar')
+        return os.path.join(_common.RSRC, b'password.rar')
 
 
 class ImportSingletonTest(_common.TestCase, ImportHelper):
