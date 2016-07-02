@@ -601,6 +601,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
         try:
             path = self.touch(os.path.join(b'foo', b'bar'))
+            path = path.decode('utf-8')
 
             # The file itself.
             self.assertTrue(is_path(path))
