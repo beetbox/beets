@@ -4,20 +4,27 @@ Changelog
 1.4.0 (in development)
 ----------------------
 
-Some dependency notes for packagers:
+Version 1.4 is our first step toward supporting Python 3 in addition to Python
+2. We're not quite there yet, but thanks mainly to the heroic efforts of
+:user:`jrobeson`, we're on our way. A few basic commands work now, and we're
+working to bring full support over the next few releases.
 
-* This version of beets now depends on the `six`_ library. This is our first
-  step toward supporting Python 3.
+Specifically, if you package beets for distribution, here's what you'll want
+to know:
+
+* This version of beets now depends on the `six`_ library.
 * We also bumped our minimum required version of `Mutagen`_ to 1.31 (from
   1.27).
+* Please don't package beets as a Python 3 application *yet*, even though some
+  things may appear to work under Python 3.4 and later.
 
-New features:
+There's a small new feature:
 
 * :doc:`/plugins/web`: Added an ``expand`` option to show the items of an
   album and a ``path`` field to the JSON output of a file which shows the
   filled-out path template for each file. :bug:`2050`
 
-Fixes:
+And there are a few bug fixes too:
 
 * :doc:`/plugins/web`: The JSON output is no longer pretty-printed (for a
   space savings). :bug:`2050`
