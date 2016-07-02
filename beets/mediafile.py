@@ -955,7 +955,11 @@ class VorbisImageStorageStyle(ListStorageStyle):
         pic.type = image.type_index
         pic.mime = image.mime_type
         pic.desc = image.desc or u''
-        return base64.b64encode(pic.write())
+
+        # Encoding with base64 returns bytes on both Python 2 and 3.
+        # Mutagen requires the data to be a Unicode string, so we decode
+        # it before passing it along.
+        return base64.b64encode(pic.write()).decode('ascii')
 
 
 class FlacImageStorageStyle(ListStorageStyle):
