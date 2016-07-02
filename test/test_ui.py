@@ -1013,7 +1013,7 @@ class ShowChangeTest(_common.TestCase):
             autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
         # FIXME decoding shouldn't be done here
-        return self.io.getoutput().lower().decode('utf8')
+        return util.text_string(self.io.getoutput().lower())
 
     def test_null_change(self):
         msg = self._show_change()

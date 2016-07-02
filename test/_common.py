@@ -21,6 +21,7 @@ import sys
 import os
 import tempfile
 import shutil
+import six
 import unittest
 from contextlib import contextmanager
 
@@ -256,7 +257,10 @@ class DummyOut(object):
         self.buf.append(s)
 
     def get(self):
-        return b''.join(self.buf)
+        if six.PY2:
+            return b''.join(self.buf)
+        else:
+            return ''.join(self.buf)
 
     def clear(self):
         self.buf = []
@@ -271,7 +275,10 @@ class DummyIn(object):
         self.out = out
 
     def add(self, s):
-        self.buf.append(s + b'\n')
+        if six.PY2:
+            self.buf.append(s + b'\n')
+        else:
+            self.buf.append(s + '\n')
 
     def readline(self):
         if not self.buf:
