@@ -30,7 +30,7 @@ from mock import patch
 
 from test import _common
 from test._common import unittest
-from beets.util import displayable_path, bytestring_path
+from beets.util import displayable_path, bytestring_path, py3_path
 from test.helper import TestImportSession, TestHelper, has_program, capture_log
 from beets import importer
 from beets.importer import albums_in_dir
@@ -355,9 +355,9 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
 
 
 def create_archive(session):
-    (handle, path) = mkstemp(dir=session.temp_dir)
+    (handle, path) = mkstemp(dir=py3_path(session.temp_dir))
     os.close(handle)
-    archive = ZipFile(path, mode='w')
+    archive = ZipFile(py3_path(path), mode='w')
     archive.write(os.path.join(_common.RSRC, b'full.mp3'),
                   'full.mp3')
     archive.close()
@@ -414,7 +414,7 @@ class ImportTarTest(ImportZipTest):
     def create_archive(self):
         (handle, path) = mkstemp(dir=self.temp_dir)
         os.close(handle)
-        archive = TarFile(path, mode='w')
+        archive = TarFile(py3_path(path), mode='w')
         archive.add(os.path.join(_common.RSRC, b'full.mp3'),
                     'full.mp3')
         archive.close()

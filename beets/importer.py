@@ -944,7 +944,7 @@ class ArchiveImportTask(SentinelImportTask):
             return False
 
         for path_test, _ in cls.handlers():
-            if path_test(path):
+            if path_test(util.py3_path(path)):
                 return True
         return False
 
@@ -990,7 +990,7 @@ class ArchiveImportTask(SentinelImportTask):
 
         try:
             extract_to = mkdtemp()
-            archive = handler_class(self.toppath, mode='r')
+            archive = handler_class(util.py3_path(self.toppath), mode='r')
             archive.extractall(extract_to)
         finally:
             archive.close()
