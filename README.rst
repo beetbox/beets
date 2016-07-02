@@ -1,9 +1,6 @@
 .. image:: http://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
 
-.. image:: https://img.shields.io/pypi/dw/beets.svg
-    :target: https://pypi.python.org/pypi/beets#downloads
-
 .. image:: http://img.shields.io/codecov/c/github/beetbox/beets.svg
     :target: https://codecov.io/github/beetbox/beets
 
