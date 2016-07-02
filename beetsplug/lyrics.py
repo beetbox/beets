@@ -84,7 +84,7 @@ def unescape(text):
 
     def replchar(m):
         num = m.group(1)
-        return unichr(int(num))
+        return six.unichr(int(num))
     out = re.sub(u"&#(\d+);", replchar, out)
     return out
 
