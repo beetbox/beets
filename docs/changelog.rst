@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.20 (in development)
------------------------
+1.4.0 (in development)
+----------------------
 
 Some dependency notes for packagers:
 
