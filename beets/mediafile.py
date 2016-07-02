@@ -874,7 +874,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         frame = mutagen.id3.Frames[self.key]()
         frame.data = image.data
         frame.mime = image.mime_type
-        frame.desc = (image.desc or u'').encode('utf8')
+        frame.desc = image.desc or u''
         frame.encoding = 3  # UTF-8 encoding of desc
         frame.type = image.type_index
         return frame
