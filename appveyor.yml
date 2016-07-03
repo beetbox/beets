@@ -1,6 +1,9 @@
 version: "{build}"
 build: off
 deploy: off
+skip_commits:
+    # add [appveyor skip] as an alias for [skip appveyor] (like [ci skip])
+    message: /\[appveyor skip\]/
 
 environment:
     # Undocumented feature of nose-show-skipped.
