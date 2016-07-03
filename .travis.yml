@@ -35,6 +35,7 @@ addons:
             - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
         packages:
             - bash-completion
+            - imagemagick
             - mp3gain
             - unrar
 
