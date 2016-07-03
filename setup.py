@@ -94,7 +94,8 @@ setup(
         'musicbrainzngs>=0.4',
         'pyyaml',
         'jellyfish',
-    ] + (['colorama'] if (sys.platform == 'win32') else []),
+    ] + (['colorama'] if (sys.platform == 'win32') else []) +
+        (['enum34>=1.0.4'] if sys.version_info < (3, 4, 0) else []),
 
     tests_require=[
         'beautifulsoup4',
