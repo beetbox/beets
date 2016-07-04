@@ -10,6 +10,7 @@ from mock import patch, Mock
 
 from test._common import unittest
 from test.helper import TestHelper
+from beets.util import displayable_path
 from beetsplug.permissions import (check_permissions,
                                    convert_perm,
                                    dirs_in_library)
@@ -67,9 +68,13 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
     def assertPerms(self, path, typ, expect_success):  # noqa
         for x in [(True, self.exp_perms[expect_success][typ], '!='),
                   (False, self.exp_perms[not expect_success][typ], '==')]:
-            self.assertEqual(x[0], check_permissions(path, x[1]),
-                             msg=u'{} : {} {} {}'.format(
-                path, oct(os.stat(path).st_mode), x[2], oct(x[1])))
+            msg = u'{} : {} {} {}'.format(
+                displayable_path(path),
+                oct(os.stat(path).st_mode),
+                x[2],
+                oct(x[1])
+            )
+            self.assertEqual(x[0], check_permissions(path, x[1]), msg=msg)
 
     def test_convert_perm_from_string(self):
         self.assertEqual(convert_perm('10'), 8)
