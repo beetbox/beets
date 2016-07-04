@@ -272,9 +272,11 @@ class IPFSPlugin(BeetsPlugin):
                     break
             except AttributeError:
                 pass
+            item_path = os.path.basename(item.path).decode(
+                util._fsencoding(), 'ignore'
+            )
             # Clear current path from item
-            item.path = '/ipfs/{0}/{1}'.format(album.ipfs,
-                                               os.path.basename(item.path))
+            item.path = '/ipfs/{0}/{1}'.format(album.ipfs, item_path)
 
             item.id = None
             items.append(item)
