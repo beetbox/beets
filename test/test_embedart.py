@@ -26,7 +26,7 @@ from test.helper import TestHelper
 
 from beets.mediafile import MediaFile
 from beets import config, logging, ui
-from beets.util import syspath
+from beets.util import syspath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import art
 
@@ -136,7 +136,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         self.assertEqual(mediafile.images[0].data, self.image_data,
                          u'Image written is not {0}'.format(
-                         self.abbey_artpath))
+                         displayable_path(self.abbey_artpath)))
 
     @require_artresizer_compare
     def test_accept_similar_art(self):
@@ -150,7 +150,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         self.assertEqual(mediafile.images[0].data, self.image_data,
                          u'Image written is not {0}'.format(
-                         self.abbey_similarpath))
+                         displayable_path(self.abbey_similarpath)))
 
     def test_non_ascii_album_path(self):
         resource_path = os.path.join(_common.RSRC, b'image.mp3')
