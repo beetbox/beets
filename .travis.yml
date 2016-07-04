@@ -1,5 +1,6 @@
+dist: trusty
+sudo: required
 language: python
-sudo: false
 
 env:
     global:
@@ -29,8 +30,12 @@ matrix:
 # Non-Python dependencies.
 addons:
     apt:
+        sources:
+            - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty multiverse"
+            - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
         packages:
             - bash-completion
+            - imagemagick
             - mp3gain
             - unrar
 
