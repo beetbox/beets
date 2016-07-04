@@ -262,6 +262,9 @@ class DummyOut(object):
         else:
             return ''.join(self.buf)
 
+    def flush(self):
+        self.clear()
+
     def clear(self):
         self.buf = []
 
