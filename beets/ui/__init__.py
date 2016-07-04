@@ -1208,7 +1208,7 @@ def _configure(options):
 def _open_library(config):
     """Create a new library instance from the configuration.
     """
-    dbpath = config['library'].as_filename()
+    dbpath = util.bytestring_path(config['library'].as_filename())
     try:
         lib = library.Library(
             dbpath,

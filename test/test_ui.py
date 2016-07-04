@@ -845,11 +845,11 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assert_equal_path(
-            config['library'].as_filename(),
+            util.bytestring_path(config['library'].as_filename()),
             os.path.join(self.user_config_dir, b'beets.db')
         )
         self.assert_equal_path(
-            config['statefile'].as_filename(),
+            util.bytestring_path(config['statefile'].as_filename()),
             os.path.join(self.user_config_dir, b'state')
         )
 
@@ -862,10 +862,14 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             file.write('statefile: state')
 
         ui._raw_main(['--config', cli_config_path, 'test'])
-        self.assert_equal_path(config['library'].as_filename(),
-                               os.path.join(self.beetsdir, b'beets.db'))
-        self.assert_equal_path(config['statefile'].as_filename(),
-                               os.path.join(self.beetsdir, b'state'))
+        self.assert_equal_path(
+            util.bytestring_path(config['library'].as_filename()),
+            os.path.join(self.beetsdir, b'beets.db')
+        )
+        self.assert_equal_path(
+            util.bytestring_path(config['statefile'].as_filename()),
+            os.path.join(self.beetsdir, b'state')
+        )
 
     def test_command_line_option_relative_to_working_dir(self):
         os.chdir(self.temp_dir)
@@ -911,10 +915,14 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         os.environ['BEETSDIR'] = util.py3_path(self.beetsdir)
 
         config.read()
-        self.assert_equal_path(config['library'].as_filename(),
-                               os.path.join(self.beetsdir, b'library.db'))
-        self.assert_equal_path(config['statefile'].as_filename(),
-                               os.path.join(self.beetsdir, b'state.pickle'))
+        self.assert_equal_path(
+            util.bytestring_path(config['library'].as_filename()),
+            os.path.join(self.beetsdir, b'library.db')
+        )
+        self.assert_equal_path(
+            util.bytestring_path(config['statefile'].as_filename()),
+            os.path.join(self.beetsdir, b'state.pickle')
+        )
 
     def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
         os.environ['BEETSDIR'] = util.py3_path(self.beetsdir)
@@ -925,10 +933,14 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             file.write('statefile: state')
 
         config.read()
-        self.assert_equal_path(config['library'].as_filename(),
-                               os.path.join(self.beetsdir, b'beets.db'))
-        self.assert_equal_path(config['statefile'].as_filename(),
-                               os.path.join(self.beetsdir, b'state'))
+        self.assert_equal_path(
+            util.bytestring_path(config['library'].as_filename()),
+            os.path.join(self.beetsdir, b'beets.db')
+        )
+        self.assert_equal_path(
+            util.bytestring_path(config['statefile'].as_filename()),
+            os.path.join(self.beetsdir, b'state')
+        )
 
 
 class ShowModelChangeTest(_common.TestCase):
