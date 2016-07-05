@@ -188,7 +188,7 @@ class SafetyTest(unittest.TestCase, TestHelper):
         self._exccheck(b'nothing.xml', beets.mediafile.UnreadableFileError,
                        "ftyp")
 
-    @unittest.skipIf(not hasattr(os, 'symlink'), u'platform lacks symlink')
+    @unittest.skipUnless(_common.HAVE_SYMLINK, u'platform lacks symlink')
     def test_broken_symlink(self):
         fn = os.path.join(_common.RSRC, b'brokenlink')
         os.symlink('does_not_exist', fn)
