@@ -348,7 +348,10 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
             )
             self.assertExists(filename)
             self.assertTrue(os.path.islink(filename))
-            self.assert_equal_path(os.readlink(filename), mediafile.path)
+            self.assert_equal_path(
+                util.bytestring_path(os.readlink(filename)),
+                mediafile.path
+            )
 
 
 def create_archive(session):
