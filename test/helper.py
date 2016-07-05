@@ -366,7 +366,7 @@ class TestHelper(object):
         items = []
         path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         for i in range(track_count):
-            item = Item.from_path(bytes(path))
+            item = Item.from_path(path)
             item.album = u'\u00e4lbum'  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
