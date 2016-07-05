@@ -53,7 +53,7 @@ log.setLevel(logging.DEBUG)
 _item_ident = 0
 
 # OS feature test.
-HAVE_SYMLINK = hasattr(os, 'symlink')
+HAVE_SYMLINK = sys.platform != 'win32'
 
 
 def item(lib=None):
