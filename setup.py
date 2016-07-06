@@ -118,7 +118,8 @@ setup(
         'mpdstats': ['python-mpd2'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
-        'thumbnails': ['pathlib', 'pyxdg'],
+        'thumbnails': ['pyxdg'] +
+        (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
     },
     # Non-Python/non-PyPI plugin dependencies:
