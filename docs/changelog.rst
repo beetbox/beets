@@ -1,6 +1,11 @@
 Changelog
 =========
 
+* :doc:`/plugins/embyupdate`: Use the option of Emby's API Key's rather than
+  a password. Add an apikey to your config file for this to work. Does not
+  break the use of password as an authentication method
+
+
 1.4.0 (in development)
 ----------------------
 
