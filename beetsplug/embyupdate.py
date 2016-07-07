@@ -104,26 +104,26 @@ class EmbyUpdate(BeetsPlugin):
         port = config['emby']['port'].get()
         username = config['emby']['username'].get()
         password = config['emby']['password'].get()
-		token = config['emby']['apikey'].get()
+        token = config['emby']['apikey'].get()
 
         # Get user information from the Emby API.
         user = get_user(host, port, username)
         if not user:
             self._log.warning(u'User {0} could not be found.'.format(username))
             return
-		
-		if not token:
-			# Create Authentication data and headers.
-			auth_data = password_data(username, password)
-			headers = create_headers(user[0]['Id'])
 
-			# Get authentication token.
-			token = get_token(host, port, headers, auth_data)
-			if not token:
-				self._log.warning(
-					u'Could not get token for user {0}', username
-				)
-				return
+        if not token:
+            # Create Authentication data and headers.
+            auth_data = password_data(username, password)
+            headers = create_headers(user[0]['Id'])
+
+            # Get authentication token.
+            token = get_token(host, port, headers, auth_data)
+            if not token:
+                self._log.warning(
+                    u'Could not get token for user {0}', username
+                )
+                return
 
         # Recreate headers with a token.
         headers = create_headers(user[0]['Id'], token=token)
