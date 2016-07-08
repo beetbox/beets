@@ -119,8 +119,8 @@ def pil_getsize(path_in):
 
 
 def im_getsize(path_in):
-    cmd = [b'identify', b'-format', b'%w %h',
-           util.syspath(path_in, prefix=False)]
+    cmd = [b'convert', b'-format', b'%w %h',
+           util.syspath(path_in, prefix=False), b'-identify', b'null']
     try:
         out = util.command_output(cmd)
     except subprocess.CalledProcessError as exc:
