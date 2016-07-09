@@ -428,6 +428,7 @@ class ConvertPlugin(BeetsPlugin):
 
             # Create a temporary file for the conversion.
             tmpdir = self.config['tmpdir'].get()
+            tmpdir = util.bytestring_path(tmpdir) if tmpdir else None
             fd, dest = tempfile.mkstemp(b'.' + ext, dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
