@@ -428,8 +428,9 @@ class ConvertPlugin(BeetsPlugin):
 
             # Create a temporary file for the conversion.
             tmpdir = self.config['tmpdir'].get()
-            tmpdir = util.bytestring_path(tmpdir) if tmpdir else None
-            fd, dest = tempfile.mkstemp(b'.' + ext, dir=tmpdir)
+            if tmpdir:
+                tmpdir = util.py3_path(util.bytestring_path(tmpdir))
+            fd, dest = tempfile.mkstemp(util.py3_path(b'.' + ext), dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.
