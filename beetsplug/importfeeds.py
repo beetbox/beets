@@ -24,7 +24,7 @@ import os
 import re
 
 from beets.plugins import BeetsPlugin
-from beets.util import mkdirall, normpath, syspath, bytestring_path
+from beets.util import mkdirall, normpath, syspath, bytestring_path, link
 from beets import config
 
 M3U_DEFAULT_NAME = 'imported.m3u'
@@ -131,7 +131,7 @@ class ImportFeedsPlugin(BeetsPlugin):
             for path in paths:
                 dest = os.path.join(feedsdir, os.path.basename(path))
                 if not os.path.exists(syspath(dest)):
-                    os.symlink(syspath(path), syspath(dest))
+                    link(path, dest)
 
         if 'echo' in formats:
             self._log.info(u"Location of imported music:")
