@@ -422,6 +422,7 @@ class TestHelper(object):
     # Running beets commands
 
     def run_command(self, *args):
+        sys.argv = ['beet']  # avoid leakage from test suite args
         if hasattr(self, 'lib'):
             lib = self.lib
         else:
