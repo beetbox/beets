@@ -443,8 +443,7 @@ def move(path, dest, replace=False):
     path = syspath(path)
     dest = syspath(dest)
     if os.path.exists(dest) and not replace:
-        raise FilesystemError(u'file exists', 'rename', (path, dest),
-                              traceback.format_exc())
+        raise FilesystemError(u'file exists', 'rename', (path, dest))
 
     # First, try renaming the file.
     try:
