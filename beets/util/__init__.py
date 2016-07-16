@@ -471,6 +471,10 @@ def link(path, dest, replace=False):
         raise FilesystemError(u'file exists', 'rename', (path, dest))
     try:
         os.symlink(path, dest)
+    except NotImplementedError:
+        # raised on python >= 3.2 and Windows versions before Vista
+        raise FilesystemError(u'Windows XP does not support symbolic links.'
+                              'link', (path, dest), traceback.format_exc())
     except OSError:
         raise FilesystemError(u'Operating system does not support symbolic '
                               u'links.', 'link', (path, dest),
