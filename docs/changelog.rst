@@ -41,7 +41,12 @@ And there are a few bug fixes too:
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
 
+????
+
+* The pathlib module dependency was replaced by `pathlib2`_
+
 .. _six: https://pythonhosted.org/six/
+.. _pathlib2: https://pypi.python.org/pypi/pathlib2/
 
 
 1.3.19 (June 25, 2016)
