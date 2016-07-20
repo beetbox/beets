@@ -25,6 +25,7 @@ The scraper script used is available here:
 https://gist.github.com/1241307
 """
 import pylast
+import codecs
 import os
 import yaml
 import traceback
@@ -140,7 +141,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             c14n_filename = C14N_TREE
         if c14n_filename:
             c14n_filename = normpath(c14n_filename)
-            genres_tree = yaml.load(open(c14n_filename, 'r'))
+            genres_file = codecs.open(c14n_filename, 'r', encoding='utf-8')
+            genres_tree = yaml.load(genres_file)
             flatten_tree(genres_tree, [], self.c14n_branches)
 
     @property

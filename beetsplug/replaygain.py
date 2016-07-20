@@ -308,9 +308,9 @@ class CommandBackend(Backend):
     def format_supported(self, item):
         """Checks whether the given item is supported by the selected tool.
         """
-        if 'mp3gain' in self.command and item.format != 'MP3':
+        if b'mp3gain' in self.command and item.format != 'MP3':
             return False
-        elif 'aacgain' in self.command and item.format not in ('MP3', 'AAC'):
+        elif b'aacgain' in self.command and item.format not in ('MP3', 'AAC'):
             return False
         return True
 

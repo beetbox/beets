@@ -327,6 +327,11 @@ def _recommendation(results):
     return rec
 
 
+def _sort_candidates(candidates):
+    """Sort candidates by distance."""
+    return sorted(candidates, key=lambda match: match.distance)
+
+
 def _add_candidate(items, results, info):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
@@ -443,7 +448,7 @@ def tag_album(items, search_artist=None, search_album=None,
         _add_candidate(items, candidates, info)
 
     # Sort and get the recommendation.
-    candidates = sorted(candidates.values())
+    candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
     return cur_artist, cur_album, candidates, rec
 
@@ -471,16 +476,16 @@ def tag_item(item, search_artist=None, search_title=None,
                 candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)
                 # If this is a good match, then don't keep searching.
-                rec = _recommendation(sorted(candidates.values()))
+                rec = _recommendation(_sort_candidates(candidates.values()))
                 if rec == Recommendation.strong and \
                         not config['import']['timid']:
                     log.debug(u'Track ID match.')
-                    return sorted(candidates.values()), rec
+                    return _sort_candidates(candidates.values()), rec
 
     # If we're searching by ID, don't proceed.
     if search_ids:
         if candidates:
-            return sorted(candidates.values()), rec
+            return _sort_candidates(candidates.values()), rec
         else:
             return [], Recommendation.none
 
@@ -496,6 +501,6 @@ def tag_item(item, search_artist=None, search_title=None,
 
     # Sort by distance and return with recommendation.
     log.debug(u'Found {0} candidates.', len(candidates))
-    candidates = sorted(candidates.values())
+    candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
     return candidates, rec
