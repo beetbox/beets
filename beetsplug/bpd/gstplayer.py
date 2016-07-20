@@ -29,9 +29,9 @@ from six.moves import urllib
 from beets import ui
 
 import gi
-from gi.repository import GLib, Gst
-
 gi.require_version('Gst', '1.0')
+from gi.repository import GLib, Gst  # noqa ignore=E402
+
 
 Gst.init(None)
 

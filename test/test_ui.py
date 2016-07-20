@@ -774,7 +774,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         ])
 
     def test_cli_config_option(self):
-        config_path = os.path.join(self.temp_dir, 'config.yaml')
+        config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(config_path, 'w') as file:
             file.write('anoption: value')
 
@@ -785,7 +785,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         with open(self.user_config_path, 'w') as file:
             file.write('anoption: value')
 
-        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:
             file.write('anoption: cli overwrite')
 
@@ -798,7 +798,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         with open(env_config_path, 'w') as file:
             file.write('anoption: value')
 
-        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:
             file.write('anoption: cli overwrite')
 
@@ -807,8 +807,8 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
 #    @unittest.skip('Difficult to implement with optparse')
 #    def test_multiple_cli_config_files(self):
-#        cli_config_path_1 = os.path.join(self.temp_dir, 'config.yaml')
-#        cli_config_path_2 = os.path.join(self.temp_dir, 'config_2.yaml')
+#        cli_config_path_1 = os.path.join(self.temp_dir, b'config.yaml')
+#        cli_config_path_2 = os.path.join(self.temp_dir, b'config_2.yaml')
 #
 #        with open(cli_config_path_1, 'w') as file:
 #            file.write('first: value')
@@ -823,9 +823,9 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 #
 #    @unittest.skip('Difficult to implement with optparse')
 #    def test_multiple_cli_config_overwrite(self):
-#        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+#        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
 #        cli_overwrite_config_path = os.path.join(self.temp_dir,
-#                                                 'overwrite_config.yaml')
+#                                                 b'overwrite_config.yaml')
 #
 #        with open(cli_config_path, 'w') as file:
 #            file.write('anoption: value')
@@ -838,7 +838,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 #        self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
-        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:
             file.write('library: beets.db\n')
             file.write('statefile: state')
@@ -856,7 +856,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
         os.environ['BEETSDIR'] = util.py3_path(self.beetsdir)
 
-        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:
             file.write('library: beets.db\n')
             file.write('statefile: state')
@@ -878,7 +878,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
                                os.path.join(os.getcwd(), 'foo.db'))
 
     def test_cli_config_file_loads_plugin_commands(self):
-        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:
             file.write('pluginpath: %s\n' % _common.PLUGINPATH)
             file.write('plugins: test')

@@ -47,7 +47,7 @@ def replace_ext(path, ext):
 
     The new extension must not contain a leading dot.
     """
-    ext_dot = util.bytestring_path('.' + ext)
+    ext_dot = b'.' + ext
     return os.path.splitext(path)[0] + ext_dot
 
 
@@ -68,7 +68,7 @@ def get_format(fmt=None):
             .format(fmt)
         )
     except ConfigTypeError:
-        command = config['convert']['formats'][fmt].get(bytes)
+        command = config['convert']['formats'][fmt].get(str)
         extension = fmt
 
     # Convenience and backwards-compatibility shortcuts.
@@ -428,7 +428,9 @@ class ConvertPlugin(BeetsPlugin):
 
             # Create a temporary file for the conversion.
             tmpdir = self.config['tmpdir'].get()
-            fd, dest = tempfile.mkstemp('.' + ext, dir=tmpdir)
+            if tmpdir:
+                tmpdir = util.py3_path(util.bytestring_path(tmpdir))
+            fd, dest = tempfile.mkstemp(util.py3_path(b'.' + ext), dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.

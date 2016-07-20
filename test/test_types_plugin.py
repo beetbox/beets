@@ -48,7 +48,7 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
         # Match in range
         out = self.list(u'myint:1..3')
-        self.assertIn(b'aaa', out)
+        self.assertIn('aaa', out)
 
     def test_album_integer_modify_and_query(self):
         self.config['types'] = {'myint': u'int'}
@@ -64,7 +64,7 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
         # Match in range
         out = self.list_album(u'myint:1..3')
-        self.assertIn(b'aaa', out)
+        self.assertIn('aaa', out)
 
     def test_float_modify_and_query(self):
         self.config['types'] = {'myfloat': u'float'}
@@ -76,7 +76,7 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
         # Match in range
         out = self.list(u'myfloat:-10..0')
-        self.assertIn(b'aaa', out)
+        self.assertIn('aaa', out)
 
     def test_bool_modify_and_query(self):
         self.config['types'] = {'mybool': u'bool'}

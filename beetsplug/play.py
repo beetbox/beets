@@ -137,8 +137,7 @@ class PlayPlugin(BeetsPlugin):
         else:
             open_args = [self._create_tmp_playlist(paths)]
 
-        self._log.debug(u'executing command: {} {}', command_str,
-                        util.text_string(b' '.join(open_args)))
+        self._log.debug(u'executing command: {} {!r}', command_str, open_args)
         try:
             util.interactive_open(open_args, command_str)
         except OSError as exc:
