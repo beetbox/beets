@@ -1,11 +1,6 @@
 Changelog
 =========
 
-* :doc:`/plugins/embyupdate`: Use the option of Emby's API Key's rather than
-  a password. Add an apikey to your config file for this to work. Does not
-  break the use of password as an authentication method
-
-
 1.4.0 (in development)
 ----------------------
 
@@ -23,11 +18,13 @@ to know:
 * Please don't package beets as a Python 3 application *yet*, even though some
   things may appear to work under Python 3.4 and later.
 
-There's a small new feature:
+The are a couple of small new features:
 
 * :doc:`/plugins/web`: Added an ``expand`` option to show the items of an
   album and a ``path`` field to the JSON output of a file which shows the
   filled-out path template for each file. :bug:`2050`
+* :doc:`/plugins/embyupdate`: The plugin can now use an API key instead of a
+  password to authenticate with Emby. :bug:`2045` :bug:`2117`
 
 And there are a few bug fixes too:
 
