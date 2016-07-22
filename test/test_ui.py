@@ -24,7 +24,7 @@ import subprocess
 import platform
 from copy import deepcopy
 
-from mock import patch
+from mock import patch, Mock
 from test import _common
 from test._common import unittest
 from test.helper import capture_stdout, has_program, TestHelper, control_stdin
@@ -1065,6 +1065,7 @@ class ShowChangeTest(_common.TestCase):
                         u'caf.mp3 ->' in msg)
 
 
+@patch('beets.library.Item.try_filesize', Mock(return_value=987))
 class SummarizeItemsTest(_common.TestCase):
     def setUp(self):
         super(SummarizeItemsTest, self).setUp()
@@ -1073,8 +1074,6 @@ class SummarizeItemsTest(_common.TestCase):
         item.length = 10 * 60 + 54
         item.format = "F"
         self.item = item
-        fsize_mock = patch('beets.library.Item.try_filesize').start()
-        fsize_mock.return_value = 987
 
     def test_summarize_item(self):
         summary = commands.summarize_items([], True)
