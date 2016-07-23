@@ -1143,7 +1143,7 @@ class CompletionTest(_common.TestCase):
         else:
             self.skipTest(u'bash-completion script not found')
         try:
-            with open(util.syspath(bash_completion), 'r') as f:
+            with open(util.syspath(bash_completion), 'rb') as f:
                 tester.stdin.writelines(f)
         except IOError:
             self.skipTest(u'could not read bash-completion script')
@@ -1157,7 +1157,7 @@ class CompletionTest(_common.TestCase):
 
         # Load test suite.
         test_script = os.path.join(_common.RSRC, b'test_completion.sh')
-        with open(test_script, 'r') as test_script:
+        with open(test_script, 'rb') as test_script:
             tester.stdin.writelines(test_script)
         (out, err) = tester.communicate()
         if tester.returncode != 0 or out != u"completion tests passed\n":
