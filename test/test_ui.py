@@ -1151,17 +1151,17 @@ class CompletionTest(_common.TestCase):
         # Load completion script.
         self.io.install()
         ui._raw_main(['completion'])
-        completion_script = self.io.getoutput()
+        completion_script = self.io.getoutput().encode('utf-8')
         self.io.restore()
-        tester.stdin.writelines(completion_script)
+        tester.stdin.writelines(completion_script.splitlines(True))
 
         # Load test suite.
         test_script = os.path.join(_common.RSRC, b'test_completion.sh')
         with open(test_script, 'rb') as test_script:
             tester.stdin.writelines(test_script)
         (out, err) = tester.communicate()
-        if tester.returncode != 0 or out != u"completion tests passed\n":
-            print(out)
+        if tester.returncode != 0 or out != b'completion tests passed\n':
+            print(out.decode('utf-8'))
             self.fail(u'test/test_completion.sh did not execute properly')
 
 
