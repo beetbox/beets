@@ -28,22 +28,12 @@ Each plugin has its own set of options that can be defined in a section bearing 
     convert:
         auto: true
 
-Install dependencies
---------------------
-
-The needed dependencies can be found on the plugin page.
-
-You can also use `pip`'s "extras" feature to install all dependencies for a beets plugin.
-
-::
-
-    pip install beets[fetchart]
-
-It's also possible to install the dependencies for multiple plugins at once::
+Some plugins have special dependencies that you'll need to install. The
+documentation page for each plugin will list them in the setup instructions.
+For some, you can use `pip`'s "extras" feature to install the dependencies,
+like this::
 
     pip install beets[fetchart,lyrics,lastgenre]
-
-Remember to use `pip` for Python 2.7 as Python 3 is not yet supported. You might have to use `sudo`.
 
 .. toctree::
    :hidden:
