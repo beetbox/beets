@@ -14,7 +14,7 @@
 
 from __future__ import division, absolute_import, print_function
 
-from mock import patch
+from mock import patch, Mock
 
 from beets import library
 from beets.util import bytestring_path, _fsencoding
@@ -26,19 +26,17 @@ from test.helper import TestHelper
 import os
 
 
+@patch('beets.util.command_output', Mock())
 class IPFSPluginTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_beets()
         self.load_plugins('ipfs')
-        self.patcher = patch('beets.util.command_output')
-        self.command_output = self.patcher.start()
         self.lib = library.Library(":memory:")
 
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
-        self.patcher.stop()
 
     def test_stored_hashes(self):
         test_album = self.mk_test_album()
