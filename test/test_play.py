@@ -41,8 +41,8 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
         self.unload_plugins()
 
-    def do_test(self, open_mock, args=('title:aNiceTitle',), expected_cmd='echo',
-                expected_playlist=None):
+    def do_test(self, open_mock, args=('title:aNiceTitle',),
+                expected_cmd='echo', expected_playlist=None):
         self.run_command('play', *args)
 
         open_mock.assert_called_once_with(ANY, expected_cmd)
@@ -58,12 +58,14 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.do_test(open_mock, [u'-a', u'nice'])
 
     def test_args_option(self, open_mock):
-        self.do_test(open_mock, [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo')
+        self.do_test(open_mock,
+                     [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo')
 
     def test_args_option_in_middle(self, open_mock):
         self.config['play']['command'] = 'echo $args other'
 
-        self.do_test(open_mock, [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo other')
+        self.do_test(open_mock,
+                     [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo other')
 
     def test_relative_to(self, open_mock):
         self.config['play']['command'] = 'echo'
@@ -71,7 +73,8 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
         path = os.path.relpath(self.item.path, b'/something')
         playlist = path.decode('utf8')
-        self.do_test(open_mock, expected_cmd='echo', expected_playlist=playlist)
+        self.do_test(open_mock,
+                     expected_cmd='echo', expected_playlist=playlist)
 
     def test_use_folders(self, open_mock):
         self.config['play']['command'] = None
