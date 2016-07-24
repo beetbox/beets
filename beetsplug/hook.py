@@ -17,6 +17,7 @@ from __future__ import division, absolute_import, print_function
 
 import string
 import subprocess
+import six
 
 from beets.plugins import BeetsPlugin
 from beets.ui import _arg_encoding
@@ -96,7 +97,12 @@ class HookPlugin(BeetsPlugin):
                     self._log.error('invalid command "{0}"', command)
                     return
 
-                formatter = CodingFormatter(_arg_encoding())
+                # Use a string formatter that works on Unicode strings.
+                if six.PY2:
+                    formatter = CodingFormatter(_arg_encoding())
+                else:
+                    formatter = string.Formatter()
+
                 command_pieces = shlex_split(command)
 
                 for i, piece in enumerate(command_pieces):
