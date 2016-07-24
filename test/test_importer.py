@@ -1766,8 +1766,10 @@ def mocked_get_recording_by_id(id_, includes=[], release_status=[],
     }
 
 
-@patch('musicbrainzngs.get_recording_by_id', Mock(side_effect=mocked_get_recording_by_id))
-@patch('musicbrainzngs.get_release_by_id', Mock(side_effect=mocked_get_release_by_id))
+@patch('musicbrainzngs.get_recording_by_id',
+       Mock(side_effect=mocked_get_recording_by_id))
+@patch('musicbrainzngs.get_release_by_id',
+       Mock(side_effect=mocked_get_release_by_id))
 class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
     """Test the --musicbrainzid argument."""
 
@@ -1849,6 +1851,7 @@ class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
         task.lookup_candidates()
         self.assertEqual(set(['VALID_RECORDING_0', 'VALID_RECORDING_1']),
                          set([c.info.title for c in task.candidates]))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
