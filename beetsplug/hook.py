@@ -24,8 +24,13 @@ from beets.util import shlex_split
 
 
 class CodingFormatter(string.Formatter):
-    """A custom string formatter that decodes the format string and it's
-    fields.
+    """A variant of `string.Formatter` that converts everything to `unicode`
+    strings.
+
+    This is necessary on Python 2, where formatting otherwise occurs on
+    bytestrings. It intercepts two points in the formatting process to decode
+    the format string and all fields using the specified encoding. If decoding
+    fails, the values are used as-is.
     """
 
     def __init__(self, coding):
@@ -57,6 +62,7 @@ class CodingFormatter(string.Formatter):
         """
         converted = super(CodingFormatter, self).convert_field(value,
                                                                conversion)
+
         try:
             converted = converted.decode(self._coding)
         except UnicodeEncodeError:
