@@ -425,8 +425,6 @@ class TestHelper(object):
         sys.argv = ['beet']  # avoid leakage from test suite args
         if hasattr(self, 'lib'):
             lib = self.lib
-        else:
-            lib = Library(':memory:')
         beets.ui._raw_main(list(args), lib)
 
     def run_with_output(self, *args):
