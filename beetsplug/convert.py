@@ -22,6 +22,7 @@ import threading
 import subprocess
 import tempfile
 import shlex
+import six
 from string import Template
 
 from beets import ui, util, plugins, config
@@ -183,6 +184,11 @@ class ConvertPlugin(BeetsPlugin):
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
         # Substitute $source and $dest in the argument list.
+        if not six.PY2:
+            command = command.decode(ui._arg_encoding(), 'surrogateescape')
+            source = source.decode(ui._arg_encoding(), 'surrogateescape')
+            dest = dest.decode(ui._arg_encoding(), 'surrogateescape')
+
         args = shlex.split(command)
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
