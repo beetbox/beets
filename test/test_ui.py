@@ -1151,10 +1151,10 @@ class CompletionTest(_common.TestCase, TestHelper):
         tester.stdin.writelines(completion_script.splitlines(True))
 
         # Load test suite.
-        test_script = os.path.join(_common.RSRC, b'test_completion.sh')
-        with open(test_script, 'rb') as test_script:
-            tester.stdin.writelines(test_script)
-        (out, err) = tester.communicate()
+        test_script_name = os.path.join(_common.RSRC, b'test_completion.sh')
+        with open(test_script_name, 'rb') as test_script_file:
+            tester.stdin.writelines(test_script_file)
+        out, err = tester.communicate()
         if tester.returncode != 0 or out != b'completion tests passed\n':
             print(out.decode('utf-8'))
             self.fail(u'test/test_completion.sh did not execute properly')
