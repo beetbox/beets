@@ -138,7 +138,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertTrue(all(i.title.startswith(title_starts_with)
                             for i in self.lib.items()))
 
-    def test_title_edit_discard(self, m):
+    def test_title_edit_discard(self, mock_write):
         """Edit title for all items in the library, then discard changes."""
         # Edit track titles.
         self.run_mocked_command({'replacements': {u't\u00eftle':
@@ -146,11 +146,11 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 # Cancel.
                                 ['c'])
 
-        self.assertCounts(m, write_call_count=0,
+        self.assertCounts(mock_write, write_call_count=0,
                           title_starts_with=u't\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
-    def test_title_edit_apply(self, m):
+    def test_title_edit_apply(self, mock_write):
         """Edit title for all items in the library, then apply changes."""
         # Edit track titles.
         self.run_mocked_command({'replacements': {u't\u00eftle':
@@ -158,12 +158,12 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 # Apply changes.
                                 ['a'])
 
-        self.assertCounts(m, write_call_count=self.TRACK_COUNT,
+        self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT,
                           title_starts_with=u'modified t\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['title'])
 
-    def test_single_title_edit_apply(self, m):
+    def test_single_title_edit_apply(self, mock_write):
         """Edit title for one item in the library, then apply changes."""
         # Edit one track title.
         self.run_mocked_command({'replacements': {u't\u00eftle 9':
@@ -171,25 +171,25 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 # Apply changes.
                                 ['a'])
 
-        self.assertCounts(m, write_call_count=1,)
+        self.assertCounts(mock_write, write_call_count=1,)
         # No changes except on last item.
         self.assertItemFieldsModified(list(self.album.items())[:-1],
                                       self.items_orig[:-1], [])
         self.assertEqual(list(self.album.items())[-1].title,
                          u'modified t\u00eftle 9')
 
-    def test_noedit(self, m):
+    def test_noedit(self, mock_write):
         """Do not edit anything."""
         # Do not edit anything.
         self.run_mocked_command({'contents': None},
                                 # No stdin.
                                 [])
 
-        self.assertCounts(m, write_call_count=0,
+        self.assertCounts(mock_write, write_call_count=0,
                           title_starts_with=u't\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
-    def test_album_edit_apply(self, m):
+    def test_album_edit_apply(self, mock_write):
         """Edit the album field for all items in the library, apply changes.
         By design, the album should not be updated.""
         """
@@ -199,14 +199,14 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 # Apply changes.
                                 ['a'])
 
-        self.assertCounts(m, write_call_count=self.TRACK_COUNT)
+        self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['album'])
         # Ensure album is *not* modified.
         self.album.load()
         self.assertEqual(self.album.album, u'\u00e4lbum')
 
-    def test_single_edit_add_field(self, m):
+    def test_single_edit_add_field(self, mock_write):
         """Edit the yaml file appending an extra field to the first item, then
         apply changes."""
         # Append "foo: bar" to item with id == 1.
@@ -216,10 +216,10 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 ['a'])
 
         self.assertEqual(self.lib.items(u'id:1')[0].foo, 'bar')
-        self.assertCounts(m, write_call_count=1,
+        self.assertCounts(mock_write, write_call_count=1,
                           title_starts_with=u't\u00eftle')
 
-    def test_a_album_edit_apply(self, m):
+    def test_a_album_edit_apply(self, mock_write):
         """Album query (-a), edit album field, apply changes."""
         self.run_mocked_command({'replacements': {u'\u00e4lbum':
                                                   u'modified \u00e4lbum'}},
@@ -228,12 +228,12 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 args=['-a'])
 
         self.album.load()
-        self.assertCounts(m, write_call_count=self.TRACK_COUNT)
+        self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertEqual(self.album.album, u'modified \u00e4lbum')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['album'])
 
-    def test_a_albumartist_edit_apply(self, m):
+    def test_a_albumartist_edit_apply(self, mock_write):
         """Album query (-a), edit albumartist field, apply changes."""
         self.run_mocked_command({'replacements': {u'album artist':
                                                   u'modified album artist'}},
@@ -242,12 +242,12 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 args=['-a'])
 
         self.album.load()
-        self.assertCounts(m, write_call_count=self.TRACK_COUNT)
+        self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertEqual(self.album.albumartist, u'the modified album artist')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['albumartist'])
 
-    def test_malformed_yaml(self, m):
+    def test_malformed_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a malformed yaml
         document)."""
         # Edit the yaml file to an invalid file.
@@ -255,10 +255,10 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 # Edit again to fix? No.
                                 ['n'])
 
-        self.assertCounts(m, write_call_count=0,
+        self.assertCounts(mock_write, write_call_count=0,
                           title_starts_with=u't\u00eftle')
 
-    def test_invalid_yaml(self, m):
+    def test_invalid_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a well-formed but
         invalid yaml document)."""
         # Edit the yaml file to an invalid but parseable file.
@@ -266,7 +266,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 # No stdin.
                                 [])
 
-        self.assertCounts(m, write_call_count=0,
+        self.assertCounts(mock_write, write_call_count=0,
                           title_starts_with=u't\u00eftle')
 
 
