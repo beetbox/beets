@@ -9,9 +9,7 @@ from six import assertCountEqual
 from test._common import unittest
 from test import _common
 import json
-import beetsplug
 from beets.library import Item, Album
-beetsplug.__path__ = ['./beetsplug', '../beetsplug']  # noqa
 from beetsplug import web
 
 
