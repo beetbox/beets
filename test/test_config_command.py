@@ -20,6 +20,7 @@ import six
 class ConfigCommandTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
+        self.lib = Library(':memory:')
         self.temp_dir = mkdtemp()
         if 'EDITOR' in os.environ:
             del os.environ['EDITOR']
@@ -119,7 +120,6 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         self.assertIn('here is problem', six.text_type(user_error.exception))
 
     def test_edit_invalid_config_file(self):
-        self.lib = Library(':memory:')
         with open(self.config_path, 'w') as file:
             file.write('invalid: [')
         config.clear()
