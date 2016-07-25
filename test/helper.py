@@ -421,10 +421,16 @@ class TestHelper(object):
 
     # Running beets commands
 
-    def run_command(self, *args):
+    def run_command(self, *args, **kwargs):
+        """Run a beets command with an arbitrary amount of arguments. The
+           Library` defaults to `self.lib`, but can be overridden with
+           the keyword argument `lib`.
+        """
         sys.argv = ['beet']  # avoid leakage from test suite args
+        lib = None
         if hasattr(self, 'lib'):
             lib = self.lib
+        lib = kwargs.get('lib', lib)
         beets.ui._raw_main(list(args), lib)
 
     def run_with_output(self, *args):
