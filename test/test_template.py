@@ -17,8 +17,6 @@
 """
 from __future__ import division, absolute_import, print_function
 
-import warnings
-
 from test._common import unittest
 from beets.util import functemplate
 import six
@@ -212,13 +210,6 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(len(arg_parts), 1)
         self._assert_call(arg_parts[0], u"bar", 1)
         self.assertEqual(list(_normexpr(arg_parts[0].args[0])), [u'baz'])
-
-    def test_fail_on_utf8(self):
-        parts = u'é'.encode('utf8')
-        warnings.simplefilter("ignore")
-        with self.assertRaises(UnicodeDecodeError):
-            functemplate._parse(parts)
-        warnings.simplefilter("default")
 
 
 class EvalTest(unittest.TestCase):
