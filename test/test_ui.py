@@ -65,7 +65,7 @@ class ListTest(unittest.TestCase):
         with capture_stdout() as stdout:
             self._run_list([u'na\xefve'])
         out = stdout.getvalue()
-        self.assertTrue(u'na\xefve' in out.decode(stdout.encoding))
+        self.assertTrue(u'na\xefve' in out)
 
     def test_list_item_path(self):
         with capture_stdout() as stdout:
@@ -641,8 +641,8 @@ class InputTest(_common.TestCase):
         self.io.install()
 
     def test_manual_search_gets_unicode(self):
-        self.io.addinput(b'\xc3\x82me')
-        self.io.addinput(b'\xc3\x82me')
+        self.io.addinput('Âme')
+        self.io.addinput('Âme')
         artist, album = commands.manual_search(False)
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
