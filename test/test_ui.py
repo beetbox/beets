@@ -23,6 +23,7 @@ import re
 import subprocess
 import platform
 from copy import deepcopy
+import six
 
 from mock import patch, Mock
 from test import _common
@@ -65,7 +66,9 @@ class ListTest(unittest.TestCase):
         with capture_stdout() as stdout:
             self._run_list([u'na\xefve'])
         out = stdout.getvalue()
-        self.assertTrue(u'na\xefve' in out.decode(stdout.encoding))
+        if six.PY2:
+            out = out.decode(stdout.encoding)
+        self.assertTrue(u'na\xefve' in out)
 
     def test_list_item_path(self):
         with capture_stdout() as stdout:
