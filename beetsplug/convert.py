@@ -190,18 +190,23 @@ class ConvertPlugin(BeetsPlugin):
             dest = dest.decode(ui._arg_encoding(), 'surrogateescape')
 
         args = shlex.split(command)
+        encode_cmd = []
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
                 'source': source,
                 'dest': dest,
             })
+            if six.PY2:
+                encode_cmd.append(args[i])
+            else:
+                encode_cmd.append(args[i].encode(ui._arg_encoding()))
 
         if pretend:
             self._log.info(u' '.join(ui.decargs(args)))
             return
 
         try:
-            util.command_output(args)
+            util.command_output(encode_cmd)
         except subprocess.CalledProcessError as exc:
             # Something went wrong (probably Ctrl+C), remove temporary files
             self._log.info(u'Encoding {0} failed. Cleaning up...',
