@@ -172,7 +172,7 @@ class ModifyTest(unittest.TestCase, TestHelper):
 
     def modify_inp(self, inp, *args):
         with control_stdin(inp):
-            ui._raw_main(['modify'] + list(args), self.lib)
+            self.run_command('modify', *args)
 
     def modify(self, *args):
         self.modify_inp('y', *args)
@@ -360,7 +360,7 @@ class WriteTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def write_cmd(self, *args):
-        ui._raw_main(['write'] + list(args), self.lib)
+        self.run_command('write', *args)
 
     def test_update_mtime(self):
         item = self.add_item_fixture()
@@ -721,7 +721,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         with self.write_config_file() as config:
             config.write('paths: {x: y}')
 
-        ui._raw_main(['test'])
+        self.run_command('test', lib=None)
         key, template = self.test_cmd.lib.path_formats[0]
         self.assertEqual(key, 'x')
         self.assertEqual(template.original, 'y')
@@ -732,8 +732,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self._reset_config()
         with self.write_config_file() as config:
             config.write('paths: {x: y}')
-
-        ui._raw_main(['test'])
+        self.run_command('test', lib=None)
         key, template = self.test_cmd.lib.path_formats[0]
         self.assertEqual(key, 'x')
         self.assertEqual(template.original, 'y')
@@ -745,28 +744,27 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             config.write('library: /xxx/yyy/not/a/real/path')
 
         with self.assertRaises(ui.UserError):
-            ui._raw_main(['test'])
+            self.run_command('test', lib=None)
 
     def test_user_config_file(self):
         with self.write_config_file() as file:
             file.write('anoption: value')
 
-        ui._raw_main(['test'])
+        self.run_command('test', lib=None)
         self.assertEqual(config['anoption'].get(), 'value')
 
     def test_replacements_parsed(self):
         with self.write_config_file() as config:
             config.write("replace: {'[xy]': z}")
 
-        ui._raw_main(['test'])
+        self.run_command('test', lib=None)
         replacements = self.test_cmd.lib.replacements
         self.assertEqual(replacements, [(re.compile(u'[xy]'), 'z')])
 
     def test_multiple_replacements_parsed(self):
         with self.write_config_file() as config:
             config.write("replace: {'[xy]': z, foo: bar}")
-
-        ui._raw_main(['test'])
+        self.run_command('test', lib=None)
         replacements = self.test_cmd.lib.replacements
         self.assertEqual(replacements, [
             (re.compile(u'[xy]'), u'z'),
@@ -777,8 +775,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(config_path, 'w') as file:
             file.write('anoption: value')
-
-        ui._raw_main(['--config', config_path, 'test'])
+        self.run_command('--config', config_path, 'test', lib=None)
         self.assertEqual(config['anoption'].get(), 'value')
 
     def test_cli_config_file_overwrites_user_defaults(self):
@@ -788,8 +785,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:
             file.write('anoption: cli overwrite')
-
-        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.run_command('--config', cli_config_path, 'test', lib=None)
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
     def test_cli_config_file_overwrites_beetsdir_defaults(self):
@@ -801,8 +797,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:
             file.write('anoption: cli overwrite')
-
-        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.run_command('--config', cli_config_path, 'test', lib=None)
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
 #    @unittest.skip('Difficult to implement with optparse')
@@ -816,8 +811,8 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 #        with open(cli_config_path_2, 'w') as file:
 #            file.write('second: value')
 #
-#        ui._raw_main(['--config', cli_config_path_1,
-#                      '--config', cli_config_path_2, 'test'])
+#        self.run_command('--config', cli_config_path_1,
+#                      '--config', cli_config_path_2, 'test', lib=None)
 #        self.assertEqual(config['first'].get(), 'value')
 #        self.assertEqual(config['second'].get(), 'value')
 #
@@ -833,8 +828,8 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 #        with open(cli_overwrite_config_path, 'w') as file:
 #            file.write('anoption: overwrite')
 #
-#        ui._raw_main(['--config', cli_config_path,
-#                      '--config', cli_overwrite_config_path, 'test'])
+#        self.run_command('--config', cli_config_path,
+#                      '--config', cli_overwrite_config_path, 'test')
 #        self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
@@ -843,7 +838,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             file.write('library: beets.db\n')
             file.write('statefile: state')
 
-        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.run_command('--config', cli_config_path, 'test', lib=None)
         self.assert_equal_path(
             util.bytestring_path(config['library'].as_filename()),
             os.path.join(self.user_config_dir, b'beets.db')
@@ -861,7 +856,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             file.write('library: beets.db\n')
             file.write('statefile: state')
 
-        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.run_command('--config', cli_config_path, 'test', lib=None)
         self.assert_equal_path(
             util.bytestring_path(config['library'].as_filename()),
             os.path.join(self.beetsdir, b'beets.db')
@@ -873,7 +868,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
     def test_command_line_option_relative_to_working_dir(self):
         os.chdir(self.temp_dir)
-        ui._raw_main(['--library', 'foo.db', 'test'])
+        self.run_command('--library', 'foo.db', 'test', lib=None)
         self.assert_equal_path(config['library'].as_filename(),
                                os.path.join(os.getcwd(), 'foo.db'))
 
@@ -883,7 +878,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             file.write('pluginpath: %s\n' % _common.PLUGINPATH)
             file.write('plugins: test')
 
-        ui._raw_main(['--config', cli_config_path, 'plugin'])
+        self.run_command('--config', cli_config_path, 'plugin', lib=None)
         self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
 
     def test_beetsdir_config(self):
@@ -900,7 +895,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         beetsdir = os.path.join(self.temp_dir, b'beetsfile')
         open(beetsdir, 'a').close()
         os.environ['BEETSDIR'] = util.py3_path(beetsdir)
-        self.assertRaises(ConfigError, ui._raw_main, ['test'])
+        self.assertRaises(ConfigError, self.run_command, 'test')
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
         os.environ['BEETSDIR'] = util.py3_path(self.beetsdir)
@@ -1114,15 +1109,15 @@ class PathFormatTest(_common.TestCase):
 
 
 @_common.slow_test()
-class PluginTest(_common.TestCase):
+class PluginTest(_common.TestCase, TestHelper):
     def test_plugin_command_from_pluginpath(self):
         config['pluginpath'] = [_common.PLUGINPATH]
         config['plugins'] = ['test']
-        ui._raw_main(['test'])
+        self.run_command('test', lib=None)
 
 
 @_common.slow_test()
-class CompletionTest(_common.TestCase):
+class CompletionTest(_common.TestCase, TestHelper):
     def test_completion(self):
         # Load plugin commands
         config['pluginpath'] = [_common.PLUGINPATH]
@@ -1150,7 +1145,7 @@ class CompletionTest(_common.TestCase):
 
         # Load completion script.
         self.io.install()
-        ui._raw_main(['completion'])
+        self.run_command('completion', lib=None)
         completion_script = self.io.getoutput().encode('utf-8')
         self.io.restore()
         tester.stdin.writelines(completion_script.splitlines(True))
