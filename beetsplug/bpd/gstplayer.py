@@ -30,7 +30,7 @@ from beets import ui
 
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import GLib, Gst  # noqa ignore=E402
+from gi.repository import GLib, Gst  # noqa: E402
 
 
 Gst.init(None)

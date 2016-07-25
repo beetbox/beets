@@ -40,7 +40,7 @@ import beets
 # `memoryview`, depending on the Python version, tells it that we
 # actually mean non-text data.
 if six.PY2:
-    BLOB_TYPE = buffer  # noqa ignore=F821
+    BLOB_TYPE = buffer  # noqa: F821
 else:
     BLOB_TYPE = memoryview
 

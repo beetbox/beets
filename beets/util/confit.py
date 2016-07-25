@@ -44,9 +44,9 @@ REDACTED_TOMBSTONE = 'REDACTED'
 # Utilities.
 
 PY3 = sys.version_info[0] == 3
-STRING = str if PY3 else unicode  # noqa ignore=F821
-BASESTRING = str if PY3 else basestring  # noqa ignore=F821
-NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)  # noqa ignore=F821
+STRING = str if PY3 else unicode  # noqa: F821
+BASESTRING = str if PY3 else basestring  # noqa: F821
+NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)  # noqa: F821
 
 
 def iter_first(sequence):
