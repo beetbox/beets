@@ -119,13 +119,25 @@ def capture_stdout():
         print(capture.getvalue())
 
 
+def _convert_args(args):
+    """Convert args to bytestrings for Python 2 and convert them to strings
+       on Python 3.
+    """
+    for i, elem in enumerate(args):
+        if six.PY2:
+            if isinstance(elem, six.text_type):
+                args[i] = elem.encode(_arg_encoding())
+        else:
+            if isinstance(elem, bytes):
+                args[i] = elem.decode(_arg_encoding())
+
+    return args
+
+
 def has_program(cmd, args=['--version']):
     """Returns `True` if `cmd` can be executed.
     """
-    full_cmd = [cmd] + args
-    for i, elem in enumerate(full_cmd):
-        if isinstance(elem, six.text_type):
-            full_cmd[i] = elem.encode(_arg_encoding())
+    full_cmd = _convert_args([cmd] + args)
     try:
         with open(os.devnull, 'wb') as devnull:
             subprocess.check_call(full_cmd, stderr=devnull,
@@ -431,7 +443,7 @@ class TestHelper(object):
         if hasattr(self, 'lib'):
             lib = self.lib
         lib = kwargs.get('lib', lib)
-        beets.ui._raw_main(list(args), lib)
+        beets.ui._raw_main(_convert_args(list(args)), lib)
 
     def run_with_output(self, *args):
         with capture_stdout() as out:
