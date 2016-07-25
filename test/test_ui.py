@@ -641,11 +641,13 @@ class InputTest(_common.TestCase):
         self.io.install()
 
     def test_manual_search_gets_unicode(self):
-        self.io.addinput(b'\xc3\x82me')
-        self.io.addinput(b'\xc3\x82me')
+        # The input here uses "native strings": bytes on Python 2, Unicode on
+        # Python 3.
+        self.io.addinput('foö')
+        self.io.addinput('bár')
         artist, album = commands.manual_search(False)
-        self.assertEqual(artist, u'\xc2me')
-        self.assertEqual(album, u'\xc2me')
+        self.assertEqual(artist, u'foö')
+        self.assertEqual(album, u'bár')
 
 
 @_common.slow_test()
