@@ -28,96 +28,97 @@ from beets.ui import UserError
 from beets.util import open_anything
 
 
+@patch('beetsplug.play.util.interactive_open')
 class PlayPluginTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
         self.load_plugins('play')
         self.item = self.add_item(album=u'a nice älbum', title=u'aNiceTitle')
         self.lib.add_album([self.item])
-        self.open_patcher = patch('beetsplug.play.util.interactive_open')
-        self.open_mock = self.open_patcher.start()
         self.config['play']['command'] = 'echo'
 
     def tearDown(self):
-        self.open_patcher.stop()
         self.teardown_beets()
         self.unload_plugins()
 
-    def do_test(self, args=('title:aNiceTitle',), expected_cmd='echo',
-                expected_playlist=None):
+    def run_and_assert(self, open_mock, args=('title:aNiceTitle',),
+                       expected_cmd='echo', expected_playlist=None):
         self.run_command('play', *args)
 
-        self.open_mock.assert_called_once_with(ANY, expected_cmd)
+        open_mock.assert_called_once_with(ANY, expected_cmd)
         expected_playlist = expected_playlist or self.item.path.decode('utf-8')
         exp_playlist = expected_playlist + u'\n'
-        with open(self.open_mock.call_args[0][0][0], 'rb') as playlist:
+        with open(open_mock.call_args[0][0][0], 'rb') as playlist:
             self.assertEqual(exp_playlist, playlist.read().decode('utf-8'))
 
-    def test_basic(self):
-        self.do_test()
+    def test_basic(self, open_mock):
+        self.run_and_assert(open_mock)
 
-    def test_album_option(self):
-        self.do_test([u'-a', u'nice'])
+    def test_album_option(self, open_mock):
+        self.run_and_assert(open_mock, [u'-a', u'nice'])
 
-    def test_args_option(self):
-        self.do_test([u'-A', u'foo', u'title:aNiceTitle'], u'echo foo')
+    def test_args_option(self, open_mock):
+        self.run_and_assert(
+            open_mock, [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo')
 
-    def test_args_option_in_middle(self):
+    def test_args_option_in_middle(self, open_mock):
         self.config['play']['command'] = 'echo $args other'
 
-        self.do_test([u'-A', u'foo', u'title:aNiceTitle'], u'echo foo other')
+        self.run_and_assert(
+            open_mock, [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo other')
 
-    def test_relative_to(self):
+    def test_relative_to(self, open_mock):
         self.config['play']['command'] = 'echo'
         self.config['play']['relative_to'] = '/something'
 
         path = os.path.relpath(self.item.path, b'/something')
         playlist = path.decode('utf8')
-        self.do_test(expected_cmd='echo', expected_playlist=playlist)
+        self.run_and_assert(
+            open_mock, expected_cmd='echo', expected_playlist=playlist)
 
-    def test_use_folders(self):
+    def test_use_folders(self, open_mock):
         self.config['play']['command'] = None
         self.config['play']['use_folders'] = True
         self.run_command('play', '-a', 'nice')
 
-        self.open_mock.assert_called_once_with(ANY, open_anything())
-        playlist = open(self.open_mock.call_args[0][0][0], 'rb')
+        open_mock.assert_called_once_with(ANY, open_anything())
+        playlist = open(open_mock.call_args[0][0][0], 'rb')
         self.assertEqual(u'{}\n'.format(
             os.path.dirname(self.item.path.decode('utf-8'))),
             playlist.read().decode('utf-8'))
 
-    def test_raw(self):
+    def test_raw(self, open_mock):
         self.config['play']['raw'] = True
 
         self.run_command(u'play', u'nice')
 
-        self.open_mock.assert_called_once_with([self.item.path], 'echo')
+        open_mock.assert_called_once_with([self.item.path], 'echo')
 
-    def test_not_found(self):
+    def test_not_found(self, open_mock):
         self.run_command(u'play', u'not found')
 
-        self.open_mock.assert_not_called()
+        open_mock.assert_not_called()
 
-    def test_warning_threshold(self):
+    def test_warning_threshold(self, open_mock):
         self.config['play']['warning_threshold'] = 1
         self.add_item(title='another NiceTitle')
 
         with control_stdin("a"):
             self.run_command(u'play', u'nice')
 
-        self.open_mock.assert_not_called()
+        open_mock.assert_not_called()
 
-    def test_warning_threshold_backwards_compat(self):
+    def test_warning_threshold_backwards_compat(self, open_mock):
         self.config['play']['warning_treshold'] = 1
         self.add_item(title=u'another NiceTitle')
 
         with control_stdin("a"):
             self.run_command(u'play', u'nice')
 
-        self.open_mock.assert_not_called()
+        open_mock.assert_not_called()
 
-    def test_command_failed(self):
-        self.open_mock.side_effect = OSError(u"some reason")
+    def test_command_failed(self, open_mock):
+        open_mock.side_effect = OSError(u"some reason")
 
         with self.assertRaises(UserError):
             self.run_command(u'play', u'title:aNiceTitle')

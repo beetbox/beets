@@ -26,7 +26,7 @@ from six import StringIO
 from tempfile import mkstemp
 from zipfile import ZipFile
 from tarfile import TarFile
-from mock import patch
+from mock import patch, Mock
 
 from test import _common
 from test._common import unittest
@@ -1072,7 +1072,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.assertFalse(self.items[0].comp)
 
 
-def test_album_info():
+def test_album_info(*args, **kwargs):
     """Create an AlbumInfo object for testing.
     """
     track_info = TrackInfo(
@@ -1087,9 +1087,10 @@ def test_album_info():
         album_id=u'albumid',
         artist_id=u'artistid',
     )
-    return album_info
+    return iter([album_info])
 
 
+@patch('beets.autotag.mb.match_album', Mock(side_effect=test_album_info))
 class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
                                _common.Assertions):
 
@@ -1099,17 +1100,11 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         # Original album
         self.add_album_fixture(albumartist=u'artist', album=u'album')
 
-        # Create duplicate through autotagger
-        self.match_album_patcher = patch('beets.autotag.mb.match_album')
-        self.match_album = self.match_album_patcher.start()
-        self.match_album.return_value = iter([test_album_info()])
-
         # Create import session
         self.importer = self.create_importer()
         config['import']['autotag'] = True
 
     def tearDown(self):
-        self.match_album_patcher.stop()
         self.teardown_beets()
 
     def test_remove_duplicate_album(self):
@@ -1179,6 +1174,13 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         return album
 
 
+def test_track_info(*args, **kwargs):
+    return iter([TrackInfo(
+        artist=u'artist', title=u'title',
+        track_id=u'new trackid', index=0,)])
+
+
+@patch('beets.autotag.mb.match_track', Mock(side_effect=test_track_info))
 class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
                                    _common.Assertions):
 
@@ -1189,24 +1191,12 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.add_item_fixture(artist=u'artist', title=u'title',
                               mb_trackid='old trackid')
 
-        # Create duplicate through autotagger
-        self.match_track_patcher = patch('beets.autotag.mb.match_track')
-        self.match_track = self.match_track_patcher.start()
-        track_info = TrackInfo(
-            artist=u'artist',
-            title=u'title',
-            track_id=u'new trackid',
-            index=0,
-        )
-        self.match_track.return_value = iter([track_info])
-
         # Import session
         self.importer = self.create_importer()
         config['import']['autotag'] = True
         config['import']['singletons'] = True
 
     def tearDown(self):
-        self.match_track_patcher.stop()
         self.teardown_beets()
 
     def test_remove_duplicate(self):
@@ -1706,100 +1696,6 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         self.assertEqual(logs, [u'No files imported from {0}'
                          .format(displayable_path(self.empty_path))])
 
-
-class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
-    """Test the --musicbrainzid argument."""
-
-    MB_RELEASE_PREFIX = 'https://musicbrainz.org/release/'
-    MB_RECORDING_PREFIX = 'https://musicbrainz.org/recording/'
-    ID_RELEASE_0 = '00000000-0000-0000-0000-000000000000'
-    ID_RELEASE_1 = '11111111-1111-1111-1111-111111111111'
-    ID_RECORDING_0 = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-    ID_RECORDING_1 = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-
-    def setUp(self):
-        self.setup_beets()
-        self._create_import_dir(1)
-
-        # Patch calls to musicbrainzngs.
-        self.release_patcher = patch('musicbrainzngs.get_release_by_id',
-                                     side_effect=mocked_get_release_by_id)
-        self.recording_patcher = patch('musicbrainzngs.get_recording_by_id',
-                                       side_effect=mocked_get_recording_by_id)
-        self.release_patcher.start()
-        self.recording_patcher.start()
-
-    def tearDown(self):
-        self.recording_patcher.stop()
-        self.release_patcher.stop()
-        self.teardown_beets()
-
-    def test_one_mbid_one_album(self):
-        self.config['import']['search_ids'] = \
-            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0]
-        self._setup_import_session()
-
-        self.importer.add_choice(importer.action.APPLY)
-        self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_0')
-
-    def test_several_mbid_one_album(self):
-        self.config['import']['search_ids'] = \
-            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
-             self.MB_RELEASE_PREFIX + self.ID_RELEASE_1]
-        self._setup_import_session()
-
-        self.importer.add_choice(2)  # Pick the 2nd best match (release 1).
-        self.importer.add_choice(importer.action.APPLY)
-        self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_1')
-
-    def test_one_mbid_one_singleton(self):
-        self.config['import']['search_ids'] = \
-            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0]
-        self._setup_import_session(singletons=True)
-
-        self.importer.add_choice(importer.action.APPLY)
-        self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'VALID_RECORDING_0')
-
-    def test_several_mbid_one_singleton(self):
-        self.config['import']['search_ids'] = \
-            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
-             self.MB_RECORDING_PREFIX + self.ID_RECORDING_1]
-        self._setup_import_session(singletons=True)
-
-        self.importer.add_choice(2)  # Pick the 2nd best match (recording 1).
-        self.importer.add_choice(importer.action.APPLY)
-        self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'VALID_RECORDING_1')
-
-    def test_candidates_album(self):
-        """Test directly ImportTask.lookup_candidates()."""
-        task = importer.ImportTask(paths=self.import_dir,
-                                   toppath='top path',
-                                   items=[_common.item()])
-        task.search_ids = [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
-                           self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
-                           'an invalid and discarded id']
-
-        task.lookup_candidates()
-        self.assertEqual(set(['VALID_RELEASE_0', 'VALID_RELEASE_1']),
-                         set([c.info.album for c in task.candidates]))
-
-    def test_candidates_singleton(self):
-        """Test directly SingletonImportTask.lookup_candidates()."""
-        task = importer.SingletonImportTask(toppath='top path',
-                                            item=_common.item())
-        task.search_ids = [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
-                           self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
-                           'an invalid and discarded id']
-
-        task.lookup_candidates()
-        self.assertEqual(set(['VALID_RECORDING_0', 'VALID_RECORDING_1']),
-                         set([c.info.title for c in task.candidates]))
-
-
 # Helpers for ImportMusicBrainzIdTest.
 
 
@@ -1868,6 +1764,93 @@ def mocked_get_recording_by_id(id_, includes=[], release_status=[],
             }],
         }
     }
+
+
+@patch('musicbrainzngs.get_recording_by_id',
+       Mock(side_effect=mocked_get_recording_by_id))
+@patch('musicbrainzngs.get_release_by_id',
+       Mock(side_effect=mocked_get_release_by_id))
+class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
+    """Test the --musicbrainzid argument."""
+
+    MB_RELEASE_PREFIX = 'https://musicbrainz.org/release/'
+    MB_RECORDING_PREFIX = 'https://musicbrainz.org/recording/'
+    ID_RELEASE_0 = '00000000-0000-0000-0000-000000000000'
+    ID_RELEASE_1 = '11111111-1111-1111-1111-111111111111'
+    ID_RECORDING_0 = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    ID_RECORDING_1 = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+
+    def setUp(self):
+        self.setup_beets()
+        self._create_import_dir(1)
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_one_mbid_one_album(self):
+        self.config['import']['search_ids'] = \
+            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0]
+        self._setup_import_session()
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_0')
+
+    def test_several_mbid_one_album(self):
+        self.config['import']['search_ids'] = \
+            [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
+             self.MB_RELEASE_PREFIX + self.ID_RELEASE_1]
+        self._setup_import_session()
+
+        self.importer.add_choice(2)  # Pick the 2nd best match (release 1).
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'VALID_RELEASE_1')
+
+    def test_one_mbid_one_singleton(self):
+        self.config['import']['search_ids'] = \
+            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0]
+        self._setup_import_session(singletons=True)
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'VALID_RECORDING_0')
+
+    def test_several_mbid_one_singleton(self):
+        self.config['import']['search_ids'] = \
+            [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
+             self.MB_RECORDING_PREFIX + self.ID_RECORDING_1]
+        self._setup_import_session(singletons=True)
+
+        self.importer.add_choice(2)  # Pick the 2nd best match (recording 1).
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'VALID_RECORDING_1')
+
+    def test_candidates_album(self):
+        """Test directly ImportTask.lookup_candidates()."""
+        task = importer.ImportTask(paths=self.import_dir,
+                                   toppath='top path',
+                                   items=[_common.item()])
+        task.search_ids = [self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
+                           self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
+                           'an invalid and discarded id']
+
+        task.lookup_candidates()
+        self.assertEqual(set(['VALID_RELEASE_0', 'VALID_RELEASE_1']),
+                         set([c.info.album for c in task.candidates]))
+
+    def test_candidates_singleton(self):
+        """Test directly SingletonImportTask.lookup_candidates()."""
+        task = importer.SingletonImportTask(toppath='top path',
+                                            item=_common.item())
+        task.search_ids = [self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
+                           self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
+                           'an invalid and discarded id']
+
+        task.lookup_candidates()
+        self.assertEqual(set(['VALID_RECORDING_0', 'VALID_RECORDING_1']),
+                         set([c.info.title for c in task.candidates]))
 
 
 def suite():
