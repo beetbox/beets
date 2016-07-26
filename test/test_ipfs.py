@@ -14,9 +14,8 @@
 
 from __future__ import division, absolute_import, print_function
 
-from mock import patch, Mock
+from mock import patch, Mock, ANY
 
-from beets import library
 from beets.util import bytestring_path, _fsencoding
 from beetsplug.ipfs import IPFSPlugin
 
@@ -26,35 +25,33 @@ from test.helper import TestHelper
 import os
 
 
-@patch('beets.util.command_output', Mock())
+@patch('shutil.rmtree', Mock())
+@patch('beets.util.command_output')
 class IPFSPluginTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_beets()
         self.load_plugins('ipfs')
-        self.lib = library.Library(":memory:")
 
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_stored_hashes(self):
+    def test_stored_hashes(self, cmd_mock):
         test_album = self.mk_test_album()
         ipfs = IPFSPlugin()
-        added_albums = ipfs.ipfs_added_albums(self.lib, self.lib.path)
+        added_albums = ipfs.ipfs_added_albums(self.lib, ':memory:')
         added_album = added_albums.get_album(1)
         self.assertEqual(added_album.ipfs, test_album.ipfs)
-        found = False
         want_item = test_album.items()[2]
+        ipfs_item = os.path.basename(want_item.path).decode(_fsencoding(),)
+        want_path = bytestring_path(
+            '/ipfs/{0}/{1}'.format(test_album.ipfs, ipfs_item))
+
+        found = False
         for check_item in added_album.items():
             try:
                 if check_item.ipfs:
-                    ipfs_item = os.path.basename(want_item.path).decode(
-                        _fsencoding(),
-                    )
-                    want_path = '/ipfs/{0}/{1}'.format(test_album.ipfs,
-                                                       ipfs_item)
-                    want_path = bytestring_path(want_path)
                     self.assertEqual(check_item.path, want_path)
                     self.assertEqual(check_item.ipfs, want_item.ipfs)
                     self.assertEqual(check_item.title, want_item.title)
@@ -90,6 +87,18 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
         album.store()
 
         return album
+
+    def test_get_hash(self, cmd_mock):
+        hash = u'QmfM9ic5LJj7V6ecozFx1MkSoaaiq3PXfhJoFvyqzpLXSf'
+        self.run_command('ipfs', '--get', hash)
+        cmd_mock.assert_called_once_with(['ipfs', 'get', hash])
+
+    def test_publish(self, cmd_mock):
+        self.run_command('ipfs', '--publish')
+        cmd_mock.assert_called_once_with(['ipfs', 'add', '-q', ANY])
+
+# TODO: Make a TestCase with a disk=True library to test remote library
+# functionality (i.e. ipfs_get with non-hash and ipfs_list)
 
 
 def suite():
