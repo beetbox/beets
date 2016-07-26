@@ -90,6 +90,9 @@ class PlayPlugin(BeetsPlugin):
                 command_str = command_str.replace(ARGS_MARKER, opts.args)
             else:
                 command_str = u"{} {}".format(command_str, opts.args)
+        else:
+            if ARGS_MARKER in command_str:
+                command_str = command_str.replace(" "+ARGS_MARKER, "")
 
         # Perform search by album and add folders rather than tracks to
         # playlist.
