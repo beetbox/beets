@@ -327,7 +327,7 @@ FLAC files.
 If beets still complains about a file that seems to be valid, `file a
 bug <https://github.com/beetbox/beets/issues/new>`__ and we'll look into
 it. There's always a possibility that there's a bug "upstream" in the
-`Mutagen <http://code.google.com/p/mutagen/>`__ library used by beets,
+`Mutagen <https://github.com/quodlibet/mutagen>`__ library used by beets,
 in which case we'll forward the bug to that project's tracker.
 
 
