@@ -237,7 +237,7 @@ Here are a few of the plugins written by the beets community:
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
-.. _beetFs: https://code.google.com/p/beetfs/
+.. _beetFs: https://github.com/jbaiter/beetfs
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
 .. _A cmus plugin:

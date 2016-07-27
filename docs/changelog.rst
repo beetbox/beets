@@ -3205,7 +3205,7 @@ BPD). To "upgrade" an old database, you can use the included ``albumify`` plugin
   your library path format strings like ``$artist - $album ($format)`` to get
   directories with names like ``Paul Simon - Graceland (FLAC)``.
 
-.. _for the future: http://code.google.com/p/beets/issues/detail?id=69
+.. _for the future: https://github.com/google-code-export/beets/issues/69
 .. _the beetsplug directory:
    https://github.com/beetbox/beets/tree/master/beetsplug
 
@@ -3214,7 +3214,7 @@ exposes your music in a FUSE filesystem using a custom directory structure. Even
 cooler: it lets you keep your files intact on-disk while correcting their tags
 when accessed through FUSE. Check it out!
 
-.. _beetfs: http://code.google.com/p/beetfs/
+.. _beetfs: https://github.com/jbaiter/beetfs
 
 1.0b2 (July 7, 2010)
 --------------------
