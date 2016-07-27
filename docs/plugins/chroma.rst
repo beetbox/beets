@@ -88,8 +88,8 @@ You will also need a mechanism for decoding audio files supported by the
 
 To decode audio formats (MP3, FLAC, etc.) with GStreamer, you'll need the
 standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
-``gstreamer0.10-plugins-good``, ``gstreamer0.10-plugins-bad``, and
-``gstreamer0.10-plugins-ugly``.
+``gstreamer1.0-plugins-good``, ``gstreamer1.0-plugins-bad``, and
+``gstreamer1.0-plugins-ugly``.
 
 Usage
 -----
