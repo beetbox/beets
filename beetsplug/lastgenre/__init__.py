@@ -404,7 +404,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         # Work around an inconsistency in pylast where
         # Album.get_top_tags() does not return TopItem instances.
-        # https://code.google.com/p/pylast/issues/detail?id=85
+        # https://github.com/pylast/pylast/issues/86
         if isinstance(obj, pylast.Album):
             obj = super(pylast.Album, obj)
 

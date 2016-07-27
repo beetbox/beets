@@ -24,7 +24,7 @@ Next, add your Last.fm username to your beets configuration file::
         user: beetsfanatic
 
 .. _pip: http://www.pip-installer.org/
-.. _pylast: http://code.google.com/p/pylast/
+.. _pylast: https://github.com/pylast/pylast
 
 Importing Play Counts
 ---------------------

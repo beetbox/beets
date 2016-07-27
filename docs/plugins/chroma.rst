@@ -75,7 +75,7 @@ You will also need a mechanism for decoding audio files supported by the
   Note that if you install beets in a virtualenv, you'll need it to have
   ``--system-site-packages`` enabled for Python to see the GStreamer bindings.
 
-* On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
+* On Windows, builds are provided by `GStreamer`_
 
 .. _audioread: https://github.com/beetbox/audioread
 .. _pyacoustid: http://github.com/beetbox/pyacoustid
@@ -83,7 +83,6 @@ You will also need a mechanism for decoding audio files supported by the
 .. _MAD: http://spacepants.org/src/pymad/
 .. _pymad: http://www.underbit.com/products/mad/
 .. _Core Audio: http://developer.apple.com/technologies/mac/audio-and-video.html
-.. _OSSBuild: http://code.google.com/p/ossbuild/
 .. _Gstreamer: http://gstreamer.freedesktop.org/
 .. _PyGObject: https://wiki.gnome.org/Projects/PyGObject
 

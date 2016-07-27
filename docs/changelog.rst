@@ -2994,7 +2994,7 @@ issue involves correct ordering of autotagged albums.
 
 * Added `` beet version`` command that just shows the current release version.
 
-.. _upstream bug: http://code.google.com/p/mutagen/issues/detail?id=7
+.. _upstream bug: https://github.com/quodlibet/mutagen/issues/7
 .. _Bluelet: https://github.com/sampsyo/bluelet
 
 1.0b5 (September 28, 2010)
@@ -3207,7 +3207,7 @@ BPD). To "upgrade" an old database, you can use the included ``albumify`` plugin
 
 .. _for the future: http://code.google.com/p/beets/issues/detail?id=69
 .. _the beetsplug directory:
-    http://code.google.com/p/beets/source/browse/#hg/beetsplug
+   https://github.com/beetbox/beets/tree/master/beetsplug
 
 Beets also now has its first third-party plugin: `beetfs`_, by Martin Eve! It
 exposes your music in a FUSE filesystem using a custom directory structure. Even
