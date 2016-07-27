@@ -60,7 +60,7 @@ def call(args):
     except UnicodeEncodeError:
         # Due to a bug in Python 2's subprocess on Windows, Unicode
         # filenames can fail to encode on that platform. See:
-        # http://code.google.com/p/beets/issues/detail?id=499
+        # https://github.com/google-code-export/beets/issues/499
         raise ReplayGainError(u"argument encoding failed")
 
 
