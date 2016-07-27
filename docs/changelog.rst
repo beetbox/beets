@@ -25,9 +25,9 @@ The are a couple of small new features:
   filled-out path template for each file. :bug:`2050`
 * :doc:`/plugins/embyupdate`: The plugin can now use an API key instead of a
   password to authenticate with Emby. :bug:`2045` :bug:`2117`
-* :doc:`/plugins/acousticbrainz`: The plugin now also adds a ``bpm``, when a 
-  song can be found on AcousticBrainz, this is faster than using the bpm
-  plugin.
+* :doc:`/plugins/acousticbrainz`: The plugin now also adds a ``bpm`` field
+  when a song can be found on AcousticBrainz, this is faster and more
+  automatic than using the :doc:`/plugins/bpm`.
 
 And there are a few bug fixes too:
 
