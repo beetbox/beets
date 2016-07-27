@@ -39,8 +39,9 @@ And there are a few bug fixes too:
 * With :ref:`per_disc_numbering` enabled, some metadata sources (notably, the
   :doc:`/plugins/beatport`) would not set the track number at all. This is
   fixed. :bug:`2085`
-* :doc:`/plugins/play`: Fix $args getting passed verbatim to the play command
-  if it was set in the configuration but -A or --args was ommitted.
+* :doc:`/plugins/play`: Fix ``$args`` getting passed verbatim to the play
+  command if it was set in the configuration but ``-A`` or ``--args`` was
+  omitted.
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
