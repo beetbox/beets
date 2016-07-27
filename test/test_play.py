@@ -67,6 +67,12 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.run_and_assert(
             open_mock, [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo other')
 
+    def test_unset_args_option_in_middle(self, open_mock):
+        self.config['play']['command'] = 'echo $args other'
+
+        self.run_and_assert(
+            open_mock, [u'title:aNiceTitle'], u'echo other')
+
     def test_relative_to(self, open_mock):
         self.config['play']['command'] = 'echo'
         self.config['play']['relative_to'] = '/something'
