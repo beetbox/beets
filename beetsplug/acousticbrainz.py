@@ -133,6 +133,9 @@ def fetch_info(log, items, write):
             item.average_loudness = get_value(
                 "lowlevel", "average_loudness"
             )
+            item.bpm = get_value(
+                "rhythm", "bpm"
+            )
             item.chords_changes_rate = get_value(
                 "tonal", "chords_changes_rate"
             )
