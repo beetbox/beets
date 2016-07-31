@@ -42,6 +42,8 @@ dropped, and Python 3.x is not yet supported.)
 
       $ sudo dnf install beets beets-plugins beets-doc
 
+* On **NixOS**, run ``nix-env -i beets``.
+
 .. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
 .. _dnf package: https://apps.fedoraproject.org/packages/beets
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
