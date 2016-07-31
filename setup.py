@@ -86,7 +86,7 @@ setup(
     },
 
     install_requires=[
-        'six',
+        'six>=1.9',
         'mutagen>=1.31',
         'munkres',
         'unidecode',
