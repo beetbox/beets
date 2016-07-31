@@ -28,6 +28,7 @@ The are a couple of small new features:
 * :doc:`/plugins/acousticbrainz`: The plugin now also adds a ``bpm`` field
   when a song can be found on AcousticBrainz, this is faster and more
   automatic than using the :doc:`/plugins/bpm`.
+* ``beet --version`` now includes the python version used to run beets.
 
 And there are a few bug fixes too:
 
