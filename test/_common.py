@@ -138,10 +138,6 @@ class Assertions(object):
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
-        # The common case.
-        if a == b:
-            return
-
         self.assertEqual(util.normpath(a), util.normpath(b),
                          u'paths are not equal: {!r} and {!r}'.format(a, b))
 
