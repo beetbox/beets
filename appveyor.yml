@@ -19,6 +19,7 @@ environment:
 
 # Install Tox for running tests.
 install:
+    - cinst imagemagick
     - "%PYTHON%/Scripts/pip.exe install tox"
     - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
