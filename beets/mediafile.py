@@ -118,11 +118,20 @@ class MutagenError(UnreadableFileError):
 
 def mutagen_call(action, path, func, *args, **kwargs):
     """Call a Mutagen function with appropriate error handling.
+
+    `action` is a string describing what the function is trying to do,
+    and `path` is the relevant filename. The rest of the arguments
+    describe the callable to invoke.
+
+    We require at least Mutagen 1.33, where `IOError` is *never* used,
+    neither for internal parsing errors *nor* for ordinary IO error
+    conditions such as a bad filename. Mutagen-specific parsing errors and IO
+    errors are reraised as `UnreadableFileError`. Other exceptions
+    raised inside Mutagen---i.e., bugs---are reraised as `MutagenError`.
     """
     try:
         return func(*args, **kwargs)
-    except (mutagen.MutagenError, IOError) as exc:
-        # Mutagen <1.33 could raise IOError
+    except mutagen.MutagenError as exc:
         log.debug(u'{} failed: {}', action, six.text_type(exc))
         raise UnreadableFileError(path)
     except Exception as exc:
