@@ -114,6 +114,24 @@ class MutagenError(UnreadableFileError):
         Exception.__init__(self, msg)
 
 
+# Interacting with Mutagen.
+
+def mutagen_call(action, path, func, *args, **kwargs):
+    """Call a Mutagen function with appropriate error handling.
+    """
+    try:
+        return func(*args, **kwargs)
+    except (mutagen.MutagenError, IOError) as exc:
+        # Mutagen <1.33 could raise IOError
+        log.debug(u'{} failed: {}', action, six.text_type(exc))
+        raise UnreadableFileError(path)
+    except Exception as exc:
+        # Isolate bugs in Mutagen.
+        log.debug(u'{}', traceback.format_exc())
+        log.error(u'uncaught Mutagen exception in {}: {}', action, exc)
+        raise MutagenError(path, exc)
+
+
 # Utility.
 
 def _safe_cast(out_type, val):
@@ -1361,17 +1379,7 @@ class MediaFile(object):
         path = syspath(path)
         self.path = path
 
-        try:
-            self.mgfile = mutagen.File(path)
-        except (mutagen.MutagenError, IOError) as exc:
-            # Mutagen <1.33 could raise IOError
-            log.debug(u'parsing failed: {0}', six.text_type(exc))
-            raise UnreadableFileError(path)
-        except Exception as exc:
-            # Isolate bugs in Mutagen.
-            log.debug(u'{}', traceback.format_exc())
-            log.error(u'uncaught Mutagen exception in open: {0}', exc)
-            raise MutagenError(path, exc)
+        self.mgfile = mutagen_call('open', path, mutagen.File, path)
 
         if self.mgfile is None:
             # Mutagen couldn't guess the type
@@ -1426,34 +1434,13 @@ class MediaFile(object):
             id3.update_to_v23()
             kwargs['v2_version'] = 3
 
-        try:
-            self.mgfile.save(**kwargs)
-        except (mutagen.MutagenError, IOError) as exc:
-            # Mutagen <1.33 could raise IOError
-            log.debug(u'saving failed: {0}', six.text_type(exc))
-            raise UnreadableFileError(self.path)
-        except Exception as exc:
-            # Isolate bugs in Mutagen.
-            log.debug(u'{}', traceback.format_exc())
-            log.error(u'uncaught Mutagen exception in save: {0}', exc)
-            raise MutagenError(self.path, exc)
+        mutagen_call('save', self.path, self.mgfile.save, **kwargs)
 
     def delete(self):
         """Remove the current metadata tag from the file. May
         throw `UnreadableFileError`.
         """
-
-        try:
-            self.mgfile.delete()
-        except (mutagen.MutagenError, IOError) as exc:
-            # Mutagen <1.33 could raise IOError.
-            log.debug(u'deleting failed: {0}', six.text_type(exc))
-            raise UnreadableFileError(self.path)
-        except Exception as exc:
-            # Isolate bugs in Mutagen.
-            log.debug(u'{}', traceback.format_exc())
-            log.error(u'uncaught Mutagen exception in delete: {0}', exc)
-            raise MutagenError(self.path, exc)
+        mutagen_call('delete', self.path, self.mgfile.delete)
 
     # Convenient access to the set of available fields.
 
