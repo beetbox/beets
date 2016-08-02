@@ -13,7 +13,7 @@ Specifically, if you package beets for distribution, here's what you'll want
 to know:
 
 * This version of beets now depends on the `six`_ library.
-* We also bumped our minimum required version of `Mutagen`_ to 1.31 (from
+* We also bumped our minimum required version of `Mutagen`_ to 1.33 (from
   1.27).
 * Please don't package beets as a Python 3 application *yet*, even though some
   things may appear to work under Python 3.4 and later.
