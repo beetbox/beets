@@ -51,7 +51,6 @@ from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
-from beets.ui import _arg_encoding
 from beets import util
 
 # TODO Move AutotagMock here
@@ -126,10 +125,10 @@ def _convert_args(args):
     for i, elem in enumerate(args):
         if six.PY2:
             if isinstance(elem, six.text_type):
-                args[i] = elem.encode(_arg_encoding())
+                args[i] = elem.encode(util.arg_encoding())
         else:
             if isinstance(elem, bytes):
-                args[i] = elem.decode(_arg_encoding())
+                args[i] = elem.decode(util.arg_encoding())
 
     return args
 

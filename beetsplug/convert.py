@@ -185,9 +185,9 @@ class ConvertPlugin(BeetsPlugin):
 
         # Substitute $source and $dest in the argument list.
         if not six.PY2:
-            command = command.decode(ui._arg_encoding(), 'surrogateescape')
-            source = source.decode(ui._arg_encoding(), 'surrogateescape')
-            dest = dest.decode(ui._arg_encoding(), 'surrogateescape')
+            command = command.decode(util.arg_encoding(), 'surrogateescape')
+            source = source.decode(util.arg_encoding(), 'surrogateescape')
+            dest = dest.decode(util.arg_encoding(), 'surrogateescape')
 
         args = shlex.split(command)
         encode_cmd = []
@@ -199,7 +199,7 @@ class ConvertPlugin(BeetsPlugin):
             if six.PY2:
                 encode_cmd.append(args[i])
             else:
-                encode_cmd.append(args[i].encode(ui._arg_encoding()))
+                encode_cmd.append(args[i].encode(util.arg_encoding()))
 
         if pretend:
             self._log.info(u' '.join(ui.decargs(args)))

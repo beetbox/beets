@@ -20,8 +20,7 @@ import subprocess
 import six
 
 from beets.plugins import BeetsPlugin
-from beets.ui import _arg_encoding
-from beets.util import shlex_split
+from beets.util import shlex_split, arg_encoding
 
 
 class CodingFormatter(string.Formatter):
@@ -99,7 +98,7 @@ class HookPlugin(BeetsPlugin):
 
                 # Use a string formatter that works on Unicode strings.
                 if six.PY2:
-                    formatter = CodingFormatter(_arg_encoding())
+                    formatter = CodingFormatter(arg_encoding())
                 else:
                     formatter = string.Formatter()
 
