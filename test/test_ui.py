@@ -1209,7 +1209,7 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
 
     def test_format_option_unicode(self):
         l = self.run_with_output(b'ls', b'-f',
-                                 u'caf\xe9'.encode(ui._arg_encoding()))
+                                 u'caf\xe9'.encode(util.arg_encoding()))
         self.assertEqual(l, u'caf\xe9\n')
 
     def test_root_format_option(self):
