@@ -20,7 +20,6 @@ CLI commands are implemented in the ui.commands module.
 
 from __future__ import division, absolute_import, print_function
 
-import locale
 import optparse
 import textwrap
 import sys
@@ -108,24 +107,12 @@ def _stream_encoding(stream, default='utf8'):
     return stream.encoding or default
 
 
-def _arg_encoding():
-    """Get the encoding for command-line arguments (and other OS
-    locale-sensitive strings).
-    """
-    try:
-        return locale.getdefaultlocale()[1] or 'utf8'
-    except ValueError:
-        # Invalid locale environment variable setting. To avoid
-        # failing entirely for no good reason, assume UTF-8.
-        return 'utf8'
-
-
 def decargs(arglist):
     """Given a list of command-line argument bytestrings, attempts to
     decode them to Unicode strings when running under Python 2.
     """
     if six.PY2:
-        return [s.decode(_arg_encoding()) for s in arglist]
+        return [s.decode(util.arg_encoding()) for s in arglist]
     else:
         return arglist
 

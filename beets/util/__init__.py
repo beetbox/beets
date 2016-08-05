@@ -18,6 +18,7 @@
 from __future__ import division, absolute_import, print_function
 import os
 import sys
+import locale
 import re
 import shutil
 import fnmatch
@@ -300,6 +301,18 @@ def components(path):
         comps.append(last)
 
     return comps
+
+
+def arg_encoding():
+    """Get the encoding for command-line arguments (and other OS
+    locale-sensitive strings).
+    """
+    try:
+        return locale.getdefaultlocale()[1] or 'utf8'
+    except ValueError:
+        # Invalid locale environment variable setting. To avoid
+        # failing entirely for no good reason, assume UTF-8.
+        return 'utf8'
 
 
 def _fsencoding():

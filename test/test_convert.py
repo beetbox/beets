@@ -24,7 +24,6 @@ from test.helper import control_stdin
 
 from beets.mediafile import MediaFile
 from beets import util
-from beets import ui
 
 
 class TestHelper(helper.TestHelper):
@@ -119,7 +118,7 @@ class ConvertCommand(object):
         """Run the `convert` command on a given path."""
         # The path is currently a filesystem bytestring. Convert it to
         # an argument bytestring.
-        path = path.decode(util._fsencoding()).encode(ui._arg_encoding())
+        path = path.decode(util._fsencoding()).encode(util.arg_encoding())
 
         args = args + (b'path:' + path,)
         return self.run_command('convert', *args)
