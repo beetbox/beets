@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """A tiny tool used to test the `convert` plugin. It copies a file and appends
 a specified text tag.
