@@ -24,6 +24,7 @@ from beets.dbcore import types
 from beets.importer import action
 from beets.ui.commands import _do_query, PromptChoice
 from copy import deepcopy
+import codecs
 import subprocess
 import yaml
 from tempfile import NamedTemporaryFile
@@ -244,7 +245,11 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # Set up a temporary file with the initial data for editing.
-        new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
+        if six.PY2:
+            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
+        else:
+            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
+                                     encoding='utf-8')
         old_str = dump(old_data)
         new.write(old_str)
         new.close()
@@ -257,7 +262,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
                 # Read the data back after editing and check whether anything
                 # changed.
-                with open(new.name) as f:
+                with codecs.open(new.name, encoding='utf-8') as f:
                     new_str = f.read()
                 if new_str == old_str:
                     ui.print_(u"No changes; aborting.")
