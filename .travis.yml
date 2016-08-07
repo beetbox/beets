@@ -11,10 +11,20 @@ matrix:
     include:
         - python: 2.7
           env: {TOX_ENV: py27-cov, COVERAGE: 1}
+        - python: 2.7
+          env: {TOX_ENV: py27-test, TEST_LOCALE: C}
+        - python: 2.7
+          env: {TOX_ENV: py27-test, TEST_LOCALE: ja_JP.EUC-JP}
         - python: 2.7_with_system_site_packages
           env: {TOX_ENV: py27-test}
         - python: 3.4
           env: {TOX_ENV: py34-test}
+        - python: 3.4
+          env: {TOX_ENV: py34-test, TEST_LOCALE: C}
+        - python: 3.4
+          env: {TOX_ENV: py34-test, TEST_LOCALE: de_DE}
+        - python: 3.4
+          env: {TOX_ENV: py34-test, TEST_LOCALE: ja_JP.EUC-JP}
         - python: 3.4_with_system_site_packages
           env: {TOX_ENV: py34-test}
         - python: 3.5
@@ -36,6 +46,8 @@ addons:
             - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty multiverse"
             - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
         packages:
+            - language-pack-ja
+            - language-pack-de
             - bash-completion
             - gir1.2-gst-plugins-base-1.0
             - gir1.2-gstreamer-1.0
@@ -61,10 +73,13 @@ script:
     - if [[ $TRAVIS_PYTHON_VERSION == *_site_packages ]]; then SITE_PACKAGES=--sitepackages; fi
     # pip in trusty breaks on packages prefixed with "_". See https://github.com/pypa/pip/issues/3681
     - if [[ $TRAVIS_PYTHON_VERSION == 3.4_with_system_site_packages ]]; then sudo rm -rf /usr/lib/python3/dist-packages/_lxc-0.1.egg-info; fi
-    - tox -e $TOX_ENV $SITE_PACKAGES
+    - LANG=$TEST_LOCALE LC_MESSAGES=en_US.utf-8 tox -e $TOX_ENV $SITE_PACKAGES
 
 # Report coverage to codecov.io.
 before_install:
+    - sudo locale-gen de_DE
+    - sudo locale-gen ja_JP.EUC-JP
+    - sudo dpkg-reconfigure locales
     - "[ ! -z $COVERAGE ] && travis_retry pip install codecov || true"
 after_success:
     - "[ ! -z $COVERAGE ] && codecov || true"
