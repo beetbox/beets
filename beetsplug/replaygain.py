@@ -102,7 +102,7 @@ class Bs1770gainBackend(Backend):
             'method': 'replaygain',
         })
         self.chunk_at = config['chunk_at'].as_number()
-        self.method = b'--' + bytes(config['method'].as_str())
+        self.method = b'--' + config['method'].as_str().encode('ascii')
 
         cmd = b'bs1770gain'
         try:
@@ -341,7 +341,7 @@ class CommandBackend(Backend):
         else:
             # Disable clipping warning.
             cmd = cmd + [b'-c']
-        cmd = cmd + [b'-d', bytes(self.gain_offset)]
+        cmd = cmd + [b'-d', str(self.gain_offset).encode('ascii')]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug(u'analyzing {0} files', len(items))
