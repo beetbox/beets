@@ -43,7 +43,7 @@ def resize_url(url, maxwidth):
     """
     return '{0}?{1}'.format(PROXY_URL, urlencode({
         'url': url.replace('http://', ''),
-        'w': bytes(maxwidth),
+        'w': maxwidth,
     }))
 
 
