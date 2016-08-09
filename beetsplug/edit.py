@@ -252,6 +252,8 @@ class EditPlugin(plugins.BeetsPlugin):
                                      encoding='utf-8')
         old_str = dump(old_data)
         new.write(old_str)
+        if six.PY2:
+            old_str = old_str.decode('utf-8')
         new.close()
 
         # Loop until we have parseable data and the user confirms.
