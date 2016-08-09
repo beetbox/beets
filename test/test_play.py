@@ -88,10 +88,11 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.run_command('play', '-a', 'nice')
 
         open_mock.assert_called_once_with(ANY, open_anything())
-        playlist = open(open_mock.call_args[0][0][0], 'rb')
+        with open(open_mock.call_args[0][0][0], 'rb') as f:
+            playlist = f.read().decode('utf-8')
         self.assertEqual(u'{}\n'.format(
             os.path.dirname(self.item.path.decode('utf-8'))),
-            playlist.read().decode('utf-8'))
+            playlist)
 
     def test_raw(self, open_mock):
         self.config['play']['raw'] = True
