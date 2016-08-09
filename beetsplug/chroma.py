@@ -236,7 +236,7 @@ def submit_items(log, userkey, items, chunksize=64):
         try:
             acoustid.submit(API_KEY, userkey, data)
         except acoustid.AcoustidError as exc:
-            log.warn(u'acoustid submission error: {0}', exc)
+            log.warning(u'acoustid submission error: {0}', exc)
         del data[:]
 
     for item in items:

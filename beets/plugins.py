@@ -255,7 +255,7 @@ def load_plugins(names=()):
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
-                    log.warn(u'** plugin {0} not found', name)
+                    log.warning(u'** plugin {0} not found', name)
                 else:
                     raise
             else:
@@ -265,7 +265,7 @@ def load_plugins(names=()):
                         _classes.add(obj)
 
         except:
-            log.warn(
+            log.warning(
                 u'** error loading plugin {}:\n{}',
                 name,
                 traceback.format_exc(),

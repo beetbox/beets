@@ -39,7 +39,7 @@ def assert_permissions(path, permission, log):
     `check_permissions`.
     """
     if not check_permissions(util.syspath(path), permission):
-        log.warn(
+        log.warning(
             u'could not set permissions on {}',
             util.displayable_path(path),
         )

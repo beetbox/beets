@@ -96,8 +96,8 @@ def im_resize(maxwidth, path_in, path_out=None):
             util.syspath(path_out, prefix=False),
         ])
     except subprocess.CalledProcessError:
-        log.warn(u'artresizer: IM convert failed for {0}',
-                 util.displayable_path(path_in))
+        log.warning(u'artresizer: IM convert failed for {0}',
+                    util.displayable_path(path_in))
         return path_in
     return path_out
 
@@ -124,7 +124,7 @@ def im_getsize(path_in):
     try:
         out = util.command_output(cmd)
     except subprocess.CalledProcessError as exc:
-        log.warn(u'ImageMagick size query failed')
+        log.warning(u'ImageMagick size query failed')
         log.debug(
             u'`convert` exited with (status {}) when '
             u'getting size with command {}:\n{}',
@@ -134,7 +134,7 @@ def im_getsize(path_in):
     try:
         return tuple(map(int, out.split(b' ')))
     except IndexError:
-        log.warn(u'Could not understand IM output: {0!r}', out)
+        log.warning(u'Could not understand IM output: {0!r}', out)
 
 
 BACKEND_GET_SIZE = {

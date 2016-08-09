@@ -624,9 +624,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
                                 u'no API key configured.')
                 sources.remove('google')
             elif not HAS_BEAUTIFUL_SOUP:
-                self._log.warn(u'To use the google lyrics source, you must '
-                               u'install the beautifulsoup4 module. See the '
-                               u'documentation for further details.')
+                self._log.warning(u'To use the google lyrics source, you must '
+                                  u'install the beautifulsoup4 module. See '
+                                  u'the documentation for further details.')
                 sources.remove('google')
 
         self.config['bing_lang_from'] = [
@@ -634,9 +634,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.bing_auth_token = None
 
         if not HAS_LANGDETECT and self.config['bing_client_secret'].get():
-            self._log.warn(u'To use bing translations, you need to '
-                           u'install the langdetect module. See the '
-                           u'documentation for further details.')
+            self._log.warning(u'To use bing translations, you need to '
+                              u'install the langdetect module. See the '
+                              u'documentation for further details.')
 
         self.backends = [self.SOURCE_BACKENDS[source](self.config, self._log)
                          for source in sources]

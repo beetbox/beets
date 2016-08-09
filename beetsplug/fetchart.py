@@ -265,10 +265,10 @@ class RemoteArtSource(ArtSource):
                 ext = b'.' + CONTENT_TYPES[real_ct][0]
 
                 if real_ct != ct:
-                    self._log.warn(u'Server specified {}, but returned a '
-                                   u'{} image. Correcting the extension '
-                                   u'to {}',
-                                   ct, real_ct, ext)
+                    self._log.warning(u'Server specified {}, but returned a '
+                                      u'{} image. Correcting the extension '
+                                      u'to {}',
+                                      ct, real_ct, ext)
 
                 suffix = py3_path(ext)
                 with NamedTemporaryFile(suffix=suffix, delete=False) as fh:

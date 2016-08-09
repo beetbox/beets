@@ -362,8 +362,8 @@ class ImportSession(object):
             # Either accept immediately or prompt for input to decide.
             if self.want_resume is True or \
                self.should_resume(toppath):
-                log.warn(u'Resuming interrupted import of {0}',
-                         util.displayable_path(toppath))
+                log.warning(u'Resuming interrupted import of {0}',
+                            util.displayable_path(toppath))
                 self._is_resuming[toppath] = True
             else:
                 # Clear progress; we're starting from the top.
@@ -1148,8 +1148,8 @@ class ImportTaskFactory(object):
 
         if not (self.session.config['move'] or
                 self.session.config['copy']):
-            log.warn(u"Archive importing requires either "
-                     u"'copy' or 'move' to be enabled.")
+            log.warning(u"Archive importing requires either "
+                        u"'copy' or 'move' to be enabled.")
             return
 
         log.debug(u'Extracting archive: {0}',
@@ -1179,7 +1179,7 @@ class ImportTaskFactory(object):
                 # Silently ignore non-music files.
                 pass
             elif isinstance(exc.reason, mediafile.UnreadableFileError):
-                log.warn(u'unreadable file: {0}', displayable_path(path))
+                log.warning(u'unreadable file: {0}', displayable_path(path))
             else:
                 log.error(u'error reading {0}: {1}',
                           displayable_path(path), exc)
@@ -1204,8 +1204,8 @@ def read_tasks(session):
         skipped += task_factory.skipped
 
         if not task_factory.imported:
-            log.warn(u'No files imported from {0}',
-                     displayable_path(toppath))
+            log.warning(u'No files imported from {0}',
+                        displayable_path(toppath))
 
     # Show skipped directories (due to incremental/resume).
     if skipped:

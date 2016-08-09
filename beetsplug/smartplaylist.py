@@ -98,7 +98,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         for playlist in self.config['playlists'].get(list):
             if 'name' not in playlist:
-                self._log.warn(u"playlist configuration is missing name")
+                self._log.warning(u"playlist configuration is missing name")
                 continue
 
             playlist_data = (playlist['name'],)
@@ -134,8 +134,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     playlist_data += (query_and_sort,)
 
             except ParsingError as exc:
-                self._log.warn(u"invalid query in playlist {}: {}",
-                               playlist['name'], exc)
+                self._log.warning(u"invalid query in playlist {}: {}",
+                                  playlist['name'], exc)
                 continue
 
             self._unmatched_playlists.add(playlist_data)

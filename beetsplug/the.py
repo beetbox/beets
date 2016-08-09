@@ -54,14 +54,14 @@ class ThePlugin(BeetsPlugin):
                     self._log.error(u'invalid pattern: {0}', p)
                 else:
                     if not (p.startswith('^') or p.endswith('$')):
-                        self._log.warn(u'warning: \"{0}\" will not '
-                                       u'match string start/end', p)
+                        self._log.warning(u'warning: \"{0}\" will not '
+                                          u'match string start/end', p)
         if self.config['a']:
             self.patterns = [PATTERN_A] + self.patterns
         if self.config['the']:
             self.patterns = [PATTERN_THE] + self.patterns
         if not self.patterns:
-            self._log.warn(u'no patterns defined!')
+            self._log.warning(u'no patterns defined!')
 
     def unthe(self, text, pattern):
         """Moves pattern in the path format string or strips it
