@@ -823,8 +823,8 @@ class TerminalImportSession(importer.ImportSession):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
-        log.warn(u"This {0} is already in the library!",
-                 (u"album" if task.is_album else u"item"))
+        log.warning(u"This {0} is already in the library!",
+                    (u"album" if task.is_album else u"item"))
 
         if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
@@ -902,9 +902,9 @@ class TerminalImportSession(importer.ImportSession):
                 # Keep the first of the choices, removing the rest.
                 dup_choices = [c for c in all_choices if c.short == short]
                 for c in dup_choices[1:]:
-                    log.warn(u"Prompt choice '{0}' removed due to conflict "
-                             u"with '{1}' (short letter: '{2}')",
-                             c.long, dup_choices[0].long, c.short)
+                    log.warning(u"Prompt choice '{0}' removed due to conflict "
+                                u"with '{1}' (short letter: '{2}')",
+                                c.long, dup_choices[0].long, c.short)
                     extra_choices.remove(c)
         return extra_choices
 
@@ -1667,8 +1667,8 @@ def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
         print_(line, end=u'')
     if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
-        log.warn(u'Warning: Unable to find the bash-completion package. '
-                 u'Command line completion might not work.')
+        log.warning(u'Warning: Unable to find the bash-completion package. '
+                    u'Command line completion might not work.')
 
 BASH_COMPLETION_PATHS = map(syspath, [
     u'/etc/bash_completion',

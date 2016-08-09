@@ -51,7 +51,9 @@ class ZeroPlugin(BeetsPlugin):
 
         # We'll only handle `fields` or `keep_fields`, but not both.
         if self.config['fields'] and self.config['keep_fields']:
-            self._log.warn(u'cannot blacklist and whitelist at the same time')
+            self._log.warning(
+                u'cannot blacklist and whitelist at the same time'
+            )
 
         # Blacklist mode.
         if self.config['fields']:
@@ -84,8 +86,8 @@ class ZeroPlugin(BeetsPlugin):
                 self._log.error(u'invalid field: {0}', field)
                 continue
             if mode == 'fields' and field in ('id', 'path', 'album_id'):
-                self._log.warn(u'field \'{0}\' ignored, zeroing '
-                               u'it would be dangerous', field)
+                self._log.warning(u'field \'{0}\' ignored, zeroing '
+                                  u'it would be dangerous', field)
                 continue
 
     def set_pattern(self, field):
@@ -102,7 +104,7 @@ class ZeroPlugin(BeetsPlugin):
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
         if task.choice_flag == action.ASIS and not self.warned:
-            self._log.warn(u'cannot zero in \"as-is\" mode')
+            self._log.warning(u'cannot zero in \"as-is\" mode')
             self.warned = True
         # TODO request write in as-is mode
 
@@ -123,7 +125,7 @@ class ZeroPlugin(BeetsPlugin):
         by `self.patterns`.
         """
         if not self.patterns:
-            self._log.warn(u'no fields, nothing to do')
+            self._log.warning(u'no fields, nothing to do')
             return
 
         for field, patterns in self.patterns.items():

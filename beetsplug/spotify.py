@@ -63,8 +63,8 @@ class SpotifyPlugin(BeetsPlugin):
             self.config['show_failures'].set(True)
 
         if self.config['mode'].get() not in ['list', 'open']:
-            self._log.warn(u'{0} is not a valid mode',
-                           self.config['mode'].get())
+            self._log.warning(u'{0} is not a valid mode',
+                              self.config['mode'].get())
             return False
 
         self.opts = opts
@@ -154,9 +154,9 @@ class SpotifyPlugin(BeetsPlugin):
                     self._log.info(u'track: {0}', track)
                 self._log.info(u'')
             else:
-                self._log.warn(u'{0} track(s) did not match a Spotify ID;\n'
-                               u'use --show-failures to display',
-                               failure_count)
+                self._log.warning(u'{0} track(s) did not match a Spotify ID;\n'
+                                  u'use --show-failures to display',
+                                  failure_count)
 
         return results
 
@@ -172,4 +172,4 @@ class SpotifyPlugin(BeetsPlugin):
                 for item in ids:
                     print(self.open_url + item)
         else:
-            self._log.warn(u'No Spotify tracks found from beets query')
+            self._log.warning(u'No Spotify tracks found from beets query')

@@ -319,8 +319,8 @@ class EditPlugin(plugins.BeetsPlugin):
         are temporary.
         """
         if len(old_data) != len(new_data):
-            self._log.warn(u'number of objects changed from {} to {}',
-                           len(old_data), len(new_data))
+            self._log.warning(u'number of objects changed from {} to {}',
+                              len(old_data), len(new_data))
 
         obj_by_id = {o.id: o for o in objs}
         ignore_fields = self.config['ignore_fields'].as_str_seq()
@@ -330,7 +330,7 @@ class EditPlugin(plugins.BeetsPlugin):
             forbidden = False
             for key in ignore_fields:
                 if old_dict.get(key) != new_dict.get(key):
-                    self._log.warn(u'ignoring object whose {} changed', key)
+                    self._log.warning(u'ignoring object whose {} changed', key)
                     forbidden = True
                     break
             if forbidden:
