@@ -87,8 +87,9 @@ class EdgeTest(unittest.TestCase):
         # such aren't recognized by imghdr. Ensure that this still works thanks
         # to our own follow up mimetype detection based on
         # https://github.com/file/file/blob/master/magic/Magdir/jpeg#L12
-        f = open(os.path.join(_common.RSRC, b'only-magic-bytes.jpg'), 'rb')
-        jpg_data = f.read()
+        magic_bytes_file = os.path.join(_common.RSRC, b'only-magic-bytes.jpg')
+        with open(magic_bytes_file, 'rb') as f:
+            jpg_data = f.read()
         self.assertEqual(
             beets.mediafile._image_mime_type(jpg_data),
             'image/jpeg')

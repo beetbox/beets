@@ -141,8 +141,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             c14n_filename = C14N_TREE
         if c14n_filename:
             c14n_filename = normpath(c14n_filename)
-            genres_file = codecs.open(c14n_filename, 'r', encoding='utf-8')
-            genres_tree = yaml.load(genres_file)
+            with codecs.open(c14n_filename, 'r', encoding='utf-8') as f:
+                genres_tree = yaml.load(f)
             flatten_tree(genres_tree, [], self.c14n_branches)
 
     @property
