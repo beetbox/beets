@@ -737,10 +737,28 @@ def cpu_count():
         return 1
 
 
+def convert_command_args(args):
+    """Convert command arguments to bytestrings on Python 2 and
+    surrogate-escaped strings on Python 3."""
+    assert isinstance(args, list)
+
+    def convert(arg):
+        if six.PY2:
+            if isinstance(arg, six.text_type):
+                arg = arg.encode(arg_encoding())
+        else:
+            if isinstance(arg, bytes):
+                arg = arg.decode(arg_encoding(), 'surrogateescape')
+        return arg
+
+    return [convert(a) for a in args]
+
+
 def command_output(cmd, shell=False):
     """Runs the command and returns its output after it has exited.
 
-    ``cmd`` is a list of byte string arguments starting with the command names.
+    ``cmd`` is a list of arguments starting with the command names. The
+    arguments are bytes on Unix and strings on Windows.
     If ``shell`` is true, ``cmd`` is assumed to be a string and passed to a
     shell to execute.
 
@@ -751,6 +769,8 @@ def command_output(cmd, shell=False):
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
+    cmd = convert_command_args(cmd)
+
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -762,7 +782,7 @@ def command_output(cmd, shell=False):
     if proc.returncode:
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
-            cmd=b' '.join(cmd),
+            cmd=' '.join(cmd),
             output=stdout + stderr,
         )
     return stdout
