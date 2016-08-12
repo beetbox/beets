@@ -84,7 +84,7 @@ class DiscogsPlugin(BeetsPlugin):
                                      token, secret)
 
     def reset_auth(self):
-        """Delete toke file & redo the auth steps.
+        """Delete token file & redo the auth steps.
         """
         os.remove(self._tokenfile())
         self.setup()
