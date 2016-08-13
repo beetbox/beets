@@ -20,7 +20,7 @@ import os
 import stat
 import ctypes
 import sys
-import six
+import beets.util
 
 
 def _is_hidden_osx(path):
@@ -28,7 +28,7 @@ def _is_hidden_osx(path):
 
     This uses os.lstat to work out if a file has the "hidden" flag.
     """
-    file_stat = os.lstat(path)
+    file_stat = os.lstat(beets.util.syspath(path))
 
     if hasattr(file_stat, 'st_flags') and hasattr(stat, 'UF_HIDDEN'):
         return bool(file_stat.st_flags & stat.UF_HIDDEN)
@@ -46,7 +46,7 @@ def _is_hidden_win(path):
     hidden_mask = 2
 
     # Retrieve the attributes for the file.
-    attrs = ctypes.windll.kernel32.GetFileAttributesW(path)
+    attrs = ctypes.windll.kernel32.GetFileAttributesW(beets.util.syspath(path))
 
     # Ensure we have valid attribues and compare them against the mask.
     return attrs >= 0 and attrs & hidden_mask
@@ -57,11 +57,12 @@ def _is_hidden_dot(path):
 
     Files starting with a dot are seen as "hidden" files on Unix-based OSes.
     """
-    return os.path.basename(path).startswith('.')
+    return os.path.basename(path).startswith(b'.')
 
 
 def is_hidden(path):
-    """Return whether or not a file is hidden.
+    """Return whether or not a file is hidden. `path` should be a
+    bytestring filename.
 
     This method works differently depending on the platform it is called on.
 
@@ -74,10 +75,6 @@ def is_hidden(path):
     On any other operating systems (i.e. Linux), it uses `is_hidden_dot` to
     work out if a file is hidden.
     """
-    # Convert the path to unicode if it is not already.
-    if not isinstance(path, six.text_type):
-        path = path.decode('utf-8')
-
     # Run platform specific functions depending on the platform
     if sys.platform == 'darwin':
         return _is_hidden_osx(path) or _is_hidden_dot(path)
