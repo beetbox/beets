@@ -46,6 +46,8 @@ And there are a few bug fixes too:
 * :doc:`/plugins/play`: Fix ``$args`` getting passed verbatim to the play
   command if it was set in the configuration but ``-A`` or ``--args`` was
   omitted.
+* With :ref:`ignore_hidden` enabled, non-UTF-8 filenames would cause a crash.
+  This is fixed. :bug:`2168`
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
