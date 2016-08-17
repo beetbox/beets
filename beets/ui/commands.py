@@ -1046,7 +1046,7 @@ import_cmd.parser.add_option(
 )
 import_cmd.parser.add_option(
     u'-S', u'--search-id', dest='search_ids', action='append',
-    metavar='BACKEND_ID',
+    metavar='ID',
     help=u'restrict matching to a specific metadata backend ID'
 )
 import_cmd.func = import_func
