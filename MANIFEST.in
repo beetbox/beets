@@ -31,3 +31,6 @@ include beets/config_default.yaml
 
 # Shell completion template
 include beets/ui/completion_base.sh
+
+# Include extra bits
+recursive-include extra *
