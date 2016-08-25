@@ -128,10 +128,10 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             # to grayscale and then pipe them into the `compare` command.
             # On Windows, ImageMagick doesn't support the magic \\?\ prefix
             # on paths, so we pass `prefix=False` to `syspath`.
-            convert_cmd = [b'convert', syspath(imagepath, prefix=False),
+            convert_cmd = ['convert', syspath(imagepath, prefix=False),
                            syspath(art, prefix=False),
-                           b'-colorspace', b'gray', b'MIFF:-']
-            compare_cmd = [b'compare', b'-metric', b'PHASH', b'-', b'null:']
+                           '-colorspace', 'gray', 'MIFF:-']
+            compare_cmd = ['compare', '-metric', 'PHASH', '-', 'null:']
             log.debug(u'comparing images with pipeline {} | {}',
                       convert_cmd, compare_cmd)
             convert_proc = subprocess.Popen(
