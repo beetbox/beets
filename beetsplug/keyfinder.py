@@ -52,14 +52,14 @@ class KeyFinderPlugin(BeetsPlugin):
 
     def find_key(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
-        bin = util.bytestring_path(self.config['bin'].as_str())
+        bin = self.config['bin'].as_str()
 
         for item in items:
             if item['initial_key'] and not overwrite:
                 continue
 
             try:
-                output = util.command_output([bin, b'-f',
+                output = util.command_output([bin, '-f',
                                               util.syspath(item.path)])
             except (subprocess.CalledProcessError, OSError) as exc:
                 self._log.error(u'execution failed: {0}', exc)

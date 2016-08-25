@@ -44,7 +44,7 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
         item.load()
         self.assertEqual(item['initial_key'], 'C#m')
         command_output.assert_called_with(
-            [b'KeyFinder', b'-f', util.syspath(item.path)])
+            ['KeyFinder', '-f', util.syspath(item.path)])
 
     def test_add_key_on_import(self, command_output):
         command_output.return_value = 'dbm'
