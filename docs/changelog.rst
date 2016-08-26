@@ -20,6 +20,10 @@ to know:
 
 The are a couple of small new features:
 
+* :doc:`/plugins/mpdupdate`, :doc:`/plugins/mpdstats`: When the ``host`` option
+  is not set, these plugins will now look for the ``$MPD_HOST`` environment
+  variable before falling back to ``localhost``. Thanks to :user:`tarruda`.
+  :bug:`2175`
 * :doc:`/plugins/web`: Added an ``expand`` option to show the items of an
   album and a ``path`` field to the JSON output of a file which shows the
   filled-out path template for each file. :bug:`2050`

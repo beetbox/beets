@@ -39,7 +39,8 @@ To configure the plugin, make an ``mpd:`` section in your
 configuration file. The available options are:
 
 - **host**: The MPD server hostname.
-  Default: ``localhost``.
+  Default: The ``$MPD_HOST`` environment variable if set,
+  falling back to ``localhost`` otherwise.
 - **port**: The MPD server port.
   Default: 6600.
 - **password**: The MPD server password.
