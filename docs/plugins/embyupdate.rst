@@ -6,7 +6,7 @@ EmbyUpdate Plugin
 To use ``embyupdate`` plugin, enable it in your configuration (see :ref:`using-plugins`). Then, you'll probably want to configure the specifics of your Emby server. You can do that using an ``emby:`` section in your ``config.yaml``, which looks like this::
 
     emby:
-        host: localhost
+        host: http://localhost
         port: 8096
         username: user
         apikey: apikey
@@ -25,8 +25,8 @@ Configuration
 
 The available options under the ``emby:`` section are:
 
-- **host**: The Emby server name.
-  Default: ``localhost``
+- **host**: The Emby server host. You have to include ``http://`` or ``https://``.
+  Default: ``http://localhost``
 - **port**: The Emby server port.
   Default: 8096
 - **username**: A username of a Emby user that is allowed to refresh the library.

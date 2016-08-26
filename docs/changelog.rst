@@ -48,6 +48,8 @@ And there are a few bug fixes too:
   omitted.
 * With :ref:`ignore_hidden` enabled, non-UTF-8 filenames would cause a crash.
   This is fixed. :bug:`2168`
+* :doc:`/plugins/embyupdate`: Fixes authentication header problem that caused
+  a problem that it was not possible to get tokens from the Emby API.
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
