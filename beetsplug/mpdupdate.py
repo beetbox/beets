@@ -68,7 +68,7 @@ class MPDUpdatePlugin(BeetsPlugin):
     def __init__(self):
         super(MPDUpdatePlugin, self).__init__()
         config['mpd'].add({
-            'host':     u'localhost',
+            'host':     os.environ.get('MPD_HOST', u'localhost'),
             'port':     6600,
             'password': u'',
         })
