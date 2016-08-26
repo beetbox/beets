@@ -331,7 +331,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'music_directory': config['directory'].as_filename(),
             'rating':          True,
             'rating_mix':      0.75,
-            'host':            u'localhost',
+            'host':            os.environ.get('MPD_HOST', u'localhost'),
             'port':            6600,
             'password':        u'',
         })
