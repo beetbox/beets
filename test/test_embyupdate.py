@@ -14,7 +14,7 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
         self.load_plugins('embyupdate')
 
         self.config['emby'] = {
-            u'host': u'localhost',
+            u'host': u'http://localhost',
             u'port': 8096,
             u'username': u'username',
             u'password': u'password'
@@ -47,12 +47,14 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
         self.assertEqual(
             embyupdate.create_headers('e8837bc1-ad67-520e-8cd2-f629e3155721'),
             {
-                'Authorization': 'MediaBrowser',
-                'UserId': 'e8837bc1-ad67-520e-8cd2-f629e3155721',
-                'Client': 'other',
-                'Device': 'empy',
-                'DeviceId': 'beets',
-                'Version': '0.0.0'
+                'x-emby-authorization': (
+                    'MediaBrowser '
+                    'UserId="e8837bc1-ad67-520e-8cd2-f629e3155721", '
+                    'Client="other", '
+                    'Device="beets", '
+                    'DeviceId="beets", '
+                    'Version="0.0.0"'
+                )
             }
         )
 
@@ -61,13 +63,15 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
             embyupdate.create_headers('e8837bc1-ad67-520e-8cd2-f629e3155721',
                                       token='abc123'),
             {
-                'Authorization': 'MediaBrowser',
-                'UserId': 'e8837bc1-ad67-520e-8cd2-f629e3155721',
-                'Client': 'other',
-                'Device': 'empy',
-                'DeviceId': 'beets',
-                'Version': '0.0.0',
-                'X-MediaBrowser-Token': 'abc123'
+                'x-emby-authorization': (
+                    'MediaBrowser '
+                    'UserId="e8837bc1-ad67-520e-8cd2-f629e3155721", '
+                    'Client="other", '
+                    'Device="beets", '
+                    'DeviceId="beets", '
+                    'Version="0.0.0"'
+                ),
+                'x-mediabrowser-token': 'abc123'
             }
         )
 
@@ -132,12 +136,14 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
                       content_type='application/json')
 
         headers = {
-            'Authorization': 'MediaBrowser',
-            'UserId': 'e8837bc1-ad67-520e-8cd2-f629e3155721',
-            'Client': 'other',
-            'Device': 'empy',
-            'DeviceId': 'beets',
-            'Version': '0.0.0'
+            'x-emby-authorization': (
+                'MediaBrowser '
+                'UserId="e8837bc1-ad67-520e-8cd2-f629e3155721", '
+                'Client="other", '
+                'Device="beets", '
+                'DeviceId="beets", '
+                'Version="0.0.0"'
+            )
         }
 
         auth_data = {
@@ -147,7 +153,7 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
         }
 
         self.assertEqual(
-            embyupdate.get_token('localhost', 8096, headers, auth_data),
+            embyupdate.get_token('http://localhost', 8096, headers, auth_data),
             '4b19180cf02748f7b95c7e8e76562fc8')
 
     @responses.activate
@@ -196,7 +202,7 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
                       status=200,
                       content_type='application/json')
 
-        response = embyupdate.get_user('localhost', 8096, 'username')
+        response = embyupdate.get_user('http://localhost', 8096, 'username')
 
         self.assertEqual(response[0]['Id'],
                          '2ec276a2642e54a19b612b9418a8bd3b')
