@@ -3,7 +3,7 @@
 """Updates the Emby Library whenever the beets library is changed.
 
     emby:
-        host: http://localhost
+        host: localhost
         port: 8096
         username: user
         password: password
@@ -34,7 +34,22 @@ def api_url(host, port, endpoint):
     :returns: Full API url
     :rtype: str
     """
-    joined = urljoin('{0}:{1}'.format(host, port), endpoint)
+    # check if http or https is defined as host and create hostname
+    hostname_list = [host]
+    if host.startswith('http://') or host.startswith('https://'):
+        hostname = ''.join(hostname_list)
+    else:
+        hostname_list.insert(0, 'http://')
+        hostname = ''.join(hostname_list)
+
+    joined = urljoin(
+        '{hostname}:{port}'.format(
+            hostname=hostname,
+            port=port
+        ),
+        endpoint
+    )
+
     scheme, netloc, path, query_string, fragment = urlsplit(joined)
     query_params = parse_qs(query_string)
 
