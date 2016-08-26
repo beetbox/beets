@@ -14,7 +14,7 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
         self.load_plugins('embyupdate')
 
         self.config['emby'] = {
-            u'host': u'http://localhost',
+            u'host': u'localhost',
             u'port': 8096,
             u'username': u'username',
             u'password': u'password'
@@ -24,12 +24,28 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
         self.unload_plugins()
 
-    def test_api_url(self):
+    def test_api_url_only_name(self):
         self.assertEqual(
             embyupdate.api_url(self.config['emby']['host'].get(),
                                self.config['emby']['port'].get(),
                                '/Library/Refresh'),
             'http://localhost:8096/Library/Refresh?format=json'
+        )
+
+    def test_api_url_http(self):
+        self.assertEqual(
+            embyupdate.api_url(u'http://localhost',
+                               self.config['emby']['port'].get(),
+                               '/Library/Refresh'),
+            'http://localhost:8096/Library/Refresh?format=json'
+        )
+
+    def test_api_url_https(self):
+        self.assertEqual(
+            embyupdate.api_url(u'https://localhost',
+                               self.config['emby']['port'].get(),
+                               '/Library/Refresh'),
+            'https://localhost:8096/Library/Refresh?format=json'
         )
 
     def test_password_data(self):
