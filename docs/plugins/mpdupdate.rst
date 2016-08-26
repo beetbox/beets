@@ -31,7 +31,7 @@ Configuration
 The available options under the ``mpd:`` section are:
 
 - **host**: The MPD server name.
-  Default: ``localhost``.
+  Default: The ``$MPD_HOST`` environment variable if set, falling back to ``localhost`` otherwise.
 - **port**: The MPD server port.
   Default: 6600.
 - **password**: The MPD server password.
