@@ -114,14 +114,15 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     bytecode of the compiled function.
     """
     func_def = ast.FunctionDef(
-        name.encode('utf8'),
-        ast.arguments(
-            [ast.Name(n, ast.Param()) for n in arg_names],
-            None, None,
-            [ex_literal(None) for _ in arg_names],
+        name=name.encode('utf8'),
+        args=ast.arguments(
+            args=[ast.Name(n, ast.Param()) for n in arg_names],
+            vararg=None,
+            kwarg=None,
+            defaults=[ex_literal(None) for _ in arg_names],
         ),
-        statements,
-        [],
+        body=statements,
+        decorator_list=[],
     )
     mod = ast.Module([func_def])
     ast.fix_missing_locations(mod)
