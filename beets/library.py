@@ -57,9 +57,6 @@ class PathQuery(dbcore.FieldQuery):
     and case-sensitive otherwise.
     """
 
-    escape_re = re.compile(br'[\\_%]')
-    escape_char = b'\\'
-
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
         """Create a path query. `pattern` must be a path, either to a
         file or a directory.
@@ -108,20 +105,17 @@ class PathQuery(dbcore.FieldQuery):
         return (path == self.file_path) or path.startswith(self.dir_path)
 
     def col_clause(self):
-        if self.case_sensitive:
-            file_blob = BLOB_TYPE(self.file_path)
-            dir_blob = BLOB_TYPE(self.dir_path)
-            return '({0} = ?) || (substr({0}, 1, ?) = ?)'.format(self.field), \
-                   (file_blob, len(dir_blob), dir_blob)
+        file_blob = BLOB_TYPE(self.file_path)
+        dir_blob = BLOB_TYPE(self.dir_path)
 
-        escape = lambda m: self.escape_char + m.group(0)
-        dir_pattern = self.escape_re.sub(escape, self.dir_path)
-        dir_blob = BLOB_TYPE(dir_pattern + b'%')
-        file_pattern = self.escape_re.sub(escape, self.file_path)
-        file_blob = BLOB_TYPE(file_pattern)
-        return '({0} LIKE ? ESCAPE ?) || ({0} LIKE ? ESCAPE ?)'.format(
-            self.field), (file_blob, self.escape_char, dir_blob,
-                          self.escape_char)
+        if self.case_sensitive:
+            query_part = '({0} = ?) || (substr({0}, 1, ?) = ?)'
+        else:
+            query_part = '(BYTELOWER({0}) = BYTELOWER(?)) || \
+                         (substr(BYTELOWER({0}), 1, ?) = BYTELOWER(?))'
+
+        return query_part.format(self.field), \
+            (file_blob, len(dir_blob), dir_blob)
 
 
 # Library-specific field types.
@@ -1201,6 +1195,19 @@ def parse_query_string(s, model_cls):
     return parse_query_parts(parts, model_cls)
 
 
+def _sqlite_bytelower(bytestring):
+    """ A custom ``bytelower`` sqlite function so we can compare
+        bytestrings in a semi case insensitive fashion.  This is to work
+        around sqlite builds are that compiled with
+        ``-DSQLITE_LIKE_DOESNT_MATCH_BLOBS``. See
+        ``https://github.com/beetbox/beets/issues/2172`` for details.
+    """
+    if not six.PY2:
+        return bytestring.lower()
+
+    return buffer(bytes(bytestring).lower())  # noqa: F821
+
+
 # The Library: interface to the database.
 
 class Library(dbcore.Database):
@@ -1214,6 +1221,8 @@ class Library(dbcore.Database):
                                '$artist/$album/$track $title'),),
                  replacements=None):
         super(Library, self).__init__(path)
+
+        self._connection().create_function('bytelower', 1, _sqlite_bytelower)
 
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
