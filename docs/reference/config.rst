@@ -557,7 +557,7 @@ duplicate_action
 
 Either ``skip``, ``keep``, ``remove``, or ``ask``. Controls how duplicates
 are treated in import task. "skip" means that new item(album or track) will be
-skiped; "keep" means keep both old and new items; "remove" means remove old
+skipped; "keep" means keep both old and new items; "remove" means remove old
 item; "ask" means the user should be prompted for the action each time.
 The default is ``ask``.
 
