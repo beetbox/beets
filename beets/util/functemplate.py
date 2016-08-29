@@ -214,7 +214,7 @@ class Call(object):
                 [ex_call(
                     'map',
                     [
-                        ex_rvalue('unicode'),
+                        ex_rvalue(six.text_type.__name__),
                         ast.List(subexprs, ast.Load()),
                     ]
                 )],
