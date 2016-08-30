@@ -113,8 +113,10 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     the resulting Python function. If `debug`, then print out the
     bytecode of the compiled function.
     """
+    if six.PY2:
+        name = name.encode('utf-8')
     func_def = ast.FunctionDef(
-        name=name.encode('utf8'),
+        name=name,
         args=ast.arguments(
             args=[ast.Name(n, ast.Param()) for n in arg_names],
             vararg=None,
@@ -165,8 +167,12 @@ class Symbol(object):
 
     def translate(self):
         """Compile the variable lookup."""
-        expr = ex_rvalue(VARIABLE_PREFIX + self.ident.encode('utf8'))
-        return [expr], set([self.ident.encode('utf8')]), set()
+        if six.PY2:
+            ident = self.ident.encode('utf-8')
+        else:
+            ident = self.ident
+        expr = ex_rvalue(VARIABLE_PREFIX + ident)
+        return [expr], set([ident]), set()
 
 
 class Call(object):
@@ -199,7 +205,11 @@ class Call(object):
     def translate(self):
         """Compile the function call."""
         varnames = set()
-        funcnames = set([self.ident.encode('utf8')])
+        if six.PY2:
+            ident = self.ident.encode('utf-8')
+        else:
+            ident = self.ident
+        funcnames = set([ident])
 
         arg_exprs = []
         for arg in self.args:
@@ -221,7 +231,7 @@ class Call(object):
             ))
 
         subexpr_call = ex_call(
-            FUNCTION_PREFIX + self.ident.encode('utf8'),
+            FUNCTION_PREFIX + ident,
             arg_exprs
         )
         return [subexpr_call], varnames, funcnames
