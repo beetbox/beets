@@ -57,9 +57,6 @@ class PathQuery(dbcore.FieldQuery):
     and case-sensitive otherwise.
     """
 
-    escape_re = re.compile(br'[\\_%]')
-    escape_char = b'\\'
-
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
         """Create a path query. `pattern` must be a path, either to a
         file or a directory.
@@ -108,20 +105,17 @@ class PathQuery(dbcore.FieldQuery):
         return (path == self.file_path) or path.startswith(self.dir_path)
 
     def col_clause(self):
-        if self.case_sensitive:
-            file_blob = BLOB_TYPE(self.file_path)
-            dir_blob = BLOB_TYPE(self.dir_path)
-            return '({0} = ?) || (substr({0}, 1, ?) = ?)'.format(self.field), \
-                   (file_blob, len(dir_blob), dir_blob)
+        file_blob = BLOB_TYPE(self.file_path)
+        dir_blob = BLOB_TYPE(self.dir_path)
 
-        escape = lambda m: self.escape_char + m.group(0)
-        dir_pattern = self.escape_re.sub(escape, self.dir_path)
-        dir_blob = BLOB_TYPE(dir_pattern + b'%')
-        file_pattern = self.escape_re.sub(escape, self.file_path)
-        file_blob = BLOB_TYPE(file_pattern)
-        return '({0} LIKE ? ESCAPE ?) || ({0} LIKE ? ESCAPE ?)'.format(
-            self.field), (file_blob, self.escape_char, dir_blob,
-                          self.escape_char)
+        if self.case_sensitive:
+            query_part = '({0} = ?) || (substr({0}, 1, ?) = ?)'
+        else:
+            query_part = '(UPPER({0}) = UPPER(?)) || \
+                         (substr(UPPER({0}), 1, ?) = UPPER(?))'
+
+        return query_part.format(self.field), \
+            (file_blob, len(dir_blob), dir_blob)
 
 
 # Library-specific field types.
