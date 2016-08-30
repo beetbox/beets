@@ -33,7 +33,7 @@ import re
 import ast
 import dis
 import types
-
+import sys
 import six
 
 SYMBOL_DELIM = u'$'
@@ -105,7 +105,10 @@ def ex_call(func, args):
         if not isinstance(args[i], ast.expr):
             args[i] = ex_literal(args[i])
 
-    return ast.Call(func, args, [], None, None)
+    if sys.version_info[:2] < (3, 5):
+        return ast.Call(func, args, [], None, None)
+    else:
+        return ast.Call(func, args, [])
 
 
 def compile_func(arg_names, statements, name='_the_func', debug=False):
@@ -114,18 +117,30 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     bytecode of the compiled function.
     """
     if six.PY2:
-        name = name.encode('utf-8')
-    func_def = ast.FunctionDef(
-        name=name,
-        args=ast.arguments(
-            args=[ast.Name(n, ast.Param()) for n in arg_names],
-            vararg=None,
-            kwarg=None,
-            defaults=[ex_literal(None) for _ in arg_names],
-        ),
-        body=statements,
-        decorator_list=[],
-    )
+        func_def = ast.FunctionDef(
+            name=name.encode('utf-8'),
+            args=ast.arguments(
+                args=[ast.Name(n, ast.Param()) for n in arg_names],
+                vararg=None,
+                kwarg=None,
+                defaults=[ex_literal(None) for _ in arg_names],
+            ),
+            body=statements,
+            decorator_list=[],
+        )
+    else:
+        func_def = ast.FunctionDef(
+            name=name,
+            args=ast.arguments(
+                args=[ast.arg(arg=n, annotation=None) for n in arg_names],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[ex_literal(None) for _ in arg_names],
+            ),
+            body=statements,
+            decorator_list=[],
+        )
+
     mod = ast.Module([func_def])
     ast.fix_missing_locations(mod)
 
