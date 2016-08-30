@@ -33,7 +33,7 @@ import re
 import ast
 import dis
 import types
-
+import sys
 import six
 
 SYMBOL_DELIM = u'$'
@@ -105,7 +105,10 @@ def ex_call(func, args):
         if not isinstance(args[i], ast.expr):
             args[i] = ex_literal(args[i])
 
-    return ast.Call(func, args, [], None, None)
+    if sys.version_info[:2] < (3, 5):
+        return ast.Call(func, args, [], None, None)
+    else:
+        return ast.Call(func, args, [])
 
 
 def compile_func(arg_names, statements, name='_the_func', debug=False):
@@ -113,17 +116,31 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     the resulting Python function. If `debug`, then print out the
     bytecode of the compiled function.
     """
-    func_def = ast.FunctionDef(
-        name=name.encode('utf8'),
-        args=ast.arguments(
-            args=[ast.Name(n, ast.Param()) for n in arg_names],
-            vararg=None,
-            kwarg=None,
-            defaults=[ex_literal(None) for _ in arg_names],
-        ),
-        body=statements,
-        decorator_list=[],
-    )
+    if six.PY2:
+        func_def = ast.FunctionDef(
+            name=name.encode('utf-8'),
+            args=ast.arguments(
+                args=[ast.Name(n, ast.Param()) for n in arg_names],
+                vararg=None,
+                kwarg=None,
+                defaults=[ex_literal(None) for _ in arg_names],
+            ),
+            body=statements,
+            decorator_list=[],
+        )
+    else:
+        func_def = ast.FunctionDef(
+            name=name,
+            args=ast.arguments(
+                args=[ast.arg(arg=n, annotation=None) for n in arg_names],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[ex_literal(None) for _ in arg_names],
+            ),
+            body=statements,
+            decorator_list=[],
+        )
+
     mod = ast.Module([func_def])
     ast.fix_missing_locations(mod)
 
@@ -165,8 +182,12 @@ class Symbol(object):
 
     def translate(self):
         """Compile the variable lookup."""
-        expr = ex_rvalue(VARIABLE_PREFIX + self.ident.encode('utf8'))
-        return [expr], set([self.ident.encode('utf8')]), set()
+        if six.PY2:
+            ident = self.ident.encode('utf-8')
+        else:
+            ident = self.ident
+        expr = ex_rvalue(VARIABLE_PREFIX + ident)
+        return [expr], set([ident]), set()
 
 
 class Call(object):
@@ -199,7 +220,11 @@ class Call(object):
     def translate(self):
         """Compile the function call."""
         varnames = set()
-        funcnames = set([self.ident.encode('utf8')])
+        if six.PY2:
+            ident = self.ident.encode('utf-8')
+        else:
+            ident = self.ident
+        funcnames = set([ident])
 
         arg_exprs = []
         for arg in self.args:
@@ -214,14 +239,14 @@ class Call(object):
                 [ex_call(
                     'map',
                     [
-                        ex_rvalue('unicode'),
+                        ex_rvalue(six.text_type.__name__),
                         ast.List(subexprs, ast.Load()),
                     ]
                 )],
             ))
 
         subexpr_call = ex_call(
-            FUNCTION_PREFIX + self.ident.encode('utf8'),
+            FUNCTION_PREFIX + ident,
             arg_exprs
         )
         return [subexpr_call], varnames, funcnames
@@ -509,8 +534,7 @@ class Template(object):
     def __init__(self, template):
         self.expr = _parse(template)
         self.original = template
-        if six.PY2:  # FIXME Compiler is broken on Python 3.
-            self.compiled = self.translate()
+        self.compiled = self.translate()
 
     def __eq__(self, other):
         return self.original == other.original
@@ -526,13 +550,11 @@ class Template(object):
     def substitute(self, values={}, functions={}):
         """Evaluate the template given the values and functions.
         """
-        if six.PY2:  # FIXME As above.
-            try:
-                res = self.compiled(values, functions)
-            except:  # Handle any exceptions thrown by compiled version.
-                res = self.interpret(values, functions)
-        else:
+        try:
+            res = self.compiled(values, functions)
+        except:  # Handle any exceptions thrown by compiled version.
             res = self.interpret(values, functions)
+
         return res
 
     def translate(self):
