@@ -392,7 +392,7 @@ class DestinationTest(_common.TestCase):
     def test_unicode_normalized_nfc_on_linux(self):
         instr = unicodedata.normalize('NFD', u'caf\xe9')
         self.lib.path_formats = [(u'default', instr)]
-        dest = self.i.destination(platform='linux2', fragment=True)
+        dest = self.i.destination(platform='linux', fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFC', instr))
 
     def test_non_mbcs_characters_on_windows(self):
@@ -411,7 +411,7 @@ class DestinationTest(_common.TestCase):
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [(u'default', u'foo')]
         self.i.path = util.bytestring_path(u'bar.caf\xe9')
-        dest = self.i.destination(platform='linux2', fragment=True)
+        dest = self.i.destination(platform='linux', fragment=True)
         self.assertEqual(dest, u'foo.caf\xe9')
 
     def test_asciify_and_replace(self):
