@@ -55,18 +55,18 @@ class ModifyFileMocker(object):
         `self.contents` is empty, the file remains unchanged.
         """
         if self.contents:
-            with codecs.open(filename, 'w', encoding='utf8') as f:
+            with codecs.open(filename, 'w', encoding='utf-8') as f:
                 f.write(self.contents)
 
     def replace_contents(self, filename, log):
         """Modify `filename`, reading its contents and replacing the strings
         specified in `self.replacements`.
         """
-        with codecs.open(filename, 'r', encoding='utf8') as f:
+        with codecs.open(filename, 'r', encoding='utf-8') as f:
             contents = f.read()
         for old, new_ in self.replacements.items():
             contents = contents.replace(old, new_)
-        with codecs.open(filename, 'w', encoding='utf8') as f:
+        with codecs.open(filename, 'w', encoding='utf-8') as f:
             f.write(contents)
 
 

@@ -321,7 +321,7 @@ class SoundCheckTest(unittest.TestCase):
         self.assertEqual(peak, 0.0)
 
     def test_special_characters(self):
-        gain, peak = beets.mediafile._sc_decode(u'caf\xe9'.encode('utf8'))
+        gain, peak = beets.mediafile._sc_decode(u'caf\xe9'.encode('utf-8'))
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 

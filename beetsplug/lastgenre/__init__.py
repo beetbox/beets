@@ -130,7 +130,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             wl_filename = normpath(wl_filename)
             with open(wl_filename, 'rb') as f:
                 for line in f:
-                    line = line.decode('utf8').strip().lower()
+                    line = line.decode('utf-8').strip().lower()
                     if line and not line.startswith(u'#'):
                         self.whitelist.add(line)
 

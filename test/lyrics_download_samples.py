@@ -52,7 +52,7 @@ def main(argv=None):
         if not os.path.isfile(fn):
             html = requests.get(url, verify=False).text
             with safe_open_w(fn) as f:
-                f.write(html.encode('utf8'))
+                f.write(html.encode('utf-8'))
 
 if __name__ == "__main__":
     sys.exit(main())

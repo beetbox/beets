@@ -162,12 +162,12 @@ class PathConversionTest(_common.TestCase):
     def test_bytestring_path_windows_encodes_utf8(self):
         path = u'caf\xe9'
         outpath = self._windows_bytestring_path(path)
-        self.assertEqual(path, outpath.decode('utf8'))
+        self.assertEqual(path, outpath.decode('utf-8'))
 
     def test_bytesting_path_windows_removes_magic_prefix(self):
         path = u'\\\\?\\C:\\caf\xe9'
         outpath = self._windows_bytestring_path(path)
-        self.assertEqual(outpath, u'C:\\caf\xe9'.encode('utf8'))
+        self.assertEqual(outpath, u'C:\\caf\xe9'.encode('utf-8'))
 
 
 class PathTruncationTest(_common.TestCase):

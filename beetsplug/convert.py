@@ -84,7 +84,7 @@ def get_format(fmt=None):
     if 'extension' in keys:
         extension = config['convert']['extension'].as_str()
 
-    return (command.encode('utf8'), extension.encode('utf8'))
+    return (command.encode('utf-8'), extension.encode('utf-8'))
 
 
 def should_transcode(item, fmt):

@@ -107,7 +107,7 @@ class AlbumInfo(object):
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
     # https://github.com/alastair/python-musicbrainz-ngs/issues/85
-    def decode(self, codec='utf8'):
+    def decode(self, codec='utf-8'):
         """Ensure that all string attributes on this object, and the
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
@@ -169,7 +169,7 @@ class TrackInfo(object):
         self.data_url = data_url
 
     # As above, work around a bug in python-musicbrainz-ngs.
-    def decode(self, codec='utf8'):
+    def decode(self, codec='utf-8'):
         """Ensure that all string attributes on this object are decoded
         to Unicode.
         """

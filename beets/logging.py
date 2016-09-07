@@ -52,7 +52,7 @@ def logsafe(val):
         # (a) only do this for paths, if they can be given a distinct
         # type, and (b) warn the developer if they do this for other
         # bytestrings.
-        return val.decode('utf8', 'replace')
+        return val.decode('utf-8', 'replace')
 
     # A "problem" object: needs a workaround.
     elif isinstance(val, subprocess.CalledProcessError):
@@ -61,7 +61,7 @@ def logsafe(val):
         except UnicodeDecodeError:
             # An object with a broken __unicode__ formatter. Use __str__
             # instead.
-            return str(val).decode('utf8', 'replace')
+            return str(val).decode('utf-8', 'replace')
 
     # Other objects are used as-is so field access, etc., still works in
     # the format string.

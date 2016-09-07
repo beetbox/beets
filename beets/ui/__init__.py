@@ -86,7 +86,7 @@ def _out_encoding():
     return _stream_encoding(sys.stdout)
 
 
-def _stream_encoding(stream, default='utf8'):
+def _stream_encoding(stream, default='utf-8'):
     """A helper for `_in_encoding` and `_out_encoding`: get the stream's
     preferred encoding, using a configured override or a default
     fallback if neither is not specified.

@@ -90,7 +90,7 @@ def control_stdin(input=None):
     org = sys.stdin
     sys.stdin = StringIO(input)
     if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
-        sys.stdin.encoding = 'utf8'
+        sys.stdin.encoding = 'utf-8'
     try:
         yield sys.stdin
     finally:
@@ -110,7 +110,7 @@ def capture_stdout():
     org = sys.stdout
     sys.stdout = capture = StringIO()
     if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
-        sys.stdout.encoding = 'utf8'
+        sys.stdout.encoding = 'utf-8'
     try:
         yield sys.stdout
     finally:

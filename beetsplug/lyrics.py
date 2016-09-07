@@ -79,7 +79,7 @@ URL_CHARACTERS = {
 def unescape(text):
     """Resolve &#xxx; HTML entities (and some others)."""
     if isinstance(text, bytes):
-        text = text.decode('utf8', 'ignore')
+        text = text.decode('utf-8', 'ignore')
     out = text.replace(u'&nbsp;', u' ')
 
     def replchar(m):
@@ -189,7 +189,7 @@ class Backend(object):
         if isinstance(s, six.text_type):
             for char, repl in URL_CHARACTERS.items():
                 s = s.replace(char, repl)
-            s = s.encode('utf8', 'ignore')
+            s = s.encode('utf-8', 'ignore')
         return urllib.parse.quote(s)
 
     def build_url(self, artist, title):
@@ -265,7 +265,7 @@ class Genius(Backend):
     def search_genius(self, artist, title):
         query = u"%s %s" % (artist, title)
         url = u'https://api.genius.com/search?q=%s' \
-            % (urllib.parse.quote(query.encode('utf8')))
+            % (urllib.parse.quote(query.encode('utf-8')))
 
         self._log.debug(u'genius: requesting search {}', url)
         try:
@@ -551,7 +551,7 @@ class Google(Backend):
         query = u"%s %s" % (artist, title)
         url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' \
               % (self.api_key, self.engine_id,
-                 urllib.parse.quote(query.encode('utf8')))
+                 urllib.parse.quote(query.encode('utf-8')))
 
         data = urllib.request.urlopen(url)
         data = json.load(data)
@@ -763,7 +763,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                     self.bing_auth_token = None
                     return self.append_translation(text, to_lang)
                 return text
-            lines_translated = ET.fromstring(r.text.encode('utf8')).text
+            lines_translated = ET.fromstring(r.text.encode('utf-8')).text
             # Use a translation mapping dict to build resulting lyrics
             translations = dict(zip(text_lines, lines_translated.split('|')))
             result = ''

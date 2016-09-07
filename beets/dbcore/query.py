@@ -252,7 +252,7 @@ class BytesQuery(MatchQuery):
         # rather than encoded Unicode.
         if isinstance(self.pattern, (six.text_type, bytes)):
             if isinstance(self.pattern, six.text_type):
-                self.pattern = self.pattern.encode('utf8')
+                self.pattern = self.pattern.encode('utf-8')
             self.buf_pattern = buffer(self.pattern)
         elif isinstance(self.pattern, buffer):
             self.buf_pattern = self.pattern
