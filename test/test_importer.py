@@ -1465,10 +1465,10 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         """Normalize a path's Unicode combining form according to the
         platform.
         """
-        path = path.decode('utf8')
+        path = path.decode('utf-8')
         norm_form = 'NFD' if sys.platform == 'darwin' else 'NFC'
         path = unicodedata.normalize(norm_form, path)
-        return path.encode('utf8')
+        return path.encode('utf-8')
 
     def test_coalesce_nested_album_multiple_subdirs(self):
         self.create_music()

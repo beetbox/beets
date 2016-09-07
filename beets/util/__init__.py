@@ -70,7 +70,7 @@ class HumanReadableException(Exception):
         if isinstance(self.reason, six.text_type):
             return self.reason
         elif isinstance(self.reason, bytes):
-            return self.reason.decode('utf8', 'ignore')
+            return self.reason.decode('utf-8', 'ignore')
         elif hasattr(self.reason, 'strerror'):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
@@ -308,11 +308,11 @@ def arg_encoding():
     locale-sensitive strings).
     """
     try:
-        return locale.getdefaultlocale()[1] or 'utf8'
+        return locale.getdefaultlocale()[1] or 'utf-8'
     except ValueError:
         # Invalid locale environment variable setting. To avoid
         # failing entirely for no good reason, assume UTF-8.
-        return 'utf8'
+        return 'utf-8'
 
 
 def _fsencoding():
@@ -326,7 +326,7 @@ def _fsencoding():
         # for Windows paths, so the encoding is actually immaterial so
         # we can avoid dealing with this nastiness. We arbitrarily
         # choose UTF-8.
-        encoding = 'utf8'
+        encoding = 'utf-8'
     return encoding
 
 
@@ -344,11 +344,11 @@ def bytestring_path(path):
     if os.path.__name__ == 'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
         path = path[len(WINDOWS_MAGIC_PREFIX):]
 
-    # Try to encode with default encodings, but fall back to UTF8.
+    # Try to encode with default encodings, but fall back to utf-8.
     try:
         return path.encode(_fsencoding())
     except (UnicodeError, LookupError):
-        return path.encode('utf8')
+        return path.encode('utf-8')
 
 
 PATH_SEP = bytestring_path(os.sep)
@@ -370,7 +370,7 @@ def displayable_path(path, separator=u'; '):
     try:
         return path.decode(_fsencoding(), 'ignore')
     except (UnicodeError, LookupError):
-        return path.decode('utf8', 'ignore')
+        return path.decode('utf-8', 'ignore')
 
 
 def syspath(path, prefix=True):
@@ -389,7 +389,7 @@ def syspath(path, prefix=True):
         # arbitrarily. But earlier versions used MBCS because it is
         # reported as the FS encoding by Windows. Try both.
         try:
-            path = path.decode('utf8')
+            path = path.decode('utf-8')
         except UnicodeError:
             # The encoding should always be MBCS, Windows' broken
             # Unicode representation.
@@ -620,7 +620,7 @@ def legalize_path(path, replacements, length, extension, fragment):
 
     if fragment:
         # Outputting Unicode.
-        extension = extension.decode('utf8', 'ignore')
+        extension = extension.decode('utf-8', 'ignore')
 
     first_stage_path, _ = _legalize_stage(
         path, replacements, length, extension, fragment
@@ -679,14 +679,14 @@ def as_string(value):
     if value is None:
         return u''
     elif isinstance(value, buffer_types):
-        return bytes(value).decode('utf8', 'ignore')
+        return bytes(value).decode('utf-8', 'ignore')
     elif isinstance(value, bytes):
-        return value.decode('utf8', 'ignore')
+        return value.decode('utf-8', 'ignore')
     else:
         return six.text_type(value)
 
 
-def text_string(value, encoding='utf8'):
+def text_string(value, encoding='utf-8'):
     """Convert a string, which can either be bytes or unicode, to
     unicode.
 
@@ -844,8 +844,8 @@ def shlex_split(s):
     elif isinstance(s, six.text_type):
         # Work around a Python bug.
         # http://bugs.python.org/issue6988
-        bs = s.encode('utf8')
-        return [c.decode('utf8') for c in shlex.split(bs)]
+        bs = s.encode('utf-8')
+        return [c.decode('utf-8') for c in shlex.split(bs)]
 
     else:
         raise TypeError(u'shlex_split called with non-string')

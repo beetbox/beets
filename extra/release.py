@@ -169,8 +169,8 @@ def rst2md(text):
         ['pandoc', '--from=rst', '--to=markdown', '--no-wrap'],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    stdout, _ = pandoc.communicate(text.encode('utf8'))
-    md = stdout.decode('utf8').strip()
+    stdout, _ = pandoc.communicate(text.encode('utf-8'))
+    md = stdout.decode('utf-8').strip()
 
     # Fix up odd spacing in lists.
     return re.sub(r'^-   ', '- ', md, flags=re.M)

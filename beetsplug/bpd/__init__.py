@@ -575,7 +575,7 @@ class Connection(object):
         out = NEWLINE.join(lines) + NEWLINE
         log.debug('{}', out[:-1])  # Don't log trailing newline.
         if isinstance(out, six.text_type):
-            out = out.encode('utf8')
+            out = out.encode('utf-8')
         return self.sock.sendall(out)
 
     def do_command(self, command):

@@ -244,7 +244,7 @@ class InputException(Exception):
 
 
 class DummyOut(object):
-    encoding = 'utf8'
+    encoding = 'utf-8'
 
     def __init__(self):
         self.buf = []
@@ -266,7 +266,7 @@ class DummyOut(object):
 
 
 class DummyIn(object):
-    encoding = 'utf8'
+    encoding = 'utf-8'
 
     def __init__(self, out=None):
         self.buf = []

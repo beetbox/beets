@@ -356,11 +356,11 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
 
             # Overrides for MPD settings.
             if opts.host:
-                mpd_config['host'] = opts.host.decode('utf8')
+                mpd_config['host'] = opts.host.decode('utf-8')
             if opts.port:
                 mpd_config['host'] = int(opts.port)
             if opts.password:
-                mpd_config['password'] = opts.password.decode('utf8')
+                mpd_config['password'] = opts.password.decode('utf-8')
 
             try:
                 MPDStats(lib, self._log).run()

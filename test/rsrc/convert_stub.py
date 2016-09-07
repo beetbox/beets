@@ -22,7 +22,7 @@ def convert(in_file, out_file, tag):
     """
     # On Python 3, encode the tag argument as bytes.
     if not isinstance(tag, bytes):
-        tag = tag.encode('utf8')
+        tag = tag.encode('utf-8')
 
     # On Windows, use Unicode paths. (The test harness gives them to us
     # as UTF-8 bytes.)

@@ -220,7 +220,7 @@ class Bs1770gainBackend(Backend):
         containing information about each analyzed file.
         """
         out = []
-        data = text.decode('utf8', errors='ignore')
+        data = text.decode('utf-8', errors='ignore')
         regex = re.compile(
             u'(\\s{2,2}\\[\\d+\\/\\d+\\].*?|\\[ALBUM\\].*?)'
             '(?=\\s{2,2}\\[\\d+\\/\\d+\\]|\\s{2,2}\\[ALBUM\\]'

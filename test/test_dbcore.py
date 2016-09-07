@@ -349,7 +349,7 @@ class FormatTest(unittest.TestCase):
 
     def test_format_flex_field_bytes(self):
         model = TestModel1()
-        model.other_field = u'caf\xe9'.encode('utf8')
+        model.other_field = u'caf\xe9'.encode('utf-8')
         value = model.formatted().get('other_field')
         self.assertTrue(isinstance(value, six.text_type))
         self.assertEqual(value, u'caf\xe9')

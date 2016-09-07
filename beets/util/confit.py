@@ -499,7 +499,7 @@ class Subview(ConfigView):
         if isinstance(self.key, int):
             self.name += u'#{0}'.format(self.key)
         elif isinstance(self.key, bytes):
-            self.name += self.key.decode('utf8')
+            self.name += self.key.decode('utf-8')
         elif isinstance(self.key, STRING):
             self.name += self.key
         else:
@@ -1238,7 +1238,7 @@ class StrSeq(Template):
 
     def convert(self, value, view):
         if isinstance(value, bytes):
-            value = value.decode('utf8', 'ignore')
+            value = value.decode('utf-8', 'ignore')
 
         if isinstance(value, STRING):
             if self.split:
@@ -1256,7 +1256,7 @@ class StrSeq(Template):
             if isinstance(x, STRING):
                 return x
             elif isinstance(x, bytes):
-                return x.decode('utf8', 'ignore')
+                return x.decode('utf-8', 'ignore')
             else:
                 self.fail(u'must be a list of strings', view, True)
         return list(map(convert, value))

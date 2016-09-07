@@ -68,7 +68,7 @@ class FormattedMapping(collections.Mapping):
     def _get_formatted(self, model, key):
         value = model._type(key).format(model.get(key))
         if isinstance(value, bytes):
-            value = value.decode('utf8', 'ignore')
+            value = value.decode('utf-8', 'ignore')
 
         if self.for_path:
             sep_repl = beets.config['path_sep_replace'].as_str()

@@ -341,7 +341,7 @@ class LibModel(dbcore.Model):
         result = self.evaluate_template(spec)
         if isinstance(spec, bytes):
             # if spec is a byte string then we must return a one as well
-            return result.encode('utf8')
+            return result.encode('utf-8')
         else:
             return result
 

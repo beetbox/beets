@@ -404,7 +404,7 @@ class DestinationTest(_common.TestCase):
             p = self.i.destination()
             self.assertFalse(b'?' in p)
             # We use UTF-8 to encode Windows paths now.
-            self.assertTrue(u'h\u0259d'.encode('utf8') in p)
+            self.assertTrue(u'h\u0259d'.encode('utf-8') in p)
         finally:
             sys.getfilesystemencoding = oldfunc
 
@@ -923,7 +923,7 @@ class PathStringTest(_common.TestCase):
         self.assertTrue(isinstance(i.path, bytes))
 
     def test_special_chars_preserved_in_database(self):
-        path = u'b\xe1r'.encode('utf8')
+        path = u'b\xe1r'.encode('utf-8')
         self.i.path = path
         self.i.store()
         i = list(self.lib.items())[0]
@@ -931,7 +931,7 @@ class PathStringTest(_common.TestCase):
 
     def test_special_char_path_added_to_database(self):
         self.i.remove()
-        path = u'b\xe1r'.encode('utf8')
+        path = u'b\xe1r'.encode('utf-8')
         i = item()
         i.path = path
         self.lib.add(i)

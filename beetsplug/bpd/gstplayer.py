@@ -130,7 +130,7 @@ class GstPlayer(object):
         """
         self.player.set_state(Gst.State.NULL)
         if isinstance(path, six.text_type):
-            path = path.encode('utf8')
+            path = path.encode('utf-8')
         uri = 'file://' + urllib.parse.quote(path)
         self.player.set_property("uri", uri)
         self.player.set_state(Gst.State.PLAYING)

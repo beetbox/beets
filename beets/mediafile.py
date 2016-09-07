@@ -176,7 +176,7 @@ def _safe_cast(out_type, val):
 
     elif out_type == six.text_type:
         if isinstance(val, bytes):
-            return val.decode('utf8', 'ignore')
+            return val.decode('utf-8', 'ignore')
         elif isinstance(val, six.text_type):
             return val
         else:
@@ -187,7 +187,7 @@ def _safe_cast(out_type, val):
             return float(val)
         else:
             if isinstance(val, bytes):
-                val = val.decode('utf8', 'ignore')
+                val = val.decode('utf-8', 'ignore')
             else:
                 val = six.text_type(val)
             match = re.match(r'[\+-]?([0-9]+\.?[0-9]*|[0-9]*\.[0-9]+)',
@@ -249,7 +249,7 @@ def _sc_decode(soundcheck):
     # We decode binary data. If one of the formats gives us a text
     # string, interpret it as UTF-8.
     if isinstance(soundcheck, six.text_type):
-        soundcheck = soundcheck.encode('utf8')
+        soundcheck = soundcheck.encode('utf-8')
 
     # SoundCheck tags consist of 10 numbers, each represented by 8
     # characters of ASCII hex preceded by a space.
@@ -460,7 +460,7 @@ class StorageStyle(object):
         # Convert suffix to correct string type.
         if self.suffix and self.as_type is six.text_type \
            and not isinstance(self.suffix, six.text_type):
-            self.suffix = self.suffix.decode('utf8')
+            self.suffix = self.suffix.decode('utf-8')
 
     # Getter.
 
@@ -512,7 +512,7 @@ class StorageStyle(object):
                 # Store bools as 1/0 instead of True/False.
                 value = six.text_type(int(bool(value)))
             elif isinstance(value, bytes):
-                value = value.decode('utf8', 'ignore')
+                value = value.decode('utf-8', 'ignore')
             else:
                 value = six.text_type(value)
         else:
@@ -625,7 +625,7 @@ class MP4StorageStyle(StorageStyle):
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
         if self.key.startswith('----:') and isinstance(value, six.text_type):
-            value = value.encode('utf8')
+            value = value.encode('utf-8')
         return value
 
 
@@ -767,7 +767,7 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
     def store(self, mutagen_file, value):
         # This field type stores text data as encoded data.
         assert isinstance(value, six.text_type)
-        value = value.encode('utf8')
+        value = value.encode('utf-8')
 
         frames = mutagen_file.tags.getall(self.key)
         for frame in frames:
@@ -1067,7 +1067,7 @@ class APEv2ImageStorageStyle(ListStorageStyle):
                 text_delimiter_index = frame.value.find(b'\x00')
                 if text_delimiter_index > 0:
                     comment = frame.value[0:text_delimiter_index]
-                    comment = comment.decode('utf8', 'replace')
+                    comment = comment.decode('utf-8', 'replace')
                 else:
                     comment = None
                 image_data = frame.value[text_delimiter_index + 1:]
@@ -1084,7 +1084,7 @@ class APEv2ImageStorageStyle(ListStorageStyle):
         for image in values:
             image_type = image.type or ImageType.other
             comment = image.desc or ''
-            image_data = comment.encode('utf8') + b'\x00' + image.data
+            image_data = comment.encode('utf-8') + b'\x00' + image.data
             cover_tag = self.TAG_NAMES[image_type]
             mutagen_file[cover_tag] = image_data
 

@@ -65,7 +65,7 @@ class Type(object):
         if value is None:
             value = u''
         if isinstance(value, bytes):
-            value = value.decode('utf8', 'ignore')
+            value = value.decode('utf-8', 'ignore')
 
         return six.text_type(value)
 
@@ -105,7 +105,7 @@ class Type(object):
         and the method must handle these in addition.
         """
         if isinstance(sql_value, buffer):
-            sql_value = bytes(sql_value).decode('utf8', 'ignore')
+            sql_value = bytes(sql_value).decode('utf-8', 'ignore')
         if isinstance(sql_value, six.text_type):
             return self.parse(sql_value)
         else:

@@ -1059,7 +1059,7 @@ class ShowChangeTest(_common.TestCase):
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = u''
-        self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
+        self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf-8')
         msg = re.sub(r'  +', ' ', self._show_change())
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg or
                         u'caf.mp3 ->' in msg)
@@ -1360,12 +1360,12 @@ class EncodingTest(_common.TestCase):
     def out_encoding_default_utf8(self):
         with patch('sys.stdout') as stdout:
             stdout.encoding = None
-            self.assertEqual(ui._out_encoding(), 'utf8')
+            self.assertEqual(ui._out_encoding(), 'utf-8')
 
     def in_encoding_default_utf8(self):
         with patch('sys.stdin') as stdin:
             stdin.encoding = None
-            self.assertEqual(ui._in_encoding(), 'utf8')
+            self.assertEqual(ui._in_encoding(), 'utf-8')
 
 
 def suite():
