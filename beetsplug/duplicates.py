@@ -136,15 +136,15 @@ class DuplicatesPlugin(BeetsPlugin):
                 items = lib.items(decargs(args))
 
             if path:
-                fmt = '$path'
+                fmt = u'$path'
 
             # Default format string for count mode.
             if count and not fmt:
                 if album:
-                    fmt = '$albumartist - $album'
+                    fmt = u'$albumartist - $album'
                 else:
-                    fmt = '$albumartist - $album - $title'
-                fmt += ': {0}'
+                    fmt = u'$albumartist - $album - $title'
+                fmt += u': {0}'
 
             if checksum:
                 for i in items:
@@ -170,7 +170,7 @@ class DuplicatesPlugin(BeetsPlugin):
         return [self._command]
 
     def _process_item(self, item, copy=False, move=False, delete=False,
-                      tag=False, fmt=''):
+                      tag=False, fmt=u''):
         """Process Item `item`.
         """
         print_(format(item, fmt))
