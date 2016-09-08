@@ -102,8 +102,7 @@ class EditMixin(object):
         passing `args` to `run_command`."""
         m = ModifyFileMocker(**modify_file_args)
         with patch('beetsplug.edit.edit', side_effect=m.action):
-            with control_stdin('\n'.join(stdin)):
-                self.run_command('edit', *args)
+                self.run_command('edit', *args, input='\n'.join(stdin))
 
 
 @_common.slow_test()

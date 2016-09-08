@@ -27,7 +27,7 @@ import six
 from mock import patch, Mock
 from test import _common
 from test._common import unittest
-from test.helper import capture_stdout, TestHelper, control_stdin
+from test.helper import capture_stdout, TestHelper
 
 from beets import library
 from beets import ui
@@ -164,8 +164,7 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def modify_inp(self, inp, *args):
-        with control_stdin(inp):
-            self.run_command('modify', *args)
+        self.run_command('modify', *args, input=inp)
 
     def modify(self, *args):
         self.modify_inp('y', *args)
