@@ -204,7 +204,7 @@ class InfoPlugin(BeetsPlugin):
                 if opts.keys_only:
                     print_data_keys(data, item)
                 else:
-                    fmt = ui.decargs([opts.format])[0]
+                    fmt = ui.decargs([opts.format])[0] if opts.format else None
                     print_data(data, item, fmt)
                 first = False
 
