@@ -837,7 +837,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         """
         path = optparse.Option(*flags, nargs=0, action='callback',
                                callback=self._set_format,
-                               callback_kwargs={'fmt': '$path',
+                               callback_kwargs={'fmt': u'$path',
                                                 'store_true': True},
                                help=u'print paths for matched items or albums')
         self.add_option(path)
