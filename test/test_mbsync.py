@@ -100,8 +100,8 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(e, logs[0])
 
         # restore the config
-        config['format_item'] = '$artist - $album - $title'
-        config['format_album'] = '$albumartist - $album'
+        config['format_item'] = u'$artist - $album - $title'
+        config['format_album'] = u'$albumartist - $album'
 
         # Test singleton with no mb_trackid.
         # The default singleton format includes $artist and $album
