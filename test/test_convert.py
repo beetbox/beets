@@ -20,7 +20,6 @@ import os.path
 from test import _common
 from test._common import unittest
 from test import helper
-from test.helper import control_stdin
 
 from beets.mediafile import MediaFile
 from beets import util
@@ -114,18 +113,18 @@ class ConvertCommand(object):
     """A mixin providing a utility method to run the `convert`command
     in tests.
     """
-    def run_convert_path(self, path, *args):
+    def run_convert_path(self, path, *args, **kwargs):
         """Run the `convert` command on a given path."""
         # The path is currently a filesystem bytestring. Convert it to
         # an argument bytestring.
         path = path.decode(util._fsencoding()).encode(util.arg_encoding())
 
         args = args + (b'path:' + path,)
-        return self.run_command('convert', *args)
+        return self.run_command('convert', *args, **kwargs)
 
-    def run_convert(self, *args):
+    def run_convert(self, *args, **kwargs):
         """Run the `convert` command on `self.item`."""
-        return self.run_convert_path(self.item.path, *args)
+        return self.run_convert_path(self.item.path, *args, **kwargs)
 
 
 @_common.slow_test()
@@ -158,8 +157,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         self.teardown_beets()
 
     def test_convert(self):
-        with control_stdin('y'):
-            self.run_convert()
+        self.run_convert(input='y')
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
@@ -169,24 +167,21 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         self.assertFileTag(converted, 'mp3')
 
     def test_rejecet_confirmation(self):
-        with control_stdin('n'):
-            self.run_convert()
+        self.run_convert(input='n')
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFalse(os.path.isfile(converted))
 
     def test_convert_keep_new(self):
         self.assertEqual(os.path.splitext(self.item.path)[1], b'.ogg')
 
-        with control_stdin('y'):
-            self.run_convert('--keep-new')
+        self.run_convert('--keep-new', input='y')
 
         self.item.load()
         self.assertEqual(os.path.splitext(self.item.path)[1], b'.mp3')
 
     def test_format_option(self):
-        with control_stdin('y'):
-            self.run_convert('--format', 'opus')
-            converted = os.path.join(self.convert_dest, b'converted.ops')
+        self.run_convert('--format', 'opus', input='y')
+        converted = os.path.join(self.convert_dest, b'converted.ops')
         self.assertFileTag(converted, 'opus')
 
     def test_embed_album_art(self):
@@ -197,8 +192,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         with open(os.path.join(image_path), 'rb') as f:
             image_data = f.read()
 
-        with control_stdin('y'):
-            self.run_convert()
+        self.run_convert(input='y')
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         mediafile = MediaFile(converted)
         self.assertEqual(mediafile.images[0].data, image_data)
@@ -243,23 +237,20 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
 
     def test_transcode_from_lossles(self):
         [item] = self.add_item_fixtures(ext='flac')
-        with control_stdin('y'):
-            self.run_convert_path(item.path)
+        self.run_convert_path(item.path, input='y')
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
     def test_transcode_from_lossy(self):
         self.config['convert']['never_convert_lossy_files'] = False
         [item] = self.add_item_fixtures(ext='ogg')
-        with control_stdin('y'):
-            self.run_convert_path(item.path)
+        self.run_convert_path(item.path, input='y')
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
     def test_transcode_from_lossy_prevented(self):
         [item] = self.add_item_fixtures(ext='ogg')
-        with control_stdin('y'):
-            self.run_convert_path(item.path)
+        self.run_convert_path(item.path, input='y')
         converted = os.path.join(self.convert_dest, b'converted.ogg')
         self.assertNoFileTag(converted, 'mp3')
 
