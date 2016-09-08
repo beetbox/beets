@@ -36,7 +36,7 @@ class MBSubmitPlugin(BeetsPlugin):
         super(MBSubmitPlugin, self).__init__()
 
         self.config.add({
-            'format': '$track. $title - $artist ($length)',
+            'format': u'$track. $title - $artist ($length)',
             'threshold': 'medium',
         })
 
@@ -57,4 +57,4 @@ class MBSubmitPlugin(BeetsPlugin):
 
     def print_tracks(self, session, task):
         for i in task.items:
-            print_data(None, i, self.config['format'].get())
+            print_data(None, i, self.config['format'].as_str())

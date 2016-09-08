@@ -1055,12 +1055,12 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(six.text_type(album), u"foö bar")
         self.assertEqual(bytes(album), b"fo\xc3\xb6 bar")
 
-        config['format_item'] = 'bar $foo'
+        config['format_item'] = u'bar $foo'
         item = beets.library.Item()
         item.foo = u'bar'
         item.tagada = u'togodo'
-        self.assertEqual("{0}".format(item), u"bar bar")
-        self.assertEqual("{0:$tagada}".format(item), u"togodo")
+        self.assertEqual(u"{0}".format(item), u"bar bar")
+        self.assertEqual(u"{0:$tagada}".format(item), u"togodo")
 
 
 class UnicodePathTest(_common.LibTestCase):

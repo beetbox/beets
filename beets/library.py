@@ -338,12 +338,8 @@ class LibModel(dbcore.Model):
     def __format__(self, spec):
         if not spec:
             spec = beets.config[self._format_config_key].as_str()
-        result = self.evaluate_template(spec)
-        if isinstance(spec, bytes):
-            # if spec is a byte string then we must return a one as well
-            return result.encode('utf-8')
-        else:
-            return result
+        assert isinstance(spec, six.text_type)
+        return self.evaluate_template(spec)
 
     def __str__(self):
         return format(self)
