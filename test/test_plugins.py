@@ -77,18 +77,18 @@ class ItemTypesTest(unittest.TestCase, TestHelper):
         item.add(self.lib)
 
         # Do not match unset values
-        out = self.run_with_output(u'ls', u'rating:1..3')
-        self.assertNotIn(u'aaa', out)
+        result = self.run_with_output(u'ls', u'rating:1..3')
+        self.assertNotIn(u'aaa', result.output)
 
         self.run_command(u'modify', u'rating=2', u'--yes')
 
         # Match in range
-        out = self.run_with_output(u'ls', u'rating:1..3')
-        self.assertIn(u'aaa', out)
+        result = self.run_with_output(u'ls', u'rating:1..3')
+        self.assertIn(u'aaa', result.output)
 
         # Don't match out of range
-        out = self.run_with_output(u'ls', u'rating:3..5')
-        self.assertNotIn(u'aaa', out)
+        result = self.run_with_output(u'ls', u'rating:3..5')
+        self.assertNotIn(u'aaa', result.output)
 
 
 class ItemWriteTest(unittest.TestCase, TestHelper):

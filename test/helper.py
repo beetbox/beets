@@ -40,6 +40,7 @@ import shutil
 import subprocess
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
+from collections import namedtuple
 from six import StringIO
 from enum import Enum
 
@@ -447,7 +448,10 @@ class TestHelper(object):
     def run_with_output(self, *args):
         with capture_stdout() as out:
             self.run_command(*args)
-        return util.text_string(out.getvalue())
+
+        result = namedtuple('Result', ['output'])
+        result.output = util.text_string(out.getvalue())
+        return result
 
     # Safe file operations
 

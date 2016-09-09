@@ -1187,67 +1187,82 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def test_base(self):
-        l = self.run_with_output(u'ls')
-        self.assertEqual(l, u'the artist - the album - the title\n')
+        result = self.run_with_output(u'ls')
+        out = result.output
+        self.assertEqual(out, u'the artist - the album - the title\n')
 
-        l = self.run_with_output(u'ls', u'-a')
-        self.assertEqual(l, u'the album artist - the album\n')
+        result = self.run_with_output(u'ls', u'-a')
+        out = result.output
+        self.assertEqual(out, u'the album artist - the album\n')
 
     def test_path_option(self):
-        l = self.run_with_output(u'ls', u'-p')
-        self.assertEqual(l, u'xxx/yyy\n')
+        result = self.run_with_output(u'ls', u'-p')
+        out = result.output
+        self.assertEqual(out, u'xxx/yyy\n')
 
-        l = self.run_with_output(u'ls', u'-a', u'-p')
-        self.assertEqual(l, u'xxx\n')
+        result = self.run_with_output(u'ls', u'-a', u'-p')
+        out = result.output
+        self.assertEqual(out, u'xxx\n')
 
     def test_format_option(self):
-        l = self.run_with_output(u'ls', u'-f', u'$artist')
-        self.assertEqual(l, u'the artist\n')
+        result = self.run_with_output(u'ls', u'-f', u'$artist')
+        out = result.output
+        self.assertEqual(out, u'the artist\n')
 
-        l = self.run_with_output(u'ls', u'-a', u'-f', u'$albumartist')
-        self.assertEqual(l, u'the album artist\n')
+        result = self.run_with_output(u'ls', u'-a', u'-f', u'$albumartist')
+        out = result.output
+        self.assertEqual(out, u'the album artist\n')
 
     def test_format_option_unicode(self):
-        l = self.run_with_output(b'ls', b'-f',
-                                 u'caf\xe9'.encode(util.arg_encoding()))
-        self.assertEqual(l, u'caf\xe9\n')
+        result = self.run_with_output(b'ls', b'-f',
+                                      u'caf\xe9'.encode(util.arg_encoding()))
+        out = result.output
+        self.assertEqual(out, u'caf\xe9\n')
 
     def test_root_format_option(self):
-        l = self.run_with_output(u'--format-item', u'$artist',
-                                 u'--format-album', u'foo', u'ls')
-        self.assertEqual(l, u'the artist\n')
+        result = self.run_with_output(u'--format-item', u'$artist',
+                                      u'--format-album', u'foo', u'ls')
+        out = result.output
+        self.assertEqual(out, u'the artist\n')
 
-        l = self.run_with_output(u'--format-item', u'foo',
-                                 u'--format-album', u'$albumartist',
-                                 u'ls', u'-a')
-        self.assertEqual(l, u'the album artist\n')
+        result = self.run_with_output(u'--format-item', u'foo',
+                                      u'--format-album', u'$albumartist',
+                                      u'ls', u'-a')
+        out = result.output
+        self.assertEqual(out, u'the album artist\n')
 
     def test_help(self):
-        l = self.run_with_output(u'help')
-        self.assertIn(u'Usage:', l)
+        result = self.run_with_output(u'help')
+        out = result.output
+        self.assertIn(u'Usage:', out)
 
-        l = self.run_with_output(u'help', u'list')
-        self.assertIn(u'Usage:', l)
+        result = self.run_with_output(u'help', u'list')
+        out = result.output
+        self.assertIn(u'Usage:', out)
 
         with self.assertRaises(ui.UserError):
             self.run_command(u'help', u'this.is.not.a.real.command')
 
     def test_stats(self):
-        l = self.run_with_output(u'stats')
-        self.assertIn(u'Approximate total size:', l)
+        result = self.run_with_output(u'stats')
+        out = result.output
+        self.assertIn(u'Approximate total size:', out)
 
         # # Need to have more realistic library setup for this to work
-        # l = self.run_with_output('stats', '-e')
-        # self.assertIn('Total size:', l)
+        # result = self.run_with_output('stats', '-e')
+        # out = result.output
+        # self.assertIn('Total size:', out)
 
     def test_version(self):
-        l = self.run_with_output(u'version')
-        self.assertIn(u'python version', l)
-        self.assertIn(u'no plugins loaded', l)
+        result = self.run_with_output(u'version')
+        out = result.output
+        self.assertIn(u'python version', out)
+        self.assertIn(u'no plugins loaded', out)
 
         # # Need to have plugin loaded
-        # l = self.run_with_output('version')
-        # self.assertIn('plugins: ', l)
+        # result = self.run_with_output('version')
+        # out = result.output
+        # self.assertIn('plugins: ', out)
 
 
 class CommonOptionsParserTest(unittest.TestCase, TestHelper):

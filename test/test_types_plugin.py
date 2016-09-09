@@ -134,14 +134,17 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
             self.run_command(u'ls')
 
     def modify(self, *args):
-        return self.run_with_output(u'modify', u'--yes', u'--nowrite',
-                                    u'--nomove', *args)
+        result = self.run_with_output(u'modify', u'--yes', u'--nowrite',
+                                      u'--nomove', *args)
+        return result.output
 
     def list(self, query, fmt=u'$artist - $album - $title'):
-        return self.run_with_output(u'ls', u'-f', fmt, query).strip()
+        result = self.run_with_output(u'ls', u'-f', fmt, query)
+        return result.output.strip()
 
     def list_album(self, query, fmt=u'$albumartist - $album - $title'):
-        return self.run_with_output(u'ls', u'-a', u'-f', fmt, query).strip()
+        result = self.run_with_output(u'ls', u'-a', u'-f', fmt, query)
+        return result.output.strip()
 
 
 def mktime(*args):

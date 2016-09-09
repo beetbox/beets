@@ -45,7 +45,8 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile.composer = None
         mediafile.save()
 
-        out = self.run_with_output(path)
+        result = self.run_with_output(path)
+        out = result.output
         self.assertIn(path, out)
         self.assertIn('albumartist: AAA', out)
         self.assertIn('disctitle: DDD', out)
@@ -60,7 +61,8 @@ class InfoTest(unittest.TestCase, TestHelper):
         item1.album = 'yyyy'
         item1.store()
 
-        out = self.run_with_output('album:yyyy')
+        result = self.run_with_output('album:yyyy')
+        out = result.output
         self.assertIn(displayable_path(item1.path), out)
         self.assertIn(u'album: xxxx', out)
 
@@ -71,7 +73,8 @@ class InfoTest(unittest.TestCase, TestHelper):
         item.album = 'xxxx'
         item.store()
 
-        out = self.run_with_output('--library', 'album:xxxx')
+        result = self.run_with_output('--library', 'album:xxxx')
+        out = result.output
         self.assertIn(displayable_path(item.path), out)
         self.assertIn(u'album: xxxx', out)
 
@@ -89,7 +92,8 @@ class InfoTest(unittest.TestCase, TestHelper):
         item.store()
         mediafile.save()
 
-        out = self.run_with_output('--summarize', 'album:AAA', path)
+        result = self.run_with_output('--summarize', 'album:AAA', path)
+        out = result.output
         self.assertIn(u'album: AAA', out)
         self.assertIn(u'tracktotal: 5', out)
         self.assertIn(u'title: [various]', out)
@@ -100,16 +104,18 @@ class InfoTest(unittest.TestCase, TestHelper):
         item.album = 'xxxx'
         item.store()
 
-        out = self.run_with_output('--library', 'album:xxxx',
-                                   '--include-keys', '*lbu*')
+        result = self.run_with_output('--library', 'album:xxxx',
+                                      '--include-keys', '*lbu*')
+        out = result.output
         self.assertIn(displayable_path(item.path), out)
         self.assertNotIn(u'title:', out)
         self.assertIn(u'album: xxxx', out)
 
     def test_custom_format(self):
         self.add_item_fixtures()
-        out = self.run_with_output('--library', '--format',
-                                   '$track. $title - $artist ($length)')
+        result = self.run_with_output('--library', '--format',
+                                      '$track. $title - $artist ($length)')
+        out = result.output
         self.assertEqual(u'02. tïtle 0 - the artist (0:01)\n', out)
 
 

@@ -92,8 +92,9 @@ class MetaSyncTest(_common.TestCase, TestHelper):
         self.assertIn('itunes_rating', Item._types)
 
     def test_pretend_sync_from_itunes(self):
-        out = self.run_with_output('metasync', '-p')
+        result = self.run_with_output('metasync', '-p')
 
+        out = result.output
         self.assertIn('itunes_rating: 60 -> 80', out)
         self.assertIn('itunes_rating: 100', out)
         self.assertIn('itunes_playcount: 31', out)
