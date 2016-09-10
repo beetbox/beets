@@ -425,7 +425,8 @@ def tag_album(items, search_artist=None, search_album=None,
                 # matches.
                 if rec == Recommendation.strong:
                     log.debug(u'ID match.')
-                    return cur_artist, cur_album, candidates.values(), rec
+                    return cur_artist, cur_album, \
+                        list(candidates.values()), rec
 
         # Search terms.
         if not (search_artist and search_album):
