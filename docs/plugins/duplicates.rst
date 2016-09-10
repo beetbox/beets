@@ -47,8 +47,8 @@ file. The available options mirror the command-line options:
   of items. This overrides the ``keys`` option the first time it is run;
   however, because it caches the resulting checksum as ``flexattrs`` in the
   database, you can use ``--key=name_of_the_checksumming_program
-  --key=any_other_keys`` (or set configuration ``keys`` option) the second time
-  around.
+  --key=any_other_keys`` (or set the ``keys`` configuration option) the second
+  time around.
   Default: ``ffmpeg -i {file} -f crc -``.
 - **copy**: A destination base directory into which to copy matched
   items.
