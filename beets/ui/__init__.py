@@ -1051,42 +1051,6 @@ class SubcommandsOptionParser(CommonOptionsParser):
 optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
 
 
-def vararg_callback(option, opt_str, value, parser):
-    """Callback for an option with variable arguments.
-    Manually collect arguments right of a callback-action
-    option (ie. with action="callback"), and add the resulting
-    list to the destination var.
-
-    Usage:
-    parser.add_option("-c", "--callback", dest="vararg_attr",
-                      action="callback", callback=vararg_callback)
-
-    Details:
-    http://docs.python.org/2/library/optparse.html#callback-example-6-variable
-    -arguments
-    """
-    value = [value]
-
-    def floatable(str):
-        try:
-            float(str)
-            return True
-        except ValueError:
-            return False
-
-    for arg in parser.rargs:
-        # stop on --foo like options
-        if arg[:2] == "--" and len(arg) > 2:
-            break
-        # stop on -a, but not on -3 or -3.0
-        if arg[:1] == "-" and len(arg) > 1 and not floatable(arg):
-            break
-        value.append(arg)
-
-    del parser.rargs[:len(value) - 1]
-    setattr(parser.values, option.dest, value)
-
-
 # The main entry point and bootstrapping.
 
 def _load_plugins(config):
