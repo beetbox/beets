@@ -42,6 +42,7 @@ from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
 from six import StringIO
 from enum import Enum
+import click.testing
 
 import beets
 from beets import logging
@@ -52,6 +53,7 @@ from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
 from beets import util
+import beets.ui.cli
 
 # TODO Move AutotagMock here
 from test import _common
@@ -432,22 +434,31 @@ class TestHelper(object):
 
     # Running beets commands
 
-    def run_command(self, *args, **kwargs):
-        """Run a beets command with an arbitrary amount of arguments. The
-           Library` defaults to `self.lib`, but can be overridden with
-           the keyword argument `lib`.
-        """
-        sys.argv = ['beet']  # avoid leakage from test suite args
-        lib = None
-        if hasattr(self, 'lib'):
-            lib = self.lib
-        lib = kwargs.get('lib', lib)
-        beets.ui._raw_main(_convert_args(list(args)), lib)
+    def get_click_runner(self, lib=None, setup_ctx=True):
+        runner = click.testing.CliRunner(charset='utf-8')
+        if setup_ctx:
+            if hasattr(self, 'lib'):
+                lib = self.lib
 
-    def run_with_output(self, *args):
-        with capture_stdout() as out:
-            self.run_command(*args)
-        return util.text_string(out.getvalue())
+            ctx = beets.ui.cli.Context(lib=lib)
+        else:
+            ctx = None
+
+        def invoke(args, **kwargs):
+            rv = runner.invoke(beets.ui.beet, args=args, obj=ctx,
+                               catch_exceptions=False, **kwargs)
+            return rv
+
+        return invoke
+
+    # XXX: compat
+    def run_with_output(self, *args, **kwargs):
+        lib = kwargs.pop('lib', None)
+        args = _convert_args(list(args))
+        invoke = self.get_click_runner(lib=lib)
+        return invoke(args, **kwargs).output
+
+    run_command = run_with_output
 
     # Safe file operations
 
