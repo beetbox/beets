@@ -18,6 +18,12 @@ to know:
 * Please don't package beets as a Python 3 application *yet*, even though some
   things may appear to work under Python 3.4 and later.
 
+UI Change:
+
+* :doc:`/plugins/duplicates` no longer accepts multiple arguments in the form
+  of ``-k title albumartist album``. Each argument must be prefixed with
+  ``-k``. Example: ``-k title -k albumartist -k album``
+
 The are a couple of small new features:
 
 * :doc:`/plugins/mpdupdate`, :doc:`/plugins/mpdstats`: When the ``host`` option
