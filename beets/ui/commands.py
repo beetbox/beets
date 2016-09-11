@@ -24,10 +24,11 @@ import re
 from platform import python_version
 from collections import namedtuple, Counter
 from itertools import chain
+import click
 
 import beets
 from beets import ui
-from beets.ui import print_, input_, decargs, show_path_changes
+from beets.ui import print_, input_, decargs, show_path_changes, cli
 from beets import autotag
 from beets.autotag import Recommendation
 from beets.autotag import hooks
@@ -121,26 +122,24 @@ default_commands.append(fields_cmd)
 
 # help: Print help text for commands
 
-class HelpCommand(ui.Subcommand):
-
-    def __init__(self):
-        super(HelpCommand, self).__init__(
-            'help', aliases=('?',),
-            help=u'give detailed help on a specific sub-command',
-        )
-
-    def func(self, lib, opts, args):
-        if args:
-            cmdname = args[0]
-            helpcommand = self.root_parser._subcommand_for_name(cmdname)
-            if not helpcommand:
-                raise ui.UserError(u"unknown command '{0}'".format(cmdname))
-            helpcommand.print_help()
-        else:
-            self.root_parser.print_help()
+@click.command('help',
+               short_help=u'give detailed help on a specific sub-command',
+               cls=cli.Command)
+@click.pass_context
+@click.argument('command', required=False)
+def help_cmd(ctx, command):
+    if not command:
+        print_(ctx.parent.get_help())
+        return
+    cmd_name, cmd, args = ctx.parent.command.resolve_command(
+        ctx.parent,
+        [command]
+    )
+    with cmd.make_context(cmd_name, args, parent=ctx.parent) as ctx_:
+        print_(ctx_.get_help())
 
 
-default_commands.append(HelpCommand())
+default_commands.append(help_cmd)
 
 
 # import: Autotagger and importer.
@@ -1591,8 +1590,10 @@ default_commands.append(write_cmd)
 # config: Show and edit user configuration.
 
 def config_func(lib, opts, args):
-    # Make sure lazy configuration is loaded
-    config.resolve()
+    # Make sure lazy configuration is loaded, unless we're just editing
+    # the file.
+    if not opts.edit:
+        config.resolve()
 
     # Print paths.
     if opts.paths:
