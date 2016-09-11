@@ -939,10 +939,12 @@ def beet(ctx, **options):
     # Configure the MusicBrainz API.
     mb.configure()
 
-    # Open the library database and set it on the context.
-    lib = _open_library(config)
-    plugins.send('library_opened', lib=lib)
-    beets_ctx.lib = lib
+    # Open the library database and set it on the context
+    # if we didn't already get it from the test suite.
+    if not beets_ctx.lib:
+        beets_ctx.lib = _open_library(config)
+
+    plugins.send('library_opened', lib=beets_ctx.lib)
 
     # Load field types from the plugins.
     library.Item._types.update(plugins.types(library.Item))
