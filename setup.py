@@ -73,6 +73,7 @@ setup(
         'beets.autotag',
         'beets.util',
         'beets.dbcore',
+        'beets.compat',
         'beetsplug',
         'beetsplug.bpd',
         'beetsplug.web',
