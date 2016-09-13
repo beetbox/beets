@@ -101,7 +101,7 @@ def apply_matches(d):
     """Given a mapping from items to field dicts, apply the fields to
     the objects.
     """
-    some_map = d.values()[0]
+    some_map = list(d.values())[0]
     keys = some_map.keys()
 
     # Only proceed if the "tag" field is equal across all filenames.
