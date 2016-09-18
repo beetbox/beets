@@ -15,13 +15,16 @@ matrix:
           env: {TOX_ENV: py34-test}
         - python: 3.5
           env: {TOX_ENV: py35-test}
+        - python: 3.6-dev
+          env: {TOX_ENV: py36-test}
         # - python: pypy
         #   - env: {TOX_ENV: pypy-test}
         - python: 3.4
           env: {TOX_ENV: py34-flake8}
         - python: 2.7
           env: {TOX_ENV: docs}
-
+    allow_failures:
+        - python: 3.6-dev
 # Non-Python dependencies.
 addons:
     apt:
