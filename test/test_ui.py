@@ -354,7 +354,7 @@ class WriteTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def write_cmd(self, *args):
-        self.run_command('write', *args)
+        return self.run_with_output('write', *args)
 
     def test_update_mtime(self):
         item = self.add_item_fixture()
@@ -380,10 +380,9 @@ class WriteTest(unittest.TestCase, TestHelper):
         item.bitrate = 123
         item.store()
 
-        with capture_stdout() as stdout:
-            self.write_cmd()
+        output = self.write_cmd()
 
-        self.assertEqual(stdout.getvalue(), '')
+        self.assertEqual(output, '')
 
     def test_write_metadata_field(self):
         item = self.add_item_fixture()
@@ -393,11 +392,10 @@ class WriteTest(unittest.TestCase, TestHelper):
         item.title = u'new title'
         item.store()
 
-        with capture_stdout() as stdout:
-            self.write_cmd()
+        output = self.write_cmd()
 
         self.assertTrue(u'{0} -> new title'.format(old_title)
-                        in stdout.getvalue())
+                        in output)
 
 
 class MoveTest(_common.TestCase):
