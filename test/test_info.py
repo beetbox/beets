@@ -32,9 +32,6 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def run_command(self, *args):
-        super(InfoTest, self).run_command('info', *args)
-
     def test_path(self):
         path = self.create_mediafile_fixture()
 
@@ -45,7 +42,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile.composer = None
         mediafile.save()
 
-        out = self.run_with_output(path)
+        out = self.run_with_output('info', path)
         self.assertIn(path, out)
         self.assertIn('albumartist: AAA', out)
         self.assertIn('disctitle: DDD', out)
@@ -60,7 +57,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         item1.album = 'yyyy'
         item1.store()
 
-        out = self.run_with_output('album:yyyy')
+        out = self.run_with_output('info', 'album:yyyy')
         self.assertIn(displayable_path(item1.path), out)
         self.assertIn(u'album: xxxx', out)
 
@@ -71,7 +68,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         item.album = 'xxxx'
         item.store()
 
-        out = self.run_with_output('--library', 'album:xxxx')
+        out = self.run_with_output('info', '--library', 'album:xxxx')
         self.assertIn(displayable_path(item.path), out)
         self.assertIn(u'album: xxxx', out)
 
@@ -89,7 +86,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         item.store()
         mediafile.save()
 
-        out = self.run_with_output('--summarize', 'album:AAA', path)
+        out = self.run_with_output('info', '--summarize', 'album:AAA', path)
         self.assertIn(u'album: AAA', out)
         self.assertIn(u'tracktotal: 5', out)
         self.assertIn(u'title: [various]', out)
@@ -100,7 +97,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         item.album = 'xxxx'
         item.store()
 
-        out = self.run_with_output('--library', 'album:xxxx',
+        out = self.run_with_output('info', '--library', 'album:xxxx',
                                    '--include-keys', '*lbu*')
         self.assertIn(displayable_path(item.path), out)
         self.assertNotIn(u'title:', out)
@@ -108,7 +105,7 @@ class InfoTest(unittest.TestCase, TestHelper):
 
     def test_custom_format(self):
         self.add_item_fixtures()
-        out = self.run_with_output('--library', '--format',
+        out = self.run_with_output('info', '--library', '--format',
                                    '$track. $title - $artist ($length)')
         self.assertEqual(u'02. tïtle 0 - the artist (0:01)\n', out)
 
