@@ -12,7 +12,7 @@ from beets import ui
 from beets import config
 
 from test._common import unittest
-from test.helper import TestHelper, capture_stdout
+from test.helper import TestHelper
 from beets.library import Library
 import six
 
@@ -44,9 +44,8 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         rmtree(self.temp_dir)
 
     def _run_with_yaml_output(self, *args):
-        with capture_stdout() as output:
-            self.run_command(*args)
-        return yaml.load(output.getvalue())
+        output = self.run_with_output(*args)
+        return yaml.load(output)
 
     def test_show_user_config(self):
         output = self._run_with_yaml_output('config', '-c')
@@ -83,16 +82,16 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         self.assertEqual(output['import']['timid'], False)
 
     def test_config_paths(self):
-        with capture_stdout() as output:
-            self.run_command('config', '-p')
-        paths = output.getvalue().split('\n')
+        output = self.run_with_output('config', '-p')
+
+        paths = output.split('\n')
         self.assertEqual(len(paths), 2)
         self.assertEqual(paths[0], self.config_path)
 
     def test_config_paths_with_cli(self):
-        with capture_stdout() as output:
-            self.run_command('--config', self.cli_config_path, 'config', '-p')
-        paths = output.getvalue().split('\n')
+        output = self.run_with_output('--config', self.cli_config_path,
+                                      'config', '-p')
+        paths = output.split('\n')
         self.assertEqual(len(paths), 3)
         self.assertEqual(paths[0], self.cli_config_path)
 
