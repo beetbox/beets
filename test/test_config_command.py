@@ -43,40 +43,41 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         rmtree(self.temp_dir)
 
-    def test_show_user_config(self):
+    def _run_with_yaml_output(self, *args):
         with capture_stdout() as output:
-            self.run_command('config', '-c')
-        output = yaml.load(output.getvalue())
+            self.run_command(*args)
+        return yaml.load(output.getvalue())
+
+    def test_show_user_config(self):
+        output = self._run_with_yaml_output('config', '-c')
+
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'password_value')
 
     def test_show_user_config_with_defaults(self):
-        with capture_stdout() as output:
-            self.run_command('config', '-dc')
-        output = yaml.load(output.getvalue())
+        output = self._run_with_yaml_output('config', '-dc')
+
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'password_value')
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['import']['timid'], False)
 
     def test_show_user_config_with_cli(self):
-        with capture_stdout() as output:
-            self.run_command('--config', self.cli_config_path, 'config')
-        output = yaml.load(output.getvalue())
+        output = self._run_with_yaml_output('--config', self.cli_config_path,
+                                            'config')
+
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['option'], 'cli overwrite')
 
     def test_show_redacted_user_config(self):
-        with capture_stdout() as output:
-            self.run_command('config')
-        output = yaml.load(output.getvalue())
+        output = self._run_with_yaml_output('config')
+
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'REDACTED')
 
     def test_show_redacted_user_config_with_defaults(self):
-        with capture_stdout() as output:
-            self.run_command('config', '-d')
-        output = yaml.load(output.getvalue())
+        output = self._run_with_yaml_output('config', '-d')
+
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['password'], 'REDACTED')
         self.assertEqual(output['import']['timid'], False)
