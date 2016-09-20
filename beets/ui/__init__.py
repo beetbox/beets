@@ -20,8 +20,7 @@ CLI commands are implemented in the ui.commands module.
 
 from __future__ import division, absolute_import, print_function
 
-import optparse
-import textwrap
+import click
 import sys
 from difflib import SequenceMatcher
 import sqlite3
@@ -38,9 +37,10 @@ from beets import plugins
 from beets import util
 from beets.util.functemplate import Template
 from beets import config
-from beets.util import confit, as_string
+from beets.util import confit
 from beets.autotag import mb
 from beets.dbcore import query as db_query
+from beets.ui import cli
 import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -69,6 +69,11 @@ class UserError(Exception):
     """UI exception. Commands should throw this in order to display
     nonrecoverable errors to the user.
     """
+
+
+# For backwards compatibility, we provide Subcommand here as an alias
+# for LegacySubcommand.
+Subcommand = cli.LegacySubcommand
 
 
 # Encoding utilities.
@@ -757,300 +762,6 @@ def show_path_changes(path_changes):
             log.info(u'{0} {1} -> {2}', source, ' ' * pad, dest)
 
 
-class CommonOptionsParser(optparse.OptionParser, object):
-    """Offers a simple way to add common formatting options.
-
-    Options available include:
-        - matching albums instead of tracks: add_album_option()
-        - showing paths instead of items/albums: add_path_option()
-        - changing the format of displayed items/albums: add_format_option()
-
-    The last one can have several behaviors:
-        - against a special target
-        - with a certain format
-        - autodetected target with the album option
-
-    Each method is fully documented in the related method.
-    """
-    def __init__(self, *args, **kwargs):
-        super(CommonOptionsParser, self).__init__(*args, **kwargs)
-        self._album_flags = False
-        # this serves both as an indicator that we offer the feature AND allows
-        # us to check whether it has been specified on the CLI - bypassing the
-        # fact that arguments may be in any order
-
-    def add_album_option(self, flags=('-a', '--album')):
-        """Add a -a/--album option to match albums instead of tracks.
-
-        If used then the format option can auto-detect whether we're setting
-        the format for items or albums.
-        Sets the album property on the options extracted from the CLI.
-        """
-        album = optparse.Option(*flags, action='store_true',
-                                help=u'match albums instead of tracks')
-        self.add_option(album)
-        self._album_flags = set(flags)
-
-    def _set_format(self, option, opt_str, value, parser, target=None,
-                    fmt=None, store_true=False):
-        """Internal callback that sets the correct format while parsing CLI
-        arguments.
-        """
-        if store_true:
-            setattr(parser.values, option.dest, True)
-
-        # Use the explicitly specified format, or the string from the option.
-        if fmt:
-            value = fmt
-        elif value:
-            value, = decargs([value])
-        else:
-            value = u''
-
-        parser.values.format = value
-        if target:
-            config[target._format_config_key].set(value)
-        else:
-            if self._album_flags:
-                if parser.values.album:
-                    target = library.Album
-                else:
-                    # the option is either missing either not parsed yet
-                    if self._album_flags & set(parser.rargs):
-                        target = library.Album
-                    else:
-                        target = library.Item
-                config[target._format_config_key].set(value)
-            else:
-                config[library.Item._format_config_key].set(value)
-                config[library.Album._format_config_key].set(value)
-
-    def add_path_option(self, flags=('-p', '--path')):
-        """Add a -p/--path option to display the path instead of the default
-        format.
-
-        By default this affects both items and albums. If add_album_option()
-        is used then the target will be autodetected.
-
-        Sets the format property to u'$path' on the options extracted from the
-        CLI.
-        """
-        path = optparse.Option(*flags, nargs=0, action='callback',
-                               callback=self._set_format,
-                               callback_kwargs={'fmt': u'$path',
-                                                'store_true': True},
-                               help=u'print paths for matched items or albums')
-        self.add_option(path)
-
-    def add_format_option(self, flags=('-f', '--format'), target=None):
-        """Add -f/--format option to print some LibModel instances with a
-        custom format.
-
-        `target` is optional and can be one of ``library.Item``, 'item',
-        ``library.Album`` and 'album'.
-
-        Several behaviors are available:
-            - if `target` is given then the format is only applied to that
-            LibModel
-            - if the album option is used then the target will be autodetected
-            - otherwise the format is applied to both items and albums.
-
-        Sets the format property on the options extracted from the CLI.
-        """
-        kwargs = {}
-        if target:
-            if isinstance(target, six.string_types):
-                target = {'item': library.Item,
-                          'album': library.Album}[target]
-            kwargs['target'] = target
-
-        opt = optparse.Option(*flags, action='callback',
-                              callback=self._set_format,
-                              callback_kwargs=kwargs,
-                              help=u'print with custom format')
-        self.add_option(opt)
-
-    def add_all_common_options(self):
-        """Add album, path and format options.
-        """
-        self.add_album_option()
-        self.add_path_option()
-        self.add_format_option()
-
-
-# Subcommand parsing infrastructure.
-#
-# This is a fairly generic subcommand parser for optparse. It is
-# maintained externally here:
-# http://gist.github.com/462717
-# There you will also find a better description of the code and a more
-# succinct example program.
-
-class Subcommand(object):
-    """A subcommand of a root command-line application that may be
-    invoked by a SubcommandOptionParser.
-    """
-    def __init__(self, name, parser=None, help='', aliases=(), hide=False):
-        """Creates a new subcommand. name is the primary way to invoke
-        the subcommand; aliases are alternate names. parser is an
-        OptionParser responsible for parsing the subcommand's options.
-        help is a short description of the command. If no parser is
-        given, it defaults to a new, empty CommonOptionsParser.
-        """
-        self.name = name
-        self.parser = parser or CommonOptionsParser()
-        self.aliases = aliases
-        self.help = help
-        self.hide = hide
-        self._root_parser = None
-
-    def print_help(self):
-        self.parser.print_help()
-
-    def parse_args(self, args):
-        return self.parser.parse_args(args)
-
-    @property
-    def root_parser(self):
-        return self._root_parser
-
-    @root_parser.setter
-    def root_parser(self, root_parser):
-        self._root_parser = root_parser
-        self.parser.prog = '{0} {1}'.format(
-            as_string(root_parser.get_prog_name()), self.name)
-
-
-class SubcommandsOptionParser(CommonOptionsParser):
-    """A variant of OptionParser that parses subcommands and their
-    arguments.
-    """
-
-    def __init__(self, *args, **kwargs):
-        """Create a new subcommand-aware option parser. All of the
-        options to OptionParser.__init__ are supported in addition
-        to subcommands, a sequence of Subcommand objects.
-        """
-        # A more helpful default usage.
-        if 'usage' not in kwargs:
-            kwargs['usage'] = u"""
-  %prog COMMAND [ARGS...]
-  %prog help COMMAND"""
-        kwargs['add_help_option'] = False
-
-        # Super constructor.
-        super(SubcommandsOptionParser, self).__init__(*args, **kwargs)
-
-        # Our root parser needs to stop on the first unrecognized argument.
-        self.disable_interspersed_args()
-
-        self.subcommands = []
-
-    def add_subcommand(self, *cmds):
-        """Adds a Subcommand object to the parser's list of commands.
-        """
-        for cmd in cmds:
-            cmd.root_parser = self
-            self.subcommands.append(cmd)
-
-    # Add the list of subcommands to the help message.
-    def format_help(self, formatter=None):
-        # Get the original help message, to which we will append.
-        out = super(SubcommandsOptionParser, self).format_help(formatter)
-        if formatter is None:
-            formatter = self.formatter
-
-        # Subcommands header.
-        result = ["\n"]
-        result.append(formatter.format_heading('Commands'))
-        formatter.indent()
-
-        # Generate the display names (including aliases).
-        # Also determine the help position.
-        disp_names = []
-        help_position = 0
-        subcommands = [c for c in self.subcommands if not c.hide]
-        subcommands.sort(key=lambda c: c.name)
-        for subcommand in subcommands:
-            name = subcommand.name
-            if subcommand.aliases:
-                name += ' (%s)' % ', '.join(subcommand.aliases)
-            disp_names.append(name)
-
-            # Set the help position based on the max width.
-            proposed_help_position = len(name) + formatter.current_indent + 2
-            if proposed_help_position <= formatter.max_help_position:
-                help_position = max(help_position, proposed_help_position)
-
-        # Add each subcommand to the output.
-        for subcommand, name in zip(subcommands, disp_names):
-            # Lifted directly from optparse.py.
-            name_width = help_position - formatter.current_indent - 2
-            if len(name) > name_width:
-                name = "%*s%s\n" % (formatter.current_indent, "", name)
-                indent_first = help_position
-            else:
-                name = "%*s%-*s  " % (formatter.current_indent, "",
-                                      name_width, name)
-                indent_first = 0
-            result.append(name)
-            help_width = formatter.width - help_position
-            help_lines = textwrap.wrap(subcommand.help, help_width)
-            help_line = help_lines[0] if help_lines else ''
-            result.append("%*s%s\n" % (indent_first, "", help_line))
-            result.extend(["%*s%s\n" % (help_position, "", line)
-                           for line in help_lines[1:]])
-        formatter.dedent()
-
-        # Concatenate the original help message with the subcommand
-        # list.
-        return out + "".join(result)
-
-    def _subcommand_for_name(self, name):
-        """Return the subcommand in self.subcommands matching the
-        given name. The name may either be the name of a subcommand or
-        an alias. If no subcommand matches, returns None.
-        """
-        for subcommand in self.subcommands:
-            if name == subcommand.name or \
-               name in subcommand.aliases:
-                return subcommand
-        return None
-
-    def parse_global_options(self, args):
-        """Parse options up to the subcommand argument. Returns a tuple
-        of the options object and the remaining arguments.
-        """
-        options, subargs = self.parse_args(args)
-
-        # Force the help command
-        if options.help:
-            subargs = ['help']
-        elif options.version:
-            subargs = ['version']
-        return options, subargs
-
-    def parse_subcommand(self, args):
-        """Given the `args` left unused by a `parse_global_options`,
-        return the invoked subcommand, the subcommand options, and the
-        subcommand arguments.
-        """
-        # Help is default command
-        if not args:
-            args = ['help']
-
-        cmdname = args.pop(0)
-        subcommand = self._subcommand_for_name(cmdname)
-        if not subcommand:
-            raise UserError(u"unknown command '{0}'".format(cmdname))
-
-        suboptions, subargs = subcommand.parse_args(args)
-        return subcommand, suboptions, subargs
-
-
-optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
-
-
 # The main entry point and bootstrapping.
 
 def _load_plugins(config):
@@ -1076,42 +787,14 @@ def _load_plugins(config):
     return plugins
 
 
-def _setup(options, lib=None):
-    """Prepare and global state and updates it with command line options.
-
-    Returns a list of subcommands, a list of plugins, and a library instance.
-    """
-    # Configure the MusicBrainz API.
-    mb.configure()
-
-    config = _configure(options)
-
-    plugins = _load_plugins(config)
-
-    # Get the default subcommands.
-    from beets.ui.commands import default_commands
-
-    subcommands = list(default_commands)
-    subcommands.extend(plugins.commands())
-
-    if lib is None:
-        lib = _open_library(config)
-        plugins.send("library_opened", lib=lib)
-    library.Item._types.update(plugins.types(library.Item))
-    library.Album._types.update(plugins.types(library.Album))
-
-    return subcommands, plugins, lib
-
-
 def _configure(options):
     """Amend the global configuration object with command line options.
     """
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
-    if getattr(options, 'config', None) is not None:
-        config_path = options.config
-        del options.config
+    config_path = options.pop('config', None)
+    if config_path is not None:
         config.set_file(config_path)
     config.set_args(options)
 
@@ -1180,55 +863,108 @@ def _open_library(config):
     return lib
 
 
-def _raw_main(args, lib=None):
-    """A helper function for `main` without top-level exception
-    handling.
+# The main entry point.
+
+class BeetsCommand(cli.AliasGroup):
+    """The root CLI command class for the `beet` executable.
     """
-    parser = SubcommandsOptionParser()
-    parser.add_format_option(flags=('--format-item',), target=library.Item)
-    parser.add_format_option(flags=('--format-album',), target=library.Album)
-    parser.add_option('-l', '--library', dest='library',
-                      help=u'library database file to use')
-    parser.add_option('-d', '--directory', dest='directory',
-                      help=u"destination music directory")
-    parser.add_option('-v', '--verbose', dest='verbose', action='count',
-                      help=u'log more details (use twice for even more)')
-    parser.add_option('-c', '--config', dest='config',
-                      help=u'path to configuration file')
-    parser.add_option('-h', '--help', dest='help', action='store_true',
-                      help=u'show this help message and exit')
-    parser.add_option('--version', dest='version', action='store_true',
-                      help=optparse.SUPPRESS_HELP)
+    def load_commands(self):
+        """Using the current beets configuration, load the set of
+        subcommands for the `beet` executable. Any previously loaded
+        commands in `self.commands` are cleared.
+        """
+        # The built-in commands.
+        from beets.ui.commands import default_commands
+        subcommands = list(default_commands)
 
-    options, subargs = parser.parse_global_options(args)
+        # Commands from plugins.
+        subcommands.extend(plugins.commands())
 
-    # Special case for the `config --edit` command: bypass _setup so
-    # that an invalid configuration does not prevent the editor from
-    # starting.
-    if subargs and subargs[0] == 'config' \
-       and ('-e' in subargs or '--edit' in subargs):
-        from beets.ui.commands import config_edit
-        return config_edit()
+        # Populate the commands dict.
+        self.commands = {}
+        for command in subcommands:
+            # For compatibility, convert old optparse-based commands
+            # into Click commands.
+            if isinstance(command, cli.LegacySubcommand):
+                command = command._to_click()
+            self.add_command(command)
 
-    test_lib = bool(lib)
-    subcommands, plugins, lib = _setup(options, lib)
-    parser.add_subcommand(*subcommands)
+    def resolve_command(self, ctx, args):
+        # Special case for the `config --edit` command. This bypasses
+        # all of the normal beets initialization so the command can
+        # succeed even with a broken configuration.
+        str_args = [click.utils.make_str(a) for a in args]
+        if str_args[0] == 'config' and ('-e' in str_args or
+                                        '--edit' in str_args):
+            from beets.ui.commands import config_cmd
+            command = config_cmd._to_click()
+            return str_args[0], command, args[1:]
 
-    subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
-    subcommand.func(lib, suboptions, subargs)
+        # In the normal case, configure beets and then load the set of
+        # subcommands immediately before continuing with the resolution
+        # logic.
+        config = _configure(ctx.params)
+        _load_plugins(config)
+        self.load_commands()
 
-    plugins.send('cli_exit', lib=lib)
-    if not test_lib:
-        # Clean up the library unless it came from the test harness.
-        lib._close()
+        return super(BeetsCommand, self).resolve_command(ctx, args)
 
 
-def main(args=None):
-    """Run the main command-line interface for beets. Includes top-level
-    exception handlers that print friendly error messages.
+@click.command(cls=BeetsCommand,
+               context_settings={'help_option_names': ['-h', '--help']})
+@cli.format_option(flags=('--format-item',), target=library.Item)
+@cli.format_option(flags=('--format-album',), target=library.Album)
+@click.option('-l', '--library', metavar='LIBRARY',
+              help=u'Library database file to use.')
+@click.option('-d', '--directory', metavar='DIRECTORY',
+              help=u'Destination music directory.')
+@click.option('-v', '--verbose', count=True,
+              help=u'Print debugging information.')
+@click.option('-c', '--config', metavar='CONFIG',
+              help=u'Path to configuration file.')
+@click.pass_context
+def beet(ctx, **options):
+    """The main command entry for the beets CLI.
+
+    There is no top-level exception handling here. To print pretty error
+    messages, invoke `main` instead.
+    """
+    beets_ctx = ctx.ensure_object(cli.Context)
+
+    # Special case for the config command: avoid doing any setup that
+    # requires parsing the configuration.
+    if ctx.invoked_subcommand == 'config':
+        return
+
+    # Configure the MusicBrainz API.
+    mb.configure()
+
+    # Open the library database and set it on the context
+    # if we didn't already get it from the test suite
+    if not beets_ctx.lib:
+        beets_ctx.lib = _open_library(config)
+
+    plugins.send('library_opened', lib=beets_ctx.lib)
+
+    # Load field types from the plugins.
+    library.Item._types.update(plugins.types(library.Item))
+    library.Album._types.update(plugins.types(library.Album))
+
+    # Tell plugins when the subcommand invocation is finished.
+    @ctx.call_on_close
+    def send_plugin_cli_exit():
+        plugins.send('cli_exit', lib=beets_ctx.lib)
+
+
+def main():
+    """Run the main command-line interface for beets.
+
+    Includes top-level exception handlers that print friendly error
+    messages. There is no command-line parsing here; that happens in the
+    helper, `beet`.
     """
     try:
-        _raw_main(args)
+        beet(standalone_mode=False)
     except UserError as exc:
         message = exc.args[0] if exc.args else None
         log.error(u'error: {0}', message)
@@ -1257,3 +993,9 @@ def main(args=None):
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
         log.debug(u'{}', traceback.format_exc())
+    except click.ClickException as exc:
+        # Handle command-line parser errors.
+        exc.show()
+        sys.exit(exc.exit_code)
+    except click.Abort:
+        sys.exit(1)

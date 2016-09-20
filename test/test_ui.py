@@ -20,7 +20,6 @@ from __future__ import division, absolute_import, print_function
 import os
 import shutil
 import re
-import subprocess
 import platform
 from copy import deepcopy
 import six
@@ -28,7 +27,7 @@ import six
 from mock import patch, Mock
 from test import _common
 from test._common import unittest
-from test.helper import capture_stdout, has_program, TestHelper, control_stdin
+from test.helper import capture_stdout, TestHelper
 
 from beets import library
 from beets import ui
@@ -165,8 +164,7 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def modify_inp(self, inp, *args):
-        with control_stdin(inp):
-            self.run_command('modify', *args)
+        self.run_command('modify', *args, input=inp)
 
     def modify(self, *args):
         self.modify_inp('y', *args)
@@ -1108,56 +1106,6 @@ class PluginTest(_common.TestCase, TestHelper):
         config['pluginpath'] = [_common.PLUGINPATH]
         config['plugins'] = ['test']
         self.run_command('test', lib=None)
-
-
-@_common.slow_test()
-class CompletionTest(_common.TestCase, TestHelper):
-    def test_completion(self):
-        # Load plugin commands
-        config['pluginpath'] = [_common.PLUGINPATH]
-        config['plugins'] = ['test']
-
-        # Do not load any other bash completion scripts on the system.
-        env = dict(os.environ)
-        env['BASH_COMPLETION_DIR'] = os.devnull
-        env['BASH_COMPLETION_COMPAT_DIR'] = os.devnull
-
-        # Open a `bash` process to run the tests in. We'll pipe in bash
-        # commands via stdin.
-        cmd = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc').split()
-        if not has_program(cmd[0]):
-            self.skipTest(u'bash not available')
-        tester = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE, env=env)
-
-        # Load bash_completion library.
-        for path in commands.BASH_COMPLETION_PATHS:
-            if os.path.exists(util.syspath(path)):
-                bash_completion = path
-                break
-        else:
-            self.skipTest(u'bash-completion script not found')
-        try:
-            with open(util.syspath(bash_completion), 'rb') as f:
-                tester.stdin.writelines(f)
-        except IOError:
-            self.skipTest(u'could not read bash-completion script')
-
-        # Load completion script.
-        self.io.install()
-        self.run_command('completion', lib=None)
-        completion_script = self.io.getoutput().encode('utf-8')
-        self.io.restore()
-        tester.stdin.writelines(completion_script.splitlines(True))
-
-        # Load test suite.
-        test_script_name = os.path.join(_common.RSRC, b'test_completion.sh')
-        with open(test_script_name, 'rb') as test_script_file:
-            tester.stdin.writelines(test_script_file)
-        out, err = tester.communicate()
-        if tester.returncode != 0 or out != b'completion tests passed\n':
-            print(out.decode('utf-8'))
-            self.fail(u'test/test_completion.sh did not execute properly')
 
 
 class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):

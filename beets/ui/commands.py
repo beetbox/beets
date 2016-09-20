@@ -20,14 +20,14 @@ interface.
 from __future__ import division, absolute_import, print_function
 
 import os
-import re
 from platform import python_version
 from collections import namedtuple, Counter
 from itertools import chain
+import click
 
 import beets
 from beets import ui
-from beets.ui import print_, input_, decargs, show_path_changes
+from beets.ui import print_, input_, decargs, show_path_changes, cli
 from beets import autotag
 from beets.autotag import Recommendation
 from beets.autotag import hooks
@@ -38,7 +38,6 @@ from beets.util import syspath, normpath, ancestry, displayable_path
 from beets import library
 from beets import config
 from beets import logging
-from beets.util.confit import _package_path
 import six
 
 VARIOUS_ARTISTS = u'Various Artists'
@@ -121,26 +120,24 @@ default_commands.append(fields_cmd)
 
 # help: Print help text for commands
 
-class HelpCommand(ui.Subcommand):
-
-    def __init__(self):
-        super(HelpCommand, self).__init__(
-            'help', aliases=('?',),
-            help=u'give detailed help on a specific sub-command',
-        )
-
-    def func(self, lib, opts, args):
-        if args:
-            cmdname = args[0]
-            helpcommand = self.root_parser._subcommand_for_name(cmdname)
-            if not helpcommand:
-                raise ui.UserError(u"unknown command '{0}'".format(cmdname))
-            helpcommand.print_help()
-        else:
-            self.root_parser.print_help()
+@click.command('help',
+               short_help=u'give detailed help on a specific sub-command',
+               cls=cli.Command)
+@click.pass_context
+@click.argument('command', required=False)
+def help_cmd(ctx, command):
+    if not command:
+        print_(ctx.parent.get_help())
+        return
+    cmd_name, cmd, args = ctx.parent.command.resolve_command(
+        ctx.parent,
+        [command]
+    )
+    with cmd.make_context(cmd_name, args, parent=ctx.parent) as ctx_:
+        print_(ctx_.get_help())
 
 
-default_commands.append(HelpCommand())
+default_commands.append(help_cmd)
 
 
 # import: Autotagger and importer.
@@ -1591,8 +1588,10 @@ default_commands.append(write_cmd)
 # config: Show and edit user configuration.
 
 def config_func(lib, opts, args):
-    # Make sure lazy configuration is loaded
-    config.resolve()
+    # Make sure lazy configuration is loaded, unless we're just editing
+    # the file.
+    if not opts.edit:
+        config.resolve()
 
     # Print paths.
     if opts.paths:
@@ -1659,111 +1658,3 @@ config_cmd.parser.add_option(
 )
 config_cmd.func = config_func
 default_commands.append(config_cmd)
-
-
-# completion: print completion script
-
-def print_completion(*args):
-    for line in completion_script(default_commands + plugins.commands()):
-        print_(line, end=u'')
-    if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
-        log.warning(u'Warning: Unable to find the bash-completion package. '
-                    u'Command line completion might not work.')
-
-BASH_COMPLETION_PATHS = map(syspath, [
-    u'/etc/bash_completion',
-    u'/usr/share/bash-completion/bash_completion',
-    u'/usr/local/share/bash-completion/bash_completion',
-    # SmartOS
-    u'/opt/local/share/bash-completion/bash_completion',
-    # Homebrew (before bash-completion2)
-    u'/usr/local/etc/bash_completion',
-])
-
-
-def completion_script(commands):
-    """Yield the full completion shell script as strings.
-
-    ``commands`` is alist of ``ui.Subcommand`` instances to generate
-    completion data for.
-    """
-    base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
-    with open(base_script, 'r') as base_script:
-        yield util.text_string(base_script.read())
-
-    options = {}
-    aliases = {}
-    command_names = []
-
-    # Collect subcommands
-    for cmd in commands:
-        name = cmd.name
-        command_names.append(name)
-
-        for alias in cmd.aliases:
-            if re.match(r'^\w+$', alias):
-                aliases[alias] = name
-
-        options[name] = {u'flags': [], u'opts': []}
-        for opts in cmd.parser._get_all_options()[1:]:
-            if opts.action in ('store_true', 'store_false'):
-                option_type = u'flags'
-            else:
-                option_type = u'opts'
-
-            options[name][option_type].extend(
-                opts._short_opts + opts._long_opts
-            )
-
-    # Add global options
-    options['_global'] = {
-        u'flags': [u'-v', u'--verbose'],
-        u'opts':
-            u'-l --library -c --config -d --directory -h --help'.split(u' ')
-    }
-
-    # Add flags common to all commands
-    options['_common'] = {
-        u'flags': [u'-h', u'--help']
-    }
-
-    # Start generating the script
-    yield u"_beet() {\n"
-
-    # Command names
-    yield u"  local commands='%s'\n" % ' '.join(command_names)
-    yield u"\n"
-
-    # Command aliases
-    yield u"  local aliases='%s'\n" % ' '.join(aliases.keys())
-    for alias, cmd in aliases.items():
-        yield u"  local alias__%s=%s\n" % (alias, cmd)
-    yield u'\n'
-
-    # Fields
-    yield u"  fields='%s'\n" % ' '.join(
-        set(
-            list(library.Item._fields.keys()) +
-            list(library.Album._fields.keys())
-        )
-    )
-
-    # Command options
-    for cmd, opts in options.items():
-        for option_type, option_list in opts.items():
-            if option_list:
-                option_list = u' '.join(option_list)
-                yield u"  local %s__%s='%s'\n" % (
-                    option_type, cmd, option_list)
-
-    yield u'  _beet_dispatch\n'
-    yield u'}\n'
-
-
-completion_cmd = ui.Subcommand(
-    'completion',
-    help=u'print shell script that provides command line completion'
-)
-completion_cmd.func = print_completion
-completion_cmd.hide = True
-default_commands.append(completion_cmd)

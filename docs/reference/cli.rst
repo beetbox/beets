@@ -404,10 +404,10 @@ Beets includes support for shell command completion. The command ``beet
 completion`` prints out a `bash`_ 3.2 script; to enable completion put a line
 like this into your ``.bashrc`` or similar file::
 
-    eval "$(beet completion)"
+    eval "$(_BEET_COMPLETE=source beet)"
 
-Or, to avoid slowing down your shell startup time, you can pipe the ``beet
-completion`` output to a file and source that instead.
+Or, to avoid slowing down your shell startup time, you can pipe the
+``_BEET_COMPLETE=source beet`` output to a file and source that instead.
 
 You will also need to source the `bash-completion`_ script, which is probably
 available via your package manager. On OS X, you can install it via Homebrew
@@ -428,10 +428,6 @@ accepts a query, the script will also complete field names. ::
 
 (Don't worry about the slash in front of the colon: this is a escape
 sequence for the shell and won't be seen by beets.)
-
-Completion of plugin commands only works for those plugins
-that were enabled when running ``beet completion``. If you add a plugin
-later on you will want to re-generate the script.
 
 zsh
 ```

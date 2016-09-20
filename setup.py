@@ -73,6 +73,7 @@ setup(
         'beets.autotag',
         'beets.util',
         'beets.dbcore',
+        'beets.compat',
         'beetsplug',
         'beetsplug.bpd',
         'beetsplug.web',
@@ -93,6 +94,7 @@ setup(
         'musicbrainzngs>=0.4',
         'pyyaml',
         'jellyfish',
+        'click',
     ] + (['colorama'] if (sys.platform == 'win32') else []) +
         (['enum34>=1.0.4'] if sys.version_info < (3, 4, 0) else []),
 
