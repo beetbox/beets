@@ -144,29 +144,29 @@ def search_pairs(item):
     The method also tries to split multiple titles separated with `/`.
     """
 
+    def strip_part(string, pattern):
+        """Return first matching group if string matches pattern, the full
+           string otherwise."""
+        match = re.search(pattern, string, re.IGNORECASE)
+        if match:
+            return match.group(1)
+        return string
+
     title, artist = item.title, item.artist
-    titles = [title]
-    artists = [artist]
+    titles = set([title])
+    artists = set([artist])
 
     # Remove any featuring artists from the artists name
-    pattern = r"(.*?) {0}".format(plugins.feat_tokens())
-    match = re.search(pattern, artist, re.IGNORECASE)
-    if match:
-        artists.append(match.group(1))
+    artists.add(strip_part(artist, r"(.*?) {0}".format(plugins.feat_tokens())))
 
     # Remove a parenthesized suffix from a title string. Common
     # examples include (live), (remix), and (acoustic).
-    pattern = r"(.+?)\s+[(].*[)]$"
-    match = re.search(pattern, title, re.IGNORECASE)
-    if match:
-        titles.append(match.group(1))
+    titles.add(strip_part(title, r"(.+?)\s+[(].*[)]$"))
 
     # Remove any featuring artists from the title
     pattern = r"(.*?) {0}".format(plugins.feat_tokens(for_artist=False))
-    for title in titles[:]:
-        match = re.search(pattern, title, re.IGNORECASE)
-        if match:
-            titles.append(match.group(1))
+    for title in list(titles):
+        titles.add(strip_part(title, pattern))
 
     # Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
     # and each of them.
