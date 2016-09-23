@@ -168,6 +168,9 @@ def search_pairs(item):
     for title in list(titles):
         titles.add(strip_part(title, pattern))
 
+    # Remove part of the title string after colon ':'
+    titles.add(strip_part(title, r"(.+?)\s*:.*"))
+
     # Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
     # and each of them.
     multi_titles = []
