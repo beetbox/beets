@@ -84,7 +84,6 @@ class LyricsPluginTest(unittest.TestCase):
         self.assertIn(('Alice', ['song']),
                       lyrics.search_pairs(item))
 
-
     def test_search_pairs_multi_titles(self):
         item = Item(title='1 / 2', artist='A')
         self.assertIn(('A', ['1 / 2']), lyrics.search_pairs(item))
