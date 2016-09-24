@@ -26,7 +26,7 @@ from six.moves import zip
 from beets import logging
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import syspath, command_output, displayable_path
+from beets.util import syspath, command_output, displayable_path, py3_path
 
 
 # Utilities.
@@ -574,7 +574,7 @@ class GStreamerBackend(Backend):
 
         self._file = self._files.pop(0)
         self._pipe.set_state(self.Gst.State.NULL)
-        self._src.set_property("location", syspath(self._file.path))
+        self._src.set_property("location", py3_path(syspath(self._file.path)))
         self._pipe.set_state(self.Gst.State.PLAYING)
         return True
 
@@ -595,7 +595,7 @@ class GStreamerBackend(Backend):
         # Set a new file on the filesrc element, can only be done in the
         # READY state
         self._src.set_state(self.Gst.State.READY)
-        self._src.set_property("location", syspath(self._file.path))
+        self._src.set_property("location", py3_path(syspath(self._file.path)))
 
         # Ensure the filesrc element received the paused state of the
         # pipeline in a blocking manner
