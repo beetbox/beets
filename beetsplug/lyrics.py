@@ -25,8 +25,9 @@ import re
 import requests
 import unicodedata
 import warnings
-from six.moves import urllib
 import six
+from six.moves import urllib
+from collections import OrderedDict
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
@@ -153,23 +154,28 @@ def search_pairs(item):
         return string
 
     title, artist = item.title, item.artist
-    titles = set([title])
-    artists = set([artist])
+    titles = [title]
+    artists = [artist]
 
     # Remove any featuring artists from the artists name
-    artists.add(strip_part(artist, r"(.*?) {0}".format(plugins.feat_tokens())))
+    artists.append(
+        strip_part(artist, r"(.*?) {0}".format(plugins.feat_tokens())))
 
     # Remove a parenthesized suffix from a title string. Common
     # examples include (live), (remix), and (acoustic).
-    titles.add(strip_part(title, r"(.+?)\s+[(].*[)]$"))
+    titles.append(strip_part(title, r"(.+?)\s+[(].*[)]$"))
 
     # Remove any featuring artists from the title
     pattern = r"(.*?) {0}".format(plugins.feat_tokens(for_artist=False))
     for title in list(titles):
-        titles.add(strip_part(title, pattern))
+        titles.append(strip_part(title, pattern))
 
-    # Remove part of the title string after colon ':'
-    titles.add(strip_part(title, r"(.+?)\s*:.*"))
+    # Remove part of the title string after colon ':' for songs with subtitles
+    titles.append(strip_part(title, r"(.+?)\s*:.*"))
+
+    # Yield artist and title obtained from item first
+    titles = list(OrderedDict.fromkeys([title] + titles))
+    artists = list(OrderedDict.fromkeys([artist] + artists))
 
     # Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
     # and each of them.
