@@ -407,11 +407,11 @@ class ConfigView(object):
         """
         return self.get(Number())
 
-    def as_str_seq(self):
+    def as_str_seq(self, split=True):
         """Get the value as a sequence of strings. Equivalent to
         `get(StrSeq())`.
         """
-        return self.get(StrSeq())
+        return self.get(StrSeq(split=split))
 
     def as_str(self):
         """Get the value as a (Unicode) string. Equivalent to
