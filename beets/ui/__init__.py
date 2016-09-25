@@ -1056,7 +1056,7 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
 def _load_plugins(config):
     """Load the plugins specified in the configuration.
     """
-    paths = config['pluginpath'].get(confit.StrSeq(split=False))
+    paths = config['pluginpath'].as_str_seq(split=False)
     paths = [util.normpath(p) for p in paths]
     log.debug(u'plugin paths: {0}', util.displayable_path(paths))
 
