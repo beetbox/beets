@@ -24,6 +24,10 @@ UI Change:
   of ``-k title albumartist album``. Each argument must be prefixed with
   ``-k``. Example: ``-k title -k albumartist -k album``
 
+Deprecated configuration optional removals:
+
+* Remove top level ``colors`` configuration option.
+
 The are a couple of small new features:
 
 * :doc:`/plugins/mpdupdate`, :doc:`/plugins/mpdstats`: When the ``host`` option
