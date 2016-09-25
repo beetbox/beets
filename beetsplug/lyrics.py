@@ -27,7 +27,6 @@ import unicodedata
 import warnings
 import six
 from six.moves import urllib
-from collections import OrderedDict
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
@@ -145,37 +144,32 @@ def search_pairs(item):
     The method also tries to split multiple titles separated with `/`.
     """
 
-    def strip_part(string, pattern):
-        """Return first matching group if string matches pattern, the full
-           string otherwise."""
-        match = re.search(pattern, string, re.IGNORECASE)
-        if match:
-            return match.group(1)
-        return string
+    def generate_alternatives(string, patterns):
+        """Generate string alternatives by extracting first matching group for
+           each given pattern."""
+        alternatives = [string]
+        for pattern in patterns:
+            match = re.search(pattern, string, re.IGNORECASE)
+            if match:
+                alternatives.append(match.group(1))
+        return alternatives
 
     title, artist = item.title, item.artist
-    titles = [title]
-    artists = [artist]
 
-    # Remove any featuring artists from the artists name
-    artists.append(
-        strip_part(artist, r"(.*?) {0}".format(plugins.feat_tokens())))
+    patterns = [
+        # Remove any featuring artists from the artists name
+        r"(.*?) {0}".format(plugins.feat_tokens())]
+    artists = generate_alternatives(artist, patterns)
 
-    # Remove a parenthesized suffix from a title string. Common
-    # examples include (live), (remix), and (acoustic).
-    titles.append(strip_part(title, r"(.+?)\s+[(].*[)]$"))
-
-    # Remove any featuring artists from the title
-    pattern = r"(.*?) {0}".format(plugins.feat_tokens(for_artist=False))
-    for title in list(titles):
-        titles.append(strip_part(title, pattern))
-
-    # Remove part of the title string after colon ':' for songs with subtitles
-    titles.append(strip_part(title, r"(.+?)\s*:.*"))
-
-    # Yield artist and title obtained from item first
-    titles = list(OrderedDict.fromkeys([title] + titles))
-    artists = list(OrderedDict.fromkeys([artist] + artists))
+    patterns = [
+        # Remove a parenthesized suffix from a title string. Common
+        # examples include (live), (remix), and (acoustic).
+        r"(.+?)\s+[(].*[)]$",
+        # Remove any featuring artists from the title
+        r"(.*?) {0}".format(plugins.feat_tokens(for_artist=False)),
+        # Remove part of title after colon ':' for songs with subtitles
+        r"(.+?)\s*:.*"]
+    titles = generate_alternatives(title, patterns)
 
     # Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
     # and each of them.
