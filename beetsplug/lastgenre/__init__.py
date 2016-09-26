@@ -109,6 +109,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'force': True,
             'auto': True,
             'separator': u', ',
+            'specificity': False,
         })
 
         self.setup()
@@ -158,6 +159,27 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         elif source == 'artist':
             return 'artist',
 
+    def _get_depth(self, tag):
+        """Find the depth of a tag in the genres tree.
+        """
+        depth = None
+        for key, value in enumerate(self.c14n_branches):
+            if tag in value:
+                depth = value.index(tag)
+                break
+        return depth
+
+    def _sort_by_depth(self, tags):
+        """Given a list of tags, sort the tags by their depths in the
+        genre tree.
+        """
+        tags_by_depth = []
+        for key, value in enumerate(tags):
+            depth = self._get_depth(value)
+            tags_by_depth.append({'tag': value, 'depth': depth})
+        tags_by_depth = sorted(tags_by_depth, key=lambda k: k['depth'], reverse=True)
+        return [i['tag'] for i in tags_by_depth]
+
     def _resolve_genres(self, tags):
         """Given a list of strings, return a genre by joining them into a
         single string and (optionally) canonicalizing each.
@@ -179,11 +201,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
 
                 tags_all += parents
-                if len(tags_all) >= count:
+                # Don't break here if we need to sort by specificity, which happens with
+                # the full tag list below
+                if not self.config['specificity'] and len(tags_all) >= count:
                     break
             tags = tags_all
 
         tags = deduplicate(tags)
+
+        # sort the tags by specificity
+        if self.config['specificity']:
+            tags = self._sort_by_depth(tags)
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
