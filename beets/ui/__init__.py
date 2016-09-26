@@ -1121,14 +1121,6 @@ def _configure(options):
     else:
         log.set_global_level(logging.INFO)
 
-    # Ensure compatibility with old (top-level) color configuration.
-    # Deprecation msg to motivate user to switch to config['ui']['color].
-    if config['color'].exists():
-        log.warning(u'Warning: top-level configuration of `color` '
-                    u'is deprecated. Configure color use under `ui`. '
-                    u'See documentation for more info.')
-        config['ui']['color'].set(config['color'].get(bool))
-
     # Compatibility from list_format_{item,album} to format_{item,album}
     for elem in ('item', 'album'):
         old_key = 'list_format_{0}'.format(elem)
