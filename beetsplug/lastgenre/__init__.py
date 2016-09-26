@@ -109,7 +109,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'force': True,
             'auto': True,
             'separator': u', ',
-            'specificity': False,
+            'prefer_specific': False,
         })
 
         self.setup()
@@ -200,14 +200,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 tags_all += parents
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
-                if not self.config['specificity'] and len(tags_all) >= count:
+                if (not self.config['prefer_specific'] and
+                    len(tags_all) >= count):
                     break
             tags = tags_all
 
         tags = deduplicate(tags)
 
         # Sort the tags by specificity.
-        if self.config['specificity']:
+        if self.config['prefer_specific']:
             tags = self._sort_by_depth(tags)
 
         # c14n only adds allowed genres but we may have had forbidden genres in
