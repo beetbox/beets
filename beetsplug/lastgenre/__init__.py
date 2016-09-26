@@ -173,12 +173,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Given a list of tags, sort the tags by their depths in the
         genre tree.
         """
-        tags_by_depth = []
-        for key, value in enumerate(tags):
-            depth = self._get_depth(value)
-            tags_by_depth.append({'tag': value, 'depth': depth})
-        tags_by_depth = sorted(tags_by_depth, key=lambda k: k['depth'], reverse=True)
-        return [i['tag'] for i in tags_by_depth]
+        depth_tag_pairs = [(self._get_depth(t), t) for t in tags]
+        depth_tag_pairs.sort(reverse=True)
+        return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags):
         """Given a list of strings, return a genre by joining them into a
@@ -201,15 +198,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
 
                 tags_all += parents
-                # Don't break here if we need to sort by specificity, which happens with
-                # the full tag list below
+                # Stop if we have enough tags already, unless we need to find
+                # the most specific tag (instead of the most popular).
                 if not self.config['specificity'] and len(tags_all) >= count:
                     break
             tags = tags_all
 
         tags = deduplicate(tags)
 
-        # sort the tags by specificity
+        # Sort the tags by specificity.
         if self.config['specificity']:
             tags = self._sort_by_depth(tags)
 
