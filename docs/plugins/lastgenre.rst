@@ -103,6 +103,19 @@ The plugin uses this weight to discard unpopular tags.  The default is to
 ignore tags with a weight less then 10. You can change this by setting
 the ``min_weight`` config option.
 
+Specific vs. Popular Genres
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, the plugin sorts genres by popularity. However, you can use the
+``prefer_specific`` option to override this behavior and instead sort genres
+by specificity, as determined by your whitelist and canonicalization tree.
+
+For instance, say you have both ``folk`` and ``americana`` in your whitelist
+and canonicalization tree and ``americana`` is a leaf within ``folk``. If
+Last.fm returns both of those tags, lastgenre is going to use the most
+popular, which is often the most generic (in this case ``folk``). By setting
+``prefer_specific`` to true, lastgenre would use ``americana`` instead.
+
 Configuration
 -------------
 
@@ -126,6 +139,8 @@ configuration file. The available options are:
   Default: ``yes``.
 - **min_weight**: Minimum popularity factor below which genres are discarded.
   Default: 10.
+- **prefer_specific**: Sort genres by the most to least specific, rather than
+  most to least popular. Default: ``no``.
 - **source**: Which entity to look up in Last.fm. Can be
   either ``artist``, ``album`` or ``track``.
   Default: ``album``.
