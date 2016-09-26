@@ -20,6 +20,7 @@ environment:
 # Install Tox for running tests.
 install:
     - cinst imagemagick -y
+    - cinst unrar -y
     - "%PYTHON%/Scripts/pip.exe install tox"
     - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
