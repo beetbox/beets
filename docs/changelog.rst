@@ -27,6 +27,8 @@ UI Change:
 Deprecated configuration optional removals:
 
 * Remove top level ``colors`` configuration option.
+* Remove deprecated ``list_format_album`` and ``list_format_item``
+  configuration options.
 
 The are a couple of small new features:
 

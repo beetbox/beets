@@ -1121,20 +1121,6 @@ def _configure(options):
     else:
         log.set_global_level(logging.INFO)
 
-    # Compatibility from list_format_{item,album} to format_{item,album}
-    for elem in ('item', 'album'):
-        old_key = 'list_format_{0}'.format(elem)
-        if config[old_key].exists():
-            new_key = 'format_{0}'.format(elem)
-            log.warning(
-                u'Warning: configuration uses "{0}" which is deprecated'
-                u' in favor of "{1}" now that it affects all commands. '
-                u'See changelog & documentation.',
-                old_key,
-                new_key,
-            )
-            config[new_key].set(config[old_key])
-
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
         log.debug(u'user configuration: {0}',
