@@ -21,6 +21,8 @@ environment:
 install:
     - cinst imagemagick -y
     - cinst unrar -y
+    - cinst aacgain -y
+    - cinst mp3gain -y
     - "%PYTHON%/Scripts/pip.exe install tox"
     - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
