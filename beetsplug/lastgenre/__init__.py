@@ -109,6 +109,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'force': True,
             'auto': True,
             'separator': u', ',
+            'prefer_specific': False,
         })
 
         self.setup()
@@ -158,6 +159,24 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         elif source == 'artist':
             return 'artist',
 
+    def _get_depth(self, tag):
+        """Find the depth of a tag in the genres tree.
+        """
+        depth = None
+        for key, value in enumerate(self.c14n_branches):
+            if tag in value:
+                depth = value.index(tag)
+                break
+        return depth
+
+    def _sort_by_depth(self, tags):
+        """Given a list of tags, sort the tags by their depths in the
+        genre tree.
+        """
+        depth_tag_pairs = [(self._get_depth(t), t) for t in tags]
+        depth_tag_pairs.sort(reverse=True)
+        return [p[1] for p in depth_tag_pairs]
+
     def _resolve_genres(self, tags):
         """Given a list of strings, return a genre by joining them into a
         single string and (optionally) canonicalizing each.
@@ -179,11 +198,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
 
                 tags_all += parents
-                if len(tags_all) >= count:
+                # Stop if we have enough tags already, unless we need to find
+                # the most specific tag (instead of the most popular).
+                if (not self.config['prefer_specific'] and
+                        len(tags_all) >= count):
                     break
             tags = tags_all
 
         tags = deduplicate(tags)
+
+        # Sort the tags by specificity.
+        if self.config['prefer_specific']:
+            tags = self._sort_by_depth(tags)
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
