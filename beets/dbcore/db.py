@@ -692,8 +692,9 @@ class Database(object):
     """The Model subclasses representing tables in this database.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, timeout=5.0):
         self.path = path
+        self.timeout = timeout
 
         self._connections = {}
         self._tx_stacks = defaultdict(list)
@@ -732,8 +733,7 @@ class Database(object):
                 # bytestring paths here on Python 3, so we need to
                 # provide a `str` using `py3_path`.
                 conn = sqlite3.connect(
-                    py3_path(self.path),
-                    timeout=beets.config['timeout'].as_number(),
+                    py3_path(self.path), timeout=self.timeout
                 )
 
                 # Access SELECT results like dictionaries.
