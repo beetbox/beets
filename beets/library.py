@@ -1216,7 +1216,8 @@ class Library(dbcore.Database):
                  path_formats=((PF_KEY_DEFAULT,
                                '$artist/$album/$track $title'),),
                  replacements=None):
-        super(Library, self).__init__(path)
+        timeout = beets.config['timeout'].as_number()
+        super(Library, self).__init__(path, timeout=timeout)
 
         self._connection().create_function('bytelower', 1, _sqlite_bytelower)
 
