@@ -318,9 +318,11 @@ class Parser(object):
 
     # Common parsing resources.
     special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
-                     ARG_SEP, ESCAPE_CHAR)
+                     ESCAPE_CHAR)
     special_char_re = re.compile(r'[%s]|$' %
                                  u''.join(re.escape(c) for c in special_chars))
+    escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
+    terminator_chars = (GROUP_CLOSE)
 
     def parse_expression(self):
         """Parse a template expression starting at ``pos``. Resulting
@@ -348,14 +350,13 @@ class Parser(object):
                 # The last character can never begin a structure, so we
                 # just interpret it as a literal character (unless it
                 # terminates the expression, as with , and }).
-                if char not in (GROUP_CLOSE, ARG_SEP):
+                if char not in self.terminator_chars:
                     text_parts.append(char)
                     self.pos += 1
                 break
 
             next_char = self.string[self.pos + 1]
-            if char == ESCAPE_CHAR and next_char in \
-                    (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP):
+            if char == ESCAPE_CHAR and next_char in self.escapable_chars:
                 # An escaped special character ($$, $}, etc.). Note that
                 # ${ is not an escape sequence: this is ambiguous with
                 # the start of a symbol and it's not necessary (just
@@ -375,7 +376,7 @@ class Parser(object):
             elif char == FUNC_DELIM:
                 # Parse a function call.
                 self.parse_call()
-            elif char in (GROUP_CLOSE, ARG_SEP):
+            elif char in self.terminator_chars:
                 # Template terminated.
                 break
             elif char == GROUP_OPEN:
