@@ -484,7 +484,7 @@ class Parser(object):
         expressions = []
 
         while self.pos < len(self.string):
-            subparser = Parser(self.string[self.pos:])
+            subparser = ArgumentsParser(self.string[self.pos:])
             subparser.parse_expression()
 
             # Extract and advance past the parsed expression.
@@ -511,6 +511,18 @@ class Parser(object):
         ident = re.match(r'\w*', remainder).group(0)
         self.pos += len(ident)
         return ident
+
+
+class ArgumentsParser(Parser):
+    """``Parser`` that considers ``ARG_SEP`` to be a special character.
+    """
+    # Common parsing resources.
+    special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
+                     ARG_SEP, ESCAPE_CHAR)
+    special_char_re = re.compile(r'[%s]|$' %
+                                 u''.join(re.escape(c) for c in special_chars))
+    escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
+    terminator_chars = (GROUP_CLOSE, ARG_SEP)
 
 
 def _parse(template):
