@@ -1,6 +1,11 @@
 #compdef beet
 
-# cached completion file for beet (generated from _beet)
+# Cached completion file for beet (generated from _beet)
+# To use this file add the following line to your .zshrc file: compdef _beet_cached beet
+# Note: this was created from _beet, and should be regenerated when new fields or plugins are added.
+# See comments at the start of _beet for instructions on how to do this.
+
+# Created with the following plugins active: fuzzy play info lyrics fromfilename check lastgenre badfiles chroma edit smartplaylist
 
 _beet_field_values () {
 	local -a output fieldvals
