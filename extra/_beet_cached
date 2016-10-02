@@ -1,6 +1,6 @@
 #compdef beet
 
-# Cached completion file for beet (generated from _beet)
+# Cached zsh completion file for beet (generated from _beet)
 # To use this file add the following line to your .zshrc file: compdef _beet_cached beet
 # Note: this was created from _beet, and should be regenerated when new fields or plugins are added.
 # See comments at the start of _beet for instructions on how to do this.
