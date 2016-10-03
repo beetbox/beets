@@ -311,8 +311,14 @@ class Parser(object):
     replaced with a real, accepted parsing technique (PEG, parser
     generator, etc.).
     """
-    def __init__(self, string):
+    def __init__(self, string, in_argument=False):
+        """ Create a new parser.
+        :param in_arguments: boolean that indicates the parser is to be
+        used for parsing function arguments, ie. considering commas
+        (`ARG_SEP`) a special character
+        """
         self.string = string
+        self.in_argument = in_argument
         self.pos = 0
         self.parts = []
 
@@ -322,7 +328,7 @@ class Parser(object):
     special_char_re = re.compile(r'[%s]|$' %
                                  u''.join(re.escape(c) for c in special_chars))
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
-    terminator_chars = (GROUP_CLOSE)
+    terminator_chars = (GROUP_CLOSE,)
 
     def parse_expression(self):
         """Parse a template expression starting at ``pos``. Resulting
@@ -330,16 +336,26 @@ class Parser(object):
         the ``parts`` field, a list.  The ``pos`` field is updated to be
         the next character after the expression.
         """
+        # Append comma (ARG_SEP) to the list of special characters only when
+        # parsing function arguments.
+        extra_special_chars = ()
+        special_char_re = self.special_char_re
+        if self.in_argument:
+            extra_special_chars = (ARG_SEP,)
+            special_char_re = re.compile(
+                r'[%s]|$' % u''.join(re.escape(c) for c in
+                                     self.special_chars + extra_special_chars))
+
         text_parts = []
 
         while self.pos < len(self.string):
             char = self.string[self.pos]
 
-            if char not in self.special_chars:
+            if char not in self.special_chars + extra_special_chars:
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
                 next_pos = (
-                    self.special_char_re.search(
+                    special_char_re.search(
                         self.string[self.pos:]).start() + self.pos
                 )
                 text_parts.append(self.string[self.pos:next_pos])
@@ -350,13 +366,14 @@ class Parser(object):
                 # The last character can never begin a structure, so we
                 # just interpret it as a literal character (unless it
                 # terminates the expression, as with , and }).
-                if char not in self.terminator_chars:
+                if char not in self.terminator_chars + extra_special_chars:
                     text_parts.append(char)
                     self.pos += 1
                 break
 
             next_char = self.string[self.pos + 1]
-            if char == ESCAPE_CHAR and next_char in self.escapable_chars:
+            if char == ESCAPE_CHAR and next_char in (self.escapable_chars +
+                                                     extra_special_chars):
                 # An escaped special character ($$, $}, etc.). Note that
                 # ${ is not an escape sequence: this is ambiguous with
                 # the start of a symbol and it's not necessary (just
@@ -376,7 +393,7 @@ class Parser(object):
             elif char == FUNC_DELIM:
                 # Parse a function call.
                 self.parse_call()
-            elif char in self.terminator_chars:
+            elif char in self.terminator_chars + extra_special_chars:
                 # Template terminated.
                 break
             elif char == GROUP_OPEN:
@@ -484,7 +501,7 @@ class Parser(object):
         expressions = []
 
         while self.pos < len(self.string):
-            subparser = ArgumentsParser(self.string[self.pos:])
+            subparser = Parser(self.string[self.pos:], in_argument=True)
             subparser.parse_expression()
 
             # Extract and advance past the parsed expression.
@@ -511,18 +528,6 @@ class Parser(object):
         ident = re.match(r'\w*', remainder).group(0)
         self.pos += len(ident)
         return ident
-
-
-class ArgumentsParser(Parser):
-    """``Parser`` that considers ``ARG_SEP`` to be a special character.
-    """
-    # Common parsing resources.
-    special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
-                     ARG_SEP, ESCAPE_CHAR)
-    special_char_re = re.compile(r'[%s]|$' %
-                                 u''.join(re.escape(c) for c in special_chars))
-    escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
-    terminator_chars = (GROUP_CLOSE, ARG_SEP)
 
 
 def _parse(template):
