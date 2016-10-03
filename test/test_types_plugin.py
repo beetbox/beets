@@ -70,6 +70,10 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
         self.config['types'] = {'myfloat': u'float'}
         item = self.add_item(artist=u'aaa')
 
+        # Do not match unset values
+        out = self.list(u'myfloat:10..0')
+        self.assertEqual(u'', out)
+
         self.modify(u'myfloat=-9.1')
         item.load()
         self.assertEqual(item['myfloat'], -9.1)
@@ -83,6 +87,10 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
         true = self.add_item(artist=u'true')
         false = self.add_item(artist=u'false')
         self.add_item(artist=u'unset')
+
+        # Do not match unset values
+        out = self.list(u'mybool:true, mybool:false')
+        self.assertEqual(u'', out)
 
         # Set true
         self.modify(u'mybool=1', u'artist:true')
@@ -111,6 +119,10 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
         self.config['time_format'] = '%Y-%m-%d'
         old = self.add_item(artist=u'prince')
         new = self.add_item(artist=u'britney')
+
+        # Do not match unset values
+        out = self.list(u'mydate:..2000')
+        self.assertEqual(u'', out)
 
         self.modify(u'mydate=1999-01-01', u'artist:prince')
         old.load()
