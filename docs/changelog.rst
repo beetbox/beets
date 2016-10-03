@@ -68,6 +68,8 @@ And there are a few bug fixes too:
   a problem that it was not possible to get tokens from the Emby API.
 * :doc:`/plugins/lyrics`: Search for lyrics using the title part preceding the 
   colon character. :bug:`2206`
+* Fix a crash when a query contains a date field that is not set for all
+  the items. :bug:`1938` 
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
