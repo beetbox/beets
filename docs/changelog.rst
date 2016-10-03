@@ -45,6 +45,8 @@ The are a couple of small new features:
   when a song can be found on AcousticBrainz, this is faster and more
   automatic than using the :doc:`/plugins/bpm`.
 * ``beet --version`` now includes the python version used to run beets.
+* :doc:`/reference/pathformat` can now include unescaped commas (``,``) when
+  they are not part of a function call. :bug:`2166` :bug:`2213`
 
 And there are a few bug fixes too:
 
