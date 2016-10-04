@@ -76,12 +76,12 @@ These functions are built in to beets:
 * ``%time{date_time,format}``: Return the date and time in any format accepted
   by `strftime`_. For example, to get the year some music was added to your
   library, use ``%time{$added,%Y}``.
-* ``%first{text}``: Returns the first item, separated by ``; ``.
+* ``%first{text}``: Returns the first item, separated by ``;`` (a semicolon
+  followed by a space).
   You can use ``%first{text,count,skip}``, where ``count`` is the number of
   items (default 1) and ``skip`` is number to skip (default 0). You can also use
   ``%first{text,count,skip,sep,join}`` where ``sep`` is the separator, like
   ``;`` or ``/`` and join is the text to concatenate the items.
-  For example,
 * ``%ifdef{field}``, ``%ifdef{field,truetext}`` or
   ``%ifdef{field,truetext,falsetext}``: If ``field`` exists, then return
   ``truetext`` or ``field`` (default). Otherwise, returns ``falsetext``.
@@ -142,11 +142,17 @@ Syntax Details
 The characters ``$``, ``%``, ``{``, ``}``, and ``,`` are "special" in the path
 template syntax. This means that, for example, if you want a ``%`` character to
 appear in your paths, you'll need to be careful that you don't accidentally
-write a function call. To escape any of these characters (except ``{``), prefix
-it with a ``$``.  For example, ``$$`` becomes ``$``; ``$%`` becomes ``%``, etc.
-The only exception is ``${``, which is ambiguous with the variable reference
-syntax (like ``${title}``). To insert a ``{`` alone, it's always sufficient to
-just type ``{``.
+write a function call. To escape any of these characters (except ``{``, and
+``,`` outside a function argument), prefix it with a ``$``.  For example,
+``$$`` becomes ``$``; ``$%`` becomes ``%``, etc. The only exceptions are:
+
+* ``${``, which is ambiguous with the variable reference syntax (like
+  ``${title}``). To insert a ``{`` alone, it's always sufficient to just type
+  ``{``.
+* commas are used as argument separators in function calls. Inside of a
+  function's argument, use ``$,`` to get a literal ``,`` character. Outside of
+  any function argument, escaping is not necessary: ``,`` by itself will
+  produce ``,`` in the output.
 
 If a value or function is undefined, the syntax is simply left unreplaced. For
 example, if you write ``$foo`` in a path template, this will yield ``$foo`` in
