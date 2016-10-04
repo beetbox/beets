@@ -76,12 +76,12 @@ These functions are built in to beets:
 * ``%time{date_time,format}``: Return the date and time in any format accepted
   by `strftime`_. For example, to get the year some music was added to your
   library, use ``%time{$added,%Y}``.
-* ``%first{text}``: Returns the first item, separated by ``; ``.
+* ``%first{text}``: Returns the first item, separated by ``;`` (a semicolon
+  followed by a space).
   You can use ``%first{text,count,skip}``, where ``count`` is the number of
   items (default 1) and ``skip`` is number to skip (default 0). You can also use
   ``%first{text,count,skip,sep,join}`` where ``sep`` is the separator, like
   ``;`` or ``/`` and join is the text to concatenate the items.
-  For example,
 * ``%ifdef{field}``, ``%ifdef{field,truetext}`` or
   ``%ifdef{field,truetext,falsetext}``: If ``field`` exists, then return
   ``truetext`` or ``field`` (default). Otherwise, returns ``falsetext``.
