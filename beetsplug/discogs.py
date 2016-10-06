@@ -234,6 +234,10 @@ class DiscogsPlugin(BeetsPlugin):
             catalogno = None
         country = result.data.get('country')
         media = result.data['formats'][0]['name']
+        # Explicitely set the `media` for the tracks, since it is expected by
+        # `autotag.apply_metadata`.
+        for track in tracks:
+            track.media = media
         data_url = result.data['uri']
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
