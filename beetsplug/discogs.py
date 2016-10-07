@@ -274,10 +274,11 @@ class DiscogsPlugin(BeetsPlugin):
     def get_tracks(self, tracklist):
         """Returns a list of TrackInfo objects for a discogs tracklist.
         """
+        clean_tracklist = self.coalesce_tracks(tracklist)
         tracks = []
         index_tracks = {}
         index = 0
-        for track in tracklist:
+        for track in clean_tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
                 index += 1
@@ -338,12 +339,73 @@ class DiscogsPlugin(BeetsPlugin):
 
         return tracks
 
+    def coalesce_tracks(self, raw_tracklist):
+        """Pre-process a tracklist, merging subtracks into a single track. The
+        title for the merged track is the one from the previous index track,
+        if present; otherwise it is a combination of the subtracks titles.
+        """
+        def add_merged_subtracks(tracklist, subtracks):
+            """Modify `tracklist` in place, merging a list of `subtracks` into
+            a single track into `tracklist`."""
+            # Calculate position based on first subtrack, without subindex.
+            idx, medium_idx, _ = self.get_track_index(subtracks[0]['position'])
+            position = '%s%s' % (idx or '', medium_idx or '')
+
+            if len(tracklist) > 1 and not tracklist[-1]['position']:
+                # Assume the previous index track contains the track title, and
+                # "convert" it to a real track. The only exception is if the
+                # index track is the only one on the tracklist, as it probably
+                # is a medium title.
+                tracklist[-1]['position'] = position
+            else:
+                # Merge the subtracks, pick a title, and append the new track.
+                track = subtracks[0].copy()
+                track['title'] = ' / '.join([t['title'] for t in subtracks])
+                tracklist.append(track)
+
+        # Pre-process the tracklist, trying to identify subtracks.
+        subtracks = []
+        tracklist = []
+        prev_subindex = ''
+        for track in raw_tracklist:
+            if track['position']:
+                _, _, subindex = self.get_track_index(track['position'])
+                if subindex:
+                    if subindex.rjust(len(raw_tracklist)) > prev_subindex:
+                        # Subtrack still part of the current main track.
+                        subtracks.append(track)
+                    else:
+                        # Subtrack part of a new group (..., 1.3, *2.1*, ...).
+                        add_merged_subtracks(tracklist, subtracks)
+                        subtracks = [track]
+                    prev_subindex = subindex.rjust(len(raw_tracklist))
+                else:
+                    # Regular track.
+                    if subtracks:
+                        add_merged_subtracks(tracklist, subtracks)
+                        subtracks = []
+                        prev_subindex = ''
+                    tracklist.append(track)
+            else:
+                # Index track.
+                if subtracks:
+                    add_merged_subtracks(tracklist, subtracks)
+                    subtracks = []
+                    prev_subindex = ''
+                tracklist.append(track)
+
+        # Merge and add the remaining subtracks, if any.
+        if subtracks:
+            add_merged_subtracks(tracklist, subtracks)
+
+        return tracklist
+
     def get_track_info(self, track, index):
         """Returns a TrackInfo object for a discogs track.
         """
         title = track['title']
         track_id = None
-        medium, medium_index = self.get_track_index(track['position'])
+        medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = self.get_artist(track.get('artists', []))
         length = self.get_track_length(track['duration'])
         return TrackInfo(title, track_id, artist, artist_id, length, index,
@@ -351,17 +413,21 @@ class DiscogsPlugin(BeetsPlugin):
                          disctitle=None, artist_credit=None)
 
     def get_track_index(self, position):
-        """Returns the medium and medium index for a discogs track position.
+        """Returns the medium, medium index and subtrack index for a discogs
+        track position.
         """
+        # TODO: revise comment
         # medium_index is a number at the end of position. medium is everything
         # else. E.g. (A)(1), (Side A, Track )(1), (A)(), ()(1), etc.
-        match = re.match(r'^(.*?)(\d*)$', position.upper())
+        match = re.match(r'^(.*?)(\d*?)(\.[\w]+|[A-Z]+)?$', position.upper())
         if match:
-            medium, index = match.groups()
+            medium, index, subindex = match.groups()
+            if subindex and subindex.startswith('.'):
+                subindex = subindex[1:]
         else:
             self._log.debug(u'Invalid position: {0}', position)
-            medium = index = None
-        return medium or None, index or None
+            medium = index, subindex = None
+        return medium or None, index or None, subindex or None
 
     def get_track_length(self, duration):
         """Returns the track length in seconds for a discogs duration.
