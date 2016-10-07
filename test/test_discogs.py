@@ -24,8 +24,7 @@ from beetsplug.discogs import DiscogsPlugin
 
 
 class DGAlbumInfoTest(_common.TestCase):
-    def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False):
+    def _make_release(self, tracks=None):
         """Returns a Bag that mimics a discogs_client.Release. The list
         of elements on the returned Bag is incomplete, including just
         those required for the tests on this class."""
@@ -75,7 +74,14 @@ class DGAlbumInfoTest(_common.TestCase):
 
         return track
 
-    def test_set_media_for_tracks(self):
+    def _make_release_from_positions(self, positions):
+        """Return a Bag that mimics a discogs_client.Release with a
+        tracklist where tracks have the specified `positions`."""
+        tracks = [self._make_track('TITLE%s' % i, position) for
+                  (i, position) in enumerate(positions, start=1)]
+        return self._make_release(tracks)
+
+    def test_parse_media_for_tracks(self):
         tracks = [self._make_track('TITLE ONE', '1', '01:01'),
                   self._make_track('TITLE TWO', '2', '02:02')]
         release = self._make_release(tracks=tracks)
@@ -85,6 +91,90 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.media, 'FORMAT')
         self.assertEqual(t[0].media, d.media)
         self.assertEqual(t[1].media, d.media)
+
+    def test_parse_tracklist_without_sides(self):
+        """Test standard Discogs position 12.2.9#1: "without sides"."""
+        release = self._make_release_from_positions(['1', '2', '3'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 3)
+
+    def test_parse_tracklist_with_sides(self):
+        """Test standard Discogs position 12.2.9#2: "with sides"."""
+        release = self._make_release_from_positions(['A1', 'A2', 'B1', 'B2'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 1)  # 2 sides = 1 LP
+        self.assertEqual(len(d.tracks), 4)
+
+    def test_parse_tracklist_multiple_lp(self):
+        """Test standard Discogs position 12.2.9#3: "multiple LP"."""
+        release = self._make_release_from_positions(['A1', 'A2', 'B1', 'C1'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 2)  # 3 sides = 1 LP + 1 LP
+        self.assertEqual(len(d.tracks), 4)
+
+    def test_parse_tracklist_multiple_cd(self):
+        """Test standard Discogs position 12.2.9#4: "multiple CDs"."""
+        release = self._make_release_from_positions(['1-1', '1-2', '2-1',
+                                                     '3-1'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 3)
+        self.assertEqual(len(d.tracks), 4)
+
+    def test_parse_tracklist_subtracks_dot(self):
+        """Test standard Discogs position 12.2.9#5: "sub tracks, dots"."""
+        release = self._make_release_from_positions(['1', '2.1', '2.2', '3'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 3)
+
+        release = self._make_release_from_positions(['A1', 'A2.1', 'A2.2',
+                                                     'A3'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 3)
+
+    def test_parse_tracklist_subtracks_letter(self):
+        """Test standard Discogs position 12.2.9#5: "sub tracks, letter"."""
+        release = self._make_release_from_positions(['A1', 'A2a', 'A2b', 'A3'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 3)
+
+        release = self._make_release_from_positions(['A1', 'A2.a', 'A2.b',
+                                                     'A3'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 3)
+
+    def test_parse_tracklist_subtracks_extra_material(self):
+        """Test standard Discogs position 12.2.9#6: "extra material"."""
+        release = self._make_release_from_positions(['1', '2', 'Video 1'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 2)
+        self.assertEqual(len(d.tracks), 3)
+
+    def test_parse_tracklist_subtracks_indices(self):
+        """Test parsing of subtracks that include index tracks."""
+        release = self._make_release_from_positions(['', '', '1.1', '1.2'])
+        # Track 1: Index track with medium title
+        release.data['tracklist'][0]['title'] = 'MEDIUM TITLE'
+        # Track 2: Index track with track group title
+        release.data['tracklist'][1]['title'] = 'TRACK GROUP TITLE'
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 1)
+        self.assertEqual(d.tracks[0].title, 'TRACK GROUP TITLE')
 
 
 def suite():
