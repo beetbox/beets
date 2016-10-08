@@ -84,7 +84,7 @@ indicates that you need to insert extra arguments before specifying the
 playlist.
 
 Note on the Leakage of the Generated Playlists
-_______________________________________________
+----------------------------------------------
 
 Because the command that will open the generated ``.m3u`` files can be
 arbitrarily configured by the user, beets won't try to delete those files. For
