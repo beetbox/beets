@@ -106,6 +106,7 @@ setup(
         'pyxdg',
         'pathlib',
         'python-mpd2',
+        'discogs-client'
     ],
 
     # Plugin (optional) dependencies:
