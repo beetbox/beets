@@ -235,7 +235,7 @@ class DiscogsPlugin(BeetsPlugin):
             catalogno = None
         country = result.data.get('country')
         media = result.data['formats'][0]['name']
-        # Explicitely set the `media` for the tracks, since it is expected by
+        # Explicitly set the `media` for the tracks, since it is expected by
         # `autotag.apply_metadata`.
         for track in tracks:
             track.media = media
