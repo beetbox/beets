@@ -34,6 +34,7 @@ import time
 import json
 import socket
 import os
+import traceback
 from string import ascii_lowercase
 
 
@@ -275,7 +276,15 @@ class DiscogsPlugin(BeetsPlugin):
     def get_tracks(self, tracklist):
         """Returns a list of TrackInfo objects for a discogs tracklist.
         """
-        clean_tracklist = self.coalesce_tracks(tracklist)
+        try:
+            clean_tracklist = self.coalesce_tracks(tracklist)
+        except Exception as exc:
+            # FIXME: this is an extra precaution for making sure there are no
+            # side effects after #2222. It should be removed after further
+            # testing.
+            self._log.debug(u'{}', traceback.format_exc())
+            self._log.error(u'uncaught exception in coalesce_tracks: {}', exc)
+            clean_tracklist = tracklist
         tracks = []
         index_tracks = {}
         index = 0
@@ -369,6 +378,7 @@ class DiscogsPlugin(BeetsPlugin):
         tracklist = []
         prev_subindex = ''
         for track in raw_tracklist:
+            # Regular subtrack (track with subindex).
             if track['position']:
                 _, _, subindex = self.get_track_index(track['position'])
                 if subindex:
@@ -380,20 +390,21 @@ class DiscogsPlugin(BeetsPlugin):
                         add_merged_subtracks(tracklist, subtracks)
                         subtracks = [track]
                     prev_subindex = subindex.rjust(len(raw_tracklist))
-                else:
-                    # Regular track.
-                    if subtracks:
-                        add_merged_subtracks(tracklist, subtracks)
-                        subtracks = []
-                        prev_subindex = ''
-                    tracklist.append(track)
-            else:
-                # Index track.
-                if subtracks:
-                    add_merged_subtracks(tracklist, subtracks)
-                    subtracks = []
-                    prev_subindex = ''
+                    continue
+
+            # Index track with nested sub_tracks.
+            if not track['position'] and 'sub_tracks' in track:
+                # Append the index track, assuming it contains the track title.
                 tracklist.append(track)
+                add_merged_subtracks(tracklist, track['sub_tracks'])
+                continue
+
+            # Regular track or index track without nested sub_tracks.
+            if subtracks:
+                add_merged_subtracks(tracklist, subtracks)
+                subtracks = []
+                prev_subindex = ''
+            tracklist.append(track)
 
         # Merge and add the remaining subtracks, if any.
         if subtracks:
