@@ -6,8 +6,11 @@
 #            are stored.
 #            It will be very slow the first time you try to complete in a zsh shell (especially if you've enable many plugins),
 #            but a cache file (_beet_cached) will be created after the first completion which will make subsequent calls much
-#            faster. If you enable new plugins or fields you should update the cache file by deleting it and then performing
-#            another completion in a new shell.
+#            faster. 
+#            If you enable new plugins or fields you should update the cache file by deleting it, entering the following commands:
+#                  unfunction _beet
+#                  autoload -z _beet
+#            and then performing another completion in a new shell.
 
 # If cache file exists, use that
 local completionsdir="$HOME/.oh-my-zsh/custom/completions"
