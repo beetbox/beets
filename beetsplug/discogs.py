@@ -416,17 +416,30 @@ class DiscogsPlugin(BeetsPlugin):
         """Returns the medium, medium index and subtrack index for a discogs
         track position.
         """
-        # TODO: revise comment
-        # medium_index is a number at the end of position. medium is everything
-        # else. E.g. (A)(1), (Side A, Track )(1), (A)(), ()(1), etc.
-        match = re.match(r'^(.*?)(\d*?)(\.[\w]+|[A-Z]+)?$', position.upper())
+        # Match the standard Discogs positions (12.2.9), which can have several
+        # forms (1, 1-1, A1, A1.1, A1a, ...).
+        match = re.match(
+            r'^(.*?)'           # medium: everything before medium_index.
+            r'(\d*?)'           # medium_index: a number at the end of
+                                # `position`, except if followed by a subtrack
+                                # index.
+                                # subtrack_index: can only be matched if medium
+                                # or medium_index have been matched, and can be
+            r'((?<=\w)\.[\w]+'  # - a dot followed by a string (A.1, 2.A)
+            r'|(?<=\d)[A-Z]+'   # - a string that follows a number (1A, B2a)
+            r')?'
+            r'$',
+            position.upper()
+        )
+
         if match:
             medium, index, subindex = match.groups()
+
             if subindex and subindex.startswith('.'):
                 subindex = subindex[1:]
         else:
             self._log.debug(u'Invalid position: {0}', position)
-            medium = index, subindex = None
+            medium = index = subindex = None
         return medium or None, index or None, subindex or None
 
     def get_track_length(self, duration):
