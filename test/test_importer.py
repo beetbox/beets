@@ -22,6 +22,7 @@ import re
 import shutil
 import unicodedata
 import sys
+import six
 from six import StringIO
 from tempfile import mkstemp
 from zipfile import ZipFile
@@ -1465,10 +1466,20 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         """Normalize a path's Unicode combining form according to the
         platform.
         """
-        path = path.decode('utf-8')
+        if not six.PY3:
+            path = path.decode(util._fsencoding())
+        else:
+            path = path.decode(util._fsencoding(), 'surrogateescape')
+
         norm_form = 'NFD' if sys.platform == 'darwin' else 'NFC'
         path = unicodedata.normalize(norm_form, path)
-        return path.encode('utf-8')
+
+        if not six.PY3:
+            path = path.encode(util._fsencoding())
+        else:
+            path = path.encode(util._fsencoding(), 'surrogateescape')
+
+        return path
 
     def test_coalesce_nested_album_multiple_subdirs(self):
         self.create_music()
