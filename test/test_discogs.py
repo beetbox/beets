@@ -92,6 +92,26 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(t[0].media, d.media)
         self.assertEqual(t[1].media, d.media)
 
+    def test_parse_position(self):
+        """Test the conversion of discogs `position` to medium, medium_index
+        and subtrack_index."""
+        # List of tuples (discogs_position, (medium, medium_index, subindex)
+        positions = [('1',       (None,   '1',  None)),
+                     ('A12',     ('A',    '12', None)),
+                     ('12-34',   ('12-',  '34', None)),
+                     ('CD1-1',   ('CD1-', '1',  None)),
+                     ('1.12',    (None,   '1',  '12')),
+                     ('12.a',    (None,   '12', 'A')),
+                     ('12.34',   (None,   '12', '34')),
+                     ('1ab',     (None,   '1',  'AB')),
+                     # Non-standard
+                     ('IV',      ('IV',   None, None)),
+                     ]
+
+        d = DiscogsPlugin()
+        for position, expected in positions:
+            self.assertEqual(d.get_track_index(position), expected)
+
     def test_parse_tracklist_without_sides(self):
         """Test standard Discogs position 12.2.9#1: "without sides"."""
         release = self._make_release_from_positions(['1', '2', '3'])
@@ -123,6 +143,14 @@ class DGAlbumInfoTest(_common.TestCase):
         d = DiscogsPlugin().get_album_info(release)
 
         self.assertEqual(d.mediums, 3)
+        self.assertEqual(len(d.tracks), 4)
+
+    def test_parse_tracklist_non_standard(self):
+        """Test non standard Discogs position."""
+        release = self._make_release_from_positions(['I', 'II', 'III', 'IV'])
+        d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d.mediums, 1)
         self.assertEqual(len(d.tracks), 4)
 
     def test_parse_tracklist_subtracks_dot(self):
