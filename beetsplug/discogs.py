@@ -426,8 +426,7 @@ class DiscogsPlugin(BeetsPlugin):
 
     def get_track_index(self, position):
         """Returns the medium, medium index and subtrack index for a discogs
-        track position.
-        """
+        track position."""
         # Match the standard Discogs positions (12.2.9), which can have several
         # forms (1, 1-1, A1, A1.1, A1a, ...).
         match = re.match(
