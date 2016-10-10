@@ -236,6 +236,21 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(len(d.tracks), 1)
         self.assertEqual(d.tracks[0].title, 'TRACK GROUP TITLE')
 
+    def test_parse_tracklist_subtracks_nested(self):
+        """Test parsing of subtracks defined inside a index track."""
+        release = self._make_release_from_positions(['1', '', '3'])
+        # Track 2: Index track with track group title, and sub_tracks
+        release.data['tracklist'][1]['title'] = 'TRACK GROUP TITLE'
+        release.data['tracklist'][1]['sub_tracks'] = [
+            self._make_track('TITLE ONE', '2.1', '01:01'),
+            self._make_track('TITLE TWO', '2.2', '02:02')
+        ]
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 3)
+        self.assertEqual(d.tracks[1].title, 'TRACK GROUP TITLE')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
