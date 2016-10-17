@@ -74,7 +74,8 @@ And there are a few bug fixes too:
   the items. :bug:`1938`
 * :doc:`/plugins/discogs`: Subtracks are now detected and combined into a
   single track, two-sided mediums are treated as single discs, and tracks
-  have ``media`` and ``medium_total`` set correctly. :bug:`2222`
+  have ``media``, ``medium_total`` and ``medium`` set correctly. :bug:`2222`
+  :bug:`2228`.
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
