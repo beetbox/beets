@@ -335,6 +335,7 @@ class DiscogsPlugin(BeetsPlugin):
                     index_count = 0
                     side_count = 0
             index_count += 1
+            medium_count = 1 if medium_count == 0 else medium_count
             track.medium, track.medium_index = medium_count, index_count
 
         # Get `disctitle` from Discogs index tracks. Assume that an index track
