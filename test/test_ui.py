@@ -499,12 +499,13 @@ class UpdateTest(_common.TestCase):
         self.album.store()
         os.remove(artfile)
 
-    def _update(self, query=(), album=False, move=False, reset_mtime=True):
+    def _update(self, query=(), album=False, move=False, reset_mtime=True,
+                fields=None):
         self.io.addinput('y')
         if reset_mtime:
             self.i.mtime = 0
             self.i.store()
-        commands.update_items(self.lib, query, album, move, False)
+        commands.update_items(self.lib, query, album, move, False, fields=fields)
 
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))
