@@ -1081,11 +1081,14 @@ default_commands.append(list_cmd)
 
 # update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, move, pretend):
+def update_items(lib, query, album, move, pretend, fields):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     """
     with lib.transaction():
+        if fields is None:
+            fields = library.Item._media_fields
+
         items, _ = _do_query(lib, query, album)
 
         # Walk through the items and pick up their changes.
@@ -1125,23 +1128,23 @@ def update_items(lib, query, album, move, pretend):
 
             # Check for and display changes.
             changed = ui.show_model_changes(item,
-                                            fields=library.Item._media_fields)
+                                            fields=fields)
 
             # Save changes.
             if not pretend:
                 if changed:
                     # Move the item if it's in the library.
                     if move and lib.directory in ancestry(item.path):
-                        item.move()
+                        item.move(fields_to_store=fields)
 
-                    item.store()
+                    item.store(fields_to_store=fields)
                     affected_albums.add(item.album_id)
                 else:
                     # The file's mtime was different, but there were no
                     # changes to the metadata. Store the new mtime,
                     # which is set in the call to read(), so we don't
                     # check this again in the future.
-                    item.store()
+                    item.store(fields_to_store=fields)
 
         # Skip album changes while pretending.
         if pretend:
@@ -1160,17 +1163,17 @@ def update_items(lib, query, album, move, pretend):
             # Update album structure to reflect an item in it.
             for key in library.Album.item_keys:
                 album[key] = first_item[key]
-            album.store()
+            album.store(fields_to_store=fields)
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
                 log.debug(u'moving album {0}', album_id)
-                album.move()
+                album.move(fields_to_store=fields)
 
 
 def update_func(lib, opts, args):
     update_items(lib, decargs(args), opts.album, ui.should_move(opts.move),
-                 opts.pretend)
+                 opts.pretend, opts.fields)
 
 
 update_cmd = ui.Subcommand(
@@ -1189,6 +1192,10 @@ update_cmd.parser.add_option(
 update_cmd.parser.add_option(
     u'-p', u'--pretend', action='store_true',
     help=u"show all changes but do nothing"
+)
+update_cmd.parser.add_option(
+    u'-F', u'--field', default=None, action='append', dest='fields',
+    help=u'list of fields to update'
 )
 update_cmd.func = update_func
 default_commands.append(update_cmd)

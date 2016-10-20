@@ -342,7 +342,7 @@ class Model(object):
 
     # Database interaction (CRUD methods).
 
-    def store(self):
+    def store(self, fields_to_store=None):
         """Save the object's metadata into the library database.
         """
         self._check_db()
@@ -350,7 +350,9 @@ class Model(object):
         # Build assignments for query.
         assignments = []
         subvars = []
-        for key in self._fields:
+        if fields_to_store is None:
+            fields_to_store = self._fields
+        for key in fields_to_store:
             if key != 'id' and key in self._dirty:
                 self._dirty.remove(key)
                 assignments.append(key + '=?')
