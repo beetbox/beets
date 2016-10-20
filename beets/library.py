@@ -323,8 +323,8 @@ class LibModel(dbcore.Model):
         funcs.update(plugins.template_funcs())
         return funcs
 
-    def store(self):
-        super(LibModel, self).store()
+    def store(self, fields_to_store=None):
+        super(LibModel, self).store(fields_to_store)
         plugins.send('database_change', lib=self._db, model=self)
 
     def remove(self):
@@ -729,7 +729,8 @@ class Item(LibModel):
 
         self._db._memotable = {}
 
-    def move(self, copy=False, link=False, basedir=None, with_album=True):
+    def move(self, copy=False, link=False, basedir=None, with_album=True,
+             fields_to_store=None):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
@@ -759,7 +760,7 @@ class Item(LibModel):
         # Perform the move and store the change.
         old_path = self.path
         self.move_file(dest, copy, link)
-        self.store()
+        self.store(fields_to_store)
 
         # If this item is in an album, move its art.
         if with_album:
@@ -1000,7 +1001,7 @@ class Album(LibModel):
             util.prune_dirs(os.path.dirname(old_art),
                             self._db.directory)
 
-    def move(self, copy=False, link=False, basedir=None):
+    def move(self, copy=False, link=False, basedir=None, fields_to_store=None):
         """Moves (or copies) all items to their destination. Any album
         art moves along with them. basedir overrides the library base
         directory for the destination. The album is stored to the
@@ -1010,7 +1011,7 @@ class Album(LibModel):
 
         # Ensure new metadata is available to items for destination
         # computation.
-        self.store()
+        self.store(fields_to_store)
 
         # Move items.
         items = list(self.items())
@@ -1019,7 +1020,7 @@ class Album(LibModel):
 
         # Move art.
         self.move_art(copy, link)
-        self.store()
+        self.store(fields_to_store)
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
@@ -1108,7 +1109,7 @@ class Album(LibModel):
 
         plugins.send('art_set', album=self)
 
-    def store(self):
+    def store(self, fields_to_store=None):
         """Update the database with the album information. The album's
         tracks are also updated.
         """
@@ -1119,7 +1120,7 @@ class Album(LibModel):
                 track_updates[key] = self[key]
 
         with self._db.transaction():
-            super(Album, self).store()
+            super(Album, self).store(fields_to_store)
             if track_updates:
                 for item in self.items():
                     for key, value in track_updates.items():
