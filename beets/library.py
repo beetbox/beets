@@ -1016,7 +1016,8 @@ class Album(LibModel):
         # Move items.
         items = list(self.items())
         for item in items:
-            item.move(copy, link, basedir=basedir, with_album=False)
+            item.move(copy, link, basedir=basedir, with_album=False,
+                      fields_to_store=fields_to_store)
 
         # Move art.
         self.move_art(copy, link)

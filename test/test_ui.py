@@ -550,6 +550,26 @@ class UpdateTest(_common.TestCase):
         item = self.lib.items().get()
         self.assertTrue(b'differentTitle' not in item.path)
 
+    def test_selective_modified_metadata_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.title = u'differentTitle'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=True, fields=['title'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentTitle' in item.path)
+        self.assertNotEqual(item.genre, u'differentGenre')
+
+    def test_selective_modified_metadata_not_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.title = u'differentTitle'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=False, fields=['title'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentTitle' not in item.path)
+        self.assertNotEqual(item.genre, u'differentGenre')
+
     def test_modified_album_metadata_moved(self):
         mf = MediaFile(self.i.path)
         mf.album = u'differentAlbum'
