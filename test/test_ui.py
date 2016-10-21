@@ -505,7 +505,8 @@ class UpdateTest(_common.TestCase):
         if reset_mtime:
             self.i.mtime = 0
             self.i.store()
-        commands.update_items(self.lib, query, album, move, False, fields=fields)
+        commands.update_items(self.lib, query, album, move, False,
+                              fields=fields)
 
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))
