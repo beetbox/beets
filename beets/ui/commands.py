@@ -1086,6 +1086,11 @@ def update_items(lib, query, album, move, pretend, fields):
     reflect the item's embedded tags.
     """
     with lib.transaction():
+        if move and fields is not None and 'path' not in fields:
+            # Special case: if an item needs to be moved, the path field has to
+            # updated; otherwise the new path will not be reflected in the
+            # database
+            fields.append('path')
         items, _ = _do_query(lib, query, album)
 
         # Walk through the items and pick up their changes.
