@@ -767,7 +767,7 @@ class Item(LibModel):
             album = self.get_album()
             if album:
                 album.move_art(copy)
-                album.store()
+                album.store(fields_to_store)
 
         # Prune vacated directory.
         if not copy:
