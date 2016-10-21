@@ -1084,12 +1084,14 @@ default_commands.append(list_cmd)
 def update_items(lib, query, album, move, pretend, fields):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
+    :param fields: The fields to be stored. If not specified, all fields will
+    be.
     """
     with lib.transaction():
         if move and fields is not None and 'path' not in fields:
             # Special case: if an item needs to be moved, the path field has to
             # updated; otherwise the new path will not be reflected in the
-            # database
+            # database.
             fields.append('path')
         items, _ = _do_query(lib, query, album)
 
@@ -1138,16 +1140,16 @@ def update_items(lib, query, album, move, pretend, fields):
                 if changed:
                     # Move the item if it's in the library.
                     if move and lib.directory in ancestry(item.path):
-                        item.move(fields_to_store=fields)
+                        item.move(fields=fields)
 
-                    item.store(fields_to_store=fields)
+                    item.store(fields=fields)
                     affected_albums.add(item.album_id)
                 else:
                     # The file's mtime was different, but there were no
                     # changes to the metadata. Store the new mtime,
                     # which is set in the call to read(), so we don't
                     # check this again in the future.
-                    item.store(fields_to_store=fields)
+                    item.store(fields=fields)
 
         # Skip album changes while pretending.
         if pretend:
@@ -1166,12 +1168,12 @@ def update_items(lib, query, album, move, pretend, fields):
             # Update album structure to reflect an item in it.
             for key in library.Album.item_keys:
                 album[key] = first_item[key]
-            album.store(fields_to_store=fields)
+            album.store(fields=fields)
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
                 log.debug(u'moving album {0}', album_id)
-                album.move(fields_to_store=fields)
+                album.move(fields=fields)
 
 
 def update_func(lib, opts, args):
