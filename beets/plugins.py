@@ -488,3 +488,13 @@ def sanitize_choices(choices, choices_all):
             if not (s in seen or seen.add(s)):
                 res.extend(list(others) if s == '*' else [s])
     return res
+
+
+def notify_info_received(msg):
+    def decorator(generator):
+        def decorated(*args, **kwargs):
+            for v in generator(*args, **kwargs):
+                send(msg, info=v)
+                yield v
+        return decorated
+    return decorator

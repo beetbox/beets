@@ -525,10 +525,7 @@ def album_for_mbid(release_id):
     if the ID is not found.
     """
     try:
-        album = mb.album_for_id(release_id)
-        if album:
-            plugins.send(u'albuminfo_received', info=album)
-        return album
+        return mb.album_for_id(release_id)
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
@@ -538,32 +535,31 @@ def track_for_mbid(recording_id):
     if the ID is not found.
     """
     try:
-        track = mb.track_for_id(recording_id)
-        if track:
-            plugins.send(u'trackinfo_received', info=track)
-        return track
+        return mb.track_for_id(recording_id)
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
 
+@plugins.notify_info_received(u'albuminfo_received')
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
-    candidates = [album_for_mbid(album_id)]
-    plugin_albums = plugins.album_for_id(album_id)
-    for a in plugin_albums:
-        plugins.send(u'albuminfo_received', info=a)
-    candidates.extend(plugin_albums)
-    return [a for a in candidates if a]
+    a = album_for_mbid(album_id)
+    if a:
+        yield a
+    for a in plugins.album_for_id(album_id):
+        if a:
+            yield a
 
 
+@plugins.notify_info_received(u'trackinfo_received')
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
-    candidates = [track_for_mbid(track_id)]
-    plugin_tracks = plugins.track_for_id(track_id)
-    for t in plugin_tracks:
-        plugins.send(u'trackinfo_received', info=t)
-    candidates.extend(plugin_tracks)
-    return [t for t in candidates if t]
+    t = track_for_mbid(track_id)
+    if t:
+        yield t
+    for t in plugins.track_for_id(track_id):
+        if t:
+            yield t
 
 
 def album_candidates(items, artist, album, va_likely):
