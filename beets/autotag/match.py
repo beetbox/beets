@@ -29,7 +29,6 @@ from beets import config
 from beets.util import plurality
 from beets.autotag import hooks
 from beets.util.enumeration import OrderedEnum
-from functools import reduce
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -261,19 +260,21 @@ def match_by_id(items):
     AlbumInfo object for the corresponding album. Otherwise, returns
     None.
     """
-    # Is there a consensus on the MB album ID?
-    albumids = [item.mb_albumid for item in items if item.mb_albumid]
-    if not albumids:
-        log.debug(u'No album IDs found.')
+    albumids = (item.mb_albumid for item in items if item.mb_albumid)
+    try:
+        # Did any of the items have an MB album ID?
+        first = albumids.next()
+    except StopIteration:
+        log.debug(u'No album ID found.')
         return None
-
-    # If all album IDs are equal, look up the album.
-    if bool(reduce(lambda x, y: x if x == y else (), albumids)):
-        albumid = albumids[0]
-        log.debug(u'Searching for discovered album ID: {0}', albumid)
-        return hooks.album_for_mbid(albumid)
     else:
-        log.debug(u'No album ID consensus.')
+        # Is there a consensus on the MB album ID?
+        if all(first == other for other in albumids):
+            # If all album IDs are equal, look up the album.
+            log.debug(u'Searching for discovered album ID: {0}', first)
+            return hooks.album_for_mbid(first)
+        else:
+            log.debug(u'No album ID consensus.')
 
 
 def _recommendation(results):
