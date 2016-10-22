@@ -261,20 +261,22 @@ def match_by_id(items):
     None.
     """
     albumids = (item.mb_albumid for item in items if item.mb_albumid)
+
+    # Did any of the items have an MB album ID?
     try:
-        # Did any of the items have an MB album ID?
-        first = albumids.next()
+        first = next(albumids)
     except StopIteration:
         log.debug(u'No album ID found.')
         return None
-    else:
-        # Is there a consensus on the MB album ID?
-        if all(first == other for other in albumids):
-            # If all album IDs are equal, look up the album.
-            log.debug(u'Searching for discovered album ID: {0}', first)
-            return hooks.album_for_mbid(first)
-        else:
+
+    # Is there a consensus on the MB album ID?
+    for other in albumids:
+        if other != first:
             log.debug(u'No album ID consensus.')
+            return None
+    # If all album IDs are equal, look up the album.
+    log.debug(u'Searching for discovered album ID: {0}', first)
+    return hooks.album_for_mbid(first)
 
 
 def _recommendation(results):
