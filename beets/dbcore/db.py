@@ -342,15 +342,19 @@ class Model(object):
 
     # Database interaction (CRUD methods).
 
-    def store(self):
+    def store(self, fields=None):
         """Save the object's metadata into the library database.
+        :param fields: the fields to be stored. If not specified, all fields
+        will be.
         """
+        if fields is None:
+            fields = self._fields
         self._check_db()
 
         # Build assignments for query.
         assignments = []
         subvars = []
-        for key in self._fields:
+        for key in fields:
             if key != 'id' and key in self._dirty:
                 self._dirty.remove(key)
                 assignments.append(key + '=?')
