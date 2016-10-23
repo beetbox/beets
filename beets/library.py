@@ -746,9 +746,9 @@ class Item(LibModel):
         move its art. (This can be disabled by passing
         with_album=False.)
 
-        By default, the item is stored to the database if it is in the database,
-        so any dirty fields prior to the move() call will be written as a
-        side effect. You probably want to call save() to commit the DB
+        By default, the item is stored to the database if it is in the
+        database, so any dirty fields prior to the move() call will be written
+        as a side effect. You probably want to call save() to commit the DB
         transaction. If `store` is true however, the item won't be stored, and
         you'll have to manually store it after invoking this method.
         """
