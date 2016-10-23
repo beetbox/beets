@@ -1140,7 +1140,7 @@ def update_items(lib, query, album, move, pretend, fields):
                 if changed:
                     # Move the item if it's in the library.
                     if move and lib.directory in ancestry(item.path):
-                        item.move(fields=fields)
+                        item.move(store=False)
 
                     item.store(fields=fields)
                     affected_albums.add(item.album_id)
@@ -1173,7 +1173,14 @@ def update_items(lib, query, album, move, pretend, fields):
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
                 log.debug(u'moving album {0}', album_id)
-                album.move(fields=fields)
+
+                # Manually moving and storing the album.
+                items = list(album.items())
+                for item in items:
+                    item.move(store=False)
+                    item.store(fields=fields)
+                album.move(store=False)
+                album.store(fields=fields)
 
 
 def update_func(lib, opts, args):

@@ -730,7 +730,7 @@ class Item(LibModel):
         self._db._memotable = {}
 
     def move(self, copy=False, link=False, basedir=None, with_album=True,
-             fields=None):
+             store=True):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
@@ -746,10 +746,11 @@ class Item(LibModel):
         move its art. (This can be disabled by passing
         with_album=False.)
 
-        The item is stored to the database if it is in the database, so
-        any dirty fields prior to the move() call will be written as a
+        By default, the item is stored to the database if it is in the database,
+        so any dirty fields prior to the move() call will be written as a
         side effect. You probably want to call save() to commit the DB
-        transaction.
+        transaction. If `store` is true however, the item won't be stored, and
+        you'll have to manually store it after invoking this method.
         """
         self._check_db()
         dest = self.destination(basedir=basedir)
@@ -760,14 +761,16 @@ class Item(LibModel):
         # Perform the move and store the change.
         old_path = self.path
         self.move_file(dest, copy, link)
-        self.store(fields)
+        if store:
+            self.store()
 
         # If this item is in an album, move its art.
         if with_album:
             album = self.get_album()
             if album:
                 album.move_art(copy)
-                album.store(fields)
+                if store:
+                    album.store()
 
         # Prune vacated directory.
         if not copy:
@@ -1001,27 +1004,31 @@ class Album(LibModel):
             util.prune_dirs(os.path.dirname(old_art),
                             self._db.directory)
 
-    def move(self, copy=False, link=False, basedir=None, fields=None):
+    def move(self, copy=False, link=False, basedir=None, store=True):
         """Moves (or copies) all items to their destination. Any album
         art moves along with them. basedir overrides the library base
-        directory for the destination. The album is stored to the
-        database, persisting any modifications to its metadata.
+        directory for the destination. By default, the album is stored to the
+        database, persisting any modifications to its metadata. If `store` is
+        true however, the album is not stored automatically, and you'll have
+        to manually store it after invoking this method.
         """
         basedir = basedir or self._db.directory
 
         # Ensure new metadata is available to items for destination
         # computation.
-        self.store(fields)
+        if store:
+            self.store()
 
         # Move items.
         items = list(self.items())
         for item in items:
             item.move(copy, link, basedir=basedir, with_album=False,
-                      fields=fields)
+                      store=store)
 
         # Move art.
         self.move_art(copy, link)
-        self.store(fields)
+        if store:
+            self.store()
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
