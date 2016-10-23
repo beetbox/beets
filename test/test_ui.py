@@ -499,12 +499,14 @@ class UpdateTest(_common.TestCase):
         self.album.store()
         os.remove(artfile)
 
-    def _update(self, query=(), album=False, move=False, reset_mtime=True):
+    def _update(self, query=(), album=False, move=False, reset_mtime=True,
+                fields=None):
         self.io.addinput('y')
         if reset_mtime:
             self.i.mtime = 0
             self.i.store()
-        commands.update_items(self.lib, query, album, move, False)
+        commands.update_items(self.lib, query, album, move, False,
+                              fields=fields)
 
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))
@@ -549,6 +551,26 @@ class UpdateTest(_common.TestCase):
         item = self.lib.items().get()
         self.assertTrue(b'differentTitle' not in item.path)
 
+    def test_selective_modified_metadata_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.title = u'differentTitle'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=True, fields=['title'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentTitle' in item.path)
+        self.assertNotEqual(item.genre, u'differentGenre')
+
+    def test_selective_modified_metadata_not_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.title = u'differentTitle'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=False, fields=['title'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentTitle' not in item.path)
+        self.assertNotEqual(item.genre, u'differentGenre')
+
     def test_modified_album_metadata_moved(self):
         mf = MediaFile(self.i.path)
         mf.album = u'differentAlbum'
@@ -565,6 +587,26 @@ class UpdateTest(_common.TestCase):
         self._update(move=True)
         album = self.lib.albums()[0]
         self.assertNotEqual(artpath, album.artpath)
+
+    def test_selective_modified_album_metadata_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.album = u'differentAlbum'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=True, fields=['album'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentAlbum' in item.path)
+        self.assertNotEqual(item.genre, u'differentGenre')
+
+    def test_selective_modified_album_metadata_not_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.album = u'differentAlbum'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=True, fields=['genre'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentAlbum' not in item.path)
+        self.assertEqual(item.genre, u'differentGenre')
 
     def test_mtime_match_skips_update(self):
         mf = MediaFile(self.i.path)
