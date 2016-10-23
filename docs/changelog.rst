@@ -47,6 +47,8 @@ The are a couple of small new features:
 * ``beet --version`` now includes the python version used to run beets.
 * :doc:`/reference/pathformat` can now include unescaped commas (``,``) when
   they are not part of a function call. :bug:`2166` :bug:`2213`
+* The :ref:`update-cmd` command takes a new ``-F`` flag to specify the fields
+  to update. Thanks to :user:`dangmai`. :bug:`2229` :bug:`2231`
 
 And there are a few bug fixes too:
 
