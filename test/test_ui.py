@@ -588,6 +588,26 @@ class UpdateTest(_common.TestCase):
         album = self.lib.albums()[0]
         self.assertNotEqual(artpath, album.artpath)
 
+    def test_selective_modified_album_metadata_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.album = u'differentAlbum'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=True, fields=['album'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentAlbum' in item.path)
+        self.assertNotEqual(item.genre, u'differentGenre')
+
+    def test_selective_modified_album_metadata_not_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.album = u'differentAlbum'
+        mf.genre = u'differentGenre'
+        mf.save()
+        self._update(move=True, fields=['genre'])
+        item = self.lib.items().get()
+        self.assertTrue(b'differentAlbum' not in item.path)
+        self.assertEqual(item.genre, u'differentGenre')
+
     def test_mtime_match_skips_update(self):
         mf = MediaFile(self.i.path)
         mf.title = u'differentTitle'
