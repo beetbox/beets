@@ -69,6 +69,14 @@ new versions.
 
 .. _@b33ts: http://twitter.com/b33ts
 
+Installing on Mac OS X 10.11 and higher
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Starting with Mac OS X 10.11 (El Capitan), Apple has enabled `System Integrity Protection`_ (SIP), and because of SIP, some installation processes may fail, even with ``sudo``, because they intrude on protected areas of the system (if you've installed python via `Homebrew`_ this probably won't happen since the Python libraries are installed to an unrestricted folder). If this does happen, try installing beets only for the current user by running ``pip install --user beets``. It might also be a good idea to add ``~/Library/Python/2.7/bin`` to your ``$PATH``.
+
+.. _System Integrity Protection: https://support.apple.com/en-us/HT204899
+.. _Homebrew: http://brew.sh
+
 Installing on Windows
 ^^^^^^^^^^^^^^^^^^^^^
 
