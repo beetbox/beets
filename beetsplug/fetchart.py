@@ -292,8 +292,8 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
 
-    URL = 'http://coverartarchive.org/release/{mbid}/front'
-    GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
+    URL = 'https://coverartarchive.org/release/{mbid}/front'
+    GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
 
     def get(self, album, extra):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
@@ -310,7 +310,7 @@ class CoverArtArchive(RemoteArtSource):
 
 class Amazon(RemoteArtSource):
     NAME = u"Amazon"
-    URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
+    URL = 'https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
     INDICES = (1, 2)
 
     def get(self, album, extra):
@@ -324,7 +324,7 @@ class Amazon(RemoteArtSource):
 
 class AlbumArtOrg(RemoteArtSource):
     NAME = u"AlbumArt.org scraper"
-    URL = 'http://www.albumart.org/index_detail.php'
+    URL = 'https://www.albumart.org/index_detail.php'
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
     def get(self, album, extra):
@@ -395,7 +395,7 @@ class FanartTV(RemoteArtSource):
     """Art from fanart.tv requested using their API"""
     NAME = u"fanart.tv"
 
-    API_URL = 'http://webservice.fanart.tv/v3/'
+    API_URL = 'https://webservice.fanart.tv/v3/'
     API_ALBUMS = API_URL + 'music/albums/'
     PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
 
@@ -488,8 +488,8 @@ class ITunesStore(RemoteArtSource):
 
 class Wikipedia(RemoteArtSource):
     NAME = u"Wikipedia (queried through DBpedia)"
-    DBPEDIA_URL = 'http://dbpedia.org/sparql'
-    WIKIPEDIA_URL = 'http://en.wikipedia.org/w/api.php'
+    DBPEDIA_URL = 'https://dbpedia.org/sparql'
+    WIKIPEDIA_URL = 'https://en.wikipedia.org/w/api.php'
     SPARQL_QUERY = u'''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                  PREFIX dbpprop: <http://dbpedia.org/property/>
                  PREFIX owl: <http://dbpedia.org/ontology/>
