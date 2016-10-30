@@ -310,7 +310,7 @@ class CoverArtArchive(RemoteArtSource):
 
 class Amazon(RemoteArtSource):
     NAME = u"Amazon"
-    URL = 'https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
+    URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
     INDICES = (1, 2)
 
     def get(self, album, extra):
