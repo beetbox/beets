@@ -540,7 +540,7 @@ def track_for_mbid(recording_id):
         exc.log(log)
 
 
-@plugins.notify_info_received(u'albuminfo_received')
+@plugins.notify_info_yielded(u'albuminfo_received')
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     a = album_for_mbid(album_id)
@@ -551,7 +551,7 @@ def albums_for_id(album_id):
             yield a
 
 
-@plugins.notify_info_received(u'trackinfo_received')
+@plugins.notify_info_yielded(u'trackinfo_received')
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     t = track_for_mbid(track_id)
