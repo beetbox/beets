@@ -490,7 +490,7 @@ def sanitize_choices(choices, choices_all):
     return res
 
 
-def notify_info_received(msg):
+def notify_info_yielded(msg):
     def decorator(generator):
         def decorated(*args, **kwargs):
             for v in generator(*args, **kwargs):
