@@ -491,6 +491,12 @@ def sanitize_choices(choices, choices_all):
 
 
 def notify_info_yielded(event):
+    """Makes a generator send the event 'event' every time it yields.
+    This decorator is supposed to decorate a generator, but any function
+    returning an iterable should work.
+    Each yielded value is passed to plugins using the 'info' parameter of
+    'send'.
+    """
     def decorator(generator):
         def decorated(*args, **kwargs):
             for v in generator(*args, **kwargs):
