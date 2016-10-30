@@ -30,7 +30,7 @@ from beets import config
 import six
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
-BASE_URL = 'http://musicbrainz.org/'
+BASE_URL = 'https://musicbrainz.org/'
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
