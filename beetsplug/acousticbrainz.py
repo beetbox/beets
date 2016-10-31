@@ -153,13 +153,16 @@ class AcousticPlugin(plugins.BeetsPlugin):
         return data
 
     def _fetch_info(self, items, write):
-        """Get data from AcousticBrainz for the items.
+        """Fetch additional information from AcousticBrainz for the `item`s.
         """
-        for item in (item for item in items if item.mb_trackid):
+        for item in items:
+            if not item.mb_trackid:
+                continue
+
             self._log.info(u'getting data for: {}', item)
             data = self._get_data(item.mb_trackid)
             if data:
-                for attr, val in self._map_dict_to_scheme(data, ABSCHEME):
+                for attr, val in self._map_data_to_scheme(data, ABSCHEME):
                     self._log.info(u'attribute {} of {} set to {}',
                                    attr,
                                    item,
@@ -169,33 +172,108 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 if write:
                     item.try_write()
 
-    def _map_dict_to_scheme(self,
-                            d,
-                            s,
-                            composites=defaultdict(lambda: DefaultList('')),
-                            root=True):
-        for k, v in s.items():
-            if k in d:
+    def _map_data_to_scheme(self, data, scheme):
+        """Given `data` as a structure of nested dictionaries, and `scheme` as a
+        structure of nested dictionaries , `yield` tuples `(attr, val)` where
+        `attr` and `val` are corresponding leaf nodes in `scheme` and `data`.
+
+        As its name indicates, `scheme` defines how the data is structured,
+        so this function tries to find leaf nodes in `data` that correspond
+        to the leafs nodes of `scheme`, and not the other way around.
+        Leaf nodes of `data` that do not exist in the `scheme` do not matter.
+        If a leaf node of `scheme` is not present in `data`,
+        no value is yielded for that attribute and a simple warning is issued.
+
+        Finally, to account for attributes of which the value is split between
+        several leaf nodes in `data`, leaf nodes of `scheme` can be tuples
+        `(attr, order)` where `attr` is the attribute to which the leaf node
+        belongs, and `order` is the place at which it should appear in the
+        value. The different `value`s belonging to the same `attr` are simply
+        joined with `' '`. This is hardcoded and not very flexible, but it gets
+        the job done.
+
+        Example:
+        >>> scheme = {
+            'key1': 'attribute',
+            'key group': {
+                'subkey1': 'subattribute',
+                'subkey2': ('composite attribute', 0)
+            },
+            'key2': ('composite attribute', 1)
+        }
+        >>> data = {
+            'key1': 'value',
+            'key group': {
+                'subkey1': 'subvalue',
+                'subkey2': 'part 1 of composite attr'
+            },
+            'key2': 'part 2'
+        }
+        >>> print(list(_map_data_to_scheme(data, scheme)))
+        [('subattribute', 'subvalue'),
+         ('attribute', 'value'),
+         ('composite attribute', 'part 1 of composite attr part 2')]
+        """
+        """First, we traverse `scheme` and `data`, `yield`ing all the non
+        composites attributes straight away and populating the dictionary
+        `composites` with the composite attributes.
+
+        When we are finished traversing `scheme`, `composites` should map
+        each composite attribute to an ordered list of the values belonging to
+        the attribute, for example:
+        `composites = {'initial_key': ['B', 'minor']}`.
+
+        composites is a `defaultdict` of `DefaultList`s (defined below).
+        It is a `defaultdict` by pure convenience. It holds `DefaultList`s
+        because the values of a composite attribute can be inserted out of
+        order, and we do not know the final length of a composite attribute in
+        advance. So, if we have
+        `composites = {}`
+        and then
+        `composites['initial_key'][1] = 'minor'`
+        happens, we want the result to be:
+        `composites = {'initial_key': ['', 'minor']}`
+        """
+        composites = defaultdict(lambda: DefaultList(''))
+        # The recursive traversal
+        for attr, val in self._data_to_scheme_child(data,
+                                                    scheme,
+                                                    composites):
+            yield attr, val
+        """When composites has been populated, yield the composite attributes
+        by joining their parts.
+        """
+        for composite_attr, value_parts in composites.items():
+            yield composite_attr, ' '.join(value_parts)
+
+    def _data_to_scheme_child(self, subdata, subscheme, composites):
+        """The recursive business logic of :meth:`_map_data_to_scheme`:
+        Traverse two structures of nested dictionaries in parallel and `yield`
+        tuples of corresponding leaf nodes.
+
+        If a leaf node belongs to a composite attribute (is a `tuple`),
+        populate `composites` rather than yielding straight away.
+        All the child functions for a single traversal share the same
+        `composites` instance, which is passed along.
+        """
+        for k, v in subscheme.items():
+            if k in subdata:
                 if type(v) == dict:
-                    for yielded in self._map_dict_to_scheme(d[k],
-                                                            v,
-                                                            composites,
-                                                            root=False):
+                    for yielded in self._data_to_scheme_child(subdata[k],
+                                                              v,
+                                                              composites):
                         yield yielded
                 elif type(v) == tuple:
-                    composites.setdefault(v[0], DefaultList(''))[v[1]] = d[k]
+                    composites[v[0]][v[1]] = subdata[k]
                 else:
-                    yield (v, d[k])
+                    yield v, subdata[k]
             else:
                 self._log.debug(u'Data {} could not be mapped to scheme {} '
-                                u'because key {} was not found', d, v, k)
-        if root:
-            for k, v in composites.items():
-                yield k, ' '.join(v)
+                                u'because key {} was not found', subdata, v, k)
 
 
 def _generate_urls(mbid):
-    """Generates AcousticBrainz end point url for given MBID.
+    """Generates AcousticBrainz end point urls for given `mbid`.
     """
     for level in LEVELS:
         yield ACOUSTIC_BASE + mbid + level
