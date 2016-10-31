@@ -18,13 +18,90 @@
 from __future__ import division, absolute_import, print_function
 
 import requests
-import operator
 
+from collections import defaultdict
+from beets.util.collections import DefaultList
 from beets import plugins, ui
-from functools import reduce
 
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
 LEVELS = ["/low-level", "/high-level"]
+ABSCHEME = {
+    'highlevel': {
+        'danceability': {
+            'all': {
+                'danceable': 'danceable'
+            }
+        },
+        'gender': {
+            'value': 'gender'
+        },
+        'genre_rosamerica': {
+            'value': 'genre_rosamerica'
+        },
+        'mood_acoustic': {
+            'all': {
+                'acoustic': 'mood_acoustic'
+            }
+        },
+        'mood_aggressive': {
+            'all': {
+                'aggressive': 'mood_aggressive'
+            }
+        },
+        'mood_electronic': {
+            'all': {
+                'electronic': 'mood_electronic'
+            }
+        },
+        'mood_happy': {
+            'all': {
+                'happy': 'mood_happy'
+            }
+        },
+        'mood_party': {
+            'all': {
+                'party': 'mood_party'
+            }
+        },
+        'mood_relaxed': {
+            'all': {
+                'relaxed': 'mood_relaxed'
+            }
+        },
+        'mood_sad': {
+            'all': {
+                'sad': 'mood_sad'
+            }
+        },
+        'ismir04_rhythm': {
+            'value': 'rhythm'
+        },
+        'tonal_atonal': {
+            'all': {
+                'tonal': 'tonal'
+            }
+        },
+        'voice_instrumental': {
+            'value': 'voice_instrumental'
+        },
+    },
+    'lowlevel': {
+        'average_loudness': 'average_loudness'
+    },
+    'rhythm': {
+        'bpm': 'bpm'
+    },
+    'tonal': {
+        'chords_changes_rate': 'chords_changes_rate',
+        'chords_key': 'chords_key',
+        'chords_number_rate': 'chords_number_rate',
+        'chords_scale': 'chords_scale',
+        'key_key': ('initial_key', 0),
+        'key_scale': ('initial_key', 1),
+        'key_strength': 'key_strength'
+
+    }
+}
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
@@ -52,91 +129,6 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """
         self._fetch_info(task.imported_items(), False)
 
-    def _fetch_info(self, items, write):
-        """Get data from AcousticBrainz for the items.
-        """
-
-        def get_value(*map_path):
-            try:
-                return reduce(operator.getitem, map_path, data)
-            except KeyError:
-                log.debug(u'Invalid Path: {}', map_path)
-
-        for item in (item for item in items if item.mb_trackid):
-            self._log.info(u'getting data for: {}', item)
-            data = self._get_data(item.mb_trackid)
-            if data:
-                # Get each field and assign it on the item.
-                item.danceable = get_value(
-                    "highlevel", "danceability", "all", "danceable",
-                )
-                item.gender = get_value(
-                    "highlevel", "gender", "value",
-                )
-                item.genre_rosamerica = get_value(
-                    "highlevel", "genre_rosamerica", "value"
-                )
-                item.mood_acoustic = get_value(
-                    "highlevel", "mood_acoustic", "all", "acoustic"
-                )
-                item.mood_aggressive = get_value(
-                    "highlevel", "mood_aggressive", "all", "aggressive"
-                )
-                item.mood_electronic = get_value(
-                    "highlevel", "mood_electronic", "all", "electronic"
-                )
-                item.mood_happy = get_value(
-                    "highlevel", "mood_happy", "all", "happy"
-                )
-                item.mood_party = get_value(
-                    "highlevel", "mood_party", "all", "party"
-                )
-                item.mood_relaxed = get_value(
-                    "highlevel", "mood_relaxed", "all", "relaxed"
-                )
-                item.mood_sad = get_value(
-                    "highlevel", "mood_sad", "all", "sad"
-                )
-                item.rhythm = get_value(
-                    "highlevel", "ismir04_rhythm", "value"
-                )
-                item.tonal = get_value(
-                    "highlevel", "tonal_atonal", "all", "tonal"
-                )
-                item.voice_instrumental = get_value(
-                    "highlevel", "voice_instrumental", "value"
-                )
-                item.average_loudness = get_value(
-                    "lowlevel", "average_loudness"
-                )
-                item.bpm = get_value(
-                    "rhythm", "bpm"
-                )
-                item.chords_changes_rate = get_value(
-                    "tonal", "chords_changes_rate"
-                )
-                item.chords_key = get_value(
-                    "tonal", "chords_key"
-                )
-                item.chords_number_rate = get_value(
-                    "tonal", "chords_number_rate"
-                )
-                item.chords_scale = get_value(
-                    "tonal", "chords_scale"
-                )
-                item.initial_key = '{} {}'.format(
-                    get_value("tonal", "key_key"),
-                    get_value("tonal", "key_scale")
-                )
-                item.key_strength = get_value(
-                    "tonal", "key_strength"
-                )
-
-                # Store the data.
-                item.store()
-                if write:
-                    item.try_write()
-
     def _get_data(self, mbid):
         data = {}
         for url in _generate_urls(mbid):
@@ -159,6 +151,49 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 return {}
 
         return data
+
+    def _fetch_info(self, items, write):
+        """Get data from AcousticBrainz for the items.
+        """
+        for item in (item for item in items if item.mb_trackid):
+            self._log.info(u'getting data for: {}', item)
+            data = self._get_data(item.mb_trackid)
+            if data:
+                # Get each field and assign it on the item.
+                for attr, val in self._map_dict_to_scheme(data, ABSCHEME):
+                    self._log.debug(u'attribute {} of {} set to {}',
+                                    attr,
+                                    item,
+                                    val)
+                    setattr(item, attr, val)
+                # Store the data.
+                item.store()
+                if write:
+                    item.try_write()
+
+    def _map_dict_to_scheme(self,
+                            d,
+                            s,
+                            composites=defaultdict(lambda: DefaultList('')),
+                            root=True):
+        for k, v in s.items():
+            if k in d:
+                if type(v) == dict:
+                    for yielded in self._map_dict_to_scheme(d[k],
+                                                            v,
+                                                            composites,
+                                                            root=False):
+                        yield yielded
+                elif type(v) == tuple:
+                    composites.setdefault(v[0], DefaultList(''))[v[1]] = d[k]
+                else:
+                    yield (v, d[k])
+            else:
+                self._log.debug(u'Data {} could not be mapped to scheme {} '
+                                u'because key {} was not found', d, v, k)
+        if root:
+            for k, v in composites.items():
+                yield k, ' '.join(v)
 
 
 def _generate_urls(mbid):
