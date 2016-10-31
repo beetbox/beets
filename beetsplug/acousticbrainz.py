@@ -159,14 +159,12 @@ class AcousticPlugin(plugins.BeetsPlugin):
             self._log.info(u'getting data for: {}', item)
             data = self._get_data(item.mb_trackid)
             if data:
-                # Get each field and assign it on the item.
                 for attr, val in self._map_dict_to_scheme(data, ABSCHEME):
                     self._log.debug(u'attribute {} of {} set to {}',
                                     attr,
                                     item,
                                     val)
                     setattr(item, attr, val)
-                # Store the data.
                 item.store()
                 if write:
                     item.try_write()
