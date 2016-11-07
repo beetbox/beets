@@ -29,7 +29,7 @@ from beets import importer
 from beets import ui
 from beets import util
 from beets import config
-from beets.mediafile import _image_mime_type
+from beets.mediafile import image_mime_type
 from beets.util.artresizer import ArtResizer
 from beets.util import confit
 from beets.util import syspath, bytestring_path, py3_path
@@ -250,7 +250,7 @@ class RemoteArtSource(ArtSource):
                     # server didn't return enough data, i.e. corrupt image
                     return
 
-                real_ct = _image_mime_type(header)
+                real_ct = image_mime_type(header)
                 if real_ct is None:
                     # detection by file magic failed, fall back to the
                     # server-supplied Content-Type

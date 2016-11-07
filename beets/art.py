@@ -22,7 +22,6 @@ from __future__ import division, absolute_import, print_function
 import subprocess
 import platform
 from tempfile import NamedTemporaryFile
-import imghdr
 import os
 
 from beets.util import displayable_path, syspath, bytestring_path

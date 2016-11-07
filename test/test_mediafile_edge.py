@@ -91,7 +91,7 @@ class EdgeTest(unittest.TestCase):
         with open(magic_bytes_file, 'rb') as f:
             jpg_data = f.read()
         self.assertEqual(
-            beets.mediafile._image_mime_type(jpg_data),
+            beets.mediafile.image_mime_type(jpg_data),
             'image/jpeg')
 
     def test_soundcheck_non_ascii(self):
