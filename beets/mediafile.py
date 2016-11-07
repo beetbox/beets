@@ -308,6 +308,17 @@ def _sc_encode(gain, peak):
 
 
 # Cover art and other images.
+def _imghdr_what_wrapper(data):
+    """A wrapper around imghdr.what to account for jpeg files that can only be
+    identified as such using their magic bytes
+    See #1545
+    See https://github.com/file/file/blob/master/magic/Magdir/jpeg#L12
+    """
+    # imghdr.what returns none for jpegs with only the magic bytes, so
+    # _wider_test_jpeg is run in that case. It still returns None if it didn't
+    # match such a jpeg file.
+    return imghdr.what(None, h=data) or _wider_test_jpeg(data)
+
 
 def _wider_test_jpeg(data):
     """Test for a jpeg file following the UNIX file implementation which
@@ -318,14 +329,14 @@ def _wider_test_jpeg(data):
         return 'jpeg'
 
 
-def _image_mime_type(data):
+def image_mime_type(data):
     """Return the MIME type of the image data (a bytestring).
     """
     # This checks for a jpeg file with only the magic bytes (unrecognized by
     # imghdr.what). imghdr.what returns none for that type of file, so
     # _wider_test_jpeg is run in that case. It still returns None if it didn't
     # match such a jpeg file.
-    kind = imghdr.what(None, h=data) or _wider_test_jpeg(data)
+    kind = _imghdr_what_wrapper(data)
     if kind in ['gif', 'jpeg', 'png', 'tiff', 'bmp']:
         return 'image/{0}'.format(kind)
     elif kind == 'pgm':
@@ -394,7 +405,7 @@ class Image(object):
     @property
     def mime_type(self):
         if self.data:
-            return _image_mime_type(self.data)
+            return image_mime_type(self.data)
 
     @property
     def type_index(self):
