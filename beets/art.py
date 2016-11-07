@@ -180,7 +180,7 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
                 log.debug(u'IM output is not a number: {0!r}', out_str)
                 return
 
-            log.debug(u'ImageMagick copmare score: {0}', phash_diff)
+            log.debug(u'ImageMagick compare score: {0}', phash_diff)
             return phash_diff <= compare_threshold
 
     return True
