@@ -59,6 +59,7 @@ import enum
 
 from beets import logging
 from beets.util import displayable_path, syspath, as_string
+from beets.util.collections import IdentityUnlessDict
 import six
 
 
@@ -80,6 +81,8 @@ TYPES = {
     'asf':  'Windows Media',
     'aiff': 'AIFF',
 }
+
+PREFERRED_IMAGE_EXTENSIONS = IdentityUnlessDict({'jpeg': 'jpg'})
 
 
 # Exceptions.
@@ -349,6 +352,10 @@ def image_mime_type(data):
         return 'image/x-xbitmap'
     else:
         return 'image/x-{0}'.format(kind)
+
+
+def image_extension(data):
+    return PREFERRED_IMAGE_EXTENSIONS[_imghdr_what_wrapper(data)]
 
 
 class ImageType(enum.Enum):
