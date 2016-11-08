@@ -59,7 +59,7 @@ import enum
 
 from beets import logging
 from beets.util import displayable_path, syspath, as_string
-from beets.util.collections import IdentityUnlessDict
+from beets.util.collections import IdentityFallbackDict
 import six
 
 
@@ -82,7 +82,7 @@ TYPES = {
     'aiff': 'AIFF',
 }
 
-PREFERRED_IMAGE_EXTENSIONS = IdentityUnlessDict({'jpeg': 'jpg'})
+PREFERRED_IMAGE_EXTENSIONS = IdentityFallbackDict({'jpeg': 'jpg'})
 
 
 # Exceptions.

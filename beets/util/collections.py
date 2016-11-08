@@ -16,7 +16,7 @@
 """
 
 
-class IdentityUnlessDict(dict):
+class IdentityFallbackDict(dict):
     """A dictionary which is "transparent" (maps keys to themselves) for all
     keys not in it.
     """
