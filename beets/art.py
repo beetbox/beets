@@ -22,7 +22,6 @@ from __future__ import division, absolute_import, print_function
 import subprocess
 import platform
 from tempfile import NamedTemporaryFile
-import imghdr
 import os
 
 from beets.util import displayable_path, syspath, bytestring_path
@@ -194,7 +193,7 @@ def extract(log, outpath, item):
         return
 
     # Add an extension to the filename.
-    ext = imghdr.what(None, h=art)
+    ext = mediafile.image_extension(art)
     if not ext:
         log.warning(u'Unknown image type in {0}.',
                     displayable_path(item.path))
