@@ -163,6 +163,17 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         self.assertExists(os.path.join(albumpath, b'extracted.png'))
 
+    def test_extracted_extension(self):
+        resource_path = os.path.join(_common.RSRC, b'image-jpeg.mp3')
+        album = self.add_album_fixture()
+        trackpath = album.items()[0].path
+        albumpath = album.path
+        shutil.copy(syspath(resource_path), syspath(trackpath))
+
+        self.run_command('extractart', '-n', 'extracted')
+
+        self.assertExists(os.path.join(albumpath, b'extracted.jpg'))
+
 
 @patch('beets.art.subprocess')
 @patch('beets.art.extract')
