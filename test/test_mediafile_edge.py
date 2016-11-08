@@ -91,8 +91,7 @@ class EdgeTest(unittest.TestCase):
         with open(magic_bytes_file, 'rb') as f:
             jpg_data = f.read()
         self.assertEqual(
-            beets.mediafile._image_mime_type(jpg_data),
-            'image/jpeg')
+            beets.mediafile._imghdr_what_wrapper(jpg_data), 'jpeg')
 
     def test_soundcheck_non_ascii(self):
         # Make sure we don't crash when the iTunes SoundCheck field contains

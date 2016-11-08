@@ -52,6 +52,12 @@ The are a couple of small new features:
 
 And there are a few bug fixes too:
 
+* :doc:`/plugins/embedart`: The plugin now uses ``jpg`` as an extension rather
+  than ``jpeg``, to ensure consistency with :doc:`plugins/fetchart`.
+  Thanks to :user:`tweitzel`. :bug:`2254` :bug:`2255`
+* :doc:`/plugins/embedart`: The plugin now works for all jpeg files, including
+  those that are only recognizable by their magic bytes.
+  :bug:`1545` :bug:`2255`
 * :doc:`/plugins/web`: The JSON output is no longer pretty-printed (for a
   space savings). :bug:`2050`
 * :doc:`/plugins/permissions`: Fix a regression in the previous release where
@@ -70,7 +76,7 @@ And there are a few bug fixes too:
   This is fixed. :bug:`2168`
 * :doc:`/plugins/embyupdate`: Fixes authentication header problem that caused
   a problem that it was not possible to get tokens from the Emby API.
-* :doc:`/plugins/lyrics`: Search for lyrics using the title part preceding the 
+* :doc:`/plugins/lyrics`: Search for lyrics using the title part preceding the
   colon character. :bug:`2206`
 * Fix a crash when a query contains a date field that is not set for all
   the items. :bug:`1938`
