@@ -24,6 +24,7 @@ from beets.ui import decargs, print_, Subcommand
 from beets import config
 from beets.dbcore import types
 
+
 def _missing_count(album):
     """Return number of missing items in `album`.
     """
@@ -83,7 +84,7 @@ class MissingPlugin(BeetsPlugin):
     """
 
     album_types = {
-       'missing':  types.INTEGER,
+        'missing':  types.INTEGER,
     }
 
     def __init__(self):
