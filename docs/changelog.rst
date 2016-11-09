@@ -84,6 +84,8 @@ And there are a few bug fixes too:
   single track, two-sided mediums are treated as single discs, and tracks
   have ``media``, ``medium_total`` and ``medium`` set correctly. :bug:`2222`
   :bug:`2228`.
+* :doc:`/plugins/missing`: ``missing`` is now treated as an integer, allowing
+  the use of (for example) ranges in queries.
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
