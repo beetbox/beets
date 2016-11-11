@@ -150,8 +150,9 @@ class SmartPlaylistTest(unittest.TestCase):
         spl = SmartPlaylistPlugin()
 
         i = Mock(path=b'/tagada.mp3')
-        i.evaluate_template.side_effect = lambda pl, _: pl.replace(b'$title', b'ta:ga:da').decode()
-                          
+        title_replacer = lambda pl, _: pl.replace(b'$title', b'ta:ga:da').decode()
+        i.evaluate_template.side_effect = title_replacer
+
         lib = Mock()
         lib.replacements = CHAR_REPLACE
         lib.items.return_value = [i]
@@ -181,7 +182,8 @@ class SmartPlaylistTest(unittest.TestCase):
         rmtree(dir)
 
         self.assertEqual(content, b'/tagada.mp3\n')
-        
+
+
 class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
