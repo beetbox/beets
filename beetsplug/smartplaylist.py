@@ -173,7 +173,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         for playlist in self._matched_playlists:
             name, (query, q_sort), (album_query, a_q_sort) = playlist
-            self._log.debug(u"Creating playlist {0}", name)
+            sanitized_name = sanitize_path(name, lib.replacements)
+            self._log.debug(u"Creating playlist {0}", sanitized_name)
             items = []
 
             if query:
@@ -186,7 +187,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
             for item in items:
-                m3u_name = sanitize_path(item.evaluate_template(name, True), lib.replacements)
+                m3u_name = item.evaluate_template(sanitized_name, True)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
                 item_path = item.path
