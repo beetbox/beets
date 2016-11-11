@@ -150,7 +150,7 @@ class SmartPlaylistTest(unittest.TestCase):
         spl = SmartPlaylistPlugin()
 
         i = Mock(path=b'/tagada.mp3')
-        i.evaluate_template.side_effect = lambda x, _: x
+        i.evaluate_template.side_effect = lambda pl, _: pl.replace('$title', 'ta:ga:da')
         
         lib = Mock()
         lib.replacements = CHAR_REPLACE
@@ -159,7 +159,7 @@ class SmartPlaylistTest(unittest.TestCase):
 
         q = Mock()
         a_q = Mock()
-        pl = b'.my:<playlist>.m3u', (q, None), (a_q, None)
+        pl = b'$title-my<playlist>.m3u', (q, None), (a_q, None)
         spl._matched_playlists = [pl]
 
         dir = bytestring_path(mkdtemp())
@@ -174,7 +174,7 @@ class SmartPlaylistTest(unittest.TestCase):
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = path.join(dir, b'_my__playlist_.m3u')
+        m3u_filepath = path.join(dir, b'ta_ga_da-my_playlist_.m3u')
         self.assertTrue(path.exists(m3u_filepath))
         with open(syspath(m3u_filepath), 'rb') as f:
             content = f.read()
