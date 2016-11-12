@@ -385,25 +385,21 @@ class ConvertPlugin(BeetsPlugin):
                 util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
-        if not opts.dest:
-            opts.dest = self.config['dest'].get()
-        if not opts.dest:
+        dest = opts.dest or self.config['dest'].get()
+        if not dest:
             raise ui.UserError(u'no convert destination set')
-        opts.dest = util.bytestring_path(opts.dest)
+        dest = util.bytestring_path(dest)
 
-        if not opts.threads:
-            opts.threads = self.config['threads'].get(int)
+        threads = opts.threads or self.config['threads'].get(int)
 
-        if self.config['paths']:
-            path_formats = ui.get_path_formats(self.config['paths'])
+        path_formats = ui.get_path_formats(self.config['paths'] or None)
+
+        fmt = opts.format or self.config['format'].as_str().lower()
+
+        if opts.pretend is not None:
+            pretend = opts.pretend
         else:
-            path_formats = ui.get_path_formats()
-
-        if not opts.format:
-            opts.format = self.config['format'].as_str().lower()
-
-        pretend = opts.pretend if opts.pretend is not None else \
-            self.config['pretend'].get(bool)
+            pretend = self.config['pretend'].get(bool)
 
         if not pretend:
             ui.commands.list_items(lib, ui.decargs(args), opts.album)
@@ -416,16 +412,15 @@ class ConvertPlugin(BeetsPlugin):
             items = (i for a in albums for i in a.items())
             if self.config['copy_album_art']:
                 for album in albums:
-                    self.copy_album_art(album, opts.dest, path_formats,
-                                        pretend)
+                    self.copy_album_art(album, dest, path_formats, pretend)
         else:
             items = iter(lib.items(ui.decargs(args)))
-        convert = [self.convert_item(opts.dest,
+        convert = [self.convert_item(dest,
                                      opts.keep_new,
                                      path_formats,
-                                     opts.format,
+                                     fmt,
                                      pretend)
-                   for _ in range(opts.threads)]
+                   for _ in range(threads)]
         pipe = util.pipeline.Pipeline([items, convert])
         pipe.run_parallel()
 
