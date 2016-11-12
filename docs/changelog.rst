@@ -32,8 +32,6 @@ Deprecated configuration optional removals:
 
 The are a couple of small new features:
 
-* :doc:`/plugins/smartplaylist`: Playlist names will be sanitized to
-  ensure valid filenames. :bug:`2258`
 * :doc:`/plugins/mpdupdate`, :doc:`/plugins/mpdstats`: When the ``host`` option
   is not set, these plugins will now look for the ``$MPD_HOST`` environment
   variable before falling back to ``localhost``. Thanks to :user:`tarruda`.
@@ -88,6 +86,8 @@ And there are a few bug fixes too:
   :bug:`2228`.
 * :doc:`/plugins/missing`: ``missing`` is now treated as an integer, allowing
   the use of (for example) ranges in queries.
+* :doc:`/plugins/smartplaylist`: Playlist names will be sanitized to
+  ensure valid filenames. :bug:`2258`
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
