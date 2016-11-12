@@ -401,27 +401,35 @@ class ConvertPlugin(BeetsPlugin):
         else:
             pretend = self.config['pretend'].get(bool)
 
-        if not pretend:
-            ui.commands.list_items(lib, ui.decargs(args), opts.album)
-
-            if not (opts.yes or ui.input_yn(u"Convert? (Y/n)")):
-                return
-
         if opts.album:
             albums = lib.albums(ui.decargs(args))
-            items = (i for a in albums for i in a.items())
-            if self.config['copy_album_art']:
-                for album in albums:
-                    self.copy_album_art(album, dest, path_formats, pretend)
+            items = [i for a in albums for i in a.items()]
+            if not pretend:
+                for a in albums:
+                    ui.print_(format(a, u''))
         else:
-            items = iter(lib.items(ui.decargs(args)))
+            items = list(lib.items(ui.decargs(args)))
+            if not pretend:
+                for i in items:
+                    ui.print_(format(i, u''))
+
+        if not items:
+            self._log.error(u'Empty query result.')
+            return
+        if not (pretend or opts.yes or ui.input_yn(u"Convert? (Y/n)")):
+            return
+
+        if opts.album and self.config['copy_album_art']:
+            for album in albums:
+                self.copy_album_art(album, dest, path_formats, pretend)
+
         convert = [self.convert_item(dest,
                                      opts.keep_new,
                                      path_formats,
                                      fmt,
                                      pretend)
                    for _ in range(threads)]
-        pipe = util.pipeline.Pipeline([items, convert])
+        pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
 
     def convert_on_import(self, lib, item):
