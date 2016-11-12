@@ -20,7 +20,8 @@ from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.util import mkdirall, normpath, syspath, bytestring_path
+from beets.util import (mkdirall, normpath, sanitize_path, syspath,
+                        bytestring_path)
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
@@ -187,6 +188,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             # the items and generate the correct m3u file names.
             for item in items:
                 m3u_name = item.evaluate_template(name, True)
+                m3u_name = sanitize_path(m3u_name, lib.replacements)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
                 item_path = item.path
