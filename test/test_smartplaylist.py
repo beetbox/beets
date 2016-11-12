@@ -151,7 +151,7 @@ class SmartPlaylistTest(unittest.TestCase):
 
         i = Mock(path=b'/tagada.mp3')
         i.evaluate_template.side_effect = \
-             lambda pl, _: pl.replace(b'$title', b'ta:ga:da').decode()
+            lambda pl, _: pl.replace(b'$title', b'ta:ga:da').decode()
 
         lib = Mock()
         lib.replacements = CHAR_REPLACE
