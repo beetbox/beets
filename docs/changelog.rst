@@ -32,6 +32,8 @@ Deprecated configuration optional removals:
 
 The are a couple of small new features:
 
+* :doc:`/plugins/smartplaylist`: Playlist names will be sanitized to
+  ensure valid filenames. :bug:`2258`
 * :doc:`/plugins/mpdupdate`, :doc:`/plugins/mpdstats`: When the ``host`` option
   is not set, these plugins will now look for the ``$MPD_HOST`` environment
   variable before falling back to ``localhost``. Thanks to :user:`tarruda`.

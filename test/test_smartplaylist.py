@@ -25,7 +25,7 @@ from beetsplug.smartplaylist import SmartPlaylistPlugin
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import NullSort, MultipleSort, FixedFieldSort
-from beets.util import syspath, bytestring_path, py3_path
+from beets.util import syspath, bytestring_path, py3_path, CHAR_REPLACE
 from beets.ui import UserError
 from beets import config
 
@@ -150,13 +150,17 @@ class SmartPlaylistTest(unittest.TestCase):
         spl = SmartPlaylistPlugin()
 
         i = Mock(path=b'/tagada.mp3')
-        i.evaluate_template.side_effect = lambda x, _: x
-        q = Mock()
-        a_q = Mock()
+        i.evaluate_template.side_effect = \
+             lambda pl, _: pl.replace(b'$title', b'ta:ga:da').decode()
+
         lib = Mock()
+        lib.replacements = CHAR_REPLACE
         lib.items.return_value = [i]
         lib.albums.return_value = []
-        pl = b'my_playlist.m3u', (q, None), (a_q, None)
+
+        q = Mock()
+        a_q = Mock()
+        pl = b'$title-my<playlist>.m3u', (q, None), (a_q, None)
         spl._matched_playlists = [pl]
 
         dir = bytestring_path(mkdtemp())
@@ -171,7 +175,7 @@ class SmartPlaylistTest(unittest.TestCase):
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = path.join(dir, pl[0])
+        m3u_filepath = path.join(dir, b'ta_ga_da-my_playlist_.m3u')
         self.assertTrue(path.exists(m3u_filepath))
         with open(syspath(m3u_filepath), 'rb') as f:
             content = f.read()
