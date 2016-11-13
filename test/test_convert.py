@@ -20,7 +20,7 @@ import os.path
 from test import _common
 from test._common import unittest
 from test import helper
-from test.helper import control_stdin
+from test.helper import control_stdin, capture_log
 
 from beets.mediafile import MediaFile
 from beets import util
@@ -214,6 +214,11 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         self.run_convert('--pretend')
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFalse(os.path.exists(converted))
+
+    def test_empty_query(self):
+        with capture_log('beets.convert') as logs:
+            self.run_convert('An impossible query')
+        self.assertEqual(logs[0], u'convert: Empty query result.')
 
 
 @_common.slow_test()

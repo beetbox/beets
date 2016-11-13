@@ -52,6 +52,8 @@ The are a couple of small new features:
 
 And there are a few bug fixes too:
 
+* :doc:`/plugins/convert`: The plugin no longer asks for confirmation if the
+  query did not return anything to convert. :bug:`2260` :bug:`2262`
 * :doc:`/plugins/embedart`: The plugin now uses ``jpg`` as an extension rather
   than ``jpeg``, to ensure consistency with :doc:`plugins/fetchart`.
   Thanks to :user:`tweitzel`. :bug:`2254` :bug:`2255`
