@@ -168,7 +168,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.assertFileTag(converted, 'mp3')
 
-    def test_rejecet_confirmation(self):
+    def test_reject_confirmation(self):
         with control_stdin('n'):
             self.run_convert()
         converted = os.path.join(self.convert_dest, b'converted.mp3')
