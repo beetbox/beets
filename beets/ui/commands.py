@@ -87,7 +87,7 @@ def _print_keys(query):
     returned row, with identation of 2 spaces.
     """
     for row in query:
-        print_(u' ' * 2 + row['key'].decode('utf-8'))
+        print_(u' ' * 2 + row['key'])
 
 
 def fields_func(lib, opts, args):
