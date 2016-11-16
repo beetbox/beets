@@ -230,7 +230,7 @@ class SymbolsReplaced(Backend):
         '>': 'Greater_Than',
         '#': 'Number_',
         r'[\[\{]': '(',
-        r'[\[\{]': ')'
+        r'[\]\}]': ')',
     }
 
     @classmethod
