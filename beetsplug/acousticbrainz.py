@@ -20,7 +20,6 @@ from __future__ import division, absolute_import, print_function
 import requests
 
 from collections import defaultdict
-from beets.util.collections import DefaultList
 from beets import plugins, ui
 
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
@@ -222,19 +221,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
         each composite attribute to an ordered list of the values belonging to
         the attribute, for example:
         `composites = {'initial_key': ['B', 'minor']}`.
-
-        composites is a `defaultdict` of `DefaultList`s (defined below).
-        It is a `defaultdict` by pure convenience. It holds `DefaultList`s
-        because the values of a composite attribute can be inserted out of
-        order, and we do not know the final length of a composite attribute in
-        advance. So, if we have
-        `composites = {}`
-        and then
-        `composites['initial_key'][1] = 'minor'`
-        happens, we want the result to be:
-        `composites = {'initial_key': ['', 'minor']}`
         """
-        composites = defaultdict(lambda: DefaultList(''))
+        composites = defaultdict(list)
         # The recursive traversal
         for attr, val in self._data_to_scheme_child(data,
                                                     scheme,
@@ -264,7 +252,12 @@ class AcousticPlugin(plugins.BeetsPlugin):
                                                               composites):
                         yield yielded
                 elif type(v) == tuple:
-                    composites[v[0]][v[1]] = subdata[k]
+                    composite_attribute, part_number = v
+                    attribute_parts = composites[composite_attribute]
+                    # Parts are not guaranteed to be inserted in order
+                    while len(attribute_parts) <= part_number:
+                        attribute_parts.append('')
+                    attribute_parts[part_number] = subdata[k]
                 else:
                     yield v, subdata[k]
             else:

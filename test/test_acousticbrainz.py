@@ -23,22 +23,7 @@ import os.path
 
 from test._common import unittest, RSRC
 
-from beetsplug.acousticbrainz import DefaultList, AcousticPlugin, ABSCHEME
-
-
-class DefaultListTest(unittest.TestCase):
-    def test_getitem(self):
-        default_list = DefaultList('foo')
-        default_value = default_list[2]
-        self.assertEqual(default_value, 'foo')
-        self.assertEqual(default_list, ['foo', 'foo', 'foo'])
-
-    def test_setitem(self):
-        default_list = DefaultList('foo')
-        default_list[2] = 'bar'
-        self.assertEqual(default_list, ['foo', 'foo', 'bar'])
-        default_list[1] = 'baz'
-        self.assertEqual(default_list, ['foo', 'baz', 'bar'])
+from beetsplug.acousticbrainz import AcousticPlugin, ABSCHEME
 
 
 class MapDataToSchemeTest(unittest.TestCase):
