@@ -920,7 +920,16 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         frame.data = image.data
         frame.mime = image.mime_type
         frame.desc = image.desc or u''
-        frame.encoding = 3  # UTF-8 encoding of desc
+
+        # For compatibility with OS X/iTunes prefer latin-1 if possible.
+        # See issue #899
+        try:
+            frame.desc.encode("latin-1")
+        except UnicodeEncodeError:
+            frame.encoding = 1  # utf-16
+        else:
+            frame.encoding = 0  # latin-1 if possible
+
         frame.type = image.type_index
         return frame
 
