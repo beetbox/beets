@@ -375,30 +375,26 @@ class ID3v23Test(unittest.TestCase, TestHelper):
         finally:
             self._delete_test()
 
-    def test_v24_image_encoding(self):
-        mf = self._make_test(id3v23=False)
-        try:
-            mf.images = [beets.mediafile.Image(b'test data')]
-            mf.save()
-            frame = mf.mgfile.tags.getall('APIC')[0]
-            self.assertEqual(frame.encoding, 3)
-        finally:
-            self._delete_test()
+    def test_image_encoding(self):
+        """For compatibility with OS X/iTunes.
 
-    @unittest.skip("a bug, see #899")
-    def test_v23_image_encoding(self):
-        """For compatibility with OS X/iTunes (and strict adherence to
-        the standard), ID3v2.3 tags need to use an inferior text
-        encoding: UTF-8 is not supported.
+        See https://github.com/beetbox/beets/issues/899#issuecomment-62437773
         """
-        mf = self._make_test(id3v23=True)
-        try:
-            mf.images = [beets.mediafile.Image(b'test data')]
-            mf.save()
-            frame = mf.mgfile.tags.getall('APIC')[0]
-            self.assertEqual(frame.encoding, 1)
-        finally:
-            self._delete_test()
+
+        for v23 in [True, False]:
+            mf = self._make_test(id3v23=v23)
+            try:
+                mf.images = [
+                    beets.mediafile.Image(b'data', desc=u""),
+                    beets.mediafile.Image(b'data', desc=u"foo"),
+                    beets.mediafile.Image(b'data', desc=u"\u0185"),
+                ]
+                mf.save()
+                apic_frames = mf.mgfile.tags.getall('APIC')
+                encodings = dict([(f.desc, f.encoding) for f in apic_frames])
+                self.assertEqual(encodings, {u"": 0, u"foo": 0, u"\u0185": 1})
+            finally:
+                self._delete_test()
 
 
 def suite():
