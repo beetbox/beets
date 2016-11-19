@@ -926,9 +926,9 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         try:
             frame.desc.encode("latin-1")
         except UnicodeEncodeError:
-            frame.encoding = 1  # utf-16
+            frame.encoding = mutagen.id3.Encoding.UTF16
         else:
-            frame.encoding = 0  # latin-1 if possible
+            frame.encoding = mutagen.id3.Encoding.LATIN1
 
         frame.type = image.type_index
         return frame
