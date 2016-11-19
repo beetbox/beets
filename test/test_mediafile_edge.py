@@ -19,6 +19,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
+import mutagen.id3
 
 from test import _common
 from test._common import unittest
@@ -392,7 +393,11 @@ class ID3v23Test(unittest.TestCase, TestHelper):
                 mf.save()
                 apic_frames = mf.mgfile.tags.getall('APIC')
                 encodings = dict([(f.desc, f.encoding) for f in apic_frames])
-                self.assertEqual(encodings, {u"": 0, u"foo": 0, u"\u0185": 1})
+                self.assertEqual(encodings, {
+                    u"": mutagen.id3.Encoding.LATIN1,
+                    u"foo": mutagen.id3.Encoding.LATIN1,
+                    u"\u0185": mutagen.id3.Encoding.UTF16,
+                })
             finally:
                 self._delete_test()
 
