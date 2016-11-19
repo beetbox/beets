@@ -90,6 +90,10 @@ And there are a few bug fixes too:
   the use of (for example) ranges in queries.
 * :doc:`/plugins/smartplaylist`: Playlist names will be sanitized to
   ensure valid filenames. :bug:`2258`
+* The ID3 APIC tag now uses the Latin-1 encoding when possible instead of a
+  Unicode encoding. This should increase compatibility with other software,
+  especially with iTunes and when using ID3v2.3. Thanks to :user:`lazka`.
+  :bug:`899` :bug:`2264` :bug:`2270`
 
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
