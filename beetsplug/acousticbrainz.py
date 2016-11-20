@@ -18,13 +18,89 @@
 from __future__ import division, absolute_import, print_function
 
 import requests
-import operator
 
+from collections import defaultdict
 from beets import plugins, ui
-from functools import reduce
 
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
 LEVELS = ["/low-level", "/high-level"]
+ABSCHEME = {
+    'highlevel': {
+        'danceability': {
+            'all': {
+                'danceable': 'danceable'
+            }
+        },
+        'gender': {
+            'value': 'gender'
+        },
+        'genre_rosamerica': {
+            'value': 'genre_rosamerica'
+        },
+        'mood_acoustic': {
+            'all': {
+                'acoustic': 'mood_acoustic'
+            }
+        },
+        'mood_aggressive': {
+            'all': {
+                'aggressive': 'mood_aggressive'
+            }
+        },
+        'mood_electronic': {
+            'all': {
+                'electronic': 'mood_electronic'
+            }
+        },
+        'mood_happy': {
+            'all': {
+                'happy': 'mood_happy'
+            }
+        },
+        'mood_party': {
+            'all': {
+                'party': 'mood_party'
+            }
+        },
+        'mood_relaxed': {
+            'all': {
+                'relaxed': 'mood_relaxed'
+            }
+        },
+        'mood_sad': {
+            'all': {
+                'sad': 'mood_sad'
+            }
+        },
+        'ismir04_rhythm': {
+            'value': 'rhythm'
+        },
+        'tonal_atonal': {
+            'all': {
+                'tonal': 'tonal'
+            }
+        },
+        'voice_instrumental': {
+            'value': 'voice_instrumental'
+        },
+    },
+    'lowlevel': {
+        'average_loudness': 'average_loudness'
+    },
+    'rhythm': {
+        'bpm': 'bpm'
+    },
+    'tonal': {
+        'chords_changes_rate': 'chords_changes_rate',
+        'chords_key': 'chords_key',
+        'chords_number_rate': 'chords_number_rate',
+        'chords_scale': 'chords_scale',
+        'key_key': ('initial_key', 0),
+        'key_scale': ('initial_key', 1),
+        'key_strength': 'key_strength'
+
+    }
+}
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
@@ -42,7 +118,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            fetch_info(self._log, items, ui.should_write())
+            self._fetch_info(items, ui.should_write())
 
         cmd.func = func
         return [cmd]
@@ -50,119 +126,149 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def import_task_files(self, session, task):
         """Function is called upon beet import.
         """
+        self._fetch_info(task.imported_items(), False)
 
-        items = task.imported_items()
-        fetch_info(self._log, items, False)
+    def _get_data(self, mbid):
+        data = {}
+        for url in _generate_urls(mbid):
+            self._log.debug(u'fetching URL: {}', url)
 
-
-def fetch_info(log, items, write):
-    """Get data from AcousticBrainz for the items.
-    """
-
-    def get_value(*map_path):
-        try:
-            return reduce(operator.getitem, map_path, data)
-        except KeyError:
-            log.debug(u'Invalid Path: {}', map_path)
-
-    for item in items:
-        if item.mb_trackid:
-            log.info(u'getting data for: {}', item)
-
-            # Fetch the data from the AB API.
-            urls = [generate_url(item.mb_trackid, path) for path in LEVELS]
-            log.debug(u'fetching URLs: {}', ' '.join(urls))
             try:
-                res = [requests.get(url) for url in urls]
+                res = requests.get(url)
             except requests.RequestException as exc:
-                log.info(u'request error: {}', exc)
-                continue
+                self._log.info(u'request error: {}', exc)
+                return {}
 
-            # Check for missing tracks.
-            if any(r.status_code == 404 for r in res):
-                log.info(u'recording ID {} not found', item.mb_trackid)
-                continue
+            if res.status_code == 404:
+                self._log.info(u'recording ID {} not found', mbid)
+                return {}
 
-            # Parse the JSON response.
             try:
-                data = res[0].json()
-                data.update(res[1].json())
+                data.update(res.json())
             except ValueError:
-                log.debug(u'Invalid Response: {} & {}', [r.text for r in res])
+                self._log.debug(u'Invalid Response: {}', res.text)
+                return {}
 
-            # Get each field and assign it on the item.
-            item.danceable = get_value(
-                "highlevel", "danceability", "all", "danceable",
-            )
-            item.gender = get_value(
-                "highlevel", "gender", "value",
-            )
-            item.genre_rosamerica = get_value(
-                "highlevel", "genre_rosamerica", "value"
-            )
-            item.mood_acoustic = get_value(
-                "highlevel", "mood_acoustic", "all", "acoustic"
-            )
-            item.mood_aggressive = get_value(
-                "highlevel", "mood_aggressive", "all", "aggressive"
-            )
-            item.mood_electronic = get_value(
-                "highlevel", "mood_electronic", "all", "electronic"
-            )
-            item.mood_happy = get_value(
-                "highlevel", "mood_happy", "all", "happy"
-            )
-            item.mood_party = get_value(
-                "highlevel", "mood_party", "all", "party"
-            )
-            item.mood_relaxed = get_value(
-                "highlevel", "mood_relaxed", "all", "relaxed"
-            )
-            item.mood_sad = get_value(
-                "highlevel", "mood_sad", "all", "sad"
-            )
-            item.rhythm = get_value(
-                "highlevel", "ismir04_rhythm", "value"
-            )
-            item.tonal = get_value(
-                "highlevel", "tonal_atonal", "all", "tonal"
-            )
-            item.voice_instrumental = get_value(
-                "highlevel", "voice_instrumental", "value"
-            )
-            item.average_loudness = get_value(
-                "lowlevel", "average_loudness"
-            )
-            item.bpm = get_value(
-                "rhythm", "bpm"
-            )
-            item.chords_changes_rate = get_value(
-                "tonal", "chords_changes_rate"
-            )
-            item.chords_key = get_value(
-                "tonal", "chords_key"
-            )
-            item.chords_number_rate = get_value(
-                "tonal", "chords_number_rate"
-            )
-            item.chords_scale = get_value(
-                "tonal", "chords_scale"
-            )
-            item.initial_key = '{} {}'.format(
-                get_value("tonal", "key_key"),
-                get_value("tonal", "key_scale")
-            )
-            item.key_strength = get_value(
-                "tonal", "key_strength"
-            )
+        return data
 
-            # Store the data.
-            item.store()
-            if write:
-                item.try_write()
+    def _fetch_info(self, items, write):
+        """Fetch additional information from AcousticBrainz for the `item`s.
+        """
+        for item in items:
+            if not item.mb_trackid:
+                continue
+
+            self._log.info(u'getting data for: {}', item)
+            data = self._get_data(item.mb_trackid)
+            if data:
+                for attr, val in self._map_data_to_scheme(data, ABSCHEME):
+                    self._log.debug(u'attribute {} of {} set to {}',
+                                    attr,
+                                    item,
+                                    val)
+                    setattr(item, attr, val)
+                item.store()
+                if write:
+                    item.try_write()
+
+    def _map_data_to_scheme(self, data, scheme):
+        """Given `data` as a structure of nested dictionaries, and `scheme` as a
+        structure of nested dictionaries , `yield` tuples `(attr, val)` where
+        `attr` and `val` are corresponding leaf nodes in `scheme` and `data`.
+
+        As its name indicates, `scheme` defines how the data is structured,
+        so this function tries to find leaf nodes in `data` that correspond
+        to the leafs nodes of `scheme`, and not the other way around.
+        Leaf nodes of `data` that do not exist in the `scheme` do not matter.
+        If a leaf node of `scheme` is not present in `data`,
+        no value is yielded for that attribute and a simple warning is issued.
+
+        Finally, to account for attributes of which the value is split between
+        several leaf nodes in `data`, leaf nodes of `scheme` can be tuples
+        `(attr, order)` where `attr` is the attribute to which the leaf node
+        belongs, and `order` is the place at which it should appear in the
+        value. The different `value`s belonging to the same `attr` are simply
+        joined with `' '`. This is hardcoded and not very flexible, but it gets
+        the job done.
+
+        Example:
+        >>> scheme = {
+            'key1': 'attribute',
+            'key group': {
+                'subkey1': 'subattribute',
+                'subkey2': ('composite attribute', 0)
+            },
+            'key2': ('composite attribute', 1)
+        }
+        >>> data = {
+            'key1': 'value',
+            'key group': {
+                'subkey1': 'subvalue',
+                'subkey2': 'part 1 of composite attr'
+            },
+            'key2': 'part 2'
+        }
+        >>> print(list(_map_data_to_scheme(data, scheme)))
+        [('subattribute', 'subvalue'),
+         ('attribute', 'value'),
+         ('composite attribute', 'part 1 of composite attr part 2')]
+        """
+        """First, we traverse `scheme` and `data`, `yield`ing all the non
+        composites attributes straight away and populating the dictionary
+        `composites` with the composite attributes.
+
+        When we are finished traversing `scheme`, `composites` should map
+        each composite attribute to an ordered list of the values belonging to
+        the attribute, for example:
+        `composites = {'initial_key': ['B', 'minor']}`.
+        """
+        composites = defaultdict(list)
+        # The recursive traversal
+        for attr, val in self._data_to_scheme_child(data,
+                                                    scheme,
+                                                    composites):
+            yield attr, val
+        """When composites has been populated, yield the composite attributes
+        by joining their parts.
+        """
+        for composite_attr, value_parts in composites.items():
+            yield composite_attr, ' '.join(value_parts)
+
+    def _data_to_scheme_child(self, subdata, subscheme, composites):
+        """The recursive business logic of :meth:`_map_data_to_scheme`:
+        Traverse two structures of nested dictionaries in parallel and `yield`
+        tuples of corresponding leaf nodes.
+
+        If a leaf node belongs to a composite attribute (is a `tuple`),
+        populate `composites` rather than yielding straight away.
+        All the child functions for a single traversal share the same
+        `composites` instance, which is passed along.
+        """
+        for k, v in subscheme.items():
+            if k in subdata:
+                if type(v) == dict:
+                    for attr, val in self._data_to_scheme_child(subdata[k],
+                                                                v,
+                                                                composites):
+                        yield attr, val
+                elif type(v) == tuple:
+                    composite_attribute, part_number = v
+                    attribute_parts = composites[composite_attribute]
+                    # Parts are not guaranteed to be inserted in order
+                    while len(attribute_parts) <= part_number:
+                        attribute_parts.append('')
+                    attribute_parts[part_number] = subdata[k]
+                else:
+                    yield v, subdata[k]
+            else:
+                self._log.warning(u'Acousticbrainz did not provide info'
+                                  u'about {}', k)
+                self._log.debug(u'Data {} could not be mapped to scheme {} '
+                                u'because key {} was not found', subdata, v, k)
 
 
-def generate_url(mbid, level):
-    """Generates AcousticBrainz end point url for given MBID.
+def _generate_urls(mbid):
+    """Generates AcousticBrainz end point urls for given `mbid`.
     """
-    return ACOUSTIC_BASE + mbid + level
+    for level in LEVELS:
+        yield ACOUSTIC_BASE + mbid + level
