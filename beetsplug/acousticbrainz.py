@@ -162,10 +162,10 @@ class AcousticPlugin(plugins.BeetsPlugin):
             data = self._get_data(item.mb_trackid)
             if data:
                 for attr, val in self._map_data_to_scheme(data, ABSCHEME):
-                    self._log.info(u'attribute {} of {} set to {}',
-                                   attr,
-                                   item,
-                                   val)
+                    self._log.debug(u'attribute {} of {} set to {}',
+                                    attr,
+                                    item,
+                                    val)
                     setattr(item, attr, val)
                 item.store()
                 if write:
@@ -247,10 +247,10 @@ class AcousticPlugin(plugins.BeetsPlugin):
         for k, v in subscheme.items():
             if k in subdata:
                 if type(v) == dict:
-                    for yielded in self._data_to_scheme_child(subdata[k],
-                                                              v,
-                                                              composites):
-                        yield yielded
+                    for attr, val in self._data_to_scheme_child(subdata[k],
+                                                                v,
+                                                                composites):
+                        yield attr, val
                 elif type(v) == tuple:
                     composite_attribute, part_number = v
                     attribute_parts = composites[composite_attribute]
@@ -261,6 +261,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 else:
                     yield v, subdata[k]
             else:
+                self._log.warning(u'Acousticbrainz did not provide info'
+                                  u'about {}', k)
                 self._log.debug(u'Data {} could not be mapped to scheme {} '
                                 u'because key {} was not found', subdata, v, k)
 
