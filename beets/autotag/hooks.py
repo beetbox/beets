@@ -562,6 +562,7 @@ def tracks_for_id(track_id):
             yield t
 
 
+@plugins.notify_info_yielded(u'albuminfo_received')
 def album_candidates(items, artist, album, va_likely):
     """Search for album matches. ``items`` is a list of Item objects
     that make up the album. ``artist`` and ``album`` are the respective
@@ -569,51 +570,42 @@ def album_candidates(items, artist, album, va_likely):
     entered by the user. ``va_likely`` is a boolean indicating whether
     the album is likely to be a "various artists" release.
     """
-    out = []
-
     # Base candidates if we have album and artist to match.
     if artist and album:
         try:
-            out.extend(mb.match_album(artist, album, len(items)))
+            for candidate in mb.match_album(artist, album, len(items)):
+                yield candidate
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Also add VA matches from MusicBrainz where appropriate.
     if va_likely and album:
         try:
-            out.extend(mb.match_album(None, album, len(items)))
+            for candidate in mb.match_album(None, album, len(items)):
+                yield candidate
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Candidates from plugins.
-    out.extend(plugins.candidates(items, artist, album, va_likely))
-
-    # Notify subscribed plugins about fetched album info
-    for a in out:
-        plugins.send(u'albuminfo_received', info=a)
-
-    return out
+    for candidate in plugins.candidates(items, artist, album, va_likely):
+        yield candidate
 
 
+@plugins.notify_info_yielded(u'trackinfo_received')
 def item_candidates(item, artist, title):
     """Search for item matches. ``item`` is the Item to be matched.
     ``artist`` and ``title`` are strings and either reflect the item or
     are specified by the user.
     """
-    out = []
 
     # MusicBrainz candidates.
     if artist and title:
         try:
-            out.extend(mb.match_track(artist, title))
+            for candidate in mb.match_track(artist, title):
+                yield candidate
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Plugin candidates.
-    out.extend(plugins.item_candidates(item, artist, title))
-
-    # Notify subscribed plugins about fetched track info
-    for i in out:
-        plugins.send(u'trackinfo_received', info=i)
-
-    return out
+    for candidate in plugins.item_candidates(item, artist, title):
+        yield candidate
