@@ -351,41 +351,35 @@ def album_distance(items, album_info, mapping):
 def candidates(items, artist, album, va_likely):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
-    out = []
     for plugin in find_plugins():
-        out.extend(plugin.candidates(items, artist, album, va_likely))
-    return out
+        for candidate in plugin.candidates(items, artist, album, va_likely):
+            yield candidate
 
 
 def item_candidates(item, artist, title):
     """Gets MusicBrainz candidates for an item from the plugins.
     """
-    out = []
     for plugin in find_plugins():
-        out.extend(plugin.item_candidates(item, artist, title))
-    return out
+        for item_candidate in plugin.item_candidates(item, artist, title):
+            yield item_candidate
 
 
 def album_for_id(album_id):
     """Get AlbumInfo objects for a given ID string.
     """
-    out = []
     for plugin in find_plugins():
-        res = plugin.album_for_id(album_id)
-        if res:
-            out.append(res)
-    return out
+        album = plugin.album_for_id(album_id)
+        if album:
+            yield album
 
 
 def track_for_id(track_id):
     """Get TrackInfo objects for a given ID string.
     """
-    out = []
     for plugin in find_plugins():
-        res = plugin.track_for_id(track_id)
-        if res:
-            out.append(res)
-    return out
+        track = plugin.track_for_id(track_id)
+        if track:
+            yield track
 
 
 def template_funcs():
