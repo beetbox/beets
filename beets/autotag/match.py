@@ -409,10 +409,10 @@ def tag_album(items, search_artist=None, search_album=None,
 
     # Search by explicit ID.
     if search_ids:
-        search_cands = []
         for search_id in search_ids:
             log.debug(u'Searching for album ID: {0}', search_id)
-            search_cands.extend(hooks.albums_for_id(search_id))
+            for id_candidate in hooks.albums_for_id(search_id):
+                _add_candidate(items, candidates, id_candidate)
 
     # Use existing metadata or text search.
     else:
@@ -444,13 +444,13 @@ def tag_album(items, search_artist=None, search_album=None,
         log.debug(u'Album might be VA: {0}', va_likely)
 
         # Get the results from the data sources.
-        search_cands = hooks.album_candidates(items, search_artist,
-                                              search_album, va_likely)
+        for matched_candidate in hooks.album_candidates(items,
+                                                        search_artist,
+                                                        search_album,
+                                                        va_likely):
+            _add_candidate(items, candidates, matched_candidate)
 
-    log.debug(u'Evaluating {0} candidates.', len(search_cands))
-    for info in search_cands:
-        _add_candidate(items, candidates, info)
-
+    log.debug(u'Evaluating {0} candidates.', len(candidates))
     # Sort and get the recommendation.
     candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
