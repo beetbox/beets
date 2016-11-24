@@ -227,7 +227,8 @@ modify
 ``````
 ::
 
-    beet modify [-MWay] QUERY [FIELD=VALUE...] [FIELD!...]
+    beet modify [-MWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
+    beet mod [-MWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
 
 Change the metadata for items or albums in the database.
 
