@@ -227,7 +227,8 @@ modify
 ``````
 ::
 
-    beet modify [-MWay] QUERY [FIELD=VALUE...] [FIELD!...]
+    beet modify [-MWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
+    beet mod [-MWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
 
 Change the metadata for items or albums in the database.
 
@@ -242,8 +243,11 @@ individual tracks. Items will automatically be moved around when necessary if
 they're in your library directory, but you can disable that with ``-M``. Tags
 will be written to the files according to the settings you have for imports,
 but these can be overridden with ``-w`` (write tags, the default) and ``-W``
-(don't write tags).  Finally, this command politely asks for your permission
-before making any changes, but you can skip that prompt with the ``-y`` switch.
+(don't write tags).  Finally, this command politely prints a list of all
+affected items in the library and asks for your permission before making any
+changes. You can then select if you want to abort the change with n, confirm
+with y or you can select items to apply the changes with s (see 
+:ref:`modify-selected`). But you can skip that prompt with the ``-y`` switch.
 
 .. _move-cmd:
 
