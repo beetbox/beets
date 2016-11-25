@@ -242,11 +242,16 @@ individual tracks. Items will automatically be moved around when necessary if
 they're in your library directory, but you can disable that with ``-M``. Tags
 will be written to the files according to the settings you have for imports,
 but these can be overridden with ``-w`` (write tags, the default) and ``-W``
-(don't write tags).  Finally, this command politely prints a list of all
+(don't write tags).
+
+When you run the ``modify`` command, it prints a list of all
 affected items in the library and asks for your permission before making any
-changes. You can then select if you want to abort the change with n, confirm
-with y or you can select items to apply the changes with s (see 
-:ref:`modify-selected`). But you can skip that prompt with the ``-y`` switch.
+changes. You can then choose to abort the change (type `n`), confirm
+(`y`), or interactively choose some of the items (`s`). In the latter case,
+the command will prompt you for every matching item or album and invite you to
+type `y` or `n`. This option lets you choose precisely which data to change
+without spending too much time to carefully craft a query. To skip the prompts
+entirely, use the ``-y`` option.
 
 .. _move-cmd:
 
