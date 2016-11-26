@@ -58,7 +58,6 @@ import traceback
 import enum
 
 from beets import logging
-from beets.util import as_string
 import six
 
 
@@ -1486,7 +1485,12 @@ class MediaFile(object):
         """
         for property, descriptor in cls.__dict__.items():
             if isinstance(descriptor, MediaField):
-                yield as_string(property)
+                if isinstance(property, bytes):
+                    # On Python 2, class field names are bytes. This method
+                    # produces text strings.
+                    yield property.decode('utf8', 'ignore')
+                else:
+                    yield property
 
     @classmethod
     def _field_sort_name(cls, name):
