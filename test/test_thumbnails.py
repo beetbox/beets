@@ -19,8 +19,8 @@ import os.path
 from mock import Mock, patch, call
 from tempfile import mkdtemp
 from shutil import rmtree
+import unittest
 
-from test._common import unittest
 from test.helper import TestHelper
 
 from beets.util import bytestring_path

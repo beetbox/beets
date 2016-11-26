@@ -20,9 +20,9 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
+import unittest
 
 from test import _common
-from test._common import unittest
 from test.helper import capture_log
 from test.test_importer import ImportHelper
 from beets import config

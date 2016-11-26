@@ -23,10 +23,10 @@ import shutil
 import tempfile
 import datetime
 import time
+import unittest
 from six import assertCountEqual
 
 from test import _common
-from test._common import unittest
 from beets.mediafile import MediaFile, Image, \
     ImageType, CoverArtField, UnreadableFileError
 

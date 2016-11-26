@@ -17,10 +17,10 @@
 
 from __future__ import division, absolute_import, print_function
 
+import unittest
 from mock import Mock
 
 from test import _common
-from test._common import unittest
 from beetsplug import lastgenre
 from beets import config
 

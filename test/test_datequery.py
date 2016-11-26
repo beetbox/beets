@@ -18,8 +18,8 @@
 from __future__ import division, absolute_import, print_function
 
 from test import _common
-from test._common import unittest
 from datetime import datetime
+import unittest
 import time
 from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
 

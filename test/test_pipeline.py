@@ -18,8 +18,8 @@
 from __future__ import division, absolute_import, print_function
 
 import six
+import unittest
 
-from test._common import unittest
 from beets.util import pipeline
 
 

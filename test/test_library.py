@@ -25,9 +25,9 @@ import re
 import unicodedata
 import sys
 import time
+import unittest
 
 from test import _common
-from test._common import unittest
 from test._common import item
 import beets.library
 import beets.mediafile

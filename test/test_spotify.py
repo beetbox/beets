@@ -6,9 +6,9 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import responses
+import unittest
 
 from test import _common
-from test._common import unittest
 from beets import config
 from beets.library import Item
 from beetsplug import spotify

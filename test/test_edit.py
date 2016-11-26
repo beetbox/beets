@@ -15,10 +15,10 @@
 
 from __future__ import division, absolute_import, print_function
 import codecs
+import unittest
 
 from mock import patch
 from test import _common
-from test._common import unittest
 from test.helper import TestHelper, control_stdin
 from test.test_ui_importer import TerminalImportSessionSetup
 from test.test_importer import ImportHelper, AutotagStub

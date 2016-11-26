@@ -15,9 +15,9 @@
 
 from __future__ import division, absolute_import, print_function
 
+import unittest
 from mock import patch
 
-from test._common import unittest
 from test.helper import TestHelper,\
     generate_album_info, \
     generate_track_info, \

@@ -20,10 +20,10 @@ import sys
 import re
 import os
 import subprocess
+import unittest
 
 from mock import patch, Mock
 
-from test._common import unittest
 from test import _common
 from beets import util
 import six

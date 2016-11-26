@@ -17,8 +17,9 @@ from __future__ import division, absolute_import, print_function
 
 import re
 import os.path
+import unittest
+
 from test import _common
-from test._common import unittest
 from test import helper
 from test.helper import control_stdin, capture_log
 

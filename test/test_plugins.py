@@ -19,6 +19,7 @@ import os
 from mock import patch, Mock, ANY
 import shutil
 import itertools
+import unittest
 
 from beets.importer import SingletonImportTask, SentinelImportTask, \
     ArchiveImportTask, action
@@ -30,7 +31,7 @@ from beets.util import displayable_path, bytestring_path
 
 from test.test_importer import ImportHelper, AutotagStub
 from test.test_ui_importer import TerminalImportSessionSetup
-from test._common import unittest, RSRC
+from test._common import RSRC
 from test import helper
 
 

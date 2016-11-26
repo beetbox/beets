@@ -21,9 +21,9 @@ import time
 from datetime import datetime
 from beets.library import Item
 from beets.util import py3_path
+import unittest
 
 from test import _common
-from test._common import unittest
 from test.helper import TestHelper
 
 
