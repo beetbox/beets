@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.0 (in development)
-----------------------
+1.4.0 (November 25, 2016)
+-------------------------
 
 Version 1.4 has **alpha-level** Python 3 support. Thanks to the heroic efforts
 of :user:`jrobeson`, beets should run both under Python 2.7, as before, and
