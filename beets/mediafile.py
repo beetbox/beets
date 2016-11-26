@@ -58,7 +58,7 @@ import traceback
 import enum
 
 from beets import logging
-from beets.util import displayable_path, syspath, as_string
+from beets.util import as_string
 import six
 
 
@@ -90,7 +90,7 @@ class UnreadableFileError(Exception):
     """Mutagen is not able to extract information from the file.
     """
     def __init__(self, path):
-        Exception.__init__(self, displayable_path(path))
+        Exception.__init__(self, repr(path))
 
 
 class FileTypeError(UnreadableFileError):
@@ -100,11 +100,10 @@ class FileTypeError(UnreadableFileError):
     mutagen type is not supported by `Mediafile`.
     """
     def __init__(self, path, mutagen_type=None):
-        path = displayable_path(path)
         if mutagen_type is None:
-            msg = path
+            msg = repr(path)
         else:
-            msg = u'{0}: of mutagen type {1}'.format(path, mutagen_type)
+            msg = u'{0}: of mutagen type {1}'.format(repr(path), mutagen_type)
         Exception.__init__(self, msg)
 
 
@@ -112,7 +111,7 @@ class MutagenError(UnreadableFileError):
     """Raised when Mutagen fails unexpectedly---probably due to a bug.
     """
     def __init__(self, path, mutagen_exc):
-        msg = u'{0}: {1}'.format(displayable_path(path), mutagen_exc)
+        msg = u'{0}: {1}'.format(repr(path), mutagen_exc)
         Exception.__init__(self, msg)
 
 
@@ -1412,7 +1411,6 @@ class MediaFile(object):
         By default, MP3 files are saved with ID3v2.4 tags. You can use
         the older ID3v2.3 standard by specifying the `id3v23` option.
         """
-        path = syspath(path)
         self.path = path
 
         self.mgfile = mutagen_call('open', path, mutagen.File, path)
