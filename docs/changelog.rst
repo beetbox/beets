@@ -53,7 +53,7 @@ And there are a few bug fixes too:
 * :doc:`/plugins/convert`: The plugin no longer asks for confirmation if the
   query did not return anything to convert. :bug:`2260` :bug:`2262`
 * :doc:`/plugins/embedart`: The plugin now uses ``jpg`` as an extension rather
-  than ``jpeg``, to ensure consistency with :doc:`plugins/fetchart`.
+  than ``jpeg``, to ensure consistency with the :doc:`plugins/fetchart`.
   Thanks to :user:`tweitzel`. :bug:`2254` :bug:`2255`
 * :doc:`/plugins/embedart`: The plugin now works for all jpeg files, including
   those that are only recognizable by their magic bytes.
@@ -76,10 +76,11 @@ And there are a few bug fixes too:
   This is fixed. :bug:`2168`
 * :doc:`/plugins/embyupdate`: Fixes authentication header problem that caused
   a problem that it was not possible to get tokens from the Emby API.
-* :doc:`/plugins/lyrics`: Search for lyrics using the title part preceding the
-  colon character. :bug:`2206`
-* Fix a crash when a query contains a date field that is not set for all
-  the items. :bug:`1938`
+* :doc:`/plugins/lyrics`: Some titles use a colon to separate the main title
+  from a subtitle. To find more matches, the plugin now also searches for
+  lyrics using the part part preceding the colon character. :bug:`2206`
+* Fix a crash when a query uses a date field and some items are missing that
+  field. :bug:`1938`
 * :doc:`/plugins/discogs`: Subtracks are now detected and combined into a
   single track, two-sided mediums are treated as single discs, and tracks
   have ``media``, ``medium_total`` and ``medium`` set correctly. :bug:`2222`
