@@ -23,7 +23,6 @@ import unittest
 import mutagen.id3
 
 from test import _common
-from test.helper import TestHelper
 
 from beets import mediafile
 import six
@@ -145,7 +144,7 @@ class InvalidValueToleranceTest(unittest.TestCase):
         self.assertEqual(v, 1.0)
 
 
-class SafetyTest(unittest.TestCase, TestHelper):
+class SafetyTest(unittest.TestCase, _common.TempDirMixin):
     def setUp(self):
         self.create_temp_dir()
 
@@ -210,7 +209,7 @@ class SideEffectsTest(unittest.TestCase):
         self.assertEqual(old_mtime, new_mtime)
 
 
-class MP4EncodingTest(unittest.TestCase, TestHelper):
+class MP4EncodingTest(unittest.TestCase, _common.TempDirMixin):
     def setUp(self):
         self.create_temp_dir()
         src = os.path.join(_common.RSRC, b'full.m4a')
@@ -229,7 +228,7 @@ class MP4EncodingTest(unittest.TestCase, TestHelper):
         self.assertEqual(new_mf.label, u'foo\xe8bar')
 
 
-class MP3EncodingTest(unittest.TestCase, TestHelper):
+class MP3EncodingTest(unittest.TestCase, _common.TempDirMixin):
     def setUp(self):
         self.create_temp_dir()
         src = os.path.join(_common.RSRC, b'full.mp3')
@@ -332,7 +331,7 @@ class SoundCheckTest(unittest.TestCase):
         self.assertEqual(peak, 0.0)
 
 
-class ID3v23Test(unittest.TestCase, TestHelper):
+class ID3v23Test(unittest.TestCase, _common.TempDirMixin):
     def _make_test(self, ext=b'mp3', id3v23=False):
         self.create_temp_dir()
         src = os.path.join(_common.RSRC,

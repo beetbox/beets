@@ -333,6 +333,28 @@ class Bag(object):
         return self.fields.get(key)
 
 
+# Convenience methods for setting up a temporary sandbox directory for tests
+# that need to interact with the filesystem.
+
+class TempDirMixin(object):
+    """Text mixin for creating and deleting a temporary directory.
+    """
+
+    def create_temp_dir(self):
+        """Create a temporary directory and assign it into `self.temp_dir`.
+        Call `remove_temp_dir` later to delete it.
+        """
+        path = tempfile.mkdtemp()
+        if not isinstance(path, bytes):
+            path = path.encode('utf8')
+        self.temp_dir = path
+
+    def remove_temp_dir(self):
+        """Delete the temporary directory created by `create_temp_dir`.
+        """
+        shutil.rmtree(self.temp_dir)
+
+
 # Platform mocking.
 
 @contextmanager
