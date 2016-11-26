@@ -1273,7 +1273,7 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
 
     def test_version(self):
         l = self.run_with_output(u'version')
-        self.assertIn(u'python version', l)
+        self.assertIn(u'Python version', l)
         self.assertIn(u'no plugins loaded', l)
 
         # # Need to have plugin loaded
