@@ -29,7 +29,6 @@ from test import _common
 from test._common import unittest
 from beets.mediafile import MediaFile, Image, \
     ImageType, CoverArtField, UnreadableFileError
-from beets.util import bytestring_path
 
 
 class ArtTestMixin(object):
@@ -379,7 +378,10 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
     ]
 
     def setUp(self):
-        self.temp_dir = bytestring_path(tempfile.mkdtemp())
+        name = tempfile.mkdtemp()
+        if not isinstance(name, bytes):
+            name = name.encode('utf8')
+        self.temp_dir = name
 
     def tearDown(self):
         if os.path.isdir(self.temp_dir):
@@ -632,7 +634,9 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
             self.fail('\n  '.join(errors))
 
     def _mediafile_fixture(self, name):
-        name = bytestring_path(name + '.' + self.extension)
+        name = name + '.' + self.extension
+        if not isinstance(name, bytes):
+            name = name.encode('utf8')
         src = os.path.join(_common.RSRC, name)
         target = os.path.join(self.temp_dir, name)
         shutil.copy(src, target)
