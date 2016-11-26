@@ -15,8 +15,8 @@
 
 from __future__ import division, absolute_import, print_function
 
+import unittest
 from mock import Mock, patch, call, ANY
-from test._common import unittest
 from test.helper import TestHelper
 
 from beets.library import Item

@@ -19,12 +19,12 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
+import unittest
 
 import responses
 from mock import patch
 
 from test import _common
-from test._common import unittest
 from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import config

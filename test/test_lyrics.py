@@ -18,13 +18,13 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-from test import _common
 import sys
 import re
+import unittest
 
+from test import _common
 from mock import MagicMock
 
-from test._common import unittest
 from beetsplug import lyrics
 from beets.library import Item
 from beets.util import confit, bytestring_path

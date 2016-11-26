@@ -7,12 +7,13 @@ import sys
 import threading
 import logging as log
 from six import StringIO
+import unittest
 
 import beets.logging as blog
 from beets import plugins, ui
 import beetsplug
 from test import _common
-from test._common import unittest, TestCase
+from test._common import TestCase
 from test import helper
 import six
 

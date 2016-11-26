@@ -4,7 +4,7 @@
 
 from __future__ import division, absolute_import, print_function
 
-from test._common import unittest
+import unittest
 from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin

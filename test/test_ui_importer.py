@@ -20,8 +20,9 @@ test_importer module. But here the test importer inherits from
 """
 
 from __future__ import division, absolute_import, print_function
+import unittest
 
-from test._common import unittest, DummyIO
+from test._common import DummyIO
 from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer

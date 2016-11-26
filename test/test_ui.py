@@ -24,10 +24,10 @@ import subprocess
 import platform
 from copy import deepcopy
 import six
+import unittest
 
 from mock import patch, Mock
 from test import _common
-from test._common import unittest
 from test.helper import capture_stdout, has_program, TestHelper, control_stdin
 
 from beets import library

@@ -7,11 +7,11 @@ import yaml
 from mock import patch
 from tempfile import mkdtemp
 from shutil import rmtree
+import unittest
 
 from beets import ui
 from beets import config
 
-from test._common import unittest
 from test.helper import TestHelper
 from beets.library import Library
 import six

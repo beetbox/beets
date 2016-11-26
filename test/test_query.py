@@ -21,9 +21,9 @@ from functools import partial
 from mock import patch
 import os
 import sys
+import unittest
 
 from test import _common
-from test._common import unittest
 from test import helper
 
 import beets.library

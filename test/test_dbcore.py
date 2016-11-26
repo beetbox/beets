@@ -20,10 +20,10 @@ from __future__ import division, absolute_import, print_function
 import os
 import shutil
 import sqlite3
+import unittest
 from six import assertRaisesRegex
 
 from test import _common
-from test._common import unittest
 from beets import dbcore
 from tempfile import mkstemp
 import six

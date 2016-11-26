@@ -6,9 +6,9 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import platform
+import unittest
 from mock import patch, Mock
 
-from test._common import unittest
 from test.helper import TestHelper
 from beets.util import displayable_path
 from beetsplug.permissions import (check_permissions,

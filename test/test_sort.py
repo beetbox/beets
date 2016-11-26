@@ -17,8 +17,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import unittest
 from test import _common
-from test._common import unittest
 import beets.library
 from beets import dbcore
 from beets import config

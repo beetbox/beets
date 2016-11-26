@@ -18,8 +18,8 @@ from __future__ import division, absolute_import, print_function
 """Tests for the `importadded` plugin."""
 
 import os
+import unittest
 
-from test._common import unittest
 from test.test_importer import ImportHelper, AutotagStub
 from beets import importer
 from beets import util

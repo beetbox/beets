@@ -20,8 +20,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import re
 import sys
-
-from test._common import unittest
+import unittest
 
 pkgpath = os.path.dirname(__file__) or '.'
 sys.path.append(pkgpath)

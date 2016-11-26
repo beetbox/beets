@@ -20,8 +20,9 @@ from __future__ import division, absolute_import, print_function
 
 import json
 import os.path
+import unittest
 
-from test._common import unittest, RSRC
+from test._common import RSRC
 
 from beetsplug.acousticbrainz import AcousticPlugin, ABSCHEME
 
