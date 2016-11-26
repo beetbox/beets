@@ -16,7 +16,7 @@
 """Tests for the 'acousticbrainz' plugin.
 """
 
-from __future__ import absolute_import, print_function
+from __future__ import division, absolute_import, print_function
 
 import json
 import os.path
