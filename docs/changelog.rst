@@ -1,13 +1,7 @@
 Changelog
 =========
 
-1.4.1 (in development)
-----------------------
-
-Changelog goes here!
-
-
-1.4.0 (November 25, 2016)
+1.4.1 (November 25, 2016)
 -------------------------
 
 Version 1.4 has **alpha-level** Python 3 support. Thanks to the heroic efforts
