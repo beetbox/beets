@@ -25,7 +25,6 @@ from test import _common
 from test._common import unittest
 from test.helper import TestHelper
 
-from beets.util import bytestring_path
 import beets.mediafile
 import six
 
@@ -334,12 +333,12 @@ class SoundCheckTest(unittest.TestCase):
 
 
 class ID3v23Test(unittest.TestCase, TestHelper):
-    def _make_test(self, ext='mp3', id3v23=False):
+    def _make_test(self, ext=b'mp3', id3v23=False):
         self.create_temp_dir()
         src = os.path.join(_common.RSRC,
-                           bytestring_path('full.{0}'.format(ext)))
+                           b'full.' + ext)
         self.path = os.path.join(self.temp_dir,
-                                 bytestring_path('test.{0}'.format(ext)))
+                                 b'test.' + ext)
         shutil.copy(src, self.path)
         return beets.mediafile.MediaFile(self.path, id3v23=id3v23)
 
@@ -369,7 +368,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
             self._delete_test()
 
     def test_v23_on_non_mp3_is_noop(self):
-        mf = self._make_test('m4a', id3v23=True)
+        mf = self._make_test(b'm4a', id3v23=True)
         try:
             mf.year = 2013
             mf.save()
