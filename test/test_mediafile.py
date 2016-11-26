@@ -20,7 +20,6 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
-import tempfile
 import datetime
 import time
 import unittest
@@ -293,7 +292,8 @@ class GenreListTestMixin(object):
         assertCountEqual(self, mediafile.genres, [u'the genre', u'another'])
 
 
-class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
+class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
+                        _common.TempDirMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
@@ -378,14 +378,10 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
     ]
 
     def setUp(self):
-        name = tempfile.mkdtemp()
-        if not isinstance(name, bytes):
-            name = name.encode('utf8')
-        self.temp_dir = name
+        self.create_temp_dir()
 
     def tearDown(self):
-        if os.path.isdir(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        self.remove_temp_dir()
 
     def test_read_nonexisting(self):
         mediafile = self._mediafile_fixture('full')
