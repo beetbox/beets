@@ -124,4 +124,5 @@ match:
     track_length_grace: 10
     track_length_max: 30
 
-reverse_proxy: no
+web:
+    reverse_proxy: no
