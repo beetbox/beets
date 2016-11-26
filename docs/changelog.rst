@@ -22,9 +22,10 @@ If you package beets for distribution, here's what you'll want to know:
 This version also makes a few changes to the command-line interface and
 configuration that you may need to know about:
 
-* :doc:`/plugins/duplicates` no longer accepts multiple arguments in the form
-  of ``-k title albumartist album``. Each argument must be prefixed with
-  ``-k``. Example: ``-k title -k albumartist -k album``
+* :doc:`/plugins/duplicates`: The ``duplicates`` command no longer accepts
+  multiple field arguments in the form ``-k title albumartist album``. Each
+  argument must be prefixed with ``-k``, as in ``-k title -k albumartist -k
+  album``.
 * The old top-level ``colors`` configuration option has been removed (the
   setting is now under ``ui``).
 * The deprecated ``list_format_album`` and ``list_format_item``
