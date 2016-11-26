@@ -4,47 +4,45 @@ Changelog
 1.4.0 (in development)
 ----------------------
 
-Version 1.4 is our first step toward supporting Python 3 in addition to Python
-2. We're not quite there yet, but thanks mainly to the heroic efforts of
-:user:`jrobeson`, we're on our way. A few basic commands work now, and we're
-working to bring full support over the next few releases.
+Version 1.4 has **alpha-level** Python 3 support. Thanks to the heroic efforts
+of :user:`jrobeson`, beets should run both under Python 2.7, as before, and
+now under Python 3.4 and above. The support is still new: it undoubtedly
+contains bugs, so it may replace all your music with Limp Bizkit---but if
+you're brave and you have backups, please try installing on Python 3. Let us
+know how it goes.
 
-Specifically, if you package beets for distribution, here's what you'll want
-to know:
+If you package beets for distribution, here's what you'll want to know:
 
 * This version of beets now depends on the `six`_ library.
 * We also bumped our minimum required version of `Mutagen`_ to 1.33 (from
   1.27).
-* Please don't package beets as a Python 3 application *yet*, even though some
-  things may appear to work under Python 3.4 and later.
+* Please don't package beets as a Python 3 application *yet*, even though most
+  things work under Python 3.4 and later.
 
-UI Change:
+This version also makes a few changes to the command-line interface and
+configuration that you may need to know about:
 
 * :doc:`/plugins/duplicates` no longer accepts multiple arguments in the form
   of ``-k title albumartist album``. Each argument must be prefixed with
   ``-k``. Example: ``-k title -k albumartist -k album``
+* The old top-level ``colors`` configuration option has been removed (the
+  setting is now under ``ui``).
+* The deprecated ``list_format_album`` and ``list_format_item``
+  configuration options have been removed (see :ref:`format_album` and
+  :ref:`format_item`).
 
-Deprecated configuration optional removals:
-
-* Remove top level ``colors`` configuration option.
-* Remove deprecated ``list_format_album`` and ``list_format_item``
-  configuration options.
-
-The are a couple of small new features:
+The are a few new features:
 
 * :doc:`/plugins/mpdupdate`, :doc:`/plugins/mpdstats`: When the ``host`` option
   is not set, these plugins will now look for the ``$MPD_HOST`` environment
   variable before falling back to ``localhost``. Thanks to :user:`tarruda`.
   :bug:`2175`
 * :doc:`/plugins/web`: Added an ``expand`` option to show the items of an
-  album and a ``path`` field to the JSON output of a file which shows the
-  filled-out path template for each file. :bug:`2050`
+  album. :bug:`2050`
 * :doc:`/plugins/embyupdate`: The plugin can now use an API key instead of a
   password to authenticate with Emby. :bug:`2045` :bug:`2117`
-* :doc:`/plugins/acousticbrainz`: The plugin now also adds a ``bpm`` field
-  when a song can be found on AcousticBrainz, this is faster and more
-  automatic than using the :doc:`/plugins/bpm`.
-* ``beet --version`` now includes the python version used to run beets.
+* :doc:`/plugins/acousticbrainz`: The plugin now adds a ``bpm`` field.
+* ``beet --version`` now includes the Python version used to run beets.
 * :doc:`/reference/pathformat` can now include unescaped commas (``,``) when
   they are not part of a function call. :bug:`2166` :bug:`2213`
 * The :ref:`update-cmd` command takes a new ``-F`` flag to specify the fields
