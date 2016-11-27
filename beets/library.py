@@ -824,7 +824,11 @@ class Item(LibModel):
             subpath = unicodedata.normalize('NFC', subpath)
 
         if beets.config['asciify_paths']:
-            subpath = unidecode(subpath)
+            path_components = subpath.split(os.path.sep)
+            sep_replace = beets.config['path_sep_replace'].get()
+            for index, item in enumerate(path_components):
+                path_components[index] = unidecode(item).replace(os.path.sep,sep_replace)
+            subpath = os.path.sep.join(path_components)
 
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
