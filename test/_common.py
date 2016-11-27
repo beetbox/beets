@@ -352,7 +352,8 @@ class TempDirMixin(object):
     def remove_temp_dir(self):
         """Delete the temporary directory created by `create_temp_dir`.
         """
-        shutil.rmtree(self.temp_dir)
+        if os.path.isdir(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
 
 
 # Platform mocking.
