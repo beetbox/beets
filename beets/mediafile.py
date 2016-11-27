@@ -56,8 +56,7 @@ import imghdr
 import os
 import traceback
 import enum
-
-from beets import logging
+import logging
 import six
 
 
