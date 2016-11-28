@@ -80,7 +80,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             self.update_album_list([task.album])
 
     def update_album_list(self, album_list):
-        """Update the MusicBrainz colleciton from a list of Beets albums
+        """Update the MusicBrainz collection from a list of Beets albums
         """
         # Get the available collections.
         collections = mb_call(musicbrainzngs.get_collections)
