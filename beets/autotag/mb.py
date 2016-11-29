@@ -276,18 +276,22 @@ def album_info(release):
         disambig.append(release.get('disambiguation'))
     info.albumdisambig = u', '.join(disambig)
 
-    # Considers all release types (both primary and secondary) and stores as a comma-separated string
+    # Considers all release types (both primary and secondary) and
+    # stores them as a comma-separated string
     all_types = []
     if 'primary-type' in release['release-group']:
         rel_primarytype = release['release-group']['primary-type']
         if rel_primarytype:
             all_types.append(rel_primarytype.lower())
     if 'secondary-type-list' in release['release-group']:
-        for secondarytype in release['release-group']['secondary-type-list']:
-            all_types.append(secondarytype.lower())
-    if len(all_types) != 0:
-        all_types = ','.join(all_types)
-        info.albumtype = all_types.lower()
+        all_types.extend([secondarytype.lower() for secondarytype in\
+            release['release-group']['secondary-type-list']])
+    if 'type' in release['release-group']:
+        rel_type = release['release-group']['type']
+        if rel_type and rel_type.lower() not in all_types:
+            all_types.append(rel_type)
+    if len(all_types):
+        info.albumtype = ', '.join(all_types).lower()
 
     # Release dates.
     release_date = release.get('date')
