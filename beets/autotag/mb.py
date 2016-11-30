@@ -276,8 +276,9 @@ def album_info(release):
         disambig.append(release.get('disambiguation'))
     info.albumdisambig = u', '.join(disambig)
 
-    # Considers all release types (both primary and secondary) and
-    # stores them as a comma-separated string
+    # Retrieves the Release type.
+    # Considers all other release types(including primary and secondary) (new)
+    # and logs them.
     if 'type' in release['release-group']:
         reltype = release['release-group']['type']
         if reltype:
