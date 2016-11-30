@@ -278,20 +278,19 @@ def album_info(release):
 
     # Considers all release types (both primary and secondary) and
     # stores them as a comma-separated string
-    all_types = []
+    if 'type' in release['release-group']:
+        reltype = release['release-group']['type']
+        if reltype:
+            info.albumtype = reltype.lower()
     if 'primary-type' in release['release-group']:
         rel_primarytype = release['release-group']['primary-type']
         if rel_primarytype:
-            all_types.append(rel_primarytype.lower())
+            log.debug('Primary Type (new data): ' + rel_primarytype.lower())
     if 'secondary-type-list' in release['release-group']:
-        all_types.extend([secondarytype.lower() for secondarytype in\
-            release['release-group']['secondary-type-list']])
-    if 'type' in release['release-group']:
-        rel_type = release['release-group']['type']
-        if rel_type and rel_type.lower() not in all_types:
-            all_types.append(rel_type)
-    if len(all_types):
-        info.albumtype = ', '.join(all_types).lower()
+        if release['release-group']['secondary-type-list']:
+            log.debug('Secondary Type(s) (new data): ' + ', '.join(
+                [secondarytype.lower() for secondarytype in \
+                    release['release-group']['secondary-type-list']]))
 
     # Release dates.
     release_date = release.get('date')
