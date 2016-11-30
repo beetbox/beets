@@ -290,7 +290,7 @@ def album_info(release):
     if 'secondary-type-list' in release['release-group']:
         if release['release-group']['secondary-type-list']:
             log.debug('Secondary Type(s) (new data): ' + ', '.join(
-                [secondarytype.lower() for secondarytype in \
+                [secondarytype.lower() for secondarytype in
                     release['release-group']['secondary-type-list']]))
 
     # Release dates.
