@@ -142,6 +142,11 @@ class ConvertPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('convert', help=u'convert to external location')
+        cmd.parser.usage = cmd.parser.usage + \
+            u' QUERY\n' + \
+            u'\n' + \
+            u'Convert tracks from your library to external location.\n' + \
+            u'Do not remove those tracks from library.'
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help=u'show actions but do nothing')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
