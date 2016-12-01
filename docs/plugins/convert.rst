@@ -4,7 +4,9 @@ Convert Plugin
 The ``convert`` plugin lets you convert parts of your collection to a
 directory of your choice, transcoding audio and embedding album art along the
 way. It can transcode to and from any format using a configurable command
-line.
+line. This plugin is useful to convert existing tracks in your library
+to a path outside of your library. The tracks will not be removed from your
+library.
 
 
 Installation
