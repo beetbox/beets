@@ -152,7 +152,6 @@ class OAuth(BeetsPlugin):
             refresh_token = tokendata['refresh_token']
 
         self.client = MusicBrainzCollectionPlugin()
-        return token
 
     def authenticate(self):
         auth_client = MusicBrainzCollectionPlugin()
