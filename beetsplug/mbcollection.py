@@ -28,8 +28,6 @@ import json
 
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
-AUTH_ERRORS = (TokenRequestDenied, TokenMissing, VerifierMissing)
-
 
 def mb_call(func, *args, **kwargs):
     """Call a MusicBrainz API function and catch exceptions.
@@ -160,7 +158,7 @@ class OAuth(BeetsPlugin):
         auth_client = MusicBrainzCollectionPlugin(client_id, secret)
         try:
             url = auth_client.authorize_url()
-        except AUTH_ERRORS as e:
+        except Exception as e:
             self._log.debug(u'authentication error: {0}', e)
             raise beets.ui.UserError(u'Token request failed')
 
