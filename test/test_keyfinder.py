@@ -16,7 +16,7 @@
 from __future__ import division, absolute_import, print_function
 
 from mock import patch
-from test._common import unittest
+import unittest
 from test.helper import TestHelper
 
 from beets.library import Item

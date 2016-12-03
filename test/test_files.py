@@ -21,9 +21,9 @@ import shutil
 import os
 import stat
 from os.path import join
+import unittest
 
 from test import _common
-from test._common import unittest
 from test._common import item, touch
 import beets.library
 from beets import util

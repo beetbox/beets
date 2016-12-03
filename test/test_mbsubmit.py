@@ -15,7 +15,7 @@
 
 from __future__ import division, absolute_import, print_function
 
-from test._common import unittest
+import unittest
 from test.helper import capture_stdout, control_stdin, TestHelper
 from test.test_importer import ImportHelper, AutotagStub
 from test.test_ui_importer import TerminalImportSessionSetup

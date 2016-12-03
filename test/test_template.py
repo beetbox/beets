@@ -17,9 +17,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from test._common import unittest
-from beets.util import functemplate
+import unittest
 import six
+from beets.util import functemplate
 
 
 def _normexpr(expr):

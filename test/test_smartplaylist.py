@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 from os import path, remove
 from tempfile import mkdtemp
 from shutil import rmtree
+import unittest
 
 from mock import Mock, MagicMock
 
@@ -29,7 +30,6 @@ from beets.util import syspath, bytestring_path, py3_path, CHAR_REPLACE
 from beets.ui import UserError
 from beets import config
 
-from test._common import unittest
 from test.helper import TestHelper
 
 

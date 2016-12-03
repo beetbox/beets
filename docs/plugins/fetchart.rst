@@ -60,7 +60,7 @@ file. The available options are:
   Default: None.
 - **google_engine**: The custom search engine to use.
   Default: The `beets custom search engine`_, which searches the entire web.
-  **fanarttv_key**: The personal API key for requesting art from
+- **fanarttv_key**: The personal API key for requesting art from
   fanart.tv. See below.
 - **store_source**: If enabled, fetchart stores the artwork's source in a
   flexible tag named ``art_source``. See below for the rationale behind this.

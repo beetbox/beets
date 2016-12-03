@@ -2,9 +2,9 @@
 
 from __future__ import division, absolute_import, print_function
 
-from test._common import unittest
 from test.helper import TestHelper
 from beetsplug import embyupdate
+import unittest
 import responses
 
 

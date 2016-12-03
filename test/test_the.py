@@ -4,7 +4,7 @@
 
 from __future__ import division, absolute_import, print_function
 
-from test._common import unittest
+import unittest
 from test import _common
 from beets import config
 from beetsplug.the import ThePlugin, PATTERN_A, PATTERN_THE, FORMAT
