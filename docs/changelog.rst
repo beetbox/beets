@@ -7,7 +7,7 @@ Changelog
 Fixes:
 
 * :doc:`/plugins/badfiles`: Fix a crash on non-ASCII filenames. :bug:`2299`
-* With :ref:`asciify_paths` set to "yes", some unicode tags could decode in such a way that erroneous directories were created mid-filename. This has been fixed.
+* With :ref:`asciify-paths` set to "yes", some unicode tags could decode in such a way that erroneous directories were created mid-filename. This has been fixed.
 
 
 1.4.1 (November 25, 2016)
