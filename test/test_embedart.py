@@ -19,9 +19,9 @@ import os.path
 import shutil
 from mock import patch, MagicMock
 import tempfile
+import unittest
 
 from test import _common
-from test._common import unittest
 from test.helper import TestHelper
 
 from beets.mediafile import MediaFile

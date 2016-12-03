@@ -56,15 +56,13 @@ import imghdr
 import os
 import traceback
 import enum
-
-from beets import logging
-from beets.util import displayable_path, syspath, as_string
+import logging
 import six
 
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 # Human-readable type names.
 TYPES = {
@@ -90,7 +88,7 @@ class UnreadableFileError(Exception):
     """Mutagen is not able to extract information from the file.
     """
     def __init__(self, path):
-        Exception.__init__(self, displayable_path(path))
+        Exception.__init__(self, repr(path))
 
 
 class FileTypeError(UnreadableFileError):
@@ -100,11 +98,10 @@ class FileTypeError(UnreadableFileError):
     mutagen type is not supported by `Mediafile`.
     """
     def __init__(self, path, mutagen_type=None):
-        path = displayable_path(path)
         if mutagen_type is None:
-            msg = path
+            msg = repr(path)
         else:
-            msg = u'{0}: of mutagen type {1}'.format(path, mutagen_type)
+            msg = u'{0}: of mutagen type {1}'.format(repr(path), mutagen_type)
         Exception.__init__(self, msg)
 
 
@@ -112,7 +109,7 @@ class MutagenError(UnreadableFileError):
     """Raised when Mutagen fails unexpectedly---probably due to a bug.
     """
     def __init__(self, path, mutagen_exc):
-        msg = u'{0}: {1}'.format(displayable_path(path), mutagen_exc)
+        msg = u'{0}: {1}'.format(repr(path), mutagen_exc)
         Exception.__init__(self, msg)
 
 
@@ -134,12 +131,12 @@ def mutagen_call(action, path, func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except mutagen.MutagenError as exc:
-        log.debug(u'{} failed: {}', action, six.text_type(exc))
+        log.debug(u'%s failed: %s', action, six.text_type(exc))
         raise UnreadableFileError(path)
     except Exception as exc:
         # Isolate bugs in Mutagen.
-        log.debug(u'{}', traceback.format_exc())
-        log.error(u'uncaught Mutagen exception in {}: {}', action, exc)
+        log.debug(u'%s', traceback.format_exc())
+        log.error(u'uncaught Mutagen exception in %s: %s', action, exc)
         raise MutagenError(path, exc)
 
 
@@ -405,7 +402,7 @@ class Image(object):
             try:
                 type = list(ImageType)[type]
             except IndexError:
-                log.debug(u"ignoring unknown image type index {0}", type)
+                log.debug(u"ignoring unknown image type index %s", type)
                 type = ImageType.other
         self.type = type
 
@@ -1412,7 +1409,6 @@ class MediaFile(object):
         By default, MP3 files are saved with ID3v2.4 tags. You can use
         the older ID3v2.3 standard by specifying the `id3v23` option.
         """
-        path = syspath(path)
         self.path = path
 
         self.mgfile = mutagen_call('open', path, mutagen.File, path)
@@ -1488,7 +1484,12 @@ class MediaFile(object):
         """
         for property, descriptor in cls.__dict__.items():
             if isinstance(descriptor, MediaField):
-                yield as_string(property)
+                if isinstance(property, bytes):
+                    # On Python 2, class field names are bytes. This method
+                    # produces text strings.
+                    yield property.decode('utf8', 'ignore')
+                else:
+                    yield property
 
     @classmethod
     def _field_sort_name(cls, name):

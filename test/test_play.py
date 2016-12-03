@@ -19,9 +19,9 @@ from __future__ import division, absolute_import, print_function
 
 import os
 
+import unittest
 from mock import patch, ANY
 
-from test._common import unittest
 from test.helper import TestHelper, control_stdin
 
 from beets.ui import UserError

@@ -27,9 +27,9 @@ from tempfile import mkstemp
 from zipfile import ZipFile
 from tarfile import TarFile
 from mock import patch, Mock
+import unittest
 
 from test import _common
-from test._common import unittest
 from beets.util import displayable_path, bytestring_path, py3_path
 from test.helper import TestImportSession, TestHelper, has_program, capture_log
 from beets import importer

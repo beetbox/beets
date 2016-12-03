@@ -20,10 +20,11 @@ from beets import library
 from beets.util import bytestring_path, _fsencoding
 from beetsplug.ipfs import IPFSPlugin
 
-from test import _common
-from test._common import unittest
-from test.helper import TestHelper
+import unittest
 import os
+
+from test import _common
+from test.helper import TestHelper
 
 
 @patch('beets.util.command_output', Mock())

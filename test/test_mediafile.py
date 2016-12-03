@@ -20,20 +20,14 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
-import tempfile
 import datetime
 import time
+import unittest
 from six import assertCountEqual
 
 from test import _common
-from test._common import unittest
-from beets.mediafile import MediaFile, MediaField, Image, \
-    MP3DescStorageStyle, StorageStyle, MP4StorageStyle, \
-    ASFStorageStyle, ImageType, CoverArtField, UnreadableFileError
-from beets.library import Item
-from beets.plugins import BeetsPlugin
-from beets.util import bytestring_path
-import six
+from beets.mediafile import MediaFile, Image, \
+    ImageType, CoverArtField, UnreadableFileError
 
 
 class ArtTestMixin(object):
@@ -298,80 +292,8 @@ class GenreListTestMixin(object):
         assertCountEqual(self, mediafile.genres, [u'the genre', u'another'])
 
 
-field_extension = MediaField(
-    MP3DescStorageStyle(u'customtag'),
-    MP4StorageStyle('----:com.apple.iTunes:customtag'),
-    StorageStyle('customtag'),
-    ASFStorageStyle('customtag'),
-)
-
-
-class ExtendedFieldTestMixin(object):
-
-    def test_extended_field_write(self):
-        plugin = BeetsPlugin()
-        plugin.add_media_field('customtag', field_extension)
-
-        try:
-            mediafile = self._mediafile_fixture('empty')
-            mediafile.customtag = u'F#'
-            mediafile.save()
-
-            mediafile = MediaFile(mediafile.path)
-            self.assertEqual(mediafile.customtag, u'F#')
-
-        finally:
-            delattr(MediaFile, 'customtag')
-            Item._media_fields.remove('customtag')
-
-    def test_write_extended_tag_from_item(self):
-        plugin = BeetsPlugin()
-        plugin.add_media_field('customtag', field_extension)
-
-        try:
-            mediafile = self._mediafile_fixture('empty')
-            self.assertIsNone(mediafile.customtag)
-
-            item = Item(path=mediafile.path, customtag=u'Gb')
-            item.write()
-            mediafile = MediaFile(mediafile.path)
-            self.assertEqual(mediafile.customtag, u'Gb')
-
-        finally:
-            delattr(MediaFile, 'customtag')
-            Item._media_fields.remove('customtag')
-
-    def test_read_flexible_attribute_from_file(self):
-        plugin = BeetsPlugin()
-        plugin.add_media_field('customtag', field_extension)
-
-        try:
-            mediafile = self._mediafile_fixture('empty')
-            mediafile.update({'customtag': u'F#'})
-            mediafile.save()
-
-            item = Item.from_path(mediafile.path)
-            self.assertEqual(item['customtag'], u'F#')
-
-        finally:
-            delattr(MediaFile, 'customtag')
-            Item._media_fields.remove('customtag')
-
-    def test_invalid_descriptor(self):
-        with self.assertRaises(ValueError) as cm:
-            MediaFile.add_field('somekey', True)
-        self.assertIn(u'must be an instance of MediaField',
-                      six.text_type(cm.exception))
-
-    def test_overwrite_property(self):
-        with self.assertRaises(ValueError) as cm:
-            MediaFile.add_field('artist', MediaField())
-        self.assertIn(u'property "artist" already exists',
-                      six.text_type(cm.exception))
-
-
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
-                        ExtendedFieldTestMixin):
+                        _common.TempDirMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
@@ -456,11 +378,10 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
     ]
 
     def setUp(self):
-        self.temp_dir = bytestring_path(tempfile.mkdtemp())
+        self.create_temp_dir()
 
     def tearDown(self):
-        if os.path.isdir(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        self.remove_temp_dir()
 
     def test_read_nonexisting(self):
         mediafile = self._mediafile_fixture('full')
@@ -709,7 +630,9 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
             self.fail('\n  '.join(errors))
 
     def _mediafile_fixture(self, name):
-        name = bytestring_path(name + '.' + self.extension)
+        name = name + '.' + self.extension
+        if not isinstance(name, bytes):
+            name = name.encode('utf8')
         src = os.path.join(_common.RSRC, name)
         target = os.path.join(self.temp_dir, name)
         shutil.copy(src, target)

@@ -16,14 +16,15 @@
 
 from __future__ import division, absolute_import, print_function
 
-from test._common import unittest
+import unittest
+import six
+
 from test.helper import TestHelper, has_program
 
 from beets import config
 from beets.mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
-import six
 
 try:
     import gi

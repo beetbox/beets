@@ -17,9 +17,9 @@ from __future__ import division, absolute_import, print_function
 
 import os.path
 import tempfile
+import unittest
 
 from test import _common
-from test._common import unittest
 from test.helper import TestHelper
 
 from beets import config

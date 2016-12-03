@@ -4,9 +4,9 @@
 
 from __future__ import division, absolute_import, print_function
 
+import unittest
 from six import assertCountEqual
 
-from test._common import unittest
 from test import _common
 import json
 from beets.library import Item, Album
