@@ -4,7 +4,9 @@ Changelog
 1.4.2 (in development)
 ----------------------
 
-Changelog goes here!
+Fixes:
+
+* :doc:`/plugins/badfiles`: Fix a crash on non-ASCII filenames. :bug:`2299`
 
 
 1.4.1 (November 25, 2016)
