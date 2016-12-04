@@ -18,12 +18,15 @@
 from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand
+from beets.ui import Subcommand, decargs, print_
 from beets import config
 from beets import ui
 from beets import util
 from os.path import relpath
 from tempfile import NamedTemporaryFile
+import random
+from operator import attrgetter
+from itertools import groupby
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
@@ -55,6 +58,18 @@ class PlayPlugin(BeetsPlugin):
             u'-A', u'--args',
             action='store',
             help=u'add additional arguments to the command',
+        )
+        play_command.parser.add_option(
+            u'-r', u'--random',
+            action='store_true',
+            help=u'randomize queried items sent to playlist',
+        )
+        play_command.parser.add_option(
+            u'-n', u'--number',
+            action='store',
+            type="int",
+            help=u'number of items to choose when randomizing',
+            default=1,
         )
         play_command.func = self.play_music
         return [play_command]
@@ -109,6 +124,7 @@ class PlayPlugin(BeetsPlugin):
                                  for item in sort.sort(album.items()))
             item_type = 'album'
 
+
         # Perform item query and add tracks to playlist.
         else:
             selection = lib.items(ui.decargs(args))
@@ -123,6 +139,48 @@ class PlayPlugin(BeetsPlugin):
             ui.print_(ui.colorize('text_warning',
                                   u'No {0} to play.'.format(item_type)))
             return
+
+        # Get a random selection of items  
+        if opts.random:
+            # Group the objects by artist so we can sample from them.
+            key = attrgetter('albumartist')
+            selection_by_artists = {}
+            for artist, v in groupby(selection, key):
+                selection_by_artists[artist] = list(v)
+    
+            selection = []
+            for _ in range(opts.number):
+                # Terminate early if we're out of objects to select.
+                if not selection_by_artists:
+                    break
+    
+                # Choose an artist and an object for that artist, removing
+                # this choice from the pool.
+                artist = random.choice(list(selection_by_artists.keys()))
+                selection_from_artist = selection_by_artists[artist]
+                i = random.randint(0, len(selection_from_artist) - 1)
+                selection.append(selection_from_artist.pop(i))
+    
+                # Remove the artist if we've used up all of its objects.
+                if not selection_from_artist:
+                    del selection_by_artists[artist]
+    
+            number = min(len(selection), opts.number)
+            selection = random.sample(selection, number)
+            if opts.album:
+                paths = []
+        
+                sort = lib.get_default_album_sort()
+                for album in selection:
+                    if use_folders:
+                        paths.append(album.item_dir())
+                    else:
+                        paths.extend(item.path
+                                     for item in sort.sort(album.items()))
+            else:
+                paths = [item.path for item in selection]
+                if relative_to:
+                    paths = [relpath(path, relative_to) for path in paths]
 
         # Warn user before playing any huge playlists.
         if warning_threshold and len(selection) > warning_threshold:
