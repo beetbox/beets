@@ -416,7 +416,10 @@ class DestinationTest(_common.TestCase):
 
     def test_asciify_and_replace(self):
         config['asciify_paths'] = True
-        self.lib.replacements = [(re.compile(u'"'), u'q'), (re.compile(os.path.sep), config['path_sep_replace'].get())]
+        self.lib.replacements = [
+            (re.compile(u'"'), u'q'), 
+            (re.compile(os.path.sep), config['path_sep_replace'].get())
+        ]
         self.lib.directory = b'lib'
         self.lib.path_formats = [(u'default', u'$title')]
         self.i.title = u'\u201c\xa2\u00f6\u2014\u00cf\xbd\u201d'
