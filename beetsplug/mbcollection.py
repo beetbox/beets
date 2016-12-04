@@ -30,6 +30,18 @@ SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
 ERRORS = (TokenExpiredError, InsecureTransportError)
 
+def mb_call(func, *args, **kwargs):
+     """Call a MusicBrainz API function and catch exceptions.
+     """
+     try:
+         return func(*args, **kwargs)
+     except musicbrainzngs.AuthenticationError:
+         raise ui.UserError(u'authentication with MusicBrainz failed')
+     except (musicbrainzngs.ResponseError, musicbrainzngs.NetworkError) as exc:
+         raise ui.UserError(u'MusicBrainz API error: {0}'.format(exc))
+     except musicbrainzngs.UsageError:
+         raise ui.UserError(u'MusicBrainz credentials missing')
+
 def submit_albums(collection_id, release_ids):
     """Add all of the release IDs to the indicated collection. Multiple
     requests are made if there are many release IDs to submit.
