@@ -417,7 +417,7 @@ class DestinationTest(_common.TestCase):
     def test_asciify_and_replace(self):
         config['asciify_paths'] = True
         self.lib.replacements = [
-            (re.compile(u'"'), u'q'), 
+            (re.compile(u'"'), u'q'),
             (re.compile(os.path.sep), config['path_sep_replace'].get())
         ]
         self.lib.directory = b'lib'
