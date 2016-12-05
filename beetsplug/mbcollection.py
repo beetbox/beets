@@ -22,12 +22,16 @@ from beets import config
 import musicbrainzngs
 
 import re
-
-from rauth import OAuth2Service
 import json
+
+from requests_oauthlib import OAuth2Session
+from requests_oauthlib.oauth2_session import (TokenExpiredError,
+                                              InsecureTransportError)
 
 SUBMISSION_CHUNK_SIZE = 200
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
+ERRORS = (TokenExpiredError, InsecureTransportError)
+
 
 def mb_call(func, *args, **kwargs):
     """Call a MusicBrainz API function and catch exceptions.
@@ -55,27 +59,16 @@ def submit_albums(collection_id, release_ids):
 
 
 class MusicBrainzCollectionPlugin(BeetsPlugin):
-    def __init__(self, client_id, client_secret, token=None, refresh_token=None):
+    def __init__(self):
         super(MusicBrainzCollectionPlugin, self).__init__()
-        self.service = OAuth2Service(
-            client_id=client_id,
-            client_secret=client_secret,
-            authorize_url="https://musicbrainz.org/oauth2/authorize",
-            access_token_url="https://musicbrainz.org/oauth2/token",
-            base_url="https://musicbrainz.org/"
+        config['musicbrainz']['pass'].redact = True
+        musicbrainzngs.auth(
+            config['musicbrainz']['user'].as_str(),
+            config['musicbrainz']['pass'].as_str(),
         )
-        self.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-        self.params = {'response_type': 'code',
-                       'redirect_uri': self.redirect_uri}
-
-    def authorize_url(self):
-        return self.service.get_authorize_url(**self.params)
-
-    def get_token(self, code):
-        session = service.get_raw_access_token(data={'code': code, 'redirect_uri': self.redirect_uri,
-                                                     'grant_type': 'authorization_code', 'token_type': 'bearer'})
-        t = session.json()
-        return t['access_token'], t['refresh_token']
+        self.config.add({'auto': False})
+        if self.config['auto']:
+            self.import_stages = [self.imported]
 
     def commands(self):
         mbupdate = Subcommand('mbupdate',
@@ -135,51 +128,68 @@ class OAuth(BeetsPlugin):
             'client_secret': 'XPiJdmSkh6uJDoWguo-J7g',
             'tokenfile': 'oauth2_token.json'
         })
+        self.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+        self.scope = ['profile', 'collection']
+        self.auth_url = "https://musicbrainz.org/oauth2/authorize"
+        self.token_uri = "https://musicbrainz.org/oauth2/token"
+        self.params = {'response_type': 'code'}
+        self.service = OAuth2Session(self.config['client_id'].as_str(),
+                                     redirect_uri=self.redirect_uri,
+                                     scope=self.scope)
         self.config['client_id'].redact = True
         self.config['client_secret'].redact = True
-        self.client = None
+
         self.register_listener('import_begin', self.setup)
 
-    def setup(self, session=None):
-        client_id = self.config['client_id'].as_str()
-        secret = self.config['client_secret'].as_str()
+    def authorize_url(self):
+        return self.service.authorization_url(self.auth_url)
+
+    def get_token(self, code):
+        data = {'code': code, 'redirect_uri': self.redirect_uri,
+                'grant_type': 'authorization_code', 'token_type': 'bearer'}
+        client_id = self.config['client.id'].as_str()
+        client_secret = self.config['client_secret'].as_str()
+        session = self.service.fetch_token(self.token_uri,
+                                           code=code, headers=data,
+                                           client_id=client_id,
+                                           client_secret=client_secret)
+        return session['access_token'], session['refresh_token']
+
+    def setup(self):
         try:
             with open(self.tokenfile()) as f:
                 tokendata = json.load(f)
         except IOError:
-            token, refresh_token = self.authenticate(client_id, secret)
+            token, refresh_token = self.authenticate()
         else:
             token = tokendata['token']
             refresh_token = tokendata['refresh_token']
+        return token, refresh_token
 
-        self.client = MusicBrainzCollectionPlugin(client_id, secret, token, refresh_token)
-
-    def authenticate(self, client_id, secret):
-        auth_client = MusicBrainzCollectionPlugin(client_id, secret)
+    def authenticate(self):
         try:
-            url = auth_client.authorize_url()
-        except Exception as e:
+            url = self.authorize_url()
+        except ERRORS as e:
             self._log.debug(u'authentication error: {0}', e)
-            raise beets.ui.UserError(u'Token request failed')
+            raise ui.UserError(u'Communication with Musicbrainz failed')
 
-        beets.ui.print_(u"To authenticate, visit:")
-        beets.ui.print_(url)
+        ui.print_(u"To authenticate, visit:")
+        ui.print_(url)
 
-        data = beets.ui.input_(u"Enter the string displayed in your browser:")
+        data = ui.input_(u"Enter the string displayed in your browser:")
 
         try:
-            token, refresh_token = auth_client.get_token(data)
-        except AUTH_ERRORS as e:
+            token, refresh_token = self.get_token(data)
+        except ERRORS as e:
             self._log.debug(u'authentication error: {0}', e)
-            raise beets.ui.UserError(u'Token request failed')
+            raise ui.UserError(u'Token request failed')
 
-        with open(tokenfile(), 'w') as f:
+        with open(self.tokenfile(), 'w') as f:
             json.dump({'token': token, 'refresh_token': refresh_token}, f)
 
-        return token
+        return token, refresh_token
 
-    @staticmethod
-    def tokenfile():
+    def tokenfile(self):
         from os import path
         basedir = path.abspath(path.dirname(__file__))
         return "".join([basedir, '/token.json'])
