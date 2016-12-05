@@ -28,9 +28,14 @@ import beets
 from beets import util
 from beets import config
 import six
+import sys
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
-BASE_URL = 'http://musicbrainz.org/'
+
+if sys.version_info > (2, 7, 9):
+    BASE_URL = 'https://musicbrainz.org/'
+else:
+    BASE_URL = 'http://musicbrainz.org/'
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
