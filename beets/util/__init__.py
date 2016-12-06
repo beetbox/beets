@@ -33,6 +33,7 @@ import six
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
+SNI_SUPPORTED = sys.version_info >= (2, 7, 9)
 
 
 class HumanReadableException(Exception):
