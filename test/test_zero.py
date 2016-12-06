@@ -11,6 +11,7 @@ from beets.library import Item
 from beets import config
 from beetsplug.zero import ZeroPlugin
 from beets.mediafile import MediaFile
+from beets.util import syspath
 
 
 class ZeroPluginTest(unittest.TestCase, TestHelper):
@@ -61,7 +62,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         item.rg_track_peak = 0.0
         item.write()
 
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertIsNotNone(mediafile.rg_track_peak)
         self.assertIsNotNone(mediafile.rg_track_gain)
 
@@ -71,28 +72,28 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.load_plugins('zero')
 
         item.write()
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertIsNone(mediafile.rg_track_peak)
         self.assertIsNone(mediafile.rg_track_gain)
 
     def test_do_not_change_database(self):
         item = self.add_item_fixture(year=2000)
         item.write()
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(2000, mediafile.year)
 
         config['zero'] = {'fields': ['year']}
         self.load_plugins('zero')
 
         item.write()
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(item['year'], 2000)
         self.assertIsNone(mediafile.year)
 
     def test_change_database(self):
         item = self.add_item_fixture(year=2000)
         item.write()
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(2000, mediafile.year)
 
         config['zero'] = {
@@ -102,7 +103,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.load_plugins('zero')
 
         item.write()
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(item['year'], 0)
         self.assertIsNone(mediafile.year)
 
@@ -110,14 +111,14 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         path = self.create_mediafile_fixture(images=['jpg'])
         item = Item.from_path(path)
 
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertNotEqual(0, len(mediafile.images))
 
         config['zero'] = {'fields': [u'images']}
         self.load_plugins('zero')
 
         item.write()
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(0, len(mediafile.images))
 
 

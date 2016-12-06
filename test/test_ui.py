@@ -40,6 +40,7 @@ from beets import config
 from beets import plugins
 from beets.util.confit import ConfigError
 from beets import util
+from beets.util import syspath
 
 
 class ListTest(unittest.TestCase):
@@ -289,7 +290,7 @@ class ModifyTest(unittest.TestCase, TestHelper):
     def test_write_initial_key_tag(self):
         self.modify(u"initial_key=C#m")
         item = self.lib.items().get()
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.initial_key, u'C#m')
 
     def test_set_flexattr(self):
@@ -313,11 +314,11 @@ class ModifyTest(unittest.TestCase, TestHelper):
         item.write()
         item.store()
 
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.initial_key, u'C#m')
 
         self.modify(u"initial_key!")
-        mediafile = MediaFile(item.path)
+        mediafile = MediaFile(syspath(item.path))
         self.assertIsNone(mediafile.initial_key)
 
     def test_arg_parsing_colon_query(self):
@@ -528,7 +529,7 @@ class UpdateTest(_common.TestCase):
         self.assertNotExists(artpath)
 
     def test_modified_metadata_detected(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.title = u'differentTitle'
         mf.save()
         self._update()
@@ -536,7 +537,7 @@ class UpdateTest(_common.TestCase):
         self.assertEqual(item.title, u'differentTitle')
 
     def test_modified_metadata_moved(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.title = u'differentTitle'
         mf.save()
         self._update(move=True)
@@ -544,7 +545,7 @@ class UpdateTest(_common.TestCase):
         self.assertTrue(b'differentTitle' in item.path)
 
     def test_modified_metadata_not_moved(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.title = u'differentTitle'
         mf.save()
         self._update(move=False)
@@ -552,7 +553,7 @@ class UpdateTest(_common.TestCase):
         self.assertTrue(b'differentTitle' not in item.path)
 
     def test_selective_modified_metadata_moved(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.title = u'differentTitle'
         mf.genre = u'differentGenre'
         mf.save()
@@ -562,7 +563,7 @@ class UpdateTest(_common.TestCase):
         self.assertNotEqual(item.genre, u'differentGenre')
 
     def test_selective_modified_metadata_not_moved(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.title = u'differentTitle'
         mf.genre = u'differentGenre'
         mf.save()
@@ -572,7 +573,7 @@ class UpdateTest(_common.TestCase):
         self.assertNotEqual(item.genre, u'differentGenre')
 
     def test_modified_album_metadata_moved(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.album = u'differentAlbum'
         mf.save()
         self._update(move=True)
@@ -581,7 +582,7 @@ class UpdateTest(_common.TestCase):
 
     def test_modified_album_metadata_art_moved(self):
         artpath = self.album.artpath
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.album = u'differentAlbum'
         mf.save()
         self._update(move=True)
@@ -589,7 +590,7 @@ class UpdateTest(_common.TestCase):
         self.assertNotEqual(artpath, album.artpath)
 
     def test_selective_modified_album_metadata_moved(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.album = u'differentAlbum'
         mf.genre = u'differentGenre'
         mf.save()
@@ -599,7 +600,7 @@ class UpdateTest(_common.TestCase):
         self.assertNotEqual(item.genre, u'differentGenre')
 
     def test_selective_modified_album_metadata_not_moved(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.album = u'differentAlbum'
         mf.genre = u'differentGenre'
         mf.save()
@@ -609,7 +610,7 @@ class UpdateTest(_common.TestCase):
         self.assertEqual(item.genre, u'differentGenre')
 
     def test_mtime_match_skips_update(self):
-        mf = MediaFile(self.i.path)
+        mf = MediaFile(syspath(self.i.path))
         mf.title = u'differentTitle'
         mf.save()
 

@@ -105,7 +105,7 @@ class BadFiles(BeetsPlugin):
                 ui.print_(u"{}: checker exited withs status {}"
                           .format(ui.colorize('text_error', dpath), status))
                 for line in output:
-                    ui.print_("  {}".format(displayable_path(line)))
+                    ui.print_(u"  {}".format(displayable_path(line)))
             elif errors > 0:
                 ui.print_(u"{}: checker found {} errors or warnings"
                           .format(ui.colorize('text_warning', dpath), errors))
