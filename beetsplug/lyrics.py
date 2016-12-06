@@ -648,7 +648,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
         params = {
             'client_id': 'beets',
             'client_secret': self.config['bing_client_secret'],
-            'scope': 'http://api.microsofttranslator.com',
+            'scope': 'https://api.microsofttranslator.com' if sys.version_info >= (2, 7, 9) else
+            'http://api.microsofttranslator.com',
             'grant_type': 'client_credentials',
         }
 
