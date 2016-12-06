@@ -416,14 +416,18 @@ class DestinationTest(_common.TestCase):
 
     def test_asciify_and_replace(self):
         config['asciify_paths'] = True
-        self.lib.replacements = [
-            (re.compile(u'"'), u'q'), 
-            (re.compile(os.path.sep), config['path_sep_replace'].get())
-        ]
+        self.lib.replacements = [(re.compile(u'"'), u'q')]
         self.lib.directory = b'lib'
         self.lib.path_formats = [(u'default', u'$title')]
-        self.i.title = u'\u201c\xa2\u00f6\u2014\u00cf\xbd\u201d'
-        self.assertEqual(self.i.destination(), np('lib/qC_o--I1_2q'))
+        self.i.title = u'\u201c\u00f6\u2014\u00cf\u201d'
+        self.assertEqual(self.i.destination(), np('lib/qo--Iq'))
+
+    def test_asciify_character_expanding_to_slash(self):
+        config['asciify_paths'] = True
+        self.lib.directory = b'lib'
+        self.lib.path_formats = [(u'default', u'$title')]
+        self.i.title = u'ab\xa2\xbdd'
+        self.assertEqual(self.i.destination(), np('lib/abC_1_2d'))
 
     def test_destination_with_replacements(self):
         self.lib.directory = b'base'
