@@ -32,7 +32,7 @@ import sys
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
-if sys.version_info > (2, 7, 9):
+if util.SNI_SUPPORTED:
     BASE_URL = 'https://musicbrainz.org/'
 else:
     BASE_URL = 'http://musicbrainz.org/'
