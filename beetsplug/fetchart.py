@@ -292,7 +292,7 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
 
-    if ui.SNI_SUPPORTED >= (2, 7, 9):
+    if uti.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
         GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
     else:
@@ -314,7 +314,7 @@ class CoverArtArchive(RemoteArtSource):
 
 class Amazon(RemoteArtSource):
     NAME = u"Amazon"
-    if ui.SNI_SUPPORTED >= (2, 7, 9):
+    if util.SNI_SUPPORTED:
         URL = 'https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
     else:
         URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
@@ -331,7 +331,7 @@ class Amazon(RemoteArtSource):
 
 class AlbumArtOrg(RemoteArtSource):
     NAME = u"AlbumArt.org scraper"
-    if ui.SNI_SUPPORTED >= (2, 7, 9):
+    if util.SNI_SUPPORTED:
         URL = 'https://www.albumart.org/index_detail.php'
     else:
         URL = 'http://www.albumart.org/index_detail.php'
@@ -404,7 +404,7 @@ class GoogleImages(RemoteArtSource):
 class FanartTV(RemoteArtSource):
     """Art from fanart.tv requested using their API"""
     NAME = u"fanart.tv"
-    if ui.SNI_SUPPORTED >= (2, 7, 9):
+    if util.SNI_SUPPORTED:
         API_URL = 'https://webservice.fanart.tv/v3/'
     else:
         API_URL = 'htts://webservice.fanart.tv/v3/'
@@ -500,7 +500,7 @@ class ITunesStore(RemoteArtSource):
 
 class Wikipedia(RemoteArtSource):
     NAME = u"Wikipedia (queried through DBpedia)"
-    if ui.SNI_SUPPORTED >= (2, 7, 9):
+    if uti.SNI_SUPPORTED:
         DBPEDIA_URL = 'https://dbpedia.org/sparql'
         WIKIPEDIA_URL = 'https://en.wikipedia.org/w/api.php'
     else:
