@@ -23,7 +23,10 @@ from beets import config
 from beets import plugins
 from beets.dbcore import types
 
-API_URL = 'http://ws.audioscrobbler.com/2.0/'
+if ui.SNI_SUPPORTED >= (2, 7, 9):
+    API_URL = 'https://ws.audioscrobbler.com/2.0/'
+else:
+    API_URL = 'https://ws.audioscrobbler.com/2.0/'
 
 
 class LastImportPlugin(plugins.BeetsPlugin):
