@@ -1104,18 +1104,20 @@ class WriteTest(unittest.TestCase, TestHelper):
         shutil.copy(syspath(item.path), syspath(custom_path))
 
         item['artist'] = 'new artist'
-        self.assertNotEqual(MediaFile(custom_path).artist, 'new artist')
-        self.assertNotEqual(MediaFile(item.path).artist, 'new artist')
+        self.assertNotEqual(MediaFile(syspath(custom_path)).artist,
+                            'new artist')
+        self.assertNotEqual(MediaFile(syspath(item.path)).artist,
+                            'new artist')
 
         item.write(custom_path)
-        self.assertEqual(MediaFile(custom_path).artist, 'new artist')
-        self.assertNotEqual(MediaFile(item.path).artist, 'new artist')
+        self.assertEqual(MediaFile(syspath(custom_path)).artist, 'new artist')
+        self.assertNotEqual(MediaFile(syspath(item.path)).artist, 'new artist')
 
     def test_write_custom_tags(self):
         item = self.add_item_fixture(artist='old artist')
         item.write(tags={'artist': 'new artist'})
         self.assertNotEqual(item.artist, 'new artist')
-        self.assertEqual(MediaFile(item.path).artist, 'new artist')
+        self.assertEqual(MediaFile(syspath(item.path)).artist, 'new artist')
 
     def test_write_date_field(self):
         # Since `date` is not a MediaField, this should do nothing.
@@ -1123,7 +1125,7 @@ class WriteTest(unittest.TestCase, TestHelper):
         clean_year = item.year
         item.date = u'foo'
         item.write()
-        self.assertEqual(MediaFile(item.path).year, clean_year)
+        self.assertEqual(MediaFile(syspath(item.path)).year, clean_year)
 
 
 class ItemReadTest(unittest.TestCase):
