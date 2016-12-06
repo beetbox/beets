@@ -68,6 +68,7 @@ class FetchImageHelper(_common.TestCase):
 
 class FetchImageTest(FetchImageHelper, UseThePlugin):
     URL = 'http://example.com/test.jpg'
+    URL_HTTPS = 'https://example.com/test.jpg'
 
     def setUp(self):
         super(FetchImageTest, self).setUp()
@@ -75,10 +76,13 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
         self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
         self.extra = {'maxwidth': 0}
         self.candidate = fetchart.Candidate(logger, url=self.URL)
+        self.candidate_https = fetchart.Candidate(logger, url=self.URL_HTTPS)
 
     def test_invalid_type_returns_none(self):
         self.mock_response(self.URL, 'image/watercolour')
+        self.mock_response(self.URL_HTTPS, 'image/watercolour')
         self.source.fetch_image(self.candidate, self.extra)
+        self.source.fetch_image(self.candidate_https, self.extra)
         self.assertEqual(self.candidate.path, None)
 
     def test_jpeg_type_returns_path(self):
@@ -88,13 +92,17 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
 
     def test_extension_set_by_content_type(self):
         self.mock_response(self.URL, 'image/png')
+        self.mock_response(self.URL_HTTPS, 'image/png')
         self.source.fetch_image(self.candidate, self.extra)
+        self.source.fetch_image(self.candidate_https, self.extra)
         self.assertEqual(os.path.splitext(self.candidate.path)[1], b'.png')
         self.assertExists(self.candidate.path)
 
     def test_does_not_rely_on_server_content_type(self):
         self.mock_response(self.URL, 'image/jpeg', 'image/png')
+        self.mock_response(self.URL_HTTPS, 'image/jpeg', 'imsge/png')
         self.source.fetch_image(self.candidate, self.extra)
+        self.source.fetch_image(self.candidate_https, self.extra)
         self.assertEqual(os.path.splitext(self.candidate.path)[1], b'.png')
         self.assertExists(self.candidate.path)
 
@@ -157,6 +165,13 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
     CAA_URL = 'http://coverartarchive.org/release/{0}/front' \
               .format(MBID)
 
+    AMAZON_URL_HTTPS = 'http://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
+                 .format(ASIN)
+    AAO_URL_HTTPS = 'http://www.albumart.org/index_detail.php?asin={0}' \
+                 .format(ASIN)
+    CAA_URL_HTTPS = 'http://coverartarchive.org/release/{0}/front' \
+                 .format(MBID)
+
     def setUp(self):
         super(CombinedTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, b'arttest')
@@ -164,6 +179,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
 
     def test_main_interface_returns_amazon_art(self):
         self.mock_response(self.AMAZON_URL)
+        self.mock_response(self.AMAZON_URL_HTTPS)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         self.assertIsNotNone(candidate)
@@ -176,6 +192,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
     def test_main_interface_gives_precedence_to_fs_art(self):
         _common.touch(os.path.join(self.dpath, b'art.jpg'))
         self.mock_response(self.AMAZON_URL)
+        self.mock_response(self.AMAZON_URL_HTTPS)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
         self.assertIsNotNone(candidate)
@@ -183,6 +200,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
 
     def test_main_interface_falls_back_to_amazon(self):
         self.mock_response(self.AMAZON_URL)
+        self.mock_response(self.AMAZON_URL_HTTPS)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
         self.assertIsNotNone(candidate)
@@ -190,24 +208,30 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
 
     def test_main_interface_tries_amazon_before_aao(self):
         self.mock_response(self.AMAZON_URL)
+        self.mock_response(self.AMAZON_URL_HTTPS)
         album = _common.Bag(asin=self.ASIN)
         self.plugin.art_for_album(album, [self.dpath])
         self.assertEqual(len(responses.calls), 1)
         self.assertEqual(responses.calls[0].request.url, self.AMAZON_URL)
+        self.assertEqual(responses.calls[0].request.url, self.AMAZON_URL_HTTPS)
 
     def test_main_interface_falls_back_to_aao(self):
         self.mock_response(self.AMAZON_URL, content_type='text/html')
+        self.mock_response(self.AMAZON_URL_HTTPS, content_type='text/html')
         album = _common.Bag(asin=self.ASIN)
         self.plugin.art_for_album(album, [self.dpath])
         self.assertEqual(responses.calls[-1].request.url, self.AAO_URL)
+        self.assertEqual(responses.calls[-1].request.url, self.AAO_URL_HTTPS)
 
     def test_main_interface_uses_caa_when_mbid_available(self):
         self.mock_response(self.CAA_URL)
+        self.mock_response(self.CAA_URL_HTTPS)
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         self.assertIsNotNone(candidate)
         self.assertEqual(len(responses.calls), 1)
         self.assertEqual(responses.calls[0].request.url, self.CAA_URL)
+        self.assertEqual(responses.calls[0].request.url, self.CAA_URL_HTTPS)
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
