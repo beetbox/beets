@@ -53,6 +53,8 @@ addons:
 # test.
 install:
     - travis_retry pip install tox sphinx
+    # upgrade requests to satisfy sphinx linkcheck (for building man pages)
+    - if [[ $TRAVIS_PYTHON_VERSION == *_site_packages ]]; then pip install -U requests; fi
     - travis_retry tox -e $TOX_ENV --notest
 
 script:
