@@ -956,8 +956,13 @@ def asciify_path(path, sep_replace):
     """
     # if this platform has an os.altsep, change it to os.sep.
     if os.altsep:
-        path.replace(os.altsep, os.sep)
+        path = path.replace(os.altsep, os.sep)
     path_components = path.split(os.sep)
     for index, item in enumerate(path_components):
         path_components[index] = unidecode(item).replace(os.sep, sep_replace)
+        if os.altsep:
+            path_components[index] = unidecode(item).replace(
+                os.altsep,
+                sep_replace
+            )
     return os.sep.join(path_components)
