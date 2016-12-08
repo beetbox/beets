@@ -23,7 +23,6 @@ import unicodedata
 import time
 import re
 import six
-from unidecode import unidecode
 
 from beets import logging
 from beets.mediafile import MediaFile, UnreadableFileError
@@ -824,13 +823,10 @@ class Item(LibModel):
             subpath = unicodedata.normalize('NFC', subpath)
 
         if beets.config['asciify_paths']:
-            path_components = subpath.split(os.path.sep)
-            sep_replace = beets.config['path_sep_replace'].get()
-            for index, item in enumerate(path_components):
-                path_components[index] = unidecode(item).replace(
-                    os.path.sep, sep_replace
-                )
-            subpath = os.path.sep.join(path_components)
+            subpath = util.asciify_path(
+                subpath,
+                beets.config['path_sep_replace'].as_str()
+            )
 
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
@@ -1082,7 +1078,10 @@ class Album(LibModel):
             beets.config['art_filename'].as_str())
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config['asciify_paths']:
-            subpath = unidecode(subpath)
+            subpath = util.asciify_path(
+                subpath,
+                beets.config['path_sep_replace'].as_str()
+            )
         subpath = util.sanitize_path(subpath,
                                      replacements=self._db.replacements)
         subpath = bytestring_path(subpath)
@@ -1434,7 +1433,7 @@ class DefaultTemplateFunctions(object):
     def tmpl_asciify(s):
         """Translate non-ASCII characters to their ASCII equivalents.
         """
-        return unidecode(s)
+        return util.asciify_path(s, beets.config['path_sep_replace'].as_str())
 
     @staticmethod
     def tmpl_time(s, fmt):

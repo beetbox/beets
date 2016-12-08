@@ -589,6 +589,10 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._setf(u'%title{$title}')
         self._assert_dest(b'/base/The Title')
 
+    def test_asciify_variable(self):
+        self._setf(u'%asciify{ab\xa2\xbdd}')
+        self._assert_dest(b'/base/abC_1_2d')
+
     def test_left_variable(self):
         self._setf(u'%left{$title, 3}')
         self._assert_dest(b'/base/the')
