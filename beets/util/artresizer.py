@@ -25,7 +25,6 @@ from tempfile import NamedTemporaryFile
 from six.moves.urllib.parse import urlencode
 from beets import logging
 from beets import util
-from beets import ui
 import six
 
 # Resizing methods
@@ -33,7 +32,7 @@ PIL = 1
 IMAGEMAGICK = 2
 WEBPROXY = 3
 
-if ui.SNI_SUPPORTED >= (2, 7, 9):
+if util.SNI_SUPPORTED:
     PROXY_URL = 'https://images.weserv.nl/'
 else:
     PROXY_URL = 'http://images.weserv.nl/'

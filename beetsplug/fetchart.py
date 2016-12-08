@@ -292,7 +292,7 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
 
-    if uti.SNI_SUPPORTED:
+    if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
         GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
     else:
@@ -500,7 +500,7 @@ class ITunesStore(RemoteArtSource):
 
 class Wikipedia(RemoteArtSource):
     NAME = u"Wikipedia (queried through DBpedia)"
-    if uti.SNI_SUPPORTED:
+    if util.SNI_SUPPORTED:
         DBPEDIA_URL = 'https://dbpedia.org/sparql'
         WIKIPEDIA_URL = 'https://en.wikipedia.org/w/api.php'
     else:
