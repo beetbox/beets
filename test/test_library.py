@@ -422,6 +422,13 @@ class DestinationTest(_common.TestCase):
         self.i.title = u'\u201c\u00f6\u2014\u00cf\u201d'
         self.assertEqual(self.i.destination(), np('lib/qo--Iq'))
 
+    def test_asciify_character_expanding_to_slash(self):
+        config['asciify_paths'] = True
+        self.lib.directory = b'lib'
+        self.lib.path_formats = [(u'default', u'$title')]
+        self.i.title = u'ab\xa2\xbdd'
+        self.assertEqual(self.i.destination(), np('lib/abC_1_2d'))
+
     def test_destination_with_replacements(self):
         self.lib.directory = b'base'
         self.lib.replacements = [(re.compile(r'a'), u'e')]
@@ -581,6 +588,10 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
     def test_title_case_variable(self):
         self._setf(u'%title{$title}')
         self._assert_dest(b'/base/The Title')
+
+    def test_asciify_variable(self):
+        self._setf(u'%asciify{ab\xa2\xbdd}')
+        self._assert_dest(b'/base/abC_1_2d')
 
     def test_left_variable(self):
         self._setf(u'%left{$title, 3}')

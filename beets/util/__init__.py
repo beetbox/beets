@@ -29,6 +29,7 @@ import platform
 import shlex
 from beets.util import hidden
 import six
+from unidecode import unidecode
 
 
 MAX_FILENAME_LENGTH = 200
@@ -941,3 +942,27 @@ def raw_seconds_short(string):
         raise ValueError(u'String not in M:SS format')
     minutes, seconds = map(int, match.groups())
     return float(minutes * 60 + seconds)
+
+
+def asciify_path(path, sep_replace):
+    """Decodes all unicode characters in a path into ASCII equivalents.
+
+    Substitutions are provided by the unidecode module. Path separators in the
+    input are preserved.
+
+    Keyword arguments:
+    path -- The path to be asciified.
+    sep_replace -- the string to be used to replace extraneous path separators.
+    """
+    # if this platform has an os.altsep, change it to os.sep.
+    if os.altsep:
+        path = path.replace(os.altsep, os.sep)
+    path_components = path.split(os.sep)
+    for index, item in enumerate(path_components):
+        path_components[index] = unidecode(item).replace(os.sep, sep_replace)
+        if os.altsep:
+            path_components[index] = unidecode(item).replace(
+                os.altsep,
+                sep_replace
+            )
+    return os.sep.join(path_components)
