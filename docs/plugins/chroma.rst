@@ -31,7 +31,7 @@ First, install pyacoustid itself. You can do this using `pip`_, like so::
 
     $ pip install pyacoustid
 
-.. _pip: http://pip.openplans.org/
+.. _pip: http://www.pip-installer.org/
 
 Then, you will need to install `Chromaprint`_, either as a dynamic library or
 in the form of a command-line tool (``fpcalc``).
