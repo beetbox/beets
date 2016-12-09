@@ -18,20 +18,21 @@
 from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand
 from beets import config
 from beets import ui
 from beets import util
+import contextlib
+import sys
+import cStringIO
 from os.path import relpath
 from tempfile import NamedTemporaryFile
-import random
-from operator import attrgetter
-from itertools import groupby
+from beetsplug import random
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
 ARGS_MARKER = '$args'
-
+_random = random.Random()
 
 class PlayPlugin(BeetsPlugin):
 
@@ -62,14 +63,19 @@ class PlayPlugin(BeetsPlugin):
         play_command.parser.add_option(
             u'-r', u'--random',
             action='store_true',
-            help=u'randomize queried items sent to playlist',
+            help=u'play random item',
         )
         play_command.parser.add_option(
             u'-n', u'--number',
             action='store',
             type="int",
-            help=u'number of items to choose when randomizing',
+            help=u'with -r: number of random items to choose',
             default=1,
+        )
+        play_command.parser.add_option(
+            u'-e', u'--equal-chance',
+            action='store_true',
+            help=u'with -r: each artist has the same chance',
         )
         play_command.func = self.play_music
         return [play_command]
@@ -112,9 +118,12 @@ class PlayPlugin(BeetsPlugin):
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
-            selection = lib.albums(ui.decargs(args))
+            if opts.random:
+                with nostdout():
+                    selection = _random.random_item(lib, opts, args)
+            else:
+                selection = lib.albums(ui.decargs(args))
             paths = []
-
             sort = lib.get_default_album_sort()
             for album in selection:
                 if use_folders:
@@ -124,63 +133,24 @@ class PlayPlugin(BeetsPlugin):
                                  for item in sort.sort(album.items()))
             item_type = 'album'
 
-
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(ui.decargs(args))
+            if opts.random:
+                with nostdout():
+                    selection = _random.random_item(lib, opts, args)
+            else:
+                selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
             if relative_to:
                 paths = [relpath(path, relative_to) for path in paths]
             item_type = 'track'
 
         item_type += 's' if len(selection) > 1 else ''
-
         if not selection:
             ui.print_(ui.colorize('text_warning',
                                   u'No {0} to play.'.format(item_type)))
             return
-
-        # Get a random selection of items  
-        if opts.random:
-            # Group the objects by artist so we can sample from them.
-            key = attrgetter('albumartist')
-            selection_by_artists = {}
-            for artist, v in groupby(selection, key):
-                selection_by_artists[artist] = list(v)
-    
-            selection = []
-            for _ in range(opts.number):
-                # Terminate early if we're out of objects to select.
-                if not selection_by_artists:
-                    break
-    
-                # Choose an artist and an object for that artist, removing
-                # this choice from the pool.
-                artist = random.choice(list(selection_by_artists.keys()))
-                selection_from_artist = selection_by_artists[artist]
-                i = random.randint(0, len(selection_from_artist) - 1)
-                selection.append(selection_from_artist.pop(i))
-    
-                # Remove the artist if we've used up all of its objects.
-                if not selection_from_artist:
-                    del selection_by_artists[artist]
-    
-            number = min(len(selection), opts.number)
-            selection = random.sample(selection, number)
-            if opts.album:
-                paths = []
         
-                sort = lib.get_default_album_sort()
-                for album in selection:
-                    if use_folders:
-                        paths.append(album.item_dir())
-                    else:
-                        paths.extend(item.path
-                                     for item in sort.sort(album.items()))
-            else:
-                paths = [item.path for item in selection]
-                if relative_to:
-                    paths = [relpath(path, relative_to) for path in paths]
 
         # Warn user before playing any huge playlists.
         if warning_threshold and len(selection) > warning_threshold:
@@ -213,3 +183,10 @@ class PlayPlugin(BeetsPlugin):
             m3u.write(item + b'\n')
         m3u.close()
         return m3u.name
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    sys.stdout = cStringIO.StringIO()
+    yield
+    sys.stdout = save_stdout
