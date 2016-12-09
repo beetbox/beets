@@ -24,7 +24,7 @@ from beets import ui
 from beets import util
 import contextlib
 import sys
-import cStringIO
+import os
 from os.path import relpath
 from tempfile import NamedTemporaryFile
 from beetsplug import random
@@ -186,7 +186,9 @@ class PlayPlugin(BeetsPlugin):
 
 @contextlib.contextmanager
 def nostdout():
-    save_stdout = sys.stdout
-    sys.stdout = cStringIO.StringIO()
-    yield
-    sys.stdout = save_stdout
+    new_target = open(os.devnull, "w")
+    old_target, sys.stdout = sys.stdout, new_target
+    try:
+        yield new_target
+    finally:
+        sys.stdout = old_target
