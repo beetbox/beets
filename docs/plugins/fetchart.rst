@@ -157,7 +157,7 @@ Once the library is installed, the plugin will use it to search automatically.
 
 .. _a problem: https://github.com/ocelma/python-itunes/issues/9
 .. _python-itunes: https://github.com/ocelma/python-itunes
-.. _pip: http://pip.openplans.org/
+.. _pip: http://www.pip-installer.org/
 
 Google custom search
 ''''''''''''''''''''
