@@ -34,6 +34,7 @@ from beetsplug import random
 ARGS_MARKER = '$args'
 _random = random.Random()
 
+
 class PlayPlugin(BeetsPlugin):
 
     def __init__(self):
@@ -150,7 +151,6 @@ class PlayPlugin(BeetsPlugin):
             ui.print_(ui.colorize('text_warning',
                                   u'No {0} to play.'.format(item_type)))
             return
-        
 
         # Warn user before playing any huge playlists.
         if warning_threshold and len(selection) > warning_threshold:
@@ -183,6 +183,7 @@ class PlayPlugin(BeetsPlugin):
             m3u.write(item + b'\n')
         m3u.close()
         return m3u.name
+
 
 @contextlib.contextmanager
 def nostdout():

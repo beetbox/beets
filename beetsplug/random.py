@@ -23,6 +23,7 @@ import random
 from operator import attrgetter
 from itertools import groupby
 
+
 class Random(BeetsPlugin):
 
     def commands(self):
@@ -48,19 +49,19 @@ class Random(BeetsPlugin):
 
     def random_item(self, lib, opts, args):
         query = decargs(args)
-    
+
         if opts.album:
             objs = lib.albums(query)
         else:
             objs = lib.items(query)
-    
+
         if opts.equal_chance:
             objs_list = list(objs)
             self._equal_chance(objs_list, opts)
-    
+
         number = min(len(objs), opts.number)
         objs = random.sample(objs, number)
-       
+
         for item in objs:
             print_(format(item))
 
