@@ -61,7 +61,7 @@ To install without pip, download beets from `its PyPI page`_ and run ``python
 setup.py install`` in the directory therein.
 
 .. _its PyPI page: http://pypi.python.org/pypi/beets#downloads
-.. _pip: http://pip.openplans.org/
+.. _pip: https://pip.pypa.io/en/stable/
 
 The best way to upgrade beets to a new version is by running ``pip install -U
 beets``. You may want to follow `@b33ts`_ on Twitter to hear about progress on
