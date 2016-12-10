@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 import pylast
 from pylast import TopItem, _extract, _number
 from beets import util
+from beets import ui
 from beets import dbcore
 from beets import config
 from beets import plugins
