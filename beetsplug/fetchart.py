@@ -401,7 +401,7 @@ class FanartTV(RemoteArtSource):
     if util.SNI_SUPPORTED:
         API_URL = 'https://webservice.fanart.tv/v3/'
     else:
-        API_URL = 'htts://webservice.fanart.tv/v3/'
+        API_URL = 'https://webservice.fanart.tv/v3/'
     API_ALBUMS = API_URL + 'music/albums/'
     PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
 
