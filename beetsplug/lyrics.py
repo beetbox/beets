@@ -51,6 +51,7 @@ except ImportError:
 
 from beets import plugins
 from beets import util
+from beets import ui
 
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
