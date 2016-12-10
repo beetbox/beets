@@ -74,7 +74,8 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
         self.dpath = os.path.join(self.temp_dir, b'arttest')
         self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
         self.extra = {'maxwidth': 0}
-        self.candidate = fetchart.Candidate(logger, url=self.URL.format('http://'))
+        self.candidate = fetchart.Candidate(logger,
+                                            url=self.URL.format('http://'))
 
     def test_invalid_type_returns_none(self):
         self.mock_response(self.URL.format('http://'), 'image/watercolour')
@@ -96,8 +97,10 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
         self.assertExists(self.candidate.path)
 
     def test_does_not_rely_on_server_content_type(self):
-        self.mock_response(self.URL.format('http://'), 'image/jpeg', 'image/png')
-        self.mock_response(self.URL.format('https://'), 'image/jpeg', 'imsge/png')
+        self.mock_response(self.URL.format('http://'),
+                           'image/jpeg', 'image/png')
+        self.mock_response(self.URL.format('https://'),
+                           'image/jpeg', 'imsge/png')
         self.source.fetch_image(self.candidate, self.extra)
         self.assertEqual(os.path.splitext(self.candidate.path)[1], b'.png')
         self.assertExists(self.candidate.path)
@@ -167,7 +170,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
         os.mkdir(self.dpath)
 
     def test_main_interface_returns_amazon_art(self):
-        self.mock_response("http://"+self.AMAZON_URL)
+        self.mock_response("http://" + self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         self.assertIsNotNone(candidate)
@@ -179,43 +182,46 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
 
     def test_main_interface_gives_precedence_to_fs_art(self):
         _common.touch(os.path.join(self.dpath, b'art.jpg'))
-        self.mock_response("http://"+self.AMAZON_URL)
+        self.mock_response("http://" + self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
         self.assertIsNotNone(candidate)
         self.assertEqual(candidate.path, os.path.join(self.dpath, b'art.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
-        self.mock_response("http://"+self.AMAZON_URL)
+        self.mock_response("http://" + self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
         self.assertIsNotNone(candidate)
         self.assertFalse(candidate.path.startswith(self.dpath))
 
     def test_main_interface_tries_amazon_before_aao(self):
-        self.mock_response("http://"+self.AMAZON_URL)
+        self.mock_response("http://" + self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         self.plugin.art_for_album(album, [self.dpath])
         self.assertEqual(len(responses.calls), 1)
-        self.assertEqual(responses.calls[0].request.url, "http://"+self.AMAZON_URL)
+        self.assertEqual(responses.calls[0].request.url,
+                         "http://" + self.AMAZON_URL)
 
     def test_main_interface_falls_back_to_aao(self):
-        self.mock_response("http://"+self.AMAZON_URL, content_type='text/html')
+        self.mock_response("http://" + self.AMAZON_URL,
+                           content_type='text/html')
         album = _common.Bag(asin=self.ASIN)
         self.plugin.art_for_album(album, [self.dpath])
-        self.assertEqual(responses.calls[-1].request.url, "http://"+self.AAO_URL)
+        self.assertEqual(responses.calls[-1].request.url,
+                         "http://" + self.AAO_URL)
 
     def test_main_interface_uses_caa_when_mbid_available(self):
-        self.mock_response("http://"+self.CAA_URL)
-        self.mock_response("https://"+self.CAA_URL)
+        self.mock_response("http://" + self.CAA_URL)
+        self.mock_response("https://" + self.CAA_URL)
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         self.assertIsNotNone(candidate)
         self.assertEqual(len(responses.calls), 1)
         if util.SNI_SUPPORTED:
-            url = "https://"+self.CAA_URL
+            url = "https://" + self.CAA_URL
         else:
-            url = "http://"+self.CAA_URL
+            url = "http://" + self.CAA_URL
         self.assertEqual(responses.calls[0].request.url, url)
 
     def test_local_only_does_not_access_network(self):
