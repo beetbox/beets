@@ -6,6 +6,11 @@ supplements the CLI. It can't do much right now, and the interface is a little
 clunky, but you can use it to query and browse your music and---in browsers that
 support HTML5 Audio---you can even play music.
 
+It also implements a subset of `subsonic api`_ that allows any subsonic client
+to play music from beets.
+
+.. _subsonic api: http://www.subsonic.org/pages/api.jsp
+
 While it's not meant to replace the CLI, a graphical interface has a number of
 advantages in certain situations. For example, when editing a tag, a natural CLI
 makes you retype the whole thing---common GUI conventions can be used to just
@@ -68,6 +73,8 @@ configuration file. The available options are:
   Default: false.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
+- **subsonic**: Should the subsonic API be available.
+  Default: True
 
 Implementation
 --------------

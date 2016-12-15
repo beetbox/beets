@@ -106,7 +106,8 @@ setup(
         'pyxdg',
         'pathlib',
         'python-mpd2',
-        'discogs-client'
+        'discogs-client',
+        'xmlunittest'
     ],
 
     # Plugin (optional) dependencies:

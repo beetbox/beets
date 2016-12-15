@@ -18,10 +18,14 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import random
 import sys
 import unicodedata
 import time
 import re
+from itertools import groupby
+from operator import attrgetter
+
 import six
 
 from beets import logging
@@ -956,6 +960,8 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters['path'] = Album.item_dir
         getters['albumtotal'] = Album._albumtotal
+        getters['duration'] = Album._duration
+        getters['track_count'] = Album._track_count
         return getters
 
     def items(self):
@@ -1071,6 +1077,18 @@ class Album(LibModel):
                 break
 
         return total
+
+    def _track_count(self):
+        """Returns the number of tracks of this album. The difference with
+        `_albumtotal` is that it returns the number of tracks that are actually
+        in the database.
+        """
+        return len(self.items())
+
+    def _duration(self):
+        """Returns a sum of the duration of all tracks of this album
+        """
+        return sum((t.length for t in self.items()))
 
     def art_destination(self, image, item_dir=None):
         """Returns a path to the destination for the album art image
