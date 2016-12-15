@@ -156,6 +156,11 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     ``medium_index``, the track's index on its medium; ``medium_total``,
     the number of tracks on the medium. Each number is a 1-based index.
     """
+    flag = False
+
+    if recording['title'] == '[silence]':
+        flag = True
+
     info = beets.autotag.hooks.TrackInfo(
         recording['title'],
         recording['id'],
@@ -165,6 +170,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         medium_total=medium_total,
         data_source=u'MusicBrainz',
         data_url=track_url(recording['id']),
+        ignorable=flag
     )
 
     if recording.get('artist-credit'):

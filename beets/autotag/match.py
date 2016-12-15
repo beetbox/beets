@@ -241,8 +241,10 @@ def distance(items, album_info, mapping):
         dist.tracks[track] = track_distance(item, track, album_info.va)
         dist.add('tracks', dist.tracks[track].distance)
 
+    count_ign = len([x.ignorable for x in album_info.tracks if x.ignorable])
+
     # Missing tracks.
-    for i in range(len(album_info.tracks) - len(mapping)):
+    for i in range(len(album_info.tracks) - len(mapping) - count_ign):
         dist.add('missing_tracks', 1.0)
 
     # Unmatched tracks.
