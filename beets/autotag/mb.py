@@ -31,6 +31,7 @@ import six
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 BASE_URL = 'http://musicbrainz.org/'
+SILENCE_TITLE = '[silence]'
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
@@ -156,10 +157,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     ``medium_index``, the track's index on its medium; ``medium_total``,
     the number of tracks on the medium. Each number is a 1-based index.
     """
-    flag = False
-
-    if recording['title'] == '[silence]':
-        flag = True
+    silence = recording['title'] == SILENCE_TITLE
 
     info = beets.autotag.hooks.TrackInfo(
         recording['title'],
@@ -170,7 +168,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         medium_total=medium_total,
         data_source=u'MusicBrainz',
         data_url=track_url(recording['id']),
-        ignorable=flag
+        ignorable=silence,
     )
 
     if recording.get('artist-credit'):
