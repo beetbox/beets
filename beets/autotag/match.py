@@ -241,9 +241,8 @@ def distance(items, album_info, mapping):
         dist.tracks[track] = track_distance(item, track, album_info.va)
         dist.add('tracks', dist.tracks[track].distance)
 
-    count_ign = len([x.ignorable for x in album_info.tracks if x.ignorable])
-
     # Missing tracks.
+    count_ign = sum([x.ignorable for x in album_info.tracks])
     for i in range(len(album_info.tracks) - len(mapping) - count_ign):
         dist.add('missing_tracks', 1.0)
 
@@ -362,7 +361,10 @@ def _add_candidate(items, results, info):
             return
 
     # Find mapping between the items and the track info.
+    # Delete [silence] tracks from extra_tracks
+    silence_tracks = [x for x in info.tracks if x.ignorable]
     mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
+    extra_tracks = list(set(extra_tracks) - set(silence_tracks))
 
     # Get the change distance.
     dist = distance(items, info, mapping)
