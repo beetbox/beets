@@ -202,7 +202,7 @@ class ConvertPlugin(BeetsPlugin):
                 encode_cmd.append(args[i].encode(util.arg_encoding()))
 
         if pretend:
-            self._log.info(u' '.join(ui.decargs(args)))
+            self._log.info(u'{0}', u' '.join(ui.decargs(args)))
             return
 
         try:
