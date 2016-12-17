@@ -42,6 +42,8 @@ def random_item(lib, opts, args):
             objs = []
 
             for item in objs_shuffled:
+                if opts.album:
+                    item.length = sum(a.length for a in item.items())
                 if (total_time + item.length) <= time_sec:
                     objs.append(item)
                     total_time += item.length
@@ -63,6 +65,8 @@ def random_item(lib, opts, args):
                 if not objs_by_artists:
                     break
 
+                if opts.album:
+                    item.length = sum(a.length for a in item.items())
                 if (total_time + item.length) <= time_sec:
                     artist = random.choice(list(objs_by_artists.keys()))
                     objs_from_artist = objs_by_artists[artist]
