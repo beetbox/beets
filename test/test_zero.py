@@ -139,7 +139,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['year'], 2000)
         self.assertEqual(mediafile.year, 2000)
 
-    def test_subcommand(self):
+    def test_subcommand_update_database_true(self):
         item = self.add_item_fixture(
             year=2016,
             day=13,
@@ -164,7 +164,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(mediafile.comments, None)
         self.assertEqual(item['comments'], u'')
 
-    def test_subcommand_update_database_False(self):
+    def test_subcommand_update_database_false(self):
         item = self.add_item_fixture(
             year=2016,
             day=13,
@@ -179,9 +179,6 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
             'auto': False
         }
         self.load_plugins('zero')
-
-        z = ZeroPlugin()
-        z.debug = False
         self.run_command('zero')
 
         mediafile = MediaFile(syspath(item.path))
@@ -192,6 +189,53 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['comments'], u'test comment')
         self.assertEqual(mediafile.comments, None)
 
+    def test_subcommand_query_include(self):
+        item = self.add_item_fixture(
+            year=2016,
+            day=13,
+            month=3,
+            comments=u'test comment'
+        )
+
+        item.write()
+
+        config['zero'] = {
+            'fields': [u'comments'],
+            'update_database': False,
+            'auto': False
+        }
+
+        self.load_plugins('zero')
+        self.run_command('zero', 'year: 2016')
+
+        mediafile = MediaFile(syspath(item.path))
+
+        self.assertEqual(mediafile.year, 2016)
+        self.assertEqual(mediafile.comments, None)
+
+    def test_subcommand_query_exclude(self):
+        item = self.add_item_fixture(
+            year=2016,
+            day=13,
+            month=3,
+            comments=u'test comment'
+        )
+
+        item.write()
+
+        config['zero'] = {
+            'fields': [u'comments'],
+            'update_database': False,
+            'auto': False
+        }
+
+        self.load_plugins('zero')
+        self.run_command('zero', 'year: 0000')
+
+        mediafile = MediaFile(syspath(item.path))
+
+        self.assertEqual(mediafile.year, 2016)
+        self.assertEqual(mediafile.comments, u'test comment')
 
 
 def suite():
