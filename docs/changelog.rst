@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.2 (in development)
-----------------------
+1.4.2 (December 16, 2016)
+-------------------------
 
 This is just a little bug fix release. With 1.4.2, we're also confident enough
 to recommend that anyone who's interested give Python 3 a try: bugs may still
