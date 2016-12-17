@@ -6,6 +6,10 @@ Changelog
 
 Changelog goes here!
 
+Features:
+
+* :doc:`/plugins/zero`: Added ``zero`` command to manually trigger the zero
+  plugin.
 
 1.4.2 (December 16, 2016)
 -------------------------
