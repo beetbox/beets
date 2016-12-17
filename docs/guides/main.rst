@@ -9,12 +9,14 @@ collection better.
 Installing
 ----------
 
-You will need Python. (Beets is written for `Python 2.7`_. 2.6 support has been
-dropped, and Python 3.x is not yet supported.)
+You will need Python.
+Beets works on `Python 2.7`_ and Python 3.4 or later.
 
 .. _Python 2.7: http://www.python.org/download/
 
 * **macOS** v10.7 (Lion) and later include Python 2.7 out of the box.
+  You can opt for Python 3 by installing it via `Homebrew`_:
+  ``brew install python3``
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
@@ -55,7 +57,7 @@ dropped, and Python 3.x is not yet supported.)
 .. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/
 
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
-front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
+front of that).
 
 To install without pip, download beets from `its PyPI page`_ and run ``python
 setup.py install`` in the directory therein.
