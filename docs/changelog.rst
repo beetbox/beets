@@ -4,7 +4,13 @@ Changelog
 1.4.2 (in development)
 ----------------------
 
-Fixes:
+This is just a little bug fix release. With 1.4.2, we're also confident enough
+to recommend that anyone who's interested give Python 3 a try: bugs may still
+lurk, but we've deemed things safe enough for broad adoption. If you can,
+please install beets with ``pip3`` instead of ``pip2`` this time and let us
+know how it goes!
+
+Here are the fixes:
 
 * :doc:`/plugins/badfiles`: Fix a crash on non-ASCII filenames. :bug:`2299`
 * The ``%asciify{}`` path formatting function and the :ref:`asciify-paths`
