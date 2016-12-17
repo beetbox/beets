@@ -365,6 +365,7 @@ def _add_candidate(items, results, info):
     silence_tracks = [x for x in info.tracks if x.ignorable]
     mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
     extra_tracks = list(set(extra_tracks) - set(silence_tracks))
+    extra_tracks.sort(key=lambda t: (t.index, t.title))
 
     # Get the change distance.
     dist = distance(items, info, mapping)
