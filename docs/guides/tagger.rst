@@ -291,7 +291,8 @@ If you think beets is ignoring an album that's listed in MusicBrainz, please
 I Hope That Makes Sense
 -----------------------
 
-If I haven't made the process clear, please send an email to `the mailing
-list`_ and I'll try to improve this guide.
+If we haven't made the process clear, please post on `the discussion
+board`_ and we'll try to improve this guide.
 
 .. _the mailing list: http://groups.google.com/group/beets-users
+.. _the discussion board: http://discourse.beets.io

@@ -2,11 +2,12 @@ FAQ
 ###
 
 Here are some answers to frequently-asked questions from IRC and elsewhere.
-Got a question that isn't answered here? Try `IRC`_, the `mailing list`_, or
+Got a question that isn't answered here? Try `IRC`_, the `discussion board`_, or
 :ref:`filing an issue <bugs>` in the bug tracker.
 
 .. _IRC: irc://irc.freenode.net/beets
 .. _mailing list: http://groups.google.com/group/beets-users
+.. _discussion board: http://discourse.beets.io
 
 .. contents::
     :local:
