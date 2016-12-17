@@ -18,6 +18,8 @@ Here are the fixes:
   unicode characters into ASCII, such as ½ and ¢.
 * :doc:`/plugins/convert`: Fix a logging-related crash when filenames contain
   curly brackets. Thanks to :user:`kierdavis`. :bug:`2323`
+* We've rolled back some changes to the included zsh completion script that
+  were causing problems for some users. :bug:`2266`
 
 Also, we've removed some special handling for logging in the
 :doc:`/plugins/discogs` that we believe was unnecessary. If spurious log
