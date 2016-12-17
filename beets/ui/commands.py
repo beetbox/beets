@@ -545,7 +545,11 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             assert not singleton
             return importer.action.TRACKS
         elif sel == u'e':
-            return importer.action.MANUAL
+            ans = ui.input_("Use MB web interface?")
+            if ans == u'U':
+                return importer.action.web
+            else:
+                return importer.action.MANUAL
         elif sel == u's':
             return importer.action.SKIP
         elif sel == u'b':
