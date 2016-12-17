@@ -121,6 +121,78 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(0, len(mediafile.images))
 
+    def test_auto_false(self):
+        item = self.add_item_fixture(year=2000)
+        item.write()
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(2000, mediafile.year)
+
+        config['zero'] = {
+            'fields': [u'year'],
+            'update_database': True,
+            'auto': False
+        }
+        self.load_plugins('zero')
+
+        item.write()
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(item['year'], 2000)
+        self.assertEqual(mediafile.year, 2000)
+
+    def test_subcommand(self):
+        item = self.add_item_fixture(
+            year=2016,
+            day=13,
+            month=3,
+            comments=u'test comment'
+        )
+        item.write()
+        item_id = item.id
+        config['zero'] = {
+            'fields': [u'comments'],
+            'update_database': True,
+            'auto': False
+        }
+        self.load_plugins('zero')
+        self.run_command('zero')
+
+        mediafile = MediaFile(syspath(item.path))
+        item = self.lib.get_item(item_id)
+
+        self.assertEqual(item['year'], 2016)
+        self.assertEqual(mediafile.year, 2016)
+        self.assertEqual(mediafile.comments, None)
+        self.assertEqual(item['comments'], u'')
+
+    def test_subcommand_update_database_False(self):
+        item = self.add_item_fixture(
+            year=2016,
+            day=13,
+            month=3,
+            comments=u'test comment'
+        )
+        item.write()
+        item_id = item.id
+        config['zero'] = {
+            'fields': [u'comments'],
+            'update_database': False,
+            'auto': False
+        }
+        self.load_plugins('zero')
+
+        z = ZeroPlugin()
+        z.debug = False
+        self.run_command('zero')
+
+        mediafile = MediaFile(syspath(item.path))
+        item = self.lib.get_item(item_id)
+
+        self.assertEqual(item['year'], 2016)
+        self.assertEqual(mediafile.year, 2016)
+        self.assertEqual(item['comments'], u'test comment')
+        self.assertEqual(mediafile.comments, None)
+
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
