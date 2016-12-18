@@ -19,6 +19,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.setup_beets()
 
     def tearDown(self):
+        self.remove_mediafile_fixtures()
         self.teardown_beets()
         self.unload_plugins()
 
@@ -236,6 +237,76 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         self.assertEqual(mediafile.year, 2016)
         self.assertEqual(mediafile.comments, u'test comment')
+
+    def test_no_fields(self):
+        item = self.add_item_fixture(year=2016)
+        item.write()
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(mediafile.year, 2016)
+
+        item_id = item.id
+        config['zero'] = {}
+        self.load_plugins('zero')
+        self.run_command('zero')
+
+        item = self.lib.get_item(item_id)
+
+        self.assertEqual(item['year'], 2016)
+        self.assertEqual(mediafile.year, 2016)
+
+    def test_whitelist_and_blacklist(self):
+        item = self.add_item_fixture(year=2016)
+        item.write()
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(mediafile.year, 2016)
+
+        item_id = item.id
+        config['zero'] = {'fields': [u'year'],
+                          'keep_fields': [u'comments']}
+
+        self.load_plugins('zero')
+        self.run_command('zero')
+
+        item = self.lib.get_item(item_id)
+
+        self.assertEqual(item['year'], 2016)
+        self.assertEqual(mediafile.year, 2016)
+
+    def test_keep_fields(self):
+        item = self.add_item_fixture(year=2016, comments=u'test comment')
+        config['zero'] = {'keep_fields': [u'year'],
+                          'fields': None,
+                          'update_database': True,
+                          'auto': True}
+
+        tags = {
+            'comments': u'test comment',
+            'year': 2016,
+        }
+        self.load_plugins('zero')
+        z = ZeroPlugin()
+        z.write_event(item, item.path, tags)
+        self.assertEqual(tags['comments'], None)
+        self.assertEqual(tags['year'], 2016)
+
+    def test_keep_fields_removes_preserved_tags(self):
+        config['zero'] = {'keep_fields': [u'year id'],
+                          'fields': None,
+                          'update_database': True,
+                          'auto': True}
+
+        z = ZeroPlugin()
+
+        self.assertNotIn('id', z.patterns)
+
+    def test_field_preserved_tags(self):
+        config['zero'] = {'fields': [u'year id'],
+                          'update_database': True,
+                          'auto': True}
+
+        z = ZeroPlugin()
+
+        self.assertNotIn('id', z.patterns)
 
 
 def suite():
