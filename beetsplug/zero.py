@@ -21,7 +21,7 @@ import re
 from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action
-from beets.util import confit, syspath
+from beets.util import confit
 from beets.ui import Subcommand, decargs
 import six
 
@@ -94,12 +94,12 @@ class ZeroPlugin(BeetsPlugin):
         the section of the configuration to validate.
         """
         for field in self.config[mode].as_str_seq():
-            if field not in MediaFile.fields():
-                self._log.error(u'invalid field: {0}', field)
-                continue
             if mode == 'fields' and field in ('id', 'path', 'album_id'):
                 self._log.warning(u'field \'{0}\' ignored, zeroing '
                                   u'it would be dangerous', field)
+                continue
+            if field not in MediaFile.fields():
+                self._log.error(u'invalid field: {0}', field)
                 continue
 
     def set_pattern(self, field):
@@ -133,30 +133,12 @@ class ZeroPlugin(BeetsPlugin):
         return False
 
     def process_item(self, item):
-        if not self.patterns:
-            self._log.warning(u'no fields, nothing to do')
-            return
+        tags = dict(item)
 
-        for field, patterns in self.patterns.items():
-            if field in item.keys():
-                if not self.should_update(item, field):
-                    continue
-
-                value = item[field]
-                match = self.match_patterns(item[field], patterns)
-
-            else:
-                value = ''
-                match = patterns is True
-
-            if match:
-                self._log.warning(u'{0}: {1} -> None', field, value)
-                item[field] = None
-                if self.config['update_database']:
-                    item.update({field: None})
-                    item.store()
-
-        item.write()
+        if self.set_fields(item, tags):
+            item.write(tags=tags)
+            if self.config['update_database']:
+                item.store(fields=tags)
 
     def write_event(self, item, path, tags):
         """Set values in tags to `None` if the key and value are matched
@@ -165,9 +147,14 @@ class ZeroPlugin(BeetsPlugin):
         if not self.config['auto']:
             return
 
+        self.set_fields(item, tags)
+
+    def set_fields(self, item, tags):
+        fields_set = False
+
         if not self.patterns:
             self._log.warning(u'no fields, nothing to do')
-            return
+            return False
 
         for field, patterns in self.patterns.items():
             if field in tags:
@@ -178,18 +165,10 @@ class ZeroPlugin(BeetsPlugin):
                 match = patterns is True
 
             if match:
+                fields_set = True
                 self._log.debug(u'{0}: {1} -> None', field, value)
                 tags[field] = None
                 if self.config['update_database']:
                     item[field] = None
 
-    def should_update(self, item, field):
-        media = MediaFile(syspath(item.path))
-        attributes = media.fields()
-        if field in attributes:
-            return True
-
-        if self.config['update_database'] and item[field]:
-            return True
-
-        return False
+        return fields_set
