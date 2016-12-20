@@ -40,13 +40,13 @@ import six
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
-HELLO = 'OK MPD %s' % PROTOCOL_VERSION
-CLIST_BEGIN = 'command_list_begin'
-CLIST_VERBOSE_BEGIN = 'command_list_ok_begin'
-CLIST_END = 'command_list_end'
-RESP_OK = 'OK'
-RESP_CLIST_VERBOSE = 'list_OK'
-RESP_ERR = 'ACK'
+HELLO = u'OK MPD %s' % PROTOCOL_VERSION
+CLIST_BEGIN = u'command_list_begin'
+CLIST_VERBOSE_BEGIN = u'command_list_ok_begin'
+CLIST_END = u'command_list_end'
+RESP_OK = u'OK'
+RESP_CLIST_VERBOSE = u'list_OK'
+RESP_ERR = u'ACK'
 
 NEWLINE = u"\n"
 
@@ -604,7 +604,8 @@ class Connection(object):
             line = line.strip()
             if not line:
                 break
-            log.debug('{}', line)
+            line = line.decode('utf8')  # MPD protocol uses UTF-8.
+            log.debug(u'{}', line)
 
             if clist is not None:
                 # Command list already opened.
@@ -656,7 +657,7 @@ class Command(object):
             if match[0]:
                 # Quoted argument.
                 arg = match[0]
-                arg = arg.replace('\\"', '"').replace('\\\\', '\\')
+                arg = arg.replace(u'\\"', u'"').replace(u'\\\\', u'\\')
             else:
                 # Unquoted argument.
                 arg = match[1]
