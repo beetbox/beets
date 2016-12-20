@@ -44,6 +44,14 @@ def apply_item_metadata(item, track_info):
         item.mb_artistid = track_info.artist_id
     if track_info.data_source:
         item.data_source = track_info.data_source
+
+    if track_info.lyricist is not None:
+        item.lyricist = track_info.lyricist
+    if track_info.composer is not None:
+        item.composer = track_info.composer
+    if track_info.arranger is not None:
+        item.arranger = track_info.arranger
+
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
 
@@ -142,3 +150,10 @@ def apply_metadata(album_info, mapping):
 
         if track_info.media is not None:
             item.media = track_info.media
+
+        if track_info.lyricist is not None:
+            item.lyricist = track_info.lyricist
+        if track_info.composer is not None:
+            item.composer = track_info.composer
+        if track_info.arranger is not None:
+            item.arranger = track_info.arranger
