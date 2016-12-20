@@ -18,14 +18,10 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import random
 import sys
 import unicodedata
 import time
 import re
-from itertools import groupby
-from operator import attrgetter
-
 import six
 
 from beets import logging

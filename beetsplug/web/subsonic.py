@@ -109,7 +109,12 @@ def jsonresponse(resp, error=False, version=DEFAULT_VERSION):
 
 def jsonpresponse(resp, callback, error=False, version=DEFAULT_VERSION):
     """Returns a jsonp string response of the given dict"""
-    return "{}({})".format(callback, jsonresponse(resp, error, version))
+    resp = jsonresponse(resp, error, version)
+    resp.set_data('{}({})'.format(
+        callback,
+        resp.get_data(as_text=True)
+    ))
+    return resp
 
 
 def xmlresponse(resp, error=False, version=DEFAULT_VERSION):
@@ -140,8 +145,9 @@ def subsonicify():
     if f == 'jsonp':
         # Some clients (MiniSub, Perisonic) set f to jsonp without callback
         # for streamed data
-        if not callback and request.endpoint not in ['stream_media',
-                                                     'cover_art']:
+        print(request.endpoint)
+        if not callback and request.endpoint not in ['subsonic.v_download',
+                                                     'subsonic.v_cover_art']:
             return jsonresponse({
                 'error': {
                     'code': 0,
