@@ -4,7 +4,9 @@ Changelog
 1.4.3 (in development)
 ----------------------
 
-Changelog goes here!
+Fixes:
+
+* :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
 
 
 1.4.2 (December 16, 2016)
