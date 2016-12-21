@@ -752,6 +752,45 @@ class MP3StorageStyle(StorageStyle):
         mutagen_file.tags.setall(self.key, [frame])
 
 
+class MP3PeopleStorageStyle(MP3StorageStyle):
+    """Store list of people in ID3 frames.
+    """
+    def __init__(self, key, involvement='', **kwargs):
+        self.involvement = involvement
+        super(MP3PeopleStorageStyle, self).__init__(key, **kwargs)
+
+    def store(self, mutagen_file, value):
+        frames = mutagen_file.tags.getall(self.key)
+        print(frames)
+
+        # Try modifying in place.
+        found = False
+        for frame in frames:
+            if frame.encoding == mutagen.id3.Encoding.UTF8:
+                for pair in frame.people:
+                    if pair[0].lower() == self.involvement.lower():
+                        pair[1] = value
+                        found = True
+
+        # Try creating a new frame.
+        if not found:
+            frame = mutagen.id3.Frames[self.key](
+                encoding=mutagen.id3.Encoding.UTF8,
+                people=[[self.involvement, value]]
+            )
+            print(frame)
+            mutagen_file.tags.add(frame)
+
+    def fetch(self, mutagen_file):
+        for frame in mutagen_file.tags.getall(self.key):
+            for pair in frame.people:
+                if pair[0].lower() == self.involvement.lower():
+                    try:
+                        return pair[1]
+                    except IndexError:
+                        return None
+
+
 class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
     """Store lists of data in multiple ID3 frames.
     """
@@ -1590,12 +1629,25 @@ class MediaFile(object):
     )
     genre = genres.single_field()
 
+    lyricist = MediaField(
+        MP3StorageStyle('TEXT'),
+        MP4StorageStyle('----:com.apple.iTunes:LYRICIST'),
+        StorageStyle('LYRICIST'),
+        ASFStorageStyle('WM/Writer'),
+    )
     composer = MediaField(
         MP3StorageStyle('TCOM'),
         MP4StorageStyle('\xa9wrt'),
         StorageStyle('COMPOSER'),
         ASFStorageStyle('WM/Composer'),
     )
+    arranger = MediaField(
+        MP3PeopleStorageStyle('TIPL', involvement='arranger'),
+        MP4StorageStyle('----:com.apple.iTunes:Arranger'),
+        StorageStyle('ARRANGER'),
+        ASFStorageStyle('beets/Arranger'),
+    )
+
     grouping = MediaField(
         MP3StorageStyle('TIT1'),
         MP4StorageStyle('\xa9grp'),

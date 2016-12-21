@@ -54,8 +54,12 @@ class MusicBrainzAPIError(util.HumanReadableException):
 log = logging.getLogger('beets')
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
-                    'labels', 'artist-credits', 'aliases']
+                    'labels', 'artist-credits', 'aliases',
+                    'recording-level-rels', 'work-rels',
+                    'work-level-rels', 'artist-rels']
 TRACK_INCLUDES = ['artists', 'aliases']
+if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
+    TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
 
 
 def track_url(trackid):
@@ -178,6 +182,33 @@ def track_info(recording, index=None, medium=None, medium_index=None,
 
     if recording.get('length'):
         info.length = int(recording['length']) / (1000.0)
+
+    lyricist = []
+    composer = []
+    for work_relation in recording.get('work-relation-list', ()):
+        if work_relation['type'] != 'performance':
+            continue
+        for artist_relation in work_relation['work'].get(
+                'artist-relation-list', ()):
+            if 'type' in artist_relation:
+                type = artist_relation['type']
+                if type == 'lyricist':
+                    lyricist.append(artist_relation['artist']['name'])
+                elif type == 'composer':
+                    composer.append(artist_relation['artist']['name'])
+    if lyricist:
+        info.lyricist = u', '.join(lyricist)
+    if composer:
+        info.composer = u', '.join(composer)
+
+    arranger = []
+    for artist_relation in recording.get('artist-relation-list', ()):
+        if 'type' in artist_relation:
+            type = artist_relation['type']
+            if type == 'arranger':
+                arranger.append(artist_relation['artist']['name'])
+    if arranger:
+        info.arranger = u', '.join(arranger)
 
     info.decode()
     return info
