@@ -4,6 +4,13 @@ Changelog
 1.4.3 (in development)
 ----------------------
 
+Features:
+
+* We now support the composer, lyricist, and arranger tags. The MusicBrainz
+  data source will fetch data for these fields when the next version of
+  `python-musicbrainzngs`_ is released. Thanks to :user:`ibmibmibm`.
+  :bug:`506` :bug:`507` :bug:`1547` :bug:`2333`
+
 Fixes:
 
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
@@ -553,7 +560,7 @@ The new features:
   how the items will be moved without actually changing anything.
 * The importer now supports matching of "pregap" or HTOA (hidden track-one
   audio) tracks when they are listed in MusicBrainz. (This feature depends on a
-  new version of the ``musicbrainzngs`` library that is not yet released, but
+  new version of the `python-musicbrainzngs`_ library that is not yet released, but
   will start working when it is available.) Thanks to :user:`ruippeixotog`.
   :bug:`1104` :bug:`1493`
 * :doc:`/plugins/plexupdate`: A new ``token`` configuration option lets you
@@ -2001,7 +2008,7 @@ query syntax.
 New configuration options:
 
 * :ref:`languages` controls the preferred languages when selecting an alias
-  from MusicBrainz. This feature requires `python-musicbrainz-ngs`_ 0.3 or
+  from MusicBrainz. This feature requires `python-musicbrainzngs`_ 0.3 or
   later. Thanks to Sam Doshi.
 * :ref:`detail` enables a mode where all tracks are listed in the importer UI,
   as opposed to only changed tracks.
@@ -2667,7 +2674,7 @@ tracks from a given release. Two other new plugins are also included with this
 release: one for assigning genres and another for ReplayGain analysis.
 
 * Beets now communicates with MusicBrainz via the new `Next Generation Schema`_
-  (NGS) service via `python-musicbrainz-ngs`_. The bindings are included with
+  (NGS) service via `python-musicbrainzngs`_. The bindings are included with
   this version of beets, but a future version will make them an external
   dependency.
 * The importer now detects **multi-disc albums** and tags them together. Using a
@@ -2713,7 +2720,7 @@ release: one for assigning genres and another for ReplayGain analysis.
 
 .. _KraYmer: https://github.com/KraYmer
 .. _Next Generation Schema: http://musicbrainz.org/doc/XML_Web_Service/Version_2
-.. _python-musicbrainz-ngs: https://github.com/alastair/python-musicbrainz-ngs
+.. _python-musicbrainzngs: https://github.com/alastair/python-musicbrainzngs
 .. _acoustid: http://acoustid.org/
 .. _Peter Brunner: https://github.com/Lugoues
 .. _Simon Chopin: https://github.com/laarmen
