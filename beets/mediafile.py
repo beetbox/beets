@@ -761,7 +761,6 @@ class MP3PeopleStorageStyle(MP3StorageStyle):
 
     def store(self, mutagen_file, value):
         frames = mutagen_file.tags.getall(self.key)
-        print(frames)
 
         # Try modifying in place.
         found = False
@@ -778,7 +777,6 @@ class MP3PeopleStorageStyle(MP3StorageStyle):
                 encoding=mutagen.id3.Encoding.UTF8,
                 people=[[self.involvement, value]]
             )
-            print(frame)
             mutagen_file.tags.add(frame)
 
     def fetch(self, mutagen_file):
