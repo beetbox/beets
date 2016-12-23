@@ -80,6 +80,12 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             # Get the executable needed to calculate the sha1 hash.
             self.extractor = distutils.spawn.find_executable(self.extractor)
 
+        # Calculate extractor hash.
+        self.extractor_sha = hashlib.sha1()
+        with open(self.extractor, 'rb') as extractor:
+            self.extractor_sha.update(extractor.read())
+        self.extractor_sha = self.extractor_sha.hexdigest()
+
     supported_formats = {'mp3', 'ogg', 'oga', 'flac', 'mp4', 'm4a', 'm4r',
                          'm4b', 'm4p', 'aac', 'wma', 'asf', 'mpc', 'wv',
                          'spx', 'tta', '3g2', 'aif', 'aiff', 'ape'}
@@ -124,13 +130,9 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             call([self.extractor, util.syspath(item.path), filename])
             with open(filename) as tmp_file:
                 analysis = json.loads(tmp_file.read())
-            # Calculate extractor hash.
-            m = hashlib.sha1()
-            with open(self.extractor, 'rb') as extractor:
-                m.update(extractor.read())
             # Add the hash to the output.
             analysis['metadata']['version']['essentia_build_sha'] = \
-                m.hexdigest()
+                self.extractor_sha
             return analysis
         finally:
             try:
