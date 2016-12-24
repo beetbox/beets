@@ -830,7 +830,7 @@ class FlacTest(ReadWriteTestBase, PartialTestMixin,
     extension = 'flac'
     audio_properties = {
         'length': 1.0,
-        'bitrate': 175120,
+        'bitrate': 108688,
         'format': u'FLAC',
         'samplerate': 44100,
         'bitdepth': 16,
