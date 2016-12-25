@@ -16,22 +16,20 @@
 """ Clears tag fields in media files."""
 
 from __future__ import division, absolute_import, print_function
+import six
 
 import re
+
 from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action
 from beets.util import confit
-import six
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '0.10'
 
 
 class ZeroPlugin(BeetsPlugin):
-
-    _instance = None
-
     def __init__(self):
         super(ZeroPlugin, self).__init__()
 
@@ -46,60 +44,43 @@ class ZeroPlugin(BeetsPlugin):
             'update_database': False,
         })
 
-        self.patterns = {}
+        self.fields_to_progs = {}
         self.warned = False
 
-        # We'll only handle `fields` or `keep_fields`, but not both.
         if self.config['fields'] and self.config['keep_fields']:
             self._log.warning(
                 u'cannot blacklist and whitelist at the same time'
             )
-
         # Blacklist mode.
-        if self.config['fields']:
-            self.validate_config('fields')
+        elif self.config['fields']:
             for field in self.config['fields'].as_str_seq():
-                self.set_pattern(field)
-
+                self._set_pattern(field)
         # Whitelist mode.
         elif self.config['keep_fields']:
-            self.validate_config('keep_fields')
-
             for field in MediaFile.fields():
-                if field in self.config['keep_fields'].as_str_seq():
-                    continue
-                self.set_pattern(field)
+                if (field not in self.config['keep_fields'].as_str_seq() and
+                        # These fields should always be preserved.
+                        field not in ('id', 'path', 'album_id')):
+                    self._set_pattern(field)
 
-            # These fields should always be preserved.
-            for key in ('id', 'path', 'album_id'):
-                if key in self.patterns:
-                    del self.patterns[key]
-
-    def validate_config(self, mode):
-        """Check whether fields in the configuration are valid.
-
-        `mode` should either be "fields" or "keep_fields", indicating
-        the section of the configuration to validate.
-        """
-        for field in self.config[mode].as_str_seq():
-            if field not in MediaFile.fields():
-                self._log.error(u'invalid field: {0}', field)
-                continue
-            if mode == 'fields' and field in ('id', 'path', 'album_id'):
-                self._log.warning(u'field \'{0}\' ignored, zeroing '
-                                  u'it would be dangerous', field)
-                continue
-
-    def set_pattern(self, field):
+    def _set_pattern(self, field):
         """Set a field in `self.patterns` to a string list corresponding to
         the configuration, or `True` if the field has no specific
         configuration.
         """
-        try:
-            self.patterns[field] = self.config[field].as_str_seq()
-        except confit.NotFoundError:
-            # Matches everything
-            self.patterns[field] = True
+        if field not in MediaFile.fields():
+            self._log.error(u'invalid field: {0}', field)
+        elif field in ('id', 'path', 'album_id'):
+            self._log.warning(u'field \'{0}\' ignored, zeroing '
+                              u'it would be dangerous', field)
+        else:
+            try:
+                for pattern in self.config[field].as_str_seq():
+                    prog = re.compile(pattern, re.IGNORECASE)
+                    self.fields_to_progs.setdefault(field, []).append(prog)
+            except confit.NotFoundError:
+                # Matches everything
+                self.fields_to_progs[field] = []
 
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
@@ -108,36 +89,36 @@ class ZeroPlugin(BeetsPlugin):
             self.warned = True
         # TODO request write in as-is mode
 
-    @classmethod
-    def match_patterns(cls, field, patterns):
-        """Check if field (as string) is matching any of the patterns in
-        the list.
-        """
-        if patterns is True:
-            return True
-        for p in patterns:
-            if re.search(p, six.text_type(field), flags=re.IGNORECASE):
-                return True
-        return False
-
     def write_event(self, item, path, tags):
         """Set values in tags to `None` if the key and value are matched
         by `self.patterns`.
         """
-        if not self.patterns:
+        if not self.fields_to_progs:
             self._log.warning(u'no fields, nothing to do')
             return
 
-        for field, patterns in self.patterns.items():
+        for field, progs in self.fields_to_progs.items():
             if field in tags:
                 value = tags[field]
-                match = self.match_patterns(tags[field], patterns)
+                match = _match_progs(value, progs, self._log)
             else:
                 value = ''
-                match = patterns is True
+                match = not progs
 
             if match:
                 self._log.debug(u'{0}: {1} -> None', field, value)
                 tags[field] = None
                 if self.config['update_database']:
                     item[field] = None
+
+
+def _match_progs(value, progs, log):
+    """Check if field (as string) is matching any of the patterns in
+    the list.
+    """
+    if not progs:
+        return True
+    for prog in progs:
+        if prog.search(six.text_type(value)):
+            return True
+    return False
