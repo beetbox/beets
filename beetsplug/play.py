@@ -22,12 +22,17 @@ from beets.ui import Subcommand
 from beets import config
 from beets import ui
 from beets import util
+import contextlib
+import sys
+import os
 from os.path import relpath
 from tempfile import NamedTemporaryFile
+from beetsplug import random
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
 ARGS_MARKER = '$args'
+_random = random.Random()
 
 
 class PlayPlugin(BeetsPlugin):
@@ -55,6 +60,23 @@ class PlayPlugin(BeetsPlugin):
             u'-A', u'--args',
             action='store',
             help=u'add additional arguments to the command',
+        )
+        play_command.parser.add_option(
+            u'-r', u'--random',
+            action='store_true',
+            help=u'play random item',
+        )
+        play_command.parser.add_option(
+            u'-n', u'--number',
+            action='store',
+            type="int",
+            help=u'with -r: number of random items to choose',
+            default=1,
+        )
+        play_command.parser.add_option(
+            u'-e', u'--equal-chance',
+            action='store_true',
+            help=u'with -r: each artist has the same chance',
         )
         play_command.func = self.play_music
         return [play_command]
@@ -97,9 +119,12 @@ class PlayPlugin(BeetsPlugin):
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
-            selection = lib.albums(ui.decargs(args))
+            if opts.random:
+                with nostdout():
+                    selection = _random.random_item(lib, opts, args)
+            else:
+                selection = lib.albums(ui.decargs(args))
             paths = []
-
             sort = lib.get_default_album_sort()
             for album in selection:
                 if use_folders:
@@ -111,14 +136,17 @@ class PlayPlugin(BeetsPlugin):
 
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(ui.decargs(args))
+            if opts.random:
+                with nostdout():
+                    selection = _random.random_item(lib, opts, args)
+            else:
+                selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
             if relative_to:
                 paths = [relpath(path, relative_to) for path in paths]
             item_type = 'track'
 
         item_type += 's' if len(selection) > 1 else ''
-
         if not selection:
             ui.print_(ui.colorize('text_warning',
                                   u'No {0} to play.'.format(item_type)))
@@ -155,3 +183,13 @@ class PlayPlugin(BeetsPlugin):
             m3u.write(item + b'\n')
         m3u.close()
         return m3u.name
+
+
+@contextlib.contextmanager
+def nostdout():
+    new_target = open(os.devnull, "w")
+    old_target, sys.stdout = sys.stdout, new_target
+    try:
+        yield new_target
+    finally:
+        sys.stdout = old_target
