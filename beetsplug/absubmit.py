@@ -65,7 +65,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 # Extractor found, will exit with an error if not called with
                 # the correct amount of arguments.
                 pass
-            # Get the executable needed to calculate the sha1 hash.
+            # Get the executable location on the system,
+            # needed to calculate the sha1 hash.
             self.extractor = distutils.spawn.find_executable(self.extractor)
 
         # Calculate extractor hash.
@@ -91,8 +92,6 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
     def command(self, lib, opts, args):
         # Get items from arguments
         items = lib.items(ui.decargs(args))
-        # Get no_submit option.
-        # TODO get a should submit option from the command line.
         for item in items:
             analysis = self._get_analysis(item)
             if analysis:
@@ -111,7 +110,10 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                            u'supported format.', item)
             return None
 
-        # Temporary file to save extractor output to.
+        # Temporary file to save extractor output to, extractor only works
+        # if an output file is given. Here we use a temporary file to copy
+        # the data into a python object and then remove the file from the
+        # system.
         tmp_file, filename = tempfile.mkstemp(suffix='.json')
         try:
             # Close the file, so the extractor can overwrite it.
