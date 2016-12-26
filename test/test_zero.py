@@ -105,26 +105,21 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.load_plugins('zero')
         item.write()
 
-        mediafile = MediaFile(syspath(path))
-        self.assertEqual(0, len(mediafile.images))
+        mf = MediaFile(syspath(path))
+        self.assertEqual(0, len(mf.images))
 
     def test_auto_false(self):
+        self.config['zero']['fields'] = ['year']
+        self.config['zero']['update_database'] = True
+        self.config['zero']['auto'] = False
+
         item = self.add_item_fixture(year=2000)
         item.write()
-        mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(2000, mediafile.year)
 
-        config['zero'] = {
-            'fields': [u'year'],
-            'update_database': True,
-            'auto': False
-        }
         self.load_plugins('zero')
-
         item.write()
-        mediafile = MediaFile(syspath(item.path))
+
         self.assertEqual(item['year'], 2000)
-        self.assertEqual(mediafile.year, 2000)
 
     def test_subcommand_update_database_true(self):
         item = self.add_item_fixture(
@@ -135,20 +130,19 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         )
         item.write()
         item_id = item.id
-        config['zero'] = {
-            'fields': [u'comments'],
-            'update_database': True,
-            'auto': False
-        }
+        self.config['zero']['fields'] = ['comments']
+        self.config['zero']['update_database'] = True
+        self.config['zero']['auto'] = False
+
         self.load_plugins('zero')
         self.run_command('zero')
 
-        mediafile = MediaFile(syspath(item.path))
+        mf = MediaFile(syspath(item.path))
         item = self.lib.get_item(item_id)
 
         self.assertEqual(item['year'], 2016)
-        self.assertEqual(mediafile.year, 2016)
-        self.assertEqual(mediafile.comments, None)
+        self.assertEqual(mf.year, 2016)
+        self.assertEqual(mf.comments, None)
         self.assertEqual(item['comments'], u'')
 
     def test_subcommand_update_database_false(self):
@@ -160,21 +154,21 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         )
         item.write()
         item_id = item.id
-        config['zero'] = {
-            'fields': [u'comments'],
-            'update_database': False,
-            'auto': False
-        }
+
+        self.config['zero']['fields'] = ['comments']
+        self.config['zero']['update_database'] = False
+        self.config['zero']['auto'] = False
+
         self.load_plugins('zero')
         self.run_command('zero')
 
-        mediafile = MediaFile(syspath(item.path))
+        mf = MediaFile(syspath(item.path))
         item = self.lib.get_item(item_id)
 
         self.assertEqual(item['year'], 2016)
-        self.assertEqual(mediafile.year, 2016)
+        self.assertEqual(mf.year, 2016)
         self.assertEqual(item['comments'], u'test comment')
-        self.assertEqual(mediafile.comments, None)
+        self.assertEqual(mf.comments, None)
 
     def test_subcommand_query_include(self):
         item = self.add_item_fixture(
@@ -186,19 +180,17 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         item.write()
 
-        config['zero'] = {
-            'fields': [u'comments'],
-            'update_database': False,
-            'auto': False
-        }
+        self.config['zero']['fields'] = ['comments']
+        self.config['zero']['update_database'] = False
+        self.config['zero']['auto'] = False
 
         self.load_plugins('zero')
         self.run_command('zero', 'year: 2016')
 
-        mediafile = MediaFile(syspath(item.path))
+        mf = MediaFile(syspath(item.path))
 
-        self.assertEqual(mediafile.year, 2016)
-        self.assertEqual(mediafile.comments, None)
+        self.assertEqual(mf.year, 2016)
+        self.assertEqual(mf.comments, None)
 
     def test_subcommand_query_exclude(self):
         item = self.add_item_fixture(
@@ -210,19 +202,84 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         item.write()
 
-        config['zero'] = {
-            'fields': [u'comments'],
-            'update_database': False,
-            'auto': False
-        }
+        self.config['zero']['fields'] = ['comments']
+        self.config['zero']['update_database'] = False
+        self.config['zero']['auto'] = False
 
         self.load_plugins('zero')
         self.run_command('zero', 'year: 0000')
 
-        mediafile = MediaFile(syspath(item.path))
+        mf = MediaFile(syspath(item.path))
 
+        self.assertEqual(mf.year, 2016)
+        self.assertEqual(mf.comments, u'test comment')
+
+    def test_no_fields(self):
+        item = self.add_item_fixture(year=2016)
+        item.write()
+        mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.year, 2016)
-        self.assertEqual(mediafile.comments, u'test comment')
+
+        item_id = item.id
+
+        self.load_plugins('zero')
+        self.run_command('zero')
+
+        item = self.lib.get_item(item_id)
+
+        self.assertEqual(item['year'], 2016)
+        self.assertEqual(mediafile.year, 2016)
+
+    def test_whitelist_and_blacklist(self):
+        item = self.add_item_fixture(year=2016)
+        item.write()
+        mf = MediaFile(syspath(item.path))
+        self.assertEqual(mf.year, 2016)
+
+        item_id = item.id
+        self.config['zero']['fields'] = [u'year']
+        self.config['zero']['keep_fields'] = [u'comments']
+
+        self.load_plugins('zero')
+        self.run_command('zero')
+
+        item = self.lib.get_item(item_id)
+
+        self.assertEqual(item['year'], 2016)
+        self.assertEqual(mf.year, 2016)
+
+    def test_keep_fields(self):
+        item = self.add_item_fixture(year=2016, comments=u'test comment')
+        self.config['zero']['keep_fields'] = [u'year']
+        self.config['zero']['fields'] = None
+        self.config['zero']['update_database'] = True
+
+        tags = {
+            'comments': u'test comment',
+            'year': 2016,
+        }
+        self.load_plugins('zero')
+        z = ZeroPlugin()
+        z.write_event(item, item.path, tags)
+        self.assertEqual(tags['comments'], None)
+        self.assertEqual(tags['year'], 2016)
+
+    def test_keep_fields_removes_preserved_tags(self):
+        self.config['zero']['keep_fields'] = [u'year']
+        self.config['zero']['fields'] = None
+        self.config['zero']['update_database'] = True
+
+        z = ZeroPlugin()
+
+        self.assertNotIn('id', z.fields_to_progs)
+
+    def test_fields_removes_preserved_tags(self):
+        self.config['zero']['fields'] = [u'year id']
+        self.config['zero']['update_database'] = True
+
+        z = ZeroPlugin()
+
+        self.assertNotIn('id', z.fields_to_progs)
 
 
 def suite():

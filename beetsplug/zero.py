@@ -23,6 +23,7 @@ import re
 from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action
+from beets.ui import Subcommand, decargs
 from beets.util import confit
 
 __author__ = 'baobab@heresiarch.info'
@@ -39,6 +40,7 @@ class ZeroPlugin(BeetsPlugin):
                                self.import_task_choice_event)
 
         self.config.add({
+            'auto': True,
             'fields': [],
             'keep_fields': [],
             'update_database': False,
@@ -62,6 +64,16 @@ class ZeroPlugin(BeetsPlugin):
                         # These fields should always be preserved.
                         field not in ('id', 'path', 'album_id')):
                     self._set_pattern(field)
+
+    def commands(self):
+        zero_command = Subcommand('zero', help='set fields to null')
+
+        def zero_fields(lib, opts, args):
+            for item in lib.items(decargs(args)):
+                self.process_item(item)
+
+        zero_command.func = zero_fields
+        return [zero_command]
 
     def _set_pattern(self, field):
         """Set a field in `self.patterns` to a string list corresponding to
@@ -93,23 +105,40 @@ class ZeroPlugin(BeetsPlugin):
         """Set values in tags to `None` if the key and value are matched
         by `self.patterns`.
         """
+        if self.config['auto']:
+            self.set_fields(item, tags)
+
+    def set_fields(self, item, tags):
+        fields_set = False
+
         if not self.fields_to_progs:
             self._log.warning(u'no fields, nothing to do')
-            return
+            return False
 
         for field, progs in self.fields_to_progs.items():
             if field in tags:
                 value = tags[field]
-                match = _match_progs(value, progs, self._log)
+                match = _match_progs(tags[field], progs, self._log)
             else:
                 value = ''
                 match = not progs
 
             if match:
+                fields_set = True
                 self._log.debug(u'{0}: {1} -> None', field, value)
                 tags[field] = None
                 if self.config['update_database']:
                     item[field] = None
+
+        return fields_set
+
+    def process_item(self, item):
+        tags = dict(item)
+
+        if self.set_fields(item, tags):
+            item.write(tags=tags)
+            if self.config['update_database']:
+                item.store(fields=tags)
 
 
 def _match_progs(value, progs, log):
