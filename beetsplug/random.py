@@ -24,25 +24,26 @@ from operator import attrgetter
 from itertools import groupby
 
 
-def random_item(lib, opts, args):
-    query = decargs(args)
+def random_objs(objs, album, number=1, time=None, equal_chance=False):
+    """Get a random subset of the provided `objs`.
 
-    if opts.album:
-        objs = list(lib.albums(query))
-    else:
-        objs = list(lib.items(query))
-
-    if opts.time:
+    If `number` is provided, produce that many matches. Otherwise, if
+    `time` is provided, instead select a list whose total time is close
+    to that number of minutes. If `equal_chance` is true, give each
+    artist an equal chance of being included so that artists with more
+    songs are not represented disproportionately.
+    """
+    if time:
         total_time = 0.0
-        time_sec = (opts.time * 60)
+        time_sec = (time * 60)
         objs_shuffled = objs
         random.shuffle(objs_shuffled)
 
-        if not opts.equal_chance:
+        if not equal_chance:
             objs = []
 
             for item in objs_shuffled:
-                if opts.album:
+                if album:
                     item.length = sum(a.length for a in item.items())
                 if (total_time + item.length) <= time_sec:
                     objs.append(item)
@@ -51,7 +52,7 @@ def random_item(lib, opts, args):
                 else:
                     pass
 
-    if opts.equal_chance:
+    if equal_chance:
         # Group the objects by artist so we can sample from them.
         key = attrgetter('albumartist')
         objs.sort(key=key)
@@ -60,12 +61,12 @@ def random_item(lib, opts, args):
             objs_by_artists[artist] = list(v)
         objs = []
 
-        if opts.time:
+        if time:
             for item in objs_shuffled:
                 if not objs_by_artists:
                     break
 
-                if opts.album:
+                if album:
                     item.length = sum(a.length for a in item.items())
                 if (total_time + item.length) <= time_sec:
                     artist = random.choice(list(objs_by_artists.keys()))
@@ -81,7 +82,7 @@ def random_item(lib, opts, args):
                     pass
 
         else:
-            for _ in range(opts.number):
+            for _ in range(number):
                 # Terminate early if we're out of objects to select.
                 if not objs_by_artists:
                     break
@@ -97,12 +98,29 @@ def random_item(lib, opts, args):
                 if not objs_from_artist:
                     del objs_by_artists[artist]
 
-    elif not opts.time:
-        number = min(len(objs), opts.number)
+    elif not time:
+        number = min(len(objs), number)
         objs = random.sample(objs, number)
 
-    for item in objs:
-        print_(format(item))
+    return objs
+
+
+def random_func(lib, opts, args):
+    """Select some random items or albums and print the results.
+    """
+    # Fetch all the objects matching the query into a list.
+    query = decargs(args)
+    if opts.album:
+        objs = list(lib.albums(query))
+    else:
+        objs = list(lib.items(query))
+
+    # Print a random subset.
+    objs = random_objs(objs, opts.album, opts.number, opts.time,
+                       opts.equal_chance)
+    for obj in objs:
+        print_(format(obj))
+
 
 random_cmd = Subcommand('random',
                         help=u'choose a random track or album')
@@ -116,7 +134,7 @@ random_cmd.parser.add_option(
     u'-t', u'--time', action='store', type="float",
     help=u'total length in minutes of objects to choose')
 random_cmd.parser.add_all_common_options()
-random_cmd.func = random_item
+random_cmd.func = random_func
 
 
 class Random(BeetsPlugin):
