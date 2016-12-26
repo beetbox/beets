@@ -18,19 +18,7 @@ from beets import ui
 
 
 class ABSubmitError(Exception):
-    """Base exception for all excpetions this plugin can raise."""
-
-
-class FatalABSubmitError(ABSubmitError):
-    """Raised if the plugin is not able to start."""
-
-
-class AnalysisABSubmitError(ABSubmitError):
-    """Raised if analysis of file fails."""
-
-
-class SubmitABSubmitError(ABSubmitError):
-    """Raised if submitting data fails."""
+    """Raised when failing to analyse file with extractor."""
 
 
 def call(args):
@@ -41,8 +29,8 @@ def call(args):
     try:
         return util.command_output(args)
     except subprocess.CalledProcessError as e:
-        raise AnalysisABSubmitError(
-            u"{0} exited with status {1}".format(args[0], e.returncode)
+        raise ABSubmitError(
+            u'{0} exited with status {1}'.format(args[0], e.returncode)
         )
 
 
@@ -58,8 +46,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             self.extractor = util.normpath(self.extractor)
             # Expicit path to extractor
             if not os.path.isfile(self.extractor):
-                raise FatalABSubmitError(
-                    u'extractor command does not exist: {0}'.
+                raise ui.UserError(
+                    u'Extractor command does not exist: {0}.'.
                     format(self.extractor)
                 )
         else:
@@ -69,11 +57,11 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             try:
                 call([self.extractor])
             except OSError:
-                raise FatalABSubmitError(
-                    u'no extractor command found: install "{0}"'.
-                    format(self.extractor)
+                raise ui.UserError(
+                    u'No extractor command found: please install the '
+                    u'extractor binary from http://acousticbrainz.org/download'
                 )
-            except AnalysisABSubmitError:
+            except ABSubmitError:
                 # Extractor found, will exit with an error if not called with
                 # the correct amount of arguments.
                 pass
@@ -114,20 +102,27 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         mbid = item['mb_trackid']
         # If file has no mbid skip it.
         if not mbid:
-            self._log.info('Not analysing {}, missing '
-                           'musicbrainz track id.', item)
+            self._log.info(u'Not analysing {}, missing '
+                           u'musicbrainz track id.', item)
             return None
         # If file format is not supported skip it.
         if item['format'].lower() not in self.supported_formats:
-            self._log.info('Not analysing {}, file not in '
-                           'supported format.', item)
+            self._log.info(u'Not analysing {}, file not in '
+                           u'supported format.', item)
             return None
 
         # Temporary file to save extractor output to.
         tmp_file, filename = tempfile.mkstemp(suffix='.json')
         try:
             # Close the file, so the extractor can overwrite it.
-            call([self.extractor, util.syspath(item.path), filename])
+            try:
+                call([self.extractor, util.syspath(item.path), filename])
+            except ABSubmitError as e:
+                self._log.error(
+                    u'Failed to analyse {item} for AcousticBrainz: {error}',
+                    item=item, error=e
+                )
+                return None
             with open(filename) as tmp_file:
                 analysis = json.loads(tmp_file.read())
             # Add the hash to the output.
@@ -151,11 +146,12 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         if response.status_code != 200:
             try:
                 message = response.json()['message']
-            except Exception as e:
-                message = 'unable to get error message: {}'.format(e)
-            raise ABSubmitError(
-                'Failed to submit analysis: {message})'.
-                format(status_code=response.status_code, message=message)
+            except (ValueError, KeyError) as e:
+                message = u'unable to get error message: {}'.format(e)
+            self._log.error(
+                u'Failed to submit AcousticBrainz analysis of {item}: '
+                u'{message}).', item=item, message=message
             )
-        self._log.debug('Successfully submitted AcousticBrainz analysis '
-                        'for {}.', item)
+        else:
+            self._log.debug(u'Successfully submitted AcousticBrainz analysis '
+                            u'for {}.', item)
