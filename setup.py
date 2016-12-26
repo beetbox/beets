@@ -111,6 +111,7 @@ setup(
 
     # Plugin (optional) dependencies:
     extras_require={
+        'absubmit': ['requests'],
         'fetchart': ['requests'],
         'chroma': ['pyacoustid'],
         'discogs': ['discogs-client>=2.1.0'],
@@ -126,6 +127,7 @@ setup(
     # Non-Python/non-PyPI plugin dependencies:
     # convert: ffmpeg
     # bpd: python-gi and GStreamer
+    # absubmit: extractor binary from http://acousticbrainz.org/download
 
     classifiers=[
         'Topic :: Multimedia :: Sound/Audio',
