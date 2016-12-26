@@ -24,6 +24,15 @@ from operator import attrgetter
 from itertools import groupby
 
 
+def _length(obj, album):
+    """Get the duration of an item or album.
+    """
+    if album:
+        return sum(i.length for i in obj.items())
+    else:
+        return obj.length
+
+
 def random_objs(objs, album, number=1, time=None, equal_chance=False):
     """Get a random subset of the provided `objs`.
 
@@ -42,12 +51,11 @@ def random_objs(objs, album, number=1, time=None, equal_chance=False):
         if not equal_chance:
             objs = []
 
-            for item in objs_shuffled:
-                if album:
-                    item.length = sum(a.length for a in item.items())
-                if (total_time + item.length) <= time_sec:
-                    objs.append(item)
-                    total_time += item.length
+            for obj in objs_shuffled:
+                length = _length(obj, album)
+                if (total_time + length) <= time_sec:
+                    objs.append(obj)
+                    total_time += length
 
                 else:
                     pass
@@ -62,18 +70,17 @@ def random_objs(objs, album, number=1, time=None, equal_chance=False):
         objs = []
 
         if time:
-            for item in objs_shuffled:
+            for obj in objs_shuffled:
                 if not objs_by_artists:
                     break
 
-                if album:
-                    item.length = sum(a.length for a in item.items())
-                if (total_time + item.length) <= time_sec:
+                length = _length(obj, album)
+                if (total_time + length) <= time_sec:
                     artist = random.choice(list(objs_by_artists.keys()))
                     objs_from_artist = objs_by_artists[artist]
                     i = random.randint(0, len(objs_from_artist) - 1)
                     objs.append(objs_from_artist.pop(i))
-                    total_time += item.length
+                    total_time += length
 
                     if not objs_from_artist:
                         del objs_by_artists[artist]
