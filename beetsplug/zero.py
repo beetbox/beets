@@ -23,7 +23,7 @@ import re
 from beets.plugins import BeetsPlugin
 from beets.mediafile import MediaFile
 from beets.importer import action
-from beets.ui import Subcommand, decargs
+from beets.ui import Subcommand, decargs, input_yn
 from beets.util import confit
 
 __author__ = 'baobab@heresiarch.info'
@@ -69,6 +69,8 @@ class ZeroPlugin(BeetsPlugin):
         zero_command = Subcommand('zero', help='set fields to null')
 
         def zero_fields(lib, opts, args):
+            if not decargs(args) and not input_yn(u"Remove fields for all items? (Y/n)", True):
+                return
             for item in lib.items(decargs(args)):
                 self.process_item(item)
 

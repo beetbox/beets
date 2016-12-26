@@ -5,7 +5,7 @@
 from __future__ import division, absolute_import, print_function
 
 import unittest
-from test.helper import TestHelper
+from test.helper import TestHelper, control_stdin
 
 from beets.library import Item
 from beetsplug.zero import ZeroPlugin
@@ -135,7 +135,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.config['zero']['auto'] = False
 
         self.load_plugins('zero')
-        self.run_command('zero')
+        with control_stdin('y'):
+            self.run_command('zero')
 
         mf = MediaFile(syspath(item.path))
         item = self.lib.get_item(item_id)
@@ -160,7 +161,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.config['zero']['auto'] = False
 
         self.load_plugins('zero')
-        self.run_command('zero')
+        with control_stdin('y'):
+            self.run_command('zero')
 
         mf = MediaFile(syspath(item.path))
         item = self.lib.get_item(item_id)
@@ -223,7 +225,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         item_id = item.id
 
         self.load_plugins('zero')
-        self.run_command('zero')
+        with control_stdin('y'):
+            self.run_command('zero')
 
         item = self.lib.get_item(item_id)
 
@@ -241,7 +244,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.config['zero']['keep_fields'] = [u'comments']
 
         self.load_plugins('zero')
-        self.run_command('zero')
+        with control_stdin('y'):
+            self.run_command('zero')
 
         item = self.lib.get_item(item_id)
 
@@ -259,6 +263,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
             'year': 2016,
         }
         self.load_plugins('zero')
+
         z = ZeroPlugin()
         z.write_event(item, item.path, tags)
         self.assertEqual(tags['comments'], None)
@@ -280,6 +285,31 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         z = ZeroPlugin()
 
         self.assertNotIn('id', z.fields_to_progs)
+
+    def test_empty_query_n_response_no_changes(self):
+        item = self.add_item_fixture(
+            year=2016,
+            day=13,
+            month=3,
+            comments=u'test comment'
+        )
+        item.write()
+        item_id = item.id
+        self.config['zero']['fields'] = ['comments']
+        self.config['zero']['update_database'] = True
+        self.config['zero']['auto'] = False
+
+        self.load_plugins('zero')
+        with control_stdin('n'):
+            self.run_command('zero')
+
+        mf = MediaFile(syspath(item.path))
+        item = self.lib.get_item(item_id)
+
+        self.assertEqual(item['year'], 2016)
+        self.assertEqual(mf.year, 2016)
+        self.assertEqual(mf.comments, u'test comment')
+        self.assertEqual(item['comments'], u'test comment')
 
 
 def suite():
