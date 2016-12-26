@@ -69,7 +69,9 @@ class ZeroPlugin(BeetsPlugin):
         zero_command = Subcommand('zero', help='set fields to null')
 
         def zero_fields(lib, opts, args):
-            if not decargs(args) and not input_yn(u"Remove fields for all items? (Y/n)", True):
+            if not decargs(args) and not input_yn(
+                    u"Remove fields for all items? (Y/n)",
+                    True):
                 return
             for item in lib.items(decargs(args)):
                 self.process_item(item)
