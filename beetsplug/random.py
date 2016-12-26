@@ -32,6 +32,25 @@ def random_item(lib, opts, args):
     else:
         objs = list(lib.items(query))
 
+    if opts.time:
+        total_time = 0.0
+        time_sec = (opts.time * 60)
+        objs_shuffled = objs
+        random.shuffle(objs_shuffled)
+
+        if not opts.equal_chance:
+            objs = []
+
+            for item in objs_shuffled:
+                if opts.album:
+                    item.length = sum(a.length for a in item.items())
+                if (total_time + item.length) <= time_sec:
+                    objs.append(item)
+                    total_time += item.length
+
+                else:
+                    pass
+
     if opts.equal_chance:
         # Group the objects by artist so we can sample from them.
         key = attrgetter('albumartist')
@@ -39,25 +58,46 @@ def random_item(lib, opts, args):
         objs_by_artists = {}
         for artist, v in groupby(objs, key):
             objs_by_artists[artist] = list(v)
-
         objs = []
-        for _ in range(opts.number):
-            # Terminate early if we're out of objects to select.
-            if not objs_by_artists:
-                break
 
-            # Choose an artist and an object for that artist, removing
-            # this choice from the pool.
-            artist = random.choice(list(objs_by_artists.keys()))
-            objs_from_artist = objs_by_artists[artist]
-            i = random.randint(0, len(objs_from_artist) - 1)
-            objs.append(objs_from_artist.pop(i))
+        if opts.time:
+            for item in objs_shuffled:
+                if not objs_by_artists:
+                    break
 
-            # Remove the artist if we've used up all of its objects.
-            if not objs_from_artist:
-                del objs_by_artists[artist]
+                if opts.album:
+                    item.length = sum(a.length for a in item.items())
+                if (total_time + item.length) <= time_sec:
+                    artist = random.choice(list(objs_by_artists.keys()))
+                    objs_from_artist = objs_by_artists[artist]
+                    i = random.randint(0, len(objs_from_artist) - 1)
+                    objs.append(objs_from_artist.pop(i))
+                    total_time += item.length
 
-    else:
+                    if not objs_from_artist:
+                        del objs_by_artists[artist]
+
+                else:
+                    pass
+
+        else:
+            for _ in range(opts.number):
+                # Terminate early if we're out of objects to select.
+                if not objs_by_artists:
+                    break
+
+                # Choose an artist and an object for that artist, removing
+                # this choice from the pool.
+                artist = random.choice(list(objs_by_artists.keys()))
+                objs_from_artist = objs_by_artists[artist]
+                i = random.randint(0, len(objs_from_artist) - 1)
+                objs.append(objs_from_artist.pop(i))
+
+                # Remove the artist if we've used up all of its objects.
+                if not objs_from_artist:
+                    del objs_by_artists[artist]
+
+    elif not opts.time:
         number = min(len(objs), opts.number)
         objs = random.sample(objs, number)
 
@@ -65,13 +105,16 @@ def random_item(lib, opts, args):
         print_(format(item))
 
 random_cmd = Subcommand('random',
-                        help=u'chose a random track or album')
+                        help=u'choose a random track or album')
 random_cmd.parser.add_option(
     u'-n', u'--number', action='store', type="int",
     help=u'number of objects to choose', default=1)
 random_cmd.parser.add_option(
     u'-e', u'--equal-chance', action='store_true',
     help=u'each artist has the same chance')
+random_cmd.parser.add_option(
+    u'-t', u'--time', action='store', type="float",
+    help=u'total length in minutes of objects to choose')
 random_cmd.parser.add_all_common_options()
 random_cmd.func = random_item
 
