@@ -38,6 +38,7 @@ like this::
 .. toctree::
    :hidden:
 
+   absubmit
    acousticbrainz
    badfiles
    beatport
@@ -105,6 +106,7 @@ Autotagger Extensions
 Metadata
 --------
 
+* :doc:`absubmit`: Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to the AcousticBrainz server
 * :doc:`acousticbrainz`: Fetch various AcousticBrainz metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
 * :doc:`edit`: Edit metadata from a text editor.
@@ -128,6 +130,7 @@ Metadata
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
+.. _streaming_extractor_music: http://acousticbrainz.org/download
 
 Path Formats
 ------------
