@@ -155,6 +155,12 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """Fetch additional information from AcousticBrainz for the `item`s.
         """
         for item in items:
+            
+            mood_str = item.get('mood_acoustic', u'')
+            if len(mood_str) != 0:
+                self._log.info(u'Already set acousticbrainz tag for {} ', item)
+                continue
+
             if not item.mb_trackid:
                 continue
 
