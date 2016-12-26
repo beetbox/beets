@@ -13,15 +13,13 @@ Features:
 * :doc:`/plugins/random`: A new ``--time`` option lets you generate a random
   playlist that takes a given amount of time. Thanks to :user:`diomekes`.
   :bug:`2305` :bug:`2322`
+* :doc:`/plugins/zero`: Added ``zero`` command to manually trigger the zero
+  plugin. Thanks to :user:`SJoshBrown`. :bug:`2274` :bug:`2329`
 
 Fixes:
 
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
 
-Features:
-
-* :doc:`/plugins/zero`: Added ``zero`` command to manually trigger the zero
-  plugin.
 
 1.4.2 (December 16, 2016)
 -------------------------

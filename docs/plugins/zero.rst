@@ -18,7 +18,8 @@ Configuration
 Make a ``zero:`` section in your configuration file. You can specify the
 fields to nullify and the conditions for nullifying them:
 
-* Set ``auto`` to ``yes`` to null fields automatically on import. Default ``yes``
+* Set ``auto`` to ``yes`` to null fields automatically on import.
+  Default: ``yes``.
 * Set ``fields`` to a whitespace-separated list of fields to change. You can
   get the list of all available fields by running ``beet fields``. In
   addition, the ``images`` field allows you to remove any images
@@ -47,5 +48,5 @@ Note that the plugin currently does not zero fields when importing "as-is".
 Manually Triggering Zero
 ------------------------
 
-The ``zero`` command will invoke the zero plugin on items matching a query. Use the
-command ``beet zero [QUERY]``
+You can also type ``beet zero [QUERY]`` to manually invoke the plugin on music
+in your library.
