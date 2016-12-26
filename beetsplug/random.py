@@ -97,26 +97,19 @@ def random_objs(objs, album, number=1, time=None, equal_chance=False):
     artist an equal chance of being included so that artists with more
     songs are not represented disproportionately.
     """
-    if time:
-        time_sec = time * 60
-        objs_shuffled = objs
-        random.shuffle(objs_shuffled)
-
-        if not equal_chance:
-            return _take_time(objs_shuffled, time_sec, album)
-
+    # Permute the objects either in a straightforward way or an
+    # artist-balanced way.
     if equal_chance:
-        if time:
-            return _take_time(_equal_chance_permutation(objs), time_sec, album)
+        perm = _equal_chance_permutation(objs)
+    else:
+        perm = objs
+        random.shuffle(perm)  # N.B. This shuffles the original list.
 
-        else:
-            return _take(_equal_chance_permutation(objs), number)
-
-    elif not time:
-        number = min(len(objs), number)
-        objs = random.sample(objs, number)
-
-    return objs
+    # Select objects by time our count.
+    if time:
+        return _take_time(perm, time * 60, album)
+    else:
+        return _take(perm, number)
 
 
 def random_func(lib, opts, args):
