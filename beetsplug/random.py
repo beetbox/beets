@@ -73,6 +73,21 @@ def _take(iter, num):
     return out
 
 
+def _take_time(iter, secs, album):
+    """Return a list containing the first values in `iter`, which should
+    be Item or Album objects, that add up to the given amount of time in
+    seconds.
+    """
+    out = []
+    total_time = 0.0
+    for obj in iter:
+        length = _length(obj, album)
+        if total_time + length <= secs:
+            out.append(obj)
+            total_time += length
+    return out
+
+
 def random_objs(objs, album, number=1, time=None, equal_chance=False):
     """Get a random subset of the provided `objs`.
 
@@ -83,47 +98,19 @@ def random_objs(objs, album, number=1, time=None, equal_chance=False):
     songs are not represented disproportionately.
     """
     if time:
-        total_time = 0.0
         time_sec = time * 60
         objs_shuffled = objs
         random.shuffle(objs_shuffled)
 
         if not equal_chance:
-            objs = []
-
-            for obj in objs_shuffled:
-                length = _length(obj, album)
-                if (total_time + length) <= time_sec:
-                    objs.append(obj)
-                    total_time += length
-
-                else:
-                    pass
+            return _take_time(objs_shuffled, time_sec, album)
 
     if equal_chance:
-
         if time:
-            for obj in objs_shuffled:
-                if not objs_by_artists:
-                    break
-
-                length = _length(obj, album)
-                if (total_time + length) <= time_sec:
-                    artist = random.choice(list(objs_by_artists.keys()))
-                    objs_from_artist = objs_by_artists[artist]
-                    i = random.randint(0, len(objs_from_artist) - 1)
-                    objs.append(objs_from_artist.pop(i))
-                    total_time += length
-
-                    if not objs_from_artist:
-                        del objs_by_artists[artist]
-
-                else:
-                    pass
+            return _take_time(_equal_chance_permutation(objs), time_sec, album)
 
         else:
             return _take(_equal_chance_permutation(objs), number)
-
 
     elif not time:
         number = min(len(objs), number)
