@@ -8,7 +8,12 @@ The ``acousticbrainz`` plugin gets acoustic-analysis information from the
 
 Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run it by typing::
 
-    $ beet acousticbrainz [QUERY]
+    $ beet acousticbrainz [-f] [QUERY]
+
+By default, the command will only look for acousticbrainz data when the tracks doesn't
+already have it; the ``-f`` or ``--force`` switch makes it fetch acousticbrainz 
+for the item. If you specify a query, only matching tracks will be processed; 
+otherwise, the command processes every track in your library.
 
 For all tracks with a MusicBrainz recording ID, the plugin currently sets
 these fields:
@@ -52,3 +57,6 @@ configuration file. There is one option:
 
 - **auto**: Enable AcousticBrainz during ``beet import``.
   Default: ``yes``.
+- **force**: By default, beets will not override already fetched acousticbrainz data. To instead fetch acousticbrainz and override data, 
+  set the ``force`` option to ``yes``.
+  Default: ``no``.
