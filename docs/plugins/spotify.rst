@@ -73,7 +73,7 @@ Here's an example::
     spotify:
         mode: open
         region_filter: US
-        show_faiulres: on
+        show_failures: on
         tiebreak: first
 
         regex: [
