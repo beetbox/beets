@@ -119,7 +119,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._fetch_info(items, ui.should_write(),opts.force_refetch or self.config['force'])
+            self._fetch_info(items, ui.should_write(), opts.force_refetch or self.config['force'])
        
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
@@ -165,8 +165,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
             
             if not force:
                 mood_str = item.get('mood_acoustic', u'')
-                if len(mood_str) != 0:
-                    self._log.info(u'Already set acousticbrainz tag for {} ', item)
+                if mood_str:
+                    self._log.info(u'Already set acousticbrainz tags for {} ', item)
                     continue
 
             if not item.mb_trackid:
