@@ -124,7 +124,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
-            help=u'always fetch acousticbrainz data',
+            help=u're-download data when already present'
         )
 
         cmd.func = func
