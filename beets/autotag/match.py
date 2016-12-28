@@ -22,6 +22,7 @@ from __future__ import division, absolute_import, print_function
 import datetime
 import re
 from munkres import Munkres
+from collections import namedtuple
 
 from beets import logging
 from beets import plugins
@@ -50,6 +51,13 @@ class Recommendation(OrderedEnum):
     low = 1
     medium = 2
     strong = 3
+
+
+# A structure for holding a set of possible matches to choose between. This
+# consists of a list of possible candidates (i.e., AlbumInfo or TrackInfo
+# objects) and a recommendation value.
+
+Proposal = namedtuple('Proposal', ('candidates', 'recommendation'))
 
 
 # Primary matching functionality.
@@ -379,9 +387,8 @@ def _add_candidate(items, results, info):
 
 def tag_album(items, search_artist=None, search_album=None,
               search_ids=[]):
-    """Return a tuple of a artist name, an album name, a list of
-    `AlbumMatch` candidates from the metadata backend, and a
-    `Recommendation`.
+    """Return a tuple of the current artist name, the current album
+    name, and a `Proposal` containing `AlbumMatch` candidates.
 
     The artist and album are the most common values of these fields
     among `items`.
@@ -429,7 +436,7 @@ def tag_album(items, search_artist=None, search_album=None,
                 if rec == Recommendation.strong:
                     log.debug(u'ID match.')
                     return cur_artist, cur_album, \
-                        list(candidates.values()), rec
+                        Proposal(list(candidates.values()), rec)
 
         # Search terms.
         if not (search_artist and search_album):
@@ -454,14 +461,15 @@ def tag_album(items, search_artist=None, search_album=None,
     # Sort and get the recommendation.
     candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
-    return cur_artist, cur_album, candidates, rec
+    return cur_artist, cur_album, Proposal(candidates, rec)
 
 
 def tag_item(item, search_artist=None, search_title=None,
              search_ids=[]):
-    """Attempts to find metadata for a single track. Returns a
-    `(candidates, recommendation)` pair where `candidates` is a list of
-    TrackMatch objects. `search_artist` and `search_title` may be used
+    """Find metadata for a single track. Return a `Proposal` consisting
+    of `TrackMatch` objects.
+
+    `search_artist` and `search_title` may be used
     to override the current metadata for the purposes of the MusicBrainz
     title. `search_ids` may be used for restricting the search to a list
     of metadata backend IDs.
@@ -484,14 +492,14 @@ def tag_item(item, search_artist=None, search_title=None,
                 if rec == Recommendation.strong and \
                         not config['import']['timid']:
                     log.debug(u'Track ID match.')
-                    return _sort_candidates(candidates.values()), rec
+                    return Proposal(_sort_candidates(candidates.values()), rec)
 
     # If we're searching by ID, don't proceed.
     if search_ids:
         if candidates:
-            return _sort_candidates(candidates.values()), rec
+            return Proposal(_sort_candidates(candidates.values()), rec)
         else:
-            return [], Recommendation.none
+            return Proposal([], Recommendation.none)
 
     # Search terms.
     if not (search_artist and search_title):
@@ -507,4 +515,4 @@ def tag_item(item, search_artist=None, search_title=None,
     log.debug(u'Found {0} candidates.', len(candidates))
     candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
-    return candidates, rec
+    return Proposal(candidates, rec)

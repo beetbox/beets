@@ -752,18 +752,22 @@ class TerminalImportSession(importer.ImportSession):
             elif choice is importer.action.MANUAL:
                 # Try again with manual search terms.
                 search_artist, search_album = manual_search(False)
-                _, _, candidates, rec = autotag.tag_album(
+                _, _, prop = autotag.tag_album(
                     task.items, search_artist, search_album
                 )
+                candidates = prop.candidates
+                rec = prop.recommendation
 
             # Manual ID. We prompt for the ID and run the loop again.
             elif choice is importer.action.MANUAL_ID:
                 # Try a manually-entered ID.
                 search_id = manual_id(False)
                 if search_id:
-                    _, _, candidates, rec = autotag.tag_album(
+                    _, _, prop = autotag.tag_album(
                         task.items, search_ids=search_id.split()
                     )
+                    candidates = prop.candidates
+                    rec = prop.recommendation
 
             # Plugin-provided choices. We invoke the associated callback
             # function.
@@ -807,25 +811,33 @@ class TerminalImportSession(importer.ImportSession):
 
             if choice in (importer.action.SKIP, importer.action.ASIS):
                 return choice
+
             elif choice == importer.action.TRACKS:
                 assert False  # TRACKS is only legal for albums.
+
             elif choice == importer.action.MANUAL:
                 # Continue in the loop with a new set of candidates.
                 search_artist, search_title = manual_search(True)
-                candidates, rec = autotag.tag_item(task.item, search_artist,
-                                                   search_title)
+                prop = autotag.tag_item(task.item, search_artist, search_title)
+                candidates = prop.candidates
+                rec = prop.recommendation
+
             elif choice == importer.action.MANUAL_ID:
                 # Ask for a track ID.
                 search_id = manual_id(True)
                 if search_id:
-                    candidates, rec = autotag.tag_item(
-                        task.item, search_ids=search_id.split())
+                    prop = autotag.tag_item(task.item,
+                                            search_ids=search_id.split())
+                    candidates = prop.candidates
+                    rec = prop.recommendation
+
             elif choice in list(extra_ops.keys()):
                 # Allow extra ops to automatically set the post-choice.
                 post_choice = extra_ops[choice](self, task)
                 if isinstance(post_choice, importer.action):
                     # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
+
             else:
                 # Chose a candidate.
                 assert isinstance(choice, autotag.TrackMatch)
