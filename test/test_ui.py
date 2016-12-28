@@ -670,21 +670,6 @@ class ImportTest(_common.TestCase):
                           None)
 
 
-class InputTest(_common.TestCase):
-    def setUp(self):
-        super(InputTest, self).setUp()
-        self.io.install()
-
-    def test_manual_search_gets_unicode(self):
-        # The input here uses "native strings": bytes on Python 2, Unicode on
-        # Python 3.
-        self.io.addinput('foö')
-        self.io.addinput('bár')
-        artist, album = commands.manual_search(False)
-        self.assertEqual(artist, u'foö')
-        self.assertEqual(album, u'bár')
-
-
 @_common.slow_test()
 class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
     def setUp(self):
