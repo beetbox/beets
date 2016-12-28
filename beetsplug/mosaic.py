@@ -28,6 +28,7 @@ from PIL import Image
 
 import math
 
+
 class MosaicCoverArtPlugin(BeetsPlugin):
 	col_size = 4
 	margin = 3
@@ -54,13 +55,12 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 		for album in albums:
 			self._log.info(u'#{}#', album.artpath)
 			
-			if not album.artpath :
+			if not album.artpath:
 				continue
 
 			if not os.path.exists(album.artpath):
 				continue
 
-			
 			covers.append(album.artpath) 
 
 		sqrtnum = int(math.sqrt(len(covers)))
@@ -70,11 +70,11 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 		rows = cols = sqrtnum
 		
 		if tail>0:
-			rows +=1
+			cols +=1
 
 		self._log.info(u'{}x{}', cols,rows)
 
-		montage = Image.new(mode='RGBA', size=(cols*(100+self.margin), rows*(100+self.margin)), color=(0,0,0,0))
+		montage = Image.new(mode='RGBA', size=(cols*(100+self.margin), rows*(100+self.margin)), color=(0,100,0,0))
 
 		size = 100, 100
 		offset_x = 0
@@ -82,16 +82,16 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 		colcounter=0;
 		for cover in covers:	
 			
-			
 			try:	
 				im = Image.open(cover)
 				im.thumbnail(size, Image.ANTIALIAS)
-				montage.paste(im, (offset_y, offset_x))
+				self._log.info(u'Paste into mosaic: {} - {}x{}',cover,offset_x,offset_y)
+				montage.paste(im, (offset_x, offset_y))
 				
-				self._log.info(u'Paste into mosaic: {} ',cover)
+
 
 				colcounter +=1
-				if colcounter > cols:
+				if colcounter >= cols:
 					offset_y += 100+self.margin
 					colcounter =0
 					offset_x =0;
