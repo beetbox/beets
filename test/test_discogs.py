@@ -290,6 +290,16 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(len(d.tracks), 3)
         self.assertEqual(d.tracks[1].title, 'TRACK GROUP TITLE')
 
+    def test_parse_minimal_release(self):
+        """Test parsing of a release with the minimal amount of information."""
+        artists = [{'name': 'ARTIST NAME', 'id': 'ARTIST ID', 'join': ''}]
+        release = Bag(data={'id': 123, 'tracklist': [], 'artists': artists},
+                      title='TITLE', artists=[Bag(data=d) for d in artists])
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.artist, 'ARTIST NAME')
+        self.assertEqual(d.album, 'TITLE')
+        self.assertEqual(len(d.tracks), 0)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

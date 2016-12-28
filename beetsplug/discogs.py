@@ -218,25 +218,36 @@ class DiscogsPlugin(BeetsPlugin):
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
         tracks = self.get_tracks(result.data['tracklist'])
-        albumtype = ', '.join(
-            result.data['formats'][0].get('descriptions', [])) or None
-        va = result.data['artists'][0]['name'].lower() == 'various'
+
+        # Extract information for the optional AlbumInfo fields, if possible.
+        va = result.data['artists'][0].get('name', '').lower() == 'various'
+        year = result.data.get('year')
+        mediums = len(set(t.medium for t in tracks))
+        country = result.data.get('country')
+        data_url = result.data.get('uri')
+
+        # Extract information for the optional AlbumInfo fields that are
+        # contained on nested discogs fields.
+        albumtype = media = label = catalogno = None
+        if result.data.get('formats'):
+            albumtype = ', '.join(
+                result.data['formats'][0].get('descriptions', [])) or None
+            media = result.data['formats'][0]['name']
+        if result.data.get('labels'):
+            label = result.data['labels'][0].get('name')
+            catalogno = result.data['labels'][0].get('catno')
+
+        # Additional cleanups (various artists name, catalog number, media).
         if va:
             artist = config['va_name'].as_str()
-        year = result.data['year']
-        label = result.data['labels'][0]['name']
-        mediums = len(set(t.medium for t in tracks))
-        catalogno = result.data['labels'][0]['catno']
         if catalogno == 'none':
-            catalogno = None
-        country = result.data.get('country')
-        media = result.data['formats'][0]['name']
+                catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
         # `autotag.apply_metadata`, and set `medium_total`.
         for track in tracks:
             track.media = media
             track.medium_total = mediums
-        data_url = result.data['uri']
+
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
                          day=None, label=label, mediums=mediums,
