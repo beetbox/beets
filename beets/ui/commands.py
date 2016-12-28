@@ -733,17 +733,11 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         candidates, rec = task.candidates, task.rec
         while True:
-            # Set up menu choices.
-            choices = [
-                PromptChoice(u'e', u'Enter search', manual_search),
-                PromptChoice(u'i', u'enter Id', manual_id),
-            ]
-            choices += self._get_plugin_choices(task)
-
             # Ask for a choice from the user. The result of
             # `choose_candidate` may be an `importer.action`, an
             # `AlbumMatch` object for a specific selection, or a
             # `PromptChoice`.
+            choices = self._get_choices(task)
             choice = choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
                 itemcount=len(task.items), extra_choices=choices
@@ -791,13 +785,8 @@ class TerminalImportSession(importer.ImportSession):
             return action
 
         while True:
-            choices = [
-                PromptChoice(u'e', u'Enter search', manual_search),
-                PromptChoice(u'i', u'enter Id', manual_id),
-            ]
-            choices += self._get_plugin_choices(task)
-
             # Ask for a choice.
+            choices = self._get_choices(task)
             choice = choose_candidate(candidates, True, rec, item=task.item,
                                       extra_choices=choices)
 
@@ -866,8 +855,10 @@ class TerminalImportSession(importer.ImportSession):
                            u"was interrupted. Resume (Y/n)?"
                            .format(displayable_path(path)))
 
-    def _get_plugin_choices(self, task):
-        """Get the extra choices appended to the plugins to the ui prompt.
+    def _get_choices(self, task):
+        """Get the list of prompt choices that should be presented to the
+        user. This consists of both built-in choices and ones provided by
+        plugins.
 
         The `before_choose_candidate` event is sent to the plugins, with
         session and task as its parameters. Plugins are responsible for
@@ -880,18 +871,24 @@ class TerminalImportSession(importer.ImportSession):
 
         Returns a list of `PromptChoice`s.
         """
+        # Standard, built-in choices.
+        choices = [
+            PromptChoice(u'e', u'Enter search', manual_search),
+            PromptChoice(u'i', u'enter Id', manual_id),
+        ]
+
         # Send the before_choose_candidate event and flatten list.
         extra_choices = list(chain(*plugins.send('before_choose_candidate',
                                                  session=self, task=task)))
-        # Take into account default options, for duplicate checking.
+        # Add "dummy" choices for the other baked-in options, for
+        # duplicate checking.
         all_choices = [PromptChoice(u'a', u'Apply', None),
                        PromptChoice(u's', u'Skip', None),
                        PromptChoice(u'u', u'Use as-is', None),
                        PromptChoice(u't', u'as Tracks', None),
                        PromptChoice(u'g', u'Group albums', None),
-                       PromptChoice(u'e', u'Enter search', None),
-                       PromptChoice(u'i', u'enter Id', None),
-                       PromptChoice(u'b', u'aBort', None)] +\
+                       PromptChoice(u'b', u'aBort', None)] + \
+            choices + \
             extra_choices
 
         short_letters = [c.short for c in all_choices]
@@ -907,7 +904,8 @@ class TerminalImportSession(importer.ImportSession):
                                 u"with '{1}' (short letter: '{2}')",
                                 c.long, dup_choices[0].long, c.short)
                     extra_choices.remove(c)
-        return extra_choices
+
+        return choices + extra_choices
 
 
 # The import command.
