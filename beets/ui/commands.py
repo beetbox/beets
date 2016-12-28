@@ -158,7 +158,7 @@ def disambig_string(info):
 
     if isinstance(info, hooks.AlbumInfo):
         if info.media:
-            if info.mediums > 1:
+            if info.mediums and info.mediums > 1:
                 disambig.append(u'{0}x{1}'.format(
                     info.mediums, info.media
                 ))
