@@ -593,7 +593,4 @@ by the choices on the core importer prompt, and hence should not be used:
 
 Additionally, the callback function can optionally specify the next action to
 be performed by returning one of the values from ``importer.action``, which
-will be passed to the main loop upon the callback has been processed. Note that
-``action.MANUAL`` and ``action.MANUAL_ID`` will have no effect even if
-returned by the callback, due to the current architecture of the import
-process.
+will be passed to the main loop upon the callback has been processed.
