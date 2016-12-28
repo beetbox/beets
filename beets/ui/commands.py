@@ -509,7 +509,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     to the user.
 
     Returns one of the following:
-    * the result of the choice, which may be SKIP, ASIS, TRACKS, or MANUAL
+    * the result of the choice, which may be SKIP, ASIS, or TRACKS
     * a candidate (an AlbumMatch/TrackMatch object)
     * a chosen `PromptChoice` from `extra_choices`
     """
@@ -536,21 +536,17 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             print_(u'For help, see: '
                    u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
             opts = (u'Use as-is', u'as Tracks', u'Group albums', u'Skip',
-                    u'Enter search', u'enter Id', u'aBort')
+                    u'aBort')
         sel = ui.input_options(opts + extra_opts)
         if sel == u'u':
             return importer.action.ASIS
         elif sel == u't':
             assert not singleton
             return importer.action.TRACKS
-        elif sel == u'e':
-            return importer.action.MANUAL
         elif sel == u's':
             return importer.action.SKIP
         elif sel == u'b':
             raise importer.ImportAbort()
-        elif sel == u'i':
-            return importer.action.MANUAL_ID
         elif sel == u'g':
             return importer.action.ALBUMS
         elif sel in extra_actions:
@@ -603,11 +599,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
             # Ask the user for a choice.
             if singleton:
-                opts = (u'Skip', u'Use as-is', u'Enter search', u'enter Id',
-                        u'aBort')
+                opts = (u'Skip', u'Use as-is', u'aBort')
             else:
                 opts = (u'Skip', u'Use as-is', u'as Tracks', u'Group albums',
-                        u'Enter search', u'enter Id', u'aBort')
+                        u'aBort')
             sel = ui.input_options(opts + extra_opts,
                                    numrange=(1, len(candidates)))
             if sel == u's':
@@ -616,15 +611,11 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 return importer.action.ASIS
             elif sel == u'm':
                 pass
-            elif sel == u'e':
-                return importer.action.MANUAL
             elif sel == u't':
                 assert not singleton
                 return importer.action.TRACKS
             elif sel == u'b':
                 raise importer.ImportAbort()
-            elif sel == u'i':
-                return importer.action.MANUAL_ID
             elif sel == u'g':
                 return importer.action.ALBUMS
             elif sel in extra_actions:
@@ -650,11 +641,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         # Ask for confirmation.
         if singleton:
             opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                    u'Enter search', u'enter Id', u'aBort')
+                    u'aBort')
         else:
             opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                    u'as Tracks', u'Group albums', u'Enter search',
-                    u'enter Id', u'aBort')
+                    u'as Tracks', u'Group albums', u'aBort')
         default = config['import']['default_action'].as_choice({
             u'apply': u'a',
             u'skip': u's',
@@ -676,17 +666,13 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         elif sel == u't':
             assert not singleton
             return importer.action.TRACKS
-        elif sel == u'e':
-            return importer.action.MANUAL
         elif sel == u'b':
             raise importer.ImportAbort()
-        elif sel == u'i':
-            return importer.action.MANUAL_ID
         elif sel in extra_actions:
             return extra_actions[sel]
 
 
-def manual_search(task):
+def manual_search(session, task):
     """Get a new `Proposal` using manual search criteria.
 
     Input either an artist and album (for full albums) or artist and
@@ -704,7 +690,7 @@ def manual_search(task):
         return autotag.tag_item(task.item, artist, name)
 
 
-def manual_id(task):
+def manual_id(session, task):
     """Get a new `Proposal` using a manually-entered ID.
 
     Input an ID, either for an album ("release") or a track ("recording").
@@ -747,8 +733,12 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         candidates, rec = task.candidates, task.rec
         while True:
-            # Gather additional menu choices from plugins.
-            extra_choices = self._get_plugin_choices(task)
+            # Set up menu choices.
+            choices = [
+                PromptChoice(u'e', u'Enter search', manual_search),
+                PromptChoice(u'i', u'enter Id', manual_id),
+            ]
+            choices += self._get_plugin_choices(task)
 
             # Ask for a choice from the user. The result of
             # `choose_candidate` may be an `importer.action`, an
@@ -756,7 +746,7 @@ class TerminalImportSession(importer.ImportSession):
             # `PromptChoice`.
             choice = choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
-                itemcount=len(task.items), extra_choices=extra_choices
+                itemcount=len(task.items), extra_choices=choices
             )
 
             # Basic choices that require no more action here.
@@ -765,28 +755,16 @@ class TerminalImportSession(importer.ImportSession):
                 # Pass selection to main control flow.
                 return choice
 
-            # Manual search. We ask for the search terms and run the
-            # loop again.
-            elif choice is importer.action.MANUAL:
-                # Try again with manual search terms.
-                prop = manual_search(task)
-                candidates = prop.candidates
-                rec = prop.recommendation
-
-            # Manual ID. We prompt for the ID and run the loop again.
-            elif choice is importer.action.MANUAL_ID:
-                # Try a manually-entered ID.
-                prop = manual_id(task)
-                candidates = prop.candidates
-                rec = prop.recommendation
-
             # Plugin-provided choices. We invoke the associated callback
             # function.
-            elif choice in extra_choices:
+            elif choice in choices:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.action):
-                    # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
+                elif isinstance(post_choice, autotag.Proposal):
+                    # Use the new candidates and continue around the loop.
+                    candidates = post_choice.candidates
+                    rec = post_choice.recommendation
 
             # Otherwise, we have a specific match selection.
             else:
@@ -813,11 +791,15 @@ class TerminalImportSession(importer.ImportSession):
             return action
 
         while True:
-            extra_choices = self._get_plugin_choices(task)
+            choices = [
+                PromptChoice(u'e', u'Enter search', manual_search),
+                PromptChoice(u'i', u'enter Id', manual_id),
+            ]
+            choices += self._get_plugin_choices(task)
 
             # Ask for a choice.
             choice = choose_candidate(candidates, True, rec, item=task.item,
-                                      extra_choices=extra_choices)
+                                      extra_choices=choices)
 
             if choice in (importer.action.SKIP, importer.action.ASIS):
                 return choice
@@ -825,23 +807,13 @@ class TerminalImportSession(importer.ImportSession):
             elif choice == importer.action.TRACKS:
                 assert False  # TRACKS is only legal for albums.
 
-            elif choice == importer.action.MANUAL:
-                # Continue in the loop with a new set of candidates.
-                prop = manual_search(task)
-                candidates = prop.candidates
-                rec = prop.recommendation
-
-            elif choice == importer.action.MANUAL_ID:
-                # Ask for a track ID.
-                prop = manual_id(task)
-                candidates = prop.candidates
-                rec = prop.recommendation
-
-            elif choice in extra_choices:
+            elif choice in choices:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.action):
-                    # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
+                elif isinstance(post_choice, autotag.Proposal):
+                    candidates = post_choice.candidates
+                    rec = post_choice.recommendation
 
             else:
                 # Chose a candidate.

@@ -43,8 +43,7 @@ from enum import Enum
 from beets import mediafile
 
 action = Enum('action',
-              ['SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
-               'ALBUMS', 'RETAG'])
+              ['SKIP', 'ASIS', 'TRACKS', 'APPLY', 'ALBUMS', 'RETAG'])
 # The RETAG action represents "don't apply any match, but do record
 # new metadata". It's not reachable via the standard command prompt but
 # can be used by plugins.
@@ -443,7 +442,6 @@ class ImportTask(BaseImportTask):
         indicates that an action has been selected for this task.
         """
         # Not part of the task structure:
-        assert choice not in (action.MANUAL, action.MANUAL_ID)
         assert choice != action.APPLY  # Only used internally.
         if choice in (action.SKIP, action.ASIS, action.TRACKS, action.ALBUMS,
                       action.RETAG):
