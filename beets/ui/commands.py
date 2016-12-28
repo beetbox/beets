@@ -728,27 +728,35 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         candidates, rec = task.candidates, task.rec
         while True:
-            # Gather extra choices from plugins.
+            # Gather additional menu choices from plugins. We build a
+            # map from selection characters to callback functions.
             extra_choices = self._get_plugin_choices(task)
             extra_ops = {c.short: c.callback for c in extra_choices}
 
-            # Ask for a choice from the user.
+            # Ask for a choice from the user. The result of
+            # `choose_candidate` may be an `importer.action` flag or an
+            # `AlbumMatch` object for a specific selection.
             choice = choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
                 itemcount=len(task.items), extra_choices=extra_choices
             )
 
-            # Choose which tags to use.
+            # Basic choices that require no more action here.
             if choice in (importer.action.SKIP, importer.action.ASIS,
                           importer.action.TRACKS, importer.action.ALBUMS):
                 # Pass selection to main control flow.
                 return choice
+
+            # Manual search. We ask for the search terms and run the
+            # loop again.
             elif choice is importer.action.MANUAL:
                 # Try again with manual search terms.
                 search_artist, search_album = manual_search(False)
                 _, _, candidates, rec = autotag.tag_album(
                     task.items, search_artist, search_album
                 )
+
+            # Manual ID. We prompt for the ID and run the loop again.
             elif choice is importer.action.MANUAL_ID:
                 # Try a manually-entered ID.
                 search_id = manual_id(False)
@@ -756,12 +764,16 @@ class TerminalImportSession(importer.ImportSession):
                     _, _, candidates, rec = autotag.tag_album(
                         task.items, search_ids=search_id.split()
                     )
+
+            # Plugin-provided choices. We invoke the associated callback
+            # function.
             elif choice in list(extra_ops.keys()):
-                # Allow extra ops to automatically set the post-choice.
                 post_choice = extra_ops[choice](self, task)
                 if isinstance(post_choice, importer.action):
                     # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
+
+            # Otherwise, we have a specific match selection.
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
