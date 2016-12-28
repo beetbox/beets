@@ -830,18 +830,20 @@ class TerminalImportSession(importer.ImportSession):
             PromptChoice(u's', u'Skip',
                          lambda s, t: importer.action.SKIP),
             PromptChoice(u'u', u'Use as-is',
-                         lambda s, t: importer.action.ASIS),
-            PromptChoice(u'e', u'Enter search', manual_search),
-            PromptChoice(u'i', u'enter Id', manual_id),
-            PromptChoice(u'b', u'aBort', abort_action),
+                         lambda s, t: importer.action.ASIS)
         ]
         if task.is_album:
-            choices = [
+            choices += [
                 PromptChoice(u't', u'as Tracks',
                              lambda s, t: importer.action.TRACKS),
                 PromptChoice(u'g', u'Group albums',
                              lambda s, t: importer.action.ALBUMS),
-            ] + choices
+            ]
+        choices += [
+            PromptChoice(u'e', u'Enter search', manual_search),
+            PromptChoice(u'i', u'enter Id', manual_id),
+            PromptChoice(u'b', u'aBort', abort_action),
+        ]
 
         # Send the before_choose_candidate event and flatten list.
         extra_choices = list(chain(*plugins.send('before_choose_candidate',
