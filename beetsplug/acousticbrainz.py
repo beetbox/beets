@@ -212,7 +212,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
         joined with `' '`. This is hardcoded and not very flexible, but it gets
         the job done.
 
-        Example:
+        For example:
+
         >>> scheme = {
             'key1': 'attribute',
             'key group': {
@@ -234,24 +235,24 @@ class AcousticPlugin(plugins.BeetsPlugin):
          ('attribute', 'value'),
          ('composite attribute', 'part 1 of composite attr part 2')]
         """
-        """First, we traverse `scheme` and `data`, `yield`ing all the non
-        composites attributes straight away and populating the dictionary
-        `composites` with the composite attributes.
+        # First, we traverse `scheme` and `data`, `yield`ing all the non
+        # composites attributes straight away and populating the dictionary
+        # `composites` with the composite attributes.
 
-        When we are finished traversing `scheme`, `composites` should map
-        each composite attribute to an ordered list of the values belonging to
-        the attribute, for example:
-        `composites = {'initial_key': ['B', 'minor']}`.
-        """
+        # When we are finished traversing `scheme`, `composites` should map
+        # each composite attribute to an ordered list of the values belonging to
+        # the attribute, for example:
+        # `composites = {'initial_key': ['B', 'minor']}`.
+
+        # The recursive traversal.
         composites = defaultdict(list)
-        # The recursive traversal
         for attr, val in self._data_to_scheme_child(data,
                                                     scheme,
                                                     composites):
             yield attr, val
-        """When composites has been populated, yield the composite attributes
-        by joining their parts.
-        """
+
+        # When composites has been populated, yield the composite attributes
+        # by joining their parts.
         for composite_attr, value_parts in composites.items():
             yield composite_attr, ' '.join(value_parts)
 
