@@ -25,6 +25,7 @@ from beets import ui
 from beets import util
 from os.path import relpath
 from tempfile import NamedTemporaryFile
+from beetsplug import random
 import subprocess
 
 # Indicate where arguments should be inserted into the command string.
@@ -81,6 +82,29 @@ class PlayPlugin(BeetsPlugin):
             action='store',
             help=u'add additional arguments to the command',
         )
+        play_command.parser.add_option(
+            u'-r', u'--random',
+            action='store_true',
+            help=u'play random item',
+        )
+        play_command.parser.add_option(
+            u'-n', u'--number',
+            action='store',
+            type="int",
+            help=u'with -r: number of random items to choose',
+            default=1,
+        )
+        play_command.parser.add_option(
+            u'-e', u'--equal-chance',
+            action='store_true',
+            help=u'with -r: each artist has the same chance',
+        )
+        play_command.parser.add_option(
+            u'-t', u'--time',
+            action='store',
+            type="float",
+            help=u'with -r: total time in minutes of random items to choose',
+        )
         play_command.func = self._play_command
         return [play_command]
 
@@ -95,9 +119,15 @@ class PlayPlugin(BeetsPlugin):
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
-            selection = lib.albums(ui.decargs(args))
-            paths = []
 
+            # Send query to random plugin.
+            if opts.random:
+                selection = random.random_func(lib, opts, args,
+                                               print_list=False)
+            else:
+                selection = lib.albums(ui.decargs(args))
+
+            paths = []
             sort = lib.get_default_album_sort()
             for album in selection:
                 if use_folders:
@@ -109,7 +139,12 @@ class PlayPlugin(BeetsPlugin):
 
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(ui.decargs(args))
+            if opts.random:
+                selection = random.random_func(lib, opts, args)
+                                               print_list=False)
+            else:
+                selection = lib.items(ui.decargs(args))
+
             paths = [item.path for item in selection]
             if relative_to:
                 paths = [relpath(path, relative_to) for path in paths]

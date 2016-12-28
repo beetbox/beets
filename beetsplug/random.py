@@ -128,6 +128,8 @@ def random_func(lib, opts, args):
     for obj in objs:
         print_(format(obj))
 
+    # Return random subset to be used by other plugins.
+    return objs
 
 random_cmd = Subcommand('random',
                         help=u'choose a random track or album')
