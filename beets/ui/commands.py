@@ -509,7 +509,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     to the user.
 
     Returns one of the following:
-    * the result of the choice, which may be SKIP, ASIS, or TRACKS
+    * the result of the choice, which may be SKIP or ASIS
     * a candidate (an AlbumMatch/TrackMatch object)
     * a chosen `PromptChoice` from `extra_choices`
     """
@@ -528,23 +528,17 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     if not candidates:
         if singleton:
             print_(u"No matching recordings found.")
-            opts = (u'Use as-is', u'Skip')
         else:
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
             print_(u'For help, see: '
                    u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = (u'Use as-is', u'as Tracks', u'Group albums', u'Skip')
+        opts = (u'Use as-is', u'Skip')
         sel = ui.input_options(opts + extra_opts)
         if sel == u'u':
             return importer.action.ASIS
-        elif sel == u't':
-            assert not singleton
-            return importer.action.TRACKS
         elif sel == u's':
             return importer.action.SKIP
-        elif sel == u'g':
-            return importer.action.ALBUMS
         elif sel in extra_actions:
             return extra_actions[sel]
         else:
@@ -594,10 +588,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 print_(u' '.join(line))
 
             # Ask the user for a choice.
-            if singleton:
-                opts = (u'Skip', u'Use as-is')
-            else:
-                opts = (u'Skip', u'Use as-is', u'as Tracks', u'Group albums')
+            opts = (u'Skip', u'Use as-is')
             sel = ui.input_options(opts + extra_opts,
                                    numrange=(1, len(candidates)))
             if sel == u's':
@@ -606,11 +597,6 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 return importer.action.ASIS
             elif sel == u'm':
                 pass
-            elif sel == u't':
-                assert not singleton
-                return importer.action.TRACKS
-            elif sel == u'g':
-                return importer.action.ALBUMS
             elif sel in extra_actions:
                 return extra_actions[sel]
             else:  # Numerical selection.
@@ -632,11 +618,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             return match
 
         # Ask for confirmation.
-        if singleton:
-            opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is')
-        else:
-            opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                    u'as Tracks', u'Group albums')
+        opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is')
         default = config['import']['default_action'].as_choice({
             u'apply': u'a',
             u'skip': u's',
@@ -649,15 +631,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                                default=default)
         if sel == u'a':
             return match
-        elif sel == u'g':
-            return importer.action.ALBUMS
         elif sel == u's':
             return importer.action.SKIP
         elif sel == u'u':
             return importer.action.ASIS
-        elif sel == u't':
-            assert not singleton
-            return importer.action.TRACKS
         elif sel in extra_actions:
             return extra_actions[sel]
 
@@ -740,8 +717,7 @@ class TerminalImportSession(importer.ImportSession):
             )
 
             # Basic choices that require no more action here.
-            if choice in (importer.action.SKIP, importer.action.ASIS,
-                          importer.action.TRACKS, importer.action.ALBUMS):
+            if choice in (importer.action.SKIP, importer.action.ASIS):
                 # Pass selection to main control flow.
                 return choice
 
@@ -788,9 +764,6 @@ class TerminalImportSession(importer.ImportSession):
 
             if choice in (importer.action.SKIP, importer.action.ASIS):
                 return choice
-
-            elif choice == importer.action.TRACKS:
-                assert False  # TRACKS is only legal for albums.
 
             elif choice in choices:
                 post_choice = choice.callback(self, task)
@@ -873,6 +846,13 @@ class TerminalImportSession(importer.ImportSession):
             PromptChoice(u'i', u'enter Id', manual_id),
             PromptChoice(u'b', u'aBort', abort_action),
         ]
+        if task.is_album:
+            choices = [
+                PromptChoice(u't', u'as Tracks',
+                             lambda s, t: importer.action.TRACKS),
+                PromptChoice(u'g', u'Group albums',
+                             lambda s, t: importer.action.ALBUMS),
+            ] + choices
 
         # Send the before_choose_candidate event and flatten list.
         extra_choices = list(chain(*plugins.send('before_choose_candidate',
@@ -883,8 +863,6 @@ class TerminalImportSession(importer.ImportSession):
             PromptChoice(u'a', u'Apply', None),
             PromptChoice(u's', u'Skip', None),
             PromptChoice(u'u', u'Use as-is', None),
-            PromptChoice(u't', u'as Tracks', None),
-            PromptChoice(u'g', u'Group albums', None),
         ] + choices + extra_choices
 
         short_letters = [c.short for c in all_choices]
