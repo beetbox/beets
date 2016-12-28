@@ -511,8 +511,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     Returns one of the following:
     * the result of the choice, which may be SKIP, ASIS, TRACKS, or MANUAL
     * a candidate (an AlbumMatch/TrackMatch object)
-    * the short letter of a `PromptChoice` (if the user selected one of
-    the `extra_choices`).
+    * a chosen `PromptChoice` from `extra_choices`
     """
     # Sanity check.
     if singleton:
@@ -523,7 +522,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
     # Build helper variables for extra choices.
     extra_opts = tuple(c.long for c in extra_choices)
-    extra_actions = tuple(c.short for c in extra_choices)
+    extra_actions = {c.short: c for c in extra_choices}
 
     # Zero candidates.
     if not candidates:
@@ -555,7 +554,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         elif sel == u'g':
             return importer.action.ALBUMS
         elif sel in extra_actions:
-            return sel
+            return extra_actions[sel]
         else:
             assert False
 
@@ -629,7 +628,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             elif sel == u'g':
                 return importer.action.ALBUMS
             elif sel in extra_actions:
-                return sel
+                return extra_actions[sel]
             else:  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
@@ -684,7 +683,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         elif sel == u'i':
             return importer.action.MANUAL_ID
         elif sel in extra_actions:
-            return sel
+            return extra_actions[sel]
 
 
 def manual_search(singleton):
@@ -728,14 +727,13 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         candidates, rec = task.candidates, task.rec
         while True:
-            # Gather additional menu choices from plugins. We build a
-            # map from selection characters to callback functions.
+            # Gather additional menu choices from plugins.
             extra_choices = self._get_plugin_choices(task)
-            extra_ops = {c.short: c.callback for c in extra_choices}
 
             # Ask for a choice from the user. The result of
-            # `choose_candidate` may be an `importer.action` flag or an
-            # `AlbumMatch` object for a specific selection.
+            # `choose_candidate` may be an `importer.action`, an
+            # `AlbumMatch` object for a specific selection, or a
+            # `PromptChoice`.
             choice = choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
                 itemcount=len(task.items), extra_choices=extra_choices
@@ -771,8 +769,8 @@ class TerminalImportSession(importer.ImportSession):
 
             # Plugin-provided choices. We invoke the associated callback
             # function.
-            elif choice in list(extra_ops.keys()):
-                post_choice = extra_ops[choice](self, task)
+            elif choice in extra_choices:
+                post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.action):
                     # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
@@ -803,7 +801,6 @@ class TerminalImportSession(importer.ImportSession):
 
         while True:
             extra_choices = self._get_plugin_choices(task)
-            extra_ops = {c.short: c.callback for c in extra_choices}
 
             # Ask for a choice.
             choice = choose_candidate(candidates, True, rec, item=task.item,
@@ -831,9 +828,8 @@ class TerminalImportSession(importer.ImportSession):
                     candidates = prop.candidates
                     rec = prop.recommendation
 
-            elif choice in list(extra_ops.keys()):
-                # Allow extra ops to automatically set the post-choice.
-                post_choice = extra_ops[choice](self, task)
+            elif choice in extra_choices:
+                post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.action):
                     # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
