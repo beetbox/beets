@@ -136,7 +136,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def import_task_files(self, session, task):
         """Function is called upon beet import.
         """
-        self._fetch_info(task.imported_items(), False)
+        self._fetch_info(task.imported_items(), False, True)
 
     def _get_data(self, mbid):
         data = {}
