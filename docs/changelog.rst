@@ -24,6 +24,8 @@ Fixes:
 
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
 
+For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
+
 
 1.4.2 (December 16, 2016)
 -------------------------
