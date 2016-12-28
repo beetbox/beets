@@ -46,7 +46,7 @@ Automatic Tagging
 -----------------
 
 To automatically tag files using AcousticBrainz data during import, just
-enable the ``acousticbrainz`` plugin (see :ref:`using-plugins`). When importing 
+enable the ``acousticbrainz`` plugin (see :ref:`using-plugins`). When importing
 new files, beets will query the AcousticBrainz API using MBID and
 set the appropriate metadata.
 

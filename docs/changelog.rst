@@ -15,6 +15,10 @@ Features:
   :bug:`2305` :bug:`2322`
 * :doc:`/plugins/zero`: Added ``zero`` command to manually trigger the zero
   plugin. Thanks to :user:`SJoshBrown`. :bug:`2274` :bug:`2329`
+* :doc:`/plugins/acousticbrainz`: The plugin will avoid re-downloading data
+  for files that already have it by default. You can override this behavior
+  using a new ``force`` option. Thanks to :user:`SusannaMaria`. :bug:`2347`
+  :bug:`2349`
 
 Fixes:
 
