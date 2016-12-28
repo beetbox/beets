@@ -528,8 +528,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     if not candidates:
         if singleton:
             print_(u"No matching recordings found.")
-            opts = (u'Use as-is', u'Skip', u'Enter search', u'enter Id',
-                    u'aBort')
+            opts = (u'Use as-is', u'Skip', u'aBort')
         else:
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
