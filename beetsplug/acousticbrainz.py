@@ -119,8 +119,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._fetch_info(items, ui.should_write(), 
-                opts.force_refetch or self.config['force'])
+            self._fetch_info(items, ui.should_write(),
+                             opts.force_refetch or self.config['force'])
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
