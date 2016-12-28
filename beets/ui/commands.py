@@ -533,13 +533,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                    .format(itemcount))
             print_(u'For help, see: '
                    u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-        opts = (u'Use as-is', u'Skip')
-        sel = ui.input_options(opts + extra_opts)
-        if sel == u'u':
-            return importer.action.ASIS
-        elif sel == u's':
-            return importer.action.SKIP
-        elif sel in extra_actions:
+        sel = ui.input_options(extra_opts)
+        if sel in extra_actions:
             return extra_actions[sel]
         else:
             assert False
@@ -588,14 +583,9 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 print_(u' '.join(line))
 
             # Ask the user for a choice.
-            opts = (u'Skip', u'Use as-is')
-            sel = ui.input_options(opts + extra_opts,
+            sel = ui.input_options(extra_opts,
                                    numrange=(1, len(candidates)))
-            if sel == u's':
-                return importer.action.SKIP
-            elif sel == u'u':
-                return importer.action.ASIS
-            elif sel == u'm':
+            if sel == u'm':
                 pass
             elif sel in extra_actions:
                 return extra_actions[sel]
@@ -618,7 +608,6 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             return match
 
         # Ask for confirmation.
-        opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is')
         default = config['import']['default_action'].as_choice({
             u'apply': u'a',
             u'skip': u's',
@@ -627,14 +616,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         })
         if default is None:
             require = True
-        sel = ui.input_options(opts + extra_opts, require=require,
-                               default=default)
+        sel = ui.input_options((u'Apply', u'More candidates') + extra_opts,
+                               require=require, default=default)
         if sel == u'a':
             return match
-        elif sel == u's':
-            return importer.action.SKIP
-        elif sel == u'u':
-            return importer.action.ASIS
         elif sel in extra_actions:
             return extra_actions[sel]
 
@@ -842,6 +827,10 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Standard, built-in choices.
         choices = [
+            PromptChoice(u's', u'Skip',
+                         lambda s, t: importer.action.SKIP),
+            PromptChoice(u'u', u'Use as-is',
+                         lambda s, t: importer.action.ASIS),
             PromptChoice(u'e', u'Enter search', manual_search),
             PromptChoice(u'i', u'enter Id', manual_id),
             PromptChoice(u'b', u'aBort', abort_action),
@@ -857,14 +846,14 @@ class TerminalImportSession(importer.ImportSession):
         # Send the before_choose_candidate event and flatten list.
         extra_choices = list(chain(*plugins.send('before_choose_candidate',
                                                  session=self, task=task)))
-        # Add "dummy" choices for the other baked-in options, for
+
+        # Add a "dummy" choice for the other baked-in option, for
         # duplicate checking.
         all_choices = [
             PromptChoice(u'a', u'Apply', None),
-            PromptChoice(u's', u'Skip', None),
-            PromptChoice(u'u', u'Use as-is', None),
         ] + choices + extra_choices
 
+        # Check for conflicts.
         short_letters = [c.short for c in all_choices]
         if len(short_letters) != len(set(short_letters)):
             # Duplicate short letter has been found.
