@@ -587,12 +587,12 @@ class ImportTask(BaseImportTask):
         candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
         """
-        artist, album, candidates, recommendation = \
+        artist, album, prop = \
             autotag.tag_album(self.items, search_ids=self.search_ids)
         self.cur_artist = artist
         self.cur_album = album
-        self.candidates = candidates
-        self.rec = recommendation
+        self.candidates = prop.candidates
+        self.rec = prop.recommendation
 
     def find_duplicates(self, lib):
         """Return a list of albums from `lib` with the same artist and
@@ -830,10 +830,9 @@ class SingletonImportTask(ImportTask):
             plugins.send('item_imported', lib=lib, item=item)
 
     def lookup_candidates(self):
-        candidates, recommendation = autotag.tag_item(
-            self.item, search_ids=self.search_ids)
-        self.candidates = candidates
-        self.rec = recommendation
+        prop = autotag.tag_item(self.item, search_ids=self.search_ids)
+        self.candidates = prop.candidates
+        self.rec = prop.recommendation
 
     def find_duplicates(self, lib):
         """Return a list of items from `lib` that have the same artist
