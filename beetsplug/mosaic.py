@@ -72,7 +72,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 		if tail>0:
 			rows +=1
 
-		self._log.info(u'{}x{}', rows,cols)
+		self._log.info(u'{}x{}', cols,rows)
 
 		montage = Image.new(mode='RGBA', size=(cols*(100+self.margin), rows*(100+self.margin)), color=(0,0,0,0))
 
@@ -82,18 +82,22 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 		colcounter=0;
 		for cover in covers:	
 			
-			self._log.info(u'Album: {}', cover)
+			
 			try:	
 				im = Image.open(cover)
 				im.thumbnail(size, Image.ANTIALIAS)
-				montage.paste(im, (offset_x, offset_y))
+				montage.paste(im, (offset_y, offset_x))
+				
+				self._log.info(u'Paste into mosaic: {} ',cover)
+
 				colcounter +=1
-				offset_x += 100+self.margin
 				if colcounter > cols:
 					offset_y += 100+self.margin
 					colcounter =0
 					offset_x =0;
-
+				else:
+					offset_x += 100+self.margin
+				
 				im.close()
 			except IOError:	
 				self._log.error(u'Problem with {}', cover)
