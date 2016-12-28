@@ -444,8 +444,8 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + (u'Foo', u'baR')
+                u'as Tracks', u'Group albums', u'aBort', u'Enter search',
+                u'enter Id') + (u'Foo', u'baR')
 
         self.importer.add_choice(action.SKIP)
         self.importer.run()
@@ -467,8 +467,8 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                u'Enter search',
-                u'enter Id', u'aBort') + (u'Foo', u'baR')
+                u'aBort', u'Enter search', u'enter Id') + \
+                (u'Foo', u'baR')
 
         config['import']['singletons'] = True
         self.importer.add_choice(action.SKIP)
@@ -493,8 +493,8 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         self.register_plugin(DummyPlugin)
         # Default options + not dupe extra choices by the plugin ('baZ')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + (u'baZ',)
+                u'as Tracks', u'Group albums', u'aBort', u'Enter search',
+                u'enter Id',) + (u'baZ',)
         self.importer.add_choice(action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(opts, default='a',
@@ -517,8 +517,8 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + (u'Foo',)
+                u'as Tracks', u'Group albums', u'aBort', u'Enter search',
+                u'enter Id') + (u'Foo',)
 
         # DummyPlugin.foo() should be called once
         with patch.object(DummyPlugin, 'foo', autospec=True) as mock_foo:
@@ -548,8 +548,8 @@ class PromptChoicesTest(TerminalImportSessionSetup, unittest.TestCase,
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
         opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                u'as Tracks', u'Group albums', u'Enter search',
-                u'enter Id', u'aBort') + (u'Foo',)
+                u'as Tracks', u'Group albums', u'aBort', u'Enter search',
+                u'enter Id') + (u'Foo',)
 
         # DummyPlugin.foo() should be called once
         with helper.control_stdin('f\n'):
