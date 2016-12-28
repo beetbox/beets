@@ -107,7 +107,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(AcousticPlugin, self).__init__()
 
-        self.config.add({'auto': True,'force': False})
+        self.config.add({'auto': True, 'force': False})
 
         if self.config['auto']:
             self.register_listener('import_task_files',
@@ -119,8 +119,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._fetch_info(items, ui.should_write(), opts.force_refetch or self.config['force'])
-       
+            self._fetch_info(items, ui.should_write(), 
+                opts.force_refetch or self.config['force'])
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
@@ -162,11 +162,11 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """Fetch additional information from AcousticBrainz for the `item`s.
         """
         for item in items:
-            
             if not force:
                 mood_str = item.get('mood_acoustic', u'')
                 if mood_str:
-                    self._log.info(u'Already set acousticbrainz tags for {} ', item)
+                    self._log.info(u'Already set acoustic\
+                        brainz tags for {} ', item)
                     continue
 
             if not item.mb_trackid:
