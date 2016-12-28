@@ -239,9 +239,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
         # composites attributes straight away and populating the dictionary
         # `composites` with the composite attributes.
 
-        # When we are finished traversing `scheme`, `composites` should map
-        # each composite attribute to an ordered list of the values belonging to
-        # the attribute, for example:
+        # When we are finished traversing `scheme`, `composites` should
+        # map each composite attribute to an ordered list of the values
+        # belonging to the attribute, for example:
         # `composites = {'initial_key': ['B', 'minor']}`.
 
         # The recursive traversal.
