@@ -528,14 +528,13 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     if not candidates:
         if singleton:
             print_(u"No matching recordings found.")
-            opts = (u'Use as-is', u'Skip', u'aBort')
+            opts = (u'Use as-is', u'Skip')
         else:
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
             print_(u'For help, see: '
                    u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = (u'Use as-is', u'as Tracks', u'Group albums', u'Skip',
-                    u'aBort')
+            opts = (u'Use as-is', u'as Tracks', u'Group albums', u'Skip')
         sel = ui.input_options(opts + extra_opts)
         if sel == u'u':
             return importer.action.ASIS
@@ -544,8 +543,6 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             return importer.action.TRACKS
         elif sel == u's':
             return importer.action.SKIP
-        elif sel == u'b':
-            raise importer.ImportAbort()
         elif sel == u'g':
             return importer.action.ALBUMS
         elif sel in extra_actions:
@@ -598,10 +595,9 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
             # Ask the user for a choice.
             if singleton:
-                opts = (u'Skip', u'Use as-is', u'aBort')
+                opts = (u'Skip', u'Use as-is')
             else:
-                opts = (u'Skip', u'Use as-is', u'as Tracks', u'Group albums',
-                        u'aBort')
+                opts = (u'Skip', u'Use as-is', u'as Tracks', u'Group albums')
             sel = ui.input_options(opts + extra_opts,
                                    numrange=(1, len(candidates)))
             if sel == u's':
@@ -613,8 +609,6 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             elif sel == u't':
                 assert not singleton
                 return importer.action.TRACKS
-            elif sel == u'b':
-                raise importer.ImportAbort()
             elif sel == u'g':
                 return importer.action.ALBUMS
             elif sel in extra_actions:
@@ -639,11 +633,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
         # Ask for confirmation.
         if singleton:
-            opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                    u'aBort')
+            opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is')
         else:
             opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                    u'as Tracks', u'Group albums', u'aBort')
+                    u'as Tracks', u'Group albums')
         default = config['import']['default_action'].as_choice({
             u'apply': u'a',
             u'skip': u's',
@@ -665,8 +658,6 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         elif sel == u't':
             assert not singleton
             return importer.action.TRACKS
-        elif sel == u'b':
-            raise importer.ImportAbort()
         elif sel in extra_actions:
             return extra_actions[sel]
 
@@ -705,6 +696,12 @@ def manual_id(session, task):
         return prop
     else:
         return autotag.tag_item(task.item, search_ids=search_id.split())
+
+
+def abort_action(session, task):
+    """A prompt choice callback that aborts the importer.
+    """
+    raise importer.ImportAbort()
 
 
 class TerminalImportSession(importer.ImportSession):
@@ -874,6 +871,7 @@ class TerminalImportSession(importer.ImportSession):
         choices = [
             PromptChoice(u'e', u'Enter search', manual_search),
             PromptChoice(u'i', u'enter Id', manual_id),
+            PromptChoice(u'b', u'aBort', abort_action),
         ]
 
         # Send the before_choose_candidate event and flatten list.
@@ -881,14 +879,13 @@ class TerminalImportSession(importer.ImportSession):
                                                  session=self, task=task)))
         # Add "dummy" choices for the other baked-in options, for
         # duplicate checking.
-        all_choices = [PromptChoice(u'a', u'Apply', None),
-                       PromptChoice(u's', u'Skip', None),
-                       PromptChoice(u'u', u'Use as-is', None),
-                       PromptChoice(u't', u'as Tracks', None),
-                       PromptChoice(u'g', u'Group albums', None),
-                       PromptChoice(u'b', u'aBort', None)] + \
-            choices + \
-            extra_choices
+        all_choices = [
+            PromptChoice(u'a', u'Apply', None),
+            PromptChoice(u's', u'Skip', None),
+            PromptChoice(u'u', u'Use as-is', None),
+            PromptChoice(u't', u'as Tracks', None),
+            PromptChoice(u'g', u'Group albums', None),
+        ] + choices + extra_choices
 
         short_letters = [c.short for c in all_choices]
         if len(short_letters) != len(set(short_letters)):
