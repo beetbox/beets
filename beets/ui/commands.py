@@ -686,20 +686,40 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             return extra_actions[sel]
 
 
-def manual_search(singleton):
-    """Input either an artist and album (for full albums) or artist and
+def manual_search(task):
+    """Get a new `Proposal` using manual search criteria.
+
+    Input either an artist and album (for full albums) or artist and
     track name (for singletons) for manual search.
     """
-    artist = input_(u'Artist:')
-    name = input_(u'Track:' if singleton else u'Album:')
-    return artist.strip(), name.strip()
+    artist = input_(u'Artist:').strip()
+    name = input_(u'Album:' if task.is_album else u'Track:').strip()
+
+    if task.is_album:
+        _, _, prop = autotag.tag_album(
+            task.items, artist, name
+        )
+        return prop
+    else:
+        return autotag.tag_item(task.item, artist, name)
 
 
-def manual_id(singleton):
-    """Input an ID, either for an album ("release") or a track ("recording").
+def manual_id(task):
+    """Get a new `Proposal` using a manually-entered ID.
+
+    Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = u'Enter {0} ID:'.format(u'recording' if singleton else u'release')
-    return input_(prompt).strip()
+    prompt = u'Enter {0} ID:'.format(u'release' if task.is_album
+                                     else u'recording')
+    search_id = input_(prompt).strip()
+
+    if task.is_album:
+        _, _, prop = autotag.tag_album(
+            task.items, search_ids=search_id.split()
+        )
+        return prop
+    else:
+        return autotag.tag_item(task.item, search_ids=search_id.split())
 
 
 class TerminalImportSession(importer.ImportSession):
@@ -749,23 +769,16 @@ class TerminalImportSession(importer.ImportSession):
             # loop again.
             elif choice is importer.action.MANUAL:
                 # Try again with manual search terms.
-                search_artist, search_album = manual_search(False)
-                _, _, prop = autotag.tag_album(
-                    task.items, search_artist, search_album
-                )
+                prop = manual_search(task)
                 candidates = prop.candidates
                 rec = prop.recommendation
 
             # Manual ID. We prompt for the ID and run the loop again.
             elif choice is importer.action.MANUAL_ID:
                 # Try a manually-entered ID.
-                search_id = manual_id(False)
-                if search_id:
-                    _, _, prop = autotag.tag_album(
-                        task.items, search_ids=search_id.split()
-                    )
-                    candidates = prop.candidates
-                    rec = prop.recommendation
+                prop = manual_id(task)
+                candidates = prop.candidates
+                rec = prop.recommendation
 
             # Plugin-provided choices. We invoke the associated callback
             # function.
@@ -814,19 +827,15 @@ class TerminalImportSession(importer.ImportSession):
 
             elif choice == importer.action.MANUAL:
                 # Continue in the loop with a new set of candidates.
-                search_artist, search_title = manual_search(True)
-                prop = autotag.tag_item(task.item, search_artist, search_title)
+                prop = manual_search(task)
                 candidates = prop.candidates
                 rec = prop.recommendation
 
             elif choice == importer.action.MANUAL_ID:
                 # Ask for a track ID.
-                search_id = manual_id(True)
-                if search_id:
-                    prop = autotag.tag_item(task.item,
-                                            search_ids=search_id.split())
-                    candidates = prop.candidates
-                    rec = prop.recommendation
+                prop = manual_id(task)
+                candidates = prop.candidates
+                rec = prop.recommendation
 
             elif choice in extra_choices:
                 post_choice = choice.callback(self, task)
