@@ -42,7 +42,7 @@ from beets.util.confit import _package_path
 import six
 
 VARIOUS_ARTISTS = u'Various Artists'
-PromptChoice = namedtuple('ExtraChoice', ['short', 'long', 'callback'])
+PromptChoice = namedtuple('PromptChoice', ['short', 'long', 'callback'])
 
 # Global logger.
 log = logging.getLogger('beets')
