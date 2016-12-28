@@ -19,6 +19,9 @@ Features:
 Fixes:
 
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
+* :doc:`/plugins/discogs`: Fix a crash when a release did not contain Format
+  information, and increased robustness when other fields are missing.
+  :bug:`2302`
 
 
 1.4.2 (December 16, 2016)
