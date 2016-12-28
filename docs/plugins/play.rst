@@ -95,6 +95,12 @@ example::
 indicates that you need to insert extra arguments before specifying the
 playlist.
 
+The ``--random`` (or ``-r``) flag will choose a random song (or album, when
+used with ``-a``) from your library and play it. This option uses the
+``random`` plugin, so options available to the ``random`` plugin are also
+available to the ``play`` plugin (``--number`` (``-n``), ``--time`` (``-t``),
+and ``--equal-chance`` (``-e``), see :doc:`random`).
+
 Note on the Leakage of the Generated Playlists
 ----------------------------------------------
 
