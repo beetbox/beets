@@ -495,7 +495,7 @@ def _summary_judgment(rec):
 
 def choose_candidate(candidates, singleton, rec, cur_artist=None,
                      cur_album=None, item=None, itemcount=None,
-                     extra_choices=[]):
+                     choices=[]):
     """Given a sorted list of candidates, ask the user for a selection
     of which candidate to use. Applies to both full albums and
     singletons  (tracks). Candidates are either AlbumMatch or TrackMatch
@@ -503,15 +503,12 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     `cur_album`, and `itemcount` must be provided. For singletons,
     `item` must be provided.
 
-    `extra_choices` is a list of `PromptChoice`s, containg the choices
-    appended by the plugins after receiving the `before_choose_candidate`
-    event. If not empty, the choices are appended to the prompt presented
-    to the user.
+    `choices` is a list of `PromptChoice`s to be used in each prompt.
 
     Returns one of the following:
     * the result of the choice, which may be SKIP or ASIS
     * a candidate (an AlbumMatch/TrackMatch object)
-    * a chosen `PromptChoice` from `extra_choices`
+    * a chosen `PromptChoice` from `choices`
     """
     # Sanity check.
     if singleton:
@@ -520,9 +517,9 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         assert cur_artist is not None
         assert cur_album is not None
 
-    # Build helper variables for extra choices.
-    extra_opts = tuple(c.long for c in extra_choices)
-    extra_actions = {c.short: c for c in extra_choices}
+    # Build helper variables for the prompt choices.
+    choice_opts = tuple(c.long for c in choices)
+    choice_actions = {c.short: c for c in choices}
 
     # Zero candidates.
     if not candidates:
@@ -533,9 +530,9 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                    .format(itemcount))
             print_(u'For help, see: '
                    u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-        sel = ui.input_options(extra_opts)
-        if sel in extra_actions:
-            return extra_actions[sel]
+        sel = ui.input_options(choice_opts)
+        if sel in choice_actions:
+            return choice_actions[sel]
         else:
             assert False
 
@@ -583,12 +580,12 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 print_(u' '.join(line))
 
             # Ask the user for a choice.
-            sel = ui.input_options(extra_opts,
+            sel = ui.input_options(choice_opts,
                                    numrange=(1, len(candidates)))
             if sel == u'm':
                 pass
-            elif sel in extra_actions:
-                return extra_actions[sel]
+            elif sel in choice_actions:
+                return choice_actions[sel]
             else:  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
@@ -616,12 +613,12 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         })
         if default is None:
             require = True
-        sel = ui.input_options((u'Apply', u'More candidates') + extra_opts,
+        sel = ui.input_options((u'Apply', u'More candidates') + choice_opts,
                                require=require, default=default)
         if sel == u'a':
             return match
-        elif sel in extra_actions:
-            return extra_actions[sel]
+        elif sel in choice_actions:
+            return choice_actions[sel]
 
 
 def manual_search(session, task):
@@ -698,7 +695,7 @@ class TerminalImportSession(importer.ImportSession):
             choices = self._get_choices(task)
             choice = choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
-                itemcount=len(task.items), extra_choices=choices
+                itemcount=len(task.items), choices=choices
             )
 
             # Basic choices that require no more action here.
@@ -745,7 +742,7 @@ class TerminalImportSession(importer.ImportSession):
             # Ask for a choice.
             choices = self._get_choices(task)
             choice = choose_candidate(candidates, True, rec, item=task.item,
-                                      extra_choices=choices)
+                                      choices=choices)
 
             if choice in (importer.action.SKIP, importer.action.ASIS):
                 return choice
