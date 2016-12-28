@@ -107,7 +107,10 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(AcousticPlugin, self).__init__()
 
-        self.config.add({'auto': True, 'force': False})
+        self.config.add({
+            'auto': True,
+            'force': False,
+        })
 
         if self.config['auto']:
             self.register_listener('import_task_files',
@@ -116,16 +119,16 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('acousticbrainz',
                             help=u"fetch metadata from AcousticBrainz")
-
-        def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
-            self._fetch_info(items, ui.should_write(),
-                             opts.force_refetch or self.config['force'])
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
             help=u're-download data when already present'
         )
+
+        def func(lib, opts, args):
+            items = lib.items(ui.decargs(args))
+            self._fetch_info(items, ui.should_write(),
+                             opts.force_refetch or self.config['force'])
 
         cmd.func = func
         return [cmd]
@@ -162,13 +165,17 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """Fetch additional information from AcousticBrainz for the `item`s.
         """
         for item in items:
+            # If we're not forcing re-downloading for all tracks, check
+            # whether the data is already present. We use one
+            # representative field name to check for previously fetched
+            # data.
             if not force:
                 mood_str = item.get('mood_acoustic', u'')
                 if mood_str:
-                    self._log.info(u'Already set acoustic\
-                        brainz tags for {} ', item)
+                    self._log.info(u'data already present for: {}', item)
                     continue
 
+            # We can only fetch data for tracks with MBIDs.
             if not item.mb_trackid:
                 continue
 
