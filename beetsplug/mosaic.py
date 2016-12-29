@@ -37,7 +37,8 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         cmd = ui.Subcommand('mosaic', help=u"create mosaic from coverart")
 
         def func(lib, opts, args):
-            self._generate_montage(lib, lib.albums(ui.decargs(args)), u'mos.png')
+            self._generate_montage(lib,
+                                   lib.albums(ui.decargs(args)), u'mos.png')
 
         cmd.func = func
         return [cmd]
@@ -65,7 +66,10 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         self._log.info(u'{}x{}', cols, rows)
 
-        montage = Image.new(mode='RGBA', size=(cols * (100 + self.margin), rows * (100 + self.margin)), color=(0, 100, 0, 0))
+        montage = Image.new(mode='RGBA',
+                            size=(cols * (100 + self.margin),
+                                  rows * (100 + self.margin)),
+                            color=(0, 100, 0, 0))
 
         size = 100, 100
         offset_x = 0
@@ -76,7 +80,8 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             try:
                 im = Image.open(cover)
                 im.thumbnail(size, Image.ANTIALIAS)
-                self._log.info(u'Paste into mosaic: {} - {}x{}', cover, offset_x, offset_y)
+                self._log.info(u'Paste into mosaic: {} - {}x{}',
+                               cover, offset_x, offset_y)
                 montage.paste(im, (offset_x, offset_y))
 
                 colcounter += 1
