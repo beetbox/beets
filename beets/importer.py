@@ -43,8 +43,7 @@ from enum import Enum
 from beets import mediafile
 
 action = Enum('action',
-              ['SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
-               'ALBUMS', 'RETAG'])
+              ['SKIP', 'ASIS', 'TRACKS', 'APPLY', 'ALBUMS', 'RETAG'])
 # The RETAG action represents "don't apply any match, but do record
 # new metadata". It's not reachable via the standard command prompt but
 # can be used by plugins.
@@ -443,7 +442,6 @@ class ImportTask(BaseImportTask):
         indicates that an action has been selected for this task.
         """
         # Not part of the task structure:
-        assert choice not in (action.MANUAL, action.MANUAL_ID)
         assert choice != action.APPLY  # Only used internally.
         if choice in (action.SKIP, action.ASIS, action.TRACKS, action.ALBUMS,
                       action.RETAG):
@@ -587,12 +585,12 @@ class ImportTask(BaseImportTask):
         candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
         """
-        artist, album, candidates, recommendation = \
+        artist, album, prop = \
             autotag.tag_album(self.items, search_ids=self.search_ids)
         self.cur_artist = artist
         self.cur_album = album
-        self.candidates = candidates
-        self.rec = recommendation
+        self.candidates = prop.candidates
+        self.rec = prop.recommendation
 
     def find_duplicates(self, lib):
         """Return a list of albums from `lib` with the same artist and
@@ -830,10 +828,9 @@ class SingletonImportTask(ImportTask):
             plugins.send('item_imported', lib=lib, item=item)
 
     def lookup_candidates(self):
-        candidates, recommendation = autotag.tag_item(
-            self.item, search_ids=self.search_ids)
-        self.candidates = candidates
-        self.rec = recommendation
+        prop = autotag.tag_item(self.item, search_ids=self.search_ids)
+        self.candidates = prop.candidates
+        self.rec = prop.recommendation
 
     def find_duplicates(self, lib):
         """Return a list of items from `lib` that have the same artist

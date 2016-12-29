@@ -87,8 +87,8 @@ PREFERRED_IMAGE_EXTENSIONS = {'jpeg': 'jpg'}
 class UnreadableFileError(Exception):
     """Mutagen is not able to extract information from the file.
     """
-    def __init__(self, path):
-        Exception.__init__(self, repr(path))
+    def __init__(self, path, msg):
+        Exception.__init__(self, msg if msg else repr(path))
 
 
 class FileTypeError(UnreadableFileError):
@@ -132,7 +132,7 @@ def mutagen_call(action, path, func, *args, **kwargs):
         return func(*args, **kwargs)
     except mutagen.MutagenError as exc:
         log.debug(u'%s failed: %s', action, six.text_type(exc))
-        raise UnreadableFileError(path)
+        raise UnreadableFileError(path, six.text_type(exc))
     except Exception as exc:
         # Isolate bugs in Mutagen.
         log.debug(u'%s', traceback.format_exc())
