@@ -30,76 +30,77 @@ import math
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
-	col_size = 4
-	margin = 3
+    col_size = 4
+    margin = 3
 
-	def __init__(self):
-		super(MosaicCoverArtPlugin, self).__init__()
-		self.config.add({'maxwidth': 300})
-		self.maxwidth = self.config['maxwidth'].get(int)
+    def __init__(self):
+        super(MosaicCoverArtPlugin, self).__init__()
+        self.config.add({'maxwidth': 300})
+        self.maxwidth = self.config['maxwidth'].get(int)
 
- 	def commands(self):
-		cmd = ui.Subcommand('mosaic', help=u"create mosaic from coverart")
+    def commands(self):
+        cmd = ui.Subcommand('mosaic', help=u"create mosaic from coverart")
 
-		def func(lib, opts, args):
-			self._generate_montage(lib, lib.albums(ui.decargs(args)), u'mos.png')
-		cmd.func = func
-		return [cmd]
+        def func(lib, opts, args):
+            self._generate_montage(lib, lib.albums(
+                ui.decargs(args)), u'mos.png')
+        cmd.func = func
+        return [cmd]
 
-	def _generate_montage(self, lib, albums, output_fn):
-		fullwidth=0;
-		fullheight=0;
+    def _generate_montage(self, lib, albums, output_fn):
+        fullwidth = 0
+        fullheight = 0
 
-		covers = list();
+        covers = list()
 
-		for album in albums:
-			self._log.info(u'#{}#', album.artpath)
-			
-			if not album.artpath:
-				continue
+        for album in albums:
+            self._log.info(u'#{}#', album.artpath)
 
-			if not os.path.exists(album.artpath):
-				continue
+            if not album.artpath:
+                continue
 
-			covers.append(album.artpath) 
+            if not os.path.exists(album.artpath):
+                continue
 
-		sqrtnum = int(math.sqrt(len(covers)))
+            covers.append(album.artpath)
 
-		tail = len(covers)-(sqrtnum*sqrtnum)
+        sqrtnum = int(math.sqrt(len(covers)))
 
-		rows = cols = sqrtnum
-		
-		if tail>0:
-			cols +=1
+        tail = len(covers) - (sqrtnum * sqrtnum)
 
-		self._log.info(u'{}x{}', cols,rows)
+        rows = cols = sqrtnum
 
-		montage = Image.new(mode='RGBA', size=(cols*(100+self.margin), rows*(100+self.margin)), color=(0,100,0,0))
+        if tail > 0:
+            cols += 1
 
-		size = 100, 100
-		offset_x = 0
-		offset_y = 0
-		colcounter=0;
-		for cover in covers:	
-			
-			try:	
-				im = Image.open(cover)
-				im.thumbnail(size, Image.ANTIALIAS)
-				self._log.info(u'Paste into mosaic: {} - {}x{}',cover,offset_x,offset_y)
-				montage.paste(im, (offset_x, offset_y))
-				
+        self._log.info(u'{}x{}', cols, rows)
 
+        montage = Image.new(mode='RGBA', size=(
+            cols * (100 + self.margin), rows * (100 + self.margin)), color=(0, 100, 0, 0))
 
-				colcounter +=1
-				if colcounter >= cols:
-					offset_y += 100+self.margin
-					colcounter =0
-					offset_x =0;
-				else:
-					offset_x += 100+self.margin
-				
-				im.close()
-			except IOError:	
-				self._log.error(u'Problem with {}', cover)
-		self._log.info(u'Save montage to: {}', output_fn)
-		montage.save(output_fn)
+        size = 100, 100
+        offset_x = 0
+        offset_y = 0
+        colcounter = 0
+        for cover in covers:
+
+            try:
+                im = Image.open(cover)
+                im.thumbnail(size, Image.ANTIALIAS)
+                self._log.info(u'Paste into mosaic: {} - {}x{}',
+                               cover, offset_x, offset_y)
+                montage.paste(im, (offset_x, offset_y))
+
+                colcounter += 1
+                if colcounter >= cols:
+                    offset_y += 100 + self.margin
+                    colcounter = 0
+                    offset_x = 0
+                else:
+                    offset_x += 100 + self.margin
+
+                im.close()
+            except IOError:
+                self._log.error(u'Problem with {}', cover)
+        self._log.info(u'Save montage to: {}', output_fn)
+        montage.save(output_fn)
