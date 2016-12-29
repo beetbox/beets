@@ -122,6 +122,7 @@ class ScrubPlugin(BeetsPlugin):
             except mediafile.UnreadableFileError as exc:
                 self._log.error(u'could not open file to scrub: {0}',
                                 exc)
+                return
             art = mf.art
 
         # Remove all tags.

@@ -42,7 +42,7 @@ from beets.util.confit import _package_path
 import six
 
 VARIOUS_ARTISTS = u'Various Artists'
-PromptChoice = namedtuple('ExtraChoice', ['short', 'long', 'callback'])
+PromptChoice = namedtuple('PromptChoice', ['short', 'long', 'callback'])
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -158,7 +158,7 @@ def disambig_string(info):
 
     if isinstance(info, hooks.AlbumInfo):
         if info.media:
-            if info.mediums > 1:
+            if info.mediums and info.mediums > 1:
                 disambig.append(u'{0}x{1}'.format(
                     info.mediums, info.media
                 ))
@@ -495,7 +495,7 @@ def _summary_judgment(rec):
 
 def choose_candidate(candidates, singleton, rec, cur_artist=None,
                      cur_album=None, item=None, itemcount=None,
-                     extra_choices=[]):
+                     choices=[]):
     """Given a sorted list of candidates, ask the user for a selection
     of which candidate to use. Applies to both full albums and
     singletons  (tracks). Candidates are either AlbumMatch or TrackMatch
@@ -503,16 +503,12 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
     `cur_album`, and `itemcount` must be provided. For singletons,
     `item` must be provided.
 
-    `extra_choices` is a list of `PromptChoice`s, containg the choices
-    appended by the plugins after receiving the `before_choose_candidate`
-    event. If not empty, the choices are appended to the prompt presented
-    to the user.
+    `choices` is a list of `PromptChoice`s to be used in each prompt.
 
     Returns one of the following:
-    * the result of the choice, which may be SKIP, ASIS, TRACKS, or MANUAL
+    * the result of the choice, which may be SKIP or ASIS
     * a candidate (an AlbumMatch/TrackMatch object)
-    * the short letter of a `PromptChoice` (if the user selected one of
-    the `extra_choices`).
+    * a chosen `PromptChoice` from `choices`
     """
     # Sanity check.
     if singleton:
@@ -521,41 +517,22 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         assert cur_artist is not None
         assert cur_album is not None
 
-    # Build helper variables for extra choices.
-    extra_opts = tuple(c.long for c in extra_choices)
-    extra_actions = tuple(c.short for c in extra_choices)
+    # Build helper variables for the prompt choices.
+    choice_opts = tuple(c.long for c in choices)
+    choice_actions = {c.short: c for c in choices}
 
     # Zero candidates.
     if not candidates:
         if singleton:
             print_(u"No matching recordings found.")
-            opts = (u'Use as-is', u'Skip', u'Enter search', u'enter Id',
-                    u'aBort')
         else:
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
             print_(u'For help, see: '
                    u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = (u'Use as-is', u'as Tracks', u'Group albums', u'Skip',
-                    u'Enter search', u'enter Id', u'aBort')
-        sel = ui.input_options(opts + extra_opts)
-        if sel == u'u':
-            return importer.action.ASIS
-        elif sel == u't':
-            assert not singleton
-            return importer.action.TRACKS
-        elif sel == u'e':
-            return importer.action.MANUAL
-        elif sel == u's':
-            return importer.action.SKIP
-        elif sel == u'b':
-            raise importer.ImportAbort()
-        elif sel == u'i':
-            return importer.action.MANUAL_ID
-        elif sel == u'g':
-            return importer.action.ALBUMS
-        elif sel in extra_actions:
-            return sel
+        sel = ui.input_options(choice_opts)
+        if sel in choice_actions:
+            return choice_actions[sel]
         else:
             assert False
 
@@ -603,33 +580,12 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 print_(u' '.join(line))
 
             # Ask the user for a choice.
-            if singleton:
-                opts = (u'Skip', u'Use as-is', u'Enter search', u'enter Id',
-                        u'aBort')
-            else:
-                opts = (u'Skip', u'Use as-is', u'as Tracks', u'Group albums',
-                        u'Enter search', u'enter Id', u'aBort')
-            sel = ui.input_options(opts + extra_opts,
+            sel = ui.input_options(choice_opts,
                                    numrange=(1, len(candidates)))
-            if sel == u's':
-                return importer.action.SKIP
-            elif sel == u'u':
-                return importer.action.ASIS
-            elif sel == u'm':
+            if sel == u'm':
                 pass
-            elif sel == u'e':
-                return importer.action.MANUAL
-            elif sel == u't':
-                assert not singleton
-                return importer.action.TRACKS
-            elif sel == u'b':
-                raise importer.ImportAbort()
-            elif sel == u'i':
-                return importer.action.MANUAL_ID
-            elif sel == u'g':
-                return importer.action.ALBUMS
-            elif sel in extra_actions:
-                return sel
+            elif sel in choice_actions:
+                return choice_actions[sel]
             else:  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
@@ -649,13 +605,6 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             return match
 
         # Ask for confirmation.
-        if singleton:
-            opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                    u'Enter search', u'enter Id', u'aBort')
-        else:
-            opts = (u'Apply', u'More candidates', u'Skip', u'Use as-is',
-                    u'as Tracks', u'Group albums', u'Enter search',
-                    u'enter Id', u'aBort')
         default = config['import']['default_action'].as_choice({
             u'apply': u'a',
             u'skip': u's',
@@ -664,43 +613,54 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         })
         if default is None:
             require = True
-        sel = ui.input_options(opts + extra_opts, require=require,
-                               default=default)
+        sel = ui.input_options((u'Apply', u'More candidates') + choice_opts,
+                               require=require, default=default)
         if sel == u'a':
             return match
-        elif sel == u'g':
-            return importer.action.ALBUMS
-        elif sel == u's':
-            return importer.action.SKIP
-        elif sel == u'u':
-            return importer.action.ASIS
-        elif sel == u't':
-            assert not singleton
-            return importer.action.TRACKS
-        elif sel == u'e':
-            return importer.action.MANUAL
-        elif sel == u'b':
-            raise importer.ImportAbort()
-        elif sel == u'i':
-            return importer.action.MANUAL_ID
-        elif sel in extra_actions:
-            return sel
+        elif sel in choice_actions:
+            return choice_actions[sel]
 
 
-def manual_search(singleton):
-    """Input either an artist and album (for full albums) or artist and
+def manual_search(session, task):
+    """Get a new `Proposal` using manual search criteria.
+
+    Input either an artist and album (for full albums) or artist and
     track name (for singletons) for manual search.
     """
-    artist = input_(u'Artist:')
-    name = input_(u'Track:' if singleton else u'Album:')
-    return artist.strip(), name.strip()
+    artist = input_(u'Artist:').strip()
+    name = input_(u'Album:' if task.is_album else u'Track:').strip()
+
+    if task.is_album:
+        _, _, prop = autotag.tag_album(
+            task.items, artist, name
+        )
+        return prop
+    else:
+        return autotag.tag_item(task.item, artist, name)
 
 
-def manual_id(singleton):
-    """Input an ID, either for an album ("release") or a track ("recording").
+def manual_id(session, task):
+    """Get a new `Proposal` using a manually-entered ID.
+
+    Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = u'Enter {0} ID:'.format(u'recording' if singleton else u'release')
-    return input_(prompt).strip()
+    prompt = u'Enter {0} ID:'.format(u'release' if task.is_album
+                                     else u'recording')
+    search_id = input_(prompt).strip()
+
+    if task.is_album:
+        _, _, prop = autotag.tag_album(
+            task.items, search_ids=search_id.split()
+        )
+        return prop
+    else:
+        return autotag.tag_item(task.item, search_ids=search_id.split())
+
+
+def abort_action(session, task):
+    """A prompt choice callback that aborts the importer.
+    """
+    raise importer.ImportAbort()
 
 
 class TerminalImportSession(importer.ImportSession):
@@ -728,40 +688,33 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         candidates, rec = task.candidates, task.rec
         while True:
-            # Gather extra choices from plugins.
-            extra_choices = self._get_plugin_choices(task)
-            extra_ops = {c.short: c.callback for c in extra_choices}
-
-            # Ask for a choice from the user.
+            # Ask for a choice from the user. The result of
+            # `choose_candidate` may be an `importer.action`, an
+            # `AlbumMatch` object for a specific selection, or a
+            # `PromptChoice`.
+            choices = self._get_choices(task)
             choice = choose_candidate(
                 candidates, False, rec, task.cur_artist, task.cur_album,
-                itemcount=len(task.items), extra_choices=extra_choices
+                itemcount=len(task.items), choices=choices
             )
 
-            # Choose which tags to use.
-            if choice in (importer.action.SKIP, importer.action.ASIS,
-                          importer.action.TRACKS, importer.action.ALBUMS):
+            # Basic choices that require no more action here.
+            if choice in (importer.action.SKIP, importer.action.ASIS):
                 # Pass selection to main control flow.
                 return choice
-            elif choice is importer.action.MANUAL:
-                # Try again with manual search terms.
-                search_artist, search_album = manual_search(False)
-                _, _, candidates, rec = autotag.tag_album(
-                    task.items, search_artist, search_album
-                )
-            elif choice is importer.action.MANUAL_ID:
-                # Try a manually-entered ID.
-                search_id = manual_id(False)
-                if search_id:
-                    _, _, candidates, rec = autotag.tag_album(
-                        task.items, search_ids=search_id.split()
-                    )
-            elif choice in list(extra_ops.keys()):
-                # Allow extra ops to automatically set the post-choice.
-                post_choice = extra_ops[choice](self, task)
+
+            # Plugin-provided choices. We invoke the associated callback
+            # function.
+            elif choice in choices:
+                post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.action):
-                    # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
+                elif isinstance(post_choice, autotag.Proposal):
+                    # Use the new candidates and continue around the loop.
+                    candidates = post_choice.candidates
+                    rec = post_choice.recommendation
+
+            # Otherwise, we have a specific match selection.
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
@@ -786,34 +739,22 @@ class TerminalImportSession(importer.ImportSession):
             return action
 
         while True:
-            extra_choices = self._get_plugin_choices(task)
-            extra_ops = {c.short: c.callback for c in extra_choices}
-
             # Ask for a choice.
+            choices = self._get_choices(task)
             choice = choose_candidate(candidates, True, rec, item=task.item,
-                                      extra_choices=extra_choices)
+                                      choices=choices)
 
             if choice in (importer.action.SKIP, importer.action.ASIS):
                 return choice
-            elif choice == importer.action.TRACKS:
-                assert False  # TRACKS is only legal for albums.
-            elif choice == importer.action.MANUAL:
-                # Continue in the loop with a new set of candidates.
-                search_artist, search_title = manual_search(True)
-                candidates, rec = autotag.tag_item(task.item, search_artist,
-                                                   search_title)
-            elif choice == importer.action.MANUAL_ID:
-                # Ask for a track ID.
-                search_id = manual_id(True)
-                if search_id:
-                    candidates, rec = autotag.tag_item(
-                        task.item, search_ids=search_id.split())
-            elif choice in list(extra_ops.keys()):
-                # Allow extra ops to automatically set the post-choice.
-                post_choice = extra_ops[choice](self, task)
+
+            elif choice in choices:
+                post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.action):
-                    # MANUAL and MANUAL_ID have no effect, even if returned.
                     return post_choice
+                elif isinstance(post_choice, autotag.Proposal):
+                    candidates = post_choice.candidates
+                    rec = post_choice.recommendation
+
             else:
                 # Chose a candidate.
                 assert isinstance(choice, autotag.TrackMatch)
@@ -865,8 +806,10 @@ class TerminalImportSession(importer.ImportSession):
                            u"was interrupted. Resume (Y/n)?"
                            .format(displayable_path(path)))
 
-    def _get_plugin_choices(self, task):
-        """Get the extra choices appended to the plugins to the ui prompt.
+    def _get_choices(self, task):
+        """Get the list of prompt choices that should be presented to the
+        user. This consists of both built-in choices and ones provided by
+        plugins.
 
         The `before_choose_candidate` event is sent to the plugins, with
         session and task as its parameters. Plugins are responsible for
@@ -879,20 +822,37 @@ class TerminalImportSession(importer.ImportSession):
 
         Returns a list of `PromptChoice`s.
         """
+        # Standard, built-in choices.
+        choices = [
+            PromptChoice(u's', u'Skip',
+                         lambda s, t: importer.action.SKIP),
+            PromptChoice(u'u', u'Use as-is',
+                         lambda s, t: importer.action.ASIS)
+        ]
+        if task.is_album:
+            choices += [
+                PromptChoice(u't', u'as Tracks',
+                             lambda s, t: importer.action.TRACKS),
+                PromptChoice(u'g', u'Group albums',
+                             lambda s, t: importer.action.ALBUMS),
+            ]
+        choices += [
+            PromptChoice(u'e', u'Enter search', manual_search),
+            PromptChoice(u'i', u'enter Id', manual_id),
+            PromptChoice(u'b', u'aBort', abort_action),
+        ]
+
         # Send the before_choose_candidate event and flatten list.
         extra_choices = list(chain(*plugins.send('before_choose_candidate',
                                                  session=self, task=task)))
-        # Take into account default options, for duplicate checking.
-        all_choices = [PromptChoice(u'a', u'Apply', None),
-                       PromptChoice(u's', u'Skip', None),
-                       PromptChoice(u'u', u'Use as-is', None),
-                       PromptChoice(u't', u'as Tracks', None),
-                       PromptChoice(u'g', u'Group albums', None),
-                       PromptChoice(u'e', u'Enter search', None),
-                       PromptChoice(u'i', u'enter Id', None),
-                       PromptChoice(u'b', u'aBort', None)] +\
-            extra_choices
 
+        # Add a "dummy" choice for the other baked-in option, for
+        # duplicate checking.
+        all_choices = [
+            PromptChoice(u'a', u'Apply', None),
+        ] + choices + extra_choices
+
+        # Check for conflicts.
         short_letters = [c.short for c in all_choices]
         if len(short_letters) != len(set(short_letters)):
             # Duplicate short letter has been found.
@@ -906,7 +866,8 @@ class TerminalImportSession(importer.ImportSession):
                                 u"with '{1}' (short letter: '{2}')",
                                 c.long, dup_choices[0].long, c.short)
                     extra_choices.remove(c)
-        return extra_choices
+
+        return choices + extra_choices
 
 
 # The import command.

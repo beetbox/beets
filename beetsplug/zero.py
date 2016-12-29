@@ -27,14 +27,12 @@ from beets.ui import Subcommand, decargs, input_yn
 from beets.util import confit
 
 __author__ = 'baobab@heresiarch.info'
-__version__ = '0.10'
 
 
 class ZeroPlugin(BeetsPlugin):
     def __init__(self):
         super(ZeroPlugin, self).__init__()
 
-        # Listeners.
         self.register_listener('write', self.write_event)
         self.register_listener('import_task_choice',
                                self.import_task_choice_event)
@@ -49,6 +47,13 @@ class ZeroPlugin(BeetsPlugin):
         self.fields_to_progs = {}
         self.warned = False
 
+        """Read the bulk of the config into `self.fields_to_progs`.
+        After construction, `fields_to_progs` contains all the fields that
+        should be zeroed as keys and maps each of those to a list of compiled
+        regexes (progs) as values.
+        A field is zeroed if its value matches one of the associated progs. If
+        progs is empty, then the associated field is always zeroed.
+        """
         if self.config['fields'] and self.config['keep_fields']:
             self._log.warning(
                 u'cannot blacklist and whitelist at the same time'
@@ -80,9 +85,8 @@ class ZeroPlugin(BeetsPlugin):
         return [zero_command]
 
     def _set_pattern(self, field):
-        """Set a field in `self.patterns` to a string list corresponding to
-        the configuration, or `True` if the field has no specific
-        configuration.
+        """Populate `self.fields_to_progs` for a given field.
+        Do some sanity checks then compile the regexes.
         """
         if field not in MediaFile.fields():
             self._log.error(u'invalid field: {0}', field)
@@ -99,20 +103,22 @@ class ZeroPlugin(BeetsPlugin):
                 self.fields_to_progs[field] = []
 
     def import_task_choice_event(self, session, task):
-        """Listen for import_task_choice event."""
         if task.choice_flag == action.ASIS and not self.warned:
             self._log.warning(u'cannot zero in \"as-is\" mode')
             self.warned = True
         # TODO request write in as-is mode
 
     def write_event(self, item, path, tags):
-        """Set values in tags to `None` if the key and value are matched
-        by `self.patterns`.
-        """
         if self.config['auto']:
             self.set_fields(item, tags)
 
     def set_fields(self, item, tags):
+        """Set values in `tags` to `None` if the field is in
+        `self.fields_to_progs` and any of the corresponding `progs` matches the
+        field value.
+        Also update the `item` itself if `update_database` is set in the
+        config.
+        """
         fields_set = False
 
         if not self.fields_to_progs:
@@ -122,7 +128,7 @@ class ZeroPlugin(BeetsPlugin):
         for field, progs in self.fields_to_progs.items():
             if field in tags:
                 value = tags[field]
-                match = _match_progs(tags[field], progs, self._log)
+                match = _match_progs(tags[field], progs)
             else:
                 value = ''
                 match = not progs
@@ -145,9 +151,9 @@ class ZeroPlugin(BeetsPlugin):
                 item.store(fields=tags)
 
 
-def _match_progs(value, progs, log):
-    """Check if field (as string) is matching any of the patterns in
-    the list.
+def _match_progs(value, progs):
+    """Check if `value` (as string) is matching any of the compiled regexes in
+    the `progs` list.
     """
     if not progs:
         return True
