@@ -205,11 +205,27 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug(u"Communication error while searching for {0!r}",
                             query, exc_info=True)
             return []
-        return [self.get_album_info(release) for release in releases[:5]]
+        return filter(None, [self.get_album_info(release)
+                             for release in releases[:5]])
 
     def get_album_info(self, result):
         """Returns an AlbumInfo object for a discogs Release object.
         """
+        # Explicitly reload the `Release` fields, as they might not be yet
+        # present if the result is from a `discogs_client.search()`.
+        if not result.data.get('artists'):
+            result.refresh()
+
+        # Sanity check for required fields. The list of required fields is
+        # defined at Guideline 1.3.1.a, but in practice some releases might be
+        # lacking some of these fields. This function expects at least:
+        # `artists` (>0), `title`, `id`, `tracklist` (>0)
+        # https://www.discogs.com/help/doc/submission-guidelines-general-rules
+        if not all([result.data.get(k) for k in ['artists', 'title', 'id',
+                                                 'tracklist']]):
+            self._log.warn(u"Release does not contain the required fields")
+            return None
+
         artist, artist_id = self.get_artist([a.data for a in result.artists])
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
