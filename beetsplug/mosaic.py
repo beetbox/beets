@@ -19,7 +19,6 @@ import os.path
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets import util
 from PIL import Image
 
 import math
