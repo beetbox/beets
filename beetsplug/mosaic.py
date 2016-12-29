@@ -66,10 +66,10 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         self._log.info(u'{}x{}', cols, rows)
 
-        montage = Image.new(mode='RGBA',
+        montage = Image.new(mode='RGB',
                             size=(cols * (100 + self.margin),
                                   rows * (100 + self.margin)),
-                            color=(0, 100, 0, 0))
+                            color=(0, 0, 0, 0))
 
         size = 100, 100
         offset_x = 0
@@ -96,4 +96,43 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             except IOError:
                 self._log.error(u'Problem with {}', cover)
         self._log.info(u'Save montage to: {}', output_fn)
-        montage.save(output_fn)
+        foreground = Image.open("c:/temp/tool.png")
+        m_width, m_height = montage.size
+        f_width, f_height = foreground.size
+
+        if f_width > f_height:
+            d = f_width / 2 - (f_height / 2)
+            e = f_width / 2 + (f_height / 2)
+            box = (d, 0, e, f_height)
+            nf = foreground.crop(box)
+        elif f_width < f_height:
+            d = f_height / 2 - (f_width / 2)
+            e = f_height / 2 + (f_width / 2)
+            box = (0, d, f_width, e)
+            nf = foreground.crop(box)
+        else:
+            nf = foreground
+
+        longer_side = max(montage.size)
+        horizontal_padding = (longer_side - montage.size[0]) / 2
+        vertical_padding = (longer_side - montage.size[1]) / 2
+        img5 = montage.crop(
+            (
+                -horizontal_padding,
+                -vertical_padding,
+                montage.size[0] + horizontal_padding,
+                montage.size[1] + vertical_padding
+            )
+        )
+
+        m_width, m_height = img5.size
+
+        nf2 = nf.resize(img5.size, Image.ANTIALIAS)
+        f_width, f_height = nf2.size
+
+        self._log.info(u'Save montage to: {}:{}-{} {}:{}-{}',
+                       img5.mode, m_width, m_height, nf.mode,
+                       f_width, f_height)
+        Image.blend(img5, nf2, 0.4).save(output_fn)
+
+        # montage.save(output_fn)
