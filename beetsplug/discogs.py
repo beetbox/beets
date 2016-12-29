@@ -354,15 +354,27 @@ class DiscogsPlugin(BeetsPlugin):
             """Modify `tracklist` in place, merging a list of `subtracks` into
             a single track into `tracklist`."""
             # Calculate position based on first subtrack, without subindex.
-            idx, medium_idx, _ = self.get_track_index(subtracks[0]['position'])
+            idx, medium_idx, sub_idx = \
+                self.get_track_index(subtracks[0]['position'])
             position = '%s%s' % (idx or '', medium_idx or '')
 
-            if len(tracklist) > 1 and not tracklist[-1]['position']:
-                # Assume the previous index track contains the track title, and
-                # "convert" it to a real track. The only exception is if the
-                # index track is the only one on the tracklist, as it probably
-                # is a medium title.
-                tracklist[-1]['position'] = position
+            if tracklist and not tracklist[-1]['position']:
+                # Assume the previous index track contains the track title.
+                if sub_idx:
+                    # "Convert" the track title to a real track, discarding the
+                    # subtracks assuming they are logical divisions of a
+                    # physical track (12.2.9 Subtracks).
+                    tracklist[-1]['position'] = position
+                else:
+                    # Promote the subtracks to real tracks, discarding the
+                    # index track, assumeing the subtracks are physical tracks.
+                    index_track = tracklist.pop()
+                    # Fix artists when they are specified on the index track.
+                    if index_track.get('artists'):
+                        for subtrack in subtracks:
+                            if not subtrack.get('artists'):
+                                subtrack['artists'] = index_track['artists']
+                    tracklist.extend(subtracks)
             else:
                 # Merge the subtracks, pick a title, and append the new track.
                 track = subtracks[0].copy()
