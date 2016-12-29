@@ -27,6 +27,8 @@ Fixes:
   :bug:`2351`
 * :doc:`/plugins/scrub`: The image type values on scrubbed files are preserved
   instead of being reset to "other." :bug:`2339`
+* :doc:`/plugins/web`: Fix a crash on Python 3 when serving files from the
+  filesystem. :bug:`2353`
 
 For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
 
