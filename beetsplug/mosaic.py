@@ -19,87 +19,76 @@ import os.path
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.ui import decargs
-from beets.util import syspath, normpath, displayable_path, bytestring_path
-from beets.util.artresizer import ArtResizer
-from beets import config
-from beets import art
 from PIL import Image
 
 import math
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
-	col_size = 4
-	margin = 3
+    col_size = 4
+    margin = 3
 
-	def __init__(self):
-		super(MosaicCoverArtPlugin, self).__init__()
-		self.config.add({'maxwidth': 300})
-		self.maxwidth = self.config['maxwidth'].get(int)
+    def __init__(self):
+        super(MosaicCoverArtPlugin, self).__init__()
+        self.config.add({'maxwidth': 300})
+        self.maxwidth = self.config['maxwidth'].get(int)
 
- 	def commands(self):
-		cmd = ui.Subcommand('mosaic', help=u"create mosaic from coverart")
+    def commands(self):
+        cmd = ui.Subcommand('mosaic', help=u"create mosaic from coverart")
 
-		def func(lib, opts, args):
-			self._generate_montage(lib, lib.albums(ui.decargs(args)), u'mos.png')
-		cmd.func = func
-		return [cmd]
+        def func(lib, opts, args):
+            self._generate_montage(lib, lib.albums(ui.decargs(args)), u'mos.png')
 
-	def _generate_montage(self, lib, albums, output_fn):
-		fullwidth=0;
-		fullheight=0;
+        cmd.func = func
+        return [cmd]
 
-		covers = list();
+    def _generate_montage(self, lib, albums, output_fn):
 
-		for album in albums:
-			self._log.info(u'#{}#', album.artpath)
-			
-			if not album.artpath:
-				continue
+        covers = []
 
-			if not os.path.exists(album.artpath):
-				continue
+        for album in albums:
 
-			covers.append(album.artpath) 
+            if album.artpath and os.path.exists(album.artpath):
+                self._log.info(u'#{}#', album.artpath)
+                covers.append(album.artpath)
+            else:
+                self._log.info(u'#{} has no album?#', album)
 
-		sqrtnum = int(math.sqrt(len(covers)))
+        sqrtnum = int(math.sqrt(len(covers)))
 
-		tail = len(covers)-(sqrtnum*sqrtnum)
+        tail = len(covers) - (sqrtnum * sqrtnum)
 
-		rows = cols = sqrtnum
-		
-		if tail>0:
-			cols +=1
+        rows = cols = sqrtnum
 
-		self._log.info(u'{}x{}', cols,rows)
+        if tail > 0:
+            cols += 1
 
-		montage = Image.new(mode='RGBA', size=(cols*(100+self.margin), rows*(100+self.margin)), color=(0,100,0,0))
+        self._log.info(u'{}x{}', cols, rows)
 
-		size = 100, 100
-		offset_x = 0
-		offset_y = 0
-		colcounter=0;
-		for cover in covers:	
-			
-			try:	
-				im = Image.open(cover)
-				im.thumbnail(size, Image.ANTIALIAS)
-				self._log.info(u'Paste into mosaic: {} - {}x{}',cover,offset_x,offset_y)
-				montage.paste(im, (offset_x, offset_y))
-				
+        montage = Image.new(mode='RGBA', size=(cols * (100 + self.margin), rows * (100 + self.margin)), color=(0, 100, 0, 0))
 
+        size = 100, 100
+        offset_x = 0
+        offset_y = 0
+        colcounter = 0
+        for cover in covers:
 
-				colcounter +=1
-				if colcounter >= cols:
-					offset_y += 100+self.margin
-					colcounter =0
-					offset_x =0;
-				else:
-					offset_x += 100+self.margin
-				
-				im.close()
-			except IOError:	
-				self._log.error(u'Problem with {}', cover)
-		self._log.info(u'Save montage to: {}', output_fn)
-		montage.save(output_fn)
+            try:
+                im = Image.open(cover)
+                im.thumbnail(size, Image.ANTIALIAS)
+                self._log.info(u'Paste into mosaic: {} - {}x{}', cover, offset_x, offset_y)
+                montage.paste(im, (offset_x, offset_y))
+
+                colcounter += 1
+                if colcounter >= cols:
+                    offset_y += 100 + self.margin
+                    offset_x = 0
+                    colcounter = 0
+                else:
+                    offset_x += 100 + self.margin
+
+                    im.close()
+            except IOError:
+                self._log.error(u'Problem with {}', cover)
+        self._log.info(u'Save montage to: {}', output_fn)
+        montage.save(output_fn)
