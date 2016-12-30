@@ -23,6 +23,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 import math
 
+MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
+
 
 class MosaicCoverArtPlugin(BeetsPlugin):
     col_size = 4
@@ -116,7 +118,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                 self._log.debug(u'{}', album.artpath)
                 covers.append(album.artpath)
             else:
-                covers.append("||"+album.albumartist+"\n"+album.album)
+                covers.append("||" + album.albumartist + "\n" + album.album)
                 self._log.debug(u'#{} has no album?#', album)
 
         sqrtnum = int(math.sqrt(len(covers)))
@@ -144,24 +146,26 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         offset_x = self.margin
         offset_y = self.margin
         colcounter = 0
+
+        fnt = ImageFont.truetype(MOSAICFONT, 12)
+
         for cover in covers:
 
             try:
                 if '||' in cover:
 
                     im = Image.new('RGB', size,
-                            tuple(int(background[i:i + 2], 16)
-                                  for i in (0, 2, 4)))
-                    # get a font
-                    fnt = ImageFont.truetype('c:/temp/calibri.ttf', 12)
-                    # get a drawing context
+                                   tuple(int(background[i:i + 2], 16)
+                                         for i in (0, 2, 4)))
                     d = ImageDraw.Draw(im)
-                    d.multiline_text((10,10), cover[2:], fill=(0,0,0), font=fnt, anchor=None, spacing=0, align="left")
-                    
+                    d.multiline_text((10, 10), cover[2:],
+                                     fill=(0, 0, 0), font=fnt, anchor=None,
+                                     spacing=0, align="left")
+
                 else:
                     im = Image.open(cover)
                     im.thumbnail(size, Image.ANTIALIAS)
-                
+
                 self._log.debug(u'Paste into mosaic: {} - {}x{}',
                                 cover, offset_x, offset_y)
                 montage.paste(im, (offset_x, offset_y))
