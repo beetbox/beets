@@ -25,6 +25,8 @@ Fixes:
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
 * :doc:`/plugins/scrub`: Avoid a crash when files cannot be read or written.
   :bug:`2351`
+* :doc:`/plugins/discogs`: Improve the handling of releases that contain
+  subtracks. :bug:`2318`
 
 For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
 
