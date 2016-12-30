@@ -34,6 +34,8 @@ Fixes:
 * :doc:`/plugins/discogs`: Fix a crash when a release did not contain Format
   information, and increased robustness when other fields are missing.
   :bug:`2302`
+* :doc:`/plugins/lyrics`: The plugin now reports a beets-specific User-Agent
+  header when requesting lyrics. :bug:`2357`
 
 For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
 
