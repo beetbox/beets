@@ -19,7 +19,7 @@ import os.path
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 import math
 
@@ -116,6 +116,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                 self._log.debug(u'{}', album.artpath)
                 covers.append(album.artpath)
             else:
+                covers.append("||"+album.albumartist+"\n"+album.album)
                 self._log.debug(u'#{} has no album?#', album)
 
         sqrtnum = int(math.sqrt(len(covers)))
@@ -146,8 +147,21 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         for cover in covers:
 
             try:
-                im = Image.open(cover)
-                im.thumbnail(size, Image.ANTIALIAS)
+                if '||' in cover:
+
+                    im = Image.new('RGB', size,
+                            tuple(int(background[i:i + 2], 16)
+                                  for i in (0, 2, 4)))
+                    # get a font
+                    fnt = ImageFont.truetype('c:/temp/calibri.ttf', 12)
+                    # get a drawing context
+                    d = ImageDraw.Draw(im)
+                    d.multiline_text((10,10), cover[2:], fill=(0,0,0), font=fnt, anchor=None, spacing=0, align="left")
+                    
+                else:
+                    im = Image.open(cover)
+                    im.thumbnail(size, Image.ANTIALIAS)
+                
                 self._log.debug(u'Paste into mosaic: {} - {}x{}',
                                 cover, offset_x, offset_y)
                 montage.paste(im, (offset_x, offset_y))
