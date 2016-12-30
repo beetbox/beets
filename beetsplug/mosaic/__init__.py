@@ -19,11 +19,12 @@ import os.path
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
+# from PIL import Image, ImageDraw, ImageFont
 
 import math
 
-MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
+# MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
@@ -152,7 +153,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         offset_y = self.margin
         colcounter = 0
 
-        fnt = ImageFont.truetype(MOSAICFONT, 12)
+#        fnt = ImageFont.truetype(MOSAICFONT, 12)
 
         for cover in covers:
 
@@ -162,10 +163,10 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                     im = Image.new('RGB', size,
                                    tuple(int(background[i:i + 2], 16)
                                          for i in (0, 2, 4)))
-                    d = ImageDraw.Draw(im)
-                    d.multiline_text((10, 10), cover[2:],
-                                     fill=(0, 0, 0), font=fnt, anchor=None,
-                                     spacing=0, align="left")
+#                    d = ImageDraw.Draw(im)
+#                    d.multiline_text((10, 10), cover[2:],
+#                                     fill=(0, 0, 0), font=fnt, anchor=None,
+#                                     spacing=0, align="left")
 
                 else:
                     im = Image.open(cover)
