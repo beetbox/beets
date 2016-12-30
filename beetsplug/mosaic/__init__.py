@@ -127,8 +127,13 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         rows = cols = sqrtnum
 
-        if tail > 0:
+        if tail>=cols:
             cols += 1
+
+        tail = len(covers) - (cols * sqrtnum)
+        
+        if tail > 0:
+            rows += 1
 
         self._log.info(u'{}x{}', cols, rows)
 
