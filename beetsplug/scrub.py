@@ -123,7 +123,7 @@ class ScrubPlugin(BeetsPlugin):
                 self._log.error(u'could not open file to scrub: {0}',
                                 exc)
                 return
-            art = mf.art
+            images = mf.images
 
         # Remove all tags.
         self._scrub(item.path)
@@ -132,12 +132,12 @@ class ScrubPlugin(BeetsPlugin):
         if restore:
             self._log.debug(u'writing new tags after scrub')
             item.try_write()
-            if art:
+            if images:
                 self._log.debug(u'restoring art')
                 try:
                     mf = mediafile.MediaFile(util.syspath(item.path),
                                              config['id3v23'].get(bool))
-                    mf.art = art
+                    mf.images = images
                     mf.save()
                 except mediafile.UnreadableFileError as exc:
                     self._log.error(u'could not write tags: {0}', exc)
