@@ -31,7 +31,9 @@ Fixes:
   filesystem. :bug:`2353`
 * :doc:`/plugins/discogs`: Improve the handling of releases that contain
   subtracks. :bug:`2318`
-
+* :doc:`/plugins/discogs`: Fix a crash when a release did not contain Format
+  information, and increased robustness when other fields are missing.
+  :bug:`2302`
 
 For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
 
