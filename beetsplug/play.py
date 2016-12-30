@@ -140,7 +140,7 @@ class PlayPlugin(BeetsPlugin):
         # Perform item query and add tracks to playlist.
         else:
             if opts.random:
-                selection = random.random_func(lib, opts, args)
+                selection = random.random_func(lib, opts, args,
                                                print_list=False)
             else:
                 selection = lib.items(ui.decargs(args))

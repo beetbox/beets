@@ -112,7 +112,7 @@ def random_objs(objs, album, number=1, time=None, equal_chance=False):
         return _take(perm, number)
 
 
-def random_func(lib, opts, args):
+def random_func(lib, opts, args, print_list=True):
     """Select some random items or albums and print the results.
     """
     # Fetch all the objects matching the query into a list.
@@ -125,11 +125,14 @@ def random_func(lib, opts, args):
     # Print a random subset.
     objs = random_objs(objs, opts.album, opts.number, opts.time,
                        opts.equal_chance)
-    for obj in objs:
-        print_(format(obj))
+
+    if print_list:
+        for obj in objs:
+            print_(format(obj))
 
     # Return random subset to be used by other plugins.
-    return objs
+    else:
+        return objs
 
 random_cmd = Subcommand('random',
                         help=u'choose a random track or album')
