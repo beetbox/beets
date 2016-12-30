@@ -272,11 +272,14 @@ class DGAlbumInfoTest(_common.TestCase):
 
         d = DiscogsPlugin().get_album_info(release)
         self.assertEqual(d.mediums, 1)
+        self.assertEqual(d.tracks[0].disctitle, 'MEDIUM TITLE')
         self.assertEqual(len(d.tracks), 1)
         self.assertEqual(d.tracks[0].title, 'TRACK GROUP TITLE')
 
-    def test_parse_tracklist_subtracks_nested(self):
-        """Test parsing of subtracks defined inside a index track."""
+    def test_parse_tracklist_subtracks_nested_logical(self):
+        """Test parsing of subtracks defined inside a index track that are
+        logical subtracks (ie. should be grouped together into a single track).
+        """
         release = self._make_release_from_positions(['1', '', '3'])
         # Track 2: Index track with track group title, and sub_tracks
         release.data['tracklist'][1]['title'] = 'TRACK GROUP TITLE'
@@ -289,6 +292,40 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.mediums, 1)
         self.assertEqual(len(d.tracks), 3)
         self.assertEqual(d.tracks[1].title, 'TRACK GROUP TITLE')
+
+    def test_parse_tracklist_subtracks_nested_physical(self):
+        """Test parsing of subtracks defined inside a index track that are
+        physical subtracks (ie. should not be grouped together).
+        """
+        release = self._make_release_from_positions(['1', '', '4'])
+        # Track 2: Index track with track group title, and sub_tracks
+        release.data['tracklist'][1]['title'] = 'TRACK GROUP TITLE'
+        release.data['tracklist'][1]['sub_tracks'] = [
+            self._make_track('TITLE ONE', '2', '01:01'),
+            self._make_track('TITLE TWO', '3', '02:02')
+        ]
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.mediums, 1)
+        self.assertEqual(len(d.tracks), 4)
+        self.assertEqual(d.tracks[1].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[2].title, 'TITLE TWO')
+
+    def test_parse_tracklist_disctitles(self):
+        """Test parsing of index tracks that act as disc titles."""
+        release = self._make_release_from_positions(['', '1-1', '1-2', '',
+                                                     '2-1'])
+        # Track 1: Index track with medium title (Cd1)
+        release.data['tracklist'][0]['title'] = 'MEDIUM TITLE CD1'
+        # Track 4: Index track with medium title (Cd2)
+        release.data['tracklist'][3]['title'] = 'MEDIUM TITLE CD2'
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.mediums, 2)
+        self.assertEqual(d.tracks[0].disctitle, 'MEDIUM TITLE CD1')
+        self.assertEqual(d.tracks[1].disctitle, 'MEDIUM TITLE CD1')
+        self.assertEqual(d.tracks[2].disctitle, 'MEDIUM TITLE CD2')
+        self.assertEqual(len(d.tracks), 3)
 
 
 def suite():
