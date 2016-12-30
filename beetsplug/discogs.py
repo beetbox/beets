@@ -205,8 +205,8 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug(u"Communication error while searching for {0!r}",
                             query, exc_info=True)
             return []
-        return filter(None, [self.get_album_info(release)
-                             for release in releases[:5]])
+        return [album for album in map(self.get_album_info, releases[:5])
+                if album]
 
     def get_album_info(self, result):
         """Returns an AlbumInfo object for a discogs Release object.
