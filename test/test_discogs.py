@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 import unittest
 from test import _common
 from test._common import Bag
+from test.helper import capture_log
 
 from beetsplug.discogs import DiscogsPlugin
 
@@ -326,6 +327,29 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.tracks[1].disctitle, 'MEDIUM TITLE CD1')
         self.assertEqual(d.tracks[2].disctitle, 'MEDIUM TITLE CD2')
         self.assertEqual(len(d.tracks), 3)
+
+    def test_parse_minimal_release(self):
+        """Test parsing of a release with the minimal amount of information."""
+        data = {'id': 123,
+                'tracklist': [self._make_track('A', '1', '01:01')],
+                'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
+                'title': 'TITLE'}
+        release = Bag(data=data,
+                      title=data['title'],
+                      artists=[Bag(data=d) for d in data['artists']])
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.artist, 'ARTIST NAME')
+        self.assertEqual(d.album, 'TITLE')
+        self.assertEqual(len(d.tracks), 1)
+
+    def test_parse_release_without_required_fields(self):
+        """Test parsing of a release that does not have the required fields."""
+        release = Bag(data={}, refresh=lambda *args: None)
+        with capture_log() as logs:
+            d = DiscogsPlugin().get_album_info(release)
+
+        self.assertEqual(d, None)
+        self.assertIn('Release does not contain the required fields', logs[0])
 
 
 def suite():
