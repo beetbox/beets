@@ -34,6 +34,3 @@ include beets/ui/completion_base.sh
 
 # Include extra bits
 recursive-include extra *
-
-# Resources for the mosaic plugin.
-include beetsplug/mosaic/FreeSans.ttf

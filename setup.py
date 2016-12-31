@@ -78,7 +78,6 @@ setup(
         'beetsplug.web',
         'beetsplug.lastgenre',
         'beetsplug.metasync',
-        'beetsplug.mosaic',
     ],
     entry_points={
         'console_scripts': [
@@ -123,7 +122,7 @@ setup(
         'thumbnails': ['pyxdg'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
-        'mosaic': ['Pillow'],
+        'mosaic': ['pillow'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # convert: ffmpeg
