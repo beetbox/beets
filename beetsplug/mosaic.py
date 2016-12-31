@@ -20,7 +20,7 @@ import os.path
 from beets.plugins import BeetsPlugin
 from beets import ui
 
-import Image
+from PIL import Image
 import math
 
 # MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
