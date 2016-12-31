@@ -52,7 +52,6 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 )
         else:
             # Implicit path to extractor, search for it in path
-            # TODO how to check for on Windows?
             self.extractor = 'streaming_extractor_music'
             try:
                 call([self.extractor])
