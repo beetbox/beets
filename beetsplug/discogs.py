@@ -205,11 +205,27 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug(u"Communication error while searching for {0!r}",
                             query, exc_info=True)
             return []
-        return [self.get_album_info(release) for release in releases[:5]]
+        return [album for album in map(self.get_album_info, releases[:5])
+                if album]
 
     def get_album_info(self, result):
         """Returns an AlbumInfo object for a discogs Release object.
         """
+        # Explicitly reload the `Release` fields, as they might not be yet
+        # present if the result is from a `discogs_client.search()`.
+        if not result.data.get('artists'):
+            result.refresh()
+
+        # Sanity check for required fields. The list of required fields is
+        # defined at Guideline 1.3.1.a, but in practice some releases might be
+        # lacking some of these fields. This function expects at least:
+        # `artists` (>0), `title`, `id`, `tracklist` (>0)
+        # https://www.discogs.com/help/doc/submission-guidelines-general-rules
+        if not all([result.data.get(k) for k in ['artists', 'title', 'id',
+                                                 'tracklist']]):
+            self._log.warn(u"Release does not contain the required fields")
+            return None
+
         artist, artist_id = self.get_artist([a.data for a in result.artists])
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
@@ -218,25 +234,36 @@ class DiscogsPlugin(BeetsPlugin):
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
         tracks = self.get_tracks(result.data['tracklist'])
-        albumtype = ', '.join(
-            result.data['formats'][0].get('descriptions', [])) or None
-        va = result.data['artists'][0]['name'].lower() == 'various'
+
+        # Extract information for the optional AlbumInfo fields, if possible.
+        va = result.data['artists'][0].get('name', '').lower() == 'various'
+        year = result.data.get('year')
+        mediums = len(set(t.medium for t in tracks))
+        country = result.data.get('country')
+        data_url = result.data.get('uri')
+
+        # Extract information for the optional AlbumInfo fields that are
+        # contained on nested discogs fields.
+        albumtype = media = label = catalogno = None
+        if result.data.get('formats'):
+            albumtype = ', '.join(
+                result.data['formats'][0].get('descriptions', [])) or None
+            media = result.data['formats'][0]['name']
+        if result.data.get('labels'):
+            label = result.data['labels'][0].get('name')
+            catalogno = result.data['labels'][0].get('catno')
+
+        # Additional cleanups (various artists name, catalog number, media).
         if va:
             artist = config['va_name'].as_str()
-        year = result.data['year']
-        label = result.data['labels'][0]['name']
-        mediums = len(set(t.medium for t in tracks))
-        catalogno = result.data['labels'][0]['catno']
         if catalogno == 'none':
-            catalogno = None
-        country = result.data.get('country')
-        media = result.data['formats'][0]['name']
+                catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
         # `autotag.apply_metadata`, and set `medium_total`.
         for track in tracks:
             track.media = media
             track.medium_total = mediums
-        data_url = result.data['uri']
+
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
                          day=None, label=label, mediums=mediums,
@@ -354,15 +381,27 @@ class DiscogsPlugin(BeetsPlugin):
             """Modify `tracklist` in place, merging a list of `subtracks` into
             a single track into `tracklist`."""
             # Calculate position based on first subtrack, without subindex.
-            idx, medium_idx, _ = self.get_track_index(subtracks[0]['position'])
+            idx, medium_idx, sub_idx = \
+                self.get_track_index(subtracks[0]['position'])
             position = '%s%s' % (idx or '', medium_idx or '')
 
-            if len(tracklist) > 1 and not tracklist[-1]['position']:
-                # Assume the previous index track contains the track title, and
-                # "convert" it to a real track. The only exception is if the
-                # index track is the only one on the tracklist, as it probably
-                # is a medium title.
-                tracklist[-1]['position'] = position
+            if tracklist and not tracklist[-1]['position']:
+                # Assume the previous index track contains the track title.
+                if sub_idx:
+                    # "Convert" the track title to a real track, discarding the
+                    # subtracks assuming they are logical divisions of a
+                    # physical track (12.2.9 Subtracks).
+                    tracklist[-1]['position'] = position
+                else:
+                    # Promote the subtracks to real tracks, discarding the
+                    # index track, assuming the subtracks are physical tracks.
+                    index_track = tracklist.pop()
+                    # Fix artists when they are specified on the index track.
+                    if index_track.get('artists'):
+                        for subtrack in subtracks:
+                            if not subtrack.get('artists'):
+                                subtrack['artists'] = index_track['artists']
+                    tracklist.extend(subtracks)
             else:
                 # Merge the subtracks, pick a title, and append the new track.
                 track = subtracks[0].copy()

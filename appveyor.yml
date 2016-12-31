@@ -20,7 +20,8 @@ environment:
 # Install Tox for running tests.
 install:
     - cinst imagemagick -y
-    - cinst unrar -y
+    # TODO: remove --allow-empty-checksums when unrar offers a proper checksum
+    - cinst unrar -y --allow-empty-checksums
     - "%PYTHON%/Scripts/pip.exe install tox"
     - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 

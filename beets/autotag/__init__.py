@@ -23,7 +23,7 @@ from beets import config
 
 # Parts of external interface.
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch  # noqa
-from .match import tag_item, tag_album  # noqa
+from .match import tag_item, tag_album, Proposal  # noqa
 from .match import Recommendation  # noqa
 
 # Global logger.

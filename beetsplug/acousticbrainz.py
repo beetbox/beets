@@ -107,7 +107,10 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(AcousticPlugin, self).__init__()
 
-        self.config.add({'auto': True, 'force': False})
+        self.config.add({
+            'auto': True,
+            'force': False,
+        })
 
         if self.config['auto']:
             self.register_listener('import_task_files',
@@ -116,16 +119,16 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('acousticbrainz',
                             help=u"fetch metadata from AcousticBrainz")
-
-        def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
-            self._fetch_info(items, ui.should_write(),
-                             opts.force_refetch or self.config['force'])
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
             help=u're-download data when already present'
         )
+
+        def func(lib, opts, args):
+            items = lib.items(ui.decargs(args))
+            self._fetch_info(items, ui.should_write(),
+                             opts.force_refetch or self.config['force'])
 
         cmd.func = func
         return [cmd]
@@ -133,7 +136,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def import_task_files(self, session, task):
         """Function is called upon beet import.
         """
-        self._fetch_info(task.imported_items(), False)
+        self._fetch_info(task.imported_items(), False, True)
 
     def _get_data(self, mbid):
         data = {}
@@ -162,13 +165,17 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """Fetch additional information from AcousticBrainz for the `item`s.
         """
         for item in items:
+            # If we're not forcing re-downloading for all tracks, check
+            # whether the data is already present. We use one
+            # representative field name to check for previously fetched
+            # data.
             if not force:
                 mood_str = item.get('mood_acoustic', u'')
                 if mood_str:
-                    self._log.info(u'Already set acoustic\
-                        brainz tags for {} ', item)
+                    self._log.info(u'data already present for: {}', item)
                     continue
 
+            # We can only fetch data for tracks with MBIDs.
             if not item.mb_trackid:
                 continue
 
@@ -205,7 +212,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
         joined with `' '`. This is hardcoded and not very flexible, but it gets
         the job done.
 
-        Example:
+        For example:
+
         >>> scheme = {
             'key1': 'attribute',
             'key group': {
@@ -227,24 +235,24 @@ class AcousticPlugin(plugins.BeetsPlugin):
          ('attribute', 'value'),
          ('composite attribute', 'part 1 of composite attr part 2')]
         """
-        """First, we traverse `scheme` and `data`, `yield`ing all the non
-        composites attributes straight away and populating the dictionary
-        `composites` with the composite attributes.
+        # First, we traverse `scheme` and `data`, `yield`ing all the non
+        # composites attributes straight away and populating the dictionary
+        # `composites` with the composite attributes.
 
-        When we are finished traversing `scheme`, `composites` should map
-        each composite attribute to an ordered list of the values belonging to
-        the attribute, for example:
-        `composites = {'initial_key': ['B', 'minor']}`.
-        """
+        # When we are finished traversing `scheme`, `composites` should
+        # map each composite attribute to an ordered list of the values
+        # belonging to the attribute, for example:
+        # `composites = {'initial_key': ['B', 'minor']}`.
+
+        # The recursive traversal.
         composites = defaultdict(list)
-        # The recursive traversal
         for attr, val in self._data_to_scheme_child(data,
                                                     scheme,
                                                     composites):
             yield attr, val
-        """When composites has been populated, yield the composite attributes
-        by joining their parts.
-        """
+
+        # When composites has been populated, yield the composite attributes
+        # by joining their parts.
         for composite_attr, value_parts in composites.items():
             yield composite_attr, ' '.join(value_parts)
 

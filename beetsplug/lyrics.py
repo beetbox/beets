@@ -51,6 +51,7 @@ except ImportError:
 
 from beets import plugins
 from beets import ui
+import beets
 
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
@@ -71,6 +72,7 @@ URL_CHARACTERS = {
     u'\u2016': u'-',
     u'\u2026': u'...',
 }
+USER_AGENT = 'beets/{}'.format(beets.__version__)
 
 
 # Utilities.
@@ -210,7 +212,9 @@ class Backend(object):
             # We're not overly worried about the NSA MITMing our lyrics scraper
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                r = requests.get(url, verify=False)
+                r = requests.get(url, verify=False, headers={
+                    'User-Agent': USER_AGENT,
+                })
         except requests.RequestException as exc:
             self._log.debug(u'lyrics request failed: {0}', exc)
             return
@@ -263,7 +267,10 @@ class Genius(Backend):
     def __init__(self, config, log):
         super(Genius, self).__init__(config, log)
         self.api_key = config['genius_api_key'].as_str()
-        self.headers = {'Authorization': "Bearer %s" % self.api_key}
+        self.headers = {
+            'Authorization': "Bearer %s" % self.api_key,
+            'User-Agent': USER_AGENT,
+        }
 
     def search_genius(self, artist, title):
         query = u"%s %s" % (artist, title)

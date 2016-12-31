@@ -15,10 +15,29 @@ Features:
   :bug:`2305` :bug:`2322`
 * :doc:`/plugins/zero`: Added ``zero`` command to manually trigger the zero
   plugin. Thanks to :user:`SJoshBrown`. :bug:`2274` :bug:`2329`
+* :doc:`/plugins/acousticbrainz`: The plugin will avoid re-downloading data
+  for files that already have it by default. You can override this behavior
+  using a new ``force`` option. Thanks to :user:`SusannaMaria`. :bug:`2347`
+  :bug:`2349`
 
 Fixes:
 
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
+* :doc:`/plugins/scrub`: Avoid a crash when files cannot be read or written.
+  :bug:`2351`
+* :doc:`/plugins/scrub`: The image type values on scrubbed files are preserved
+  instead of being reset to "other." :bug:`2339`
+* :doc:`/plugins/web`: Fix a crash on Python 3 when serving files from the
+  filesystem. :bug:`2353`
+* :doc:`/plugins/discogs`: Improve the handling of releases that contain
+  subtracks. :bug:`2318`
+* :doc:`/plugins/discogs`: Fix a crash when a release did not contain Format
+  information, and increased robustness when other fields are missing.
+  :bug:`2302`
+* :doc:`/plugins/lyrics`: The plugin now reports a beets-specific User-Agent
+  header when requesting lyrics. :bug:`2357`
+
+For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
 
 
 1.4.2 (December 16, 2016)
