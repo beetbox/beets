@@ -27,7 +27,7 @@ from beets.dbcore import types
 if util.SNI_SUPPORTED:
     API_URL = 'https://ws.audioscrobbler.com/2.0/'
 else:
-    API_URL = 'https://ws.audioscrobbler.com/2.0/'
+    API_URL = 'http://ws.audioscrobbler.com/2.0/'
 
 
 class LastImportPlugin(plugins.BeetsPlugin):
