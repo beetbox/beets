@@ -22,18 +22,18 @@ from beets import ui
 
 from PIL import Image
 import math
+from parse import *
 
 # MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
     col_size = 4
-    margin = 3
 
     def __init__(self):
         super(MosaicCoverArtPlugin, self).__init__()
 
-        self.config.add({'geometry': '',
+        self.config.add({'geometry': '100x100+3+3',
                          'tile': '',  # or e.g. x3 3x
                          'label': '',
                          'background': 'ffffff',
@@ -68,6 +68,12 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             help=u'background color as HEXCOLOR'
         )
 
+        cmd.parser.add_option(
+            u'-g', u'--geometry', dest='geometry',
+            action='store', metavar='GEOMETRY',
+            help=u'define geometry as <width>x<height>+<marginx>+<marginy>'
+        )
+
         def func(lib, opts, args):
             self.config.set_args(opts)
 
@@ -92,6 +98,11 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             else:
                 background = opts.background
 
+            if self.config['geometry']:
+                geometry = opts.geometry or self.config[
+                    'geometry'].get(str)
+            else:
+                geometry = opts.background
             albums = lib.albums(ui.decargs(args))
 
             self._generate_montage(lib,
@@ -99,15 +110,21 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                                    mosaic,
                                    watermark,
                                    background,
-                                   watermark_alpha)
+                                   watermark_alpha,
+                                   geometry)
 
         cmd.func = func
         return [cmd]
 
     def _generate_montage(self, lib, albums,
                           fn_mosaic, fn_watermark,
-                          background, watermark_alpha):
+                          background, watermark_alpha, geometry):
 
+        parsestr = "{cellwidth:d}x{cellheight:d}"
+        parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
+
+        geo = parse(parsestr, geometry)
+        
         covers = []
 
         for album in albums:
@@ -135,8 +152,12 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         self._log.debug(u'Cells: {}x{}', cols, rows)
 
-        mosaic_size_width = self.margin + (cols * (100 + self.margin))
-        mosaic_size_height = self.margin + (rows * (100 + self.margin))
+        mosaic_size_width = geo['cellmarginx'] + (cols * (geo['cellwidth'] + 
+                                                          geo['cellmarginx']))
+
+        mosaic_size_height = geo['cellmarginy'] + (rows * 
+                                                   (geo['cellheight'] +
+                                                    geo['cellmarginy']))
 
         self._log.debug(u'Mosaic size: {}x{}',
                         mosaic_size_width, mosaic_size_height)
@@ -145,9 +166,9 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                             tuple(int(background[i:i + 2], 16)
                                   for i in (0, 2, 4)))
 
-        size = 100, 100
-        offset_x = self.margin
-        offset_y = self.margin
+        size = int(geo['cellwidth']), int(geo['cellheight'])
+        offset_x = int(geo['cellmarginx'])
+        offset_y = int(geo['cellmarginy'])
         colcounter = 0
 
 #        fnt = ImageFont.truetype(MOSAICFONT, 12)
@@ -175,11 +196,11 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
                 colcounter += 1
                 if colcounter >= cols:
-                    offset_y += 100 + self.margin
-                    offset_x = self.margin
+                    offset_y += geo['cellwidth'] + geo['cellmarginy']
+                    offset_x = geo['cellmarginx']
                     colcounter = 0
                 else:
-                    offset_x += 100 + self.margin
+                    offset_x += geo['cellwidth'] + geo['cellmarginx']
 
                     im.close()
             except IOError:

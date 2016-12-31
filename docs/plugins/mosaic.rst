@@ -22,6 +22,7 @@ You can customize the output mosaic, overlay and blend a image as watermark and 
   -w FILE, --watermark=FILE     	add FILE for a picture to blend over mosaic
   -a ALPHA, --alpha=ALPHA       	ALPHA value for blending 0.0-1.0
   -c HEXCOLOR, --color=HEXCOLOR 	background color as HEXCOLOR
+  -g GEOMETRY, --geometry=GEOMETRY Geometry defined as <width>x<height>+<marginx>+<marginy>
 
 Examples
 --------
@@ -51,4 +52,6 @@ configuration file. There is four option:
   Default: ``0.4``
 - **background**: The color of the background and the visible border of the mosaic as Hexcolor e.g. ffffff for white or 000000 as black 
   Default: ``ffffff``
+- **geometry**: Define geometry of each cover defined as <width>x<height>+<marginx>+<marginy>
+- Default: ``100x100+3+3``
 
