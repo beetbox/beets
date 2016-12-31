@@ -47,26 +47,26 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         cmd = ui.Subcommand('mosaic', help=u"create mosaic from coverart")
 
         cmd.parser.add_option(
-            u'-m', u'--mosaic', dest='mosaic',
-            action='store_false', default=None,
-            help=u'add filename for final mosaic picture - default: mosaic.png'
+            u'-m', u'--mosaic', dest='mosaic',  metavar='FILE',
+            action='store',
+            help=u'save final mosaic picture as FILE'
         )
 
         cmd.parser.add_option(
             u'-w', u'--watermark', dest='watermark',
-            action='store_false', default=None,
-            help=u'add filename for a picture to blend over mosaic'
+            action='store', metavar='FILE',
+            help=u'add FILE for a picture to blend over mosaic'
         )
 
         cmd.parser.add_option(
             u'-a', u'--alpha', dest='watermark_alpha',
-            action='store_false', default=None,
-            help=u'alpha value for blending - default: 0.4'
+            action='store', metavar='ALPHA',
+            help=u'ALPHA value for blending'
         )
         cmd.parser.add_option(
             u'-c', u'--color', dest='background',
-            action='store_false', default=None,
-            help=u'background color - default: ffffff'
+            action='store', metavar='HEXCOLOR',
+            help=u'background color as HEXCOLOR'
         )
 
         def func(lib, opts, args):
@@ -77,14 +77,14 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             else:
                 mosaic = opts.mosaic
 
-            self._log.info(u'Mosaic: {}', mosaic)
+            self._log.debug(u'Mosaic: {}', mosaic)
 
             if self.config['watermark']:
                 watermark = opts.watermark or self.config['watermark'].get(str)
             else:
                 watermark = opts.watermark
 
-            watermark_alpha = opts.watermark_alpha or self.config[
+            watermark_alpha = float(opts.watermark_alpha) or self.config[
                 'watermark_alpha'].get(float)
 
             if self.config['background']:
@@ -111,8 +111,6 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         covers = []
 
-        self._log.info(u'Scan available cover art ...')
-
         for album in albums:
 
             if album.artpath and os.path.exists(album.artpath):
@@ -136,13 +134,13 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         if tail > 0:
             rows += 1
 
-        self._log.info(u'{}x{}', cols, rows)
+        self._log.debug(u'Cells: {}x{}', cols, rows)
 
         mosaic_size_width = self.margin + (cols * (100 + self.margin))
         mosaic_size_height = self.margin + (rows * (100 + self.margin))
 
-        self._log.info(u'Mosaic size: {}x{}',
-                       mosaic_size_width, mosaic_size_height)
+        self._log.debug(u'Mosaic size: {}x{}',
+                        mosaic_size_width, mosaic_size_height)
 
         montage = Image.new('RGB', (mosaic_size_width, mosaic_size_height),
                             tuple(int(background[i:i + 2], 16)
