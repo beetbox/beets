@@ -1,12 +1,12 @@
 AcousticBrainz Submit Plugin
 ============================
 
-The `absubmit` plugin uses the `streaming_extractor_music`_ program to analyse an audio file and calculate different acoustic properties of the audio. The plugin then uploads this metadata to the AcousticBrainz server. The plugin does this when calling the ``beet absumbit [QUERY]`` command or on importing if the `auto` configuration option is set to ``yes``.
+The `absubmit` plugin uses the `streaming_extractor_music`_ program to analyze an audio file and calculate different acoustic properties of the audio. The plugin then uploads this metadata to the AcousticBrainz server. The plugin does this when calling the ``beet absumbit [QUERY]`` command or on importing if the `auto` configuration option is set to ``yes``.
 
 Installation
 ------------
 
-The `absubmit` plugin requires the `streaming_extractor_music`_ program to run. Its source can be found on `GitHub`_, and while it is possible to compile the extractor from source, AcousticBrainz would prefer if you used thier binary (see the AcousticBrainz `FAQ`_).
+The `absubmit` plugin requires the `streaming_extractor_music`_ program to run. Its source can be found on `GitHub`_, and while it is possible to compile the extractor from source, AcousticBrainz would prefer if you used their binary (see the AcousticBrainz `FAQ`_).
 
 The `absubmit` also plugin requires `requests`_, which you can install using `pip_` by typing:
 
