@@ -15,7 +15,7 @@ The plugin uses `Pillow`_ to manipulate album art and create the mosiac.
 Furthermore, you have to install the `Parse`_ library by typing::
     pip install Parse
 
-The plugin uses 'Parse'_ to parse the geometry-option.
+The plugin uses `Parse`_ to parse the geometry-option.
 
 By default the ``mosaic`` generates a mosaic, as mosaic.png in the current directory, of cover art out of the whole library .
 
