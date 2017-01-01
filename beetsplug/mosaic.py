@@ -77,32 +77,12 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         def func(lib, opts, args):
             self.config.set_args(opts)
 
-            if self.config['mosaic']:
-                mosaic = self.config['mosaic'].get(str)
-            else:
-                mosaic = opts.mosaic
+            mosaic = self.config['mosaic'].as_str()
+            watermark = self.config['watermark'].as_str()
+            watermark_alpha = self.config['watermark_alpha'].get(float)
+            background = self.config['background'].as_str()
+            geometry = self.config['geometry'].as_str()
 
-            self._log.debug(u'Mosaic: {}', mosaic)
-
-            if self.config['watermark']:
-                watermark = self.config['watermark'].get(str)
-            else:
-                watermark = opts.watermark
-
-            if self.config['watermark_alpha']:
-                watermark_alpha = self.config['watermark_alpha'].get(float)
-            else:
-                watermark_alpha = float(opts.watermark_alpha)
-
-            if self.config['background']:
-                background = self.config['background'].get(str)
-            else:
-                background = opts.background
-
-            if self.config['geometry']:
-                geometry = self.config['geometry'].get(str)
-            else:
-                geometry = opts.background
             albums = lib.albums(ui.decargs(args))
 
             self._generate_montage(lib,
