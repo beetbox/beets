@@ -26,7 +26,7 @@ Furthermore, you have to install the `TTFQuery`_ and `fontTools`_ library by typ
 
 The plugin uses `TTFQuery`_ and `fontTools`_ for creation of cover art alternative if cover art is not present in your library.
 
-.. _ttyquery: http://ttfquery.sourceforge.net/
+.. _ttfquery: http://ttfquery.sourceforge.net/
 .. _fonttools: https://github.com/fonttools/fonttools
 
 By default the ``mosaic`` generates a mosaic, as mosaic.png in the current directory, of cover art out of the whole library .
