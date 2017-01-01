@@ -21,7 +21,7 @@ import os.path
 
 from random import shuffle
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from beets import ui
 
@@ -29,8 +29,7 @@ from beets.plugins import BeetsPlugin
 
 from parse import parse
 
-
-# MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
+from ttfquery._scriptregistry import registry
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
@@ -115,6 +114,8 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                           fn_mosaic, fn_watermark,
                           background, watermark_alpha, geometry, random):
 
+        fnt_name = self.find_font()
+        fnt = ImageFont.truetype(fnt_name, 12)
         parsestr = "{cellwidth:d}x{cellheight:d}"
         parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
 
@@ -165,7 +166,6 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         offset_y = int(geo['cellmarginy'])
         colcounter = 0
 
-#        fnt = ImageFont.truetype(MOSAICFONT, 12)
         if random:
             shuffle(covers)
             self._log.debug(u'Randomize cover art')
@@ -178,12 +178,12 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                     im = Image.new('RGB', size,
                                    tuple(int(background[i:i + 2], 16)
                                          for i in (0, 2, 4)))
-                    self._log.info(u'Cover not available for {} ',
-                                   cover[2:].replace('\n', '-'))
-#                    d = ImageDraw.Draw(im)
-#                    d.multiline_text((10, 10), cover[2:],
-#                                     fill=(0, 0, 0), font=fnt, anchor=None,
-#                                     spacing=0, align="left")
+                    self._log.debug(u'Cover not available for {} ',
+                                    cover[2:].replace('\n', '-'))
+                    d = ImageDraw.Draw(im)
+                    d.multiline_text((10, 10), cover[2:],
+                                     fill=(0, 0, 0), font=fnt, anchor=None,
+                                     spacing=0, align="left")
 
                 else:
                     im = Image.open(cover)
@@ -246,3 +246,16 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             Image.blend(img5, nf2, watermark_alpha).save(fn_mosaic)
         else:
             montage.save(fn_mosaic)
+
+    def find_font(self):
+        # load fonts
+        registry.scan()
+        fonts = registry.matchName("Arial")
+        if len(fonts) > 1:
+            self._log.debug(u'more than 1 font by that name, use first')
+            for font in fonts:
+                self._log.debug(u'{}', font)
+
+        font_file = registry.fontFile(fonts[0])
+        self._log.debug(u'font found at {}', font_file)
+        return font_file

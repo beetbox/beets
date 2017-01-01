@@ -13,9 +13,21 @@ The plugin uses `Pillow`_ to manipulate album art and create the mosiac.
 .. _pillow: http://pillow.readthedocs.io/en/latest/
 
 Furthermore, you have to install the `Parse`_ library by typing::
+
     pip install Parse
 
 The plugin uses `Parse`_ to parse the geometry-option.
+
+.. _parse: https://github.com/r1chardj0n3s/parse
+
+Furthermore, you have to install the `TTFQuery`_ and `fontTools`_ library by typing::
+
+    pip install TTFQuery fontTools
+
+The plugin uses `TTFQuery`_ and `fontTools`_ for creation of cover art alternative if cover art is not present in your library.
+
+.. _ttyquery: http://ttfquery.sourceforge.net/
+.. _fonttools: https://github.com/fonttools/fonttools
 
 By default the ``mosaic`` generates a mosaic, as mosaic.png in the current directory, of cover art out of the whole library .
 
