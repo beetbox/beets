@@ -122,7 +122,7 @@ setup(
         'thumbnails': ['pyxdg'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
-        'mosaic': ['pillow', 'parse'],
+        'mosaic': ['pillow', 'parse', 'fontTools', 'TTFQuery'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # convert: ffmpeg
