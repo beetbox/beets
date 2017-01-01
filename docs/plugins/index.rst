@@ -73,6 +73,7 @@ like this::
    mbsync
    metasync
    missing
+   mosaic
    mpdstats
    mpdupdate
    permissions
