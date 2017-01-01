@@ -22,7 +22,7 @@ from beets import ui
 
 from PIL import Image
 import math
-from parse import *
+from parse import parse
 
 # MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
 
@@ -78,29 +78,29 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             self.config.set_args(opts)
 
             if self.config['mosaic']:
-                mosaic = opts.mosaic or self.config['mosaic'].get(str)
+                mosaic = self.config['mosaic'].get(str)
             else:
                 mosaic = opts.mosaic
 
             self._log.debug(u'Mosaic: {}', mosaic)
 
             if self.config['watermark']:
-                watermark = opts.watermark or self.config['watermark'].get(str)
+                watermark = self.config['watermark'].get(str)
             else:
                 watermark = opts.watermark
 
-            watermark_alpha = float(opts.watermark_alpha) or self.config[
-                'watermark_alpha'].get(float)
+            if self.config['watermark_alpha']:
+                watermark_alpha = self.config['watermark_alpha'].get(float)
+            else:
+                watermark_alpha = float(opts.watermark_alpha)
 
             if self.config['background']:
-                background = opts.background or self.config[
-                    'background'].get(str)
+                background = self.config['background'].get(str)
             else:
                 background = opts.background
 
             if self.config['geometry']:
-                geometry = opts.geometry or self.config[
-                    'geometry'].get(str)
+                geometry = self.config['geometry'].get(str)
             else:
                 geometry = opts.background
             albums = lib.albums(ui.decargs(args))
@@ -124,7 +124,6 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
 
         geo = parse(parsestr, geometry)
-        
         covers = []
 
         for album in albums:
@@ -152,10 +151,10 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         self._log.debug(u'Cells: {}x{}', cols, rows)
 
-        mosaic_size_width = geo['cellmarginx'] + (cols * (geo['cellwidth'] + 
+        mosaic_size_width = geo['cellmarginx'] + (cols * (geo['cellwidth'] +
                                                           geo['cellmarginx']))
 
-        mosaic_size_height = geo['cellmarginy'] + (rows * 
+        mosaic_size_height = geo['cellmarginy'] + (rows *
                                                    (geo['cellheight'] +
                                                     geo['cellmarginy']))
 
@@ -181,6 +180,8 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                     im = Image.new('RGB', size,
                                    tuple(int(background[i:i + 2], 16)
                                          for i in (0, 2, 4)))
+                    self._log.info(u'Cover not available for {} ',
+                                   cover[2:].replace('\n', '-'))
 #                    d = ImageDraw.Draw(im)
 #                    d.multiline_text((10, 10), cover[2:],
 #                                     fill=(0, 0, 0), font=fnt, anchor=None,
