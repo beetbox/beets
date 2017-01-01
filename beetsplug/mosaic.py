@@ -13,16 +13,22 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 """Allows beets to create a mosaic from covers."""
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
+
+import math
 
 import os.path
 
-from beets.plugins import BeetsPlugin
-from beets import ui
+from random import shuffle
 
 from PIL import Image
-import math
+
+from beets import ui
+
+from beets.plugins import BeetsPlugin
+
 from parse import parse
+
 
 # MOSAICFONT = os.path.join(os.path.dirname(__file__), 'FreeSans.ttf')
 
@@ -39,11 +45,18 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                          'background': 'ffffff',
                          'mosaic': 'mosaic.png',
                          'show_mosaic': False,
+                         'random': False,
                          'watermark': '',
                          'watermark_alpha': 0.4})
 
     def commands(self):
         cmd = ui.Subcommand('mosaic', help=u"create mosaic from coverart")
+
+        cmd.parser.add_option(
+            u'-r', u'--random',
+            action='store_true',
+            help=u'randomize cover art'
+        )
 
         cmd.parser.add_option(
             u'-m', u'--mosaic', dest='mosaic',  metavar='FILE',
@@ -77,6 +90,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         def func(lib, opts, args):
             self.config.set_args(opts)
 
+            random = self.config['random']
             mosaic = self.config['mosaic'].as_str()
             watermark = self.config['watermark'].as_str()
             watermark_alpha = self.config['watermark_alpha'].get(float)
@@ -91,14 +105,15 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                                    watermark,
                                    background,
                                    watermark_alpha,
-                                   geometry)
+                                   geometry,
+                                   random)
 
         cmd.func = func
         return [cmd]
 
     def _generate_montage(self, lib, albums,
                           fn_mosaic, fn_watermark,
-                          background, watermark_alpha, geometry):
+                          background, watermark_alpha, geometry, random):
 
         parsestr = "{cellwidth:d}x{cellheight:d}"
         parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
@@ -151,6 +166,9 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         colcounter = 0
 
 #        fnt = ImageFont.truetype(MOSAICFONT, 12)
+        if random:
+            shuffle(covers)
+            self._log.debug(u'Randomize cover art')
 
         for cover in covers:
 

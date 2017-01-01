@@ -17,8 +17,9 @@ By default the ``mosaic`` generates a mosaic, as mosaic.png in the current direc
 
 You can customize the output mosaic, overlay and blend a image as watermark and use a alternative filename as result picture ::
 
-  -h, --help            			show this help message and exit
-  -m FILE, --mosaic=file    		save final mosaic picture as FILE
+  -h, --help            			    show this help message and exit
+  -r, --random                    randomize the cover art
+  -m FILE, --mosaic=file    		  save final mosaic picture as FILE
   -w FILE, --watermark=FILE     	add FILE for a picture to blend over mosaic
   -a ALPHA, --alpha=ALPHA       	ALPHA value for blending 0.0-1.0
   -c HEXCOLOR, --color=HEXCOLOR 	background color as HEXCOLOR
