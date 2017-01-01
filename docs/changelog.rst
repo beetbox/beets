@@ -10,6 +10,9 @@ Features:
   data source will fetch data for these fields when the next version of
   `python-musicbrainzngs`_ is released. Thanks to :user:`ibmibmibm`.
   :bug:`506` :bug:`507` :bug:`1547` :bug:`2333`
+* A new :doc:`/plugins/absubmit` lets you run acoustic analysis software and
+  upload the results for others to use. Thanks to :user:`inytar`. :bug:`2253`
+  :bug:`2342`
 * :doc:`/plugins/random`: A new ``--time`` option lets you generate a random
   playlist that takes a given amount of time. Thanks to :user:`diomekes`.
   :bug:`2305` :bug:`2322`
