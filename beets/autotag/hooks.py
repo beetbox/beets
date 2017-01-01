@@ -154,7 +154,7 @@ class TrackInfo(object):
                  length=None, index=None, medium=None, medium_index=None,
                  medium_total=None, artist_sort=None, disctitle=None,
                  artist_credit=None, data_source=None, data_url=None,
-                 media=None, lyricist=None, composer=None, arranger=None):
+                 media=None, lyricist=None, composer=None, arranger=None, alt_track_no=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
@@ -173,6 +173,7 @@ class TrackInfo(object):
         self.lyricist = lyricist
         self.composer = composer
         self.arranger = arranger
+        self.alt_track_no = alt_track_no
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf-8'):

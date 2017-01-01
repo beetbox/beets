@@ -34,7 +34,7 @@ log = logging.getLogger('beets')
 
 def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
-    """
+    """    
     item.artist = track_info.artist
     item.artist_sort = track_info.artist_sort
     item.artist_credit = track_info.artist_credit
@@ -157,3 +157,5 @@ def apply_metadata(album_info, mapping):
             item.composer = track_info.composer
         if track_info.arranger is not None:
             item.arranger = track_info.arranger
+        
+        item.alt_track_no = track_info.alt_track_no
