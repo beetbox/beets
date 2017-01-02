@@ -21,8 +21,12 @@ To configure the plugin, make a ``absubmit:`` section in your configuration file
 
 - **auto**: Analyze every file on import. Otherwise, you need to use the ``beet absubmit`` command explicitly.
   Default: ``no``
-- **extractor**: The path to the `streaming_extractor_music`_ binary.
+- **extractor**: The absolute path to the `streaming_extractor_music`_ binary.
   Default: search for the program in your ``$PATH``
+
+Notes
+-----
+MusicBrainz track id is needed to use AcousticBrainz. Check the `streaming_extractor_music`_ download page for more information.
 
 .. _streaming_extractor_music: http://acousticbrainz.org/download
 .. _FAQ: http://acousticbrainz.org/faq
