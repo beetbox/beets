@@ -22,10 +22,14 @@ Type::
 
     beet absubmit [QUERY]
 
-to run the analysis program and upload its results. This will work on any
-music with a MusicBrainz track ID attached.
+to run the analysis program and upload its results.
 
-The plugin skips any file missing a MusicBrainz ID (MBID). This should rarely happen as Beets tags all files with their MBID on import. Files of in an unsupported encoding format are also skipped. `streaming_extractor_music`_ currently supports files with the following extensions: ``mp3``, ``ogg``, ``oga``, ``flac``, ``mp4``, ``m4a``, ``m4r``, ``m4b``, ``m4p``, ``aac``, ``wma``, ``asf``, ``mpc``, ``wv``, ``spx``, ``tta``, ``3g2``, ``aif``, ``aiff`` and ``ape``.
+The plugin works on music with a MusicBrainz track ID attached. The plugin
+will also skip music that the analysis tool doesn't support.
+`streaming_extractor_music`_ currently supports files with the extensions
+``mp3``, ``ogg``, ``oga``, ``flac``, ``mp4``, ``m4a``, ``m4r``, ``m4b``,
+``m4p``, ``aac``, ``wma``, ``asf``, ``mpc``, ``wv``, ``spx``, ``tta``,
+``3g2``, ``aif``, ``aiff`` and ``ape``.
 
 Configuration
 -------------
