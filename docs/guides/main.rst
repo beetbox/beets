@@ -137,7 +137,7 @@ favorite text editor. The file will start out empty, but here's good
 place to start::
 
     directory: ~/music
-    library: ~/data/musiclibrary.blb
+    library: ~/data/musiclibrary.db
 
 Change that first path to a directory where you'd like to keep your music. Then,
 for ``library``, choose a good place to keep a database file that keeps an index
