@@ -814,21 +814,14 @@ Example
 
 Here's an example file::
 
-    library: /var/music.blb
     directory: /var/mp3
     import:
         copy: yes
         write: yes
-        resume: ask
-        quiet_fallback: skip
-        timid: no
         log: beetslog.txt
-    ignore: .AppleDouble ._* *~ .DS_Store
-    ignore_hidden: yes
     art_filename: albumart
     plugins: bpd
     pluginpath: ~/beets/myplugins
-    threaded: yes
     ui:
         color: yes
 
