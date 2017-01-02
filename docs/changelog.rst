@@ -22,8 +22,8 @@ Features:
   for files that already have it by default. You can override this behavior
   using a new ``force`` option. Thanks to :user:`SusannaMaria`. :bug:`2347`
   :bug:`2349`
-* :doc:`/plugins/bpm`: Now uses ``import.write`` option to write tracks after
-  updating their BPM.
+* :doc:`/plugins/bpm`: Now uses the ``import.write`` configuration option to
+  decide whether or not to write tracks after updating their BPM. :bug:`1992`
 
 Fixes:
 
