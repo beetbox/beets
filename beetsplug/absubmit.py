@@ -24,7 +24,7 @@ import os
 import subprocess
 import tempfile
 
-import distutils
+from distutils import spawn
 import requests
 
 from beets import plugins
@@ -81,7 +81,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 pass
             # Get the executable location on the system,
             # needed to calculate the sha1 hash.
-            self.extractor = distutils.spawn.find_executable(self.extractor)
+            self.extractor = spawn.find_executable(self.extractor)
 
         # Calculate extractor hash.
         self.extractor_sha = hashlib.sha1()
