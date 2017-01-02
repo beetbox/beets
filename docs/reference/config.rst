@@ -387,6 +387,8 @@ file that looks like this::
 
 These options are available in this section:
 
+.. _config-import-write:
+
 write
 ~~~~~
 
