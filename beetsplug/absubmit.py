@@ -131,6 +131,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         tmp_file, filename = tempfile.mkstemp(suffix='.json')
         try:
             # Close the file, so the extractor can overwrite it.
+            os.close(tmp_file)
             try:
                 call([self.extractor, util.syspath(item.path), filename])
             except ABSubmitError as e:
