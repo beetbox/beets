@@ -65,7 +65,9 @@ class BPMPlugin(BeetsPlugin):
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.get_bpm(lib.items(ui.decargs(args)))
+        items = lib.items(ui.decargs(args))
+        write = ui.should_write()
+        self.get_bpm(items, write)
 
     def get_bpm(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)

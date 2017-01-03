@@ -10,6 +10,9 @@ Features:
   data source will fetch data for these fields when the next version of
   `python-musicbrainzngs`_ is released. Thanks to :user:`ibmibmibm`.
   :bug:`506` :bug:`507` :bug:`1547` :bug:`2333`
+* A new :doc:`/plugins/absubmit` lets you run acoustic analysis software and
+  upload the results for others to use. Thanks to :user:`inytar`. :bug:`2253`
+  :bug:`2342`
 * :doc:`/plugins/random`: A new ``--time`` option lets you generate a random
   playlist that takes a given amount of time. Thanks to :user:`diomekes`.
   :bug:`2305` :bug:`2322`
@@ -19,9 +22,14 @@ Features:
   for files that already have it by default. You can override this behavior
   using a new ``force`` option. Thanks to :user:`SusannaMaria`. :bug:`2347`
   :bug:`2349`
+* :doc:`/plugins/bpm`: Now uses the ``import.write`` configuration option to
+  decide whether or not to write tracks after updating their BPM. :bug:`1992`
 
 Fixes:
 
+* We now use SSL to access Web services whenever possible. That includes
+  MusicBrainz itself, several album art sources, some lyrics sources, and
+  other servers. Thanks to :user:`tigranl`. :bug:`2307`
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
 * :doc:`/plugins/scrub`: Avoid a crash when files cannot be read or written.
   :bug:`2351`
