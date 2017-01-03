@@ -17,17 +17,13 @@ from __future__ import division, absolute_import, print_function
 
 import pylast
 from pylast import TopItem, _extract, _number
-from beets import util
 from beets import ui
 from beets import dbcore
 from beets import config
 from beets import plugins
 from beets.dbcore import types
 
-if util.SNI_SUPPORTED:
-    API_URL = 'https://ws.audioscrobbler.com/2.0/'
-else:
-    API_URL = 'http://ws.audioscrobbler.com/2.0/'
+API_URL = 'https://ws.audioscrobbler.com/2.0/'
 
 
 class LastImportPlugin(plugins.BeetsPlugin):
