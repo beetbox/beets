@@ -27,6 +27,9 @@ Features:
 
 Fixes:
 
+* We now use SSL to access Web services whenever possible. That includes
+  MusicBrainz itself, several album art sources, some lyrics sources, and
+  other servers. Thanks to :user:`tigranl`. :bug:`2307`
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
 * :doc:`/plugins/scrub`: Avoid a crash when files cannot be read or written.
   :bug:`2351`
