@@ -762,7 +762,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         if self.bing_auth_token:
             # Extract unique lines to limit API request size per song
             text_lines = set(text.split('\n'))
-            url = ('http://api.microsofttranslator.com/v2/Http.svc/'
+            url = ('https://api.microsofttranslator.com/v2/Http.svc/'
                    'Translate?text=%s&to=%s' % ('|'.join(text_lines), to_lang))
             r = requests.get(url,
                              headers={"Authorization ": self.bing_auth_token})
