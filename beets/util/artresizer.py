@@ -32,7 +32,10 @@ PIL = 1
 IMAGEMAGICK = 2
 WEBPROXY = 3
 
-PROXY_URL = 'http://images.weserv.nl/'
+if util.SNI_SUPPORTED:
+    PROXY_URL = 'https://images.weserv.nl/'
+else:
+    PROXY_URL = 'http://images.weserv.nl/'
 
 log = logging.getLogger('beets')
 
