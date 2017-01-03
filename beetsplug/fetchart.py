@@ -398,10 +398,7 @@ class GoogleImages(RemoteArtSource):
 class FanartTV(RemoteArtSource):
     """Art from fanart.tv requested using their API"""
     NAME = u"fanart.tv"
-    if util.SNI_SUPPORTED:
-        API_URL = 'https://webservice.fanart.tv/v3/'
-    else:
-        API_URL = 'https://webservice.fanart.tv/v3/'
+    API_URL = 'https://webservice.fanart.tv/v3/'
     API_ALBUMS = API_URL + 'music/albums/'
     PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
 
@@ -494,12 +491,8 @@ class ITunesStore(RemoteArtSource):
 
 class Wikipedia(RemoteArtSource):
     NAME = u"Wikipedia (queried through DBpedia)"
-    if util.SNI_SUPPORTED:
-        DBPEDIA_URL = 'https://dbpedia.org/sparql'
-        WIKIPEDIA_URL = 'https://en.wikipedia.org/w/api.php'
-    else:
-        DBPEDIA_URL = 'http://dbpedia.org/sparql'
-        WIKIPEDIA_URL = 'http://en.wikipedia.org/w/api.php'
+    DBPEDIA_URL = 'https://dbpedia.org/sparql'
+    WIKIPEDIA_URL = 'https://en.wikipedia.org/w/api.php'
     SPARQL_QUERY = u'''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                  PREFIX dbpprop: <http://dbpedia.org/property/>
                  PREFIX owl: <http://dbpedia.org/ontology/>

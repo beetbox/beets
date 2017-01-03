@@ -50,7 +50,6 @@ except ImportError:
         pass
 
 from beets import plugins
-from beets import util
 from beets import ui
 
 
@@ -646,12 +645,10 @@ class LyricsPlugin(plugins.BeetsPlugin):
                          for source in sources]
 
     def get_bing_access_token(self):
-        url = "{0}api.microsofttranslator.com"
         params = {
             'client_id': 'beets',
             'client_secret': self.config['bing_client_secret'],
-            'scope': url.format('https://') if util.SNI_SUPPORTED
-            else url.format('http://'),
+            'scope': "https://api.microsofttranslator.com",
             'grant_type': 'client_credentials',
         }
 
