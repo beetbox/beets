@@ -12,10 +12,10 @@ environment:
     matrix:
         - PYTHON: C:\Python27
           TOX_ENV: py27-test
-        - PYTHON: C:\Python34
-          TOX_ENV: py34-test
         - PYTHON: C:\Python35
           TOX_ENV: py35-test
+        - PYTHON: C:\Python36
+          TOX_ENV: py36-test
 
 # Install Tox for running tests.
 install:
