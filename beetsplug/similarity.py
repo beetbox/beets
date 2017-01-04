@@ -103,7 +103,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             # create node for each similar artist
             self.get_similar()
             # self.clear_foreign_artists()
-            self.create_graph(gmlfile)
+            self.create_graph(gmlfile, show)
             self._log.info(u'Artist owned: {}', len(_artistsOwned))
             self._log.info(u'Artist foreign: {}', len(_artistsForeign))
             self._log.info(u'Relations: {}', len(_relations))
@@ -123,28 +123,31 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         for artist in _artistsOwned:
                 self._log.info(u'Artist: {}-{}', artist['mbid'],
                                artist['name'])
-                lastfm_artist = LASTFM.get_artist_by_mbid(artist['mbid'])
+                try:
+                    lastfm_artist = LASTFM.get_artist_by_mbid(artist['mbid'])
 
-                similar_artists = lastfm_artist.get_similar(10)
+                    similar_artists = lastfm_artist.get_similar(10)
 
-                # using nested lists
-                #       similarArtists[idx][0] - Artist object
-                #       similarArtists[idx][1] - last.fm match value
-                for artistinfo in similar_artists:
-                    mbid = artistinfo[0].get_mbid()
-                    name = artistinfo[0].get_name()
+                    # using nested lists
+                    #       similarArtists[idx][0] - Artist object
+                    #       similarArtists[idx][1] - last.fm match value
+                    for artistinfo in similar_artists:
+                        mbid = artistinfo[0].get_mbid()
+                        name = artistinfo[0].get_name()
 
-                    if mbid:
-                        artistnode = ArtistNode(mbid, name)
-                        if artistnode not in _artistsForeign:
-                            _artistsForeign.append(artistnode)
+                        if mbid:
+                            artistnode = ArtistNode(mbid, name)
+                            if artistnode not in _artistsForeign:
+                                _artistsForeign.append(artistnode)
 
-                        relation = Relation(artist['mbid'],
-                                            mbid,
-                                            artistinfo[1])
+                            relation = Relation(artist['mbid'],
+                                                mbid,
+                                                artistinfo[1])
 
-                        # if relation not in _relations:
-                        _relations.append(relation)
+                            # if relation not in _relations:
+                            _relations.append(relation)
+                except pylast.WSError:
+                    pass
 
     def clear_foreign_artists(self):
         """Collect artists from query."""
@@ -154,7 +157,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                     _artistsForeign.remove(foreign_artist)
                     break
 
-    def create_graph(self, gmlfile):
+    def create_graph(self, gmlfile, show):
         """Collect artists from query."""
         for relation in _relations:
             G.add_edge(relation['source_mbid'],
@@ -182,9 +185,9 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
         h = nx.relabel_nodes(G, custom_labels)
-
-        nx.draw(G, labels=custom_labels)
-        plt.show()
+        if show:
+            nx.draw(G, labels=custom_labels)
+            plt.show()
 
         nx.write_gml(h, gmlfile)
 

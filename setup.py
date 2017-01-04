@@ -123,6 +123,7 @@ setup(
         'thumbnails': ['pyxdg'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
+        'similarity': ['networkx', 'matplotlib', 'pylast'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # convert: ffmpeg
