@@ -23,6 +23,7 @@ from beets.dbcore import types
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import os.path
 
 _artistsOwned = list()
 _artistsForeign = list()
@@ -53,10 +54,11 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         config['lastfm'].add({'user':     '',
                               'api_key':  plugins.LASTFM_KEY, })
         config['lastfm']['api_key'].redact = True
-        self.config.add({
-                        'per_page': 500,
-                        'retry_limit': 3,
-                        })
+
+        self.config.add({'gmlfile': 'similarity.gml',
+                         'per_page': 500,
+                         'retry_limit': 3,
+                         'show': False, })
         self.item_types = {'play_count':  types.INTEGER, }
 
     def commands(self):
@@ -64,28 +66,47 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         cmd = ui.Subcommand('similarity',
                             help=u'get similarity for artists')
 
+        cmd.parser.add_option(
+            u'-g', u'--graphml', dest='gmlfile',  metavar='FILE',
+            action='store',
+            help=u'read and write Graph as gml-FILE.'
+        )
+
+        cmd.parser.add_option(
+            u'-s', u'--show',
+            action='store_true',
+            help=u'Show graph of relations.'
+        )
+
         def func(lib, opts, args):
+
             self.config.set_args(opts)
+            show = self.config['show']
+            gmlfile = self.config['gmlfile'].as_str()
 
             items = lib.items(ui.decargs(args))
 
-            self.import_similarity(lib, items)
+            self.import_similarity(lib, items, show, gmlfile)
 
         cmd.func = func
         return [cmd]
 
-    def import_similarity(self, lib, items):
+    def import_similarity(self, lib, items, show, gmlfile):
         """List duplicate tracks or albums."""
-        # create node for each similar artist
-        self.collect_artists(items)
-        # create node for each similar artist
-        self.get_similar()
-        # self.clear_foreign_artists()
-        self.create_graph()
-        self._log.info(u'Artist owned: {}', len(_artistsOwned))
-        self._log.info(u'Artist foreign: {}', len(_artistsForeign))
-        self._log.info(u'Relations: {}', len(_relations))
-# get_artist_by_mbid
+        if os.path.isfile(gmlfile) and os.access(gmlfile, os.R_OK):
+            self._log.info(u'import of gmlfile')
+            self.import_graph(gmlfile)
+        else:
+            self._log.info(u'no gmlfile found, processing last.fm query')
+            # create node for each similar artist
+            self.collect_artists(items)
+            # create node for each similar artist
+            self.get_similar()
+            # self.clear_foreign_artists()
+            self.create_graph(gmlfile)
+            self._log.info(u'Artist owned: {}', len(_artistsOwned))
+            self._log.info(u'Artist foreign: {}', len(_artistsForeign))
+            self._log.info(u'Relations: {}', len(_relations))
 
     def collect_artists(self, items):
         """Collect artists from query."""
@@ -133,24 +154,31 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                     _artistsForeign.remove(foreign_artist)
                     break
 
-    def create_graph(self):
+    def create_graph(self, gmlfile):
         """Collect artists from query."""
         for relation in _relations:
             G.add_edge(relation['source_mbid'],
-                       relation['target_mbid'])
+                       relation['target_mbid'],
+                       smbid=relation['source_mbid'],
+                       tmbid=relation['target_mbid'],
+                       rate=relation['rate'])
             self._log.debug(u'{}#{}', relation['source_mbid'],
                             relation['target_mbid'])
 
         custom_labels = {}
         for owned_artist in _artistsOwned:
-            G.add_node(owned_artist['mbid'], mbid=owned_artist['mbid'])
+            G.add_node(owned_artist['mbid'],
+                       mbid=owned_artist['mbid'],
+                       owned='True')
             custom_labels[owned_artist['mbid']] = owned_artist['name']
             self._log.debug(u'#{}', owned_artist['mbid'])
 
         for foreign_artist in _artistsForeign:
             if foreign_artist not in _artistsOwned:
                 custom_labels[foreign_artist['mbid']] = foreign_artist['name']
-                G.add_node(foreign_artist['mbid'], mbid=foreign_artist['mbid'])
+                G.add_node(foreign_artist['mbid'],
+                           mbid=foreign_artist['mbid'],
+                           owned='False')
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
         h = nx.relabel_nodes(G, custom_labels)
@@ -158,7 +186,35 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         nx.draw(G, labels=custom_labels)
         plt.show()
 
-        nx.write_gml(h, "similar.gml")
+        nx.write_gml(h, gmlfile)
+
+    def import_graph(self, gmlfile):
+        """Collect artists from query."""
+        i = nx.read_gml(gmlfile, label='label')
+        custom_labels = {}
+
+        counter = 0
+        for artist in i.nodes(data=True):
+            self._log.debug(u'{}', artist)
+            artistnode = ArtistNode(artist[1]['mbid'], artist[0])
+            custom_labels[counter] = artistnode['name']
+            counter += 1
+            if artist[1]['owned'] == 'True':
+                if artistnode not in _artistsOwned:
+                    _artistsOwned.append(artistnode)
+            else:
+                if artistnode not in _artistsForeign:
+                    _artistsForeign.append(artistnode)
+        for relitem in i.edges(data=True):
+            relation = Relation(relitem[2]['smbid'],
+                                relitem[2]['tmbid'],
+                                relitem[2]['rate'])
+            _relations.append(relation)
+
+        self._log.debug(u'{}', custom_labels)
+
+        nx.draw_networkx(i)
+        plt.show()
 
 
 class Relation():
