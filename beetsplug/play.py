@@ -32,13 +32,19 @@ import subprocess
 ARGS_MARKER = '$args'
 
 
-def play(command_str, paths, open_args, keep_open=False):
+def play(command_str, selection, paths, open_args, log, item_type='track',
+         keep_open=False):
     """Play items in paths with command_str and optional arguments. If
     keep_open, return to beets, otherwise exit once command runs.
     """
+    # Print number of tracks or albums to be played, log command to be run.
+    item_type += 's' if len(selection) > 1 else ''
+    ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
+    log.debug(u'executing command: {} {!r}', command_str, open_args)
+
     try:
         if keep_open:
-            command = command_str.split()
+            command = util.shlex_split(command_str)
             command = command + open_args
             subprocess.call(command)
         else:
@@ -81,8 +87,8 @@ class PlayPlugin(BeetsPlugin):
         return [play_command]
 
     def _play_command(self, lib, opts, args):
-        """The CLI command function for `beet play`. Creates a list of paths
-        from query, determines if tracks or albums are to be played.
+        """The CLI command function for `beet play`. Create a list of paths
+        from query, determine if tracks or albums are to be played.
         """
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
@@ -117,17 +123,17 @@ class PlayPlugin(BeetsPlugin):
             return
 
         open_args = self._playlist_or_paths(paths)
-        command_str = self._create_command_str(opts.args)
+        command_str = self._command_str(opts.args)
 
-        # If user aborts due to long playlist:
-        cancel = self._print_info(selection, command_str, open_args, item_type)
+        # Check if the selection exceeds configured threshold. If True,
+        # cancel, otherwise proceed with play command.
+        if not self._exceeds_threshold(selection, command_str, open_args,
+                                       item_type):
+            play(command_str, selection, paths, open_args, self._log,
+                 item_type)
 
-        # Otherwise proceed with play command.
-        if not cancel:
-            play(command_str, paths, open_args)
-
-    def _create_command_str(self, args=None):
-        """Creates a command string from the config command and optional args.
+    def _command_str(self, args=None):
+        """Create a command string from the config command and optional args.
         """
         command_str = config['play']['command'].get()
         if not command_str:
@@ -143,17 +149,18 @@ class PlayPlugin(BeetsPlugin):
             return command_str.replace(" " + ARGS_MARKER, "")
 
     def _playlist_or_paths(self, paths):
-        """Returns either the raw paths of items or a playlist of the items.
+        """Return either the raw paths of items or a playlist of the items.
         """
-        raw = config['play']['raw'].get(bool)
-        if raw:
+        if config['play']['raw']:
             return paths
         else:
             return [self._create_tmp_playlist(paths)]
 
-    def _print_info(self, selection, command_str, open_args,
-                    item_type='track'):
-        """Prompts user whether to continue if playlist exceeds threshold.
+    def _exceeds_threshold(self, selection, command_str, open_args,
+                           item_type='track'):
+        """Prompt user whether to continue if playlist exceeds threshold. If
+        this returns True, the tracks or albums are not played, if False,
+        the play command is run.
         """
         warning_threshold = config['play']['warning_threshold'].get(int)
         # We use -2 as a default value for warning_threshold to detect if it is
@@ -168,7 +175,6 @@ class PlayPlugin(BeetsPlugin):
             warning_threshold = config['play']['warning_treshold'].get(int)
 
         # Warn user before playing any huge playlists.
-        item_type += 's' if len(selection) > 1 else ''
         if warning_threshold and len(selection) > warning_threshold:
             ui.print_(ui.colorize(
                 'text_warning',
@@ -178,9 +184,7 @@ class PlayPlugin(BeetsPlugin):
             if ui.input_options((u'Continue', u'Abort')) == 'a':
                 return True
 
-        # Print number of tracks or albums to be played, log command to be run.
-        ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
-        self._log.debug(u'executing command: {} {!r}', command_str, open_args)
+        return False
 
     def _create_tmp_playlist(self, paths_list):
         """Create a temporary .m3u file. Return the filename.
@@ -203,8 +207,8 @@ class PlayPlugin(BeetsPlugin):
         paths = [item.path for item in selection]
 
         open_args = self._playlist_or_paths(paths)
-        command_str = self._create_command_str()
-        cancel = self._print_info(selection, command_str, open_args)
+        command_str = self._command_str()
 
-        if not cancel:
-            play(command_str, paths, open_args, keep_open=True)
+        if not self._exceeds_threshold(selection, command_str, open_args):
+            play(command_str, selection, paths, open_args, self._log,
+                 keep_open=True)

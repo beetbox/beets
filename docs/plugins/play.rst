@@ -36,7 +36,7 @@ The `play` plugin can also be invoked during an import. If enabled, the plugin
 adds a `plaY` option to the prompt, so pressing `y` will execute the configured
 command and play the items currently being imported.
 
-Once you exit your configured player, you will be returned to the import
+Once the configured command exits, you will be returned to the import
 decision prompt.  If your player is configured to run in the background (in a
 client/server setup), the music will play until you choose to stop it, and the
 import operation continues immediately.
