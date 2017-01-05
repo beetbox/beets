@@ -145,8 +145,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
 
                             # if relation not in _relations:
                             self._relations.append(relation)
-                except pylast.WSError:
-                    pass
+                except PYLAST_EXCEPTIONS as exc:
+                    self._log.debug(u'last.fm error: {0}', exc)
 
     def create_graph(self, gmlfile, show):
         """Create graph out of collected artists and relations."""
