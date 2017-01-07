@@ -24,6 +24,9 @@ Features:
   :bug:`2349`
 * :doc:`/plugins/bpm`: Now uses the ``import.write`` configuration option to
   decide whether or not to write tracks after updating their BPM. :bug:`1992`
+* :doc:`/plugins/play`: The plugin now provides an importer prompt choice to
+  play the music you're about to import. Thanks to :user:`diomekes`.
+  :bug:`2008` :bug:`2360`
 
 Fixes:
 
