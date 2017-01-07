@@ -47,7 +47,8 @@ Fixes:
   :bug:`2302`
 * :doc:`/plugins/lyrics`: The plugin now reports a beets-specific User-Agent
   header when requesting lyrics. :bug:`2357`
-* :doc:`/plugins/embyupdate`: Fix a bug that apikey and password is needed in config.
+* :doc:`/plugins/embyupdate`: The plugin now checks whether an API key or a
+  password is provided in the configuration.
 
 For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
 

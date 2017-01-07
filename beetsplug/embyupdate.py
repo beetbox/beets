@@ -153,7 +153,7 @@ class EmbyUpdate(BeetsPlugin):
             u'host': u'http://localhost',
             u'port': 8096,
             u'apikey': None,
-            u'password': None
+            u'password': None,
         })
 
         self.register_listener('database_change', self.listen_for_db_change)
