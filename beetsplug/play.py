@@ -158,9 +158,8 @@ class PlayPlugin(BeetsPlugin):
 
     def _exceeds_threshold(self, selection, command_str, open_args,
                            item_type='track'):
-        """Prompt user whether to continue if playlist exceeds threshold. If
-        this returns True, the tracks or albums are not played, if False,
-        the play command is run.
+        """Prompt user whether to abort if playlist exceeds threshold. If
+        True, cancel playback. If False, execute play command.
         """
         warning_threshold = config['play']['warning_threshold'].get(int)
         # We use -2 as a default value for warning_threshold to detect if it is
