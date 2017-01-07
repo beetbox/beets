@@ -49,6 +49,8 @@ Fixes:
   header when requesting lyrics. :bug:`2357`
 * :doc:`/plugins/embyupdate`: The plugin now checks whether an API key or a
   password is provided in the configuration.
+* :doc:`/plugins/play`: The misspelled configuration option
+  ``warning_treshold`` is no longer supported.
 
 For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
 

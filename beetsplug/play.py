@@ -64,9 +64,7 @@ class PlayPlugin(BeetsPlugin):
             'use_folders': False,
             'relative_to': None,
             'raw': False,
-            # Backwards compatibility. See #1803 and line 155
-            'warning_threshold': -2,
-            'warning_treshold': 100,
+            'warning_threshold': 100,
         })
 
         self.register_listener('before_choose_candidate',
@@ -162,16 +160,6 @@ class PlayPlugin(BeetsPlugin):
         True, cancel playback. If False, execute play command.
         """
         warning_threshold = config['play']['warning_threshold'].get(int)
-        # We use -2 as a default value for warning_threshold to detect if it is
-        # set or not. We can't use a falsey value because it would have an
-        # actual meaning in the configuration of this plugin, and we do not use
-        # -1 because some people might use it as a value to obtain no warning,
-        # which wouldn't be that bad of a practice.
-        if warning_threshold == -2:
-            # if warning_threshold has not been set by user, look for
-            # warning_treshold, to preserve backwards compatibility. See #1803.
-            # warning_treshold has the correct default value of 100.
-            warning_threshold = config['play']['warning_treshold'].get(int)
 
         # Warn user before playing any huge playlists.
         if warning_threshold and len(selection) > warning_threshold:
