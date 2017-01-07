@@ -115,15 +115,6 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
         open_mock.assert_not_called()
 
-    def test_warning_threshold_backwards_compat(self, open_mock):
-        self.config['play']['warning_treshold'] = 1
-        self.add_item(title=u'another NiceTitle')
-
-        with control_stdin("a"):
-            self.run_command(u'play', u'nice')
-
-        open_mock.assert_not_called()
-
     def test_command_failed(self, open_mock):
         open_mock.side_effect = OSError(u"some reason")
 
