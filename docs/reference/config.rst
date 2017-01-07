@@ -229,7 +229,7 @@ Default sort order to use when fetching items from the database. Defaults to
 sort_album
 ~~~~~~~~~~
 
-Default sort order to use when fetching items from the database. Defaults to
+Default sort order to use when fetching albums from the database. Defaults to
 ``albumartist+ album+``. Explicit sort orders override this default.
 
 .. _sort_case_insensitive:
