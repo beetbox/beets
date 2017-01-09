@@ -36,15 +36,11 @@ data from the tags. In turn ``MediaField`` uses a number of
 from __future__ import division, absolute_import, print_function
 
 import mutagen
-import mutagen.mp3
 import mutagen.id3
-import mutagen.oggopus
-import mutagen.oggvorbis
 import mutagen.mp4
 import mutagen.flac
-import mutagen.monkeysaudio
 import mutagen.asf
-import mutagen.aiff
+
 import codecs
 import datetime
 import re
