@@ -294,8 +294,20 @@ class GenreListTestMixin(object):
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
                         _common.TempDirMixin):
-    """Test writing and reading tags. Subclasses must set ``extension`` and
-    ``audio_properties``.
+    """Test writing and reading tags. Subclasses must set ``extension``
+    and ``audio_properties``.
+
+    The basic tests for all audio formats encompass three files provided
+    in our `rsrc` folder: `full.*`, `empty.*`, and `unparseable.*`.
+    Respectively, they should contain a full slate of common fields
+    listed in `full_initial_tags` below; no fields contents at all; and
+    an unparseable release date field.
+
+    To add support for a new file format to MediaFile, add these three
+    files and then create a `ReadWriteTestBase` subclass by copying n'
+    pasting one of the existing subclasses below. You will want to
+    update the `format` field in that subclass, and you will probably
+    need to fiddle with the `bitrate` and other format-specific fields.
     """
 
     full_initial_tags = {
@@ -554,6 +566,9 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         self.assertEqual(mediafile.disctotal, None)
 
     def test_unparseable_date(self):
+        """The `unparseable.*` fixture should not crash but should return None
+        for all parts of the release date.
+        """
         mediafile = self._mediafile_fixture('unparseable')
 
         self.assertIsNone(mediafile.date)
