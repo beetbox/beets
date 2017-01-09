@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.3 (in development)
-----------------------
+1.4.3 (January 9, 2017)
+-----------------------
 
 Happy new year! This new version includes a cornucopia of new features from
 contributors, including new tags related to classical music and a new
