@@ -887,6 +887,18 @@ class AIFFTest(ReadWriteTestBase, unittest.TestCase):
     }
 
 
+class DSFTest(ReadWriteTestBase, unittest.TestCase):
+    extension = 'dsf'
+    audio_properties = {
+        'length': 0.01,
+        'bitrate': 11289600,
+        'format': u'DSD Stream File',
+        'samplerate': 5644800,
+        'bitdepth': 1,
+        'channels': 2,
+    }
+
+
 class MediaFieldTest(unittest.TestCase):
 
     def test_properties_from_fields(self):
