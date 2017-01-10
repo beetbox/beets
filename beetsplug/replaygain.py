@@ -23,7 +23,6 @@ import warnings
 import re
 from six.moves import zip
 
-from beets import logging
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output, displayable_path, py3_path
