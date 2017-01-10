@@ -229,7 +229,7 @@ Default sort order to use when fetching items from the database. Defaults to
 sort_album
 ~~~~~~~~~~
 
-Default sort order to use when fetching items from the database. Defaults to
+Default sort order to use when fetching albums from the database. Defaults to
 ``albumartist+ album+``. Explicit sort orders override this default.
 
 .. _sort_case_insensitive:
@@ -386,6 +386,8 @@ file that looks like this::
         resume: no
 
 These options are available in this section:
+
+.. _config-import-write:
 
 write
 ~~~~~
@@ -814,21 +816,14 @@ Example
 
 Here's an example file::
 
-    library: /var/music.blb
     directory: /var/mp3
     import:
         copy: yes
         write: yes
-        resume: ask
-        quiet_fallback: skip
-        timid: no
         log: beetslog.txt
-    ignore: .AppleDouble ._* *~ .DS_Store
-    ignore_hidden: yes
     art_filename: albumart
     plugins: bpd
     pluginpath: ~/beets/myplugins
-    threaded: yes
     ui:
         color: yes
 
