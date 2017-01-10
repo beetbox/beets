@@ -322,7 +322,7 @@ class LibModel(dbcore.Model):
         funcs.update(plugins.template_funcs())
         return funcs
 
-    def store(self, fields=None):        
+    def store(self, fields=None):
         super(LibModel, self).store(fields)
         plugins.send('database_change', lib=self._db, model=self)
 
@@ -423,10 +423,10 @@ class Item(LibModel):
         'month':                types.PaddedInt(2),
         'day':                  types.PaddedInt(2),
         'track':                types.PaddedInt(2),
-        'alt_track_no':         types.STRING,
+        'track_alt':            types.STRING,
         'tracktotal':           types.PaddedInt(2),
         'disc':                 types.PaddedInt(2),
-        'disctotal':            types.PaddedInt(2),        
+        'disctotal':            types.PaddedInt(2),
         'lyrics':               types.STRING,
         'comments':             types.STRING,
         'bpm':                  types.INTEGER,
@@ -457,7 +457,7 @@ class Item(LibModel):
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
-        'initial_key':          MusicalKey(),        
+        'initial_key':          MusicalKey(),
 
         'length':      DurationType(),
         'bitrate':     types.ScaledInt(1000, u'kbps'),

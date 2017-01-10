@@ -314,9 +314,9 @@ class DiscogsPlugin(BeetsPlugin):
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
                 index += 1
-                ti = self.get_track_info(track, index)
-                ti.alt_track_no = track['position']
-                tracks.append(ti)
+                track_info = self.get_track_info(track, index)
+                track_info.track_alt = track['position']
+                tracks.append(track_info)
             else:
                 index_tracks[index + 1] = track['title']
 
