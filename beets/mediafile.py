@@ -40,7 +40,6 @@ import mutagen.id3
 import mutagen.mp4
 import mutagen.flac
 import mutagen.asf
-
 import codecs
 import datetime
 import re
@@ -73,6 +72,7 @@ TYPES = {
     'mpc':  'Musepack',
     'asf':  'Windows Media',
     'aiff': 'AIFF',
+    'dsf':  'DSD Stream File',
 }
 
 PREFERRED_IMAGE_EXTENSIONS = {'jpeg': 'jpg'}
@@ -728,7 +728,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
 class MP3StorageStyle(StorageStyle):
     """Store data in ID3 frames.
     """
-    formats = ['MP3', 'AIFF']
+    formats = ['MP3', 'AIFF', 'DSF']
 
     def __init__(self, key, id3_lang=None, **kwargs):
         """Create a new ID3 storage style. `id3_lang` is the value for
@@ -1475,6 +1475,8 @@ class MediaFile(object):
             self.type = 'asf'
         elif type(self.mgfile).__name__ == 'AIFF':
             self.type = 'aiff'
+        elif type(self.mgfile).__name__ == 'DSF':
+            self.type = 'dsf'
         else:
             raise FileTypeError(path, type(self.mgfile).__name__)
 
