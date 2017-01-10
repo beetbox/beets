@@ -901,6 +901,26 @@ class AIFFTest(ReadWriteTestBase, unittest.TestCase):
         'channels': 1,
     }
 
+try:
+    import mutagen.dsf
+except:
+    HAVE_DSF = False
+else:
+    HAVE_DSF = True
+
+@unittest.skipIf(not HAVE_DSF, "mutagen < 1.37")
+class DSFTest(ReadWriteTestBase,
+              ExtendedImageStructureTestMixin, unittest.TestCase):
+    extension = 'dsf'
+    audio_properties = {
+        'length': 0.01,
+        'bitrate': 11289600,
+        'format': u'DSD Stream File',
+        'samplerate': 5644800,
+        'bitdepth': 1,
+        'channels': 2,
+    }
+
 
 class MediaFieldTest(unittest.TestCase):
 
