@@ -1723,6 +1723,7 @@ def mocked_get_release_by_id(id_, includes=[], release_status=[],
                         'length': 59,
                     },
                     'position': 9,
+                    'number': 'A2'
                 }],
                 'position': 5,
             }],
