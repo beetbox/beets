@@ -909,8 +909,10 @@ class AIFFTest(ReadWriteTestBase, unittest.TestCase):
     }
 
 
+# Check whether we have a Mutagen version with DSF support. We can
+# remove this once we require a version that includes the feature.
 try:
-    import mutagen.dsf
+    import mutagen.dsf  # noqa
 except:
     HAVE_DSF = False
 else:
