@@ -154,7 +154,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
                  .format(ASIN)
     AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}' \
               .format(ASIN)
-    CAA_URL = 'http://coverartarchive.org/release/{0}/front' \
+    CAA_URL = 'coverartarchive.org/release/{0}/front' \
               .format(MBID)
 
     def setUp(self):
@@ -202,12 +202,17 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
         self.assertEqual(responses.calls[-1].request.url, self.AAO_URL)
 
     def test_main_interface_uses_caa_when_mbid_available(self):
-        self.mock_response(self.CAA_URL)
+        self.mock_response("http://" + self.CAA_URL)
+        self.mock_response("https://" + self.CAA_URL)
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         self.assertIsNotNone(candidate)
         self.assertEqual(len(responses.calls), 1)
-        self.assertEqual(responses.calls[0].request.url, self.CAA_URL)
+        if util.SNI_SUPPORTED:
+            url = "https://" + self.CAA_URL
+        else:
+            url = "http://" + self.CAA_URL
+        self.assertEqual(responses.calls[0].request.url, url)
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
