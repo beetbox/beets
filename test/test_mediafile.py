@@ -175,7 +175,11 @@ class ImageStructureTestMixin(ArtTestMixin):
 
 
 class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
-    """Checks for additional attributes in the image structure."""
+    """Checks for additional attributes in the image structure.
+
+    Like the base `ImageStructureTestMixin`, per-format test classes
+    should include this mixin to add image-related tests.
+    """
 
     def assertExtendedImageAttributes(self, image, desc=None, type=None):  # noqa
         self.assertEqual(image.desc, desc)
@@ -308,6 +312,9 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
     pasting one of the existing subclasses below. You will want to
     update the `format` field in that subclass, and you will probably
     need to fiddle with the `bitrate` and other format-specific fields.
+
+    You can also add image tests (using an additional `image.*` fixture
+    file) by including one of the image-related mixins.
     """
 
     full_initial_tags = {
