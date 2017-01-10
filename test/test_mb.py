@@ -68,6 +68,7 @@ class MBAlbumInfoTest(_common.TestCase):
                 track = {
                     'recording': recording,
                     'position': i + 1,
+                    'number': 'A1',
                 }
                 if track_length:
                     # Track lengths are distinct from recording lengths.
@@ -182,12 +183,12 @@ class MBAlbumInfoTest(_common.TestCase):
         second_track_list = [{
             'recording': tracks[1],
             'position': '1',
+            'number': 'A1',
         }]
         release['medium-list'].append({
             'position': '2',
             'track-list': second_track_list,
         })
-
         d = mb.album_info(release)
         self.assertEqual(d.mediums, 2)
         t = d.tracks
@@ -454,6 +455,7 @@ class MBLibraryTest(unittest.TestCase):
                                     'length': 42,
                                 },
                                 'position': 9,
+                                'number': 'A1',
                             }],
                             'position': 5,
                         }],
