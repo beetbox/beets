@@ -910,9 +910,8 @@ else:
     HAVE_DSF = True
 
 
-@unittest.skipIf(not HAVE_DSF, "mutagen < 1.37")
-class DSFTest(ReadWriteTestBase,
-              ExtendedImageStructureTestMixin, unittest.TestCase):
+@unittest.skipIf(not HAVE_DSF, "Mutagen does not have DSF support")
+class DSFTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'dsf'
     audio_properties = {
         'length': 0.01,
