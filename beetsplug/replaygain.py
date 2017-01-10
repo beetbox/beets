@@ -194,8 +194,8 @@ class Bs1770gainBackend(Backend):
         """
         # Construct shell command.
         cmd = [self.command]
-        cmd = cmd + [self.method]
-        cmd = cmd + ['-p']
+        cmd += [self.method]
+        cmd += ['-p']
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
@@ -227,7 +227,7 @@ class Bs1770gainBackend(Backend):
             ':|done\\.\\s)', re.DOTALL | re.UNICODE)
         results = re.findall(regex, data)
         for parts in results[0:num_lines]:
-            part = parts.split(b'\n')
+            part = parts.split(u'\n')
             if len(part) == 0:
                 self._log.debug(u'bad tool output: {0!r}', text)
                 raise ReplayGainError(u'bs1770gain failed')
