@@ -794,7 +794,7 @@ class ReplayGainPlugin(BeetsPlugin):
         "command": CommandBackend,
         "gstreamer": GStreamerBackend,
         "audiotools": AudioToolsBackend,
-        "bs1770gain": Bs1770gainBackend
+        "bs1770gain": Bs1770gainBackend,
     }
 
     def __init__(self):
@@ -934,8 +934,6 @@ class ReplayGainPlugin(BeetsPlugin):
         """Return the "replaygain" ui subcommand.
         """
         def func(lib, opts, args):
-            self._log.setLevel(logging.INFO)
-
             write = ui.should_write()
 
             if opts.album:
