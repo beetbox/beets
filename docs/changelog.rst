@@ -4,6 +4,11 @@ Changelog
 1.4.4 (in development)
 ----------------------
 
+New features:
+
+* Added support for DSF files, once a future version of Mutagen is released
+  that supports them. Thanks to :user:`docbobo`. :bug:`459` :bug:`2379`
+
 Fixes:
 
 * :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
