@@ -901,12 +901,14 @@ class AIFFTest(ReadWriteTestBase, unittest.TestCase):
         'channels': 1,
     }
 
+
 try:
     import mutagen.dsf
 except:
     HAVE_DSF = False
 else:
     HAVE_DSF = True
+
 
 @unittest.skipIf(not HAVE_DSF, "mutagen < 1.37")
 class DSFTest(ReadWriteTestBase,
