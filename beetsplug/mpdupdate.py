@@ -35,14 +35,14 @@ import six
 # easier.
 class BufferedSocket(object):
     """Socket abstraction that allows reading by line."""
-    def __init__(self, host, port, sep='\n'):
+    def __init__(self, host, port, sep=b'\n'):
         if host[0] in ['/', '~']:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.connect(os.path.expanduser(host))
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((host, port))
-        self.buf = ''
+        self.buf = b''
         self.sep = sep
 
     def readline(self):
@@ -51,11 +51,11 @@ class BufferedSocket(object):
             if not data:
                 break
             self.buf += data
-        if '\n' in self.buf:
+        if self.sep in self.buf:
             res, self.buf = self.buf.split(self.sep, 1)
             return res + self.sep
         else:
-            return ''
+            return b''
 
     def send(self, data):
         self.sock.send(data)
@@ -106,24 +106,24 @@ class MPDUpdatePlugin(BeetsPlugin):
             return
 
         resp = s.readline()
-        if 'OK MPD' not in resp:
+        if b'OK MPD' not in resp:
             self._log.warning(u'MPD connection failed: {0!r}', resp)
             return
 
         if password:
-            s.send('password "%s"\n' % password)
+            s.send(b'password "%s"\n' % password.encode('utf8'))
             resp = s.readline()
-            if 'OK' not in resp:
+            if b'OK' not in resp:
                 self._log.warning(u'Authentication failed: {0!r}', resp)
-                s.send('close\n')
+                s.send(b'close\n')
                 s.close()
                 return
 
-        s.send('update\n')
+        s.send(b'update\n')
         resp = s.readline()
-        if 'updating_db' not in resp:
+        if b'updating_db' not in resp:
             self._log.warning(u'Update failed: {0!r}', resp)
 
-        s.send('close\n')
+        s.send(b'close\n')
         s.close()
         self._log.info(u'Database updated.')

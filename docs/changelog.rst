@@ -4,7 +4,9 @@ Changelog
 1.4.4 (in development)
 ----------------------
 
-Changelog goes here!
+Fixes:
+
+* :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
 
 
 1.4.3 (January 9, 2017)
