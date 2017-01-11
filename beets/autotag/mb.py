@@ -269,6 +269,7 @@ def album_info(release):
             )
             ti.disctitle = disctitle
             ti.media = format
+            ti.track_alt = track['number']
 
             # Prefer track data, where present, over recording data.
             if track.get('title'):
