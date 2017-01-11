@@ -8,6 +8,9 @@ New features:
 
 * Added support for DSF files, once a future version of Mutagen is released
   that supports them. Thanks to :user:`docbobo`. :bug:`459` :bug:`2379`
+* A new template path value ``track_alt`` let's you use the tracks actual
+  number rather than its position media. Useful when importing albums that
+  have multiple sides, such as tapes and vinyls.
 
 Fixes:
 
