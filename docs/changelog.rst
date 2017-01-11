@@ -8,6 +8,11 @@ New features:
 
 * Added support for DSF files, once a future version of Mutagen is released
   that supports them. Thanks to :user:`docbobo`. :bug:`459` :bug:`2379`
+* The MusicBrainz backend and  :doc:`/plugins/discogs` now both provide a new
+  attribute called ``track_alt`` that stores more nuanced, possibly
+  non-numeric track index data. For example, some vinyl or tape media will
+  report the side of the record using a letter instead of a number in that
+  field. :bug:`1831` :bug:`2363`
 
 Fixes:
 
