@@ -276,7 +276,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
                              ImportHelper, TestHelper, EditMixin):
     """TODO
     """
-    IGNORED = ['added', 'album_id', 'id', 'mtime', 'path', 'track_alt']
+    IGNORED = ['added', 'album_id', 'id', 'mtime', 'path']
 
     def setUp(self):
         self.setup_beets()

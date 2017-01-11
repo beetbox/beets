@@ -189,6 +189,7 @@ class MBAlbumInfoTest(_common.TestCase):
             'position': '2',
             'track-list': second_track_list,
         })
+
         d = mb.album_info(release)
         self.assertEqual(d.mediums, 2)
         t = d.tracks
