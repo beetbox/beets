@@ -197,7 +197,6 @@ Ordinary metadata:
 * original_year, original_month, original_day: The release date of the original
   version of the album.
 * track
-* track_alt
 * tracktotal
 * disc
 * disctotal

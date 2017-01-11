@@ -423,7 +423,6 @@ class Item(LibModel):
         'month':                types.PaddedInt(2),
         'day':                  types.PaddedInt(2),
         'track':                types.PaddedInt(2),
-        'track_alt':            types.STRING,
         'tracktotal':           types.PaddedInt(2),
         'disc':                 types.PaddedInt(2),
         'disctotal':            types.PaddedInt(2),
