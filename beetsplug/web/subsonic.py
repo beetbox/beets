@@ -389,7 +389,7 @@ def _album_list():
         return False, request.error_formatter(10, 'Missing parameter genre')
 
     if atype == "random":
-        return True, random_objs(g.lib.albums(u''), True, number=size)
+        return True, random_objs(list(g.lib.albums(u'')), True, number=size)
     else:
         query = get_query_by_type(atype, from_year=from_year, to_year=to_year,
                                   genre=genre)
@@ -549,7 +549,7 @@ def v_random_songs():
 
     return request.formatter({'randomSongs': {
         'song': [format_track(track) for track in
-                 random_objs(g.lib.items(query), False, number=size)]
+                 random_objs(list(g.lib.items(query)), False, number=size)]
     }})
 
 
@@ -641,7 +641,8 @@ def v_cover_art():
             album = tr.get_album()
     else:
         album = g.lib.get_album(int(cid))
-    if album is None or not os.path.isfile(album.artpath):
+    if album is None or album.artpath is None or not os.path.isfile(
+            album.artpath):
         return request.error_formatter(70, 'Cover art not found'), 404
     else:
         return send_file(album.artpath, conditional=True,
@@ -658,7 +659,7 @@ def v_download():
 
     tr = g.lib.get_item(int(cid))
 
-    if tr is None or not os.path.isfile(tr.path):
+    if tr is None or tr.path is None or not os.path.isfile(tr.path):
         return request.error_formatter(70, 'Track not found'), 404
     else:
         return send_file(tr.path, conditional=True,
