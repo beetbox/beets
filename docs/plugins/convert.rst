@@ -86,8 +86,8 @@ file. The available options are:
 - **threads**: The number of threads to use for parallel encoding.
   By default, the plugin will detect the number of processors available and use
   them all.
-
-You can also configure the format to use for transcoding.
+- **format**: The format to transcode to when none is specified.  Default: 
+  ``mp3``
 
 .. _convert-format-config:
 
