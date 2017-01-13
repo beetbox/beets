@@ -145,7 +145,6 @@ def subsonicify():
     if f == 'jsonp':
         # Some clients (MiniSub, Perisonic) set f to jsonp without callback
         # for streamed data
-        print(request.endpoint)
         if not callback and request.endpoint not in ['subsonic.v_download',
                                                      'subsonic.v_cover_art']:
             return jsonresponse({

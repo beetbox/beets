@@ -7,18 +7,28 @@ from __future__ import division, absolute_import, print_function
 import re
 import unittest
 
-import xmlunittest as xmlunittest
-
 from beetsplug import web
 from beetsplug.web.subsonic import subsonic_routes
 from test.helper import TestHelper
+
+try:
+    import xmlunittest
+    XMLUNITTEST_AVAILABLE = True
+    XmlTestMixin = xmlunittest.XmlTestMixin
+except ImportError:
+    xmlunittest = None
+    XMLUNITTEST_AVAILABLE = False
+
+    class XmlTestMixin:
+        pass
+
 
 re_lm = re.compile(b'lastModified="(\d+?)"', re.MULTILINE)
 re_cr = re.compile(b'created="(.+?)"', re.MULTILINE)
 
 
-class WebSubsonicPluginTest(unittest.TestCase, xmlunittest.XmlTestMixin,
-                            TestHelper):
+@unittest.skipIf(not XMLUNITTEST_AVAILABLE, "xmlunittest cannot be found")
+class WebSubsonicPluginTest(unittest.TestCase, XmlTestMixin, TestHelper):
 
     def setUp(self):
         self.setup_beets()
