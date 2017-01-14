@@ -223,7 +223,7 @@ def item_query(queries):
 
 @app.route('/item/path/<path:path>')
 def item_at_path(path):
-    query = beets.library.PathQuery('path', u'/' + path)
+    query = beets.library.PathQuery('path', b'/' + path.encode('utf-8'))
     item = g.lib.items(query).get()
     if item:
         return flask.jsonify(_rep(item))
