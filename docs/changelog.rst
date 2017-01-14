@@ -13,6 +13,10 @@ New features:
   non-numeric track index data. For example, some vinyl or tape media will
   report the side of the record using a letter instead of a number in that
   field. :bug:`1831` :bug:`2363`
+* The :doc:`/plugins/web` has a new endpoint, ``/item/path/foo``, which will
+  return the item info for the file at the given path, or 404.
+* The :doc:`/plugins/web` also has a new config option, ``include_paths``,
+  which will cause paths to be included in item API responses if set to true.
 
 Fixes:
 
