@@ -221,6 +221,14 @@ def item_query(queries):
     return g.lib.items(queries)
 
 
+@app.route('/item/at_path/<path:path>')
+def item_at_path(path):
+    try:
+        return flask.jsonify(_rep(beets.library.Item.from_path('/' + path)))
+    except beets.library.ReadError:
+        return flask.abort(404)
+
+
 @app.route('/item/values/<string:key>')
 def item_unique_field_values(key):
     sort_key = flask.request.args.get('sort_key', key)
