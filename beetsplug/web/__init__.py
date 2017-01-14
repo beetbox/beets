@@ -221,11 +221,14 @@ def item_query(queries):
     return g.lib.items(queries)
 
 
-@app.route('/item/at_path/<path:path>')
+@app.route('/item/path/<path:path>')
 def item_at_path(path):
-    try:
-        return flask.jsonify(_rep(beets.library.Item.from_path('/' + path)))
-    except beets.library.ReadError:
+    g.lib._connection().create_function('bytelower', 1, beets.library._sqlite_bytelower)
+    query = beets.library.PathQuery('path', u'/' + path)
+    item = g.lib.items(query).get()
+    if item:
+        return flask.jsonify(_rep(item))
+    else:
         return flask.abort(404)
 
 
@@ -339,8 +342,7 @@ class WebPlugin(BeetsPlugin):
             # Normalizes json output
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
-            app.config['INCLUDE_PATHS'] = (
-                self.config.get('include_paths', False))
+            app.config['INCLUDE_PATHS'] = self.config['include_paths']
 
             # Enable CORS if required.
             if self.config['cors']:
