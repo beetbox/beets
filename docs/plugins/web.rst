@@ -163,7 +163,7 @@ dropped from the response.
 
 
 ``GET /item/by_path/...``
-+++++++++++++++++++++
++++++++++++++++++++++++++
 
 Look for an item at the given path on the server. If it corresponds to a track,
 return the track in the same format as /item/*.
