@@ -223,7 +223,6 @@ def item_query(queries):
 
 @app.route('/item/path/<path:path>')
 def item_at_path(path):
-    g.lib._connection().create_function('bytelower', 1, beets.library._sqlite_bytelower)
     query = beets.library.PathQuery('path', u'/' + path)
     item = g.lib.items(query).get()
     if item:
