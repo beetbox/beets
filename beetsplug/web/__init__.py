@@ -37,7 +37,7 @@ def _rep(obj, expand=False):
     out = dict(obj)
 
     if isinstance(obj, beets.library.Item):
-        if app.config['exclude_paths_from_items']:
+        if app.config.get('EXCLUDE_PATHS_FROM_ITEMS', True):
             del out['path']
         else:
             out['path'] = out['path'].decode('utf-8')
@@ -339,7 +339,7 @@ class WebPlugin(BeetsPlugin):
             # Normalizes json output
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
-            app.config['exclude_paths_from_items'] = (
+            app.config['EXCLUDE_PATHS_FROM_ITEMS'] = (
                 self.config.get('exclude_paths_from_items', True))
 
             # Enable CORS if required.
