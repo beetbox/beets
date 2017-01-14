@@ -21,14 +21,23 @@ class WebPluginTest(_common.LibTestCase):
         # Add fixtures
         for track in self.lib.items():
             track.remove()
-        self.lib.add(Item(title=u'title', path='', id=1))
-        self.lib.add(Item(title=u'another title', path='', id=2))
+        self.lib.add(Item(title=u'title', path='/path_1', id=1))
+        self.lib.add(Item(title=u'another title', path='/path_2', id=2))
         self.lib.add(Album(album=u'album', id=3))
         self.lib.add(Album(album=u'another album', id=4))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
+        web.app.config['EXCLUDE_PATHS_FROM_ITEMS'] = True
         self.client = web.app.test_client()
+
+    def test_config_exclude_paths_from_items(self):
+        web.app.config['EXCLUDE_PATHS_FROM_ITEMS'] = False
+        response = self.client.get('/item/1')
+        response.json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['path'], u'/path_1')
 
     def test_get_all_items(self):
         response = self.client.get('/item/')
