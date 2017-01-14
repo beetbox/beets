@@ -733,18 +733,25 @@ class Database(object):
             if thread_id in self._connections:
                 return self._connections[thread_id]
             else:
-                # Make a new connection. The `sqlite3` module can't use
-                # bytestring paths here on Python 3, so we need to
-                # provide a `str` using `py3_path`.
-                conn = sqlite3.connect(
-                    py3_path(self.path), timeout=self.timeout
-                )
-
-                # Access SELECT results like dictionaries.
-                conn.row_factory = sqlite3.Row
-
+                conn = self._create_connection()
                 self._connections[thread_id] = conn
                 return conn
+
+    def _create_connection(self):
+        """Create a SQLite connection to the underlying database. Makes
+        a new connection every time. If you need to add custom functions
+        to each connection, override this method.
+        """
+        # Make a new connection. The `sqlite3` module can't use
+        # bytestring paths here on Python 3, so we need to
+        # provide a `str` using `py3_path`.
+        conn = sqlite3.connect(
+            py3_path(self.path), timeout=self.timeout
+        )
+
+        # Access SELECT results like dictionaries.
+        conn.row_factory = sqlite3.Row
+        return conn
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
