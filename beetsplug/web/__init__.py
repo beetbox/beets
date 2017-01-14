@@ -340,7 +340,7 @@ class WebPlugin(BeetsPlugin):
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
             app.config['exclude_paths_from_items'] = (
-                self.config['exclude_paths_from_items'])
+                self.config.get('exclude_paths_from_items', True))
 
             # Enable CORS if required.
             if self.config['cors']:
