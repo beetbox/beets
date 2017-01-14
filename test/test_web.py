@@ -4,11 +4,12 @@
 
 from __future__ import division, absolute_import, print_function
 
+import json
 import unittest
+import os.path
 from six import assertCountEqual
 
 from test import _common
-import json
 from beets.library import Item, Album
 from beetsplug import web
 
@@ -73,6 +74,23 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_get_single_item_not_found(self):
         response = self.client.get('/item/3')
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_single_item_by_path(self):
+        data_path = os.path.join(_common.RSRC, b'full.mp3')
+        self.lib.add(Item.from_path(data_path))
+        response = self.client.get('/item/path' + data_path.decode('utf-8'))
+        response.json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['title'], u'full')
+
+    def test_get_single_item_by_path_not_found_if_not_in_library(self):
+        data_path = os.path.join(_common.RSRC, b'full.mp3')
+        # data_path points to a valid file, but we have not added the file
+        # to the library.
+        response = self.client.get('/item/path' + data_path.decode('utf-8'))
+
         self.assertEqual(response.status_code, 404)
 
     def test_get_item_empty_query(self):
