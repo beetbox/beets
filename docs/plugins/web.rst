@@ -63,6 +63,8 @@ configuration file. The available options are:
   Default: 8337.
 - **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
+- **exclude_paths_from_items**: The 'path' key of items is filtered out of JSON
+  responses for security reasons. Default: true.
 
 Implementation
 --------------
