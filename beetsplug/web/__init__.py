@@ -37,10 +37,10 @@ def _rep(obj, expand=False):
     out = dict(obj)
 
     if isinstance(obj, beets.library.Item):
-        if app.config.get('EXCLUDE_PATHS_FROM_ITEMS', True):
-            del out['path']
-        else:
+        if app.config.get('INCLUDE_PATHS', False):
             out['path'] = out['path'].decode('utf-8')
+        else:
+            del out['path']
 
         # Get the size (in bytes) of the backing file. This is useful
         # for the Tomahawk resolver API.
@@ -320,7 +320,7 @@ class WebPlugin(BeetsPlugin):
             'host': u'127.0.0.1',
             'port': 8337,
             'cors': '',
-            'exclude_paths_from_items': True,
+            'include_paths': False,
         })
 
     def commands(self):
@@ -339,8 +339,8 @@ class WebPlugin(BeetsPlugin):
             # Normalizes json output
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
-            app.config['EXCLUDE_PATHS_FROM_ITEMS'] = (
-                self.config.get('exclude_paths_from_items', True))
+            app.config['INCLUDE_PATHS'] = (
+                self.config.get('include_paths', False))
 
             # Enable CORS if required.
             if self.config['cors']:

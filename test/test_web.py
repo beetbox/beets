@@ -28,16 +28,24 @@ class WebPluginTest(_common.LibTestCase):
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
-        web.app.config['EXCLUDE_PATHS_FROM_ITEMS'] = True
+        web.app.config['INCLUDE_PATHS'] = False
         self.client = web.app.test_client()
 
-    def test_config_exclude_paths_from_items(self):
-        web.app.config['EXCLUDE_PATHS_FROM_ITEMS'] = False
+    def test_config_include_paths_true(self):
+        web.app.config['INCLUDE_PATHS'] = True
         response = self.client.get('/item/1')
         response.json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['path'], u'/path_1')
+
+    def test_config_include_paths_false(self):
+        web.app.config['INCLUDE_PATHS'] = False
+        response = self.client.get('/item/1')
+        response.json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('path', response.json)
 
     def test_get_all_items(self):
         response = self.client.get('/item/')
