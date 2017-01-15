@@ -17,6 +17,7 @@ from beets.plugins import BeetsPlugin
 from beets.dbcore import FieldQuery, types
 from beets.util.confit import NotFoundError
 
+
 class PlaylistQuery(FieldQuery):
     """Matches files listed by a playlist file.
     """
@@ -26,21 +27,21 @@ class PlaylistQuery(FieldQuery):
     def __init__(self, field, pattern, fast=True):
         super(PlaylistQuery, self).__init__(field, pattern, fast)
 
-        playlist_file = pattern + '.m3u'
+        playlist_file = (pattern + '.m3u').encode()
         playlist_path = os.path.join(self.playlist_dir, playlist_file)
 
         self.paths = []
-        with open(playlist_path, 'r') as f:
+        with open(playlist_path, 'rb') as f:
             for line in f:
                 if line[0] == '#':
                     # ignore comments, and extm3u extension
                     continue
                 self.paths.append(os.path.normpath(
-                    os.path.join(self.relative_path, line.decode('utf-8').rstrip())
+                    os.path.join(self.relative_path, line.rstrip())
                 ))
 
     def match(self, item):
-        return item.path.decode('utf-8') in self.paths
+        return item.path in self.paths
 
 
 class PlaylistType(types.String):
@@ -56,7 +57,9 @@ class PlaylistQueryPlugin(BeetsPlugin):
         super(PlaylistQueryPlugin, self).__init__()
         self.register_listener('library_opened', self.library_opened)
 
-        PlaylistQuery.playlist_dir = self.config['playlist_dir'].as_filename()
+        PlaylistQuery.playlist_dir = (
+            self.config['playlist_dir'].as_filename().encode()
+        )
 
     def library_opened(self, lib):
         try:
