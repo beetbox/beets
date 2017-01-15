@@ -1237,13 +1237,16 @@ class Library(dbcore.Database):
         timeout = beets.config['timeout'].as_number()
         super(Library, self).__init__(path, timeout=timeout)
 
-        self._connection().create_function('bytelower', 1, _sqlite_bytelower)
-
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
+
+    def _create_connection(self):
+        conn = super(Library, self)._create_connection()
+        conn.create_function('bytelower', 1, _sqlite_bytelower)
+        return conn
 
     # Adding objects to the database.
 
