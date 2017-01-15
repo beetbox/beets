@@ -176,11 +176,16 @@ class QueryConverter(PathConverter):
         return ','.join(value)
 
 
+class EverythingConverter(PathConverter):
+    regex = '.*?'
+
+
 # Flask setup.
 
 app = flask.Flask(__name__)
 app.url_map.converters['idlist'] = IdListConverter
 app.url_map.converters['query'] = QueryConverter
+app.url_map.converters['everything'] = EverythingConverter
 
 
 @app.before_request
@@ -221,9 +226,9 @@ def item_query(queries):
     return g.lib.items(queries)
 
 
-@app.route('/item/path/<path:path>')
+@app.route('/item/path/<everything:path>')
 def item_at_path(path):
-    query = beets.library.PathQuery('path', b'/' + path.encode('utf-8'))
+    query = beets.library.PathQuery('path', path.encode('utf-8'))
     item = g.lib.items(query).get()
     if item:
         return flask.jsonify(_rep(item))
