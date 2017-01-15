@@ -24,6 +24,8 @@ from beets.dbcore import types
 import networkx as nx
 import matplotlib.pyplot as plt
 import os.path
+from networkx.readwrite import json_graph
+import json
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -47,10 +49,12 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                               'api_key':  plugins.LASTFM_KEY, })
         config['lastfm']['api_key'].redact = True
 
-        self.config.add({'gmlfile': 'similarity.gexf',
+        self.config.add({'gexf': 'similarity.gexf',
                          'per_page': 500,
                          'retry_limit': 3,
-                         'show': False, })
+                         'show': False,
+                         'json': 'similarity.json',
+                         'depth': 3, })
         self.item_types = {'play_count':  types.INTEGER, }
 
         self._artistsOwned = list()
@@ -63,46 +67,58 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                             help=u'get similarity for artists')
 
         cmd.parser.add_option(
-            u'-g', u'--graphml', dest='gmlfile',  metavar='FILE',
+            u'-g', u'--gexf', dest='gexf',  metavar='FILE',
             action='store',
-            help=u'read and write Graph as gml-FILE.'
+            help=u'read and write Graph as gexf-FILE.'
         )
 
         cmd.parser.add_option(
-            u'-s', u'--show',
-            action='store_true',
-            help=u'Show graph of relations.'
+            u'-j', u'--json', dest='json',  metavar='FILE',
+            action='store',
+            help=u'write Graph as json-FILE.'
+        )
+
+        cmd.parser.add_option(
+            u'-s', u'--show', dest='depth',  metavar='DEPTH',
+            action='store',
+            help=u'How is the depth of searching.'
+        )
+
+        cmd.parser.add_option(
+            u'-d', u'--depth',
+
         )
 
         def func(lib, opts, args):
 
             self.config.set_args(opts)
             show = self.config['show']
-            gmlfile = self.config['gmlfile'].as_str()
+            gmlfile = self.config['gexf'].as_str()
+            depth = self.config['depth'].as_str()
 
             items = lib.items(ui.decargs(args))
 
-            self.import_similarity(lib, items, show, gmlfile)
+            self.import_similarity(lib, items, show, gmlfile, depth)
 
         cmd.func = func
         return [cmd]
 
-    def import_similarity(self, lib, items, show, gmlfile):
+    def import_similarity(self, lib, items, show, gexf, depth):
         """
         Import gml-file which contains similarity.
 
         Edges are similarity and Nodes are artists.
         """
-        if os.path.isfile(gmlfile) and os.access(gmlfile, os.R_OK):
-            self._log.info(u'import of graph file')
-            self.import_graph(gmlfile, show)
+        if os.path.isfile(gexf) and os.access(gexf, os.R_OK):
+            self._log.info(u'import of gexf file')
+            self.import_graph(gexf, show)
         else:
-            self._log.info(u'no graph file found, processing last.fm query')
+            self._log.info(u'no gexf file found, processing last.fm query')
             # create node for each similar artist
             self.collect_artists(items)
             # create node for each similar artist
-            self.get_similar()
-            self.create_graph(gmlfile, show)
+            self.get_similar(lib, depth)
+            self.create_graph(gexf, show)
             self._log.info(u'Artist owned: {}', len(self._artistsOwned))
             self._log.info(u'Artist foreign: {}', len(self._artistsForeign))
             self._log.info(u'Relations: {}', len(self._relations))
@@ -114,41 +130,67 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 artistnode = ArtistNode(item['mb_albumartistid'],
                                         item['albumartist'],
                                         True)
+                artistnode['group'] = 1
                 if artistnode not in self._artistsOwned:
                     self._artistsOwned.append(artistnode)
 
-    def get_similar(self):
+    def get_similar(self, lib, depth):
         """Collect artists from query."""
-        for artist in self._artistsOwned:
-                self._log.info(u'Artist: {}-{}', artist['mbid'],
-                               artist['name'])
-                try:
-                    lastfm_artist = LASTFM.get_artist_by_mbid(artist['mbid'])
+        depthcounter = 1
+        while True:
+            havechilds = False
+            self._log.info(u'Level: {}-{}', depthcounter, depth)
+            if depthcounter > int(depth):
+                self._log.info(u'out!')
+                break
+            depthcounter += 1
+            artistsshadow = list()
+            for artist in self._artistsOwned:
+                if not artist['checked']:
+                    self._log.info(u'Artist: {}-{}', artist['mbid'],
+                                   artist['name'])
+                    try:
+                        lastfm_artist = LASTFM.get_artist_by_mbid(
+                            artist['mbid'])
 
-                    similar_artists = lastfm_artist.get_similar(10)
+                        similar_artists = lastfm_artist.get_similar(10)
+                        artist['checked'] = True
 
-                    # using nested lists
-                    #       similarArtists[idx][0] - Artist object
-                    #       similarArtists[idx][1] - last.fm match value
-                    for artistinfo in similar_artists:
-                        mbid = artistinfo[0].get_mbid()
-                        name = artistinfo[0].get_name()
+                        # using nested lists
+                        #       similarArtists[idx][0] - Artist object
+                        #       similarArtists[idx][1] - last.fm match value
+                        for artistinfo in similar_artists:
+                            mbid = artistinfo[0].get_mbid()
+                            name = artistinfo[0].get_name()
 
-                        if mbid:
-                            artistnode = ArtistNode(mbid, name)
-                            if artistnode not in self._artistsForeign:
-                                self._artistsForeign.append(artistnode)
+                            if mbid:
+                                artistnode = ArtistNode(mbid, name)
+                                artistnode['group'] = depthcounter
+                                if len(lib.items('mb_artistid:' + mbid)) > 0:
+                                    if ((artistnode not in
+                                         self._artistsOwned) and
+                                        (artistnode not in
+                                         artistsshadow)):
+                                        artistsshadow.append(artistnode)
+                                        self._log.info(u'I own this: {}', name)
+                                        havechilds = True
+                                if artistnode not in self._artistsForeign:
+                                    self._artistsForeign.append(artistnode)
 
-                            relation = Relation(artist['mbid'],
-                                                mbid,
-                                                artistinfo[1])
+                                relation = Relation(artist['mbid'],
+                                                    mbid,
+                                                    artistinfo[1] * 1000)
 
-                            # if relation not in _relations:
-                            self._relations.append(relation)
-                except PYLAST_EXCEPTIONS as exc:
-                    self._log.debug(u'last.fm error: {0}', exc)
+                                # if relation not in _relations:
+                                self._relations.append(relation)
+                    except PYLAST_EXCEPTIONS as exc:
+                        self._log.debug(u'last.fm error: {0}', exc)
+            self._artistsOwned.extend(artistsshadow)
+            del artistsshadow[:]
+            if not havechilds:
+                break
 
-    def create_graph(self, gmlfile, show):
+    def create_graph(self, gexf, show):
         """Create graph out of collected artists and relations."""
         for relation in self._relations:
             G.add_edge(relation['source_mbid'],
@@ -163,7 +205,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         for owned_artist in self._artistsOwned:
             G.add_node(owned_artist['mbid'],
                        mbid=owned_artist['mbid'],
-                       owned='True')
+                       group=owned_artist['group'],
+                       name=owned_artist['name'])
             custom_labels[owned_artist['mbid']] = owned_artist['name']
             self._log.debug(u'#{}', owned_artist['mbid'])
 
@@ -172,24 +215,28 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 custom_labels[foreign_artist['mbid']] = foreign_artist['name']
                 G.add_node(foreign_artist['mbid'],
                            mbid=foreign_artist['mbid'],
-                           owned='False')
+                           group=foreign_artist['group'],
+                           name=foreign_artist['name'])
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
         h = nx.relabel_nodes(G, custom_labels)
         if show:
             nx.draw(G, labels=custom_labels)
             plt.show()
-        nx.write_gexf(h, gmlfile)
-        # nx.write_gml(h, gmlfile)
+        nx.write_gexf(h, gexf)
+        data = json_graph.node_link_data(h)
 
-    def import_graph(self, gmlfile, show):
+        with open('result.json', 'w') as fp:
+            json.dump(data, fp)
+
+    def import_graph(self, gexf, show):
         """Import graph from previous created gml file."""
         # i = nx.read_gml(gmlfile, label='label')
-        i = nx.read_gexf(gmlfile, None, relabel=True)
+        i = nx.read_gexf(gexf, None, relabel=True)
         for artist in i.nodes(data=True):
             self._log.debug(u'{}', artist)
             artistnode = ArtistNode(artist[1]['mbid'], artist[0])
-            if artist[1]['owned'] == 'True':
+            if artist[1]['group'] == 1:
                 if artistnode not in self._artistsOwned:
                     self._artistsOwned.append(artistnode)
             else:
@@ -204,6 +251,11 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         if show:
             nx.draw_networkx(i)
             plt.show()
+
+        data = json_graph.node_link_data(i)
+
+        with open('result.json', 'w') as fp:
+            json.dump(data, fp)
 
 
 class Relation():
@@ -251,11 +303,16 @@ class ArtistNode():
     mbid = u''
     name = u''
     owned = False
+    checked = False
+    group = 0
 
-    def __init__(self, mbid, name, owned=False):
+    def __init__(self, mbid, name, owned=False, checked=False, group=0):
         """Constructor of class."""
         self.mbid = mbid
         self.name = name
+        self.owned = owned
+        self.checked = checked
+        self.group = group
 
     def __eq__(self, other):
         """Override the default Equals behavior."""
@@ -276,5 +333,26 @@ class ArtistNode():
             return self.name
         elif key == 'owned':
             return self.owned
+        elif key == 'owned':
+            return self.owned
+        elif key == 'checked':
+            return self.checked
+        elif key == 'group':
+            return self.group
         else:
             return None
+
+    def __setitem__(self, key, value):
+        """Define a setitem function."""
+        if key == 'mbid':
+            self.mbid = value
+        elif key == 'name':
+            self.name = value
+        elif key == 'owned':
+            self.owned = value
+        elif key == 'owned':
+            self.owned = value
+        elif key == 'checked':
+            self.checked = value
+        elif key == 'group':
+            self.group = value

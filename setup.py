@@ -78,6 +78,7 @@ setup(
         'beetsplug.web',
         'beetsplug.lastgenre',
         'beetsplug.metasync',
+		'beetsplug.similarity',
     ],
     entry_points={
         'console_scripts': [
@@ -123,7 +124,7 @@ setup(
         'thumbnails': ['pyxdg'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
-        'similarity': ['networkx', 'matplotlib', 'pylast'],
+        'similarity': ['networkx', 'matplotlib', 'pylast', 'json'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # convert: ffmpeg
