@@ -38,7 +38,7 @@ def _rep(obj, expand=False):
 
     if isinstance(obj, beets.library.Item):
         if app.config.get('INCLUDE_PATHS', False):
-            out['path'] = out['path'].decode('utf-8')
+            out['path'] = util.displayable_path(out['path'])
         else:
             del out['path']
 
