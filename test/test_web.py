@@ -79,7 +79,7 @@ class WebPluginTest(_common.LibTestCase):
     def test_get_single_item_by_path(self):
         data_path = os.path.join(_common.RSRC, b'full.mp3')
         self.lib.add(Item.from_path(data_path))
-        response = self.client.get('/item/path' + data_path.decode('utf-8'))
+        response = self.client.get('/item/path/' + data_path.decode('utf-8'))
         response.json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
@@ -89,7 +89,7 @@ class WebPluginTest(_common.LibTestCase):
         data_path = os.path.join(_common.RSRC, b'full.mp3')
         # data_path points to a valid file, but we have not added the file
         # to the library.
-        response = self.client.get('/item/path' + data_path.decode('utf-8'))
+        response = self.client.get('/item/path/' + data_path.decode('utf-8'))
 
         self.assertEqual(response.status_code, 404)
 
