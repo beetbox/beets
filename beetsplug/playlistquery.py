@@ -24,7 +24,7 @@ class PlaylistQuery(FieldQuery):
     relative_path = None
     playlist_dir = None
 
-    def __init__(self, field, pattern, fast=True):
+    def __init__(self, field, pattern, fast=False):
         super(PlaylistQuery, self).__init__(field, pattern, fast)
 
         playlist_file = (pattern + '.m3u').encode()
@@ -55,6 +55,9 @@ class PlaylistQueryPlugin(BeetsPlugin):
 
     def __init__(self):
         super(PlaylistQueryPlugin, self).__init__()
+        self.config.add({
+            u'relative_to': 'base'
+        })
         self.register_listener('library_opened', self.library_opened)
 
         PlaylistQuery.playlist_dir = (
@@ -62,10 +65,7 @@ class PlaylistQueryPlugin(BeetsPlugin):
         )
 
     def library_opened(self, lib):
-        try:
-            relative_to = self.config['relative_to'].as_choice(['base', 'playlist'])
-        except NotFoundError:
-            relative_to = 'base'
+        relative_to = self.config['relative_to'].as_choice(['base', 'playlist'])
 
         if relative_to == 'playlist':
             PlaylistQuery.relative_path = PlaylistQuery.playlist_dir
