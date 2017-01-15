@@ -87,7 +87,14 @@ file. The available options are:
   By default, the plugin will detect the number of processors available and use
   them all.
 
-You can also configure the format to use for transcoding.
+You can also configure the format to use for transcoding (see the next
+section):
+
+- **format**: The name of the format to transcode to when none is specified on
+  the command line.
+  Default: ``mp3``.
+- **formats**: A set of formats and associated command lines for transcoding
+  each.
 
 .. _convert-format-config:
 

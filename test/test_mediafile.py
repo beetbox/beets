@@ -175,7 +175,11 @@ class ImageStructureTestMixin(ArtTestMixin):
 
 
 class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
-    """Checks for additional attributes in the image structure."""
+    """Checks for additional attributes in the image structure.
+
+    Like the base `ImageStructureTestMixin`, per-format test classes
+    should include this mixin to add image-related tests.
+    """
 
     def assertExtendedImageAttributes(self, image, desc=None, type=None):  # noqa
         self.assertEqual(image.desc, desc)
@@ -294,8 +298,23 @@ class GenreListTestMixin(object):
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
                         _common.TempDirMixin):
-    """Test writing and reading tags. Subclasses must set ``extension`` and
-    ``audio_properties``.
+    """Test writing and reading tags. Subclasses must set ``extension``
+    and ``audio_properties``.
+
+    The basic tests for all audio formats encompass three files provided
+    in our `rsrc` folder: `full.*`, `empty.*`, and `unparseable.*`.
+    Respectively, they should contain a full slate of common fields
+    listed in `full_initial_tags` below; no fields contents at all; and
+    an unparseable release date field.
+
+    To add support for a new file format to MediaFile, add these three
+    files and then create a `ReadWriteTestBase` subclass by copying n'
+    pasting one of the existing subclasses below. You will want to
+    update the `format` field in that subclass, and you will probably
+    need to fiddle with the `bitrate` and other format-specific fields.
+
+    You can also add image tests (using an additional `image.*` fixture
+    file) by including one of the image-related mixins.
     """
 
     full_initial_tags = {
@@ -554,6 +573,9 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         self.assertEqual(mediafile.disctotal, None)
 
     def test_unparseable_date(self):
+        """The `unparseable.*` fixture should not crash but should return None
+        for all parts of the release date.
+        """
         mediafile = self._mediafile_fixture('unparseable')
 
         self.assertIsNone(mediafile.date)
@@ -884,6 +906,29 @@ class AIFFTest(ReadWriteTestBase, unittest.TestCase):
         'samplerate': 44100,
         'bitdepth': 0,
         'channels': 1,
+    }
+
+
+# Check whether we have a Mutagen version with DSF support. We can
+# remove this once we require a version that includes the feature.
+try:
+    import mutagen.dsf  # noqa
+except:
+    HAVE_DSF = False
+else:
+    HAVE_DSF = True
+
+
+@unittest.skipIf(not HAVE_DSF, "Mutagen does not have DSF support")
+class DSFTest(ReadWriteTestBase, unittest.TestCase):
+    extension = 'dsf'
+    audio_properties = {
+        'length': 0.01,
+        'bitrate': 11289600,
+        'format': u'DSD Stream File',
+        'samplerate': 5644800,
+        'bitdepth': 1,
+        'channels': 2,
     }
 
 

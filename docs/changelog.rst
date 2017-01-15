@@ -1,10 +1,38 @@
 Changelog
 =========
 
-1.4.3 (in development)
+1.4.4 (in development)
 ----------------------
 
-Features:
+New features:
+
+* Added support for DSF files, once a future version of Mutagen is released
+  that supports them. Thanks to :user:`docbobo`. :bug:`459` :bug:`2379`
+* The MusicBrainz backend and  :doc:`/plugins/discogs` now both provide a new
+  attribute called ``track_alt`` that stores more nuanced, possibly
+  non-numeric track index data. For example, some vinyl or tape media will
+  report the side of the record using a letter instead of a number in that
+  field. :bug:`1831` :bug:`2363`
+
+Fixes:
+
+* :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
+* :doc:`/plugins/replaygain`: Fix Python 3 compatibility in the ``bs1770gain``
+  backend. :bug:`2382`
+
+
+1.4.3 (January 9, 2017)
+-----------------------
+
+Happy new year! This new version includes a cornucopia of new features from
+contributors, including new tags related to classical music and a new
+:doc:`/plugins/absubmit` for performing acoustic analysis on your music. The
+:doc:`/plugins/random` has a new mode that lets you generate time-limited
+music---for example, you might generate a random playlist that lasts the
+perfect length for your walk to work. We also access as many Web services as
+possible over secure connections now---HTTPS everywhere!
+
+The most visible new features are:
 
 * We now support the composer, lyricist, and arranger tags. The MusicBrainz
   data source will fetch data for these fields when the next version of
@@ -13,23 +41,29 @@ Features:
 * A new :doc:`/plugins/absubmit` lets you run acoustic analysis software and
   upload the results for others to use. Thanks to :user:`inytar`. :bug:`2253`
   :bug:`2342`
+* :doc:`/plugins/play`: The plugin now provides an importer prompt choice to
+  play the music you're about to import. Thanks to :user:`diomekes`.
+  :bug:`2008` :bug:`2360`
+* We now use SSL to access Web services whenever possible. That includes
+  MusicBrainz itself, several album art sources, some lyrics sources, and
+  other servers. Thanks to :user:`tigranl`. :bug:`2307`
 * :doc:`/plugins/random`: A new ``--time`` option lets you generate a random
   playlist that takes a given amount of time. Thanks to :user:`diomekes`.
   :bug:`2305` :bug:`2322`
-* :doc:`/plugins/zero`: Added ``zero`` command to manually trigger the zero
+
+Some smaller new features:
+
+* :doc:`/plugins/zero`: A new ``zero`` command manually triggers the zero
   plugin. Thanks to :user:`SJoshBrown`. :bug:`2274` :bug:`2329`
 * :doc:`/plugins/acousticbrainz`: The plugin will avoid re-downloading data
   for files that already have it by default. You can override this behavior
   using a new ``force`` option. Thanks to :user:`SusannaMaria`. :bug:`2347`
   :bug:`2349`
-* :doc:`/plugins/bpm`: Now uses the ``import.write`` configuration option to
-  decide whether or not to write tracks after updating their BPM. :bug:`1992`
+* :doc:`/plugins/bpm`: The ``import.write`` configuration option now
+  decides whether or not to write tracks after updating their BPM. :bug:`1992`
 
-Fixes:
+And the fixes:
 
-* We now use SSL to access Web services whenever possible. That includes
-  MusicBrainz itself, several album art sources, some lyrics sources, and
-  other servers. Thanks to :user:`tigranl`. :bug:`2307`
 * :doc:`/plugins/bpd`: Fix a crash on non-ASCII MPD commands. :bug:`2332`
 * :doc:`/plugins/scrub`: Avoid a crash when files cannot be read or written.
   :bug:`2351`
@@ -39,13 +73,21 @@ Fixes:
   filesystem. :bug:`2353`
 * :doc:`/plugins/discogs`: Improve the handling of releases that contain
   subtracks. :bug:`2318`
-* :doc:`/plugins/discogs`: Fix a crash when a release did not contain Format
-  information, and increased robustness when other fields are missing.
+* :doc:`/plugins/discogs`: Fix a crash when a release does not contain format
+  information, and increase robustness when other fields are missing.
   :bug:`2302`
 * :doc:`/plugins/lyrics`: The plugin now reports a beets-specific User-Agent
   header when requesting lyrics. :bug:`2357`
+* :doc:`/plugins/embyupdate`: The plugin now checks whether an API key or a
+  password is provided in the configuration.
+* :doc:`/plugins/play`: The misspelled configuration option
+  ``warning_treshold`` is no longer supported.
 
-For plugin developers: new importer prompt choices (see :ref:`append_prompt_choices`), you can now provide new candidates for the user to consider.
+For plugin developers: when providing new importer prompt choices (see
+:ref:`append_prompt_choices`), you can now provide new candidates for the user
+to consider. For example, you might provide an alternative strategy for
+picking between the available alternatives or for looking up a release on
+MusicBrainz.
 
 
 1.4.2 (December 16, 2016)

@@ -6,6 +6,7 @@
         host: localhost
         port: 8096
         username: user
+        apikey: apikey
         password: password
 """
 from __future__ import division, absolute_import, print_function
@@ -150,7 +151,9 @@ class EmbyUpdate(BeetsPlugin):
         # Adding defaults.
         config['emby'].add({
             u'host': u'http://localhost',
-            u'port': 8096
+            u'port': 8096,
+            u'apikey': None,
+            u'password': None,
         })
 
         self.register_listener('database_change', self.listen_for_db_change)
@@ -170,6 +173,11 @@ class EmbyUpdate(BeetsPlugin):
         username = config['emby']['username'].get()
         password = config['emby']['password'].get()
         token = config['emby']['apikey'].get()
+
+        # Check if at least a apikey or password is given.
+        if not any([password, token]):
+            self._log.warning(u'Provide at least Emby password or apikey.')
+            return
 
         # Get user information from the Emby API.
         user = get_user(host, port, username)
