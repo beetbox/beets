@@ -165,8 +165,11 @@ dropped from the response.
 ``GET /item/path/...``
 ++++++++++++++++++++++
 
-Look for an item at the given path on the server. If it corresponds to a track,
-return the track in the same format as ``/item/*``.
+Look for an item at the given absolute path on the server. If it corresponds to
+a track, return the track in the same format as ``/item/*``.
+
+If the server runs UNIX, you'll need to include an extra leading slash:
+``http://localhost:8337/item/path//Users/beets/Music/Foo/Bar/Baz.mp3``
 
 
 ``GET /item/query/querystring``
