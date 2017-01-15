@@ -738,9 +738,11 @@ class Database(object):
                 return conn
 
     def _create_connection(self):
-        """Create a SQLite connection to the underlying database. Makes
-        a new connection every time. If you need to add custom functions
-        to each connection, override this method.
+        """Create a SQLite connection to the underlying database.
+
+        Makes a new connection every time. If you need to configure the
+        connection settings (e.g., add custom functions), override this
+        method.
         """
         # Make a new connection. The `sqlite3` module can't use
         # bytestring paths here on Python 3, so we need to
