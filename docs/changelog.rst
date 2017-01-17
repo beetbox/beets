@@ -23,6 +23,7 @@ Fixes:
 * :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
 * :doc:`/plugins/replaygain`: Fix Python 3 compatibility in the ``bs1770gain``
   backend. :bug:`2382`
+* :doc:`/plugins/bpd`: Report playback times as integer. :bug:`2394`
 
 
 1.4.3 (January 9, 2017)
