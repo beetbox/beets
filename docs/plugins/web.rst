@@ -6,16 +6,13 @@ supplements the CLI. It can't do much right now, and the interface is a little
 clunky, but you can use it to query and browse your music and---in browsers that
 support HTML5 Audio---you can even play music.
 
-It also implements a subset of `subsonic api`_ that allows any subsonic client
-to play music from beets.
-
-.. _subsonic api: http://www.subsonic.org/pages/api.jsp
-
 While it's not meant to replace the CLI, a graphical interface has a number of
 advantages in certain situations. For example, when editing a tag, a natural CLI
 makes you retype the whole thing---common GUI conventions can be used to just
 edit the part of the tag you want to change. A graphical interface could also
 drastically increase the number of people who can use beets.
+
+.. _web-install:
 
 Install
 -------
@@ -32,6 +29,7 @@ you also need `flask-cors`_. Just type ``pip install flask-cors``.
 .. _flask-cors: https://github.com/CoryDolphin/flask-cors
 .. _CORS: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
 
+.. _web-run-the-server:
 
 Run the Server
 --------------
@@ -56,6 +54,8 @@ Type queries into the little search box. Double-click a track to play it with
 
 .. _HTML5 Audio: http://www.w3.org/TR/html-markup/audio.html
 
+.. _web-configuration:
+
 Configuration
 -------------
 
@@ -73,8 +73,6 @@ configuration file. The available options are:
   Default: false.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
-- **subsonic**: Should the subsonic API be available.
-  Default: True
 
 Implementation
 --------------

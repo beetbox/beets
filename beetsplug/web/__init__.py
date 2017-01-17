@@ -318,6 +318,12 @@ def home():
     return flask.render_template('index.html')
 
 
+def register_blueprint(blueprint):
+    """Register a Flask Blueprint onto current app.
+    """
+    app.register_blueprint(blueprint)
+
+
 # Plugin hook.
 
 class WebPlugin(BeetsPlugin):
@@ -329,7 +335,6 @@ class WebPlugin(BeetsPlugin):
             'cors': '',
             'reverse_proxy': False,
             'include_paths': False,
-            'subsonic': True
         })
 
     def commands(self):
@@ -364,10 +369,6 @@ class WebPlugin(BeetsPlugin):
             # Allow serving behind a reverse proxy
             if self.config['reverse_proxy']:
                 app.wsgi_app = ReverseProxied(app.wsgi_app)
-
-            if self.config['subsonic']:
-                from .subsonic import subsonic_routes
-                app.register_blueprint(subsonic_routes)
 
             # Start the web application.
             app.run(host=self.config['host'].as_str(),

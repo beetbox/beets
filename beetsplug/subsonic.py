@@ -31,7 +31,9 @@ import six
 from flask import send_file, g, Response, Blueprint, request
 from flask.json import jsonify
 
+from beets.plugins import BeetsPlugin
 from beets.util.random import random_objs
+from beetsplug.web import register_blueprint
 
 DEFAULT_VERSION = '1.10.1'
 subsonic_routes = Blueprint('subsonic', 'subsonic')
@@ -663,3 +665,9 @@ def v_download():
     else:
         return send_file(tr.path, conditional=True,
                          mimetype=mimetypes.guess_type(tr.path)[0])
+
+
+class SubsonicPlugin(BeetsPlugin):
+    def __init__(self):
+        super(SubsonicPlugin, self).__init__()
+        register_blueprint(subsonic_routes)

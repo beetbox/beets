@@ -87,6 +87,7 @@ like this::
    scrub
    smartplaylist
    spotify
+   subsonic
    the
    thumbnails
    types
@@ -187,6 +188,7 @@ Miscellaneous
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.
+* :doc:`subsonic`: Subsonic API on top of :doc:`web`.
 
 .. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients

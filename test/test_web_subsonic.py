@@ -8,7 +8,6 @@ import re
 import unittest
 
 from beetsplug import web
-from beetsplug.web.subsonic import subsonic_routes
 from test.helper import TestHelper
 
 try:
@@ -33,7 +32,7 @@ class WebSubsonicPluginTest(unittest.TestCase, XmlTestMixin, TestHelper):
     def setUp(self):
         self.setup_beets()
         self.load_plugins('web')
-        web.app.register_blueprint(subsonic_routes)
+        self.load_plugins('subsonic')
 
         # Add fixtures
         album = self.add_album_fixture(track_count=10)
