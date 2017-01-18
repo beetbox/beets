@@ -33,7 +33,7 @@ from flask.json import jsonify
 
 from beets.plugins import BeetsPlugin
 from beets.util.random import random_objs
-from beetsplug.web import register_blueprint
+from beetsplug.web import app
 
 DEFAULT_VERSION = '1.10.1'
 subsonic_routes = Blueprint('subsonic', 'subsonic')
@@ -670,4 +670,4 @@ def v_download():
 class SubsonicPlugin(BeetsPlugin):
     def __init__(self):
         super(SubsonicPlugin, self).__init__()
-        register_blueprint(subsonic_routes)
+        app.register_blueprint(subsonic_routes)

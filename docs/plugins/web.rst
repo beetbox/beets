@@ -95,6 +95,26 @@ for unsupported formats/browsers. There are a number of options for this:
 .. _html5media: http://html5media.info/
 .. _MediaElement.js: http://mediaelementjs.com/
 
+It is also possible to extend this plugin through `Flask`_ with the help of
+`Blueprints`_. Just create a new plugin as follows:
+
+.. code-block:: python
+
+    from flask import Blueprint
+
+    from beets.plugins import BeetsPlugin
+    from beetsplug.web import app
+
+    myplugin_blueprint = Blueprint('myplugin', 'myplugin')
+
+    class MyPlugin(BeetsPlugin):
+    def __init__(self):
+        super(MyPlugin, self).__init__()
+        app.register_blueprint(myplugin_blueprint)
+
+
+.. _Blueprints: http://flask.pocoo.org/docs/0.12/blueprints/
+
 .. _web-cors:
 
 Cross-Origin Resource Sharing (CORS)

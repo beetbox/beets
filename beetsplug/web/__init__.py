@@ -318,12 +318,6 @@ def home():
     return flask.render_template('index.html')
 
 
-def register_blueprint(blueprint):
-    """Register a Flask Blueprint onto current app.
-    """
-    app.register_blueprint(blueprint)
-
-
 # Plugin hook.
 
 class WebPlugin(BeetsPlugin):
