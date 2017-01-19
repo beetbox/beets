@@ -136,16 +136,22 @@ def print_(*strings, **kwargs):
     txt += kwargs.get('end', u'\n')
 
     # Encode the string and write it to stdout.
-    txt = txt.encode(_out_encoding(), 'replace')
     if six.PY2:
         # On Python 2, sys.stdout expects bytes.
-        sys.stdout.write(txt)
+        out = txt.encode(_out_encoding(), 'replace')
+        sys.stdout.write(out)
     else:
         # On Python 3, sys.stdout expects text strings and uses the
         # exception-throwing encoding error policy. To avoid throwing
         # errors and use our configurable encoding override, we use the
         # underlying bytes buffer instead.
-        sys.stdout.buffer.write(txt)
+        if hasattr(sys.stdout, 'buffer'):
+            out = txt.encode(_out_encoding(), 'replace')
+            sys.stdout.buffer.write(out)
+        else:
+            # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
+            # does not exist. We instead just record the text string.
+            sys.stdout.write(txt)
 
 
 # Configuration wrappers.
