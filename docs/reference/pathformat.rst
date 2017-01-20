@@ -129,8 +129,10 @@ disambiguation behavior if you just use ``%aunique{}`` with no parameters in
 your path forms (as in the default path formats), but you can customize the
 disambiguation if, for example, you include the year by default in path formats.
 
-The default characters used as brackets are ``[]``. If a single blank space is
-used, then the disambiguator will not be surrounded by anything.
+The default characters used as brackets are ``[]``. To change this, provide a
+third argument to the ``%aunique`` function consisting of two characters: the left
+and right brackets. Or, to turn off bracketing entirely, use a single blank
+space.
 
 One caveat: When you import an album that is named identically to one already in
 your library, the *first* album—the one already in your library— will not

@@ -17,6 +17,11 @@ New features:
   return the item info for the file at the given path, or 404.
 * The :doc:`/plugins/web` also has a new config option, ``include_paths``,
   which will cause paths to be included in item API responses if set to true.
+* The ``%aunique`` template function for :ref:`aunique` now takes a third
+  argument that specifies which brackets to use around the  disambiguator
+  value.  The argument can be any two characters that represent the left and
+  right brackets. It defaults to `[]` and can also be a white space to turn off
+  bracketing. :bug:`2397` :bug:`2399`
 
 Fixes:
 
