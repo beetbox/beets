@@ -730,6 +730,16 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest(b'/base/foo [foo_bar]/the title', self.i1)
 
+    def test_drop_empty_disam_string(self):
+        album1 = self.lib.get_album(self.i1)
+        album1.year = None
+        album1.store()
+        self._assert_dest(b'/base/foo/the title', self.i1)
+
+    def test_change_brackets(self):
+        self._setf(u'foo%aunique{albumartist album,year,()}/$title')
+        self._assert_dest(b'/base/foo (2001)/the title', self.i1)
+
 
 class PluginDestinationTest(_common.TestCase):
     def setUp(self):

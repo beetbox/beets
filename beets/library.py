@@ -1453,7 +1453,9 @@ class DefaultTemplateFunctions(object):
         from "disam" is used in the string if one is sufficient to
         disambiguate the albums. Otherwise, a fallback opaque value is
         used. Both "keys" and "disam" should be given as
-        whitespace-separated lists of field names.
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or a white space to have no brackets.
         """
         # Fast paths: no album, no item or library, or memoized value.
         if not self.item or not self.lib:
@@ -1470,7 +1472,15 @@ class DefaultTemplateFunctions(object):
         bracket = bracket or '[]'
         keys = keys.split()
         disam = disam.split()
-        bracket = None if bracket is ' ' else list(bracket)
+        bracket = None if bracket == ' ' else list(bracket)
+
+        # Assign a left and right bracket from bracket list.
+        if bracket:
+            bracket_l = bracket[0]
+            bracket_r = bracket[1]
+        else:
+            bracket_l = u''
+            bracket_r = u''
 
         album = self.lib.get_album(self.item)
         if not album:
@@ -1504,18 +1514,17 @@ class DefaultTemplateFunctions(object):
 
         else:
             # No disambiguator distinguished all fields.
-            res = u' {1}{0}{2}'.format(album.id, bracket[0] if bracket else
-                                       u'', bracket[1] if bracket else u'')
+            res = u' {1}{0}{2}'.format(album.id, bracket_l, bracket_r)
             self.lib._memotable[memokey] = res
             return res
 
         # Flatten disambiguation value into a string.
         disam_value = album.formatted(True).get(disambiguator)
-        res = u' {1}{0}{2}'.format(disam_value, bracket[0] if bracket else u'',
-                                   bracket[1] if bracket else u'')
 
-        # Remove space and/or brackets if disambiguation value is empty
-        if bracket and res == u' ' + ''.join(bracket) or res.isspace():
+        # Return empty string if disambiguator is empty.
+        if disam_value:
+            res = u' {1}{0}{2}'.format(disam_value, bracket_l, bracket_r)
+        else:
             res = u''
 
         self.lib._memotable[memokey] = res
