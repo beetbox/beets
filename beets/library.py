@@ -1476,7 +1476,6 @@ class DefaultTemplateFunctions(object):
 
         # Assign a left and right bracket or leave blank if argument is empty.
         if len(bracket) == 2:
-            bracket = list(bracket)
             bracket_l = bracket[0]
             bracket_r = bracket[1]
         else:
