@@ -22,10 +22,10 @@ from beets import plugins
 from beets.dbcore import types
 
 import networkx as nx
-import matplotlib.pyplot as plt
 import os.path
 from networkx.readwrite import json_graph
 import json
+
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -49,12 +49,12 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                               'api_key':  plugins.LASTFM_KEY, })
         config['lastfm']['api_key'].redact = True
 
-        self.config.add({'gexf': 'similarity.gexf',
-                         'per_page': 500,
+        self.config.add({'per_page': 500,
                          'retry_limit': 3,
                          'show': False,
                          'json': 'similarity.json',
-                         'depth': 3, })
+                         'depth': 3,
+                         'force': False, })
         self.item_types = {'play_count':  types.INTEGER, }
 
         self._artistsOwned = list()
@@ -67,15 +67,15 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                             help=u'get similarity for artists')
 
         cmd.parser.add_option(
-            u'-g', u'--gexf', dest='gexf',  metavar='FILE',
+            u'-j', u'--json', dest='json',  metavar='FILE',
             action='store',
-            help=u'read and write Graph as gexf-FILE.'
+            help=u'read/write Graph as json-FILE.'
         )
 
         cmd.parser.add_option(
-            u'-j', u'--json', dest='json',  metavar='FILE',
-            action='store',
-            help=u'write Graph as json-FILE.'
+            u'-f', u'--force', dest='force_refetch',
+            action='store_true', default=False,
+            help=u're-fetch data when jsonfile already present'
         )
 
         cmd.parser.add_option(
@@ -93,35 +93,37 @@ class SimilarityPlugin(plugins.BeetsPlugin):
 
             self.config.set_args(opts)
             show = self.config['show']
-            gmlfile = self.config['gexf'].as_str()
+            gmlfile = self.config['json'].as_str()
             depth = self.config['depth'].as_str()
 
             items = lib.items(ui.decargs(args))
 
-            self.import_similarity(lib, items, show, gmlfile, depth)
+            self.import_similarity(lib, items, show, gmlfile, depth,
+                                   opts.force_refetch or self.config['force'])
 
         cmd.func = func
         return [cmd]
 
-    def import_similarity(self, lib, items, show, gexf, depth):
+    def import_similarity(self, lib, items, show, jsonfile, depth, force):
         """
         Import gml-file which contains similarity.
 
         Edges are similarity and Nodes are artists.
         """
-        if os.path.isfile(gexf) and os.access(gexf, os.R_OK):
-            self._log.info(u'import of gexf file')
-            self.import_graph(gexf, show)
+        if not force and os.path.isfile(jsonfile) and os.access(jsonfile,
+                                                                os.R_OK):
+            self._log.info(u'import of json file')
+            self.import_graph(jsonfile, show)
         else:
-            self._log.info(u'no gexf file found, processing last.fm query')
+            self._log.info(u'Pocessing last.fm query')
             # create node for each similar artist
             self.collect_artists(items)
             # create node for each similar artist
             self.get_similar(lib, depth)
-            self.create_graph(gexf, show)
-            self._log.info(u'Artist owned: {}', len(self._artistsOwned))
-            self._log.info(u'Artist foreign: {}', len(self._artistsForeign))
-            self._log.info(u'Relations: {}', len(self._relations))
+            self.create_graph(jsonfile, show)
+        self._log.info(u'Artist owned: {}', len(self._artistsOwned))
+        self._log.info(u'Artist foreign: {}', len(self._artistsForeign))
+        self._log.info(u'Relations: {}', len(self._relations))
 
     def collect_artists(self, items):
         """Collect artists from query."""
@@ -190,7 +192,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             if not havechilds:
                 break
 
-    def create_graph(self, gexf, show):
+    def create_graph(self, jsonfile, show):
         """Create graph out of collected artists and relations."""
         for relation in self._relations:
             G.add_edge(relation['source_mbid'],
@@ -220,19 +222,19 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
         h = nx.relabel_nodes(G, custom_labels)
-        if show:
-            nx.draw(G, labels=custom_labels)
-            plt.show()
-        nx.write_gexf(h, gexf)
         data = json_graph.node_link_data(h)
-
-        with open('result.json', 'w') as fp:
+        with open(jsonfile, 'w') as fp:
             json.dump(data, fp)
+        self._log.info(u'{}', owned_artist.tojson())
+        self._log.info(u'{}', relation.tojson())
 
-    def import_graph(self, gexf, show):
+    def import_graph(self, jsonfile, show):
         """Import graph from previous created gml file."""
-        # i = nx.read_gml(gmlfile, label='label')
-        i = nx.read_gexf(gexf, None, relabel=True)
+        with open(jsonfile) as data_file:
+            data = json.load(data_file)
+
+        i = json_graph.node_link_graph(data)
+
         for artist in i.nodes(data=True):
             self._log.debug(u'{}', artist)
             artistnode = ArtistNode(artist[1]['mbid'], artist[0])
@@ -247,15 +249,6 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                                 relitem[2]['tmbid'],
                                 relitem[2]['rate'])
             self._relations.append(relation)
-
-        if show:
-            nx.draw_networkx(i)
-            plt.show()
-
-        data = json_graph.node_link_data(i)
-
-        with open('result.json', 'w') as fp:
-            json.dump(data, fp)
 
 
 class Relation():
@@ -295,6 +288,11 @@ class Relation():
             return self.rate
         else:
             return None
+
+    def tojson(self):
+        """Define a setitem function."""
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True, indent=4)
 
 
 class ArtistNode():
@@ -356,3 +354,8 @@ class ArtistNode():
             self.checked = value
         elif key == 'group':
             self.group = value
+
+    def tojson(self):
+        """Define a setitem function."""
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True, indent=4)
