@@ -4,11 +4,12 @@
 
 from __future__ import division, absolute_import, print_function
 
+import json
 import unittest
+import os.path
 from six import assertCountEqual
 
 from test import _common
-import json
 from beets.library import Item, Album
 from beetsplug import web
 
@@ -21,14 +22,31 @@ class WebPluginTest(_common.LibTestCase):
         # Add fixtures
         for track in self.lib.items():
             track.remove()
-        self.lib.add(Item(title=u'title', path='', id=1))
-        self.lib.add(Item(title=u'another title', path='', id=2))
+        self.lib.add(Item(title=u'title', path='/path_1', id=1))
+        self.lib.add(Item(title=u'another title', path='/path_2', id=2))
         self.lib.add(Album(album=u'album', id=3))
         self.lib.add(Album(album=u'another album', id=4))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
+        web.app.config['INCLUDE_PATHS'] = False
         self.client = web.app.test_client()
+
+    def test_config_include_paths_true(self):
+        web.app.config['INCLUDE_PATHS'] = True
+        response = self.client.get('/item/1')
+        response.json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['path'], u'/path_1')
+
+    def test_config_include_paths_false(self):
+        web.app.config['INCLUDE_PATHS'] = False
+        response = self.client.get('/item/1')
+        response.json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('path', response.json)
 
     def test_get_all_items(self):
         response = self.client.get('/item/')
@@ -56,6 +74,23 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_get_single_item_not_found(self):
         response = self.client.get('/item/3')
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_single_item_by_path(self):
+        data_path = os.path.join(_common.RSRC, b'full.mp3')
+        self.lib.add(Item.from_path(data_path))
+        response = self.client.get('/item/path/' + data_path.decode('utf-8'))
+        response.json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['title'], u'full')
+
+    def test_get_single_item_by_path_not_found_if_not_in_library(self):
+        data_path = os.path.join(_common.RSRC, b'full.mp3')
+        # data_path points to a valid file, but we have not added the file
+        # to the library.
+        response = self.client.get('/item/path/' + data_path.decode('utf-8'))
+
         self.assertEqual(response.status_code, 404)
 
     def test_get_item_empty_query(self):

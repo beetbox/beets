@@ -13,12 +13,22 @@ New features:
   non-numeric track index data. For example, some vinyl or tape media will
   report the side of the record using a letter instead of a number in that
   field. :bug:`1831` :bug:`2363`
+* The :doc:`/plugins/web` has a new endpoint, ``/item/path/foo``, which will
+  return the item info for the file at the given path, or 404.
+* The :doc:`/plugins/web` also has a new config option, ``include_paths``,
+  which will cause paths to be included in item API responses if set to true.
+* The ``%aunique`` template function for :ref:`aunique` now takes a third
+  argument that specifies which brackets to use around the  disambiguator
+  value.  The argument can be any two characters that represent the left and
+  right brackets. It defaults to `[]` and can also be blank to turn off
+  bracketing. :bug:`2397` :bug:`2399`
 
 Fixes:
 
 * :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
 * :doc:`/plugins/replaygain`: Fix Python 3 compatibility in the ``bs1770gain``
   backend. :bug:`2382`
+* :doc:`/plugins/bpd`: Report playback times as integer. :bug:`2394`
 
 
 1.4.3 (January 9, 2017)

@@ -1237,13 +1237,16 @@ class Library(dbcore.Database):
         timeout = beets.config['timeout'].as_number()
         super(Library, self).__init__(path, timeout=timeout)
 
-        self._connection().create_function('bytelower', 1, _sqlite_bytelower)
-
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
+
+    def _create_connection(self):
+        conn = super(Library, self)._create_connection()
+        conn.create_function('bytelower', 1, _sqlite_bytelower)
+        return conn
 
     # Adding objects to the database.
 
@@ -1444,13 +1447,15 @@ class DefaultTemplateFunctions(object):
         cur_fmt = beets.config['time_format'].as_str()
         return time.strftime(fmt, time.strptime(s, cur_fmt))
 
-    def tmpl_aunique(self, keys=None, disam=None):
+    def tmpl_aunique(self, keys=None, disam=None, bracket=None):
         """Generate a string that is guaranteed to be unique among all
         albums in the library who share the same set of keys. A fields
         from "disam" is used in the string if one is sufficient to
         disambiguate the albums. Otherwise, a fallback opaque value is
         used. Both "keys" and "disam" should be given as
-        whitespace-separated lists of field names.
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
         """
         # Fast paths: no album, no item or library, or memoized value.
         if not self.item or not self.lib:
@@ -1464,8 +1469,18 @@ class DefaultTemplateFunctions(object):
 
         keys = keys or 'albumartist album'
         disam = disam or 'albumtype year label catalognum albumdisambig'
+        if bracket is None:
+            bracket = '[]'
         keys = keys.split()
         disam = disam.split()
+
+        # Assign a left and right bracket or leave blank if argument is empty.
+        if len(bracket) == 2:
+            bracket_l = bracket[0]
+            bracket_r = bracket[1]
+        else:
+            bracket_l = u''
+            bracket_r = u''
 
         album = self.lib.get_album(self.item)
         if not album:
@@ -1499,13 +1514,19 @@ class DefaultTemplateFunctions(object):
 
         else:
             # No disambiguator distinguished all fields.
-            res = u' {0}'.format(album.id)
+            res = u' {1}{0}{2}'.format(album.id, bracket_l, bracket_r)
             self.lib._memotable[memokey] = res
             return res
 
         # Flatten disambiguation value into a string.
         disam_value = album.formatted(True).get(disambiguator)
-        res = u' [{0}]'.format(disam_value)
+
+        # Return empty string if disambiguator is empty.
+        if disam_value:
+            res = u' {1}{0}{2}'.format(disam_value, bracket_l, bracket_r)
+        else:
+            res = u''
+
         self.lib._memotable[memokey] = res
         return res
 

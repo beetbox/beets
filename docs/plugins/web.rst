@@ -63,6 +63,8 @@ configuration file. The available options are:
   Default: 8337.
 - **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
+- **include_paths**: If true, includes paths in item objects.
+  Default: false.
 
 Implementation
 --------------
@@ -158,6 +160,16 @@ Response with a list of tracks with the ids *6*, *12* and *13*.  The format of
 the response is the same as for `GET /item/`_. It is *not guaranteed* that the
 response includes all the items requested. If a track is not found it is silently
 dropped from the response.
+
+
+``GET /item/path/...``
+++++++++++++++++++++++
+
+Look for an item at the given absolute path on the server. If it corresponds to
+a track, return the track in the same format as ``/item/*``.
+
+If the server runs UNIX, you'll need to include an extra leading slash:
+``http://localhost:8337/item/path//Users/beets/Music/Foo/Bar/Baz.mp3``
 
 
 ``GET /item/query/querystring``
