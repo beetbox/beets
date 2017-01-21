@@ -1455,7 +1455,7 @@ class DefaultTemplateFunctions(object):
         used. Both "keys" and "disam" should be given as
         whitespace-separated lists of field names, while "bracket" is a
         pair of characters to be used as brackets surrounding the
-        disambiguator or a white space to have no brackets.
+        disambiguator or empty to have no brackets.
         """
         # Fast paths: no album, no item or library, or memoized value.
         if not self.item or not self.lib:
