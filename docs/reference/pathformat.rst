@@ -131,8 +131,7 @@ disambiguation if, for example, you include the year by default in path formats.
 
 The default characters used as brackets are ``[]``. To change this, provide a
 third argument to the ``%aunique`` function consisting of two characters: the left
-and right brackets. Or, to turn off bracketing entirely, use a single blank
-space.
+and right brackets. Or, to turn off bracketing entirely, leave argument blank.
 
 One caveat: When you import an album that is named identically to one already in
 your library, the *first* album—the one already in your library— will not

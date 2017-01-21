@@ -745,7 +745,7 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b'/base/foo (2001)/the title', self.i1)
 
     def test_remove_brackets(self):
-        self._setf(u'foo%aunique{albumartist album,year, }/$title')
+        self._setf(u'foo%aunique{albumartist album,year,}/$title')
         self._assert_dest(b'/base/foo 2001/the title', self.i1)
 
 
