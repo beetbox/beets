@@ -46,20 +46,6 @@ def is_url(path):
     return path.split('://', 1)[0] in ['http', 'https']
 
 
-# Use the MPDClient internals to get unicode.
-# see http://www.tarmack.eu/code/mpdunicode.py for the general idea
-class MPDClient(mpd.MPDClient):
-    def _write_command(self, command, args=[]):
-        args = [six.text_type(arg).encode('utf-8') for arg in args]
-        super(MPDClient, self)._write_command(command, args)
-
-    def _read_line(self):
-        line = super(MPDClient, self)._read_line()
-        if line is not None:
-            return line.decode('utf-8')
-        return None
-
-
 class MPDClientWrapper(object):
     def __init__(self, log):
         self._log = log
@@ -67,7 +53,7 @@ class MPDClientWrapper(object):
         self.music_directory = (
             mpd_config['music_directory'].as_str())
 
-        self.client = MPDClient()
+        self.client = mpd.MPDClient(use_unicode=True)
 
     def connect(self):
         """Connect to the MPD.
