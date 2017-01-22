@@ -88,7 +88,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             jsonfile = self.config['json'].as_str()
             force = self.config['force']
-            if self.config['depth'] and self.config['depth'].as_str().isdigit():
+            if (self.config['depth'] and
+                    self.config['depth'].as_str().isdigit()):
                 depth = int(self.config['depth'].as_str())
             else:
                 depth = 0
