@@ -85,6 +85,7 @@ like this::
    rewrite
    scrub
    smartplaylist
+   similarity
    spotify
    the
    thumbnails
@@ -127,6 +128,7 @@ Metadata
   statistics (last_played, play_count, skip_count, rating).
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
+* :doc:`similarity`: Query last.fm for similar artists and store information in json graph.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
