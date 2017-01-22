@@ -78,7 +78,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         )
 
         cmd.parser.add_option(
-            u'-d', u'--depth', dest='depth',  metavar='DEPTH',
+            u'-d', u'--depth', dest='depth',
             action='store',
             help=u'How is the depth of searching.'
         )
@@ -88,7 +88,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             jsonfile = self.config['json'].as_str()
             force = self.config['force']
-            if self.config['depth'].as_str().isdigit():
+            if self.config['depth'] and self.config['depth'].as_str().isdigit():
                 depth = int(self.config['depth'].as_str())
             else:
                 depth = 0
@@ -111,6 +111,11 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                                                                 os.R_OK):
             self._log.info(u'import of json file')
             self.import_graph(fullpath)
+            # create node for each similar artist
+            self.collect_artists(items)
+            # create node for each similar artist
+            self.get_similar(lib, depth)
+            self.create_graph(fullpath)
         else:
             self._log.info(u'Pocessing last.fm query')
             # create node for each similar artist
@@ -165,17 +170,19 @@ class SimilarityPlugin(plugins.BeetsPlugin):
 
                             if mbid:
                                 artistnode = ArtistNode(mbid, name)
-                                artistnode['group'] = depthcounter
                                 if len(lib.items('mb_artistid:' + mbid)) > 0:
                                     if ((artistnode not in
                                          self._artistsOwned) and
                                         (artistnode not in
                                          artistsshadow)):
+                                        artistnode['group'] = 1
                                         artistsshadow.append(artistnode)
                                         self._log.info(u'I own this: {}', name)
                                         havechilds = True
-                                if artistnode not in self._artistsForeign:
-                                    self._artistsForeign.append(artistnode)
+                                else:
+                                    if artistnode not in self._artistsForeign:
+                                        artistnode['group'] = 0
+                                        self._artistsForeign.append(artistnode)
 
                                 relation = Relation(artist['mbid'],
                                                     mbid,
@@ -236,8 +243,14 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         for artist in i.nodes(data=True):
             self._log.debug(u'{}', artist)
             if artist[1].get('mbid'):
+                if artist[1]['group'] == 1:
+                    artist[1]['owned'] = True
+                else:
+                    artist[1]['owned'] = False
                 artistnode = ArtistNode(artist[1]['mbid'], artist[0],
-                                        artist[1]['group'])
+                                        artist[1]['group'],
+                                        artist[1]['owned'],
+                                        artist[1]['checked'])
                 if artist[1]['group'] == 1:
                     if artistnode not in self._artistsOwned:
                         self._artistsOwned.append(artistnode)
