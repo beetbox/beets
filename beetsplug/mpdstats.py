@@ -27,7 +27,6 @@ from beets import plugins
 from beets import library
 from beets.util import displayable_path
 from beets.dbcore import types
-import six
 
 # If we lose the connection, how many times do we want to retry and how
 # much time should we wait between retries?
