@@ -51,9 +51,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
 
         self.config.add({'per_page': 500,
                          'retry_limit': 3,
-                         'show': False,
                          'json': 'similarity.json',
-                         'depth': 3,
+                         'depth': 0,
                          'force': False, })
         self.item_types = {'play_count':  types.INTEGER, }
 
@@ -79,48 +78,49 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         )
 
         cmd.parser.add_option(
-            u'-s', u'--show', dest='depth',  metavar='DEPTH',
+            u'-d', u'--depth', dest='depth',  metavar='DEPTH',
             action='store',
             help=u'How is the depth of searching.'
-        )
-
-        cmd.parser.add_option(
-            u'-d', u'--depth',
-
         )
 
         def func(lib, opts, args):
 
             self.config.set_args(opts)
-            show = self.config['show']
-            gmlfile = self.config['json'].as_str()
-            depth = self.config['depth'].as_str()
+            jsonfile = self.config['json'].as_str()
+            force = self.config['force']
+            try:
+                depth = int(self.config['depth'])
+            except ValueError:
+                depth = 0
+            except TypeError:
+                depth = 0
 
             items = lib.items(ui.decargs(args))
 
-            self.import_similarity(lib, items, show, gmlfile, depth,
-                                   opts.force_refetch or self.config['force'])
+            self.import_similarity(lib, items, jsonfile, depth, force)
 
         cmd.func = func
         return [cmd]
 
-    def import_similarity(self, lib, items, show, jsonfile, depth, force):
+    def import_similarity(self, lib, items, jsonfile, depth, force):
         """
         Import gml-file which contains similarity.
 
         Edges are similarity and Nodes are artists.
         """
-        if not force and os.path.isfile(jsonfile) and os.access(jsonfile,
+        fullpath = os.path.join(config.config_dir(), jsonfile)
+        self._log.info(u'{}', fullpath)
+        if not force and os.path.isfile(fullpath) and os.access(fullpath,
                                                                 os.R_OK):
             self._log.info(u'import of json file')
-            self.import_graph(jsonfile, show)
+            self.import_graph(fullpath)
         else:
             self._log.info(u'Pocessing last.fm query')
             # create node for each similar artist
             self.collect_artists(items)
             # create node for each similar artist
             self.get_similar(lib, depth)
-            self.create_graph(jsonfile, show)
+            self.create_graph(fullpath)
         self._log.info(u'Artist owned: {}', len(self._artistsOwned))
         self._log.info(u'Artist foreign: {}', len(self._artistsForeign))
         self._log.info(u'Relations: {}', len(self._relations))
@@ -142,7 +142,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         while True:
             havechilds = False
             self._log.info(u'Level: {}-{}', depthcounter, depth)
-            if depthcounter > int(depth):
+
+            if not int(depth) == 0 and depthcounter > int(depth):
                 self._log.info(u'out!')
                 break
             depthcounter += 1
@@ -192,7 +193,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             if not havechilds:
                 break
 
-    def create_graph(self, jsonfile, show):
+    def create_graph(self, jsonfile):
         """Create graph out of collected artists and relations."""
         for relation in self._relations:
             G.add_edge(relation['source_mbid'],
@@ -208,6 +209,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             G.add_node(owned_artist['mbid'],
                        mbid=owned_artist['mbid'],
                        group=owned_artist['group'],
+                       checked=owned_artist['checked'],
                        name=owned_artist['name'])
             custom_labels[owned_artist['mbid']] = owned_artist['name']
             self._log.debug(u'#{}', owned_artist['mbid'])
@@ -218,17 +220,16 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 G.add_node(foreign_artist['mbid'],
                            mbid=foreign_artist['mbid'],
                            group=foreign_artist['group'],
+                           checked=foreign_artist['checked'],
                            name=foreign_artist['name'])
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
         h = nx.relabel_nodes(G, custom_labels)
         data = json_graph.node_link_data(h)
         with open(jsonfile, 'w') as fp:
-            json.dump(data, fp)
-        self._log.info(u'{}', owned_artist.tojson())
-        self._log.info(u'{}', relation.tojson())
+            json.dump(data, fp, indent=4, sort_keys=True)
 
-    def import_graph(self, jsonfile, show):
+    def import_graph(self, jsonfile):
         """Import graph from previous created gml file."""
         with open(jsonfile) as data_file:
             data = json.load(data_file)
@@ -237,13 +238,15 @@ class SimilarityPlugin(plugins.BeetsPlugin):
 
         for artist in i.nodes(data=True):
             self._log.debug(u'{}', artist)
-            artistnode = ArtistNode(artist[1]['mbid'], artist[0])
-            if artist[1]['group'] == 1:
-                if artistnode not in self._artistsOwned:
-                    self._artistsOwned.append(artistnode)
-            else:
-                if artistnode not in self._artistsForeign:
-                    self._artistsForeign.append(artistnode)
+            if artist[1].get('mbid'):
+                artistnode = ArtistNode(artist[1]['mbid'], artist[0],
+                                        artist[1]['group'])
+                if artist[1]['group'] == 1:
+                    if artistnode not in self._artistsOwned:
+                        self._artistsOwned.append(artistnode)
+                else:
+                    if artistnode not in self._artistsForeign:
+                        self._artistsForeign.append(artistnode)
         for relitem in i.edges(data=True):
             relation = Relation(relitem[2]['smbid'],
                                 relitem[2]['tmbid'],
@@ -304,7 +307,7 @@ class ArtistNode():
     checked = False
     group = 0
 
-    def __init__(self, mbid, name, owned=False, checked=False, group=0):
+    def __init__(self, mbid, name, group=0, owned=False, checked=False):
         """Constructor of class."""
         self.mbid = mbid
         self.name = name

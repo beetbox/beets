@@ -21,14 +21,14 @@ var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height");
 
-var color = d3.scaleOrdinal(d3.schemeCategory20);
+var color = d3.scaleOrdinal(d3.schemeCategory10);
 
 var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().distance(20).strength(1))
+    .force("link", d3.forceLink().distance(40).strength(1))
     .force("charge", d3.forceManyBody())
     .force("center", d3.forceCenter(width / 2, height / 2));
 
-d3.json("result.json", function(error, graph) {
+d3.json("simularity.json", function(error, graph) {
   if (error) throw error;
 
   var link = svg.append("g")
@@ -36,7 +36,7 @@ d3.json("result.json", function(error, graph) {
     .selectAll("line")
     .data(graph.links)
     .enter().append("line")
-      .attr("stroke-width", function(d) { return d.rate/100; });
+      .attr("stroke-width", function(d) { return d.rate/200; });
 
   var node = svg.append("g")
       .attr("class", "nodes")
