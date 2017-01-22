@@ -72,7 +72,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         )
 
         cmd.parser.add_option(
-            u'-f', u'--force', dest='force_refetch',
+            u'-f', u'--force', dest='force',
             action='store_true', default=False,
             help=u're-fetch data when jsonfile already present'
         )
@@ -88,13 +88,10 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             jsonfile = self.config['json'].as_str()
             force = self.config['force']
-            try:
-                depth = int(self.config['depth'])
-            except ValueError:
+            if self.config['depth'].as_str().isdigit():
+                depth = int(self.config['depth'].as_str())
+            else:
                 depth = 0
-            except TypeError:
-                depth = 0
-
             items = lib.items(ui.decargs(args))
 
             self.import_similarity(lib, items, jsonfile, depth, force)
