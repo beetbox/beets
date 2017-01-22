@@ -117,7 +117,7 @@ setup(
         'discogs': ['discogs-client>=2.1.0'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'lastgenre': ['pylast'],
-        'mpdstats': ['python-mpd2'],
+        'mpdstats': ['python-mpd2>=0.4.2'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
         'thumbnails': ['pyxdg'] +
