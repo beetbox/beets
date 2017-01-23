@@ -263,25 +263,27 @@ class MPDStats(object):
         played, duration = map(int, status['time'].split(':', 1))
         remaining = duration - played
 
-        if self.now_playing and self.now_playing['path'] != path:
-            skipped = self.handle_song_change(self.now_playing)
-            # mpd responds twice on a natural new song start
-            going_to_happen_twice = not skipped
-        else:
-            going_to_happen_twice = False
+        if self.now_playing:
+            if self.now_playing['path'] != path:
+                self.handle_song_change(self.now_playing)
+            else:  # in case we got mpd play event with same song playing multiple times
+                # assume low diff means redundant second play event after natural song start
+                diff = abs(time.time() - self.now_playing['started'])
 
-        if not going_to_happen_twice:
-            self._log.info(u'playing {0}', displayable_path(path))
+                if diff <= self.time_threshold:
+                    return
 
-            self.now_playing = {
-                'started':    time.time(),
-                'remaining':  remaining,
-                'path':       path,
-                'beets_item': self.get_item(path),
-            }
+        self._log.info(u'playing {0}', displayable_path(path))
 
-            self.update_item(self.now_playing['beets_item'],
-                             'last_played', value=int(time.time()))
+        self.now_playing = {
+            'started':    time.time(),
+            'remaining':  remaining,
+            'path':       path,
+            'beets_item': self.get_item(path),
+        }
+
+        self.update_item(self.now_playing['beets_item'],
+                         'last_played', value=int(time.time()))
 
     def run(self):
         self.mpd.connect()
