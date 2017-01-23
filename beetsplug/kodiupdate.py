@@ -12,8 +12,6 @@ Put something like the following in your config.yaml to configure:
 from __future__ import division, absolute_import, print_function
 
 import requests
-import json
-from requests.auth import HTTPBasicAuth
 from beets import config
 from beets.plugins import BeetsPlugin
 
@@ -27,7 +25,7 @@ def update_kodi(host, port, user, password):
     headers = {'Content-Type': 'application/json'}
     # Create the payload. Id seems to be mandatory.
     payload = {'jsonrpc': '2.0', 'method':'AudioLibrary.Scan', 'id':1}
-    r = requests.post(url, auth=HTTPBasicAuth(user, password), json=payload, headers=headers)
+    r = requests.post(url, auth=(user, password), json=payload, headers=headers)
     return r
 
 class KodiUpdate(BeetsPlugin):
