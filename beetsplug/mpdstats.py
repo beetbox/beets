@@ -266,8 +266,11 @@ class MPDStats(object):
         if self.now_playing:
             if self.now_playing['path'] != path:
                 self.handle_song_change(self.now_playing)
-            else:  # in case we got mpd play event with same song playing multiple times
-                # assume low diff means redundant second play event after natural song start
+            else:
+                # In case we got mpd play event with same song playing
+                # multiple times,
+                # assume low diff means redundant second play event
+                # after natural song start.
                 diff = abs(time.time() - self.now_playing['started'])
 
                 if diff <= self.time_threshold:
