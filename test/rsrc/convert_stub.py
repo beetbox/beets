@@ -6,15 +6,19 @@ a specified text tag.
 """
 
 from __future__ import division, absolute_import, print_function
-from os.path import dirname, abspath
-import six
 import sys
 import platform
+import locale
 
-beets_src = dirname(dirname(dirname(abspath(__file__))))
-sys.path.insert(0, beets_src)
+PY2 = sys.version_info[0] == 2
 
-from beets.util import arg_encoding  # noqa: E402
+
+# From `beets.util`.
+def arg_encoding():
+    try:
+        return locale.getdefaultlocale()[1] or 'utf-8'
+    except ValueError:
+        return 'utf-8'
 
 
 def convert(in_file, out_file, tag):
@@ -27,7 +31,7 @@ def convert(in_file, out_file, tag):
     # On Windows, use Unicode paths. (The test harness gives them to us
     # as UTF-8 bytes.)
     if platform.system() == 'Windows':
-        if not six.PY2:
+        if not PY2:
             in_file = in_file.encode(arg_encoding())
             out_file = out_file.encode(arg_encoding())
         in_file = in_file.decode('utf-8')
