@@ -123,6 +123,7 @@ class DateQueryTest(_common.LibTestCase):
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 0)
 
+
 class DateQueryTestRelative(_common.LibTestCase):
     def setUp(self):
         super(DateQueryTestRelative, self).setUp()
@@ -135,7 +136,9 @@ class DateQueryTestRelative(_common.LibTestCase):
         self.assertEqual(len(matched), 1)
 
     def test_single_month_nonmatch_fast(self):
-        query = DateQuery('added', (datetime.now()+relativedelta(months=1)).strftime('%Y-%m'))
+        query = DateQuery('added',
+                          (datetime.now() + relativedelta(months=1)).strftime(
+                              '%Y-%m'))
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 0)
 
@@ -144,7 +147,9 @@ class DateQueryTestRelative(_common.LibTestCase):
         self.assertTrue(query.match(self.i))
 
     def test_single_month_nonmatch_slow(self):
-        query = DateQuery('added', (datetime.now()+relativedelta(months=1)).strftime('%Y-%m'))
+        query = DateQuery('added',
+                          (datetime.now() + relativedelta(months=1)).strftime(
+                              '%Y-%m'))
         self.assertFalse(query.match(self.i))
 
     def test_single_day_match_fast(self):
@@ -153,9 +158,12 @@ class DateQueryTestRelative(_common.LibTestCase):
         self.assertEqual(len(matched), 1)
 
     def test_single_day_nonmatch_fast(self):
-        query = DateQuery('added', (datetime.now()+ relativedelta(days=1)).strftime('%Y-%m-%d'))
+        query = DateQuery('added',
+                          (datetime.now() + relativedelta(days=1)).strftime(
+                              '%Y-%m-%d'))
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 0)
+
 
 class DateQueryConstructTest(unittest.TestCase):
     def test_long_numbers(self):

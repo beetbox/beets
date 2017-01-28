@@ -162,6 +162,20 @@ Dates are written separated by hyphens, like ``year-month-day``, but the month
 and day are optional. If you leave out the day, for example, you will get
 matches for the whole month.
 
+You can also use relative dates to the current time.
+Relative dates begin by the ``@`` character, followed by an optional ``+`` or
+``-`` sign that will increment or decrement now, followed by the time quantity
+that will be represented as an integer followed by either ``d`` for days, ``w``
+for weeks, ``m`` for months and finally ``y`` for year.
+
+Here is an example that finds all the albums added between now and last week::
+
+    $ beet ls -a 'added:@-1w..@0d'
+
+Find all items added in a 2 weeks period 4  weeks ago::
+
+    $ beet ls -a 'added:@-6w..@-2w'
+
 Date *intervals*, like the numeric intervals described above, are separated by
 two dots (``..``). You can specify a start, an end, or both.
 
@@ -185,6 +199,7 @@ Find all items with a file modification time between 2008-12-01 and
 2008-12-03::
 
     $ beet ls 'mtime:2008-12-01..2008-12-02'
+
 
 .. _not_query:
 
