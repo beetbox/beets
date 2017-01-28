@@ -21,6 +21,7 @@ import re
 from operator import mul
 from beets import util
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import unicodedata
 from functools import reduce
 import six
@@ -533,8 +534,9 @@ class Period(object):
     instants of time during January 2014.
     """
 
-    precisions = ('year', 'month', 'day')
+    precisions = ('year', 'month', 'day', 'relative')
     date_formats = ('%Y', '%Y-%m', '%Y-%m-%d')
+    relative = ('y', 'm', 'w', 'd')
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -550,19 +552,38 @@ class Period(object):
         """Parse a date and return a `Period` object or `None` if the
         string is empty.
         """
-        if not string:
-            return None
-        ordinal = string.count('-')
-        if ordinal >= len(cls.date_formats):
-            # Too many components.
-            return None
-        date_format = cls.date_formats[ordinal]
-        try:
-            date = datetime.strptime(string, date_format)
-        except ValueError:
-            # Parsing failed.
-            return None
-        precision = cls.precisions[ordinal]
+        if re.match('@([+|-]?)(\d+)([y|m|w|d])', string) is not None:
+            sign = re.match('@([+|-]?)(\d+)([y|m|w|d])', string).group(1)
+            quantity = re.match('@([+|-]?)(\d+)([y|m|w|d])', string).group(2)
+            timespan = re.match('@([+|-]?)(\d+)([y|m|w|d])', string).group(3)
+            if sign == '-':
+                m = -1
+            else:
+                m = 1
+            if timespan == 'y':
+                date = datetime.now() + m*relativedelta(years=int(quantity))
+            elif timespan == 'm':
+                date = datetime.now() + m*relativedelta(months=int(quantity))
+            elif timespan == 'w':
+                date = datetime.now() + m*relativedelta(weeks=int(quantity))
+            elif timespan == 'd':
+                date = datetime.now() + m*relativedelta(days=int(quantity))
+
+            precision = 'relative'
+        else:
+            if not string:
+                return None
+            ordinal = string.count('-')
+            if ordinal >= len(cls.date_formats):
+                # Too many components.
+                return None
+            date_format = cls.date_formats[ordinal]
+            try:
+                date = datetime.strptime(string, date_format)
+            except ValueError:
+                # Parsing failed.
+                return None
+            precision = cls.precisions[ordinal]
         return cls(date, precision)
 
     def open_right_endpoint(self):
@@ -571,6 +592,8 @@ class Period(object):
         """
         precision = self.precision
         date = self.date
+        if 'relative' == self.precision:
+            return date
         if 'year' == self.precision:
             return date.replace(year=date.year + 1, month=1)
         elif 'month' == precision:
