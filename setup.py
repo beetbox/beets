@@ -114,7 +114,7 @@ setup(
         'absubmit': ['requests'],
         'fetchart': ['requests'],
         'chroma': ['pyacoustid'],
-        'discogs': ['discogs-client>=2.1.0'],
+        'discogs': ['discogs-client>=2.2.1'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'lastgenre': ['pylast'],
         'mpdstats': ['python-mpd2>=0.4.2'],
