@@ -93,7 +93,6 @@ setup(
         'musicbrainzngs>=0.4',
         'pyyaml',
         'jellyfish',
-        'python-dateutil',
     ] + (['colorama'] if (sys.platform == 'win32') else []) +
         (['enum34>=1.0.4'] if sys.version_info < (3, 4, 0) else []),
 
@@ -108,7 +107,6 @@ setup(
         'pathlib',
         'python-mpd2',
         'discogs-client',
-        'python-dateutil',
     ],
 
     # Plugin (optional) dependencies:

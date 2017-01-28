@@ -21,7 +21,6 @@ import re
 from operator import mul
 from beets import util
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 import unicodedata
 from functools import reduce
 import six
@@ -561,14 +560,13 @@ class Period(object):
             else:
                 m = 1
             if timespan == 'y':
-                date = datetime.now() + m * relativedelta(years=int(quantity))
+                date = datetime.now() + m * timedelta(days=int(quantity) * 365)
             elif timespan == 'm':
-                date = datetime.now() + m * relativedelta(months=int(quantity))
+                date = datetime.now() + m * timedelta(days=int(quantity) * 30)
             elif timespan == 'w':
-                date = datetime.now() + m * relativedelta(weeks=int(quantity))
+                date = datetime.now() + timedelta(days=int(quantity) * 7)
             elif timespan == 'd':
-                date = datetime.now() + m * relativedelta(days=int(quantity))
-
+                date = datetime.now() + m * timedelta(days=int(quantity))
             precision = 'relative'
         else:
             if not string:
