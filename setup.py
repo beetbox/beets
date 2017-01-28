@@ -107,7 +107,7 @@ setup(
         'pathlib',
         'python-mpd2',
         'discogs-client',
-        'dateutils'
+        'python-dateutil'
     ],
 
     # Plugin (optional) dependencies:
