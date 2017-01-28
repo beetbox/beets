@@ -17,6 +17,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from dateutil.relativedelta import relativedelta
 from test import _common
 from datetime import datetime
 import unittest
@@ -26,6 +27,10 @@ from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
 
 def _date(string):
     return datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
+
+
+def _datepattern(datetimedate):
+    return datetimedate.strftime('%Y-%m-%dT%H:%M:%S')
 
 
 class DateIntervalTest(unittest.TestCase):
@@ -42,6 +47,9 @@ class DateIntervalTest(unittest.TestCase):
 
         self.assertContains('..2001', '2001-12-31T23:59:59')
         self.assertExcludes('..2001', '2002-01-01T00:00:00')
+
+        self.assertContains('@-1d..@1d', _datepattern(datetime.now()))
+        self.assertExcludes('@-2d..@-1d', _datepattern(datetime.now()))
 
     def test_day_precision_intervals(self):
         self.assertContains('2000-06-20..2000-06-20', '2000-06-20T00:00:00')
@@ -62,7 +70,8 @@ class DateIntervalTest(unittest.TestCase):
         self.assertContains('..', date=datetime.min)
         self.assertContains('..', '1000-01-01T00:00:00')
 
-    def assertContains(self, interval_pattern, date_pattern=None, date=None):  # noqa
+    def assertContains(self, interval_pattern, date_pattern=None,
+                       date=None):  # noqa
         if date is None:
             date = _date(date_pattern)
         (start, end) = _parse_periods(interval_pattern)
@@ -114,6 +123,39 @@ class DateQueryTest(_common.LibTestCase):
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 0)
 
+class DateQueryTestRelative(_common.LibTestCase):
+    def setUp(self):
+        super(DateQueryTestRelative, self).setUp()
+        self.i.added = _parsetime(datetime.now().strftime('%Y-%m-%d %H:%M'))
+        self.i.store()
+
+    def test_single_month_match_fast(self):
+        query = DateQuery('added', datetime.now().strftime('%Y-%m'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 1)
+
+    def test_single_month_nonmatch_fast(self):
+        query = DateQuery('added', (datetime.now()+relativedelta(months=1)).strftime('%Y-%m'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 0)
+
+    def test_single_month_match_slow(self):
+        query = DateQuery('added', datetime.now().strftime('%Y-%m'))
+        self.assertTrue(query.match(self.i))
+
+    def test_single_month_nonmatch_slow(self):
+        query = DateQuery('added', (datetime.now()+relativedelta(months=1)).strftime('%Y-%m'))
+        self.assertFalse(query.match(self.i))
+
+    def test_single_day_match_fast(self):
+        query = DateQuery('added', datetime.now().strftime('%Y-%m-%d'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 1)
+
+    def test_single_day_nonmatch_fast(self):
+        query = DateQuery('added', (datetime.now()+ relativedelta(days=1)).strftime('%Y-%m-%d'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 0)
 
 class DateQueryConstructTest(unittest.TestCase):
     def test_long_numbers(self):
