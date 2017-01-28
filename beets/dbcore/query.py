@@ -561,13 +561,13 @@ class Period(object):
             else:
                 m = 1
             if timespan == 'y':
-                date = datetime.now() + m*relativedelta(years=int(quantity))
+                date = datetime.now() + m * relativedelta(years=int(quantity))
             elif timespan == 'm':
-                date = datetime.now() + m*relativedelta(months=int(quantity))
+                date = datetime.now() + m * relativedelta(months=int(quantity))
             elif timespan == 'w':
-                date = datetime.now() + m*relativedelta(weeks=int(quantity))
+                date = datetime.now() + m * relativedelta(weeks=int(quantity))
             elif timespan == 'd':
-                date = datetime.now() + m*relativedelta(days=int(quantity))
+                date = datetime.now() + m * relativedelta(days=int(quantity))
 
             precision = 'relative'
         else:
