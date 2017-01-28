@@ -620,7 +620,7 @@ automatically accept any matches above 90% similarity, use::
 The default strong recommendation threshold is 0.04.
 
 The ``medium_rec_thresh`` and ``rec_gap_thresh`` options work similarly. When a
-match is above the *medium* recommendation threshold or the distance between it
+match is below the *medium* recommendation threshold or the distance between it
 and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.
