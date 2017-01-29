@@ -168,13 +168,13 @@ class DateQueryTestRelativeMore(_common.LibTestCase):
 
     def test_relative(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '@-4'+timespan+'..@+4'+timespan)
+            query = DateQuery('added', '@-4' + timespan + '..@+4'+ timespan)
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 1)
 
     def test_relative_fail(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '@-2'+timespan+'..@-1'+timespan)
+            query = DateQuery('added', '@-2' + timespan + '..@-1' + timespan)
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 0)
 
