@@ -535,7 +535,7 @@ class Period(object):
 
     precisions = ('year', 'month', 'day', 'relative')
     date_formats = ('%Y', '%Y-%m', '%Y-%m-%d')
-    relative = ('y', 'm', 'w', 'd')
+    relative = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -550,24 +550,30 @@ class Period(object):
     def parse(cls, string):
         """Parse a date and return a `Period` object or `None` if the
         string is empty.
+        Depending on the string, the date can be absolute or
+        relative.
+        An absolute date has to be like one of the date_formats '%Y' or '%Y-%m'
+        or '%Y-%m-%d'
+        A relative date begins by '@ 'and has to follow the pattern_dq format
+        '@([+|-]?)(\d+)([y|m|w|d])'
+        - '@' indicates it's a date relative to now()
+        - the optional '+' or '-' sign, which defaults to '+' will increment or
+        decrement now() by a certain quantity
+        - that quantity can be expressed in days, weeks, months or years
+        respectively 'd', 'w', 'm', 'y'
+        Please note that this relative calculation is rather approximate as it
+        makes the assumption of 30 days per month and 365 days per year
         """
         pattern_dq = '@([+|-]?)(\d+)([y|m|w|d])'
-        if re.match(pattern_dq, string) is not None:
-            sign = re.match(pattern_dq, string).group(1)
-            quantity = re.match(pattern_dq, string).group(2)
-            timespan = re.match(pattern_dq, string).group(3)
-            if sign == '-':
-                m = -1
-            else:
-                m = 1
-            if timespan == 'y':
-                date = datetime.now() + m * timedelta(days=int(quantity) * 365)
-            elif timespan == 'm':
-                date = datetime.now() + m * timedelta(days=int(quantity) * 30)
-            elif timespan == 'w':
-                date = datetime.now() + m * timedelta(days=int(quantity) * 7)
-            elif timespan == 'd':
-                date = datetime.now() + m * timedelta(days=int(quantity))
+        match_dq = re.match(pattern_dq, string)
+        if match_dq is not None:
+            sign = match_dq.group(1)
+            quantity = match_dq.group(2)
+            timespan = match_dq.group(3)
+            multiplier = -1 if sign == '-' else 1
+            days = cls.relative[timespan]
+            date = datetime.now() + multiplier * timedelta(
+                days=int(quantity) * days)
             precision = 'relative'
         else:
             if not string:
@@ -648,6 +654,7 @@ class DateQuery(FieldQuery):
     The value of a date field can be matched against a date interval by
     using an ellipsis interval syntax similar to that of NumericQuery.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(DateQuery, self).__init__(field, pattern, fast)
         start, end = _parse_periods(pattern)
@@ -691,6 +698,7 @@ class DurationQuery(NumericQuery):
     Raises InvalidQueryError when the pattern does not represent an int, float
     or M:SS time interval.
     """
+
     def _convert(self, s):
         """Convert a M:SS or numeric string to a float.
 

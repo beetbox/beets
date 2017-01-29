@@ -170,7 +170,7 @@ for weeks, ``m`` for months and finally ``y`` for year.
 
 Here is an example that finds all the albums added between now and last week::
 
-    $ beet ls -a 'added:@-1w..@0d'
+    $ beet ls -a 'added:@-1w..'
 
 Find all items added in a 2 weeks period 4  weeks ago::
 
