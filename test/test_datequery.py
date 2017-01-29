@@ -160,6 +160,49 @@ class DateQueryTestRelative(_common.LibTestCase):
         self.assertEqual(len(matched), 0)
 
 
+class DateQueryTestRelativeMore(_common.LibTestCase):
+    def setUp(self):
+        super(DateQueryTestRelativeMore, self).setUp()
+        self.i.added = _parsetime(datetime.now().strftime('%Y-%m-%d %H:%M'))
+        self.i.store()
+
+    def test_relative(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '@-4'+timespan+'..@+4'+timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 1)
+
+    def test_relative_fail(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '@-2'+timespan+'..@-1'+timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 0)
+
+    def test_start_relative(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '@-4' + timespan + '..')
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 1)
+
+    def test_start_relative_fail(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '@4' + timespan + '..')
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 0)
+
+    def test_end_relative(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '..@+4' + timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 1)
+
+    def test_end_relative_fail(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '..@-4' + timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 0)
+
+
 class DateQueryConstructTest(unittest.TestCase):
     def test_long_numbers(self):
         DateQuery('added', '1409830085..1412422089')

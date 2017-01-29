@@ -551,10 +551,11 @@ class Period(object):
         """Parse a date and return a `Period` object or `None` if the
         string is empty.
         """
-        if re.match('@([+|-]?)(\d+)([y|m|w|d])', string) is not None:
-            sign = re.match('@([+|-]?)(\d+)([y|m|w|d])', string).group(1)
-            quantity = re.match('@([+|-]?)(\d+)([y|m|w|d])', string).group(2)
-            timespan = re.match('@([+|-]?)(\d+)([y|m|w|d])', string).group(3)
+        pattern_dq = '@([+|-]?)(\d+)([y|m|w|d])'
+        if re.match(pattern_dq, string) is not None:
+            sign = re.match(pattern_dq, string).group(1)
+            quantity = re.match(pattern_dq, string).group(2)
+            timespan = re.match(pattern_dq, string).group(3)
             if sign == '-':
                 m = -1
             else:
@@ -564,7 +565,7 @@ class Period(object):
             elif timespan == 'm':
                 date = datetime.now() + m * timedelta(days=int(quantity) * 30)
             elif timespan == 'w':
-                date = datetime.now() + timedelta(days=int(quantity) * 7)
+                date = datetime.now() + m * timedelta(days=int(quantity) * 7)
             elif timespan == 'd':
                 date = datetime.now() + m * timedelta(days=int(quantity))
             precision = 'relative'
