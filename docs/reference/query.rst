@@ -163,10 +163,16 @@ and day are optional. If you leave out the day, for example, you will get
 matches for the whole month.
 
 You can also use relative dates to the current time.
-Relative dates begin by the ``@`` character, followed by an optional ``+`` or
-``-`` sign that will increment or decrement now, followed by the time quantity
-that will be represented as an integer followed by either ``d`` for days, ``w``
-for weeks, ``m`` for months and finally ``y`` for year.
+A relative date begins by ``@`` and has to follow the pattern_dq format
+``@([+|-]?)(\d+)([y|m|w|d])``
+- ``@`` indicates it's a date relative to now()
+- the optional ``+`` or ``-`` sign, which defaults to ``+`` will increment or
+decrement now() by a certain quantity
+- that quantity can be expressed in days, weeks, months or years respectively
+'d', 'w', 'm', 'y'
+
+Please note that this relative calculation is rather approximate as it makes
+the assumption of 30 days per month and 365 days per year.
 
 Here is an example that finds all the albums added between now and last week::
 
@@ -174,7 +180,7 @@ Here is an example that finds all the albums added between now and last week::
 
 Find all items added in a 2 weeks period 4  weeks ago::
 
-    $ beet ls -a 'added:@-6w..@-2w'
+    $ beet ls -a 'added:@-6w..@-4w'
 
 Date *intervals*, like the numeric intervals described above, are separated by
 two dots (``..``). You can specify a start, an end, or both.
@@ -199,7 +205,6 @@ Find all items with a file modification time between 2008-12-01 and
 2008-12-03::
 
     $ beet ls 'mtime:2008-12-01..2008-12-02'
-
 
 .. _not_query:
 
