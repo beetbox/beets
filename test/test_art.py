@@ -43,7 +43,9 @@ class Settings():
     """Used to pass settings to the ArtSources when the plugin isn't fully
     instantiated.
     """
-    pass
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 class UseThePlugin(_common.TestCase):
@@ -80,8 +82,7 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
         super(FetchImageTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, b'arttest')
         self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
-        self.settings = Settings()
-        self.settings.maxwidth = 0
+        self.settings = Settings(maxwidth=0)
         self.candidate = fetchart.Candidate(logger, url=self.URL)
 
     def test_invalid_type_returns_none(self):
@@ -114,9 +115,8 @@ class FSArtTest(UseThePlugin):
         os.mkdir(self.dpath)
 
         self.source = fetchart.FileSystem(logger, self.plugin.config)
-        self.settings = Settings()
-        self.settings.cautious = False
-        self.settings.cover_names = ('art',)
+        self.settings = Settings(cautious=False,
+                                 cover_names=('art',))
 
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, b'a.jpg'))
