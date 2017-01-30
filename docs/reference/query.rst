@@ -163,16 +163,20 @@ and day are optional. If you leave out the day, for example, you will get
 matches for the whole month.
 
 You can also use relative dates to the current time.
-A relative date begins by ``@`` and has to follow the pattern_dq format
-``@([+|-]?)(\d+)([y|m|w|d])``
-- ``@`` indicates it's a date relative to now()
-- the optional ``+`` or ``-`` sign, which defaults to ``+`` will increment or
-decrement now() by a certain quantity
-- that quantity can be expressed in days, weeks, months or years respectively
-'d', 'w', 'm', 'y'
+A relative date begins with an ``@``.
+It looks like ``@-3w``, ``@2m`` or ``@-4d`` which means the date 3 weeks ago,
+the date 2 months from now and the date 4 days ago.
+A relative date consists of four parts:
+- ``@`` indicates it's a date relative from now
+- ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+`` sign will
+add a time quantity to the current date while the ``-`` sign will do the
+opposite
+- a number follows and indicates the amount to add or substract
+- a final letter ends and represents the amount in either days, weeks, months or
+years (``d``, ``w``, ``m`` or ``y``)
 
-Please note that this relative calculation is rather approximate as it makes
-the assumption of 30 days per month and 365 days per year.
+Please note that this relative calculation makes the assumption of 30 days per
+month and 365 days per year.
 
 Here is an example that finds all the albums added between now and last week::
 
