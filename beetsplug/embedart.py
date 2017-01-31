@@ -20,7 +20,7 @@ import os.path
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.ui import decargs
+from beets.ui import print_, decargs
 from beets.util import syspath, normpath, displayable_path, bytestring_path
 from beets.util.artresizer import ArtResizer
 from beets import config
@@ -60,9 +60,27 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd.parser.add_option(
             u'-f', u'--file', metavar='PATH', help=u'the image file to embed'
         )
+        embed_cmd.parser.add_option(
+            u"-y", u"--yes", action="store_true", help=u"skip confirmation"
+        )
         maxwidth = self.config['maxwidth'].get(int)
         compare_threshold = self.config['compare_threshold'].get(int)
         ifempty = self.config['ifempty'].get(bool)
+
+        def _confirmation(items, opts, fmt, prompt):
+            # Confirm artwork changes to library items.
+                if not opts.yes:
+                    # Prepare confirmation with user.
+                    print_()
+
+                    # Show all the items.
+                    for item in items:
+                        print_(format(item, fmt))
+
+                    # Confirm with user.
+                    if not ui.input_yn(prompt, True):
+                        return False
+                return True
 
         def embed_func(lib, opts, args):
             if opts.file:
@@ -71,11 +89,30 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     raise ui.UserError(u'image file {0} not found'.format(
                         displayable_path(imagepath)
                     ))
-                for item in lib.items(decargs(args)):
+
+                items = lib.items(decargs(args))
+
+                # Confirm with user.
+                fmt = u'$albumartist - $album - $title'
+                prompt = u'Modify artwork for %i file%s (y/n)?' % \
+                             (len(items), 's' if len(items) > 1 else '')
+                if not _confirmation(items, opts, fmt, prompt):
+                    return
+
+                for item in items:
                     art.embed_item(self._log, item, imagepath, maxwidth, None,
                                    compare_threshold, ifempty)
             else:
-                for album in lib.albums(decargs(args)):
+                items = lib.albums(decargs(args))
+
+                # Confirm with user.
+                fmt = u'$albumartist - $album'
+                prompt = u'Modify artwork for %i album%s (y/n)?' % \
+                         (len(items), 's' if len(items) > 1 else '')
+                if not _confirmation(items, opts, fmt, prompt):
+                    return
+
+                for album in items:
                     art.embed_album(self._log, album, maxwidth, False,
                                     compare_threshold, ifempty)
                     self.remove_artfile(album)
