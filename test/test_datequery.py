@@ -47,8 +47,8 @@ class DateIntervalTest(unittest.TestCase):
         self.assertContains('..2001', '2001-12-31T23:59:59')
         self.assertExcludes('..2001', '2002-01-01T00:00:00')
 
-        self.assertContains('@-1d..@1d', _datepattern(datetime.now()))
-        self.assertExcludes('@-2d..@-1d', _datepattern(datetime.now()))
+        self.assertContains('-1d..1d', _datepattern(datetime.now()))
+        self.assertExcludes('-2d..-1d', _datepattern(datetime.now()))
 
     def test_day_precision_intervals(self):
         self.assertContains('2000-06-20..2000-06-20', '2000-06-20T00:00:00')
@@ -168,37 +168,37 @@ class DateQueryTestRelativeMore(_common.LibTestCase):
 
     def test_relative(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '@-4' + timespan + '..@+4' + timespan)
+            query = DateQuery('added', '-4' + timespan + '..+4' + timespan)
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 1)
 
     def test_relative_fail(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '@-2' + timespan + '..@-1' + timespan)
+            query = DateQuery('added', '-2' + timespan + '..-1' + timespan)
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 0)
 
     def test_start_relative(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '@-4' + timespan + '..')
+            query = DateQuery('added', '-4' + timespan + '..')
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 1)
 
     def test_start_relative_fail(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '@4' + timespan + '..')
+            query = DateQuery('added', '4' + timespan + '..')
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 0)
 
     def test_end_relative(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '..@+4' + timespan)
+            query = DateQuery('added', '..+4' + timespan)
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 1)
 
     def test_end_relative_fail(self):
         for timespan in ['d', 'w', 'm', 'y']:
-            query = DateQuery('added', '..@-4' + timespan)
+            query = DateQuery('added', '..-4' + timespan)
             matched = self.lib.items(query)
             self.assertEqual(len(matched), 0)
 

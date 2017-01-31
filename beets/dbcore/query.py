@@ -554,22 +554,25 @@ class Period(object):
         relative.
         An absolute date has to be like one of the date_formats '%Y' or '%Y-%m'
         or '%Y-%m-%d'
-        A relative date begins by '@ 'and has to follow the pattern_dq format
-        '@([+|-]?)(\d+)([y|m|w|d])'
-        - '@' indicates it's a date relative to now()
-        - the optional '+' or '-' sign, which defaults to '+' will increment or
-        decrement now() by a certain quantity
-        - that quantity can be expressed in days, weeks, months or years
-        respectively 'd', 'w', 'm', 'y'
-        Please note that this relative calculation is rather approximate as it
-        makes the assumption of 30 days per month and 365 days per year
+        A relative date consists of three parts:
+        - a ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+``
+        sign will add a time quantity to the current date while the ``-`` sign
+        will do the opposite
+        - a number follows and indicates the amount to add or substract
+        - a final letter ends and represents the amount in either days, weeks,
+        months or years (``d``, ``w``, ``m`` or ``y``)
+        Please note that this relative calculation makes the assumption of 30
+        days per month and 365 days per year.
         """
-        pattern_dq = '@([+|-]?)(\d+)([y|m|w|d])'
+
+        pattern_dq = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])'  # noqa: E501
         match_dq = re.match(pattern_dq, string)
+        # test if the string matches the relative date pattern, add the parsed
+        # quantity to now in that case
         if match_dq is not None:
-            sign = match_dq.group(1)
-            quantity = match_dq.group(2)
-            timespan = match_dq.group(3)
+            sign = match_dq.group('sign')
+            quantity = match_dq.group('quantity')
+            timespan = match_dq.group('timespan')
             multiplier = -1 if sign == '-' else 1
             days = cls.relative[timespan]
             date = datetime.now() + multiplier * timedelta(

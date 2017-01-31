@@ -166,8 +166,7 @@ You can also use relative dates to the current time.
 A relative date begins with an ``@``.
 It looks like ``@-3w``, ``@2m`` or ``@-4d`` which means the date 3 weeks ago,
 the date 2 months from now and the date 4 days ago.
-A relative date consists of four parts:
-- ``@`` indicates it's a date relative from now
+A relative date consists of three parts:
 - ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+`` sign will
 add a time quantity to the current date while the ``-`` sign will do the
 opposite
@@ -180,11 +179,11 @@ month and 365 days per year.
 
 Here is an example that finds all the albums added between now and last week::
 
-    $ beet ls -a 'added:@-1w..'
+    $ beet ls -a 'added:-1w..'
 
-Find all items added in a 2 weeks period 4  weeks ago::
+Find all items added in a 2 weeks period 4 weeks ago::
 
-    $ beet ls -a 'added:@-6w..@-4w'
+    $ beet ls -a 'added:-6w..-4w'
 
 Date *intervals*, like the numeric intervals described above, are separated by
 two dots (``..``). You can specify a start, an end, or both.
