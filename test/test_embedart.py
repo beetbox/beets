@@ -51,6 +51,9 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
     abbey_differentpath = os.path.join(_common.RSRC, b'abbey-different.jpg')
 
     def setUp(self):
+        super(EmbedartCliTest, self).setUp()
+        self.io.install()
+
         self.setup_beets()  # Converter is threaded
         self.load_plugins('embedart')
 
@@ -68,6 +71,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
+        self.io.addinput('y')
         self.run_command('embedart', '-f', self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
@@ -78,6 +82,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         item = album.items()[0]
         album.artpath = self.small_artpath
         album.store()
+        self.io.addinput('y')
         self.run_command('embedart')
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
@@ -96,6 +101,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         album.store()
 
         config['embedart']['remove_art_file'] = True
+        self.io.addinput('y')
         self.run_command('embedart')
 
         if os.path.isfile(tmp_path):
@@ -106,6 +112,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.add_album_fixture()
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
         with self.assertRaises(ui.UserError):
+            self.io.addinput('y')
             self.run_command('embedart', '-f', '/doesnotexist')
 
     def test_embed_non_image_file(self):
@@ -117,6 +124,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         os.close(handle)
 
         try:
+            self.io.addinput('y')
             self.run_command('embedart', '-f', tmp_path)
         finally:
             os.remove(tmp_path)
@@ -129,8 +137,10 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data(self.abbey_artpath)
         album = self.add_album_fixture()
         item = album.items()[0]
+        self.io.addinput('y')
         self.run_command('embedart', '-f', self.abbey_artpath)
         config['embedart']['compare_threshold'] = 20
+        self.io.addinput('y')
         self.run_command('embedart', '-f', self.abbey_differentpath)
         mediafile = MediaFile(syspath(item.path))
 
@@ -143,9 +153,10 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data(self.abbey_similarpath)
         album = self.add_album_fixture()
         item = album.items()[0]
+        self.io.addinput('y')
         self.run_command('embedart', '-f', self.abbey_artpath)
         config['embedart']['compare_threshold'] = 20
-        self.run_command('embedart', '-f', self.abbey_similarpath)
+        self.run_command('embedart', '-y', '-f', self.abbey_similarpath)
         mediafile = MediaFile(syspath(item.path))
 
         self.assertEqual(mediafile.images[0].data, self.image_data,
@@ -169,7 +180,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         trackpath = album.items()[0].path
         albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
-
+        
         self.run_command('extractart', '-n', 'extracted')
 
         self.assertExists(os.path.join(albumpath, b'extracted.jpg'))
