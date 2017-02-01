@@ -180,7 +180,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         trackpath = album.items()[0].path
         albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
-        
+
         self.run_command('extractart', '-n', 'extracted')
 
         self.assertExists(os.path.join(albumpath, b'extracted.jpg'))

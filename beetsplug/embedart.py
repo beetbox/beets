@@ -95,7 +95,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 # Confirm with user.
                 fmt = u'$albumartist - $album - $title'
                 prompt = u'Modify artwork for %i file%s (y/n)?' % \
-                             (len(items), 's' if len(items) > 1 else '')
+                         (len(items), 's' if len(items) > 1 else '')
                 if not _confirmation(items, opts, fmt, prompt):
                     return
 
