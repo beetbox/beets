@@ -28,6 +28,8 @@ New features:
 * :doc:`/plugins/badfiles`: Added a ``--verbose`` or ``-v`` option. Results are
   now displayed only for corrupted files by default and for all the files when
   the verbose option is set. :bug:`1654` :bug:`2434`
+  * :doc:`/plugins/embedart` by default now asks for confirmation before 
+  embedding art into music files. Thanks to :user:`Stunner`. :bug:`1999`
 
 Fixes:
 
