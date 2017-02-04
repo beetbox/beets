@@ -32,6 +32,7 @@ Fixes:
 * :doc:`/plugins/mpdstats`: Fix Python 3 compatibility. The plugin also now
   requires version 0.4.2 or later of the ``python-mpd2`` library. :bug:`2405`
 * :doc:`/plugins/mpdstats`: Improve handling of mpd status queries.
+* :doc:`/plugins/badfiles`: Fix Python 3 compatibility.
 
 
 1.4.3 (January 9, 2017)

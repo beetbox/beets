@@ -94,7 +94,7 @@ class BadFiles(BeetsPlugin):
                     ui.colorize('text_error', dpath)))
 
             # Run the checker against the file if one is found
-            ext = os.path.splitext(item.path)[1][1:]
+            ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
             checker = self.get_checker(ext)
             if not checker:
                 self._log.debug(u"no checker available for {}", ext)
