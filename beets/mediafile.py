@@ -1941,9 +1941,9 @@ class MediaFile(object):
             u'replaygain_album_gain',
             float_places=2, suffix=u' dB'
         ),
-        MP4SoundCheckStorageStyle(
-            '----:com.apple.iTunes:iTunNORM',
-            index=1
+        MP4StorageStyle(
+            '----:com.apple.iTunes:replaygain_album_gain',
+            float_places=2, suffix=' dB'
         ),
         StorageStyle(
             u'REPLAYGAIN_ALBUM_GAIN',
