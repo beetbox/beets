@@ -44,10 +44,11 @@ class BadFiles(BeetsPlugin):
             status = e.returncode
         except OSError as e:
             if e.errno == errno.ENOENT:
-                ui.print_(u"command not found: {}".format(cmd[0]))
-                sys.exit(1)
+                raise ui.UserError(u"command not found: {}".format(cmd[0]))
             else:
-                raise
+                raise ui.UserError(
+                    u"error invoking {}: {}".format(cmd[0], e)
+                )
         output = output.decode(sys.getfilesystemencoding())
         return status, errors, [line for line in output.split("\n") if line]
 
@@ -96,6 +97,7 @@ class BadFiles(BeetsPlugin):
             ext = os.path.splitext(item.path)[1][1:]
             checker = self.get_checker(ext)
             if not checker:
+                self._log.debug(u"no checker available for {}", ext)
                 continue
             path = item.path
             if not isinstance(path, six.text_type):
