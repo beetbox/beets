@@ -22,6 +22,9 @@ New features:
   value.  The argument can be any two characters that represent the left and
   right brackets. It defaults to `[]` and can also be blank to turn off
   bracketing. :bug:`2397` :bug:`2399`
+* Added a ``--move`` or ``-m`` option to the importer so that the files can be
+  moved to the library instead of being copied or added "in place".
+  :bug:`2252` :bug:`2429` 
 
 Fixes:
 
