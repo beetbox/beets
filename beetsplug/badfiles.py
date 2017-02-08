@@ -129,7 +129,7 @@ class BadFiles(BeetsPlugin):
                     self._log.error(u"error invoking {}: {}", e.checker, e.msg)
                 continue
             if status > 0:
-                ui.print_(u"{}: checker exited withs status {}"
+                ui.print_(u"{}: checker exited with status {}"
                           .format(ui.colorize('text_error', dpath), status))
                 for line in output:
                     ui.print_(u"  {}".format(displayable_path(line)))
