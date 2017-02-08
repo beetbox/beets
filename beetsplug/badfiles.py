@@ -30,6 +30,16 @@ import sys
 import six
 
 
+class CheckerCommandException(Exception):
+    """Raised when running a Checker failed."""
+
+    def __init__(self, cmd, oserror):
+        self.checker = cmd[0]
+        self.path = cmd[-1]
+        self.errno = oserror.errno
+        self.msg = str(oserror)
+
+
 class BadFiles(BeetsPlugin):
     def run_command(self, cmd):
         self._log.debug(u"running command: {}",
@@ -43,12 +53,7 @@ class BadFiles(BeetsPlugin):
             errors = 1
             status = e.returncode
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                raise ui.UserError(u"command not found: {}".format(cmd[0]))
-            else:
-                raise ui.UserError(
-                    u"error invoking {}: {}".format(cmd[0], e)
-                )
+            raise CheckerCommandException(cmd, e)
         output = output.decode(sys.getfilesystemencoding())
         return status, errors, [line for line in output.split("\n") if line]
 
@@ -97,12 +102,23 @@ class BadFiles(BeetsPlugin):
             ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
             checker = self.get_checker(ext)
             if not checker:
-                self._log.debug(u"no checker available for {}", ext)
+                self._log.debug(u"no checker specified in the config for {}",
+                                ext)
                 continue
             path = item.path
             if not isinstance(path, six.text_type):
                 path = item.path.decode(sys.getfilesystemencoding())
-            status, errors, output = checker(path)
+            try:
+                status, errors, output = checker(path)
+            except CheckerCommandException as e:
+                if e.errno == errno.ENOENT:
+                    self._log.error(
+                            u"command not found: {} when validating file: {}",
+                            e.checker,
+                            e.path)
+                else:
+                    self._log.error(u"error invoking {}: {}", e.checker, e.msg)
+                continue
             if status > 0:
                 ui.print_(u"{}: checker exited withs status {}"
                           .format(ui.colorize('text_error', dpath), status))
