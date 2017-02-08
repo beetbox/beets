@@ -88,6 +88,7 @@ class BadFiles(BeetsPlugin):
             return self.check_flac
 
     def check_bad(self, lib, opts, args):
+        missing_checkers = {}
         for item in lib.items(ui.decargs(args)):
 
             # First, check whether the path exists. If not, the user
@@ -102,8 +103,9 @@ class BadFiles(BeetsPlugin):
             ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
             checker = self.get_checker(ext)
             if not checker:
-                self._log.debug(u"no checker specified in the config for {}",
-                                ext)
+                missing_checkers[ext] = None
+                if opts.verbose:
+                    self._log.debug(u"no checker specified for {}", ext)
                 continue
             path = item.path
             if not isinstance(path, six.text_type):
@@ -112,10 +114,11 @@ class BadFiles(BeetsPlugin):
                 status, errors, output = checker(path)
             except CheckerCommandException as e:
                 if e.errno == errno.ENOENT:
-                    self._log.error(
-                            u"command not found: {} when validating file: {}",
-                            e.checker,
-                            e.path)
+                    missing_checkers[ext] = e.checker
+                    if opts.verbose:
+                        self._log.error(u"checker not found: {} for file: {}",
+                                        e.checker,
+                                        e.path)
                 else:
                     self._log.error(u"error invoking {}: {}", e.checker, e.msg)
                 continue
@@ -131,6 +134,17 @@ class BadFiles(BeetsPlugin):
                     ui.print_(u"  {}".format(displayable_path(line)))
             elif opts.verbose:
                 ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
+        if not opts.verbose:
+            for ext, checker in missing_checkers.items():
+                if checker:
+                    self._log.error(u"{} files exist but {} checker not found",
+                                    ext,
+                                    checker)
+                else:
+                    self._log.error(u"{} files exist but checker not specified",
+                                    ext)
+
+
 
     def commands(self):
         bad_command = Subcommand('bad',
