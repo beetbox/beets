@@ -105,7 +105,7 @@ class BadFiles(BeetsPlugin):
             if not checker:
                 missing_checkers[ext] = None
                 if opts.verbose:
-                    self._log.debug(u"no checker specified for {}", ext)
+                    self._log.error(u"no checker specified for {}", ext)
                 continue
             path = item.path
             if not isinstance(path, six.text_type):
