@@ -110,7 +110,7 @@ class BadFiles(BeetsPlugin):
             ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
             checker = self.get_checker(ext)
             if not checker:
-                self._log.debug(u"no checker specified in the config for {}",
+                self._log.error(u"no checker specified in the config for {}",
                                 ext)
                 continue
             path = item.path
