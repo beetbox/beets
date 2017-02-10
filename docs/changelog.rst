@@ -38,7 +38,9 @@ Fixes:
 * :doc:`/plugins/badfiles`: Fix Python 3 compatibility.
 * Fix some cases where album-level ReplayGain/SoundCheck metadata would be
   written to files incorrectly. :bug:`2426`
-
+* Fixed the badfiles plugin to allow the execution to continue to other files
+  if validator command is not found or exists with an error. :bug:`2430`
+  :bug:`2433`
 
 1.4.3 (January 9, 2017)
 -----------------------
