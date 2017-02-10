@@ -113,11 +113,16 @@ class BadFiles(BeetsPlugin):
                           .format(ui.colorize('text_warning', dpath), errors))
                 for line in output:
                     ui.print_(u"  {}".format(displayable_path(line)))
-            else:
+            elif opts.verbose:
                 ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
 
     def commands(self):
         bad_command = Subcommand('bad',
                                  help=u'check for corrupt or missing files')
+        bad_command.parser.add_option(
+            u'-v', u'--verbose',
+            action='store_true', default=False, dest='verbose',
+            help=u'view results for both the bad and uncorrupted files'
+        )
         bad_command.func = self.check_bad
         return [bad_command]

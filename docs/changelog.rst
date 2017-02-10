@@ -25,6 +25,9 @@ New features:
 * Added a ``--move`` or ``-m`` option to the importer so that the files can be
   moved to the library instead of being copied or added "in place".
   :bug:`2252` :bug:`2429` 
+* Added a ``--verbose`` or ``-v`` option to the badfiles plugin. Results are 
+  now displayed only for corrupted files by default and for all the files when
+  the verbose option is set. :bug:`1654` :bug:`2434`
 
 Fixes:
 
