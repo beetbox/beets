@@ -30,6 +30,16 @@ import sys
 import six
 
 
+class CheckerCommandException(Exception):
+    """Raised when running a Checker failed."""
+
+    def __init__(self, cmd, oserror):
+        self.checker = cmd[0]
+        self.path = cmd[-1]
+        self.errno = oserror.errno
+        self.msg = str(oserror)
+
+
 class BadFiles(BeetsPlugin):
     def run_command(self, cmd):
         self._log.debug(u"running command: {}",
@@ -43,12 +53,7 @@ class BadFiles(BeetsPlugin):
             errors = 1
             status = e.returncode
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                raise ui.UserError(u"command not found: {}".format(cmd[0]))
-            else:
-                raise ui.UserError(
-                    u"error invoking {}: {}".format(cmd[0], e)
-                )
+            raise CheckerCommandException(cmd, e)
         output = output.decode(sys.getfilesystemencoding())
         return status, errors, [line for line in output.split("\n") if line]
 
@@ -83,6 +88,7 @@ class BadFiles(BeetsPlugin):
             return self.check_flac
 
     def check_bad(self, lib, opts, args):
+        missing_checkers = {}
         for item in lib.items(ui.decargs(args)):
 
             # First, check whether the path exists. If not, the user
@@ -97,14 +103,27 @@ class BadFiles(BeetsPlugin):
             ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
             checker = self.get_checker(ext)
             if not checker:
-                self._log.debug(u"no checker available for {}", ext)
+                missing_checkers[ext] = None
+                if opts.verbose:
+                    self._log.error(u"no checker specified for {}", ext)
                 continue
             path = item.path
             if not isinstance(path, six.text_type):
                 path = item.path.decode(sys.getfilesystemencoding())
-            status, errors, output = checker(path)
+            try:
+                status, errors, output = checker(path)
+            except CheckerCommandException as e:
+                if e.errno == errno.ENOENT:
+                    missing_checkers[ext] = e.checker
+                    if opts.verbose:
+                        self._log.error(u"checker not found: {} for file: {}",
+                                        e.checker,
+                                        e.path)
+                else:
+                    self._log.error(u"error invoking {}: {}", e.checker, e.msg)
+                continue
             if status > 0:
-                ui.print_(u"{}: checker exited withs status {}"
+                ui.print_(u"{}: checker exited with status {}"
                           .format(ui.colorize('text_error', dpath), status))
                 for line in output:
                     ui.print_(u"  {}".format(displayable_path(line)))
@@ -113,11 +132,27 @@ class BadFiles(BeetsPlugin):
                           .format(ui.colorize('text_warning', dpath), errors))
                 for line in output:
                     ui.print_(u"  {}".format(displayable_path(line)))
-            else:
+            elif opts.verbose:
                 ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
+        if not opts.verbose:
+            for ext, checker in missing_checkers.items():
+                if checker:
+                    self._log.error(u"{} files exist but {} checker not found",
+                                    ext,
+                                    checker)
+                else:
+                    self._log.error(u"{} files exist but checker not specified",
+                                    ext)
+
+
 
     def commands(self):
         bad_command = Subcommand('bad',
                                  help=u'check for corrupt or missing files')
+        bad_command.parser.add_option(
+            u'-v', u'--verbose', 
+            action='store_true', default=False, dest='verbose',
+            help=u'view results for both the bad and uncorrupted files'
+        )
         bad_command.func = self.check_bad
         return [bad_command]
