@@ -6,14 +6,13 @@
 #       You can make it faster in future by creating a cached version:
 #       1) perform a query completion with this file (_beet), e.g. do: beet list artist:"<TAB>
 #          to create the completion function (takes a few seconds)
-#       2) save a copy of the completion function: which _beet > _beet_cached
-#       3) save a copy of the query completion function: which _beet_query > _beet_query_cached
-#       4) copy the contents of _beet_query_cached to the top of _beet_cached
-#       5) copy and paste the _beet_field_values function from _beet to the top of _beet_cached
-#       6) add the following line to the top of _beet_cached: #compdef beet
-#       7) add the following line to the bottom of _beet_cached: _beet "$@"
-#       8) save _beet_cached to your completions directory (e.g. /usr/share/zsh/functions/Completion)
-#       9) add the following line to your .zshrc file: compdef _beet_cached beet
+#       2) create a _beet_cached file with a compdef header: echo '#compdef beet'
+#       3) save a copy of the _beet_field_values in _beet_cached: which _beet_field_values >> _beet_cached
+#       4) save a copy of the query completion function in _beet_cached: which _beet_query >> _beet_cached
+#       5) save a copy of the completion function in _beet_cached: which _beet >> _beet_cached
+#       6) add a final line to _beet_cached: echo '_beet "$@"' >> _beet_cached
+#       7) save _beet_cached to your completions directory (e.g. /usr/share/zsh/functions/Completion)
+#       8) add the following line to your .zshrc file: compdef _beet_cached beet
 #       You will need to repeat this proceedure each time you enable new plugins if you want them to complete properly.
 
 # useful: argument to _regex_arguments for matching any word
