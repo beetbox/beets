@@ -24,8 +24,8 @@ New features:
   bracketing. :bug:`2397` :bug:`2399`
 * Added a ``--move`` or ``-m`` option to the importer so that the files can be
   moved to the library instead of being copied or added "in place".
-  :bug:`2252` :bug:`2429` 
-* Added a ``--verbose`` or ``-v`` option to the badfiles plugin. Results are 
+  :bug:`2252` :bug:`2429`
+* :doc:`/plugins/badfiles`: Added a ``--verbose`` or ``-v`` option. Results are
   now displayed only for corrupted files by default and for all the files when
   the verbose option is set. :bug:`1654` :bug:`2434`
 
@@ -41,9 +41,9 @@ Fixes:
 * :doc:`/plugins/badfiles`: Fix Python 3 compatibility.
 * Fix some cases where album-level ReplayGain/SoundCheck metadata would be
   written to files incorrectly. :bug:`2426`
-* Fixed the badfiles plugin to allow the execution to continue to other files
-  if validator command is not found or exists with an error. :bug:`2430`
-  :bug:`2433`
+* :doc:`/plugins/badfiles`: The command no longer bails out if validator
+  command is not found or exists with an error. :bug:`2430` :bug:`2433`
+
 
 1.4.3 (January 9, 2017)
 -----------------------
