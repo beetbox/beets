@@ -563,8 +563,8 @@ class Google(Backend):
               % (self.api_key, self.engine_id,
                  urllib.parse.quote(query.encode('utf-8')))
 
-        data = urllib.request.urlopen(url)
-        data = json.load(data)
+        data = self.fetch_url(url)
+        data = json.loads(data)
         if 'error' in data:
             reason = data['error']['errors'][0]['reason']
             self._log.debug(u'google lyrics backend error: {0}', reason)
