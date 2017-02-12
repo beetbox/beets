@@ -43,6 +43,8 @@ Fixes:
   written to files incorrectly. :bug:`2426`
 * :doc:`/plugins/badfiles`: The command no longer bails out if validator
   command is not found or exists with an error. :bug:`2430` :bug:`2433`
+* :doc:`/plugins/lyrics`: The Google search backend no longer crashes when the
+  server responds with an error. :bug:`2437`
 
 
 1.4.3 (January 9, 2017)
