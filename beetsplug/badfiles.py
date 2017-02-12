@@ -32,13 +32,12 @@ import six
 
 class CheckerCommandException(Exception):
     """Raised when running a checker failed.
-    
+
     Attributes:
         checker: Checker command name.
         path: Path to the file being validated.
         errno: Error number from the checker execution error.
         msg: Message from the checker execution error.
-
     """
 
     def __init__(self, cmd, oserror):
