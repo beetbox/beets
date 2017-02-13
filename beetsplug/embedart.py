@@ -74,12 +74,12 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     print_()
 
                     fmt = u'$albumartist - $album'
-                    item_type = u'album'
+                    istr = u'album'
                     if opts.file:
                         fmt = u'$albumartist - $album - $title'
-                        item_type = u'file'
+                        istr = u'file'
                     prompt = u'Modify artwork for %i %s%s (y/n)?' % \
-                             (len(items), item_type, 's' if len(items) > 1 else '')
+                             (len(items), istr, 's' if len(items) > 1 else '')
 
                     # Show all the items.
                     for item in items:
