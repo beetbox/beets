@@ -67,11 +67,19 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         compare_threshold = self.config['compare_threshold'].get(int)
         ifempty = self.config['ifempty'].get(bool)
 
-        def _confirmation(items, opts, fmt, prompt):
+        def _confirmation(items, opts):
             # Confirm artwork changes to library items.
                 if not opts.yes:
                     # Prepare confirmation with user.
                     print_()
+
+                    fmt = u'$albumartist - $album'
+                    item_type = u'album'
+                    if opts.file:
+                        fmt = u'$albumartist - $album - $title'
+                        item_type = u'file'
+                    prompt = u'Modify artwork for %i %s%s (y/n)?' % \
+                             (len(items), item_type, 's' if len(items) > 1 else '')
 
                     # Show all the items.
                     for item in items:
@@ -93,10 +101,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 items = lib.items(decargs(args))
 
                 # Confirm with user.
-                fmt = u'$albumartist - $album - $title'
-                prompt = u'Modify artwork for %i file%s (y/n)?' % \
-                         (len(items), 's' if len(items) > 1 else '')
-                if not _confirmation(items, opts, fmt, prompt):
+                if not _confirmation(items, opts):
                     return
 
                 for item in items:
@@ -106,10 +111,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 items = lib.albums(decargs(args))
 
                 # Confirm with user.
-                fmt = u'$albumartist - $album'
-                prompt = u'Modify artwork for %i album%s (y/n)?' % \
-                         (len(items), 's' if len(items) > 1 else '')
-                if not _confirmation(items, opts, fmt, prompt):
+                if not _confirmation(items, opts):
                     return
 
                 for album in items:
