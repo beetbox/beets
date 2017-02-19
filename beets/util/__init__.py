@@ -18,6 +18,7 @@
 from __future__ import division, absolute_import, print_function
 import os
 import sys
+import errno
 import locale
 import re
 import shutil
@@ -517,8 +518,12 @@ def hardlink(path, dest, replace=False):
         raise FilesystemError(u'OS does not support hard links.'
                               'link', (path, dest), traceback.format_exc())
     except OSError as exc:
-        raise FilesystemError(exc, 'link', (path, dest),
-                              traceback.format_exc())
+        if exc.errno == errno.EXDEV:
+            raise FilesystemError(u'Cannot hard link across devices.'
+                                  'link', (path, dest), traceback.format_exc())
+        else:
+            raise FilesystemError(exc, 'link', (path, dest),
+                                  traceback.format_exc())
 
 
 def unique_path(path):
