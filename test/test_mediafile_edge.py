@@ -197,6 +197,7 @@ class SafetyTest(unittest.TestCase, _common.TempDirMixin):
         finally:
             os.unlink(fn)
 
+
 class SideEffectsTest(unittest.TestCase):
     def setUp(self):
         self.empty = os.path.join(_common.RSRC, b'empty.mp3')

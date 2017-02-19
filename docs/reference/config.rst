@@ -445,7 +445,7 @@ option to preserve the metadata on the linked files.
 .. _hardlink:
 
 hardlink
-~~~~
+~~~~~~~~
 
 Either ``yes`` or ``no``, indicating whether to use hard links instead of
 moving or copying or symlinking files. (It conflicts with the ``move``,
