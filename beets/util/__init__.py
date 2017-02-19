@@ -514,14 +514,9 @@ def hardlink(path, dest, replace=False):
     try:
         os.link(path, dest)
     except NotImplementedError:
-        # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(u'OS does not support hard links.'
                               'link', (path, dest), traceback.format_exc())
     except OSError as exc:
-        # TODO: Windows version checks can be removed for python 3
-        if hasattr('sys', 'getwindowsversion'):
-            if sys.getwindowsversion()[0] < 6:  # is before Vista
-                exc = u'OS does not support hard links.'
         raise FilesystemError(exc, 'link', (path, dest),
                               traceback.format_exc())
 
