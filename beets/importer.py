@@ -671,8 +671,8 @@ class ImportTask(BaseImportTask):
                 # move in-library files. (Out-of-library files are
                 # copied/moved as usual).
                 old_path = item.path
-                if (copy or link or hardlink) and self.replaced_items[item] and \
-                   session.lib.directory in util.ancestry(old_path):
+                if (copy or link or hardlink) and self.replaced_items[item] \
+                   and session.lib.directory in util.ancestry(old_path):
                     item.move()
                     # We moved the item, so remove the
                     # now-nonexistent file from old_paths.
