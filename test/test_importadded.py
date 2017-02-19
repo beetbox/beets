@@ -93,6 +93,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.config['import']['copy'] = False
         self.config['import']['move'] = False
         self.config['import']['link'] = False
+        self.config['import']['hardlink'] = False
         self.assertAlbumImport()
 
     def test_import_album_with_preserved_mtimes(self):
