@@ -145,8 +145,12 @@ class MoveTest(_common.TestCase):
     def test_hardlink_arrives(self):
         self.i.move(hardlink=True)
         self.assertExists(self.dest)
-        self.assertTrue(os.path.islink(self.dest))
-        self.assertEqual(os.readlink(self.dest), self.path)
+        s1 = os.stat(self.path)
+        s2 = os.stat(self.dest)
+        self.assertTrue(
+            (s1[stat.ST_INO], s1[stat.ST_DEV]) == \
+                (s2[stat.ST_INO], s2[stat.ST_DEV])
+        )
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_does_not_depart(self):
