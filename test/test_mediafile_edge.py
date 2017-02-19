@@ -197,6 +197,15 @@ class SafetyTest(unittest.TestCase, _common.TempDirMixin):
         finally:
             os.unlink(fn)
 
+    @unittest.skipUnless(_common.HAVE_HARDLINK, u'platform lacks hardlink')
+    def test_broken_hardlink(self):
+        fn = os.path.join(_common.RSRC, b'brokenlink')
+        os.link('does_not_exist', fn)
+        try:
+            self.assertRaises(mediafile.UnreadableFileError,
+                              mediafile.MediaFile, fn)
+        finally:
+            os.unlink(fn)
 
 class SideEffectsTest(unittest.TestCase):
     def setUp(self):
