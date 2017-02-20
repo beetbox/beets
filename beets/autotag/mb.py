@@ -374,6 +374,7 @@ def match_album(artist, album, tracks=None):
         return
 
     try:
+        log.debug(u'Searching for MusicBrainz releases with: {!r}', criteria)
         res = musicbrainzngs.search_releases(
             limit=config['musicbrainz']['searchlimit'].get(int), **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
@@ -424,6 +425,7 @@ def album_for_id(releaseid):
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
+    log.debug(u'Requesting MusicBrainz release {}', releaseid)
     albumid = _parse_id(releaseid)
     if not albumid:
         log.debug(u'Invalid MBID ({0}).', releaseid)
