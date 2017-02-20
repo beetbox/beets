@@ -478,16 +478,15 @@ def move(path, dest, replace=False):
 def link(path, dest, replace=False):
     """Create a symbolic link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
-    `path` == `dest`."""
-    if (samefile(path, dest)):
+    `path` == `dest`.
+    """
+    if samefile(path, dest):
         return
 
-    path = syspath(path)
-    dest = syspath(dest)
-    if os.path.exists(dest) and not replace:
+    if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError(u'file exists', 'rename', (path, dest))
     try:
-        os.symlink(path, dest)
+        os.symlink(syspath(path), syspath(dest))
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(u'OS does not support symbolic links.'
@@ -504,16 +503,15 @@ def link(path, dest, replace=False):
 def hardlink(path, dest, replace=False):
     """Create a hard link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
-    `path` == `dest`."""
-    if (samefile(path, dest)):
+    `path` == `dest`.
+    """
+    if samefile(path, dest):
         return
 
-    path = syspath(path)
-    dest = syspath(dest)
-    if os.path.exists(dest) and not replace:
+    if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError(u'file exists', 'rename', (path, dest))
     try:
-        os.link(path, dest)
+        os.link(syspath(path), syspath(dest))
     except NotImplementedError:
         raise FilesystemError(u'OS does not support hard links.'
                               'link', (path, dest), traceback.format_exc())
