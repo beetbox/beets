@@ -451,11 +451,9 @@ Either ``yes`` or ``no``, indicating whether to use hard links instead of
 moving or copying or symlinking files. (It conflicts with the ``move``,
 ``copy``, and ``link`` options.) Defaults to ``no``.
 
-This option only works on platforms that support hardlinks: i.e., Unixes.
-It will fail on Windows.
-
-It's likely that you'll also want to set ``write`` to ``no`` if you use this
-option to preserve the metadata on the linked files.
+As with symbolic links (see :ref:`link`, above), this will not work on Windows
+and you will want to set ``write`` to ``no``.  Otherwise meatadata on the
+original file will be modified.
 
 resume
 ~~~~~~
