@@ -103,7 +103,9 @@ def assign_items(items, tracks):
         costs.append(row)
 
     # Find a minimum-cost bipartite matching.
+    log.debug('Computing track assignment...')
     matching = Munkres().compute(costs)
+    log.debug('...done.')
 
     # Produce the output matching.
     mapping = dict((items[i], tracks[j]) for (i, j) in matching)
@@ -349,7 +351,8 @@ def _add_candidate(items, results, info):
     checking the track count, ordering the items, checking for
     duplicates, and calculating the distance.
     """
-    log.debug(u'Candidate: {0} - {1}', info.artist, info.album)
+    log.debug(u'Candidate: {0} - {1} ({2})',
+              info.artist, info.album, info.album_id)
 
     # Discard albums with zero tracks.
     if not info.tracks:
