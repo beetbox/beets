@@ -24,15 +24,19 @@ MusicBrainz.
 If you have a Discogs ID for an album you want to tag, you can also enter it
 at the "enter Id" prompt in the importer.
 
-OAuth authorization
+OAuth Authorization
 ```````````````````
+
 The first time you run the :ref:`import-cmd` command after enabling the plugin,
 it will ask you to authorize with Discogs by visiting the site in a browser.
 Subsequent runs will not require re-authorization.
 
-Authentication via personal access token
+Authentication via Personal Access Token
 ````````````````````````````````````````
-To get a personal access token (called a user token in the `discogs-client`_
+
+As an alternative to OAuth, you can get a token from Discogs and add it to
+your configuration.
+To get a personal access token (called a "user token" in the `discogs-client`_
 documentation), login to `Discogs`_, and visit the
 `Developer settings page
 <https://www.discogs.com/settings/developers>`_. Press the ``Generate new
