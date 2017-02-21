@@ -988,7 +988,7 @@ class ArchiveImportTask(SentinelImportTask):
         `toppath` to that directory.
         """
         for path_test, handler_class in self.handlers():
-            if path_test(self.toppath):
+            if path_test(util.py3_path(self.toppath)):
                 break
 
         try:
