@@ -22,6 +22,7 @@ import re
 import shutil
 import unicodedata
 import sys
+import stat
 from six import StringIO
 from tempfile import mkstemp
 from zipfile import ZipFile
@@ -209,7 +210,8 @@ class ImportHelper(TestHelper):
 
     def _setup_import_session(self, import_dir=None, delete=False,
                               threaded=False, copy=True, singletons=False,
-                              move=False, autotag=True, link=False):
+                              move=False, autotag=True, link=False,
+                              hardlink=False):
         config['import']['copy'] = copy
         config['import']['delete'] = delete
         config['import']['timid'] = True
@@ -219,6 +221,7 @@ class ImportHelper(TestHelper):
         config['import']['autotag'] = autotag
         config['import']['resume'] = False
         config['import']['link'] = link
+        config['import']['hardlink'] = hardlink
 
         self.importer = TestImportSession(
             self.lib, loghandler=None, query=None,
@@ -351,6 +354,24 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
             self.assert_equal_path(
                 util.bytestring_path(os.readlink(filename)),
                 mediafile.path
+            )
+
+    @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
+    def test_import_hardlink_arrives(self):
+        config['import']['hardlink'] = True
+        self.importer.run()
+        for mediafile in self.import_media:
+            filename = os.path.join(
+                self.libdir,
+                b'Tag Artist', b'Tag Album',
+                util.bytestring_path('{0}.mp3'.format(mediafile.title))
+            )
+            self.assertExists(filename)
+            s1 = os.stat(mediafile.path)
+            s2 = os.stat(filename)
+            self.assertTrue(
+                (s1[stat.ST_INO], s1[stat.ST_DEV]) ==
+                (s2[stat.ST_INO], s2[stat.ST_DEV])
             )
 
 

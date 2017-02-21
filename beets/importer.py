@@ -220,13 +220,19 @@ class ImportSession(object):
             iconfig['resume'] = False
             iconfig['incremental'] = False
 
-        # Copy, move, and link are mutually exclusive.
+        # Copy, move, link, and hardlink are mutually exclusive.
         if iconfig['move']:
             iconfig['copy'] = False
             iconfig['link'] = False
+            iconfig['hardlink'] = False
         elif iconfig['link']:
             iconfig['copy'] = False
             iconfig['move'] = False
+            iconfig['hardlink'] = False
+        elif iconfig['hardlink']:
+            iconfig['copy'] = False
+            iconfig['move'] = False
+            iconfig['link'] = False
 
         # Only delete when copying.
         if not iconfig['copy']:
@@ -654,19 +660,19 @@ class ImportTask(BaseImportTask):
             item.update(changes)
 
     def manipulate_files(self, move=False, copy=False, write=False,
-                         link=False, session=None):
+                         link=False, hardlink=False, session=None):
         items = self.imported_items()
         # Save the original paths of all items for deletion and pruning
         # in the next step (finalization).
         self.old_paths = [item.path for item in items]
         for item in items:
-            if move or copy or link:
+            if move or copy or link or hardlink:
                 # In copy and link modes, treat re-imports specially:
                 # move in-library files. (Out-of-library files are
                 # copied/moved as usual).
                 old_path = item.path
-                if (copy or link) and self.replaced_items[item] and \
-                   session.lib.directory in util.ancestry(old_path):
+                if (copy or link or hardlink) and self.replaced_items[item] \
+                   and session.lib.directory in util.ancestry(old_path):
                     item.move()
                     # We moved the item, so remove the
                     # now-nonexistent file from old_paths.
@@ -674,7 +680,7 @@ class ImportTask(BaseImportTask):
                 else:
                     # A normal import. Just copy files and keep track of
                     # old paths.
-                    item.move(copy, link)
+                    item.move(copy, link, hardlink)
 
             if write and (self.apply or self.choice_flag == action.RETAG):
                 item.try_write()
@@ -1412,6 +1418,7 @@ def manipulate_files(session, task):
             copy=session.config['copy'],
             write=session.config['write'],
             link=session.config['link'],
+            hardlink=session.config['hardlink'],
             session=session,
         )
 
