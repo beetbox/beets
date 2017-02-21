@@ -54,7 +54,7 @@ class DiscogsPlugin(BeetsPlugin):
             'apisecret': 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy',
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
-            'user_token': None,
+            'user_token': '',
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
