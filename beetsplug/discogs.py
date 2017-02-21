@@ -68,9 +68,9 @@ class DiscogsPlugin(BeetsPlugin):
         c_key = self.config['apikey'].as_str()
         c_secret = self.config['apisecret'].as_str()
 
+        # Try using a configured user token (bypassing OAuth login).
         user_token = self.config['user_token'].as_str()
-
-        if user_token is not None and user_token != '':
+        if user_token:
             self.discogs_client = Client(USER_AGENT, user_token=user_token)
             return
 
