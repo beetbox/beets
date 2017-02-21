@@ -564,11 +564,17 @@ class Google(Backend):
                  urllib.parse.quote(query.encode('utf-8')))
 
         data = self.fetch_url(url)
-        data = json.loads(data)
+        if not data:
+            self._log.debug(u'google backend returned no data')
+            return None
+        try:
+            data = json.loads(data)
+        except ValueError as exc:
+            self._log.debug(u'google backend returned malformed JSON: {}', exc)
         if 'error' in data:
             reason = data['error']['errors'][0]['reason']
-            self._log.debug(u'google lyrics backend error: {0}', reason)
-            return
+            self._log.debug(u'google backend error: {0}', reason)
+            return None
 
         if 'items' in data.keys():
             for item in data['items']:
