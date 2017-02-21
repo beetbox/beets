@@ -48,6 +48,8 @@ Fixes:
   command is not found or exists with an error. :bug:`2430` :bug:`2433`
 * :doc:`/plugins/lyrics`: The Google search backend no longer crashes when the
   server responds with an error. :bug:`2437`
+* :doc:`/plugins/discogs`: You can now authenticate with Discogs using a
+  personal access token. :bug:`2447`
 
 
 1.4.3 (January 9, 2017)
