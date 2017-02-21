@@ -28,6 +28,9 @@ New features:
 * :doc:`/plugins/badfiles`: Added a ``--verbose`` or ``-v`` option. Results are
   now displayed only for corrupted files by default and for all the files when
   the verbose option is set. :bug:`1654` :bug:`2434`
+* A new :ref:`hardlink` config option instructs the importer to create hard
+  links on filesystems that support them. Thanks to :user:`jacobwgillespie`.
+  :bug:`2445`
 
 Fixes:
 
