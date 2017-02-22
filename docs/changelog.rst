@@ -52,6 +52,8 @@ Fixes:
   personal access token. :bug:`2447`
 * Fix Python 3 compatibility when extracting rar archives in the importer.
   Thanks to :user:`Lompik`. :bug:`2443` :bug:`2448`
+* :doc:`/plugins/duplicates`: Fix Python 3 compatibility when using the
+  ``copy`` and ``move`` options. :bug:`2444`
 
 
 1.4.3 (January 9, 2017)
