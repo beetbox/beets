@@ -50,6 +50,8 @@ Fixes:
   server responds with an error. :bug:`2437`
 * :doc:`/plugins/discogs`: You can now authenticate with Discogs using a
   personal access token. :bug:`2447`
+* Fix Python 3 compatibility when extracting rar archives in the importer.
+  Thanks to :user:`Lompik`. :bug:`2443` :bug:`2448`
 
 
 1.4.3 (January 9, 2017)
