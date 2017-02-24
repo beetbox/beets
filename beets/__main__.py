@@ -1,4 +1,5 @@
 """main module."""
+# -*- coding: utf-8 -*-
 import sys
 from .ui import main
 
