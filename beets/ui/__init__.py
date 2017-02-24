@@ -946,16 +946,6 @@ class SubcommandsOptionParser(CommonOptionsParser):
 
         self.subcommands = []
 
-    def get_prog_name(self):
-        """Get program name.
-
-        Returns:
-            Program name.
-        """
-        prog_name = super(SubcommandsOptionParser, self).get_prog_name()
-        prog_name = 'beets' if prog_name == '__main__.py' else prog_name
-        return prog_name
-
     def add_subcommand(self, *cmds):
         """Adds a Subcommand object to the parser's list of commands.
         """
