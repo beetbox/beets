@@ -1,15 +1,4 @@
 # -*- coding: utf-8 -*-
-"""main module.
-
-This module will be executed when beets module is run with `-m`.
-
-Example : `python -m beets`
-
-Related links about __main__.py:
-
-* python3 docs entry: https://docs.python.org/3/library/__main__.html
-* related SO: http://stackoverflow.com/q/4042905
-"""
 # This file is part of beets.
 # Copyright 2017, Adrian Sampson.
 #
@@ -23,6 +12,18 @@ Related links about __main__.py:
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
+
+"""main module.
+
+This module will be executed when beets module is run with `-m`.
+
+Example : `python -m beets`
+
+Related links about __main__.py:
+
+* python3 docs entry: https://docs.python.org/3/library/__main__.html
+* related SO: http://stackoverflow.com/q/4042905
+"""
 
 from __future__ import division, absolute_import, print_function
 
