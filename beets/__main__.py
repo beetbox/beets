@@ -13,16 +13,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""main module.
-
-This module will be executed when beets module is run with `-m`.
-
-Example : `python -m beets`
-
-Related links about __main__.py:
-
-* python3 docs entry: https://docs.python.org/3/library/__main__.html
-* related SO: http://stackoverflow.com/q/4042905
+"""The __main__ module lets you run the beets CLI interface by typing
+`python -m beets`.
 """
 
 from __future__ import division, absolute_import, print_function
