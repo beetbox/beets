@@ -56,5 +56,5 @@ class MBSubmitPlugin(BeetsPlugin):
             return [PromptChoice(u'p', u'Print tracks', self.print_tracks)]
 
     def print_tracks(self, session, task):
-        for i in task.items:
+        for i in sorted(task.items, key=lambda i: i.track):
             print_data(None, i, self.config['format'].as_str())
