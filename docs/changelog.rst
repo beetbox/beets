@@ -31,7 +31,7 @@ New features:
 * A new :ref:`hardlink` config option instructs the importer to create hard
   links on filesystems that support them. Thanks to :user:`jacobwgillespie`.
   :bug:`2445`
-* Added support to run program from module, e.g. `python -m beets`.
+* You can now run beets by typing `python -m beets`. :bug:`2453`
 
 Fixes:
 
