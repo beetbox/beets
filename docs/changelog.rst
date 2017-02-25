@@ -55,6 +55,8 @@ Fixes:
   Thanks to :user:`Lompik`. :bug:`2443` :bug:`2448`
 * :doc:`/plugins/duplicates`: Fix Python 3 compatibility when using the
   ``copy`` and ``move`` options. :bug:`2444`
+* :doc:`/plugins/mbsubmit`: The tracks are now sorted. Thanks to
+  :user:`awesomer`. :bug:`2457`
 
 
 1.4.3 (January 9, 2017)
