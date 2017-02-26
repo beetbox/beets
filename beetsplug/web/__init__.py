@@ -52,7 +52,7 @@ def _rep(obj, expand=False):
         return out
 
     elif isinstance(obj, beets.library.Album):
-        # del out['artpath']
+        del out['artpath']
         if expand:
             out['items'] = [_rep(item) for item in obj.items()]
         return out
