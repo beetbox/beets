@@ -80,6 +80,12 @@
                         <a target="_blank" href="http://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
                     </dd>
                 <% } %>
+                <% if (art) { %>
+                    <dt>Art</dt>
+                    <dd>
+                        <img src="/album/<%= album_id %>/art" height="150px" width="150px">
+                    </dd>
+                <% } %>
                 <dt>File</dt>
                 <dd>
                     <a target="_blank" class="download" href="/item/<%= id %>/file">download</a>
