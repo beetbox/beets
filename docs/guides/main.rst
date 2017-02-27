@@ -82,7 +82,7 @@ into this if you've installed Python yourself with `Homebrew`_ or otherwise.)
 
 If this happens, you can install beets for the current user only (sans
 ``sudo``) by typing ``pip install --user beets``. If you do that, you might want
-to add ``~/Library/Python/2.7/bin`` to your ``$PATH``.
+to add ``~/Library/Python/3.6/bin`` to your ``$PATH``.
 
 .. _System Integrity Protection: https://support.apple.com/en-us/HT204899
 .. _Homebrew: http://brew.sh
@@ -93,7 +93,7 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want Python 2.7).
+1. If you don't have it, `install Python`_ (you want Python 3.6).
 
 2. If you haven't done so already, set your ``PATH`` environment variable to
    include Python and its scripts. To do so, you have to get the "Properties"
