@@ -9,10 +9,9 @@ collection better.
 Installing
 ----------
 
-You will need Python.
-Beets works on `Python 2.7`_ and Python 3.4 or later.
+You will need `Python 3.6`_. But Beet also works with Python 2.7 and later.
 
-.. _Python 2.7: http://www.python.org/download/
+.. _Python 3.6: http://www.python.org/download/
 
 * **macOS** v10.7 (Lion) and later include Python 2.7 out of the box.
   You can opt for Python 3 by installing it via `Homebrew`_:
@@ -46,6 +45,8 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 
 * On **NixOS**, run ``nix-env -i beets``.
 
+* On most versions of **Windows**, there is a `installer`_ available on the Python website. 
+
 .. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
 .. _dnf package: https://apps.fedoraproject.org/packages/beets
 .. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
@@ -55,11 +56,14 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 .. _Debian details: http://packages.qa.debian.org/b/beets.html
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
 .. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/
+.. _installer: https://www.python.org/downloads/windows/
 
-If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
-front of that).
+If you already have Python (again, version 2.7 or later) already installed, you should be able 
+to use `pip`_, just execute ``pip install beets`` on the command line. You might need ``sudo`` 
+in front of that if you are on a Unix system (Mac/ Linux/ BSD/ etc) or need to be running a
+command prompt with Administrator privileges if you are a Windows user.
 
-To install without pip, download beets from `its PyPI page`_ and run ``python
+To install Beets without pip, download it from `its PyPI page`_ and run ``python
 setup.py install`` in the directory therein.
 
 .. _its PyPI page: http://pypi.python.org/pypi/beets#downloads
@@ -93,14 +97,15 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want Python 3.6).
+1. If you don't have it, `install Python`_ (you want Python 3.6). In either case, 
+you will need to know the path where Python is being or has already been installed
 
 2. If you haven't done so already, set your ``PATH`` environment variable to
    include Python and its scripts. To do so, you have to get the "Properties"
    window for "My Computer", then choose the "Advanced" tab, then hit the
    "Environment Variables" button, and then look for the ``PATH`` variable in
-   the table. Add the following to the end of the variable's value:
-   ``;C:\Python27;C:\Python27\Scripts``.
+   the table. If Python is installed in (say) ``C:\Python36`` on your machine, Add the
+   following to the end of the variable's value: ``;C:\Python36;C:\Python36\Scripts``.
 
 3. Next, `install pip`_ (if you don't have it already) by downloading and
    running the `get-pip.py`_ script.
@@ -110,11 +115,13 @@ get it right:
 5. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
-Windows users may also want to install a context menu item for importing files
-into beets. Just download and open `beets.reg`_ to add the necessary keys to the
-registry. You can then right-click a directory and choose "Import with beets".
-If Python is in a nonstandard location on your system, you may have to edit the
-command path manually.
+Windows users can also install a context menu item for importing files into beets. 
+Head over to and download the `beets.reg`_ file. Double click the downloaded file to
+add the necessary keys to your registry. Before you double click, open the file in your 
+favourite text editor and verify that the path to your Python installation folder matches
+you own. 
+
+You can then right-click a directory and choose "Import with beets".
 
 Because I don't use Windows myself, I may have missed something. If you have
 trouble or you have more detail to contribute here, please direct it to
@@ -138,6 +145,11 @@ place to start::
 
     directory: ~/music
     library: ~/data/musiclibrary.db
+
+For Windows user, this would look like::
+
+    directory: "D:\\My Music Files"
+    library: "D:\\My Music Files\\Musiclibrary.db"
 
 Change that first path to a directory where you'd like to keep your music. Then,
 for ``library``, choose a good place to keep a database file that keeps an index
