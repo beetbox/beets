@@ -111,10 +111,10 @@ get it right:
    in order.
 
 Windows users may also want to install a context menu item for importing files
-into beets. Just download and open `beets.reg`_ to add the necessary keys to the
-registry. You can then right-click a directory and choose "Import with beets".
-If Python is in a nonstandard location on your system, you may have to edit the
-command path manually.
+into beets. Download the `beets.reg`_ file and open it in a text file to make
+sure the paths to Python match your system. Then double-click the file add the
+necessary keys to your registry. You can then right-click a directory and
+choose "Import with beets".
 
 Because I don't use Windows myself, I may have missed something. If you have
 trouble or you have more detail to contribute here, please direct it to
