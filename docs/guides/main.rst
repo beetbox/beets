@@ -105,12 +105,9 @@ get it right:
    ``;C:\Python36;C:\Python36\Scripts``. You may need to adjust these paths to
    point to your Python installation.
 
-3. Next, `install pip`_ (if you don't have it already) by downloading and
-   running the `get-pip.py`_ script.
+3. Now install beets by running: ``pip install beets``
 
-4. Now install beets by running: ``pip install beets``
-
-5. You're all set! Type ``beet`` at the command prompt to make sure everything's
+4. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
 Windows users may also want to install a context menu item for importing files
