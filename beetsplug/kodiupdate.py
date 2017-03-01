@@ -13,7 +13,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Updates a Kodi library whenever the beets library is changed. This is based on the Plex Update plugin.
+"""Updates a Kodi library whenever the beets library is changed.
+This is based on the Plex Update plugin.
 
 Put something like the following in your config.yaml to configure:
     kodi:
@@ -34,12 +35,21 @@ def update_kodi(host, port, user, password):
     """
     url = "http://{0}:{1}/jsonrpc/".format(host, port)
 
-    # The kodi jsonrpc documentation states that Content-Type: application/json is mandatory
+    """Content-Type: application/json is mandatory
+    according to the kodi jsonrpc documentation"""
+
     headers = {'Content-Type': 'application/json'}
+
     # Create the payload. Id seems to be mandatory.
-    payload = {'jsonrpc': '2.0', 'method':'AudioLibrary.Scan', 'id':1}
-    r = requests.post(url, auth=(user, password), json=payload, headers=headers)
+    payload = {'jsonrpc': '2.0', 'method': 'AudioLibrary.Scan', 'id': 1}
+    r = requests.post(
+        url,
+        auth=(user, password),
+        json=payload,
+        headers=headers)
+
     return r
+
 
 class KodiUpdate(BeetsPlugin):
     def __init__(self):
@@ -56,7 +66,7 @@ class KodiUpdate(BeetsPlugin):
         self.register_listener('database_change', self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
-        """Listens for beets db change and register the update for the end"""
+        """Listens for beets db change and register the update"""
         self.register_listener('cli_exit', self.update)
 
     def update(self, lib):
@@ -75,4 +85,3 @@ class KodiUpdate(BeetsPlugin):
 
         except requests.exceptions.RequestException:
             self._log.warning(u'Update failed.')
-
