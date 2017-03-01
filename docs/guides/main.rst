@@ -93,24 +93,23 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want Python 3.6). On the last
-   screen, the installer gives you the option to "add Python to PATH." Check
-   this box. If you do that, you can skip the next step.
+1. If you don't have it, `install Python`_ (you want Python 3.6). During the 
+   installation, look for an option to "Add Python 3.6 to PATH". Check this box.
+   If you have done this, you can skip the next step.
 
-2. If you haven't done so already, set your ``PATH`` environment variable to
-   include Python and its scripts. To do so, you have to get the "Properties"
-   window for "My Computer", then choose the "Advanced" tab, then hit the
-   "Environment Variables" button, and then look for the ``PATH`` variable in
-   the table. Add the following to the end of the variable's value:
-   ``;C:\Python36;C:\Python36\Scripts``. You may need to adjust these paths to
-   point to your Python installation.
+2. Set your ``PATH`` environment variable to include Python and its scripts. 
+    To do so, you have to get the "Properties" window for "My Computer", then 
+    choose the "Advanced" tab, then hit the "Environment Variables" button, and 
+    then look for the ``PATH`` variable in the table. Add the following to the 
+    end of the variable's value: ``;C:\Python36;C:\Python36\Scripts``. You may 
+    need to adjust these paths to point to your Python installation.
 
-3. Now install beets by running: ``pip install beets``
+3. Now install beets by running: ``pip install beets`` at the Command Prompt.
 
 4. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
-Windows users may also want to install a context menu item for importing files
+Windows users can optionally also install a context menu item for importing files
 into beets. Download the `beets.reg`_ file and open it in a text file to make
 sure the paths to Python match your system. Then double-click the file add the
 necessary keys to your registry. You can then right-click a directory and
@@ -139,11 +138,12 @@ place to start::
     directory: ~/music
     library: ~/data/musiclibrary.db
 
-Change that first path to a directory where you'd like to keep your music. Then,
-for ``library``, choose a good place to keep a database file that keeps an index
+This should work just fine for Windows users, the ``~`` is equivalent to the
+%USERPROFILE% - typically, ``C:\Users\Your_Machine_LoginName``). Change that 
+first path to a directory where you'd like to keep your music. Then, for 
+``library``, choose a good place to keep a database file that keeps an index
 of your music. (The config's format is `YAML`_. You'll want to configure your
 text editor to use spaces, not real tabs, for indentation.)
-
 
 The default configuration assumes you want to start a new organized music folder
 (that ``directory`` above) and that you'll *copy* cleaned-up music into that
