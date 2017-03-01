@@ -230,11 +230,14 @@ songs.  Thus::
     The Magnetic Fields - Distortion - Three-Way
     The Magnetic Fields - Distortion - California Girls
     The Magnetic Fields - Distortion - Old Fools
+    
     $ beet ls hissing gronlandic
     of Montreal - Hissing Fauna, Are You the Destroyer? - Gronlandic Edit
+    
     $ beet ls bird
     The Knife - The Knife - Bird
     The Mae Shi - Terrorbird - Revelation Six
+    
     $ beet ls album:bird
     The Mae Shi - Terrorbird - Revelation Six
 
@@ -245,16 +248,33 @@ put the field before the term, separated by a : character. So ``album:bird``
 only looks for ``bird`` in the "album" field of your songs. (Need to know more?
 :doc:`/reference/query/` will answer all your questions.)
 
-The ``beet list`` command has another useful option worth mentioning, ``-a``,
-which searches for albums instead of songs::
+The ``beet list`` command has couple of other useful options worth mentioning.
+
+``-a``, which searches for albums instead of songs::
 
     $ beet ls -a forever
     Bon Iver - For Emma, Forever Ago
     Freezepop - Freezepop Forever
 
+``-f``, which lets you specify what gets displayed in the results of a search::
+
+    $ beet ls -a forever -f "[$format] $album ($year) - $artist - $title"
+    [MP3] For Emma, Forever Ago (2009) - Bon Iver - Flume
+    [AAC] Freezepop Forever (2011) - Freezepop - Harebrained Scheme
+     
+    As you can see, Beets has replaced the fields specified by the ``$`` prefix 
+    (e.g. $format, $year) with values for each item in the results. A full 
+    list of fields available for use can be found by running ``beet fields``. If
+    you'd like beet to use this format as default (without having to use ``-f``)
+    simply add it to your config file like this::
+    
+       format_item: "[$format] $album ($year) - $artist - $title"
+    
+    And yes, the enclosing double-quotes are necessary.
+    
 So handy!
 
-Beets also has a ``stats`` command, just in case you want to see how much music
+And finally, Beets also has a ``stats`` command, just in case you want to see how much music
 you have::
 
     $ beet stats
