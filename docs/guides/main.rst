@@ -93,9 +93,9 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want Python 3.6). On the last
-   screen, the installer gives you the option to "add Python to PATH." Check
-   this box. If you do that, you can skip the next step.
+1. If you don't have it, `install Python`_ (you want Python 3.6). The
+   installer should give you the option to "add Python to PATH." Check this
+   box. If you do that, you can skip the next step.
 
 2. If you haven't done so already, set your ``PATH`` environment variable to
    include Python and its scripts. To do so, you have to get the "Properties"
