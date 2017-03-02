@@ -6,6 +6,8 @@ searches that select tracks and albums from your library. This page explains the
 query string syntax, which is meant to vaguely resemble the syntax used by Web
 search engines.
 
+.. _keywordquery:
+
 Keyword
 -------
 
