@@ -238,7 +238,9 @@ songs.  Thus::
     $ beet ls album:bird
     The Mae Shi - Terrorbird - Revelation Six
 
-As you can see, search terms by default search all attributes of songs. (They're
+By default, a search term will match any of a handful of :ref:`common
+attributes <keywordquery>` of songs.
+(They're
 also implicitly joined by ANDs: a track must match *all* criteria in order to
 match the query.) To narrow a search term to a particular metadata field, just
 put the field before the term, separated by a : character. So ``album:bird``
