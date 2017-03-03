@@ -276,12 +276,12 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         if not gio.available:
             self.skipTest(u"GIO library not found")
 
-        self.assertEqual(gio.uri(u"/foo"), b"file:///")  # silent fail
-        self.assertEqual(gio.uri(b"/foo"), b"file:///foo")
-        self.assertEqual(gio.uri(b"/foo!"), b"file:///foo!")
+        self.assertEqual(gio.uri(u"/foo"), u"file:///")  # silent fail
+        self.assertEqual(gio.uri(b"/foo"), u"file:///foo")
+        self.assertEqual(gio.uri(b"/foo!"), u"file:///foo!")
         self.assertEqual(
             gio.uri(b'/music/\xec\x8b\xb8\xec\x9d\xb4'),
-            b'file:///music/%EC%8B%B8%EC%9D%B4')
+            u'file:///music/%EC%8B%B8%EC%9D%B4')
 
 
 def suite():
