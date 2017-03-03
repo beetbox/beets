@@ -59,6 +59,8 @@ Fixes:
   ``copy`` and ``move`` options. :bug:`2444`
 * :doc:`/plugins/mbsubmit`: The tracks are now sorted. Thanks to
   :user:`awesomer`. :bug:`2457`
+* :doc:`/plugins/thumbnails`: Fix a string-related crash on Python 3.
+  :bug:`2466`
 
 
 1.4.3 (January 9, 2017)
