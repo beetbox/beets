@@ -264,13 +264,7 @@ The ``beet list`` command has couple of other useful options worth mentioning.
      
     As you can see, Beets has replaced the fields specified by the ``$`` prefix 
     (e.g. $format, $year) with values for each item in the results. A full 
-    list of fields available for use can be found by running ``beet fields``. If
-    you'd like beet to use this format as default (without having to use ``-f``)
-    simply add it to your config file like this::
-    
-       format_item: "[$format] $album ($year) - $artist - $title"
-    
-    And yes, the enclosing double-quotes are necessary.
+    list of fields available for use can be found by running ``beet fields``. 
     
 So handy!
 
