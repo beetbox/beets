@@ -247,27 +247,23 @@ put the field before the term, separated by a : character. So ``album:bird``
 only looks for ``bird`` in the "album" field of your songs. (Need to know more?
 :doc:`/reference/query/` will answer all your questions.)
 
-The ``beet list`` command has couple of other useful options worth mentioning.
-
-``-a``, which searches for albums instead of songs::
+The ``beet list`` command also has an ``-a`` option, which searches for albums instead of songs::
 
     $ beet ls -a forever
     Bon Iver - For Emma, Forever Ago
     Freezepop - Freezepop Forever
 
-``-f``, which lets you specify what gets displayed in the results of a search::
+There's also an ``-f`` option (for *format*) that lets you specify what gets displayed in the results of a search::
 
     $ beet ls -a forever -f "[$format] $album ($year) - $artist - $title"
     [MP3] For Emma, Forever Ago (2009) - Bon Iver - Flume
     [AAC] Freezepop Forever (2011) - Freezepop - Harebrained Scheme
-     
-As you can see, Beets has replaced the fields specified by the ``$`` prefix (e.g. 
-$format, $year) with values for each item in the results. A full list of fields 
-available for use can be found by running ``beet fields``. 
-    
-So handy!
 
-And finally, Beets also has a ``stats`` command, just in case you want to see how much music
+In the format option, field references like `$format` and `$year` are filled
+in with data from each result. You can see a full list of available fields by
+running ``beet fields``.
+
+Beets also has a ``stats`` command, just in case you want to see how much music
 you have::
 
     $ beet stats
