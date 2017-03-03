@@ -32,6 +32,8 @@ New features:
   links on filesystems that support them. Thanks to :user:`jacobwgillespie`.
   :bug:`2445`
 * You can now run beets by typing `python -m beets`. :bug:`2453`
+* A new :doc:`/plugins/kodiupdate` lets you keep your Kodi library in sync
+  with beets. Thanks to :user:`Pauligrinder`. :bug:`2411`
 
 Fixes:
 
