@@ -262,9 +262,9 @@ The ``beet list`` command has couple of other useful options worth mentioning.
     [MP3] For Emma, Forever Ago (2009) - Bon Iver - Flume
     [AAC] Freezepop Forever (2011) - Freezepop - Harebrained Scheme
      
-    As you can see, Beets has replaced the fields specified by the ``$`` prefix 
-    (e.g. $format, $year) with values for each item in the results. A full 
-    list of fields available for use can be found by running ``beet fields``. 
+As you can see, Beets has replaced the fields specified by the ``$`` prefix (e.g. 
+$format, $year) with values for each item in the results. A full list of fields 
+available for use can be found by running ``beet fields``. 
     
 So handy!
 
