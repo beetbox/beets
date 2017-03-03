@@ -230,14 +230,11 @@ songs.  Thus::
     The Magnetic Fields - Distortion - Three-Way
     The Magnetic Fields - Distortion - California Girls
     The Magnetic Fields - Distortion - Old Fools
-    
     $ beet ls hissing gronlandic
     of Montreal - Hissing Fauna, Are You the Destroyer? - Gronlandic Edit
-    
     $ beet ls bird
     The Knife - The Knife - Bird
     The Mae Shi - Terrorbird - Revelation Six
-    
     $ beet ls album:bird
     The Mae Shi - Terrorbird - Revelation Six
 
