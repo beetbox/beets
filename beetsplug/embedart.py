@@ -35,7 +35,7 @@ def _confirm(objs, album):
     to items).
     """
     noun = u'album' if album else u'file'
-    prompt = u'Modify artwork for {} {}{} (y/n)?'.format(
+    prompt = u'Modify artwork for {} {}{} (Y/n)?'.format(
         len(objs),
         noun,
         u's' if len(objs) > 1 else u''
@@ -46,7 +46,7 @@ def _confirm(objs, album):
         print_(format(obj))
 
     # Confirm with user.
-    return ui.input_yn(prompt, True)
+    return ui.input_yn(prompt)
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
