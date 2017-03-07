@@ -61,6 +61,8 @@ Fixes:
   :user:`awesomer`. :bug:`2457`
 * :doc:`/plugins/thumbnails`: Fix a string-related crash on Python 3.
   :bug:`2466`
+* :doc:`/plugins/beatport`: More than just 10 songs are now fetched per album.
+  :bug:`2469`
 
 
 1.4.3 (January 9, 2017)
