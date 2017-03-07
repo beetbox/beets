@@ -33,9 +33,6 @@ def _confirmation(objs, opts):
     """
     # Confirm artwork changes to library items.
     if not opts.yes:
-        # Prepare confirmation with user.
-        print_()
-
         fmt = u'$albumartist - $album'
         istr = u'album'
         if opts.file:
