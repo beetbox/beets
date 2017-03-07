@@ -31,8 +31,11 @@ New features:
 * A new :ref:`hardlink` config option instructs the importer to create hard
   links on filesystems that support them. Thanks to :user:`jacobwgillespie`.
   :bug:`2445`
-* :doc:`/plugins/embedart` by default now asks for confirmation before 
+* :doc:`/plugins/embedart` by default now asks for confirmation before
   embedding art into music files. Thanks to :user:`Stunner`. :bug:`1999`
+* You can now run beets by typing `python -m beets`. :bug:`2453`
+* A new :doc:`/plugins/kodiupdate` lets you keep your Kodi library in sync
+  with beets. Thanks to :user:`Pauligrinder`. :bug:`2411`
 
 Fixes:
 
@@ -50,6 +53,21 @@ Fixes:
   command is not found or exists with an error. :bug:`2430` :bug:`2433`
 * :doc:`/plugins/lyrics`: The Google search backend no longer crashes when the
   server responds with an error. :bug:`2437`
+* :doc:`/plugins/discogs`: You can now authenticate with Discogs using a
+  personal access token. :bug:`2447`
+* Fix Python 3 compatibility when extracting rar archives in the importer.
+  Thanks to :user:`Lompik`. :bug:`2443` :bug:`2448`
+* :doc:`/plugins/duplicates`: Fix Python 3 compatibility when using the
+  ``copy`` and ``move`` options. :bug:`2444`
+* :doc:`/plugins/mbsubmit`: The tracks are now sorted. Thanks to
+  :user:`awesomer`. :bug:`2457`
+* :doc:`/plugins/thumbnails`: Fix a string-related crash on Python 3.
+  :bug:`2466`
+* :doc:`/plugins/beatport`: More than just 10 songs are now fetched per album.
+  :bug:`2469`
+* On Python 3, the :ref:`terminal_encoding` setting is respected again for
+  output and printing will no longer crash on systems configured with a
+  limited encoding.
 
 
 1.4.3 (January 9, 2017)
