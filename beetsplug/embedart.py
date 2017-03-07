@@ -33,17 +33,15 @@ def _confirmation(objs, opts):
     """
     # Confirm artwork changes to library items.
     if not opts.yes:
-        fmt = u'$albumartist - $album'
         istr = u'album'
         if opts.file:
-            fmt = u'$albumartist - $album - $title'
             istr = u'file'
         prompt = u'Modify artwork for %i %s%s (y/n)?' % \
                  (len(objs), istr, 's' if len(objs) > 1 else '')
 
         # Show all the items or albums.
         for obj in objs:
-            print_(format(obj, fmt))
+            print_(format(obj))
 
         # Confirm with user.
         if not ui.input_yn(prompt, True):
