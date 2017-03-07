@@ -63,6 +63,9 @@ Fixes:
   :bug:`2466`
 * :doc:`/plugins/beatport`: More than just 10 songs are now fetched per album.
   :bug:`2469`
+* On Python 3, the :ref:`terminal_encoding` setting is respected again for
+  output and printing will no longer crash on systems configured with a
+  limited encoding.
 
 
 1.4.3 (January 9, 2017)
