@@ -27,7 +27,7 @@ from beets import config
 from beets import art
 
 
-def _confirmation(items, opts):
+def _confirmation(objs, opts):
     """Show the list of affected objects (items or albums) and confirm
     that the user wants to modify their artwork.
     """
@@ -42,11 +42,11 @@ def _confirmation(items, opts):
             fmt = u'$albumartist - $album - $title'
             istr = u'file'
         prompt = u'Modify artwork for %i %s%s (y/n)?' % \
-                 (len(items), istr, 's' if len(items) > 1 else '')
+                 (len(objs), istr, 's' if len(objs) > 1 else '')
 
-        # Show all the items.
-        for item in items:
-            print_(format(item, fmt))
+        # Show all the items or albums.
+        for obj in objs:
+            print_(format(obj, fmt))
 
         # Confirm with user.
         if not ui.input_yn(prompt, True):
