@@ -27,26 +27,26 @@ from beets import config
 from beets import art
 
 
-def _confirmation(objs, opts):
+def _confirmation(objs, album):
     """Show the list of affected objects (items or albums) and confirm
     that the user wants to modify their artwork.
+
+    `album` is a Boolean indicating whether these are albums (as opposed
+    to items).
     """
-    # Confirm artwork changes to library items.
-    if not opts.yes:
-        istr = u'album'
-        if opts.file:
-            istr = u'file'
-        prompt = u'Modify artwork for %i %s%s (y/n)?' % \
-                 (len(objs), istr, 's' if len(objs) > 1 else '')
+    noun = u'album' if album else u'file'
+    prompt = u'Modify artwork for {} {}{} (y/n)?'.format(
+        len(objs),
+        noun,
+        u's' if len(objs) > 1 else u''
+    )
 
-        # Show all the items or albums.
-        for obj in objs:
-            print_(format(obj))
+    # Show all the items or albums.
+    for obj in objs:
+        print_(format(obj))
 
-        # Confirm with user.
-        if not ui.input_yn(prompt, True):
-            return False
-    return True
+    # Confirm with user.
+    return ui.input_yn(prompt, True)
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
@@ -100,7 +100,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 items = lib.items(decargs(args))
 
                 # Confirm with user.
-                if not _confirmation(items, opts):
+                if not opts.yes and not _confirmation(items, not opts.file):
                     return
 
                 for item in items:
@@ -110,7 +110,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 items = lib.albums(decargs(args))
 
                 # Confirm with user.
-                if not _confirmation(items, opts):
+                if not opts.yes and not _confirmation(items, not opts.file):
                     return
 
                 for album in items:
