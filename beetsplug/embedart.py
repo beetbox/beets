@@ -27,7 +27,7 @@ from beets import config
 from beets import art
 
 
-def _confirmation(objs, album):
+def _confirm(objs, album):
     """Show the list of affected objects (items or albums) and confirm
     that the user wants to modify their artwork.
 
@@ -100,20 +100,20 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 items = lib.items(decargs(args))
 
                 # Confirm with user.
-                if not opts.yes and not _confirmation(items, not opts.file):
+                if not opts.yes and not _confirm(items, not opts.file):
                     return
 
                 for item in items:
                     art.embed_item(self._log, item, imagepath, maxwidth, None,
                                    compare_threshold, ifempty)
             else:
-                items = lib.albums(decargs(args))
+                albums = lib.albums(decargs(args))
 
                 # Confirm with user.
-                if not opts.yes and not _confirmation(items, not opts.file):
+                if not opts.yes and not _confirm(albums, not opts.file):
                     return
 
-                for album in items:
+                for album in albums:
                     art.embed_album(self._log, album, maxwidth, False,
                                     compare_threshold, ifempty)
                     self.remove_artfile(album)
