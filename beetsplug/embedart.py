@@ -27,6 +27,33 @@ from beets import config
 from beets import art
 
 
+def _confirmation(items, opts):
+    """Show the list of affected objects (items or albums) and confirm
+    that the user wants to modify their artwork.
+    """
+    # Confirm artwork changes to library items.
+    if not opts.yes:
+        # Prepare confirmation with user.
+        print_()
+
+        fmt = u'$albumartist - $album'
+        istr = u'album'
+        if opts.file:
+            fmt = u'$albumartist - $album - $title'
+            istr = u'file'
+        prompt = u'Modify artwork for %i %s%s (y/n)?' % \
+                 (len(items), istr, 's' if len(items) > 1 else '')
+
+        # Show all the items.
+        for item in items:
+            print_(format(item, fmt))
+
+        # Confirm with user.
+        if not ui.input_yn(prompt, True):
+            return False
+    return True
+
+
 class EmbedCoverArtPlugin(BeetsPlugin):
     """Allows albumart to be embedded into the actual files.
     """
@@ -66,29 +93,6 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         maxwidth = self.config['maxwidth'].get(int)
         compare_threshold = self.config['compare_threshold'].get(int)
         ifempty = self.config['ifempty'].get(bool)
-
-        def _confirmation(items, opts):
-            # Confirm artwork changes to library items.
-            if not opts.yes:
-                # Prepare confirmation with user.
-                print_()
-
-                fmt = u'$albumartist - $album'
-                istr = u'album'
-                if opts.file:
-                    fmt = u'$albumartist - $album - $title'
-                    istr = u'file'
-                prompt = u'Modify artwork for %i %s%s (y/n)?' % \
-                         (len(items), istr, 's' if len(items) > 1 else '')
-
-                # Show all the items.
-                for item in items:
-                    print_(format(item, fmt))
-
-                # Confirm with user.
-                if not ui.input_yn(prompt, True):
-                    return False
-            return True
 
         def embed_func(lib, opts, args):
             if opts.file:
