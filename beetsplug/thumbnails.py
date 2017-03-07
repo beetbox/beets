@@ -289,4 +289,10 @@ class GioURI(URIGetter):
             raise
         finally:
             self.libgio.g_free(uri_ptr)
-        return uri
+
+        try:
+            return uri.decode(util._fsencoding())
+        except UnicodeDecodeError:
+            raise RuntimeError(
+                "Could not decode filename from GIO: {!r}".format(uri)
+            )

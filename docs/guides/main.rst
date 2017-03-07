@@ -82,7 +82,7 @@ into this if you've installed Python yourself with `Homebrew`_ or otherwise.)
 
 If this happens, you can install beets for the current user only (sans
 ``sudo``) by typing ``pip install --user beets``. If you do that, you might want
-to add ``~/Library/Python/2.7/bin`` to your ``$PATH``.
+to add ``~/Library/Python/3.6/bin`` to your ``$PATH``.
 
 .. _System Integrity Protection: https://support.apple.com/en-us/HT204899
 .. _Homebrew: http://brew.sh
@@ -93,28 +93,28 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want Python 2.7).
+1. If you don't have it, `install Python`_ (you want Python 3.6). The
+   installer should give you the option to "add Python to PATH." Check this
+   box. If you do that, you can skip the next step.
 
 2. If you haven't done so already, set your ``PATH`` environment variable to
    include Python and its scripts. To do so, you have to get the "Properties"
    window for "My Computer", then choose the "Advanced" tab, then hit the
    "Environment Variables" button, and then look for the ``PATH`` variable in
    the table. Add the following to the end of the variable's value:
-   ``;C:\Python27;C:\Python27\Scripts``.
+   ``;C:\Python36;C:\Python36\Scripts``. You may need to adjust these paths to
+   point to your Python installation.
 
-3. Next, `install pip`_ (if you don't have it already) by downloading and
-   running the `get-pip.py`_ script.
+3. Now install beets by running: ``pip install beets``
 
-4. Now install beets by running: ``pip install beets``
-
-5. You're all set! Type ``beet`` at the command prompt to make sure everything's
+4. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
 Windows users may also want to install a context menu item for importing files
-into beets. Just download and open `beets.reg`_ to add the necessary keys to the
-registry. You can then right-click a directory and choose "Import with beets".
-If Python is in a nonstandard location on your system, you may have to edit the
-command path manually.
+into beets. Download the `beets.reg`_ file and open it in a text file to make
+sure the paths to Python match your system. Then double-click the file add the
+necessary keys to your registry. You can then right-click a directory and
+choose "Import with beets".
 
 Because I don't use Windows myself, I may have missed something. If you have
 trouble or you have more detail to contribute here, please direct it to
@@ -142,8 +142,8 @@ place to start::
 Change that first path to a directory where you'd like to keep your music. Then,
 for ``library``, choose a good place to keep a database file that keeps an index
 of your music. (The config's format is `YAML`_. You'll want to configure your
-text editor to use spaces, not real tabs, for indentation.)
-
+text editor to use spaces, not real tabs, for indentation. Also, ``~`` means
+your home directory in these paths, even on Windows.)
 
 The default configuration assumes you want to start a new organized music folder
 (that ``directory`` above) and that you'll *copy* cleaned-up music into that
@@ -238,21 +238,30 @@ songs.  Thus::
     $ beet ls album:bird
     The Mae Shi - Terrorbird - Revelation Six
 
-As you can see, search terms by default search all attributes of songs. (They're
+By default, a search term will match any of a handful of :ref:`common
+attributes <keywordquery>` of songs.
+(They're
 also implicitly joined by ANDs: a track must match *all* criteria in order to
 match the query.) To narrow a search term to a particular metadata field, just
 put the field before the term, separated by a : character. So ``album:bird``
 only looks for ``bird`` in the "album" field of your songs. (Need to know more?
 :doc:`/reference/query/` will answer all your questions.)
 
-The ``beet list`` command has another useful option worth mentioning, ``-a``,
-which searches for albums instead of songs::
+The ``beet list`` command also has an ``-a`` option, which searches for albums instead of songs::
 
     $ beet ls -a forever
     Bon Iver - For Emma, Forever Ago
     Freezepop - Freezepop Forever
 
-So handy!
+There's also an ``-f`` option (for *format*) that lets you specify what gets displayed in the results of a search::
+
+    $ beet ls -a forever -f "[$format] $album ($year) - $artist - $title"
+    [MP3] For Emma, Forever Ago (2009) - Bon Iver - Flume
+    [AAC] Freezepop Forever (2011) - Freezepop - Harebrained Scheme
+
+In the format option, field references like `$format` and `$year` are filled
+in with data from each result. You can see a full list of available fields by
+running ``beet fields``.
 
 Beets also has a ``stats`` command, just in case you want to see how much music
 you have::
