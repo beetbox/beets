@@ -69,26 +69,26 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         def _confirmation(items, opts):
             # Confirm artwork changes to library items.
-                if not opts.yes:
-                    # Prepare confirmation with user.
-                    print_()
+            if not opts.yes:
+                # Prepare confirmation with user.
+                print_()
 
-                    fmt = u'$albumartist - $album'
-                    istr = u'album'
-                    if opts.file:
-                        fmt = u'$albumartist - $album - $title'
-                        istr = u'file'
-                    prompt = u'Modify artwork for %i %s%s (y/n)?' % \
-                             (len(items), istr, 's' if len(items) > 1 else '')
+                fmt = u'$albumartist - $album'
+                istr = u'album'
+                if opts.file:
+                    fmt = u'$albumartist - $album - $title'
+                    istr = u'file'
+                prompt = u'Modify artwork for %i %s%s (y/n)?' % \
+                         (len(items), istr, 's' if len(items) > 1 else '')
 
-                    # Show all the items.
-                    for item in items:
-                        print_(format(item, fmt))
+                # Show all the items.
+                for item in items:
+                    print_(format(item, fmt))
 
-                    # Confirm with user.
-                    if not ui.input_yn(prompt, True):
-                        return False
-                return True
+                # Confirm with user.
+                if not ui.input_yn(prompt, True):
+                    return False
+            return True
 
         def embed_func(lib, opts, args):
             if opts.file:
