@@ -34,6 +34,9 @@ New features:
 * You can now run beets by typing `python -m beets`. :bug:`2453`
 * A new :doc:`/plugins/kodiupdate` lets you keep your Kodi library in sync
   with beets. Thanks to :user:`Pauligrinder`. :bug:`2411`
+* :doc:`/plugins/smartplaylist`: Different playlist specifications that
+  generate identically-named playlist files no longer conflict; instead, the
+  resulting lists of tracks are concatenated. :bug:`2468`
 
 Fixes:
 
