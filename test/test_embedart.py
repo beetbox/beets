@@ -52,6 +52,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
     def setUp(self):
         super(EmbedartCliTest, self).setUp()
+        self.io.install()
         self.setup_beets()  # Converter is threaded
         self.load_plugins('embedart')
 
@@ -64,6 +65,15 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
+
+    def test_embed_art_from_file_with_input(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.io.addinput('y')
+        self.run_command('embedart', '-f', self.small_artpath)
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(mediafile.images[0].data, self.image_data)
 
     def test_embed_art_from_file(self):
         self._setup_data()
