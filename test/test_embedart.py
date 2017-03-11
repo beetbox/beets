@@ -66,7 +66,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_embed_art_from_file_with_input(self):
+    def test_embed_art_from_file_with_yes_input(self):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
@@ -74,6 +74,16 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.run_command('embedart', '-f', self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
+
+    def test_embed_art_from_file_with_no_input(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.io.addinput('n')
+        self.run_command('embedart', '-f', self.small_artpath)
+        mediafile = MediaFile(syspath(item.path))
+        # make sure that images array is empty (nothing embedded)
+        self.assertEqual(len(mediafile.images), 0)
 
     def test_embed_art_from_file(self):
         self._setup_data()
