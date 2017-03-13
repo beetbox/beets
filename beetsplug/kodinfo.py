@@ -30,7 +30,7 @@ class KodiNfo(BeetsPlugin):
         self.register_listener('album_imported', self.makeAlbumNfo)
         self.register_listener('item_imported', self.makeItemNfo)
 
-        def makeAlbumNfo(self, lib, album):
+    def makeAlbumNfo(self, lib, album):
         linkAlbum = 'https://musicbrainz.org/release/{0}'
         linkArtist = 'https://musicbrainz.org/artist/{0}'
         with open(album.path + '/album.nfo', 'w') as f:
