@@ -25,20 +25,20 @@ from beets import library
 
 
 class KodiNfo(BeetsPlugin):
-  def __init__(self):
-    super(KodiNfo, self).__init__()
-    self.register_listener('album_imported', self.makeAlbumNfo)
-    self.register_listener('item_imported', self.makeItemNfo)
+    def __init__(self):
+        super(KodiNfo, self).__init__()
+        self.register_listener('album_imported', self.makeAlbumNfo)
+        self.register_listener('item_imported', self.makeItemNfo)
 
-  def makeAlbumNfo(self, lib, album):
-    linkAlbum = 'https://musicbrainz.org/release/{0}'
-    linkArtist = 'https://musicbrainz.org/artist/{0}'
-    with open(album.path + '/album.nfo', 'w') as f:
-		f.write(linkAlbum.format(album.mb_albumid))
-    with open(album.path + '/../artist.nfo', 'w') as f:
-        f.write(linkArtist.format(album.mb_albumartistid))
+        def makeAlbumNfo(self, lib, album):
+        linkAlbum = 'https://musicbrainz.org/release/{0}'
+        linkArtist = 'https://musicbrainz.org/artist/{0}'
+        with open(album.path + '/album.nfo', 'w') as f:
+            f.write(linkAlbum.format(album.mb_albumid))
+        with open(album.path + '/../artist.nfo', 'w') as f:
+            f.write(linkArtist.format(album.mb_albumartistid))
 
-  def makeItemNfo(self, lib, item):
-    link = 'https://musicbrainz.org/recording/{0}'
-    with open(item.path + '/' + item.title + '.nfo/', 'w') as f:
-		f.write(link.format(item.mb_trackid))
+    def makeItemNfo(self, lib, item):
+        link = 'https://musicbrainz.org/recording/{0}'
+        with open(item.path + '/' + item.title + '.nfo/', 'w') as f:
+            f.write(link.format(item.mb_trackid))
