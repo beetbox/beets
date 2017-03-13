@@ -141,6 +141,27 @@ class MoveTest(_common.TestCase):
         self.i.move(link=True)
         self.assertEqual(self.i.path, util.normpath(self.dest))
 
+    @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
+    def test_hardlink_arrives(self):
+        self.i.move(hardlink=True)
+        self.assertExists(self.dest)
+        s1 = os.stat(self.path)
+        s2 = os.stat(self.dest)
+        self.assertTrue(
+            (s1[stat.ST_INO], s1[stat.ST_DEV]) ==
+            (s2[stat.ST_INO], s2[stat.ST_DEV])
+        )
+
+    @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
+    def test_hardlink_does_not_depart(self):
+        self.i.move(hardlink=True)
+        self.assertExists(self.path)
+
+    @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
+    def test_hardlink_changes_path(self):
+        self.i.move(hardlink=True)
+        self.assertEqual(self.i.path, util.normpath(self.dest))
+
 
 class HelperTest(_common.TestCase):
     def test_ancestry_works_on_file(self):

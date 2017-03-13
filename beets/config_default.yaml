@@ -6,6 +6,7 @@ import:
     copy: yes
     move: no
     link: no
+    hardlink: no
     delete: no
     resume: ask
     incremental: no

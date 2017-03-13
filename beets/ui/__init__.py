@@ -126,8 +126,7 @@ def print_(*strings, **kwargs):
     Python 3.
 
     The `end` keyword argument behaves similarly to the built-in `print`
-    (it defaults to a newline). The value should have the same string
-    type as the arguments.
+    (it defaults to a newline).
     """
     if not strings:
         strings = [u'']
@@ -136,11 +135,23 @@ def print_(*strings, **kwargs):
     txt = u' '.join(strings)
     txt += kwargs.get('end', u'\n')
 
-    # Send bytes to the stdout stream on Python 2.
+    # Encode the string and write it to stdout.
     if six.PY2:
-        txt = txt.encode(_out_encoding(), 'replace')
-
-    sys.stdout.write(txt)
+        # On Python 2, sys.stdout expects bytes.
+        out = txt.encode(_out_encoding(), 'replace')
+        sys.stdout.write(out)
+    else:
+        # On Python 3, sys.stdout expects text strings and uses the
+        # exception-throwing encoding error policy. To avoid throwing
+        # errors and use our configurable encoding override, we use the
+        # underlying bytes buffer instead.
+        if hasattr(sys.stdout, 'buffer'):
+            out = txt.encode(_out_encoding(), 'replace')
+            sys.stdout.buffer.write(out)
+        else:
+            # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
+            # does not exist. We instead just record the text string.
+            sys.stdout.write(txt)
 
 
 # Configuration wrappers.
