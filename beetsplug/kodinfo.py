@@ -20,7 +20,8 @@ and other details.
 For singletons, it generates one .nfo for each track.
 """
 
-from beets.plugins import BeetsPlugin
+from beets.plugins import BeetsPlugin 
+
 
 class KodiNfo(BeetsPlugin):
     def __init__(self):
