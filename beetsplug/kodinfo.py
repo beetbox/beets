@@ -21,24 +21,22 @@ For singletons, it generates one .nfo for each track.
 """
 
 from beets.plugins import BeetsPlugin
-from beets import library
-
 
 class KodiNfo(BeetsPlugin):
     def __init__(self):
         super(KodiNfo, self).__init__()
-        self.register_listener('album_imported', self.makeAlbumNfo)
-        self.register_listener('item_imported', self.makeItemNfo)
+        self.register_listener('album_imported', self.make_album_nfo)
+        self.register_listener('item_imported', self.make_item_nfo)
 
-    def makeAlbumNfo(self, lib, album):
-        linkAlbum = 'https://musicbrainz.org/release/{0}'
-        linkArtist = 'https://musicbrainz.org/artist/{0}'
+    def make_album_nfo(self, lib, album):
+        linkalbum = 'https://musicbrainz.org/release/{0}'
+        linkartist = 'https://musicbrainz.org/artist/{0}'
         with open(album.path + '/album.nfo', 'w') as f:
-            f.write(linkAlbum.format(album.mb_albumid))
+            f.write(linkalbum.format(album.mb_albumid))
         with open(album.path + '/../artist.nfo', 'w') as f:
-            f.write(linkArtist.format(album.mb_albumartistid))
+            f.write(linkartist.format(album.mb_albumartistid))
 
-    def makeItemNfo(self, lib, item):
+    def make_item_nfo(self, lib, item):
         link = 'https://musicbrainz.org/recording/{0}'
         with open(item.path + '/' + item.title + '.nfo/', 'w') as f:
             f.write(link.format(item.mb_trackid))
