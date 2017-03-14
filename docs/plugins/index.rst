@@ -66,6 +66,7 @@ like this::
    inline
    ipfs
    keyfinder
+   kodinfo
    kodiupdate
    lastgenre
    lastimport
