@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2017, Sergio Soto.
@@ -20,7 +19,14 @@ and other details.
 For singletons, it generates one .nfo for each track.
 """
 
+from __future__ import absolute_import, division, print_function
+
+import os
 from beets.plugins import BeetsPlugin
+
+LINK_ALBUM = 'https://musicbrainz.org/release/{0}'
+LINK_ARTIST = 'https://musicbrainz.org/artist/{0}'
+LINK_TRACK = 'https://musicbrainz.org/recording/{0}'
 
 
 class KodiNfo(BeetsPlugin):
@@ -30,14 +36,17 @@ class KodiNfo(BeetsPlugin):
         self.register_listener('item_imported', self.make_item_nfo)
 
     def make_album_nfo(self, lib, album):
-        linkalbum = 'https://musicbrainz.org/release/{0}'
-        linkartist = 'https://musicbrainz.org/artist/{0}'
-        with open(album.path + '/album.nfo', 'w') as f:
-            f.write(linkalbum.format(album.mb_albumid))
-        with open(album.path + '/../artist.nfo', 'w') as f:
-            f.write(linkartist.format(album.mb_albumartistid))
+        album_path = os.path.join(album.path, 'album.nfo')
+        artist_path = os.path.join(album.path, os.pardir, 'artist.nfo')
+        if not os.path.isfile(album_path):
+            with open(album_path, 'w') as f:
+                f.write(LINK_ALBUM.format(album.mb_albumid))
+        if not os.path.isfile(artist_path):
+            with open(artist_path, 'w') as f:
+                f.write(LINK_ARTIST.format(album.mb_albumartistid))
 
     def make_item_nfo(self, lib, item):
-        link = 'https://musicbrainz.org/recording/{0}'
-        with open(item.path + '/' + item.title + '.nfo/', 'w') as f:
-            f.write(link.format(item.mb_trackid))
+        track_file = item.title + '.nfo'
+        track_path = os.path.join(item.path, track_file)
+        with open(track_path, 'w') as f:
+            f.write(LINK_TRACK.format(item.mb_trackid))
