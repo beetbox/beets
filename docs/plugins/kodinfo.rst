@@ -1,4 +1,4 @@
-KodiUpdate Plugin
+KodiNfo Plugin
 =================
 
 The ``kodinfo`` plugin lets you automatically generate .nfo `files`_ used by `KODI`_ 
