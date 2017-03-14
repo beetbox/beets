@@ -150,6 +150,8 @@ Interoperability
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
+* :doc:`kodinfo`: Automatically generates .nfo files for albums and artists that `Kodi`_ can 
+  read whenever beets imports albums and tracks.
 * :doc:`kodiupdate`: Automatically notifies `Kodi`_ whenever the beets library
   changes.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library

@@ -13,19 +13,11 @@ files will then be loaded by Kodi automatically when it attempts to get metadata
 For singletons, ``kodinfo`` will generate an individual .nfo file with the name of the track for each 
 file. 
 
+``kodinfo`` will only work for configurations where the artist path is the direct parent of the 
+folder where the albums are located. This is because beets doesn't keep track of where the artist folders 
+are, so the plugin assumes they are located a level above from the albums. 
+
 .. _files: http://kodi.wiki/view/NFO_files/music
 .. _KODI: http://kodi.tv/
 .. _Plex: https://www.plex.tv
 .. _requests: http://docs.python-requests.org/en/latest/
-
-Configuration
--------------
-
-The ``kodi:`` section has no configurable options.
-
-
-A note on folder structure configuration
-----------------------------------------
-
-``kodinfo`` will only work for configurations where the artist path is the direct parent of the album 
-paths. 
