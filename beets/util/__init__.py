@@ -18,6 +18,7 @@
 from __future__ import division, absolute_import, print_function
 import os
 import sys
+import errno
 import locale
 import re
 import shutil
@@ -34,6 +35,7 @@ from unidecode import unidecode
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
+SNI_SUPPORTED = sys.version_info >= (2, 7, 9)
 
 
 class HumanReadableException(Exception):
@@ -476,16 +478,15 @@ def move(path, dest, replace=False):
 def link(path, dest, replace=False):
     """Create a symbolic link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
-    `path` == `dest`."""
-    if (samefile(path, dest)):
+    `path` == `dest`.
+    """
+    if samefile(path, dest):
         return
 
-    path = syspath(path)
-    dest = syspath(dest)
-    if os.path.exists(dest) and not replace:
+    if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError(u'file exists', 'rename', (path, dest))
     try:
-        os.symlink(path, dest)
+        os.symlink(syspath(path), syspath(dest))
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(u'OS does not support symbolic links.'
@@ -497,6 +498,30 @@ def link(path, dest, replace=False):
                 exc = u'OS does not support symbolic links.'
         raise FilesystemError(exc, 'link', (path, dest),
                               traceback.format_exc())
+
+
+def hardlink(path, dest, replace=False):
+    """Create a hard link from path to `dest`. Raises an OSError if
+    `dest` already exists, unless `replace` is True. Does nothing if
+    `path` == `dest`.
+    """
+    if samefile(path, dest):
+        return
+
+    if os.path.exists(syspath(dest)) and not replace:
+        raise FilesystemError(u'file exists', 'rename', (path, dest))
+    try:
+        os.link(syspath(path), syspath(dest))
+    except NotImplementedError:
+        raise FilesystemError(u'OS does not support hard links.'
+                              'link', (path, dest), traceback.format_exc())
+    except OSError as exc:
+        if exc.errno == errno.EXDEV:
+            raise FilesystemError(u'Cannot hard link across devices.'
+                                  'link', (path, dest), traceback.format_exc())
+        else:
+            raise FilesystemError(exc, 'link', (path, dest),
+                                  traceback.format_exc())
 
 
 def unique_path(path):

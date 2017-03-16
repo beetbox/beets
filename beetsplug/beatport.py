@@ -161,7 +161,8 @@ class BeatportClient(object):
         :returns:               Tracks in the matching release
         :rtype:                 list of :py:class:`BeatportTrack`
         """
-        response = self._get('/catalog/3/tracks', releaseId=beatport_id)
+        response = self._get('/catalog/3/tracks', releaseId=beatport_id,
+                             perPage=100)
         return [BeatportTrack(t) for t in response]
 
     def get_track(self, beatport_id):

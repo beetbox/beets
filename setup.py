@@ -56,7 +56,7 @@ if 'sdist' in sys.argv:
 
 setup(
     name='beets',
-    version='1.4.3',
+    version='1.4.4',
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
@@ -114,10 +114,10 @@ setup(
         'absubmit': ['requests'],
         'fetchart': ['requests'],
         'chroma': ['pyacoustid'],
-        'discogs': ['discogs-client>=2.1.0'],
+        'discogs': ['discogs-client>=2.2.1'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'lastgenre': ['pylast'],
-        'mpdstats': ['python-mpd2'],
+        'mpdstats': ['python-mpd2>=0.4.2'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
         'thumbnails': ['pyxdg'] +

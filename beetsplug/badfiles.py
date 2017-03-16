@@ -30,6 +30,23 @@ import sys
 import six
 
 
+class CheckerCommandException(Exception):
+    """Raised when running a checker failed.
+
+    Attributes:
+        checker: Checker command name.
+        path: Path to the file being validated.
+        errno: Error number from the checker execution error.
+        msg: Message from the checker execution error.
+    """
+
+    def __init__(self, cmd, oserror):
+        self.checker = cmd[0]
+        self.path = cmd[-1]
+        self.errno = oserror.errno
+        self.msg = str(oserror)
+
+
 class BadFiles(BeetsPlugin):
     def run_command(self, cmd):
         self._log.debug(u"running command: {}",
@@ -43,11 +60,7 @@ class BadFiles(BeetsPlugin):
             errors = 1
             status = e.returncode
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                ui.print_(u"command not found: {}".format(cmd[0]))
-                sys.exit(1)
-            else:
-                raise
+            raise CheckerCommandException(cmd, e)
         output = output.decode(sys.getfilesystemencoding())
         return status, errors, [line for line in output.split("\n") if line]
 
@@ -93,16 +106,29 @@ class BadFiles(BeetsPlugin):
                     ui.colorize('text_error', dpath)))
 
             # Run the checker against the file if one is found
-            ext = os.path.splitext(item.path)[1][1:]
+            ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
             checker = self.get_checker(ext)
             if not checker:
+                self._log.error(u"no checker specified in the config for {}",
+                                ext)
                 continue
             path = item.path
             if not isinstance(path, six.text_type):
                 path = item.path.decode(sys.getfilesystemencoding())
-            status, errors, output = checker(path)
+            try:
+                status, errors, output = checker(path)
+            except CheckerCommandException as e:
+                if e.errno == errno.ENOENT:
+                    self._log.error(
+                        u"command not found: {} when validating file: {}",
+                        e.checker,
+                        e.path
+                    )
+                else:
+                    self._log.error(u"error invoking {}: {}", e.checker, e.msg)
+                continue
             if status > 0:
-                ui.print_(u"{}: checker exited withs status {}"
+                ui.print_(u"{}: checker exited with status {}"
                           .format(ui.colorize('text_error', dpath), status))
                 for line in output:
                     ui.print_(u"  {}".format(displayable_path(line)))
@@ -111,11 +137,16 @@ class BadFiles(BeetsPlugin):
                           .format(ui.colorize('text_warning', dpath), errors))
                 for line in output:
                     ui.print_(u"  {}".format(displayable_path(line)))
-            else:
+            elif opts.verbose:
                 ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
 
     def commands(self):
         bad_command = Subcommand('bad',
                                  help=u'check for corrupt or missing files')
+        bad_command.parser.add_option(
+            u'-v', u'--verbose',
+            action='store_true', default=False, dest='verbose',
+            help=u'view results for both the bad and uncorrupted files'
+        )
         bad_command.func = self.check_bad
         return [bad_command]

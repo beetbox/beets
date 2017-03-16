@@ -663,7 +663,7 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move_file(self, dest, copy=False, link=False):
+    def move_file(self, dest, copy=False, link=False, hardlink=False):
         """Moves or copies the item's file, updating the path value if
         the move succeeds. If a file exists at ``dest``, then it is
         slightly modified to be unique.
@@ -677,6 +677,10 @@ class Item(LibModel):
         elif link:
             util.link(self.path, dest)
             plugins.send("item_linked", item=self, source=self.path,
+                         destination=dest)
+        elif hardlink:
+            util.hardlink(self.path, dest)
+            plugins.send("item_hardlinked", item=self, source=self.path,
                          destination=dest)
         else:
             plugins.send("before_item_moved", item=self, source=self.path,
@@ -730,15 +734,16 @@ class Item(LibModel):
 
         self._db._memotable = {}
 
-    def move(self, copy=False, link=False, basedir=None, with_album=True,
-             store=True):
+    def move(self, copy=False, link=False, hardlink=False, basedir=None,
+             with_album=True, store=True):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
         field is updated to reflect the new location.
 
         If `copy` is true, moving the file is copied rather than moved.
-        Similarly, `link` creates a symlink instead.
+        Similarly, `link` creates a symlink instead, and `hardlink`
+        creates a hardlink.
 
         basedir overrides the library base directory for the
         destination.
@@ -761,7 +766,7 @@ class Item(LibModel):
 
         # Perform the move and store the change.
         old_path = self.path
-        self.move_file(dest, copy, link)
+        self.move_file(dest, copy, link, hardlink)
         if store:
             self.store()
 
@@ -979,7 +984,7 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, copy=False, link=False):
+    def move_art(self, copy=False, link=False, hardlink=False):
         """Move or copy any existing album art so that it remains in the
         same directory as the items.
         """
@@ -999,6 +1004,8 @@ class Album(LibModel):
             util.copy(old_art, new_art)
         elif link:
             util.link(old_art, new_art)
+        elif hardlink:
+            util.hardlink(old_art, new_art)
         else:
             util.move(old_art, new_art)
         self.artpath = new_art
@@ -1008,7 +1015,8 @@ class Album(LibModel):
             util.prune_dirs(os.path.dirname(old_art),
                             self._db.directory)
 
-    def move(self, copy=False, link=False, basedir=None, store=True):
+    def move(self, copy=False, link=False, hardlink=False, basedir=None,
+             store=True):
         """Moves (or copies) all items to their destination. Any album
         art moves along with them. basedir overrides the library base
         directory for the destination. By default, the album is stored to the
@@ -1026,11 +1034,11 @@ class Album(LibModel):
         # Move items.
         items = list(self.items())
         for item in items:
-            item.move(copy, link, basedir=basedir, with_album=False,
+            item.move(copy, link, hardlink, basedir=basedir, with_album=False,
                       store=store)
 
         # Move art.
-        self.move_art(copy, link)
+        self.move_art(copy, link, hardlink)
         if store:
             self.store()
 
@@ -1237,13 +1245,16 @@ class Library(dbcore.Database):
         timeout = beets.config['timeout'].as_number()
         super(Library, self).__init__(path, timeout=timeout)
 
-        self._connection().create_function('bytelower', 1, _sqlite_bytelower)
-
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
+
+    def _create_connection(self):
+        conn = super(Library, self)._create_connection()
+        conn.create_function('bytelower', 1, _sqlite_bytelower)
+        return conn
 
     # Adding objects to the database.
 
@@ -1444,13 +1455,15 @@ class DefaultTemplateFunctions(object):
         cur_fmt = beets.config['time_format'].as_str()
         return time.strftime(fmt, time.strptime(s, cur_fmt))
 
-    def tmpl_aunique(self, keys=None, disam=None):
+    def tmpl_aunique(self, keys=None, disam=None, bracket=None):
         """Generate a string that is guaranteed to be unique among all
         albums in the library who share the same set of keys. A fields
         from "disam" is used in the string if one is sufficient to
         disambiguate the albums. Otherwise, a fallback opaque value is
         used. Both "keys" and "disam" should be given as
-        whitespace-separated lists of field names.
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
         """
         # Fast paths: no album, no item or library, or memoized value.
         if not self.item or not self.lib:
@@ -1464,8 +1477,18 @@ class DefaultTemplateFunctions(object):
 
         keys = keys or 'albumartist album'
         disam = disam or 'albumtype year label catalognum albumdisambig'
+        if bracket is None:
+            bracket = '[]'
         keys = keys.split()
         disam = disam.split()
+
+        # Assign a left and right bracket or leave blank if argument is empty.
+        if len(bracket) == 2:
+            bracket_l = bracket[0]
+            bracket_r = bracket[1]
+        else:
+            bracket_l = u''
+            bracket_r = u''
 
         album = self.lib.get_album(self.item)
         if not album:
@@ -1499,13 +1522,19 @@ class DefaultTemplateFunctions(object):
 
         else:
             # No disambiguator distinguished all fields.
-            res = u' {0}'.format(album.id)
+            res = u' {1}{0}{2}'.format(album.id, bracket_l, bracket_r)
             self.lib._memotable[memokey] = res
             return res
 
         # Flatten disambiguation value into a string.
         disam_value = album.formatted(True).get(disambiguator)
-        res = u' [{0}]'.format(disam_value)
+
+        # Return empty string if disambiguator is empty.
+        if disam_value:
+            res = u' {1}{0}{2}'.format(disam_value, bracket_l, bracket_r)
+        else:
+            res = u''
+
         self.lib._memotable[memokey] = res
         return res
 

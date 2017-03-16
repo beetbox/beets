@@ -66,6 +66,7 @@ like this::
    inline
    ipfs
    keyfinder
+   kodiupdate
    lastgenre
    lastimport
    lyrics
@@ -148,6 +149,8 @@ Interoperability
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
+* :doc:`kodiupdate`: Automatically notifies `Kodi`_ whenever the beets library
+  changes.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
 * :doc:`play`: Play beets queries in your music player.
@@ -160,6 +163,7 @@ Interoperability
 
 .. _Emby: http://emby.media
 .. _Plex: http://plex.tv
+.. _Kodi: http://kodi.tv
 
 Miscellaneous
 -------------
@@ -236,6 +240,8 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-usertag`_ lets you use keywords to tag and organize your music.
 
+* `beets-popularity`_ fetches popularity values from Spotify.
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -253,3 +259,5 @@ Here are a few of the plugins written by the beets community:
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
 .. _beets-usertag: https://github.com/igordertigor/beets-usertag
+.. _beets-popularity: https://github.com/abba23/beets-popularity
+

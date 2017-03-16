@@ -157,3 +157,5 @@ def apply_metadata(album_info, mapping):
             item.composer = track_info.composer
         if track_info.arranger is not None:
             item.arranger = track_info.arranger
+
+        item.track_alt = track_info.track_alt
