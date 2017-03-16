@@ -9,7 +9,7 @@ Installation
 
 The `absubmit` plugin requires the `streaming_extractor_music`_ program to run. Its source can be found on `GitHub`_, and while it is possible to compile the extractor from source, AcousticBrainz would prefer if you used their binary (see the AcousticBrainz `FAQ`_).
 
-The `absubmit` also plugin requires `requests`_, which you can install using `pip_` by typing::
+The `absubmit` also plugin requires `requests`_, which you can install using `pip`_ by typing::
 
     pip install requests
 
