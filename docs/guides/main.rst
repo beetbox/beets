@@ -126,6 +126,15 @@ trouble or you have more detail to contribute here, please direct it to
 .. _get-pip.py: https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 
 
+Core Concepts
+-------------
+
+* *Library*: Is the beets database model only meant to catalog users music , which means that it only represents links to music files. The library is commposed by @items(songs) and @albums. The metadata album is shared by the track groups. Each item belongs to an album, otherwise is a @singleton. Users can import songs with the ``beet import`` command. 
+* *Queries*: Represent the data subsets that the user wants to retrieve from the library. 
+* *Paths and Destinations*: Each item has a @destination, which is the path it would reside at. In its default setup, the beet import command copies items to their destination as they are imported. 
+* *Auto-Tagging*: Beets used two auto-tagging workflows, one for Albums and one for Items (i.e., singletons). This ones retrieve metadata provider by MusicBrainz, Beatport etc.
+
+
 Configuring
 -----------
 
