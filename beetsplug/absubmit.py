@@ -90,10 +90,6 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             self.extractor_sha.update(extractor.read())
         self.extractor_sha = self.extractor_sha.hexdigest()
 
-    supported_formats = {'mp3', 'ogg', 'oga', 'flac', 'mp4', 'm4a', 'm4r',
-                         'm4b', 'm4p', 'aac', 'wma', 'asf', 'mpc', 'wv',
-                         'spx', 'tta', '3g2', 'aif', 'aiff', 'ape'}
-
     base_url = 'https://acousticbrainz.org/api/v1/{mbid}/low-level'
 
     def commands(self):
@@ -119,11 +115,6 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             self._log.info(u'Not analysing {}, missing '
                            u'musicbrainz track id.', item)
             return None
-        # If file format is not supported skip it.
-        if item['format'].lower() not in self.supported_formats:
-            self._log.info(u'Not analysing {}, file not in '
-                           u'supported format.', item)
-            return None
 
         # Temporary file to save extractor output to, extractor only works
         # if an output file is given. Here we use a temporary file to copy
@@ -136,7 +127,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             try:
                 call([self.extractor, util.syspath(item.path), filename])
             except ABSubmitError as e:
-                self._log.error(
+                self._log.warning(
                     u'Failed to analyse {item} for AcousticBrainz: {error}',
                     item=item, error=e
                 )
