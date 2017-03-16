@@ -229,7 +229,7 @@ Default sort order to use when fetching items from the database. Defaults to
 sort_album
 ~~~~~~~~~~
 
-Default sort order to use when fetching items from the database. Defaults to
+Default sort order to use when fetching albums from the database. Defaults to
 ``albumartist+ album+``. Explicit sort orders override this default.
 
 .. _sort_case_insensitive:
@@ -433,14 +433,27 @@ link
 ~~~~
 
 Either ``yes`` or ``no``, indicating whether to use symbolic links instead of
-moving or copying files. (It conflicts with the ``move`` and ``copy``
-options.) Defaults to ``no``.
+moving or copying files. (It conflicts with the ``move``, ``copy`` and
+``hardlink`` options.) Defaults to ``no``.
 
 This option only works on platforms that support symbolic links: i.e., Unixes.
 It will fail on Windows.
 
 It's likely that you'll also want to set ``write`` to ``no`` if you use this
 option to preserve the metadata on the linked files.
+
+.. _hardlink:
+
+hardlink
+~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether to use hard links instead of
+moving or copying or symlinking files. (It conflicts with the ``move``,
+``copy``, and ``link`` options.) Defaults to ``no``.
+
+As with symbolic links (see :ref:`link`, above), this will not work on Windows
+and you will want to set ``write`` to ``no``.  Otherwise, metadata on the
+original file will be modified.
 
 resume
 ~~~~~~
@@ -620,7 +633,7 @@ automatically accept any matches above 90% similarity, use::
 The default strong recommendation threshold is 0.04.
 
 The ``medium_rec_thresh`` and ``rec_gap_thresh`` options work similarly. When a
-match is above the *medium* recommendation threshold or the distance between it
+match is below the *medium* recommendation threshold or the distance between it
 and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.

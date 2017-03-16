@@ -69,7 +69,7 @@ class Candidate(object):
         self.match = match
         self.size = size
 
-    def _validate(self, extra):
+    def _validate(self, plugin):
         """Determine whether the candidate artwork is valid based on
         its dimensions (width and ratio).
 
@@ -80,9 +80,7 @@ class Candidate(object):
         if not self.path:
             return self.CANDIDATE_BAD
 
-        if not (extra['enforce_ratio'] or
-                extra['minwidth'] or
-                extra['maxwidth']):
+        if not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth):
             return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -101,22 +99,22 @@ class Candidate(object):
         long_edge = max(self.size)
 
         # Check minimum size.
-        if extra['minwidth'] and self.size[0] < extra['minwidth']:
+        if plugin.minwidth and self.size[0] < plugin.minwidth:
             self._log.debug(u'image too small ({} < {})',
-                            self.size[0], extra['minwidth'])
+                            self.size[0], plugin.minwidth)
             return self.CANDIDATE_BAD
 
         # Check aspect ratio.
         edge_diff = long_edge - short_edge
-        if extra['enforce_ratio']:
-            if extra['margin_px']:
-                if edge_diff > extra['margin_px']:
+        if plugin.enforce_ratio:
+            if plugin.margin_px:
+                if edge_diff > plugin.margin_px:
                     self._log.debug(u'image is not close enough to being '
                                     u'square, ({} - {} > {})',
-                                    long_edge, short_edge, extra['margin_px'])
+                                    long_edge, short_edge, plugin.margin_px)
                     return self.CANDIDATE_BAD
-            elif extra['margin_percent']:
-                margin_px = extra['margin_percent'] * long_edge
+            elif plugin.margin_percent:
+                margin_px = plugin.margin_percent * long_edge
                 if edge_diff > margin_px:
                     self._log.debug(u'image is not close enough to being '
                                     u'square, ({} - {} > {})',
@@ -129,20 +127,20 @@ class Candidate(object):
                 return self.CANDIDATE_BAD
 
         # Check maximum size.
-        if extra['maxwidth'] and self.size[0] > extra['maxwidth']:
+        if plugin.maxwidth and self.size[0] > plugin.maxwidth:
             self._log.debug(u'image needs resizing ({} > {})',
-                            self.size[0], extra['maxwidth'])
+                            self.size[0], plugin.maxwidth)
             return self.CANDIDATE_DOWNSCALE
 
         return self.CANDIDATE_EXACT
 
-    def validate(self, extra):
-        self.check = self._validate(extra)
+    def validate(self, plugin):
+        self.check = self._validate(plugin)
         return self.check
 
-    def resize(self, extra):
-        if extra['maxwidth'] and self.check == self.CANDIDATE_DOWNSCALE:
-            self.path = ArtResizer.shared.resize(extra['maxwidth'], self.path)
+    def resize(self, plugin):
+        if plugin.maxwidth and self.check == self.CANDIDATE_DOWNSCALE:
+            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path)
 
 
 def _logged_get(log, *args, **kwargs):
@@ -198,13 +196,13 @@ class ArtSource(RequestMixin):
         self._log = log
         self._config = config
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         raise NotImplementedError()
 
     def _candidate(self, **kwargs):
         return Candidate(source=self, log=self._log, **kwargs)
 
-    def fetch_image(self, candidate, extra):
+    def fetch_image(self, candidate, plugin):
         raise NotImplementedError()
 
 
@@ -212,7 +210,7 @@ class LocalArtSource(ArtSource):
     IS_LOCAL = True
     LOC_STR = u'local'
 
-    def fetch_image(self, candidate, extra):
+    def fetch_image(self, candidate, plugin):
         pass
 
 
@@ -220,13 +218,13 @@ class RemoteArtSource(ArtSource):
     IS_LOCAL = False
     LOC_STR = u'remote'
 
-    def fetch_image(self, candidate, extra):
+    def fetch_image(self, candidate, plugin):
         """Downloads an image from a URL and checks whether it seems to
         actually be an image. If so, returns a path to the downloaded image.
         Otherwise, returns None.
         """
-        if extra['maxwidth']:
-            candidate.url = ArtResizer.shared.proxy_url(extra['maxwidth'],
+        if plugin.maxwidth:
+            candidate.url = ArtResizer.shared.proxy_url(plugin.maxwidth,
                                                         candidate.url)
         try:
             with closing(self.request(candidate.url, stream=True,
@@ -292,10 +290,14 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
 
-    URL = 'http://coverartarchive.org/release/{mbid}/front'
-    GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
+    if util.SNI_SUPPORTED:
+        URL = 'https://coverartarchive.org/release/{mbid}/front'
+        GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
+    else:
+        URL = 'http://coverartarchive.org/release/{mbid}/front'
+        GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
@@ -313,7 +315,7 @@ class Amazon(RemoteArtSource):
     URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
     INDICES = (1, 2)
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         """Generate URLs using Amazon ID (ASIN) string.
         """
         if album.asin:
@@ -327,7 +329,7 @@ class AlbumArtOrg(RemoteArtSource):
     URL = 'http://www.albumart.org/index_detail.php'
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         """Return art URL from AlbumArt.org using album ASIN.
         """
         if not album.asin:
@@ -358,7 +360,7 @@ class GoogleImages(RemoteArtSource):
         self.key = self._config['google_key'].get(),
         self.cx = self._config['google_engine'].get(),
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         """Return art URL from google custom search engine
         given an album title and interpreter.
         """
@@ -394,8 +396,7 @@ class GoogleImages(RemoteArtSource):
 class FanartTV(RemoteArtSource):
     """Art from fanart.tv requested using their API"""
     NAME = u"fanart.tv"
-
-    API_URL = 'http://webservice.fanart.tv/v3/'
+    API_URL = 'https://webservice.fanart.tv/v3/'
     API_ALBUMS = API_URL + 'music/albums/'
     PROJECT_KEY = '61a7d0ab4e67162b7a0c7c35915cd48e'
 
@@ -403,7 +404,7 @@ class FanartTV(RemoteArtSource):
         super(FanartTV, self).__init__(*args, **kwargs)
         self.client_key = self._config['fanarttv_key'].get()
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         if not album.mb_releasegroupid:
             return
 
@@ -454,7 +455,7 @@ class FanartTV(RemoteArtSource):
 class ITunesStore(RemoteArtSource):
     NAME = u"iTunes Store"
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         """Return art URL from iTunes Store given an album title.
         """
         if not (album.albumartist and album.album):
@@ -488,8 +489,8 @@ class ITunesStore(RemoteArtSource):
 
 class Wikipedia(RemoteArtSource):
     NAME = u"Wikipedia (queried through DBpedia)"
-    DBPEDIA_URL = 'http://dbpedia.org/sparql'
-    WIKIPEDIA_URL = 'http://en.wikipedia.org/w/api.php'
+    DBPEDIA_URL = 'https://dbpedia.org/sparql'
+    WIKIPEDIA_URL = 'https://en.wikipedia.org/w/api.php'
     SPARQL_QUERY = u'''PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                  PREFIX dbpprop: <http://dbpedia.org/property/>
                  PREFIX owl: <http://dbpedia.org/ontology/>
@@ -512,7 +513,7 @@ class Wikipedia(RemoteArtSource):
                   }}
                  Limit 1'''
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         if not (album.albumartist and album.album):
             return
 
@@ -624,16 +625,14 @@ class FileSystem(LocalArtSource):
         """
         return [idx for (idx, x) in enumerate(cover_names) if x in filename]
 
-    def get(self, album, extra):
+    def get(self, album, plugin, paths):
         """Look for album art files in the specified directories.
         """
-        paths = extra['paths']
         if not paths:
             return
-        cover_names = list(map(util.bytestring_path, extra['cover_names']))
+        cover_names = list(map(util.bytestring_path, plugin.cover_names))
         cover_names_str = b'|'.join(cover_names)
         cover_pat = br''.join([br"(\b|_)(", cover_names_str, br")(\b|_)"])
-        cautious = extra['cautious']
 
         for path in paths:
             if not os.path.isdir(syspath(path)):
@@ -663,7 +662,7 @@ class FileSystem(LocalArtSource):
                     remaining.append(fn)
 
             # Fall back to any image in the folder.
-            if remaining and not cautious:
+            if remaining and not plugin.cautious:
                 self._log.debug(u'using fallback art file {0}',
                                 util.displayable_path(remaining[0]))
                 yield self._candidate(path=os.path.join(path, remaining[0]),
@@ -842,16 +841,6 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """
         out = None
 
-        # all the information any of the sources might need
-        extra = {'paths': paths,
-                 'cover_names': self.cover_names,
-                 'cautious': self.cautious,
-                 'enforce_ratio': self.enforce_ratio,
-                 'margin_px': self.margin_px,
-                 'margin_percent': self.margin_percent,
-                 'minwidth': self.minwidth,
-                 'maxwidth': self.maxwidth}
-
         for source in self.sources:
             if source.IS_LOCAL or not local_only:
                 self._log.debug(
@@ -861,9 +850,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 )
                 # URLs might be invalid at this point, or the image may not
                 # fulfill the requirements
-                for candidate in source.get(album, extra):
-                    source.fetch_image(candidate, extra)
-                    if candidate.validate(extra):
+                for candidate in source.get(album, self, paths):
+                    source.fetch_image(candidate, self)
+                    if candidate.validate(self):
                         out = candidate
                         self._log.debug(
                             u'using {0.LOC_STR} image {1}'.format(
@@ -873,7 +862,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     break
 
         if out:
-            out.resize(extra)
+            out.resize(self)
 
         return out
 

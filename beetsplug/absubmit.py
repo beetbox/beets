@@ -24,7 +24,7 @@ import os
 import subprocess
 import tempfile
 
-from distutils import spawn
+from distutils.spawn import find_executable
 import requests
 
 from beets import plugins
@@ -79,9 +79,10 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 # Extractor found, will exit with an error if not called with
                 # the correct amount of arguments.
                 pass
-            # Get the executable location on the system,
-            # needed to calculate the sha1 hash.
-            self.extractor = spawn.find_executable(self.extractor)
+
+            # Get the executable location on the system, which we need
+            # to calculate the SHA-1 hash.
+            self.extractor = find_executable(self.extractor)
 
         # Calculate extractor hash.
         self.extractor_sha = hashlib.sha1()

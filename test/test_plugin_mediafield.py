@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import six
 import shutil
+import unittest
 
 from test import _common
 from beets.library import Item
@@ -105,3 +106,10 @@ class ExtendedFieldTestMixin(_common.TestCase):
             mediafile.MediaFile.add_field('artist', mediafile.MediaField())
         self.assertIn(u'property "artist" already exists',
                       six.text_type(cm.exception))
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')

@@ -713,8 +713,8 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         album2.year = 2001
         album2.store()
 
-        self._assert_dest(b'/base/foo 1/the title', self.i1)
-        self._assert_dest(b'/base/foo 2/the title', self.i2)
+        self._assert_dest(b'/base/foo [1]/the title', self.i1)
+        self._assert_dest(b'/base/foo [2]/the title', self.i2)
 
     def test_unique_falls_back_to_second_distinguishing_field(self):
         self._setf(u'foo%aunique{albumartist album,month year}/$title')
@@ -729,6 +729,24 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         album1.store()
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest(b'/base/foo [foo_bar]/the title', self.i1)
+
+    def test_drop_empty_disambig_string(self):
+        album1 = self.lib.get_album(self.i1)
+        album1.albumdisambig = None
+        album2 = self.lib.get_album(self.i2)
+        album2.albumdisambig = u'foo'
+        album1.store()
+        album2.store()
+        self._setf(u'foo%aunique{albumartist album,albumdisambig}/$title')
+        self._assert_dest(b'/base/foo/the title', self.i1)
+
+    def test_change_brackets(self):
+        self._setf(u'foo%aunique{albumartist album,year,()}/$title')
+        self._assert_dest(b'/base/foo (2001)/the title', self.i1)
+
+    def test_remove_brackets(self):
+        self._setf(u'foo%aunique{albumartist album,year,}/$title')
+        self._assert_dest(b'/base/foo 2001/the title', self.i1)
 
 
 class PluginDestinationTest(_common.TestCase):

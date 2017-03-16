@@ -21,7 +21,8 @@ import shlex
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, Subcommand, UserError
-from beets.util import command_output, displayable_path, subprocess
+from beets.util import command_output, displayable_path, subprocess, \
+    bytestring_path
 from beets.library import Item, Album
 import six
 
@@ -112,14 +113,14 @@ class DuplicatesPlugin(BeetsPlugin):
             self.config.set_args(opts)
             album = self.config['album'].get(bool)
             checksum = self.config['checksum'].get(str)
-            copy = self.config['copy'].get(str)
+            copy = bytestring_path(self.config['copy'].as_str())
             count = self.config['count'].get(bool)
             delete = self.config['delete'].get(bool)
             fmt = self.config['format'].get(str)
             full = self.config['full'].get(bool)
             keys = self.config['keys'].as_str_seq()
             merge = self.config['merge'].get(bool)
-            move = self.config['move'].get(str)
+            move = bytestring_path(self.config['move'].as_str())
             path = self.config['path'].get(bool)
             tiebreak = self.config['tiebreak'].get(dict)
             strict = self.config['strict'].get(bool)

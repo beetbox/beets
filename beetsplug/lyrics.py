@@ -563,12 +563,18 @@ class Google(Backend):
               % (self.api_key, self.engine_id,
                  urllib.parse.quote(query.encode('utf-8')))
 
-        data = urllib.request.urlopen(url)
-        data = json.load(data)
+        data = self.fetch_url(url)
+        if not data:
+            self._log.debug(u'google backend returned no data')
+            return None
+        try:
+            data = json.loads(data)
+        except ValueError as exc:
+            self._log.debug(u'google backend returned malformed JSON: {}', exc)
         if 'error' in data:
             reason = data['error']['errors'][0]['reason']
-            self._log.debug(u'google lyrics backend error: {0}', reason)
-            return
+            self._log.debug(u'google backend error: {0}', reason)
+            return None
 
         if 'items' in data.keys():
             for item in data['items']:
@@ -655,7 +661,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         params = {
             'client_id': 'beets',
             'client_secret': self.config['bing_client_secret'],
-            'scope': 'http://api.microsofttranslator.com',
+            'scope': "https://api.microsofttranslator.com",
             'grant_type': 'client_credentials',
         }
 
@@ -762,7 +768,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         if self.bing_auth_token:
             # Extract unique lines to limit API request size per song
             text_lines = set(text.split('\n'))
-            url = ('http://api.microsofttranslator.com/v2/Http.svc/'
+            url = ('https://api.microsofttranslator.com/v2/Http.svc/'
                    'Translate?text=%s&to=%s' % ('|'.join(text_lines), to_lang))
             r = requests.get(url,
                              headers={"Authorization ": self.bing_auth_token})

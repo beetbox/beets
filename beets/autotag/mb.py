@@ -30,7 +30,11 @@ from beets import config
 import six
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
-BASE_URL = 'http://musicbrainz.org/'
+
+if util.SNI_SUPPORTED:
+    BASE_URL = 'https://musicbrainz.org/'
+else:
+    BASE_URL = 'http://musicbrainz.org/'
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
@@ -265,6 +269,7 @@ def album_info(release):
             )
             ti.disctitle = disctitle
             ti.media = format
+            ti.track_alt = track['number']
 
             # Prefer track data, where present, over recording data.
             if track.get('title'):
@@ -369,6 +374,7 @@ def match_album(artist, album, tracks=None):
         return
 
     try:
+        log.debug(u'Searching for MusicBrainz releases with: {!r}', criteria)
         res = musicbrainzngs.search_releases(
             limit=config['musicbrainz']['searchlimit'].get(int), **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
@@ -419,6 +425,7 @@ def album_for_id(releaseid):
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
+    log.debug(u'Requesting MusicBrainz release {}', releaseid)
     albumid = _parse_id(releaseid)
     if not albumid:
         log.debug(u'Invalid MBID ({0}).', releaseid)

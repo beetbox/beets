@@ -23,7 +23,6 @@ import warnings
 import re
 from six.moves import zip
 
-from beets import logging
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output, displayable_path, py3_path
@@ -194,8 +193,8 @@ class Bs1770gainBackend(Backend):
         """
         # Construct shell command.
         cmd = [self.command]
-        cmd = cmd + [self.method]
-        cmd = cmd + ['-p']
+        cmd += [self.method]
+        cmd += ['-p']
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
@@ -227,7 +226,7 @@ class Bs1770gainBackend(Backend):
             ':|done\\.\\s)', re.DOTALL | re.UNICODE)
         results = re.findall(regex, data)
         for parts in results[0:num_lines]:
-            part = parts.split(b'\n')
+            part = parts.split(u'\n')
             if len(part) == 0:
                 self._log.debug(u'bad tool output: {0!r}', text)
                 raise ReplayGainError(u'bs1770gain failed')
@@ -794,7 +793,7 @@ class ReplayGainPlugin(BeetsPlugin):
         "command": CommandBackend,
         "gstreamer": GStreamerBackend,
         "audiotools": AudioToolsBackend,
-        "bs1770gain": Bs1770gainBackend
+        "bs1770gain": Bs1770gainBackend,
     }
 
     def __init__(self):
@@ -934,8 +933,6 @@ class ReplayGainPlugin(BeetsPlugin):
         """Return the "replaygain" ui subcommand.
         """
         def func(lib, opts, args):
-            self._log.setLevel(logging.INFO)
-
             write = ui.should_write()
 
             if opts.album:

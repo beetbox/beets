@@ -20,11 +20,33 @@ import os.path
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.ui import decargs
+from beets.ui import print_, decargs
 from beets.util import syspath, normpath, displayable_path, bytestring_path
 from beets.util.artresizer import ArtResizer
 from beets import config
 from beets import art
+
+
+def _confirm(objs, album):
+    """Show the list of affected objects (items or albums) and confirm
+    that the user wants to modify their artwork.
+
+    `album` is a Boolean indicating whether these are albums (as opposed
+    to items).
+    """
+    noun = u'album' if album else u'file'
+    prompt = u'Modify artwork for {} {}{} (Y/n)?'.format(
+        len(objs),
+        noun,
+        u's' if len(objs) > 1 else u''
+    )
+
+    # Show all the items or albums.
+    for obj in objs:
+        print_(format(obj))
+
+    # Confirm with user.
+    return ui.input_yn(prompt)
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
@@ -60,6 +82,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd.parser.add_option(
             u'-f', u'--file', metavar='PATH', help=u'the image file to embed'
         )
+        embed_cmd.parser.add_option(
+            u"-y", u"--yes", action="store_true", help=u"skip confirmation"
+        )
         maxwidth = self.config['maxwidth'].get(int)
         compare_threshold = self.config['compare_threshold'].get(int)
         ifempty = self.config['ifempty'].get(bool)
@@ -71,11 +96,24 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     raise ui.UserError(u'image file {0} not found'.format(
                         displayable_path(imagepath)
                     ))
-                for item in lib.items(decargs(args)):
+
+                items = lib.items(decargs(args))
+
+                # Confirm with user.
+                if not opts.yes and not _confirm(items, not opts.file):
+                    return
+
+                for item in items:
                     art.embed_item(self._log, item, imagepath, maxwidth, None,
                                    compare_threshold, ifempty)
             else:
-                for album in lib.albums(decargs(args)):
+                albums = lib.albums(decargs(args))
+
+                # Confirm with user.
+                if not opts.yes and not _confirm(albums, not opts.file):
+                    return
+
+                for album in albums:
                     art.embed_album(self._log, album, maxwidth, False,
                                     compare_threshold, ifempty)
                     self.remove_artfile(album)

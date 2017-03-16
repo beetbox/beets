@@ -54,9 +54,11 @@ class DiscogsPlugin(BeetsPlugin):
             'apisecret': 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy',
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
+            'user_token': '',
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
+        self.config['user_token'].redact = True
         self.discogs_client = None
         self.register_listener('import_begin', self.setup)
 
@@ -65,6 +67,12 @@ class DiscogsPlugin(BeetsPlugin):
         """
         c_key = self.config['apikey'].as_str()
         c_secret = self.config['apisecret'].as_str()
+
+        # Try using a configured user token (bypassing OAuth login).
+        user_token = self.config['user_token'].as_str()
+        if user_token:
+            self.discogs_client = Client(USER_AGENT, user_token=user_token)
+            return
 
         # Get the OAuth token from a file or log in.
         try:
@@ -314,7 +322,9 @@ class DiscogsPlugin(BeetsPlugin):
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
                 index += 1
-                tracks.append(self.get_track_info(track, index))
+                track_info = self.get_track_info(track, index)
+                track_info.track_alt = track['position']
+                tracks.append(track_info)
             else:
                 index_tracks[index + 1] = track['title']
 

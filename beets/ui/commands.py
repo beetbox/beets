@@ -942,6 +942,10 @@ import_cmd.parser.add_option(
     help=u"don't copy tracks (opposite of -c)"
 )
 import_cmd.parser.add_option(
+    u'-m', u'--move', action='store_true', dest='move',
+    help=u"move tracks into the library (overrides -c)"
+)
+import_cmd.parser.add_option(
     u'-w', u'--write', action='store_true', default=None,
     help=u"write new metadata to files' tags (default)"
 )
