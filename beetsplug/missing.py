@@ -159,12 +159,16 @@ class MissingPlugin(BeetsPlugin):
         """Print a listing of albums missing from each artist in the library
         matching query.
         """
+        total = self.config['total'].get()
+
         albums = lib.albums(query)
         # build dict mapping artist to list of their albums in library
         albums_by_artist = defaultdict(list)
         for alb in albums:
             artist = (alb['albumartist'], alb['mb_albumartistid'])
             albums_by_artist[artist].append(alb)
+
+        total_missing = 0
 
         # build dict mapping artist to list of all albums
         for artist, albums in albums_by_artist.items():
@@ -196,10 +200,17 @@ class MissingPlugin(BeetsPlugin):
                         present.append(rg)
                         break
 
+            total_missing += len(missing)
+            if total:
+                continue
+
             missing_titles = {rg['title'] for rg in missing}
 
             for release_title in missing_titles:
                 print_(u"{} - {}".format(artist[0], release_title))
+
+        if total:
+            print(total_missing)
 
     def _missing(self, album):
         """Query MusicBrainz to determine items missing from `album`.
