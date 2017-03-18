@@ -18,12 +18,10 @@
 """
 from __future__ import division, absolute_import, print_function
 
-import time
-import beets
-import musicbrainzngs as m
-import sys
+import musicbrainzngs
 
 from musicbrainzngs.musicbrainz import MusicBrainzError
+from collections import defaultdict
 from beets.autotag import hooks
 from beets.library import Item
 from beets.plugins import BeetsPlugin
@@ -100,7 +98,7 @@ class MissingPlugin(BeetsPlugin):
         self.config.add({
             'count': False,
             'total': False,
-            'albums': False,
+            'album': False,
         })
 
         self.album_template_fields['missing'] = _missing_count
@@ -115,26 +113,26 @@ class MissingPlugin(BeetsPlugin):
             u'-t', u'--total', dest='total', action='store_true',
             help=u'count total of missing tracks')
         self._command.parser.add_option(
-            u'-a', u'--albums', dest='albums', action='store_true',
+            u'-a', u'--album', dest='album', action='store_true',
             help=u'show missing albums for artist instead of tracks')
         self._command.parser.add_format_option()
 
     def commands(self):
         def _miss(lib, opts, args):
             self.config.set_args(opts)
-            albms = self.config['albums'].get()
+            albms = self.config['album'].get()
 
             helper = self._missing_albums if albms else self._missing_tracks
-            helper(lib, args)
+            helper(lib, decargs(args))
 
         self._command.func = _miss
         return [self._command]
 
-    def _missing_tracks(self, lib, args):
-        """Logic for determining missing tracks from each album in the library
-        (the usual case)
+    def _missing_tracks(self, lib, query):
+        """Print a listing of tracks missing from each album in the library
+        matching query.
         """
-        albums = lib.albums(decargs(args))
+        albums = lib.albums(query)
 
         count = self.config['count'].get()
         total = self.config['total'].get()
@@ -157,55 +155,51 @@ class MissingPlugin(BeetsPlugin):
                 for item in self._missing(album):
                     print_(format(item, fmt))
 
-    def _missing_albums(self, lib, args):
-        """Logic for determining missing albums from each artist in the library
-        (-a case)
+    def _missing_albums(self, lib, query):
+        """Print a listing of albums missing from each artist in the library
+        matching query.
         """
-        albums = lib.albums(decargs(args))
+        albums = lib.albums(query)
         # build dict mapping artist to list of their albums in library
-        albums_by_artist = {}
+        albums_by_artist = defaultdict(list)
         for alb in albums:
             artist = (alb['albumartist'], alb['mb_albumartistid'])
-            artistalbs = albums_by_artist.setdefault(artist, [])
-            artistalbs.append(alb)
-            albums_by_artist[artist] = artistalbs
+            albums_by_artist[artist].append(alb)
 
         # build dict mapping artist to list of all albums
-        m.set_useragent('beets', beets.__version__, 'http://beets.io/')
-
         for artist, albums in albums_by_artist.items():
             if artist[1] is None or artist[1] == "":
-                print_(u"[!] No musicbrainz ID for artist {}, skipping."
-                       .format(artist[0]), stream=sys.stderr)
+                albs_no_mbid = [u"'" + a['album'] + u"'" for a in albums]
+                self._log.info(
+                    u"No musicbrainz ID for artist '{}' found in album(s) {}; "
+                    "skipping", artist[0], u", ".join(albs_no_mbid)
+                )
                 continue
 
             try:
-                releases = m.browse_releases(artist=artist[1])['release-list']
+                resp = musicbrainzngs.browse_release_groups(artist=artist[1])
+                release_groups = resp['release-group-list']
             except MusicBrainzError as err:
-                print_(u"[!] Couldn't fetch info for artist '{}' ({}) - '{}'"
-                       .format(artist[0], artist[1], err), stream=sys.stderr)
+                self._log.info(
+                    u"Couldn't fetch info for artist '{}' ({}) - '{}'",
+                    artist[0], artist[1], err
+                )
                 continue
 
             missing = []
             present = []
-            for release in releases:
-                missing.append(release)
+            for rg in release_groups:
+                missing.append(rg)
                 for alb in albums:
-                    # compare by title, don't care about specific releases
-                    if alb['album'].lower() == release['title'].lower():
-                        missing.remove(release)
-                        present.append(release)
+                    if alb['mb_releasegroupid'] == rg['id']:
+                        missing.remove(rg)
+                        present.append(rg)
                         break
 
-            missing_titles = {release['title'] for release in missing}
+            missing_titles = {rg['title'] for rg in missing}
 
-            prefix_miss = "{} - ".format(artist[0])
-
-            for release in missing_titles:
-                print_(u"{}{}".format(prefix_miss, release))
-
-            # respect musicbrainz rate limits
-            time.sleep(1)
+            for release_title in missing_titles:
+                print_(u"{} - {}".format(artist[0], release_title))
 
     def _missing(self, album):
         """Query MusicBrainz to determine items missing from `album`.
