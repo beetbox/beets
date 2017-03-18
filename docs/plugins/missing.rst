@@ -11,7 +11,8 @@ Usage
 
 Add the ``missing`` plugin to your configuration (see :ref:`using-plugins`).
 By default, the ``beet missing`` command lists the names of tracks that your
-library is missing from each album.
+library is missing from each album. It can also list the names of albums that
+your library is missing from each artist.
 You can customize the output format, count
 the number of missing tracks per album, or total up the number of missing
 tracks over your whole library, using command-line switches::
@@ -19,9 +20,12 @@ tracks over your whole library, using command-line switches::
       -f FORMAT, --format=FORMAT
                             print with custom FORMAT
       -c, --count           count missing tracks per album
-      -t, --total           count total of missing tracks
+      -t, --total           count total of missing tracks or albums
+      -a, --album           show missing albums for artist instead of tracks
 
 …or by editing corresponding options.
+
+Note that ``-c`` is ignored when used with ``-a``.
 
 Configuration
 -------------
@@ -59,6 +63,10 @@ Examples
 List all missing tracks in your collection::
 
   beet missing
+
+List all missing albums in your collection::
+
+  beet missing -a
 
 List all missing tracks from 2008::
 
