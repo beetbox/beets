@@ -238,7 +238,18 @@ artist="Tom Tom Club"`` will change the artist for the track "Genius of Love."
 To remove fields (which is only possible for flexible attributes), follow a
 field name with an exclamation point: ``field!``.
 
-The ``-a`` switch operates on albums instead of individual tracks. This is relevant if you are working with any kind of album field in your paths format :doc:`configuration </reference/config>` in case that you need to change any album field such as year, album, albumartist etc, do not forget to add the command ``-a`` in the query. Otherwise you will be changing the track fields. Keep in mind that the new value will be used to update the path in the library and on the filesystem. Items will automatically be moved around when necessary if they're in your library directory, but you can disable that with  ``-M``. Tags will be written to the files according to the settings you have for imports, but these can be overridden with ``-w`` (write tags, the default) and ``-W`` (don't write tags).
+The ``-a`` switch operates on albums instead of individual tracks. Without
+this flag, the command will only change *track-level* data, even if all the
+tracks belong to the same album. If you want to change an *album-level* field,
+such as ``year`` or ``albumartist``, you'll want to use the ``-a`` flag to
+avoid a confusing situation where the data for individual tracks conflicts
+with the data for the whole album.
+
+Items will automatically be moved around when necessary if they're in your
+library directory, but you can disable that with  ``-M``. Tags will be written
+to the files according to the settings you have for imports, but these can be
+overridden with ``-w`` (write tags, the default) and ``-W`` (don't write
+tags).
 
 When you run the ``modify`` command, it prints a list of all
 affected items in the library and asks for your permission before making any
