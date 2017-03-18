@@ -40,6 +40,8 @@ New features:
 * :doc:`/plugins/smartplaylist`: Different playlist specifications that
   generate identically-named playlist files no longer conflict; instead, the
   resulting lists of tracks are concatenated. :bug:`2468`
+* :doc:`/plugins/missing`: A new mode lets you see missing albums from artists
+  you have in your library. Thanks to :user:`qlyoung`. :bug:`2481`
 
 Fixes:
 
