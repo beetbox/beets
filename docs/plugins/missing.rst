@@ -20,7 +20,7 @@ tracks over your whole library, using command-line switches::
       -f FORMAT, --format=FORMAT
                             print with custom FORMAT
       -c, --count           count missing tracks per album
-      -t, --total           count total of missing tracks
+      -t, --total           count total of missing tracks or albums
       -a, --album           show missing albums for artist instead of tracks
 
 …or by editing corresponding options.
