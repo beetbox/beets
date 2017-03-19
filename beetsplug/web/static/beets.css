@@ -158,3 +158,12 @@ body {
 #player .disabled {
     color: #666;
 }
+#player[data-status=disabled] .play,
+#player[data-status=disabled] .pause,
+#player[data-status=disabled] .times,
+#player[data-status=paused] .disabled,
+#player[data-status=paused] .pause,
+#player[data-status=playing] .disabled,
+#player[data-status=playing] .play {
+    display: none;
+}
