@@ -20,9 +20,9 @@ Beets Workflow
 
 * **Auto-Tagging**. There are two *auto-tagging* workflows: one for Album and one for item. The album tagger is selected by default and uses the filesystem to group files into Albums. Afterwards the information is used to query metadata provided by MusickBrainz for canonical metadata.
 
-In case that additional information is needed, please do not forget to take a look at our `Wiki`_
+In case that additional information is needed, please do not forget to take a look at our `Wiki`_.
 
-.. Wiki_: https://github.com/beetbox/beets/wiki
+.. _Wiki : https://github.com/beetbox/beets/wiki
 
 Installing
 ----------
