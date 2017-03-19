@@ -63,6 +63,8 @@ configuration file. The available options are:
   Default: 8337.
 - **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
+- **reverse_proxy**: Enable reverse proxy suppport  (see :ref:`reverse-proxy`, below).
+  Default: reverse proxy support is disabled.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
 
@@ -111,6 +113,26 @@ For example::
         host: 0.0.0.0
         cors: 'http://example.com'
 
+.. _reverse-proxy:
+Reverse Proxy support.
+______________________
+
+When the ``web`` plugin server is running behind a reverse proxy, you may want
+the application to  appear below some path other than / or let the reverse
+proxy terminate TLS connections. This option lets you control this by setting
+some HTTP Headers.
+When ``reverse_proxy`` is enabled, the ``X-Script-Name`` and ``X-Scheme`` HTTP
+headers control the ``SCRIPT_NAME`` and the ``wsgi.url_scheme`` environ keys,
+respectively.
+
+``Nginx`` configuration that serves the web plugin under the /beets directory::
+    location /beets {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Scheme $scheme;
+        proxy_set_header X-Script-Name /beets;
+    }
 
 JSON API
 --------
