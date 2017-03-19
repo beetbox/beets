@@ -22,7 +22,7 @@ Beets Workflow
 
 In case that additional information is needed, please do not forget to take a look at our `Wiki`_
 
-.. _Wiki_: https://github.com/beetbox/beets/wiki
+.. Wiki_: https://github.com/beetbox/beets/wiki
 
 Installing
 ----------
