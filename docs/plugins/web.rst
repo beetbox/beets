@@ -118,15 +118,19 @@ For example::
 Reverse Proxy Support
 ---------------------
 
-When the ``web`` plugin server is running behind a reverse proxy, you may want
-the application to  appear below some path other than / or let the reverse
-proxy terminate TLS connections. This option lets you control this by setting
-some HTTP Headers.
-When ``reverse_proxy`` is enabled, the ``X-Script-Name`` and ``X-Scheme`` HTTP
-headers control the ``SCRIPT_NAME`` and the ``wsgi.url_scheme`` environ keys,
-respectively.
+When the server is running behind a reverse proxy, you can tell the plugin to
+respect forwarded headers. Specifically, this can help when you host the
+plugin at a base URL other than the root ``/`` or when you use the proxy to
+handle secure connections. Enable the ``reverse_proxy`` configuration option
+if you do this.
 
-``Nginx`` configuration that serves the web plugin under the /beets directory::
+Technically, this option lets the proxy provide ``X-Script-Name`` and
+``X-Scheme`` HTTP headers to control the plugin's the ``SCRIPT_NAME`` and its
+``wsgi.url_scheme`` parameter.
+
+Here's a sample `Nginx`_ configuration that serves the web plugin under the
+/beets directory::
+
     location /beets {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
@@ -134,6 +138,8 @@ respectively.
         proxy_set_header X-Scheme $scheme;
         proxy_set_header X-Script-Name /beets;
     }
+
+.. _Nginx: https://www.nginx.com
 
 JSON API
 --------
