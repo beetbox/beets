@@ -295,19 +295,19 @@ Beets Core Concepts
 Beets relies on a few core concepts that underly every feature and every plugin you'll use. 
 Understanding these common pieces can help you see how to harness their full power. 
 
-* **Data Model**. The beets *Library* is a database that catalogs your music, which does not 
+* **Data Model**. The beets *Library* is a database that catalogs your music, which does not
 contain any music files; as a database, it saves the paths (i.e., the filenames) to your music 
 files. The *Library* is composed by *Items* (songs) and *Albums*. The Album is a collection of 
 *Items*, and it also contains its own, separate album-level metadata that is shared among all 
 of its tracks. Each *Item* belongs to an *Album*. Some Items don't have an album, these are called 
 *singletons*. The *Library* is essential because *everything* beets does relies on this component.
 
-* **Queries**. In beets, you use *queries* to select *Albums* and *Items*. Their main goal is 
+* **Queries**. In beets, you use *queries* to select *Albums* and *Items*. Their main goal is
 to retrieve your data subsets. Nearly every beets command takes a query as an argument that tells 
 it what music to operate on ( ``list``, ``remove``, ``stats``, ``modify``, ``move`` etc.).
 
 * **Paths and Destinations**. Each *Item* has a *destination*, which is the path where it would
- reside at if it were renamed according to the user's preferred scheme. The destination consist 
+reside at if it were renamed according to the user's preferred scheme. The destination consist 
 of two parts: *root directory* (specified as ``directory`` in the config file)  and the template-specified 
 fragment. The fragment is generated based on the path format templates specified by the user. The 
 user specifies query/template pairs in the config file; the template corresponding to the first query 
