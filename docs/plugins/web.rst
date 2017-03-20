@@ -63,8 +63,9 @@ configuration file. The available options are:
   Default: 8337.
 - **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
-- **reverse_proxy**: Enable reverse proxy support  (see :ref:`reverse-proxy`, below).
-  Default: reverse proxy support is disabled.
+- **reverse_proxy**: If true, enable reverse proxy support (see
+  :ref:`reverse-proxy`, below).
+  Default: false.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
 
