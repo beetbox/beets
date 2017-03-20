@@ -42,6 +42,8 @@ New features:
   resulting lists of tracks are concatenated. :bug:`2468`
 * :doc:`/plugins/missing`: A new mode lets you see missing albums from artists
   you have in your library. Thanks to :user:`qlyoung`. :bug:`2481`
+* :doc:`/plugins/web` : Add new `reverse_proxy` config option to allow serving
+  the web plugins under a reverse proxy.
 
 Fixes:
 
