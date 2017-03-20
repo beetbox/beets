@@ -63,7 +63,7 @@ configuration file. The available options are:
   Default: 8337.
 - **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
-- **reverse_proxy**: Enable reverse proxy suppport  (see :ref:`reverse-proxy`, below).
+- **reverse_proxy**: Enable reverse proxy support  (see :ref:`reverse-proxy`, below).
   Default: reverse proxy support is disabled.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
@@ -114,8 +114,9 @@ For example::
         cors: 'http://example.com'
 
 .. _reverse-proxy:
-Reverse Proxy support.
-______________________
+
+Reverse Proxy Support
+---------------------
 
 When the ``web`` plugin server is running behind a reverse proxy, you may want
 the application to  appear below some path other than / or let the reverse
@@ -136,7 +137,6 @@ respectively.
 
 JSON API
 --------
-
 
 ``GET /item/``
 ++++++++++++++
