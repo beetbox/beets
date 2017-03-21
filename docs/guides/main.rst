@@ -291,7 +291,7 @@ command lists all the available commands; then, for example, ``beet help
 import`` gives more specific help about the ``import`` command.
 
 Beets Core Concepts
---------------
+-------------------
 
 Beets relies on a few core concepts that underlie every feature and every plugin you'll use.
 Understanding these common pieces can help you see how to harness their full power.
