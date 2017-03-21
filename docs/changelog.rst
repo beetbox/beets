@@ -77,6 +77,8 @@ Fixes:
 * On Python 3, the :ref:`terminal_encoding` setting is respected again for
   output and printing will no longer crash on systems configured with a
   limited encoding.
+* :doc:`/plugins/convert`: The default configuration uses FFmpeg's built-in
+  AAC codec instead of faac. Thanks to :user:`jansol`. :bug:`2484`
 
 
 1.4.3 (January 9, 2017)
