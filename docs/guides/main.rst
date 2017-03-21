@@ -1,8 +1,8 @@
 Getting Started
 ===============
 
-Welcome to `beets`_! This guide will help you begin using it to make your music 
-collection better. 
+Welcome to `beets`_! This guide will help you begin using it to make your music
+collection better.
 
 .. _beets: http://beets.io/
 
@@ -124,6 +124,7 @@ trouble or you have more detail to contribute here, please direct it to
 .. _beets.reg: https://github.com/beetbox/beets/blob/master/extra/beets.reg
 .. _install pip: http://www.pip-installer.org/en/latest/installing.html#install-pip
 .. _get-pip.py: https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+
 
 Configuring
 -----------
@@ -327,4 +328,3 @@ Please let me know what you think of beets via `the discussion board`_ or
 .. _the mailing list: http://groups.google.com/group/beets-users
 .. _the discussion board: http://discourse.beets.io
 .. _twitter: http://twitter.com/b33ts
-
