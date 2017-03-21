@@ -306,8 +306,8 @@ Understanding these common pieces can help you see how to harness their full pow
 
 * **Queries**. In beets, you use *queries* to select *Albums* and *Items*. Their main
   goal is to retrieve your data subsets. Nearly every beets command takes a query as
-  an argument that tells it what music to operate on ( ``list``, ``remove``, ``stats``
-  , ``modify``, ``move`` etc.).
+  an argument that tells it what music to operate on (``list``, ``remove``, ``stats``,
+  ``modify``, ``move``, etc.).
 
 * **Paths and Destinations**. Each *Item* has a *destination*, which is the path where
   it would reside at if it were renamed according to the user's preferred scheme. 
