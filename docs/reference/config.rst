@@ -52,6 +52,8 @@ library
 Path to the beets library file. By default, beets will use a file called
 ``library.db`` alongside your configuration file.
 
+.. _directory:
+
 directory
 ~~~~~~~~~
 
