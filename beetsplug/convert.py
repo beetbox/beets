@@ -109,8 +109,8 @@ class ConvertPlugin(BeetsPlugin):
             u'format': u'mp3',
             u'formats': {
                 u'aac': {
-                    u'command': u'ffmpeg -i $source -y -vn -acodec libfaac '
-                                u'-aq 100 $dest',
+                    u'command': u'ffmpeg -i $source -y -vn -acodec aac '
+                                u'-aq 1 $dest',
                     u'extension': u'm4a',
                 },
                 u'alac': {
