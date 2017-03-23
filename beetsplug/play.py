@@ -163,6 +163,9 @@ class PlayPlugin(BeetsPlugin):
 
         # Warn user before playing any huge playlists.
         if warning_threshold and len(selection) > warning_threshold:
+            if len(selection) > 1:
+                item_type += 's'
+
             ui.print_(ui.colorize(
                 'text_warning',
                 u'You are about to queue {0} {1}.'.format(
