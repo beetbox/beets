@@ -279,13 +279,13 @@ def item_converted_file(item_id):
                 u' '.join(ui.decargs(args)), exc
             )
         )
-    attachment_filename = os.path.basename(util.py3_path(item.path))
-    attachment_filename = attachment_filename[:attachment_filename.rfind('.')] + extension
+    attach_filename = os.path.basename(util.py3_path(item.path))
+    attach_filename = attach_filename[:attach_filename.rfind('.')] + extension
 
     response = flask.send_file(
         util.py3_path(dest),
         as_attachment=True,
-        attachment_filename=attachment_filename,
+        attachment_filename=attach_filename,
     )
     response.headers['Content-Length'] = os.path.getsize(dest)
     return response
@@ -430,9 +430,11 @@ class WebPlugin(BeetsPlugin):
 
             app.config['INCLUDE_PATHS'] = self.config['include_paths']
             if 'convert_extension' in self.config:
-                app.config['convert_extension'] = self.config['convert_extension'].as_str()
+                app.config['convert_extension'] = \
+                    self.config['convert_extension'].as_str()
             if 'convert_command' in self.config:
-                app.config['convert_command'] = self.config['convert_command'].as_str()
+                app.config['convert_command'] = \
+                    self.config['convert_command'].as_str()
 
             # Enable CORS if required.
             if self.config['cors']:
