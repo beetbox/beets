@@ -23,9 +23,14 @@ import beets.library
 import flask
 from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
+from string import Template
 import os
 import json
 import base64
+import tempfile
+import shlex
+import six
+import subprocess
 
 
 # Utilities.
@@ -217,12 +222,72 @@ def all_items():
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
     item = g.lib.get_item(item_id)
+    path = util.py3_path(item.path)
     response = flask.send_file(
-        util.py3_path(item.path),
+        path,
         as_attachment=True,
-        attachment_filename=os.path.basename(util.py3_path(item.path)),
+        attachment_filename=os.path.basename(path),
     )
     response.headers['Content-Length'] = os.path.getsize(item.path)
+    return response
+
+
+@app.route('/item/<int:item_id>/converted_file')
+def item_converted_file(item_id):
+    item = g.lib.get_item(item_id)
+
+    try:
+        extension = '.' + app.config['convert_extension']
+    except KeyError:
+        return flask.abort(404)
+
+    try:
+        command = app.config['convert_command']
+    except KeyError:
+        command = u'ffmpeg -i $source -y -vn -aq 2 $dest'
+    source = util.py3_path(item.path)
+    converted_file = tempfile.NamedTemporaryFile(suffix=extension)
+    dest = converted_file.name
+
+    # Substitute $source and $dest in the argument list.
+    args = shlex.split(command)
+    encode_cmd = []
+    for i, arg in enumerate(args):
+        args[i] = Template(arg).safe_substitute({
+            'source': source,
+            'dest': dest,
+        })
+        if six.PY2:
+            encode_cmd.append(args[i])
+        else:
+            encode_cmd.append(args[i].encode(util.arg_encoding()))
+
+    try:
+        util.command_output(encode_cmd)
+    except subprocess.CalledProcessError as exc:
+        # Something went wrong (probably Ctrl+C)
+        print(u'Encoding {0} failed. Cleaning up...',
+              util.displayable_path(source))
+        print(u'Command {0} exited with status {1}: {2}',
+              args,
+              exc.returncode,
+              exc.output)
+        raise
+    except OSError as exc:
+        raise ui.UserError(
+            u"convert: couldn't invoke '{0}': {1}".format(
+                u' '.join(ui.decargs(args)), exc
+            )
+        )
+    attachment_filename = os.path.basename(util.py3_path(item.path))
+    attachment_filename = attachment_filename[:attachment_filename.rfind('.')] + extension
+
+    response = flask.send_file(
+        util.py3_path(dest),
+        as_attachment=True,
+        attachment_filename=attachment_filename,
+    )
+    response.headers['Content-Length'] = os.path.getsize(dest)
     return response
 
 
@@ -317,6 +382,16 @@ def stats():
     })
 
 
+@app.route('/config')
+def config():
+    if 'convert_extension' in app.config:
+        return flask.jsonify({
+            'convert_extension': app.config['convert_extension']
+        })
+    else:
+        return flask.jsonify({})
+
+
 # UI.
 
 @app.route('/')
@@ -354,6 +429,10 @@ class WebPlugin(BeetsPlugin):
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
             app.config['INCLUDE_PATHS'] = self.config['include_paths']
+            if 'convert_extension' in self.config:
+                app.config['convert_extension'] = self.config['convert_extension'].as_str()
+            if 'convert_command' in self.config:
+                app.config['convert_command'] = self.config['convert_command'].as_str()
 
             # Enable CORS if required.
             if self.config['cors']:

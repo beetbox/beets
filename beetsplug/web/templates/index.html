@@ -84,6 +84,11 @@
                 <dd>
                     <a target="_blank" class="download" href="item/<%= id %>/file">download</a>
                 </dd>
+                <% if (config.convert_extension && format != config.convert_extension.toUpperCase() ) { %>
+                <dd>
+                    <a target="_blank" class="download" href="item/<%= id %>/converted_file">convert and download as <%= config.convert_extension %></a>
+                </dd>
+                <% } %>
                 <% if (lyrics) { %>
                     <dt>Lyrics</dt>
                     <dd class="lyrics"><%= lyrics %></dd>

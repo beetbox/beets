@@ -12,6 +12,8 @@ var timeFormat = function(secs) {
     return mins + ':' + secs;
 }
 
+var config = {};
+
 // jQuery extension encapsulating event hookups for audio element controls.
 $.fn.player = function(debug) {
     // Selected element should contain an HTML5 Audio element.
@@ -240,6 +242,11 @@ var AppView = Backbone.View.extend({
             'play': _.bind(this.audioPlay, this),
             'pause': _.bind(this.audioPause, this),
             'ended': _.bind(this.audioEnded, this)
+        });
+        $.getJSON('config', function(data) {
+            config = data;
+        }).fail(function() {
+            config = {};
         });
     },
     showItems: function(items) {
