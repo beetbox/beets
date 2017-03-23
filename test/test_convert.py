@@ -49,7 +49,8 @@ class TestHelper(helper.TestHelper):
 
         # A Python script that copies the file and appends a tag.
         stub = os.path.join(_common.RSRC, b'convert_stub.py').decode('utf-8')
-        return u"{} {} $source $dest {}".format(shell_quote(sys.executable), shell_quote(stub), tag)
+        return u"{} {} $source $dest {}".format(shell_quote(sys.executable),
+                                                shell_quote(stub), tag)
 
     def assertFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content ends with `tag`.
@@ -282,6 +283,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
