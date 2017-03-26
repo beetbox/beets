@@ -613,7 +613,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         })
         if default is None:
             require = True
-        # Bell ring when interaction with the user is needed.
+        # Bell ring when user interaction is needed.
         print('\a')
         sel = ui.input_options((u'Apply', u'More candidates') + choice_opts,
                                require=require, default=default)
