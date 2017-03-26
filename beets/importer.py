@@ -1473,10 +1473,8 @@ def is_subdir_of_any_in_list(path, dirs):
     """Returns True if path os a subdirectory of any directory in dirs
     (a list). In other case, returns False.
     """
-    for d in dirs:
-        if path.startswith(d + b'/'):
-            return True
-    return False
+    ancestors = ancestry(path)
+    return any(d in ancestors for d in dirs)
 
 
 def albums_in_dir(path):
@@ -1498,10 +1496,9 @@ def albums_in_dir(path):
         # and add the current directory. If so, just add the directory
         # and move on to the next directory. If not, stop collapsing.
         if collapse_paths:
-            if (not collapse_pat and collapse_paths[0] in ancestry(root)) or \
+            if (is_subdir_of_any_in_list(root, collapse_paths)) or \
                     (collapse_pat and
-                     collapse_pat.match(os.path.basename(root))) or \
-                    is_subdir_of_any_in_list(root, collapse_paths):
+                     collapse_pat.match(os.path.basename(root))):
                 # Still collapsing.
                 collapse_paths.append(root)
                 collapse_items += items
