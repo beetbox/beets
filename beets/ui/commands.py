@@ -823,6 +823,8 @@ class TerminalImportSession(importer.ImportSession):
         Returns a list of `PromptChoice`s.
         """
         # Standard, built-in choices.
+        #Bell ring to alert the user that he has to interfere with the cmd
+        print('\a')
         choices = [
             PromptChoice(u's', u'Skip',
                          lambda s, t: importer.action.SKIP),
