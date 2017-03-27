@@ -576,6 +576,14 @@ skipped; "keep" means keep both old and new items; "remove" means remove old
 item; "ask" means the user should be prompted for the action each time.
 The default is ``ask``.
 
+.. _bell:
+
+bell
+~~~~~~~~~~~~~~~~
+
+Whether the importer ui should ring a bell when user interaction is needed.
+
+Default: ``yes``.
 
 .. _musicbrainz-config:
 
