@@ -79,6 +79,8 @@ Fixes:
   limited encoding.
 * :doc:`/plugins/convert`: The default configuration uses FFmpeg's built-in
   AAC codec instead of faac. Thanks to :user:`jansol`. :bug:`2484`
+* Fix import of multidisc releases with subdirectories, which previously
+  made each disc be imported separately in different releases. :bug:`2493`
 
 
 1.4.3 (January 9, 2017)
