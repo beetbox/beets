@@ -25,7 +25,7 @@ import:
     pretend: false
     search_ids: []
     duplicate_action: ask
-    bell: yes  
+    bell: no  
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]
