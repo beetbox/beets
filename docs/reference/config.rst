@@ -581,9 +581,9 @@ The default is ``ask``.
 bell
 ~~~~~~~~~~~~~~~~
 
-Whether the importer ui should ring a bell when user interaction is needed.
+Ring the terminal bell to get your attention when the importer needs your input.
 
-Default: ``yes``.
+Default: ``no``.
 
 .. _musicbrainz-config:
 
