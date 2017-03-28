@@ -148,6 +148,7 @@ def print_(*strings, **kwargs):
         if hasattr(sys.stdout, 'buffer'):
             out = txt.encode(_out_encoding(), 'replace')
             sys.stdout.buffer.write(out)
+            sys.stdout.buffer.flush()
         else:
             # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
             # does not exist. We instead just record the text string.
