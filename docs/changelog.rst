@@ -44,6 +44,9 @@ New features:
   you have in your library. Thanks to :user:`qlyoung`. :bug:`2481`
 * :doc:`/plugins/web` : Add new `reverse_proxy` config option to allow serving
   the web plugins under a reverse proxy.
+* A new :ref:`bell` configuration option under the ``import`` section enables
+  a terminal bell when input is required. Thanks to :user:`SpirosChadoulos`.
+  :bug:`2366` :bug:`2495`
 
 Fixes:
 
