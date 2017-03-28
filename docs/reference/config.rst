@@ -576,6 +576,14 @@ skipped; "keep" means keep both old and new items; "remove" means remove old
 item; "ask" means the user should be prompted for the action each time.
 The default is ``ask``.
 
+.. _bell:
+
+bell
+~~~~
+
+Ring the terminal bell to get your attention when the importer needs your input.
+
+Default: ``no``.
 
 .. _musicbrainz-config:
 
