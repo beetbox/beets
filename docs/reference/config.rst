@@ -579,7 +579,7 @@ The default is ``ask``.
 .. _bell:
 
 bell
-~~~~~~~~~~~~~~~~
+~~~~
 
 Ring the terminal bell to get your attention when the importer needs your input.
 
