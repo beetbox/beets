@@ -48,6 +48,18 @@ a result for the value of the path field, like so::
 You might want to use the YAML syntax for "block literals," in which a leading
 ``|`` character indicates a multi-line block of text.
 
+You can also define multiple Python functions and use them in a custom field::
+
+    item_fields:
+       my_test_field: |
+            def sub_function_one():
+                return 'TEST-1234'
+            def another_sub_function(variable_to_reference = 5):
+                test_subtraction = 85 - 9
+                test_str = str(test_subtraction)
+                return str(variable_to_reference) + "_678_" + "asdf_" + test_str
+            #returns 0000-TEST-1234-5_678_asdf_76
+            return '0000-' + sub_function_one() + "-" + another_sub_function()
 
 Album Fields
 ------------
