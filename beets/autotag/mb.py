@@ -109,6 +109,22 @@ def _preferred_alias(aliases):
         return matches[0]
 
 
+def _preferred_release_event(release):
+    """Given a release, select and return the user's preferred release
+    event as a tuple of (country, release-date). Falls back to the
+    default release event if a preferred event is not found.
+
+    """
+    countries = config['match']['preferred']['countries'].as_str_seq()
+
+    for event in release.get('release-event-list', {}):
+        for country in countries:
+            if country in event['area']['iso-3166-1-code-list']:
+                return country, event['date']
+
+    return release.get('country'), release.get('date')
+
+
 def _flatten_artist_credit(credit):
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
@@ -301,7 +317,6 @@ def album_info(release):
         info.artist = config['va_name'].as_str()
     info.asin = release.get('asin')
     info.releasegroup_id = release['release-group']['id']
-    info.country = release.get('country')
     info.albumstatus = release.get('status')
 
     # Build up the disambiguation string from the release group and release.
@@ -318,8 +333,8 @@ def album_info(release):
         if reltype:
             info.albumtype = reltype.lower()
 
-    # Release dates.
-    release_date = release.get('date')
+    # Release events.
+    info.country, release_date = _preferred_release_event(release)
     release_group_date = release['release-group'].get('first-release-date')
     if not release_date:
         # Fall back if release-specific date is not available.
