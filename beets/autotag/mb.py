@@ -118,8 +118,11 @@ def _preferred_release_event(release):
 
     for event in release.get('release-event-list', {}):
         for country in countries:
-            if country in event['area']['iso-3166-1-code-list']:
-                return country, event['date']
+            try:
+                if country in event['area']['iso-3166-1-code-list']:
+                    return country, event['date']
+            except KeyError:
+                pass
 
     return release.get('country'), release.get('date')
 
