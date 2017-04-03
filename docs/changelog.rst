@@ -47,6 +47,8 @@ New features:
 * A new :ref:`bell` configuration option under the ``import`` section enables
   a terminal bell when input is required. Thanks to :user:`SpirosChadoulos`.
   :bug:`2366` :bug:`2495`
+* Importing a release with multiple release events now selects the
+  event based on your :ref:`preferred` countries. :bug:`2501`
 
 Fixes:
 
