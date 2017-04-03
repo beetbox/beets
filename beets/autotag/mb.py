@@ -111,9 +111,8 @@ def _preferred_alias(aliases):
 
 def _preferred_release_event(release):
     """Given a release, select and return the user's preferred release
-    event as a tuple of (country, release-date). Falls back to the
+    event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
-
     """
     countries = config['match']['preferred']['countries'].as_str_seq()
 
