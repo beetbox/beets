@@ -208,10 +208,7 @@ class StringList(Type):
         representing the value. This is used in template evaluation.
         """
 
-        if isinstance(value, list):
-            value = '; '.join(value)
-
-        return six.text_type(value)
+        return six.text_type('; '.join(value))
 
     def parse(self, string):
         """Parse a (possibly human-written) string and return the

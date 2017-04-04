@@ -74,7 +74,7 @@ class StoreTest(_common.LibTestCase):
         new_genre = self.lib._connection().execute(
             'select genre from items where '
             'title="the title"').fetchone()['genre']
-        self.assertEqual(new_genre, original_genre)
+        self.assertEqual(new_genre.split('; '), original_genre)
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = u'tvp'
