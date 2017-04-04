@@ -190,6 +190,35 @@ class String(Type):
     query = query.SubstringQuery
 
 
+class StringList(Type):
+    """A List of Unicode strings type, stored in a string
+    """
+    sql = u'TEXT'
+    query = query.SubstringQuery
+
+    def from_sql(self, sql_value):
+        return self.parse(sql_value)
+
+    def to_sql(self, value):
+        return self.format(value)
+
+    def format(self, value):
+        """Given a value of this type, produce a Unicode string
+        representing the value. This is used in template evaluation.
+        """
+
+        if isinstance(value, list):
+            value = ';'.join(value)
+
+        return six.text_type(value)
+
+    def parse(self, string):
+        """Parse a (possibly human-written) string and return the
+        indicated value of this type.
+        """
+        return string.split(';')
+
+
 class Boolean(Type):
     """A boolean type.
     """
@@ -212,4 +241,5 @@ FOREIGN_ID = Id(False)
 FLOAT = Float()
 NULL_FLOAT = NullFloat()
 STRING = String()
+STRINGLIST = StringList()
 BOOLEAN = Boolean()
