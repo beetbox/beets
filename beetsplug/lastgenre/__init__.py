@@ -108,7 +108,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'source': 'album',
             'force': True,
             'auto': True,
-            'separator': u', ',
             'prefer_specific': False,
         })
 
@@ -215,9 +214,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         tags = [x.title() for x in tags if self._is_allowed(x)]
 
-        return self.config['separator'].as_str().join(
-            tags[:self.config['count'].get(int)]
-        )
+        return tags[:self.config['count'].get(int)]
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre

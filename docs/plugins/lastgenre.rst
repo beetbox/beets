@@ -93,9 +93,7 @@ By default, the plugin chooses the most popular tag on Last.fm as a genre. If
 you prefer to use a *list* of popular genre tags, you can increase the number
 of the ``count`` config option.
 
-Lists of up to *count* genres will then be used instead of single genres. The
-genres are separated by commas by default, but you can change this with the
-``separator`` config option.
+Lists of up to *count* genres will then be used instead of single genres.
 
 `Last.fm`_ provides a popularity factor, a.k.a. *weight*, for each tag ranging
 from 100 for the most popular tag down to 0 for the least popular.
@@ -144,8 +142,6 @@ configuration file. The available options are:
 - **source**: Which entity to look up in Last.fm. Can be
   either ``artist``, ``album`` or ``track``.
   Default: ``album``.
-- **separator**: A separator for multiple genres.
-  Default: ``', '``.
 - **whitelist**: The filename of a custom genre list, ``yes`` to use
   the internal whitelist, or ``no`` to consider all genres valid.
   Default: ``yes``.
