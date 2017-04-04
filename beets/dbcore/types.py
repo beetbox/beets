@@ -216,7 +216,10 @@ class StringList(Type):
         """Parse a (possibly human-written) string and return the
         indicated value of this type.
         """
-        return string.split(';')
+        if string is None:
+            return self.null
+        else:
+            return string.split(';')
 
 
 class Boolean(Type):
