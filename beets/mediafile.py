@@ -1618,13 +1618,12 @@ class MediaFile(object):
         StorageStyle('ALBUM'),
         ASFStorageStyle('WM/AlbumTitle'),
     )
-    genres = ListMediaField(
+    genre = ListMediaField(
         MP3ListStorageStyle('TCON'),
         MP4ListStorageStyle('\xa9gen'),
         ListStorageStyle('GENRE'),
         ASFStorageStyle('WM/Genre'),
     )
-    genre = genres.single_field()
 
     lyricist = MediaField(
         MP3StorageStyle('TEXT'),
