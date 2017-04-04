@@ -278,6 +278,14 @@ class GenreListTestMixin(object):
         mediafile = MediaFile(mediafile.path)
         assertCountEqual(self, mediafile.genre, [u'one', u'two'])
 
+    def test_write_genre_list_from_string(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.genre = u'one; two'
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        assertCountEqual(self, mediafile.genre, [u'one', u'two'])
+
     def test_append_genre_list(self):
         mediafile = self._mediafile_fixture('full')
         self.assertEqual(mediafile.genre, [u'the genre'])

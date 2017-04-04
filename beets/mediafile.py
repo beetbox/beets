@@ -1233,6 +1233,9 @@ class ListMediaField(MediaField):
         return [_safe_cast(self.out_type, value) for value in values]
 
     def __set__(self, mediafile, values):
+        if isinstance(values, six.text_type):
+            values = values.split('; ')
+
         for style in self.styles(mediafile.mgfile):
             style.set_list(mediafile.mgfile, values)
 
