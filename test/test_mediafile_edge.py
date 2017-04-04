@@ -40,7 +40,7 @@ class EdgeTest(unittest.TestCase):
             os.path.join(_common.RSRC, b'emptylist.mp3')
         )
         genre = emptylist.genre
-        self.assertEqual(genre, None)
+        self.assertEqual(genre, [])
 
     def test_release_time_with_space(self):
         # Ensures that release times delimited by spaces are ignored.

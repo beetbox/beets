@@ -33,14 +33,14 @@ class DummyDataTestCase(_common.TestCase):
 
         albums = [_common.album() for _ in range(3)]
         albums[0].album = u"Album A"
-        albums[0].genre = u"Rock"
+        albums[0].genre = [u"Rock"]
         albums[0].year = 2001
         albums[0].flex1 = u"Flex1-1"
         albums[0].flex2 = u"Flex2-A"
         albums[0].albumartist = u"Foo"
         albums[0].albumartist_sort = None
         albums[1].album = u"Album B"
-        albums[1].genre = u"Rock"
+        albums[1].genre = [u"Rock"]
         albums[1].year = 2001
         albums[1].flex1 = u"Flex1-2"
         albums[1].flex2 = u"Flex2-A"
@@ -241,8 +241,8 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
         results = self.lib.albums(q, sort)
         self.assertLessEqual(results[0]['genre'], results[1]['genre'])
         self.assertLessEqual(results[1]['genre'], results[2]['genre'])
-        self.assertEqual(results[1]['genre'], u'Rock')
-        self.assertEqual(results[2]['genre'], u'Rock')
+        self.assertEqual(results[1]['genre'], [u'Rock'])
+        self.assertEqual(results[2]['genre'], [u'Rock'])
         self.assertLessEqual(results[1]['album'], results[2]['album'])
         # same thing with query string
         q = u'genre+ album+'

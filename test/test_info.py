@@ -38,7 +38,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(path)
         mediafile.albumartist = 'AAA'
         mediafile.disctitle = 'DDD'
-        mediafile.genres = ['a', 'b', 'c']
+        mediafile.genre = ['a', 'b', 'c']
         mediafile.composer = None
         mediafile.save()
 
@@ -46,7 +46,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn(path, out)
         self.assertIn('albumartist: AAA', out)
         self.assertIn('disctitle: DDD', out)
-        self.assertIn('genres: a; b; c', out)
+        self.assertIn('genre: a; b; c', out)
         self.assertNotIn('composer:', out)
         self.remove_mediafile_fixtures()
 
