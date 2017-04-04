@@ -195,6 +195,7 @@ class StringList(Type):
     """
     sql = u'TEXT'
     query = query.SubstringQuery
+    null = []
 
     def from_sql(self, sql_value):
         return self.parse(sql_value)
@@ -208,7 +209,7 @@ class StringList(Type):
         """
 
         if isinstance(value, list):
-            value = ';'.join(value)
+            value = '; '.join(value)
 
         return six.text_type(value)
 
@@ -216,10 +217,10 @@ class StringList(Type):
         """Parse a (possibly human-written) string and return the
         indicated value of this type.
         """
-        if string is None:
+        if string is None or string == '':
             return self.null
         else:
-            return string.split(';')
+            return string.split('; ')
 
 
 class Boolean(Type):
