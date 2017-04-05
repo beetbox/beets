@@ -582,7 +582,10 @@ class ListStorageStyle(StorageStyle):
         """Set an individual value as the only value for the field using
         this style.
         """
-        self.set_list(mutagen_file, [value])
+        if value is None:
+            self.set_list(mutagen_file, [])
+        else:
+            self.set_list(mutagen_file, [value])
 
     def set_list(self, mutagen_file, values):
         """Set all values for the field using this style. `values`
