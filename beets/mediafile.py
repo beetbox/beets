@@ -800,7 +800,7 @@ class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
             return []
 
     def store(self, mutagen_file, values):
-        if values == []:
+        if not values:
             mutagen_file.tags.delall(self.key)
             return
         frame = mutagen.id3.Frames[self.key](encoding=3, text=values)
