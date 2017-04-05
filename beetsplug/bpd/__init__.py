@@ -776,7 +776,7 @@ class Server(BaseServer):
             u'Title: ' + item.title,
             u'Artist: ' + item.artist,
             u'Album: ' + item.album,
-            u'Genre: ' + item.genre,
+            u'Genre: ' + '; '.join(item.genre),
         ]
 
         track = six.text_type(item.track)
