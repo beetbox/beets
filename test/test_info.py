@@ -39,7 +39,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile.albumartist = 'AAA'
         mediafile.disctitle = 'DDD'
         mediafile.genre = ['a', 'b', 'c']
-        mediafile.composer = None
+        mediafile.composer = []
         mediafile.save()
 
         out = self.run_with_output('info', path)

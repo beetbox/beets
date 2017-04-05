@@ -322,7 +322,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'artist':      u'the artist',
         'album':       u'the album',
         'genre':       [u'the genre'],
-        'composer':    u'the composer',
+        'composer':    [u'the composer'],
         'grouping':    u'the grouping',
         'year':        2001,
         'month':       None,
@@ -399,6 +399,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'initial_key',
     ]
 
+    list_fields = ['genre', 'arranger', 'composer', 'lyricist']
+
     def setUp(self):
         self.create_temp_dir()
 
@@ -442,7 +444,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
     def test_read_empty(self):
         mediafile = self._mediafile_fixture('empty')
         for field in self.tag_fields:
-            if field == 'genre':
+            if field in self.list_fields:
                 self.assertEqual(getattr(mediafile, field), [])
             else:
                 self.assertIsNone(getattr(mediafile, field))
@@ -599,7 +601,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile = MediaFile(mediafile.path)
 
         for key in keys:
-            if key == 'genre':
+            if key in self.list_fields:
                 self.assertEqual(getattr(mediafile, key), [])
             else:
                 self.assertIsNone(getattr(mediafile, key))
@@ -678,7 +680,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
             if key.startswith('rg_'):
                 # ReplayGain is float
                 tags[key] = 1.0
-            elif key == 'genre':
+            elif key in self.list_fields:
                 tags[key] = ['value\u2010%s' % key]
             else:
                 tags[key] = 'value\u2010%s' % key
