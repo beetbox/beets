@@ -201,12 +201,18 @@ class StringList(Type):
         return self.parse(sql_value)
 
     def to_sql(self, value):
+        if value is None:
+            return None
+
         return self.format(value)
 
     def format(self, value):
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
+
+        if value is None:
+            return six.text_type(u'')
 
         return six.text_type('; '.join(value))
 
