@@ -752,41 +752,42 @@ class MP3StorageStyle(StorageStyle):
         mutagen_file.tags.setall(self.key, [frame])
 
 
-class MP3PeopleStorageStyle(MP3StorageStyle):
+class MP3PeopleStorageStyle(ListStorageStyle, MP3StorageStyle):
     """Store list of people in ID3 frames.
     """
     def __init__(self, key, involvement='', **kwargs):
         self.involvement = involvement
         super(MP3PeopleStorageStyle, self).__init__(key, **kwargs)
 
-    def store(self, mutagen_file, value):
-        frames = mutagen_file.tags.getall(self.key)
+    def store(self, mutagen_file, values):
+        frame = mutagen_file.tags.get(self.key)
 
-        # Try modifying in place.
-        found = False
-        for frame in frames:
+        new_people = [[self.involvement, name] for name in values]
+        if frame:
             if frame.encoding == mutagen.id3.Encoding.UTF8:
-                for pair in frame.people:
-                    if pair[0].lower() == self.involvement.lower():
-                        pair[1] = value
-                        found = True
+                people = [pair for pair in frame.people
+                          if pair[0].lower() != self.involvement.lower()]
+                new_people.extend(people)
+                mutagen_file.tags.delall(self.key)
 
         # Try creating a new frame.
-        if not found:
+        if new_people:
             frame = mutagen.id3.Frames[self.key](
                 encoding=mutagen.id3.Encoding.UTF8,
-                people=[[self.involvement, value]]
+                people=new_people
             )
             mutagen_file.tags.add(frame)
 
     def fetch(self, mutagen_file):
+        result = []
         for frame in mutagen_file.tags.getall(self.key):
             for pair in frame.people:
                 if pair[0].lower() == self.involvement.lower():
                     try:
-                        return pair[1]
+                        result.append(pair[1])
                     except IndexError:
-                        return None
+                        pass
+        return result
 
 
 class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
