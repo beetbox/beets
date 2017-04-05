@@ -1628,28 +1628,28 @@ class MediaFile(object):
         ASFStorageStyle('WM/Genre'),
     )
 
-    lyricist = MediaField(
-        MP3StorageStyle('TEXT'),
-        MP4StorageStyle('----:com.apple.iTunes:LYRICIST'),
-        StorageStyle('LYRICIST'),
+    lyricist = ListMediaField(
+        MP3ListStorageStyle('TEXT'),
+        MP4ListStorageStyle('----:com.apple.iTunes:LYRICIST'),
+        ListStorageStyle('LYRICIST'),
         ASFStorageStyle('WM/Writer'),
     )
-    composer = MediaField(
-        MP3StorageStyle('TCOM'),
-        MP4StorageStyle('\xa9wrt'),
-        StorageStyle('COMPOSER'),
+    composer = ListMediaField(
+        MP3ListStorageStyle('TCOM'),
+        MP4ListStorageStyle('\xa9wrt'),
+        ListStorageStyle('COMPOSER'),
         ASFStorageStyle('WM/Composer'),
     )
-    composer_sort = MediaField(
+    composer_sort = ListMediaField(
         MP3StorageStyle('TSOC'),
         MP4StorageStyle('soco'),
         StorageStyle('COMPOSERSORT'),
         ASFStorageStyle('WM/Composersortorder'),
     )
-    arranger = MediaField(
+    arranger = ListMediaField(
         MP3PeopleStorageStyle('TIPL', involvement='arranger'),
-        MP4StorageStyle('----:com.apple.iTunes:Arranger'),
-        StorageStyle('ARRANGER'),
+        MP4ListStorageStyle('----:com.apple.iTunes:Arranger'),
+        ListStorageStyle('ARRANGER'),
         ASFStorageStyle('beets/Arranger'),
     )
 

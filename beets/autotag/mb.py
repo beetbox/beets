@@ -222,10 +222,10 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                     composer_sort.append(
                         artist_relation['artist']['sort-name'])
     if lyricist:
-        info.lyricist = u', '.join(lyricist)
+        info.lyricist = lyricist
     if composer:
-        info.composer = u', '.join(composer)
-        info.composer_sort = u', '.join(composer_sort)
+        info.composer = composer
+        info.composer_sort = composer_sort
 
     arranger = []
     for artist_relation in recording.get('artist-relation-list', ()):
@@ -234,7 +234,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
             if type == 'arranger':
                 arranger.append(artist_relation['artist']['name'])
     if arranger:
-        info.arranger = u', '.join(arranger)
+        info.arranger = arranger
 
     info.decode()
     return info
