@@ -98,8 +98,9 @@ def print_data(data, item=None, fmt=None):
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
-            formatted[key] = u'; '.join(value)
-        if value is not None:
+            if value:
+                formatted[key] = u'; '.join(value)
+        elif value is not None:
             formatted[key] = value
 
     if len(formatted) == 0:
@@ -113,8 +114,6 @@ def print_data(data, item=None, fmt=None):
 
     for field in sorted(formatted):
         value = formatted[field]
-        if isinstance(value, list):
-            value = u'; '.join(value)
         ui.print_(lineformat.format(field, value))
 
 
