@@ -329,6 +329,19 @@ Sets the albumartist for various-artist compilations. Defaults to ``'Various
 Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
 
+multivalue_separator
+~~~~~~~~~~~~~~~~~~~~
+
+Some formats can have multivalued tags. One common example is the `genre` field
+which can hold a list of genres. Other examples include `arranger`, `composer`
+and `lyricist` fields. When any of these fields have to be converted to a single
+string (for example, when using the field in a path component, showing the
+field value on the screen, or storing the value in the internal database) a
+separator has to be used. This option allows to set which separator should
+be used. The default value is '; '.
+
+Note that this doesn't affect how multivalue fields are stored inside files,
+which depends on the file format and the field.
 
 UI Options
 ----------

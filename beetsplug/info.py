@@ -22,6 +22,7 @@ import os
 import re
 
 from beets.plugins import BeetsPlugin
+from beets import config
 from beets import ui
 from beets import mediafile
 from beets.library import Item
@@ -99,7 +100,8 @@ def print_data(data, item=None, fmt=None):
     for key, value in data.items():
         if isinstance(value, list):
             if value:
-                formatted[key] = u'; '.join(value)
+                formatted[key] = (config['multivalue_separator'].as_str()
+                                                                .join(value))
         elif value is not None:
             formatted[key] = value
 

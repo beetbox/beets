@@ -1540,16 +1540,22 @@ class DefaultTemplateFunctions(object):
         return res
 
     @staticmethod
-    def tmpl_first(s, count=1, skip=0, sep=u'; ', join_str=u'; '):
+    def tmpl_first(s, count=1, skip=0, sep=None, join_str=None):
         """ Gets the item(s) from x to y in a string separated by something
         and join then with something
 
         :param s: the string
         :param count: The number of items included
         :param skip: The number of items skipped
-        :param sep: the separator. Usually is '; ' (default) or '/ '
-        :param join_str: the string which will join the items, default '; '.
+        :param sep: the separator. Usually is '; ' or '/ '. The default value is
+        the value of the `multivalue_separator` config option.
+        :param join_str: the string which will join the items. The default value
+        if the value of the `multivalue_separator` config option.
         """
+        if sep is None:
+            sep = beets.config['multivalue_separator'].as_str()
+        if join_str is None:
+            join_str = beets.config['multivalue_separator'].as_str()
         skip = int(skip)
         count = skip + int(count)
         return join_str.join(s.split(sep)[skip:count])

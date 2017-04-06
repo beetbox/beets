@@ -34,6 +34,7 @@ data from the tags. In turn ``MediaField`` uses a number of
 ``StorageStyle`` strategies to handle format specific logic.
 """
 from __future__ import division, absolute_import, print_function
+from beets import config
 
 import mutagen
 import mutagen.id3
@@ -1241,7 +1242,7 @@ class ListMediaField(MediaField):
 
     def __set__(self, mediafile, values):
         if isinstance(values, six.text_type):
-            values = values.split('; ')
+            values = values.split(config['multivalue_separator'].as_str())
 
         for style in self.styles(mediafile.mgfile):
             style.set_list(mediafile.mgfile, values)

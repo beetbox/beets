@@ -19,6 +19,7 @@ from __future__ import division, absolute_import, print_function
 
 from . import query
 from beets.util import str2bool
+from beets import config
 import six
 
 if not six.PY2:
@@ -214,7 +215,9 @@ class StringList(Type):
         if value is None:
             return six.text_type(u'')
 
-        return six.text_type('; '.join(value))
+        return six.text_type(config['multivalue_separator'].as_str()
+                                                           .join(value))
+
 
     def parse(self, string):
         """Parse a (possibly human-written) string and return the
@@ -223,7 +226,7 @@ class StringList(Type):
         if string is None or string == '':
             return self.null
         else:
-            return string.split('; ')
+            return string.split(config['multivalue_separator'].as_str())
 
 
 class Boolean(Type):
