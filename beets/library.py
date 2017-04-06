@@ -1547,10 +1547,10 @@ class DefaultTemplateFunctions(object):
         :param s: the string
         :param count: The number of items included
         :param skip: The number of items skipped
-        :param sep: the separator. Usually is '; ' or '/ '. The default value is
-        the value of the `multivalue_separator` config option.
-        :param join_str: the string which will join the items. The default value
-        if the value of the `multivalue_separator` config option.
+        :param sep: the separator. Usually is '; ' or '/ '. The default value
+        is the value of the `multivalue_separator` config option.
+        :param join_str: the string which will join the items. The default
+        value is the value of the `multivalue_separator` config option.
         """
         if sep is None:
             sep = beets.config['multivalue_separator'].as_str()
