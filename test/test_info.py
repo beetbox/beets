@@ -38,7 +38,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile = MediaFile(path)
         mediafile.albumartist = 'AAA'
         mediafile.disctitle = 'DDD'
-        mediafile.genre = ['a', 'b', 'c']
+        mediafile.genre = ('a', 'b', 'c')
         mediafile.composer = []
         mediafile.save()
 

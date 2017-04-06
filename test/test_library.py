@@ -69,12 +69,12 @@ class StoreTest(_common.LibTestCase):
 
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
-        self.i._values_fixed['genre'] = [u'beatboxing']  # change w/o dirtying
+        self.i._values_fixed['genre'] = (u'beatboxing',)  # change w/o dirtying
         self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
             'title="the title"').fetchone()['genre']
-        self.assertEqual(new_genre.split('; '), original_genre)
+        self.assertEqual(tuple(new_genre.split('; ')), original_genre)
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = u'tvp'
@@ -656,12 +656,12 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b'/base/not_played')
 
     def test_first(self):
-        self.i.genre = ["Pop", "Rock", "Classical Crossover"]
+        self.i.genre = ("Pop", "Rock", "Classical Crossover")
         self._setf(u'%first{$genre}')
         self._assert_dest(b'/base/Pop')
 
     def test_first_skip(self):
-        self.i.genre = ["Pop", "Rock", "Classical Crossover"]
+        self.i.genre = ("Pop", "Rock", "Classical Crossover")
         self._setf(u'%first{$genre,1,2}')
         self._assert_dest(b'/base/Classical Crossover')
 

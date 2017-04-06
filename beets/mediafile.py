@@ -569,13 +569,13 @@ class ListStorageStyle(StorageStyle):
     def get_list(self, mutagen_file):
         """Get a list of all values for the field using this style.
         """
-        return [self.deserialize(item) for item in self.fetch(mutagen_file)]
+        return tuple([self.deserialize(item) for item in self.fetch(mutagen_file)])
 
     def fetch(self, mutagen_file):
         """Get the list of raw (serialized) values.
         """
         try:
-            return mutagen_file[self.key]
+            return tuple(mutagen_file[self.key])
         except KeyError:
             return []
 
@@ -1255,6 +1255,14 @@ class ListMediaField(MediaField):
         return MediaField(*self._styles, **options)
 
 
+class TupleMediaField(ListMediaField):
+    """Property descriptor that works like ListMediaField but returns a
+    tuple of values instead of a list.
+    """
+    def __get__(self, mediafile, _):
+        return tuple(super(TupleMediaField, self).__get__(mediafile, _))
+
+
 class DateField(MediaField):
     """Descriptor that handles serializing and deserializing dates
 
@@ -1629,32 +1637,32 @@ class MediaFile(object):
         StorageStyle('ALBUM'),
         ASFStorageStyle('WM/AlbumTitle'),
     )
-    genre = ListMediaField(
+    genre = TupleMediaField(
         MP3ListStorageStyle('TCON'),
         MP4ListStorageStyle('\xa9gen'),
         ListStorageStyle('GENRE'),
         ASFStorageStyle('WM/Genre'),
     )
 
-    lyricist = ListMediaField(
+    lyricist = TupleMediaField(
         MP3ListStorageStyle('TEXT'),
         MP4ListStorageStyle('----:com.apple.iTunes:LYRICIST'),
         ListStorageStyle('LYRICIST'),
         ASFStorageStyle('WM/Writer'),
     )
-    composer = ListMediaField(
+    composer = TupleMediaField(
         MP3ListStorageStyle('TCOM'),
         MP4ListStorageStyle('\xa9wrt'),
         ListStorageStyle('COMPOSER'),
         ASFStorageStyle('WM/Composer'),
     )
-    composer_sort = ListMediaField(
+    composer_sort = TupleMediaField(
         MP3StorageStyle('TSOC'),
         MP4StorageStyle('soco'),
         StorageStyle('COMPOSERSORT'),
         ASFStorageStyle('WM/Composersortorder'),
     )
-    arranger = ListMediaField(
+    arranger = TupleMediaField(
         MP3PeopleStorageStyle('TIPL', involvement='arranger'),
         MP4ListStorageStyle('----:com.apple.iTunes:Arranger'),
         ListStorageStyle('ARRANGER'),

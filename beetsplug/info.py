@@ -98,7 +98,7 @@ def print_data(data, item=None, fmt=None):
     path = displayable_path(item.path) if item else None
     formatted = {}
     for key, value in data.items():
-        if isinstance(value, list):
+        if isinstance(value, tuple):
             if value:
                 formatted[key] = (config['multivalue_separator'].as_str()
                                                                 .join(value))

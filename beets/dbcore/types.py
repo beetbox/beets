@@ -196,13 +196,13 @@ class StringList(Type):
     """
     sql = u'TEXT'
     query = query.SubstringQuery
-    null = []
+    null = ()
 
     def from_sql(self, sql_value):
         return self.parse(sql_value)
 
     def to_sql(self, value):
-        if value is None:
+        if not value:
             return None
 
         return self.format(value)
@@ -212,7 +212,7 @@ class StringList(Type):
         representing the value. This is used in template evaluation.
         """
 
-        if value is None:
+        if not value:
             return six.text_type(u'')
 
         return six.text_type(config['multivalue_separator'].as_str()
@@ -223,10 +223,10 @@ class StringList(Type):
         """Parse a (possibly human-written) string and return the
         indicated value of this type.
         """
-        if string is None or string == '':
+        if not string:
             return self.null
         else:
-            return string.split(config['multivalue_separator'].as_str())
+            return tuple(string.split(config['multivalue_separator'].as_str()))
 
 
 class Boolean(Type):

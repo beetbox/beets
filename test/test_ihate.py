@@ -16,7 +16,7 @@ class IHatePluginTest(unittest.TestCase):
 
         match_pattern = {}
         test_item = Item(
-            genre=u'TestGenre',
+            genre=(u'TestGenre',),
             album=u'TestAlbum',
             artist=u'TestArtist')
         task = importer.SingletonImportTask(None, test_item)

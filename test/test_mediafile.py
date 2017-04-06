@@ -268,15 +268,15 @@ class GenreListTestMixin(object):
 
     def test_read_genre_list(self):
         mediafile = self._mediafile_fixture('full')
-        assertCountEqual(self, mediafile.genre, ['the genre'])
+        assertCountEqual(self, mediafile.genre, ('the genre',))
 
     def test_write_genre_list(self):
         mediafile = self._mediafile_fixture('empty')
-        mediafile.genre = [u'one', u'two']
+        mediafile.genre = (u'one', u'two')
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        assertCountEqual(self, mediafile.genre, [u'one', u'two'])
+        assertCountEqual(self, mediafile.genre, (u'one', u'two'))
 
     def test_write_genre_list_from_string(self):
         mediafile = self._mediafile_fixture('empty')
@@ -284,16 +284,16 @@ class GenreListTestMixin(object):
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        assertCountEqual(self, mediafile.genre, [u'one', u'two'])
+        assertCountEqual(self, mediafile.genre, (u'one', u'two'))
 
     def test_append_genre_list(self):
         mediafile = self._mediafile_fixture('full')
-        self.assertEqual(mediafile.genre, [u'the genre'])
-        mediafile.genre += [u'another']
+        self.assertEqual(mediafile.genre, (u'the genre',))
+        mediafile.genre += (u'another',)
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        assertCountEqual(self, mediafile.genre, [u'the genre', u'another'])
+        assertCountEqual(self, mediafile.genre, (u'the genre', u'another'))
 
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
@@ -321,8 +321,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'title':       u'full',
         'artist':      u'the artist',
         'album':       u'the album',
-        'genre':       [u'the genre'],
-        'composer':    [u'the composer'],
+        'genre':       (u'the genre',),
+        'composer':    (u'the composer',),
         'grouping':    u'the grouping',
         'year':        2001,
         'month':       None,
@@ -445,7 +445,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile = self._mediafile_fixture('empty')
         for field in self.tag_fields:
             if field in self.list_fields:
-                self.assertEqual(getattr(mediafile, field), [])
+                self.assertEqual(getattr(mediafile, field), ())
             else:
                 self.assertIsNone(getattr(mediafile, field))
 
@@ -602,7 +602,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
 
         for key in keys:
             if key in self.list_fields:
-                self.assertEqual(getattr(mediafile, key), [])
+                self.assertEqual(getattr(mediafile, key), ())
             else:
                 self.assertIsNone(getattr(mediafile, key))
 
@@ -681,7 +681,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
                 # ReplayGain is float
                 tags[key] = 1.0
             elif key in self.list_fields:
-                tags[key] = ['value\u2010%s' % key]
+                tags[key] = ('value\u2010%s' % key,)
             else:
                 tags[key] = 'value\u2010%s' % key
 
@@ -801,11 +801,11 @@ class WMATest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
     def test_write_genre_list_get_first(self):
         # WMA does not preserve list order
         mediafile = self._mediafile_fixture('empty')
-        mediafile.genre = [u'one', u'two']
+        mediafile.genre = (u'one', u'two')
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        assertCountEqual(self, mediafile.genre, [u'one', u'two'])
+        assertCountEqual(self, mediafile.genre, (u'one', u'two'))
 
     def test_read_pure_tags(self):
         mediafile = self._mediafile_fixture('pure')
