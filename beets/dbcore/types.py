@@ -218,7 +218,6 @@ class StringList(Type):
         return six.text_type(config['multivalue_separator'].as_str()
                                                            .join(value))
 
-
     def parse(self, string):
         """Parse a (possibly human-written) string and return the
         indicated value of this type.

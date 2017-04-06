@@ -569,7 +569,8 @@ class ListStorageStyle(StorageStyle):
     def get_list(self, mutagen_file):
         """Get a list of all values for the field using this style.
         """
-        return tuple([self.deserialize(item) for item in self.fetch(mutagen_file)])
+        return tuple([self.deserialize(item)
+                      for item in self.fetch(mutagen_file)])
 
     def fetch(self, mutagen_file):
         """Get the list of raw (serialized) values.
