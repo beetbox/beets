@@ -1159,10 +1159,13 @@ def _open_library(config):
         )
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError):
+        message = ""
         log.debug(u'{}', traceback.format_exc())
-        raise UserError(u"database file {0} could not be opened".format(
+        if e.args[0] == "unable to open database file":
+            message = "It might be a permissions problem."
+        raise UserError(u"database file {0} could not be opened.%s".format(
             util.displayable_path(dbpath)
-        ))
+        )%message)
     log.debug(u'library database: {0}\n'
               u'library directory: {1}',
               util.displayable_path(lib.path),
