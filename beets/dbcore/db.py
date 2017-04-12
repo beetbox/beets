@@ -807,8 +807,9 @@ class Database(object):
         """
         for name, _type in fields.items():
             if isinstance(_type, types.StringList):
-                query = ("SELECT id, {0} FROM {1} WHERE {2} != '' AND " +
-                         "NOT JSON_VALID({3})").format(name, table, name, name)
+                query = ("SELECT id, {0} FROM {1} WHERE {0} != '' AND " +
+                         "(NOT JSON_VALID({0}) OR " +
+                         "JSON_TYPE({0}) != 'array')").format(name, table)
 
                 with self.transaction() as tx:
                     rows = tx.query(query)
