@@ -256,6 +256,14 @@ class JSonSubstringListQuery(SubstringQuery):
         table = 'json_each({0}) as {1}'.format(self.field, alias)
         return clause, subvals, (table,)
 
+    def negated_clause(self):
+        clause, subvals, table = self.col_clause()
+        _table = self.model_cls._table
+        primary_key = '%s.id' % (_table)
+        neg_clause = '{0} not in (select {1} from {2}, {3} where {4})'.format(
+            primary_key, primary_key, _table, ', '.join(table), clause)
+        return neg_clause, subvals, ()
+
     @classmethod
     def value_match(cls, pattern, _value):
         return any([pattern.lower() in value.lower() for value in _value])
@@ -489,11 +497,18 @@ class OrQuery(MutableCollectionQuery):
 class NotQuery(Query):
     """A query that matches the negation of its `subquery`, as a shorcut for
     performing `not(subquery)` without using regular expressions.
+
+    Sometimes, negating a subquery is not as simple as prefixing it with 'NOT'
+    in the WHERE clause, so for those cases, query objects may implement a
+    negated_clause function that returns a negated clause expression.
     """
     def __init__(self, subquery):
         self.subquery = subquery
 
     def clause(self):
+        if hasattr(self.subquery, 'negated_clause'):
+            return self.subquery.negated_clause()
+
         clause, subvals, tables = self.subquery.clause()
         if clause:
             return 'not ({0})'.format(clause), subvals, tables
