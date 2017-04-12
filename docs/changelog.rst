@@ -52,7 +52,7 @@ New features:
 
 Fixes:
 
-* :doc:`/beets/config_default`: Added default replace for - to _. :bug:`549`
+* :ref:`replace`: Added default replace for - to _. :bug:`549`
 * :doc:`/plugins/absubmit`: Do not filter for supported formats. :bug:`2471`
 * :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
 * :doc:`/plugins/replaygain`: Fix Python 3 compatibility in the ``bs1770gain``
