@@ -269,6 +269,23 @@ class JSonSubstringListQuery(SubstringQuery):
         return any([pattern.lower() in value.lower() for value in _value])
 
 
+class JSonRegexpListQuery(RegexpQuery):
+    """A query that matches a regular expression in a specific item
+    field which is a json value.
+
+    Raises InvalidQueryError when the pattern is not a valid regular
+    expression.
+    """
+
+    @classmethod
+    def value_match(cls, pattern, _value):
+        """Determine whether the value matches the pattern. The value
+        may have any type.
+        """
+        return any([pattern.search(cls._normalize(value)) is not None
+                    for value in _value])
+
+
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.

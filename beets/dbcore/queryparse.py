@@ -21,6 +21,8 @@ import re
 import itertools
 from . import query
 import beets
+import types
+from functools import partial
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -67,7 +69,8 @@ def parse_query_part(part, query_classes={}, prefixes={},
     the third return value). They are:
     - `query_classes`, which maps field names to query classes. These
       are used when no explicit prefix is present.
-    - `prefixes`, which maps prefix strings to query classes.
+    - `prefixes`, which maps prefix strings to query classes or functions
+      that get a field name as parameter and return a :class:`Query` type.
     - `default_class`, the fallback when neither the field nor a prefix
       indicates a query class.
 
@@ -95,7 +98,11 @@ def parse_query_part(part, query_classes={}, prefixes={},
     # corresponding query type.
     for pre, query_class in prefixes.items():
         if term.startswith(pre):
-            return key, term[len(pre):], query_class, negate
+            if (isinstance(query_class, types.FunctionType) or
+                    isinstance(query_class, partial)):
+                return key, term[len(pre):], query_class(key), negate
+            else:
+                return key, term[len(pre):], query_class, negate
 
     # No matching prefix, so use either the query class determined by
     # the field or the default as a fallback.
@@ -109,7 +116,9 @@ def construct_query_part(model_cls, prefixes, query_part):
     :param model_cls: The :class:`Model` class that this is a query for.
       This is used to determine the appropriate query types for the
       model's fields.
-    :param prefixes: A map from prefix strings to :class:`Query` types.
+    :param prefixes: A map from prefix strings to :class:`Query` types or
+      functions that get a field name as parameter and return a :class:`Query`
+      type.
     :param query_part: The string to parse.
 
     See the documentation for `parse_query_part` for more information on

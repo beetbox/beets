@@ -17,7 +17,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from . import query
+from . import query as _query
 from beets.util import str2bool
 from beets import config
 import six
@@ -39,8 +39,13 @@ class Type(object):
     """The SQLite column type for the value.
     """
 
-    query = query.SubstringQuery
+    query = _query.SubstringQuery
     """The `Query` subclass to be used when querying the field.
+    """
+
+    regex_query = _query.RegexpQuery
+    """The `Query` subclass to be used when querying the field with a
+    regular expression.
     """
 
     model_type = six.text_type
@@ -130,7 +135,7 @@ class Integer(Type):
     """A basic integer type.
     """
     sql = u'INTEGER'
-    query = query.NumericQuery
+    query = _query.NumericQuery
     model_type = int
 
 
@@ -172,7 +177,7 @@ class Float(Type):
     """A basic floating-point type.
     """
     sql = u'REAL'
-    query = query.NumericQuery
+    query = _query.NumericQuery
     model_type = float
 
     def format(self, value):
@@ -189,14 +194,16 @@ class String(Type):
     """A Unicode string type.
     """
     sql = u'TEXT'
-    query = query.SubstringQuery
+    query = _query.SubstringQuery
+    regex_query = _query.RegexpQuery
 
 
 class StringList(Type):
     """A List of Unicode strings type, stored in a string
     """
     sql = u'TEXT'
-    query = query.JSonSubstringListQuery
+    query = _query.JSonSubstringListQuery
+    regex_query = _query.JSonRegexpListQuery
     null = ()
 
     def from_sql(self, sql_value):
@@ -236,7 +243,7 @@ class Boolean(Type):
     """A boolean type.
     """
     sql = u'INTEGER'
-    query = query.BooleanQuery
+    query = _query.BooleanQuery
     model_type = bool
 
     def format(self, value):

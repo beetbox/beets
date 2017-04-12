@@ -23,6 +23,7 @@ import unicodedata
 import time
 import re
 import six
+from functools import partial
 
 from beets import logging
 from beets.mediafile import MediaFile, UnreadableFileError
@@ -1168,6 +1169,9 @@ class Album(LibModel):
 
 
 # Query construction helpers.
+def get_regex_query_class(model_cls, key):
+    return model_cls._type(key).regex_query
+
 
 def parse_query_parts(parts, model_cls):
     """Given a beets query string as a list of components, return the
@@ -1177,7 +1181,7 @@ def parse_query_parts(parts, model_cls):
     special path query detection.
     """
     # Get query types and their prefix characters.
-    prefixes = {':': dbcore.query.RegexpQuery}
+    prefixes = {':': partial(get_regex_query_class, model_cls)}
     prefixes.update(plugins.queries())
 
     # Special-case path-like queries, which are non-field queries
