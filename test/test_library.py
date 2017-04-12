@@ -93,7 +93,7 @@ class AddTest(_common.TestCase):
         self.lib.add(self.i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer=json_array("the composer")').fetchone()['grouping']
+            'where composer=\'["the composer"]\'').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
     def test_library_add_path_inserts_row(self):
@@ -103,7 +103,7 @@ class AddTest(_common.TestCase):
         self.lib.add(i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer=json_array("the composer")').fetchone()['grouping']
+            'where composer=\'["the composer"]\'').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
 

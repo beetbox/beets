@@ -236,7 +236,8 @@ class JSonSubstringListQuery(SubstringQuery):
     _unique_id = 1
 
     def __init__(self, field, pattern, fast, model_cls):
-        super(JSonSubstringListQuery, self).__init__(field, pattern, fast)
+        super(JSonSubstringListQuery, self).__init__(
+            field, pattern, fast and util.SQLITE_HAS_JSON_EXTENSION)
         self.model_cls = model_cls
 
     def get_unique_alias(self):

@@ -27,10 +27,11 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
-from beets.util import py3_path
+from beets.util import py3_path, SQLITE_HAS_JSON_EXTENSION
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
+import json
 
 
 class DBAccessError(Exception):
@@ -816,12 +817,27 @@ class Database(object):
         """
         for name, _type in fields.items():
             if isinstance(_type, types.StringList):
-                query = ("SELECT id, {0} FROM {1} WHERE {0} != '' AND " +
-                         "(NOT JSON_VALID({0}) OR " +
-                         "JSON_TYPE({0}) != 'array')").format(name, table)
+                if SQLITE_HAS_JSON_EXTENSION:
+                    query = ("SELECT id, {0} FROM {1} WHERE {0} != '' AND " +
+                             "(NOT JSON_VALID({0}) OR " +
+                             "JSON_TYPE({0}) != 'array')").format(name, table)
 
-                with self.transaction() as tx:
-                    rows = tx.query(query)
+                    with self.transaction() as tx:
+                        rows = tx.query(query)
+                else:
+                    query = "SELECT id, {0} FROM {1} WHERE {0} != ''".format(
+                            name, table)
+
+                    with self.transaction() as tx:
+                        rows = []
+                        for row in tx.query(query):
+                            try:
+                                value = json.loads(row[1])
+                            except:
+                                rows.append(row)
+                            else:
+                                if not isinstance(value, list):
+                                    rows.append(row)
 
                 if not rows:
                     continue

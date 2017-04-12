@@ -31,6 +31,7 @@ import shlex
 from beets.util import hidden
 import six
 from unidecode import unidecode
+import sqlite3
 
 
 MAX_FILENAME_LENGTH = 200
@@ -997,3 +998,22 @@ def asciify_path(path, sep_replace):
                 sep_replace
             )
     return os.sep.join(path_components)
+
+
+def can_use_sqlite_json_extension():
+    if sqlite3.sqlite_version_info > (3, 9, 0):
+        db = sqlite3.connect(":memory:")
+
+        try:
+            db.execute("select json_valid(?)", ("['test']",))
+        except sqlite3.OperationalError:
+            pass
+        else:
+            return True
+        finally:
+            db.close()
+
+    return False
+
+
+SQLITE_HAS_JSON_EXTENSION = can_use_sqlite_json_extension()
