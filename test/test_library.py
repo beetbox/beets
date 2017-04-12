@@ -39,6 +39,7 @@ from beets.mediafile import MediaFile
 from beets.util import syspath, bytestring_path
 from test.helper import TestHelper
 import six
+import json
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -74,7 +75,7 @@ class StoreTest(_common.LibTestCase):
         new_genre = self.lib._connection().execute(
             'select genre from items where '
             'title="the title"').fetchone()['genre']
-        self.assertEqual(tuple(new_genre.split('; ')), original_genre)
+        self.assertEqual(new_genre, json.dumps(original_genre))
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = u'tvp'
@@ -92,7 +93,7 @@ class AddTest(_common.TestCase):
         self.lib.add(self.i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()['grouping']
+            'where composer=json_array("the composer")').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
     def test_library_add_path_inserts_row(self):
@@ -102,7 +103,7 @@ class AddTest(_common.TestCase):
         self.lib.add(i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
-            'where composer="the composer"').fetchone()['grouping']
+            'where composer=json_array("the composer")').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
 
