@@ -800,6 +800,34 @@ class Database(object):
 
     # Schema setup and migration.
 
+    def _migrate_table_fields_content_type(self, table, fields):
+        """Check that the `fields` contain data according to their type.
+
+        For now, only json values are enforced in StringList fields.
+        """
+        for name, _type in fields.items():
+            if isinstance(_type, types.StringList):
+                query = ("SELECT id, {0} FROM {1} WHERE {2} != '' AND " +
+                         "NOT JSON_VALID({3})").format(name, table, name, name)
+
+                with self.transaction() as tx:
+                    rows = tx.query(query)
+
+                if not rows:
+                    continue
+
+                with self.transaction() as tx:
+                    for _id, _value in rows:
+                        if not _value:
+                            continue
+
+                        query = 'UPDATE {0} SET {1} =? WHERE id=?'.format(
+                            table, name
+                        )
+                        new_value = _type.to_sql(_type.parse(_value))
+
+                        tx.mutate(query, (new_value, _id))
+
     def _make_table(self, table, fields):
         """Set up the schema of the database. `fields` is a mapping
         from field names to `Type`s. Columns are added if necessary.
@@ -812,6 +840,7 @@ class Database(object):
         field_names = set(fields.keys())
         if current_fields.issuperset(field_names):
             # Table exists and has all the required columns.
+            self._migrate_table_fields_content_type(table, fields)
             return
 
         if not current_fields:
@@ -823,6 +852,7 @@ class Database(object):
                                                            ', '.join(columns))
 
         else:
+            self._migrate_table_fields_content_type(table, fields)
             # Table exists does not match the field set.
             setup_sql = ''
             for name, typ in fields.items():

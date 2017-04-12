@@ -21,6 +21,7 @@ from . import query
 from beets.util import str2bool
 from beets import config
 import six
+import json
 
 if not six.PY2:
     buffer = memoryview  # sqlite won't accept memoryview in python 2
@@ -199,13 +200,16 @@ class StringList(Type):
     null = ()
 
     def from_sql(self, sql_value):
-        return self.parse(sql_value)
+        if not sql_value:
+            return self.null
+        else:
+            return tuple(json.loads(sql_value))
 
     def to_sql(self, value):
         if not value:
             return None
 
-        return self.format(value)
+        return json.dumps(value)
 
     def format(self, value):
         """Given a value of this type, produce a Unicode string
