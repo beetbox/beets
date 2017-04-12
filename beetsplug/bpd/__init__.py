@@ -1052,9 +1052,12 @@ class Server(BaseServer):
         show_tag_canon, show_key = self._tagtype_lookup(show_tag)
         query = self._metadata_query(dbcore.query.MatchQuery, None, kv)
 
-        clause, subvals = query.clause()
+        tables = ['items']
+        clause, subvals, new_tables = query.clause()
+        tables.extend(new_tables)
         statement = 'SELECT DISTINCT ' + show_key + \
-                    ' FROM items WHERE ' + clause + \
+                    ' FROM ' + ', '.join(tables) + \
+                    ' WHERE ' + clause + \
                     ' ORDER BY ' + show_key
         with self.lib.transaction() as tx:
             rows = tx.query(statement, subvals)

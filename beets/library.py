@@ -114,7 +114,7 @@ class PathQuery(dbcore.FieldQuery):
                          (substr(BYTELOWER({0}), 1, ?) = BYTELOWER(?))'
 
         return query_part.format(self.field), \
-            (file_blob, len(dir_blob), dir_blob)
+            (file_blob, len(dir_blob), dir_blob), ()
 
 
 # Library-specific field types.

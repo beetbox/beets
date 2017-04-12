@@ -196,7 +196,7 @@ class StringList(Type):
     """A List of Unicode strings type, stored in a string
     """
     sql = u'TEXT'
-    query = query.SubstringQuery
+    query = query.JSonSubstringListQuery
     null = ()
 
     def from_sql(self, sql_value):

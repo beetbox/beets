@@ -488,6 +488,15 @@ class Model(object):
         """
         self[key] = self._parse(key, string)
 
+    @classmethod
+    def _fields_col_names(cls):
+        """Return the list of all fixed fields column names.
+
+        Returns the list of all fixed fields column names with table name
+        prepended to be used in a select expression.
+        """
+        return [cls._table + '.' + field for field in cls._fields]
+
 
 # Database controller and supporting interfaces.
 
@@ -892,11 +901,15 @@ class Database(object):
         """
         query = query or TrueQuery()  # A null query.
         sort = sort or NullSort()  # Unsorted.
-        where, subvals = query.clause()
+        where, subvals, new_tables = query.clause()
+        tables = [model_cls._table]
+        tables.extend(new_tables)
+        col_names = ', '.join(model_cls._fields_col_names())
         order_by = sort.order_clause()
 
-        sql = ("SELECT * FROM {0} WHERE {1} {2}").format(
-            model_cls._table,
+        sql = ("SELECT DISTINCT {0} FROM {1} WHERE {2} {3}").format(
+            col_names,
+            ', '.join(tables),
             where or '1',
             "ORDER BY {0}".format(order_by) if order_by else '',
         )

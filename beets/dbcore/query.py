@@ -66,11 +66,12 @@ class Query(object):
     def clause(self):
         """Generate an SQLite expression implementing the query.
 
-        Return (clause, subvals) where clause is a valid sqlite
-        WHERE clause implementing the query and subvals is a list of
-        items to be substituted for ?s in the clause.
+        Return (clause, subvals, tables) where clause is a valid sqlite
+        WHERE clause implementing the query, subvals is a list of
+        items to be substituted for ?s in the clause and tables is a
+        list of FROM table names to be added to the sql statement.
         """
-        return None, ()
+        return None, (), ()
 
     def match(self, item):
         """Check whether this query matches a given Item. Can be used to
@@ -101,14 +102,14 @@ class FieldQuery(Query):
         self.fast = fast
 
     def col_clause(self):
-        return None, ()
+        return None, (), ()
 
     def clause(self):
         if self.fast:
             return self.col_clause()
         else:
             # Matching a flexattr. This is a slow query.
-            return None, ()
+            return None, (), ()
 
     @classmethod
     def value_match(cls, pattern, value):
@@ -135,7 +136,7 @@ class FieldQuery(Query):
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def col_clause(self):
-        return self.field + " = ?", [self.pattern]
+        return self.field + " = ?", [self.pattern], ()
 
     @classmethod
     def value_match(cls, pattern, value):
@@ -148,7 +149,7 @@ class NoneQuery(FieldQuery):
         super(NoneQuery, self).__init__(field, None, fast)
 
     def col_clause(self):
-        return self.field + " IS NULL", ()
+        return self.field + " IS NULL", (), ()
 
     @classmethod
     def match(cls, item):
@@ -165,6 +166,7 @@ class StringFieldQuery(FieldQuery):
     """A FieldQuery that converts values to strings before matching
     them.
     """
+
     @classmethod
     def value_match(cls, pattern, value):
         """Determine whether the value matches the pattern. The value
@@ -190,7 +192,7 @@ class SubstringQuery(StringFieldQuery):
         search = '%' + pattern + '%'
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
-        return clause, subvals
+        return clause, subvals, ()
 
     @classmethod
     def string_match(cls, pattern, value):
@@ -227,6 +229,38 @@ class RegexpQuery(StringFieldQuery):
         return pattern.search(cls._normalize(value)) is not None
 
 
+class JSonSubstringListQuery(SubstringQuery):
+    """A query that matches a regular expression in a specific item
+    field which contains a json dump of a string array.
+    """
+    _unique_id = 1
+
+    def __init__(self, field, pattern, fast, model_cls):
+        super(JSonSubstringListQuery, self).__init__(field, pattern, fast)
+        self.model_cls = model_cls
+
+    def get_unique_alias(self):
+        alias = 'json_' + self.field + str(JSonSubstringListQuery._unique_id)
+        JSonSubstringListQuery._unique_id += 1
+        return alias
+
+    def col_clause(self):
+        pattern = (self.pattern
+                       .replace('\\', '\\\\')
+                       .replace('%', '\\%')
+                       .replace('_', '\\_'))
+        search = '%' + pattern + '%'
+        alias = self.get_unique_alias()
+        clause = alias + ".value like ? escape '\\'"
+        subvals = [search]
+        table = 'json_each({0}) as {1}'.format(self.field, alias)
+        return clause, subvals, (table,)
+
+    @classmethod
+    def value_match(cls, pattern, _value):
+        return any([pattern.lower() in value.lower() for value in _value])
+
+
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
@@ -259,7 +293,7 @@ class BytesQuery(MatchQuery):
             self.pattern = bytes(self.pattern)
 
     def col_clause(self):
-        return self.field + " = ?", [self.buf_pattern]
+        return self.field + " = ?", [self.buf_pattern], ()
 
 
 class NumericQuery(FieldQuery):
@@ -320,17 +354,17 @@ class NumericQuery(FieldQuery):
 
     def col_clause(self):
         if self.point is not None:
-            return self.field + '=?', (self.point,)
+            return self.field + '=?', (self.point,), ()
         else:
             if self.rangemin is not None and self.rangemax is not None:
                 return (u'{0} >= ? AND {0} <= ?'.format(self.field),
-                        (self.rangemin, self.rangemax))
+                        (self.rangemin, self.rangemax), ())
             elif self.rangemin is not None:
-                return u'{0} >= ?'.format(self.field), (self.rangemin,)
+                return u'{0} >= ?'.format(self.field), (self.rangemin,), ()
             elif self.rangemax is not None:
-                return u'{0} <= ?'.format(self.field), (self.rangemax,)
+                return u'{0} <= ?'.format(self.field), (self.rangemax,), ()
             else:
-                return u'1', ()
+                return u'1', (), ()
 
 
 class CollectionQuery(Query):
@@ -360,15 +394,18 @@ class CollectionQuery(Query):
         """
         clause_parts = []
         subvals = []
+        tables = []
         for subq in self.subqueries:
-            subq_clause, subq_subvals = subq.clause()
+            subq_clause, subq_subvals, _tables = subq.clause()
+            tables.extend(_tables)
+
             if not subq_clause:
                 # Fall back to slow query.
-                return None, ()
+                return None, (), ()
             clause_parts.append('(' + subq_clause + ')')
             subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
-        return clause, subvals
+        return clause, subvals, tables
 
     def __repr__(self):
         return "{0.__class__.__name__}({0.subqueries!r})".format(self)
@@ -457,13 +494,13 @@ class NotQuery(Query):
         self.subquery = subquery
 
     def clause(self):
-        clause, subvals = self.subquery.clause()
+        clause, subvals, tables = self.subquery.clause()
         if clause:
-            return 'not ({0})'.format(clause), subvals
+            return 'not ({0})'.format(clause), subvals, tables
         else:
             # If there is no clause, there is nothing to negate. All the logic
             # is handled by match() for slow queries.
-            return clause, subvals
+            return clause, subvals, tables
 
     def match(self, item):
         return not self.subquery.match(item)
@@ -482,7 +519,7 @@ class NotQuery(Query):
 class TrueQuery(Query):
     """A query that always matches."""
     def clause(self):
-        return '1', ()
+        return '1', (), ()
 
     def match(self, item):
         return True
@@ -491,7 +528,7 @@ class TrueQuery(Query):
 class FalseQuery(Query):
     """A query that never matches."""
     def clause(self):
-        return '0', ()
+        return '0', (), ()
 
     def match(self, item):
         return False
@@ -660,7 +697,7 @@ class DateQuery(FieldQuery):
         else:
             # Match any date.
             clause = '1'
-        return clause, subvals
+        return clause, subvals, ()
 
 
 class DurationQuery(NumericQuery):

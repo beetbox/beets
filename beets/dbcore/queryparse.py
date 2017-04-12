@@ -153,7 +153,12 @@ def construct_query_part(model_cls, prefixes, query_part):
     # Otherwise, this must be a `FieldQuery`. Use the field name to
     # construct the query object.
     key = key.lower()
-    q = query_class(key.lower(), pattern, key in model_cls._fields)
+    if issubclass(query_class, query.JSonSubstringListQuery):
+        q = query_class(key.lower(), pattern, key in model_cls._fields,
+                        model_cls)
+    else:
+        q = query_class(key.lower(), pattern, key in model_cls._fields)
+
     if negate:
         return query.NotQuery(q)
     return q
