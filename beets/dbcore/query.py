@@ -561,7 +561,7 @@ class Period(object):
             date = datetime.strptime(string, date_format)
         except ValueError:
             # Parsing failed.
-            return None
+            raise InvalidQueryArgumentTypeError(string, datetime)
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
