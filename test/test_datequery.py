@@ -21,7 +21,8 @@ from test import _common
 from datetime import datetime
 import unittest
 import time
-from beets.dbcore.query import _parse_periods, DateInterval, DateQuery, InvalidQueryArgumentTypeError
+from beets.dbcore.query import _parse_periods, DateInterval, DateQuery,\
+    InvalidQueryArgumentTypeError
 
 
 def _date(string):

@@ -893,8 +893,10 @@ class NotQueryTest(DummyDataTestCase):
     def test_type_date(self):
         q = dbcore.query.DateQuery(u'added', u'2000-01-01')
         not_results = self.lib.items(dbcore.query.NotQuery(q))
-        # query date is in the past, thus the 'not' results should contain all items
-        self.assert_items_matched(not_results, [u'foo bar', u'baz qux', u'beets 4 eva'])
+        # query date is in the past, thus the 'not' results should contain all
+        # items
+        self.assert_items_matched(not_results, [u'foo bar', u'baz qux',
+                                                u'beets 4 eva'])
         self.assertNegationProperties(q)
 
     def test_type_false(self):
