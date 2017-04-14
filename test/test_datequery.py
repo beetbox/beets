@@ -124,6 +124,21 @@ class DateQueryConstructTest(unittest.TestCase):
         with self.assertRaises(InvalidQueryArgumentTypeError):
             DateQuery('added', '12-34-56-78')
 
+    def test_invalid_date_query(self):
+        q_list = [
+            '2001-01-0a',
+            '2001-0a',
+            '200a',
+            '2001-01-01..2001-01-0a',
+            '2001-0a..2001-01',
+            '200a..2002',
+            '20aa..',
+            '..2aa'
+        ]
+        for q in q_list:
+            with self.assertRaises(InvalidQueryArgumentTypeError):
+                DateQuery('added', q)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
