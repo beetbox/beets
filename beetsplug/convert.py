@@ -24,6 +24,7 @@ import tempfile
 import shlex
 import six
 from string import Template
+import platform
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -183,12 +184,22 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
-        # Substitute $source and $dest in the argument list.
+        # On Python 3, we need to construct the command to invoke as a
+        # Unicode string. On Unix, this is a little unfortunate---the OS is
+        # expecting bytes---so we use surrogate escaping and decode with the
+        # argument encoding, which is the same encoding that will then be
+        # *reversed* to recover the same bytes before invoking the OS. On
+        # Windows, we want to preserve the Unicode filename "as is."
         if not six.PY2:
             command = command.decode(util.arg_encoding(), 'surrogateescape')
-            source = source.decode(util.arg_encoding(), 'surrogateescape')
-            dest = dest.decode(util.arg_encoding(), 'surrogateescape')
+            if platform.system() == 'Windows':
+                source = source.decode(util._fsencoding())
+                dest = dest.decode(util._fsencoding())
+            else:
+                source = source.decode(util.arg_encoding(), 'surrogateescape')
+                dest = dest.decode(util.arg_encoding(), 'surrogateescape')
 
+        # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
         encode_cmd = []
         for i, arg in enumerate(args):
