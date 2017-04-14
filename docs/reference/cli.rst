@@ -410,7 +410,7 @@ import ...``.
   this flag when reporting bugs. You can use it twice, as in ``-vv``, to make
   beets even more verbose.
 * ``-c FILE``: read a specified YAML :doc:`configuration file <config>`. any
-options set in the specified config will override your normal config.
+  options set in the specified config will override your normal config.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
