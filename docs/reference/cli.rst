@@ -409,8 +409,11 @@ import ...``.
 * ``-v``: verbose mode; prints out a deluge of debugging information. Please use
   this flag when reporting bugs. You can use it twice, as in ``-vv``, to make
   beets even more verbose.
-* ``-c FILE``: read a specified YAML :doc:`configuration file <config>`. any
-  options set in the specified config will override your normal config.
+* ``-c FILE``: read a specified YAML :doc:`configuration file <config>`. This
+  configuration works as an overlay: rather than replacing your normal
+  configuration options entirely, the two are merged. Any individual options set
+  in this config file will override your base configuration.
+
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
