@@ -533,8 +533,8 @@ class Period(object):
     instants of time during January 2014.
     """
 
-    precisions = ('year', 'month', 'day')
-    date_formats = ('%Y', '%Y-%m', '%Y-%m-%d')
+    precisions = ('day', 'month', 'year')
+    date_formats = ('%Y-%m-%d', '%Y-%m', '%Y')
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -553,17 +553,19 @@ class Period(object):
         """
         if not string:
             return None
-        ordinal = string.count('-')
-        if ordinal >= len(cls.date_formats):
-            # Too many components.
-            raise InvalidQueryArgumentTypeError(string, 'a valid datetime string')
-        date_format = cls.date_formats[ordinal]
-        try:
-            date = datetime.strptime(string, date_format)
-        except ValueError:
-            # Parsing failed.
-            raise InvalidQueryArgumentTypeError(string, 'a valid datetime string')
-        precision = cls.precisions[ordinal]
+        count = 0
+        date = None
+        for date_format in cls.date_formats:
+            try:
+                date = datetime.strptime(string, date_format)
+                break
+            except ValueError:
+                # Parsing failed.
+                count += 1
+        if date is None:
+            raise InvalidQueryArgumentTypeError(string,
+                                                'a valid datetime string')
+        precision = cls.precisions[count]
         return cls(date, precision)
 
     def open_right_endpoint(self):
