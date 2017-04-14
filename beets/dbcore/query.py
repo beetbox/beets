@@ -555,7 +555,7 @@ class Period(object):
         ordinal = string.count('-')
         if ordinal >= len(cls.date_formats):
             # Too many components.
-            return None
+            raise InvalidQueryArgumentTypeError(string, 'a valid datetime string')
         date_format = cls.date_formats[ordinal]
         try:
             date = datetime.strptime(string, date_format)
