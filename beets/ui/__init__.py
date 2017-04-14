@@ -1122,12 +1122,11 @@ def _configure(options):
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
     if getattr(options, 'config', None) is not None:
-        overlay_path = True
-        config_path = options.config
+        overlay_path = options.config
         del options.config
-        config.set_file(config_path)
+        config.set_file(overlay_path)
     else:
-        overlay_path = False
+        overlay_path = None
     config.set_args(options)
 
     # Configure the logger.
@@ -1138,11 +1137,11 @@ def _configure(options):
 
     if overlay_path:
         log.debug(u'overlaying configuration: {0}',
-                  util.displayable_path(config_path))
+                  util.displayable_path(overlay_path))
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
-        log.debug(u'base user configuration: {0}',
+        log.debug(u'user configuration: {0}',
                   util.displayable_path(config_path))
     else:
         log.debug(u'no user configuration found at {0}',
