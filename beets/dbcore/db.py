@@ -32,6 +32,10 @@ from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
 
+class AccessFileError(Exception):
+    """UI exception. Commands should throw this in order to display
+    nonrecoverable errors to the user.
+    """
 
 class FormattedMapping(collections.Mapping):
     """A `dict`-like formatted view of a model.
@@ -680,8 +684,11 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        cursor = self.db._connection().execute(statement, subvals)
-        return cursor.lastrowid
+
+            cursor = self.db._connection().execute(statement, subvals)
+            raise AccessFileError("unable to open database file. It might be a permissions problem")
+            return cursor.lastrowid
+
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
