@@ -685,9 +685,9 @@ class Transaction(object):
         the row ID of the last affected row.
         """
 
-            cursor = self.db._connection().execute(statement, subvals)
-            raise AccessFileError("unable to open database file. It might be a permissions problem")
-            return cursor.lastrowid
+        cursor = self.db._connection().execute(statement, subvals)
+        raise AccessFileError("unable to open database file. It might be a permissions problem")
+        return cursor.lastrowid
 
 
     def script(self, statements):
