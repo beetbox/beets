@@ -547,8 +547,9 @@ class Period(object):
 
     @classmethod
     def parse(cls, string):
-        """Parse a date and return a `Period` object or `None` if the
-        string is empty.
+        """Parse a date and return a `Period` object, or `None` if the
+        string is empty, or raise an InvalidQueryArgumentTypeError if
+        the string could not be parsed to a date.
         """
         if not string:
             return None
