@@ -684,16 +684,16 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-
-        cursor = self.db._connection().execute(statement, subvals)
-        raise AccessFileError("unable to open database file. It might be a permissions problem")
-        return cursor.lastrowid
+        try:
+            cursor = self.db._connection().execute(statement, subvals)
+            return cursor.lastrowid
+        except sqlite3.OperationalError as e:
+            raise AccessFileError("unable to open database file. It might be a permissions problem")
 
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
         self.db._connection().executescript(statements)
-
 
 class Database(object):
     """A container for Model objects that wraps an SQLite database as
