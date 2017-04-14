@@ -121,7 +121,8 @@ class DateQueryConstructTest(unittest.TestCase):
             DateQuery('added', '1409830085..1412422089')
 
     def test_too_many_components(self):
-        DateQuery('added', '12-34-56-78')
+        with self.assertRaises(InvalidQueryArgumentTypeError):
+            DateQuery('added', '12-34-56-78')
 
 
 def suite():
