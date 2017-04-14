@@ -72,7 +72,7 @@ box. To extract `rar` files, install the `rarfile`_ package and the
 Optional command flags:
 
 * By default, the command copies files your the library directory and
-  updates the ID3 tags on your music. In order to move the files, instead of 
+  updates the ID3 tags on your music. In order to move the files, instead of
   copying, use the ``-m`` (move) option. If you'd like to leave your music
   files untouched, try the ``-C`` (don't copy) and ``-W`` (don't write tags)
   options. You can also disable this behavior by default in the
@@ -409,7 +409,8 @@ import ...``.
 * ``-v``: verbose mode; prints out a deluge of debugging information. Please use
   this flag when reporting bugs. You can use it twice, as in ``-vv``, to make
   beets even more verbose.
-* ``-c FILE``: read a specified YAML :doc:`configuration file <config>`.
+* ``-c FILE``: read a specified YAML :doc:`configuration file <config>`. any
+options set in the specified config will override your normal config.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
