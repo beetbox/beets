@@ -28,12 +28,9 @@ def convert(in_file, out_file, tag):
     if not isinstance(tag, bytes):
         tag = tag.encode('utf-8')
 
-    # On Windows, use Unicode paths. (The test harness gives them to us
-    # as UTF-8 bytes.)
-    if platform.system() == 'Windows':
-        if not PY2:
-            in_file = in_file.encode(arg_encoding())
-            out_file = out_file.encode(arg_encoding())
+    # On Windows, use Unicode paths. On Python 3, we get the actual,
+    # Unicode filenames. On Python 2, we get them as UTF-8 byes.
+    if platform.system() == 'Windows' and PY2:
         in_file = in_file.decode('utf-8')
         out_file = out_file.decode('utf-8')
 
