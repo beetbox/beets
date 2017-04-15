@@ -770,6 +770,8 @@ Fixes:
   does not exist, beets creates an empty file before editing it. This fixes an
   error on OS X, where the ``open`` command does not work with non-existent
   files. :bug:`1480`
+* :doc:`/plugins/convert`: Fix a problem with filename encoding on Windows
+  under Python 3. :bug:`2515` :bug:`2516`
 
 .. _Python bug: http://bugs.python.org/issue16512
 .. _ipfs: http://ipfs.io
