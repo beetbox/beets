@@ -412,7 +412,8 @@ import ...``.
 * ``-c FILE``: read a specified YAML :doc:`configuration file <config>`. This
   configuration works as an overlay: rather than replacing your normal
   configuration options entirely, the two are merged. Any individual options set
-  in this config file will override your base configuration.
+  in this config file will override the corresponding settings in your base
+  configuration.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
