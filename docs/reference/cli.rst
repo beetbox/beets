@@ -414,7 +414,6 @@ import ...``.
   configuration options entirely, the two are merged. Any individual options set
   in this config file will override your base configuration.
 
-
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
 
