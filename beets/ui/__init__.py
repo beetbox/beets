@@ -1248,6 +1248,6 @@ def main(args=None):
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
         log.debug(u'{}', traceback.format_exc())
-    except db.AccessFileError as exc:
-        log.error(u'{0}',exc)
+    except db.DBAccessError as exc:
+        log.error(u'{0}', exc)
         sys.exit(1)
