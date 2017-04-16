@@ -39,6 +39,7 @@ replace:
     '\.$': _
     '\s+$': ''
     '^\s+': ''
+    '^-': _
 path_sep_replace: _
 asciify_paths: false
 art_filename: cover
