@@ -52,7 +52,8 @@ New features:
 
 Fixes:
 
-* :ref:`replace`: Added default replace for - to _. :bug:`549`
+* In the :ref:`replace` configuration option, we now replace a leading hyphen
+  (-) with an underscore. :bug:`549` :bug:`2509`
 * :doc:`/plugins/absubmit`: Do not filter for supported formats. :bug:`2471`
 * :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
 * :doc:`/plugins/replaygain`: Fix Python 3 compatibility in the ``bs1770gain``
