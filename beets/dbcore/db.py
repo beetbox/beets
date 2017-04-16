@@ -32,10 +32,14 @@ from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
 
-class AccessFileError(Exception):
-    """UI exception. Commands should throw this in order to display
-    nonrecoverable errors to the user.
+
+class DBAccessError(Exception):
+    """The SQLite database became inaccessible.
+    This can happen when trying to read or write the
+    database when, for example, the database file is deleted or otherwise disappears.
+    There is probably no way to recover from this error.
     """
+
 
 class FormattedMapping(collections.Mapping):
     """A `dict`-like formatted view of a model.
@@ -688,12 +692,15 @@ class Transaction(object):
             cursor = self.db._connection().execute(statement, subvals)
             return cursor.lastrowid
         except sqlite3.OperationalError as e:
-            raise AccessFileError("unable to open database file. It might be a permissions problem")
-
+            if e.args[0] in ('unable to open database file',
+            'attempt to write a readonly database file'):
+                raise DBAccessError("Unable to open database file." \
+                 "It might be a permissions problem.")
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
         self.db._connection().executescript(statements)
+
 
 class Database(object):
     """A container for Model objects that wraps an SQLite database as
