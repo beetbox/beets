@@ -823,14 +823,21 @@ class Database(object):
                              "JSON_TYPE({0}) != 'array')").format(name, table)
 
                     with self.transaction() as tx:
-                        rows = tx.query(query)
+                        try:
+                            rows = tx.query(query)
+                        except sqlite3.OperationalError:
+                            rows = []
                 else:
                     query = "SELECT id, {0} FROM {1} WHERE {0} != ''".format(
                             name, table)
 
                     with self.transaction() as tx:
                         rows = []
-                        for row in tx.query(query):
+                        try:
+                            all_rows = tx.query(query)
+                        except:
+                            all_rows = []
+                        for row in all_rows:
                             try:
                                 value = json.loads(row[1])
                             except:
