@@ -35,10 +35,10 @@ import six
 
 class DBAccessError(Exception):
     """The SQLite database became inaccessible.
-    This can happen when trying to read or write the
-    database when, for example, the database file
-    is deleted or otherwise disappears.
-    There is probably no way to recover from this error.
+
+    This can happen when trying to read or write the database when, for
+    example, the database file is deleted or otherwise disappears. There
+    is probably no way to recover from this error.
     """
 
 
