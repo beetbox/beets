@@ -1480,6 +1480,10 @@ def move_items(lib, dest, query, copy, album, pretend, export=False, confirm=Fal
                                for obj in objs])
     else:
         if export:
+            objs = ui.input_select_objects(
+                u'Really %s' % act, objs,
+                lambda o: show_path_changes(
+                    [(o.path, o.destination(basedir=dest))]))
             for obj in objs:
                 util.copy(obj.path, obj.destination(basedir=dest))
         else:
