@@ -49,6 +49,9 @@ New features:
   :bug:`2366` :bug:`2495`
 * Importing a release with multiple release events now selects the
   event based on your :ref:`preferred` countries. :bug:`2501`
+* :doc:`/plugins/play`: A new ``-y`` or ``--yes`` parameter lets you skip
+  the warning message if you enqueue more items than the warning threshold
+  usually allows.
 
 Fixes:
 

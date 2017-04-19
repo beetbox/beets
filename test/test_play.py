@@ -115,6 +115,20 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
         open_mock.assert_not_called()
 
+    def test_skip_warning_threshold_bypass(self, open_mock):
+        self.config['play']['warning_threshold'] = 1
+        self.other_item = self.add_item(title='another NiceTitle')
+
+        expected_playlist = u'{0}\n{1}'.format(
+            self.item.path.decode('utf-8'),
+            self.other_item.path.decode('utf-8'))
+
+        with control_stdin("a"):
+            self.run_and_assert(
+                open_mock,
+                [u'-y', u'NiceTitle'],
+                expected_playlist=expected_playlist)
+
     def test_command_failed(self, open_mock):
         open_mock.side_effect = OSError(u"some reason")
 
