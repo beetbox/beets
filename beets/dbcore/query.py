@@ -547,21 +547,24 @@ class Period(object):
 
     @classmethod
     def parse(cls, string):
-        """Parse a date and return a `Period` object or `None` if the
-        string is empty.
+        """Parse a date and return a `Period` object, or `None` if the
+        string is empty, or raise an InvalidQueryArgumentTypeError if
+        the string could not be parsed to a date.
         """
         if not string:
             return None
         ordinal = string.count('-')
         if ordinal >= len(cls.date_formats):
             # Too many components.
-            return None
+            raise InvalidQueryArgumentTypeError(string,
+                                                'a valid datetime string')
         date_format = cls.date_formats[ordinal]
         try:
             date = datetime.strptime(string, date_format)
         except ValueError:
             # Parsing failed.
-            return None
+            raise InvalidQueryArgumentTypeError(string,
+                                                'a valid datetime string')
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 

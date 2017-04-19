@@ -21,7 +21,8 @@ from test import _common
 from datetime import datetime
 import unittest
 import time
-from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
+from beets.dbcore.query import _parse_periods, DateInterval, DateQuery,\
+    InvalidQueryArgumentTypeError
 
 
 def _date(string):
@@ -117,10 +118,27 @@ class DateQueryTest(_common.LibTestCase):
 
 class DateQueryConstructTest(unittest.TestCase):
     def test_long_numbers(self):
-        DateQuery('added', '1409830085..1412422089')
+        with self.assertRaises(InvalidQueryArgumentTypeError):
+            DateQuery('added', '1409830085..1412422089')
 
     def test_too_many_components(self):
-        DateQuery('added', '12-34-56-78')
+        with self.assertRaises(InvalidQueryArgumentTypeError):
+            DateQuery('added', '12-34-56-78')
+
+    def test_invalid_date_query(self):
+        q_list = [
+            '2001-01-0a',
+            '2001-0a',
+            '200a',
+            '2001-01-01..2001-01-0a',
+            '2001-0a..2001-01',
+            '200a..2002',
+            '20aa..',
+            '..2aa'
+        ]
+        for q in q_list:
+            with self.assertRaises(InvalidQueryArgumentTypeError):
+                DateQuery('added', q)
 
 
 def suite():
