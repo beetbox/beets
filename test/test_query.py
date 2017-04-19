@@ -891,9 +891,12 @@ class NotQueryTest(DummyDataTestCase):
         self.assertNegationProperties(q)
 
     def test_type_date(self):
-        q = dbcore.query.DateQuery(u'mtime', u'0.0')
+        q = dbcore.query.DateQuery(u'added', u'2000-01-01')
         not_results = self.lib.items(dbcore.query.NotQuery(q))
-        self.assert_items_matched(not_results, [])
+        # query date is in the past, thus the 'not' results should contain all
+        # items
+        self.assert_items_matched(not_results, [u'foo bar', u'baz qux',
+                                                u'beets 4 eva'])
         self.assertNegationProperties(q)
 
     def test_type_false(self):
@@ -992,7 +995,7 @@ class NotQueryTest(DummyDataTestCase):
         AttributeError: type object 'NoneQuery' has no attribute 'field'
         at NoneQuery.match() (due to being @classmethod, and no self?)
         """
-        classes = [(dbcore.query.DateQuery, [u'mtime', u'0.0']),
+        classes = [(dbcore.query.DateQuery, [u'added', u'2001-01-01']),
                    (dbcore.query.MatchQuery, [u'artist', u'one']),
                    # (dbcore.query.NoneQuery, ['rg_track_gain']),
                    (dbcore.query.NumericQuery, [u'year', u'2002']),
