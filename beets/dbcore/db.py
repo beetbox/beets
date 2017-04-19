@@ -33,6 +33,15 @@ from .query import MatchQuery, NullSort, TrueQuery
 import six
 
 
+class DBAccessError(Exception):
+    """The SQLite database became inaccessible.
+
+    This can happen when trying to read or write the database when, for
+    example, the database file is deleted or otherwise disappears. There
+    is probably no way to recover from this error.
+    """
+
+
 class FormattedMapping(collections.Mapping):
     """A `dict`-like formatted view of a model.
 
@@ -680,8 +689,18 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        cursor = self.db._connection().execute(statement, subvals)
-        return cursor.lastrowid
+        try:
+            cursor = self.db._connection().execute(statement, subvals)
+            return cursor.lastrowid
+        except sqlite3.OperationalError as e:
+            # In two specific cases, SQLite reports an error while accessing
+            # the underlying database file. We surface these exceptions as
+            # DBAccessError so the application can abort.
+            if e.args[0] in ("attempt to write a readonly database",
+                             "unable to open database file"):
+                raise DBAccessError(e.args[0])
+            else:
+                raise
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
