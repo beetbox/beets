@@ -90,6 +90,8 @@ Fixes:
   made each disc be imported separately in different releases. :bug:`2493`
 * Invalid date queries now print an error message instead of being silently
   ignored. Thanks to :user:`discopatrick`. :bug:`2513` :bug:`2517`
+* When the SQLite database stops being accessible, we now print a friendly
+  error message. Thanks to :user:`Mary011196`. :bug:`1676` :bug:`2508`
 
 
 1.4.3 (January 9, 2017)
