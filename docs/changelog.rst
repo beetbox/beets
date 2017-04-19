@@ -88,6 +88,8 @@ Fixes:
   AAC codec instead of faac. Thanks to :user:`jansol`. :bug:`2484`
 * Fix import of multidisc releases with subdirectories, which previously
   made each disc be imported separately in different releases. :bug:`2493`
+* Invalid date queries now print an error message instead of being silently
+  ignored. Thanks to :user:`discopatrick`. :bug:`2513` :bug:`2517`
 
 
 1.4.3 (January 9, 2017)
