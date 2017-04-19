@@ -41,6 +41,7 @@ from beets import config
 from beets.util import confit, as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
+from beets.dbcore import db
 import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -1253,3 +1254,10 @@ def main(args=None):
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
         log.debug(u'{}', traceback.format_exc())
+    except db.DBAccessError as exc:
+        log.error(
+            u'database access error: {0}\n'
+            u'the library file might have a permissions problem',
+            exc
+        )
+        sys.exit(1)

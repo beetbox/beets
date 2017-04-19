@@ -88,6 +88,8 @@ Fixes:
   AAC codec instead of faac. Thanks to :user:`jansol`. :bug:`2484`
 * Fix import of multidisc releases with subdirectories, which previously
   made each disc be imported separately in different releases. :bug:`2493`
+* When the SQLite database stops being accessible, we now print a friendly
+  error message. Thanks to :user:`Mary011196`. :bug:`1676` :bug:`2508`
 
 
 1.4.3 (January 9, 2017)
