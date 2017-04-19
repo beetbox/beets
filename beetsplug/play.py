@@ -82,9 +82,9 @@ class PlayPlugin(BeetsPlugin):
             help=u'add additional arguments to the command',
         )
         play_command.parser.add_option(
-            u'-f', u'--force',
+            u'-y', u'--yes',
             action="store_true",
-            help=u'disable the warning threshold',
+            help=u'skip the warning threshold',
         )
         play_command.func = self._play_command
         return [play_command]
@@ -130,8 +130,8 @@ class PlayPlugin(BeetsPlugin):
 
         # Check if the selection exceeds configured threshold. If True,
         # cancel, otherwise proceed with play command.
-        if opts.force or not self._exceeds_threshold(selection, command_str, open_args,
-                                       item_type):
+        if opts.yes or not self._exceeds_threshold(
+                selection, command_str, open_args, item_type):
             play(command_str, selection, paths, open_args, self._log,
                  item_type)
 
