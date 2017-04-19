@@ -58,9 +58,9 @@ def find_feat_part(artist, albumartist):
     # If the last element of the split (the right-hand side of the
     # album artist) is nonempty, then it probably contains the
     # featured artist.
-    elif albumartist_split[-1] != '':
+    elif albumartist_split[1] != '':
         # Extract the featured artist from the right-hand side.
-        _, feat_part = split_on_feat(albumartist_split[-1])
+        _, feat_part = split_on_feat(albumartist_split[1])
         return feat_part
 
     # Otherwise, if there's nothing on the right-hand side, look for a
