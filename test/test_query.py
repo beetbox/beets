@@ -30,7 +30,7 @@ import beets.library
 from beets import dbcore
 from beets.dbcore import types
 from beets.dbcore.query import (NoneQuery, ParsingError,
-                                InvalidQueryArgumentTypeError)
+                                InvalidQueryArgumentValueError)
 from beets.library import Library, Item
 from beets import util
 import platform
@@ -301,11 +301,11 @@ class GetTest(DummyDataTestCase):
         self.assertFalse(results)
 
     def test_invalid_query(self):
-        with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
+        with self.assertRaises(InvalidQueryArgumentValueError) as raised:
             dbcore.query.NumericQuery('year', u'199a')
         self.assertIn(u'not an int', six.text_type(raised.exception))
 
-        with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
+        with self.assertRaises(InvalidQueryArgumentValueError) as raised:
             dbcore.query.RegexpQuery('year', u'199(')
         exception_text = six.text_type(raised.exception)
         self.assertIn(u'not a regular expression', exception_text)
