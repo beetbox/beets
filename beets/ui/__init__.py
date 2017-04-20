@@ -41,6 +41,7 @@ from beets import config
 from beets.util import confit, as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
+from beets.dbcore import db
 import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -1122,9 +1123,11 @@ def _configure(options):
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
     if getattr(options, 'config', None) is not None:
-        config_path = options.config
+        overlay_path = options.config
         del options.config
-        config.set_file(config_path)
+        config.set_file(overlay_path)
+    else:
+        overlay_path = None
     config.set_args(options)
 
     # Configure the logger.
@@ -1132,6 +1135,10 @@ def _configure(options):
         log.set_global_level(logging.DEBUG)
     else:
         log.set_global_level(logging.INFO)
+
+    if overlay_path:
+        log.debug(u'overlaying configuration: {0}',
+                  util.displayable_path(overlay_path))
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
@@ -1247,3 +1254,10 @@ def main(args=None):
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
         log.debug(u'{}', traceback.format_exc())
+    except db.DBAccessError as exc:
+        log.error(
+            u'database access error: {0}\n'
+            u'the library file might have a permissions problem',
+            exc
+        )
+        sys.exit(1)
