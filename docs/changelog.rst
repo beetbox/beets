@@ -49,9 +49,14 @@ New features:
   :bug:`2366` :bug:`2495`
 * Importing a release with multiple release events now selects the
   event based on your :ref:`preferred` countries. :bug:`2501`
+* :doc:`/plugins/play`: A new ``-y`` or ``--yes`` parameter lets you skip
+  the warning message if you enqueue more items than the warning threshold
+  usually allows.
 
 Fixes:
 
+* In the :ref:`replace` configuration option, we now replace a leading hyphen
+  (-) with an underscore. :bug:`549` :bug:`2509`
 * :doc:`/plugins/absubmit`: Do not filter for supported formats. :bug:`2471`
 * :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
 * :doc:`/plugins/replaygain`: Fix Python 3 compatibility in the ``bs1770gain``
@@ -86,6 +91,10 @@ Fixes:
   AAC codec instead of faac. Thanks to :user:`jansol`. :bug:`2484`
 * Fix import of multidisc releases with subdirectories, which previously
   made each disc be imported separately in different releases. :bug:`2493`
+* Invalid date queries now print an error message instead of being silently
+  ignored. Thanks to :user:`discopatrick`. :bug:`2513` :bug:`2517`
+* When the SQLite database stops being accessible, we now print a friendly
+  error message. Thanks to :user:`Mary011196`. :bug:`1676` :bug:`2508`
 
 
 1.4.3 (January 9, 2017)
@@ -770,6 +779,8 @@ Fixes:
   does not exist, beets creates an empty file before editing it. This fixes an
   error on OS X, where the ``open`` command does not work with non-existent
   files. :bug:`1480`
+* :doc:`/plugins/convert`: Fix a problem with filename encoding on Windows
+  under Python 3. :bug:`2515` :bug:`2516`
 
 .. _Python bug: http://bugs.python.org/issue16512
 .. _ipfs: http://ipfs.io
