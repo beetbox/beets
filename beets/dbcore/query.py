@@ -533,8 +533,8 @@ class Period(object):
     instants of time during January 2014.
     """
 
-    precisions = ('day', 'month', 'year')
-    date_formats = ('%Y-%m-%d', '%Y-%m', '%Y')
+    precisions = ('year', 'month', 'day')
+    date_formats = ('%Y', '%Y-%m', '%Y-%m-%d')
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
