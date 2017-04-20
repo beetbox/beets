@@ -553,7 +553,7 @@ class Period(object):
         """
         if not string:
             return None
-        count = 0
+        ordinal = 0
         date = None
         for date_format in cls.date_formats:
             try:
@@ -561,11 +561,11 @@ class Period(object):
                 break
             except ValueError:
                 # Parsing failed.
-                count += 1
+                ordinal += 1
         if date is None:
             raise InvalidQueryArgumentTypeError(string,
                                                 'a valid datetime string')
-        precision = cls.precisions[count]
+        precision = cls.precisions[ordinal]
         return cls(date, precision)
 
     def open_right_endpoint(self):
