@@ -553,15 +553,14 @@ class Period(object):
         """
         if not string:
             return None
-        ordinal = 0
         date = None
-        for date_format in cls.date_formats:
+        for ordinal, date_format in enumerate(cls.date_formats):
             try:
                 date = datetime.strptime(string, date_format)
                 break
             except ValueError:
                 # Parsing failed.
-                ordinal += 1
+                pass
         if date is None:
             raise InvalidQueryArgumentTypeError(string,
                                                 'a valid datetime string')
