@@ -801,6 +801,7 @@ def command_output(cmd, shell=False):
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        stdin=subprocess.DEVNULL,
         close_fds=platform.system() != 'Windows',
         shell=shell
     )
