@@ -553,18 +553,17 @@ class Period(object):
         """
         if not string:
             return None
-        ordinal = string.count('-')
-        if ordinal >= len(cls.date_formats):
-            # Too many components.
-            raise InvalidQueryArgumentValueError(string,
-                                                 'a valid datetime string')
-        date_format = cls.date_formats[ordinal]
-        try:
-            date = datetime.strptime(string, date_format)
-        except ValueError:
-            # Parsing failed.
-            raise InvalidQueryArgumentValueError(string,
-                                                 'a valid datetime string')
+        date = None
+        for ordinal, date_format in enumerate(cls.date_formats):
+            try:
+                date = datetime.strptime(string, date_format)
+                break
+            except ValueError:
+                # Parsing failed.
+                pass
+        if date is None:
+            raise InvalidQueryArgumentTypeError(string,
+                                                'a valid datetime string')
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
