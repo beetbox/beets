@@ -563,7 +563,7 @@ class Period(object):
                 pass
         if date is None:
             raise InvalidQueryArgumentValueError(string,
-                                                'a valid datetime string')
+                                                 'a valid datetime string')
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
