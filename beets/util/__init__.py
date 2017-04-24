@@ -797,10 +797,16 @@ def command_output(cmd, shell=False):
     """
     cmd = convert_command_args(cmd)
 
+    try:  # python >= 3.3
+        devnull = subprocess.DEVNULL
+    except AttributeError:
+        devnull = open(os.devnull, 'r+b')
+
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        stdin=devnull,
         close_fds=platform.system() != 'Windows',
         shell=shell
     )
