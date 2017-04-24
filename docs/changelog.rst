@@ -52,6 +52,11 @@ New features:
 * :doc:`/plugins/play`: A new ``-y`` or ``--yes`` parameter lets you skip
   the warning message if you enqueue more items than the warning threshold
   usually allows.
+* Fix a bug where commands which forked subprocesses would sometimes prevent
+  further inputs. This bug mainly affected :doc:`/plugins/convert`.
+  Thanks to :user:`jansol`.
+  :bug:`2488`
+  :bug:`2524`
 
 Fixes:
 
