@@ -18,6 +18,7 @@
 
 from __future__ import division, absolute_import, print_function
 
+import errno
 import hashlib
 import json
 import os
@@ -142,8 +143,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             try:
                 os.remove(filename)
             except OSError as e:
-                # errno 2 means file does not exist, just ignore this error.
-                if e.errno != 2:
+                # ENOENT means file does not exist, just ignore this error.
+                if e.errno != errno.ENOENT:
                     raise
 
     def _submit_data(self, item, data):
