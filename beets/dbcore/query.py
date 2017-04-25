@@ -533,8 +533,8 @@ class Period(object):
     instants of time during January 2014.
     """
 
-    precisions = ('year', 'month', 'day')
-    date_formats = ('%Y', '%Y-%m', '%Y-%m-%d')
+    precisions = ('year', 'month', 'day', 'hour')
+    date_formats = ('%Y', '%Y-%m', '%Y-%m-%d', '%Y-%m-%dT%H')
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -582,6 +582,8 @@ class Period(object):
                 return date.replace(year=date.year + 1, month=1)
         elif 'day' == precision:
             return date + timedelta(days=1)
+        elif 'hour' == precision:
+            return date + timedelta(hours=1)
         else:
             raise ValueError(u'unhandled precision {0}'.format(precision))
 
