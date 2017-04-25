@@ -82,9 +82,9 @@ class DateIntervalTest(unittest.TestCase):
         self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
                             '2000-01-01T12:30:30')
         self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
-                            '2000-01-01T12:30:59')
+                            '2000-01-01T12:31:59')
         self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
-                            '2000-01-01T12:31:00')
+                            '2000-01-01T12:32:00')
 
     def test_unbounded_endpoints(self):
         self.assertContains('..', date=datetime.max)
