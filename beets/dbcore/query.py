@@ -544,8 +544,8 @@ class Period(object):
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
-        precision (a string, one of "year", "month", "day", "hour", "minute", or
-        "second").
+        precision (a string, one of "year", "month", "day", "hour", "minute",
+        or "second").
         """
         if precision not in Period.precisions:
             raise ValueError(u'Invalid precision {0}'.format(precision))
