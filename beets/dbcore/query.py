@@ -539,7 +539,7 @@ class Period(object):
         ('%Y-%m',),  # month
         ('%Y-%m-%d',),  # day
         ('%Y-%m-%dT%H', '%Y-%m-%d %H'),  # hour
-        ('%Y-%m-%dT%H:%M',)  # minute
+        ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M')  # minute
     )
 
     def __init__(self, date, precision):
