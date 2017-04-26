@@ -534,7 +534,7 @@ class Period(object):
     """
 
     precisions = ('year', 'month', 'day', 'hour', 'minute')
-    date_formats = ('%Y', '%Y-%m', '%Y-%m-%d', '%Y-%m-%dT%H', '%Y-%m-%dT%H:%M')
+    date_formats = (('%Y',), ('%Y-%m',), ('%Y-%m-%d',), ('%Y-%m-%dT%H', 'dummy-format'), ('%Y-%m-%dT%H:%M',))
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -555,13 +555,19 @@ class Period(object):
         if not string:
             return None
         date = None
+        found = False
         for ordinal, date_format in enumerate(cls.date_formats):
-            try:
-                date = datetime.strptime(string, date_format)
+            if found is True:
+                ordinal -= 1
                 break
-            except ValueError:
-                # Parsing failed.
-                pass
+            for format_option in date_format:
+                try:
+                    date = datetime.strptime(string, format_option)
+                    found = True
+                    break
+                except ValueError:
+                    # Parsing failed.
+                    pass
         if date is None:
             raise InvalidQueryArgumentTypeError(string,
                                                 'a valid datetime string')
