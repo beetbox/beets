@@ -533,13 +533,14 @@ class Period(object):
     instants of time during January 2014.
     """
 
-    precisions = ('year', 'month', 'day', 'hour', 'minute')
+    precisions = ('year', 'month', 'day', 'hour', 'minute', 'second')
     date_formats = (
         ('%Y',),  # year
         ('%Y-%m',),  # month
         ('%Y-%m-%d',),  # day
         ('%Y-%m-%dT%H', '%Y-%m-%d %H'),  # hour
-        ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M')  # minute
+        ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'),  # minute
+        ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
     )
 
     def __init__(self, date, precision):
@@ -599,6 +600,8 @@ class Period(object):
             return date + timedelta(hours=1)
         elif 'minute' == precision:
             return date + timedelta(minutes=1)
+        elif 'second' == precision:
+            return date + timedelta(seconds=1)
         else:
             raise ValueError(u'unhandled precision {0}'.format(precision))
 
