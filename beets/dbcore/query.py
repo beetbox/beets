@@ -534,7 +534,13 @@ class Period(object):
     """
 
     precisions = ('year', 'month', 'day', 'hour', 'minute')
-    date_formats = (('%Y',), ('%Y-%m',), ('%Y-%m-%d',), ('%Y-%m-%dT%H', '%Y-%m-%d %H'), ('%Y-%m-%dT%H:%M',))
+    date_formats = (
+        ('%Y',),  # year
+        ('%Y-%m',),  # month
+        ('%Y-%m-%d',),  # day
+        ('%Y-%m-%dT%H', '%Y-%m-%d %H'),  # hour
+        ('%Y-%m-%dT%H:%M',)  # minute
+    )
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
