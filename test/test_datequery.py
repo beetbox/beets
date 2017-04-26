@@ -99,6 +99,22 @@ class DateIntervalTest(unittest.TestCase):
         self.assertContains('2000-01-01 12:30..2000-01-01 12:31',
                             '2000-01-01T12:30:00')
 
+    def test_second_precision_intervals(self):
+        self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:49')
+        self.assertContains('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:50')
+        self.assertContains('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:55')
+        self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:56')
+
+        # test with ' ' (space) separator
+        self.assertExcludes('2000-01-01 12:30:50..2000-01-01 12:30:55',
+                            '2000-01-01T12:30:49')
+        self.assertContains('2000-01-01 12:30:50..2000-01-01 12:30:55',
+                            '2000-01-01T12:30:50')
+
     def test_unbounded_endpoints(self):
         self.assertContains('..', date=datetime.max)
         self.assertContains('..', date=datetime.min)
