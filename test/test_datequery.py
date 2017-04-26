@@ -59,6 +59,7 @@ class DateIntervalTest(unittest.TestCase):
         self.assertExcludes('1999-12..2000-02', '2000-03-01T00:00:00')
 
     def test_hour_precision_intervals(self):
+        # test with 'T' separator
         self.assertExcludes('2000-01-01T12..2000-01-01T13',
                             '2000-01-01T11:59:59')
         self.assertContains('2000-01-01T12..2000-01-01T13',
@@ -73,6 +74,12 @@ class DateIntervalTest(unittest.TestCase):
                             '2000-01-01T14:00:00')
         self.assertExcludes('2000-01-01T12..2000-01-01T13',
                             '2000-01-01T14:30:00')
+
+        # test with ' ' (space) separator
+        self.assertExcludes('2000-01-01 12..2000-01-01 13',
+                            '2000-01-01T11:59:59')
+        self.assertContains('2000-01-01 12..2000-01-01 13',
+                            '2000-01-01T12:00:00')
 
     def test_minute_precision_intervals(self):
         self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
