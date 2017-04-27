@@ -212,6 +212,10 @@ class DateQueryConstructTest(unittest.TestCase):
         self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
         self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
 
+    def test_datetime_invalid_separator(self):
+        with self.assertRaises(InvalidQueryArgumentTypeError):
+            DateQuery('added', '2000-01-01x12')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
