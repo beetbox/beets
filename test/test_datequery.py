@@ -179,12 +179,12 @@ class DateQueryConstructTest(unittest.TestCase):
             with self.assertRaises(InvalidQueryArgumentTypeError):
                 DateQuery('added', q)
 
-    def test_datetime_T_separator(self):
+    def test_datetime_uppercase_t_separator(self):
         date_query = DateQuery('added', '2000-01-01T12')
         self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
         self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
 
-    def test_datetime_t_separator(self):
+    def test_datetime_lowercase_t_separator(self):
         date_query = DateQuery('added', '2000-01-01t12')
         self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
         self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
