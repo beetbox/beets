@@ -75,12 +75,6 @@ class DateIntervalTest(unittest.TestCase):
         self.assertExcludes('2000-01-01T12..2000-01-01T13',
                             '2000-01-01T14:30:00')
 
-        # test with ' ' (space) separator
-        self.assertExcludes('2000-01-01 12..2000-01-01 13',
-                            '2000-01-01T11:59:59')
-        self.assertContains('2000-01-01 12..2000-01-01 13',
-                            '2000-01-01T12:00:00')
-
     def test_minute_precision_intervals(self):
         self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
                             '2000-01-01T12:29:59')
@@ -93,12 +87,6 @@ class DateIntervalTest(unittest.TestCase):
         self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
                             '2000-01-01T12:32:00')
 
-        # test with ' ' (space) separator
-        self.assertExcludes('2000-01-01 12:30..2000-01-01 12:31',
-                            '2000-01-01T12:29:59')
-        self.assertContains('2000-01-01 12:30..2000-01-01 12:31',
-                            '2000-01-01T12:30:00')
-
     def test_second_precision_intervals(self):
         self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
                             '2000-01-01T12:30:49')
@@ -108,12 +96,6 @@ class DateIntervalTest(unittest.TestCase):
                             '2000-01-01T12:30:55')
         self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
                             '2000-01-01T12:30:56')
-
-        # test with ' ' (space) separator
-        self.assertExcludes('2000-01-01 12:30:50..2000-01-01 12:30:55',
-                            '2000-01-01T12:30:49')
-        self.assertContains('2000-01-01 12:30:50..2000-01-01 12:30:55',
-                            '2000-01-01T12:30:50')
 
     def test_unbounded_endpoints(self):
         self.assertContains('..', date=datetime.max)
