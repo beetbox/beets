@@ -1644,7 +1644,7 @@ class MediaFile(object):
         MP3StorageStyle('TSOC'),
         MP4StorageStyle('soco'),
         StorageStyle('COMPOSERSORT'),
-        ASFStorageStyle('WM/Composersort'),
+        ASFStorageStyle('WM/Composersortorder'),
     )
     
     arranger = MediaField(
