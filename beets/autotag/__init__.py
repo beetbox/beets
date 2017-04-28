@@ -53,8 +53,6 @@ def apply_item_metadata(item, track_info):
         item.composer_sort = track_info.composer_sort
     if track_info.arranger is not None:
         item.arranger = track_info.arranger
-    
-    
 
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
