@@ -156,7 +156,7 @@ class TrackInfo(object):
                  length=None, index=None, medium=None, medium_index=None,
                  medium_total=None, artist_sort=None, disctitle=None,
                  artist_credit=None, data_source=None, data_url=None,
-                 media=None, lyricist=None, composer=None, composer_sort=None, 
+                 media=None, lyricist=None, composer=None, composer_sort=None,
                  arranger=None, track_alt=None):
         self.title = title
         self.track_id = track_id
