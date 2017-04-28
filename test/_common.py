@@ -68,7 +68,6 @@ def item(lib=None):
         genre=u'the genre',
         lyricist=u'the lyricist',
         composer=u'the composer',
-        composer_sort=u'the sortname of the composer',
         arranger=u'the arranger',
         grouping=u'the grouping',
         year=1,
