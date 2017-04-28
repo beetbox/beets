@@ -141,6 +141,12 @@ class ImageStructureTestMixin(ArtTestMixin):
                       type=ImageType.composer)
         mediafile.images += [image]
         mediafile.save()
+        
+        image = Image(data=self.png_data, desc=u'the sortname of the composer',
+                      type=ImageType.composer_sort)
+        mediafile.images += [image]
+        mediafile.save()
+        
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 3)
@@ -149,6 +155,12 @@ class ImageStructureTestMixin(ArtTestMixin):
         image = next(images, None)
         self.assertExtendedImageAttributes(
             image, desc=u'the composer', type=ImageType.composer
+        )
+        
+        images = (i for i in mediafile.images if i.desc == u'the sortname of the composer')
+        image = next(images, None)
+        self.assertExtendedImageAttributes(
+            image, desc=u'the sortname of the composer', type=ImageType.composer_sort
         )
 
     def test_delete_image_structures(self):
@@ -193,6 +205,11 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
                       type=ImageType.composer)
         mediafile.images += [image]
         mediafile.save()
+        
+        image = Image(data=self.tiff_data, desc=u'the sortname of the composer',
+                      type=ImageType.composer_sort)
+        mediafile.images += [image]
+        mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 3)
@@ -202,6 +219,11 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
                      mediafile.images))[0]
         self.assertExtendedImageAttributes(
             image, desc=u'the composer', type=ImageType.composer)
+            
+        image = list(filter(lambda i: i.mime_type == 'image/tiff',
+                     mediafile.images))[0]
+        self.assertExtendedImageAttributes(
+            image, desc=u'the sortname of the composer', type=ImageType.composer_sort)
 
 
 class LazySaveTestMixin(object):
