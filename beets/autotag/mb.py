@@ -227,7 +227,6 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         info.composer_sort = u', '.join(composer_sort)
 
     arranger = []
-    arranger_sort = []
     for artist_relation in recording.get('artist-relation-list', ()):
         if 'type' in artist_relation:
             type = artist_relation['type']
