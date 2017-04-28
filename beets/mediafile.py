@@ -1653,13 +1653,6 @@ class MediaFile(object):
         StorageStyle('ARRANGER'),
         ASFStorageStyle('beets/Arranger'),
     )
-    
-    arranger = MediaField(
-        MP3PeopleStorageStyle('TIPL', involvement='arranger'),
-        MP4StorageStyle('----:com.apple.iTunes:Arranger'),
-        StorageStyle('ARRANGER'),
-        ASFStorageStyle('beets/Arranger'),
-    )
 
     grouping = MediaField(
         MP3StorageStyle('TIT1'),
