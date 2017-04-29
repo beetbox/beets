@@ -84,7 +84,7 @@ def _do_query(lib, query, album, also_items=True):
 
 def _print_keys(query):
     """Given a SQLite query result, print the `key` field of each
-    returned row, with identation of 2 spaces.
+    returned row, with indentation of 2 spaces.
     """
     for row in query:
         print_(u' ' * 2 + row['key'])
