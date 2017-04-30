@@ -476,6 +476,83 @@ class MoveTest(_common.TestCase):
         self.i.load()
         self.assertIn(b'srcfile', self.i.path)
 
+class ExportTest(_common.TestCase):
+    def setUp(self):
+        super(MoveTest, self).setUp()
+
+        self.io.install()
+
+        self.libdir = os.path.join(self.temp_dir, b'testlibdir')
+        os.mkdir(self.libdir)
+
+        self.itempath = os.path.join(self.libdir, b'srcfile')
+        shutil.copy(os.path.join(_common.RSRC, b'full.mp3'), self.itempath)
+
+        # Add a file to the library but don't copy it in yet.
+        self.lib = library.Library(':memory:', self.libdir)
+        self.i = library.Item.from_path(self.itempath)
+        self.lib.add(self.i)
+        self.album = self.lib.add_album([self.i])
+
+        # Alternate destination directory.
+        self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
+
+    def _move(self, query=(), dest=None, copy=False, album=False,
+              pretend=False, export=True):
+        commands.move_items(self.lib, dest, query, copy, album, pretend, export)
+
+    def test_move_item(self):
+        self._move()
+        self.i.load()
+        self.assertTrue(b'testlibdir' in self.i.path)
+        self.assertExists(self.i.path)
+        self.assertNotExists(self.itempath)
+
+    def test_copy_item(self):
+        self._move(copy=True)
+        self.i.load()
+        self.assertTrue(b'testlibdir' in self.i.path)
+        self.assertExists(self.i.path)
+        self.assertExists(self.itempath)
+
+    def test_move_album(self):
+        self._move(album=True)
+        self.i.load()
+        self.assertTrue(b'testlibdir' in self.i.path)
+        self.assertExists(self.i.path)
+        self.assertNotExists(self.itempath)
+
+    def test_copy_album(self):
+        self._move(copy=True, album=True)
+        self.i.load()
+        self.assertTrue(b'testlibdir' in self.i.path)
+        self.assertExists(self.i.path)
+        self.assertExists(self.itempath)
+
+    def test_move_item_custom_dir(self):
+        self._move(dest=self.otherdir)
+        self.i.load()
+        self.assertTrue(b'testotherdir' in self.i.path)
+        self.assertExists(self.i.path)
+        self.assertNotExists(self.itempath)
+
+    def test_move_album_custom_dir(self):
+        self._move(dest=self.otherdir, album=True)
+        self.i.load()
+        self.assertTrue(b'testotherdir' in self.i.path)
+        self.assertExists(self.i.path)
+        self.assertNotExists(self.itempath)
+
+    def test_pretend_move_item(self):
+        self._move(dest=self.otherdir, pretend=True)
+        self.i.load()
+        self.assertIn(b'srcfile', self.i.path)
+
+    def test_pretend_move_album(self):
+        self._move(album=True, pretend=True)
+        self.i.load()
+        self.assertIn(b'srcfile', self.i.path)
+
 
 class UpdateTest(_common.TestCase):
     def setUp(self):
