@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function
 import difflib
 import itertools
 import json
+import struct
 import re
 import requests
 import unicodedata
@@ -77,6 +78,11 @@ USER_AGENT = 'beets/{}'.format(beets.__version__)
 
 # Utilities.
 
+def unichar(i):
+    try:
+        return six.unichr(i)
+    except ValueError:
+        return struct.pack('i', i).decode('utf-32')
 
 def unescape(text):
     """Resolve &#xxx; HTML entities (and some others)."""
@@ -86,7 +92,7 @@ def unescape(text):
 
     def replchar(m):
         num = m.group(1)
-        return six.unichr(int(num))
+        return unichar(int(num))
     out = re.sub(u"&#(\d+);", replchar, out)
     return out
 
