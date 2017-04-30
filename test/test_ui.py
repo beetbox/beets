@@ -478,7 +478,7 @@ class MoveTest(_common.TestCase):
 
 class ExportTest(_common.TestCase):
     def setUp(self):
-        super(MoveTest, self).setUp()
+        super(ExportTest, self).setUp()
 
         self.io.install()
 
