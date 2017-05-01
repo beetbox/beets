@@ -221,10 +221,12 @@ class MockFetchUrl(object):
 
 
 def is_lyrics_content_ok(title, text):
-    """Compare lyrics text to expected lyrics for given title"""
-
-    keywords = LYRICS_TEXTS[google.slugify(title)]
-    return all(x in text.lower() for x in keywords)
+    """Compare lyrics text to expected lyrics for given title."""
+    if not text:
+        return
+    keywords = set(LYRICS_TEXTS[google.slugify(title)].split())
+    words = set(x.strip(".?, ") for x in text.lower().split())
+    return keywords <= words
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b'lyrics')
 LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, b'lyricstext.yaml'))
