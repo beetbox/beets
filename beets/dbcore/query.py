@@ -47,7 +47,7 @@ class InvalidQueryError(ParsingError):
         super(InvalidQueryError, self).__init__(message)
 
 
-class InvalidQueryArgumentTypeError(ParsingError):
+class InvalidQueryArgumentValueError(ParsingError):
     """Represent a query argument that could not be converted as expected.
 
     It exists to be caught in upper stack levels so a meaningful (i.e. with the
@@ -57,7 +57,7 @@ class InvalidQueryArgumentTypeError(ParsingError):
         message = u"'{0}' is not {1}".format(what, expected)
         if detail:
             message = u"{0}: {1}".format(message, detail)
-        super(InvalidQueryArgumentTypeError, self).__init__(message)
+        super(InvalidQueryArgumentValueError, self).__init__(message)
 
 
 class Query(object):
@@ -211,9 +211,9 @@ class RegexpQuery(StringFieldQuery):
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
             # Invalid regular expression.
-            raise InvalidQueryArgumentTypeError(pattern,
-                                                u"a regular expression",
-                                                format(exc))
+            raise InvalidQueryArgumentValueError(pattern,
+                                                 u"a regular expression",
+                                                 format(exc))
 
     @staticmethod
     def _normalize(s):
@@ -285,7 +285,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryArgumentTypeError(s, u"an int or a float")
+                raise InvalidQueryArgumentValueError(s, u"an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
@@ -548,7 +548,7 @@ class Period(object):
     @classmethod
     def parse(cls, string):
         """Parse a date and return a `Period` object, or `None` if the
-        string is empty, or raise an InvalidQueryArgumentTypeError if
+        string is empty, or raise an InvalidQueryArgumentValueError if
         the string could not be parsed to a date.
         """
         if not string:
@@ -562,8 +562,8 @@ class Period(object):
                 # Parsing failed.
                 pass
         if date is None:
-            raise InvalidQueryArgumentTypeError(string,
-                                                'a valid datetime string')
+            raise InvalidQueryArgumentValueError(string,
+                                                 'a valid datetime string')
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
@@ -685,7 +685,7 @@ class DurationQuery(NumericQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryArgumentTypeError(
+                raise InvalidQueryArgumentValueError(
                     s,
                     u"a M:SS string or a float")
 
