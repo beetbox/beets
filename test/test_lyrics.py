@@ -42,7 +42,7 @@ google = lyrics.Google(MagicMock(), log)
 
 class LyricsPluginTest(unittest.TestCase):
     def setUp(self):
-        """Set up configuration"""
+        """Set up configuration."""
         lyrics.LyricsPlugin()
 
     def test_search_artist(self):
@@ -317,7 +317,7 @@ class LyricsGooglePluginTest(unittest.TestCase):
                   title=u'Beets song', path=u'/lyrics/beetssong')
 
     def setUp(self):
-        """Set up configuration"""
+        """Set up configuration."""
         try:
             __import__('bs4')
         except ImportError:
