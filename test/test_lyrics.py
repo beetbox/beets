@@ -15,21 +15,25 @@
 
 """Tests for the 'lyrics' plugin."""
 
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
 import os
-import sys
 import re
+import six
+import sys
 import unittest
 
+from mock import patch
 from test import _common
-from mock import MagicMock
+
+from beets import logging
+from beets.library import Item
+from beets.util import bytestring_path, confit
 
 from beetsplug import lyrics
-from beets.library import Item
-from beets.util import confit, bytestring_path
-from beets import logging
-import six
+
+from mock import MagicMock
+
 
 log = logging.getLogger('beets.test_lyrics')
 raw_backend = lyrics.Backend({}, log)
