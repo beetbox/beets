@@ -559,22 +559,21 @@ class Period(object):
         string is empty, or raise an InvalidQueryArgumentTypeError if
         the string could not be parsed to a date.
         """
+
+        def find_date_and_format(string):
+            for ord, format in enumerate(cls.date_formats):
+                for format_option in format:
+                    try:
+                        date = datetime.strptime(string, format_option)
+                        return date, ord
+                    except ValueError:
+                        # Parsing failed.
+                        pass
+            return (None, None)
+
         if not string:
             return None
-        date = None
-        found = False
-        for ordinal, date_format in enumerate(cls.date_formats):
-            if found is True:
-                ordinal -= 1
-                break
-            for format_option in date_format:
-                try:
-                    date = datetime.strptime(string, format_option)
-                    found = True
-                    break
-                except ValueError:
-                    # Parsing failed.
-                    pass
+        date, ordinal = find_date_and_format(string)
         if date is None:
             raise InvalidQueryArgumentTypeError(string,
                                                 'a valid datetime string')
