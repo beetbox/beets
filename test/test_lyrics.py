@@ -295,6 +295,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         LyricsGoogleBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
+    @unittest.skipUnless(os.environ.get('BEETS_TEST_LYRICS_SOURCES', '0') == '1',
+        'lyrics sources testing not enabled')
     def test_backend_sources_ok(self):
         """Test default backends with songs known to exist in respective databases.
         """
@@ -305,6 +307,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
                 errors.append(s['backend'].__name__)
         self.assertFalse(errors)
 
+    @unittest.skipUnless(os.environ.get('BEETS_TEST_LYRICS_SOURCES', '0') == '1',
+        'lyrics sources testing not enabled')
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
         search engine are correctly scraped."""
