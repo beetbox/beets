@@ -206,10 +206,25 @@ var ItemMainDetailView = Backbone.View.extend({
     },
     render: function() {
         $(this.el).html(this.template(this.model.toJSON()));
+        this.displayYouTubeVideo();
         return this;
     },
     play: function() {
         app.playItem(this.model);
+    },
+    displayYouTubeVideo: function(){
+        if (!this.model.get("artist") || !this.model.get("title"))return false;
+        var keyword = this.model.get("artist") + ' ' + this.model.get("title");
+        var yturl='http://gdata.youtube.com/feeds/api/videos?q='+
+                  encodeURIComponent(keyword)+
+                  '&format=5&category=Music&max-results=1&v=2&alt=jsonc&callback=?';
+        $.getJSON(yturl,function(response){
+           if(response.data.items){
+               var youtubeTemplate= _.template($('#item-youtube-template').html());
+               var youtubeId = response.data.items[0].id;
+               $('dl').append(youtubeTemplate({youtubeId:youtubeId}));
+           }
+        });
     }
 });
 // Holds Track no., Format, MusicBrainz link, Lyrics, Comments etc.

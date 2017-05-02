@@ -42,7 +42,6 @@
 
         <div id="extra-detail">
         </div>
-
         <!-- Templates. -->
         <script type="text/template" id="item-entry-template">
             <%= title %>
@@ -93,6 +92,12 @@
                     <dd><%= comments %></dd>
                 <% } %>
             </dl>
+        </script>
+        <script type="text/template" id="item-youtube-template">
+            <dt>Youtube</dt>
+            <dd>
+                <iframe class="youtube-player" type="text/html" width="640" height="385" src="http://www.youtube.com/embed/<%= youtubeId %>" frameborder="0"></iframe>
+            </dd>
         </script>
     </body>
 </html>
