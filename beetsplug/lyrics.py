@@ -52,7 +52,6 @@ except ImportError:
 
 from beets import plugins
 from beets import ui
-import beets
 
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
@@ -260,6 +259,7 @@ class MusiXmatch(SymbolsReplaced):
 
     def fetch(self, artist, title):
         url = self.build_url(artist, title)
+
         html = self.fetch_url(url)
         if not html:
             return
