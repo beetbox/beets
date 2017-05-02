@@ -1,0 +1,7 @@
+PyYAML>=3.11
+Unidecode>=0.04.14
+argparse>=1.2.1
+munkres>=1.0.6
+musicbrainzngs>=0.5
+mutagen>=1.22
+wsgiref>=0.1.2
