@@ -362,7 +362,7 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         soup = BeautifulSoup(html, "html.parser",
                              parse_only=SoupStrainer('title'))
         self.assertEqual(google.is_page_candidate(url, soup.title.string,
-                                                  s['title'], s['artist']), True, url)
+            s['title'], s['artist']), True, url)
 
     def test_is_page_candidate_fuzzy_match(self):
         """Test matching html page title with song infos -- when song infos are
