@@ -235,14 +235,16 @@ class LyricsGoogleBaseTest(unittest.TestCase):
 
 
 class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
-    """Check that beets google custom search engine sources are correctly scraped.
+    """Check that beets google custom search engine sources are correctly
+       scraped.
     """
 
     DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
 
     DEFAULT_SOURCES = [
         dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
-        # dict(artist=u'Santana', title=u'Black magic woman', backend=lyrics.MusiXmatch),
+        # dict(artist=u'Santana', title=u'Black magic woman',
+        # backend=lyrics.MusiXmatch),
         # dict(DEFAULT_SONG, backend=lyrics.Genius),
     ]
 
@@ -295,19 +297,22 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         LyricsGoogleBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
-    @unittest.skipUnless(os.environ.get('BEETS_TEST_LYRICS_SOURCES', '0') == '1',
+    @unittest.skipUnless(os.environ.get(
+        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
         'lyrics sources testing not enabled')
     def test_backend_sources_ok(self):
         """Test default backends with songs known to exist in respective databases.
         """
         errors = []
         for s in self.DEFAULT_SOURCES:
-            res = s['backend'](self.plugin.config, self.plugin._log).fetch(s['artist'], s['title'])
+            res = s['backend'](self.plugin.config, self.plugin._log).fetch(
+                s['artist'], s['title'])
             if not is_lyrics_content_ok(s['title'], res):
                 errors.append(s['backend'].__name__)
         self.assertFalse(errors)
 
-    @unittest.skipUnless(os.environ.get('BEETS_TEST_LYRICS_SOURCES', '0') == '1',
+    @unittest.skipUnless(os.environ.get(
+        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
         'lyrics sources testing not enabled')
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
@@ -353,8 +358,8 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         html = raw_backend.fetch_url(url)
         soup = BeautifulSoup(html, "html.parser",
                              parse_only=SoupStrainer('title'))
-        self.assertEqual(google.is_page_candidate(url, soup.title.string, s['title'], s['artist']),
-                         True, url)
+        self.assertEqual(google.is_page_candidate(url, soup.title.string,
+            s['title'], s['artist']), True, url)
 
     def test_is_page_candidate_fuzzy_match(self):
         """Test matching html page title with song infos -- when song infos are

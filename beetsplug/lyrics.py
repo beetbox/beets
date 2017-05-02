@@ -263,7 +263,8 @@ class MusiXmatch(SymbolsReplaced):
         html = self.fetch_url(url)
         if not html:
             return
-        lyrics = extract_text_between(html, '<p class="mxm-lyrics__content" data-reactid="135">',
+        lyrics = extract_text_between(html, 
+            '<p class="mxm-lyrics__content" data-reactid="135">',
             '</p>')
         return lyrics.strip(',"').replace('\\n', '\n')
 
