@@ -341,8 +341,22 @@ class ImportSession(object):
         if self.config['incremental'] \
            and tuple(paths) in self.history_dirs:
             return True
-
-        return False
+        for path in paths:
+            # In case path points to a directory: check if there is
+            # already an album at the library with the same path.
+            # If it's not a directory: check for already imported
+            # singletons.
+            if os.path.isdir(path):
+                items = self.lib.albums('path:"' + path + '"')
+            else:
+                items = self.lib.items('path:"' + path + '"')
+            if items is None or len(items) == 0:
+                # This path is not found at the library so it isn't
+                # already imported.
+                return False
+        # All paths are present at the library so everything was
+        # already imported before.
+        return True
 
     @property
     def history_dirs(self):
