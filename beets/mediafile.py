@@ -1281,6 +1281,9 @@ class DateField(MediaField):
     def __set__(self, mediafile, date):
         if date is None:
             self._set_date_tuple(mediafile, None, None, None)
+        elif isinstance(date, basestring):
+            year, month, day = date.split("-")
+            self._set_date_tuple(mediafile, year, month, day)
         else:
             self._set_date_tuple(mediafile, date.year, date.month, date.day)
 
