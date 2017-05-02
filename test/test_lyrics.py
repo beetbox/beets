@@ -311,7 +311,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         'lyrics sources testing not enabled')
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
-        search engine are correctly scraped."""
+           search engine are correctly scraped.
+        """
         for s in self.GOOGLE_SOURCES:
             url = s['url'] + s['path']
             res = lyrics.scrape_lyrics_from_html(
@@ -323,6 +324,7 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
 class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
     """Test scraping heuristics on a fake html page.
     """
+
     source = dict(url=u'http://www.example.com', artist=u'John Doe',
                   title=u'Beets song', path=u'/lyrics/beetssong')
 
@@ -330,7 +332,6 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         """Set up configuration"""
         LyricsGoogleBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
-        
 
     @patch.object(lyrics.Backend, 'fetch_url', MockFetchUrl())
     def test_mocked_source_ok(self):
@@ -344,7 +345,8 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
     @patch.object(lyrics.Backend, 'fetch_url', MockFetchUrl())
     def test_is_page_candidate_exact_match(self):
         """Test matching html page title with song infos -- when song infos are
-        present in the title."""
+           present in the title.
+        """
         from bs4 import SoupStrainer, BeautifulSoup
         s = self.source
         url = six.text_type(s['url'] + s['path'])
@@ -356,7 +358,8 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
 
     def test_is_page_candidate_fuzzy_match(self):
         """Test matching html page title with song infos -- when song infos are
-        not present in the title."""
+           not present in the title.
+        """
         s = self.source
         url = s['url'] + s['path']
         url_title = u'example.com | Beats song by John doe'
