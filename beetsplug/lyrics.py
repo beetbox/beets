@@ -52,7 +52,7 @@ except ImportError:
 
 from beets import plugins
 from beets import ui
-
+import beets
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
