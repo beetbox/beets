@@ -11,11 +11,11 @@
 Beets is the media library management system for obsessive-compulsive music
 geeks.
 
-The purpose of beets is to get your music collection right once and for all.
+The purpose of Beets is to get your music collection right once and for all.
 It catalogs your collection, automatically improving its metadata as it goes.
 It then provides a bouquet of tools for manipulating and accessing your music.
 
-Here's an example of beets' brainy tag corrector doing its thing::
+Here's an example of Beets' brainy tag corrector doing its thing::
 
   $ beet import ~/music/ladytron
   Tagging:
@@ -26,8 +26,8 @@ Here's an example of beets' brainy tag corrector doing its thing::
    * White Light Generation -> Whitelightgenerator
    * All the Way            -> All the Way...
 
-Because beets is designed as a library, it can do almost anything you can
-imagine for your music collection. Via `plugins`_, beets becomes a panacea:
+Because Beets is designed as a library, it can do almost anything you can
+imagine for your music collection. Via `plugins`_, Beets becomes a panacea:
 
 - Fetch or calculate all the metadata you could possibly need: `album art`_,
   `lyrics`_, `genres`_, `tempos`_, `ReplayGain`_ levels, or `acoustic
