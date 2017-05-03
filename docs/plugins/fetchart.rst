@@ -49,7 +49,7 @@ file. The available options are:
   (``enforce_ratio: 0.5%``). Default: ``no``.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``filesystem coverart itunes amazon albumart``, i.e., everything but
+  Default: ``filesystem coverart amazon albumart``, i.e., everything but
   ``wikipedia``, ``google`` and ``fanarttv``. Enable those sources for more
   matches at the cost of some speed. They are searched in the given order,
   thus in the default config, no remote (Web) art source are queried if
@@ -82,13 +82,13 @@ or `Pillow`_.
 .. _ImageMagick: http://www.imagemagick.org/
 
 Here's an example that makes plugin select only images that contain *front* or
-*back* keywords in their filenames and prioritizes the iTunes source over
+*back* keywords in their filenames and prioritizes the Amazon source over
 others::
 
     fetchart:
         cautious: true
         cover_names: front back
-        sources: itunes *
+        sources: amazon *
 
 
 Manually Fetching Album Art
@@ -128,7 +128,7 @@ Album Art Sources
 -----------------
 
 By default, this plugin searches for art in the local filesystem as well as on
-the Cover Art Archive, the iTunes Store, Amazon, and AlbumArt.org, in that
+the Cover Art Archive, Amazon, and AlbumArt.org, in that
 order.
 You can reorder the sources or remove
 some to speed up the process using the ``sources`` configuration option.
@@ -146,18 +146,9 @@ described above.  For "as-is" imports (and non-autotagged imports using the
 iTunes Store
 ''''''''''''
 
-To use the iTunes Store as an art source, install the `python-itunes`_
-library. You can do this using `pip`_, like so::
+There is currently `no plugin`_ to use the iTunes Store as an art source.
 
-    $ pip install https://github.com/ocelma/python-itunes/archive/master.zip
-
-(There's currently `a problem`_ that prevents a plain ``pip install
-python-itunes`` from working.)
-Once the library is installed, the plugin will use it to search automatically.
-
-.. _a problem: https://github.com/ocelma/python-itunes/issues/9
-.. _python-itunes: https://github.com/ocelma/python-itunes
-.. _pip: http://www.pip-installer.org/
+.. _no plugin: https://github.com/beetbox/beets/issues/2371
 
 Google custom search
 ''''''''''''''''''''
