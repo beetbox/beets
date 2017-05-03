@@ -246,9 +246,10 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
 
     DEFAULT_SOURCES = [
         dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
-        # dict(artist=u'Santana', title=u'Black magic woman',
-        #     backend=lyrics.MusiXmatch),
-        # dict(DEFAULT_SONG, backend=lyrics.Genius),
+        dict(DEFAULT_SONG, backend=lyrics.LyricsCom),
+        dict(artist=u'Santana', title=u'Black magic woman',
+             backend=lyrics.MusiXmatch),
+        dict(DEFAULT_SONG, backend=lyrics.Genius),
     ]
 
     GOOGLE_SOURCES = [
@@ -361,8 +362,9 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         html = raw_backend.fetch_url(url)
         soup = BeautifulSoup(html, "html.parser",
                              parse_only=SoupStrainer('title'))
-        self.assertEqual(google.is_page_candidate(url, soup.title.string,
-                s['title'], s['artist']), True, url)
+        self.assertEqual(
+            google.is_page_candidate(url, soup.title.string,
+                                     s['title'], s['artist']), True, url)
 
     def test_is_page_candidate_fuzzy_match(self):
         """Test matching html page title with song infos -- when song infos are
