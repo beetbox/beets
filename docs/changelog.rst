@@ -100,6 +100,11 @@ Fixes:
   ignored. Thanks to :user:`discopatrick`. :bug:`2513` :bug:`2517`
 * When the SQLite database stops being accessible, we now print a friendly
   error message. Thanks to :user:`Mary011196`. :bug:`1676` :bug:`2508`
+* :doc:`plugins/fetchart`'s iTunes Store artwork lookup no longer recommended
+  in documentation, as the unmaintained `python-itunes`_ is broken. Want
+  to adopt it? :bug:`2371` :bug:`1610`
+
+.. _python-itunes: https://github.com/ocelma/python-itunes
 
 
 1.4.3 (January 9, 2017)
