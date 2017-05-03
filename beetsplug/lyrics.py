@@ -381,39 +381,6 @@ class LyricsWiki(SymbolsReplaced):
                 return lyrics
 
 
-class LyricsCom(Backend):
-    """Fetch lyrics from Lyrics.com."""
-
-    URL_PATTERN = 'http://www.lyrics.com/%s-lyrics-%s.html'
-    NOT_FOUND = (
-        'Sorry, we do not have the lyric',
-        'Submit Lyrics',
-    )
-
-    @classmethod
-    def _encode(cls, s):
-        s = re.sub(r'[^\w\s-]', '', s)
-        s = re.sub(r'\s+', '-', s)
-        return super(LyricsCom, cls)._encode(s).lower()
-
-    def fetch(self, artist, title):
-        url = self.build_url(artist, title)
-        html = self.fetch_url(url)
-        if not html:
-            return
-        lyrics = extract_text_between(html, '<div id="lyrics" class="SCREENO'
-                                      'NLY" itemprop="description">', '</div>')
-        if not lyrics:
-            return
-        for not_found_str in self.NOT_FOUND:
-            if not_found_str in lyrics:
-                return
-
-        parts = lyrics.split('\n---\nLyrics powered by', 1)
-        if parts:
-            return parts[0]
-
-
 def remove_credits(text):
     """Remove first/last line of text if it contains the word 'lyrics'
     eg 'Lyrics by songsdatabase.com'
@@ -605,11 +572,10 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'lyrics.com', 'musixmatch']
+    SOURCES = ['google', 'lyricwiki', 'musixmatch']
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
-        'lyrics.com': LyricsCom,
         'musixmatch': MusiXmatch,
         'genius': Genius,
     }
