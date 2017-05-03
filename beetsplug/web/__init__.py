@@ -42,6 +42,10 @@ def _rep(obj, expand=False):
         else:
             del out['path']
 
+        # Filter all bytes attributes and convert them to strings
+        for key in filter(lambda key: isinstance(out[key], bytes), out):
+            out[key] = out[key].decode('utf-8')
+
         # Get the size (in bytes) of the backing file. This is useful
         # for the Tomahawk resolver API.
         try:
