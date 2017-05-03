@@ -143,13 +143,6 @@ When you choose to apply changes during an import, beets will search for art as
 described above.  For "as-is" imports (and non-autotagged imports using the
 ``-A`` flag), beets only looks for art on the local filesystem.
 
-iTunes Store
-''''''''''''
-
-There is currently `no plugin`_ to use the iTunes Store as an art source.
-
-.. _no plugin: https://github.com/beetbox/beets/issues/2371
-
 Google custom search
 ''''''''''''''''''''
 
