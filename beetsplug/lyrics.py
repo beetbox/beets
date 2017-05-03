@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function
 import difflib
 import itertools
 import json
+import struct
 import re
 import requests
 import unicodedata
@@ -53,7 +54,6 @@ from beets import plugins
 from beets import ui
 import beets
 
-
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
 TAG_RE = re.compile(r'<[^>]*>')
@@ -77,6 +77,12 @@ USER_AGENT = 'beets/{}'.format(beets.__version__)
 
 # Utilities.
 
+def unichar(i):
+    try:
+        return six.unichr(i)
+    except ValueError:
+        return struct.pack('i', i).decode('utf-32')
+
 
 def unescape(text):
     """Resolve &#xxx; HTML entities (and some others)."""
@@ -86,7 +92,7 @@ def unescape(text):
 
     def replchar(m):
         num = m.group(1)
-        return six.unichr(int(num))
+        return unichar(int(num))
     out = re.sub(u"&#(\d+);", replchar, out)
     return out
 
@@ -104,7 +110,6 @@ def extract_text_in(html, starttag):
     """Extract the text from a <DIV> tag in the HTML starting with
     ``starttag``. Returns None if parsing fails.
     """
-
     # Strip off the leading text before opening tag.
     try:
         _, html = html.split(starttag, 1)
@@ -145,10 +150,10 @@ def search_pairs(item):
     and featured artists from the strings and add them as candidates.
     The method also tries to split multiple titles separated with `/`.
     """
-
     def generate_alternatives(string, patterns):
         """Generate string alternatives by extracting first matching group for
-           each given pattern."""
+           each given pattern.
+        """
         alternatives = [string]
         for pattern in patterns:
             match = re.search(pattern, string, re.IGNORECASE)
@@ -254,16 +259,18 @@ class MusiXmatch(SymbolsReplaced):
 
     def fetch(self, artist, title):
         url = self.build_url(artist, title)
+
         html = self.fetch_url(url)
         if not html:
             return
-        lyrics = extract_text_between(html,
-                                      '"body":', '"language":')
+        html_part = html.split('<p class="mxm-lyrics__content')[-1]
+        lyrics = extract_text_between(html_part, '>', '</p>')
         return lyrics.strip(',"').replace('\\n', '\n')
 
 
 class Genius(Backend):
     """Fetch lyrics from Genius via genius-api."""
+
     def __init__(self, config, log):
         super(Genius, self).__init__(config, log)
         self.api_key = config['genius_api_key'].as_str()
@@ -355,6 +362,7 @@ class Genius(Backend):
 
 class LyricsWiki(SymbolsReplaced):
     """Fetch lyrics from LyricsWiki."""
+
     URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
 
     def fetch(self, artist, title):
@@ -375,6 +383,7 @@ class LyricsWiki(SymbolsReplaced):
 
 class LyricsCom(Backend):
     """Fetch lyrics from Lyrics.com."""
+
     URL_PATTERN = 'http://www.lyrics.com/%s-lyrics-%s.html'
     NOT_FOUND = (
         'Sorry, we do not have the lyric',
@@ -478,6 +487,7 @@ def scrape_lyrics_from_html(html):
 
 class Google(Backend):
     """Fetch lyrics from Google search results."""
+
     def __init__(self, config, log):
         super(Google, self).__init__(config, log)
         self.api_key = config['google_API_key'].as_str()
@@ -713,7 +723,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
     def fetch_item_lyrics(self, lib, item, write, force):
         """Fetch and store lyrics for a single item. If ``write``, then the
-        lyrics will also be written to the file itself."""
+           lyrics will also be written to the file itself.
+        """
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
             self._log.info(u'lyrics already present: {0}', item)
