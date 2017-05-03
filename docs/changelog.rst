@@ -103,6 +103,7 @@ Fixes:
 * :doc:`plugins/fetchart`'s iTunes Store artwork lookup no longer recommended
   in documentation, as the unmaintained `python-itunes`_ is broken. Want
   to adopt it? :bug:`2371` :bug:`1610`
+* :doc:`/plugins/lyrics`: drop Lyrics.com backend (don't work anymore)
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
