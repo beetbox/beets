@@ -105,6 +105,7 @@ Fixes:
   to adopt it? :bug:`2371` :bug:`1610`
 * :doc:`/plugins/web`: Avoid a crash when sending binary data, such as
   Chromaprint fingerprints, in music attributes. :bug:`2542` :bug:`2532`
+* :doc:`/plugins/lyrics`: drop Lyrics.com backend (don't work anymore)
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
