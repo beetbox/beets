@@ -1481,8 +1481,12 @@ def move_items(lib, dest, query, copy, album, pretend, export=False,
                                for obj in objs])
     else:
         if export:
-            for obj in objs:
-                util.copy(obj.path, obj.destination(basedir=dest))
+            if album:
+                util.copy([(item.path, item.destination(basedir=dest))
+                                   for obj in objs for item in obj.items()])
+            else:
+                util.copy([(obj.path, obj.destination(basedir=dest))
+                                   for obj in objs])
         if confirm:
             objs = ui.input_select_objects(
                 u'Really %s' % act, objs,
