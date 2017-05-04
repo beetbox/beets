@@ -100,15 +100,17 @@ Fixes:
   ignored. Thanks to :user:`discopatrick`. :bug:`2513` :bug:`2517`
 * When the SQLite database stops being accessible, we now print a friendly
   error message. Thanks to :user:`Mary011196`. :bug:`1676` :bug:`2508`
-* :doc:`/plugins/fetchart`'s iTunes Store artwork lookup no longer recommended
-  in documentation, as the unmaintained `python-itunes`_ is broken. Want
-  to adopt it? :bug:`2371` :bug:`1610`
 * :doc:`/plugins/web`: Avoid a crash when sending binary data, such as
   Chromaprint fingerprints, in music attributes. :bug:`2542` :bug:`2532`
-* :doc:`/plugins/lyrics`: drop Lyrics.com backend (don't work anymore)
+
+Two plugins had backends removed due to bitrot:
+
 * :doc:`/plugins/lyrics`: The Lyrics.com backend has been removed. (It stopped
   working because of changes to the site's URL structure.)
   :bug:`2548` :bug:`2549`
+* :doc:`/plugins/fetchart`: The documentation no longer recommends iTunes
+  Store artwork lookup because the unmaintained `python-itunes`_ is broken.
+  Want to adopt it? :bug:`2371` :bug:`1610`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
