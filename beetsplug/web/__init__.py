@@ -43,10 +43,10 @@ def _rep(obj, expand=False):
         else:
             del out['path']
 
-        # Filter all bytes attributes and convert them to strings
+        # Filter all bytes attributes and convert them to strings.
         for key, value in out.items():
             if isinstance(out[key], bytes):
-                out[key] = base64.b64encode(out[key]).decode('ascii')
+                out[key] = base64.b64encode(value).decode('ascii')
 
         # Get the size (in bytes) of the backing file. This is useful
         # for the Tomahawk resolver API.
