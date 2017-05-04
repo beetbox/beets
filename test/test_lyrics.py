@@ -246,7 +246,6 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
 
     DEFAULT_SOURCES = [
         dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
-        dict(DEFAULT_SONG, backend=lyrics.LyricsCom),
         dict(artist=u'Santana', title=u'Black magic woman',
              backend=lyrics.MusiXmatch),
         dict(DEFAULT_SONG, backend=lyrics.Genius),
