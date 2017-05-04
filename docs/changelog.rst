@@ -106,6 +106,9 @@ Fixes:
 * :doc:`/plugins/web`: Avoid a crash when sending binary data, such as
   Chromaprint fingerprints, in music attributes. :bug:`2542` :bug:`2532`
 * :doc:`/plugins/lyrics`: drop Lyrics.com backend (don't work anymore)
+* :doc:`/plugins/lyrics`: The Lyrics.com backend has been removed. (It stopped
+  working because of changes to the site's URL structure.)
+  :bug:`2548` :bug:`2549`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
