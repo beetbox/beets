@@ -25,6 +25,7 @@ from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
 import os
 import json
+import base64
 
 
 # Utilities.
@@ -41,6 +42,11 @@ def _rep(obj, expand=False):
             out['path'] = util.displayable_path(out['path'])
         else:
             del out['path']
+
+        # Filter all bytes attributes and convert them to strings
+        for key, value in out.items():
+            if isinstance(out[key], bytes):
+                out[key] = base64.b64encode(out[key]).decode('ascii')
 
         # Get the size (in bytes) of the backing file. This is useful
         # for the Tomahawk resolver API.
