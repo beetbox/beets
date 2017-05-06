@@ -506,7 +506,7 @@ class ExportTest(_common.TestCase):
         self.i.load()
         self.assertTrue(b'testlibdir' in self.i.path)
         self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
+        self.assertExists(self.itempath)
 
     def test_copy_item(self):
         self._move(copy=True)
@@ -520,7 +520,7 @@ class ExportTest(_common.TestCase):
         self.i.load()
         self.assertTrue(b'testlibdir' in self.i.path)
         self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
+        self.assertExists(self.itempath)
 
     def test_copy_album(self):
         self._move(copy=True, album=True)
@@ -534,14 +534,14 @@ class ExportTest(_common.TestCase):
         self.i.load()
         self.assertTrue(b'testotherdir' in self.i.path)
         self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
+        self.assertExists(self.itempath)
 
     def test_move_album_custom_dir(self):
         self._move(dest=self.otherdir, album=True)
         self.i.load()
         self.assertTrue(b'testotherdir' in self.i.path)
         self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
+        self.assertExists(self.itempath)
 
     def test_pretend_move_item(self):
         self._move(dest=self.otherdir, pretend=True)
