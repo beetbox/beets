@@ -147,6 +147,8 @@ class IPFSPlugin(BeetsPlugin):
     def ipfs_get(self, lib, query):
         query = query[0]
         # Check if query is a hash
+        # TODO: generalize to other hashes; probably use a multihash
+        # implementation
         if query.startswith("Qm") and len(query) == 46:
             self.ipfs_get_from_hash(lib, query)
         else:
