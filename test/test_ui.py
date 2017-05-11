@@ -543,6 +543,8 @@ class ExportTest(_common.TestCase):
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
+
+
     def test_pretend_move_item(self):
         self._move(dest=self.otherdir, pretend=True)
         self.i.load()
