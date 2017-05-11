@@ -1481,13 +1481,18 @@ def move_items(lib, dest, query, copy, album, pretend, export=False,
                                for obj in objs])
     else:
         if export:
+
             if album:
                 for obj in objs:
                     for item in obj.items():
+                        # Create necessary ancestry for the copy.
+                        util.mkdirall(item.destination(basedir=dest))
                         util.copy(item.path, item.destination(basedir=dest))
             else:
-                for item in objs:
-                    util.copy(item.path, item.destination(basedir=dest))
+                for obj in objs:
+                    # Create necessary ancestry for the copy.
+                    util.mkdirall(obj.destination(basedir=dest))
+                    util.copy(obj.path, obj.destination(basedir=dest))
         if confirm:
             objs = ui.input_select_objects(
                 u'Really %s' % act, objs,
