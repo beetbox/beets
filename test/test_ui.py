@@ -156,7 +156,6 @@ class RemoveTest(_common.TestCase):
 
 
 class ModifyTest(unittest.TestCase, TestHelper):
-
     def setUp(self):
         self.setup_beets()
         self.album = self.add_album_fixture()
@@ -347,7 +346,6 @@ class ModifyTest(unittest.TestCase, TestHelper):
 
 
 class WriteTest(unittest.TestCase, TestHelper):
-
     def setUp(self):
         self.setup_beets()
 
@@ -476,6 +474,7 @@ class MoveTest(_common.TestCase):
         self.i.load()
         self.assertIn(b'srcfile', self.i.path)
 
+
 class ExportTest(_common.TestCase):
     def setUp(self):
         super(ExportTest, self).setUp()
@@ -499,7 +498,8 @@ class ExportTest(_common.TestCase):
 
     def _move(self, query=(), dest=None, copy=False, album=False,
               pretend=False, export=True):
-        commands.move_items(self.lib, dest, query, copy, album, pretend, export)
+        commands.move_items(self.lib, dest, query, copy, album,
+                            pretend, export)
 
     def test_move_item(self):
         self._move()
@@ -542,8 +542,6 @@ class ExportTest(_common.TestCase):
         self.assertTrue(b'testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
-
-
 
     def test_pretend_move_item(self):
         self._move(dest=self.otherdir, pretend=True)
@@ -901,37 +899,37 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.run_command('--config', cli_config_path, 'test', lib=None)
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
-#    @unittest.skip('Difficult to implement with optparse')
-#    def test_multiple_cli_config_files(self):
-#        cli_config_path_1 = os.path.join(self.temp_dir, b'config.yaml')
-#        cli_config_path_2 = os.path.join(self.temp_dir, b'config_2.yaml')
-#
-#        with open(cli_config_path_1, 'w') as file:
-#            file.write('first: value')
-#
-#        with open(cli_config_path_2, 'w') as file:
-#            file.write('second: value')
-#
-#        self.run_command('--config', cli_config_path_1,
-#                      '--config', cli_config_path_2, 'test', lib=None)
-#        self.assertEqual(config['first'].get(), 'value')
-#        self.assertEqual(config['second'].get(), 'value')
-#
-#    @unittest.skip('Difficult to implement with optparse')
-#    def test_multiple_cli_config_overwrite(self):
-#        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
-#        cli_overwrite_config_path = os.path.join(self.temp_dir,
-#                                                 b'overwrite_config.yaml')
-#
-#        with open(cli_config_path, 'w') as file:
-#            file.write('anoption: value')
-#
-#        with open(cli_overwrite_config_path, 'w') as file:
-#            file.write('anoption: overwrite')
-#
-#        self.run_command('--config', cli_config_path,
-#                      '--config', cli_overwrite_config_path, 'test')
-#        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+    #    @unittest.skip('Difficult to implement with optparse')
+    #    def test_multiple_cli_config_files(self):
+    #        cli_config_path_1 = os.path.join(self.temp_dir, b'config.yaml')
+    #        cli_config_path_2 = os.path.join(self.temp_dir, b'config_2.yaml')
+    #
+    #        with open(cli_config_path_1, 'w') as file:
+    #            file.write('first: value')
+    #
+    #        with open(cli_config_path_2, 'w') as file:
+    #            file.write('second: value')
+    #
+    #        self.run_command('--config', cli_config_path_1,
+    #                      '--config', cli_config_path_2, 'test', lib=None)
+    #        self.assertEqual(config['first'].get(), 'value')
+    #        self.assertEqual(config['second'].get(), 'value')
+    #
+    #    @unittest.skip('Difficult to implement with optparse')
+    #    def test_multiple_cli_config_overwrite(self):
+    #        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
+    #        cli_overwrite_config_path = os.path.join(self.temp_dir,
+    #                                                 b'overwrite_config.yaml')
+    #
+    #        with open(cli_config_path, 'w') as file:
+    #            file.write('anoption: value')
+    #
+    #        with open(cli_overwrite_config_path, 'w') as file:
+    #            file.write('anoption: overwrite')
+    #
+    #        self.run_command('--config', cli_config_path,
+    #                      '--config', cli_overwrite_config_path, 'test')
+    #        self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
@@ -1271,6 +1269,7 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
     """Test CommonOptionsParser and formatting LibModel formatting on 'list'
     command.
     """
+
     def setUp(self):
         self.setup_beets()
         self.lib = library.Library(':memory:')
@@ -1466,6 +1465,7 @@ class EncodingTest(_common.TestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
