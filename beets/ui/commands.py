@@ -1447,13 +1447,6 @@ modify_cmd.parser.add_option(
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
 
-#export(file) function copies a file without modifying the database.
-
-def export(file):
-    # Create necessary ancestry for the copy.
-    util.mkdirall(file.destination(basedir=dest))
-    util.copy(file.path, file.destination(basedir=dest))
-
 # move: Move/copy files to the library or a new base directory.
 
 def move_items(lib, dest, query, copy, album, pretend, export=False,
@@ -1488,6 +1481,12 @@ def move_items(lib, dest, query, copy, album, pretend, export=False,
     else:
         #Copying files without modifying the database.
         if export:
+            # export(file) function copies a file without modifying the database.
+
+            def export(file):
+                # Create necessary ancestry for the copy.
+                util.mkdirall(file.destination(basedir=dest))
+                util.copy(file.path, file.destination(basedir=dest))
             if album:
                 for obj in objs:
                     for item in obj.items():
