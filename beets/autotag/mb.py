@@ -219,7 +219,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                     lyricist.append(artist_relation['artist']['name'])
                 elif type == 'composer':
                     composer.append(artist_relation['artist']['name'])
-                    composer_sort.append(artist_relation['artist']['sort-name'])
+                    composer_sort.append(
+                        artist_relation['artist']['sort-name'])
     if lyricist:
         info.lyricist = u', '.join(lyricist)
     if composer:
