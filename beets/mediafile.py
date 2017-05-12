@@ -1638,13 +1638,18 @@ class MediaFile(object):
         StorageStyle('COMPOSER'),
         ASFStorageStyle('WM/Composer'),
     )
+    composer_sort = MediaField(
+        MP3StorageStyle('TSOC'),
+        MP4StorageStyle('soco'),
+        StorageStyle('COMPOSERSORT'),
+        ASFStorageStyle('WM/Composersortorder'),
+    )
     arranger = MediaField(
         MP3PeopleStorageStyle('TIPL', involvement='arranger'),
         MP4StorageStyle('----:com.apple.iTunes:Arranger'),
         StorageStyle('ARRANGER'),
         ASFStorageStyle('beets/Arranger'),
     )
-
     grouping = MediaField(
         MP3StorageStyle('TIT1'),
         MP4StorageStyle('\xa9grp'),

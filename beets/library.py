@@ -417,6 +417,7 @@ class Item(LibModel):
         'genre':                types.STRING,
         'lyricist':             types.STRING,
         'composer':             types.STRING,
+        'composer_sort':        types.STRING,
         'arranger':             types.STRING,
         'grouping':             types.STRING,
         'year':                 types.PaddedInt(4),
