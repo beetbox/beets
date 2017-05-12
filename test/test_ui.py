@@ -501,54 +501,33 @@ class ExportTest(_common.TestCase):
         commands.move_items(self.lib, dest, query, copy, album,
                             pretend, export)
 
-    def test_move_item(self):
+    def test_export_item(self):
         self._move()
         self.i.load()
         self.assertTrue(b'testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
-    def test_copy_item(self):
-        self._move(copy=True)
-        self.i.load()
-        self.assertTrue(b'testlibdir' in self.i.path)
-        self.assertExists(self.i.path)
-        self.assertExists(self.itempath)
-
-    def test_move_album(self):
-        self._move(album=True)
-        self.i.load()
-        self.assertTrue(b'testlibdir' in self.i.path)
-        self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
-
-    def test_copy_album(self):
-        self._move(copy=True, album=True)
-        self.i.load()
-        self.assertTrue(b'testlibdir' in self.i.path)
-        self.assertExists(self.i.path)
-        self.assertExists(self.itempath)
-
-    def test_move_item_custom_dir(self):
+    def test_export_item_custom_dir(self):
         self._move(dest=self.otherdir)
         self.i.load()
         self.assertTrue(b'testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
-    def test_move_album_custom_dir(self):
+    def test_export_album_custom_dir(self):
         self._move(dest=self.otherdir, album=True)
         self.i.load()
         self.assertTrue(b'testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
-    def test_pretend_move_item(self):
+    def test_pretend_export_item(self):
         self._move(dest=self.otherdir, pretend=True)
         self.i.load()
         self.assertIn(b'srcfile', self.i.path)
 
-    def test_pretend_move_album(self):
+    def test_pretend_export_album(self):
         self._move(album=True, pretend=True)
         self.i.load()
         self.assertIn(b'srcfile', self.i.path)
@@ -899,37 +878,37 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.run_command('--config', cli_config_path, 'test', lib=None)
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
-    #    @unittest.skip('Difficult to implement with optparse')
-    #    def test_multiple_cli_config_files(self):
-    #        cli_config_path_1 = os.path.join(self.temp_dir, b'config.yaml')
-    #        cli_config_path_2 = os.path.join(self.temp_dir, b'config_2.yaml')
-    #
-    #        with open(cli_config_path_1, 'w') as file:
-    #            file.write('first: value')
-    #
-    #        with open(cli_config_path_2, 'w') as file:
-    #            file.write('second: value')
-    #
-    #        self.run_command('--config', cli_config_path_1,
-    #                      '--config', cli_config_path_2, 'test', lib=None)
-    #        self.assertEqual(config['first'].get(), 'value')
-    #        self.assertEqual(config['second'].get(), 'value')
-    #
-    #    @unittest.skip('Difficult to implement with optparse')
-    #    def test_multiple_cli_config_overwrite(self):
-    #        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
-    #        cli_overwrite_config_path = os.path.join(self.temp_dir,
-    #                                                 b'overwrite_config.yaml')
-    #
-    #        with open(cli_config_path, 'w') as file:
-    #            file.write('anoption: value')
-    #
-    #        with open(cli_overwrite_config_path, 'w') as file:
-    #            file.write('anoption: overwrite')
-    #
-    #        self.run_command('--config', cli_config_path,
-    #                      '--config', cli_overwrite_config_path, 'test')
-    #        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+#    @unittest.skip('Difficult to implement with optparse')
+#    def test_multiple_cli_config_files(self):
+#        cli_config_path_1 = os.path.join(self.temp_dir, b'config.yaml')
+#        cli_config_path_2 = os.path.join(self.temp_dir, b'config_2.yaml')
+#
+#        with open(cli_config_path_1, 'w') as file:
+#            file.write('first: value')
+#
+#        with open(cli_config_path_2, 'w') as file:
+#            file.write('second: value')
+#
+#        self.run_command('--config', cli_config_path_1,
+#                      '--config', cli_config_path_2, 'test', lib=None)
+#        self.assertEqual(config['first'].get(), 'value')
+#        self.assertEqual(config['second'].get(), 'value')
+#
+#    @unittest.skip('Difficult to implement with optparse')
+#    def test_multiple_cli_config_overwrite(self):
+#        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
+#        cli_overwrite_config_path = os.path.join(self.temp_dir,
+#                                                 b'overwrite_config.yaml')
+#
+#        with open(cli_config_path, 'w') as file:
+#            file.write('anoption: value')
+#
+#        with open(cli_overwrite_config_path, 'w') as file:
+#            file.write('anoption: overwrite')
+#
+#        self.run_command('--config', cli_config_path,
+#                      '--config', cli_overwrite_config_path, 'test')
+#        self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
