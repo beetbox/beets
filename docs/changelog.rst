@@ -57,6 +57,10 @@ New features:
   Thanks to :user:`jansol`.
   :bug:`2488`
   :bug:`2524`
+* A new field, ``composer_sort``, is now supported and fetched from
+  MusicBrainz.
+  Thanks to :user:`dosoe`.
+  :bug:`2519` :bug:`2529`
 
 Fixes:
 
