@@ -72,7 +72,7 @@ box. To extract `rar` files, install the `rarfile`_ package and the
 Optional command flags:
 
 * By default, the command copies files your the library directory and
-  updates the ID3 tags on your music. In order to move the files, instead of 
+  updates the ID3 tags on your music. In order to move the files, instead of
   copying, use the ``-m`` (move) option. If you'd like to leave your music
   files untouched, try the ``-C`` (don't copy) and ``-W`` (don't write tags)
   options. You can also disable this behavior by default in the
@@ -275,6 +275,7 @@ query are renamed into your library directory structure. By specifying a
 destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
+The ``-e`` flag (for "export") copies files without changing the database.
 
 To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
 show you a list of files that would be moved but won't actually change anything
