@@ -2007,6 +2007,38 @@ class MediaFile(object):
         out_type=float,
     )
 
+    # EBU R128 fields.
+    r128_track_gain = MediaField(
+        MP3DescStorageStyle(
+            u'R128_TRACK_GAIN'
+        ),
+        MP4StorageStyle(
+            '----:com.apple.iTunes:R128_TRACK_GAIN'
+        ),
+        StorageStyle(
+            u'R128_TRACK_GAIN'
+        ),
+        ASFStorageStyle(
+            u'R128_TRACK_GAIN'
+        ),
+        out_type=int,
+    )
+    r128_album_gain = MediaField(
+        MP3DescStorageStyle(
+            u'R128_ALBUM_GAIN'
+        ),
+        MP4StorageStyle(
+            '----:com.apple.iTunes:R128_ALBUM_GAIN'
+        ),
+        StorageStyle(
+            u'R128_ALBUM_GAIN'
+        ),
+        ASFStorageStyle(
+            u'R128_ALBUM_GAIN'
+        ),
+        out_type=int,
+    )
+
     initial_key = MediaField(
         MP3StorageStyle('TKEY'),
         MP4StorageStyle('----:com.apple.iTunes:initialkey'),
