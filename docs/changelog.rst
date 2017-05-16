@@ -106,6 +106,7 @@ Fixes:
   error message. Thanks to :user:`Mary011196`. :bug:`1676` :bug:`2508`
 * :doc:`/plugins/web`: Avoid a crash when sending binary data, such as
   Chromaprint fingerprints, in music attributes. :bug:`2542` :bug:`2532`
+* Fix a hang when parsing templates that end in newlines. :bug:`2562`
 
 Two plugins had backends removed due to bitrot:
 
