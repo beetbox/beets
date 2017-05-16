@@ -206,6 +206,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         info.length = int(recording['length']) / (1000.0)
 
     lyricist = []
+    lyricist_sort = []
     composer = []
     composer_sort = []
     for work_relation in recording.get('work-relation-list', ()):
@@ -217,24 +218,31 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                 type = artist_relation['type']
                 if type == 'lyricist':
                     lyricist.append(artist_relation['artist']['name'])
+                    lyricist_sort.append(
+                        artist_relation['artist']['sort-name'])
                 elif type == 'composer':
                     composer.append(artist_relation['artist']['name'])
                     composer_sort.append(
                         artist_relation['artist']['sort-name'])
     if lyricist:
         info.lyricist = u', '.join(lyricist)
+        info.lyricist_sort = u', '.join(lyricist_sort)
     if composer:
         info.composer = u', '.join(composer)
         info.composer_sort = u', '.join(composer_sort)
 
     arranger = []
+    arranger_sort = []
     for artist_relation in recording.get('artist-relation-list', ()):
         if 'type' in artist_relation:
             type = artist_relation['type']
             if type == 'arranger':
                 arranger.append(artist_relation['artist']['name'])
+                arranger_sort.append(
+                    artist_relation['artist']['sort-name'])
     if arranger:
         info.arranger = u', '.join(arranger)
+        info.arranger_sort = u', '.join(arranger_sort)
 
     info.decode()
     return info
