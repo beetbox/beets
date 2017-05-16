@@ -143,9 +143,11 @@ class TrackInfo(object):
     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
     - ``data_url``: The data source release URL.
     - ``lyricist``: individual track lyricist name
+    - ``lyricist_sort``: individual track lyricist sort name
     - ``composer``: individual track composer name
     - ``composer_sort``: individual track composer sort name
     - ``arranger`: individual track arranger name
+    - ``arranger_sort`: individual track arranger sort name
     - ``track_alt``: alternative track number (tape, vinyl, etc.)
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
@@ -156,8 +158,9 @@ class TrackInfo(object):
                  length=None, index=None, medium=None, medium_index=None,
                  medium_total=None, artist_sort=None, disctitle=None,
                  artist_credit=None, data_source=None, data_url=None,
-                 media=None, lyricist=None, composer=None, composer_sort=None,
-                 arranger=None, track_alt=None):
+                 media=None, lyricist=None, lyricist_sort=None,
+                 composer=None, composer_sort=None arranger=None,
+                 arranger_sort=None, track_alt=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
@@ -174,9 +177,11 @@ class TrackInfo(object):
         self.data_source = data_source
         self.data_url = data_url
         self.lyricist = lyricist
+        self.lyricist_sort = lyricist_sort
         self.composer = composer
         self.composer_sort = composer_sort
         self.arranger = arranger
+        self.arranger_sort = arranger_sort
         self.track_alt = track_alt
 
     # As above, work around a bug in python-musicbrainz-ngs.
