@@ -107,6 +107,8 @@ Fixes:
 * :doc:`/plugins/web`: Avoid a crash when sending binary data, such as
   Chromaprint fingerprints, in music attributes. :bug:`2542` :bug:`2532`
 * Fix a hang when parsing templates that end in newlines. :bug:`2562`
+* Fix a crash when reading non-ASCII characters in configuration files on
+  Windows under Python 3. :bug:`2456` :bug:`2565` :bug:`2566`
 
 Two plugins had backends removed due to bitrot:
 
