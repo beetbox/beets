@@ -154,10 +154,12 @@ def _safe_cast(out_type, val):
             return int(val)
         else:
             # Process any other type as a string.
-            if not isinstance(val, six.string_types):
+            if isinstance(val, bytes):
+                val = val.decode('utf-8', 'ignore')
+            elif not isinstance(val, six.string_types):
                 val = six.text_type(val)
             # Get a number from the front of the string.
-            val = re.match(r'[0-9]*', val.strip()).group(0)
+            val = re.match(r'[\+-]?[0-9]*', val.strip()).group(0)
             if not val:
                 return 0
             else:
