@@ -668,7 +668,7 @@ def load_yaml(filename):
     parsed, a ConfigReadError is raised.
     """
     try:
-        with open(filename, 'r') as f:
+        with open(filename, 'rb') as f:
             return yaml.load(f, Loader=Loader)
     except (IOError, yaml.error.YAMLError) as exc:
         raise ConfigReadError(filename, exc)
@@ -908,9 +908,10 @@ class Configuration(RootView):
                 default_source = source
                 break
         if default_source and default_source.filename:
-            with open(default_source.filename, 'r') as fp:
+            with open(default_source.filename, 'rb') as fp:
                 default_data = fp.read()
-            yaml_out = restore_yaml_comments(yaml_out, default_data)
+            yaml_out = restore_yaml_comments(yaml_out,
+                                             default_data.decode('utf8'))
 
         return yaml_out
 
