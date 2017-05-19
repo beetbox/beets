@@ -175,9 +175,11 @@ class TrackInfo(object):
         self.data_source = data_source
         self.data_url = data_url
         self.lyricist = lyricist
+        self.lyricist_sort = lyricist_sort
         self.composer = composer
         self.composer_sort = composer_sort
         self.arranger = arranger
+        self.arranger_sort = arranger_sort
         self.track_alt = track_alt
 
     # As above, work around a bug in python-musicbrainz-ngs.
