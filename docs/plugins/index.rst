@@ -42,6 +42,7 @@ like this::
    acousticbrainz
    badfiles
    beatport
+   beets2kodi
    bpd
    bpm
    bucket
@@ -170,6 +171,7 @@ Miscellaneous
 
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
+  :doc:`beets2kodi`: Creates kodi .nfo files
 * :doc:`convert`: Transcode music and embed album art while exporting to
   a different directory.
 * :doc:`duplicates`: List duplicate tracks or albums.
