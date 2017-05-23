@@ -3,8 +3,8 @@ Beets2Kodi Plugin
 
 The plugin lets you create nfo files for Kodi music
 library whenever you import an album into the library. The plugin relies on the
- information provided by beets library and the audiodb (TADB). It only uses 
- MusicBrainz IDs, empty ID fields or discogs ID are ignored.
+information provided by beets library and the audiodb (TADB). It only uses 
+MusicBrainz IDs, empty ID fields or discogs ID are ignored.
 
 Configuration
 
