@@ -2,13 +2,17 @@ Beets2Kodi Plugin
 =================
 
 The plugin lets you create nfo files for Kodi music
-library whenever you import an album into the library.
-It only creates artist and album .nfos. As no documentation of track .nfo on Kodi wiki. 
+library whenever you import an album into the library. The plugin relies on the
+ information provided by beets library and the audiodb (TADB). It only uses 
+ MusicBrainz IDs, empty ID fields or discogs ID are ignored.
 
-To use ``Beets2Kodi`` plugin, enable it in your configuration
+Configuration
+
+To use ``beets2kodi`` plugin, enable it in your configuration
 (see :ref:`using-plugins`).
 Then, you'll want to configure the specifics of your Kodi host.
-You can do that using a ``kodi:`` section and include audiodb.com api key in your ``config.yaml``,
+You can do that using a ``kodi:`` section and include audiodb.com api key in 
+your ``config.yaml``,
 which looks like this as per kodiupdate plugin::
 
     kodi:
@@ -16,18 +20,21 @@ which looks like this as per kodiupdate plugin::
         port: 8080
         user: kodi
         pwd: kodi
-        nfo_format: xml # (or mbid_url_only)
-        library_name: music
+        music_lib_name: music 
+
     audiodb:
         key: secretkey or testkey '1'
 
-The nfo_format key, tells plugin to produce XML type document or a text file with MBID url
+The music_lib_name key is the name you given to your music library when 
+importing/scanning your music to Kodi
 
-To use the ``beets2kodi`` plugin you need  (requests, lxml, simplejson. base64) libraries
+To use the ``beets2kodi`` plugin you need  (urllib.request, lxml, simplejson, 
+base64) modules
 
 You'll also need to enable JSON-RPC in Kodi in order the use the plugin.
-In Kodi's interface, navigate to System/Settings/Network/Services and choose "Allow control of Kodi via HTTP."
+In Kodi's interface, navigate to System/Settings/Network/Services and choose 
+"Allow control of Kodi via HTTP."
 
-With that all in place, you can create nfo files for Kodi.
+With that all in place, you can create nfo/xml files for Kodi.
 
 
