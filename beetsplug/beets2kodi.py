@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2017,  Peace Lekalakala
+# Copyright 2017, Peace Lekalakala. URL only text file by Sergio Soto.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,10 +12,9 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# URL only text file by Sergio Soto
 
-"""Creates Kodi nfo files (artist.nfo & album.nfo) in xml format after
-importing album.
+"""Creates Kodi nfo files in xml or url only text format.
+The nfos are created after importing album.
 
 Put something like the following in your config.yaml to configure:
 as per kodiupdate plugin
@@ -24,23 +23,27 @@ as per kodiupdate plugin
         port: 8080
         user: user
         pwd: secret
+        music_lib_name: music
     audiodb:
         key: secretkey
 """
-
 from __future__ import absolute_import, division, print_function
+
+import base64
+import json
 import os
 import time
-import simplejson
-import json
-import base64
 import urllib.request
 from urllib.request import Request, urlopen
-import beets.library
-from beets import config
-from beets.plugins import BeetsPlugin
-from lxml import etree as et
 from uuid import UUID
+
+from beets import config
+import beets.library
+from beets.plugins import BeetsPlugin
+
+from lxml import etree as et
+
+import simplejson
 
 artist_tags = ['name', 'musicBrainzArtistID', 'sortname', 'genre', 'style',
                'mood', 'born', 'formed', 'biography', 'died', 'disbanded']
@@ -93,12 +96,12 @@ LINK_TRACK = 'https://musicbrainz.org/recording/{0}'
 
 
 def artist_info(albumid):
-
+    """Collect artist information from beets lib and audiodb.com."""
     for album in lib.albums(albumid):
         data = (album.albumartist, album.albumartist_sort,
                 album.mb_albumartistid, album.genre, album.path)
         url = audiodb_url + "{0}/artist-mb.php?i=".format(
-              config['audiodb']['key'])
+            config['audiodb']['key'])
 
         try:
             response = urllib.request.urlopen(url + data[2])
@@ -127,6 +130,7 @@ def artist_info(albumid):
 
 
 def artist_albums(artistid):
+    """Get artist's albums from beets library."""
     albumdata = []
     for album in lib.albums(artistid):
         row = album.album, album.original_year
@@ -137,7 +141,7 @@ def artist_albums(artistid):
 
 
 def album_info(albumid):
-
+    """Collect album information from beets lib and audiodb.com."""
     for album in lib.albums(albumid):
         data = (
             album.albumartist,
@@ -191,6 +195,7 @@ def album_info(albumid):
 
 
 def album_tracks(albumid):
+    """Get album's tracks from beets libary."""
     trackdata = []
     for item in lib.items(albumid):
         row = item.track, item.mb_trackid, item.length, item.title
@@ -201,6 +206,8 @@ def album_tracks(albumid):
 
 
 def paths(tag, albumid):
+    """From kodi itself get the music library path."""
+    """Useful for shared libraries, in order to get nfs or samba paths."""
     auth = str.encode(
         '%s:%s' %
         (config['kodi']['user'],
@@ -227,13 +234,8 @@ def paths(tag, albumid):
         length = int(len(data) + 1)
         album_path = row[3].decode("utf-8")
         artist_path = os.path.dirname(album_path)
-        if row[0] in album_path or row[0] in artist_path:
-            out_data = ((album_path, (xbmc_path + album_path[length:])),
-                        (artist_path, (xbmc_path + artist_path[length:])),
-                        row[0])
-        else:
-            out_data = (
-                (album_path, (xbmc_path + album_path[length:])), '', row[0])
+        out_data = ((album_path, (xbmc_path + album_path[length:])),
+                    (artist_path, (xbmc_path + artist_path[length:])), row[0])
 
         if "artist" in tag:
             return out_data[1]
@@ -243,62 +245,34 @@ def paths(tag, albumid):
 
 
 def thumbs(tag, albumid):
+    """Name paths where art files reside."""
     if "artist" in tag:
         thumbs = []
         for a in paths('artist', albumid):
-            thumb = "%s/artist.tbn" % a
+            thumb = os.path.join(a, 'artist.tbn')
             thumbs.append(thumb)
         return thumbs
+
     if "album" in tag:
         for album in lib.albums(albumid):
             if album.artpath:
                 art_file = os.path.basename(album.artpath.decode('utf8'))
         thumbs = []
         for a in paths('album', albumid):
-            thumb = "%s/%s" % (a, art_file)
+            thumb = os.path.join(a, art_file)
             thumbs.append(thumb)
         return thumbs
 
 
-class Beets2Kodi(BeetsPlugin):
-    def __init__(self):
-        super(Beets2Kodi, self).__init__()
-        # Adding defaults.
-        self.config['audiodb'].add({
-            "key": 1
-            })
-        config['kodi'].add({
-            u'host': u'localhost',
-            u'port': 8080,
-            u'user': u'kodi',
-            u'pwd': u'kodi',
-            u'nfo_format': 'xml',
-            u'library_name': 'music'
-            })
-        config['kodi']['pwd'].redact = True
-        self.register_listener('album_imported', self.check_id)
-
-    def check_id(self, lib, album):
-        try:
-            UUID(album.mb_albumid)
-            self._log.info(u'Album ID is valid MBID...creating .nfos')
-            self.register_listener('album_imported', self.nfo_type)
-        except ValueError:
-            self._log.info(u"Album ID is not valid MBID...can't create .nfos")
-            return
-
-    def nfo_type(self, lib, album):
-        if config['kodi']['nfo_format'] == 'mbid_only_text':
-            self._log.info(u'Creating url only .nfo file...')
-            self.register_listener('album_imported', self.album_nfo_text)
-        else:
-            self._log.info(u'creating XML .nfo file...')
-            self.register_listener('album_imported', self.album_nfo_xml)
-            self.register_listener('album_imported', self.artist_nfo_xml)
-
-    def album_nfo_text(self, lib, album):
-        album_path = os.path.join(album.path, 'album.nfo')
-        artist_path = os.path.join(album.path, os.pardir, 'artist.nfo')
+def album_nfo_text(albumid):
+    """Create MBID URL only text file."""
+    """This part from original kodinfo.py."""
+    for album in lib.albums(albumid):
+        album_path = os.path.join(album.path.decode("utf-8"), 'album.nfo')
+        artist_path = os.path.join(
+            album.path.decode('utf8'),
+            os.pardir,
+            'artist.nfo')
         if not os.path.isfile(album_path):
             with open(album_path, 'w') as f:
                 f.write(LINK_ALBUM.format(album.mb_albumid))
@@ -306,59 +280,10 @@ class Beets2Kodi(BeetsPlugin):
             with open(artist_path, 'w') as f:
                 f.write(LINK_ARTIST.format(album.mb_albumartistid))
 
-    def artist_nfo_xml(self, lib, album):
-        albumid = 'mb_albumid:' + album.mb_albumid
-        artistid = 'mb_albumartistid:' + album.mb_albumartistid
-        artistnfo = os.path.join(
-            album.path.decode('utf8'),
-            os.pardir,
-            'artist.nfo')
-        if album.albumartist in ['Various Artists', 'Soundtracks']:
-            pass
-        else:
-            root = et.Element('artist')
-            for i in range(len(artist_tags)):
-                artist_tags[i] = et.SubElement(
-                    root, '{}'.format(artist_tags[i]))
-                artist_tags[i].text = artist_info(albumid)[i]
 
-            for i in range(len(paths('artist', albumid))):
-                path = et.SubElement(root, 'path')
-                path.text = paths('artist', albumid)[i]
-
-            if artist_info(albumid)[11] == '':
-                thumb = et.SubElement(root, 'thumb')
-                thumb.text = ''
-            else:
-                thumb_location = os.path.join(
-                    paths('artist', albumid)[0], 'artist.tbn')
-                urllib.request.urlretrieve(
-                    artist_info(albumid)[11], thumb_location)
-                thumb = et.SubElement(root, 'thumb')
-                thumb.text = artist_info(albumid)[11]
-                for i in range(len(thumbs('artist', albumid))):
-                    thumb = et.SubElement(root, 'thumb')
-                    thumb.text = thumbs('artist', albumid)[i]
-
-            fanart = et.SubElement(root, 'fanart')
-            fanart.text = artist_info(albumid)[12]
-
-            for i in range(len(artist_albums(artistid))):
-                album = et.SubElement(root, 'album')
-                title = et.SubElement(album, 'title')
-                title.text = artist_albums(artistid)[i][1]
-                year = et.SubElement(album, 'year')
-                year.text = str(artist_albums(artistid)[i][0])
-
-            xml = et.tostring(
-                root,
-                pretty_print=True,
-                xml_declaration=True,
-                encoding='UTF-8',
-                standalone="yes").decode()
-            print(xml, file=open(artistnfo, 'w+'))
-
-    def album_nfo_xml(self, lib, album):
+def album_nfo_xml(albumid):
+    """Create XML file with album information."""
+    for album in lib.albums(albumid):
         albumnfo = os.path.join(album.path.decode('utf8'), 'album.nfo')
         albumid = 'mb_albumid:' + album.mb_albumid
         root = et.Element('album')
@@ -406,3 +331,99 @@ class Beets2Kodi(BeetsPlugin):
             encoding='UTF-8',
             standalone="yes").decode()
         print(xml, file=open(albumnfo, 'w+'))
+
+
+def artist_nfo_xml(albumid):
+    """Create XML file with artist information."""
+    for album in lib.albums(albumid):
+        albumid = 'mb_albumid:' + album.mb_albumid
+        artistid = 'mb_albumartistid:' + album.mb_albumartistid
+        artistnfo = os.path.join(
+            album.path.decode('utf8'),
+            os.pardir,
+            'artist.nfo')
+        if album.albumartist in ['Various Artists', 'Soundtracks']:
+            pass
+        else:
+            root = et.Element('artist')
+            for i in range(len(artist_tags)):
+                artist_tags[i] = et.SubElement(
+                    root, '{}'.format(artist_tags[i]))
+                artist_tags[i].text = artist_info(albumid)[i]
+
+            for i in range(len(paths('artist', albumid))):
+                path = et.SubElement(root, 'path')
+                path.text = paths('artist', albumid)[i]
+
+            if artist_info(albumid)[11] == '':
+                thumb = et.SubElement(root, 'thumb')
+                thumb.text = ''
+            else:
+                thumb_location = os.path.join(
+                    album.path.decode('utf8'),
+                    os.pardir, 'artist.tbn')
+                urllib.request.urlretrieve(
+                    artist_info(albumid)[11], thumb_location)
+                thumb = et.SubElement(root, 'thumb')
+                thumb.text = artist_info(albumid)[11]
+                for i in range(len(thumbs('artist', albumid))):
+                    thumb = et.SubElement(root, 'thumb')
+                    thumb.text = thumbs('artist', albumid)[i]
+
+            fanart = et.SubElement(root, 'fanart')
+            fanart.text = artist_info(albumid)[12]
+
+            for i in range(len(artist_albums(artistid))):
+                album = et.SubElement(root, 'album')
+                title = et.SubElement(album, 'title')
+                title.text = artist_albums(artistid)[i][1]
+                year = et.SubElement(album, 'year')
+                year.text = str(artist_albums(artistid)[i][0])
+
+            xml = et.tostring(
+                root,
+                pretty_print=True,
+                xml_declaration=True,
+                encoding='UTF-8',
+                standalone="yes").decode()
+            print(xml, file=open(artistnfo, 'w+'))
+
+
+class Beets2Kodi(BeetsPlugin):
+    """Beets2Kodi Plugin."""
+
+    def __init__(self):
+        """Plugin docstring."""
+        super(Beets2Kodi, self).__init__()
+
+        # Adding defaults.
+        self.config['audiodb'].add({
+            "key": 1})
+        config['kodi'].add({
+            u'host': u'localhost',
+            u'port': 8080,
+            u'user': u'kodi',
+            u'pwd': u'kodi',
+            u'nfo_format': 'xml',
+            u'library_name': 'music'})
+        config['kodi']['pwd'].redact = True
+        self.register_listener('album_imported', self.create_nfos)
+
+    def create_nfos(self, lib, album):
+        """Create nfos as per choice in config."""
+        try:
+            # Check if MBID is valid UUID as per MB recommendations
+            UUID(album.mb_albumid)
+            self._log.info(u'Album ID is valid MBID...creating .nfos')
+            albumid = 'mb_albumid:' + album.mb_albumid
+            nfo_format = '{0}'.format(config['kodi']['nfo_format'])
+            if nfo_format in 'mbid_only_text':
+                self._log.info(u'Creating url only text format .nfo file...')
+                album_nfo_text(albumid)
+            else:
+                self._log.info(u'creating XML format .nfo file...')
+                album_nfo_xml(albumid)
+                artist_nfo_xml(albumid)
+        except ValueError:
+            self._log.info(u"Album ID is not valid MBID...can't create .nfos")
+            return
