@@ -20,16 +20,18 @@ which looks like this as per kodiupdate plugin::
         port: 8080
         user: kodi
         pwd: kodi
-        music_lib_name: music 
+        music_lib_name: music
+        nfo_format: xml
 
     audiodb:
         key: secretkey or testkey '1'
 
 The music_lib_name key is the name you given to your music library when 
-importing/scanning your music to Kodi
+importing/scanning your music to Kodi.
+The nfo_format: Choices are 'xml' or 'mbid_only_text'.
 
 To use the ``beets2kodi`` plugin you need  (urllib.request, lxml, simplejson, 
-base64) modules
+base64) modules.
 
 You'll also need to enable JSON-RPC in Kodi in order the use the plugin.
 In Kodi's interface, navigate to System/Settings/Network/Services and choose 
