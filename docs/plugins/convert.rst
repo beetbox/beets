@@ -164,7 +164,7 @@ executable.
 ::
 
     #!/bin/sh
-    /usr/bin/ffmpeg -i "$1" -f wav - | /usr/bin/lame -V 2 --noreplaygain - "$2"
+    ffmpeg -i "$1" -f wav - | lame -V 2 --noreplaygain - "$2"
 
 Then configure the ``convert`` plugin to use the script.
 
