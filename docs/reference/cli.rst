@@ -138,6 +138,17 @@ Optional command flags:
   searching for other candidates by using the ``--search-id SEARCH_ID`` option.
   Multiple IDs can be specified by simply repeating the option several times.
 
+* You can supply ``--set-field`` options with ``field=value`` pairs to assign to
+  those fields the specified values on import, in addition to such field/value
+  pairs defined in the ``importer.set_fields`` dictionary in the configuration
+  file. Make sure to use an option per field/value pair, like so:
+  ::
+
+    beet import --set-field genre="Alternative Rock" --set-field mood="emotional"
+
+  Note that values for the fields specified on the command-line override the
+  ones defined for those fields in the configuration file.
+
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
 
 .. only:: html

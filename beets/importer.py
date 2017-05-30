@@ -532,12 +532,15 @@ class ImportTask(BaseImportTask):
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
+
     def set_fields(self):
         set_fields_dict = config['import']['set_fields']
         for field in set_fields_dict.keys():
-            print(type(set_fields_dict[field].get()))
             value = set_fields_dict[field].get()
-            log.debug(u'Set field {1}={2} for {0}', displayable_path(self.paths), field, value)
+            log.debug(u'Set field {1}={2} for {0}',
+                      displayable_path(self.paths),
+                      field,
+                      value)
             self.album[field] = value
             self.album.store()
 
@@ -894,7 +897,10 @@ class SingletonImportTask(ImportTask):
         set_fields_dict = config['import']['set_fields']
         for field in set_fields_dict.keys():
             value = set_fields_dict[field].get()
-            log.debug(u'Set field {1}={2} for {0}', displayable_path(self.paths), field, value)
+            log.debug(u'Set field {1}={2} for {0}',
+                      displayable_path(self.paths),
+                      field,
+                      value)
             self.item[field] = value
             self.item.store()
 

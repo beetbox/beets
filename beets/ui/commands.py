@@ -1019,9 +1019,10 @@ import_cmd.parser.add_option(
     help=u'restrict matching to a specific metadata backend ID'
 )
 import_cmd.parser.add_option(
-    u'--set-field', dest='set_fields', action='callback', callback=SubcommandsOptionParser._store_dict,
+    u'--set-field', dest='set_fields', action='callback',
+    callback=SubcommandsOptionParser._store_dict,
     metavar='FIELD=VALUE',
-    help=u'set the given fields to the supplied values after importing'
+    help=u'set the given fields to the supplied values'
 )
 import_cmd.func = import_func
 default_commands.append(import_cmd)
