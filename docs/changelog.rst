@@ -61,6 +61,11 @@ New features:
   MusicBrainz.
   Thanks to :user:`dosoe`.
   :bug:`2519` :bug:`2529`
+* It is now possible to set fields to certain values during import, using
+  either the `importer.set_fields` dictionary in the config file, or by
+  passing one or more `--set-field field=value` options on the command-line.
+  :bug: `1881`
+
 
 Fixes:
 

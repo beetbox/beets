@@ -586,6 +586,26 @@ Ring the terminal bell to get your attention when the importer needs your input.
 
 Default: ``no``.
 
+.. _set_fields:
+
+set_fields
+~~~~~~~~~~
+
+A dictionary of field/value pairs, each one used to set a field to the
+corresponding value during import.
+
+Example: ::
+
+    set_fields:
+        genre: 'To Listen'
+        collection: 'Unordered'
+
+Note that field/value pairs supplied via ``--set-field`` options on the
+command-line are processed in addition to those specified here. Those values
+override the ones defined here in the case of fields with the same name.
+
+Default: ``{}`` (empty).
+
 .. _musicbrainz-config:
 
 MusicBrainz Options
