@@ -1060,6 +1060,24 @@ class SubcommandsOptionParser(CommonOptionsParser):
         suboptions, subargs = subcommand.parse_args(args)
         return subcommand, suboptions, subargs
 
+    @staticmethod
+    def _store_dict(option, opt_str, value, parser):
+        """Custom action callback to parse options which have ``key=value``
+        pairs as values. All such pairs passed for this option are
+        aggregated into a dictionary.
+        """
+        dest = option.dest
+        option_values = getattr(parser.values, dest, None)
+
+        if option_values is None:
+            # This is the first supplied ``key=value`` pair of option.
+            # Initialize empty dictionary and get a reference to it.
+            setattr(parser.values, dest, dict())
+            option_values = getattr(parser.values, dest)
+
+        key, value = value.split('=')
+        option_values[key] = value
+
 
 optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
 
