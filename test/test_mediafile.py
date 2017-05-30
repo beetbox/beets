@@ -399,7 +399,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'initial_key',
     ]
 
-    list_fields = ['genre', 'arranger', 'composer', 'lyricist']
+    list_fields = ['genre', 'arranger', 'composer', 'composer_sort', 'lyricist']
 
     def setUp(self):
         self.create_temp_dir()
