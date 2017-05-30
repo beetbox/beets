@@ -1075,7 +1075,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
             setattr(parser.values, dest, dict())
             option_values = getattr(parser.values, dest)
 
-        key, value = value.split('=')
+        key, value = map(lambda s: util.text_string(s), value.split('='))
         option_values[key] = value
 
 

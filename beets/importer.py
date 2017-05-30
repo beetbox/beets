@@ -419,7 +419,7 @@ class ImportTask(BaseImportTask):
       from the `candidates` list.
 
     * `find_duplicates()` Returns a list of albums from `lib` with the
-       same artist and album name as the task.
+      same artist and album name as the task.
 
     * `apply_metadata()` Sets the attributes of the items from the
       task's `match` attribute.
@@ -428,6 +428,9 @@ class ImportTask(BaseImportTask):
 
     * `manipulate_files()` Copy, move, and write files depending on the
       session configuration.
+
+    * `set_fields()` Sets the fields given at CLI or configuration to
+      the specified values.
 
     * `finalize()` Update the import progress and cleanup the file
       system.
@@ -529,6 +532,14 @@ class ImportTask(BaseImportTask):
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
+    def set_fields(self):
+        set_fields_dict = config['import']['set_fields']
+        for field in set_fields_dict.keys():
+            print(type(set_fields_dict[field].get()))
+            value = set_fields_dict[field].get()
+            log.debug(u'Set field {1}={2} for {0}', displayable_path(self.paths), field, value)
+            self.album[field] = value
+            self.album.store()
 
     def finalize(self, session):
         """Save progress, clean up files, and emit plugin event.
@@ -876,6 +887,16 @@ class SingletonImportTask(ImportTask):
 
     def reload(self):
         self.item.load()
+
+    def set_fields(self):
+        """Similar to ``ImportTask.set_fields``, but for singleton items.
+        """
+        set_fields_dict = config['import']['set_fields']
+        for field in set_fields_dict.keys():
+            value = set_fields_dict[field].get()
+            log.debug(u'Set field {1}={2} for {0}', displayable_path(self.paths), field, value)
+            self.item[field] = value
+            self.item.store()
 
 
 # FIXME The inheritance relationships are inverted. This is why there
@@ -1384,6 +1405,11 @@ def apply_choice(session, task):
         plugins.send('import_task_apply', session=session, task=task)
 
     task.add(session.lib)
+
+    # If ``set_fields`` is set, set those fields to the
+    # configured values.
+    if config['import']['set_fields']:
+        task.set_fields()
 
 
 @pipeline.mutator_stage
