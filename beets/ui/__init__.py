@@ -1075,7 +1075,15 @@ class SubcommandsOptionParser(CommonOptionsParser):
             setattr(parser.values, dest, dict())
             option_values = getattr(parser.values, dest)
 
-        key, value = map(lambda s: util.text_string(s), value.split('='))
+        try:
+            key, value = map(lambda s: util.text_string(s), value.split('='))
+            if not (key and value):
+                raise ValueError
+        except ValueError:
+            raise UserError(
+                "supplied argument `{0}' is not of the form `key=value'"
+                .format(value))
+
         option_values[key] = value
 
 
