@@ -227,6 +227,11 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(parts[2], u',')
         self._assert_symbol(parts[3], u"bar")
 
+    def test_newline_at_end(self):
+        parts = list(_normparse(u'foo\n'))
+        self.assertEqual(len(parts), 1)
+        self.assertEqual(parts[0], u'foo\n')
+
 
 class EvalTest(unittest.TestCase):
     def _eval(self, template):

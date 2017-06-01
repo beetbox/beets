@@ -264,7 +264,7 @@ def load_plugins(names=()):
                             and obj != BeetsPlugin and obj not in _classes:
                         _classes.add(obj)
 
-        except:
+        except Exception:
             log.warning(
                 u'** error loading plugin {}:\n{}',
                 name,

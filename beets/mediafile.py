@@ -1317,7 +1317,7 @@ class DateField(MediaField):
         for item in items:
             try:
                 items_.append(int(item))
-            except:
+            except (TypeError, ValueError):
                 items_.append(None)
         return items_
 
@@ -1637,6 +1637,12 @@ class MediaFile(object):
         MP4StorageStyle('\xa9wrt'),
         StorageStyle('COMPOSER'),
         ASFStorageStyle('WM/Composer'),
+    )
+    composer_sort = MediaField(
+        MP3StorageStyle('TSOC'),
+        MP4StorageStyle('soco'),
+        StorageStyle('COMPOSERSORT'),
+        ASFStorageStyle('WM/Composersortorder'),
     )
     arranger = MediaField(
         MP3PeopleStorageStyle('TIPL', involvement='arranger'),

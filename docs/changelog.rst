@@ -57,6 +57,10 @@ New features:
   Thanks to :user:`jansol`.
   :bug:`2488`
   :bug:`2524`
+* A new field, ``composer_sort``, is now supported and fetched from
+  MusicBrainz.
+  Thanks to :user:`dosoe`.
+  :bug:`2519` :bug:`2529`
 
 Fixes:
 
@@ -100,6 +104,22 @@ Fixes:
   ignored. Thanks to :user:`discopatrick`. :bug:`2513` :bug:`2517`
 * When the SQLite database stops being accessible, we now print a friendly
   error message. Thanks to :user:`Mary011196`. :bug:`1676` :bug:`2508`
+* :doc:`/plugins/web`: Avoid a crash when sending binary data, such as
+  Chromaprint fingerprints, in music attributes. :bug:`2542` :bug:`2532`
+* Fix a hang when parsing templates that end in newlines. :bug:`2562`
+* Fix a crash when reading non-ASCII characters in configuration files on
+  Windows under Python 3. :bug:`2456` :bug:`2565` :bug:`2566`
+
+Two plugins had backends removed due to bitrot:
+
+* :doc:`/plugins/lyrics`: The Lyrics.com backend has been removed. (It stopped
+  working because of changes to the site's URL structure.)
+  :bug:`2548` :bug:`2549`
+* :doc:`/plugins/fetchart`: The documentation no longer recommends iTunes
+  Store artwork lookup because the unmaintained `python-itunes`_ is broken.
+  Want to adopt it? :bug:`2371` :bug:`1610`
+
+.. _python-itunes: https://github.com/ocelma/python-itunes
 
 
 1.4.3 (January 9, 2017)

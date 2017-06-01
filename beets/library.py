@@ -417,6 +417,7 @@ class Item(LibModel):
         'genre':                types.STRING,
         'lyricist':             types.STRING,
         'composer':             types.STRING,
+        'composer_sort':        types.STRING,
         'arranger':             types.STRING,
         'grouping':             types.STRING,
         'year':                 types.PaddedInt(4),
@@ -1306,7 +1307,7 @@ class Library(dbcore.Database):
                 query, parsed_sort = parse_query_string(query, model_cls)
             elif isinstance(query, (list, tuple)):
                 query, parsed_sort = parse_query_parts(query, model_cls)
-        except dbcore.query.InvalidQueryArgumentTypeError as exc:
+        except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
 
         # Any non-null sort specified by the parsed query overrides the

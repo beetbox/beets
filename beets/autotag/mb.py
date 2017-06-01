@@ -207,6 +207,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
 
     lyricist = []
     composer = []
+    composer_sort = []
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
@@ -218,10 +219,13 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                     lyricist.append(artist_relation['artist']['name'])
                 elif type == 'composer':
                     composer.append(artist_relation['artist']['name'])
+                    composer_sort.append(
+                        artist_relation['artist']['sort-name'])
     if lyricist:
         info.lyricist = u', '.join(lyricist)
     if composer:
         info.composer = u', '.join(composer)
+        info.composer_sort = u', '.join(composer_sort)
 
     arranger = []
     for artist_relation in recording.get('artist-relation-list', ()):

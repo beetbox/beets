@@ -2,11 +2,10 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Lyric Wiki`_, `Lyrics.com`_,
+Namely, the current version of the plugin uses `Lyric Wiki`_, 
 `Musixmatch`_, `Genius.com`_, and, optionally, the Google custom search API.
 
 .. _Lyric Wiki: http://lyrics.wikia.com/
-.. _Lyrics.com: http://www.lyrics.com/
 .. _Musixmatch: https://www.musixmatch.com/
 .. _Genius.com: http://genius.com/
 
@@ -60,7 +59,7 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google lyricwiki lyrics.com musixmatch``, i.e., all the
+  Default: ``google lyricwiki musixmatch``, i.e., all the
   sources except for `genius`. The `google` source will be automatically
   deactivated if no ``google_API_key`` is setup.
 

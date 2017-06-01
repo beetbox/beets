@@ -84,7 +84,7 @@ def _do_query(lib, query, album, also_items=True):
 
 def _print_keys(query):
     """Given a SQLite query result, print the `key` field of each
-    returned row, with identation of 2 spaces.
+    returned row, with indentation of 2 spaces.
     """
     for row in query:
         print_(u' ' * 2 + row['key'])
@@ -615,7 +615,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             require = True
         # Bell ring when user interaction is needed.
         if config['import']['bell']:
-            ui.print_('\a', end='')
+            ui.print_(u'\a', end=u'')
         sel = ui.input_options((u'Apply', u'More candidates') + choice_opts,
                                require=require, default=default)
         if sel == u'a':
