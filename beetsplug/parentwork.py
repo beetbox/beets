@@ -72,7 +72,7 @@ class ParentWorkPlugin(BeetsPlugin):
             performer_types = ['performer', 'instrument', 'vocals',
                 'conductor', 'orchestra', 'chorus master', 'concertmaster']
             rec_rels = musicbrainzngs.get_recording_by_id(
-                recording_id,includes=['work-rels', 'artist-rels'])
+                recording_id, includes=['work-rels', 'artist-rels'])
             if 'artist-relation-list' in rec_rels['recording']:
                 for dudes in rec_rels['recording'][
                         'artist-relation-list']:
@@ -95,8 +95,8 @@ class ParentWorkPlugin(BeetsPlugin):
                         if 'work-relation-list' in work_info['work']:
                             for work_father in work_info['work'][
                                     'work-relation-list']:
-                                if work_father['type'] == 'parts' and 
-                                        'direction' in work_father: 
+                                if work_father['type'] == 'parts' and\
+                                        'direction' in work_father:
                                     if work_father['direction'] == 'backward':
                                         father_id=work_father['work']['id']
                                         partof = True
