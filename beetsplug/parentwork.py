@@ -131,8 +131,7 @@ class ParentWorkPlugin(BeetsPlugin):
             item['parent_composer']      = parent_composer
             item['parent_composer_sort'] = parent_composer_sort
             
-            item.try_write()
-            item.store(fields=['parent_work','parent_work_disambig','work','work_disambig','performer','performer_sort','parent_composer','parent_composer_sort'])
+            item.store()
             
             
             
