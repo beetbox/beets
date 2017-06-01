@@ -68,7 +68,6 @@ class ParentWorkPlugin(BeetsPlugin):
             parent_composer_sort = []
             item.read()
             recording_id = item['mb_trackid']
-            i = 0
             performer_types = ['performer', 'instrument', 'vocals',
                 'conductor', 'orchestra', 'chorus master', 'concertmaster']
             rec_rels = musicbrainzngs.get_recording_by_id(
@@ -124,7 +123,7 @@ class ParentWorkPlugin(BeetsPlugin):
                     else: 
                         parent_work.append(work_info['work']['title'])
                         if 'disambiguation' in work_info['work']:
-                            parent_work_disambig.append(work_info['work']
+                            parent_work_disambig.append(work_info['work']\
                                 ['disambiguation'])
 
             item['parent_work']          = u', '.join(parent_work)
@@ -137,4 +136,3 @@ class ParentWorkPlugin(BeetsPlugin):
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
 
             item.store()
-
