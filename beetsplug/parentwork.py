@@ -135,12 +135,6 @@ class ParentWorkPlugin(BeetsPlugin):
             item['performer_sort']       = u', '.join(performer_sort)
             item['parent_composer']      = u', '.join(parent_composer)
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
-            
+
             item.store()
-            
-            
-            
-            
-            
-            
-            
+
