@@ -23,6 +23,7 @@ import subprocess
 from beets import ui
 from beets import util
 from beets.plugins import BeetsPlugin
+from beets.dbcore import types
 
 import musicbrainzngs
 
@@ -37,14 +38,6 @@ class ParentWorkPlugin(BeetsPlugin):
     #            u'auto': True,
     #            u'overwrite': False,
     #        })
-    #        self.add_media_field('work', 'work title')
-    #        self.add_media_field('work_disamb', 'work title disambiguation')
-    #        self.add_media_field('parent_work', 'parent work title')
-    #        self.add_media_field('parent_work_disamb', 'parent work title disambiguation')
-    #        self.add_media_field('parent_composer', 'parent composer name')
-    #        self.add_media_field('parent_composer_sort', 'parent composer sort name')
-    #        self.add_media_field('performer', 'performer name')
-    #        self.add_media_field('performer_sort', 'performer sort name')
     
     def commands(self):
         cmd = ui.Subcommand('parentwork',
@@ -54,7 +47,17 @@ class ParentWorkPlugin(BeetsPlugin):
         
     def command(self, lib, opts, args):
         self.find_key(lib.items(ui.decargs(args)))
-             
+           
+    item_types = {
+        'parent_work':          types.STRING,
+        'parent_work_disambig': types.STRING,
+        'work':                 types.STRING,
+        'work_disambig':        types.STRING,
+        'performer':            types.STRING,
+        'performer_sort':       types.STRING,
+        'parent_composer':      types.STRING,
+        'parent_composer_sort': types.STRING}
+        
     def imported(self, session, task):
         self.find_work(task.items)        
     
@@ -122,14 +125,14 @@ class ParentWorkPlugin(BeetsPlugin):
                     i=i+1
                 break    
             
-            item['parent_work']          = parent_work
-            item['parent_work_disambig'] = parent_work_disambig
-            item['work']                 = work
-            item['work_disambig']        = work_disambig
-            item['performer']            = performer
-            item['performer_sort']       = performer_sort
-            item['parent_composer']      = parent_composer
-            item['parent_composer_sort'] = parent_composer_sort
+            item['parent_work']          = u', '.join(parent_work)
+            item['parent_work_disambig'] = u', '.join(parent_work_disambig)
+            item['work']                 = u', '.join(work)
+            item['work_disambig']        = u', '.join(work_disambig)
+            item['performer']            = u', '.join(performer)
+            item['performer_sort']       = u', '.join(performer_sort)
+            item['parent_composer']      = u', '.join(parent_composer)
+            item['parent_composer_sort'] = u', '.join(parent_composer_sort)
             
             item.store()
             
