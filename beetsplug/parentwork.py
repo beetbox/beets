@@ -73,7 +73,6 @@ class ParentWorkPlugin(BeetsPlugin):
                     'concertmaster']
             rec_rels = musicbrainzngs.get_recording_by_id(
                 recording_id, includes=['work-rels', 'artist-rels'])
-            print(rec_rels)
             if 'artist-relation-list' in rec_rels['recording']:
                 for dudes in rec_rels['recording'][
                         'artist-relation-list']:
