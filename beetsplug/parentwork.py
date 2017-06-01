@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Gets work title, disambiguation, parent work and its disambiguation, 
+"""Gets work title, disambiguation, parent work and its disambiguation,
 composer, composer sort name and performers
 """
 
@@ -25,12 +25,12 @@ from beets.dbcore import types
 
 import musicbrainzngs
 
+
 class ParentWorkPlugin(BeetsPlugin):
 
     def __init__(self):
         super(ParentWorkPlugin, self).__init__()
         self.import_stages = [self.imported]
-
 
     def commands(self):
         cmd = ui.Subcommand('parentwork',
@@ -56,7 +56,7 @@ class ParentWorkPlugin(BeetsPlugin):
         self.find_work(task.items)
 
     def find_work(self, items):
-        
+
         for item in items:
             performer            = []
             performer_sort       = []
@@ -69,21 +69,21 @@ class ParentWorkPlugin(BeetsPlugin):
             item.read()
             recording_id = item['mb_trackid']
             i = 0
-            performer_types = ['performer','instrument','vocals',
-                'conductor','orchestra','chorus master','concertmaster']
+            performer_types = ['performer', 'instrument', 'vocals',
+                'conductor', 'orchestra', 'chorus master', 'concertmaster']
             rec_rels = musicbrainzngs.get_recording_by_id(
                 recording_id,includes=['work-rels', 'artist-rels'])
             if 'artist-relation-list' in rec_rels['recording']:
                 for dudes in rec_rels['recording'][
-                    'artist-relation-list']:
+                        'artist-relation-list']:
                     if dudes['type'] in performer_types:
                         performer.append(dudes['artist']['name'])
                         performer_sort.append(dudes['artist']['sort-name'])
             if 'work-relation-list' in rec_rels['recording']:
                 for work_relation in rec_rels['recording'][
-                    'work-relation-list']:
+                        'work-relation-list']:
                     work_id = work_relation['work']['id']
-                    work_info = musicbrainzngs.get_work_by_id(work_id, 
+                    work_info = musicbrainzngs.get_work_by_id(work_id,
                         includes=["work-rels", "artist-rels"])
                     work.append(work_info['work']['title'])
                     if 'disambiguation' in work_info['work']:
@@ -94,20 +94,21 @@ class ParentWorkPlugin(BeetsPlugin):
                         partof = False
                         if 'work-relation-list' in work_info['work']:
                             for work_father in work_info['work'][
-                                'work-relation-list']:
+                                    'work-relation-list']:
                                 if work_father['type'] == 'parts' and 
-                                    'direction' in work_father: 
+                                        'direction' in work_father: 
                                     if work_father['direction'] == 'backward':
                                         father_id=work_father['work']['id']
                                         partof = True
-                                        work_info = musicbrainzngs.\
-                                        get_work_by_id(father_id, includes=[\
-                                        "work-rels", "artist-rels"])
+                                            work_info = musicbrainzngs.\
+                                                get_work_by_id(father_id,
+                                                includes=[
+                                                "work-rels", "artist-rels"])
                     if 'artist-relation-list' in work_info['work']:
                         for artist in work_info['work'][
                             'artist-relation-list']:
                             if artist['type'] == 'composer' and not 
-                                artist['artist']['name'] in parent_composer:
+                                    artist['artist']['name'] in parent_composer:
                                 parent_composer.append(artist['artist']
                                     ['name'])
                                 parent_composer_sort.append(artist['artist']
@@ -115,8 +116,8 @@ class ParentWorkPlugin(BeetsPlugin):
                     else:
                         print('no composer')
                         print('add one at')
-                        print('https://musicbrainz.org/work/' + work_info\
-                            ['work']['id'])
+                        print('https://musicbrainz.org/work/' + work_info[
+                            'work']['id'])
                     if work_info['work']['title'] in parent_work:
                         pass
                     else: 
