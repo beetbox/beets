@@ -49,6 +49,8 @@ def apply_item_metadata(item, track_info):
         item.lyricist = track_info.lyricist
     if track_info.composer is not None:
         item.composer = track_info.composer
+    if track_info.composer_sort is not None:
+        item.composer_sort = track_info.composer_sort
     if track_info.arranger is not None:
         item.arranger = track_info.arranger
 
@@ -155,6 +157,8 @@ def apply_metadata(album_info, mapping):
             item.lyricist = track_info.lyricist
         if track_info.composer is not None:
             item.composer = track_info.composer
+        if track_info.composer_sort is not None:
+            item.composer_sort = track_info.composer_sort
         if track_info.arranger is not None:
             item.arranger = track_info.arranger
 
