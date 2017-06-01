@@ -46,7 +46,7 @@ class ParentWorkPlugin(BeetsPlugin):
         return [cmd]
         
     def command(self, lib, opts, args):
-        self.find_key(lib.items(ui.decargs(args)))
+        self.find_work(lib.items(ui.decargs(args)))
            
     item_types = {
         'parent_work':          types.STRING,
