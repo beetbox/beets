@@ -68,11 +68,12 @@ class ParentWorkPlugin(BeetsPlugin):
             parent_composer_sort = []
             item.read()
             recording_id = item['mb_trackid']
-            performer_types = ['performer', 'instrument', 'vocals',
-                    'conductor', 'orchestra', 'chorus master', 
+            performer_types = ['performer', 'instrument', 'vocal',
+                    'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
             rec_rels = musicbrainzngs.get_recording_by_id(
                 recording_id, includes=['work-rels', 'artist-rels'])
+            print(rec_rels)
             if 'artist-relation-list' in rec_rels['recording']:
                 for dudes in rec_rels['recording'][
                         'artist-relation-list']:
