@@ -69,7 +69,8 @@ class ParentWorkPlugin(BeetsPlugin):
             item.read()
             recording_id = item['mb_trackid']
             performer_types = ['performer', 'instrument', 'vocals',
-                'conductor', 'orchestra', 'chorus master', 'concertmaster']
+                    'conductor', 'orchestra', 'chorus master', 
+                    'concertmaster']
             rec_rels = musicbrainzngs.get_recording_by_id(
                 recording_id, includes=['work-rels', 'artist-rels'])
             if 'artist-relation-list' in rec_rels['recording']:
@@ -83,11 +84,11 @@ class ParentWorkPlugin(BeetsPlugin):
                         'work-relation-list']:
                     work_id = work_relation['work']['id']
                     work_info = musicbrainzngs.get_work_by_id(work_id,
-                        includes=["work-rels", "artist-rels"])
+                            includes=["work-rels", "artist-rels"])
                     work.append(work_info['work']['title'])
                     if 'disambiguation' in work_info['work']:
                         work_disambig.append(work_info['work']
-                            ['disambiguation'])
+                                ['disambiguation'])
                     partof = True
                     while partof:
                         partof = False
@@ -101,8 +102,8 @@ class ParentWorkPlugin(BeetsPlugin):
                                         partof = True
                                         work_info = musicbrainzngs.\
                                             get_work_by_id(father_id,
-                                            includes=[
-                                            "work-rels", "artist-rels"])
+                                                includes=[
+                                                "work-rels", "artist-rels"])
                     if 'artist-relation-list' in work_info['work']:
                         for artist in work_info['work'][
                                 'artist-relation-list']:
@@ -110,9 +111,9 @@ class ParentWorkPlugin(BeetsPlugin):
                                     artist['artist']['name'] in\
                                     parent_composer:
                                 parent_composer.append(artist['artist']
-                                    ['name'])
+                                        ['name'])
                                 parent_composer_sort.append(artist['artist']
-                                    ['sort-name'])
+                                        ['sort-name'])
                     else:
                         print('no composer')
                         print('add one at')
@@ -120,10 +121,10 @@ class ParentWorkPlugin(BeetsPlugin):
                             'work']['id'])
                     if work_info['work']['title'] in parent_work:
                         pass
-                    else: 
+                    else:
                         parent_work.append(work_info['work']['title'])
                         if 'disambiguation' in work_info['work']:
-                            parent_work_disambig.append(work_info['work']\
+                            parent_work_disambig.append(work_info['work']
                                 ['disambiguation'])
 
             item['parent_work']          = u', '.join(parent_work)
