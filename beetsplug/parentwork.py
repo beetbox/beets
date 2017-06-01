@@ -98,17 +98,18 @@ class ParentWorkPlugin(BeetsPlugin):
                                 if work_father['type'] == 'parts' and\
                                         'direction' in work_father:
                                     if work_father['direction'] == 'backward':
-                                        father_id=work_father['work']['id']
+                                        father_id = work_father['work']['id']
                                         partof = True
-                                            work_info = musicbrainzngs.\
-                                                get_work_by_id(father_id,
-                                                includes=[
-                                                "work-rels", "artist-rels"])
+                                        work_info = musicbrainzngs.\
+                                            get_work_by_id(father_id,
+                                            includes=[
+                                            "work-rels", "artist-rels"])
                     if 'artist-relation-list' in work_info['work']:
                         for artist in work_info['work'][
-                            'artist-relation-list']:
-                            if artist['type'] == 'composer' and not 
-                                    artist['artist']['name'] in parent_composer:
+                                'artist-relation-list']:
+                            if artist['type'] == 'composer' and not\
+                                    artist['artist']['name'] in\
+                                    parent_composer:
                                 parent_composer.append(artist['artist']
                                     ['name'])
                                 parent_composer_sort.append(artist['artist']
