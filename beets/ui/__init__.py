@@ -1249,5 +1249,9 @@ def main(args=None):
         # Silently ignore ^C except in verbose mode.
         log.debug(u'{}', traceback.format_exc())
     except db.DBAccessError as exc:
-        log.error(u'{0}', exc)
+        log.error(
+            u'database access error: {0}\n'
+            u'the library file might have a permissions problem',
+            exc
+        )
         sys.exit(1)
