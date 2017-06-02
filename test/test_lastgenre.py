@@ -218,7 +218,8 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         # Normal case.
         tags = ('electronic', 'ambient', 'post-rock', 'downtempo')
         res = self.plugin._sort_by_depth(tags)
-        self.assertEqual(res, ['post-rock', 'downtempo', 'ambient', 'electronic'])
+        self.assertEqual(
+                res, ['post-rock', 'downtempo', 'ambient', 'electronic'])
         # Non-canonical tag ('chillout') present.
         tags = ('electronic', 'ambient', 'chillout')
         res = self.plugin._sort_by_depth(tags)
