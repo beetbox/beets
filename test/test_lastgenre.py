@@ -214,7 +214,7 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
                          u'fallback'))
 
     def test_sort_by_depth(self):
-        self._setup_config(canonical=True,count=99)
+        self._setup_config(canonical=True)
         # Normal case.
         tags = ('electronic', 'ambient', 'post-rock', 'downtempo')
         res = self.plugin._sort_by_depth(tags)
