@@ -41,6 +41,7 @@ from beets.util import pipeline, sorted_walk, ancestry
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
 from beets import mediafile
+from beets.autotag.hooks import AlbumInfo
 
 action = Enum('action',
               ['SKIP', 'ASIS', 'TRACKS', 'APPLY', 'ALBUMS', 'RETAG'])
@@ -696,6 +697,7 @@ class ImportTask(BaseImportTask):
         """
         self.align_album_level_fields()
         with lib.transaction():
+            AlbumInfo.data_source = 'foo'
             self.record_replaced(lib)
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
