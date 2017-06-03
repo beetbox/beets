@@ -55,7 +55,7 @@ class ParentWorkPlugin(BeetsPlugin):
     def imported(self, session, task):
         self.find_work(task.items)
 
-    def find_parentwork(work_id)
+    def find_parentwork(work_id):
         work_info = musicbrainzngs.get_work_by_id(work_id,
             includes=["work-rels", "artist-rels"])
             partof = True
