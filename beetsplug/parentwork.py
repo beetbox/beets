@@ -54,6 +54,25 @@ class ParentWorkPlugin(BeetsPlugin):
 
     def imported(self, session, task):
         self.find_work(task.items)
+        
+    def find_parentwork(work_id)
+        work_info = musicbrainzngs.get_work_by_id(work_id,
+            includes=["work-rels", "artist-rels"])
+            partof = True
+            while partof:
+                partof = False
+                if 'work-relation-list' in work_info['work']:
+                    for work_father in work_info['work']\
+                        ['work-relation-list']:
+                        if work_father['type'] == 'parts' and\
+                            'direction' in work_father:
+                            if work_father['direction'] == 'backward':
+                                father_id = work_father['work']['id']
+                                partof = True
+                                work_info = musicbrainzngs.\
+                                    get_work_by_id(father_id,
+                                    includes = ["work-rels", "artist-rels"])
+        return(work_info)
 
     def find_work(self, items):
 
@@ -71,62 +90,57 @@ class ParentWorkPlugin(BeetsPlugin):
             performer_types = ['performer', 'instrument', 'vocal',
                     'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
-            rec_rels = musicbrainzngs.get_recording_by_id(
-                recording_id, includes=['work-rels', 'artist-rels'])
-            if 'artist-relation-list' in rec_rels['recording']:
-                for dudes in rec_rels['recording'][
-                        'artist-relation-list']:
-                    if dudes['type'] in performer_types:
-                        performer.append(dudes['artist']['name'])
-                        performer_sort.append(dudes['artist']['sort-name'])
-            if 'work-relation-list' in rec_rels['recording']:
-                for work_relation in rec_rels['recording'][
-                        'work-relation-list']:
-                    work_id = work_relation['work']['id']
-                    work_info = musicbrainzngs.get_work_by_id(work_id,
-                            includes=["work-rels", "artist-rels"])
-                    work.append(work_info['work']['title'])
-                    if 'disambiguation' in work_info['work']:
-                        work_disambig.append(work_info['work']
-                                ['disambiguation'])
-                    partof = True
-                    while partof:
-                        partof = False
-                        if 'work-relation-list' in work_info['work']:
-                            for work_father in work_info['work'][
-                                    'work-relation-list']:
-                                if work_father['type'] == 'parts' and\
-                                        'direction' in work_father:
-                                    if work_father['direction'] == 'backward':
-                                        father_id = work_father['work']['id']
-                                        partof = True
-                                        work_info = musicbrainzngs.\
-                                            get_work_by_id(father_id,
-                                                includes=[
-                                                "work-rels", "artist-rels"])
-                    if 'artist-relation-list' in work_info['work']:
-                        for artist in work_info['work'][
+            i=0
+            while i<5:
+                try: 
+                    rec_rels = musicbrainzngs.get_recording_by_id(
+                    recording_id, includes=['work-rels', 'artist-rels'])
+                    if 'artist-relation-list' in rec_rels['recording']:
+                        for dudes in rec_rels['recording'][
                                 'artist-relation-list']:
-                            if artist['type'] == 'composer' and not\
-                                    artist['artist']['name'] in\
-                                    parent_composer:
-                                parent_composer.append(artist['artist']
-                                        ['name'])
-                                parent_composer_sort.append(artist['artist']
-                                        ['sort-name'])
-                    else:
-                        print('no composer')
-                        print('add one at')
-                        print('https://musicbrainz.org/work/' + work_info[
-                            'work']['id'])
-                    if work_info['work']['title'] in parent_work:
-                        pass
-                    else:
-                        parent_work.append(work_info['work']['title'])
-                        if 'disambiguation' in work_info['work']:
-                            parent_work_disambig.append(work_info['work']
-                                ['disambiguation'])
-
+                            if dudes['type'] in performer_types:
+                                performer.append(dudes['artist']['name'])
+                                performer_sort.append(dudes['artist']
+                                    ['sort-name'])
+                    if 'work-relation-list' in rec_rels['recording']:
+                        for work_relation in rec_rels['recording'][
+                                'work-relation-list']:
+                            work_id = work_relation['work']['id']
+                            work.append(work_relation['work']['title'])
+                            if 'disambiguation' in work_info['work']:
+                                work_disambig.append(work_relation['work']
+                                        ['disambiguation'])
+                            work_info = find_parentwork(work_id)
+                            if 'artist-relation-list' in work_info['work']:
+                                for artist in work_info['work'][
+                                    'artist-relation-list']:
+                                    if artist['type'] == 'composer' and not\
+                                        artist['artist']['name'] in\
+                                        parent_composer:
+                                        parent_composer.append(artist\
+                                            ['artist']['name'])
+                                        parent_composer_sort.append(
+                                            artist['artist']
+                                            ['sort-name'])
+                            else:
+                                print('no composer')
+                                print('add one at')
+                                print('https://musicbrainz.org/work/' + 
+                                    work_info['work']['id'])
+                            if work_info['work']['title'] in parent_work:
+                                pass
+                            else:
+                                parent_work.append(work_info['work']['title'])
+                                if 'disambiguation' in work_info['work']:
+                                    parent_work_disambig.append(
+                                        work_info['work']['disambiguation'])
+                    break
+                except musicbrainzngs.musicbrainz.NetworkError:
+                    i=i+1
+                except musicbrainzngs.musicbrainz.ResponseError: 
+                    i=i+1
+                
+            print(parent_composer_sort)
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
             item['work']                 = u', '.join(work)
