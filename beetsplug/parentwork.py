@@ -69,7 +69,7 @@ class ParentWorkPlugin(BeetsPlugin):
                             father_id = work_father['work']['id']
                             partof = True
                             work_info = musicbrainzngs.get_work_by_id(
-                                father_id,includes = ["work-rels", 
+                                father_id,includes = ["work-rels",
                                 "artist-rels"])
         return(work_info)
 
@@ -140,9 +140,9 @@ class ParentWorkPlugin(BeetsPlugin):
                     i=i+1
                 except musicbrainzngs.musicbrainz.ResponseError: 
                     i=i+1
-                if i=5:
-                    print('Work unreachable')
-                    print('recording id: ' + recording_id)
+            if i=5:
+                print('Work unreachable')
+                print('recording id: ' + recording_id)
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
             item['work']                 = u', '.join(work)
