@@ -115,7 +115,6 @@ class ParentWorkPlugin(BeetsPlugin):
                             if 'disambiguation' in work_relation['work']:
                                 work_disambig.append(work_relation['work']
                                         ['disambiguation'])
-                            print(work_id)
                             work_info = find_parentwork(work_id)
                             if 'artist-relation-list' in work_info['work']:
                                 for artist in work_info['work'][
