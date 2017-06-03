@@ -105,6 +105,8 @@ class ParentWorkPlugin(BeetsPlugin):
                     if 'work-relation-list' in rec_rels['recording']:
                         for work_relation in rec_rels['recording'][
                                 'work-relation-list']:
+                            if work_relation['type'] != 'performance':
+                                continue
                             work_id = work_relation['work']['id']
                             work.append(work_relation['work']['title'])
                             if 'disambiguation' in work_info['work']:
