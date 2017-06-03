@@ -140,7 +140,7 @@ class ParentWorkPlugin(BeetsPlugin):
                     i=i+1
                 except musicbrainzngs.musicbrainz.ResponseError: 
                     i=i+1
-            if i=5:
+            if i==5:
                 print('Work unreachable')
                 print('recording id: ' + recording_id)
             item['parent_work']          = u', '.join(parent_work)
