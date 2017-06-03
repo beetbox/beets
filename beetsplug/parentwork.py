@@ -139,7 +139,8 @@ class ParentWorkPlugin(BeetsPlugin):
                     i=i+1
                 except musicbrainzngs.musicbrainz.ResponseError: 
                     i=i+1
-                
+                if i=5
+                    print('Wokr unreachable')
             print(parent_composer_sort)
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
