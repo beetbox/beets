@@ -108,7 +108,7 @@ class ParentWorkPlugin(BeetsPlugin):
                                 continue
                             work_id = work_relation['work']['id']
                             work.append(work_relation['work']['title'])
-                            if 'disambiguation' in work_info['work']:
+                            if 'disambiguation' in work_relation['work']:
                                 work_disambig.append(work_relation['work']
                                         ['disambiguation'])
                             work_info = find_parentwork(work_id)
@@ -143,6 +143,8 @@ class ParentWorkPlugin(BeetsPlugin):
             if i==5:
                 print('Work unreachable')
                 print('recording id: ' + recording_id)
+            print(i)
+            print(parent_composer)
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
             item['work']                 = u', '.join(work)
