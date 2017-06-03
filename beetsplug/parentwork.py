@@ -58,20 +58,19 @@ class ParentWorkPlugin(BeetsPlugin):
     def find_parentwork(work_id):
         work_info = musicbrainzngs.get_work_by_id(work_id,
             includes=["work-rels", "artist-rels"])
-            partof = True
-            while partof:
-                partof = False
-                if 'work-relation-list' in work_info['work']:
-                    for work_father in work_info['work']\
-                        ['work-relation-list']:
-                        if work_father['type'] == 'parts' and\
-                            'direction' in work_father:
-                            if work_father['direction'] == 'backward':
-                                father_id = work_father['work']['id']
-                                partof = True
-                                work_info = musicbrainzngs.\
-                                    get_work_by_id(father_id,
-                                    includes = ["work-rels", "artist-rels"])
+        partof = True
+        while partof:
+            partof = False
+            if 'work-relation-list' in work_info['work']:
+                for work_father in work_info['work']['work-relation-list']:
+                    if work_father['type'] == 'parts' and\
+                        'direction' in work_father:
+                        if work_father['direction'] == 'backward':
+                            father_id = work_father['work']['id']
+                            partof = True
+                            work_info = musicbrainzngs.get_work_by_id(
+                                father_id,includes = ["work-rels", 
+                                "artist-rels"])
         return(work_info)
 
     def find_work(self, items):
@@ -141,7 +140,7 @@ class ParentWorkPlugin(BeetsPlugin):
                     i=i+1
                 except musicbrainzngs.musicbrainz.ResponseError: 
                     i=i+1
-                if i=5
+                if i=5:
                     print('Work unreachable')
                     print('recording id: ' + recording_id)
             item['parent_work']          = u', '.join(parent_work)
