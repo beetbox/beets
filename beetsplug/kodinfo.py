@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2017, Peace Lekalakala. 
+# Copyright 2017, Peace Lekalakala.
 # URL only text file by Sergio Soto, update by Pauli Kettunen.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
