@@ -75,6 +75,12 @@ class DateIntervalTest(unittest.TestCase):
         self.assertExcludes('2000-01-01T12..2000-01-01T13',
                             '2000-01-01T14:30:00')
 
+        # test non-range query
+        self.assertContains('2008-12-01T22',
+                            '2008-12-01T22:30:00')
+        self.assertExcludes('2008-12-01T22',
+                            '2008-12-01T23:30:00')
+
     def test_minute_precision_intervals(self):
         self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
                             '2000-01-01T12:29:59')
