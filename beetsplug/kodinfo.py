@@ -225,10 +225,9 @@ def kodi_path():
             'Authorization': authorization}
         url = "http://{0}:{1}/jsonrpc".format(
             config['kodi']['host'], config['kodi']['port'])
-        music_lib_name = "{0}".format(config['kodi']['library_name'])
         data = {"jsonrpc": "2.0",
                 "method": "Files.GetSources",
-                "params": {"media": music_lib_name},
+                "params": {"media": "music"},
                 "id": 1}
         json_data = json.dumps(data).encode('utf-8')
         request = Request(url, json_data, headers)
@@ -366,12 +365,8 @@ def album_nfo_xml(albumid):
 def artist_nfo_xml(albumid):
     """Create XML file with artist information."""
     for album in lib.albums(albumid):
-        albumid = 'mb_albumid:' + album.mb_albumid
         artistid = 'mb_albumartistid:' + album.mb_albumartistid
-        artistnfo = os.path.join(
-            album.path.decode('utf8'),
-            os.pardir,
-            'artist.nfo')
+        artistnfo = os.path.join(artist_path(albumid)[0], 'artist.nfo')
         if album.albumartist in ['Various Artists', 'Soundtracks',
                                  'Compilations']:
             pass
@@ -449,15 +444,12 @@ class KodiNfo(BeetsPlugin):
         super(KodiNfo, self).__init__()
 
         # Adding defaults.
-        self.config['audiodb'].add({
-            "key": 1})
-        config['kodi'].add({
+        self.config['kodi'].add({
             u'host': u'localhost',
             u'port': 8080,
             u'user': u'kodi',
             u'pwd': u'kodi',
-            u'nfo_format': 'xml',
-            u'library_name': 'music'})
+            u'nfo_format': 'xml'})
         config['kodi']['pwd'].redact = True
         self.register_listener('album_imported', self.create_nfos)
         self.register_listener('database_change', self.listen_for_db_change)
