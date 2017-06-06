@@ -166,7 +166,7 @@ def album_info(albumid):
                 date[1], '02'), format(
                 date[2], '02')))
         url = audiodb_url + "{0}/album-mb.php?i=".format(
-            config['audiodb']['key'])
+            audio_db_key)
 
         if data[5] == 0:
             comp = 'False'
