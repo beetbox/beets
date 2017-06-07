@@ -55,8 +55,6 @@ class ParentWorkPlugin(BeetsPlugin):
     def imported(self, session, task):
         self.find_work(task.items)
 
-    
-
     def find_work(self, items):
     
         def find_parentwork(work_id):
@@ -67,17 +65,17 @@ class ParentWorkPlugin(BeetsPlugin):
             while partof:
                 partof = False
                 if 'work-relation-list' in work_info['work']:
-                    for work_father in work_info['work']\
-                        ['work-relation-list']:
+                    for work_father in work_info['work'][
+                            'work-relation-list']:
                         if work_father['type'] == 'parts' and\
-                            'direction' in work_father:
+                                'direction' in work_father:
                             if work_father['direction'] == 'backward':
                                 father_id = work_father['work']['id']
                                 partof = True
                                 work_info = musicbrainzngs.get_work_by_id(
-                                    father_id,includes = ["work-rels",
-                                    "artist-rels"])
-            return work_info;
+                                    father_id,includes=["work-rels", 
+                                        "artist-rels"])
+            return work_info
 
         for item in items:
             performer            = []
@@ -91,20 +89,20 @@ class ParentWorkPlugin(BeetsPlugin):
             item.read()
             recording_id = item['mb_trackid']
             performer_types = ['performer', 'instrument', 'vocal',
-                    'conductor', 'performing orchestra', 'chorus master', 
+                'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
-            i=0
-            while i<5:
-                try: 
+            i = 0
+            while i < 5:
+                try:
                     rec_rels = musicbrainzngs.get_recording_by_id(
-                    recording_id, includes=['work-rels', 'artist-rels'])
+                        recording_id, includes=['work-rels', 'artist-rels'])
                     if 'artist-relation-list' in rec_rels['recording']:
                         for dudes in rec_rels['recording'][
                                 'artist-relation-list']:
                             if dudes['type'] in performer_types:
                                 performer.append(dudes['artist']['name'])
-                                performer_sort.append(dudes['artist']
-                                    ['sort-name'])
+                                    performer_sort.append(dudes['artist']
+                                        ['sort-name'])
                     if 'work-relation-list' in rec_rels['recording']:
                         for work_relation in rec_rels['recording'][
                                 'work-relation-list']:
@@ -114,7 +112,7 @@ class ParentWorkPlugin(BeetsPlugin):
                             work.append(work_relation['work']['title'])
                             if 'disambiguation' in work_relation['work']:
                                 work_disambig.append(work_relation['work']
-                                        ['disambiguation'])
+                                    ['disambiguation'])
                             work_info = find_parentwork(work_id)
                             if 'artist-relation-list' in work_info['work']:
                                 for artist in work_info['work'][
