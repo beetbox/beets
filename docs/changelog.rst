@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.4 (in development)
-----------------------
+1.4.4 (June 10, 2017)
+---------------------
 
 This release built up a longer-than-normal list of nifty new features. We now
 support DSF audio files and the importer can hard-link your files, for
