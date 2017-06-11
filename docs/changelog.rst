@@ -11,6 +11,12 @@ Features:
   `r128` configuration option enables this behavior for specific formats.
   Thanks to :user:`autrimpo`. :bug:`2557` :bug:`2560`
 
+Fixes:
+
+* :doc:`/plugins/lastgenre`: Fix a crash when using the `prefer_specific` and
+  `canonical` options together. Thanks to :user:`yacoob`. :bug:`2459`
+  :bug:`2583`
+
 
 1.4.4 (June 10, 2017)
 ---------------------
