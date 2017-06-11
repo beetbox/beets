@@ -4,7 +4,12 @@ Changelog
 1.4.5 (in development)
 ----------------------
 
-Changelog goes here!
+Features:
+
+* :doc:`/plugins/replaygain`: We now keep R128 data in separate tags from
+  classic ReplayGain data for formats that need it (namely, Ogg Opus). A new
+  `r128` configuration option enables this behavior for specific formats.
+  Thanks to :user:`autrimpo`. :bug:`2557` :bug:`2560`
 
 
 1.4.4 (June 10, 2017)
