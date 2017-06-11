@@ -30,7 +30,8 @@ import gmusicapi.clients
 class Gmusic(BeetsPlugin):
     def __init__(self):
         super(Gmusic, self).__init__()
-        # Checks for OAuth2 credentials, if they don't exist - performs authorization
+        # Checks for OAuth2 credentials,
+        # if they don't exist - performs authorization
         self.m = Musicmanager()
         if os.path.isfile(gmusicapi.clients.OAUTH_FILEPATH):
             self.m.login()
