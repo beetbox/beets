@@ -6,6 +6,9 @@ Changelog
 
 Features:
 
+* :ref:`Date queries <datequery>` can now include times, so you can filter
+  your music down to the second. Thanks to :user:`discopatrick`. :bug:`2506`
+  :bug:`2528`
 * :doc:`/plugins/replaygain`: We now keep R128 data in separate tags from
   classic ReplayGain data for formats that need it (namely, Ogg Opus). A new
   `r128` configuration option enables this behavior for specific formats.
