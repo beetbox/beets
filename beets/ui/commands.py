@@ -1464,6 +1464,7 @@ def move_items(lib, dest, query, copy, album, pretend, export=False,
     isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
 
+    copy = copy or export  # Exporting always copies.
     action = u'Copying' if copy else u'Moving'
     act = u'copy' if copy else u'move'
     entity = u'album' if album else u'item'
@@ -1480,22 +1481,6 @@ def move_items(lib, dest, query, copy, album, pretend, export=False,
             show_path_changes([(obj.path, obj.destination(basedir=dest))
                                for obj in objs])
     else:
-        # Copying files without modifying the database.
-        if export:
-            # export(file) function copies a file without modifying
-            # the database.
-
-            def export(file):
-                # Create necessary ancestry for the copy.
-                util.mkdirall(file.destination(basedir=dest))
-                util.copy(file.path, file.destination(basedir=dest))
-            if album:
-                for obj in objs:
-                    for item in obj.items():
-                        export(item)
-            else:
-                for obj in objs:
-                    export(obj)
         if confirm:
             objs = ui.input_select_objects(
                 u'Really %s' % act, objs,
@@ -1505,8 +1490,12 @@ def move_items(lib, dest, query, copy, album, pretend, export=False,
         for obj in objs:
             log.debug(u'moving: {0}', util.displayable_path(obj.path))
 
-            obj.move(copy, basedir=dest)
-            obj.store()
+            if export:
+                # Copy without affecting the database.
+                obj.move(True, basedir=dest, store=False)
+            else:
+                # Ordinary move/copy: store the new path.
+                obj.move(copy, basedir=dest)
 
 
 def move_func(lib, opts, args):
