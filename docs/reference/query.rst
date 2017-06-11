@@ -201,15 +201,17 @@ but before 23:00::
 
     $ beet ls 'added:2008-12-01T22'
 
-Find all items added on or after 2008-12-01 22:45::
+To find all items added on or after 2008-12-01 at 22:45::
 
     $ beet ls 'added:2008-12-01T22:45..'
 
-Find all items added on 2008-12-01, at or after 22:45:20 but before 22:45:41::
+To find all items added on 2008-12-01, at or after 22:45:20 but before
+22:45:41::
 
     $ beet ls 'added:2008-12-01T22:45:20..2008-12-01T22:45:40'
 
-Examples of each time format::
+Here are example of the three ways to separate dates from times. All of these
+queries do the same thing::
 
     $ beet ls 'added:2008-12-01T22:45:20'
     $ beet ls 'added:2008-12-01t22:45:20'
