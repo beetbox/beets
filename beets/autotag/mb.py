@@ -333,11 +333,22 @@ def album_info(release):
         disambig.append(release.get('disambiguation'))
     info.albumdisambig = u', '.join(disambig)
 
-    # Release type not always populated.
+    # Retrieves the Release type.
+    # Considers all other release types(including primary and secondary) (new)
+    # and logs them.
     if 'type' in release['release-group']:
         reltype = release['release-group']['type']
         if reltype:
             info.albumtype = reltype.lower()
+    if 'primary-type' in release['release-group']:
+        rel_primarytype = release['release-group']['primary-type']
+        if rel_primarytype:
+            log.debug('Primary Type (new data): ' + rel_primarytype.lower())
+    if 'secondary-type-list' in release['release-group']:
+        if release['release-group']['secondary-type-list']:
+            log.debug('Secondary Type(s) (new data): ' + ', '.join(
+                [secondarytype.lower() for secondarytype in
+                    release['release-group']['secondary-type-list']]))
 
     # Release events.
     info.country, release_date = _preferred_release_event(release)
