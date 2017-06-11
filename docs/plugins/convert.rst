@@ -145,47 +145,26 @@ and the given command is used for all conversions.
 Gapless MP3 encoding
 ````````````````````
 
-Due to limitations in the ``ffmpeg`` encoder, by default the ``convert`` plugin
-does not produce MP3s with accurate length tags (it does not write a LAME MP3
-info tag). This means that the MP3s are not "`gapless`_", and can result in
-noticeable gaps between tracks during playback.
-
-.. _gapless: http://wiki.hydrogenaud.io/index.php?title=Gapless_playback
-
-To work around this problem, you must use the `LAME`_ MP3 encoder, which will
-produce MP3s with accurate length tags.
-
-.. _LAME: http://lame.sourceforge.net/
-
-To do this on Linux, you need to install ``lame``, create a script (e.g.
-``/home/user/.config/beets/mp3.sh``) with the following contents, and make it
-executable.
-
-::
+While FFmpeg cannot produce "`gapless`_" MP3s by itself, you can create them
+by using `LAME`_ directly. Use a shell script like this to pipe the output of
+FFmpeg into the LAME tool::
 
     #!/bin/sh
     ffmpeg -i "$1" -f wav - | lame -V 2 --noreplaygain - "$2"
 
-Then configure the ``convert`` plugin to use the script.
-
-::
+Then configure the ``convert`` plugin to use the script::
 
     convert:
-        command: /home/user/.config/beets/mp3.sh $source $dest
+        command: /path/to/script.sh $source $dest
         extension: mp3
 
-.. note::
-
-    In the script above, ``ffmpeg`` output format ``wav`` is used to produce an
-    accurate length header to pass to ``lame``.
-
-    ``--noreplaygain`` configures ``lame`` not to do ReplayGain analysis and
-    tagging itself, because it can only do a track level analysis. Instead, you
-    can use the beets ``replaygain`` plugin to analyse and add both Album and
-    Track ReplayGain tags.
-
-    See the ``lame`` `documentation`_ and the `HydrogenAudio wiki`_ for other
-    ``lame`` configuration options, and a thorough discussion of MP3 encoding.
+This strategy configures FFmpeg to produce a WAV file with an accurate length
+header for LAME to use. Using ``--noreplaygain`` disables gain analysis; you
+can use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
+`documentation`_ and the `HydrogenAudio wiki`_ for other LAME configuration
+options and a thorough discussion of MP3 encoding.
 
 .. _documentation: http://lame.sourceforge.net/using.php
 .. _HydrogenAudio wiki: http://wiki.hydrogenaud.io/index.php?title=LAME
+.. _gapless: http://wiki.hydrogenaud.io/index.php?title=Gapless_playback
+.. _LAME: http://lame.sourceforge.net/
