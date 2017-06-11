@@ -499,7 +499,7 @@ class ExportTest(_common.TestCase):
     def _move(self, query=(), dest=None, copy=False, album=False,
               pretend=False, export=True):
         commands.move_items(self.lib, dest, query, copy, album,
-                            pretend, export)
+                            pretend, export=export)
 
     def test_export_item(self):
         self._move()
