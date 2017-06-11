@@ -533,12 +533,20 @@ class Period(object):
     instants of time during January 2014.
     """
 
-    precisions = ('year', 'month', 'day')
-    date_formats = ('%Y', '%Y-%m', '%Y-%m-%d')
+    precisions = ('year', 'month', 'day', 'hour', 'minute', 'second')
+    date_formats = (
+        ('%Y',),  # year
+        ('%Y-%m',),  # month
+        ('%Y-%m-%d',),  # day
+        ('%Y-%m-%dT%H', '%Y-%m-%d %H'),  # hour
+        ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'),  # minute
+        ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
+    )
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
-        precision (a string, one of "year", "month", or "day").
+        precision (a string, one of "year", "month", "day", "hour", "minute",
+        or "second").
         """
         if precision not in Period.precisions:
             raise ValueError(u'Invalid precision {0}'.format(precision))
@@ -551,16 +559,21 @@ class Period(object):
         string is empty, or raise an InvalidQueryArgumentValueError if
         the string could not be parsed to a date.
         """
+
+        def find_date_and_format(string):
+            for ord, format in enumerate(cls.date_formats):
+                for format_option in format:
+                    try:
+                        date = datetime.strptime(string, format_option)
+                        return date, ord
+                    except ValueError:
+                        # Parsing failed.
+                        pass
+            return (None, None)
+
         if not string:
             return None
-        date = None
-        for ordinal, date_format in enumerate(cls.date_formats):
-            try:
-                date = datetime.strptime(string, date_format)
-                break
-            except ValueError:
-                # Parsing failed.
-                pass
+        date, ordinal = find_date_and_format(string)
         if date is None:
             raise InvalidQueryArgumentValueError(string,
                                                  'a valid datetime string')
@@ -582,6 +595,12 @@ class Period(object):
                 return date.replace(year=date.year + 1, month=1)
         elif 'day' == precision:
             return date + timedelta(days=1)
+        elif 'hour' == precision:
+            return date + timedelta(hours=1)
+        elif 'minute' == precision:
+            return date + timedelta(minutes=1)
+        elif 'second' == precision:
+            return date + timedelta(seconds=1)
         else:
             raise ValueError(u'unhandled precision {0}'.format(precision))
 
