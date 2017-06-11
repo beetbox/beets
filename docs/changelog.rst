@@ -13,6 +13,9 @@ Features:
   classic ReplayGain data for formats that need it (namely, Ogg Opus). A new
   `r128` configuration option enables this behavior for specific formats.
   Thanks to :user:`autrimpo`. :bug:`2557` :bug:`2560`
+* The :ref:`move-cmd` command gained a new ``--export`` flag, which copies
+  files to an external location without changing their location in the library
+  database. Thanks to :user:`SpirosChadoulos`. :bug:`435` :bug:`2510`
 
 Fixes:
 
