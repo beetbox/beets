@@ -156,6 +156,7 @@ class RemoveTest(_common.TestCase):
 
 
 class ModifyTest(unittest.TestCase, TestHelper):
+
     def setUp(self):
         self.setup_beets()
         self.album = self.add_album_fixture()
@@ -346,6 +347,7 @@ class ModifyTest(unittest.TestCase, TestHelper):
 
 
 class WriteTest(unittest.TestCase, TestHelper):
+
     def setUp(self):
         self.setup_beets()
 
@@ -1248,7 +1250,6 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
     """Test CommonOptionsParser and formatting LibModel formatting on 'list'
     command.
     """
-
     def setUp(self):
         self.setup_beets()
         self.lib = library.Library(':memory:')
@@ -1444,7 +1445,6 @@ class EncodingTest(_common.TestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
-
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
