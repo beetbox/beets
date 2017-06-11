@@ -501,36 +501,23 @@ class ExportTest(_common.TestCase):
         commands.move_items(self.lib, dest, query, copy, album,
                             pretend, export=export)
 
-    def test_export_item(self):
-        self._move()
-        self.i.load()
-        self.assertTrue(b'testlibdir' in self.i.path)
-        self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
-
     def test_export_item_custom_dir(self):
         self._move(dest=self.otherdir)
         self.i.load()
-        self.assertTrue(b'testotherdir' in self.i.path)
-        self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
+        self.assertEqual(self.i.path, self.itempath)
+        self.assertExists(self.otherdir)
 
     def test_export_album_custom_dir(self):
         self._move(dest=self.otherdir, album=True)
         self.i.load()
-        self.assertTrue(b'testotherdir' in self.i.path)
-        self.assertExists(self.i.path)
-        self.assertNotExists(self.itempath)
+        self.assertEqual(self.i.path, self.itempath)
+        self.assertExists(self.otherdir)
 
     def test_pretend_export_item(self):
         self._move(dest=self.otherdir, pretend=True)
         self.i.load()
         self.assertIn(b'srcfile', self.i.path)
-
-    def test_pretend_export_album(self):
-        self._move(album=True, pretend=True)
-        self.i.load()
-        self.assertIn(b'srcfile', self.i.path)
+        self.assertNotExists(self.otherdir)
 
 
 class UpdateTest(_common.TestCase):
