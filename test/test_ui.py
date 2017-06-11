@@ -481,8 +481,6 @@ class ExportTest(_common.TestCase):
     def setUp(self):
         super(ExportTest, self).setUp()
 
-        self.io.install()
-
         self.libdir = os.path.join(self.temp_dir, b'testlibdir')
         os.mkdir(self.libdir)
 
