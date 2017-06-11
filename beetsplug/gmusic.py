@@ -23,20 +23,19 @@ from beets import ui
 from beets import config
 from beets.ui import Subcommand
 from gmusicapi import Musicmanager, Mobileclient
+from gmusicapi.exceptions import NotLoggedIn
 import gmusicapi.clients
-
-
-# Checks for OAuth2 credentials, if they don't exist - performs authorization
-m = Musicmanager()
-if os.path.isfile(gmusicapi.clients.OAUTH_FILEPATH):
-    m.login()
-else:
-    m.perform_oauth()
 
 
 class Gmusic(BeetsPlugin):
     def __init__(self):
         super(Gmusic, self).__init__()
+        # Checks for OAuth2 credentials, if they don't exist - performs authorization
+        self.m = Musicmanager()
+        if os.path.isfile(gmusicapi.clients.OAUTH_FILEPATH):
+            self.m.login()
+        else:
+            self.m.perform_oauth()
 
     def commands(self):
         gupload = Subcommand('gmusic-upload',
@@ -59,19 +58,22 @@ class Gmusic(BeetsPlugin):
         items = lib.items(ui.decargs(args))
         files = [x.path.decode('utf-8') for x in items]
         ui.print_('Uploading your files...')
-        m.upload(filepaths=files)
+        self.m.upload(filepaths=files)
         ui.print_('Your files were successfully added to library')
 
     def search(self, lib, opts, args):
-        email = config['gmusic']['email'].as_str()
-        password = config['gmusic']['password'].as_str()
+        password = config['gmusic']['password']
+        email = config['gmusic']['email']
+        password.redact = True
+        email.redact = True
         # Since Musicmanager doesn't support library management
         # we need to use mobileclient interface
         mobile = Mobileclient()
         try:
-            mobile.login(email, password, Mobileclient.FROM_MAC_ADDRESS)
+            mobile.login(email.as_str(), password.as_str(),
+                         Mobileclient.FROM_MAC_ADDRESS)
             files = mobile.get_all_songs()
-        except:
+        except NotLoggedIn:
             ui.print_('Error occured. Please check your email and password')
         if not args:
             for i, file in enumerate(files, start=1):
@@ -79,12 +81,12 @@ class Gmusic(BeetsPlugin):
                       file['title'], ui.colorize('red', file['album']))
         else:
             if opts.track:
-                print(*self.match(files, args, 'title'))
+                self.match(files, args, 'title')
             else:
-                print(*self.match(files, args, 'artist'))
+                self.match(files, args, 'artist')
 
     @staticmethod
     def match(files, args, search_by):
         for file in files:
-            if ' '.join(args) in file[search_by]:
-                return file['artist'], file['title'], file['album']
+            if ' '.join(ui.decargs(args)) in file[search_by]:
+                print(file['artist'], file['title'], file['album'])

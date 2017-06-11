@@ -3,20 +3,30 @@ Gmusic Plugin
 
 This plugin allows you to manage your Google Play Music library with beets.
 
+
+Installation
+------------
+
+The plugin requires `gmusic`_. You can install it using `pip`::
+
+    pip install gmusicapi
+
+.. _gmusic: https://github.com/simon-weber/gmusicapi/
+
 Usage
 -----
 
 To use the ``gmusic`` plugin, enable it in your configuration file.
 
-Then, add your Google email and password to configuration file under a ``gmusic`` section, if you want to be able to search for songs in your library::
+Then, add your Google email and password to configuration file under a ``gmusic`` section, if you want to be able to search for songs in your library.
+It's not necessary if you only upload files. ::
 
     gmusic:
         email: email
         password: password
 
-It's not necessary if you only upload files.
 
-Now if you want to upload your tracks use ``gmusic-upload`` command::
+If you want to upload your tracks use ``gmusic-upload`` command::
 
     beet gmusic-upload [ARGS...]
 
