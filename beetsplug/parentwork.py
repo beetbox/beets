@@ -58,10 +58,20 @@ class ParentWorkPlugin(BeetsPlugin):
     def find_work(self, items):
     
         def find_parentwork(work_id):
-            "finds the parentwork of a work given its id"
+            """This function finds the parentwork of a work given its id. """
             work_info = musicbrainzngs.get_work_by_id(work_id,
                 includes=["work-rels", "artist-rels"])
             partof = True
+            # The works a given work is related to are listed in 
+            # work_info['work']['work-relation-list']. The relations can be 
+            # diverse: arrangement of, later version of, part of etc. The 
+            # father work (i. e. the work the work is part of) is given by the
+            # relationship 'type' to be 'part' and the relationship 
+            # 'direction' to be 'backwards'. First I assume the work doesn't 
+            # have a father work (i. e. it is its own parentwork), but if in 
+            # the works it is related to there is a work which is his father 
+            # work, then I assume the father work is the parent work and try 
+            # the same with it. 
             while partof:
                 partof = False
                 if 'work-relation-list' in work_info['work']:
@@ -92,7 +102,7 @@ class ParentWorkPlugin(BeetsPlugin):
                 'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
             i = 0
-            while i < 5:
+            while i < 1:
                 try:
                     rec_rels = musicbrainzngs.get_recording_by_id(
                         recording_id, includes=['work-rels', 'artist-rels'])
@@ -142,11 +152,12 @@ class ParentWorkPlugin(BeetsPlugin):
                     i=i+1
                 except musicbrainzngs.musicbrainz.ResponseError: 
                     i=i+1
-            if i==5:
+            if i==1:
                 print('Work unreachable')
                 print('recording id: ')
                 print(recording_id)
             else:
+                print(parent_composer)
                 item['parent_work']          = u', '.join(parent_work)
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
                 item['work']                 = u', '.join(work)
