@@ -333,20 +333,23 @@ def album_info(release):
         disambig.append(release.get('disambiguation'))
     info.albumdisambig = u', '.join(disambig)
 
-    # Retrieves the Release type.
-    # Considers all other release types(including primary and secondary) (new)
-    # and logs them.
+    # Get the "classic" Release type. This data comes from a legacy API
+    # feature before MusicBrainz supported multiple release types.
     if 'type' in release['release-group']:
         reltype = release['release-group']['type']
         if reltype:
             info.albumtype = reltype.lower()
+
+    # Log the new-style "primary" and "secondary" release types.
+    # Eventually, we'd like to actually store this data, but we just log
+    # it for now to help understand the differences.
     if 'primary-type' in release['release-group']:
         rel_primarytype = release['release-group']['primary-type']
         if rel_primarytype:
-            log.debug('Primary Type (new data): ' + rel_primarytype.lower())
+            log.debug('primary MB release type: ' + rel_primarytype.lower())
     if 'secondary-type-list' in release['release-group']:
         if release['release-group']['secondary-type-list']:
-            log.debug('Secondary Type(s) (new data): ' + ', '.join(
+            log.debug('secondary MB release type(s): ' + ', '.join(
                 [secondarytype.lower() for secondarytype in
                     release['release-group']['secondary-type-list']]))
 
