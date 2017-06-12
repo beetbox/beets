@@ -112,7 +112,7 @@ class ParentWorkPlugin(BeetsPlugin):
             performer_types = ['performer', 'instrument', 'vocal',
                 'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
-            found=True
+            found = True
             try:
                 rec_rels = musicbrainzngs.get_recording_by_id(
                     recording_id, includes=['work-rels', 'artist-rels'])
@@ -141,7 +141,7 @@ class ParentWorkPlugin(BeetsPlugin):
                 print('Work unreachable')
                 print('recording id: ')
                 print(recording_id)
-                found=False
+                found = False
 
             if found:
                 print(parent_composer)
