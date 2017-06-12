@@ -42,16 +42,6 @@ class ParentWorkPlugin(BeetsPlugin):
     def command(self, lib, opts, args):
         self.find_work(lib.items(ui.decargs(args)))
 
-    item_types = {
-        'parent_work':          types.STRING,
-        'parent_work_disambig': types.STRING,
-        'work':                 types.STRING,
-        'work_disambig':        types.STRING,
-        'performer':            types.STRING,
-        'performer_sort':       types.STRING,
-        'parent_composer':      types.STRING,
-        'parent_composer_sort': types.STRING}
-
     def imported(self, session, task):
         self.find_work(task.items)
 
