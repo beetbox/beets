@@ -25,6 +25,56 @@ from beets.dbcore import types
 
 import musicbrainzngs
 
+def find_parentwork(work_id):
+    """This function finds the parentwork of a work given its id. """
+    work_info = musicbrainzngs.get_work_by_id(work_id,
+        includes=["work-rels", "artist-rels"])
+    partof = True
+    # The works a given work is related to are listed in
+    # work_info['work']['work-relation-list']. The relations can be
+    # diverse: arrangement of, later version of, part of etc. The
+    # father work (i. e. the work the work is part of) is given by the
+    # relationship 'type' to be 'part' and the relationship
+    # 'direction' to be 'backwards'. First I assume the work doesn't
+    # have a father work (i. e. it is its own parentwork), but if in
+    # the works it is related to there is a work which is his father
+    # work, then I assume the father work is the parent work and try
+    # the same with it.
+    while partof:
+        partof = False
+        if 'work-relation-list' in work_info['work']:
+            for work_father in work_info['work']['work-relation-list']:
+                if work_father['type'] == 'parts' and work_father.get(
+                    'direction') == 'backward':
+                    father_id = work_father['work']['id']
+                    partof = True
+                    work_info = musicbrainzngs.get_work_by_id(
+                        father_id,includes = ["work-rels","artist-rels"])
+    return work_info
+
+def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
+    parent_work_disambig):
+    """Given the parentwork info dict, this function updates the 
+    parent composer etc"""
+    composer_exists=False
+    if 'artist-relation-list' in work_info['work']:
+        for artist in work_info['work']['artist-relation-list']:
+            if artist['type'] == 'composer' and artist['artist'][
+            'name'] not in parent_composer:
+                composer_exists=True
+                parent_composer.append(artist['artist']['name'])
+                parent_composer_sort.append(artist['artist']['sort-name'])
+    if not composer_exists:
+        print('no composer')
+        print('add one at')
+        print('https://musicbrainz.org/work/' + 
+            work_info['work']['id'])
+    if work_info['work']['title'] in parent_work:
+        pass
+    else:
+        parent_work.append(work_info['work']['title'])
+        if 'disambiguation' in work_info['work']:
+            parent_work_disambig.append(work_info['work']['disambiguation'])
 
 class ParentWorkPlugin(BeetsPlugin):
 
@@ -47,65 +97,17 @@ class ParentWorkPlugin(BeetsPlugin):
 
     def find_work(self, items):
 
-        def find_parentwork(work_id):
-            """This function finds the parentwork of a work given its id. """
-            work_info = musicbrainzngs.get_work_by_id(work_id,
-                includes=["work-rels", "artist-rels"])
-            partof = True
-            # The works a given work is related to are listed in
-            # work_info['work']['work-relation-list']. The relations can be
-            # diverse: arrangement of, later version of, part of etc. The
-            # father work (i. e. the work the work is part of) is given by the
-            # relationship 'type' to be 'part' and the relationship
-            # 'direction' to be 'backwards'. First I assume the work doesn't
-            # have a father work (i. e. it is its own parentwork), but if in
-            # the works it is related to there is a work which is his father
-            # work, then I assume the father work is the parent work and try
-            # the same with it.
-            while partof:
-                partof = False
-                if 'work-relation-list' in work_info['work']:
-                    for work_father in work_info['work'][
-                            'work-relation-list']:
-                        if work_father['type'] == 'parts' and\
-                                work_father.get('direction') == 'backward':
-                            father_id = work_father['work']['id']
-                            partof = True
-                            work_info = musicbrainzngs.get_work_by_id(
-                                father_id,includes = ["work-rels",
-                                    "artist-rels"])
-            return work_info
-            
-        def get_info(work_info,parent_composer,parent_composer_sort,
-            parent_work,parent_work_disambig):
-            """Given the parentwork info dict, this function updates the 
-            parent composer etc"""
-
-            if 'artist-relation-list' in work_info['work']:
-                for artist in work_info['work']['artist-relation-list']:
-                    if artist['type'] == 'composer' and artist['artist'][
-                    'name'] not in parent_composer:
-                        parent_composer.append(artist['artist']['name'])
-                        parent_composer_sort.append(artist['artist']
-                            ['sort-name'])
-            else:
-                print('no composer')
-                print('add one at')
-                print('https://musicbrainz.org/work/' + 
-                    work_info['work']['id'])
-            if work_info['work']['title'] in parent_work:
-                pass
-            else:
-                parent_work.append(work_info['work']['title'])
-                if 'disambiguation' in work_info['work']:
-                    parent_work_disambig.append(
-                        work_info['work']['disambiguation'])
+        
 
         for item in items:
             performer            = []
             performer_sort       = []
             work                 = []
             work_disambig        = []
+            parent_work          = []
+            parent_work_disambig = []
+            parent_composer      = []
+            parent_composer_sort = []
             
             item.read()
             recording_id = item['mb_trackid']
@@ -135,7 +137,7 @@ class ParentWorkPlugin(BeetsPlugin):
                                 ['disambiguation'])
                         work_info = find_parentwork(work_id)
                         get_info(work_info,parent_composer,
-                        parent_composer_sort,parent_work,parnet_work_disambig)
+                        parent_composer_sort,parent_work,parent_work_disambig)
 
             except musicbrainzngs.musicbrainz.WebServiceError: 
                 print('Work unreachable')
