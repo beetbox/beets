@@ -53,15 +53,16 @@ def find_parentwork(work_id):
     return work_info
 
 def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
-    parent_work_disambig):
+    parent_work_disambig,work_ids,composer_ids):
     """Given the parentwork info dict, this function updates the 
     parent composer etc"""
     composer_exists=False
     if 'artist-relation-list' in work_info['work']:
         for artist in work_info['work']['artist-relation-list']:
             if artist['type'] == 'composer' and artist['artist'][
-            'name'] not in parent_composer:
+            'id'] not in composer_ids:
                 composer_exists=True
+                composer_ids.add(artist['artist']['id']
                 parent_composer.append(artist['artist']['name'])
                 parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
@@ -69,10 +70,11 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
         print('add one at')
         print('https://musicbrainz.org/work/' + 
             work_info['work']['id'])
-    if work_info['work']['title'] in parent_work:
+    if work_info['work']['id'] in work_ids:
         pass
     else:
         parent_work.append(work_info['work']['title'])
+        work_ids.add(work_info['work']['id'])
         if 'disambiguation' in work_info['work']:
             parent_work_disambig.append(work_info['work']['disambiguation'])
 
@@ -108,6 +110,8 @@ class ParentWorkPlugin(BeetsPlugin):
             parent_work_disambig = []
             parent_composer      = []
             parent_composer_sort = []
+            work_ids             = set()
+            composer_ids         = set()
             
             item.read()
             recording_id = item['mb_trackid']
@@ -115,6 +119,8 @@ class ParentWorkPlugin(BeetsPlugin):
                 'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
             found = True
+            if item.get('parent_work')!=None:
+                continue
             try:
                 rec_rels = musicbrainzngs.get_recording_by_id(
                     recording_id, includes=['work-rels', 'artist-rels'])
@@ -137,7 +143,8 @@ class ParentWorkPlugin(BeetsPlugin):
                                 ['disambiguation'])
                         work_info = find_parentwork(work_id)
                         get_info(work_info,parent_composer,
-                        parent_composer_sort,parent_work,parent_work_disambig)
+                        parent_composer_sort,parent_work,parent_work_disambig,
+                        work_ids,composer_ids)
 
             except musicbrainzngs.musicbrainz.WebServiceError: 
                 print('Work unreachable')
