@@ -77,7 +77,7 @@ class ParentWorkPlugin(BeetsPlugin):
             return work_info
             
         def get_info(work_info,parent_composer,parent_composer_sort,
-            parent_work,parnet_work_disambig)
+            parent_work,parent_work_disambig)
             """Given the parentwork info dict, this function updates the 
             parent composer etc"""
 
