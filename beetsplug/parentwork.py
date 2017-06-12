@@ -121,7 +121,7 @@ class ParentWorkPlugin(BeetsPlugin):
                     'artist-relation-list']:
                         if dudes['type'] in performer_types:
                             performer.append(dudes['artist']['name'])
-                                performer_sort.append(dudes['artist']
+                            performer_sort.append(dudes['artist']
                                 ['sort-name'])
                 if 'work-relation-list' in rec_rels['recording']:
                     for work_relation in rec_rels['recording'][
