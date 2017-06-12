@@ -57,6 +57,7 @@ like this::
    ftintitle
    fuzzy
    freedesktop
+   gmusic
    hook
    ihate
    importadded
