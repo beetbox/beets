@@ -600,7 +600,7 @@ Example: ::
         genre: 'To Listen'
         collection: 'Unordered'
 
-Note that field/value pairs supplied via ``--set-field`` options on the
+Note that field/value pairs supplied via ``--set`` options on the
 command-line are processed in addition to those specified here. Those values
 override the ones defined here in the case of fields with the same name.
 
