@@ -62,7 +62,7 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
             if artist['type'] == 'composer' and artist['artist'][
             'id'] not in composer_ids:
                 composer_exists=True
-                composer_ids.add(artist['artist']['id']
+                composer_ids.add(artist['artist']['id'])
                 parent_composer.append(artist['artist']['name'])
                 parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
