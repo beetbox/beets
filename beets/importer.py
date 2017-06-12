@@ -537,15 +537,14 @@ class ImportTask(BaseImportTask):
         """Sets the fields given at CLI or configuration to the specified
         values.
         """
-        set_fields_dict = config['import']['set_fields']
-        for field in set_fields_dict.keys():
-            value = set_fields_dict[field].get()
+        for field, view in config['import']['set_fields'].items():
+            value = view.get()
             log.debug(u'Set field {1}={2} for {0}',
                       displayable_path(self.paths),
                       field,
                       value)
             self.album[field] = value
-            self.album.store()
+        self.album.store()
 
     def finalize(self, session):
         """Save progress, clean up files, and emit plugin event.
@@ -898,15 +897,14 @@ class SingletonImportTask(ImportTask):
         """Sets the fields given at CLI or configuration to the specified
         values.
         """
-        set_fields_dict = config['import']['set_fields']
-        for field in set_fields_dict.keys():
-            value = set_fields_dict[field].get()
+        for field, view in config['import']['set_fields'].items():
+            value = view.get()
             log.debug(u'Set field {1}={2} for {0}',
                       displayable_path(self.paths),
                       field,
                       value)
             self.item[field] = value
-            self.item.store()
+        self.item.store()
 
 
 # FIXME The inheritance relationships are inverted. This is why there
@@ -1418,6 +1416,9 @@ def apply_choice(session, task):
 
     # If ``set_fields`` is set, set those fields to the
     # configured values.
+    # NOTE: This cannot be done before the ``task.add()`` call above,
+    # because then the ``ImportTask`` won't have an `album` for which
+    # it can set the fields.
     if config['import']['set_fields']:
         task.set_fields()
 
