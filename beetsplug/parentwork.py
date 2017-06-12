@@ -100,7 +100,6 @@ class ParentWorkPlugin(BeetsPlugin):
                 if 'disambiguation' in work_info['work']:
                     parent_work_disambig.append(
                         work_info['work']['disambiguation'])
-            
 
         for item in items:
             performer            = []
