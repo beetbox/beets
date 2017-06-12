@@ -101,62 +101,59 @@ class ParentWorkPlugin(BeetsPlugin):
             performer_types = ['performer', 'instrument', 'vocal',
                 'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
-            i = 0
-            while i < 1:
-                try:
-                    rec_rels = musicbrainzngs.get_recording_by_id(
-                        recording_id, includes=['work-rels', 'artist-rels'])
-                    if 'artist-relation-list' in rec_rels['recording']:
-                        for dudes in rec_rels['recording'][
+            found=True
+            try:
+                rec_rels = musicbrainzngs.get_recording_by_id(
+                    recording_id, includes=['work-rels', 'artist-rels'])
+                if 'artist-relation-list' in rec_rels['recording']:
+                    for dudes in rec_rels['recording'][
+                            'artist-relation-list']:
+                        if dudes['type'] in performer_types:
+                            performer.append(dudes['artist']['name'])
+                                performer_sort.append(dudes['artist']
+                                    ['sort-name'])
+                if 'work-relation-list' in rec_rels['recording']:
+                    for work_relation in rec_rels['recording'][
+                            'work-relation-list']:
+                        if work_relation['type'] != 'performance':
+                            continue
+                        work_id = work_relation['work']['id']
+                        work.append(work_relation['work']['title'])
+                        if 'disambiguation' in work_relation['work']:
+                            work_disambig.append(work_relation['work']
+                                ['disambiguation'])
+                        work_info = find_parentwork(work_id)
+                        if 'artist-relation-list' in work_info['work']:
+                            for artist in work_info['work'][
                                 'artist-relation-list']:
-                            if dudes['type'] in performer_types:
-                                performer.append(dudes['artist']['name'])
-                                    performer_sort.append(dudes['artist']
+                                if artist['type'] == 'composer' and not\
+                                    artist['artist']['name'] in\
+                                    parent_composer:
+                                    parent_composer.append(artist\
+                                        ['artist']['name'])
+                                    parent_composer_sort.append(
+                                        artist['artist']
                                         ['sort-name'])
-                    if 'work-relation-list' in rec_rels['recording']:
-                        for work_relation in rec_rels['recording'][
-                                'work-relation-list']:
-                            if work_relation['type'] != 'performance':
-                                continue
-                            work_id = work_relation['work']['id']
-                            work.append(work_relation['work']['title'])
-                            if 'disambiguation' in work_relation['work']:
-                                work_disambig.append(work_relation['work']
-                                    ['disambiguation'])
-                            work_info = find_parentwork(work_id)
-                            if 'artist-relation-list' in work_info['work']:
-                                for artist in work_info['work'][
-                                    'artist-relation-list']:
-                                    if artist['type'] == 'composer' and not\
-                                        artist['artist']['name'] in\
-                                        parent_composer:
-                                        parent_composer.append(artist\
-                                            ['artist']['name'])
-                                        parent_composer_sort.append(
-                                            artist['artist']
-                                            ['sort-name'])
-                            else:
-                                print('no composer')
-                                print('add one at')
-                                print('https://musicbrainz.org/work/' + 
-                                    work_info['work']['id'])
-                            if work_info['work']['title'] in parent_work:
-                                pass
-                            else:
-                                parent_work.append(work_info['work']['title'])
-                                if 'disambiguation' in work_info['work']:
-                                    parent_work_disambig.append(
-                                        work_info['work']['disambiguation'])
-                    break
-                except musicbrainzngs.musicbrainz.NetworkError:
-                    i=i+1
-                except musicbrainzngs.musicbrainz.ResponseError: 
-                    i=i+1
-            if i==1:
+                        else:
+                            print('no composer')
+                            print('add one at')
+                            print('https://musicbrainz.org/work/' + 
+                                work_info['work']['id'])
+                        if work_info['work']['title'] in parent_work:
+                            pass
+                        else:
+                            parent_work.append(work_info['work']['title'])
+                            if 'disambiguation' in work_info['work']:
+                                parent_work_disambig.append(
+                                    work_info['work']['disambiguation'])
+
+            except musicbrainzngs.musicbrainz.WebServiceError: 
                 print('Work unreachable')
                 print('recording id: ')
                 print(recording_id)
-            else:
+                found=False
+
+            if found:
                 print(parent_composer)
                 item['parent_work']          = u', '.join(parent_work)
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
