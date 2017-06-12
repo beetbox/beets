@@ -534,6 +534,9 @@ class ImportTask(BaseImportTask):
                                 lib.directory)
 
     def set_fields(self):
+        """Sets the fields given at CLI or configuration to the specified
+        values.
+        """
         set_fields_dict = config['import']['set_fields']
         for field in set_fields_dict.keys():
             value = set_fields_dict[field].get()
@@ -892,7 +895,8 @@ class SingletonImportTask(ImportTask):
         self.item.load()
 
     def set_fields(self):
-        """Similar to ``ImportTask.set_fields``, but for singleton items.
+        """Sets the fields given at CLI or configuration to the specified
+        values.
         """
         set_fields_dict = config['import']['set_fields']
         for field in set_fields_dict.keys():
