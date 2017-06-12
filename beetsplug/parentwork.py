@@ -118,11 +118,11 @@ class ParentWorkPlugin(BeetsPlugin):
                     recording_id, includes=['work-rels', 'artist-rels'])
                 if 'artist-relation-list' in rec_rels['recording']:
                     for dudes in rec_rels['recording'][
-                            'artist-relation-list']:
+                    'artist-relation-list']:
                         if dudes['type'] in performer_types:
                             performer.append(dudes['artist']['name'])
                                 performer_sort.append(dudes['artist']
-                                    ['sort-name'])
+                                ['sort-name'])
                 if 'work-relation-list' in rec_rels['recording']:
                     for work_relation in rec_rels['recording'][
                             'work-relation-list']:
