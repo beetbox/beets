@@ -78,13 +78,12 @@ class ParentWorkPlugin(BeetsPlugin):
                     for work_father in work_info['work'][
                             'work-relation-list']:
                         if work_father['type'] == 'parts' and\
-                                'direction' in work_father:
-                            if work_father['direction'] == 'backward':
-                                father_id = work_father['work']['id']
-                                partof = True
-                                work_info = musicbrainzngs.get_work_by_id(
-                                    father_id,includes=["work-rels", 
-                                        "artist-rels"])
+                                work_father.get('direction')=='backward'
+                            father_id = work_father['work']['id']
+                            partof = True
+                            work_info = musicbrainzngs.get_work_by_id(
+                                father_id,includes=["work-rels", 
+                                    "artist-rels"])
             return work_info
 
         for item in items:
