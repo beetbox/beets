@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2017, Peace Lekalakala.
-# URL only text file by Sergio Soto, update by Pauli Kettunen.
+# URL only text file by Sergio Soto.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -24,9 +24,7 @@ as per kodiupdate plugin
         port: 8080
         user: user
         pwd: secret
-        music_lib_name: music
-    audiodb:
-        key: secretkey
+        nfo_format: xml
 """
 from __future__ import absolute_import, division, print_function
 
@@ -44,10 +42,6 @@ import beets.library
 from beets.plugins import BeetsPlugin
 
 from pathlib import Path
-
-from lxml import etree as et
-
-import simplejson
 
 audio_db_key = '195010'
 
@@ -111,7 +105,7 @@ def artist_info(albumid):
 
         try:
             response = urllib.request.urlopen(url + data[2])
-            data2 = simplejson.load(response)["artists"][0]
+            data2 = json.load(response)["artists"][0]
 
         except (ValueError, TypeError):
             # catch simplejson.decoder.JSONDecodeError and load emptydata
@@ -175,7 +169,7 @@ def album_info(albumid):
 
         try:
             response = urllib.request.urlopen(url + data[2])
-            data2 = simplejson.load(response)["album"][0]
+            data2 = json.load(response)["album"][0]
 
         except (ValueError, TypeError):
             # catch simplejson.decoder.JSONDecodeError and load emptydata
@@ -231,7 +225,7 @@ def kodi_path():
                 "id": 1}
         json_data = json.dumps(data).encode('utf-8')
         request = Request(url, json_data, headers)
-        result = simplejson.load(urlopen(request))
+        result = json.load(urlopen(request))
         _kodi_path = result['result']['sources'][0]['file']
         return _kodi_path
     except (requests.exceptions.RequestException, ValueError, TypeError):
@@ -305,13 +299,14 @@ def album_nfo_text(albumid, mb_albumid, mb_artistid):
         pass  # No artist.nfo file for compilation albums
     else:
         artist_nfo_file = os.path.join(artist_path(albumid)[0],
-                                       'artsist.nfo')
+                                       'artist.nfo')
         with open(artist_nfo_file, 'w') as f:
                 f.write(LINK_ARTIST.format(mb_artistid))
 
 
 def album_nfo_xml(albumid):
     """Create XML file with album information."""
+    from lxml import etree as et
     for album in lib.albums(albumid):
         albumnfo = os.path.join(album.path.decode('utf8'), 'album.nfo')
         albumid = 'mb_albumid:' + album.mb_albumid
@@ -371,6 +366,7 @@ def artist_nfo_xml(albumid):
                                  'Compilations']:
             pass
         else:
+            from lxml import etree as et
             root = et.Element('artist')
             for i in range(len(artist_tags)):
                 artist_tags[i] = et.SubElement(
@@ -386,8 +382,7 @@ def artist_nfo_xml(albumid):
                 thumb.text = ''
             else:
                 thumb_location = os.path.join(
-                    album.path.decode('utf8'),
-                    os.pardir, 'artist.tbn')
+                    artist_path(albumid)[0], 'artist.tbn')
                 urllib.request.urlretrieve(
                     artist_info(albumid)[11], thumb_location)
                 thumb = et.SubElement(root, 'thumb')
@@ -415,27 +410,6 @@ def artist_nfo_xml(albumid):
             print(xml, file=open(artistnfo, 'w+'))
 
 
-def update_kodi(host, port, user, password):
-    """Send request to the Kodi api to start a library refresh."""
-    """By Pauli Kettunen"""
-    url = "http://{0}:{1}/jsonrpc/".format(host, port)
-
-    """Content-Type: application/json is mandatory"""
-    """according to the kodi jsonrpc documentation"""
-
-    headers = {'Content-Type': 'application/json'}
-
-    # Create the payload. Id seems to be mandatory.
-    payload = {'jsonrpc': '2.0', 'method': 'AudioLibrary.Scan', 'id': 1}
-    r = requests.post(
-        url,
-        auth=(user, password),
-        json=payload,
-        headers=headers)
-
-    return r
-
-
 class KodiNfo(BeetsPlugin):
     """KodiNfo Plugin."""
 
@@ -452,7 +426,6 @@ class KodiNfo(BeetsPlugin):
             u'nfo_format': 'xml'})
         config['kodi']['pwd'].redact = True
         self.register_listener('album_imported', self.create_nfos)
-        self.register_listener('database_change', self.listen_for_db_change)
 
     def create_nfos(self, lib, album):
         """Create nfos as per choice in config."""
@@ -463,8 +436,8 @@ class KodiNfo(BeetsPlugin):
             albumid = 'mb_albumid:' + album.mb_albumid
             mb_albumid = album.mb_albumid
             mb_artistid = album.mb_albumartistid
-            nfo_format = '{0}'.format(config['kodi']['nfo_format'])
-            if nfo_format in 'mbid_only_text':
+            nfo_format = str(config['kodi']['nfo_format'])
+            if nfo_format in 'text':
                 self._log.info(u'Creating url only text format .nfo file...')
                 album_nfo_text(albumid, mb_albumid, mb_artistid)
             else:
@@ -473,23 +446,3 @@ class KodiNfo(BeetsPlugin):
                 artist_nfo_xml(albumid)
         except ValueError:
             self._log.info(u"Album ID is not valid MBID...can't create .nfos")
-
-    def listen_for_db_change(self, lib, model):
-        """Listen for beets db change and register the update."""
-        self.register_listener('cli_exit', self.update)
-
-    def update(self, lib):
-        """When client exists try sending refresh request to Kodi server."""
-        self._log.info(u'Updating Kodi library...')
-
-        # Try to send update request.
-        try:
-            update_kodi(
-                config['kodi']['host'].get(),
-                config['kodi']['port'].get(),
-                config['kodi']['user'].get(),
-                config['kodi']['pwd'].get())
-            self._log.info(u'... started.')
-
-        except requests.exceptions.RequestException:
-            self._log.warning(u'Update failed.')
