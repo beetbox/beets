@@ -88,8 +88,8 @@ class ParentWorkPlugin(BeetsPlugin):
             
         def get_info(work_info,parent_composer,parent_composer_sort,
             parent_work,parnet_work_disambig)
-            """Given the parentwork info dict, it updates the parent composer 
-            etc"""
+            """Given the parentwork info dict, this function updates the 
+            parent composer etc"""
 
             if 'artist-relation-list' in work_info['work']:
                 for artist in work_info['work']['artist-relation-list']:
