@@ -40,6 +40,7 @@ from beets import config
 from beets import logging
 from beets.util.confit import _package_path
 import six
+from . import _store_dict
 
 VARIOUS_ARTISTS = u'Various Artists'
 PromptChoice = namedtuple('PromptChoice', ['short', 'long', 'callback'])
@@ -1016,6 +1017,12 @@ import_cmd.parser.add_option(
     u'-S', u'--search-id', dest='search_ids', action='append',
     metavar='ID',
     help=u'restrict matching to a specific metadata backend ID'
+)
+import_cmd.parser.add_option(
+    u'--set', dest='set_fields', action='callback',
+    callback=_store_dict,
+    metavar='FIELD=VALUE',
+    help=u'set the given fields to the supplied values'
 )
 import_cmd.func = import_func
 default_commands.append(import_cmd)

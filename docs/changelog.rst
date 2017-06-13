@@ -88,6 +88,14 @@ Here's a full list of new features:
   Thanks to :user:`jansol`.
   :bug:`2488`
   :bug:`2524`
+* A new field, ``composer_sort``, is now supported and fetched from
+  MusicBrainz.
+  Thanks to :user:`dosoe`.
+  :bug:`2519` :bug:`2529`
+* It is now possible to set fields to certain values during import, using
+  either the `importer.set_fields` dictionary in the config file, or by
+  passing one or more `--set field=value` options on the command-line.
+  :bug: `1881`
 
 There are also quite a few fixes:
 
