@@ -1457,7 +1457,8 @@ default_commands.append(modify_cmd)
 
 # move: Move/copy files to the library or a new base directory.
 
-def move_items(lib, dest, query, copy, album, pretend, confirm=False):
+def move_items(lib, dest, query, copy, album, pretend, confirm=False,
+               export=False):
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
@@ -1470,6 +1471,7 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False):
     isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
 
+    copy = copy or export  # Exporting always copies.
     action = u'Copying' if copy else u'Moving'
     act = u'copy' if copy else u'move'
     entity = u'album' if album else u'item'
@@ -1495,8 +1497,12 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False):
         for obj in objs:
             log.debug(u'moving: {0}', util.displayable_path(obj.path))
 
-            obj.move(copy, basedir=dest)
-            obj.store()
+            if export:
+                # Copy without affecting the database.
+                obj.move(True, basedir=dest, store=False)
+            else:
+                # Ordinary move/copy: store the new path.
+                obj.move(copy, basedir=dest)
 
 
 def move_func(lib, opts, args):
@@ -1507,7 +1513,7 @@ def move_func(lib, opts, args):
             raise ui.UserError(u'no such directory: %s' % dest)
 
     move_items(lib, dest, decargs(args), opts.copy, opts.album, opts.pretend,
-               opts.timid)
+               opts.timid, opts.export)
 
 
 move_cmd = ui.Subcommand(
@@ -1528,6 +1534,10 @@ move_cmd.parser.add_option(
 move_cmd.parser.add_option(
     u'-t', u'--timid', dest='timid', action='store_true',
     help=u'always confirm all actions'
+)
+move_cmd.parser.add_option(
+    u'-e', u'--export', default=False, action='store_true',
+    help=u'copy without changing the database path'
 )
 move_cmd.parser.add_album_option()
 move_cmd.func = move_func
