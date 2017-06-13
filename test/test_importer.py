@@ -543,6 +543,38 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
         self.assertEqual(len(self.lib.items()), 2)
         self.assertEqual(len(self.lib.albums()), 2)
 
+    def test_set_fields(self):
+        genre = u"\U0001F3B7 Jazz"
+        collection = u"To Listen"
+
+        config['import']['set_fields'] = {
+            u'collection': collection,
+            u'genre': genre
+        }
+
+        # As-is item import.
+        self.assertEqual(self.lib.albums().get(), None)
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+
+        for item in self.lib.items():
+            item.load()  # TODO: Not sure this is necessary.
+            self.assertEqual(item.genre, genre)
+            self.assertEqual(item.collection, collection)
+            # Remove item from library to test again with APPLY choice.
+            item.remove()
+
+        # Autotagged.
+        self.assertEqual(self.lib.albums().get(), None)
+        self.importer.clear_choices()
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+
+        for item in self.lib.items():
+            item.load()
+            self.assertEqual(item.genre, genre)
+            self.assertEqual(item.collection, collection)
+
 
 class ImportTest(_common.TestCase, ImportHelper):
     """Test APPLY, ASIS and SKIP choices.
@@ -671,6 +703,38 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         with self.assertRaises(AttributeError):
             self.lib.items().get().data_source
+
+    def test_set_fields(self):
+        genre = u"\U0001F3B7 Jazz"
+        collection = u"To Listen"
+
+        config['import']['set_fields'] = {
+            u'collection': collection,
+            u'genre': genre
+        }
+
+        # As-is album import.
+        self.assertEqual(self.lib.albums().get(), None)
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+
+        for album in self.lib.albums():
+            album.load()  # TODO: Not sure this is necessary.
+            self.assertEqual(album.genre, genre)
+            self.assertEqual(album.collection, collection)
+            # Remove album from library to test again with APPLY choice.
+            album.remove()
+
+        # Autotagged.
+        self.assertEqual(self.lib.albums().get(), None)
+        self.importer.clear_choices()
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+
+        for album in self.lib.albums():
+            album.load()
+            self.assertEqual(album.genre, genre)
+            self.assertEqual(album.collection, collection)
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
