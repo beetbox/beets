@@ -558,7 +558,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
         self.importer.run()
 
         for item in self.lib.items():
-            item.load() # TODO: Not sure this is necessary.
+            item.load()  # TODO: Not sure this is necessary.
             self.assertEqual(item.genre, genre)
             self.assertEqual(item.collection, collection)
             # Remove item from library to test again with APPLY choice.
@@ -719,7 +719,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
 
         for album in self.lib.albums():
-            album.load() # TODO: Not sure this is necessary.
+            album.load()  # TODO: Not sure this is necessary.
             self.assertEqual(album.genre, genre)
             self.assertEqual(album.collection, collection)
             # Remove album from library to test again with APPLY choice.
