@@ -6,10 +6,10 @@ Changelog
 
 Features:
 
-* It is now possible to set fields to certain values during import, using
-  either the `importer.set_fields` dictionary in the config file, or by
-  passing one or more `--set field=value` options on the command-line.
-  :bug: `1881`
+* You can now set fields to certain values during :ref:`import-cmd`, using
+  either a ``--set field=value`` command-line flag or a new :ref:`set_fields`
+  configuration option under the `importer` section.
+  Thanks to :user:`bartkl`. :bug: `1881` :bug:`2581`
 * :ref:`Date queries <datequery>` can now include times, so you can filter
   your music down to the second. Thanks to :user:`discopatrick`. :bug:`2506`
   :bug:`2528`

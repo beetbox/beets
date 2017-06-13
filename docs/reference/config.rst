@@ -591,18 +591,15 @@ Default: ``no``.
 set_fields
 ~~~~~~~~~~
 
-A dictionary of field/value pairs, each one used to set a field to the
-corresponding value during import.
-
-Example: ::
+A dictionary indicating fields to set to values for newly imported music.
+Here's an example::
 
     set_fields:
         genre: 'To Listen'
         collection: 'Unordered'
 
-Note that field/value pairs supplied via ``--set`` options on the
-command-line are processed in addition to those specified here. Those values
-override the ones defined here in the case of fields with the same name.
+Other field/value pairs supplied via the ``--set`` option on the command-line
+override any settings here for fields with the same name.
 
 Default: ``{}`` (empty).
 
