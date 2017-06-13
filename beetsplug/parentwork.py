@@ -59,12 +59,12 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
     composer_exists=False
     if 'artist-relation-list' in work_info['work']:
         for artist in work_info['work']['artist-relation-list']:
-            if artist['type'] == 'composer' and artist['artist'][
-            'id'] not in composer_ids:
+            if artist['type'] == 'composer':
                 composer_exists=True
-                composer_ids.add(artist['artist']['id'])
-                parent_composer.append(artist['artist']['name'])
-                parent_composer_sort.append(artist['artist']['sort-name'])
+                if artist['artist']['id'] not in composer_ids:
+                    composer_ids.add(artist['artist']['id'])
+                    parent_composer.append(artist['artist']['name'])
+                    parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
         print('no composer')
         print('add one at')
@@ -153,7 +153,6 @@ class ParentWorkPlugin(BeetsPlugin):
                 found = False
 
             if found:
-                print(parent_composer)
                 item['parent_work']          = u', '.join(parent_work)
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
                 item['work']                 = u', '.join(work)
