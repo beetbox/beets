@@ -769,8 +769,8 @@ def show_path_changes(path_changes):
             pad = max_width - len(source)
             log.info(u'{0} {1} -> {2}', source, ' ' * pad, dest)
 
-# Helper functions for option parsing.
 
+# Helper functions for option parsing.
 
 def _store_dict(option, opt_str, value, parser):
     """Custom action callback to parse options which have ``key=value``
