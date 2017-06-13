@@ -58,6 +58,51 @@ class DateIntervalTest(unittest.TestCase):
         self.assertExcludes('1999-12..2000-02', '1999-11-30T23:59:59')
         self.assertExcludes('1999-12..2000-02', '2000-03-01T00:00:00')
 
+    def test_hour_precision_intervals(self):
+        # test with 'T' separator
+        self.assertExcludes('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T11:59:59')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T12:00:00')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T12:30:00')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T13:30:00')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T13:59:59')
+        self.assertExcludes('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T14:00:00')
+        self.assertExcludes('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T14:30:00')
+
+        # test non-range query
+        self.assertContains('2008-12-01T22',
+                            '2008-12-01T22:30:00')
+        self.assertExcludes('2008-12-01T22',
+                            '2008-12-01T23:30:00')
+
+    def test_minute_precision_intervals(self):
+        self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:29:59')
+        self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:30:00')
+        self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:30:30')
+        self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:31:59')
+        self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:32:00')
+
+    def test_second_precision_intervals(self):
+        self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:49')
+        self.assertContains('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:50')
+        self.assertContains('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:55')
+        self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:56')
+
     def test_unbounded_endpoints(self):
         self.assertContains('..', date=datetime.max)
         self.assertContains('..', date=datetime.min)
@@ -139,6 +184,25 @@ class DateQueryConstructTest(unittest.TestCase):
         for q in q_list:
             with self.assertRaises(InvalidQueryArgumentValueError):
                 DateQuery('added', q)
+
+    def test_datetime_uppercase_t_separator(self):
+        date_query = DateQuery('added', '2000-01-01T12')
+        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
+        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+
+    def test_datetime_lowercase_t_separator(self):
+        date_query = DateQuery('added', '2000-01-01t12')
+        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
+        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+
+    def test_datetime_space_separator(self):
+        date_query = DateQuery('added', '2000-01-01 12')
+        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
+        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+
+    def test_datetime_invalid_separator(self):
+        with self.assertRaises(InvalidQueryArgumentValueError):
+            DateQuery('added', '2000-01-01x12')
 
 
 def suite():

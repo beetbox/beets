@@ -154,10 +154,12 @@ def _safe_cast(out_type, val):
             return int(val)
         else:
             # Process any other type as a string.
-            if not isinstance(val, six.string_types):
+            if isinstance(val, bytes):
+                val = val.decode('utf-8', 'ignore')
+            elif not isinstance(val, six.string_types):
                 val = six.text_type(val)
             # Get a number from the front of the string.
-            val = re.match(r'[0-9]*', val.strip()).group(0)
+            val = re.match(r'[\+-]?[0-9]*', val.strip()).group(0)
             if not val:
                 return 0
             else:
@@ -2003,6 +2005,38 @@ class MediaFile(object):
         StorageStyle(u'REPLAYGAIN_ALBUM_PEAK', float_places=6),
         ASFStorageStyle(u'replaygain_album_peak', float_places=6),
         out_type=float,
+    )
+
+    # EBU R128 fields.
+    r128_track_gain = MediaField(
+        MP3DescStorageStyle(
+            u'R128_TRACK_GAIN'
+        ),
+        MP4StorageStyle(
+            '----:com.apple.iTunes:R128_TRACK_GAIN'
+        ),
+        StorageStyle(
+            u'R128_TRACK_GAIN'
+        ),
+        ASFStorageStyle(
+            u'R128_TRACK_GAIN'
+        ),
+        out_type=int,
+    )
+    r128_album_gain = MediaField(
+        MP3DescStorageStyle(
+            u'R128_ALBUM_GAIN'
+        ),
+        MP4StorageStyle(
+            '----:com.apple.iTunes:R128_ALBUM_GAIN'
+        ),
+        StorageStyle(
+            u'R128_ALBUM_GAIN'
+        ),
+        ASFStorageStyle(
+            u'R128_ALBUM_GAIN'
+        ),
+        out_type=int,
     )
 
     initial_key = MediaField(
