@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Uploads files to Google Play Music"""
+"""Upload files to Google Play Music and list songs in its library."""
 
 from __future__ import print_function
 import os.path
@@ -41,6 +41,7 @@ class Gmusic(BeetsPlugin):
     def commands(self):
         gupload = Subcommand('gmusic-upload',
                              help=u'upload your tracks to Google Play Music')
+        gupload.func = self.upload
 
         search = Subcommand('gmusic-songs',
                             help=u'list of songs in Google Play Music library'
@@ -51,7 +52,6 @@ class Gmusic(BeetsPlugin):
         search.parser.add_option('-a', '--artist', dest='artist',
                                  action='store_true',
                                  help='Search by artist')
-        gupload.func = self.upload
         search.func = self.search
         return [gupload, search]
 
@@ -75,7 +75,10 @@ class Gmusic(BeetsPlugin):
                          Mobileclient.FROM_MAC_ADDRESS)
             files = mobile.get_all_songs()
         except NotLoggedIn:
-            ui.print_('Error occured. Please check your email and password')
+            ui.print_(
+                'Authentication error. Please check your email and password.'
+            )
+            return
         if not args:
             for i, file in enumerate(files, start=1):
                 print(i, ui.colorize('blue', file['artist']),
