@@ -13,7 +13,7 @@ Features:
 * :ref:`Date queries <datequery>` can now include times, so you can filter
   your music down to the second. Thanks to :user:`discopatrick`. :bug:`2506`
   :bug:`2528`
-* A new :ref:`/plugins/gmusic` lets you interact with your Google Play Music
+* A new :doc:`/plugins/gmusic` lets you interact with your Google Play Music
   library. Thanks to :user:`tigranl`. :bug:`2553` :bug:`2586`
 * :doc:`/plugins/replaygain`: We now keep R128 data in separate tags from
   classic ReplayGain data for formats that need it (namely, Ogg Opus). A new
