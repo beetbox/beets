@@ -15,7 +15,7 @@
 
 """Upload files to Google Play Music and list songs in its library."""
 
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 import os.path
 
 from beets.plugins import BeetsPlugin
