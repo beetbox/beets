@@ -386,7 +386,7 @@ class CollectionQuery(Query):
 
     def __eq__(self, other):
         return super(CollectionQuery, self).__eq__(other) and \
-               self.subqueries == other.subqueries
+            self.subqueries == other.subqueries
 
     def __hash__(self):
         """Since subqueries are mutable, this object should not be hashable.
@@ -426,7 +426,7 @@ class AnyFieldQuery(CollectionQuery):
 
     def __eq__(self, other):
         return super(AnyFieldQuery, self).__eq__(other) and \
-               self.query_class == other.query_class
+            self.query_class == other.query_class
 
     def __hash__(self):
         return hash((self.pattern, tuple(self.fields), self.query_class))
@@ -489,7 +489,7 @@ class NotQuery(Query):
 
     def __eq__(self, other):
         return super(NotQuery, self).__eq__(other) and \
-               self.subquery == other.subquery
+            self.subquery == other.subquery
 
     def __hash__(self):
         return hash(('not', hash(self.subquery)))
@@ -855,7 +855,7 @@ class MultipleSort(Sort):
 
     def __eq__(self, other):
         return super(MultipleSort, self).__eq__(other) and \
-               self.sorts == other.sorts
+            self.sorts == other.sorts
 
 
 class FieldSort(Sort):
@@ -893,8 +893,8 @@ class FieldSort(Sort):
 
     def __eq__(self, other):
         return super(FieldSort, self).__eq__(other) and \
-               self.field == other.field and \
-               self.ascending == other.ascending
+            self.field == other.field and \
+            self.ascending == other.ascending
 
 
 class FixedFieldSort(FieldSort):
