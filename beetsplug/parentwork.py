@@ -102,8 +102,6 @@ class ParentWorkPlugin(BeetsPlugin):
         
 
         for item in items:
-            performer            = []
-            performer_sort       = []
             work                 = []
             work_disambig        = []
             parent_work          = []
@@ -123,14 +121,7 @@ class ParentWorkPlugin(BeetsPlugin):
                 continue
             try:
                 rec_rels = musicbrainzngs.get_recording_by_id(
-                    recording_id, includes=['work-rels', 'artist-rels'])
-                if 'artist-relation-list' in rec_rels['recording']:
-                    for dudes in rec_rels['recording'][
-                    'artist-relation-list']:
-                        if dudes['type'] in performer_types:
-                            performer.append(dudes['artist']['name'])
-                            performer_sort.append(dudes['artist']
-                                ['sort-name'])
+                    recording_id, includes=['work-rels'])
                 if 'work-relation-list' in rec_rels['recording']:
                     for work_relation in rec_rels['recording'][
                             'work-relation-list']:
@@ -157,8 +148,6 @@ class ParentWorkPlugin(BeetsPlugin):
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
                 item['work']                 = u', '.join(work)
                 item['work_disambig']        = u', '.join(work_disambig)
-                item['performer']            = u', '.join(performer)
-                item['performer_sort']       = u', '.join(performer_sort)
                 item['parent_composer']      = u', '.join(parent_composer)
                 item['parent_composer_sort'] = u', '.join(parent_composer_sort)
 
