@@ -148,6 +148,8 @@ class MatchQuery(FieldQuery):
 
 
 class NoneQuery(FieldQuery):
+    """A query that checks whether a field is null."""
+
     def __init__(self, field, fast=True):
         super(NoneQuery, self).__init__(field, None, fast)
 

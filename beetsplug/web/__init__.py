@@ -217,12 +217,20 @@ def all_items():
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
     item = g.lib.get_item(item_id)
+
+    # On Windows under Python 2, Flask wants a Unicode path. On Python 3, it
+    # *always* wants a Unicode path.
+    if os.name == 'nt':
+        item_path = util.syspath(item.path)
+    else:
+        item_path = util.py3_path(item.path)
+
     response = flask.send_file(
-        util.py3_path(item.path),
+        item_path,
         as_attachment=True,
         attachment_filename=os.path.basename(util.py3_path(item.path)),
     )
-    response.headers['Content-Length'] = os.path.getsize(item.path)
+    response.headers['Content-Length'] = os.path.getsize(item_path)
     return response
 
 
