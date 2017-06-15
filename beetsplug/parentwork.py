@@ -19,7 +19,7 @@ composer, composer sort name and performers
 
 from __future__ import division, absolute_import, print_function
 
-from beets import ui
+from beets import ui, logging
 from beets.plugins import BeetsPlugin
 from beets.dbcore import types
 
@@ -114,12 +114,12 @@ class ParentWorkPlugin(BeetsPlugin):
             composer_ids         = set()
             
             item.read()
-            recording_id = item['mb_trackid']
+            recording_id = item.mb_trackid
             performer_types = ['performer', 'instrument', 'vocal',
                 'conductor', 'performing orchestra', 'chorus master', 
                     'concertmaster']
             found = True
-            if item.get('parent_work')!=None:
+            if 'parent_work' in item:
                 continue
             try:
                 rec_rels = musicbrainzngs.get_recording_by_id(
