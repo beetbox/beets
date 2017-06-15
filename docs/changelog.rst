@@ -28,6 +28,8 @@ Fixes:
 * :doc:`/plugins/lastgenre`: Fix a crash when using the `prefer_specific` and
   `canonical` options together. Thanks to :user:`yacoob`. :bug:`2459`
   :bug:`2583`
+* :doc:`/plugins/web`: Fix a crash on Windows under Python 2 when serving
+  non-ASCII filenames. Thanks to :user:`robot3498712`. :bug:`2592` :bug:`2593`
 
 
 1.4.4 (June 10, 2017)
