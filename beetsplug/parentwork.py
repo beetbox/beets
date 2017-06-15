@@ -113,9 +113,6 @@ class ParentWorkPlugin(BeetsPlugin):
             
             item.read()
             recording_id = item.mb_trackid
-            performer_types = ['performer', 'instrument', 'vocal',
-                'conductor', 'performing orchestra', 'chorus master', 
-                    'concertmaster']
             found = True
             if 'parent_work' in item:
                 continue
