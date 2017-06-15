@@ -667,6 +667,7 @@ class DateQuery(FieldQuery):
     The value of a date field can be matched against a date interval by
     using an ellipsis interval syntax similar to that of NumericQuery.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(DateQuery, self).__init__(field, pattern, fast)
         start, end = _parse_periods(pattern)
@@ -710,6 +711,7 @@ class DurationQuery(NumericQuery):
     Raises InvalidQueryError when the pattern does not represent an int, float
     or M:SS time interval.
     """
+
     def _convert(self, s):
         """Convert a M:SS or numeric string to a float.
 
@@ -832,6 +834,7 @@ class FieldSort(Sort):
     """An abstract sort criterion that orders by a specific field (of
     any kind).
     """
+
     def __init__(self, field, ascending=True, case_insensitive=True):
         self.field = field
         self.ascending = ascending
@@ -869,6 +872,7 @@ class FieldSort(Sort):
 class FixedFieldSort(FieldSort):
     """Sort object to sort on a fixed field.
     """
+
     def order_clause(self):
         order = "ASC" if self.ascending else "DESC"
         if self.case_insensitive:
@@ -885,12 +889,14 @@ class SlowFieldSort(FieldSort):
     """A sort criterion by some model field other than a fixed field:
     i.e., a computed or flexible field.
     """
+
     def is_slow(self):
         return True
 
 
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
+
     def sort(self, items):
         return items
 
