@@ -40,6 +40,7 @@ class InvalidQueryError(ParsingError):
 
     The query should be a unicode string or a list, which will be space-joined.
     """
+
     def __init__(self, query, explanation):
         if isinstance(query, list):
             query = " ".join(query)
@@ -53,6 +54,7 @@ class InvalidQueryArgumentValueError(ParsingError):
     It exists to be caught in upper stack levels so a meaningful (i.e. with the
     query) InvalidQueryError can be raised.
     """
+
     def __init__(self, what, expected, detail=None):
         message = u"'{0}' is not {1}".format(what, expected)
         if detail:
@@ -63,6 +65,7 @@ class InvalidQueryArgumentValueError(ParsingError):
 class Query(object):
     """An abstract class representing a query into the item database.
     """
+
     def clause(self):
         """Generate an SQLite expression implementing the query.
 
@@ -95,6 +98,7 @@ class FieldQuery(Query):
     string. Subclasses may also provide `col_clause` to implement the
     same matching functionality in SQLite.
     """
+
     def __init__(self, field, pattern, fast=True):
         self.field = field
         self.pattern = pattern
@@ -134,6 +138,7 @@ class FieldQuery(Query):
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
+
     def col_clause(self):
         return self.field + " = ?", [self.pattern]
 
@@ -143,6 +148,7 @@ class MatchQuery(FieldQuery):
 
 
 class NoneQuery(FieldQuery):
+    """A query that checks whether a field is null."""
 
     def __init__(self, field, fast=True):
         super(NoneQuery, self).__init__(field, None, fast)
@@ -165,6 +171,7 @@ class StringFieldQuery(FieldQuery):
     """A FieldQuery that converts values to strings before matching
     them.
     """
+
     @classmethod
     def value_match(cls, pattern, value):
         """Determine whether the value matches the pattern. The value
@@ -182,11 +189,12 @@ class StringFieldQuery(FieldQuery):
 
 class SubstringQuery(StringFieldQuery):
     """A query that matches a substring in a specific item field."""
+
     def col_clause(self):
         pattern = (self.pattern
-                       .replace('\\', '\\\\')
-                       .replace('%', '\\%')
-                       .replace('_', '\\_'))
+                   .replace('\\', '\\\\')
+                   .replace('%', '\\%')
+                   .replace('_', '\\_'))
         search = '%' + pattern + '%'
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
@@ -204,6 +212,7 @@ class RegexpQuery(StringFieldQuery):
     Raises InvalidQueryError when the pattern is not a valid regular
     expression.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(RegexpQuery, self).__init__(field, pattern, fast)
         pattern = self._normalize(pattern)
@@ -231,6 +240,7 @@ class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(BooleanQuery, self).__init__(field, pattern, fast)
         if isinstance(pattern, six.string_types):
@@ -244,6 +254,7 @@ class BytesQuery(MatchQuery):
     `unicode` equivalently in Python 2. Always use this query instead of
     `MatchQuery` when matching on BLOB values.
     """
+
     def __init__(self, field, pattern):
         super(BytesQuery, self).__init__(field, pattern)
 
@@ -270,6 +281,7 @@ class NumericQuery(FieldQuery):
     Raises InvalidQueryError when the pattern does not represent an int or
     a float.
     """
+
     def _convert(self, s):
         """Convert a string to a numeric type (float or int).
 
@@ -337,6 +349,7 @@ class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be
     indexed like a list to access the sub-queries.
     """
+
     def __init__(self, subqueries=()):
         self.subqueries = subqueries
 
@@ -389,6 +402,7 @@ class AnyFieldQuery(CollectionQuery):
     any field. The individual field query class is provided to the
     constructor.
     """
+
     def __init__(self, pattern, fields, cls):
         self.pattern = pattern
         self.fields = fields
@@ -424,6 +438,7 @@ class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
     """
+
     def __setitem__(self, key, value):
         self.subqueries[key] = value
 
@@ -433,6 +448,7 @@ class MutableCollectionQuery(CollectionQuery):
 
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
+
     def clause(self):
         return self.clause_with_joiner('and')
 
@@ -442,6 +458,7 @@ class AndQuery(MutableCollectionQuery):
 
 class OrQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
+
     def clause(self):
         return self.clause_with_joiner('or')
 
@@ -453,6 +470,7 @@ class NotQuery(Query):
     """A query that matches the negation of its `subquery`, as a shorcut for
     performing `not(subquery)` without using regular expressions.
     """
+
     def __init__(self, subquery):
         self.subquery = subquery
 
@@ -481,6 +499,7 @@ class NotQuery(Query):
 
 class TrueQuery(Query):
     """A query that always matches."""
+
     def clause(self):
         return '1', ()
 
@@ -490,6 +509,7 @@ class TrueQuery(Query):
 
 class FalseQuery(Query):
     """A query that never matches."""
+
     def clause(self):
         return '0', ()
 
