@@ -130,7 +130,7 @@ class FieldQuery(Query):
 
     def __eq__(self, other):
         return super(FieldQuery, self).__eq__(other) and \
-               self.field == other.field and self.pattern == other.pattern
+            self.field == other.field and self.pattern == other.pattern
 
     def __hash__(self):
         return hash((self.field, hash(self.pattern)))
