@@ -40,6 +40,7 @@ class InvalidQueryError(ParsingError):
 
     The query should be a unicode string or a list, which will be space-joined.
     """
+
     def __init__(self, query, explanation):
         if isinstance(query, list):
             query = " ".join(query)
@@ -53,6 +54,7 @@ class InvalidQueryArgumentValueError(ParsingError):
     It exists to be caught in upper stack levels so a meaningful (i.e. with the
     query) InvalidQueryError can be raised.
     """
+
     def __init__(self, what, expected, detail=None):
         message = u"'{0}' is not {1}".format(what, expected)
         if detail:
@@ -63,6 +65,7 @@ class InvalidQueryArgumentValueError(ParsingError):
 class Query(object):
     """An abstract class representing a query into the item database.
     """
+
     def clause(self):
         """Generate an SQLite expression implementing the query.
 
@@ -95,6 +98,7 @@ class FieldQuery(Query):
     string. Subclasses may also provide `col_clause` to implement the
     same matching functionality in SQLite.
     """
+
     def __init__(self, field, pattern, fast=True):
         self.field = field
         self.pattern = pattern
@@ -134,6 +138,7 @@ class FieldQuery(Query):
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
+
     def col_clause(self):
         return self.field + " = ?", [self.pattern]
 
@@ -143,7 +148,6 @@ class MatchQuery(FieldQuery):
 
 
 class NoneQuery(FieldQuery):
-
     def __init__(self, field, fast=True):
         super(NoneQuery, self).__init__(field, None, fast)
 
@@ -165,6 +169,7 @@ class StringFieldQuery(FieldQuery):
     """A FieldQuery that converts values to strings before matching
     them.
     """
+
     @classmethod
     def value_match(cls, pattern, value):
         """Determine whether the value matches the pattern. The value
@@ -182,11 +187,12 @@ class StringFieldQuery(FieldQuery):
 
 class SubstringQuery(StringFieldQuery):
     """A query that matches a substring in a specific item field."""
+
     def col_clause(self):
         pattern = (self.pattern
-                       .replace('\\', '\\\\')
-                       .replace('%', '\\%')
-                       .replace('_', '\\_'))
+                   .replace('\\', '\\\\')
+                   .replace('%', '\\%')
+                   .replace('_', '\\_'))
         search = '%' + pattern + '%'
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
@@ -204,6 +210,7 @@ class RegexpQuery(StringFieldQuery):
     Raises InvalidQueryError when the pattern is not a valid regular
     expression.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(RegexpQuery, self).__init__(field, pattern, fast)
         pattern = self._normalize(pattern)
@@ -231,6 +238,7 @@ class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(BooleanQuery, self).__init__(field, pattern, fast)
         if isinstance(pattern, six.string_types):
@@ -244,6 +252,7 @@ class BytesQuery(MatchQuery):
     `unicode` equivalently in Python 2. Always use this query instead of
     `MatchQuery` when matching on BLOB values.
     """
+
     def __init__(self, field, pattern):
         super(BytesQuery, self).__init__(field, pattern)
 
@@ -270,6 +279,7 @@ class NumericQuery(FieldQuery):
     Raises InvalidQueryError when the pattern does not represent an int or
     a float.
     """
+
     def _convert(self, s):
         """Convert a string to a numeric type (float or int).
 
@@ -337,6 +347,7 @@ class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be
     indexed like a list to access the sub-queries.
     """
+
     def __init__(self, subqueries=()):
         self.subqueries = subqueries
 
@@ -389,6 +400,7 @@ class AnyFieldQuery(CollectionQuery):
     any field. The individual field query class is provided to the
     constructor.
     """
+
     def __init__(self, pattern, fields, cls):
         self.pattern = pattern
         self.fields = fields
@@ -424,6 +436,7 @@ class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
     """
+
     def __setitem__(self, key, value):
         self.subqueries[key] = value
 
@@ -433,6 +446,7 @@ class MutableCollectionQuery(CollectionQuery):
 
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
+
     def clause(self):
         return self.clause_with_joiner('and')
 
@@ -442,6 +456,7 @@ class AndQuery(MutableCollectionQuery):
 
 class OrQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
+
     def clause(self):
         return self.clause_with_joiner('or')
 
@@ -453,6 +468,7 @@ class NotQuery(Query):
     """A query that matches the negation of its `subquery`, as a shorcut for
     performing `not(subquery)` without using regular expressions.
     """
+
     def __init__(self, subquery):
         self.subquery = subquery
 
@@ -481,6 +497,7 @@ class NotQuery(Query):
 
 class TrueQuery(Query):
     """A query that always matches."""
+
     def clause(self):
         return '1', ()
 
@@ -490,6 +507,7 @@ class TrueQuery(Query):
 
 class FalseQuery(Query):
     """A query that never matches."""
+
     def clause(self):
         return '0', ()
 
@@ -542,6 +560,7 @@ class Period(object):
         ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'),  # minute
         ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
     )
+    relative = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -555,9 +574,21 @@ class Period(object):
 
     @classmethod
     def parse(cls, string):
-        """Parse a date and return a `Period` object, or `None` if the
-        string is empty, or raise an InvalidQueryArgumentValueError if
-        the string could not be parsed to a date.
+        """Parse a date and return a `Period` object or `None` if the
+        string is empty.
+        Depending on the string, the date can be absolute or
+        relative.
+        An absolute date has to be like one of the date_formats '%Y' or '%Y-%m'
+        or '%Y-%m-%d'
+        A relative date consists of three parts:
+        - a ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+``
+        sign will add a time quantity to the current date while the ``-`` sign
+        will do the opposite
+        - a number follows and indicates the amount to add or substract
+        - a final letter ends and represents the amount in either days, weeks,
+        months or years (``d``, ``w``, ``m`` or ``y``)
+        Please note that this relative calculation makes the assumption of 30
+        days per month and 365 days per year.
         """
 
         def find_date_and_format(string):
@@ -573,6 +604,21 @@ class Period(object):
 
         if not string:
             return None
+
+        pattern_dq = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])'  # noqa: E501
+        match_dq = re.match(pattern_dq, string)
+        # test if the string matches the relative date pattern, add the parsed
+        # quantity to now in that case
+        if match_dq is not None:
+            sign = match_dq.group('sign')
+            quantity = match_dq.group('quantity')
+            timespan = match_dq.group('timespan')
+            multiplier = -1 if sign == '-' else 1
+            days = cls.relative[timespan]
+            date = datetime.now() + multiplier * timedelta(
+                days=int(quantity) * days)
+            string = date.strftime(cls.date_formats[5][0])
+
         date, ordinal = find_date_and_format(string)
         if date is None:
             raise InvalidQueryArgumentValueError(string,
@@ -586,6 +632,8 @@ class Period(object):
         """
         precision = self.precision
         date = self.date
+        if 'relative' == self.precision:
+            return date
         if 'year' == self.precision:
             return date.replace(year=date.year + 1, month=1)
         elif 'month' == precision:
@@ -647,6 +695,7 @@ class DateQuery(FieldQuery):
     The value of a date field can be matched against a date interval by
     using an ellipsis interval syntax similar to that of NumericQuery.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(DateQuery, self).__init__(field, pattern, fast)
         start, end = _parse_periods(pattern)
@@ -690,6 +739,7 @@ class DurationQuery(NumericQuery):
     Raises InvalidQueryError when the pattern does not represent an int, float
     or M:SS time interval.
     """
+
     def _convert(self, s):
         """Convert a M:SS or numeric string to a float.
 
@@ -812,6 +862,7 @@ class FieldSort(Sort):
     """An abstract sort criterion that orders by a specific field (of
     any kind).
     """
+
     def __init__(self, field, ascending=True, case_insensitive=True):
         self.field = field
         self.ascending = ascending
@@ -849,6 +900,7 @@ class FieldSort(Sort):
 class FixedFieldSort(FieldSort):
     """Sort object to sort on a fixed field.
     """
+
     def order_clause(self):
         order = "ASC" if self.ascending else "DESC"
         if self.case_insensitive:
@@ -865,12 +917,14 @@ class SlowFieldSort(FieldSort):
     """A sort criterion by some model field other than a fixed field:
     i.e., a computed or flexible field.
     """
+
     def is_slow(self):
         return True
 
 
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
+
     def sort(self, items):
         return items
 
