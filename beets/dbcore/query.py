@@ -563,6 +563,8 @@ class Period(object):
         ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
     )
     relative = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
+    relative_re = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)' + \
+        '(?P<timespan>[y|m|w|d])'
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -606,24 +608,26 @@ class Period(object):
         if not string:
             return None
 
-        pattern_dq = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])'  # noqa: E501
-        match_dq = re.match(pattern_dq, string)
-        # test if the string matches the relative date pattern, add the parsed
-        # quantity to now in that case
-        if match_dq is not None:
+        # Check for a relative date.
+        match_dq = re.match(cls.relative_re, string)
+        if match_dq:
             sign = match_dq.group('sign')
             quantity = match_dq.group('quantity')
             timespan = match_dq.group('timespan')
+
+            # Add or subtract the given amount of time from the current
+            # date.
             multiplier = -1 if sign == '-' else 1
             days = cls.relative[timespan]
-            date = datetime.now() + multiplier * timedelta(
-                days=int(quantity) * days)
+            date = datetime.now() + \
+                timedelta(days=int(quantity) * days) * multiplier
             string = date.strftime(cls.date_formats[5][0])
 
+        # Check for an absolute date.
         date, ordinal = find_date_and_format(string)
         if date is None:
             raise InvalidQueryArgumentValueError(string,
-                                                 'a valid datetime string')
+                                                 'a valid date/time string')
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
