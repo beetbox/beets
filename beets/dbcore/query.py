@@ -577,20 +577,19 @@ class Period(object):
     @classmethod
     def parse(cls, string):
         """Parse a date and return a `Period` object or `None` if the
-        string is empty.
-        Depending on the string, the date can be absolute or
-        relative.
-        An absolute date has to be like one of the date_formats '%Y' or '%Y-%m'
-        or '%Y-%m-%d'
-        A relative date consists of three parts:
-        - a ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+``
-        sign will add a time quantity to the current date while the ``-`` sign
-        will do the opposite
-        - a number follows and indicates the amount to add or substract
-        - a final letter ends and represents the amount in either days, weeks,
-        months or years (``d``, ``w``, ``m`` or ``y``)
-        Please note that this relative calculation makes the assumption of 30
-        days per month and 365 days per year.
+        string is empty, or raise an InvalidQueryArgumentValueError if
+        the string cannot be parsed to a date.
+
+        The date may be absolute or relative. Absolute dates look like
+        `YYYY`, or `YYYY-MM-DD`, or `YYYY-MM-DD HH:MM:SS`, etc. Relative
+        dates have three parts:
+
+        - Optionally, a ``+`` or ``-`` sign indicating the future or the
+          past. The default is the future.
+        - A number: how much to add or subtract.
+        - A letter indicating the unit: days, weeks, months or years
+          (``d``, ``w``, ``m`` or ``y``). A "month" is exactly 30 days
+          and a "year" is exactly 365 days.
         """
 
         def find_date_and_format(string):
