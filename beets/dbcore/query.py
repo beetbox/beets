@@ -533,6 +533,7 @@ class Period(object):
     instants of time during January 2014.
     """
 
+
     precisions = ('year', 'month', 'day', 'hour', 'minute', 'second')
     date_formats = (
         ('%Y',),  # year
@@ -542,6 +543,8 @@ class Period(object):
         ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'),  # minute
         ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
     )
+    relative = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
+
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -555,9 +558,21 @@ class Period(object):
 
     @classmethod
     def parse(cls, string):
-        """Parse a date and return a `Period` object, or `None` if the
-        string is empty, or raise an InvalidQueryArgumentValueError if
-        the string could not be parsed to a date.
+        """Parse a date and return a `Period` object or `None` if the
+        string is empty.
+        Depending on the string, the date can be absolute or
+        relative.
+        An absolute date has to be like one of the date_formats '%Y' or '%Y-%m'
+        or '%Y-%m-%d'
+        A relative date consists of three parts:
+        - a ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+``
+        sign will add a time quantity to the current date while the ``-`` sign
+        will do the opposite
+        - a number follows and indicates the amount to add or substract
+        - a final letter ends and represents the amount in either days, weeks,
+        months or years (``d``, ``w``, ``m`` or ``y``)
+        Please note that this relative calculation makes the assumption of 30
+        days per month and 365 days per year.
         """
 
         def find_date_and_format(string):
@@ -573,6 +588,20 @@ class Period(object):
 
         if not string:
             return None
+
+        pattern_dq = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])'  # noqa: E501
+        match_dq = re.match(pattern_dq, string)
+        # test if the string matches the relative date pattern, add the parsed
+        # quantity to now in that case
+        if match_dq is not None:
+            sign = match_dq.group('sign')
+            quantity = match_dq.group('quantity')
+            timespan = match_dq.group('timespan')
+            multiplier = -1 if sign == '-' else 1
+            days = cls.relative[timespan]
+            date = datetime.now() + multiplier * timedelta(days=int(quantity) * days)
+            string = date.strftime(cls.date_formats[5][0])
+
         date, ordinal = find_date_and_format(string)
         if date is None:
             raise InvalidQueryArgumentValueError(string,
@@ -586,6 +615,8 @@ class Period(object):
         """
         precision = self.precision
         date = self.date
+        if 'relative' == self.precision:
+            return date
         if 'year' == self.precision:
             return date.replace(year=date.year + 1, month=1)
         elif 'month' == precision:
@@ -647,6 +678,7 @@ class DateQuery(FieldQuery):
     The value of a date field can be matched against a date interval by
     using an ellipsis interval syntax similar to that of NumericQuery.
     """
+
     def __init__(self, field, pattern, fast=True):
         super(DateQuery, self).__init__(field, pattern, fast)
         start, end = _parse_periods(pattern)
@@ -690,6 +722,7 @@ class DurationQuery(NumericQuery):
     Raises InvalidQueryError when the pattern does not represent an int, float
     or M:SS time interval.
     """
+
     def _convert(self, s):
         """Convert a M:SS or numeric string to a float.
 
