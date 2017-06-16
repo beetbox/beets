@@ -71,7 +71,9 @@ class Amarok(MetaSource):
         # for the patch relative to the mount point. But the full path is part
         # of the result set. So query for the filename and then try to match
         # the correct item from the results we get back
-        results = self.collection.Query(self.queryXML % quoteattr(basename(path)))
+        results = self.collection.Query(
+            self.queryXML % quoteattr(basename(path))
+        )
         for result in results:
             if result['xesam:url'] != path:
                 continue
