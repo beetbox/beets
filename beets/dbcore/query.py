@@ -562,6 +562,9 @@ class Period(object):
         ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'),  # minute
         ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
     )
+    relative_units = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
+    relative_re = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)' + \
+        '(?P<timespan>[y|m|w|d])'
 
     def __init__(self, date, precision):
         """Create a period with the given date (a `datetime` object) and
@@ -575,9 +578,20 @@ class Period(object):
 
     @classmethod
     def parse(cls, string):
-        """Parse a date and return a `Period` object, or `None` if the
+        """Parse a date and return a `Period` object or `None` if the
         string is empty, or raise an InvalidQueryArgumentValueError if
-        the string could not be parsed to a date.
+        the string cannot be parsed to a date.
+
+        The date may be absolute or relative. Absolute dates look like
+        `YYYY`, or `YYYY-MM-DD`, or `YYYY-MM-DD HH:MM:SS`, etc. Relative
+        dates have three parts:
+
+        - Optionally, a ``+`` or ``-`` sign indicating the future or the
+          past. The default is the future.
+        - A number: how much to add or subtract.
+        - A letter indicating the unit: days, weeks, months or years
+          (``d``, ``w``, ``m`` or ``y``). A "month" is exactly 30 days
+          and a "year" is exactly 365 days.
         """
 
         def find_date_and_format(string):
@@ -593,10 +607,27 @@ class Period(object):
 
         if not string:
             return None
+
+        # Check for a relative date.
+        match_dq = re.match(cls.relative_re, string)
+        if match_dq:
+            sign = match_dq.group('sign')
+            quantity = match_dq.group('quantity')
+            timespan = match_dq.group('timespan')
+
+            # Add or subtract the given amount of time from the current
+            # date.
+            multiplier = -1 if sign == '-' else 1
+            days = cls.relative_units[timespan]
+            date = datetime.now() + \
+                timedelta(days=int(quantity) * days) * multiplier
+            return cls(date, cls.precisions[5])
+
+        # Check for an absolute date.
         date, ordinal = find_date_and_format(string)
         if date is None:
             raise InvalidQueryArgumentValueError(string,
-                                                 'a valid datetime string')
+                                                 'a valid date/time string')
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
