@@ -165,8 +165,7 @@ and day are optional. If you leave out the day, for example, you will get
 matches for the whole month.
 
 You can also use relative dates to the current time.
-A relative date begins with an ``@``.
-It looks like ``@-3w``, ``@2m`` or ``@-4d`` which means the date 3 weeks ago,
+It looks like ``-3w``, ``2m`` or ``-4d`` which means the date 3 weeks ago,
 the date 2 months from now and the date 4 days ago.
 A relative date consists of three parts:
 - ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+`` sign will
