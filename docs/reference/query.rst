@@ -217,27 +217,24 @@ queries do the same thing::
     $ beet ls 'added:2008-12-01t22:45:20'
     $ beet ls 'added:2008-12-01 22:45:20'
 
-You can also use relative dates to the current time.
-It looks like ``-3w``, ``2m`` or ``-4d`` which means the date 3 weeks ago,
-the date 2 months from now and the date 4 days ago.
-A relative date consists of three parts:
-- ``+`` or ``-`` sign is optional and defaults to ``+``. The ``+`` sign will
-add a time quantity to the current date while the ``-`` sign will do the
-opposite
-- a number follows and indicates the amount to add or substract
-- a final letter ends and represents the amount in either days, weeks, months or
-years (``d``, ``w``, ``m`` or ``y``)
+You can also use *relative* dates. For example, ``-3w`` means three weeks ago,
+and ``+4d`` means four days in the future. A relative date has three parts:
 
-Please note that this relative calculation makes the assumption of 30 days per
-month and 365 days per year.
+- Either ``+`` or ``-``, to indicate the past or the future. The sign is
+  optional; if you leave this off, it defaults to the future.
+- A number.
+- A letter indicating the unit: ``d``, ``w``, ``m`` or ``y``, meaning days,
+  weeks, months or years. (A "month" is always 30 days and a "year" is always
+  365 days.)
 
-Here is an example that finds all the albums added between now and last week::
+Here's an example that finds all the albums added since last week::
 
     $ beet ls -a 'added:-1w..'
 
-Find all items added in a 2 weeks period 4 weeks ago::
+And here's an example that lists items added in a two-week period starting
+four weeks ago::
 
-    $ beet ls -a 'added:-6w..-4w'
+    $ beet ls 'added:-6w..-4w'
 
 .. _not_query:
 
