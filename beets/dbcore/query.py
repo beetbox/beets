@@ -562,7 +562,7 @@ class Period(object):
         ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'),  # minute
         ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
     )
-    relative = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
+    relative_units = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
     relative_re = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)' + \
         '(?P<timespan>[y|m|w|d])'
 
@@ -618,10 +618,10 @@ class Period(object):
             # Add or subtract the given amount of time from the current
             # date.
             multiplier = -1 if sign == '-' else 1
-            days = cls.relative[timespan]
+            days = cls.relative_units[timespan]
             date = datetime.now() + \
                 timedelta(days=int(quantity) * days) * multiplier
-            string = date.strftime(cls.date_formats[5][0])
+            return cls(date, cls.precisions[5])
 
         # Check for an absolute date.
         date, ordinal = find_date_and_format(string)
@@ -637,8 +637,6 @@ class Period(object):
         """
         precision = self.precision
         date = self.date
-        if 'relative' == self.precision:
-            return date
         if 'year' == self.precision:
             return date.replace(year=date.year + 1, month=1)
         elif 'month' == precision:
