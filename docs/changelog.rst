@@ -35,6 +35,8 @@ Fixes:
   non-ASCII filenames. Thanks to :user:`robot3498712`. :bug:`2592` :bug:`2593`
 * :doc:`/plugins/metasync`: Fix a crash in the Amarok backend when filenames
   contain quotes. Thanks to :user:`aranc23`. :bug:`2595` :bug:`2596`
+* More informative error messages are displayed when the file format is not
+  recognized. :bug:`2599`
 
 
 1.4.4 (June 10, 2017)
