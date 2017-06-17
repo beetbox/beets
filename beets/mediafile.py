@@ -96,7 +96,7 @@ class FileTypeError(UnreadableFileError):
     """
     def __init__(self, path, mutagen_type=None):
         if mutagen_type is None:
-            msg = repr(path)
+            msg = u'{0!r}: not in a recognized format'.format(path)
         else:
             msg = u'{0}: of mutagen type {1}'.format(repr(path), mutagen_type)
         Exception.__init__(self, msg)
