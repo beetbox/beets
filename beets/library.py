@@ -615,7 +615,7 @@ class Item(LibModel):
             mediafile = MediaFile(syspath(path),
                                   id3v23=beets.config['id3v23'].get(bool))
         except UnreadableFileError as exc:
-            raise ReadError(self.path, exc)
+            raise ReadError(path, exc)
 
         # Write the tags to the file.
         mediafile.update(item_tags)
