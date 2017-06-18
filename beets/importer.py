@@ -631,23 +631,7 @@ class ImportTask(BaseImportTask):
         """
         changes = {}
 
-        if self.choice_flag == action.ASIS:
-            # Taking metadata "as-is". Guess whether this album is VA.
-            plur_albumartist, freq = util.plurality(
-                [i.albumartist or i.artist for i in self.items]
-            )
-            if freq == len(self.items) or \
-                (freq > 1 and
-                    float(freq) / len(self.items) >= SINGLE_ARTIST_THRESH):
-                # Single-artist album.
-                changes['albumartist'] = plur_albumartist
-                changes['comp'] = False
-            else:
-                # VA.
-                changes['albumartist'] = config['va_name'].as_str()
-                changes['comp'] = True
-
-        elif self.choice_flag in (action.APPLY, action.RETAG):
+        if self.choice_flag in (action.APPLY, action.RETAG):
             # Applying autotagged metadata. Just get AA from the first
             # item.
             if not self.items[0].albumartist:
