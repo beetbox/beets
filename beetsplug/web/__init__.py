@@ -194,6 +194,11 @@ app.url_map.converters['query'] = QueryConverter
 app.url_map.converters['everything'] = EverythingConverter
 
 
+@app.teardown_appcontext
+def teardown_appcontext(error):
+    g.lib._close()
+
+
 @app.before_request
 def before_request():
     g.lib = app.config['lib']
