@@ -25,32 +25,37 @@ from beets.dbcore import types
 
 import musicbrainzngs
 
-def find_parentwork(work_id):
-    """This function finds the parentwork of a work given its id. """
+def work_father(work_id): 
+    """ This function finds the id of the father work given its id"""
     work_info = musicbrainzngs.get_work_by_id(work_id,
-        includes=["work-rels", "artist-rels"])
-    partof = True
-    # The works a given work is related to are listed in
-    # work_info['work']['work-relation-list']. The relations can be
-    # diverse: arrangement of, later version of, part of etc. The
-    # father work (i. e. the work the work is part of) is given by the
-    # relationship 'type' to be 'part' and the relationship
-    # 'direction' to be 'backwards'. First I assume the work doesn't
-    # have a father work (i. e. it is its own parentwork), but if in
-    # the works it is related to there is a work which is his father
-    # work, then I assume the father work is the parent work and try
-    # the same with it.
-    while partof:
-        partof = False
-        if 'work-relation-list' in work_info['work']:
-            for work_father in work_info['work']['work-relation-list']:
-                if work_father['type'] == 'parts' and work_father.get(
-                    'direction') == 'backward':
-                    father_id = work_father['work']['id']
-                    partof = True
-                    work_info = musicbrainzngs.get_work_by_id(
-                        father_id,includes = ["work-rels","artist-rels"])
-    return work_info
+        includes=["work-rels"])
+    if 'work-relation-list' in work_info['work']:
+        for work_father in work_info['work']['work-relation-list']:
+            if work_father['type'] == 'parts' and work_father.get(
+                'direction') == 'backward':
+                father_id = work_father['work']['id']
+                return(father_id)
+        return(None)
+                
+    else: 
+        return(None)
+
+def work_parent(work_id):
+    """This function finds the parentwork id of a work given its id. """
+    while True: 
+        new_work_id = work_parent(work_id)
+        if not new_work_id:
+            return work_id
+        work_id = new_work_id
+    return work_id
+        
+def find_parentwork(work_id):
+    """This function gives the work relationships (dict) of a parent_work 
+    given the id of the work"""
+    parent_id=work_parent(work_id)
+    work_info = musicbrainzngs.get_work_by_id(
+        parent_id,includes = ["artist-rels"])
+    return(work_info)
 
 def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
     parent_work_disambig,work_ids,composer_ids):
