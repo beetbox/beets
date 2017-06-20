@@ -70,10 +70,6 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
             "no composer, add one at https://musicbrainz.org/work/" + 
             work_info['work']['id']
             )
-        print('no composer')
-        print('add one at')
-        print('https://musicbrainz.org/work/' + 
-            work_info['work']['id'])
     if work_info['work']['id'] in work_ids:
         pass
     else:
@@ -132,11 +128,9 @@ class ParentWorkPlugin(BeetsPlugin):
             
             item.read()
             recording_id = item.mb_trackid
-            print(recording_id)
             found = True
             if 'parent_work' in item and not force:
                 continue
-                print(item[parent_composer])
             try:
                 rec_rels = musicbrainzngs.get_recording_by_id(
                     recording_id, includes=['work-rels'])
@@ -164,16 +158,11 @@ class ParentWorkPlugin(BeetsPlugin):
                             "add one at https://musicbrainz.org/recording/" + 
                             recording_id
                             )
-                print(parent_composer)
 
             except musicbrainzngs.musicbrainz.WebServiceError: 
                 self._log.debug(
                     "Work unreachable, recording id: " + recording_id
                     )
-                print("Work unreachable, recording id: " + recording_id)
-                #print('Work unreachable')
-                #print('recording id: ')
-                #print(recording_id)
                 found = False
 
             if found:
