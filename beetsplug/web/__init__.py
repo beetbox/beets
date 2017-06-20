@@ -194,8 +194,8 @@ app.url_map.converters['query'] = QueryConverter
 app.url_map.converters['everything'] = EverythingConverter
 
 
-@app.teardown_appcontext
-def teardown_appcontext(error):
+@app.teardown_request
+def teardown_request(error):
     g.lib._close()
 
 
