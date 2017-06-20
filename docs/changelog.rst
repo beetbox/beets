@@ -4,12 +4,17 @@ Changelog
 1.4.5 (in development)
 ----------------------
 
-Features:
+Version 1.4.5 adds some oft-requested features. When you're importing files,
+you can now manually set fields on the new music. Date queries have gotten
+much more powerful: you can write precise queries down to the second, and we
+now have *relative* queries like ``-1w``, which means *one week ago*.
+
+Here are the new features:
 
 * You can now set fields to certain values during :ref:`import-cmd`, using
   either a ``--set field=value`` command-line flag or a new :ref:`set_fields`
   configuration option under the `importer` section.
-  Thanks to :user:`bartkl`. :bug: `1881` :bug:`2581`
+  Thanks to :user:`bartkl`. :bug:`1881` :bug:`2581`
 * :ref:`Date queries <datequery>` can now include times, so you can filter
   your music down to the second. Thanks to :user:`discopatrick`. :bug:`2506`
   :bug:`2528`
@@ -23,10 +28,10 @@ Features:
   `r128` configuration option enables this behavior for specific formats.
   Thanks to :user:`autrimpo`. :bug:`2557` :bug:`2560`
 * The :ref:`move-cmd` command gained a new ``--export`` flag, which copies
-  files to an external location without changing their location in the library
+  files to an external location without changing their paths in the library
   database. Thanks to :user:`SpirosChadoulos`. :bug:`435` :bug:`2510`
 
-Fixes:
+There are also some bug fixes:
 
 * :doc:`/plugins/lastgenre`: Fix a crash when using the `prefer_specific` and
   `canonical` options together. Thanks to :user:`yacoob`. :bug:`2459`
