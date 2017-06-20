@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.5 (in development)
-----------------------
+1.4.5 (June 20, 2017)
+---------------------
 
 Version 1.4.5 adds some oft-requested features. When you're importing files,
 you can now manually set fields on the new music. Date queries have gotten
