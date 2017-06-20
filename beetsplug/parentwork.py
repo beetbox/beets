@@ -66,7 +66,7 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
-        self._log.debug(
+        self._log.info(
             "no composer, add one at https://musicbrainz.org/work/" + 
             work_info['work']['id']
             )
@@ -129,6 +129,12 @@ class ParentWorkPlugin(BeetsPlugin):
             item.read()
             recording_id = item.mb_trackid
             found = True
+            self_log.debug(
+                "Current recording id: " + recording_id
+                )
+            self_log.debug(
+                item[artist] + " - " item[title]
+                )
             if 'parent_work' in item and not force:
                 continue
             try:
@@ -151,16 +157,16 @@ class ParentWorkPlugin(BeetsPlugin):
                         parent_composer_sort,parent_work,parent_work_disambig,
                         work_ids,composer_ids)
                         if not hasawork and details: 
-                            self._log.debug(
+                            self._log.info(
                             "No work attached, recording id: " + recording_id
                             )
-                            self._log.debug(
+                            self._log.info(
                             "add one at https://musicbrainz.org/recording/" + 
                             recording_id
                             )
 
             except musicbrainzngs.musicbrainz.WebServiceError: 
-                self._log.debug(
+                self._log.info(
                     "Work unreachable, recording id: " + recording_id
                     )
                 found = False
