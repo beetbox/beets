@@ -54,8 +54,9 @@ def find_parentwork(work_id):
 
 def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
     parent_work_disambig,work_ids,composer_ids):
-    """Given the parentwork info dict, this function updates the 
-    parent composer etc"""
+    """Given the parentwork info dict, this function updates parent_composer, 
+    parent_composer_sort, parent_work, parent_work_disambig, work_ids and
+    composer_ids"""
     composer_exists=False
     if 'artist-relation-list' in work_info['work']:
         for artist in work_info['work']['artist-relation-list']:
