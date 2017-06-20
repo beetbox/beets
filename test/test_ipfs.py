@@ -67,17 +67,17 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
     def mk_test_album(self):
         items = [_common.item() for _ in range(3)]
         items[0].title = 'foo bar'
-        items[0].artist = 'one'
+        items[0].artist = '1one'
         items[0].album = 'baz'
         items[0].year = 2001
         items[0].comp = True
         items[1].title = 'baz qux'
-        items[1].artist = 'two'
+        items[1].artist = '2two'
         items[1].album = 'baz'
         items[1].year = 2002
         items[1].comp = True
         items[2].title = 'beets 4 eva'
-        items[2].artist = 'three'
+        items[2].artist = '3three'
         items[2].album = 'foo'
         items[2].year = 2003
         items[2].comp = False
