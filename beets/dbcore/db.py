@@ -236,7 +236,7 @@ class Model(object):
         if key in getters:  # Computed.
             return getters[key](self)
         elif key in self._fields:  # Fixed.
-            return self._values_fixed.get(key)
+            return self._values_fixed.get(key, self._type(key).null)
         elif key in self._values_flex:  # Flexible.
             return self._values_flex[key]
         else:
