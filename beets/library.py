@@ -205,6 +205,8 @@ class MusicalKey(types.String):
         r'bb': 'a#',
     }
 
+    null = None
+
     def parse(self, key):
         key = key.lower()
         for flat, sharp in self.ENHARMONIC.items():
