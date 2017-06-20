@@ -66,6 +66,10 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
+        self._log.debug(
+            "no composer, add one at https://musicbrainz.org/work/" + 
+            work_info['work']['id']
+            )
         print('no composer')
         print('add one at')
         print('https://musicbrainz.org/work/' + 
@@ -83,12 +87,27 @@ class ParentWorkPlugin(BeetsPlugin):
     def __init__(self):
         super(ParentWorkPlugin, self).__init__()
         self.import_stages = [self.imported]
+        self.config.add({
+            u'bin': u'parentwork',
+            u'auto': True,
+            u'force': False,
+            u'details': False
+        })
+
+        if self.config['auto'].get(bool):
+            self.import_stages = [self.imported]
 
     def commands(self):
         cmd = ui.Subcommand('parentwork',
                             help=u'fetches parent works, composers \
                                 and performers')
         cmd.func = self.command
+        #cmd.parser.add_option(
+        #    u'-f', u'--force', dest='force',
+        #    action='store_true', default=False,
+        #    help=u're-fetch parent works etc even if already present'
+        #)
+        
         return [cmd]
 
     def command(self, lib, opts, args):
@@ -98,8 +117,8 @@ class ParentWorkPlugin(BeetsPlugin):
         self.find_work(task.items)
 
     def find_work(self, items):
-
-        
+        force = self.config['force'].get(bool)
+        details = self.config['details'].get(bool)
 
         for item in items:
             work                 = []
@@ -113,17 +132,21 @@ class ParentWorkPlugin(BeetsPlugin):
             
             item.read()
             recording_id = item.mb_trackid
+            print(recording_id)
             found = True
-            if 'parent_work' in item:
+            if 'parent_work' in item and not force:
                 continue
+                print(item[parent_composer])
             try:
                 rec_rels = musicbrainzngs.get_recording_by_id(
                     recording_id, includes=['work-rels'])
                 if 'work-relation-list' in rec_rels['recording']:
                     for work_relation in rec_rels['recording'][
                             'work-relation-list']:
+                        hasawork=False
                         if work_relation['type'] != 'performance':
                             continue
+                        hasawork=True
                         work_id = work_relation['work']['id']
                         work.append(work_relation['work']['title'])
                         if 'disambiguation' in work_relation['work']:
@@ -133,11 +156,24 @@ class ParentWorkPlugin(BeetsPlugin):
                         get_info(work_info,parent_composer,
                         parent_composer_sort,parent_work,parent_work_disambig,
                         work_ids,composer_ids)
+                        if not hasawork and details: 
+                            self._log.debug(
+                            "No work attached, recording id: " + recording_id
+                            )
+                            self._log.debug(
+                            "add one at https://musicbrainz.org/recording/" + 
+                            recording_id
+                            )
+                print(parent_composer)
 
             except musicbrainzngs.musicbrainz.WebServiceError: 
-                print('Work unreachable')
-                print('recording id: ')
-                print(recording_id)
+                self._log.debug(
+                    "Work unreachable, recording id: " + recording_id
+                    )
+                print("Work unreachable, recording id: " + recording_id)
+                #print('Work unreachable')
+                #print('recording id: ')
+                #print(recording_id)
                 found = False
 
             if found:
