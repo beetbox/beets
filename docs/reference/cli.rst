@@ -138,6 +138,13 @@ Optional command flags:
   searching for other candidates by using the ``--search-id SEARCH_ID`` option.
   Multiple IDs can be specified by simply repeating the option several times.
 
+* You can supply ``--set field=value`` to assign `field` to `value` on import.
+  These assignments will merge with (and possibly override) the
+  :ref:`set_fields` configuration dictionary. You can use the option multiple
+  times on the command line, like so::
+
+    beet import --set genre="Alternative Rock" --set mood="emotional"
+
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
 
 .. only:: html
@@ -275,6 +282,7 @@ query are renamed into your library directory structure. By specifying a
 destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
+The ``-e`` flag (for "export") copies files without changing the database.
 
 To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
 show you a list of files that would be moved but won't actually change anything

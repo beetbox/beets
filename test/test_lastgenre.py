@@ -213,6 +213,18 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(res, (config['lastgenre']['fallback'].get(),
                          u'fallback'))
 
+    def test_sort_by_depth(self):
+        self._setup_config(canonical=True)
+        # Normal case.
+        tags = ('electronic', 'ambient', 'post-rock', 'downtempo')
+        res = self.plugin._sort_by_depth(tags)
+        self.assertEqual(
+            res, ['post-rock', 'downtempo', 'ambient', 'electronic'])
+        # Non-canonical tag ('chillout') present.
+        tags = ('electronic', 'ambient', 'chillout')
+        res = self.plugin._sort_by_depth(tags)
+        self.assertEqual(res, ['ambient', 'electronic'])
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
