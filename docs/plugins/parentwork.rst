@@ -20,7 +20,7 @@ This plugin adds six tags:
 
 - **work**: The title of the work. 
 - **work_disambig**: The disambiguation of the work title (useful expecially 
-to distinguish arrangements). 
+  to distinguish arrangements). 
 - **parent_work**: The title of the parentwork.  
 - **parent_work_disambig**: The disambiguation of the parentwork title. 
 - **parent_composer**: The composer of the parentwork. 
@@ -39,7 +39,7 @@ To use the ``parentwork`` plugin, enable it in your configuration (see
 Configuration
 -------------
 
-To configure the plugin, make a ``keyfinder:`` section in your
+To configure the plugin, make a ``parentwork:`` section in your
 configuration file. The available options are:
 
 - **auto**: Analyze every file on
@@ -47,8 +47,8 @@ configuration file. The available options are:
   explicitly.
   Default: ``yes``
 - **force**: As a default, ``parentwork`` only fetches work info for 
-recordings that do not already have a ``parent_work`` tag. If ``force`` 
-is enabled, it fetches it for all recordings. 
+  recordings that do not already have a ``parent_work`` tag. If ``force`` 
+  is enabled, it fetches it for all recordings. 
   Default: ``no``
 - **details**: Prints out all the recordings that do not have a work attached.
   Default: ``no``.
