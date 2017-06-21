@@ -43,9 +43,10 @@ def work_father(work_id):
 def work_parent(work_id):
     """This function finds the parentwork id of a work given its id. """
     while True: 
-        new_work_id = work_parent(work_id)
+        new_work_id = work_father(work_id)
         if not new_work_id:
             return work_id
+            break
         work_id = new_work_id
     return work_id
         
@@ -139,7 +140,7 @@ class ParentWorkPlugin(BeetsPlugin):
                 "Current recording id: " + recording_id
                 )
             self._log.debug(
-                item[artist] + " - " + item[title]
+                item.artist + " - " + item.title
                 )
             if 'parent_work' in item and not force:
                 continue
