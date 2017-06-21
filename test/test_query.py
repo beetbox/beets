@@ -79,10 +79,10 @@ class AnyFieldQueryTest(_common.LibTestCase):
 
 class AssertsMixin(object):
     def assert_items_matched(self, results, titles):
-        self.assertEqual([i.title for i in results], titles)
+        self.assertEqual(set([i.title for i in results]), set(titles))
 
     def assert_albums_matched(self, results, albums):
-        self.assertEqual([a.album for a in results], albums)
+        self.assertEqual(set([a.album for a in results]), set(albums))
 
 
 # A test case class providing a library with some dummy data and some
