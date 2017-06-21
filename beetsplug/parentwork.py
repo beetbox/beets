@@ -72,11 +72,11 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
                     composer_ids.add(artist['artist']['id'])
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
-    if not composer_exists:
-        self._log.info(
-            "no composer, add one at https://musicbrainz.org/work/" + 
-            work_info['work']['id']
-            )
+    #if not composer_exists:
+    #    self._log.info(
+    #        "no composer, add one at https://musicbrainz.org/work/" + 
+    #        work_info['work']['id']
+    #        )
     if work_info['work']['id'] in work_ids:
         pass
     else:
@@ -105,11 +105,6 @@ class ParentWorkPlugin(BeetsPlugin):
                             help=u'fetches parent works, composers \
                                 and performers')
         cmd.func = self.command
-        #cmd.parser.add_option(
-        #    u'-f', u'--force', dest='force',
-        #    action='store_true', default=False,
-        #    help=u're-fetch parent works etc even if already present'
-        #)
         
         return [cmd]
 
@@ -163,7 +158,7 @@ class ParentWorkPlugin(BeetsPlugin):
                         get_info(work_info,parent_composer,
                         parent_composer_sort,parent_work,parent_work_disambig,
                         work_ids,composer_ids)
-                        if not hasawork and details: 
+                        if details and not hasawork: 
                             self._log.info(
                             "No work attached, recording id: " + recording_id
                             )
@@ -171,7 +166,14 @@ class ParentWorkPlugin(BeetsPlugin):
                             "add one at https://musicbrainz.org/recording/" + 
                             recording_id
                             )
-
+                elif details: 
+                    self._log.info(
+                        "No work attached, recording id: " + recording_id
+                        )
+                    self._log.info(
+                        "add one at https://musicbrainz.org/recording/" + 
+                        recording_id
+                        )
             except musicbrainzngs.musicbrainz.WebServiceError: 
                 self._log.info(
                     "Work unreachable, recording id: " + recording_id
