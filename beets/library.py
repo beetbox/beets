@@ -144,9 +144,26 @@ class DateType(types.Float):
 
 
 class PathType(types.Type):
+    """A dbcore type for filesystem paths. These are represented as
+    `bytes` objects, in keeping with the Unix filesystem abstraction.
+    """
+
     sql = u'BLOB'
     query = PathQuery
     model_type = bytes
+
+    def __init__(self, nullable=False):
+        """Create a path type object. `nullable` controls whether the
+        type may be missing, i.e., None.
+        """
+        self.nullable = nullable
+
+    @property
+    def null(self):
+        if self.nullable:
+            return None
+        else:
+            return b''
 
     def format(self, value):
         return util.displayable_path(value)
@@ -187,6 +204,8 @@ class MusicalKey(types.String):
         r'ab': 'g#',
         r'bb': 'a#',
     }
+
+    null = None
 
     def parse(self, key):
         key = key.lower()
@@ -456,6 +475,8 @@ class Item(LibModel):
         'rg_track_peak':        types.NULL_FLOAT,
         'rg_album_gain':        types.NULL_FLOAT,
         'rg_album_peak':        types.NULL_FLOAT,
+        'r128_track_gain':      types.PaddedInt(6),
+        'r128_album_gain':      types.PaddedInt(6),
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
@@ -615,7 +636,7 @@ class Item(LibModel):
             mediafile = MediaFile(syspath(path),
                                   id3v23=beets.config['id3v23'].get(bool))
         except UnreadableFileError as exc:
-            raise ReadError(self.path, exc)
+            raise ReadError(path, exc)
 
         # Write the tags to the file.
         mediafile.update(item_tags)
@@ -873,7 +894,7 @@ class Album(LibModel):
     _always_dirty = True
     _fields = {
         'id':      types.PRIMARY_ID,
-        'artpath': PathType(),
+        'artpath': PathType(True),
         'added':   DateType(),
 
         'albumartist':        types.STRING,
@@ -900,6 +921,7 @@ class Album(LibModel):
         'albumdisambig':      types.STRING,
         'rg_album_gain':      types.NULL_FLOAT,
         'rg_album_peak':      types.NULL_FLOAT,
+        'r128_album_gain':    types.PaddedInt(6),
         'original_year':      types.PaddedInt(4),
         'original_month':     types.PaddedInt(2),
         'original_day':       types.PaddedInt(2),
@@ -943,6 +965,7 @@ class Album(LibModel):
         'albumdisambig',
         'rg_album_gain',
         'rg_album_peak',
+        'r128_album_gain',
         'original_year',
         'original_month',
         'original_day',

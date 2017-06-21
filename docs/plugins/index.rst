@@ -58,6 +58,7 @@ like this::
    ftintitle
    fuzzy
    freedesktop
+   gmusic
    hook
    ihate
    importadded
@@ -175,6 +176,7 @@ Miscellaneous
 * :doc:`duplicates`: List duplicate tracks or albums.
 * :doc:`export`: Export data from queries to a format.
 * :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
+* :doc:`gmusic`: Search and upload files to Google Play Music.
 * :doc:`hook`: Run a command when an event is emitted by beets.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.

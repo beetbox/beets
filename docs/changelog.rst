@@ -1,42 +1,102 @@
 Changelog
 =========
 
-1.4.4 (in development)
+1.4.6 (in development)
 ----------------------
 
-New features:
+Changelog goes here!
+
+
+1.4.5 (June 20, 2017)
+---------------------
+
+Version 1.4.5 adds some oft-requested features. When you're importing files,
+you can now manually set fields on the new music. Date queries have gotten
+much more powerful: you can write precise queries down to the second, and we
+now have *relative* queries like ``-1w``, which means *one week ago*.
+
+Here are the new features:
+
+* You can now set fields to certain values during :ref:`import-cmd`, using
+  either a ``--set field=value`` command-line flag or a new :ref:`set_fields`
+  configuration option under the `importer` section.
+  Thanks to :user:`bartkl`. :bug:`1881` :bug:`2581`
+* :ref:`Date queries <datequery>` can now include times, so you can filter
+  your music down to the second. Thanks to :user:`discopatrick`. :bug:`2506`
+  :bug:`2528`
+* :ref:`Date queries <datequery>` can also be *relative*. You can say
+  ``added:-1w..`` to match music added in the last week, for example. Thanks
+  to :user:`euri10`. :bug:`2598`
+* A new :doc:`/plugins/gmusic` lets you interact with your Google Play Music
+  library. Thanks to :user:`tigranl`. :bug:`2553` :bug:`2586`
+* :doc:`/plugins/replaygain`: We now keep R128 data in separate tags from
+  classic ReplayGain data for formats that need it (namely, Ogg Opus). A new
+  `r128` configuration option enables this behavior for specific formats.
+  Thanks to :user:`autrimpo`. :bug:`2557` :bug:`2560`
+* The :ref:`move-cmd` command gained a new ``--export`` flag, which copies
+  files to an external location without changing their paths in the library
+  database. Thanks to :user:`SpirosChadoulos`. :bug:`435` :bug:`2510`
+
+There are also some bug fixes:
+
+* :doc:`/plugins/lastgenre`: Fix a crash when using the `prefer_specific` and
+  `canonical` options together. Thanks to :user:`yacoob`. :bug:`2459`
+  :bug:`2583`
+* :doc:`/plugins/web`: Fix a crash on Windows under Python 2 when serving
+  non-ASCII filenames. Thanks to :user:`robot3498712`. :bug:`2592` :bug:`2593`
+* :doc:`/plugins/metasync`: Fix a crash in the Amarok backend when filenames
+  contain quotes. Thanks to :user:`aranc23`. :bug:`2595` :bug:`2596`
+* More informative error messages are displayed when the file format is not
+  recognized. :bug:`2599`
+
+
+1.4.4 (June 10, 2017)
+---------------------
+
+This release built up a longer-than-normal list of nifty new features. We now
+support DSF audio files and the importer can hard-link your files, for
+example.
+
+Here's a full list of new features:
 
 * Added support for DSF files, once a future version of Mutagen is released
   that supports them. Thanks to :user:`docbobo`. :bug:`459` :bug:`2379`
+* A new :ref:`hardlink` config option instructs the importer to create hard
+  links on filesystems that support them. Thanks to :user:`jacobwgillespie`.
+  :bug:`2445`
+* A new :doc:`/plugins/kodiupdate` lets you keep your Kodi library in sync
+  with beets. Thanks to :user:`Pauligrinder`. :bug:`2411`
+* A new :ref:`bell` configuration option under the ``import`` section enables
+  a terminal bell when input is required. Thanks to :user:`SpirosChadoulos`.
+  :bug:`2366` :bug:`2495`
+* A new field, ``composer_sort``, is now supported and fetched from
+  MusicBrainz.
+  Thanks to :user:`dosoe`.
+  :bug:`2519` :bug:`2529`
 * The MusicBrainz backend and  :doc:`/plugins/discogs` now both provide a new
   attribute called ``track_alt`` that stores more nuanced, possibly
   non-numeric track index data. For example, some vinyl or tape media will
   report the side of the record using a letter instead of a number in that
   field. :bug:`1831` :bug:`2363`
-* The :doc:`/plugins/web` has a new endpoint, ``/item/path/foo``, which will
+* :doc:`/plugins/web`: Added a new endpoint, ``/item/path/foo``, which will
   return the item info for the file at the given path, or 404.
-* The :doc:`/plugins/web` also has a new config option, ``include_paths``,
+* :doc:`/plugins/web`: Added a new config option, ``include_paths``,
   which will cause paths to be included in item API responses if set to true.
 * The ``%aunique`` template function for :ref:`aunique` now takes a third
-  argument that specifies which brackets to use around the  disambiguator
+  argument that specifies which brackets to use around the disambiguator
   value.  The argument can be any two characters that represent the left and
   right brackets. It defaults to `[]` and can also be blank to turn off
   bracketing. :bug:`2397` :bug:`2399`
 * Added a ``--move`` or ``-m`` option to the importer so that the files can be
-  moved to the library instead of being copied or added "in place".
+  moved to the library instead of being copied or added "in place."
   :bug:`2252` :bug:`2429`
 * :doc:`/plugins/badfiles`: Added a ``--verbose`` or ``-v`` option. Results are
   now displayed only for corrupted files by default and for all the files when
   the verbose option is set. :bug:`1654` :bug:`2434`
-* A new :ref:`hardlink` config option instructs the importer to create hard
-  links on filesystems that support them. Thanks to :user:`jacobwgillespie`.
-  :bug:`2445`
 * :doc:`/plugins/embedart`: The explicit ``embedart`` command now asks for
   confirmation before embedding art into music files. Thanks to
   :user:`Stunner`. :bug:`1999`
 * You can now run beets by typing `python -m beets`. :bug:`2453`
-* A new :doc:`/plugins/kodiupdate` lets you keep your Kodi library in sync
-  with beets. Thanks to :user:`Pauligrinder`. :bug:`2411`
 * :doc:`/plugins/smartplaylist`: Different playlist specifications that
   generate identically-named playlist files no longer conflict; instead, the
   resulting lists of tracks are concatenated. :bug:`2468`
@@ -44,9 +104,6 @@ New features:
   you have in your library. Thanks to :user:`qlyoung`. :bug:`2481`
 * :doc:`/plugins/web` : Add new `reverse_proxy` config option to allow serving
   the web plugins under a reverse proxy.
-* A new :ref:`bell` configuration option under the ``import`` section enables
-  a terminal bell when input is required. Thanks to :user:`SpirosChadoulos`.
-  :bug:`2366` :bug:`2495`
 * Importing a release with multiple release events now selects the
   event based on your :ref:`preferred` countries. :bug:`2501`
 * :doc:`/plugins/play`: A new ``-y`` or ``--yes`` parameter lets you skip
@@ -57,28 +114,25 @@ New features:
   Thanks to :user:`jansol`.
   :bug:`2488`
   :bug:`2524`
-* A new field, ``composer_sort``, is now supported and fetched from
-  MusicBrainz.
-  Thanks to :user:`dosoe`.
-  :bug:`2519` :bug:`2529`
 
-Fixes:
+There are also quite a few fixes:
 
 * In the :ref:`replace` configuration option, we now replace a leading hyphen
   (-) with an underscore. :bug:`549` :bug:`2509`
-* :doc:`/plugins/absubmit`: Do not filter for supported formats. :bug:`2471`
+* :doc:`/plugins/absubmit`: We no longer filter audio files for specific
+  formats---we will attempt the submission process for all formats. :bug:`2471`
 * :doc:`/plugins/mpdupdate`: Fix Python 3 compatibility. :bug:`2381`
 * :doc:`/plugins/replaygain`: Fix Python 3 compatibility in the ``bs1770gain``
   backend. :bug:`2382`
-* :doc:`/plugins/bpd`: Report playback times as integer. :bug:`2394`
+* :doc:`/plugins/bpd`: Report playback times as integers. :bug:`2394`
 * :doc:`/plugins/mpdstats`: Fix Python 3 compatibility. The plugin also now
   requires version 0.4.2 or later of the ``python-mpd2`` library. :bug:`2405`
-* :doc:`/plugins/mpdstats`: Improve handling of mpd status queries.
+* :doc:`/plugins/mpdstats`: Improve handling of MPD status queries.
 * :doc:`/plugins/badfiles`: Fix Python 3 compatibility.
 * Fix some cases where album-level ReplayGain/SoundCheck metadata would be
   written to files incorrectly. :bug:`2426`
-* :doc:`/plugins/badfiles`: The command no longer bails out if validator
-  command is not found or exists with an error. :bug:`2430` :bug:`2433`
+* :doc:`/plugins/badfiles`: The command no longer bails out if the validator
+  command is not found or exits with an error. :bug:`2430` :bug:`2433`
 * :doc:`/plugins/lyrics`: The Google search backend no longer crashes when the
   server responds with an error. :bug:`2437`
 * :doc:`/plugins/discogs`: You can now authenticate with Discogs using a
@@ -87,7 +141,7 @@ Fixes:
   Thanks to :user:`Lompik`. :bug:`2443` :bug:`2448`
 * :doc:`/plugins/duplicates`: Fix Python 3 compatibility when using the
   ``copy`` and ``move`` options. :bug:`2444`
-* :doc:`/plugins/mbsubmit`: The tracks are now sorted. Thanks to
+* :doc:`/plugins/mbsubmit`: The tracks are now sorted properly. Thanks to
   :user:`awesomer`. :bug:`2457`
 * :doc:`/plugins/thumbnails`: Fix a string-related crash on Python 3.
   :bug:`2466`
@@ -98,8 +152,8 @@ Fixes:
   limited encoding.
 * :doc:`/plugins/convert`: The default configuration uses FFmpeg's built-in
   AAC codec instead of faac. Thanks to :user:`jansol`. :bug:`2484`
-* Fix import of multidisc releases with subdirectories, which previously
-  made each disc be imported separately in different releases. :bug:`2493`
+* Fix the importer's detection of multi-disc albums when other subdirectories
+  are present. :bug:`2493`
 * Invalid date queries now print an error message instead of being silently
   ignored. Thanks to :user:`discopatrick`. :bug:`2513` :bug:`2517`
 * When the SQLite database stops being accessible, we now print a friendly
@@ -110,7 +164,7 @@ Fixes:
 * Fix a crash when reading non-ASCII characters in configuration files on
   Windows under Python 3. :bug:`2456` :bug:`2565` :bug:`2566`
 
-Two plugins had backends removed due to bitrot:
+We removed backends from two metadata plugins because of bitrot:
 
 * :doc:`/plugins/lyrics`: The Lyrics.com backend has been removed. (It stopped
   working because of changes to the site's URL structure.)

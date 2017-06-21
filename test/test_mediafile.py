@@ -376,6 +376,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'rg_track_gain',
         'rg_album_peak',
         'rg_album_gain',
+        'r128_track_gain',
+        'r128_album_gain',
         'albumartist',
         'mb_albumartistid',
         'artist_sort',
@@ -674,6 +676,9 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
             if key.startswith('rg_'):
                 # ReplayGain is float
                 tags[key] = 1.0
+            elif key.startswith('r128_'):
+                # R128 is int
+                tags[key] = -1
             else:
                 tags[key] = 'value\u2010%s' % key
 

@@ -188,6 +188,54 @@ Find all items with a file modification time between 2008-12-01 and
 
     $ beet ls 'mtime:2008-12-01..2008-12-02'
 
+You can also add an optional time value to date queries, specifying hours,
+minutes, and seconds.
+
+Times are separated from dates by a space, an uppercase 'T' or a lowercase
+'t', for example: ``2008-12-01T23:59:59``. If you specify a time, then the
+date must contain a year, month, and day. The minutes and seconds are
+optional.
+
+Here is an example that finds all items added on 2008-12-01 at or after 22:00
+but before 23:00::
+
+    $ beet ls 'added:2008-12-01T22'
+
+To find all items added on or after 2008-12-01 at 22:45::
+
+    $ beet ls 'added:2008-12-01T22:45..'
+
+To find all items added on 2008-12-01, at or after 22:45:20 but before
+22:45:41::
+
+    $ beet ls 'added:2008-12-01T22:45:20..2008-12-01T22:45:40'
+
+Here are example of the three ways to separate dates from times. All of these
+queries do the same thing::
+
+    $ beet ls 'added:2008-12-01T22:45:20'
+    $ beet ls 'added:2008-12-01t22:45:20'
+    $ beet ls 'added:2008-12-01 22:45:20'
+
+You can also use *relative* dates. For example, ``-3w`` means three weeks ago,
+and ``+4d`` means four days in the future. A relative date has three parts:
+
+- Either ``+`` or ``-``, to indicate the past or the future. The sign is
+  optional; if you leave this off, it defaults to the future.
+- A number.
+- A letter indicating the unit: ``d``, ``w``, ``m`` or ``y``, meaning days,
+  weeks, months or years. (A "month" is always 30 days and a "year" is always
+  365 days.)
+
+Here's an example that finds all the albums added since last week::
+
+    $ beet ls -a 'added:-1w..'
+
+And here's an example that lists items added in a two-week period starting
+four weeks ago::
+
+    $ beet ls 'added:-6w..-4w'
+
 .. _not_query:
 
 Query Term Negation
