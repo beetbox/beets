@@ -135,7 +135,7 @@ class ParentWorkPlugin(BeetsPlugin):
             item.read()
             recording_id = item.mb_trackid
             found = True
-            self_log.debug(
+            self._log.debug(
                 "Current recording id: " + recording_id
                 )
             self._log.debug(
