@@ -144,9 +144,26 @@ class DateType(types.Float):
 
 
 class PathType(types.Type):
+    """A dbcore type for filesystem paths. These are represented as
+    `bytes` objects, in keeping with the Unix filesystem abstraction.
+    """
+
     sql = u'BLOB'
     query = PathQuery
     model_type = bytes
+
+    def __init__(self, nullable=False):
+        """Create a path type object. `nullable` controls whether the
+        type may be missing, i.e., None.
+        """
+        self.nullable = nullable
+
+    @property
+    def null(self):
+        if self.nullable:
+            return None
+        else:
+            return b''
 
     def format(self, value):
         return util.displayable_path(value)
@@ -187,6 +204,8 @@ class MusicalKey(types.String):
         r'ab': 'g#',
         r'bb': 'a#',
     }
+
+    null = None
 
     def parse(self, key):
         key = key.lower()
@@ -873,7 +892,7 @@ class Album(LibModel):
     _always_dirty = True
     _fields = {
         'id':      types.PRIMARY_ID,
-        'artpath': PathType(),
+        'artpath': PathType(True),
         'added':   DateType(),
 
         'albumartist':        types.STRING,
