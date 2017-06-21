@@ -139,7 +139,7 @@ class ParentWorkPlugin(BeetsPlugin):
                 "Current recording id: " + recording_id
                 )
             self_log.debug(
-                item[artist] + " - " item[title]
+                item[artist] + " - " + item[title]
                 )
             if 'parent_work' in item and not force:
                 continue
