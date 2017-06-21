@@ -1647,7 +1647,7 @@ class MediaFile(object):
         ASFStorageStyle('WM/Composersortorder'),
     )
     work = MediaField(
-        MP3StorageStyle('TXXX', involvement='Work'),
+        MP3StorageStyle('TXXX:Work'),
         MP4StorageStyle('----:com.apple.iTunes:Work'),
         StorageStyle('WORK'),
         ASFStorageStyle('beets/Work'),
