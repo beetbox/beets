@@ -110,6 +110,11 @@ class ParentWorkPlugin(BeetsPlugin):
         cmd = ui.Subcommand('parentwork',
                             help=u'fetches parent works, composers \
                                 and performers')
+        cmd.parser.add_option(
+            u'-f', u'--force', dest='force',
+            action='store_true', default=False,
+            help=u'Fetch parentwork even if already present'
+        )
         cmd.func = self.command
 
         return [cmd]
@@ -120,8 +125,8 @@ class ParentWorkPlugin(BeetsPlugin):
     def imported(self, session, task):
         self.find_work(task.items)
 
-    def find_work(self, items):
-        force = self.config['force'].get(bool)
+    def find_work(self, items, force):
+        force = self.config['force'].get(bool) or force
         details = self.config['details'].get(bool)
 
         for item in items:
@@ -168,15 +173,15 @@ class ParentWorkPlugin(BeetsPlugin):
                         if details and not hasawork:
                             self._log.info("No work attached,recording id: " +
                                            recording_id)
-                            self._log.info("add one at \
-                                           https://musicbrainz.org/\
-                                           recording/" +
+                            self._log.info("add one at" +
+                                           "https://musicbrainz.org/" +
+                                           "recording/" +
                                            recording_id)
                 elif details:
                     self._log.info(
                         "No work attached, recording id: " + recording_id)
-                    self._log.info("add one at https://musicbrainz.org\
-                                   /recording/" + recording_id)
+                    self._log.info("add one at https://musicbrainz.org" +
+                                   "/recording/" + recording_id)
             except musicbrainzngs.musicbrainz.WebServiceError:
                 self._log.info(
                     "Work unreachable, recording id: " + recording_id)
