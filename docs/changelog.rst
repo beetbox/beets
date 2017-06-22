@@ -6,6 +6,13 @@ Changelog
 
 Changelog goes here!
 
+For developers:
+
+* Fixed fields in Album and Item objects are now more strict about translating
+  missing values into type-specific null-like values. This should help in
+  cases where a string field is unexpectedly `None` sometimes instead of just
+  showing up as an empty string. :bug:`2605`
+
 
 1.4.5 (June 20, 2017)
 ---------------------
