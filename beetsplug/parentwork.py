@@ -19,64 +19,69 @@ composer, composer sort name and performers
 
 from __future__ import division, absolute_import, print_function
 
-from beets import ui, logging
+from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.dbcore import types
+
 
 import musicbrainzngs
 
-def work_father(work_id): 
+
+def work_father(work_id):
     """ This function finds the id of the father work given its id"""
     work_info = musicbrainzngs.get_work_by_id(work_id,
-        includes=["work-rels"])
+                                              includes=["work-rels"])
     if 'work-relation-list' in work_info['work']:
         for work_father in work_info['work']['work-relation-list']:
-            if work_father['type'] == 'parts' and work_father.get(
-                'direction') == 'backward':
+            if work_father['type'] == 'parts' \
+                    and work_father.get('direction') == 'backward':
                 father_id = work_father['work']['id']
                 return(father_id)
         return(None)
-                
-    else: 
+
+    else:
         return(None)
+
 
 def work_parent(work_id):
     """This function finds the parentwork id of a work given its id. """
-    while True: 
+    while True:
         new_work_id = work_father(work_id)
         if not new_work_id:
             return work_id
             break
         work_id = new_work_id
     return work_id
-        
+
+
 def find_parentwork(work_id):
-    """This function gives the work relationships (dict) of a parent_work 
+    """This function gives the work relationships (dict) of a parent_work
     given the id of the work"""
-    parent_id=work_parent(work_id)
-    work_info = musicbrainzngs.get_work_by_id(
-        parent_id,includes = ["artist-rels"])
+    parent_id = work_parent(work_id)
+    work_info = musicbrainzngs.get_work_by_id(parent_id,
+                                              includes=["artist-rels"])
     return(work_info)
 
-def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
-    parent_work_disambig,work_ids,composer_ids):
-    """Given the parentwork info dict, this function updates parent_composer, 
+
+def get_info(work_info, parent_composer, parent_composer_sort, parent_work,
+             parent_work_disambig, work_ids, composer_ids, log):
+    """Given the parentwork info dict, this function updates parent_composer,
     parent_composer_sort, parent_work, parent_work_disambig, work_ids and
     composer_ids"""
-    composer_exists=False
+    composer_exists = False
     if 'artist-relation-list' in work_info['work']:
         for artist in work_info['work']['artist-relation-list']:
             if artist['type'] == 'composer':
-                composer_exists=True
+                composer_exists = True
                 if artist['artist']['id'] not in composer_ids:
                     composer_ids.add(artist['artist']['id'])
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
-    #if not composer_exists:
-    #    self._log.info(
-    #        "no composer, add one at https://musicbrainz.org/work/" + 
-    #        work_info['work']['id']
-    #        )
+    if not composer_exists:
+        print('I am here!')
+        log._log.info(
+            "no composer, add one at https://musicbrainz.org/work/" +
+            work_info['work']['id'])
+        print('logging done')
     if work_info['work']['id'] in work_ids:
         pass
     else:
@@ -84,6 +89,7 @@ def get_info(work_info,parent_composer,parent_composer_sort,parent_work,
         work_ids.add(work_info['work']['id'])
         if 'disambiguation' in work_info['work']:
             parent_work_disambig.append(work_info['work']['disambiguation'])
+
 
 class ParentWorkPlugin(BeetsPlugin):
 
@@ -105,7 +111,7 @@ class ParentWorkPlugin(BeetsPlugin):
                             help=u'fetches parent works, composers \
                                 and performers')
         cmd.func = self.command
-        
+
         return [cmd]
 
     def command(self, lib, opts, args):
@@ -127,16 +133,16 @@ class ParentWorkPlugin(BeetsPlugin):
             parent_composer_sort = []
             work_ids             = set()
             composer_ids         = set()
-            
+
             item.read()
             recording_id = item.mb_trackid
             found = True
             self._log.debug(
                 "Current recording id: " + recording_id
-                )
+            )
             self._log.debug(
                 item.artist + " - " + item.title
-                )
+            )
             if 'parent_work' in item and not force:
                 continue
             try:
@@ -145,39 +151,35 @@ class ParentWorkPlugin(BeetsPlugin):
                 if 'work-relation-list' in rec_rels['recording']:
                     for work_relation in rec_rels['recording'][
                             'work-relation-list']:
-                        hasawork=False
+                        hasawork = False
                         if work_relation['type'] != 'performance':
                             continue
-                        hasawork=True
+                        hasawork = True
                         work_id = work_relation['work']['id']
                         work.append(work_relation['work']['title'])
                         if 'disambiguation' in work_relation['work']:
                             work_disambig.append(work_relation['work']
-                                ['disambiguation'])
+                                                 ['disambiguation'])
                         work_info = find_parentwork(work_id)
-                        get_info(work_info,parent_composer,
-                        parent_composer_sort,parent_work,parent_work_disambig,
-                        work_ids,composer_ids)
-                        if details and not hasawork: 
-                            self._log.info(
-                            "No work attached, recording id: " + recording_id
-                            )
-                            self._log.info(
-                            "add one at https://musicbrainz.org/recording/" + 
-                            recording_id
-                            )
-                elif details: 
+                        get_info(work_info, parent_composer,
+                                 parent_composer_sort, parent_work,
+                                 parent_work_disambig,
+                                 work_ids, composer_ids, log=None)
+                        if details and not hasawork:
+                            self._log.info("No work attached,recording id: " +
+                                           recording_id)
+                            self._log.info("add one at \
+                                           https://musicbrainz.org/\
+                                           recording/" +
+                                           recording_id)
+                elif details:
                     self._log.info(
-                        "No work attached, recording id: " + recording_id
-                        )
-                    self._log.info(
-                        "add one at https://musicbrainz.org/recording/" + 
-                        recording_id
-                        )
-            except musicbrainzngs.musicbrainz.WebServiceError: 
+                        "No work attached, recording id: " + recording_id)
+                    self._log.info("add one at https://musicbrainz.org\
+                                   /recording/" + recording_id)
+            except musicbrainzngs.musicbrainz.WebServiceError:
                 self._log.info(
-                    "Work unreachable, recording id: " + recording_id
-                    )
+                    "Work unreachable, recording id: " + recording_id)
                 found = False
 
             if found:
