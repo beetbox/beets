@@ -22,7 +22,7 @@ from __future__ import division, absolute_import, print_function
 from beets import ui
 from beets.plugins import BeetsPlugin
 
-
+import logging
 import musicbrainzngs
 
 
@@ -63,7 +63,7 @@ def find_parentwork(work_id):
 
 
 def get_info(work_info, parent_composer, parent_composer_sort, parent_work,
-             parent_work_disambig, work_ids, composer_ids, log):
+             parent_work_disambig, work_ids, composer_ids):
     """Given the parentwork info dict, this function updates parent_composer,
     parent_composer_sort, parent_work, parent_work_disambig, work_ids and
     composer_ids"""
@@ -78,7 +78,7 @@ def get_info(work_info, parent_composer, parent_composer_sort, parent_work,
                     parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
         print('I am here!')
-        log._log.info(
+        logging.info(
             "no composer, add one at https://musicbrainz.org/work/" +
             work_info['work']['id'])
         print('logging done')
@@ -169,7 +169,7 @@ class ParentWorkPlugin(BeetsPlugin):
                         get_info(work_info, parent_composer,
                                  parent_composer_sort, parent_work,
                                  parent_work_disambig,
-                                 work_ids, composer_ids, log=None)
+                                 work_ids, composer_ids)
                         if details and not hasawork:
                             self._log.info("No work attached,recording id: " +
                                            recording_id)
