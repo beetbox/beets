@@ -126,7 +126,7 @@ class ParentWorkPlugin(BeetsPlugin):
         self.find_work(task.items)
 
     def find_work(self, items, force):
-        force = self.config['force'].get(bool) or force
+        force = self.config['force'].get(bool)
         details = self.config['details'].get(bool)
 
         for item in items:
@@ -143,10 +143,7 @@ class ParentWorkPlugin(BeetsPlugin):
             recording_id = item.mb_trackid
             found = True
             self._log.debug(
-                "Current recording id: " + recording_id
-            )
-            self._log.debug(
-                item.artist + " - " + item.title
+                "Fetching " + item.artist + " - " + item.title
             )
             if 'parent_work' in item and not force:
                 continue
@@ -188,6 +185,7 @@ class ParentWorkPlugin(BeetsPlugin):
                 found = False
 
             if found:
+                self._log.debug("Work fetched: " + parent_work)
                 item['parent_work']          = u', '.join(parent_work)
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
                 item['work']                 = u', '.join(work)
