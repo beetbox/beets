@@ -242,12 +242,12 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                        ]
     for artist_relation in recording.get('artist-relation-list', ()):
         if 'type' in artist_relation:
-            type = artist_relation['type']
-            if type == 'arranger':
+            rel_type = artist_relation['type']
+            if rel_type == 'arranger':
                 arranger.append(artist_relation['artist']['name'])
                 arranger_sort.append(
                     artist_relation['artist']['sort-name'])
-            if type in performer_types and \
+            if rel_type in performer_types and \
                     artist_relation.get('direction') == 'backward':
                 artist_tmp = artist_relation['artist']['name']
                 performer_tmp[artist_tmp] = []
