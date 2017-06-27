@@ -158,7 +158,8 @@ class TrackInfo(object):
                  artist_credit=None, data_source=None, data_url=None,
                  media=None, lyricist=None, lyricist_sort=None,
                  composer=None, composer_sort=None, arranger=None,
-                 arranger_sort=None, track_alt=None):
+                 arranger_sort=None, track_alt=None, performer=None,
+                 performer_sort=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
@@ -180,6 +181,8 @@ class TrackInfo(object):
         self.composer_sort = composer_sort
         self.arranger = arranger
         self.arranger_sort = arranger_sort
+        self.performer = performer
+        self.performer_sort = performer_sort
         self.track_alt = track_alt
 
     # As above, work around a bug in python-musicbrainz-ngs.

@@ -233,6 +233,13 @@ def track_info(recording, index=None, medium=None, medium_index=None,
 
     arranger = []
     arranger_sort = []
+    performer = []
+    performer_sort = []
+    performer_tmp = {}
+    performer_types = ['performer', 'instrument', 'vocal',
+                                    'conductor', 'performing orchestra',
+                                    'chorus master', 'concertmaster'
+                       ]
     for artist_relation in recording.get('artist-relation-list', ()):
         if 'type' in artist_relation:
             type = artist_relation['type']
@@ -240,9 +247,30 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                 arranger.append(artist_relation['artist']['name'])
                 arranger_sort.append(
                     artist_relation['artist']['sort-name'])
+            if type in performer_types:
+                artist_tmp = artist_relation['artist']['name']
+                performer_tmp[artist_tmp] = []
+                if 'attribute-list' in artist_relation:
+                    for attribute in artist_relation['attribute-list']:
+                        performer_tmp[artist_tmp].append(attribute)
+                else:
+                    performer_tmp[artist_tmp].append(artist_relation['type'])
+                performer_tmp[artist_relation['artist']['sort-name']] =\
+                    performer_tmp[artist_tmp]
+                performer.append(artist_tmp +
+                                 '(' + u', '.join(performer_tmp[artist_tmp]) +
+                                 ')')
+                performer_sort.append(artist_relation['artist']['sort-name'] +
+                                      '(' +
+                                      u', '.join(performer_tmp[artist_tmp]) +
+                                      ')')
     if arranger:
         info.arranger = u', '.join(arranger)
         info.arranger_sort = u', '.join(arranger_sort)
+
+    if performer:
+        info.performer = u', '.join(performer)
+        info.performer_sort = u', '.join(performer_sort)
 
     info.decode()
     return info

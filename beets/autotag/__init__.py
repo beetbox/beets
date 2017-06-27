@@ -57,6 +57,10 @@ def apply_item_metadata(item, track_info):
         item.arranger = track_info.arranger
     if track_info.arranger_sort is not None:
         item.arranger_sort = track_info.arranger_sort
+    if track_info.performer is not None:
+        item.performer = track_info.performer
+    if track_info.performer_sort is not None:
+        item.performer_sort = track_info.performer_sort
 
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
@@ -169,5 +173,9 @@ def apply_metadata(album_info, mapping):
             item.arranger = track_info.arranger
         if track_info.arranger_sort is not None:
             item.arranger_sort = track_info.arranger_sort
+        if track_info.performer is not None:
+            item.performer = track_info.performer
+        if track_info.performer_sort is not None:
+            item.performer_sort = track_info.performer_sort
 
         item.track_alt = track_info.track_alt

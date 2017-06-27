@@ -440,6 +440,8 @@ class Item(LibModel):
         'composer_sort':        types.STRING,
         'arranger':             types.STRING,
         'arranger_sort':        types.STRING,
+        'performer':            types.STRING,
+        'performer_sort':       types.STRING,
         'grouping':             types.STRING,
         'year':                 types.PaddedInt(4),
         'month':                types.PaddedInt(2),
