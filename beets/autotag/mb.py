@@ -247,7 +247,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                 arranger.append(artist_relation['artist']['name'])
                 arranger_sort.append(
                     artist_relation['artist']['sort-name'])
-            if type in performer_types:
+            if type in performer_types and \
+                    artist_relation.get('direction') == 'backward':
                 artist_tmp = artist_relation['artist']['name']
                 performer_tmp[artist_tmp] = []
                 if 'attribute-list' in artist_relation:
