@@ -13,8 +13,8 @@ For developers:
   cases where a string field is unexpectedly `None` sometimes instead of just
   showing up as an empty string. :bug:`2605`
   
-* Added new tags arranger_sort and lyricist_sort. Thanks to :user:`dosoe`. 
-  :bug:`2563`
+* Added new tags arranger_sort, lyricist_sort, performer and performer_sort. 
+  Thanks to :user:`dosoe`. :bug:`2563`
 
 
 1.4.5 (June 20, 2017)
