@@ -3,7 +3,7 @@
 (Describe your problem, feature request, or discussion topic here. If you're reporting a bug, please fill out this and the "Setup" section below. Otherwise, you can delete them.)
 
 Running this command in verbose (`-vv`) mode:
-
+hgjhk
 ```sh
 $ beet -vv (... paste here ...)
 ```
