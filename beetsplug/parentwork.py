@@ -125,7 +125,7 @@ class ParentWorkPlugin(BeetsPlugin):
     def imported(self, session, task):
         self.find_work(task.items)
 
-    def find_work(self, items, force):
+    def find_work(self, items):
         force = self.config['force'].get(bool)
         details = self.config['details'].get(bool)
 
@@ -146,6 +146,9 @@ class ParentWorkPlugin(BeetsPlugin):
                 "Fetching " + item.artist + " - " + item.title
             )
             if 'parent_work' in item and not force:
+                self._log.debug(
+                    "Work already in library, not necessary fetching"
+                )
                 continue
             try:
                 rec_rels = musicbrainzngs.get_recording_by_id(
@@ -185,7 +188,7 @@ class ParentWorkPlugin(BeetsPlugin):
                 found = False
 
             if found:
-                self._log.debug("Work fetched: " + parent_work)
+                self._log.debug("Work fetched: " + u', '.join(parent_work))
                 item['parent_work']          = u', '.join(parent_work)
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
                 item['work']                 = u', '.join(work)
