@@ -63,7 +63,7 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'work-level-rels', 'artist-rels']
 TRACK_INCLUDES = ['artists', 'aliases']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
-    TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
+    TRACK_INCLUDES += ['work-level-rels', 'artist-rels', 'work-rels']
 
 
 def track_url(trackid):
