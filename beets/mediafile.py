@@ -1869,7 +1869,7 @@ class MediaFile(object):
         ASFStorageStyle('MusicBrainz/Track Id'),
     )
     mb_workid = MediaField(
-        MP3UFIDStorageStyle(owner='http://musicbrainz.org'),
+        MP3DescStorageStyle(u'MusicBrainz Work Id'),
         MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Work Id'),
         StorageStyle('MUSICBRAINZ_WORKID'),
         ASFStorageStyle('MusicBrainz/Work Id'),
