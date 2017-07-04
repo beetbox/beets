@@ -855,7 +855,7 @@ class ReplayGainPlugin(BeetsPlugin):
         # value.
         return self.overwrite or \
             any([self.should_use_r128(item) and
-                (not item.r128_item_gain or not item.r128_album_gain)
+                (not item.r128_track_gain or not item.r128_album_gain)
                 for item in album.items()]) or \
             any([not self.should_use_r128(item) and
                 (not item.rg_album_gain or not item.rg_album_peak)
@@ -903,11 +903,11 @@ class ReplayGainPlugin(BeetsPlugin):
 
         self._log.info(u'analyzing {0}', album)
 
-        if (any([self.should_use_r128(item) for item in album.items()]) and
+        if (any([self.should_use_r128(item) for item in album.items()]) and not
                 all(([self.should_use_r128(item) for item in album.items()]))):
                 raise ReplayGainError(
                     u"Mix of ReplayGain and EBU R128 detected"
-                    u"for some tracks in album {0}".format(album)
+                    u" for some tracks in album {0}".format(album)
                 )
 
         if any([self.should_use_r128(item) for item in album.items()]):
