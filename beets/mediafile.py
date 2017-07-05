@@ -34,6 +34,7 @@ data from the tags. In turn ``MediaField`` uses a number of
 ``StorageStyle`` strategies to handle format specific logic.
 """
 from __future__ import division, absolute_import, print_function
+from beets import config
 
 import mutagen
 import mutagen.id3
@@ -1600,6 +1601,25 @@ class MediaFile(object):
                 else:
                     setattr(self, field, dict[field])
 
+    def map_tags(tag):
+        config_exists = config['map'].exists()
+        config_mapping = config['map']
+        if config_exists and config_mapping and config_mapping[tag].exists() and config_mapping[tag].get():
+            vorbis_tags = tuple(map(lambda tag: StorageStyle(tag), config_mapping[tag].get().upper().split()))
+            return MediaField(*
+                (MP3DescStorageStyle(key='USLT'),
+                MP4StorageStyle('\xa9lyr')) + 
+                vorbis_tags +
+                (ASFStorageStyle('WM/Lyrics'),)
+            )
+        else:
+            return MediaField(
+                MP3DescStorageStyle(key='USLT'),
+                MP4StorageStyle('\xa9lyr'),
+                StorageStyle('LYRICS'),
+                ASFStorageStyle('WM/Lyrics')
+            )
+
     # Field definitions.
 
     title = MediaField(
@@ -1693,12 +1713,7 @@ class MediaFile(object):
         ASFStorageStyle('TotalDiscs'),
         out_type=int,
     )
-    lyrics = MediaField(
-        MP3DescStorageStyle(key='USLT'),
-        MP4StorageStyle('\xa9lyr'),
-        StorageStyle('LYRICS'),
-        ASFStorageStyle('WM/Lyrics'),
-    )
+    lyrics = map_tags('lyrics') 
     comments = MediaField(
         MP3DescStorageStyle(key='COMM'),
         MP4StorageStyle('\xa9cmt'),
