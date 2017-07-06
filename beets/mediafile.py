@@ -34,7 +34,6 @@ data from the tags. In turn ``MediaField`` uses a number of
 ``StorageStyle`` strategies to handle format specific logic.
 """
 from __future__ import division, absolute_import, print_function
-from beets import config
 
 import mutagen
 import mutagen.id3
@@ -1439,7 +1438,7 @@ class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
     metadata.
     """
-    def __init__(self, path, id3v23=False):
+    def __init__(self, path, id3v23=False, mapping=None):
         """Constructs a new `MediaFile` reflecting the file at path. May
         throw `UnreadableFileError`.
 
@@ -1490,6 +1489,10 @@ class MediaFile(object):
 
         # Set the ID3v2.3 flag only for MP3s.
         self.id3v23 = id3v23 and self.type == 'mp3'
+
+        # Set tag mapping
+        self.mapping = mapping
+        self.lyrics = self.map_tags('lyrics')
 
     def save(self):
         """Write the object's tags back to the file. May
@@ -1601,11 +1604,9 @@ class MediaFile(object):
                 else:
                     setattr(self, field, dict[field])
 
-    def map_tags(tag):
-        config_exists = config['map'].exists()
-        config_mapping = config['map']
-        if config_exists and config_mapping and config_mapping[tag].exists() and config_mapping[tag].get():
-            vorbis_tags = tuple(map(lambda tag: StorageStyle(tag), config_mapping[tag].get().upper().split()))
+    def map_tags(self, tag):
+        if self.mapping and self.mapping[tag]:
+            vorbis_tags = tuple(map(lambda tag: StorageStyle(tag), self.mapping[tag].upper().split()))
             return MediaField(*
                 (MP3DescStorageStyle(key='USLT'),
                 MP4StorageStyle('\xa9lyr')) + 
@@ -1616,7 +1617,6 @@ class MediaFile(object):
             return MediaField(
                 MP3DescStorageStyle(key='USLT'),
                 MP4StorageStyle('\xa9lyr'),
-                StorageStyle('LYRICS'),
                 ASFStorageStyle('WM/Lyrics')
             )
 
@@ -1713,7 +1713,6 @@ class MediaFile(object):
         ASFStorageStyle('TotalDiscs'),
         out_type=int,
     )
-    lyrics = map_tags('lyrics') 
     comments = MediaField(
         MP3DescStorageStyle(key='COMM'),
         MP4StorageStyle('\xa9cmt'),
