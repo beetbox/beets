@@ -6,6 +6,11 @@ Changelog
 
 Changelog goes here!
 
+Fixes:
+
+* :doc:`/plugins/replaygain`: Fix a regression in the previous release related
+  to the new R128 tags. :bug:`2615` :bug:`2623`
+
 For developers:
 
 * Fixed fields in Album and Item objects are now more strict about translating
