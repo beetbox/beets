@@ -140,7 +140,7 @@ map:
     grouping: [GROUPING]
     track: [TRACK, TRACKNUMBER]
     tracktotal: [TRACKTOTAL, TRACKC, TOTALTRACKS]
-    disc: [DISC DISCNUMBER]
+    disc: [DISC, DISCNUMBER]
     disctotal: [DISCTOTAL, DISCC, TOTALDISCS]
     lyrics: [LYRICS]
     comments: [DESCRIPTION, COMMENT]
