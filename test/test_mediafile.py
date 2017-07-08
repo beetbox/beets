@@ -28,7 +28,7 @@ from six import assertCountEqual
 from test import _common
 from beets.mediafile import MediaFile, Image, \
     ImageType, CoverArtField, UnreadableFileError
-
+from beets import config
 
 class ArtTestMixin(object):
     """Test reads and writes of the ``art`` property.
@@ -292,7 +292,7 @@ class GenreListTestMixin(object):
         mediafile.genres += [u'another']
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         assertCountEqual(self, mediafile.genres, [u'the genre', u'another'])
 
 
@@ -663,7 +663,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         src = os.path.join(_common.RSRC, name)
         target = os.path.join(self.temp_dir, name)
         shutil.copy(src, target)
-        return MediaFile(target)
+        return MediaFile(target, mapping=config['map'].get())
 
     def _generate_tags(self, base=None):
         """Return dictionary of tags, mapping tag names to values.
