@@ -66,7 +66,7 @@ class ArtTestMixin(object):
         mediafile.art = self.png_data
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.art, self.png_data)
 
     def test_set_jpg_art(self):
@@ -74,7 +74,7 @@ class ArtTestMixin(object):
         mediafile.art = self.jpg_data
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.art, self.jpg_data)
 
     def test_delete_art(self):
@@ -82,13 +82,13 @@ class ArtTestMixin(object):
         mediafile.art = self.jpg_data
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertIsNotNone(mediafile.art)
 
         del mediafile.art
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertIsNone(mediafile.art)
 
 
@@ -124,7 +124,7 @@ class ImageStructureTestMixin(ArtTestMixin):
         mediafile.images = [image]
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(len(mediafile.images), 1)
 
         image = mediafile.images[0]
@@ -142,7 +142,7 @@ class ImageStructureTestMixin(ArtTestMixin):
         mediafile.images += [image]
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(len(mediafile.images), 3)
 
         images = (i for i in mediafile.images if i.desc == u'the composer')
@@ -158,7 +158,7 @@ class ImageStructureTestMixin(ArtTestMixin):
         del mediafile.images
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(len(mediafile.images), 0)
 
     def test_guess_cover(self):
@@ -194,7 +194,7 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
         mediafile.images += [image]
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(len(mediafile.images), 3)
 
         # WMA does not preserve the order, so we have to work around this
@@ -275,7 +275,7 @@ class GenreListTestMixin(object):
         mediafile.genres = [u'one', u'two']
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         assertCountEqual(self, mediafile.genres, [u'one', u'two'])
 
     def test_write_genre_list_get_first(self):
@@ -283,7 +283,7 @@ class GenreListTestMixin(object):
         mediafile.genres = [u'one', u'two']
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.genre, u'one')
 
     def test_append_genre_list(self):
@@ -297,7 +297,7 @@ class GenreListTestMixin(object):
 
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
-                        _common.TempDirMixin):
+                        _common.TempDirMixin, _common.TestCase):
     """Test writing and reading tags. Subclasses must set ``extension``
     and ``audio_properties``.
 
@@ -402,10 +402,12 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
     ]
 
     def setUp(self):
+        super(ReadWriteTestBase, self).setUp()
         self.create_temp_dir()
 
     def tearDown(self):
         self.remove_temp_dir()
+        super(ReadWriteTestBase, self).tearDown()
 
     def test_read_nonexisting(self):
         mediafile = self._mediafile_fixture('full')
@@ -454,7 +456,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
             setattr(mediafile, key, value)
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertTags(mediafile, tags)
 
     def test_update_empty(self):
@@ -464,7 +466,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile.update(tags)
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertTags(mediafile, tags)
 
     def test_overwrite_full(self):
@@ -480,7 +482,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
             setattr(mediafile, key, value)
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertTags(mediafile, tags)
 
     def test_update_full(self):
@@ -493,7 +495,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile.update(tags)
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertTags(mediafile, tags)
 
     def test_write_date_components(self):
@@ -506,7 +508,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile.original_day = 30
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.year, 2001)
         self.assertEqual(mediafile.month, 1)
         self.assertEqual(mediafile.day, 2)
@@ -523,7 +525,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile.day = 2
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.year, 2001)
         self.assertIsNone(mediafile.month)
         self.assertIsNone(mediafile.day)
@@ -535,7 +537,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile.original_date = datetime.date(1999, 12, 30)
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.year, 2001)
         self.assertEqual(mediafile.month, 1)
         self.assertEqual(mediafile.day, 2)
@@ -552,7 +554,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile.track = 1
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.track, 1)
         self.assertEqual(mediafile.tracktotal, 2)
 
@@ -569,7 +571,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         delattr(mediafile, 'disctotal')
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.track, 10)
         self.assertEqual(mediafile.tracktotal, None)
         self.assertEqual(mediafile.disc, 10)
@@ -595,7 +597,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         for key in keys:
             delattr(mediafile, key)
         mediafile.save()
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
 
         for key in keys:
             self.assertIsNone(getattr(mediafile, key))
@@ -607,7 +609,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         delattr(mediafile, 'disctotal')
 
         mediafile.save()
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.track, self.full_initial_tags['track'])
         self.assertEqual(mediafile.disc, self.full_initial_tags['disc'])
 
@@ -616,7 +618,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
 
         mediafile.date = datetime.date(2001, 12, 3)
         mediafile.save()
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertIsNotNone(mediafile.date)
         self.assertIsNotNone(mediafile.year)
         self.assertIsNotNone(mediafile.month)
@@ -624,7 +626,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
 
         delattr(mediafile, 'month')
         mediafile.save()
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertIsNotNone(mediafile.date)
         self.assertIsNotNone(mediafile.year)
         self.assertIsNone(mediafile.month)
@@ -638,7 +640,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
 
         delattr(mediafile, 'year')
         mediafile.save()
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertIsNone(mediafile.date)
         self.assertIsNone(mediafile.year)
 
@@ -799,7 +801,7 @@ class WMATest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile.genres = [u'one', u'two']
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertIn(mediafile.genre, [u'one', u'two'])
 
     def test_read_pure_tags(self):
@@ -831,7 +833,7 @@ class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile.year = 2000
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertEqual(mediafile.mgfile['YEAR'], [u'2000'])
 
     def test_legacy_coverart_tag(self):
@@ -842,7 +844,7 @@ class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile.art = self.png_data
         mediafile.save()
 
-        mediafile = MediaFile(mediafile.path)
+        mediafile = MediaFile(mediafile.path, mapping=config['map'].get())
         self.assertFalse('coverart' in mediafile.mgfile)
 
     def test_date_tag_with_slashes(self):
