@@ -71,6 +71,19 @@ class ListTest(unittest.TestCase):
             out = out.decode(stdout.encoding)
         self.assertTrue(u'na\xefve' in out)
 
+    def test_list_unicode_query_upper_lower(self):
+        """Test if german letters Ä, Ö and Ü will discard case"""
+        self.item.title = u'Unrockbar'
+        self.item.artist = u'Die Ärzte'
+        self.item.store()
+        self.lib._connection().commit()
+
+        stdout = self._run_list([u'ärzte'])
+        out = stdout.getvalue()
+        if six.PY2:
+            out = out.decode(stdout.encoding)
+        self.assertTrue(u'Die Ärzte' in out)
+
     def test_list_item_path(self):
         stdout = self._run_list(fmt=u'$path')
         self.assertEqual(stdout.getvalue().strip(), u'xxx/yyy')
