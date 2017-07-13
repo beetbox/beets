@@ -29,6 +29,7 @@ from beets.util.artresizer import ArtResizer
 from beets import mediafile
 from beets import config
 
+
 def mediafile_image(image_path, maxwidth=None):
     """Return a `mediafile.Image` object for the path.
     """
@@ -41,7 +42,8 @@ def mediafile_image(image_path, maxwidth=None):
 def get_art(log, item):
     # Extract the art.
     try:
-        mf = mediafile.MediaFile(syspath(item.path), mapping=config['map'].get())
+        mf = mediafile.MediaFile(syspath(item.path),
+                                 mapping=config['map'].get())
     except mediafile.UnreadableFileError as exc:
         log.warning(u'Could not extract art from {0}: {1}',
                     displayable_path(item.path), exc)

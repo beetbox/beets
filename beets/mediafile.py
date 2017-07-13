@@ -1225,7 +1225,10 @@ class MediaField(object):
     def _all_styles(self, mediafile):
         """Get all storage styles of this field
         """
-        return mediafile.get_storage_styles(self.field_name) if self.field_name else self._styles
+        if self.field_name:
+            return mediafile.get_storage_styles(self.field_name)
+        else:
+            return self._styles
 
 
 class ListMediaField(MediaField):
@@ -1258,7 +1261,11 @@ class ListMediaField(MediaField):
     def _all_styles(self, mediafile):
         """Get all storage styles of this field
         """
-        return mediafile.get_storage_styles(self.field_name, list_type=True) if self.field_name else self._styles
+        if self.field_name:
+            return mediafile.get_storage_styles(self.field_name,
+                                                list_type=True)
+        else:
+            return self._styles
 
 
 class DateField(MediaField):
@@ -1622,336 +1629,343 @@ class MediaFile(object):
         vorbis_styles = ()
         if self.mapping and self.mapping.get(field, None):
             if list_type:
-                vorbis_styles = tuple([ListStorageStyle(tag, **self.vorbis_params.get(field, {}) ) for tag in self.mapping[field]])
+                vorbis_styles = tuple([ListStorageStyle(tag,
+                                      **self.vorbis_params.get(field, {}))
+                                      for tag in self.mapping[field]])
             else:
-                vorbis_styles = tuple([StorageStyle(tag, **self.vorbis_params.get(field, {}) ) for tag in self.mapping[field]])
+                vorbis_styles = tuple([StorageStyle(tag,
+                                      **self.vorbis_params.get(field, {}))
+                                      for tag in self.mapping[field]])
 
         return self.other_styles[field] + vorbis_styles
-               
+
     # Non Vorbis storage styles
     other_styles = {
         'title': (
-                MP3StorageStyle('TIT2'),
-                MP4StorageStyle('\xa9nam'),
-                ASFStorageStyle('Title'),
+            MP3StorageStyle('TIT2'),
+            MP4StorageStyle('\xa9nam'),
+            ASFStorageStyle('Title'),
         ),
         'artist': (
-                MP3StorageStyle('TPE1'),
-                MP4StorageStyle('\xa9ART'),
-                ASFStorageStyle('Author'),
+            MP3StorageStyle('TPE1'),
+            MP4StorageStyle('\xa9ART'),
+            ASFStorageStyle('Author'),
         ),
         'album': (
-                MP3StorageStyle('TALB'),
-                MP4StorageStyle('\xa9alb'),
-                ASFStorageStyle('WM/AlbumTitle'),
+            MP3StorageStyle('TALB'),
+            MP4StorageStyle('\xa9alb'),
+            ASFStorageStyle('WM/AlbumTitle'),
         ),
         'genre': (
-                MP3ListStorageStyle('TCON'),
-                MP4ListStorageStyle('\xa9gen'),
-                ASFStorageStyle('WM/Genre'),
+            MP3ListStorageStyle('TCON'),
+            MP4ListStorageStyle('\xa9gen'),
+            ASFStorageStyle('WM/Genre'),
         ),
         'lyricist': (
-                MP3StorageStyle('TEXT'),
-                MP4StorageStyle('----:com.apple.iTunes:LYRICIST'),
-                ASFStorageStyle('WM/Writer'),
+            MP3StorageStyle('TEXT'),
+            MP4StorageStyle('----:com.apple.iTunes:LYRICIST'),
+            ASFStorageStyle('WM/Writer'),
         ),
         'composer': (
-                MP3StorageStyle('TCOM'),
-                MP4StorageStyle('\xa9wrt'),
-                ASFStorageStyle('WM/Composer'),
+            MP3StorageStyle('TCOM'),
+            MP4StorageStyle('\xa9wrt'),
+            ASFStorageStyle('WM/Composer'),
         ),
         'composer_sort': (
-                MP3StorageStyle('TSOC'),
-                MP4StorageStyle('soco'),
-                ASFStorageStyle('WM/Composersortorder'),
+            MP3StorageStyle('TSOC'),
+            MP4StorageStyle('soco'),
+            ASFStorageStyle('WM/Composersortorder'),
         ),
         'arranger': (
-                MP3PeopleStorageStyle('TIPL', involvement='arranger'),
-                MP4StorageStyle('----:com.apple.iTunes:Arranger'),
-                ASFStorageStyle('beets/Arranger'),
+            MP3PeopleStorageStyle('TIPL', involvement='arranger'),
+            MP4StorageStyle('----:com.apple.iTunes:Arranger'),
+            ASFStorageStyle('beets/Arranger'),
         ),
         'grouping': (
-                MP3StorageStyle('TIT1'),
-                MP4StorageStyle('\xa9grp'),
-                ASFStorageStyle('WM/ContentGroupDescription'),
+            MP3StorageStyle('TIT1'),
+            MP4StorageStyle('\xa9grp'),
+            ASFStorageStyle('WM/ContentGroupDescription'),
         ),
         'track': (
-                MP3SlashPackStorageStyle('TRCK', pack_pos=0),
-                MP4TupleStorageStyle('trkn', index=0),
-                ASFStorageStyle('WM/TrackNumber'),
+            MP3SlashPackStorageStyle('TRCK', pack_pos=0),
+            MP4TupleStorageStyle('trkn', index=0),
+            ASFStorageStyle('WM/TrackNumber'),
         ),
         'tracktotal': (
-                MP3SlashPackStorageStyle('TRCK', pack_pos=1),
-                MP4TupleStorageStyle('trkn', index=1),
-                ASFStorageStyle('TotalTracks'),
+            MP3SlashPackStorageStyle('TRCK', pack_pos=1),
+            MP4TupleStorageStyle('trkn', index=1),
+            ASFStorageStyle('TotalTracks'),
         ),
         'disc': (
-                MP3SlashPackStorageStyle('TPOS', pack_pos=0),
-                MP4TupleStorageStyle('disk', index=0),
-                ASFStorageStyle('WM/PartOfSet'),
+            MP3SlashPackStorageStyle('TPOS', pack_pos=0),
+            MP4TupleStorageStyle('disk', index=0),
+            ASFStorageStyle('WM/PartOfSet'),
         ),
         'disctotal': (
-                MP3SlashPackStorageStyle('TPOS', pack_pos=1),
-                MP4TupleStorageStyle('disk', index=1),
-                ASFStorageStyle('TotalDiscs'),
+            MP3SlashPackStorageStyle('TPOS', pack_pos=1),
+            MP4TupleStorageStyle('disk', index=1),
+            ASFStorageStyle('TotalDiscs'),
         ),
         'lyrics': (
-                MP3DescStorageStyle(key='USLT'),
-                MP4StorageStyle('\xa9lyr'),
-                ASFStorageStyle('WM/Lyrics'),
+            MP3DescStorageStyle(key='USLT'),
+            MP4StorageStyle('\xa9lyr'),
+            ASFStorageStyle('WM/Lyrics'),
         ),
         'comments': (
-                MP3DescStorageStyle(key='COMM'),
-                MP4StorageStyle('\xa9cmt'),
-                ASFStorageStyle('WM/Comments'),
-                ASFStorageStyle('Description')
+            MP3DescStorageStyle(key='COMM'),
+            MP4StorageStyle('\xa9cmt'),
+            ASFStorageStyle('WM/Comments'),
+            ASFStorageStyle('Description')
         ),
         'bpm': (
-                MP3StorageStyle('TBPM'),
-                MP4StorageStyle('tmpo', as_type=int),
-                ASFStorageStyle('WM/BeatsPerMinute'),
+            MP3StorageStyle('TBPM'),
+            MP4StorageStyle('tmpo', as_type=int),
+            ASFStorageStyle('WM/BeatsPerMinute'),
         ),
         'comp': (
-                MP3StorageStyle('TCMP'),
-                MP4BoolStorageStyle('cpil'),
-                ASFStorageStyle('WM/IsCompilation', as_type=bool),
+            MP3StorageStyle('TCMP'),
+            MP4BoolStorageStyle('cpil'),
+            ASFStorageStyle('WM/IsCompilation', as_type=bool),
         ),
         'albumartist': (
-                MP3StorageStyle('TPE2'),
-                MP4StorageStyle('aART'),
-                ASFStorageStyle('WM/AlbumArtist'),
+            MP3StorageStyle('TPE2'),
+            MP4StorageStyle('aART'),
+            ASFStorageStyle('WM/AlbumArtist'),
         ),
         'albumtype': (
-                MP3DescStorageStyle(u'MusicBrainz Album Type'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Type'),
-                ASFStorageStyle('MusicBrainz/Album Type'),
+            MP3DescStorageStyle(u'MusicBrainz Album Type'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Type'),
+            ASFStorageStyle('MusicBrainz/Album Type'),
         ),
         'label': (
-                MP3StorageStyle('TPUB'),
-                MP4StorageStyle('----:com.apple.iTunes:Label'),
-                MP4StorageStyle('----:com.apple.iTunes:publisher'),
-                ASFStorageStyle('WM/Publisher'),
+            MP3StorageStyle('TPUB'),
+            MP4StorageStyle('----:com.apple.iTunes:Label'),
+            MP4StorageStyle('----:com.apple.iTunes:publisher'),
+            ASFStorageStyle('WM/Publisher'),
         ),
         'artist_sort': (
-                MP3StorageStyle('TSOP'),
-                MP4StorageStyle('soar'),
-                ASFStorageStyle('WM/ArtistSortOrder'),
+            MP3StorageStyle('TSOP'),
+            MP4StorageStyle('soar'),
+            ASFStorageStyle('WM/ArtistSortOrder'),
         ),
         'albumartist_sort': (
-                MP3DescStorageStyle(u'ALBUMARTISTSORT'),
-                MP4StorageStyle('soaa'),
-                ASFStorageStyle('WM/AlbumArtistSortOrder'),
+            MP3DescStorageStyle(u'ALBUMARTISTSORT'),
+            MP4StorageStyle('soaa'),
+            ASFStorageStyle('WM/AlbumArtistSortOrder'),
         ),
         'asin': (
-                MP3DescStorageStyle(u'ASIN'),
-                MP4StorageStyle('----:com.apple.iTunes:ASIN'),
-                ASFStorageStyle('MusicBrainz/ASIN'),
+            MP3DescStorageStyle(u'ASIN'),
+            MP4StorageStyle('----:com.apple.iTunes:ASIN'),
+            ASFStorageStyle('MusicBrainz/ASIN'),
         ),
         'catalognum': (
-                MP3DescStorageStyle(u'CATALOGNUMBER'),
-                MP4StorageStyle('----:com.apple.iTunes:CATALOGNUMBER'),
-                ASFStorageStyle('WM/CatalogNo'),
+            MP3DescStorageStyle(u'CATALOGNUMBER'),
+            MP4StorageStyle('----:com.apple.iTunes:CATALOGNUMBER'),
+            ASFStorageStyle('WM/CatalogNo'),
         ),
         'disctitle': (
-                MP3StorageStyle('TSST'),
-                MP4StorageStyle('----:com.apple.iTunes:DISCSUBTITLE'),
-                ASFStorageStyle('WM/SetSubTitle'),
+            MP3StorageStyle('TSST'),
+            MP4StorageStyle('----:com.apple.iTunes:DISCSUBTITLE'),
+            ASFStorageStyle('WM/SetSubTitle'),
         ),
         'encoder': (
-                MP3StorageStyle('TENC'),
-                MP4StorageStyle('\xa9too'),
-                ASFStorageStyle('WM/EncodedBy'),
+            MP3StorageStyle('TENC'),
+            MP4StorageStyle('\xa9too'),
+            ASFStorageStyle('WM/EncodedBy'),
         ),
         'script': (
-                MP3DescStorageStyle(u'Script'),
-                MP4StorageStyle('----:com.apple.iTunes:SCRIPT'),
-                ASFStorageStyle('WM/Script'),
+            MP3DescStorageStyle(u'Script'),
+            MP4StorageStyle('----:com.apple.iTunes:SCRIPT'),
+            ASFStorageStyle('WM/Script'),
         ),
         'language': (
-                MP3StorageStyle('TLAN'),
-                MP4StorageStyle('----:com.apple.iTunes:LANGUAGE'),
-                ASFStorageStyle('WM/Language'),
+            MP3StorageStyle('TLAN'),
+            MP4StorageStyle('----:com.apple.iTunes:LANGUAGE'),
+            ASFStorageStyle('WM/Language'),
         ),
         'country': (
-                MP3DescStorageStyle(u'MusicBrainz Album Release Country'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz '
-                                'Album Release Country'),
-                ASFStorageStyle('MusicBrainz/Album Release Country'),
+            MP3DescStorageStyle(u'MusicBrainz Album Release Country'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz '
+                            'Album Release Country'),
+            ASFStorageStyle('MusicBrainz/Album Release Country'),
         ),
         'albumstatus': (
-                MP3DescStorageStyle(u'MusicBrainz Album Status'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Status'),
-                ASFStorageStyle('MusicBrainz/Album Status'),
+            MP3DescStorageStyle(u'MusicBrainz Album Status'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Status'),
+            ASFStorageStyle('MusicBrainz/Album Status'),
         ),
         'media': (
-                MP3StorageStyle('TMED'),
-                MP4StorageStyle('----:com.apple.iTunes:MEDIA'),
-                ASFStorageStyle('WM/Media'),
+            MP3StorageStyle('TMED'),
+            MP4StorageStyle('----:com.apple.iTunes:MEDIA'),
+            ASFStorageStyle('WM/Media'),
         ),
         'albumdisambig': (
-            # This tag mapping was invented for beets (not used by Picard, etc).
-                MP3DescStorageStyle(u'MusicBrainz Album Comment'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Comment'),
-                ASFStorageStyle('MusicBrainz/Album Comment'),
+            # This tag mapping was invented for beets (not used by
+            # Picard, etc).
+            MP3DescStorageStyle(u'MusicBrainz Album Comment'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Comment'),
+            ASFStorageStyle('MusicBrainz/Album Comment'),
         ),
         'date': (
-                MP3StorageStyle('TDRC'),
-                MP4StorageStyle('\xa9day'),
-                ASFStorageStyle('WM/Year'),
+            MP3StorageStyle('TDRC'),
+            MP4StorageStyle('\xa9day'),
+            ASFStorageStyle('WM/Year'),
         ),
         'year': tuple(),
         'original_date': (
-                MP3StorageStyle('TDOR'),
-                MP4StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR'),
-                ASFStorageStyle('WM/OriginalReleaseYear')
+            MP3StorageStyle('TDOR'),
+            MP4StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR'),
+            ASFStorageStyle('WM/OriginalReleaseYear')
         ),
         'artist_credit': (
-                MP3DescStorageStyle(u'Artist Credit'),
-                MP4StorageStyle('----:com.apple.iTunes:Artist Credit'),
-                ASFStorageStyle('beets/Artist Credit'),
+            MP3DescStorageStyle(u'Artist Credit'),
+            MP4StorageStyle('----:com.apple.iTunes:Artist Credit'),
+            ASFStorageStyle('beets/Artist Credit'),
         ),
         'albumartist_credit': (
-                MP3DescStorageStyle(u'Album Artist Credit'),
-                MP4StorageStyle('----:com.apple.iTunes:Album Artist Credit'),
-                ASFStorageStyle('beets/Album Artist Credit'),
+            MP3DescStorageStyle(u'Album Artist Credit'),
+            MP4StorageStyle('----:com.apple.iTunes:Album Artist Credit'),
+            ASFStorageStyle('beets/Album Artist Credit'),
         ),
         'mb_trackid': (
-                MP3UFIDStorageStyle(owner='http://musicbrainz.org'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id'),
-                ASFStorageStyle('MusicBrainz/Track Id'),
+            MP3UFIDStorageStyle(owner='http://musicbrainz.org'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id'),
+            ASFStorageStyle('MusicBrainz/Track Id'),
         ),
         'mb_albumid': (
-                MP3DescStorageStyle(u'MusicBrainz Album Id'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Id'),
-                ASFStorageStyle('MusicBrainz/Album Id'),
+            MP3DescStorageStyle(u'MusicBrainz Album Id'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Id'),
+            ASFStorageStyle('MusicBrainz/Album Id'),
         ),
         'mb_artistid': (
-                MP3DescStorageStyle(u'MusicBrainz Artist Id'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Artist Id'),
-                ASFStorageStyle('MusicBrainz/Artist Id'),
+            MP3DescStorageStyle(u'MusicBrainz Artist Id'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Artist Id'),
+            ASFStorageStyle('MusicBrainz/Artist Id'),
         ),
         'mb_albumartistid': (
-                MP3DescStorageStyle(u'MusicBrainz Album Artist Id'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Artist Id'),
-                ASFStorageStyle('MusicBrainz/Album Artist Id'),
+            MP3DescStorageStyle(u'MusicBrainz Album Artist Id'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz '
+                            'Album Artist Id'),
+            ASFStorageStyle('MusicBrainz/Album Artist Id'),
         ),
         'mb_releasegroupid': (
-                MP3DescStorageStyle(u'MusicBrainz Release Group Id'),
-                MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Release Group Id'),
-                ASFStorageStyle('MusicBrainz/Release Group Id'),
+            MP3DescStorageStyle(u'MusicBrainz Release Group Id'),
+            MP4StorageStyle('----:com.apple.iTunes:MusicBrainz '
+                            'Release Group Id'),
+            ASFStorageStyle('MusicBrainz/Release Group Id'),
         ),
         'acoustid_fingerprint': (
-                MP3DescStorageStyle(u'Acoustid Fingerprint'),
-                MP4StorageStyle('----:com.apple.iTunes:Acoustid Fingerprint'),
-                ASFStorageStyle('Acoustid/Fingerprint'),
+            MP3DescStorageStyle(u'Acoustid Fingerprint'),
+            MP4StorageStyle('----:com.apple.iTunes:Acoustid Fingerprint'),
+            ASFStorageStyle('Acoustid/Fingerprint'),
         ),
         'acoustid_id': (
-                MP3DescStorageStyle(u'Acoustid Id'),
-                MP4StorageStyle('----:com.apple.iTunes:Acoustid Id'),
-                ASFStorageStyle('Acoustid/Id'),
+            MP3DescStorageStyle(u'Acoustid Id'),
+            MP4StorageStyle('----:com.apple.iTunes:Acoustid Id'),
+            ASFStorageStyle('Acoustid/Id'),
         ),
         'rg_track_gain': (
-                MP3DescStorageStyle(
-                    u'REPLAYGAIN_TRACK_GAIN',
-                    float_places=2, suffix=u' dB'
-                ),
-                MP3DescStorageStyle(
-                    u'replaygain_track_gain',
-                    float_places=2, suffix=u' dB'
-                ),
-                MP3SoundCheckStorageStyle(
-                    key='COMM',
-                    index=0, desc=u'iTunNORM',
-                    id3_lang='eng'
-                ),
-                MP4StorageStyle(
-                    '----:com.apple.iTunes:replaygain_track_gain',
-                    float_places=2, suffix=' dB'
-                ),
-                MP4SoundCheckStorageStyle(
-                    '----:com.apple.iTunes:iTunNORM',
-                    index=0
-                ),
-                ASFStorageStyle(
-                    u'replaygain_track_gain',
-                    float_places=2, suffix=u' dB'
-                ),
+            MP3DescStorageStyle(
+                u'REPLAYGAIN_TRACK_GAIN',
+                float_places=2, suffix=u' dB'
+            ),
+            MP3DescStorageStyle(
+                u'replaygain_track_gain',
+                float_places=2, suffix=u' dB'
+            ),
+            MP3SoundCheckStorageStyle(
+                key='COMM',
+                index=0, desc=u'iTunNORM',
+                id3_lang='eng'
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:replaygain_track_gain',
+                float_places=2, suffix=' dB'
+            ),
+            MP4SoundCheckStorageStyle(
+                '----:com.apple.iTunes:iTunNORM',
+                index=0
+            ),
+            ASFStorageStyle(
+                u'replaygain_track_gain',
+                float_places=2, suffix=u' dB'
+            ),
         ),
         'rg_album_gain': (
-                MP3DescStorageStyle(
-                    u'REPLAYGAIN_ALBUM_GAIN',
-                    float_places=2, suffix=u' dB'
-                ),
-                MP3DescStorageStyle(
-                    u'replaygain_album_gain',
-                    float_places=2, suffix=u' dB'
-                ),
-                MP4StorageStyle(
-                    '----:com.apple.iTunes:replaygain_album_gain',
-                    float_places=2, suffix=' dB'
-                ),
-                ASFStorageStyle(
-                    u'replaygain_album_gain',
-                    float_places=2, suffix=u' dB'
-                ),
+            MP3DescStorageStyle(
+                u'REPLAYGAIN_ALBUM_GAIN',
+                float_places=2, suffix=u' dB'
+            ),
+            MP3DescStorageStyle(
+                u'replaygain_album_gain',
+                float_places=2, suffix=u' dB'
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:replaygain_album_gain',
+                float_places=2, suffix=' dB'
+            ),
+            ASFStorageStyle(
+                u'replaygain_album_gain',
+                float_places=2, suffix=u' dB'
+            ),
         ),
         'rg_track_peak': (
-                MP3DescStorageStyle(
-                    u'REPLAYGAIN_TRACK_PEAK',
-                    float_places=6
-                ),
-                MP3DescStorageStyle(
-                    u'replaygain_track_peak',
-                    float_places=6
-                ),
-                MP3SoundCheckStorageStyle(
-                    key=u'COMM',
-                    index=1, desc=u'iTunNORM',
-                    id3_lang='eng'
-                ),
-                MP4StorageStyle(
-                    '----:com.apple.iTunes:replaygain_track_peak',
-                    float_places=6
-                ),
-                MP4SoundCheckStorageStyle(
-                    '----:com.apple.iTunes:iTunNORM',
-                    index=1
-                ),
-                ASFStorageStyle(u'replaygain_track_peak', float_places=6),
+            MP3DescStorageStyle(
+                u'REPLAYGAIN_TRACK_PEAK',
+                float_places=6
+            ),
+            MP3DescStorageStyle(
+                u'replaygain_track_peak',
+                float_places=6
+            ),
+            MP3SoundCheckStorageStyle(
+                key=u'COMM',
+                index=1, desc=u'iTunNORM',
+                id3_lang='eng'
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:replaygain_track_peak',
+                float_places=6
+            ),
+            MP4SoundCheckStorageStyle(
+                '----:com.apple.iTunes:iTunNORM',
+                index=1
+            ),
+            ASFStorageStyle(u'replaygain_track_peak', float_places=6),
         ),
         'rg_album_peak': (
-                MP3DescStorageStyle(
-                    u'REPLAYGAIN_ALBUM_PEAK',
-                    float_places=6
-                ),
-                MP3DescStorageStyle(
-                    u'replaygain_album_peak',
-                    float_places=6
-                ),
-                MP4StorageStyle(
-                    '----:com.apple.iTunes:replaygain_album_peak',
-                    float_places=6
-                ),
-                ASFStorageStyle(u'replaygain_album_peak', float_places=6),
+            MP3DescStorageStyle(
+                u'REPLAYGAIN_ALBUM_PEAK',
+                float_places=6
+            ),
+            MP3DescStorageStyle(
+                u'replaygain_album_peak',
+                float_places=6
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:replaygain_album_peak',
+                float_places=6
+            ),
+            ASFStorageStyle(u'replaygain_album_peak', float_places=6),
         ),
         'r128_track_gain': (
-                MP3DescStorageStyle(u'R128_TRACK_GAIN'),
-                MP4StorageStyle('----:com.apple.iTunes:R128_TRACK_GAIN'),
-                ASFStorageStyle(u'R128_TRACK_GAIN'),
+            MP3DescStorageStyle(u'R128_TRACK_GAIN'),
+            MP4StorageStyle('----:com.apple.iTunes:R128_TRACK_GAIN'),
+            ASFStorageStyle(u'R128_TRACK_GAIN'),
         ),
         'r128_album_gain': (
-                MP3DescStorageStyle(u'R128_ALBUM_GAIN'),
-                MP4StorageStyle('----:com.apple.iTunes:R128_ALBUM_GAIN'),
-                ASFStorageStyle(u'R128_ALBUM_GAIN'),
+            MP3DescStorageStyle(u'R128_ALBUM_GAIN'),
+            MP4StorageStyle('----:com.apple.iTunes:R128_ALBUM_GAIN'),
+            ASFStorageStyle(u'R128_ALBUM_GAIN'),
         ),
         'initial_key': (
-                MP3StorageStyle('TKEY'),
-                MP4StorageStyle('----:com.apple.iTunes:initialkey'),
-                ASFStorageStyle('INITIALKEY'),
+            MP3StorageStyle('TKEY'),
+            MP4StorageStyle('----:com.apple.iTunes:initialkey'),
+            ASFStorageStyle('INITIALKEY'),
         ),
     }
 
-    #additioanl parameters for certain vorbis tags
+    # additioanl parameters for certain vorbis tags
     vorbis_params = {
         'rg_track_gain': {
             'float_places': 2,
@@ -2031,11 +2045,11 @@ class MediaFile(object):
     mb_albumid = MediaField(field_name='mb_albumid')
     mb_artistid = MediaField(field_name='mb_artistid')
     mb_albumartistid = MediaField(field_name='mb_albumartistid')
-    mb_releasegroupid = MediaField(field_name='mb_releasegroupid') 
+    mb_releasegroupid = MediaField(field_name='mb_releasegroupid')
 
     # Acoustid fields.
-    acoustid_fingerprint = MediaField(field_name='acoustid_fingerprint') 
-    acoustid_id = MediaField(field_name='acoustid_id') 
+    acoustid_fingerprint = MediaField(field_name='acoustid_fingerprint')
+    acoustid_id = MediaField(field_name='acoustid_id')
 
     # ReplayGain fields.
     rg_track_gain = MediaField(field_name='rg_track_gain', out_type=float)
@@ -2047,7 +2061,7 @@ class MediaFile(object):
     r128_track_gain = MediaField(field_name='r128_track_gain', out_type=int)
     r128_album_gain = MediaField(field_name='r128_album_gain', out_type=int)
 
-    initial_key = MediaField(field_name='initial_key') 
+    initial_key = MediaField(field_name='initial_key')
 
     @property
     def length(self):

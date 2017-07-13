@@ -24,6 +24,7 @@ import re
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import mediafile
+from beets import config
 from beets.library import Item
 from beets.util import displayable_path, normpath, syspath
 
@@ -46,7 +47,7 @@ def tag_data_emitter(path):
     def emitter():
         fields = list(mediafile.MediaFile.readable_fields())
         fields.remove('images')
-        mf = mediafile.MediaFile(syspath(path))
+        mf = mediafile.MediaFile(syspath(path), mapping=config['map'].get())
         tags = {}
         for field in fields:
             tags[field] = getattr(mf, field)

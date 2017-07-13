@@ -585,7 +585,8 @@ class Item(LibModel):
         else:
             read_path = normpath(read_path)
         try:
-            mediafile = MediaFile(syspath(read_path), mapping=beets.config['map'].get())
+            mediafile = MediaFile(syspath(read_path),
+                                  mapping=beets.config['map'].get())
         except UnreadableFileError as exc:
             raise ReadError(read_path, exc)
 
@@ -632,7 +633,8 @@ class Item(LibModel):
         # Open the file.
         try:
             mediafile = MediaFile(syspath(path),
-                                  id3v23=beets.config['id3v23'].get(bool), mapping=beets.config['map'].get())
+                                  id3v23=beets.config['id3v23'].get(bool),
+                                  mapping=beets.config['map'].get())
         except UnreadableFileError as exc:
             raise ReadError(path, exc)
 

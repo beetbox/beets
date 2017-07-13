@@ -30,6 +30,7 @@ from beets.mediafile import MediaFile, Image, \
     ImageType, CoverArtField, UnreadableFileError
 from beets import config
 
+
 class ArtTestMixin(object):
     """Test reads and writes of the ``art`` property.
     """
@@ -658,14 +659,14 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
             errors = [u'Tags did not match'] + errors
             self.fail('\n  '.join(errors))
 
-    def _mediafile_fixture(self, name):
+    def _mediafile_fixture(self, name, mapping=config['map'].get()):
         name = name + '.' + self.extension
         if not isinstance(name, bytes):
             name = name.encode('utf8')
         src = os.path.join(_common.RSRC, name)
         target = os.path.join(self.temp_dir, name)
         shutil.copy(src, target)
-        return MediaFile(target, mapping=config['map'].get())
+        return MediaFile(target, mapping=mapping)
 
     def _generate_tags(self, base=None):
         """Return dictionary of tags, mapping tag names to values.
@@ -866,6 +867,36 @@ class FlacTest(ReadWriteTestBase, PartialTestMixin,
         'bitdepth': 16,
         'channels': 1,
     }
+
+    def test_map_artist_to_custom_tags(self):
+        tag_mapping = {'artist': ['MYARTIST', 'my artist 2']}
+
+        mediafile = self._mediafile_fixture('full', tag_mapping)
+        # the custom tags don't exist on the file yet
+        self.assertEqual(None, mediafile.artist)
+
+        mediafile.artist = u'Beatles'
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path, mapping=tag_mapping)
+        self.assertEqual(mediafile.artist, u'Beatles')
+        self.assertEqual(mediafile.mgfile['MYARTIST'], [u'Beatles'])
+        self.assertEqual(mediafile.mgfile['my artist 2'], [u'Beatles'])
+
+        # original tag not overwritten
+        self.assertEqual(mediafile.mgfile['ARTIST'], [u'the artist'])
+
+    def test_map_artist_to_nothing(self):
+        tag_mapping = {'artist': []}
+
+        mediafile = self._mediafile_fixture('empty', tag_mapping)
+        self.assertEqual(None, mediafile.artist)
+
+        mediafile.artist = u'Beatles'
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path, mapping=tag_mapping)
+        self.assertEqual(mediafile.artist, None)
 
 
 class ApeTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,

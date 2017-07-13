@@ -24,14 +24,14 @@ import mutagen.id3
 
 from test import _common
 
-from beets import mediafile
+from beets import mediafile, config
 import six
 
 
 _sc = mediafile._safe_cast
 
 
-class EdgeTest(unittest.TestCase):
+class EdgeTest(_common.TestCase):
     def test_emptylist(self):
         # Some files have an ID3 frame that has a list with no elements.
         # This is very hard to produce, so this is just the first 8192
@@ -72,7 +72,8 @@ class EdgeTest(unittest.TestCase):
         # Different taggers use different vorbis comments to reflect
         # the disc and disc count fields: ensure that the alternative
         # style works.
-        f = mediafile.MediaFile(os.path.join(_common.RSRC, b'discc.ogg'))
+        f = mediafile.MediaFile(os.path.join(_common.RSRC, b'discc.ogg'),
+                                mapping=config['map'].get())
         self.assertEqual(f.disc, 4)
         self.assertEqual(f.disctotal, 5)
 
