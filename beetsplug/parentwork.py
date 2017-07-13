@@ -111,12 +111,22 @@ class ParentWorkPlugin(BeetsPlugin):
                             help=u'fetches parent works, composers \
                                 and performers')
         cmd.parser.add_option(
-            u'-f', u'--force', dest='force',
+            u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
-            help=u'Fetch parentwork even if already present'
+            help=u'always re-fetch works',
         )
-        cmd.func = self.command
 
+        def func(lib, opts, args):
+            # The "write to files" option corresponds to the
+            # import_write config value.
+            write = ui.should_write()
+            for item in lib.items(ui.decargs(args)):
+                self.find_work(
+                    lib, item, write,
+                    opts.force_refetch or self.config['force'],
+                )
+
+        cmd.func = func
         return [cmd]
 
     def command(self, lib, opts, args):
@@ -125,9 +135,7 @@ class ParentWorkPlugin(BeetsPlugin):
     def imported(self, session, task):
         self.find_work(task.items)
 
-    def find_work(self, items):
-        force = self.config['force'].get(bool)
-        details = self.config['details'].get(bool)
+    def find_work(self, lib, item, force):
 
         for item in items:
             work                 = []
