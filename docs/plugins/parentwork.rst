@@ -50,6 +50,4 @@ configuration file. The available options are:
   recordings that do not already have a ``parent_work`` tag. If ``force`` 
   is enabled, it fetches it for all recordings. 
   Default: ``no``
-- **details**: Prints out all the recordings that do not have a work attached.
-  Default: ``no``.
 
