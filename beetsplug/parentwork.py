@@ -62,8 +62,8 @@ def find_parentwork(work_id):
     return(work_info)
 
 
-def get_info(work_info, parent_composer, parent_composer_sort, parent_work,
-             parent_work_disambig, work_ids, composer_ids):
+def get_info(item, work_info, parent_composer, parent_composer_sort,
+             parent_work, parent_work_disambig, work_ids, composer_ids):
     """Given the parentwork info dict, this function updates parent_composer,
     parent_composer_sort, parent_work, parent_work_disambig, work_ids and
     composer_ids"""
@@ -78,6 +78,7 @@ def get_info(work_info, parent_composer, parent_composer_sort, parent_work,
                     parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
         print('I am here!')
+        logging.info(item.artist + ' - ' + item.title)
         logging.info(
             "no composer, add one at https://musicbrainz.org/work/" +
             work_info['work']['id'])
@@ -131,7 +132,12 @@ class ParentWorkPlugin(BeetsPlugin):
         self.find_work(lib.items(ui.decargs(args)))
 
     def imported(self, session, task):
-        self.find_work(task.items)
+        """Import hook for fetching parentworks automatically.
+        """
+        if self.config['auto']:
+            for item in task.imported_items():
+                self.find_work(session.lib, item,
+                               self.config['force'])
 
     def find_work(self, lib, item, force):
 
@@ -171,7 +177,7 @@ class ParentWorkPlugin(BeetsPlugin):
                         work_disambig.append(work_relation['work']
                                              ['disambiguation'])
                     work_info = find_parentwork(work_id)
-                    get_info(work_info, parent_composer,
+                    get_info(item, work_info, parent_composer,
                              parent_composer_sort, parent_work,
                              parent_work_disambig,
                              work_ids, composer_ids)
