@@ -100,7 +100,6 @@ class ParentWorkPlugin(BeetsPlugin):
             u'bin': u'parentwork',
             u'auto': True,
             u'force': False,
-            u'details': False
         })
 
         if self.config['auto'].get(bool):
@@ -119,10 +118,9 @@ class ParentWorkPlugin(BeetsPlugin):
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
-            write = ui.should_write()
             for item in lib.items(ui.decargs(args)):
                 self.find_work(
-                    lib, item, write,
+                    lib, item,
                     opts.force_refetch or self.config['force'],
                 )
 
@@ -137,71 +135,71 @@ class ParentWorkPlugin(BeetsPlugin):
 
     def find_work(self, lib, item, force):
 
-        for item in items:
-            work                 = []
-            work_disambig        = []
-            parent_work          = []
-            parent_work_disambig = []
-            parent_composer      = []
-            parent_composer_sort = []
-            work_ids             = set()
-            composer_ids         = set()
+        work                 = []
+        work_disambig        = []
+        parent_work          = []
+        parent_work_disambig = []
+        parent_composer      = []
+        parent_composer_sort = []
+        work_ids             = set()
+        composer_ids         = set()
 
-            item.read()
-            recording_id = item.mb_trackid
-            found = True
+        item.read()
+        recording_id = item.mb_trackid
+        found = True
+        self._log.debug(
+            "Fetching " + item.artist + " - " + item.title
+        )
+        if 'parent_work' in item and not force:
             self._log.debug(
-                "Fetching " + item.artist + " - " + item.title
+                "Work already in library, not necessary fetching"
             )
-            if 'parent_work' in item and not force:
-                self._log.debug(
-                    "Work already in library, not necessary fetching"
-                )
-                continue
-            try:
-                rec_rels = musicbrainzngs.get_recording_by_id(
-                    recording_id, includes=['work-rels'])
-                if 'work-relation-list' in rec_rels['recording']:
-                    for work_relation in rec_rels['recording'][
-                            'work-relation-list']:
-                        hasawork = False
-                        if work_relation['type'] != 'performance':
-                            continue
-                        hasawork = True
-                        work_id = work_relation['work']['id']
-                        work.append(work_relation['work']['title'])
-                        if 'disambiguation' in work_relation['work']:
-                            work_disambig.append(work_relation['work']
-                                                 ['disambiguation'])
-                        work_info = find_parentwork(work_id)
-                        get_info(work_info, parent_composer,
-                                 parent_composer_sort, parent_work,
-                                 parent_work_disambig,
-                                 work_ids, composer_ids)
-                        if details and not hasawork:
-                            self._log.info("No work attached,recording id: " +
-                                           recording_id)
-                            self._log.info("add one at" +
-                                           "https://musicbrainz.org/" +
-                                           "recording/" +
-                                           recording_id)
-                elif details:
-                    self._log.info(
-                        "No work attached, recording id: " + recording_id)
-                    self._log.info("add one at https://musicbrainz.org" +
-                                   "/recording/" + recording_id)
-            except musicbrainzngs.musicbrainz.WebServiceError:
-                self._log.info(
-                    "Work unreachable, recording id: " + recording_id)
-                found = False
+            return
+        try:
+            rec_rels = musicbrainzngs.get_recording_by_id(
+                recording_id, includes=['work-rels'])
+            if 'work-relation-list' in rec_rels['recording']:
+                for work_relation in rec_rels['recording'][
+                        'work-relation-list']:
+                    hasawork = False
+                    if work_relation['type'] != 'performance':
+                        continue
+                    hasawork = True
+                    work_id = work_relation['work']['id']
+                    work.append(work_relation['work']['title'])
+                    if 'disambiguation' in work_relation['work']:
+                        work_disambig.append(work_relation['work']
+                                             ['disambiguation'])
+                    work_info = find_parentwork(work_id)
+                    get_info(work_info, parent_composer,
+                             parent_composer_sort, parent_work,
+                             parent_work_disambig,
+                             work_ids, composer_ids)
+                    if not hasawork:
+                        self._log.info("No work attached,recording id: " +
+                                       recording_id)
+                        self._log.info("add one at" +
+                                       "https://musicbrainz.org/" +
+                                       "recording/" +
+                                       recording_id)
+            
+            self._log.info(
+                "No work attached, recording id: " + recording_id)
+            self._log.info(item.artist + ' - ' + item.title)
+            self._log.info("add one at https://musicbrainz.org" +
+                           "/recording/" + recording_id)
+        except musicbrainzngs.musicbrainz.WebServiceError:
+            self._log.info(
+                "Work unreachable, recording id: " + recording_id)
+            found = False
 
-            if found:
-                self._log.debug("Work fetched: " + u', '.join(parent_work))
-                item['parent_work']          = u', '.join(parent_work)
-                item['parent_work_disambig'] = u', '.join(parent_work_disambig)
-                item['work']                 = u', '.join(work)
-                item['work_disambig']        = u', '.join(work_disambig)
-                item['parent_composer']      = u', '.join(parent_composer)
-                item['parent_composer_sort'] = u', '.join(parent_composer_sort)
+        if found:
+            self._log.debug("Work fetched: " + u', '.join(parent_work))
+            item['parent_work']          = u', '.join(parent_work)
+            item['parent_work_disambig'] = u', '.join(parent_work_disambig)
+            item['work']                 = u', '.join(work)
+            item['work_disambig']        = u', '.join(work_disambig)
+            item['parent_composer']      = u', '.join(parent_composer)
+            item['parent_composer_sort'] = u', '.join(parent_composer_sort)
 
-                item.store()
+            item.store()
