@@ -178,23 +178,27 @@ class ParentWorkPlugin(BeetsPlugin):
                     if not hasawork:
                         self._log.info("No work attached,recording id: " +
                                        recording_id)
+                        self._log.info(item.artist + ' - ' + item.title)
                         self._log.info("add one at" +
                                        "https://musicbrainz.org/" +
                                        "recording/" +
                                        recording_id)
-            
-            self._log.info(
-                "No work attached, recording id: " + recording_id)
-            self._log.info(item.artist + ' - ' + item.title)
-            self._log.info("add one at https://musicbrainz.org" +
-                           "/recording/" + recording_id)
+
+            else:
+                self._log.info(
+                    "No work attached, recording id: " + recording_id)
+                self._log.info(item.artist + ' - ' + item.title)
+                self._log.info("add one at https://musicbrainz.org" +
+                               "/recording/" + recording_id)
         except musicbrainzngs.musicbrainz.WebServiceError:
             self._log.info(
                 "Work unreachable, recording id: " + recording_id)
             found = False
 
         if found:
-            self._log.debug("Work fetched: " + u', '.join(parent_work))
+            self._log.info("Work found for: " + item.artist + ' - ' +
+                           item.title)
+            self._log.info("Work fetched: " + u', '.join(parent_work))
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
             item['work']                 = u', '.join(work)
