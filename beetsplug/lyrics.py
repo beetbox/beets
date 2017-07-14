@@ -660,6 +660,11 @@ class LyricsPlugin(plugins.BeetsPlugin):
             help=u'print lyrics to console',
         )
         cmd.parser.add_option(
+            u'-r', u'--print-rst', dest='printrst',
+            action='store_true', default=False,
+            help=u'print lyrics to console as RST text',
+        )
+        cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
             help=u'always re-download lyrics',
@@ -682,15 +687,27 @@ class LyricsPlugin(plugins.BeetsPlugin):
                         lib, item, write,
                         opts.force_refetch or self.config['force'],
                     )
-                if opts.printlyr and item.lyrics:
-                    if artist != item.artist:
-                        artist = item.artist
-                        ui.print_('<h1>' + artist + '</h1>')
-                    if album != item.album:
-                        album = item.album
-                        ui.print_('<h2>' + artist + '</h2>')
-                    ui.print_('<h3>' + item.title + '</h3>')
-                    ui.print_('<pre>' + item.lyrics + '</pre>')
+                if item.lyrics:
+                    if opts.printlyr:
+                        ui.print_(item.lyrics)
+                    if opts.printrst:
+                        if artist != item.artist:
+                            artist = item.artist
+                            ui.print_(artist)
+                            ui.print_(u'=' * len(artist))
+                            ui.print_()
+                        if album != item.album:
+                            album = item.album
+                            ui.print_(album)
+                            ui.print_(u'-' * len(album))
+                            ui.print_()
+                        title_str = u':index:`' + item.title + u'`'
+                        ui.print_(title_str)
+                        ui.print_(u'~' * len(title_str))
+                        ui.print_()
+                        # turn lyrics into a line block
+                        ui.print_(u'| ' + item.lyrics.replace(u'\n', u'\n| '))
+                        ui.print_()
 
         cmd.func = func
         return [cmd]
