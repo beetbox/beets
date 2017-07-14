@@ -23,6 +23,10 @@ recursive-include beetsplug/web/static *
 include beetsplug/lastgenre/genres.txt
 include beetsplug/lastgenre/genres-tree.yaml
 
+# And for the mosaic plugin.
+include beetsplug/mosaic/Inconsolata-Regular.ttf
+include beetsplug/mosaic/OFL.txt
+
 # Exclude junk.
 global-exclude .DS_Store
 

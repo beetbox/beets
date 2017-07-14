@@ -29,8 +29,6 @@ from beets.plugins import BeetsPlugin
 
 from parse import parse
 
-from ttfquery._scriptregistry import registry
-
 
 class MosaicCoverArtPlugin(BeetsPlugin):
     col_size = 4
@@ -114,8 +112,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                           fn_mosaic, fn_watermark,
                           background, watermark_alpha, geometry, random):
 
-        fnt_name = self.find_font()
-        fnt = ImageFont.truetype(fnt_name, 12)
+        fnt = ImageFont.truetype("Inconsolata-Regular.ttf", 12)
         parsestr = "{cellwidth:d}x{cellheight:d}"
         parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
 
