@@ -243,4 +243,3 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             Image.blend(img5, nf2, watermark_alpha).save(fn_mosaic)
         else:
             montage.save(fn_mosaic)
-
