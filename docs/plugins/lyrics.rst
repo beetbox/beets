@@ -84,10 +84,55 @@ lyrics will be added to the beets database and, if ``import.write`` is on,
 embedded into files' metadata.
 
 The ``-p`` option to the ``lyrics`` command makes it print lyrics out to the
-console so you can view the fetched (or previously-stored) lyrics.
+console so you can view the fetched (or previously-stored) lyrics. The
+``-r`` option similarly shows all lyrics as an RST (ReStructuredText)
+document. That document, in turn, can be parsed by tools like Sphinx
+to generate HTML, ePUB or PDF formatted documents. Use, for example,
+the following ``conf.py``::
+
+  # -*- coding: utf-8 -*-
+  master_doc = 'index'
+  project = u'Lyrics'
+  copyright = u'none'
+  author = u'Various Authors'
+  latex_documents = [
+      (master_doc, 'Lyrics.tex', project,
+       author, 'manual'),
+  ]
+  epub_title = project
+  epub_author = author
+  epub_publisher = author
+  epub_copyright = copyright
+  epub_exclude_files = ['search.html']
+  epub_tocdepth = 1
+  epub_tocdup = False
+
+Then the output can be written to ``index.rst``. An alternative is to
+use the following ``index.rst`` file, which will also generate an
+index of song titles::
+
+  Lyrics
+  ======
+  
+  * :ref:`Song index <genindex>`
+  * :ref:`search`
+  
+  Artist index:
+  
+  .. toctree::
+     :maxdepth: 1
+  
+     artists
+
+Then the correct format can be generated with one of::
+
+  sphinx-build -b epub3 . _build/epub
+  sphinx-build -b latex . _build/latex
+  sphinx-build -b html . _build/html
 
 The ``-f`` option forces the command to fetch lyrics, even for tracks that
-already have lyrics.
+already have lyrics. Inversely, the ``-s`` option skips lyrics that
+are not locally available, to dump lyrics faster.
 
 .. _activate-google-custom-search:
 
