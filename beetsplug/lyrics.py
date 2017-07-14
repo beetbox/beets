@@ -595,6 +595,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "76V-uFL5jks5dNvcGCdarqFjDhP9c",
             'fallback': None,
             'force': False,
+            'skip': False,
             'sources': self.SOURCES,
         })
         self.config['bing_client_secret'].redact = True
@@ -663,18 +664,33 @@ class LyricsPlugin(plugins.BeetsPlugin):
             action='store_true', default=False,
             help=u'always re-download lyrics',
         )
+        cmd.parser.add_option(
+            u'-s', u'--skip', dest='skip_fetched',
+            action='store_true', default=False,
+            help=u'skip already fetched lyrics',
+        )
 
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = ui.should_write()
+            artist = ''
+            album = ''
             for item in lib.items(ui.decargs(args)):
-                self.fetch_item_lyrics(
-                    lib, item, write,
-                    opts.force_refetch or self.config['force'],
-                )
+                if not opts.skip_fetched and not self.config['skip']:
+                    self.fetch_item_lyrics(
+                        lib, item, write,
+                        opts.force_refetch or self.config['force'],
+                    )
                 if opts.printlyr and item.lyrics:
-                    ui.print_(item.lyrics)
+                    if artist != item.artist:
+                        artist = item.artist
+                        ui.print_('<h1>' + artist + '</h1>')
+                    if album != item.album:
+                        album = item.album
+                        ui.print_('<h2>' + artist + '</h2>')
+                    ui.print_('<h3>' + item.title + '</h3>')
+                    ui.print_('<pre>' + item.lyrics + '</pre>')
 
         cmd.func = func
         return [cmd]
