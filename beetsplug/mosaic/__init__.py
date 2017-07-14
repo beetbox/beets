@@ -244,15 +244,3 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         else:
             montage.save(fn_mosaic)
 
-    def find_font(self):
-        # load fonts
-        registry.scan()
-        fonts = registry.matchName("Arial")
-        if len(fonts) > 1:
-            self._log.debug(u'more than 1 font by that name, use first')
-            for font in fonts:
-                self._log.debug(u'{}', font)
-
-        font_file = registry.fontFile(fonts[0])
-        self._log.debug(u'font found at {}', font_file)
-        return font_file
