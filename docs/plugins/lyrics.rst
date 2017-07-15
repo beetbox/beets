@@ -122,8 +122,9 @@ index of song titles::
   
   .. toctree::
      :maxdepth: 1
+     :glob:
   
-     artists
+     artists/*
 
 Then the correct format can be generated with one of::
 
