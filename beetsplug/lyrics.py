@@ -711,7 +711,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
                           % opts.writerst)
                 ui.print_(u'  sphinx-build -b epub %s _build/epub'
                           % opts.writerst)
-                ui.print_(u'  sphinx-build -b latex %s _build/latex && make -C _build/latex all-pdf'
+                ui.print_((u'  sphinx-build -b latex %s _build/latex '
+                           u'&& make -C _build/latex all-pdf')
                           % opts.writerst)
         cmd.func = func
         return [cmd]
