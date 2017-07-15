@@ -133,8 +133,9 @@ Then the correct format can be generated with one of::
   sphinx-build -b html . _build/html
 
 The ``-f`` option forces the command to fetch lyrics, even for tracks that
-already have lyrics. Inversely, the ``-s`` option skips lyrics that
-are not locally available, to dump lyrics faster.
+already have lyrics. Inversely, the ``-l`` option restricts operations
+to lyrics that are locally available, to show lyrics faster without
+retrying them over the network all the time.
 
 .. _activate-google-custom-search:
 
