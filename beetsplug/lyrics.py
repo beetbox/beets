@@ -713,10 +713,12 @@ class LyricsPlugin(plugins.BeetsPlugin):
 ''')
                             output.write(u'\n')
                         if album != item.album:
-                            album = item.album
-                            output.write(album.encode('utf-8'))
+                            tmpalbum = album = item.album
+                            if album == '':
+                                tmpalbum = 'Unknown album'
+                            output.write(tmpalbum.encode('utf-8'))
                             output.write(u'\n')
-                            output.write(u'-' * len(album))
+                            output.write(u'-' * len(tmpalbum))
                             output.write(u'\n')
                             output.write(u'\n')
                         title_str = u':index:`' + item.title + u'`'
