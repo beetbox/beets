@@ -723,13 +723,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 if item is None:
                     return
             self.artist = item.artist
-            self.rst = u'''%s
-%s
-
-.. contents::
-   :local:
-
-''' % (self.artist, u'=' * len(self.artist))
+            self.rst = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
+                       % (self.artist, u'=' * len(self.artist))
         if self.album != item.album:
             tmpalbum = self.album = item.album
             if self.album == '':
