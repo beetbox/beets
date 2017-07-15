@@ -703,35 +703,27 @@ class LyricsPlugin(plugins.BeetsPlugin):
                                           unidecode(artist).lower())
                             path = os.path.join(opts.writerst, slug + u'.rst')
                             output = open(path, 'w')
-                            output.write(artist.encode('utf-8'))
-                            output.write(u'\n')
-                            output.write(u'=' * len(artist))
-                            output.write(u'\n')
-                            output.write(u'''
+                            rst = u'''%s
+%s
+
 .. contents::
    :local:
-''')
-                            output.write(u'\n')
+
+''' % (artist, u'=' * len(artist))
+                            output.write(rst.encode('utf-8'))
                         if album != item.album:
                             tmpalbum = album = item.album
                             if album == '':
-                                tmpalbum = 'Unknown album'
-                            output.write(tmpalbum.encode('utf-8'))
-                            output.write(u'\n')
-                            output.write(u'-' * len(tmpalbum))
-                            output.write(u'\n')
-                            output.write(u'\n')
-                        title_str = u':index:`' + item.title + u'`'
-                        output.write(title_str.encode('utf-8'))
-                        output.write(u'\n')
-                        output.write(u'~' * len(title_str))
-                        output.write(u'\n')
-                        output.write(u'\n')
-                        # turn lyrics into a line block
+                                tmpalbum = u'Unknown album'
+                            rst = u"%s\n%s\n\n" % (tmpalbum,
+                                                   u'-' * len(tmpalbum))
+                            output.write(rst.encode('utf-8'))
+                        title_str = u":index:`%s`" % item.title
                         block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
-                        output.write(block.encode('utf-8'))
-                        output.write(u'\n')
-                        output.write(u'\n')
+                        rst = u"%s\n%s\n\n%s\n" % (title_str,
+                                                   u'~' * len(title_str),
+                                                   block)
+                        output.write(rst.encode('utf-8'))
             if opts.writerst:
                 output.close()
 
