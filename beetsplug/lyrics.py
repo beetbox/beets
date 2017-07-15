@@ -22,12 +22,15 @@ import difflib
 import itertools
 import json
 import struct
+import os.path
 import re
 import requests
 import unicodedata
+from unidecode import unidecode
 import warnings
 import six
 from six.moves import urllib
+import sys
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
@@ -660,9 +663,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             help=u'print lyrics to console',
         )
         cmd.parser.add_option(
-            u'-r', u'--print-rst', dest='printrst',
-            action='store_true', default=False,
-            help=u'print lyrics to console as RST text',
+            u'-r', u'--write-rst', dest='writerst',
+            action='store', default='.',
+            help=u'write lyrics to given directory as RST files',
         )
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
@@ -679,8 +682,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = ui.should_write()
-            artist = ''
-            album = ''
+            artist = u'Unknown artist'
+            album = False
+            output = sys.stdout
             for item in lib.items(ui.decargs(args)):
                 if not opts.skip_fetched and not self.config['skip']:
                     self.fetch_item_lyrics(
@@ -690,24 +694,44 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 if item.lyrics:
                     if opts.printlyr:
                         ui.print_(item.lyrics)
-                    if opts.printrst:
+                    if opts.writerst:
                         if artist != item.artist:
                             artist = item.artist
-                            ui.print_(artist)
-                            ui.print_(u'=' * len(artist))
-                            ui.print_()
+                            if output != sys.stdout:
+                                output.close()
+                            slug = re.sub(r'\W+', '-',
+                                          unidecode(artist).lower())
+                            path = os.path.join(opts.writerst, slug + u'.rst')
+                            output = open(path, 'w')
+                            output.write(artist.encode('utf-8'))
+                            output.write(u'\n')
+                            output.write(u'=' * len(artist))
+                            output.write(u'\n')
+                            output.write(u'''
+.. contents::
+   :local:
+''')
+                            output.write(u'\n')
                         if album != item.album:
                             album = item.album
-                            ui.print_(album)
-                            ui.print_(u'-' * len(album))
-                            ui.print_()
+                            output.write(album.encode('utf-8'))
+                            output.write(u'\n')
+                            output.write(u'-' * len(album))
+                            output.write(u'\n')
+                            output.write(u'\n')
                         title_str = u':index:`' + item.title + u'`'
-                        ui.print_(title_str)
-                        ui.print_(u'~' * len(title_str))
-                        ui.print_()
+                        output.write(title_str.encode('utf-8'))
+                        output.write(u'\n')
+                        output.write(u'~' * len(title_str))
+                        output.write(u'\n')
+                        output.write(u'\n')
                         # turn lyrics into a line block
-                        ui.print_(u'| ' + item.lyrics.replace(u'\n', u'\n| '))
-                        ui.print_()
+                        block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
+                        output.write(block.encode('utf-8'))
+                        output.write(u'\n')
+                        output.write(u'\n')
+            if opts.writerst:
+                output.close()
 
         cmd.func = func
         return [cmd]
