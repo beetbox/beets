@@ -29,7 +29,11 @@ from beets.plugins import BeetsPlugin
 
 from parse import parse
 
+import requests
+
 FONT = os.path.join(os.path.dirname(__file__), 'Inconsolata-Regular.ttf')
+FONTURL = 'https://github.com/google/fonts/raw/'
+FONTURL += 'master/ofl/inconsolata/Inconsolata-Regular.ttf'
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
@@ -97,6 +101,12 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             geometry = self.config['geometry'].as_str()
 
             albums = lib.albums(ui.decargs(args))
+
+            if not os.path.isfile(FONT):
+                self._log.info("Download Font: " + FONTURL)
+                response = requests.get(FONTURL)
+                with open(FONT, 'wb') as f:
+                    f.write(response.content)
 
             self._generate_montage(lib,
                                    albums,
