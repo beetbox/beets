@@ -18,12 +18,10 @@ from __future__ import division, absolute_import, print_function
 import os
 import unittest
 from test.helper import TestHelper
-from beets import util
-from beets import config
+import tempfile
 from beets.library import Item
 from PIL import Image
 
-import tempfile
 
 MOSAIC_FILE = tempfile.NamedTemporaryFile(suffix='.png')
 
