@@ -726,7 +726,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             if self.rst is not None:
                 slug = re.sub(r'\W+', '-', unidecode(self.artist).lower())
                 path = os.path.join(directory, 'artists', slug + u'.rst')
-                with open(path, 'w') as output:
+                with open(path, 'wb') as output:
                     output.write(self.rst.encode('utf-8'))
                 self.rst = None
                 if item is None:
@@ -761,7 +761,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 raise
         indexfile = os.path.join(directory, 'index.rst')
         if not os.path.exists(indexfile):
-            with open(indexfile, 'w') as output:
+            with open(indexfile, 'wb') as output:
                 output.write(u'''Lyrics
 ======
 
@@ -778,7 +778,7 @@ Artist index:
 ''')
         conffile = os.path.join(directory, 'conf.py')
         if not os.path.exists(conffile):
-            with open(conffile, 'w') as output:
+            with open(conffile, 'wb') as output:
                 output.write(u'''# -*- coding: utf-8 -*-
 master_doc = 'index'
 project = u'Lyrics'
