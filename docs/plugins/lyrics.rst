@@ -84,58 +84,39 @@ lyrics will be added to the beets database and, if ``import.write`` is on,
 embedded into files' metadata.
 
 The ``-p`` option to the ``lyrics`` command makes it print lyrics out to the
-console so you can view the fetched (or previously-stored) lyrics. The
-``-r directory`` option similarly shows all lyrics as an RST (ReStructuredText)
-document structure located in ``directory`` (which defaults to the
-current directory). That document, in turn, can be parsed by tools like Sphinx
-to generate HTML, ePUB or PDF formatted documents. Use, for example,
-the following ``conf.py``::
-
-  # -*- coding: utf-8 -*-
-  master_doc = 'index'
-  project = u'Lyrics'
-  copyright = u'none'
-  author = u'Various Authors'
-  latex_documents = [
-      (master_doc, 'Lyrics.tex', project,
-       author, 'manual'),
-  ]
-  epub_title = project
-  epub_author = author
-  epub_publisher = author
-  epub_copyright = copyright
-  epub_exclude_files = ['search.html']
-  epub_tocdepth = 1
-  epub_tocdup = False
-
-Then the output can be written to ``index.rst``. An alternative is to
-use the following ``index.rst`` file, which will also generate an
-index of song titles::
-
-  Lyrics
-  ======
-  
-  * :ref:`Song index <genindex>`
-  * :ref:`search`
-  
-  Artist index:
-  
-  .. toctree::
-     :maxdepth: 1
-     :glob:
-  
-     artists/*
-
-Then the correct format can be generated with one of::
-
-  sphinx-build -b epub3 . _build/epub
-  sphinx-build -b latex . _build/latex
-  sphinx-build -b html . _build/html
+console so you can view the fetched (or previously-stored) lyrics.
 
 The ``-f`` option forces the command to fetch lyrics, even for tracks that
 already have lyrics. Inversely, the ``-l`` option restricts operations
 to lyrics that are locally available, to show lyrics faster without
 retrying them over the network all the time.
+
+Rendering lyrics into other formats
+-----------------------------------
+
+The ``-r directory`` option similarly renders all lyrics as an RST
+(ReStructuredText) document structure located in ``directory`` (which
+defaults to the current directory). That directory, in turn, can be
+parsed by tools like Sphinx to generate HTML, ePUB or PDF formatted
+documents. A minimal ``conf.py`` and ``index.rst`` files are created
+the first time the command is ran, to provide templates that can be
+modified. They are not overwritten on subsequent runs.
+
+Sphinx supports various `builders
+<http://www.sphinx-doc.org/en/stable/builders.html>`_, but here are a
+few suggestions.
+
+ * build a HTML version::
+
+    sphinx-build -b html . _build/html
+
+ * build an ePUB3 formatted file, usable on ebook-readers::
+
+     sphinx-build -b epub3 . _build/epub
+
+ * build a PDF file, which incidentally also builds a LaTeX file::
+
+    sphinx-build -b latex %s _build/latex && make -C _build/latex all-pdf
 
 .. _activate-google-custom-search:
 

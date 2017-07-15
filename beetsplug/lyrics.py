@@ -690,6 +690,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = ui.should_write()
+            if opts.writerst:
+                self.writerst_indexes(opts.writerst)
             for item in lib.items(ui.decargs(args)):
                 if not opts.local_only and not self.config['local']:
                     self.fetch_item_lyrics(
@@ -704,6 +706,13 @@ class LyricsPlugin(plugins.BeetsPlugin):
             if opts.writerst:
                 # flush last artist
                 self.writerst(opts.writerst, None)
+                ui.print_(u'RST files generated. to build, use one of:')
+                ui.print_(u'  sphinx-build -b html %s _build/html'
+                          % opts.writerst)
+                ui.print_(u'  sphinx-build -b epub %s _build/epub'
+                          % opts.writerst)
+                ui.print_(u'  sphinx-build -b latex %s _build/latex && make -C _build/latex all-pdf'
+                          % opts.writerst)
         cmd.func = func
         return [cmd]
 
@@ -736,6 +745,57 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.rst += u"%s\n%s\n\n%s\n" % (title_str,
                                          u'~' * len(title_str),
                                          block)
+
+    def writerst_indexes(self, directory):
+        """Write conf.py and index.rst files necessary for Sphinx
+
+        We write minimal configurations that are necessary for Sphinx
+        to operate. We do not overwrite existing files so that
+        customizations are respected."""
+        try:
+            os.makedirs(os.path.join(directory, 'artists'))
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                raise
+        indexfile = os.path.join(directory, 'index.rst')
+        if not os.path.exists(indexfile):
+            with open(indexfile, 'w') as output:
+                output.write(u'''Lyrics
+======
+
+* :ref:`Song index <genindex>`
+* :ref:`search`
+
+Artist index:
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   artists/*
+''')
+        conffile = os.path.join(directory, 'conf.py')
+        if not os.path.exists(conffile):
+            with open(conffile, 'w') as output:
+                output.write(u'''# -*- coding: utf-8 -*-
+master_doc = 'index'
+project = u'Lyrics'
+copyright = u'none'
+author = u'Various Authors'
+latex_documents = [
+    (master_doc, 'Lyrics.tex', project,
+     author, 'manual'),
+]
+epub_title = project
+epub_author = author
+epub_publisher = author
+epub_copyright = copyright
+epub_exclude_files = ['search.html']
+epub_tocdepth = 1
+epub_tocdup = False
+''')
 
     def imported(self, session, task):
         """Import hook for fetching lyrics automatically.
