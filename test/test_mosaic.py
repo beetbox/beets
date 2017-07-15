@@ -19,6 +19,13 @@ import os
 import unittest
 from test.helper import TestHelper
 from beets import util
+from beets import config
+from beets.library import Item
+from PIL import Image
+
+import tempfile
+
+MOSAIC_FILE = tempfile.NamedTemporaryFile(suffix='.png')
 
 
 class MosaicCliTest(unittest.TestCase, TestHelper):
@@ -27,7 +34,7 @@ class MosaicCliTest(unittest.TestCase, TestHelper):
         self.setup_beets()
         self.load_plugins('mosaic')
         self.config['mosaic']['geometry'] = '150x150+3+3'
-        self.config['mosaic']['mosaic'] = 'test_mosaic.png'
+        self.config['mosaic']['mosaic'] = MOSAIC_FILE.name
         self._set_up_data()
 
     def _set_up_data(self):
@@ -65,9 +72,17 @@ class MosaicCliTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def test_generate_mosaic(self):
-        out = self.run_with_output('mosaic', '')
+        MOSAIC_FILE.close()
+        self.run_with_output('mosaic', '')
+        width = 0
+        height = 0
+        with Image.open(MOSAIC_FILE.name) as img:
+            width, height = img.size
+            del img
 
-        self.assertIn('itunes_rating: 60 -> 80', out)
+        os.remove(MOSAIC_FILE.name)
+        self.assertEqual(width, 309)
+        self.assertEqual(height, 309)
 
 
 def suite():
