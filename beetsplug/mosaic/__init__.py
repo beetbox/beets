@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015-2016, Ohm Patel.
+# Copyright 2017 Susanna Maria Hepp
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -28,6 +28,8 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 from parse import parse
+
+FONT = os.path.join(os.path.dirname(__file__), 'Inconsolata-Regular.ttf')
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
@@ -108,15 +110,24 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
+    def _insert_newlines(self, string, every=15):
+        lines = []
+        for i in range(0, len(string), every):
+            lines.append(string[i:i + every])
+        return '\n'.join(lines)
+
     def _generate_montage(self, lib, albums,
                           fn_mosaic, fn_watermark,
                           background, watermark_alpha, geometry, random):
+        self._log.info(u'{0}', FONT)
 
-        fnt = ImageFont.truetype("Inconsolata-Regular.ttf", 12)
         parsestr = "{cellwidth:d}x{cellheight:d}"
         parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
 
         geo = parse(parsestr, geometry)
+        # Load Truetype font bundled with plugin, tweak the fontsize according to the cell width
+        fnt = ImageFont.truetype(FONT, int(round(geo['cellwidth'] / 10)))
+
         covers = []
 
         for album in albums:
@@ -170,18 +181,21 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         for cover in covers:
 
             try:
-                if '||' in cover:
-
+                if '||' in str(cover):
+                    info = cover[2:].strip()
+                    if not info:
+                        continue
                     im = Image.new('RGB', size,
                                    tuple(int(background[i:i + 2], 16)
                                          for i in (0, 2, 4)))
                     self._log.debug(u'Cover not available for {} ',
-                                    cover[2:].replace('\n', '-'))
+                                    info.replace('\n', '-'))
                     d = ImageDraw.Draw(im)
-                    d.multiline_text((10, 10), cover[2:],
-                                     fill=(0, 0, 0), font=fnt, anchor=None,
-                                     spacing=0, align="left")
-
+                    info = self._insert_newlines(info.replace('\n', '-'))
+                    self._log.info("<{0}>", info)
+                    d.multiline_text((int(round(geo['cellwidth'] / 10)), int(
+                        round(geo['cellheight'] / 10))), info,
+                        font=fnt, fill=(255, 0, 0, 255))
                 else:
                     im = Image.open(cover)
                     im.thumbnail(size, Image.ANTIALIAS)
