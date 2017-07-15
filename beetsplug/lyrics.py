@@ -19,6 +19,7 @@
 from __future__ import absolute_import, division, print_function
 
 import difflib
+import errno
 import itertools
 import json
 import struct
@@ -30,7 +31,6 @@ from unidecode import unidecode
 import warnings
 import six
 from six.moves import urllib
-import sys
 
 try:
     from bs4 import SoupStrainer, BeautifulSoup
@@ -605,6 +605,14 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.config['google_API_key'].redact = True
         self.config['google_engine_ID'].redact = True
         self.config['genius_api_key'].redact = True
+        # state information for the RST writer
+        # the current artist
+        self.artist = u'Unknown artist'
+        # the current album, False means no album yet
+        self.album = False
+        # the current rst file content. None means the file is not
+        # open yet.
+        self.rst = None
 
         available_sources = list(self.SOURCES)
         sources = plugins.sanitize_choices(
@@ -682,9 +690,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = ui.should_write()
-            artist = u'Unknown artist'
-            album = False
-            output = sys.stdout
             for item in lib.items(ui.decargs(args)):
                 if not opts.local_only and not self.config['local']:
                     self.fetch_item_lyrics(
@@ -695,40 +700,47 @@ class LyricsPlugin(plugins.BeetsPlugin):
                     if opts.printlyr:
                         ui.print_(item.lyrics)
                     if opts.writerst:
-                        if artist != item.artist:
-                            artist = item.artist
-                            if output != sys.stdout:
-                                output.close()
-                            slug = re.sub(r'\W+', '-',
-                                          unidecode(artist).lower())
-                            path = os.path.join(opts.writerst, slug + u'.rst')
-                            output = open(path, 'w')
-                            rst = u'''%s
+                        self.writerst(opts.writerst, item)
+            if opts.writerst:
+                # flush last artist
+                self.writerst(opts.writerst, None)
+        cmd.func = func
+        return [cmd]
+
+    def writerst(self, directory, item):
+        """Write the item to an RST file
+
+        this will keep state (in the `rst` variable) in order to avoid
+        writing continuously to the same files
+        """
+        if item is None or self.artist != item.artist:
+            if self.rst is not None:
+                slug = re.sub(r'\W+', '-', unidecode(self.artist).lower())
+                path = os.path.join(directory, 'artists', slug + u'.rst')
+                with open(path, 'w') as output:
+                    output.write(self.rst.encode('utf-8'))
+                self.rst = None
+                if item is None:
+                    return
+            self.artist = item.artist
+            self.rst = u'''%s
 %s
 
 .. contents::
    :local:
 
-''' % (artist, u'=' * len(artist))
-                            output.write(rst.encode('utf-8'))
-                        if album != item.album:
-                            tmpalbum = album = item.album
-                            if album == '':
-                                tmpalbum = u'Unknown album'
-                            rst = u"%s\n%s\n\n" % (tmpalbum,
-                                                   u'-' * len(tmpalbum))
-                            output.write(rst.encode('utf-8'))
-                        title_str = u":index:`%s`" % item.title
-                        block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
-                        rst = u"%s\n%s\n\n%s\n" % (title_str,
-                                                   u'~' * len(title_str),
-                                                   block)
-                        output.write(rst.encode('utf-8'))
-            if opts.writerst:
-                output.close()
-
-        cmd.func = func
-        return [cmd]
+''' % (self.artist, u'=' * len(self.artist))
+        if self.album != item.album:
+            tmpalbum = self.album = item.album
+            if self.album == '':
+                tmpalbum = u'Unknown album'
+            self.rst += u"%s\n%s\n\n" % (tmpalbum,
+                                         u'-' * len(tmpalbum))
+        title_str = u":index:`%s`" % item.title
+        block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
+        self.rst += u"%s\n%s\n\n%s\n" % (title_str,
+                                         u'~' * len(title_str),
+                                         block)
 
     def imported(self, session, task):
         """Import hook for fetching lyrics automatically.
