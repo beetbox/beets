@@ -85,8 +85,9 @@ embedded into files' metadata.
 
 The ``-p`` option to the ``lyrics`` command makes it print lyrics out to the
 console so you can view the fetched (or previously-stored) lyrics. The
-``-r`` option similarly shows all lyrics as an RST (ReStructuredText)
-document. That document, in turn, can be parsed by tools like Sphinx
+``-r directory`` option similarly shows all lyrics as an RST (ReStructuredText)
+document structure located in ``directory`` (which defaults to the
+current directory). That document, in turn, can be parsed by tools like Sphinx
 to generate HTML, ePUB or PDF formatted documents. Use, for example,
 the following ``conf.py``::
 
