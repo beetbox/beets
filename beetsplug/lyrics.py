@@ -598,7 +598,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "76V-uFL5jks5dNvcGCdarqFjDhP9c",
             'fallback': None,
             'force': False,
-            'skip': False,
+            'local': False,
             'sources': self.SOURCES,
         })
         self.config['bing_client_secret'].redact = True
@@ -673,9 +673,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             help=u'always re-download lyrics',
         )
         cmd.parser.add_option(
-            u'-s', u'--skip', dest='skip_fetched',
+            u'-l', u'--local', dest='local_only',
             action='store_true', default=False,
-            help=u'skip already fetched lyrics',
+            help=u'do not fetch missing lyrics',
         )
 
         def func(lib, opts, args):
@@ -686,7 +686,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             album = False
             output = sys.stdout
             for item in lib.items(ui.decargs(args)):
-                if not opts.skip_fetched and not self.config['skip']:
+                if not opts.local_only and not self.config['local']:
                     self.fetch_item_lyrics(
                         lib, item, write,
                         opts.force_refetch or self.config['force'],
