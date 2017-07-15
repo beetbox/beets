@@ -119,8 +119,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
     def _generate_montage(self, lib, albums,
                           fn_mosaic, fn_watermark,
                           background, watermark_alpha, geometry, random):
-        self._log.info(u'{0}', FONT)
-
+       
         parsestr = "{cellwidth:d}x{cellheight:d}"
         parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
 
@@ -192,7 +191,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                                     info.replace('\n', '-'))
                     d = ImageDraw.Draw(im)
                     info = self._insert_newlines(info.replace('\n', '-'))
-                    self._log.info("<{0}>", info)
+                    
                     d.multiline_text((int(round(geo['cellwidth'] / 10)), int(
                         round(geo['cellheight'] / 10))), info,
                         font=fnt, fill=(255, 0, 0, 255))
