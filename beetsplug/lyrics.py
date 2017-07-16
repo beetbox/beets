@@ -672,7 +672,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         )
         cmd.parser.add_option(
             u'-r', u'--write-rst', dest='writerst',
-            action='store', default='.',
+            action='store', default='.', metavar='directory',
             help=u'write lyrics to given directory as RST files',
         )
         cmd.parser.add_option(
