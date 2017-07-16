@@ -88,33 +88,37 @@ console so you can view the fetched (or previously-stored) lyrics.
 
 The ``-f`` option forces the command to fetch lyrics, even for tracks that
 already have lyrics. Inversely, the ``-l`` option restricts operations
-to lyrics that are locally available, to show lyrics faster without
-retrying them over the network all the time.
+to lyrics that are locally available, which show lyrics faster without using
+the network at all.
 
 Rendering Lyrics into Other Formats
 -----------------------------------
 
-The ``-r directory`` option similarly renders all lyrics as an RST
-(ReStructuredText) document structure located in ``directory`` (which
-defaults to the current directory). That directory, in turn, can be
-parsed by tools like Sphinx to generate HTML, ePUB or PDF formatted
-documents. A minimal ``conf.py`` and ``index.rst`` files are created
-the first time the command is ran, to provide templates that can be
-modified. They are not overwritten on subsequent runs.
+The ``-r directory`` option renders all lyrics as `reStructuredText`_ (ReST)
+documents in ``directory`` (by default, the current directory). That
+directory, in turn, can be parsed by tools like `Sphinx`_ to generate HTML,
+ePUB, or PDF documents.
+
+A minimal ``conf.py`` and ``index.rst`` files are created the first time the
+command is run. They are not overwritten on subsequent runs, so you can safely
+modify these files to customize the output.
+
+.. _Sphinx: http://www.sphinx-doc.org/
+.. _reStructuredText: http://docutils.sourceforge.net/rst.html
 
 Sphinx supports various `builders
 <http://www.sphinx-doc.org/en/stable/builders.html>`_, but here are a
 few suggestions.
 
- * build a HTML version::
+ * Build an HTML version::
 
     sphinx-build -b html . _build/html
 
- * build an ePUB3 formatted file, usable on ebook-readers::
+ * Build an ePUB3 formatted file, usable on ebook readers::
 
-     sphinx-build -b epub3 . _build/epub
+    sphinx-build -b epub3 . _build/epub
 
- * build a PDF file, which incidentally also builds a LaTeX file::
+ * Build a PDF file, which incidentally also builds a LaTeX file::
 
     sphinx-build -b latex %s _build/latex && make -C _build/latex all-pdf
 
