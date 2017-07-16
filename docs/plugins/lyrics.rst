@@ -91,7 +91,7 @@ already have lyrics. Inversely, the ``-l`` option restricts operations
 to lyrics that are locally available, to show lyrics faster without
 retrying them over the network all the time.
 
-Rendering lyrics into other formats
+Rendering Lyrics into Other Formats
 -----------------------------------
 
 The ``-r directory`` option similarly renders all lyrics as an RST
@@ -120,7 +120,7 @@ few suggestions.
 
 .. _activate-google-custom-search:
 
-Activate Google custom search
+Activate Google Custom Search
 ------------------------------
 
 Using the Google backend requires `BeautifulSoup`_, which you can install
