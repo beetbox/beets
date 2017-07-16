@@ -4,7 +4,11 @@ Changelog
 1.4.6 (in development)
 ----------------------
 
-Changelog goes here!
+New features:
+
+* :doc:`/plugins/lyrics`: The plugin can now produce reStructuredText files
+  for beautiful, readable books of lyrics. Thanks to :user:`anarcat`.
+  :bug:`2628`
 
 Fixes:
 
