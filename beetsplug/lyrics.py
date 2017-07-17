@@ -759,11 +759,22 @@ class LyricsPlugin(plugins.BeetsPlugin):
         This will keep state (in the `rest` variable) in order to avoid
         writing continuously to the same files.
         """
-        if item is None or self.artist != item.artist.strip():
+        def slug(text):
+            """Make a URL-safe, human-readable version of the given text
+
+            This will do the following:
+
+            1. decode unicode characters into ASCII
+            2. shift everything to lowercase
+            3. strip whitespace
+            4. replace other non-word characters with dashes
+            """
+            return re.sub(r'\W+', '-', unidecode(text).lower().strip())
+
+        if item is None or slug(self.artist) != slug(item.artist):
             if self.rest is not None:
-                slug = re.sub(r'\W+', '-',
-                              unidecode(self.artist.strip()).lower())
-                path = os.path.join(directory, 'artists', slug + u'.rst')
+                path = os.path.join(directory, 'artists',
+                                    slug(self.artist) + u'.rst')
                 with open(path, 'wb') as output:
                     output.write(self.rest.encode('utf-8'))
                 self.rest = None
