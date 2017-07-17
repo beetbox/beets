@@ -77,6 +77,41 @@ URL_CHARACTERS = {
 }
 USER_AGENT = 'beets/{}'.format(beets.__version__)
 
+# the content for the base index.rst generated
+REST_INDEX_TEMPLATE = u'''Lyrics
+======
+
+* :ref:`Song index <genindex>`
+* :ref:`search`
+
+Artist index:
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   artists/*
+'''
+
+# the content for the base conf.py generated
+REST_CONF_TEMPLATE = u'''# -*- coding: utf-8 -*-
+master_doc = 'index'
+project = u'Lyrics'
+copyright = u'none'
+author = u'Various Authors'
+latex_documents = [
+    (master_doc, 'Lyrics.tex', project,
+     author, 'manual'),
+]
+epub_title = project
+epub_author = author
+epub_publisher = author
+epub_copyright = copyright
+epub_exclude_files = ['search.html']
+epub_tocdepth = 1
+epub_tocdup = False
+'''
+
 
 # Utilities.
 
@@ -763,40 +798,11 @@ class LyricsPlugin(plugins.BeetsPlugin):
         indexfile = os.path.join(directory, 'index.rst')
         if not os.path.exists(indexfile):
             with open(indexfile, 'wb') as output:
-                output.write(u'''Lyrics
-======
-
-* :ref:`Song index <genindex>`
-* :ref:`search`
-
-Artist index:
-
-.. toctree::
-   :maxdepth: 1
-   :glob:
-
-   artists/*
-''')
+                output.write(REST_INDEX_TEMPLATE)
         conffile = os.path.join(directory, 'conf.py')
         if not os.path.exists(conffile):
             with open(conffile, 'wb') as output:
-                output.write(u'''# -*- coding: utf-8 -*-
-master_doc = 'index'
-project = u'Lyrics'
-copyright = u'none'
-author = u'Various Authors'
-latex_documents = [
-    (master_doc, 'Lyrics.tex', project,
-     author, 'manual'),
-]
-epub_title = project
-epub_author = author
-epub_publisher = author
-epub_copyright = copyright
-epub_exclude_files = ['search.html']
-epub_tocdepth = 1
-epub_tocdup = False
-''')
+                output.write(REST_CONF_TEMPLATE)
 
     def imported(self, session, task):
         """Import hook for fetching lyrics automatically.
