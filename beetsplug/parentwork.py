@@ -114,8 +114,6 @@ class ParentWorkPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            # The "write to files" option corresponds to the
-            # import_write config value.
             for item in lib.items(ui.decargs(args)):
                 self.find_work(
                     lib, item,
