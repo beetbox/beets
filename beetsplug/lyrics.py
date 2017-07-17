@@ -301,9 +301,19 @@ class MusiXmatch(SymbolsReplaced):
         html = self.fetch_url(url)
         if not html:
             return
+        if "We detected that your IP is blocked" in html:
+            self._log.warning(u'we are blocked at MusixMatch: url %s failed'
+                              % url)
+            return
         html_part = html.split('<p class="mxm-lyrics__content')[-1]
         lyrics = extract_text_between(html_part, '>', '</p>')
-        return lyrics.strip(',"').replace('\\n', '\n')
+        lyrics = lyrics.strip(',"').replace('\\n', '\n')
+        # another odd case: sometimes only that string remains, for
+        # missing songs. this seems to happen after being blocked
+        # above, when filling in the CAPTCHA.
+        if "Instant lyrics for all your music." in lyrics:
+            return
+        return lyrics
 
 
 class Genius(Backend):
