@@ -781,9 +781,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
                                           u'-' * len(tmpalbum.strip()))
         title_str = u":index:`%s`" % item.title.strip()
         block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
-        self.rest += u"%s\n%s\n\n%s\n" % (title_str,
-                                          u'~' * len(title_str),
-                                          block)
+        self.rest += u"%s\n%s\n\n%s\n\n" % (title_str,
+                                            u'~' * len(title_str),
+                                            block)
 
     def writerest_indexes(self, directory):
         """Write conf.py and index.rst files necessary for Sphinx
