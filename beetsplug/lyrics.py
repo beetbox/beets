@@ -797,11 +797,11 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 raise
         indexfile = os.path.join(directory, 'index.rst')
         if not os.path.exists(indexfile):
-            with open(indexfile, 'wb') as output:
+            with open(indexfile, 'w') as output:
                 output.write(REST_INDEX_TEMPLATE)
         conffile = os.path.join(directory, 'conf.py')
         if not os.path.exists(conffile):
-            with open(conffile, 'wb') as output:
+            with open(conffile, 'w') as output:
                 output.write(REST_CONF_TEMPLATE)
 
     def imported(self, session, task):
