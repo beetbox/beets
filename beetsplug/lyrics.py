@@ -605,14 +605,14 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.config['google_API_key'].redact = True
         self.config['google_engine_ID'].redact = True
         self.config['genius_api_key'].redact = True
-        # state information for the RST writer
+        # state information for the ReST writer
         # the current artist
         self.artist = u'Unknown artist'
         # the current album, False means no album yet
         self.album = False
-        # the current rst file content. None means the file is not
+        # the current rest file content. None means the file is not
         # open yet.
-        self.rst = None
+        self.rest = None
 
         available_sources = list(self.SOURCES)
         sources = plugins.sanitize_choices(
@@ -671,9 +671,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             help=u'print lyrics to console',
         )
         cmd.parser.add_option(
-            u'-r', u'--write-rst', dest='writerst',
+            u'-r', u'--write-rest', dest='writerest',
             action='store', default='.', metavar='dir',
-            help=u'write lyrics to given directory as RST files',
+            help=u'write lyrics to given directory as ReST files',
         )
         cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
@@ -690,8 +690,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = ui.should_write()
-            if opts.writerst:
-                self.writerst_indexes(opts.writerst)
+            if opts.writerest:
+                self.writerest_indexes(opts.writerest)
             for item in lib.items(ui.decargs(args)):
                 if not opts.local_only and not self.config['local']:
                     self.fetch_item_lyrics(
@@ -701,53 +701,53 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 if item.lyrics:
                     if opts.printlyr:
                         ui.print_(item.lyrics)
-                    if opts.writerst:
-                        self.writerst(opts.writerst, item)
-            if opts.writerst:
+                    if opts.writerest:
+                        self.writerest(opts.writerest, item)
+            if opts.writerest:
                 # flush last artist
-                self.writerst(opts.writerst, None)
-                ui.print_(u'RST files generated. to build, use one of:')
+                self.writerest(opts.writerest, None)
+                ui.print_(u'ReST files generated. to build, use one of:')
                 ui.print_(u'  sphinx-build -b html %s _build/html'
-                          % opts.writerst)
+                          % opts.writerest)
                 ui.print_(u'  sphinx-build -b epub %s _build/epub'
-                          % opts.writerst)
+                          % opts.writerest)
                 ui.print_((u'  sphinx-build -b latex %s _build/latex '
                            u'&& make -C _build/latex all-pdf')
-                          % opts.writerst)
+                          % opts.writerest)
         cmd.func = func
         return [cmd]
 
-    def writerst(self, directory, item):
-        """Write the item to an RST file
+    def writerest(self, directory, item):
+        """Write the item to an ReST file
 
-        this will keep state (in the `rst` variable) in order to avoid
-        writing continuously to the same files
+        This will keep state (in the `rest` variable) in order to avoid
+        writing continuously to the same files.
         """
         if item is None or self.artist != item.artist:
-            if self.rst is not None:
+            if self.rest is not None:
                 slug = re.sub(r'\W+', '-', unidecode(self.artist).lower())
                 path = os.path.join(directory, 'artists', slug + u'.rst')
                 with open(path, 'wb') as output:
-                    output.write(self.rst.encode('utf-8'))
-                self.rst = None
+                    output.write(self.rest.encode('utf-8'))
+                self.rest = None
                 if item is None:
                     return
             self.artist = item.artist
-            self.rst = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
-                       % (self.artist, u'=' * len(self.artist))
+            self.rest = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
+                        % (self.artist, u'=' * len(self.artist))
         if self.album != item.album:
             tmpalbum = self.album = item.album
             if self.album == '':
                 tmpalbum = u'Unknown album'
-            self.rst += u"%s\n%s\n\n" % (tmpalbum,
-                                         u'-' * len(tmpalbum))
+            self.rest += u"%s\n%s\n\n" % (tmpalbum,
+                                          u'-' * len(tmpalbum))
         title_str = u":index:`%s`" % item.title
         block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
-        self.rst += u"%s\n%s\n\n%s\n" % (title_str,
-                                         u'~' * len(title_str),
-                                         block)
+        self.rest += u"%s\n%s\n\n%s\n" % (title_str,
+                                          u'~' * len(title_str),
+                                          block)
 
-    def writerst_indexes(self, directory):
+    def writerest_indexes(self, directory):
         """Write conf.py and index.rst files necessary for Sphinx
 
         We write minimal configurations that are necessary for Sphinx
