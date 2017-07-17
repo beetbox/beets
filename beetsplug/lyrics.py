@@ -19,12 +19,15 @@
 from __future__ import absolute_import, division, print_function
 
 import difflib
+import errno
 import itertools
 import json
 import struct
+import os.path
 import re
 import requests
 import unicodedata
+from unidecode import unidecode
 import warnings
 import six
 from six.moves import urllib
@@ -73,6 +76,41 @@ URL_CHARACTERS = {
     u'\u2026': u'...',
 }
 USER_AGENT = 'beets/{}'.format(beets.__version__)
+
+# the content for the base index.rst generated
+REST_INDEX_TEMPLATE = u'''Lyrics
+======
+
+* :ref:`Song index <genindex>`
+* :ref:`search`
+
+Artist index:
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   artists/*
+'''
+
+# the content for the base conf.py generated
+REST_CONF_TEMPLATE = u'''# -*- coding: utf-8 -*-
+master_doc = 'index'
+project = u'Lyrics'
+copyright = u'none'
+author = u'Various Authors'
+latex_documents = [
+    (master_doc, 'Lyrics.tex', project,
+     author, 'manual'),
+]
+epub_title = project
+epub_author = author
+epub_publisher = author
+epub_copyright = copyright
+epub_exclude_files = ['search.html']
+epub_tocdepth = 1
+epub_tocdup = False
+'''
 
 
 # Utilities.
@@ -595,12 +633,21 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "76V-uFL5jks5dNvcGCdarqFjDhP9c",
             'fallback': None,
             'force': False,
+            'local': False,
             'sources': self.SOURCES,
         })
         self.config['bing_client_secret'].redact = True
         self.config['google_API_key'].redact = True
         self.config['google_engine_ID'].redact = True
         self.config['genius_api_key'].redact = True
+        # state information for the ReST writer
+        # the current artist
+        self.artist = u'Unknown artist'
+        # the current album, False means no album yet
+        self.album = False
+        # the current rest file content. None means the file is not
+        # open yet.
+        self.rest = None
 
         available_sources = list(self.SOURCES)
         sources = plugins.sanitize_choices(
@@ -659,25 +706,105 @@ class LyricsPlugin(plugins.BeetsPlugin):
             help=u'print lyrics to console',
         )
         cmd.parser.add_option(
+            u'-r', u'--write-rest', dest='writerest',
+            action='store', default='.', metavar='dir',
+            help=u'write lyrics to given directory as ReST files',
+        )
+        cmd.parser.add_option(
             u'-f', u'--force', dest='force_refetch',
             action='store_true', default=False,
             help=u'always re-download lyrics',
+        )
+        cmd.parser.add_option(
+            u'-l', u'--local', dest='local_only',
+            action='store_true', default=False,
+            help=u'do not fetch missing lyrics',
         )
 
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = ui.should_write()
+            if opts.writerest:
+                self.writerest_indexes(opts.writerest)
             for item in lib.items(ui.decargs(args)):
-                self.fetch_item_lyrics(
-                    lib, item, write,
-                    opts.force_refetch or self.config['force'],
-                )
-                if opts.printlyr and item.lyrics:
-                    ui.print_(item.lyrics)
-
+                if not opts.local_only and not self.config['local']:
+                    self.fetch_item_lyrics(
+                        lib, item, write,
+                        opts.force_refetch or self.config['force'],
+                    )
+                if item.lyrics:
+                    if opts.printlyr:
+                        ui.print_(item.lyrics)
+                    if opts.writerest:
+                        self.writerest(opts.writerest, item)
+            if opts.writerest:
+                # flush last artist
+                self.writerest(opts.writerest, None)
+                ui.print_(u'ReST files generated. to build, use one of:')
+                ui.print_(u'  sphinx-build -b html %s _build/html'
+                          % opts.writerest)
+                ui.print_(u'  sphinx-build -b epub %s _build/epub'
+                          % opts.writerest)
+                ui.print_((u'  sphinx-build -b latex %s _build/latex '
+                           u'&& make -C _build/latex all-pdf')
+                          % opts.writerest)
         cmd.func = func
         return [cmd]
+
+    def writerest(self, directory, item):
+        """Write the item to an ReST file
+
+        This will keep state (in the `rest` variable) in order to avoid
+        writing continuously to the same files.
+        """
+        if item is None or self.artist != item.artist:
+            if self.rest is not None:
+                slug = re.sub(r'\W+', '-',
+                              unidecode(self.artist.strip()).lower())
+                path = os.path.join(directory, 'artists', slug + u'.rst')
+                with open(path, 'wb') as output:
+                    output.write(self.rest.encode('utf-8'))
+                self.rest = None
+                if item is None:
+                    return
+            self.artist = item.artist
+            self.rest = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
+                        % (self.artist.strip(),
+                           u'=' * len(self.artist.strip()))
+        if self.album != item.album:
+            tmpalbum = self.album = item.album
+            if self.album == '':
+                tmpalbum = u'Unknown album'
+            self.rest += u"%s\n%s\n\n" % (tmpalbum.strip(),
+                                          u'-' * len(tmpalbum.strip()))
+        title_str = u":index:`%s`" % item.title.strip()
+        block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
+        self.rest += u"%s\n%s\n\n%s\n" % (title_str,
+                                          u'~' * len(title_str),
+                                          block)
+
+    def writerest_indexes(self, directory):
+        """Write conf.py and index.rst files necessary for Sphinx
+
+        We write minimal configurations that are necessary for Sphinx
+        to operate. We do not overwrite existing files so that
+        customizations are respected."""
+        try:
+            os.makedirs(os.path.join(directory, 'artists'))
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                raise
+        indexfile = os.path.join(directory, 'index.rst')
+        if not os.path.exists(indexfile):
+            with open(indexfile, 'w') as output:
+                output.write(REST_INDEX_TEMPLATE)
+        conffile = os.path.join(directory, 'conf.py')
+        if not os.path.exists(conffile):
+            with open(conffile, 'w') as output:
+                output.write(REST_CONF_TEMPLATE)
 
     def imported(self, session, task):
         """Import hook for fetching lyrics automatically.
