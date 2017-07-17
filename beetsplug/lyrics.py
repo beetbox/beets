@@ -759,7 +759,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         This will keep state (in the `rest` variable) in order to avoid
         writing continuously to the same files.
         """
-        if item is None or self.artist != item.artist:
+        if item is None or self.artist != item.artist.strip():
             if self.rest is not None:
                 slug = re.sub(r'\W+', '-',
                               unidecode(self.artist.strip()).lower())
@@ -769,10 +769,10 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 self.rest = None
                 if item is None:
                     return
-            self.artist = item.artist
+            self.artist = item.artist.strip()
             self.rest = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
-                        % (self.artist.strip(),
-                           u'=' * len(self.artist.strip()))
+                        % (self.artist,
+                           u'=' * len(self.artist))
         if self.album != item.album:
             tmpalbum = self.album = item.album
             if self.album == '':
