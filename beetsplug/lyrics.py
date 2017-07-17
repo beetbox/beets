@@ -77,7 +77,7 @@ URL_CHARACTERS = {
 }
 USER_AGENT = 'beets/{}'.format(beets.__version__)
 
-# the content for the base index.rst generated
+# The content for the base index.rst generated in ReST mode.
 REST_INDEX_TEMPLATE = u'''Lyrics
 ======
 
@@ -93,7 +93,7 @@ Artist index:
    artists/*
 '''
 
-# the content for the base conf.py generated
+# The content for the base conf.py generated.
 REST_CONF_TEMPLATE = u'''# -*- coding: utf-8 -*-
 master_doc = 'index'
 project = u'Lyrics'
@@ -640,12 +640,13 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.config['google_API_key'].redact = True
         self.config['google_engine_ID'].redact = True
         self.config['genius_api_key'].redact = True
-        # state information for the ReST writer
-        # the current artist
+
+        # State information for the ReST writer.
+        # First, the current artist we're writing.
         self.artist = u'Unknown artist'
-        # the current album, False means no album yet
+        # The current album: False means no album yet.
         self.album = False
-        # the current rest file content. None means the file is not
+        # The current rest file content. None means the file is not
         # open yet.
         self.rest = None
 
