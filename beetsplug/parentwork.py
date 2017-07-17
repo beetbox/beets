@@ -198,9 +198,9 @@ class ParentWorkPlugin(BeetsPlugin):
             found = False
 
         if found:
-            self._log.info("Finished searching work for: " +
+            self._log.debug("Finished searching work for: " +
                            item.artist + ' - ' + item.title)
-            self._log.info("Work fetched: " + u', '.join(parent_work) +
+            self._log.debug("Work fetched: " + u', '.join(parent_work) +
                            ' - ' + u', '.join(parent_composer))
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
