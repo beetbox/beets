@@ -760,7 +760,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
         """
         if item is None or self.artist != item.artist:
             if self.rest is not None:
-                slug = re.sub(r'\W+', '-', unidecode(self.artist).lower())
+                slug = re.sub(r'\W+', '-',
+                              unidecode(self.artist.strip()).lower())
                 path = os.path.join(directory, 'artists', slug + u'.rst')
                 with open(path, 'wb') as output:
                     output.write(self.rest.encode('utf-8'))
@@ -769,14 +770,15 @@ class LyricsPlugin(plugins.BeetsPlugin):
                     return
             self.artist = item.artist
             self.rest = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
-                        % (self.artist, u'=' * len(self.artist))
+                        % (self.artist.strip(),
+                           u'=' * len(self.artist.strip()))
         if self.album != item.album:
             tmpalbum = self.album = item.album
             if self.album == '':
                 tmpalbum = u'Unknown album'
-            self.rest += u"%s\n%s\n\n" % (tmpalbum,
-                                          u'-' * len(tmpalbum))
-        title_str = u":index:`%s`" % item.title
+            self.rest += u"%s\n%s\n\n" % (tmpalbum.strip(),
+                                          u'-' * len(tmpalbum.strip()))
+        title_str = u":index:`%s`" % item.title.strip()
         block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
         self.rest += u"%s\n%s\n\n%s\n" % (title_str,
                                           u'~' * len(title_str),
