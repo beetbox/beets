@@ -24,7 +24,6 @@ from beets.library import Item
 from PIL import Image
 
 
-
 MOSAIC_FILE = tempfile.NamedTemporaryFile(suffix='.png')
 
 
