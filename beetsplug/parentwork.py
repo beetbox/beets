@@ -22,7 +22,6 @@ from __future__ import division, absolute_import, print_function
 from beets import ui
 from beets.plugins import BeetsPlugin
 
-import logging
 import musicbrainzngs
 
 
@@ -62,7 +61,7 @@ def find_parentwork(work_id):
     return(work_info)
 
 
-def get_info(item, work_info, parent_composer, parent_composer_sort,
+def get_info(self, item, work_info, parent_composer, parent_composer_sort,
              parent_work, parent_work_disambig, work_ids, composer_ids):
     """Given the parentwork info dict, this function updates parent_composer,
     parent_composer_sort, parent_work, parent_work_disambig, work_ids and
@@ -77,12 +76,10 @@ def get_info(item, work_info, parent_composer, parent_composer_sort,
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
     if not composer_exists:
-        print('I am here!')
-        logging.info(item.artist + ' - ' + item.title)
-        logging.info(
+        self._log.info(item.artist + ' - ' + item.title)
+        self._log.info(
             "no composer, add one at https://musicbrainz.org/work/" +
             work_info['work']['id'])
-        print('logging done')
     if work_info['work']['id'] in work_ids:
         pass
     else:
@@ -177,7 +174,7 @@ class ParentWorkPlugin(BeetsPlugin):
                         work_disambig.append(work_relation['work']
                                              ['disambiguation'])
                     work_info = find_parentwork(work_id)
-                    get_info(item, work_info, parent_composer,
+                    get_info(self, item, work_info, parent_composer,
                              parent_composer_sort, parent_work,
                              parent_work_disambig,
                              work_ids, composer_ids)
@@ -204,8 +201,8 @@ class ParentWorkPlugin(BeetsPlugin):
         if found:
             self._log.info("Work found for: " + item.artist + ' - ' +
                            item.title)
-            self._log.info("Work fetched: " + u', '.join(parent_work) + ' - '
-                           u', '.join(parent_composer))
+            self._log.info("Work fetched: " + u', '.join(parent_work) +
+                           ' - ' + u', '.join(parent_composer))
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
             item['work']                 = u', '.join(work)
