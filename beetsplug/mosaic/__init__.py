@@ -141,7 +141,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         covers = []
 
         for album in albums:
-
+            self._log.debug(u'{}', album.artpath)
             if album.artpath and os.path.exists(album.artpath):
                 self._log.debug(u'{}', album.artpath)
                 covers.append(album.artpath)
@@ -189,7 +189,6 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             self._log.debug(u'Randomize cover art')
 
         for cover in covers:
-
             try:
                 if '||' in str(cover):
                     info = cover[2:].strip()

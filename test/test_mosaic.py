@@ -17,25 +17,35 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import unittest
+from test import _common
 from test.helper import TestHelper
 import tempfile
 from beets.library import Item
 from PIL import Image
 
 
+
 MOSAIC_FILE = tempfile.NamedTemporaryFile(suffix='.png')
 
 
-class MosaicCliTest(unittest.TestCase, TestHelper):
+class MosaicCliTest(_common.TestCase, TestHelper):
+
+    m1_artpath = os.path.join(_common.RSRC, b'mosaic_1.png')
+    m2_artpath = os.path.join(_common.RSRC, b'mosaic_2.tif')
+    m3_artpath = os.path.join(_common.RSRC, b'mosaic_3.jpg')
 
     def setUp(self):
         self.setup_beets()
         self.load_plugins('mosaic')
         self.config['mosaic']['geometry'] = '150x150+3+3'
         self.config['mosaic']['mosaic'] = MOSAIC_FILE.name
-        self._set_up_data()
 
-    def _set_up_data(self):
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
+
+    def test_generate_mosaic_with_invalid(self):
+
         album_invalid = Item(
             albumartist=u'Artist A info',
             album=u'Album A info',
@@ -65,11 +75,51 @@ class MosaicCliTest(unittest.TestCase, TestHelper):
         )
         self.lib.add_album([album_invalid])
 
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+        MOSAIC_FILE.close()
+        self.run_with_output('mosaic', '')
+        width = 0
+        height = 0
+        with Image.open(MOSAIC_FILE.name) as img:
+            width, height = img.size
+            del img
 
-    def test_generate_mosaic(self):
+        os.remove(MOSAIC_FILE.name)
+        self.assertEqual(width, 309)
+        self.assertEqual(height, 309)
+
+    def test_generate_mosaic_with_images(self):
+
+        self.config['mosaic']['watermark'] = self.m3_artpath.decode("utf-8")
+
+        album_invalid = Item(
+            albumartist=u'Artist E info',
+            album=u'Album A info',
+            path='',
+            artpath=self.m1_artpath.decode("utf-8")
+        )
+        self.lib.add_album([album_invalid])
+        album_invalid = Item(
+            albumartist=u'Artist F info',
+            album=u'Album B info',
+            path='',
+            artpath=self.m2_artpath.decode("utf-8")
+        )
+        self.lib.add_album([album_invalid])
+        album_invalid = Item(
+            albumartist=u'Artist G info',
+            album=u'Album C info',
+            path='',
+            artpath=self.m3_artpath.decode("utf-8")
+        )
+        self.lib.add_album([album_invalid])
+        album_invalid = Item(
+            albumartist=u'Artist H info',
+            album=u'Album D info',
+            path='',
+            artpath=self.m1_artpath.decode("utf-8")
+        )
+        self.lib.add_album([album_invalid])
+
         MOSAIC_FILE.close()
         self.run_with_output('mosaic', '')
         width = 0
