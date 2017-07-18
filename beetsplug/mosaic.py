@@ -76,7 +76,8 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         cmd.parser.add_option(
             u'-a', u'--alpha', dest='watermark_alpha',
             action='store', metavar='ALPHA',
-            help=u'ALPHA value for blending'
+            help=u'ALPHA value for blending',
+            type="float"
         )
         cmd.parser.add_option(
             u'-c', u'--color', dest='background',

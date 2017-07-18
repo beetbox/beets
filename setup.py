@@ -78,7 +78,6 @@ setup(
         'beetsplug.web',
         'beetsplug.lastgenre',
         'beetsplug.metasync',
-        'beetsplug.mosaic',
     ],
     entry_points={
         'console_scripts': [
