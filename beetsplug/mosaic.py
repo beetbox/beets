@@ -107,7 +107,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             fonturl = self.config['font'].as_str()
 
             albums = lib.albums(ui.decargs(args))
-            filename = fonturl[fonturl.rfind("/")+1:]
+            filename = fonturl[fonturl.rfind("/") + 1:]
             fontpath = os.path.join(os.path.dirname(__file__), filename)
 
             if not os.path.isfile(fontpath):
