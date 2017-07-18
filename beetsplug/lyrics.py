@@ -227,6 +227,24 @@ def search_pairs(item):
     return itertools.product(artists, multi_titles)
 
 
+def slug(text):
+    """Make a URL-safe, human-readable version of the given text
+
+    This will do the following:
+
+    1. decode unicode characters into ASCII
+    2. shift everything to lowercase
+    3. strip whitespace
+    4. replace other non-word characters with dashes
+    5. strip extra dashes
+
+    This somewhat duplicates the :func:`Google.slugify` function but
+    slugify is not as generic as this one, which can be reused
+    elsewhere.
+    """
+    return re.sub(r'\W+', '-', unidecode(text).lower().strip()).strip('-')
+
+
 class Backend(object):
     def __init__(self, config, log):
         self._log = log
@@ -759,31 +777,30 @@ class LyricsPlugin(plugins.BeetsPlugin):
         This will keep state (in the `rest` variable) in order to avoid
         writing continuously to the same files.
         """
-        if item is None or self.artist != item.artist:
+
+        if item is None or slug(self.artist) != slug(item.artist):
             if self.rest is not None:
-                slug = re.sub(r'\W+', '-',
-                              unidecode(self.artist.strip()).lower())
-                path = os.path.join(directory, 'artists', slug + u'.rst')
+                path = os.path.join(directory, 'artists',
+                                    slug(self.artist) + u'.rst')
                 with open(path, 'wb') as output:
                     output.write(self.rest.encode('utf-8'))
                 self.rest = None
                 if item is None:
                     return
-            self.artist = item.artist
+            self.artist = item.artist.strip()
             self.rest = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
-                        % (self.artist.strip(),
-                           u'=' * len(self.artist.strip()))
+                        % (self.artist,
+                           u'=' * len(self.artist))
         if self.album != item.album:
-            tmpalbum = self.album = item.album
+            tmpalbum = self.album = item.album.strip()
             if self.album == '':
                 tmpalbum = u'Unknown album'
-            self.rest += u"%s\n%s\n\n" % (tmpalbum.strip(),
-                                          u'-' * len(tmpalbum.strip()))
+            self.rest += u"%s\n%s\n\n" % (tmpalbum, u'-' * len(tmpalbum))
         title_str = u":index:`%s`" % item.title.strip()
         block = u'| ' + item.lyrics.replace(u'\n', u'\n| ')
-        self.rest += u"%s\n%s\n\n%s\n" % (title_str,
-                                          u'~' * len(title_str),
-                                          block)
+        self.rest += u"%s\n%s\n\n%s\n\n" % (title_str,
+                                            u'~' * len(title_str),
+                                            block)
 
     def writerest_indexes(self, directory):
         """Write conf.py and index.rst files necessary for Sphinx
