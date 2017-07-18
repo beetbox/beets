@@ -393,6 +393,26 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         google.is_page_candidate(url, url_title, s['title'], u'Sunn O)))')
 
 
+class SlugTests(unittest.TestCase):
+
+    def test_slug(self):
+        # plain ascii passthrough
+        text = u"test"
+        self.assertEqual(lyrics.slug(text), 'test')
+        # german unicode and capitals
+        text = u"Mørdag"
+        self.assertEqual(lyrics.slug(text), 'mordag')
+        # more accents and quotes
+        text = u"l'été c'est fait pour jouer"
+        self.assertEqual(lyrics.slug(text), 'l-ete-c-est-fait-pour-jouer')
+        # accents, parens and spaces
+        text = u"\xe7afe au lait (boisson)"
+        self.assertEqual(lyrics.slug(text), 'cafe-au-lait-boisson')
+        text = u"Multiple  spaces -- and symbols! -- merged"
+        self.assertEqual(lyrics.slug(text),
+                         'multiple-spaces-and-symbols-merged')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
