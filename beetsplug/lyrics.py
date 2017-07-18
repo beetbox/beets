@@ -236,6 +236,10 @@ def slug(text):
     2. shift everything to lowercase
     3. strip whitespace
     4. replace other non-word characters with dashes
+
+    This somewhat duplicates the :func:`Google.slugify` function but
+    slugify is not as generic as this one, which can be reused
+    elsewhere.
     """
     return re.sub(r'\W+', '-', unidecode(text).lower().strip())
 
