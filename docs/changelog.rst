@@ -14,6 +14,9 @@ Fixes:
 
 * :doc:`/plugins/replaygain`: Fix a regression in the previous release related
   to the new R128 tags. :bug:`2615` :bug:`2623`
+* :doc:`/plugins/lyrics`: The MusixMatch backend now detect and warns
+  the user when blocked on the server. Thanks to
+  :user:`anarcat`. :bug:`2634` :bug:`2632`
 
 For developers:
 
