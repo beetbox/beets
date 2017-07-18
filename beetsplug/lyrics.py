@@ -227,6 +227,19 @@ def search_pairs(item):
     return itertools.product(artists, multi_titles)
 
 
+def slug(text):
+    """Make a URL-safe, human-readable version of the given text
+
+    This will do the following:
+
+    1. decode unicode characters into ASCII
+    2. shift everything to lowercase
+    3. strip whitespace
+    4. replace other non-word characters with dashes
+    """
+    return re.sub(r'\W+', '-', unidecode(text).lower().strip())
+
+
 class Backend(object):
     def __init__(self, config, log):
         self._log = log
@@ -759,17 +772,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
         This will keep state (in the `rest` variable) in order to avoid
         writing continuously to the same files.
         """
-        def slug(text):
-            """Make a URL-safe, human-readable version of the given text
-
-            This will do the following:
-
-            1. decode unicode characters into ASCII
-            2. shift everything to lowercase
-            3. strip whitespace
-            4. replace other non-word characters with dashes
-            """
-            return re.sub(r'\W+', '-', unidecode(text).lower().strip())
 
         if item is None or slug(self.artist) != slug(item.artist):
             if self.rest is not None:
