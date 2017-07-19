@@ -33,7 +33,6 @@ import requests
 
 
 class MosaicCoverArtPlugin(BeetsPlugin):
-    col_size = 4
 
     def __init__(self):
         super(MosaicCoverArtPlugin, self).__init__()
@@ -96,6 +95,9 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
+            """collect parameters and download the font for cover creation
+            if cover not available for album
+            """
             self.config.set_args(opts)
 
             random = self.config['random']
@@ -111,7 +113,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             fontpath = os.path.join(os.path.dirname(__file__), filename)
 
             if not os.path.isfile(fontpath):
-                self._log.info("Download Font: " + fonturl)
+                self._log.debug("Download Font: " + fonturl)
                 response = requests.get(fonturl)
                 with open(fontpath, 'wb') as f:
                     f.write(response.content)
@@ -139,30 +141,35 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                           fn_mosaic, fn_watermark,
                           background, watermark_alpha,
                           geometry, random, fontpath):
-
+        """Generate the mosaic.
+        """
+        # Construct the parser for getting the geometry parameter
         parsestr = "{cellwidth:d}x{cellheight:d}"
         parsestr += "+{cellmarginx:d}+{cellmarginy:d}"
-
         geo = parse(parsestr, geometry)
-        # Load Truetype font bundled with plugin
+
+        # Load Truetype font from plugin folder, which was downloaded before
         # tweak the fontsize according to the cell width
         fnt = ImageFont.truetype(fontpath, int(round(geo['cellwidth'] / 10)))
 
         covers = []
-
+        # based on retrieved albums create a list of album cover
         for album in albums:
             self._log.debug(u'{}', album.artpath)
             if album.artpath and os.path.exists(album.artpath):
                 self._log.debug(u'{}', album.artpath)
                 covers.append(album.artpath)
             else:
+                # if album cover not present use the albumartist and album
+                # which will be used later for cover creation
                 covers.append("||" + album.albumartist + "\n" + album.album)
                 self._log.debug(u'#{} has no album?#', album)
 
+        # calculate the number of rows and cols of the final mosaic
+        # try to achieve a square size
         sqrtnum = int(math.sqrt(len(covers)))
 
         tail = len(covers) - (sqrtnum * sqrtnum)
-
         rows = cols = sqrtnum
 
         if tail >= cols:
@@ -175,6 +182,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         self._log.debug(u'Cells: {}x{}', cols, rows)
 
+        # calculate the final mosaix size in pixel
         mosaic_size_width = geo['cellmarginx'] + (cols * (geo['cellwidth'] +
                                                           geo['cellmarginx']))
 
@@ -184,7 +192,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
 
         self._log.debug(u'Mosaic size: {}x{}',
                         mosaic_size_width, mosaic_size_height)
-
+        # Create the mosiac image
         montage = Image.new('RGB', (mosaic_size_width, mosaic_size_height),
                             tuple(int(background[i:i + 2], 16)
                                   for i in (0, 2, 4)))
@@ -194,6 +202,7 @@ class MosaicCoverArtPlugin(BeetsPlugin):
         offset_y = int(geo['cellmarginy'])
         colcounter = 0
 
+        # shuffle the list of covers if desired
         if random:
             shuffle(covers)
             self._log.debug(u'Randomize cover art')
@@ -202,6 +211,9 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             try:
                 if '||' in str(cover):
                     info = cover[2:].strip()
+                    # I faced the problem with entries
+                    # in the database with empty album and artist
+                    # this is for robustness
                     if not info:
                         continue
                     im = Image.new('RGB', size,
@@ -211,18 +223,23 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                                     info.replace('\n', '-'))
                     d = ImageDraw.Draw(im)
                     info = self._insert_newlines(info.replace('\n', '-'))
-
+                    # Using text to identify the missing cover in the mosic
                     d.multiline_text((int(round(geo['cellwidth'] / 10)), int(
                         round(geo['cellheight'] / 10))), info,
                         font=fnt, fill=(255, 0, 0, 255))
                 else:
+                    # load the normal cover image
+                    # and resize it
                     im = Image.open(cover)
                     im.thumbnail(size, Image.ANTIALIAS)
 
                 self._log.debug(u'Paste into mosaic: {} - {}x{}',
                                 cover, offset_x, offset_y)
+                # Paste the image at the right position in the mosaic
                 montage.paste(im, (offset_x, offset_y))
 
+                # Increase the counter for the column, used for
+                # calculation of the postion of the next cover in the mosaic
                 colcounter += 1
                 if colcounter >= cols:
                     offset_y += geo['cellwidth'] + geo['cellmarginy']
@@ -236,10 +253,12 @@ class MosaicCoverArtPlugin(BeetsPlugin):
                 self._log.error(u'Problem with {}', cover)
 
         if fn_watermark:
+            # Load the watermark image
             foreground = Image.open(fn_watermark)
             m_width, m_height = montage.size
             f_width, f_height = foreground.size
 
+            # Calculate the final size of the watermark picture
             if f_width > f_height:
                 d = f_width / 2 - (f_height / 2)
                 e = f_width / 2 + (f_height / 2)
@@ -256,6 +275,8 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             longer_side = max(montage.size)
             horizontal_padding = (longer_side - montage.size[0]) / 2
             vertical_padding = (longer_side - montage.size[1]) / 2
+            # Crop the watermark picture that the ratio fits to the
+            # mosaic
             img5 = montage.crop(
                 (
                     -horizontal_padding,
@@ -266,13 +287,14 @@ class MosaicCoverArtPlugin(BeetsPlugin):
             )
 
             m_width, m_height = img5.size
-
+            # Resize the watermark picture finally
             nf2 = nf.resize(img5.size, Image.ANTIALIAS)
             f_width, f_height = nf2.size
 
             self._log.debug(u'Save montage to: {}:{}-{} {}:{}-{}',
                             img5.mode, m_width, m_height, nf.mode,
                             f_width, f_height)
+            # Blend the watermark with the mosaic together
             Image.blend(img5, nf2, watermark_alpha).save(fn_mosaic)
         else:
             montage.save(fn_mosaic)
