@@ -215,7 +215,6 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
-        #print(work_relation)
         work.append(work_relation['work']['title'])
         work_id.append(work_relation['work']['id'])
         if 'disambiguation' in work_relation['work']:
