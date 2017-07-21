@@ -107,7 +107,7 @@ class ParentWorkPlugin(BeetsPlugin):
                                self.config['force'])
 
     def get_info(self, item, work_info, parent_composer, parent_composer_sort,
-                 parent_work, parent_work_disambig, work_ids, composer_ids):
+                 parent_work, parent_work_disambig, dupe_ids, composer_ids):
         """Given the parentwork info dict, this function updates parent_composer,
         parent_composer_sort, parent_work, parent_work_disambig, work_ids and
         composer_ids"""
@@ -126,76 +126,50 @@ class ParentWorkPlugin(BeetsPlugin):
             self._log.info(
                 "no composer, add one at https://musicbrainz.org/work/" +
                 work_info['work']['id'])
-        if work_info['work']['id'] in work_ids:
+        if work_info['work']['id'] in dupe_ids:
             pass
         else:
             parent_work.append(work_info['work']['title'])
-            work_ids.add(work_info['work']['id'])
+            dupe_ids.add(work_info['work']['id'])
             if 'disambiguation' in work_info['work']:
                 parent_work_disambig.append(work_info['work']
                                             ['disambiguation'])
 
     def find_work(self, lib, item, force):
 
-        work                 = []
-        work_disambig        = []
         parent_work          = []
         parent_work_disambig = []
         parent_composer      = []
         parent_composer_sort = []
-        work_ids             = set()
+        dupe_ids             = set()
         composer_ids         = set()
 
         item.read()
         recording_id = item.mb_trackid
+
+        hasawork = True
+        if not item.work_id:
+            self._log.info("No work attached, recording id: " + recording_id)
+            self._log.info(item.artist + ' - ' + item.title)
+            self._log.info("add one at https://musicbrainz.org" +
+                           "/recording/" + recording_id)
+            hasawork = False
         found = True
-        self._log.debug(
-            "Fetching " + item.artist + " - " + item.title
-        )
-        if 'parent_work' in item and not force:
-            self._log.debug(
-                "Work already in library, not necessary fetching"
-            )
-            return
-        try:
-            rec_rels = musicbrainzngs.get_recording_by_id(
-                recording_id, includes=['work-rels'])
-            if 'work-relation-list' in rec_rels['recording']:
-                for work_relation in rec_rels['recording'][
-                        'work-relation-list']:
-                    hasawork = False
-                    if work_relation['type'] != 'performance':
-                        continue
-                    hasawork = True
-                    work_id = work_relation['work']['id']
-                    work.append(work_relation['work']['title'])
-                    if 'disambiguation' in work_relation['work']:
-                        work_disambig.append(work_relation['work']
-                                             ['disambiguation'])
-                    work_info = find_parentwork(work_id)
+        if (force or not parent_work) and hasawork:
+            try:
+                work_ids = item.work_id.split(', ')
+                for w_id in work_ids:
+                    work_info = find_parentwork(w_id)
                     self.get_info(item, work_info, parent_composer,
                                   parent_composer_sort, parent_work,
                                   parent_work_disambig,
-                                  work_ids, composer_ids)
-                    if not hasawork:
-                        self._log.info("No work attached,recording id: " +
-                                       recording_id)
-                        self._log.info(item.artist + ' - ' + item.title)
-                        self._log.info("add one at" +
-                                       "https://musicbrainz.org/" +
-                                       "recording/" +
-                                       recording_id)
-
-            else:
-                self._log.info(
-                    "No work attached, recording id: " + recording_id)
-                self._log.info(item.artist + ' - ' + item.title)
-                self._log.info("add one at https://musicbrainz.org" +
-                               "/recording/" + recording_id)
-        except musicbrainzngs.musicbrainz.WebServiceError:
-            self._log.info(
-                "Work unreachable, recording id: " + recording_id)
-            found = False
+                                  dupe_ids, composer_ids)
+            except musicbrainzngs.musicbrainz.WebServiceError:
+                self._log.debug("Work unreachable")
+                found = False
+        elif parent_work:
+            self._log.debug("Work already in library, not necessary fetching")
+            return
 
         if found:
             self._log.debug("Finished searching work for: " +
@@ -204,8 +178,6 @@ class ParentWorkPlugin(BeetsPlugin):
                             ' - ' + u', '.join(parent_composer))
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
-            item['work']                 = u', '.join(work)
-            item['work_disambig']        = u', '.join(work_disambig)
             item['parent_composer']      = u', '.join(parent_composer)
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
 

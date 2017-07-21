@@ -208,9 +208,20 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     lyricist = []
     composer = []
     composer_sort = []
+    work = []
+    work_id = []
+    work_disambig = []
+
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
+        #print(work_relation)
+        work.append(work_relation['work']['title'])
+        work_id.append(work_relation['work']['id'])
+        if 'disambiguation' in work_relation['work']:
+            work_disambig.append(work_relation['work']['disambiguation'])
+        else:
+            work_disambig.append(' ')
         for artist_relation in work_relation['work'].get(
                 'artist-relation-list', ()):
             if 'type' in artist_relation:
@@ -226,6 +237,10 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if composer:
         info.composer = u', '.join(composer)
         info.composer_sort = u', '.join(composer_sort)
+    if work:
+        info.work = u', '.join(work)
+        info.work_id = u', '.join(work_id)
+        info.work_disambig = u', '.join(work_disambig)
 
     arranger = []
     for artist_relation in recording.get('artist-relation-list', ()):
