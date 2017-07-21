@@ -107,7 +107,7 @@ class ParentWorkPlugin(BeetsPlugin):
                                self.config['force'])
 
     def get_info(self, item, work_info, parent_composer, parent_composer_sort,
-                 parent_work, parent_work_disambig, dupe_ids, composer_ids):
+                 parent_work, parent_work_disambig, parent_work_id, composer_ids):
         """Given the parentwork info dict, this function updates parent_composer,
         parent_composer_sort, parent_work, parent_work_disambig, work_ids and
         composer_ids"""
@@ -126,11 +126,11 @@ class ParentWorkPlugin(BeetsPlugin):
             self._log.info(
                 "no composer, add one at https://musicbrainz.org/work/" +
                 work_info['work']['id'])
-        if work_info['work']['id'] in dupe_ids:
+        if work_info['work']['id'] in parent_work_id:
             pass
         else:
             parent_work.append(work_info['work']['title'])
-            dupe_ids.add(work_info['work']['id'])
+            parent_work_id.append(work_info['work']['id'])
             if 'disambiguation' in work_info['work']:
                 parent_work_disambig.append(work_info['work']
                                             ['disambiguation'])
@@ -141,7 +141,7 @@ class ParentWorkPlugin(BeetsPlugin):
         parent_work_disambig = []
         parent_composer      = []
         parent_composer_sort = []
-        dupe_ids             = set()
+        parent_work_id       = []
         composer_ids         = set()
 
         item.read()
@@ -163,7 +163,7 @@ class ParentWorkPlugin(BeetsPlugin):
                     self.get_info(item, work_info, parent_composer,
                                   parent_composer_sort, parent_work,
                                   parent_work_disambig,
-                                  dupe_ids, composer_ids)
+                                  parent_work_id, composer_ids)
             except musicbrainzngs.musicbrainz.WebServiceError:
                 self._log.debug("Work unreachable")
                 found = False
@@ -178,6 +178,7 @@ class ParentWorkPlugin(BeetsPlugin):
                             ' - ' + u', '.join(parent_composer))
             item['parent_work']          = u', '.join(parent_work)
             item['parent_work_disambig'] = u', '.join(parent_work_disambig)
+            item['parent_work_id']       = u', '.join(parent_work_id)
             item['parent_composer']      = u', '.join(parent_composer)
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
 
