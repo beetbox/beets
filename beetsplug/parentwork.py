@@ -134,6 +134,8 @@ class ParentWorkPlugin(BeetsPlugin):
             if 'disambiguation' in work_info['work']:
                 parent_work_disambig.append(work_info['work']
                                             ['disambiguation'])
+            else:
+                parent_work_disambig.append('')
 
     def find_work(self, lib, item, force):
 
