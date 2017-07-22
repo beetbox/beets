@@ -1460,7 +1460,7 @@ class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
     metadata.
     """
-    def __init__(self, path, id3v23=False, mapping=None):
+    def __init__(self, path, id3v23=False, mapping={}):
         """Constructs a new `MediaFile` reflecting the file at path. May
         throw `UnreadableFileError`.
 
@@ -1513,7 +1513,7 @@ class MediaFile(object):
         self.id3v23 = id3v23 and self.type == 'mp3'
 
         # Set tag mapping
-        self.mapping = mapping
+        self.mapping = mapping if mapping else {}
 
     def save(self):
         """Write the object's tags back to the file. May
@@ -1627,17 +1627,73 @@ class MediaFile(object):
 
     def get_storage_styles(self, field, list_type=False):
         vorbis_styles = ()
-        if self.mapping and self.mapping.get(field, None):
-            if list_type:
-                vorbis_styles = tuple([ListStorageStyle(tag,
-                                      **self.vorbis_params.get(field, {}))
-                                      for tag in self.mapping[field]])
-            else:
-                vorbis_styles = tuple([StorageStyle(tag,
-                                      **self.vorbis_params.get(field, {}))
-                                      for tag in self.mapping[field]])
+        if list_type:
+            vorbis_styles = tuple([ListStorageStyle(tag,
+                                  **self.vorbis_params.get(field, {}))
+                                  for tag in self.mapping.get(field,
+                                  self.default_mapping[field])])
+        else:
+            vorbis_styles = tuple([StorageStyle(tag,
+                                  **self.vorbis_params.get(field, {}))
+                                  for tag in self.mapping.get(field,
+                                  self.default_mapping[field])])
 
         return self.other_styles[field] + vorbis_styles
+
+    #default vorbis mapping
+    default_mapping = {
+        'title': ['TITLE'],
+        'artist': ['ARTIST'],
+        'album': ['ALBUM'],
+        'genre': ['GENRE'],
+        'lyricist': ['LYRICIST'],
+        'composer': ['COMPOSER'],
+        'composer_sort': ['COMPOSERSORT'],
+        'arranger': ['ARRANGER'],
+        'grouping': ['GROUPING'],
+        'track': ['TRACK', 'TRACKNUMBER'],
+        'tracktotal': ['TRACKTOTAL', 'TRACKC', 'TOTALTRACKS'],
+        'disc': ['DISC', 'DISCNUMBER'],
+        'disctotal': ['DISCTOTAL', 'DISCC', 'TOTALDISCS'],
+        'lyrics': ['LYRICS'],
+        'comments': ['DESCRIPTION', 'COMMENT'],
+        'bpm': ['BPM'],
+        'comp': ['COMPILATION'],
+        'albumartist': ['ALBUM ARTIST', 'ALBUMARTIST'],
+        'albumtype': ['MUSICBRAINZ_ALBUMTYPE'],
+        'label': ['LABEL', 'PUBLISHER'],
+        'artist_sort': ['ARTISTSORT'],
+        'albumartist_sort': ['ALBUMARTISTSORT'],
+        'asin': ['ASIN'],
+        'catalognum': ['CATALOGNUMBER'],
+        'disctitle': ['DISCSUBTITLE'],
+        'encoder': ['ENCODEDBY', 'ENCODER'],
+        'script': ['SCRIPT'],
+        'language': ['LANGUAGE'],
+        'country': ['RELEASECOUNTRY'],
+        'albumstatus': ['MUSICBRAINZ_ALBUMSTATUS'],
+        'media': ['MEDIA'],
+        'albumdisambig': ['MUSICBRAINZ_ALBUMCOMMENT'],
+        'date': ['DATE'],
+        'year': ['YEAR'],
+        'original_date': ['ORIGINALDATE'],
+        'artist_credit': ['ARTIST_CREDIT'],
+        'albumartist_credit': ['ALBUMARTIST_CREDIT'],
+        'mb_trackid': ['MUSICBRAINZ_TRACKID'],
+        'mb_albumid': ['MUSICBRAINZ_ALBUMID'],
+        'mb_artistid': ['MUSICBRAINZ_ARTISTID'],
+        'mb_albumartistid': ['MUSICBRAINZ_ALBUMARTISTID'],
+        'mb_releasegroupid': ['MUSICBRAINZ_RELEASEGROUPID'],
+        'acoustid_fingerprint': ['ACOUSTID_FINGERPRINT'],
+        'acoustid_id': ['ACOUSTID_ID'],
+        'rg_track_gain': ['REPLAYGAIN_TRACK_GAIN'],
+        'rg_album_gain': ['REPLAYGAIN_ALBUM_GAIN'],
+        'rg_track_peak': ['REPLAYGAIN_TRACK_PEAK'],
+        'rg_album_peak': ['REPLAYGAIN_ALBUM_PEAK'],
+        'r128_track_gain': ['R128_TRACK_GAIN'],
+        'r128_album_gain': ['R128_ALBUM_GAIN'],
+        'initial_key': ['INITIALKEY']
+    }
 
     # Non Vorbis storage styles
     other_styles = {
