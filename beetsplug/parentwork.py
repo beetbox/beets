@@ -157,7 +157,7 @@ class ParentWorkPlugin(BeetsPlugin):
             self._log.info("add one at https://musicbrainz.org" +
                            "/recording/" + recording_id)
             hasawork = False
-        found = True
+        found = False
         if (force or not parent_work) and hasawork:
             try:
                 work_ids = item.work_id.split(', ')
@@ -167,6 +167,7 @@ class ParentWorkPlugin(BeetsPlugin):
                                   parent_composer_sort, parent_work,
                                   parent_work_disambig,
                                   parent_work_id, composer_ids)
+                found = True
             except musicbrainzngs.musicbrainz.WebServiceError:
                 self._log.debug("Work unreachable")
                 found = False
