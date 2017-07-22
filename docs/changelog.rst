@@ -12,6 +12,11 @@ New features:
 
 Fixes:
 
+* Prevent Python from warning about a ``BrokenPipeError`` being ignored even
+  though we do take it into account. This was an issue when using beets in
+  simple shell scripts.
+  Thanks to :user:`Azphreal`.
+  :bug:`2622` :bug:`2631`
 * :doc:`/plugins/replaygain`: Fix a regression in the previous release related
   to the new R128 tags. :bug:`2615` :bug:`2623`
 * :doc:`/plugins/lyrics`: The MusixMatch backend now detect and warns
