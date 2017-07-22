@@ -186,7 +186,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                     except PYLAST_EXCEPTIONS as exc:
                         try:
                             self._log.debug(u'last.fm error: {0}', exc)
-                            lastfm_artist = LASTFM.get_artist(quote(artist['name']))
+                            lastfm_artist = LASTFM.get_artist(
+                                quote(artist['name']))
                         except PYLAST_EXCEPTIONS as exc:
                             self._log.debug(u'2 last.fm error: {0}', exc)
                             continue
@@ -198,11 +199,11 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                         mbid = artistinfo[0].get_mbid()
                         name = artistinfo[0].get_name()
                         lastfmurl = artistinfo[0].get_url()
-                        print("sim artists:",lastfmurl)
+                        # print("sim artists:",lastfmurl)
 
                         if name:
                             artistnode = ArtistNode(mbid, name, lastfmurl)
-                            if len(lib.items('artist:' + name)) > 0:
+                            if len(lib.items('artist:' + quote(name))) > 0:
                                 if ((artistnode not in
                                         self._artistsOwned) and
                                     (artistnode not in
