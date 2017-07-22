@@ -5,7 +5,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
+# without limitation the rights to use, copy, modify, merge, publish,e
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
@@ -80,7 +80,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         cmd.parser.add_option(
             u'-d', u'--depth', dest='depth',
             action='store',
-            help=u'How is the depth of searching.'
+            help=u'How is the depth of searching.',
+            type="int"
         )
 
         def func(lib, opts, args):
@@ -251,7 +252,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 artistnode = ArtistNode(artist[1]['mbid'], artist[0],
                                         artist[1]['group'],
                                         artist[1]['owned'],
-                                        artist[1]['checked'])
+                                        artist[1]['checked']
+                                        artist[1]['lastfmurl'])
                 if artist[1]['group'] == 1:
                     if artistnode not in self._artistsOwned:
                         self._artistsOwned.append(artistnode)
@@ -314,17 +316,19 @@ class ArtistNode():
 
     mbid = u''
     name = u''
+    lastfmurl = u''
     owned = False
     checked = False
     group = 0
 
-    def __init__(self, mbid, name, group=0, owned=False, checked=False):
+    def __init__(self, mbid, name, group=0, owned=False, checked=False, lastfmurl):
         """Constructor of class."""
         self.mbid = mbid
         self.name = name
         self.owned = owned
         self.checked = checked
         self.group = group
+        self.lastfmurl = lastfmurl
 
     def __eq__(self, other):
         """Override the default Equals behavior."""
@@ -351,6 +355,8 @@ class ArtistNode():
             return self.checked
         elif key == 'group':
             return self.group
+        elif key == 'lastfmurl'
+            return self.lastfmurl
         else:
             return None
 
@@ -366,6 +372,8 @@ class ArtistNode():
             self.owned = value
         elif key == 'checked':
             self.checked = value
+        elif key == 'lastfmurl'
+            self.lastfmurl = value
         elif key == 'group':
             self.group = value
 
