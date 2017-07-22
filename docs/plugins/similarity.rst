@@ -32,13 +32,13 @@ To configure the plugin, make a ``similarity:`` section in your
 configuration file. There is some options:
 
 - **force**: Queries similarity data even for artists that already
-processed before.
+  processed before.
   Default: ``no``.
 
 - **json**: Filename for json File which stores the relations between 
-artists. Location is the default config-dir.
+  artists. Location is the default config-dir.
 
 - **depth**: Depth of similarity graph which will be processed. If 
-set to ``0`` it goes down until every owned artist is checked 
-against similar artist and no more owned artist is found.
+  set to ``0`` it goes down until every owned artist is checked 
+  against similar artist and no more owned artist is found.
   Default: ``0``.
