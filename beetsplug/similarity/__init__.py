@@ -52,7 +52,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         self.config.add({'per_page': 500,
                          'retry_limit': 3,
                          'json': 'similarity.json',
-                         'depth': 0,
+                         'depth': 1,
                          'force': False, })
         self.item_types = {'play_count':  types.INTEGER, }
 
@@ -89,9 +89,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             jsonfile = self.config['json'].as_str()
             force = self.config['force']
-            if (self.config['depth'] and
-                    self.config['depth'].as_str().isdigit()):
-                depth = int(self.config['depth'].as_str())
+            if (self.config['depth']):
+                depth = self.config['depth'].get(int)
             else:
                 depth = 0
             items = lib.items(ui.decargs(args))
@@ -135,19 +134,40 @@ class SimilarityPlugin(plugins.BeetsPlugin):
             if item['mb_albumartistid']:
                 artistnode = ArtistNode(item['mb_albumartistid'],
                                         item['albumartist'],
+                                        "",
                                         True)
                 artistnode['group'] = 1
                 if artistnode not in self._artistsOwned:
+                    lastfmurl = u''
+                    try:
+
+                        lastfm_artist = LASTFM.get_artist_by_mbid(
+                            item['mb_albumartistid'])
+                        lastfmurl = lastfm_artist.get_url()
+                    except PYLAST_EXCEPTIONS as exc:
+                        try:
+                            #self._log.debug(u'last.fm error: {0}', exc)
+                            lastfm_artist = LASTFM.get_artist(
+                                item['albumartist'])
+                            lastfmurl = lastfm_artist.get_url()
+                        except PYLAST_EXCEPTIONS as exc:
+                            self._log.debug(u'last.fm error: {0}', exc)
+
+                    artistnode['lastfmurl'] = lastfmurl
+                    self._log.info(
+                        u'collect: {}-{}', item['mb_albumartistid'],
+                        item['albumartist'])
                     self._artistsOwned.append(artistnode)
 
     def get_similar(self, lib, depth):
         """Collect artists from query."""
         depthcounter = 1
+
         while True:
             havechilds = False
             self._log.info(u'Level: {}-{}', depthcounter, depth)
 
-            if not int(depth) == 0 and depthcounter > int(depth):
+            if not depth == 0 and depthcounter > depth:
                 self._log.info(u'out!')
                 break
             depthcounter += 1
@@ -159,41 +179,46 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                     try:
                         lastfm_artist = LASTFM.get_artist_by_mbid(
                             artist['mbid'])
-
-                        similar_artists = lastfm_artist.get_similar(10)
-                        artist['checked'] = True
-
-                        # using nested lists
-                        #       similarArtists[idx][0] - Artist object
-                        #       similarArtists[idx][1] - last.fm match value
-                        for artistinfo in similar_artists:
-                            mbid = artistinfo[0].get_mbid()
-                            name = artistinfo[0].get_name()
-
-                            if mbid:
-                                artistnode = ArtistNode(mbid, name)
-                                if len(lib.items('mb_artistid:' + mbid)) > 0:
-                                    if ((artistnode not in
-                                         self._artistsOwned) and
-                                        (artistnode not in
-                                         artistsshadow)):
-                                        artistnode['group'] = 1
-                                        artistsshadow.append(artistnode)
-                                        self._log.info(u'I own this: {}', name)
-                                        havechilds = True
-                                else:
-                                    if artistnode not in self._artistsForeign:
-                                        artistnode['group'] = 0
-                                        self._artistsForeign.append(artistnode)
-
-                                relation = Relation(artist['mbid'],
-                                                    mbid,
-                                                    artistinfo[1] * 1000)
-
-                                # if relation not in _relations:
-                                self._relations.append(relation)
                     except PYLAST_EXCEPTIONS as exc:
-                        self._log.debug(u'last.fm error: {0}', exc)
+                        try:
+                            self._log.debug(u'last.fm error: {0}', exc)
+                            lastfm_artist = LASTFM.get_artist(artist['name'])
+                        except PYLAST_EXCEPTIONS as exc:
+                            self._log.debug(u'last.fm error: {0}', exc)
+                            continue
+
+                    similar_artists = lastfm_artist.get_similar(10)
+                    artist['checked'] = True
+
+                    for artistinfo in similar_artists:
+                        mbid = artistinfo[0].get_mbid()
+                        name = artistinfo[0].get_name()
+                        lastfmurl = artistinfo[0].get_url()
+
+                        if name:
+                            artistnode = ArtistNode(mbid, name, lastfmurl)
+                            if len(lib.items('artist:' + name)) > 0:
+                                if ((artistnode not in
+                                        self._artistsOwned) and
+                                    (artistnode not in
+                                        artistsshadow)):
+                                    artistnode['group'] = 1
+                                    artistsshadow.append(artistnode)
+                                    self._log.info(u'I own this: {}', name)
+                                    havechilds = True
+                            else:
+                                if artistnode not in self._artistsForeign:
+                                    artistnode['group'] = 0
+                                    self._artistsForeign.append(artistnode)
+
+                            relation = Relation(artist['mbid'],
+                                                mbid,
+                                                artist['lastfmurl'],
+                                                lastfmurl,
+                                                artistinfo[1] * 1000)
+
+                            # if relation not in _relations:
+                            self._relations.append(relation)
             self._artistsOwned.extend(artistsshadow)
             del artistsshadow[:]
             if not havechilds:
@@ -206,7 +231,10 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                        relation['target_mbid'],
                        smbid=relation['source_mbid'],
                        tmbid=relation['target_mbid'],
-                       rate=relation['rate'])
+                       slastfmurl=relation['source_lastfmurl'],
+                       tlastfmurl=relation['target_lastfmurl'],
+                       rate=relation['rate'],
+                       )
             self._log.debug(u'{}#{}', relation['source_mbid'],
                             relation['target_mbid'])
 
@@ -216,7 +244,9 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                        mbid=owned_artist['mbid'],
                        group=owned_artist['group'],
                        checked=owned_artist['checked'],
-                       name=owned_artist['name'])
+                       name=owned_artist['name'],
+                       lastfmurl=owned_artist['lastfmurl']
+                       )
             custom_labels[owned_artist['mbid']] = owned_artist['name']
             self._log.debug(u'#{}', owned_artist['mbid'])
 
@@ -227,7 +257,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                            mbid=foreign_artist['mbid'],
                            group=foreign_artist['group'],
                            checked=foreign_artist['checked'],
-                           name=foreign_artist['name'])
+                           name=foreign_artist['name'],
+                           lastfmurl=owned_artist['lastfmurl'])
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
         h = nx.relabel_nodes(G, custom_labels)
@@ -252,7 +283,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 artistnode = ArtistNode(artist[1]['mbid'], artist[0],
                                         artist[1]['group'],
                                         artist[1]['owned'],
-                                        artist[1]['checked']
+                                        artist[1]['checked'],
                                         artist[1]['lastfmurl'])
                 if artist[1]['group'] == 1:
                     if artistnode not in self._artistsOwned:
@@ -263,6 +294,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         for relitem in i.edges(data=True):
             relation = Relation(relitem[2]['smbid'],
                                 relitem[2]['tmbid'],
+                                relitem[2]['slastfmurl'],
+                                relitem[2]['tlastfmurl'],
                                 relitem[2]['rate'])
             self._relations.append(relation)
 
@@ -270,24 +303,59 @@ class SimilarityPlugin(plugins.BeetsPlugin):
 class Relation():
     """Relations between Artists."""
 
-    def __init__(self, source_mbid, target_mbid, rate):
+    def __init__(self, source_mbid, target_mbid, source_lastfmurl,
+                 target_lastfmurl, rate):
         """Constructor of class."""
         self.source_mbid = source_mbid
         self.target_mbid = target_mbid
+        self.source_lastfmurl = source_lastfmurl
+        self.target_lastfmurl = target_lastfmurl
         self.rate = rate
 
     def __eq__(self, other):
         """Override the default Equals behavior."""
+        s = False
+        t = False
+        st = False
+
         if isinstance(other, self.__class__):
-            if (self.source_mbid == other.source_mbid and
-                    self.target_mbid == other.target_mbid):
-                return True
-            elif (self.target_mbid == other.source_mbid and
-                  self.target_mbid == other.source_mbid):
-                # Since both conditions are true
-                return True
+
+            if self.source_mbid and other.source_mbid:
+                if self.source_mbid == other.source_mbid:
+                    s = True
             else:
-                return False
+                if self.source_lastfmurl and other.source_lastfmurl:
+                    if self.source_lastfmurl == other.source_lastfmurl:
+                        s = True
+
+            if self.target_mbid and other.target_mbid:
+                if self.target_mbid == other.target_mbid:
+                    t = True
+            else:
+                if self.target_lastfmurl and other.target_lastfmurl:
+                    if self.target_lastfmurl == other.target_lastfmurl:
+                        t = True
+
+            if self.source_mbid and other.target_mbid:
+                if self.source_mbid == other.target_mbid:
+                    st = True
+            else:
+                if self.source_lastfmurl and other.target_lastfmurl:
+                    if self.source_lastfmurl == other.target_lastfmurl:
+                        st = True
+
+            if self.target_mbid and other.source_mbid:
+                if self.target_mbid == other.source_mbid:
+                    st = True
+            else:
+                if self.target_lastfmurl and other.source_lastfmurl:
+                    if self.target_lastfmurl == other.source_lastfmurl:
+                        st = True
+
+        if s and t or st:
+            return True
+        else:
+            return False
 
     def __ne__(self, other):
         """Define a non-equality test."""
@@ -302,6 +370,10 @@ class Relation():
             return self.target_mbid
         elif key == 'rate':
             return self.rate
+        elif key == 'source_lastfmurl':
+            return self.source_lastfmurl
+        elif key == 'target_lastfmurl':
+            return self.target_lastfmurl
         else:
             return None
 
@@ -321,7 +393,8 @@ class ArtistNode():
     checked = False
     group = 0
 
-    def __init__(self, mbid, name, group=0, owned=False, checked=False, lastfmurl):
+    def __init__(self, mbid, name, lastfmurl, group=0, owned=False,
+                 checked=False):
         """Constructor of class."""
         self.mbid = mbid
         self.name = name
@@ -333,7 +406,10 @@ class ArtistNode():
     def __eq__(self, other):
         """Override the default Equals behavior."""
         if isinstance(other, self.__class__):
-            return self.mbid == other.mbid
+            if self.mbid and other.mbid:
+                return self.mbid == other.mbid
+            elif self.lastfmurl and other.lastfmurl:
+                return self.lastfmurl == other.lastfmurl
         return False
 
     def __ne__(self, other):
@@ -355,7 +431,7 @@ class ArtistNode():
             return self.checked
         elif key == 'group':
             return self.group
-        elif key == 'lastfmurl'
+        elif key == 'lastfmurl':
             return self.lastfmurl
         else:
             return None
@@ -372,7 +448,7 @@ class ArtistNode():
             self.owned = value
         elif key == 'checked':
             self.checked = value
-        elif key == 'lastfmurl'
+        elif key == 'lastfmurl':
             self.lastfmurl = value
         elif key == 'group':
             self.group = value
