@@ -26,6 +26,11 @@ import os.path
 from networkx.readwrite import json_graph
 import json
 
+try:
+    from urllib import quote  # Python 2.X
+except ImportError:
+    from urllib.parse import quote  # Python 3+
+
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -147,10 +152,10 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                     except PYLAST_EXCEPTIONS as exc:
                         try:
                             lastfm_artist = LASTFM.get_artist(
-                                item['albumartist'])
+                                quote(item['albumartist']))
                             lastfmurl = lastfm_artist.get_url()
                         except PYLAST_EXCEPTIONS as exc:
-                            self._log.debug(u'last.fm error: {0}', exc)
+                            self._log.debug(u'1 last.fm error: {0}', exc)
 
                     artistnode['lastfmurl'] = lastfmurl
                     self._log.info(
@@ -181,9 +186,9 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                     except PYLAST_EXCEPTIONS as exc:
                         try:
                             self._log.debug(u'last.fm error: {0}', exc)
-                            lastfm_artist = LASTFM.get_artist(artist['name'])
+                            lastfm_artist = LASTFM.get_artist(quote(artist['name']))
                         except PYLAST_EXCEPTIONS as exc:
-                            self._log.debug(u'last.fm error: {0}', exc)
+                            self._log.debug(u'2 last.fm error: {0}', exc)
                             continue
 
                     similar_artists = lastfm_artist.get_similar(10)
@@ -244,7 +249,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                        mbid=owned_artist['mbid'],
                        group=owned_artist['group'],
                        checked=owned_artist['checked'],
-                       name=owned_artist['name'],
+                       name=quote(owned_artist['name']),
                        lastfmurl=owned_artist['lastfmurl']
                        )
             custom_labels[owned_artist['mbid']] = owned_artist['name']
@@ -257,7 +262,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                            mbid=foreign_artist['mbid'],
                            group=foreign_artist['group'],
                            checked=foreign_artist['checked'],
-                           name=foreign_artist['name'],
+                           name=quote(foreign_artist['name']),
                            lastfmurl=foreign_artist['lastfmurl'])
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
@@ -281,10 +286,10 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                 else:
                     artist[1]['owned'] = False
                 artistnode = ArtistNode(artist[1]['mbid'], artist[0],
+                                        artist[1]['lastfmurl'],
                                         artist[1]['group'],
                                         artist[1]['owned'],
-                                        artist[1]['checked'],
-                                        artist[1]['lastfmurl'])
+                                        artist[1]['checked'])
                 if artist[1]['group'] == 1:
                     if artistnode not in self._artistsOwned:
                         self._artistsOwned.append(artistnode)
