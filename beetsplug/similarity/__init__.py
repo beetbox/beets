@@ -146,7 +146,6 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                         lastfmurl = lastfm_artist.get_url()
                     except PYLAST_EXCEPTIONS as exc:
                         try:
-                            #self._log.debug(u'last.fm error: {0}', exc)
                             lastfm_artist = LASTFM.get_artist(
                                 item['albumartist'])
                             lastfmurl = lastfm_artist.get_url()
@@ -194,6 +193,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                         mbid = artistinfo[0].get_mbid()
                         name = artistinfo[0].get_name()
                         lastfmurl = artistinfo[0].get_url()
+                        print("sim artists:",lastfmurl)
 
                         if name:
                             artistnode = ArtistNode(mbid, name, lastfmurl)
@@ -227,8 +227,8 @@ class SimilarityPlugin(plugins.BeetsPlugin):
     def create_graph(self, jsonfile):
         """Create graph out of collected artists and relations."""
         for relation in self._relations:
-            G.add_edge(relation['source_mbid'],
-                       relation['target_mbid'],
+            G.add_edge(relation['source_lastfmurl'],
+                       relation['target_lastfmurl'],
                        smbid=relation['source_mbid'],
                        tmbid=relation['target_mbid'],
                        slastfmurl=relation['source_lastfmurl'],
@@ -240,7 +240,7 @@ class SimilarityPlugin(plugins.BeetsPlugin):
 
         custom_labels = {}
         for owned_artist in self._artistsOwned:
-            G.add_node(owned_artist['mbid'],
+            G.add_node(owned_artist['lastfmurl'],
                        mbid=owned_artist['mbid'],
                        group=owned_artist['group'],
                        checked=owned_artist['checked'],
@@ -253,12 +253,12 @@ class SimilarityPlugin(plugins.BeetsPlugin):
         for foreign_artist in self._artistsForeign:
             if foreign_artist not in self._artistsOwned:
                 custom_labels[foreign_artist['mbid']] = foreign_artist['name']
-                G.add_node(foreign_artist['mbid'],
+                G.add_node(foreign_artist['lastfmurl'],
                            mbid=foreign_artist['mbid'],
                            group=foreign_artist['group'],
                            checked=foreign_artist['checked'],
                            name=foreign_artist['name'],
-                           lastfmurl=owned_artist['lastfmurl'])
+                           lastfmurl=foreign_artist['lastfmurl'])
                 self._log.debug(u'#{}', foreign_artist['mbid'])
 
         h = nx.relabel_nodes(G, custom_labels)
