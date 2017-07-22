@@ -13,7 +13,11 @@ For developers:
   cases where a string field is unexpectedly `None` sometimes instead of just
   showing up as an empty string. :bug:`2605`
 
-* Added parentwork plugin, to catch work titles and the works they are part of. 
+* Added parentwork plugin, to catch work titles and the works they are part
+  of, as well as their composers. 
+  Thanks to :user:`dosoe`. :bug:`2580`
+  
+* Added work, work_id and work_diambig tags and fetching in beets core
   Thanks to :user:`dosoe`. :bug:`2580`
 
 1.4.5 (June 20, 2017)
