@@ -6,6 +6,11 @@ Changelog
 
 Changelog goes here!
 
+Here are the new features:
+
+* You can now customize the tag names that beets reads and writes to for audio
+  formats that use Vorbis comments. :bug:`2621`
+
 For developers:
 
 * Fixed fields in Album and Item objects are now more strict about translating

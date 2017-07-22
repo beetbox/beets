@@ -329,6 +329,24 @@ Sets the albumartist for various-artist compilations. Defaults to ``'Various
 Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
 
+.. _map:
+
+map
+~~~
+
+Allows custom mappings for tag names when beets reads and writes fields. For
+example, when writing the ``tracktotal`` field to a file that supports Vorbis
+comments, beets by default writes to the tags ``TRACKTOTAL``, ``TRACKC``, and
+``TOTALTRACKS``. Use `map` to customize this mapping. For example::
+
+    map:
+        tracktotal: [TRACKTOTAL, TRACKCOUNT]
+
+You can use an empty list ``[]`` to completely prevent a field from being
+written. Note that this will also prevent beets from reading that tag. This
+option is only supported for file formats that use Vorbis comments such as
+FLAC, WavPack, and Musepack. The default mappings are used for file formats
+that don't use Vorbis comments.
 
 UI Options
 ----------
