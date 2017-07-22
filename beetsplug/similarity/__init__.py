@@ -191,8 +191,10 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                         except PYLAST_EXCEPTIONS as exc:
                             self._log.debug(u'2 last.fm error: {0}', exc)
                             continue
-
-                    similar_artists = lastfm_artist.get_similar(10)
+                    try:
+                        similar_artists = lastfm_artist.get_similar(10)
+                    except pylast.WSError as exc:
+                        similar_artists = []   
                     artist['checked'] = True
 
                     for artistinfo in similar_artists:
