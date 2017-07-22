@@ -1640,7 +1640,7 @@ class MediaFile(object):
 
         return self.other_styles[field] + vorbis_styles
 
-    #default vorbis mapping
+    # default vorbis mapping
     default_mapping = {
         'title': ['TITLE'],
         'artist': ['ARTIST'],
