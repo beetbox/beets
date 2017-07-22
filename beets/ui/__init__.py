@@ -1276,7 +1276,7 @@ def main(args=None):
     except IOError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
-            pass
+            sys.stderr.close()
         else:
             raise
     except KeyboardInterrupt:
