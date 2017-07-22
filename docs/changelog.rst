@@ -9,6 +9,8 @@ New features:
 * :doc:`/plugins/lyrics`: The plugin can now produce reStructuredText files
   for beautiful, readable books of lyrics. Thanks to :user:`anarcat`.
   :bug:`2628`
+* You can now customize the tag names that beets reads and writes to for audio
+  formats that use Vorbis comments. :bug:`2621`
 
 Fixes:
 
@@ -22,11 +24,6 @@ Fixes:
 * :doc:`/plugins/lyrics`: The MusixMatch backend now detect and warns
   the user when blocked on the server. Thanks to
   :user:`anarcat`. :bug:`2634` :bug:`2632`
-
-Here are the new features:
-
-* You can now customize the tag names that beets reads and writes to for audio
-  formats that use Vorbis comments. :bug:`2621`
 
 For developers:
 
