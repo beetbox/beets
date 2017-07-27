@@ -204,12 +204,12 @@ class SimilarityPlugin(plugins.BeetsPlugin):
                         # print("sim artists:",lastfmurl)
 
                         if name:
-                            artistnode = ArtistNode(mbid, name, lastfmurl)
+                            artistnode = ArtistNode(mbid, quote(name), lastfmurl)
                             if len(lib.items('artist:' + quote(name))) > 0:
                                 if ((artistnode not in
-                                        self._artistsOwned) and
+                                     self._artistsOwned) and
                                     (artistnode not in
-                                        artistsshadow)):
+                                     artistsshadow)):
                                     artistnode['group'] = 1
                                     artistsshadow.append(artistnode)
                                     self._log.info(u'I own this: {}', name)
