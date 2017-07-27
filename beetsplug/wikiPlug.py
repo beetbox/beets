@@ -9,18 +9,8 @@ import time
 import urllib.request
 from bs4 import BeautifulSoup
 
-
-# checks the track numbers whether it is exist or not in data
-numerics = [ "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.", "11.", "12.", "13.", "14.", "15.", "16.", "17.", "18.", "19.", "20."]
 infoBoxList = ['Released', 'Genre', 'Length', 'Label']
 
-#-----------------------------------------------------------------------
-# this function is such a controller for getting the correct row data from the tables in Wikipedia for the 'Tracklists'
-def isNumeric(lst):
-    for i in numerics:
-        if(lst[0]==i):
-            return True
-    return False
 #-----------------------------------------------------------------------
 # isInfobox check
 def isInInfo(liste):
@@ -159,8 +149,8 @@ class WikiAlbum(object):
                 rowData = (row.getText()).split('\n')
                 rowData = list(filter(None, rowData))
                 # enables to pick only the tracks not irrelevant parts of the tables.
-                # len(rowData) check is used for getting the correct table data
-                if (isNumeric(rowData) and len(rowData) > 3):
+                # len(rowData) check is used for getting the correct table data and checking track numbers whether it is exist or not
+                if (rowData[0][:-1].isdigit() and len(rowData) > 3):
                     trackCounter += 1
 
 
@@ -169,8 +159,8 @@ class WikiAlbum(object):
                 rowData = (row.getText()).split('\n')
                 rowData = list(filter(None, rowData))
                 # enables to pick only the tracks not irrelevant parts of the tables.
-                # len(rowData) check is used for getting the correct table data
-                if (isNumeric(rowData) and len(rowData) > 3):
+                # len(rowData) check is used for getting the correct table data and checking track numbers whether it is exist or not
+                if (rowData[0][:-1].isdigit() and len(rowData) > 3):
                     oneTrack = Track(rowData)
                     oneTrack.setDataUrl(self.data_url)
                     oneTrack.setMediumTotal(trackCounter)
