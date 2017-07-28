@@ -93,6 +93,7 @@ setup(
         'pyyaml',
         'mediafile>=0.2.0',
         'confuse>=1.0.0',
+        'reflink',
     ] + [
         # Avoid a version of munkres incompatible with Python 3.
         'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else
@@ -123,6 +124,7 @@ setup(
             'rarfile',
             'responses>=0.3.0',
             'requests_oauthlib',
+            'reflink',
         ] + (
             # Tests for the thumbnails plugin need pathlib on Python 2 too.
             ['pathlib'] if (sys.version_info < (3, 4, 0)) else []

@@ -134,6 +134,8 @@ class MoveOperation(Enum):
     COPY = 1
     LINK = 2
     HARDLINK = 3
+    REFLINK = 4
+    REFLINK_AUTO = 5
 
 
 def normpath(path):
