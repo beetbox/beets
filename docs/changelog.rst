@@ -51,6 +51,8 @@ Fixes:
   analysis tool produced non-ASCII metadata. :bug:`2673`
 * :doc:`/plugins/duplicates`: Fix the `--key` command line option, which was
   ignored.
+* :doc:`/plugins/replaygain`: Fix album replaygain calculation with the
+  gstreamer backend. :bug:`2636`
 
 For developers:
 
