@@ -747,6 +747,20 @@ class Item(LibModel):
             util.hardlink(self.path, dest)
             plugins.send("item_hardlinked", item=self, source=self.path,
                          destination=dest)
+        elif operation == MoveOperation.REFLINK:
+            util.reflink(self.path, dest, fallback=False)
+            plugins.send("item_reflinked", item=self, source=self.path,
+                         destination=dest)
+        elif operation == MoveOperation.REFLINK_AUTO:
+            util.reflink(self.path, dest, fallback=True)
+            plugins.send("item_reflinked", item=self, source=self.path,
+                         destination=dest)
+        else:
+            plugins.send("before_item_moved", item=self, source=self.path,
+                         destination=dest)
+            util.move(self.path, dest)
+            plugins.send("item_moved", item=self, source=self.path,
+                         destination=dest)
 
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -1087,6 +1101,12 @@ class Album(LibModel):
             util.link(old_art, new_art)
         elif operation == MoveOperation.HARDLINK:
             util.hardlink(old_art, new_art)
+        elif operation == MoveOperation.REFLINK:
+            util.reflink(old_art, new_art, fallback=False)
+        elif operation == MoveOperation.REFLINK_AUTO:
+            util.reflink(old_art, new_art, fallback=True)
+        else:
+            util.move(old_art, new_art)
         self.artpath = new_art
 
     def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
