@@ -164,6 +164,10 @@ The events currently available are:
   created for a file.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
+* `item_reflinked`: called with an ``Item`` object whenever a reflink is
+  created for a file.
+  Parameters: ``item``, ``source`` path, ``destination`` path
+
 * `item_removed`: called with an ``Item`` object every time an item (singleton
   or album's part) is removed from the library (even when its file is not
   deleted from disk).
