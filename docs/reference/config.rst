@@ -483,6 +483,27 @@ As with symbolic links (see :ref:`link`, above), this will not work on Windows
 and you will want to set ``write`` to ``no``.  Otherwise, metadata on the
 original file will be modified.
 
+.. _reflink:
+
+reflink
+~~~~~~~
+
+Either ``yes``, ``no`` or ``auto``, indicating whether to `reflink clone`_ files
+into the library directory when using ``beet import``. Defaults to ``no``.
+When ``auto`` is specified, ``reflink`` will fall back on ``copy``,
+in case that ``reflink``'s are not supported on the used filesystem.
+
+
+The option is ignored if ``move`` is enabled (i.e., beets can move or
+copy files but it doesn't make sense to do both).
+
+
+The option is filesystem dependent. For filesystem support, refer to the
+`pyreflink`_ documentation.
+
+.. _reflink clone: https://blogs.oracle.com/otn/save-disk-space-on-linux-by-cloning-files-on-btrfs-and-ocfs2
+.. _pyreflink: https://reflink.readthedocs.io/en/latest/
+
 resume
 ~~~~~~
 
