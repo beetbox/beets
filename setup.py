@@ -93,7 +93,6 @@ setup(
         'pyyaml',
         'mediafile>=0.2.0',
         'confuse>=1.0.0',
-        'reflink',
     ] + [
         # Avoid a version of munkres incompatible with Python 3.
         'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else
@@ -161,6 +160,7 @@ setup(
         'scrub': ['mutagen>=1.33'],
         'bpd': ['PyGObject'],
         'replaygain': ['PyGObject'],
+        'reflink': ['reflink'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     #   chroma: chromaprint or fpcalc

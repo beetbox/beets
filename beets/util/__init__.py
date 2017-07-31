@@ -34,7 +34,6 @@ from beets.util import hidden
 import six
 from unidecode import unidecode
 from enum import Enum
-import reflink as pyreflink
 
 
 MAX_FILENAME_LENGTH = 200
@@ -554,6 +553,7 @@ def reflink(path, dest, replace=False, fallback=False):
     `path` == `dest`. When `fallback` is True, `reflink` falls back on
     `copy` when the filesystem does not support reflinks.
     """
+    import reflink as pyreflink
     if samefile(path, dest):
         return
 
