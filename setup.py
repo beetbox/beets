@@ -93,7 +93,6 @@ setup(
         'musicbrainzngs>=0.4',
         'pyyaml',
         'jellyfish',
-        'reflink',
     ] + (['colorama'] if (sys.platform == 'win32') else []) +
         (['enum34>=1.0.4'] if sys.version_info < (3, 4, 0) else []),
 
@@ -125,6 +124,7 @@ setup(
         'thumbnails': ['pyxdg'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
+        'reflink': ['reflink'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # convert: ffmpeg
