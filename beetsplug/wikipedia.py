@@ -19,9 +19,9 @@ BeautifulSoup library.
 
 from __future__ import division, absolute_import, print_function
 
-from beets.autotag.hooks import *
+from beets.autotag.hooks import Distance
 from beets.plugins import BeetsPlugin
-from requests.exceptions import *
+from requests.exceptions import ConnectionError
 import time
 import urllib.request
 from bs4 import BeautifulSoup
