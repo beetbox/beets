@@ -19,9 +19,9 @@ BeautifulSoup library.
 
 from __future__ import division, absolute_import, print_function
 
-from beets.autotag.hooks import Distance
+from beets.autotag.hooks import *
 from beets.plugins import BeetsPlugin
-from requests.exceptions import ConnectionError
+from requests.exceptions import *
 import time
 import urllib.request
 from bs4 import BeautifulSoup
@@ -113,7 +113,7 @@ class WikiAlbum(object):
                               album_name[:-9] + '_(' + artist + '_album)'
                         html = urllib.request.urlopen(url).read()
                     except urllib.error.HTTPError:
-                        raise urllib.error.HTTPError
+                        raise HTTPError
 
         except ConnectionError:
             raise ConnectionError
