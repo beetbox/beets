@@ -13,29 +13,29 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Adds Wikipedia search support to the autotagger. Requires the
+"""Adds Wikipedia search support to the auto-tagger. Requires the
 BeautifulSoup library.
 """
 
 from __future__ import division, absolute_import, print_function
 
-from beets.autotag.hooks import *
+from beets.autotag.hooks import Distance
 from beets.plugins import BeetsPlugin
-from requests.exceptions import *
+from requests.exceptions import ConnectionError
 import time
 import urllib.request
 from bs4 import BeautifulSoup
 
-infoBoxList = ['Released', 'Genre', 'Length', 'Label']
+info_boxList = ['Released', 'Genre', 'Length', 'Label']
 
-#-----------------------------------------------------------------------
-# isInfobox check
-def isInInfo(liste):
-    for i in infoBoxList:
+# -----------------------------------------------------------------------
+# is Info Box check
+
+def is_in_info(liste):
+    for i in info_boxList:
         if(len(liste) != 0 and liste[0] == i):
             return True
     return False
-
 
 def get_track_length(duration):
     """
@@ -47,11 +47,13 @@ def get_track_length(duration):
         return None
     return length.tm_min * 60 + length.tm_sec
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+
 """
     WikiAlbum class is being served like AlbumInfo object which keeps all album
     meta data in itself.
 """
+
 class WikiAlbum(object):
     def __init__(self, artist, album_name):
 
@@ -59,16 +61,13 @@ class WikiAlbum(object):
         self.artist = artist
         self.tracks = []
         self.album_length = ""
-
         self.label = None
         self.year = None
         self.data_source = "Wikipedia"
         self.data_url = ""
         self.album_id = 1
         self.va = False
-
         self.artist_id = 1
-
         self.asin = None
         self.albumtype = None
         self.year = None
@@ -89,16 +88,16 @@ class WikiAlbum(object):
         self.original_month = None
         self.original_day = None
 
-
-
         try:
-            url = 'https://en.wikipedia.org/wiki/' + album_name + '_(' + artist + '_album)'
+            url = 'https://en.wikipedia.org/wiki/' + album_name + \
+                  '_(' + artist + '_album)'
             html = urllib.request.urlopen(url).read()
 
         except urllib.error.HTTPError:
 
             try:
-                url = 'https://en.wikipedia.org/wiki/' + album_name + '_(album)'
+                url = 'https://en.wikipedia.org/wiki/' + album_name + \
+                      '_(album)'
                 html = urllib.request.urlopen(url).read()
             except urllib.error.HTTPError:
                 try:
@@ -107,31 +106,31 @@ class WikiAlbum(object):
                 except urllib.error.HTTPError:
                     try:
                         # in case of album name has (Deluxe) extension
-                        url = 'https://en.wikipedia.org/wiki/' + album_name[:-9] + '_(' + artist + '_album)'
+                        url = 'https://en.wikipedia.org/wiki/' +\
+                              album_name[:-9] + '_(' + artist + '_album)'
                         html = urllib.request.urlopen(url).read()
                     except urllib.error.HTTPError:
-                        raise HTTPError
+                        raise urllib.error.HTTPError
 
         except ConnectionError:
             raise ConnectionError
-
 
         self.data_url = url
         soup = BeautifulSoup(html, "lxml")
 
         # ------------------ INFOBOX PARSING ----------------------#
-        infoBox = soup.findAll("table", {"class": "infobox"})
-        infoCounter = 1
-        for info in infoBox:
+        info_box = soup.findAll("table", {"class": "infobox"})
+        info_counter = 1
+        for info in info_box:
             for row in info.findAll("tr"):
 
-                if (self.artist == "" and infoCounter == 3):
+                if (self.artist == "" and info_counter == 3):
                     self.artist = row.getText().split()[-1]
 
                 data = (row.getText()).split('\n')
                 data = list(filter(None, data))
 
-                if (isInInfo(data)):
+                if (is_in_info(data)):
                     if(data[0] == 'Label'):
                         self.label = str(data[1:])
                     elif(data[0] == 'Released'):
@@ -141,7 +140,7 @@ class WikiAlbum(object):
                             self.day = int(data[1][-3:-1])
                         else:
                             self.year = int(data[1][-4:])
-                    # Length of an Album which is converted into beets length format
+                    # Album length which is converted into beets length format
                     elif(data[0] == "Length"):
                         self.album_length = get_track_length(data[1])
 
@@ -155,45 +154,45 @@ class WikiAlbum(object):
                                 break
                         self.genre = fixed_genre
 
-                infoCounter += 1
+                info_counter += 1
 
         track_tables = soup.findAll("table", {"class": "tracklist"})
 
-        # to set the MediumTotal, total number of tracks in an album is required
-        trackCounter = 0
+        # set the MediumTotal,total number of tracks in an album is required
+        track_counter = 0
         for table in track_tables:
             for row in table.findAll("tr"):
-                rowData = (row.getText()).split('\n')
-                rowData = list(filter(None, rowData))
-                # enables to pick only the tracks not irrelevant parts of the tables.
-                # len(rowData) check is used for getting the correct table data and checking track numbers whether it is exist or not
-                if (rowData[0][:-1].isdigit() and len(rowData) > 3):
-                    trackCounter += 1
-
+                row_data = (row.getText()).split('\n')
+                row_data = list(filter(None, row_data))
+                # pick only the tracks not irrelevant parts of the tables.
+                # len(row_data) check is used for getting the correct
+                # table data & checks track numbers whether it is exist or not
+                if (row_data[0][:-1].isdigit() and len(row_data) > 3):
+                    track_counter += 1
 
         for table in track_tables:
             for row in table.findAll("tr"):
-                rowData = (row.getText()).split('\n')
-                rowData = list(filter(None, rowData))
-                # enables to pick only the tracks not irrelevant parts of the tables.
-                # len(rowData) check is used for getting the correct table data and checking track numbers whether it is exist or not
-                if (rowData[0][:-1].isdigit() and len(rowData) > 3):
-                    oneTrack = Track(rowData)
-                    oneTrack.setDataUrl(self.data_url)
-                    oneTrack.setMediumTotal(trackCounter)
-                    self.tracks.append(oneTrack)
+                row_data = (row.getText()).split('\n')
+                row_data = list(filter(None, row_data))
+                # pick only the tracks not irrelevant parts of the tables.
+                # len(row_data) check is used for getting the correct table
+                # data and checking track numbers whether it is exist or not
+                if (row_data[0][:-1].isdigit() and len(row_data) > 3):
+                    one_track = Track(row_data)
+                    one_track.set_data_url(self.data_url)
+                    one_track.set_medium_total(track_counter)
+                    self.tracks.append(one_track)
 
-    def getL(self):
+    def get_album_len(self):
         return self.album_length
-    def getTracks(self):
+    def get_tracks(self):
         return self.tracks
 
-
-
-# keep the metadata of tracks which are gathered from wikipedia like TrackInfo object in beets
+# keeps the metadata of tracks which are gathered from wikipedia
+# like TrackInfo object in beets
 class Track(object):
 
-    def __init__(self, row ):
+    def __init__(self, row):
 
         #####
         self.medium = 1
@@ -203,12 +202,12 @@ class Track(object):
         self.track_id = int(row[0][:-1])
         self.index = int(row[0][:-1])
 
-        #wiping out the character (") from track name
-        tempName = ""
+        # wiping out the character (") from track name
+        temp_name = ""
         for i in row[1]:
             if(i != '"'):
-                tempName += i
-        self.title = str(tempName)
+                temp_name += i
+        self.title = str(temp_name)
 
         self.writer = list(row[2].split(','))
         self.producers = row[3:-1]
@@ -240,27 +239,23 @@ class Track(object):
         self.albumartist_sort = None
         self.albumartist_credit = None
 
-
-    def setMediumTotal(self,num):
+    def set_medium_total(self, num):
         self.medium_total = num
         self.track_total = num
-    def setDataUrl(self,url):
+    def set_data_url(self, url):
         self.data_url = url
-    def getName(self):
+    def get_name(self):
         return self.title
-    def getWriter(self):
+    def get_writer(self):
         return self.writer
-    def getProducers(self):
+    def get_producers(self):
         return self.producers
-    def getLength(self):
+    def get_length(self):
         return self.length
 
-
-
-class WikiPlug(BeetsPlugin):
-
+class Wikipedia(BeetsPlugin):
     def __init__(self):
-        super(WikiPlugin, self).__init__()
+        super(Wikipedia, self).__init__()
         self.config.add({
             'source_weight': 0.50
         })
@@ -270,17 +265,17 @@ class WikiPlug(BeetsPlugin):
     """ Track_distance
         item --> track to be matched(Item Object)
         info is the TrackInfo object that proposed as a match
-            --- should return a (dist,dist_max) pair of floats indicating the distance
+        should return a (dist,dist_max) pair of floats indicating the distance
     """
     def track_distance(self, item, info):
         dist = Distance()
         return dist
 
-    #----------------------------------------------
+    # ----------------------------------------------
     """
-        album_info --> is a AlbumInfo Object reflecting the album to be compared.
-        items --> is a sequence of all Item objects that will be matched
-        mapping --> is a dictionary mapping Items to TrackInfo objects
+        album_info --> AlbumInfo Object reflecting the album to be compared.
+        items --> sequence of all Item objects that will be matched
+        mapping --> dictionary mapping Items to TrackInfo objects
     """
     def album_distance(self, items, album_info, mapping):
         """
@@ -288,7 +283,7 @@ class WikiPlug(BeetsPlugin):
         """
         dist = Distance()
 
-        if (album_info.data_source == 'Wikipedia') :
+        if (album_info.data_source == 'Wikipedia'):
             dist.add('source', self.config['source_weight'].as_number())
         return dist
 
