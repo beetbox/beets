@@ -31,11 +31,13 @@ info_boxList = ['Released', 'Genre', 'Length', 'Label']
 # -----------------------------------------------------------------------
 # is Info Box check
 
+
 def is_in_info(liste):
     for i in info_boxList:
         if(len(liste) != 0 and liste[0] == i):
             return True
     return False
+
 
 def get_track_length(duration):
     """
@@ -53,6 +55,7 @@ def get_track_length(duration):
     WikiAlbum class is being served like AlbumInfo object which keeps all album
     meta data in itself.
 """
+
 
 class WikiAlbum(object):
     def __init__(self, artist, album_name):
@@ -185,11 +188,14 @@ class WikiAlbum(object):
 
     def get_album_len(self):
         return self.album_length
+
     def get_tracks(self):
         return self.tracks
 
 # keeps the metadata of tracks which are gathered from wikipedia
 # like TrackInfo object in beets
+
+
 class Track(object):
 
     def __init__(self, row):
@@ -242,16 +248,22 @@ class Track(object):
     def set_medium_total(self, num):
         self.medium_total = num
         self.track_total = num
+
     def set_data_url(self, url):
         self.data_url = url
+
     def get_name(self):
         return self.title
+
     def get_writer(self):
         return self.writer
+
     def get_producers(self):
         return self.producers
+
     def get_length(self):
         return self.length
+
 
 class Wikipedia(BeetsPlugin):
     def __init__(self):
@@ -296,5 +308,3 @@ class Wikipedia(BeetsPlugin):
         candidate_list.append(WikiAlbum(artist, album))
 
         return candidate_list
-
-
