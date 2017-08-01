@@ -113,7 +113,7 @@ class WikiAlbum(object):
                               album_name[:-9] + '_(' + artist + '_album)'
                         html = urllib.request.urlopen(url).read()
                     except urllib.error.HTTPError:
-                        raise HTTPError
+                        raise urllib.error.HTTPError
 
         except ConnectionError:
             raise ConnectionError
