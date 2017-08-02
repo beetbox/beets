@@ -595,7 +595,8 @@ class AssignmentTest(unittest.TestCase):
         items.append(item(12, 186.45916150485752))
 
         def info(index, title, length):
-            return TrackInfo(title, None, length=length, index=index)
+            return TrackInfo(title=title, track_id=None, length=length,
+                             index=index)
         trackinfo = []
         trackinfo.append(info(1, u'Alone', 238.893))
         trackinfo.append(info(2, u'The Woman in You', 341.44))
