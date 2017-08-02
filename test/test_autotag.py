@@ -103,9 +103,12 @@ def _make_item(title, track, artist=u'some artist'):
 
 def _make_trackinfo():
     return [
-        TrackInfo(u'one', None, u'some artist', length=1, index=1),
-        TrackInfo(u'two', None, u'some artist', length=1, index=2),
-        TrackInfo(u'three', None, u'some artist', length=1, index=3),
+        TrackInfo(title=u'one', track_id=None, artist=u'some artist',
+                  length=1, index=1),
+        TrackInfo(title=u'two', track_id=None, artist=u'some artist',
+                  length=1, index=2),
+        TrackInfo(title=u'three', track_id=None, artist=u'some artist',
+                  length=1, index=3),
     ]
 
 
@@ -500,9 +503,9 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'three', 2))
         items.append(self.item(u'two', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo(u'one', None))
-        trackinfo.append(TrackInfo(u'two', None))
-        trackinfo.append(TrackInfo(u'three', None))
+        trackinfo.append(TrackInfo(title=u'one', track_id=None))
+        trackinfo.append(TrackInfo(title=u'two', track_id=None))
+        trackinfo.append(TrackInfo(title=u'three', track_id=None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
@@ -519,9 +522,9 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'three', 1))
         items.append(self.item(u'two', 1))
         trackinfo = []
-        trackinfo.append(TrackInfo(u'one', None))
-        trackinfo.append(TrackInfo(u'two', None))
-        trackinfo.append(TrackInfo(u'three', None))
+        trackinfo.append(TrackInfo(title=u'one', track_id=None))
+        trackinfo.append(TrackInfo(title=u'two', track_id=None))
+        trackinfo.append(TrackInfo(title=u'three', track_id=None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
@@ -537,9 +540,9 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'one', 1))
         items.append(self.item(u'three', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo(u'one', None))
-        trackinfo.append(TrackInfo(u'two', None))
-        trackinfo.append(TrackInfo(u'three', None))
+        trackinfo.append(TrackInfo(title=u'one', track_id=None))
+        trackinfo.append(TrackInfo(title=u'two', track_id=None))
+        trackinfo.append(TrackInfo(title=u'three', track_id=None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
@@ -555,8 +558,8 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'two', 2))
         items.append(self.item(u'three', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo(u'one', None))
-        trackinfo.append(TrackInfo(u'three', None))
+        trackinfo.append(TrackInfo(title=u'one', track_id=None))
+        trackinfo.append(TrackInfo(title=u'three', track_id=None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [items[1]])
@@ -644,8 +647,8 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
             artist_sort='trackArtistSort',
         ))
         trackinfo.append(TrackInfo(
-            u'twoNew',
-            u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
             medium=2,
             medium_index=1,
             index=2,
@@ -806,17 +809,17 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
         self.items.append(Item({}))
         trackinfo = []
         trackinfo.append(TrackInfo(
-            u'oneNew',
-            u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-            u'artistOneNew',
-            u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            artist=u'artistOneNew',
+            artist_id=u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
             index=1,
         ))
         trackinfo.append(TrackInfo(
-            u'twoNew',
-            u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
-            u'artistTwoNew',
-            u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            artist=u'artistTwoNew',
+            artist_id=u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
             index=2,
         ))
         self.info = AlbumInfo(
