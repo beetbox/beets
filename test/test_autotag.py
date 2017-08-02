@@ -637,8 +637,8 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.items.append(Item({}))
         trackinfo = []
         trackinfo.append(TrackInfo(
-            u'oneNew',
-            u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
             medium=1,
             medium_index=1,
             medium_total=1,
