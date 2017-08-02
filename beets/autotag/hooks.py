@@ -123,72 +123,115 @@ class AlbumInfo(object):
                 track.decode(codec)
 
 
-class TrackInfo(object):
-    """Describes a canonical track present on a release. Appears as part
-    of an AlbumInfo's ``tracks`` list. Consists of these data members:
-
-    - ``title``: name of the track
-    - ``track_id``: MusicBrainz ID; UUID fragment only
-    - ``artist``: individual track artist name
-    - ``artist_id``
-    - ``length``: float: duration of the track in seconds
-    - ``index``: position on the entire release
-    - ``media``: delivery mechanism (Vinyl, etc.)
-    - ``medium``: the disc number this track appears on in the album
-    - ``medium_index``: the track's position on the disc
-    - ``medium_total``: the number of tracks on the item's disc
-    - ``artist_sort``: name of the track artist for sorting
-    - ``disctitle``: name of the individual medium (subtitle)
-    - ``artist_credit``: Recording-specific artist name
-    - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
-    - ``data_url``: The data source release URL.
-    - ``lyricist``: individual track lyricist name
-    - ``composer``: individual track composer name
-    - ``composer_sort``: individual track composer sort name
-    - ``arranger`: individual track arranger name
-    - ``track_alt``: alternative track number (tape, vinyl, etc.)
-
-    Only ``title`` and ``track_id`` are required. The rest of the fields
-    may be None. The indices ``index``, ``medium``, and ``medium_index``
-    are all 1-based.
+class TrackInfo(dict):
     """
-    def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None, index=None, medium=None, medium_index=None,
-                 medium_total=None, artist_sort=None, disctitle=None,
-                 artist_credit=None, data_source=None, data_url=None,
-                 media=None, lyricist=None, composer=None, composer_sort=None,
-                 arranger=None, track_alt=None):
-        self.title = title
-        self.track_id = track_id
-        self.artist = artist
-        self.artist_id = artist_id
-        self.length = length
-        self.index = index
-        self.media = media
-        self.medium = medium
-        self.medium_index = medium_index
-        self.medium_total = medium_total
-        self.artist_sort = artist_sort
-        self.disctitle = disctitle
-        self.artist_credit = artist_credit
-        self.data_source = data_source
-        self.data_url = data_url
-        self.lyricist = lyricist
-        self.composer = composer
-        self.composer_sort = composer_sort
-        self.arranger = arranger
-        self.track_alt = track_alt
+    Example:
+    m = Map({'first_name': 'Eduardo'}, last_name='Pool',
+    age=24, sports=['Soccer'])
+    """
+    def __init__(self, *args, **kwargs):
+        super(TrackInfo, self).__init__(*args, **kwargs)
+        for arg in args:
+            if isinstance(arg, dict):
+                for k, v in arg.iteritems():
+                    self[k] = v
 
-    # As above, work around a bug in python-musicbrainz-ngs.
+        if kwargs:
+            for k, v in kwargs.iteritems():
+                self[k] = v
+
+    def __getattr__(self, attr):
+        return self.get(attr)
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __setitem__(self, key, value):
+        super(TrackInfo, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __delattr__(self, item):
+        self.__delitem__(item)
+
+    def __delitem__(self, key):
+        super(TrackInfo, self).__delitem__(key)
+        del self.__dict__[key]
+
     def decode(self, codec='utf-8'):
         """Ensure that all string attributes on this object are decoded
         to Unicode.
         """
-        for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
-                    'artist_credit', 'media']:
-            value = getattr(self, fld)
+        for fld in self:
+            value = self.get(fld)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
+
+# class TrackInfo(object):
+#     """Describes a canonical track present on a release. Appears as part
+#     of an AlbumInfo's ``tracks`` list. Consists of these data members:
+#
+#     - ``title``: name of the track
+#     - ``track_id``: MusicBrainz ID; UUID fragment only
+#     - ``artist``: individual track artist name
+#     - ``artist_id``
+#     - ``length``: float: duration of the track in seconds
+#     - ``index``: position on the entire release
+#     - ``media``: delivery mechanism (Vinyl, etc.)
+#     - ``medium``: the disc number this track appears on in the album
+#     - ``medium_index``: the track's position on the disc
+#     - ``medium_total``: the number of tracks on the item's disc
+#     - ``artist_sort``: name of the track artist for sorting
+#     - ``disctitle``: name of the individual medium (subtitle)
+#     - ``artist_credit``: Recording-specific artist name
+#     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
+#     - ``data_url``: The data source release URL.
+#     - ``lyricist``: individual track lyricist name
+#     - ``composer``: individual track composer name
+#     - ``composer_sort``: individual track composer sort name
+#     - ``arranger`: individual track arranger name
+#     - ``track_alt``: alternative track number (tape, vinyl, etc.)
+#
+#     Only ``title`` and ``track_id`` are required. The rest of the fields
+#     may be None. The indices ``index``, ``medium``, and ``medium_index``
+#     are all 1-based.
+#     """
+#     def __init__(self, title, track_id, artist=None, artist_id=None,
+#                  length=None, index=None, medium=None, medium_index=None,
+#                  medium_total=None, artist_sort=None, disctitle=None,
+#                  artist_credit=None, data_source=None, data_url=None,
+#                 media=None, lyricist=None, composer=None, composer_sort=None,
+#                  arranger=None, track_alt=None):
+#         self.title = title
+#         self.track_id = track_id
+#         self.artist = artist
+#         self.artist_id = artist_id
+#         self.length = length
+#         self.index = index
+#         self.media = media
+#         self.medium = medium
+#         self.medium_index = medium_index
+#         self.medium_total = medium_total
+#         self.artist_sort = artist_sort
+#         self.disctitle = disctitle
+#         self.artist_credit = artist_credit
+#         self.data_source = data_source
+#         self.data_url = data_url
+#         self.lyricist = lyricist
+#         self.composer = composer
+#         self.composer_sort = composer_sort
+#         self.arranger = arranger
+#         self.track_alt = track_alt
+#
+#     # As above, work around a bug in python-musicbrainz-ngs.
+#     def decode(self, codec='utf-8'):
+#         """Ensure that all string attributes on this object are decoded
+#         to Unicode.
+#         """
+#         for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
+#                     'artist_credit', 'media']:
+#             value = getattr(self, fld)
+#             if isinstance(value, bytes):
+#                 setattr(self, fld, value.decode(codec, 'ignore'))
 
 
 # Candidate distance scoring.

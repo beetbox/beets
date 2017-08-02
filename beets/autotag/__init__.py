@@ -45,13 +45,13 @@ def apply_item_metadata(item, track_info):
     if track_info.data_source:
         item.data_source = track_info.data_source
 
-    if track_info.lyricist is not None:
+    if track_info.get('lyricist'):
         item.lyricist = track_info.lyricist
-    if track_info.composer is not None:
+    if track_info.get('composer'):
         item.composer = track_info.composer
-    if track_info.composer_sort is not None:
+    if track_info.get('composer_sort'):
         item.composer_sort = track_info.composer_sort
-    if track_info.arranger is not None:
+    if track_info.get('arranger'):
         item.arranger = track_info.arranger
 
     # At the moment, the other metadata is left intact (including album
@@ -107,7 +107,7 @@ def apply_metadata(album_info, mapping):
         if config['per_disc_numbering']:
             # We want to let the track number be zero, but if the medium index
             # is not provided we need to fall back to the overall index.
-            if track_info.medium_index is not None:
+            if track_info.get('medium_index'):
                 item.track = track_info.medium_index
             else:
                 item.track = track_info.index
@@ -147,19 +147,19 @@ def apply_metadata(album_info, mapping):
             value = getattr(album_info, field)
             if value is not None:
                 item[field] = value
-        if track_info.disctitle is not None:
+        if track_info.get('disctitle'):
             item.disctitle = track_info.disctitle
 
-        if track_info.media is not None:
+        if track_info.get('media'):
             item.media = track_info.media
 
-        if track_info.lyricist is not None:
+        if track_info.get('lyricist'):
             item.lyricist = track_info.lyricist
-        if track_info.composer is not None:
+        if track_info.get('composer'):
             item.composer = track_info.composer
-        if track_info.composer_sort is not None:
+        if track_info.get('composer_sort'):
             item.composer_sort = track_info.composer_sort
-        if track_info.arranger is not None:
+        if track_info.get('arranger'):
             item.arranger = track_info.arranger
 
-        item.track_alt = track_info.track_alt
+        item.track_alt = track_info.get('track_alt')

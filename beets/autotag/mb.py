@@ -183,8 +183,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     the number of tracks on the medium. Each number is a 1-based index.
     """
     info = beets.autotag.hooks.TrackInfo(
-        recording['title'],
-        recording['id'],
+        title=recording['title'],
+        track_id=recording['id'],
         index=index,
         medium=medium,
         medium_index=medium_index,
