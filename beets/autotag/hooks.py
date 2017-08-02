@@ -129,15 +129,11 @@ class TrackInfo(dict):
     m = Map({'first_name': 'Eduardo'}, last_name='Pool',
     age=24, sports=['Soccer'])
     """
-    def __init__(self, *args, **kwargs):
-        super(TrackInfo, self).__init__(*args, **kwargs)
-        for arg in args:
-            if isinstance(arg, dict):
-                for k, v in arg.iteritems():
-                    self[k] = v
+    def __init__(self, **kwargs):
+        super(TrackInfo, self).__init__(**kwargs)
 
         if kwargs:
-            for k, v in kwargs.iteritems():
+            for k, v in kwargs.items():
                 self[k] = v
 
     def __getattr__(self, attr):
