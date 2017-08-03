@@ -34,8 +34,9 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
 
     def _ft_add_item(self, artist, title, work_id, parent_work=None,
                      parent_work_disambig=None, parent_composer=None,
-                     parent_work_id=None):
-        return self.add_item(artist=artist,
+                     parent_work_id=None, path='/'):
+        return self.add_item(path=path,
+                             artist=artist,
                              title=title,
                              work_id=work_id,
                              parent_work=parent_work,
