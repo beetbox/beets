@@ -22,7 +22,7 @@ from test.helper import TestHelper
 from beetsplug import parentwork
 
 
-class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
+class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
     def setUp(self):
         """Set up configuration"""
         self.setup_beets()
@@ -32,7 +32,7 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def _ft_add_item(self, artist, title, work_id, parent_work=None,
+    def _pw_add_item(self, artist, title, work_id, parent_work=None,
                      parent_work_disambig=None, parent_composer=None,
                      parent_work_id=None, path='/'):
         return self.add_item(path=path,
@@ -44,11 +44,11 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
                              parent_composer=parent_composer,
                              parent_composer_sort=parent_work_id)
 
-    def _ft_set_config(self, force):
+    def _pw_set_config(self, force):
         self.config['parentwork']['force'] = force
 
-    def test_functional_drop(self):
-        item = self._ft_add_item(artist=u'Johann Sebastian Bach',
+    def test_normal_case(self):
+        item = self._pw_add_item(artist=u'Johann Sebastian Bach',
                                  title=u'Matthäus-Passion Part I Ouverture',
                                  work_id=u'2e4a3668-458d-\
                                  3b2a-8be2-0b08e0d8243a')
@@ -62,8 +62,8 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
         self.assertEqual(item['parent_work_id'],
                          u'45afb3b2-18ac-4187-bc72-beb1b1c194ba')
 
-    def test_functional_several_composers_disambig(self):
-        item = self._ft_add_item(artist=u'Mozart',
+    def test_several_composers_disambig(self):
+        item = self._pw_add_item(artist=u'Mozart',
                                  title=u'Requiem I. Introitus',
                                  work_id=u'e27bda6e-531e-\
                                  36d3-9cd7-b8ebc18e8c53')
@@ -78,9 +78,9 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
         self.assertEqual(item['parent_work_id'],
                          u'32c8943f-1b27-3a23-8660-4567f4847c94')
 
-    def test_functional_custom_format(self):
-        self._ft_set_config('yes')
-        item = self._ft_add_item(artist=u'Mozart',
+    def test_force_in_config(self):
+        self._pw_set_config('yes')
+        item = self._pw_add_item(artist=u'Mozart',
                                  title=u'Requiem I. Introitus',
                                  work_id=u'e27bda6e-531e-36d3-\
                                  9cd7-b8ebc18e8c53')
@@ -95,11 +95,11 @@ class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
         self.assertEqual(item['parent_work_id'],
                          u'32c8943f-1b27-3a23-8660-4567f4847c94')
 
-        self._ft_set_config('no')
-        item = self._ft_add_item(artist=u'Mozart',
-                                 title=u'Requiem I. Introitus',
-                                 work_id=u'e27bda6e-531e-36d3-\
-                                 9cd7-b8ebc18e8c53',
+        self._pw_set_config('no')
+        item = self._pw_add_item(artist=u'Mozart',
+                                 title=u'Requiem II. Kyrie',
+                                 work_id=u'6eaede01-c31a-3402\
+                                 -bedb-598e6bcbad03',
                                  parent_work=u'Requiem in D minor, K. 626',
                                  parent_work_disambig=u'Süßmayr Edition',
                                  parent_composer=u'Wolfgang Amadeus Mozart, \
