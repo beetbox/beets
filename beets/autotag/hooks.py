@@ -126,6 +126,7 @@ class AlbumInfo(object):
 class TrackInfo(object):
 
     def __init__(self, **kwargs):
+        self.tags = {}
         if kwargs:
             for k, v in kwargs.items():
                 self.tags[k] = v
