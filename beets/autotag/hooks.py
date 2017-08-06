@@ -123,30 +123,30 @@ class AlbumInfo(object):
                 track.decode(codec)
 
 
-class TrackInfo(object)
+class TrackInfo(object):
 
-    def __init__(selt, **kwargs):
+    def __init__(self, **kwargs):
         if kwargs:
             for k, v in kwargs.items():
                 self.tags[k] = v
-    
+
     def __getattr__(self, attr):
         return self.tags.get(attr)
-        
+
     def __setattr__(self, key, value):
         self.__setitem__(key, value)
-        
+
     def __setitem__(self, key, value):
         super(TrackInfo, self).tags.__setitem__(key, value)
         self.tags.__dict__.update({key: value})
-        
+
     def __delattr__(self, item):
         self.tags.__delitem__(item)
-        
+
     def __delitem__(self, key):
         super(TrackInfo, self).tags.__delitem__(key)
         del self.tags.__dict__[key]
-        
+
     def decode(self, codec='utf-8'):
         """Ensure that all string attributes on this object are decoded
         to Unicode.
@@ -156,7 +156,7 @@ class TrackInfo(object)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
-#class TrackInfo(dict):
+# class TrackInfo(dict):
 #    """
 #    Example:
 #    m = Map({'first_name': 'Eduardo'}, last_name='Pool',
