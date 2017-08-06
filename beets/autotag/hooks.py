@@ -142,7 +142,7 @@ class TrackInfo(object):
         self.tags.__dict__.update({key: value})
 
     def __delattr__(self, item):
-        self.tags.__delitem__(item)
+        self.__delitem__(item)
 
     def __delitem__(self, key):
         # super(TrackInfo, self).__delitem__(key)
