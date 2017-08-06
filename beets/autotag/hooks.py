@@ -137,14 +137,14 @@ class TrackInfo(object):
         self.__setitem__(key, value)
 
     def __setitem__(self, key, value):
-        super(TrackInfo, self).tags.__setitem__(key, value)
+        super(TrackInfo, self).__setitem__(key, value)
         self.tags.__dict__.update({key: value})
 
     def __delattr__(self, item):
         self.tags.__delitem__(item)
 
     def __delitem__(self, key):
-        super(TrackInfo, self).tags.__delitem__(key)
+        super(TrackInfo, self).__delitem__(key)
         del self.tags.__dict__[key]
 
     def decode(self, codec='utf-8'):
