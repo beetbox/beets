@@ -123,78 +123,81 @@ class AlbumInfo(object):
                 track.decode(codec)
 
 
-class TrackInfo(object):
-
-    def __init__(self, **kwargs):
-        self.tags = {}
-        if kwargs:
-            for k, v in kwargs.items():
-                self.tags[k] = v
-
-    def __getattr__(self, attr):
-        return self.tags.get(attr)
-
-    def __setattr__(self, key, value):
-        self.__setitem__(key, value)
-
-    def __setitem__(self, key, value):
-        # super(TrackInfo, self).__setitem__(key, value)
-        self.tags.__dict__.update({key: value})
-
-    def __delattr__(self, item):
-        self.__delitem__(item)
-
-    def __delitem__(self, key):
-        # super(TrackInfo, self).__delitem__(key)
-        del self.tags.__dict__[key]
-
-    def decode(self, codec='utf-8'):
-        """Ensure that all string attributes on this object are decoded
-        to Unicode.
-        """
-        for fld in self.tags:
-            value = self.tags.get(fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
-
-# class TrackInfo(dict):
-#    """
-#    Example:
-#    m = Map({'first_name': 'Eduardo'}, last_name='Pool',
-#    age=24, sports=['Soccer'])
-#    """
-#    def __init__(self, **kwargs):
-#        super(TrackInfo, self).__init__(**kwargs)
+# class TrackInfo(object):
 #
+#    def __init__(self, **kwargs):
+#        self.tags = {}
 #        if kwargs:
 #            for k, v in kwargs.items():
-#                self[k] = v
+#                self.tags[k] = v
 #
 #    def __getattr__(self, attr):
-#        return self.get(attr)
+#        return self.tags.get(attr)
 #
 #    def __setattr__(self, key, value):
 #        self.__setitem__(key, value)
 #
 #    def __setitem__(self, key, value):
-#        super(TrackInfo, self).__setitem__(key, value)
-#        self.__dict__.update({key: value})
+#        # super(TrackInfo, self).__setitem__(key, value)
+#        self.tags.__dict__.update({key: value})
 #
 #    def __delattr__(self, item):
 #        self.__delitem__(item)
 #
 #    def __delitem__(self, key):
-#        super(TrackInfo, self).__delitem__(key)
-#        del self.__dict__[key]
+#        # super(TrackInfo, self).__delitem__(key)
+#        del self.tags.__dict__[key]
 #
 #    def decode(self, codec='utf-8'):
 #        """Ensure that all string attributes on this object are decoded
 #        to Unicode.
 #        """
-#        for fld in self:
-#            value = self.get(fld)
+#        for fld in self.tags:
+#            value = self.tags.get(fld)
 #            if isinstance(value, bytes):
 #                setattr(self, fld, value.decode(codec, 'ignore'))
+
+class TrackInfo(dict):
+    """
+    Example:
+    m = Map({'first_name': 'Eduardo'}, last_name='Pool',
+    age=24, sports=['Soccer'])
+    """
+    def __init__(self, **kwargs):
+        super(TrackInfo, self).__init__(**kwargs)
+
+        if kwargs:
+            for k, v in kwargs.items():
+                self[k] = v
+
+    def __getattr__(self, attr):
+        return self.get(attr)
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __setitem__(self, key, value):
+        super(TrackInfo, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __delattr__(self, item):
+        self.__delitem__(item)
+
+    def __delitem__(self, key):
+        super(TrackInfo, self).__delitem__(key)
+        del self.__dict__[key]
+
+    def __hash__(self):
+        return object.__hash__(self)
+
+    def decode(self, codec='utf-8'):
+        """Ensure that all string attributes on this object are decoded
+        to Unicode.
+        """
+        for fld in self:
+            value = self.get(fld)
+            if isinstance(value, bytes):
+                setattr(self, fld, value.decode(codec, 'ignore'))
 
 # class TrackInfo(object):
 #     """Describes a canonical track present on a release. Appears as part
