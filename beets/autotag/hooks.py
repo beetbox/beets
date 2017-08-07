@@ -174,8 +174,8 @@ class TrackInfo(dict):
         return self.get(attr)
         # work around for pickle bug in Python 3.4
         # see http://bugs.python.org/issue16251
-        if name == "__getnewargs_ex__":
-            raise AttributeError("%r has no attribute %r" % (type(self), name))
+        if attr == "__getnewargs_ex__":
+            raise AttributeError("%r has no attribute %r" % (type(self), attr))
 
     def __setattr__(self, key, value):
         self.__setitem__(key, value)
