@@ -34,12 +34,13 @@ log = logging.getLogger('beets')
 
 def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
-    """
+   """
     item.artist = track_info.artist
     item.artist_sort = track_info.artist_sort
     item.artist_credit = track_info.artist_credit
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
+    item.media = track_info.media
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
     if track_info.data_source:
@@ -50,8 +51,8 @@ def apply_item_metadata(item, track_info):
 
 def apply_metadata(album_info, mapping):
     """Set the items' metadata to match an AlbumInfo object using a
-    mapping from Items to TrackInfo objects.
-    """
+   mapping from Items to TrackInfo objects.
+   """
     for item, track_info in mapping.items():
         # Album, artist, track count.
         if track_info.artist:
@@ -142,3 +143,6 @@ def apply_metadata(album_info, mapping):
 
         if track_info.media is not None:
             item.media = track_info.media
+
+        if album_info.media is not None:
+            item.media = album_info.media
