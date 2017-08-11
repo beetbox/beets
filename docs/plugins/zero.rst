@@ -51,19 +51,12 @@ Manually Triggering Zero
 You can also type ``beet zero [QUERY]`` to manually invoke the plugin on music
 in your library.
 
-A Note About Fields
--------------------
+Preserving Album Art
+--------------------
 
-If you wish to store embedded cover artwork metadata in the file, you must 
-use the field ``images``. This is a special field and is not shown by 
-issuing the command ``beet fields``.
-
-For example::
+If you use the ``keep_fields`` option, the plugin will remove embedded album
+art from files' tags unless you tell it not to. To keep the album art, include
+the special field ``images`` in the list. For example::
 
     zero:
         keep_fields: title artist album year track genre images
-        
-This will result in the following metadata field in an MP3 file::
-
-    APIC (Attached picture): ()[, 3]: image/jpeg, 88742 bytes
-
