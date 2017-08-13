@@ -78,8 +78,23 @@ class ItemInfo(dict):
         self.__delattr__(key)
 
     def __getattr__(self, key):
-        """Disables default getattr and uses the item way"""
-        super(ItemInfo, self).__getitem__(key)
+        """Disables default getattr and uses the item way
+        For full backward compatibility, None is returned if key has not
+        been set (everything was set to None before...)
+        """
+        try:
+            return super(ItemInfo, self).__getitem__(key)
+        except KeyError:
+            return None
+
+    def __getitem__(self, key):
+        """For backward compatibility, return None if item is not
+        found
+        """
+        try:
+            return super(ItemInfo, self).__getitem__(key)
+        except KeyError:
+            return None
 
 
 class AlbumInfo(ItemInfo):
@@ -126,6 +141,14 @@ class AlbumInfo(ItemInfo):
                 "{}".format(self.REQ_ATTR))
         else:
             super(AlbumInfo, self).__init__(**kwargs)
+
+    def __hash__(self):
+        """Always a good idea to have a hash"""
+        return self['album_id']
+
+    def __reduce__(self):
+        """Used by :py:func:`copy.deepcopy`"""
+        return self['album_id']
 
     def decode(self, codec='utf-8', errors='ignore'):
         """Work around a bug in python-musicbrainz-ngs that causes some
@@ -188,6 +211,10 @@ class TrackInfo(ItemInfo):
     def __hash__(self):
         """Track id is supposed unique, and is required"""
         return self.track_id.__hash__()
+
+    def __reduce__(self):
+        """Used by :py:func:`copy.deepcopy`"""
+        return self['track_id']
 
     def decode(self, codec='utf-8', errors='ignore'):
         """Work around a bug in python-musicbrainz-ngs that causes some

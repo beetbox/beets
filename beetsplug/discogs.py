@@ -272,7 +272,8 @@ class DiscogsPlugin(BeetsPlugin):
             track.media = media
             track.medium_total = mediums
 
-        return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
+        return AlbumInfo(album=album, album_id=album_id, artist=artist,
+                         artist_id=artist_id, tracks=tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
                          day=None, label=label, mediums=mediums,
                          artist_sort=None, releasegroup_id=None,
@@ -465,9 +466,10 @@ class DiscogsPlugin(BeetsPlugin):
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = self.get_artist(track.get('artists', []))
         length = self.get_track_length(track['duration'])
-        return TrackInfo(title, track_id, artist, artist_id, length, index,
-                         medium, medium_index, artist_sort=None,
-                         disctitle=None, artist_credit=None)
+        return TrackInfo(title=title, track_id=track_id, artist=artist,
+                         artist_id=artist_id, length=length, index=index,
+                         medium=medium, medium_index=medium_index,
+                         artist_sort=None, disctitle=None, artist_credit=None)
 
     def get_track_index(self, position):
         """Returns the medium, medium index and subtrack index for a discogs

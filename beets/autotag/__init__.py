@@ -143,7 +143,7 @@ def apply_metadata(album_info, mapping):
         setattr(item, 'mb_albumid', (album_info['album_id']
                                      if 'album_id' in album_info.keys()
                                      else None))
-        setattr(item, 'mb_artistid', try_track_info('mb_artistid'))
+        setattr(item, 'mb_artistid', try_track_info('artist_id'))
         setattr(item, 'mb_albumartistid', (album_info['artist_id']
                                            if 'artist_id' in album_info.keys()
                                            else None))
