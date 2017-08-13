@@ -34,7 +34,55 @@ log = logging.getLogger('beets')
 
 # Classes used to represent candidate options.
 
-class AlbumInfo(object):
+class ItemInfo(dict):
+    """Generic item information. Dict-like object which has its key/value
+    pair mirrored on its attributes for the sake of backward compatibility.
+    """
+
+    def __init__(self, **kwargs):
+        """Initialises values. kwargs are optional arguments and may be
+        set to None
+        """
+        super(ItemInfo, self).__init__()
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+        # And set attributes
+        for attr, val in kwargs.items():
+            setattr(self, attr, val)
+
+    def __setattr__(self, key, value):
+        """Sets dict-like key value and adds attribute. Be sure to
+        call super's set attribute to avoid recursion: using setattr
+        will try to use this class' __setattr__ which calls setattr.
+
+        :param key: new key in mapping and new attribute
+        :type key: str
+        :param value: value associated to key
+        :type value: any
+        """
+        super(ItemInfo, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __setitem__(self, key, value):
+        """Calls __setattr__"""
+        setattr(self, key, value)
+
+    def __delattr__(self, key):
+        """Deletes attribute and key"""
+        super(ItemInfo, self).__delitem__(key)
+        del self.__dict__[key]
+
+    def __delitem__(self, key):
+        """Calls __delattr__"""
+        self.__delattr__(key)
+
+    def __getattr__(self, key):
+        """Disables default getattr and uses the item way"""
+        super(ItemInfo, self).__getitem__(key)
+
+
+class AlbumInfo(ItemInfo):
     """Describes a canonical release that may be used to match a release
     in the library. Consists of these data members:
 
@@ -67,63 +115,36 @@ class AlbumInfo(object):
     The fields up through ``tracks`` are required. The others are
     optional and may be None.
     """
-    def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
-                 albumtype=None, va=False, year=None, month=None, day=None,
-                 label=None, mediums=None, artist_sort=None,
-                 releasegroup_id=None, catalognum=None, script=None,
-                 language=None, country=None, albumstatus=None, media=None,
-                 albumdisambig=None, artist_credit=None, original_year=None,
-                 original_month=None, original_day=None, data_source=None,
-                 data_url=None):
-        self.album = album
-        self.album_id = album_id
-        self.artist = artist
-        self.artist_id = artist_id
-        self.tracks = tracks
-        self.asin = asin
-        self.albumtype = albumtype
-        self.va = va
-        self.year = year
-        self.month = month
-        self.day = day
-        self.label = label
-        self.mediums = mediums
-        self.artist_sort = artist_sort
-        self.releasegroup_id = releasegroup_id
-        self.catalognum = catalognum
-        self.script = script
-        self.language = language
-        self.country = country
-        self.albumstatus = albumstatus
-        self.media = media
-        self.albumdisambig = albumdisambig
-        self.artist_credit = artist_credit
-        self.original_year = original_year
-        self.original_month = original_month
-        self.original_day = original_day
-        self.data_source = data_source
-        self.data_url = data_url
 
-    # Work around a bug in python-musicbrainz-ngs that causes some
-    # strings to be bytes rather than Unicode.
-    # https://github.com/alastair/python-musicbrainz-ngs/issues/85
-    def decode(self, codec='utf-8'):
-        """Ensure that all string attributes on this object, and the
+    REQ_ATTR = set(('album', 'album_id', 'artist', 'artist_id', 'tracks'))
+
+    def __init__(self, **kwargs):
+        """Sets vars and verifies that REQ_ATTR are in kwargs"""
+        if not self.REQ_ATTR <= set(kwargs.keys()):
+            raise TypeError(
+                "AlbumInfo takes at least those 5 keyword arguments "
+                "{}".format(self.REQ_ATTR))
+        else:
+            super(AlbumInfo, self).__init__(**kwargs)
+
+    def decode(self, codec='utf-8', errors='ignore'):
+        """Work around a bug in python-musicbrainz-ngs that causes some
+        strings to be bytes rather than Unicode.
+        https://github.com/alastair/python-musicbrainz-ngs/issues/85
+
+        Ensures that all string attributes on this object, and the
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
-        for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
-                    'catalognum', 'script', 'language', 'country',
-                    'albumstatus', 'albumdisambig', 'artist_credit', 'media']:
-            value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
+        for fld, val in self.__dict__.items():
+            if isinstance(val, bytes):
+                setattr(self, fld, val.decode(codec, errors))
 
-        if self.tracks:
+        if hasattr(self, 'tracks') and self.tracks:
             for track in self.tracks:
-                track.decode(codec)
+                track.decode(codec, errors)
 
 
-class TrackInfo(object):
+class TrackInfo(ItemInfo):
     """Describes a canonical track present on a release. Appears as part
     of an AlbumInfo's ``tracks`` list. Consists of these data members:
 
@@ -152,43 +173,33 @@ class TrackInfo(object):
     may be None. The indices ``index``, ``medium``, and ``medium_index``
     are all 1-based.
     """
-    def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None, index=None, medium=None, medium_index=None,
-                 medium_total=None, artist_sort=None, disctitle=None,
-                 artist_credit=None, data_source=None, data_url=None,
-                 media=None, lyricist=None, composer=None, composer_sort=None,
-                 arranger=None, track_alt=None):
-        self.title = title
-        self.track_id = track_id
-        self.artist = artist
-        self.artist_id = artist_id
-        self.length = length
-        self.index = index
-        self.media = media
-        self.medium = medium
-        self.medium_index = medium_index
-        self.medium_total = medium_total
-        self.artist_sort = artist_sort
-        self.disctitle = disctitle
-        self.artist_credit = artist_credit
-        self.data_source = data_source
-        self.data_url = data_url
-        self.lyricist = lyricist
-        self.composer = composer
-        self.composer_sort = composer_sort
-        self.arranger = arranger
-        self.track_alt = track_alt
 
-    # As above, work around a bug in python-musicbrainz-ngs.
-    def decode(self, codec='utf-8'):
-        """Ensure that all string attributes on this object are decoded
-        to Unicode.
+    REQ_ATTR = set(('title', 'track_id'))
+
+    def __init__(self, **kwargs):
+        """Sets vars and verifies that REQ_ATTR are in kwargs"""
+        if not self.REQ_ATTR <= set(kwargs.keys()):
+            raise TypeError(
+                "TrackInfo takes at least those 2 keyword arguments "
+                "{}".format(self.REQ_ATTR))
+        else:
+            super(TrackInfo, self).__init__(**kwargs)
+
+    def __hash__(self):
+        """Track id is supposed unique, and is required"""
+        return self.track_id.__hash__()
+
+    def decode(self, codec='utf-8', errors='ignore'):
+        """Work around a bug in python-musicbrainz-ngs that causes some
+        strings to be bytes rather than Unicode.
+        https://github.com/alastair/python-musicbrainz-ngs/issues/85
+
+        Ensures that all string attributes of this object are converted to
+        unicode.
         """
-        for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
-                    'artist_credit', 'media']:
-            value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
+        for fld, val in self.__dict__.items():
+            if isinstance(val, bytes):
+                setattr(self, fld, val.decode(codec, errors))
 
 
 # Candidate distance scoring.
