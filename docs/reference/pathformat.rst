@@ -108,7 +108,7 @@ disk.
 The ``aunique`` function detects situations where two albums have some identical
 fields and emits text from additional fields to disambiguate the albums. For
 example, if you have both Crystal Castles albums in your library, ``%aunique{}``
-will expand to "[2008]" for one album and "[2010]" for the other. The
+will expand to " [2008]" for one album and " [2010]" for the other. The
 function detects that you have two albums with the same artist and title but
 that they have different release years.
 
@@ -120,8 +120,10 @@ characters used to surround the disambiguator.
 Any group of albums with identical values for all the identifiers will be
 considered "duplicates". Then, the function tries each disambiguator field,
 looking for one that distinguishes each of the duplicate albums from each
-other. The first such field is used as the result for ``%aunique``. If no field
-suffices, an arbitrary number is used to distinguish the two albums.
+other. The first such field is used as the result for ``%aunique``, preceded
+by a space. If no field suffices, an arbitrary number is used to distinguish
+the two albums. If an album is not a duplicate, ``%aunique`` just returns
+a space.
 
 The default identifiers are ``albumartist album`` and the default disambiguators
 are ``albumtype year label catalognum albumdisambig``. So you can get reasonable
@@ -136,10 +138,10 @@ and right brackets. Or, to turn off bracketing entirely, leave argument blank.
 One caveat: When you import an album that is named identically to one already in
 your library, the *first* album—the one already in your library— will not
 consider itself a duplicate at import time. This means that ``%aunique{}`` will
-expand to nothing for this album and no disambiguation string will be used at
+expand to just a space for this album and no disambiguation string will be used at
 its import time. Only the second album will receive a disambiguation string. If
 you want to add the disambiguation string to both albums, just run ``beet move``
-(possibly restricted by a query) to update the paths for the albums.
+(possibly restricted by a :doc:`query`) to update the paths for the albums.
 
 
 Syntax Details
