@@ -123,7 +123,7 @@ looking for one that distinguishes each of the duplicate albums from each
 other. The first such field is used as the result for ``%aunique``, preceded
 by a space. If no field suffices, an arbitrary number is used to distinguish
 the two albums. If an album is not a duplicate, ``%aunique`` just returns
-a space.
+an empty string.
 
 The default identifiers are ``albumartist album`` and the default disambiguators
 are ``albumtype year label catalognum albumdisambig``. So you can get reasonable
@@ -138,7 +138,7 @@ and right brackets. Or, to turn off bracketing entirely, leave argument blank.
 One caveat: When you import an album that is named identically to one already in
 your library, the *first* album—the one already in your library— will not
 consider itself a duplicate at import time. This means that ``%aunique{}`` will
-expand to just a space for this album and no disambiguation string will be used at
+expand to nothing for this album and no disambiguation string will be used at
 its import time. Only the second album will receive a disambiguation string. If
 you want to add the disambiguation string to both albums, just run ``beet move``
 (possibly restricted by a :doc:`query`) to update the paths for the albums.
