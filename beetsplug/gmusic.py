@@ -58,9 +58,9 @@ class Gmusic(BeetsPlugin):
     def upload(self, lib, opts, args):
         items = lib.items(ui.decargs(args))
         files = [x.path.decode('utf-8') for x in items]
-        ui.print_('Uploading your files...')
+        ui.print_(u'Uploading your files...')
         self.m.upload(filepaths=files)
-        ui.print_('Your files were successfully added to library')
+        ui.print_(u'Your files were successfully added to library')
 
     def search(self, lib, opts, args):
         password = config['gmusic']['password']
@@ -76,7 +76,7 @@ class Gmusic(BeetsPlugin):
             files = mobile.get_all_songs()
         except NotLoggedIn:
             ui.print_(
-                'Authentication error. Please check your email and password.'
+                u'Authentication error. Please check your email and password.'
             )
             return
         if not args:
