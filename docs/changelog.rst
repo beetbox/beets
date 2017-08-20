@@ -22,6 +22,8 @@ Fixes:
 * :doc:`/plugins/lyrics`: The MusixMatch backend now detect and warns
   the user when blocked on the server. Thanks to
   :user:`anarcat`. :bug:`2634` :bug:`2632`
+* :doc:`/plugins/importfeeds`: Fix an error on Python 3 in certain
+  configurations. Thanks to :user:`djl`. :bug:`2467` :bug:`2658`
 
 For developers:
 
