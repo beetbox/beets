@@ -33,7 +33,7 @@ from beets.plugins import BeetsPlugin
 def update_kodi(host, port, user, password):
     """Sends request to the Kodi api to start a library refresh.
     """
-    url = "http://{0}:{1}/jsonrpc/".format(host, port)
+    url = "http://{0}:{1}/jsonrpc".format(host, port)
 
     """Content-Type: application/json is mandatory
     according to the kodi jsonrpc documentation"""
