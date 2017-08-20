@@ -365,9 +365,12 @@ class EditPlugin(plugins.BeetsPlugin):
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
         """
-        # Assign temporary ids to the Items.
-        for i, obj in enumerate(task.items):
-            obj.id = i + 1
+        # Assign negative temporary ids to Items that are not in the database
+        # yet. By using negative values, no clash with items in the database
+        # can occur.
+        for i, obj in enumerate(task.items, start=1):
+            if not obj._db:
+                obj.id = -i
 
         # Present the YAML to the user and let her change it.
         fields = self._get_fields(album=False, extra=[])
@@ -375,7 +378,8 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Remove temporary ids.
         for obj in task.items:
-            obj.id = None
+            if not obj._db:
+                obj.id = None
 
         # Save the new data.
         if success:
