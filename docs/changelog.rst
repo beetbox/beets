@@ -24,6 +24,9 @@ Fixes:
   :user:`anarcat`. :bug:`2634` :bug:`2632`
 * :doc:`/plugins/importfeeds`: Fix an error on Python 3 in certain
   configurations. Thanks to :user:`djl`. :bug:`2467` :bug:`2658`
+* :doc: `/plugins/edit`: Fix a bug when editing items during a ``-L``
+  re-import. Previously, diffs against against unrelated items could be
+  shown or beets could crash with a traceback. :bug:`2659`
 
 For developers:
 
