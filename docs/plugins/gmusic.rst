@@ -35,9 +35,13 @@ password under a section called ``gmusic``, like so::
         email: user@example.com
         password: seekrit
 
+If you are using two-factor authentication you need to provide an app password (visit `settings` page to set up).
+
 Then, use the ``gmusic-songs`` command to list music::
 
     beet gmusic-songs [-at] [ARGS]
+
+.. _settings: https://github.com/beetbox/beets/issues/2660
 
 Use the ``-a`` option to search by artist and ``-t`` to search by track. For
 example::
