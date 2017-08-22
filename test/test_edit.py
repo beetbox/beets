@@ -210,13 +210,14 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
     def test_single_edit_add_field(self, mock_write):
         """Edit the yaml file appending an extra field to the first item, then
         apply changes."""
-        # Append "foo: bar" to item with id == 1.
-        self.run_mocked_command({'replacements': {u"id: 1":
-                                                  u"id: 1\nfoo: bar"}},
+        # Append "foo: bar" to item with id == 2. ("id: 1" would match both
+        # "id: 1" and "id: 10")
+        self.run_mocked_command({'replacements': {u"id: 2":
+                                                  u"id: 2\nfoo: bar"}},
                                 # Apply changes.
                                 ['a'])
 
-        self.assertEqual(self.lib.items(u'id:1')[0].foo, 'bar')
+        self.assertEqual(self.lib.items(u'id:2')[0].foo, 'bar')
         # Even though a flexible attribute was written (which is not directly
         # written to the tags), write should still be called since templates
         # might use it.
