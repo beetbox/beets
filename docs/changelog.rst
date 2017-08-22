@@ -27,6 +27,8 @@ Fixes:
 * :doc:`/plugins/edit`: Fix a bug when editing items during a ``-L``
   re-import. Previously, diffs against against unrelated items could be
   shown or beets could crash with a traceback. :bug:`2659`
+* :doc:`/plugins/kodiupdate`: Fix server URL and add better error reporting.
+  :bug:`2662`
 
 For developers:
 
