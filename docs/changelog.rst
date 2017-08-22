@@ -24,6 +24,8 @@ Fixes:
   :user:`anarcat`. :bug:`2634` :bug:`2632`
 * :doc:`/plugins/importfeeds`: Fix an error on Python 3 in certain
   configurations. Thanks to :user:`djl`. :bug:`2467` :bug:`2658`
+* :doc:`/plugins/kodiupdate`: Fix server URL and add better error reporting.
+  :bug:`2662`
 
 For developers:
 
