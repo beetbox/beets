@@ -162,7 +162,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT,
                           title_starts_with=u'modified t\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['title'])
+                                      ['title', 'mtime'])
 
     def test_single_title_edit_apply(self, mock_write):
         """Edit title for one item in the library, then apply changes."""
@@ -202,7 +202,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
 
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['album'])
+                                      ['album', 'mtime'])
         # Ensure album is *not* modified.
         self.album.load()
         self.assertEqual(self.album.album, u'\u00e4lbum')
@@ -235,7 +235,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertEqual(self.album.album, u'modified \u00e4lbum')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['album'])
+                                      ['album', 'mtime'])
 
     def test_a_albumartist_edit_apply(self, mock_write):
         """Album query (-a), edit albumartist field, apply changes."""
@@ -249,7 +249,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertEqual(self.album.albumartist, u'the modified album artist')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['albumartist'])
+                                      ['albumartist', 'mtime'])
 
     def test_malformed_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a malformed yaml
