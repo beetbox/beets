@@ -315,6 +315,8 @@ class TestHelper(object):
         item = Item(**values_)
         if 'path' not in values:
             item['path'] = 'audio.' + item['format'].lower()
+        # mtime needs to be set last since other assignments reset it.
+        item.mtime = 12345
         return item
 
     def add_item(self, **values):
@@ -365,6 +367,8 @@ class TestHelper(object):
             item = Item.from_path(path)
             item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
+            # mtime needs to be set last since other assignments reset it.
+            item.mtime = 12345
             item.add(self.lib)
             item.move(copy=True)
             item.store()
@@ -380,6 +384,8 @@ class TestHelper(object):
             item = Item.from_path(path)
             item.album = u'\u00e4lbum'  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
+            # mtime needs to be set last since other assignments reset it.
+            item.mtime = 12345
             item.add(self.lib)
             item.move(copy=True)
             item.store()
