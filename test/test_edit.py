@@ -217,6 +217,9 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 ['a'])
 
         self.assertEqual(self.lib.items(u'id:1')[0].foo, 'bar')
+        # Even though a flexible attribute was written (which is not directly
+        # written to the tags), write should still be called since templates
+        # might use it.
         self.assertCounts(mock_write, write_call_count=1,
                           title_starts_with=u't\u00eftle')
 
