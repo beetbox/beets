@@ -23,7 +23,6 @@ from beets import ui
 from beets.dbcore import types
 from beets.importer import action
 from beets.ui.commands import _do_query, PromptChoice
-from copy import deepcopy
 import codecs
 import subprocess
 import yaml
@@ -283,7 +282,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 # Show the changes.
                 # If the objects are not on the DB yet, we need a copy of their
                 # original state for show_model_changes.
-                objs_old = [deepcopy(obj) if obj.id < 0 else None
+                objs_old = [obj.copy() if obj.id < 0 else None
                             for obj in objs]
                 self.apply_data(objs, old_data, new_data)
                 changed = False
