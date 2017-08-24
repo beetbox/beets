@@ -22,6 +22,7 @@ from test import _common
 from test.helper import TestHelper, control_stdin
 from test.test_ui_importer import TerminalImportSessionSetup
 from test.test_importer import ImportHelper, AutotagStub
+from beets.dbcore.query import TrueQuery
 from beets.library import Item
 from beetsplug.edit import EditPlugin
 
@@ -348,6 +349,34 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
                                                       u'Edited Title'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
+
+        # Check that 'title' field is modified, and other fields come from
+        # the candidate.
+        self.assertTrue(all('Edited Title ' in i.title
+                            for i in self.lib.items()))
+        self.assertTrue(all('match ' in i.mb_trackid
+                            for i in self.lib.items()))
+
+        # Ensure album is fetched from a candidate.
+        self.assertIn('albumid', self.lib.albums()[0].mb_albumid)
+
+    def test_edit_retag_apply(self):
+        """Import the album using a candidate, then retag and edit and apply
+        changes.
+        """
+        self._setup_import_session()
+        self.run_mocked_interpreter({},
+                                    # 1, Apply changes.
+                                    ['1', 'a'])
+
+        # Retag and edit track titles.  On retag, the importer will reset items
+        # ids but not the db connections.
+        self.importer.paths = []
+        self.importer.query = TrueQuery()
+        self.run_mocked_interpreter({'replacements': {u'Applied Title':
+                                                      u'Edited Title'}},
+                                    # eDit, Apply changes.
+                                    ['d', 'a'])
 
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
