@@ -217,6 +217,18 @@ class Model(object):
         if need_id and not self.id:
             raise ValueError(u'{0} has no id'.format(type(self).__name__))
 
+    def copy(self):
+        """Create a semi-deep copy of the item. In particular, the _db object
+        is not duplicated. A simple copy.deepcopy wouldn't work due to the
+        sqlite objects in _db.
+        """
+        new = self.__class__()
+        new._db = self._db
+        new._values_fixed = self._values_fixed.copy()
+        new._values_flex = self._values_flex.copy()
+        new._dirty = self._dirty.copy()
+        return new
+
     # Essential field accessors.
 
     @classmethod
