@@ -283,7 +283,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 # Show the changes.
                 # If the objects are not on the DB yet, we need a copy of their
                 # original state for show_model_changes.
-                objs_old = [deepcopy(obj) if not obj._db else None
+                objs_old = [deepcopy(obj) if obj.id < 0 else None
                             for obj in objs]
                 self.apply_data(objs, old_data, new_data)
                 changed = False
@@ -308,7 +308,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     objs = [(old_obj or obj)
                             for old_obj, obj in zip(objs_old, objs)]
                     for obj in objs:
-                        if obj._db:
+                        if not obj.id < 0:
                             obj.load()
                     continue
 
@@ -374,7 +374,8 @@ class EditPlugin(plugins.BeetsPlugin):
         # yet. By using negative values, no clash with items in the database
         # can occur.
         for i, obj in enumerate(task.items, start=1):
-            if not obj._db:
+            # The importer may set the id to None when re-importing albums.
+            if not obj._db or obj.id is None:
                 obj.id = -i
 
         # Present the YAML to the user and let her change it.
@@ -383,7 +384,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Remove temporary ids.
         for obj in task.items:
-            if not obj._db:
+            if obj.id < 0:
                 obj.id = None
 
         # Save the new data.
