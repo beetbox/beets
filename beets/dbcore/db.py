@@ -217,6 +217,21 @@ class Model(object):
         if need_id and not self.id:
             raise ValueError(u'{0} has no id'.format(type(self).__name__))
 
+    def copy(self):
+        """Create a copy of the model object.
+
+        The field values and other state is duplicated, but the new copy
+        remains associated with the same database as the old object.
+        (A simple `copy.deepcopy` will not work because it would try to
+        duplicate the SQLite connection.)
+        """
+        new = self.__class__()
+        new._db = self._db
+        new._values_fixed = self._values_fixed.copy()
+        new._values_flex = self._values_flex.copy()
+        new._dirty = self._dirty.copy()
+        return new
+
     # Essential field accessors.
 
     @classmethod
