@@ -27,6 +27,10 @@ Fixes:
 * :doc:`/plugins/edit`: Fix a bug when editing items during a ``-L``
   re-import. Previously, diffs against against unrelated items could be
   shown or beets could crash with a traceback. :bug:`2659`
+* Fixed a problem where "no-op" modifications would reset files' mtimes,
+  resulting in unnecessary writes. This most prominently affected the
+  :doc:`/plugins/edit` when saving the text file without making changes to some
+  music.
 
 For developers:
 
