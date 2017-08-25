@@ -302,8 +302,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     return False
                 elif choice == u'e':  # Keep editing.
                     # Reset the temporary changes to the objects. I we have a
-                    # deepcopy from above, use that, else reload from the
-                    # database.
+                    # copy from above, use that, else reload from the database.
                     objs = [(old_obj or obj)
                             for old_obj, obj in zip(objs_old, objs)]
                     for obj in objs:

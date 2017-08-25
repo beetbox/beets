@@ -218,9 +218,12 @@ class Model(object):
             raise ValueError(u'{0} has no id'.format(type(self).__name__))
 
     def copy(self):
-        """Create a semi-deep copy of the item. In particular, the _db object
-        is not duplicated. A simple copy.deepcopy wouldn't work due to the
-        sqlite objects in _db.
+        """Create a copy of the model object.
+
+        The field values and other state is duplicated, but the new copy
+        remains associated with the same database as the old object.
+        (A simple `copy.deepcopy` will not work because it would try to
+        duplicate the SQLite connection.)
         """
         new = self.__class__()
         new._db = self._db
