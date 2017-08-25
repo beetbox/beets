@@ -242,8 +242,9 @@ class Model(object):
         else:
             raise KeyError(key)
 
-    def __setitem__(self, key, value):
-        """Assign the value for a field.
+    def _setitem(self, key, value):
+        """Assign the value for a field, return whether new and old value
+        differ.
         """
         # Choose where to place the value.
         if key in self._fields:
@@ -257,8 +258,16 @@ class Model(object):
         # Assign value and possibly mark as dirty.
         old_value = source.get(key)
         source[key] = value
-        if self._always_dirty or old_value != value:
+        changed = old_value != value
+        if self._always_dirty or changed:
             self._dirty.add(key)
+
+        return changed
+
+    def __setitem__(self, key, value):
+        """Assign the value for a field.
+        """
+        self._setitem(key, value)
 
     def __delitem__(self, key):
         """Remove a flexible attribute from the model.

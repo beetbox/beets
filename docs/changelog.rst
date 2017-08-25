@@ -29,6 +29,10 @@ Fixes:
   shown or beets could crash with a traceback. :bug:`2659`
 * :doc:`/plugins/kodiupdate`: Fix server URL and add better error reporting.
   :bug:`2662`
+* Fixed a problem where "no-op" modifications would reset files' mtimes,
+  resulting in unnecessary writes. This most prominently affected the
+  :doc:`/plugins/edit` when saving the text file without making changes to some
+  music. :bug:`2667`
 
 For developers:
 

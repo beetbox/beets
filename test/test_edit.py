@@ -162,7 +162,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT,
                           title_starts_with=u'modified t\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['title'])
+                                      ['title', 'mtime'])
 
     def test_single_title_edit_apply(self, mock_write):
         """Edit title for one item in the library, then apply changes."""
@@ -202,7 +202,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
 
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['album'])
+                                      ['album', 'mtime'])
         # Ensure album is *not* modified.
         self.album.load()
         self.assertEqual(self.album.album, u'\u00e4lbum')
@@ -210,13 +210,17 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
     def test_single_edit_add_field(self, mock_write):
         """Edit the yaml file appending an extra field to the first item, then
         apply changes."""
-        # Append "foo: bar" to item with id == 1.
-        self.run_mocked_command({'replacements': {u"id: 1":
-                                                  u"id: 1\nfoo: bar"}},
+        # Append "foo: bar" to item with id == 2. ("id: 1" would match both
+        # "id: 1" and "id: 10")
+        self.run_mocked_command({'replacements': {u"id: 2":
+                                                  u"id: 2\nfoo: bar"}},
                                 # Apply changes.
                                 ['a'])
 
-        self.assertEqual(self.lib.items(u'id:1')[0].foo, 'bar')
+        self.assertEqual(self.lib.items(u'id:2')[0].foo, 'bar')
+        # Even though a flexible attribute was written (which is not directly
+        # written to the tags), write should still be called since templates
+        # might use it.
         self.assertCounts(mock_write, write_call_count=1,
                           title_starts_with=u't\u00eftle')
 
@@ -232,7 +236,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertEqual(self.album.album, u'modified \u00e4lbum')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['album'])
+                                      ['album', 'mtime'])
 
     def test_a_albumartist_edit_apply(self, mock_write):
         """Album query (-a), edit albumartist field, apply changes."""
@@ -246,7 +250,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
         self.assertEqual(self.album.albumartist, u'the modified album artist')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
-                                      ['albumartist'])
+                                      ['albumartist', 'mtime'])
 
     def test_malformed_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a malformed yaml

@@ -547,10 +547,10 @@ class Item(LibModel):
             elif isinstance(value, BLOB_TYPE):
                 value = bytes(value)
 
-        if key in MediaFile.fields():
-            self.mtime = 0  # Reset mtime on dirty.
+        changed = super(Item, self)._setitem(key, value)
 
-        super(Item, self).__setitem__(key, value)
+        if changed and key in MediaFile.fields():
+            self.mtime = 0  # Reset mtime on dirty.
 
     def update(self, values):
         """Set all key/value pairs in the mapping. If mtime is
