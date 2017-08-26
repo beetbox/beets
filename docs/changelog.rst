@@ -33,6 +33,8 @@ Fixes:
   resulting in unnecessary writes. This most prominently affected the
   :doc:`/plugins/edit` when saving the text file without making changes to some
   music. :bug:`2667`
+* :doc:`/plugins/chroma`: Fix a crash when running the ``submit`` command on
+  Python 3 on Windows with non-ASCII filenames. :bug:`2671`
 
 For developers:
 
