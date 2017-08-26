@@ -120,10 +120,19 @@ characters used to surround the disambiguator.
 Any group of albums with identical values for all the identifiers will be
 considered "duplicates". Then, the function tries each disambiguator field,
 looking for one that distinguishes each of the duplicate albums from each
-other. The first such field is used as the result for ``%aunique``, preceded
-by a space. If no field suffices, an arbitrary number is used to distinguish
-the two albums. If an album is not a duplicate, ``%aunique`` just returns
-an empty string.
+other.
+
+The first such field is used as the result for ``%aunique``, in the following
+format:
+
+1. Space: `` ``
+2. Left bracket (default: ``[``)
+3. The distinguishing field
+4. Right bracket (default: ``]``)
+
+If no field suffices, beets distinguishes the two albums with their album number
+(used internally in the beets database). If an album is not a duplicate,
+``%aunique`` just returns an empty string.
 
 The default identifiers are ``albumartist album`` and the default disambiguators
 are ``albumtype year label catalognum albumdisambig``. So you can get reasonable
@@ -133,7 +142,7 @@ disambiguation if, for example, you include the year by default in path formats.
 
 The default characters used as brackets are ``[]``. To change this, provide a
 third argument to the ``%aunique`` function consisting of two characters: the left
-and right brackets. Or, to turn off bracketing entirely, leave argument blank.
+and right brackets. Or, to turn off bracketing entirely, leave the argument blank.
 
 One caveat: When you import an album that is named identically to one already in
 your library, the *first* album—the one already in your library— will not
