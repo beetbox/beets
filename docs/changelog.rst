@@ -35,6 +35,8 @@ Fixes:
   music. :bug:`2667`
 * :doc:`/plugins/chroma`: Fix a crash when running the ``submit`` command on
   Python 3 on Windows with non-ASCII filenames. :bug:`2671`
+* :doc:`/plugins/absubmit`: Fix an occasional crash on Python 3 when the AB
+  analysis tool produced non-ASCII metadata. :bug:`2673`
 
 For developers:
 

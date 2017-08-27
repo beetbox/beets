@@ -133,8 +133,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     item=item, error=e
                 )
                 return None
-            with open(filename) as tmp_file:
-                analysis = json.loads(tmp_file.read())
+            with open(filename, 'rb') as tmp_file:
+                analysis = json.load(tmp_file)
             # Add the hash to the output.
             analysis['metadata']['version']['essentia_build_sha'] = \
                 self.extractor_sha
