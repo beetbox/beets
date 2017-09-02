@@ -18,7 +18,6 @@
 from __future__ import division, absolute_import, print_function
 
 import re
-import pdb
 import traceback
 import musicbrainzngs
 from six.moves.urllib.parse import urljoin
@@ -347,7 +346,7 @@ def track_for_id(releaseid):
         log.debug(u'Invalid MBID ({0}).', releaseid)
         return
     try:
-        res = musicbrainzngs.get_recording_by_id(id=trackid,
+        res = musicbrainzngs.get_recording_by_id(trackid,
                                                  includes=TRACK_INCLUDES)
     except musicbrainzngs.ResponseError:
         log.debug(u'Track ID match failed.')

@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 from test import _common
 from beets.autotag import mb
 from beets import config
+from beets.autotag import hooks
 
 import unittest
 import mock
@@ -117,7 +118,7 @@ class MBAlbumInfoTest(_common.TestCase):
 
     def test_parse_release_with_year(self):
         release = self._make_release('1984')
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.album, 'ALBUM TITLE')
         self.assertEqual(d.album_id, 'ALBUM ID')
         self.assertEqual(d.artist, 'ARTIST NAME')
@@ -128,12 +129,12 @@ class MBAlbumInfoTest(_common.TestCase):
 
     def test_parse_release_type(self):
         release = self._make_release('1984')
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.albumtype, 'album')
 
     def test_parse_release_full_date(self):
         release = self._make_release('1987-03-31')
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.original_year, 1987)
         self.assertEqual(d.original_month, 3)
         self.assertEqual(d.original_day, 31)
@@ -143,7 +144,7 @@ class MBAlbumInfoTest(_common.TestCase):
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         release = self._make_release(tracks=tracks)
 
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         t = d.tracks
         self.assertEqual(len(t), 2)
         self.assertEqual(t[0].title, 'TITLE ONE')
@@ -158,7 +159,7 @@ class MBAlbumInfoTest(_common.TestCase):
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         release = self._make_release(tracks=tracks)
 
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         t = d.tracks
         self.assertEqual(t[0].medium_index, 1)
         self.assertEqual(t[0].index, 1)
@@ -170,7 +171,7 @@ class MBAlbumInfoTest(_common.TestCase):
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         release = self._make_release(tracks=tracks)
 
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.mediums, 1)
         t = d.tracks
         self.assertEqual(t[0].medium, 1)
@@ -190,7 +191,7 @@ class MBAlbumInfoTest(_common.TestCase):
             'track-list': second_track_list,
         })
 
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.mediums, 2)
         t = d.tracks
         self.assertEqual(t[0].medium, 1)
@@ -202,87 +203,87 @@ class MBAlbumInfoTest(_common.TestCase):
 
     def test_parse_release_year_month_only(self):
         release = self._make_release('1987-03')
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.original_year, 1987)
         self.assertEqual(d.original_month, 3)
 
     def test_no_durations(self):
         tracks = [self._make_track('TITLE', 'ID', None)]
         release = self._make_release(tracks=tracks)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.tracks[0].length, None)
 
     def test_track_length_overrides_recording_length(self):
         tracks = [self._make_track('TITLE', 'ID', 1.0 * 1000.0)]
         release = self._make_release(tracks=tracks, track_length=2.0 * 1000.0)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.tracks[0].length, 2.0)
 
     def test_no_release_date(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertFalse(d.original_year)
         self.assertFalse(d.original_month)
         self.assertFalse(d.original_day)
 
     def test_various_artists_defaults_false(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertFalse(d.va)
 
     def test_detect_various_artists(self):
         release = self._make_release(None)
         release['artist-credit'][0]['artist']['id'] = \
             mb.VARIOUS_ARTISTS_ID
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertTrue(d.va)
 
     def test_parse_artist_sort_name(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.artist_sort, 'ARTIST SORT NAME')
 
     def test_parse_releasegroupid(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.releasegroup_id, 'RELEASE GROUP ID')
 
     def test_parse_asin(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.asin, 'ALBUM ASIN')
 
     def test_parse_catalognum(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.catalognum, 'CATALOG NUMBER')
 
     def test_parse_textrepr(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.script, 'SCRIPT')
         self.assertEqual(d.language, 'LANGUAGE')
 
     def test_parse_country(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.country, 'COUNTRY')
 
     def test_parse_status(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.albumstatus, 'STATUS')
 
     def test_parse_media(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         release = self._make_release(None, tracks=tracks)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.media, 'FORMAT')
 
     def test_parse_disambig(self):
         release = self._make_release(None)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.albumdisambig,
                          'RG_DISAMBIGUATION, R_DISAMBIGUATION')
 
@@ -290,7 +291,7 @@ class MBAlbumInfoTest(_common.TestCase):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         release = self._make_release(None, tracks=tracks)
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         t = d.tracks
         self.assertEqual(t[0].disctitle, 'MEDIUM TITLE')
         self.assertEqual(t[1].disctitle, 'MEDIUM TITLE')
@@ -298,13 +299,13 @@ class MBAlbumInfoTest(_common.TestCase):
     def test_missing_language(self):
         release = self._make_release(None)
         del release['text-representation']['language']
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.language, None)
 
     def test_parse_recording_artist(self):
         tracks = [self._make_track('a', 'b', 1, True)]
         release = self._make_release(None, tracks=tracks)
-        track = mb.album_info(release).tracks[0]
+        track = hooks.AlbumInfo.from_mb_release(release).tracks[0]
         self.assertEqual(track.artist, 'RECORDING ARTIST NAME')
         self.assertEqual(track.artist_id, 'RECORDING ARTIST ID')
         self.assertEqual(track.artist_sort, 'RECORDING ARTIST SORT NAME')
@@ -313,7 +314,7 @@ class MBAlbumInfoTest(_common.TestCase):
     def test_track_artist_overrides_recording_artist(self):
         tracks = [self._make_track('a', 'b', 1, True)]
         release = self._make_release(None, tracks=tracks, track_artist=True)
-        track = mb.album_info(release).tracks[0]
+        track = hooks.AlbumInfo.from_mb_release(release).tracks[0]
         self.assertEqual(track.artist, 'TRACK ARTIST NAME')
         self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
@@ -321,7 +322,7 @@ class MBAlbumInfoTest(_common.TestCase):
 
     def test_data_source(self):
         release = self._make_release()
-        d = mb.album_info(release)
+        d = hooks.AlbumInfo.from_mb_release(release)
         self.assertEqual(d.data_source, 'MusicBrainz')
 
 

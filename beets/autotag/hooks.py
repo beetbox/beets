@@ -19,8 +19,6 @@ from __future__ import division, absolute_import, print_function
 from collections import namedtuple
 from functools import total_ordering
 import re
-import pdb
-import pprint
 
 from beets import logging
 from beets import plugins
@@ -401,7 +399,8 @@ class TrackInfo(ItemInfo):
         tracks = []
         for track in medium['track-list']:
             ti = TrackInfo.from_mb_recording(track['recording'])
-            ti['media'] = medium['format']
+            if 'format' in medium.keys():
+                ti['media'] = medium['format']
             tracks.append(TrackInfo.from_mb_recording(track['recording']))
         return tracks
 
