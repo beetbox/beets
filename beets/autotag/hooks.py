@@ -19,6 +19,8 @@ from __future__ import division, absolute_import, print_function
 from collections import namedtuple
 from functools import total_ordering
 import re
+import pdb
+import pprint
 
 from beets import logging
 from beets import plugins
@@ -30,10 +32,81 @@ from unidecode import unidecode
 import six
 
 log = logging.getLogger('beets')
+ITERABLES = (list, dict, tuple)
+
+
+def mbngs_translator(mbngd, aliases):
+    """Translates a musicbraizngs dictionnary with several levels to
+    a flat, :py:class:`ItemInfo` friendly one. Uses either a direct
+    mapping (str to str) or entrusts the task to a function specified
+    in the aliases dict. If the dict contains a list, elements must be
+    concatenated into a single string. Also supports using another value
+    as key (e.g. for 'composer' tag) (not yet implemented).
+
+    :param dict mbngd: raw data from musicbrainzngs
+    :param dict aliases: maps musicbrainzngs keys to ItemInfo's keys, to
+                         avoid name clashes (e.g. work id and recording id)
+                         The keys must be the same as mbngd's ones.
+
+    :returns dict: non recursive dict, i.e. mapping from str to str
+    """
+    def loop(subd, suba):
+        """
+        :param subd: subset of mbngd
+        :type subd: (key, val) list
+        :param dict suba: subdict of aliases
+        """
+        if subd == []:
+            return []
+        else:
+            key, val = subd[0]
+            remain = subd[1:]
+            if key not in suba.keys():
+                # We do not go lower
+                return loop(remain, suba)
+            else:
+                # Going deeper in the dict
+                if isinstance(val, dict):
+                    return loop(val.items(), suba[key]) + loop(remain, suba)
+                # Not going deeper, unpacking list
+                elif isinstance(val, list):
+                    if val == []:
+                        return loop(remain, suba)
+                    else:
+                        subval = [(key, val[0]), ]
+                        subremain = [(key, val[1:]), ]
+                        return (loop(subval, suba) + loop(subremain, suba) +
+                                loop(remain, suba))
+                # Value reached
+                else:
+                    return [(suba[key], val)] + loop(remain, suba)
+
+    flattened = loop(mbngd.items(), aliases)
+
+    def populate_dict(growing, data):
+        """Populates growing with data. If key appears twice or more in data,
+        the values are concatenated
+
+        :param dict growing: growing dictionary
+        :param list data: list of tuples with key as first element
+                          and value as second.
+
+        :returns: growing when data is empty
+        """
+        if data == []:
+            return growing
+        else:
+            key, val = data.pop()
+            if key in growing.keys() and val not in growing[key].split(', '):
+                growing[key] += ', {}'.format(val)
+            else:
+                growing[key] = val
+            return populate_dict(growing, data)
+
+    return populate_dict({}, flattened)
 
 
 # Classes used to represent candidate options.
-
 class ItemInfo(dict):
     """Generic item information. Dict-like object which has its key/value
     pair mirrored on its attributes for the sake of backward compatibility.
@@ -96,6 +169,20 @@ class ItemInfo(dict):
         except KeyError:
             return None
 
+    def update_val(self, key, val):
+        """Appends value to the field identified by key if it
+        exists, else, create it
+
+        :param str key: identifies field
+        :param str val: value to be set
+        """
+        if not isinstance(val, str):
+            raise TypeError("Third argument must be a str")
+        if key in self.keys():
+            self[key] += ', {v}'.format(v=val)
+        else:
+            self[key] = val
+
 
 class AlbumInfo(ItemInfo):
     """Describes a canonical release that may be used to match a release
@@ -132,19 +219,41 @@ class AlbumInfo(ItemInfo):
     """
 
     REQ_ATTR = set(('album', 'album_id', 'artist', 'artist_id', 'tracks'))
+    """Arguments required to build an :py:class:`AlbumInfo`"""
+    ALIASES = {
+        'title': 'album',
+        'id': 'album_id',
+        'asin': 'asin',
+        'country': 'releasecountry',
+        'status': 'releasestatus',
+        'date': 'date',
+        'barcode': 'barcode',
+        'packaging': 'packaging',
+        'artist-credit': {
+            'artist': {
+                'id': 'artist_id',
+                'name': 'artist',
+                'sort-name': 'artistsort',
+            },
+        },
+        'medium-list': {
+            'format': 'media',
+        },
+    }
+    """Paths to attributes in musicbrainzngs dict"""
 
     def __init__(self, **kwargs):
         """Sets vars and verifies that REQ_ATTR are in kwargs"""
         if not self.REQ_ATTR <= set(kwargs.keys()):
             raise TypeError(
                 "AlbumInfo takes at least those 5 keyword arguments "
-                "{}".format(self.REQ_ATTR))
+                "{}, {}, {}, {}, {}".format(*tuple(self.REQ_ATTR)))
         else:
             super(AlbumInfo, self).__init__(**kwargs)
 
     def __hash__(self):
         """Always a good idea to have a hash"""
-        return self['album_id']
+        return self['album_id'].__hash__()
 
     def __reduce__(self):
         """Used by :py:func:`copy.deepcopy`"""
@@ -165,6 +274,36 @@ class AlbumInfo(ItemInfo):
         if hasattr(self, 'tracks') and self.tracks:
             for track in self.tracks:
                 track.decode(codec, errors)
+
+    def build_disambig(self, release):
+        """Builds disambiguation string"""
+        disambig = []
+        if release['release-group'].get('disambiguation'):
+            disambig.append(release['release-group'].get('disambiguation'))
+        if release.get('disambiguation'):
+            disambig.append(release.get('disambiguation'))
+        self['albumdisambig'] = u', '.join(disambig)
+
+    @staticmethod
+    def from_mb_release(release):
+        """Creates an AlbumInfo object from a musicbrainzngs release dict
+
+        :param dict release: useful dict from musicbrainzngs (the 'release'
+                             key of the basic mbng dict)
+
+        :rtype: :py:class:`AlbumInfo`
+        """
+        attributes = {}
+        attributes = mbngs_translator(release, AlbumInfo.ALIASES)
+
+        # Tracks management
+        tracks = []
+        for medium in release['medium-list']:
+            tracks += TrackInfo.from_mb_medium(medium)
+        attributes['tracks'] = tracks
+        ai = AlbumInfo(**attributes)
+        ai.decode()
+        return ai
 
 
 class TrackInfo(ItemInfo):
@@ -198,6 +337,29 @@ class TrackInfo(ItemInfo):
     """
 
     REQ_ATTR = set(('title', 'track_id'))
+    """Required attributes"""
+    ALIASES = {
+        'id': 'track_id',
+        'title': 'title',
+        'artist-credit': {
+            'id': 'artist_id',
+            'name': 'artist',
+            'sort-name': 'artistsort',
+        },
+        'work-relation-list': {
+            'title': 'work',
+            'work': {
+                'id': 'musicbrainz_workid',
+                'type': 'worktype',
+                'language': 'language',
+                'artist-relation-list': {
+                    'artist': {
+                        'name': 'composer',
+                    },
+                },
+            },
+        },
+    }
 
     def __init__(self, **kwargs):
         """Sets vars and verifies that REQ_ATTR are in kwargs"""
@@ -227,6 +389,36 @@ class TrackInfo(ItemInfo):
         for fld, val in self.__dict__.items():
             if isinstance(val, bytes):
                 setattr(self, fld, val.decode(codec, errors))
+
+    @staticmethod
+    def from_mb_medium(medium):
+        """Parses medium and creates appropriate TrackInfo. Computes total
+        tracks and index of track
+
+        :returns: list of track infos parsed from medium
+        :rtype: :py:class:`TrackInfo` list
+        """
+        tracks = []
+        for track in medium['track-list']:
+            ti = TrackInfo.from_mb_recording(track['recording'])
+            ti['media'] = medium['format']
+            tracks.append(TrackInfo.from_mb_recording(track['recording']))
+        return tracks
+
+    @staticmethod
+    def from_mb_recording(recording):
+        """Creates a TrackInfo from a recording object. Depends
+        heavily on musbrainzngs structures. We treat separately the three
+        entities track - recording - work, and merge them all in a
+        TrackInfo element.
+
+        :param recording: basis of the TrackInfo, got from
+                          :py:func:`musicbrainzngs.get_recording_by_id`
+        :type recording: dict
+        """
+        attributes = {}
+        attributes = mbngs_translator(recording, TrackInfo.ALIASES)
+        return TrackInfo(**attributes)
 
 
 # Candidate distance scoring.
