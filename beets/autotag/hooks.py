@@ -30,7 +30,34 @@ from unidecode import unidecode
 import six
 
 log = logging.getLogger('beets')
-ITERABLES = (list, dict, tuple)
+
+
+def get_aliases(aliases):
+    """Gets end values af alias dict
+
+    :param dict alias: a recursive dict
+
+    :returns: the values og aliases
+    :rtype: list
+    """
+    def loop(subal):
+        """
+        :param subal: subset of aliases
+        :type subal: (key, val) list
+
+        :rtype: list
+        """
+        if subal == []:
+            return []
+        else:
+            _, val = subal[0]
+            rem = subal[1:]
+            if isinstance(val, dict):
+                return loop(val.items()) + loop(rem)
+            else:
+                return [val] + loop(rem)
+
+        return loop(aliases.items())
 
 
 def mbngs_translator(mbngd, aliases):
@@ -109,6 +136,11 @@ class ItemInfo(dict):
     """Generic item information. Dict-like object which has its key/value
     pair mirrored on its attributes for the sake of backward compatibility.
     """
+
+    REQ_ATTR = set()
+    """Attributes required to create an ItemInfo"""
+    ALIASES = {}
+    """Maps msucibrainzngs fields to ItemInfo fields"""
 
     def __init__(self, **kwargs):
         """Initialises values. kwargs are optional arguments and may be
@@ -216,26 +248,39 @@ class AlbumInfo(ItemInfo):
     optional and may be None.
     """
 
-    REQ_ATTR = set(('album', 'album_id', 'artist', 'artist_id', 'tracks'))
+    REQ_ATTR = set(('album', 'album_id', 'artist',
+                    'artist_id', 'tracks'))
     """Arguments required to build an :py:class:`AlbumInfo`"""
     ALIASES = {
         'title': 'album',
         'id': 'album_id',
         'asin': 'asin',
-        'country': 'releasecountry',
-        'status': 'releasestatus',
+        'country': 'country',
+        'status': 'albumstatus',
         'date': 'date',
         'barcode': 'barcode',
         'packaging': 'packaging',
+        'artist-credit-phrase': 'artist_credit',
+        'mediums': 'medium-count',
+        'text-representation': {
+            'script': 'script',
+            'language': 'language',
+        },
+        'label-info-list': {
+            'catalog-number': 'catalognum',
+            'label': {
+                'name': 'label',
+            },
+        },
         'artist-credit': {
             'artist': {
                 'id': 'artist_id',
                 'name': 'artist',
-                'sort-name': 'artistsort',
+                'sort-name': 'artist_sort',
             },
         },
-        'medium-list': {
-            'format': 'media',
+        'release-group': {
+            'id': 'releasegroup_id'
         },
     }
     """Paths to attributes in musicbrainzngs dict"""
@@ -291,8 +336,14 @@ class AlbumInfo(ItemInfo):
 
         :rtype: :py:class:`AlbumInfo`
         """
-        attributes = {}
         attributes = mbngs_translator(release, AlbumInfo.ALIASES)
+        if 'date' in attributes.keys():
+            date_split = attributes['date'].split('-')
+            attributes['year'] = date_split[0]
+            if len(date_split) >= 2:
+                attributes['month'] = date_split[1]
+                if len(date_split) >= 3:
+                    attributes['day'] = date_split[2]
 
         # Tracks management
         tracks = []
@@ -336,35 +387,58 @@ class TrackInfo(ItemInfo):
 
     REQ_ATTR = set(('title', 'track_id'))
     """Required attributes"""
+
     ALIASES = {
+        'position': 'medium_index',
+        'number': 'track_alt',
         'id': 'track_id',
-        'title': 'title',
+        'length': 'length',
         'artist-credit': {
-            'id': 'artist_id',
-            'name': 'artist',
-            'sort-name': 'artistsort',
+            'artist': {
+                'name': 'artist',
+                'sort-name': 'artist_sort',
+                'id': 'artist_id',
+            },
         },
-        'work-relation-list': {
-            'title': 'work',
-            'work': {
-                'id': 'musicbrainz_workid',
-                'type': 'worktype',
-                'language': 'language',
-                'artist-relation-list': {
-                    'artist': {
-                        'name': 'composer',
+        'recording': {
+            'id': 'musicbrainz_recordingid',
+            'title': 'title',
+            'artist-credit': {
+                'id': 'artist_id',
+                'name': 'artist',
+                'sort-name': 'artist_sort',
+            },
+            'work-relation-list': {
+                'title': 'work',
+                'work': {
+                    'id': 'musicbrainz_workid',
+                    'type': 'worktype',
+                    'language': 'language',
+                    'artist-relation-list': {
+                        'artist': {
+                            'name': 'writer',
+                        },
                     },
                 },
             },
         },
     }
+    """Paths of keys in musicbrainzngs recording dict"""
+
+    MEDIUM_ALIASES = {
+        'title': 'disctitle',
+        'position': 'medium',
+        'track-count': 'medium_total',
+        'format': 'media',
+    }
+    """Keys  to be dumped from medium to track info"""
 
     def __init__(self, **kwargs):
         """Sets vars and verifies that REQ_ATTR are in kwargs"""
         if not self.REQ_ATTR <= set(kwargs.keys()):
             raise TypeError(
                 "TrackInfo takes at least those 2 keyword arguments "
-                "{}".format(self.REQ_ATTR))
+                "{}, {}".format(*tuple(self.REQ_ATTR)))
         else:
             super(TrackInfo, self).__init__(**kwargs)
 
@@ -397,26 +471,30 @@ class TrackInfo(ItemInfo):
         :rtype: :py:class:`TrackInfo` list
         """
         tracks = []
+        med_attr = mbngs_translator(medium, TrackInfo.MEDIUM_ALIASES)
         for track in medium['track-list']:
-            ti = TrackInfo.from_mb_recording(track['recording'])
-            if 'format' in medium.keys():
-                ti['media'] = medium['format']
-            tracks.append(TrackInfo.from_mb_recording(track['recording']))
+            ti = TrackInfo.from_mb_track(track)
+            # Updated med_attr to avoid overwriting ti
+            med_attr.update(ti)
+            ti.update(med_attr)
+
+            # Special processing
+            if 'length' in ti.keys():
+                ti['length'] = float(ti['length']) / 1000.
+            tracks.append(ti)
         return tracks
 
     @staticmethod
-    def from_mb_recording(recording):
-        """Creates a TrackInfo from a recording object. Depends
-        heavily on musbrainzngs structures. We treat separately the three
-        entities track - recording - work, and merge them all in a
-        TrackInfo element.
+    def from_mb_track(track):
+        """Creates a TrackInfo from a track (member of
+        medium['track-list'] in musicbrainzngs)
 
-        :param recording: basis of the TrackInfo, got from
-                          :py:func:`musicbrainzngs.get_recording_by_id`
-        :type recording: dict
+        :param dict track: track from musicbrainzngs
+
+        :returns: a track info (dict-like)
+        :rtype: :py:class:`TrackInfo`
         """
-        attributes = {}
-        attributes = mbngs_translator(recording, TrackInfo.ALIASES)
+        attributes = mbngs_translator(track, TrackInfo.ALIASES)
         return TrackInfo(**attributes)
 
 
