@@ -9,3 +9,4 @@ in hacking beets itself or creating plugins for it.
     plugins
     api
     media_file
+    third_party_applications
