@@ -12,11 +12,31 @@ New features:
 
 Fixes:
 
+* Prevent Python from warning about a ``BrokenPipeError`` being ignored even
+  though we do take it into account. This was an issue when using beets in
+  simple shell scripts.
+  Thanks to :user:`Azphreal`.
+  :bug:`2622` :bug:`2631`
 * :doc:`/plugins/replaygain`: Fix a regression in the previous release related
   to the new R128 tags. :bug:`2615` :bug:`2623`
 * :doc:`/plugins/lyrics`: The MusixMatch backend now detect and warns
   the user when blocked on the server. Thanks to
   :user:`anarcat`. :bug:`2634` :bug:`2632`
+* :doc:`/plugins/importfeeds`: Fix an error on Python 3 in certain
+  configurations. Thanks to :user:`djl`. :bug:`2467` :bug:`2658`
+* :doc:`/plugins/edit`: Fix a bug when editing items during a ``-L``
+  re-import. Previously, diffs against against unrelated items could be
+  shown or beets could crash with a traceback. :bug:`2659`
+* :doc:`/plugins/kodiupdate`: Fix server URL and add better error reporting.
+  :bug:`2662`
+* Fixed a problem where "no-op" modifications would reset files' mtimes,
+  resulting in unnecessary writes. This most prominently affected the
+  :doc:`/plugins/edit` when saving the text file without making changes to some
+  music. :bug:`2667`
+* :doc:`/plugins/chroma`: Fix a crash when running the ``submit`` command on
+  Python 3 on Windows with non-ASCII filenames. :bug:`2671`
+* :doc:`/plugins/absubmit`: Fix an occasional crash on Python 3 when the AB
+  analysis tool produced non-ASCII metadata. :bug:`2673`
 
 For developers:
 
