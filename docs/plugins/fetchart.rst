@@ -109,13 +109,13 @@ be processed; otherwise, the command processes every album in your library.
 Display Only Missing Album Art
 ------------------------------
 
-Use the ``fetchart`` command with the ``-m`` switch in order to display only missing
+Use the ``fetchart`` command with the ``-q`` switch in order to display only missing
 art::
 
-    $ beet fetchart [-m] [query]
+    $ beet fetchart [-q] [query]
 
-By default the command will display all results, the ``-m`` or ``--missing``
-switch will only display results for those album arts that still miss.
+By default the command will display all results, the ``-q`` or ``--quiet``
+switch will only display results for album arts that are still missing.
 
 Image Resizing
 --------------

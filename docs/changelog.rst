@@ -9,6 +9,9 @@ New features:
 * :doc:`/plugins/lyrics`: The plugin can now produce reStructuredText files
   for beautiful, readable books of lyrics. Thanks to :user:`anarcat`.
   :bug:`2628`
+* :doc:`/plugins/fetchart`: The plugin has now a quiet switch that will only
+  display missing album arts. Thanks to :user:`euri10`.
+  :bug:`2683`
 
 Fixes:
 

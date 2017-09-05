@@ -825,14 +825,14 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             help=u're-download art when already present'
         )
         cmd.parser.add_option(
-            u'-m', u'--missing', dest='missing',
+            u'-q', u'--quiet', dest='quiet',
             action='store_true', default=False,
-            help=u'shows only missing art'
+            help=u'shows only quiet art'
         )
 
         def func(lib, opts, args):
             self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
-                                 opts.missing)
+                                 opts.quiet)
         cmd.func = func
         return [cmd]
 
@@ -872,13 +872,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         return out
 
-    def batch_fetch_art(self, lib, albums, force, missing):
+    def batch_fetch_art(self, lib, albums, force, quiet):
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
         """
         for album in albums:
             if album.artpath and not force and os.path.isfile(album.artpath):
-                if not missing:
+                if not quiet:
                     message = ui.colorize('text_highlight_minor',
                                           u'has album art')
                     self._log.info(u'{0}: {1}', album, message)
