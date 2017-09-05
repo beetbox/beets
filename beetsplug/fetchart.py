@@ -824,9 +824,15 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             action='store_true', default=False,
             help=u're-download art when already present'
         )
+        cmd.parser.add_option(
+            u'-q', u'--quiet', dest='quiet',
+            action='store_true', default=False,
+            help=u'shows only quiet art'
+        )
 
         def func(lib, opts, args):
-            self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)
+            self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
+                                 opts.quiet)
         cmd.func = func
         return [cmd]
 
@@ -866,13 +872,16 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         return out
 
-    def batch_fetch_art(self, lib, albums, force):
+    def batch_fetch_art(self, lib, albums, force, quiet):
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
         """
         for album in albums:
             if album.artpath and not force and os.path.isfile(album.artpath):
-                message = ui.colorize('text_highlight_minor', u'has album art')
+                if not quiet:
+                    message = ui.colorize('text_highlight_minor',
+                                          u'has album art')
+                    self._log.info(u'{0}: {1}', album, message)
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
@@ -885,5 +894,4 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize('text_success', u'found album art')
                 else:
                     message = ui.colorize('text_error', u'no art found')
-
-            self._log.info(u'{0}: {1}', album, message)
+                self._log.info(u'{0}: {1}', album, message)
