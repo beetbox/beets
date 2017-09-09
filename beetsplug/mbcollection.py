@@ -60,9 +60,32 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             config['musicbrainz']['user'].as_str(),
             config['musicbrainz']['pass'].as_str(),
         )
-        self.config.add({'auto': False})
+        self.config.add({
+            'auto': False,
+            'collection': u'',
+        })
         if self.config['auto']:
             self.import_stages = [self.imported]
+
+    def _get_collection(self):
+        collections = mb_call(musicbrainzngs.get_collections)
+        if not collections['collection-list']:
+            raise ui.UserError(u'no collections exist for user')
+
+        # Get all collection IDs, avoiding event collections
+        collection_ids = [x['id'] for x in collections['collection-list']]
+        if not collection_ids:
+            raise ui.UserError(u'No collection found.')
+
+        # Check that the collection exists so we can present a nice error
+        collection = self.config['collection'].as_str()
+        if collection:
+            if collection not in collection_ids:
+                raise ui.UserError(u'invalid collection ID: {0}'.format(collection))
+            return collection
+
+        # No specified collection. Just return the first collection ID
+        return collection_ids[0]
 
     def commands(self):
         mbupdate = Subcommand('mbupdate',
@@ -82,19 +105,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
     def update_album_list(self, album_list):
         """Update the MusicBrainz collection from a list of Beets albums
         """
-        # Get the available collections.
-        collections = mb_call(musicbrainzngs.get_collections)
-        if not collections['collection-list']:
-            raise ui.UserError(u'no collections exist for user')
-
-        # Get the first release collection. MusicBrainz also has event
-        # collections, so we need to avoid adding to those.
-        for collection in collections['collection-list']:
-            if 'release-count' in collection:
-                collection_id = collection['id']
-                break
-        else:
-            raise ui.UserError(u'No collection found.')
+        collection_id = self._get_collection()
 
         # Get a list of all the album IDs.
         album_ids = []
