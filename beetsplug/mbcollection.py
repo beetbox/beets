@@ -24,6 +24,7 @@ import musicbrainzngs
 import re
 
 SUBMISSION_CHUNK_SIZE = 200
+FETCH_CHUNK_SIZE = 100
 UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
 
 
@@ -63,6 +64,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         self.config.add({
             'auto': False,
             'collection': u'',
+            'remove': False,
         })
         if self.config['auto']:
             self.import_stages = [self.imported]
@@ -88,22 +90,62 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         # No specified collection. Just return the first collection ID
         return collection_ids[0]
 
+    def _get_albums_in_collection(self, id):
+        def _fetch(offset):
+            res = mb_call(
+                musicbrainzngs.get_releases_in_collection,
+                id,
+                limit=FETCH_CHUNK_SIZE,
+                offset=offset
+            )['collection']
+            return [x['id'] for x in res['release-list']], res['release-count']
+
+        offset = 0
+        albums_in_collection, release_count = _fetch(offset)
+        for i in range(0, release_count, FETCH_CHUNK_SIZE):
+            offset += FETCH_CHUNK_SIZE
+            albums_in_collection += _fetch(offset)[0]
+
+        return albums_in_collection
+
     def commands(self):
         mbupdate = Subcommand('mbupdate',
                               help=u'Update MusicBrainz collection')
+        mbupdate.parser.add_option('-r', '--remove',
+                                   action='store_true', default=None,
+                                   dest='remove_missing',
+                                   help='Remove albums not in beets library')
         mbupdate.func = self.update_collection
         return [mbupdate]
 
+    def remove_missing(self, collection_id, lib_albums):
+        lib_ids = set([x.mb_albumid for x in lib_albums])
+        albums_in_collection = self._get_albums_in_collection(collection_id)
+        remove_me = list(lib_ids - set(albums_in_collection))
+        for i in range(0, len(remove_me), FETCH_CHUNK_SIZE):
+            chunk = remove_me[i:i + FETCH_CHUNK_SIZE]
+            mb_call(
+                musicbrainzngs.remove_releases_from_collection,
+                collection_id, chunk
+            )
+
     def update_collection(self, lib, opts, args):
-        self.update_album_list(lib.albums())
+        # If the ``-r`` option is not given then fall back to the
+        # config defaults.
+        if opts.remove_missing is None:
+            remove_missing = self.config['remove'].get(bool)
+        else:
+            remove_missing = opts.remove_missing
+
+        self.update_album_list(lib, lib.albums(), remove_missing)
 
     def imported(self, session, task):
         """Add each imported album to the collection.
         """
         if task.is_album:
-            self.update_album_list([task.album])
+            self.update_album_list(session.lib, [task.album])
 
-    def update_album_list(self, album_list):
+    def update_album_list(self, lib, album_list, remove_missing=False):
         """Update the MusicBrainz collection from a list of Beets albums
         """
         collection_id = self._get_collection()
@@ -123,4 +165,6 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             u'Updating MusicBrainz collection {0}...', collection_id
         )
         submit_albums(collection_id, album_ids)
+        if remove_missing:
+            self.remove_missing(collection_id, lib.albums())
         self._log.info(u'...MusicBrainz collection updated.')
