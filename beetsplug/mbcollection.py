@@ -81,7 +81,8 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         collection = self.config['collection'].as_str()
         if collection:
             if collection not in collection_ids:
-                raise ui.UserError(u'invalid collection ID: {0}'.format(collection))
+                raise ui.UserError(u'invalid collection ID: {}'
+                                   .format(collection))
             return collection
 
         # No specified collection. Just return the first collection ID
