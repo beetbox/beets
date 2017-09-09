@@ -15,6 +15,8 @@ New features:
 * :doc:`/plugins/mbcollection`: The plugin now supports a custom MusicBrainz
   collection via the ``collection`` configuration option.
   :bug:`2685`
+* :doc:`/plugins/mbcollection`: The plugin now supports removing albums
+  from collections that are longer in the beets library.
 
 Fixes:
 
