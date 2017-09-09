@@ -12,6 +12,9 @@ New features:
 * :doc:`/plugins/fetchart`: The plugin has now a quiet switch that will only
   display missing album arts. Thanks to :user:`euri10`.
   :bug:`2683`
+* :doc:`/plugins/mbcollection`: The plugin now supports a custom MusicBrainz
+  collection via the ``collection`` configuration option.
+  :bug:`2685`
 
 Fixes:
 
