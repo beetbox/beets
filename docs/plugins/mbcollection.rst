@@ -29,3 +29,5 @@ configuration file. There is one option available:
 - **auto**: Automatically amend your MusicBrainz collection whenever you
   import a new album.
   Default: ``no``.
+- **collection**: Which MusicBrainz collection to update.
+  Default: ``None``.
