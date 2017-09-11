@@ -126,7 +126,7 @@ class FilesystemError(HumanReadableException):
 
 
 class MoveOperation(Enum):
-    """Represents the file operations that e.g. various move functions can carry out.
+    """The file operations that e.g. various move functions can carry out.
     """
     MOVE = 0
     COPY = 1
