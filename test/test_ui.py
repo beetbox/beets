@@ -40,7 +40,7 @@ from beets import config
 from beets import plugins
 from beets.util.confit import ConfigError
 from beets import util
-from beets.util import syspath
+from beets.util import syspath, MoveOperation
 
 
 class ListTest(unittest.TestCase):
@@ -126,7 +126,7 @@ class RemoveTest(_common.TestCase):
         item_path = os.path.join(_common.RSRC, b'full.mp3')
         self.i = library.Item.from_path(item_path)
         self.lib.add(self.i)
-        self.i.move(True)
+        self.i.move(operation=MoveOperation.COPY)
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
@@ -509,7 +509,7 @@ class UpdateTest(_common.TestCase):
         item_path = os.path.join(_common.RSRC, b'full.mp3')
         self.i = library.Item.from_path(item_path)
         self.lib.add(self.i)
-        self.i.move(True)
+        self.i.move(operation=MoveOperation.COPY)
         self.album = self.lib.add_album([self.i])
 
         # Album art.

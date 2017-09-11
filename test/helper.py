@@ -52,6 +52,7 @@ from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
 from beets import util
+from beets.util import MoveOperation
 
 # TODO Move AutotagMock here
 from test import _common
@@ -349,7 +350,7 @@ class TestHelper(object):
         item['path'] = os.path.join(_common.RSRC,
                                     util.bytestring_path('min.' + extension))
         item.add(self.lib)
-        item.move(copy=True)
+        item.move(operation=MoveOperation.COPY)
         item.store()
         return item
 
@@ -370,7 +371,7 @@ class TestHelper(object):
             # mtime needs to be set last since other assignments reset it.
             item.mtime = 12345
             item.add(self.lib)
-            item.move(copy=True)
+            item.move(operation=MoveOperation.COPY)
             item.store()
             items.append(item)
         return items
@@ -387,7 +388,7 @@ class TestHelper(object):
             # mtime needs to be set last since other assignments reset it.
             item.mtime = 12345
             item.add(self.lib)
-            item.move(copy=True)
+            item.move(operation=MoveOperation.COPY)
             item.store()
             items.append(item)
         return self.lib.add_album(items)

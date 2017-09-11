@@ -34,7 +34,8 @@ from beets.autotag import hooks
 from beets import plugins
 from beets import importer
 from beets import util
-from beets.util import syspath, normpath, ancestry, displayable_path
+from beets.util import syspath, normpath, ancestry, displayable_path, \
+    MoveOperation
 from beets import library
 from beets import config
 from beets import logging
@@ -1499,10 +1500,14 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False,
 
             if export:
                 # Copy without affecting the database.
-                obj.move(True, basedir=dest, store=False)
+                obj.move(operation=MoveOperation.COPY, basedir=dest,
+                         store=False)
             else:
                 # Ordinary move/copy: store the new path.
-                obj.move(copy, basedir=dest)
+                if copy:
+                    obj.move(operation=MoveOperation.COPY, basedir=dest)
+                else:
+                    obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
 def move_func(lib, opts, args):
