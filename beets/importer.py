@@ -37,7 +37,7 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
-from beets.util import pipeline, sorted_walk, ancestry
+from beets.util import pipeline, sorted_walk, ancestry, MoveOperation
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
 from beets import mediafile
@@ -675,20 +675,28 @@ class ImportTask(BaseImportTask):
         for item in self.items:
             item.update(changes)
 
-    def manipulate_files(self, move=False, copy=False, write=False,
-                         link=False, hardlink=False, session=None):
+    def manipulate_files(self, operation=None, write=False, session=None):
+        """ Copy, move, link or hardlink (depending on `operation`) the files
+        as well as write metadata.
+
+        `operation` should be an instance of `util.MoveOperation`.
+
+        If `write` is `True` metadata is written to the files.
+        """
+
         items = self.imported_items()
         # Save the original paths of all items for deletion and pruning
         # in the next step (finalization).
         self.old_paths = [item.path for item in items]
         for item in items:
-            if move or copy or link or hardlink:
+            if operation is not None:
                 # In copy and link modes, treat re-imports specially:
                 # move in-library files. (Out-of-library files are
                 # copied/moved as usual).
                 old_path = item.path
-                if (copy or link or hardlink) and self.replaced_items[item] \
-                   and session.lib.directory in util.ancestry(old_path):
+                if (operation != MoveOperation.MOVE
+                        and self.replaced_items[item]
+                        and session.lib.directory in util.ancestry(old_path)):
                     item.move()
                     # We moved the item, so remove the
                     # now-nonexistent file from old_paths.
@@ -696,7 +704,7 @@ class ImportTask(BaseImportTask):
                 else:
                     # A normal import. Just copy files and keep track of
                     # old paths.
-                    item.move(copy, link, hardlink)
+                    item.move(operation)
 
             if write and (self.apply or self.choice_flag == action.RETAG):
                 item.try_write()
@@ -1450,12 +1458,20 @@ def manipulate_files(session, task):
         if task.should_remove_duplicates:
             task.remove_duplicates(session.lib)
 
+        if session.config['move']:
+            operation = MoveOperation.MOVE
+        elif session.config['copy']:
+            operation = MoveOperation.COPY
+        elif session.config['link']:
+            operation = MoveOperation.LINK
+        elif session.config['hardlink']:
+            operation = MoveOperation.HARDLINK
+        else:
+            operation = None
+
         task.manipulate_files(
-            move=session.config['move'],
-            copy=session.config['copy'],
+            operation,
             write=session.config['write'],
-            link=session.config['link'],
-            hardlink=session.config['hardlink'],
             session=session,
         )
 

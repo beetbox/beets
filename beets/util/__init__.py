@@ -31,6 +31,7 @@ import shlex
 from beets.util import hidden
 import six
 from unidecode import unidecode
+from enum import Enum
 
 
 MAX_FILENAME_LENGTH = 200
@@ -122,6 +123,15 @@ class FilesystemError(HumanReadableException):
             )
 
         return u'{0} {1}'.format(self._reasonstr(), clause)
+
+
+class MoveOperation(Enum):
+    """Represents the file operations that e.g. various move functions can carry out.
+    """
+    MOVE = 0
+    COPY = 1
+    LINK = 2
+    HARDLINK = 3
 
 
 def normpath(path):
