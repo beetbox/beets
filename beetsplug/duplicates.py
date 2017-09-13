@@ -22,7 +22,7 @@ import shlex
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess, \
-    bytestring_path
+    bytestring_path, MoveOperation
 from beets.library import Item, Album
 import six
 
@@ -175,10 +175,10 @@ class DuplicatesPlugin(BeetsPlugin):
         """
         print_(format(item, fmt))
         if copy:
-            item.move(basedir=copy, copy=True)
+            item.move(basedir=copy, operation=MoveOperation.COPY)
             item.store()
         if move:
-            item.move(basedir=move, copy=False)
+            item.move(basedir=move)
             item.store()
         if delete:
             item.remove(delete=True)
@@ -312,7 +312,7 @@ class DuplicatesPlugin(BeetsPlugin):
                                     objs[0],
                                     displayable_path(o.path),
                                     displayable_path(missing.destination()))
-                    missing.move(copy=True)
+                    missing.move(operation=MoveOperation.COPY)
         return objs
 
     def _merge(self, objs):
