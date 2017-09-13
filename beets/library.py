@@ -28,7 +28,8 @@ from beets import logging
 from beets.mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util import bytestring_path, syspath, normpath, samefile, \
+    MoveOperation
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
@@ -685,30 +686,33 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move_file(self, dest, copy=False, link=False, hardlink=False):
-        """Moves or copies the item's file, updating the path value if
-        the move succeeds. If a file exists at ``dest``, then it is
-        slightly modified to be unique.
+    def move_file(self, dest, operation=MoveOperation.MOVE):
+        """Move, copy, link or hardlink the item's depending on `operation`,
+        updating the path value if the move succeeds.
+
+        If a file exists at `dest`, then it is slightly modified to be unique.
+
+        `operation` should be an instance of `util.MoveOperation`.
         """
         if not util.samefile(self.path, dest):
             dest = util.unique_path(dest)
-        if copy:
-            util.copy(self.path, dest)
-            plugins.send("item_copied", item=self, source=self.path,
-                         destination=dest)
-        elif link:
-            util.link(self.path, dest)
-            plugins.send("item_linked", item=self, source=self.path,
-                         destination=dest)
-        elif hardlink:
-            util.hardlink(self.path, dest)
-            plugins.send("item_hardlinked", item=self, source=self.path,
-                         destination=dest)
-        else:
+        if operation == MoveOperation.MOVE:
             plugins.send("before_item_moved", item=self, source=self.path,
                          destination=dest)
             util.move(self.path, dest)
             plugins.send("item_moved", item=self, source=self.path,
+                         destination=dest)
+        elif operation == MoveOperation.COPY:
+            util.copy(self.path, dest)
+            plugins.send("item_copied", item=self, source=self.path,
+                         destination=dest)
+        elif operation == MoveOperation.LINK:
+            util.link(self.path, dest)
+            plugins.send("item_linked", item=self, source=self.path,
+                         destination=dest)
+        elif operation == MoveOperation.HARDLINK:
+            util.hardlink(self.path, dest)
+            plugins.send("item_hardlinked", item=self, source=self.path,
                          destination=dest)
 
         # Either copying or moving succeeded, so update the stored path.
@@ -756,29 +760,27 @@ class Item(LibModel):
 
         self._db._memotable = {}
 
-    def move(self, copy=False, link=False, hardlink=False, basedir=None,
+    def move(self, operation=MoveOperation.MOVE, basedir=None,
              with_album=True, store=True):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
         field is updated to reflect the new location.
 
-        If `copy` is true, moving the file is copied rather than moved.
-        Similarly, `link` creates a symlink instead, and `hardlink`
-        creates a hardlink.
+        Instead of moving the item it can also be copied, linked or hardlinked
+        depending on `operation` which should be an instance of
+        `util.MoveOperation`.
 
-        basedir overrides the library base directory for the
-        destination.
+        `basedir` overrides the library base directory for the destination.
 
-        If the item is in an album, the album is given an opportunity to
-        move its art. (This can be disabled by passing
-        with_album=False.)
+        If the item is in an album and `with_album` is `True`, the album is
+        given an opportunity to move its art.
 
         By default, the item is stored to the database if it is in the
         database, so any dirty fields prior to the move() call will be written
-        as a side effect. You probably want to call save() to commit the DB
-        transaction. If `store` is true however, the item won't be stored, and
-        you'll have to manually store it after invoking this method.
+        as a side effect.
+        If `store` is `False` however, the item won't be stored and you'll
+        have to manually store it after invoking this method.
         """
         self._check_db()
         dest = self.destination(basedir=basedir)
@@ -788,7 +790,7 @@ class Item(LibModel):
 
         # Perform the move and store the change.
         old_path = self.path
-        self.move_file(dest, copy, link, hardlink)
+        self.move_file(dest, operation)
         if store:
             self.store()
 
@@ -796,12 +798,12 @@ class Item(LibModel):
         if with_album:
             album = self.get_album()
             if album:
-                album.move_art(copy)
+                album.move_art(operation)
                 if store:
                     album.store()
 
         # Prune vacated directory.
-        if not copy:
+        if operation == MoveOperation.MOVE:
             util.prune_dirs(os.path.dirname(old_path), self._db.directory)
 
     # Templating.
@@ -1008,9 +1010,12 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, copy=False, link=False, hardlink=False):
-        """Move or copy any existing album art so that it remains in the
-        same directory as the items.
+    def move_art(self, operation=MoveOperation.MOVE):
+        """Move, copy, link or hardlink (depending on `operation`) any
+        existing album art so that it remains in the same directory as
+        the items.
+
+        `operation` should be an instance of `util.MoveOperation`.
         """
         old_art = self.artpath
         if not old_art:
@@ -1024,29 +1029,29 @@ class Album(LibModel):
         log.debug(u'moving album art {0} to {1}',
                   util.displayable_path(old_art),
                   util.displayable_path(new_art))
-        if copy:
-            util.copy(old_art, new_art)
-        elif link:
-            util.link(old_art, new_art)
-        elif hardlink:
-            util.hardlink(old_art, new_art)
-        else:
+        if operation == MoveOperation.MOVE:
             util.move(old_art, new_art)
+            util.prune_dirs(os.path.dirname(old_art), self._db.directory)
+        elif operation == MoveOperation.COPY:
+            util.copy(old_art, new_art)
+        elif operation == MoveOperation.LINK:
+            util.link(old_art, new_art)
+        elif operation == MoveOperation.HARDLINK:
+            util.hardlink(old_art, new_art)
         self.artpath = new_art
 
-        # Prune old path when moving.
-        if not copy:
-            util.prune_dirs(os.path.dirname(old_art),
-                            self._db.directory)
+    def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
+        """Move, copy, link or hardlink (depending on `operation`)
+        all items to their destination. Any album art moves along with them.
 
-    def move(self, copy=False, link=False, hardlink=False, basedir=None,
-             store=True):
-        """Moves (or copies) all items to their destination. Any album
-        art moves along with them. basedir overrides the library base
-        directory for the destination. By default, the album is stored to the
-        database, persisting any modifications to its metadata. If `store` is
-        true however, the album is not stored automatically, and you'll have
-        to manually store it after invoking this method.
+        `basedir` overrides the library base directory for the destination.
+
+        `operation` should be an instance of `util.MoveOperation`.
+
+        By default, the album is stored to the database, persisting any
+        modifications to its metadata. If `store` is `False` however,
+        the album is not stored automatically, and you'll have to manually
+        store it after invoking this method.
         """
         basedir = basedir or self._db.directory
 
@@ -1058,11 +1063,11 @@ class Album(LibModel):
         # Move items.
         items = list(self.items())
         for item in items:
-            item.move(copy, link, hardlink, basedir=basedir, with_album=False,
+            item.move(operation, basedir=basedir, with_album=False,
                       store=store)
 
         # Move art.
-        self.move_art(copy, link, hardlink)
+        self.move_art(operation)
         if store:
             self.store()
 

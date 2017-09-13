@@ -50,6 +50,9 @@ For developers:
   missing values into type-specific null-like values. This should help in
   cases where a string field is unexpectedly `None` sometimes instead of just
   showing up as an empty string. :bug:`2605`
+* Refactored the move functions in library.py and the `manipulate_files` function
+  in importer.py to use a single parameter describing the file operation instead
+  of multiple boolean flags. :bug:`2682`
 
 
 1.4.5 (June 20, 2017)
