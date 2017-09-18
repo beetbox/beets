@@ -112,8 +112,9 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         mbupdate = Subcommand('mbupdate',
                               help=u'Update MusicBrainz collection')
         mbupdate.parser.add_option('-r', '--remove',
-                                   action='store_true', default=None,
-                                   dest='remove_missing',
+                                   action='store_true',
+                                   default=False,
+                                   dest='remove',
                                    help='Remove albums not in beets library')
         mbupdate.func = self.update_collection
         return [mbupdate]
@@ -130,13 +131,8 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             )
 
     def update_collection(self, lib, opts, args):
-        # If the ``-r`` option is not given then fall back to the
-        # config defaults.
-        if opts.remove_missing is None:
-            remove_missing = self.config['remove'].get(bool)
-        else:
-            remove_missing = opts.remove_missing
-
+        self.config.set_args(opts)
+        remove_missing = self.config['remove'].get(bool)
         self.update_album_list(lib, lib.albums(), remove_missing)
 
     def imported(self, session, task):
