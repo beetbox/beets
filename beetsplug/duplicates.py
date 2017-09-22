@@ -81,7 +81,7 @@ class DuplicatesPlugin(BeetsPlugin):
             help=u'report duplicates only if all attributes are set',
         )
         self._command.parser.add_option(
-            u'-k', u'--key',
+            u'-k', u'--key', dest='keys',
             action='append', metavar='KEY',
             help=u'report duplicates based on keys (use multiple times)',
         )
