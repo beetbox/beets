@@ -45,6 +45,8 @@ Fixes:
   Python 3 on Windows with non-ASCII filenames. :bug:`2671`
 * :doc:`/plugins/absubmit`: Fix an occasional crash on Python 3 when the AB
   analysis tool produced non-ASCII metadata. :bug:`2673`
+* :doc:`/plugins/duplicates`: Fix the `--key` command line option, which was
+  ignored.
 
 For developers:
 
