@@ -116,9 +116,10 @@ class PlayPlugin(BeetsPlugin):
         else:
             selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
-            if relative_to:
-                paths = [relpath(path, relative_to) for path in paths]
             item_type = 'track'
+         
+        if relative_to:
+            paths = [relpath(path, relative_to) for path in paths]
 
         if not selection:
             ui.print_(ui.colorize('text_warning',
