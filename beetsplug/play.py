@@ -117,7 +117,7 @@ class PlayPlugin(BeetsPlugin):
             selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
             item_type = 'track'
-         
+
         if relative_to:
             paths = [relpath(path, relative_to) for path in paths]
 
