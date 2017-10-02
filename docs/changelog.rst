@@ -20,6 +20,10 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/play`: When ``relative_to`` is set, correctly emit relative paths
+  even when querying for albums rather than tracks.
+  Thanks to :user:`j000`.
+  :bug:`2702`
 * Prevent Python from warning about a ``BrokenPipeError`` being ignored even
   though we do take it into account. This was an issue when using beets in
   simple shell scripts.
