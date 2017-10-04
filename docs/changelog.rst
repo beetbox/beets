@@ -17,6 +17,9 @@ New features:
   :bug:`2685`
 * :doc:`/plugins/mbcollection`: The plugin now supports removing albums
   from collections that are longer in the beets library.
+* A new :ref:`reflink` config option instructs the importer to create reflinks
+  on filesystems that support them. Thanks to :user:`rubdos`.
+  :bug:`2642`
 
 Fixes:
 

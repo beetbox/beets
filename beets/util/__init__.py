@@ -132,6 +132,8 @@ class MoveOperation(Enum):
     COPY = 1
     LINK = 2
     HARDLINK = 3
+    REFLINK = 4
+    REFLINK_AUTO = 5
 
 
 def normpath(path):
@@ -532,6 +534,29 @@ def hardlink(path, dest, replace=False):
         else:
             raise FilesystemError(exc, 'link', (path, dest),
                                   traceback.format_exc())
+
+
+def reflink(path, dest, replace=False, fallback=False):
+    """Create a reflink from `dest` to `path`. Raises an `OSError` if
+    `dest` already exists, unless `replace` is True. Does nothing if
+    `path` == `dest`. When `fallback` is True, `reflink` falls back on
+    `copy` when the filesystem does not support reflinks.
+    """
+    import reflink as pyreflink
+    if samefile(path, dest):
+        return
+
+    if os.path.exists(syspath(dest)) and not replace:
+        raise FilesystemError(u'file exists', 'rename', (path, dest))
+
+    try:
+        pyreflink.reflink(path, dest)
+    except (NotImplementedError, pyreflink.ReflinkImpossibleError) as exc:
+        if fallback:
+            copy(path, dest, replace)
+        else:
+            raise FilesystemError(u'OS/filesystem does not support reflinks.',
+                                  'link', (path, dest), traceback.format_exc())
 
 
 def unique_path(path):
