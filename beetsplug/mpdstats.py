@@ -256,10 +256,6 @@ class MPDStats(object):
         if not path:
             return
 
-        if is_url(path):
-            self._log.info(u'playing stream {0}', displayable_path(path))
-            return
-
         played, duration = map(int, status['time'].split(':', 1))
         remaining = duration - played
 
@@ -275,6 +271,11 @@ class MPDStats(object):
 
                 if diff <= self.time_threshold:
                     return
+
+        if is_url(path):
+            self._log.info(u'playing stream {0}', displayable_path(path))
+            self.now_playing = None
+            return
 
         self._log.info(u'playing {0}', displayable_path(path))
 
