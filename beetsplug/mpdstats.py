@@ -271,6 +271,9 @@ class MPDStats(object):
 
                 if diff <= self.time_threshold:
                     return
+                
+                if self.now_playing['path'] == path and played == 0:
+                    self.handle_song_change(self.now_playing)
 
         if is_url(path):
             self._log.info(u'playing stream {0}', displayable_path(path))
