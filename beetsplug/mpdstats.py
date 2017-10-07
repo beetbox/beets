@@ -271,7 +271,7 @@ class MPDStats(object):
 
                 if diff <= self.time_threshold:
                     return
-                
+
                 if self.now_playing['path'] == path and played == 0:
                     self.handle_song_change(self.now_playing)
 
