@@ -99,4 +99,5 @@ embedded album art:
   automatically.
 
 * ``beet clearart QUERY``: removes all embedded images from all items matching
-  the query. (Use with caution!)
+  the query. (Use with caution!) The command prompts for confirmation before 
+  making the change unless you specify the ``-y`` (``--yes``) option.
