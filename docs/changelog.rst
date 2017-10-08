@@ -17,6 +17,9 @@ New features:
   :bug:`2685`
 * :doc:`/plugins/mbcollection`: The plugin now supports removing albums
   from collections that are longer in the beets library.
+* :doc:`/plugins/mpdstats`: The plugin now updates song stats when MPD switches 
+  from a song to a stream and when it plays the same song consecutively.
+  :bug:`2707`
 
 Fixes:
 
@@ -51,6 +54,8 @@ Fixes:
   analysis tool produced non-ASCII metadata. :bug:`2673`
 * :doc:`/plugins/duplicates`: Fix the `--key` command line option, which was
   ignored.
+* :doc:`/plugins/replaygain`: Fix album replaygain calculation with the
+  gstreamer backend. :bug:`2636`
 
 For developers:
 
