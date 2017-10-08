@@ -606,6 +606,10 @@ class GStreamerBackend(Backend):
         self._decbin.sync_state_with_parent()
         self._decbin.get_state(self.Gst.CLOCK_TIME_NONE)
 
+        self._decbin.link(self._conv)
+        self._pipe.set_state(self.Gst.State.READY)
+        self._pipe.set_state(self.Gst.State.PLAYING)
+
         return True
 
     def _set_next_file(self):

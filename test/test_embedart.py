@@ -195,6 +195,28 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         self.assertExists(os.path.join(albumpath, b'extracted.jpg'))
 
+    def test_clear_art_with_yes_input(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.io.addinput('y')
+        self.run_command('embedart', '-f', self.small_artpath)
+        self.io.addinput('y')
+        self.run_command('clearart')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(len(mediafile.images), 0)
+
+    def test_clear_art_with_no_input(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.io.addinput('y')
+        self.run_command('embedart', '-f', self.small_artpath)
+        self.io.addinput('n')
+        self.run_command('clearart')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(mediafile.images[0].data, self.image_data)
+
 
 @patch('beets.art.subprocess')
 @patch('beets.art.extract')
