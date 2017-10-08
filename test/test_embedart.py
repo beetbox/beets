@@ -204,9 +204,8 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.io.addinput('y')
         self.run_command('clearart')
         mediafile = MediaFile(syspath(item.path))
-        #print(mediafile.images[0].data == self.image_data)
         self.assertEqual(len(mediafile.images), 0)
-    
+
     def test_clear_art_with_no_input(self):
         self._setup_data()
         album = self.add_album_fixture()
@@ -216,7 +215,6 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.io.addinput('n')
         self.run_command('clearart')
         mediafile = MediaFile(syspath(item.path))
-        #print(mediafile.images[0].data == self.image_data)
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
 

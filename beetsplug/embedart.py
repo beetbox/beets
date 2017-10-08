@@ -166,6 +166,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         clear_cmd.parser.add_option(
             u"-y", u"--yes", action="store_true", help=u"skip confirmation"
         )
+
         def clear_func(lib, opts, args):
             items = lib.items(decargs(args))
             # Confirm with user.
