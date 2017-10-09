@@ -335,7 +335,13 @@ class MusiXmatch(SymbolsReplaced):
 
 
 class Genius(Backend):
-    """Fetch lyrics from Genius via genius-api."""
+    """Fetch lyrics from Genius via genius-api.
+
+    Simply adapted from
+    bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping/
+    """
+
+    base_url = "https://api.genius.com"
 
     def __init__(self, config, log):
         super(Genius, self).__init__(config, log)
@@ -345,85 +351,41 @@ class Genius(Backend):
             'User-Agent': USER_AGENT,
         }
 
-    def search_genius(self, artist, title):
-        query = u"%s %s" % (artist, title)
-        url = u'https://api.genius.com/search?q=%s' \
-            % (urllib.parse.quote(query.encode('utf-8')))
+    def lyrics_from_song_api_path(self, song_api_path):
+        song_url = self.base_url + song_api_path
+        response = requests.get(song_url, headers=self.headers)
+        json = response.json()
+        path = json["response"]["song"]["path"]
 
-        self._log.debug(u'genius: requesting search {}', url)
-        try:
-            req = requests.get(
-                url,
-                headers=self.headers,
-                allow_redirects=True
-            )
-            req.raise_for_status()
-        except requests.RequestException as exc:
-            self._log.debug(u'genius: request error: {}', exc)
-            return None
+        # Gotta go regular html scraping... come on Genius.
+        page_url = "https://genius.com" + path
+        page = requests.get(page_url)
+        html = BeautifulSoup(page.text, "html.parser")
 
-        try:
-            return req.json()
-        except ValueError:
-            self._log.debug(u'genius: invalid response: {}', req.text)
-            return None
+        # Remove script tags that they put in the middle of the lyrics.
+        [h.extract() for h in html('script')]
 
-    def get_lyrics(self, link):
-        url = u'http://genius-api.com/api/lyricsInfo'
+        # At least Genius is nice and has a tag called 'lyrics'!
+        # Updated css where the lyrics are based in HTML.
+        lyrics = html.find("div", class_="lyrics").get_text()
 
-        self._log.debug(u'genius: requesting lyrics for link {}', link)
-        try:
-            req = requests.post(
-                url,
-                data={'link': link},
-                headers=self.headers,
-                allow_redirects=True
-            )
-            req.raise_for_status()
-        except requests.RequestException as exc:
-            self._log.debug(u'genius: request error: {}', exc)
-            return None
-
-        try:
-            return req.json()
-        except ValueError:
-            self._log.debug(u'genius: invalid response: {}', req.text)
-            return None
-
-    def build_lyric_string(self, lyrics):
-        if 'lyrics' not in lyrics:
-            return
-        sections = lyrics['lyrics']['sections']
-
-        lyrics_list = []
-        for section in sections:
-            lyrics_list.append(section['name'])
-            lyrics_list.append('\n')
-            for verse in section['verses']:
-                if 'content' in verse:
-                    lyrics_list.append(verse['content'])
-
-        return ''.join(lyrics_list)
+        return lyrics
 
     def fetch(self, artist, title):
-        search_data = self.search_genius(artist, title)
-        if not search_data:
-            return
+        search_url = self.base_url + "/search"
+        data = {'q': title}
+        response = requests.get(search_url, data=data, headers=self.headers)
+        json = response.json()
 
-        if not search_data['meta']['status'] == 200:
-            return
-        else:
-            records = search_data['response']['hits']
-            if not records:
-                return
+        song_info = None
+        for hit in json["response"]["hits"]:
+            if hit["result"]["primary_artist"]["name"] == artist:
+                song_info = hit
+                break
 
-            record_url = records[0]['result']['url']
-            lyric_data = self.get_lyrics(record_url)
-            if not lyric_data:
-                return
-            lyrics = self.build_lyric_string(lyric_data)
-
-            return lyrics
+        if song_info:
+            song_api_path = song_info["result"]["api_path"]
+            return self.lyrics_from_song_api_path(song_api_path)
 
 
 class LyricsWiki(SymbolsReplaced):
@@ -638,7 +600,7 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'musixmatch']
+    SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius']
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
