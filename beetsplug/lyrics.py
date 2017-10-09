@@ -336,10 +336,13 @@ class MusiXmatch(SymbolsReplaced):
 
 class Genius(Backend):
     """Fetch lyrics from Genius via genius-api.
-       Simply adapted from https://bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping/"""
-    
+
+    Simply adapted from
+    bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping/
+    """
+
     base_url = "https://api.genius.com"
-    
+
     def __init__(self, config, log):
         super(Genius, self).__init__(config, log)
         self.api_key = config['genius_api_key'].as_str()
@@ -349,34 +352,40 @@ class Genius(Backend):
         }
 
     def lyrics_from_song_api_path(self, song_api_path):
-      song_url = self.base_url + song_api_path
-      response = requests.get(song_url, headers=self.headers)
-      json = response.json()
-      path = json["response"]["song"]["path"]
-      #gotta go regular html scraping... come on Genius
-      page_url = "https://genius.com" + path
-      page = requests.get(page_url)
-      html = BeautifulSoup(page.text, "html.parser")
-      #remove script tags that they put in the middle of the lyrics
-      [h.extract() for h in html('script')]
-      #at least Genius is nice and has a tag called 'lyrics'!
-      lyrics = html.find("div", class_="lyrics").get_text() #updated css where the lyrics are based in HTML
-      return lyrics
+        song_url = self.base_url + song_api_path
+        response = requests.get(song_url, headers=self.headers)
+        json = response.json()
+        path = json["response"]["song"]["path"]
+
+        # Gotta go regular html scraping... come on Genius.
+        page_url = "https://genius.com" + path
+        page = requests.get(page_url)
+        html = BeautifulSoup(page.text, "html.parser")
+
+        # Remove script tags that they put in the middle of the lyrics.
+        [h.extract() for h in html('script')]
+
+        # At least Genius is nice and has a tag called 'lyrics'!
+        # Updated css where the lyrics are based in HTML.
+        lyrics = html.find("div", class_="lyrics").get_text()
+
+        return lyrics
 
     def fetch(self, artist, title):
-      search_url = self.base_url + "/search"
-      data = {'q': title}
-      response = requests.get(search_url, data=data, headers=self.headers)
-      json = response.json()
-      
-      song_info = None
-      for hit in json["response"]["hits"]:
-        if hit["result"]["primary_artist"]["name"] == artist:
-          song_info = hit
-          break
-      if song_info:
-        song_api_path = song_info["result"]["api_path"]
-        return self.lyrics_from_song_api_path(song_api_path)
+        search_url = self.base_url + "/search"
+        data = {'q': title}
+        response = requests.get(search_url, data=data, headers=self.headers)
+        json = response.json()
+
+        song_info = None
+        for hit in json["response"]["hits"]:
+            if hit["result"]["primary_artist"]["name"] == artist:
+                song_info = hit
+                break
+
+        if song_info:
+            song_api_path = song_info["result"]["api_path"]
+            return self.lyrics_from_song_api_path(song_api_path)
 
 
 class LyricsWiki(SymbolsReplaced):
