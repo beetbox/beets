@@ -26,6 +26,11 @@ To upload tracks to Google Play Music, use the ``gmusic-upload`` command::
     beet gmusic-upload [QUERY]
 
 If you don't include a query, the plugin will upload your entire collection.
+By default beets will use one process per cpu to upload in parallel. You
+can customize the number of processes by using the ``processes`` config option::
+
+    gmusic:
+        processes: 8
 
 To query the songs in your collection, you will need to add your Google
 credentials to your beets configuration file. Put your Google username and

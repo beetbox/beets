@@ -36,6 +36,9 @@ class Gmusic(BeetsPlugin):
         super(Gmusic, self).__init__()
 
         self.m = self.create_music_manager()
+        self.config.add({
+            'processes': multiprocessing.cpu_count()
+        })
 
     def commands(self):
         gupload = Subcommand('gmusic-upload',
@@ -58,7 +61,7 @@ class Gmusic(BeetsPlugin):
         items = lib.items(ui.decargs(args))
         files = [x.path.decode('utf-8') for x in items]
         ui.print_(u'Uploading your files...')
-        pool = multiprocessing.Pool(initializer=self._pool_init)
+        pool = multiprocessing.Pool(initializer=self._pool_init, processes=self.config['processes'])
         chunks = [tuple(files[i:i + 25]) for i in range(0, len(files), 25)]
         pool.map(self._upload_file, chunks)
         ui.print_(u'Your files were successfully added to library')
