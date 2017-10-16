@@ -26,18 +26,19 @@ from gmusicapi import Musicmanager, Mobileclient
 from gmusicapi.exceptions import NotLoggedIn
 import gmusicapi.clients
 import multiprocessing
-
-# Global Musicmanager instance, used with multiprocessing pool upload
-_music_manager = None
+from multiprocessing.pool import ThreadPool
 
 
 class Gmusic(BeetsPlugin):
+    # Per-process Musicmanager instance, used with multiprocessing pool upload
+    _music_manager = None
+
     def __init__(self):
         super(Gmusic, self).__init__()
 
         self.m = self.create_music_manager()
         self.config.add({
-            'processes': multiprocessing.cpu_count()
+            'processes': str(multiprocessing.cpu_count())
         })
 
     def commands(self):
@@ -61,7 +62,7 @@ class Gmusic(BeetsPlugin):
         items = lib.items(ui.decargs(args))
         files = [x.path.decode('utf-8') for x in items]
         ui.print_(u'Uploading your files...')
-        pool = multiprocessing.Pool(initializer=self._pool_init, processes=self.config['processes'])
+        pool = ThreadPool(processes=int(self.config.get('processes')))
         chunks = [tuple(files[i:i + 25]) for i in range(0, len(files), 25)]
         pool.map(self._upload_file, chunks)
         ui.print_(u'Your files were successfully added to library')
@@ -99,8 +100,7 @@ class Gmusic(BeetsPlugin):
             if ' '.join(ui.decargs(args)) in file[search_by]:
                 print(file['artist'], file['title'], file['album'])
 
-    @staticmethod
-    def create_music_manager():
+    def create_music_manager(self):
         manager = Musicmanager()
         # Checks for OAuth2 credentials,
         # if they don't exist - performs authorization
@@ -110,13 +110,7 @@ class Gmusic(BeetsPlugin):
             manager.perform_oauth()
         return manager
 
-    @staticmethod
-    def _pool_init():
-        global _music_manager
-        _music_manager = Gmusic.create_music_manager()
-
-    @staticmethod
-    def _upload_file(files):
-        uploaded, _, _ = _music_manager.upload(filepaths=files)
+    def _upload_file(self, files):
+        uploaded, _, _ = self._music_manager.upload(filepaths=files)
         if uploaded:
             ui.print_('Uploaded {0} files'.format(len(uploaded)))
