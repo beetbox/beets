@@ -13,8 +13,7 @@ config -p`` to see the path on your system):
   Support/beets/config.yaml``.
 
 You can launch your text editor to create or update your configuration by
-typing ``beet config -e``. (See the :ref:`config-cmd` command for details.) It
-is also possible to customize the location of the configuration file and even
+typing ``beet config -e``. On Windows you can type the command ``notepad config.yaml`` (See the :ref:`config-cmd` command for details.) It is also possible to customize the location of the configuration file and even
 use multiple layers of configuration. See `Configuration Location`_, below.
 
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
