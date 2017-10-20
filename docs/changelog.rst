@@ -63,6 +63,8 @@ Fixes:
   ignored.
 * :doc:`/plugins/replaygain`: Fix album replaygain calculation with the
   gstreamer backend. :bug:`2636`
+* :doc:`/plugins/scrub`: Handle errors when manipulating files using newer
+  versions of Mutagen. :bug:`2716`
 
 For developers:
 
