@@ -1644,15 +1644,15 @@ def config_edit():
         util.interactive_open([path], editor)
 
         except OSError as exc:
-        message = u"Could not edit configuration: {0}".format(exc)
+            message = u"Could not edit configuration: {0}".format(exc)
 
-        # If it's a windows machine, attempt to open with notepad
-        if os.name == 'nt':
-            util.interactive_open([path], u"notepad")
+            # If it's a windows machine, attempt to open with notepad
+            if os.name == 'nt':
+                util.interactive_open([path], u"notepad")
 
-        if not editor:
-            message += u". Please set the EDITOR environment variable"
-        raise ui.UserError(message)
+            if not editor:
+                message += u". Please set the EDITOR environment variable"
+            raise ui.UserError(message)
 
 config_cmd = ui.Subcommand(u'config',
                            help=u'show or edit the user configuration')
