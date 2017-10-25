@@ -1637,12 +1637,23 @@ def config_edit():
     """
     path = config.user_config_path()
     editor = util.editor_command()
+
     try:
         if not os.path.isfile(path):
             open(path, 'w+').close()
         util.interactive_open([path], editor)
+
     except OSError as exc:
+        """If it's a windows machine try this first"""
         message = u"Could not edit configuration: {0}".format(exc)
+        if os.name == 'nt':
+            message += u". Detected windows machine, attempting bootleg solution."
+            if(path):
+                confpath = path
+            else:
+                confpath = os.getenv('APPDATA') + "/beets/config.yaml"
+            os.system(u"notepad " + confpath)
+
         if not editor:
             message += u". Please set the EDITOR environment variable"
         raise ui.UserError(message)
