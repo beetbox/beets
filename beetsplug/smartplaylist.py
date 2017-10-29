@@ -16,17 +16,19 @@
 """Generates smart playlists based on beets queries.
 """
 
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets.util import (mkdirall, normpath, sanitize_path, syspath,
-                        bytestring_path)
-from beets.library import Item, Album, parse_query_string
+import os
+
+import six
+
+from beets import config, ui
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
-import os
-import six
+from beets.library import Album, Item, parse_query_string
+from beets.plugins import BeetsPlugin
+from beets.util import (bytestring_path, mkdirall, normpath, sanitize_path,
+                        syspath)
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
@@ -202,7 +204,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         # Write all of the accumulated track lists to files.
         for m3u in m3us:
             m3u_path = normpath(os.path.join(playlist_dir,
-                                bytestring_path(m3u)))
+                                             bytestring_path(m3u)))
             mkdirall(m3u_path)
             with open(syspath(m3u_path), 'wb') as f:
                 for path in m3us[m3u]:
