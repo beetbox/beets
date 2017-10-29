@@ -37,6 +37,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         super(SmartPlaylistPlugin, self).__init__()
         self.config.add({
             'relative_to': None,
+            'target_dir': None,
             'playlist_dir': u'.',
             'auto': True,
             'playlists': []
@@ -174,6 +175,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
         if relative_to:
             relative_to = normpath(relative_to)
 
+        target_dir = self.config['target_dir'].get()
+        if target_dir:
+            target_dir = normpath(target_dir)
+            beetsdir = normpath(config['directory'].get())
         # Maps playlist filenames to lists of track filenames.
         m3us = {}
 
@@ -198,6 +203,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 item_path = item.path
                 if relative_to:
                     item_path = os.path.relpath(item.path, relative_to)
+                elif target_dir:
+                    item_path = os.path.relpath(item.path, beetsdir)
+                    item_path = os.path.join(target_dir, item_path)
                 if item_path not in m3us[m3u_name]:
                     m3us[m3u_name].append(item_path)
 
