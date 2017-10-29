@@ -27,8 +27,9 @@ New features:
 * :doc:`/plugins/lyrics`: The Genius backend should work again.
   Thanks to :user:`lmagno`.
   :bug:`2709`
-* A new :ref:`reflink` config option instructs the importer to create reflinks
-  on filesystems that support them. Thanks to :user:`rubdos`.
+* A new :ref:`reflink` config option instructs the importer to create fast,
+  copy-on-write file clones on filesystems that support them. Thanks to
+  :user:`rubdos`.
   :bug:`2642`
 
 Fixes:
