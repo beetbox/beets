@@ -476,7 +476,7 @@ hardlink
 ~~~~~~~~
 
 Either ``yes`` or ``no``, indicating whether to use hard links instead of
-moving or copying or symlinking files. (It conflicts with the ``move``,
+moving, copying, or symlinking files. (It conflicts with the ``move``,
 ``copy``, and ``link`` options.) Defaults to ``no``.
 
 As with symbolic links (see :ref:`link`, above), this will not work on Windows
@@ -488,18 +488,18 @@ original file will be modified.
 reflink
 ~~~~~~~
 
-Either ``yes``, ``no`` or ``auto``, indicating whether to `reflink clone`_ files
-into the library directory when using ``beet import``. Defaults to ``no``.
-When ``auto`` is specified, ``reflink`` will fall back on ``copy``,
-in case that ``reflink``'s are not supported on the used filesystem.
+Either ``yes``, ``no``, or ``auto``, indicating whether to use copy-on-write
+file clones (a.k.a. "reflinks") instead of copying or moving files.
+The ``auto`` option uses reflinks when possible and falls back to plain
+copying when necessary.
+Defaults to ``no``.
 
+This kind of clone is only available on certain filesystems: for example,
+btrfs and APFS. For more details on filesystem support, see the `pyreflink`_
+documentation.
 
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
-
-
-The option is filesystem dependent. For filesystem support, refer to the
-`pyreflink`_ documentation.
 
 .. _reflink clone: https://blogs.oracle.com/otn/save-disk-space-on-linux-by-cloning-files-on-btrfs-and-ocfs2
 .. _pyreflink: https://reflink.readthedocs.io/en/latest/
