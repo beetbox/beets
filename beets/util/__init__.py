@@ -548,12 +548,18 @@ def hardlink(path, dest, replace=False):
 
 
 def reflink(path, dest, replace=False, fallback=False):
-    """Create a reflink from `dest` to `path`. Raises an `OSError` if
-    `dest` already exists, unless `replace` is True. Does nothing if
-    `path` == `dest`. When `fallback` is True, `reflink` falls back on
-    `copy` when the filesystem does not support reflinks.
+    """Create a reflink from `dest` to `path`.
+
+    Raise an `OSError` if `dest` already exists, unless `replace` is
+    True. If `path` == `dest`, then do nothing.
+
+    If reflinking fails and `fallback` is enabled, try copying the file
+    instead. Otherwise, raise an error without trying a plain copy.
+
+    May raise an `ImportError` if the `reflink` module is not available.
     """
     import reflink as pyreflink
+
     if samefile(path, dest):
         return
 
