@@ -11,7 +11,7 @@ matrix:
     include:
         - python: 2.7.13
           env: {TOX_ENV: py27-cov, COVERAGE: 1}
-        - python: 2.7_with_system_site_packages
+        - python: 2.7.13
           env: {TOX_ENV: py27-test}
         - python: 3.4
           env: {TOX_ENV: py34-test}
