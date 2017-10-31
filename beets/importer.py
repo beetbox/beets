@@ -1038,6 +1038,7 @@ class ArchiveImportTask(SentinelImportTask):
         self.extracted = True
         self.toppath = extract_to
 
+
 class MergedImportTask(ImportTask):
     def __init__(self, toppath, paths, items):
         super(MergedImportTask, self).__init__(toppath, paths, items)
@@ -1367,9 +1368,8 @@ def user_query(session, task):
 
             duplicate_paths = [item.path for item in duplicate_items]
 
-            merged_task = MergedImportTask(None,
-                            task.paths + duplicate_paths,
-                            task.items + duplicate_items)
+            merged_task = MergedImportTask(None, task.paths + duplicate_paths,
+                                           task.items + duplicate_items)
 
             ipl = pipeline.Pipeline([
                 iter([merged_task]),
