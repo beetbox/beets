@@ -1248,6 +1248,12 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         item = self.lib.items().get()
         self.assertEqual(item.title, u't\xeftle 0')
 
+    def test_merge_duplicate_album(self):
+        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.albums()), 1)
+
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
 

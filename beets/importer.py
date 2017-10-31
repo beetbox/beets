@@ -443,6 +443,7 @@ class ImportTask(BaseImportTask):
         self.candidates = []
         self.rec = None
         self.should_remove_duplicates = False
+        self.should_merge_duplicates = False
         self.is_album = True
         self.search_ids = []  # user-supplied candidate IDs.
 
@@ -1037,6 +1038,10 @@ class ArchiveImportTask(SentinelImportTask):
         self.extracted = True
         self.toppath = extract_to
 
+class MergedImportTask(ImportTask):
+    def __init__(self, toppath, paths, items):
+        super(MergedImportTask, self).__init__(toppath, paths, items)
+
 
 class ImportTaskFactory(object):
     """Generate album and singleton import tasks for all media files
@@ -1352,7 +1357,27 @@ def user_query(session, task):
         ])
         return pipeline.multiple(ipl.pull())
 
-    resolve_duplicates(session, task)
+    if type(task) != MergedImportTask:
+        resolve_duplicates(session, task)
+        if task.should_merge_duplicates:
+            duplicate_items = task.duplicate_items(session.lib)
+            for item in duplicate_items:
+                item.id = None
+                item.album_id = None
+
+            duplicate_paths = [item.path for item in duplicate_items]
+
+            merged_task = MergedImportTask(None,
+                            task.paths + duplicate_paths,
+                            task.items + duplicate_items)
+
+            ipl = pipeline.Pipeline([
+                iter([merged_task]),
+                lookup_candidates(session),
+                user_query(session)
+            ])
+            return pipeline.multiple(ipl.pull())
+
     apply_choice(session, task)
     return task
 
@@ -1373,6 +1398,7 @@ def resolve_duplicates(session, task):
                 u'skip': u's',
                 u'keep': u'k',
                 u'remove': u'r',
+                u'merge': u'm',
                 u'ask': u'a',
             })
             log.debug(u'default action for duplicates: {0}', duplicate_action)
@@ -1386,6 +1412,9 @@ def resolve_duplicates(session, task):
             elif duplicate_action == u'r':
                 # Remove old.
                 task.should_remove_duplicates = True
+            elif duplicate_action == u'm':
+                # Merge duplicates together
+                task.should_merge_duplicates = True
             else:
                 # No default action set; ask the session.
                 session.resolve_duplicate(task, found_duplicates)
