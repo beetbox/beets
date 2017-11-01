@@ -66,7 +66,7 @@ file. The available options are:
   flexible tag named ``art_source``. See below for the rationale behind this.
   Default: ``no``.
 
-Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
+Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
 
 .. note::
