@@ -182,6 +182,11 @@ here, including the directory and file naming scheme. See
 Importing Your Library
 ----------------------
 
+.. CAUTION::
+   Beets is really cool but still a work in progress. In some situations, running
+   the autotagger might delete your only copy of a song. Please make a backup of
+   your library before continuing!
+
 There are two good ways to bring your existing library into beets. You can
 either: (a) quickly bring all your files with all their current metadata into
 beets' database, or (b) use beets' highly-refined autotagger to find canonical

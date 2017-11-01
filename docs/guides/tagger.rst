@@ -33,6 +33,11 @@ Back to the guide.
 Overview
 --------
 
+.. CAUTION::
+   Beets is really cool but still a work in progress. In some situations, running
+   the autotagger might delete your only copy of a song. Please make a backup of
+   your library before continuing!
+
 Beets' tagger is invoked using the ``beet import`` command. Point it at a
 directory and it imports the files into your library, tagging them as it goes
 (unless you pass ``--noautotag``, of course). There are several assumptions
