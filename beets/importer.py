@@ -633,10 +633,11 @@ class ImportTask(BaseImportTask):
         ))
 
         for album in lib.albums(duplicate_query):
-            # Check whether the album is identical in contents, in which
-            # case it is not a duplicate (will be replaced).
+            # Check whether the album paths are all present in the task
+            # i.e. album is being completely re-imported by the task,
+            # in which case it is not a duplicate (will be replaced).
             album_paths = set(i.path for i in album.items())
-            if album_paths != task_paths:
+            if not (album_paths <= task_paths):
                 duplicates.append(album)
         return duplicates
 
@@ -1039,11 +1040,6 @@ class ArchiveImportTask(SentinelImportTask):
         self.toppath = extract_to
 
 
-class MergedImportTask(ImportTask):
-    def __init__(self, toppath, paths, items):
-        super(MergedImportTask, self).__init__(toppath, paths, items)
-
-
 class ImportTaskFactory(object):
     """Generate album and singleton import tasks for all media files
     indicated by a path.
@@ -1231,6 +1227,27 @@ class ImportTaskFactory(object):
                           displayable_path(path), exc)
 
 
+# Pipeline utilities
+
+def _freshen_items(items):
+    # Clear IDs from re-tagged items so they appear "fresh" when
+    # we add them back to the library.
+    for item in items:
+        item.id = None
+        item.album_id = None
+
+
+def _extend_pipeline(tasks, *stages):
+    # Return pipeline extension for stages with list of tasks
+    if type(tasks) == list:
+        task_iter = iter(tasks)
+    else:
+        task_iter = tasks
+
+    ipl = pipeline.Pipeline([task_iter] + list(stages))
+    return pipeline.multiple(ipl.pull())
+
+
 # Full-album pipeline stages.
 
 def read_tasks(session):
@@ -1276,12 +1293,7 @@ def query_tasks(session):
             log.debug(u'yielding album {0}: {1} - {2}',
                       album.id, album.albumartist, album.album)
             items = list(album.items())
-
-            # Clear IDs from re-tagged items so they appear "fresh" when
-            # we add them back to the library.
-            for item in items:
-                item.id = None
-                item.album_id = None
+            _freshen_items(items)
 
             task = ImportTask(None, [album.item_dir()], items)
             for task in task.handle_created(session):
@@ -1341,42 +1353,29 @@ def user_query(session, task):
                     yield new_task
             yield SentinelImportTask(task.toppath, task.paths)
 
-        ipl = pipeline.Pipeline([
-            emitter(task),
-            lookup_candidates(session),
-            user_query(session),
-        ])
-        return pipeline.multiple(ipl.pull())
+        return _extend_pipeline(emitter(task),
+                                lookup_candidates(session),
+                                user_query(session))
 
     # As albums: group items by albums and create task for each album
     if task.choice_flag is action.ALBUMS:
-        ipl = pipeline.Pipeline([
-            iter([task]),
-            group_albums(session),
-            lookup_candidates(session),
-            user_query(session)
-        ])
-        return pipeline.multiple(ipl.pull())
+        return _extend_pipeline([task],
+                                group_albums(session),
+                                lookup_candidates(session),
+                                user_query(session))
 
-    if type(task) != MergedImportTask:
-        resolve_duplicates(session, task)
-        if task.should_merge_duplicates:
-            duplicate_items = task.duplicate_items(session.lib)
-            for item in duplicate_items:
-                item.id = None
-                item.album_id = None
+    resolve_duplicates(session, task)
+    if task.should_merge_duplicates:
+        duplicate_items = task.duplicate_items(session.lib)
+        _freshen_items(duplicate_items)
+        duplicate_paths = [item.path for item in duplicate_items]
 
-            duplicate_paths = [item.path for item in duplicate_items]
+        merged_task = ImportTask(None, task.paths + duplicate_paths,
+                                 task.items + duplicate_items)
 
-            merged_task = MergedImportTask(None, task.paths + duplicate_paths,
-                                           task.items + duplicate_items)
-
-            ipl = pipeline.Pipeline([
-                iter([merged_task]),
-                lookup_candidates(session),
-                user_query(session)
-            ])
-            return pipeline.multiple(ipl.pull())
+        return _extend_pipeline([merged_task],
+                                lookup_candidates(session),
+                                user_query(session))
 
     apply_choice(session, task)
     return task
