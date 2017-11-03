@@ -319,7 +319,7 @@ class CoverArtArchiveReleaseGroup(RemoteArtSource):
         URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
     def get(self, album, plugin, paths):
-        """Return the Cover Art Archive release group URLs using album 
+        """Return the Cover Art Archive release group URLs using album
         MusicBrainz release group ID.
         """
         if album.mb_releasegroupid:
@@ -690,8 +690,8 @@ class FileSystem(LocalArtSource):
 # Try each source in turn.
 
 SOURCES_ALL = [u'filesystem',
-               u'coverart', u'coverartreleasegroup', u'itunes', u'amazon', u'albumart',
-               u'wikipedia', u'google', u'fanarttv']
+               u'coverart', u'coverartreleasegroup', u'itunes', u'amazon',
+               u'albumart', u'wikipedia', u'google', u'fanarttv']
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
@@ -728,7 +728,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
             'sources': ['filesystem', 'coverart', 'itunes', 'amazon',
-                'albumart', 'coverartreleasegroup'],
+                        'albumart', 'coverartreleasegroup'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
