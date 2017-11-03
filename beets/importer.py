@@ -1365,8 +1365,13 @@ def user_query(session, task):
                                 user_query(session))
 
     resolve_duplicates(session, task)
+
     if task.should_merge_duplicates:
+        # Create a new task for tagging the current items
+        # and duplicates together
         duplicate_items = task.duplicate_items(session.lib)
+
+        # duplicates would be reimported so make them look "fresh"
         _freshen_items(duplicate_items)
         duplicate_paths = [item.path for item in duplicate_items]
 
