@@ -173,6 +173,14 @@ default engine searches the entire web for cover art.
 Note that the Google custom search API is limited to 100 queries per day.
 After that, the fetchart plugin will fall back on other declared data sources.
 
+Cover art archive
+''''''''''''''''''''
+
+The coverart album art source fetch cover art for a specific release using the
+musicbrainz release id. To fetch cover art for the release group, use
+the coverartreleasegroup source which fetch cover art using the musicbrainz
+release group id.
+
 Fanart.tv
 '''''''''
 

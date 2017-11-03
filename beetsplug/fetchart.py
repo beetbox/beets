@@ -288,8 +288,6 @@ class RemoteArtSource(ArtSource):
 
 
 class CoverArtArchive(RemoteArtSource):
-    NAME = u"Cover Art Archive"
-
     if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
         GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
@@ -297,35 +295,38 @@ class CoverArtArchive(RemoteArtSource):
         URL = 'http://coverartarchive.org/release/{mbid}/front'
         GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
+    def getReleaseCandidate(self, album):
+        return self._candidate(url=self.URL.format(mbid=album.mb_albumid),
+                               match=Candidate.MATCH_EXACT)
+
+    def getReleaseGroupCandidate(self, album):
+        return self._candidate(
+                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
+                match=Candidate.MATCH_FALLBACK)
+
+
+class CAARelease(CoverArtArchive):
+    NAME = u"Cover Art Archive"
+
     def get(self, album, plugin, paths):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
         if album.mb_albumid:
-            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
-                                  match=Candidate.MATCH_EXACT)
+            yield self.getReleaseCandidate(album)
         if album.mb_releasegroupid:
-            yield self._candidate(
-                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                match=Candidate.MATCH_FALLBACK)
+            yield self.getReleaseGroupCandidate(album)
 
 
-class CoverArtArchiveReleaseGroup(RemoteArtSource):
+class CAAReleaseGroup(CoverArtArchive):
     NAME = u"Cover Art Archive Release Group"
-
-    if util.SNI_SUPPORTED:
-        URL = 'https://coverartarchive.org/release-group/{mbid}/front'
-    else:
-        URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
     def get(self, album, plugin, paths):
         """Return the Cover Art Archive release group URLs using album
         MusicBrainz release group ID.
         """
         if album.mb_releasegroupid:
-            yield self._candidate(
-                    url=self.URL.format(mbid=album.mb_releasegroupid),
-                    match=Candidate.MATCH_FALLBACK)
+            yield self.chooseReleaseGroupCandidate(album)
 
 
 class Amazon(RemoteArtSource):
@@ -695,8 +696,8 @@ SOURCES_ALL = [u'filesystem',
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
-    u'coverart': CoverArtArchive,
-    u'coverartreleasegroup': CoverArtArchiveReleaseGroup,
+    u'coverart': CAARelease,
+    u'coverartreleasegroup': CAAReleaseGroup,
     u'itunes': ITunesStore,
     u'albumart': AlbumArtOrg,
     u'amazon': Amazon,
