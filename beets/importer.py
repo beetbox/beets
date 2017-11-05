@@ -358,7 +358,7 @@ class ImportSession(object):
         """
         for path in paths:
             if path not in self._merged_items \
-                and path not in self._merged_dirs:
+               and path not in self._merged_dirs:
                 return False
         return True
 
@@ -367,7 +367,7 @@ class ImportSession(object):
         """
         self._merged_items.update(paths)
         dirs = set([os.path.dirname(path) if os.path.isfile(path) else path
-                        for path in paths])
+                    for path in paths])
         self._merged_dirs.update(dirs)
 
     def is_resuming(self, toppath):
