@@ -188,6 +188,8 @@ class ImportSession(object):
         self.paths = paths
         self.query = query
         self._is_resuming = dict()
+        self._merged_items = set()
+        self._merged_dirs = set()
 
         # Normalize the paths.
         if self.paths:
@@ -349,6 +351,24 @@ class ImportSession(object):
         if not hasattr(self, '_history_dirs'):
             self._history_dirs = history_get()
         return self._history_dirs
+
+    def already_merged(self, paths):
+        """Returns true if all the paths being imported were part of a merge
+        during previous tasks.
+        """
+        for path in paths:
+            if path not in self._merged_items \
+                and path not in self._merged_dirs:
+                return False
+        return True
+
+    def mark_merged(self, paths):
+        """Mark paths and directories as merged for future reimport tasks.
+        """
+        self._merged_items.update(paths)
+        dirs = set([os.path.dirname(path) if os.path.isfile(path) else path
+                        for path in paths])
+        self._merged_dirs.update(dirs)
 
     def is_resuming(self, toppath):
         """Return `True` if user wants to resume import of this path.
@@ -1339,6 +1359,9 @@ def user_query(session, task):
     if task.skip:
         return task
 
+    if session.already_merged(task.paths):
+        return pipeline.BUBBLE
+
     # Ask the user for a choice.
     task.choose_match(session)
     plugins.send('import_task_choice', session=session, task=task)
@@ -1371,9 +1394,12 @@ def user_query(session, task):
         # and duplicates together
         duplicate_items = task.duplicate_items(session.lib)
 
-        # duplicates would be reimported so make them look "fresh"
+        # Duplicates would be reimported so make them look "fresh"
         _freshen_items(duplicate_items)
         duplicate_paths = [item.path for item in duplicate_items]
+
+        # Record merged paths in the session so they are not reimported
+        session.mark_merged(duplicate_paths)
 
         merged_task = ImportTask(None, task.paths + duplicate_paths,
                                  task.items + duplicate_items)
