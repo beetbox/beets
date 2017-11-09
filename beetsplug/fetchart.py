@@ -288,6 +288,8 @@ class RemoteArtSource(ArtSource):
 
 
 class CoverArtArchive(RemoteArtSource):
+    NAME = u"Cover Art Archive"
+
     if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
         GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
@@ -295,38 +297,18 @@ class CoverArtArchive(RemoteArtSource):
         URL = 'http://coverartarchive.org/release/{mbid}/front'
         GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
 
-    def getReleaseCandidate(self, album):
-        return self._candidate(url=self.URL.format(mbid=album.mb_albumid),
-                               match=Candidate.MATCH_EXACT)
-
-    def getReleaseGroupCandidate(self, album):
-        return self._candidate(
-                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                match=Candidate.MATCH_FALLBACK)
-
-
-class CAARelease(CoverArtArchive):
-    NAME = u"Cover Art Archive"
-
     def get(self, album, plugin, paths):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
-        if album.mb_albumid:
-            yield self.getReleaseCandidate(album)
+        use_release_group = self._config["use_release_group"]
+        if album.mb_albumid and not use_release_group:
+            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
+                                  match=Candidate.MATCH_EXACT)
         if album.mb_releasegroupid:
-            yield self.getReleaseGroupCandidate(album)
-
-
-class CAAReleaseGroup(CoverArtArchive):
-    NAME = u"Cover Art Archive Release Group"
-
-    def get(self, album, plugin, paths):
-        """Return the Cover Art Archive release group URLs using album
-        MusicBrainz release group ID.
-        """
-        if album.mb_releasegroupid:
-            yield self.chooseReleaseGroupCandidate(album)
+            yield self._candidate(
+                    url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
+                    match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
@@ -691,13 +673,12 @@ class FileSystem(LocalArtSource):
 # Try each source in turn.
 
 SOURCES_ALL = [u'filesystem',
-               u'coverart', u'coverartreleasegroup', u'itunes', u'amazon',
-               u'albumart', u'wikipedia', u'google', u'fanarttv']
+               u'coverart', u'itunes', u'amazon', u'albumart', u'wikipedia',
+               u'google', u'fanarttv']
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
-    u'coverart': CAARelease,
-    u'coverartreleasegroup': CAAReleaseGroup,
+    u'coverart': CoverArtArchive,
     u'itunes': ITunesStore,
     u'albumart': AlbumArtOrg,
     u'amazon': Amazon,
@@ -734,6 +715,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
             'store_source': False,
+            'use_release_group': False
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True

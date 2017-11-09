@@ -65,6 +65,14 @@ file. The available options are:
 - **store_source**: If enabled, fetchart stores the artwork's source in a
   flexible tag named ``art_source``. See below for the rationale behind this.
   Default: ``no``.
+- **use_release_group**: The ``coverart`` source fetches images from the
+  `Cover Art Archive`_. The default source prioritizes the MusicBrainz release
+  ID: i.e., you get release-specific art if it's available. To instead use only
+  *release group* album art, use the source named `coverartreleasegroup`. This
+  will, for example, avoid using the album art for a specific special edition
+  of an album.
+  .. _Cover Art Archive: http://coverartarchive.org
+  Default: ``no``.
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
@@ -172,14 +180,6 @@ default engine searches the entire web for cover art.
 
 Note that the Google custom search API is limited to 100 queries per day.
 After that, the fetchart plugin will fall back on other declared data sources.
-
-Cover art archive
-''''''''''''''''''''
-
-The coverart album art source fetch cover art for a specific release using the
-musicbrainz release id. To fetch cover art for the release group, use
-the coverartreleasegroup source which fetch cover art using the musicbrainz
-release group id.
 
 Fanart.tv
 '''''''''
