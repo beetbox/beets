@@ -68,11 +68,12 @@ file. The available options are:
 - **use_release_group**: The ``coverart`` source fetches images from the
   `Cover Art Archive`_. The default source prioritizes the MusicBrainz release
   ID: i.e., you get release-specific art if it's available. To instead use only
-  *release group* album art, use the source named `coverartreleasegroup`. This
+  *release group* album art, enable this option. This
   will, for example, avoid using the album art for a specific special edition
   of an album.
-  .. _Cover Art Archive: http://coverartarchive.org
   Default: ``no``.
+
+.. _Cover Art Archive: http://coverartarchive.org
 
 Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
