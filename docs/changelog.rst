@@ -65,6 +65,8 @@ Fixes:
   gstreamer backend. :bug:`2636`
 * :doc:`/plugins/scrub`: Handle errors when manipulating files using newer
   versions of Mutagen. :bug:`2716`
+* :doc:`/plugins/fetchart`: Fix: don't skip running the fetchart plugin during import, when the
+  "Edit Candidates" option is used. :bug:`2734`
 
 For developers:
 
