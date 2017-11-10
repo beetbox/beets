@@ -783,7 +783,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             if task.choice_flag == importer.action.ASIS:
                 # For as-is imports, don't search Web sources for art.
                 local = True
-            elif task.choice_flag == importer.action.APPLY:
+            elif task.choice_flag in (importer.action.APPLY,
+                                      importer.action.RETAG):
                 # Search everywhere for art.
                 local = False
             else:
