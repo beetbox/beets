@@ -192,9 +192,12 @@ class RequestMixin(object):
 # ART SOURCES ################################################################
 
 class ArtSource(RequestMixin):
-    def __init__(self, log, config):
+    VALID_MATCHING_CRITERIA = ['default']
+
+    def __init__(self, log, config, match_by=None):
         self._log = log
         self._config = config
+        self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
     def get(self, album, plugin, paths):
         raise NotImplementedError()
@@ -289,6 +292,7 @@ class RemoteArtSource(ArtSource):
 
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
+    VALID_MATCHING_CRITERIA = ['release', 'releasegroup']
 
     if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
@@ -301,10 +305,10 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
-        if album.mb_albumid:
+        if 'release' in self.match_by and album.mb_albumid:
             yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
                                   match=Candidate.MATCH_EXACT)
-        if album.mb_releasegroupid:
+        if 'releasegroup' in self.match_by and album.mb_releasegroupid:
             yield self._candidate(
                 url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
                 match=Candidate.MATCH_FALLBACK)
@@ -770,7 +774,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     sources_name.append(u'filesystem')
                 except ValueError:
                     pass
-        self.sources = [ART_SOURCES[s](self._log, self.config)
+        self.sources = [ART_SOURCES[s](self._log, self.config, None)
                         for s in sources_name]
 
     # Asynchronous; after music is added to the library.
