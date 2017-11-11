@@ -188,6 +188,8 @@ class ImportSession(object):
         self.paths = paths
         self.query = query
         self._is_resuming = dict()
+        self._merged_items = set()
+        self._merged_dirs = set()
 
         # Normalize the paths.
         if self.paths:
@@ -350,6 +352,24 @@ class ImportSession(object):
             self._history_dirs = history_get()
         return self._history_dirs
 
+    def already_merged(self, paths):
+        """Returns true if all the paths being imported were part of a merge
+        during previous tasks.
+        """
+        for path in paths:
+            if path not in self._merged_items \
+               and path not in self._merged_dirs:
+                return False
+        return True
+
+    def mark_merged(self, paths):
+        """Mark paths and directories as merged for future reimport tasks.
+        """
+        self._merged_items.update(paths)
+        dirs = set([os.path.dirname(path) if os.path.isfile(path) else path
+                    for path in paths])
+        self._merged_dirs.update(dirs)
+
     def is_resuming(self, toppath):
         """Return `True` if user wants to resume import of this path.
 
@@ -443,6 +463,7 @@ class ImportTask(BaseImportTask):
         self.candidates = []
         self.rec = None
         self.should_remove_duplicates = False
+        self.should_merge_duplicates = False
         self.is_album = True
         self.search_ids = []  # user-supplied candidate IDs.
 
@@ -632,10 +653,11 @@ class ImportTask(BaseImportTask):
         ))
 
         for album in lib.albums(duplicate_query):
-            # Check whether the album is identical in contents, in which
-            # case it is not a duplicate (will be replaced).
+            # Check whether the album paths are all present in the task
+            # i.e. album is being completely re-imported by the task,
+            # in which case it is not a duplicate (will be replaced).
             album_paths = set(i.path for i in album.items())
-            if album_paths != task_paths:
+            if not (album_paths <= task_paths):
                 duplicates.append(album)
         return duplicates
 
@@ -1225,6 +1247,27 @@ class ImportTaskFactory(object):
                           displayable_path(path), exc)
 
 
+# Pipeline utilities
+
+def _freshen_items(items):
+    # Clear IDs from re-tagged items so they appear "fresh" when
+    # we add them back to the library.
+    for item in items:
+        item.id = None
+        item.album_id = None
+
+
+def _extend_pipeline(tasks, *stages):
+    # Return pipeline extension for stages with list of tasks
+    if type(tasks) == list:
+        task_iter = iter(tasks)
+    else:
+        task_iter = tasks
+
+    ipl = pipeline.Pipeline([task_iter] + list(stages))
+    return pipeline.multiple(ipl.pull())
+
+
 # Full-album pipeline stages.
 
 def read_tasks(session):
@@ -1270,12 +1313,7 @@ def query_tasks(session):
             log.debug(u'yielding album {0}: {1} - {2}',
                       album.id, album.albumartist, album.album)
             items = list(album.items())
-
-            # Clear IDs from re-tagged items so they appear "fresh" when
-            # we add them back to the library.
-            for item in items:
-                item.id = None
-                item.album_id = None
+            _freshen_items(items)
 
             task = ImportTask(None, [album.item_dir()], items)
             for task in task.handle_created(session):
@@ -1321,6 +1359,9 @@ def user_query(session, task):
     if task.skip:
         return task
 
+    if session.already_merged(task.paths):
+        return pipeline.BUBBLE
+
     # Ask the user for a choice.
     task.choose_match(session)
     plugins.send('import_task_choice', session=session, task=task)
@@ -1335,24 +1376,38 @@ def user_query(session, task):
                     yield new_task
             yield SentinelImportTask(task.toppath, task.paths)
 
-        ipl = pipeline.Pipeline([
-            emitter(task),
-            lookup_candidates(session),
-            user_query(session),
-        ])
-        return pipeline.multiple(ipl.pull())
+        return _extend_pipeline(emitter(task),
+                                lookup_candidates(session),
+                                user_query(session))
 
     # As albums: group items by albums and create task for each album
     if task.choice_flag is action.ALBUMS:
-        ipl = pipeline.Pipeline([
-            iter([task]),
-            group_albums(session),
-            lookup_candidates(session),
-            user_query(session)
-        ])
-        return pipeline.multiple(ipl.pull())
+        return _extend_pipeline([task],
+                                group_albums(session),
+                                lookup_candidates(session),
+                                user_query(session))
 
     resolve_duplicates(session, task)
+
+    if task.should_merge_duplicates:
+        # Create a new task for tagging the current items
+        # and duplicates together
+        duplicate_items = task.duplicate_items(session.lib)
+
+        # Duplicates would be reimported so make them look "fresh"
+        _freshen_items(duplicate_items)
+        duplicate_paths = [item.path for item in duplicate_items]
+
+        # Record merged paths in the session so they are not reimported
+        session.mark_merged(duplicate_paths)
+
+        merged_task = ImportTask(None, task.paths + duplicate_paths,
+                                 task.items + duplicate_items)
+
+        return _extend_pipeline([merged_task],
+                                lookup_candidates(session),
+                                user_query(session))
+
     apply_choice(session, task)
     return task
 
@@ -1373,6 +1428,7 @@ def resolve_duplicates(session, task):
                 u'skip': u's',
                 u'keep': u'k',
                 u'remove': u'r',
+                u'merge': u'm',
                 u'ask': u'a',
             })
             log.debug(u'default action for duplicates: {0}', duplicate_action)
@@ -1386,6 +1442,9 @@ def resolve_duplicates(session, task):
             elif duplicate_action == u'r':
                 # Remove old.
                 task.should_remove_duplicates = True
+            elif duplicate_action == u'm':
+                # Merge duplicates together
+                task.should_merge_duplicates = True
             else:
                 # No default action set; ask the session.
                 session.resolve_duplicate(task, found_duplicates)
