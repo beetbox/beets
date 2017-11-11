@@ -6,6 +6,10 @@ Changelog
 
 New features:
 
+* When the importer finds duplicate albums, you can now merge all the tracks
+  together and try importing them as a single album.
+  Thanks to :user:`udiboy1209`.
+  :bug:`112` :bug:`2725`
 * :doc:`/plugins/lyrics`: The plugin can now produce reStructuredText files
   for beautiful, readable books of lyrics. Thanks to :user:`anarcat`.
   :bug:`2628`
