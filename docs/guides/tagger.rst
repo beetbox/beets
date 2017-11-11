@@ -240,18 +240,18 @@ Beets wants to keep you safe from duplicates, which can be a real pain, so you
 have four choices in this situation. You can skip importing the new music,
 choosing to keep the stuff you already have in your library; you can keep both
 the old and the new music; you can remove the existing music and choose the
-new stuff; or you can merge the newly imported album and existing duplicate
-into one single album. 
+new stuff; or you can merge all the new and old tracks into a single album.
 If you choose that "remove" option, any duplicates will be
 removed from your library database---and, if the corresponding files are located
 inside of your beets library directory, the files themselves will be deleted as
 well.
 
 If you choose "merge", beets will try re-importing the existing and new tracks
-as one bundle so they will get tagged together appropriately.
-This is particularly helpful when you are importing extra tracks
-of an album in your library with missing tracks, so beets will ask you the same
-questions as it would if you were importing all tracks at once.
+as one bundle together.
+This is particularly helpful when you have an album that's missing some tracks
+and then want to import the remaining songs.
+The importer will ask you the same questions as it would if you were importing
+all tracks at once.
 
 If you choose to keep two identically-named albums, beets can avoid storing both
 in the same directory. See :ref:`aunique` for details.
