@@ -511,6 +511,44 @@ def sanitize_choices(choices, choices_all):
     return res
 
 
+def sanitize_pairs(pairs, pairs_all):
+    """Clean up a single-element mapping configuration attribute as returned
+    by `confit`'s `Pairs` template: keep only two-element tuples present in
+    pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
+    wildcards while keeping the original order. Note that ('*', '*') and
+    ('*', 'whatever') have the same effect.
+
+    For example,
+
+    >>> sanitize_pairs(
+    ...     [('foo', 'baz bar'), ('key', '*'), ('*', '*')],
+    ...     [('foo', 'bar'), ('foo', 'baz'), ('foo', 'foobar'),
+    ...      ('key', 'value')]
+    ...     )
+    [('foo', 'baz'), ('foo', 'bar'), ('key', 'value'), ('foo', 'foobar')]
+    """
+    pairs_all = list(pairs_all)
+    seen = set()
+    others = [x for x in pairs_all if x not in pairs]
+    res = []
+    for k, values in pairs:
+        for v in values.split():
+            x = (k, v)
+            if x in pairs_all:
+                if not x in seen:
+                    seen.add(x)
+                    res.append(x)
+            elif k == '*':
+                new = [o for o in others if o not in seen]
+                seen.update(new)
+                res.extend(new)
+            elif v == '*':
+                new = [o for o in others if o not in seen and o[0] == k]
+                seen.update(new)
+                res.extend(new)
+    return res
+
+
 def notify_info_yielded(event):
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
