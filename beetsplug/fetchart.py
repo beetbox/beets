@@ -761,21 +761,30 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
-        sources_name = plugins.sanitize_choices(
-            self.config['sources'].as_str_seq(), available_sources)
+        available_sources = [(s, c)
+                for s in available_sources
+                for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
+        sources = plugins.sanitize_pairs(
+            self.config['sources'].as_pairs(default_value='*'),
+            available_sources)
+
         if 'remote_priority' in self.config:
             self._log.warning(
                 u'The `fetch_art.remote_priority` configuration option has '
                 u'been deprecated. Instead, place `filesystem` at the end of '
                 u'your `sources` list.')
             if self.config['remote_priority'].get(bool):
-                try:
-                    sources_name.remove(u'filesystem')
-                    sources_name.append(u'filesystem')
-                except ValueError:
-                    pass
-        self.sources = [ART_SOURCES[s](self._log, self.config, None)
-                        for s in sources_name]
+                fs = []
+                others = []
+                for s, c in sources:
+                    if s == 'filesystem':
+                        fs.append((s, c))
+                    else:
+                        others.append((s, c))
+                sources = others + fs
+
+        self.sources = [ART_SOURCES[s](self._log, self.config, match_by=[c])
+                        for s, c in sources]
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
