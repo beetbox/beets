@@ -113,7 +113,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                               help=u'Update MusicBrainz collection')
         mbupdate.parser.add_option('-r', '--remove',
                                    action='store_true',
-                                   default=False,
+                                   default=None,
                                    dest='remove',
                                    help='Remove albums not in beets library')
         mbupdate.func = self.update_collection
