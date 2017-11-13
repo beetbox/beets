@@ -502,9 +502,12 @@ def sanitize_choices(choices, choices_all):
     others = [x for x in choices_all if x not in choices]
     res = []
     for s in choices:
-        if s in list(choices_all) + ['*']:
-            if not (s in seen or seen.add(s)):
-                res.extend(list(others) if s == '*' else [s])
+        if s not in seen:
+            if s in list(choices_all):
+                res.append(s)
+            elif s == '*':
+                res.extend(others)
+        seen.add(s)
     return res
 
 
