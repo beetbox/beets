@@ -71,6 +71,8 @@ Fixes:
   versions of Mutagen. :bug:`2716`
 * :doc:`/plugins/fetchart`: Fix: don't skip running the fetchart plugin during import, when the
   "Edit Candidates" option is used. :bug:`2734`
+* Fix a crash when numeric metadata fields contain just a minus or plus sign
+  with no following numbers.
 
 For developers:
 
