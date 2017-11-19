@@ -72,7 +72,7 @@ Fixes:
 * :doc:`/plugins/fetchart`: Fix: don't skip running the fetchart plugin during import, when the
   "Edit Candidates" option is used. :bug:`2734`
 * Fix a crash when numeric metadata fields contain just a minus or plus sign
-  with no following numbers.
+  with no following numbers. Thanks to :user:`eigengrau`. :bug:`2741`
 
 For developers:
 
