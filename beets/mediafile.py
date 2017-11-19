@@ -159,11 +159,8 @@ def _safe_cast(out_type, val):
             elif not isinstance(val, six.string_types):
                 val = six.text_type(val)
             # Get a number from the front of the string.
-            val = re.match(r'[\+-]?[0-9]*', val.strip()).group(0)
-            if not val:
-                return 0
-            else:
-                return int(val)
+            match = re.match(r'[\+-]?[0-9]+', val.strip())
+            return int(match.group(0)) if match else 0
 
     elif out_type == bool:
         try:
