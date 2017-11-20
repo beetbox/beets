@@ -68,6 +68,8 @@ class CodingFormatter(string.Formatter):
             converted = converted.decode(self._coding)
         except UnicodeEncodeError:
             pass
+        except AttributeError:
+            converted = value    
 
         return converted
 
