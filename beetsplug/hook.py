@@ -64,13 +64,9 @@ class CodingFormatter(string.Formatter):
         converted = super(CodingFormatter, self).convert_field(value,
                                                                conversion)
 
-        try:
-            converted = converted.decode(self._coding)
-        except UnicodeEncodeError:
-            pass
-        except AttributeError:
-            converted = value    
-
+        if isinstance(converted, bytes):
+            return converted.decode(self._coding)
+        
         return converted
 
 
