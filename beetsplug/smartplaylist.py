@@ -16,17 +16,19 @@
 """Generates smart playlists based on beets queries.
 """
 
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets.util import (mkdirall, normpath, sanitize_path, syspath,
-                        bytestring_path)
-from beets.library import Item, Album, parse_query_string
+import os
+
+import six
+
+from beets import config, ui
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
-import os
-import six
+from beets.library import Album, Item, parse_query_string
+from beets.plugins import BeetsPlugin
+from beets.util import (bytestring_path, mkdirall, normpath, sanitize_path,
+                        syspath)
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
@@ -35,6 +37,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         super(SmartPlaylistPlugin, self).__init__()
         self.config.add({
             'relative_to': None,
+            'target_dir': None,
             'playlist_dir': u'.',
             'auto': True,
             'playlists': []
@@ -172,6 +175,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
         if relative_to:
             relative_to = normpath(relative_to)
 
+        target_dir = self.config['target_dir'].get()
+        if target_dir:
+            target_dir = normpath(target_dir)
+            beetsdir = normpath(config['directory'].get())
         # Maps playlist filenames to lists of track filenames.
         m3us = {}
 
@@ -196,13 +203,16 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 item_path = item.path
                 if relative_to:
                     item_path = os.path.relpath(item.path, relative_to)
+                elif target_dir:
+                    item_path = os.path.relpath(item.path, beetsdir)
+                    item_path = os.path.join(target_dir, item_path)
                 if item_path not in m3us[m3u_name]:
                     m3us[m3u_name].append(item_path)
 
         # Write all of the accumulated track lists to files.
         for m3u in m3us:
             m3u_path = normpath(os.path.join(playlist_dir,
-                                bytestring_path(m3u)))
+                                             bytestring_path(m3u)))
             mkdirall(m3u_path)
             with open(syspath(m3u_path), 'wb') as f:
                 for path in m3us[m3u]:
