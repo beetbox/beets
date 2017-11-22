@@ -66,7 +66,7 @@ class CodingFormatter(string.Formatter):
 
         if isinstance(converted, bytes):
             return converted.decode(self._coding)
-        
+
         return converted
 
 
