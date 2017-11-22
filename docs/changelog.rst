@@ -34,6 +34,10 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/hook`: Fixed a problem whereby accessing non-string properties of
+  objects such as item or album (e.g. item.track) would cause a crash.
+  Thanks to :user:`broddo`.
+  :bug:`2740`
 * :doc:`/plugins/play`: When ``relative_to`` is set, correctly emit relative paths
   even when querying for albums rather than tracks.
   Thanks to :user:`j000`.
