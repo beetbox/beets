@@ -43,6 +43,8 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 * On **Fedora** 22 or later, there is a `DNF package`_ (or three)::
 
       $ sudo dnf install beets beets-plugins beets-doc
+      
+* On **Solus**, run ``eopkg install beets``.
 
 * On **NixOS**, run ``nix-env -i beets``.
 
