@@ -192,7 +192,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
                                         val)
                         setattr(item, attr, val)
                     else:
-                        self._log.debug(u'skipping attribute {} of {} (value {}) due to config',
+                        self._log.debug(u'skipping attribute {} of {} (value {})'
+                                        u' due to config',
                                         attr,
                                         item,
                                         val)
