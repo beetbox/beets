@@ -28,9 +28,9 @@ New features:
   before touching your files.
   Thanks to :user:`konman2`.
   :bug:`2708` :bug:`2427`
-* :doc:`/plugins/lyrics`: The Genius backend should work again.
-  Thanks to :user:`lmagno`.
-  :bug:`2709`
+* :doc:`/plugins/acousticbrainz`: The plugin can now be configured to write only
+  a specific list of tags.
+  Thanks to :user:`woparry`.
 
 Fixes:
 
