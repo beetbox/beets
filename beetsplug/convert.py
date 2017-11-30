@@ -94,9 +94,9 @@ def should_transcode(item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
-    dont_convert_queries = config['convert']['dont_convert'].as_str_seq()
-    if dont_convert_queries:
-        for query_string in dont_convert_queries:
+    no_convert_queries = config['convert']['no_convert'].as_str_seq()
+    if no_convert_queries:
+        for query_string in no_convert_queries:
             query, _ = parse_query_string(query_string, Item)
             if query.match(item):
                 return False
@@ -141,7 +141,7 @@ class ConvertPlugin(BeetsPlugin):
             u'quiet': False,
             u'embed': True,
             u'paths': {},
-            u'dont_convert': u'',
+            u'no_convert': u'',
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,

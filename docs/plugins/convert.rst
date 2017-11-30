@@ -73,7 +73,7 @@ file. The available options are:
   this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration.
   Default: none.
-- **dont_convert**: Does not transcode items matching provided query string
+- **no_convert**: Does not transcode items matching provided query string
   (see :doc:`/reference/query`). (i.e. ``format:AAC, format:WMA`` or
   ``path::\.(m4a|wma)$``)
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
