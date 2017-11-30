@@ -13,6 +13,9 @@ New features:
 * :doc:`/plugins/lyrics`: The plugin can now produce reStructuredText files
   for beautiful, readable books of lyrics. Thanks to :user:`anarcat`.
   :bug:`2628`
+* :doc:`/plugins/convert`: Adds ``no_convert`` option which ignores transcoding
+  items matching provided query string. Thanks to :user:`Stunner`.
+  :bug:`2732` :bug:`2751`
 * :doc:`/plugins/fetchart`: The plugin has now a quiet switch that will only
   display missing album arts. Thanks to :user:`euri10`.
   :bug:`2683`
