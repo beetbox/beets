@@ -141,6 +141,7 @@ class ConvertPlugin(BeetsPlugin):
             u'quiet': False,
             u'embed': True,
             u'paths': {},
+            u'dont_convert': u'',
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
