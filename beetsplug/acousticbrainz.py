@@ -165,7 +165,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def _fetch_info(self, items, write, force):
         """Fetch additional information from AcousticBrainz for the `item`s.
         """
-        tags = self.config['tags'].get()
+        tags = self.config['tags'].as_str_seq()
         for item in items:
             # If we're not forcing re-downloading for all tracks, check
             # whether the data is already present. We use one
@@ -192,8 +192,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
                                         val)
                         setattr(item, attr, val)
                     else:
-                        self._log.debug(u'skipping attribute {} of {} (value {})'
-                                        u' due to config',
+                        self._log.debug(u'skipping attribute {} of {}'
+                                        u' (value {}) due to config',
                                         attr,
                                         item,
                                         val)
