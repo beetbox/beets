@@ -107,17 +107,17 @@ class MPDClientWrapper(object):
         self.connect()
         return self.get(command, retries=retries - 1)
 
-    def playlist(self):
-        """Return the currently active playlist.  Prefixes paths with the
+    def currentsong(self):
+        """Return the path to the currently playing song.  Prefixes paths with the
         music_directory, to get the absolute path.
         """
-        result = {}
-        for entry in self.get('playlistinfo'):
+        result = None
+        entry = self.get('currentsong')
+        if 'file' in entry:
             if not is_url(entry['file']):
-                result[entry['id']] = os.path.join(
-                    self.music_directory, entry['file'])
+                result = os.path.join(self.music_directory, entry['file'])
             else:
-                result[entry['id']] = entry['file']
+                result = entry['file']
         return result
 
     def status(self):
@@ -250,10 +250,14 @@ class MPDStats(object):
         self.now_playing = None
 
     def on_play(self, status):
-        playlist = self.mpd.playlist()
-        path = playlist.get(status['songid'])
+
+        path = self.mpd.currentsong()
 
         if not path:
+            return
+
+        if is_url(path):
+            self._log.info(u'playing stream {0}', displayable_path(path))
             return
 
         played, duration = map(int, status['time'].split(':', 1))
@@ -271,14 +275,6 @@ class MPDStats(object):
 
                 if diff <= self.time_threshold:
                     return
-
-                if self.now_playing['path'] == path and played == 0:
-                    self.handle_song_change(self.now_playing)
-
-        if is_url(path):
-            self._log.info(u'playing stream {0}', displayable_path(path))
-            self.now_playing = None
-            return
 
         self._log.info(u'playing {0}', displayable_path(path))
 
