@@ -475,6 +475,15 @@ Either ``yes`` or ``no``, controlling whether imported directories are
 recorded and whether these recorded directories are skipped.  This
 corresponds to the ``-i`` flag to ``beet import``.
 
+.. _from_scratch:
+
+from_scratch
+~~~~~~~~~~~~
+
+Either ``yes`` or ``no`` (default), controlling whether existing metadata is
+discarded when a match is applied. This corresponds to the ``-from_scratch``
+flag to ``beet import``.
+
 quiet_fallback
 ~~~~~~~~~~~~~~
 
