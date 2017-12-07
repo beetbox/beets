@@ -534,6 +534,10 @@ class ImportTask(BaseImportTask):
     def apply_metadata(self):
         """Copy metadata from match info to the items.
         """
+        if config['import']['from_scratch']:
+            for item in self.match.mapping:
+                item.clear()
+
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
     def duplicate_items(self, lib):
