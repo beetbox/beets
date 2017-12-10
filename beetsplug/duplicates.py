@@ -253,13 +253,12 @@ class DuplicatesPlugin(BeetsPlugin):
         "completeness" (objects with more non-null fields come first)
         and Albums are ordered by their track count.
         """
-        if tiebreak:
-            kind = 'items' if all(isinstance(o, Item)
-                                  for o in objs) else 'albums'
+        kind = 'items' if all(isinstance(o, Item) for o in objs) else 'albums'
+
+        if tiebreak and kind in tiebreak.keys():
             key = lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
         else:
-            kind = Item if all(isinstance(o, Item) for o in objs) else Album
-            if kind is Item:
+            if kind is 'items':
                 def truthy(v):
                     # Avoid a Unicode warning by avoiding comparison
                     # between a bytes object and the empty Unicode
