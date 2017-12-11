@@ -258,14 +258,14 @@ class DuplicatesPlugin(BeetsPlugin):
         if tiebreak and kind in tiebreak.keys():
             key = lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
         else:
-            if kind is 'items':
+            if kind == 'items':
                 def truthy(v):
                     # Avoid a Unicode warning by avoiding comparison
                     # between a bytes object and the empty Unicode
                     # string ''.
                     return v is not None and \
                         (v != '' if isinstance(v, six.text_type) else True)
-                fields = kind.all_keys()
+                fields = Item.all_keys()
                 key = lambda x: sum(1 for f in fields if truthy(getattr(x, f)))
             else:
                 key = lambda x: len(x.items())
