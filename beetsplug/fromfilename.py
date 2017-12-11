@@ -27,10 +27,6 @@ import six
 
 # Filename field extraction patterns.
 PATTERNS = [
-    # "01 - Track 01" and "01": do nothing
-    r'^(\d+)\s*-\s*track\s*\d$',
-    r'^\d+$',
-
     # Useful patterns.
     r'^(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
     r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
@@ -45,6 +41,7 @@ PATTERNS = [
     r'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
     r'^(?P<track>\d+)\s(?P<title>.+)$',
     r'^(?P<title>.+) by (?P<artist>.+)$',
+    r'^(?P<track>\d+).*$',
 ]
 
 # Titles considered "empty" and in need of replacement.
