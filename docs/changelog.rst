@@ -70,6 +70,8 @@ Fixes:
   Python 3 on Windows with non-ASCII filenames. :bug:`2671`
 * :doc:`/plugins/absubmit`: Fix an occasional crash on Python 3 when the AB
   analysis tool produced non-ASCII metadata. :bug:`2673`
+* :doc:`/plugins/duplicates`: Use default tiebreak for any kind (item/album) that
+  does not have a tiebreak specified in the configuration.
 * :doc:`/plugins/duplicates`: Fix the `--key` command line option, which was
   ignored.
 * :doc:`/plugins/replaygain`: Fix album replaygain calculation with the
