@@ -128,100 +128,49 @@ class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
                          parentwork.work_parent(work_id))
 
 
-# class FtInTitlePluginTest(unittest.TestCase):
-#    def setUp(self):
-#        """Set up configuration"""
-#        ftintitle.ParentWorkPlugin()
-#
-#    def test_find_feat_part(self):
-#        test_cases = [
-#            {
-#                'artist': 'Alice ft. Bob',
-#                'album_artist': 'Alice',
-#                'feat_part': 'Bob'
-#            },
-#            {
-#                'artist': 'Alice feat Bob',
-#                'album_artist': 'Alice',
-#                'feat_part': 'Bob'
-#            },
-#            {
-#                'artist': 'Alice featuring Bob',
-#                'album_artist': 'Alice',
-#                'feat_part': 'Bob'
-#            },
-#            {
-#                'artist': 'Alice & Bob',
-#                'album_artist': 'Alice',
-#                'feat_part': 'Bob'
-#            },
-#            {
-#                'artist': 'Alice and Bob',
-#                'album_artist': 'Alice',
-#                'feat_part': 'Bob'
-#            },
-#            {
-#                'artist': 'Alice With Bob',
-#                'album_artist': 'Alice',
-#                'feat_part': 'Bob'
-#            },
-#            {
-#                'artist': 'Alice defeat Bob',
-#                'album_artist': 'Alice',
-#                'feat_part': None
-#            },
-#            {
-#                'artist': 'Alice & Bob',
-#                'album_artist': 'Bob',
-#                'feat_part': 'Alice'
-#            },
-#            {
-#                'artist': 'Alice ft. Bob',
-#                'album_artist': 'Bob',
-#                'feat_part': 'Alice'
-#            },
-#            {
-#                'artist': 'Alice ft. Carol',
-#                'album_artist': 'Bob',
-#                'feat_part': None
-#            },
-#        ]
-#
-#        for test_case in test_cases:
-#            feat_part = ftintitle.find_feat_part(
-#                test_case['artist'],
-#                test_case['album_artist']
-#            )
-#            self.assertEqual(feat_part, test_case['feat_part'])
-#
-#    def test_split_on_feat(self):
-#        parts = ftintitle.split_on_feat(u'Alice ft. Bob')
-#        self.assertEqual(parts, (u'Alice', u'Bob'))
-#        parts = ftintitle.split_on_feat(u'Alice feat Bob')
-#        self.assertEqual(parts, (u'Alice', u'Bob'))
-#        parts = ftintitle.split_on_feat(u'Alice feat. Bob')
-#        self.assertEqual(parts, (u'Alice', u'Bob'))
-#        parts = ftintitle.split_on_feat(u'Alice featuring Bob')
-#        self.assertEqual(parts, (u'Alice', u'Bob'))
-#        parts = ftintitle.split_on_feat(u'Alice & Bob')
-#        self.assertEqual(parts, (u'Alice', u'Bob'))
-#        parts = ftintitle.split_on_feat(u'Alice and Bob')
-#        self.assertEqual(parts, (u'Alice', u'Bob'))
-#        parts = ftintitle.split_on_feat(u'Alice With Bob')
-#        self.assertEqual(parts, (u'Alice', u'Bob'))
-#        parts = ftintitle.split_on_feat(u'Alice defeat Bob')
-#        self.assertEqual(parts, (u'Alice defeat Bob', None))
-#
-#    def test_contains_feat(self):
-#        self.assertTrue(ftintitle.contains_feat(u'Alice ft. Bob'))
-#        self.assertTrue(ftintitle.contains_feat(u'Alice feat. Bob'))
-#        self.assertTrue(ftintitle.contains_feat(u'Alice feat Bob'))
-#        self.assertTrue(ftintitle.contains_feat(u'Alice featuring Bob'))
-#        self.assertTrue(ftintitle.contains_feat(u'Alice & Bob'))
-#        self.assertTrue(ftintitle.contains_feat(u'Alice and Bob'))
-#        self.assertTrue(ftintitle.contains_feat(u'Alice With Bob'))
-#        self.assertFalse(ftintitle.contains_feat(u'Alice defeat Bob'))
-#        self.assertFalse(ftintitle.contains_feat(u'Aliceft.Bob'))
+class ParentworkPluginTest(unittest.TestCase):
+    def setUp(self):
+        """Set up configuration"""
+        parentwork.ParentWorkPlugin()
+
+    def test_find_feat_part(self):
+        test_cases = [
+            {
+                'work_id': u'6eaede01-c31a-3402\
+                                 -bedb-598e6bcbad03',
+                'father_work_id': '32c8943f-1b27-3a23-8660-4567f4847c94',
+                'parent_work': u'Requiem in D minor, K. 626',
+                'parent_work_disambig': u'Süßmayr Edition',
+                'parent_composer': u'Wolfgang Amadeus Mozart, \
+                                 Franz Xaver Süßmayr',
+                'parent_work_id': u'32c8943f-1b27-3a23-\
+                                 8660-4567f4847c94',
+                'parent_composer_sort': u'Mozart, Wolfgang Amadeus, \
+                                Süßmayr, Franz Xaver',
+                'parent_work_disambig': u'Süßmayr Edition'
+            },
+            {
+                'work_id': u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a',
+                'father_work_id': 'f04b42df-7251-4d86-a5ee-67cfa49580d1',
+                'parent_work': u'Matthäus-Passion, BWV 244',
+                'parent_work_disambig': u'',
+                'parent_composer': u'Johann Sebastian Bach',
+                'parent_composer_sort': u'Bach, Johann Sebastian',
+                'parent_work_id': u'45afb3b2-18ac-4187-bc72-beb1b1c194ba'
+            },
+        ]
+
+        for test_case in test_cases:
+            feat_part = parentwork.work_father(
+                test_case[0]['work_id'],
+                force=True
+            )
+            self.assertEqual(feat_part, test_case[0]['father_work_id'])
+            feat_part = parentwork.work_parent(
+                test_case[1]['work_id'],
+                force=True
+            )
+            self.assertEqual(feat_part, test_case[1]['parent_work_id'])
 
 
 def suite():

@@ -62,8 +62,8 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'recording-level-rels', 'work-rels',
                     'work-level-rels', 'artist-rels']
 TRACK_INCLUDES = ['artists', 'aliases']
-if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
-    TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
+#if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
+TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
 
 
 def track_url(trackid):
@@ -211,7 +211,6 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     work = []
     work_id = []
     work_disambig = []
-
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
