@@ -32,9 +32,9 @@ class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def _pw_add_item(self, artist, title, work_id, parent_work=None,
+    def _pw_add_item(self, path, artist, title, work_id, parent_work=None,
                      parent_work_disambig=None, parent_composer=None,
-                     parent_work_id=None, path='/'):
+                     parent_work_id=None):
         return self.add_item(path=path,
                              artist=artist,
                              title=title,
