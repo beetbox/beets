@@ -138,7 +138,7 @@ class ParentWorkPlugin(BeetsPlugin):
             else:
                 parent_work_disambig.append('')
 
-    def find_work(self, item, force):
+    def find_work(self, lib, item, force):
 
         parent_work          = []
         parent_work_disambig = []
