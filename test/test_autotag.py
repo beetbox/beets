@@ -852,6 +852,8 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
 
     def test_va_flag_cleared_does_not_set_comp(self):
         self._apply()
+        print(self.items[0].comp)
+        print(self.items[1].comp)
         self.assertFalse(self.items[0].comp)
         self.assertFalse(self.items[1].comp)
 
