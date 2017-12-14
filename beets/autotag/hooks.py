@@ -260,7 +260,7 @@ class TrackInfo(ItemInfo):
         """
         for fld, val in self.__dict__.items():
             if isinstance(val, bytes):
-                setattr(self, fld, val.decode(codec, errors))
+                setattr(self, fld, val.decode(codec, 'ignore'))
 
 
 # class TrackInfo(dict):
