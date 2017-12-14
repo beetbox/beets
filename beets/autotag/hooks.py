@@ -124,46 +124,114 @@ class AlbumInfo(object):
 
 
 class TrackInfo(dict):
+    """Generic item information. Dict-like object which has its key/value
+    pair mirrored on its attributes for the sake of backward compatibility.
     """
-    Example:
-    m = Map({'first_name': 'Eduardo'}, last_name='Pool',
-    age=24, sports=['Soccer'])
-    """
+
+#    REQ_ATTR = set()
+#    """Attributes required to create an ItemInfo"""
+#    ALIASES = {}
+#    """Maps msucibrainzngs fields to ItemInfo fields"""
+
     def __init__(self, **kwargs):
-        super(TrackInfo, self).__init__(**kwargs)
+        """Initialises values. kwargs are optional arguments and may be
+        set to None
+        """
+        super(TrackInfo, self).__init__()
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
-        if kwargs:
-            for k, v in kwargs.items():
-                self[k] = v
-
-    def __getattr__(self, attr):
-        return self.get(attr)
+        # And set attributes
+        for attr, val in kwargs.items():
+            setattr(self, attr, val)
 
     def __setattr__(self, key, value):
-        self.__setitem__(key, value)
+        """Sets dict-like key value and adds attribute. Be sure to
+        call super's set attribute to avoid recursion: using setattr
+        will try to use this class' __setattr__ which calls setattr.
 
-    def __setitem__(self, key, value):
+        :param key: new key in mapping and new attribute
+        :type key: str
+        :param value: value associated to key
+        :type value: any
+        """
         super(TrackInfo, self).__setitem__(key, value)
         self.__dict__.update({key: value})
 
-    def __delattr__(self, item):
-        self.__delitem__(item)
+    def __setitem__(self, key, value):
+        """Calls __setattr__"""
+        setattr(self, key, value)
 
-    def __delitem__(self, key):
+    def __delattr__(self, key):
+        """Deletes attribute and key"""
         super(TrackInfo, self).__delitem__(key)
         del self.__dict__[key]
 
-    def __hash__(self):
-        return object.__hash__(self)
+    def __delitem__(self, key):
+        """Calls __delattr__"""
+        self.__delattr__(key)
 
-    def decode(self, codec='utf-8'):
-        """Ensure that all string attributes on this object are decoded
-        to Unicode.
+    def __getattr__(self, key):
+        """Disables default getattr and uses the item way
+        For full backward compatibility, None is returned if key has not
+        been set (everything was set to None before...)
         """
-        for fld in self:
-            value = self.get(fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
+        try:
+            return super(TrackInfo, self).__getitem__(key)
+        except KeyError:
+            return None
+
+    def __getitem__(self, key):
+        """For backward compatibility, return None if item is not
+        found
+        """
+        try:
+            return super(TrackInfo, self).__getitem__(key)
+        except KeyError:
+            return None
+
+
+# class TrackInfo(dict):
+#    """
+#    Example:
+#    m = Map({'first_name': 'Eduardo'}, last_name='Pool',
+#    age=24, sports=['Soccer'])
+#    """
+#    def __init__(self, **kwargs):
+#        super(TrackInfo, self).__init__(**kwargs)
+#
+#        if kwargs:
+#            for k, v in kwargs.items():
+#                self[k] = v
+#
+#    def __getattr__(self, attr):
+#        return self.get(attr)
+#
+#    def __setattr__(self, key, value):
+#        self.__setitem__(key, value)
+#
+#    def __setitem__(self, key, value):
+#        super(TrackInfo, self).__setitem__(key, value)
+#        self.__dict__.update({key: value})
+#
+#    def __delattr__(self, item):
+#        self.__delitem__(item)
+#
+#    def __delitem__(self, key):
+#        super(TrackInfo, self).__delitem__(key)
+#        del self.__dict__[key]
+#
+#    def __hash__(self):
+#        return object.__hash__(self)
+#
+#    def decode(self, codec='utf-8'):
+#        """Ensure that all string attributes on this object are decoded
+#        to Unicode.
+#        """
+#        for fld in self:
+#            value = self.get(fld)
+#            if isinstance(value, bytes):
+#                setattr(self, fld, value.decode(codec, 'ignore'))
 
 # Candidate distance scoring.
 
