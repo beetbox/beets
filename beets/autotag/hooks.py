@@ -190,7 +190,23 @@ class TrackInfo(dict):
 
     def __hash__(self):
         """Always a good idea to have a hash"""
-        return self['track_id'].__hash__()
+        return self.track_id.__hash__()
+
+    def __reduce__(self):
+        """Used by :py:func:`copy.deepcopy`"""
+        return self['track_id']
+
+    def decode(self, codec='utf-8', errors='ignore'):
+        """Work around a bug in python-musicbrainz-ngs that causes some
+        strings to be bytes rather than Unicode.
+        https://github.com/alastair/python-musicbrainz-ngs/issues/85
+
+        Ensures that all string attributes of this object are converted to
+        unicode.
+        """
+        for fld, val in self.__dict__.items():
+            if isinstance(val, bytes):
+                setattr(self, fld, val.decode(codec, errors))
 
 # class TrackInfo(dict):
 #    """
