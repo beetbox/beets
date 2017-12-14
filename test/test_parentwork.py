@@ -33,10 +33,10 @@ class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def test_father_work(self):
-        work_id = '2e4a3668-458d-3b2a-8be2-0b08e0d8243a'
-        self.assertEqual('f04b42df-7251-4d86-a5ee-67cfa49580d1',
+        work_id = u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a'
+        self.assertEqual(u'f04b42df-7251-4d86-a5ee-67cfa49580d1',
                          parentwork.work_father(work_id))
-        self.assertEqual('45afb3b2-18ac-4187-bc72-beb1b1c194ba',
+        self.assertEqual(u'45afb3b2-18ac-4187-bc72-beb1b1c194ba',
                          parentwork.work_parent(work_id))
 
 
