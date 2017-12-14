@@ -31,20 +31,6 @@ class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
-
-    def _pw_add_item(self, artist, title, work_id, parent_work=None,
-                     parent_work_disambig=None, parent_composer=None,
-                     parent_work_id=None):
-        return self.add_item(artist=artist,
-                             title=title,
-                             work_id=work_id,
-                             parent_work=parent_work,
-                             parent_work_disambig=parent_work_disambig,
-                             parent_composer=parent_composer,
-                             parent_composer_sort=parent_work_id)
-
-    def _pw_set_config(self, force):
-        self.config['parentwork']['force'] = force
         
     def test_father_work(self):
         work_id = u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a'
