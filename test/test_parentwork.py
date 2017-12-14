@@ -31,7 +31,7 @@ class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
-        
+
     def test_father_work(self):
         work_id = u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a'
         self.assertEqual(u'f04b42df-7251-4d86-a5ee-67cfa49580d1',
