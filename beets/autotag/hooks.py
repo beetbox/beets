@@ -128,10 +128,8 @@ class TrackInfo(dict):
     pair mirrored on its attributes for the sake of backward compatibility.
     """
 
-#    REQ_ATTR = set()
-#    """Attributes required to create an ItemInfo"""
-#    ALIASES = {}
-#    """Maps msucibrainzngs fields to ItemInfo fields"""
+    REQ_ATTR = set(('title', 'track_id'))
+    """Attributes required to create an TrackInfo"""
 
     def __init__(self, **kwargs):
         """Initialises values. kwargs are optional arguments and may be
@@ -190,6 +188,9 @@ class TrackInfo(dict):
         except KeyError:
             return None
 
+    def __hash__(self):
+        """Always a good idea to have a hash"""
+        return self['track_id'].__hash__()
 
 # class TrackInfo(dict):
 #    """
