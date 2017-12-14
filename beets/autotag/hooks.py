@@ -33,6 +33,86 @@ log = logging.getLogger('beets')
 
 
 # Classes used to represent candidate options.
+class ItemInfo(dict):
+    """Generic item information. Dict-like object which has its key/value
+    pair mirrored on its attributes for the sake of backward compatibility.
+    """
+
+    REQ_ATTR = set()
+    """Attributes required to create an ItemInfo"""
+    ALIASES = {}
+    """Maps msucibrainzngs fields to ItemInfo fields"""
+
+    def __init__(self, **kwargs):
+        """Initialises values. kwargs are optional arguments and may be
+        set to None
+        """
+        super(ItemInfo, self).__init__()
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+        # And set attributes
+        for attr, val in kwargs.items():
+            setattr(self, attr, val)
+
+    def __setattr__(self, key, value):
+        """Sets dict-like key value and adds attribute. Be sure to
+        call super's set attribute to avoid recursion: using setattr
+        will try to use this class' __setattr__ which calls setattr.
+        :param key: new key in mapping and new attribute
+        :type key: str
+        :param value: value associated to key
+        :type value: any
+        """
+        super(ItemInfo, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __setitem__(self, key, value):
+        """Calls __setattr__"""
+        setattr(self, key, value)
+
+    def __delattr__(self, key):
+        """Deletes attribute and key"""
+        super(ItemInfo, self).__delitem__(key)
+        del self.__dict__[key]
+
+    def __delitem__(self, key):
+        """Calls __delattr__"""
+        self.__delattr__(key)
+
+    def __getattr__(self, key):
+        """Disables default getattr and uses the item way
+        For full backward compatibility, None is returned if key has not
+        been set (everything was set to None before...)
+        """
+        try:
+            return super(ItemInfo, self).__getitem__(key)
+        except KeyError:
+            return None
+
+    def __getitem__(self, key):
+        """For backward compatibility, return None if item is not
+        found
+        """
+        try:
+            return super(ItemInfo, self).__getitem__(key)
+        except KeyError:
+            return None
+
+    def update_val(self, key, val):
+        """Appends value to the field identified by key if it
+        exists, else, create it
+        :param str key: identifies field
+        :param str val: value to be set
+        """
+        if not isinstance(val, str):
+            raise TypeError("Third argument must be a str")
+        if key in self.keys():
+            self[key] += ', {v}'.format(v=val)
+        else:
+            self[key] = val
+# Classes used to represent candidate options.
+
 
 class AlbumInfo(object):
     """Describes a canonical release that may be used to match a release
@@ -123,73 +203,48 @@ class AlbumInfo(object):
                 track.decode(codec)
 
 
-class TrackInfo(dict):
-    """Generic item information. Dict-like object which has its key/value
-    pair mirrored on its attributes for the sake of backward compatibility.
+class TrackInfo(ItemInfo):
+    """Describes a canonical track present on a release. Appears as part
+    of an AlbumInfo's ``tracks`` list. Consists of these data members:
+    - ``title``: name of the track
+    - ``track_id``: MusicBrainz ID; UUID fragment only
+    - ``artist``: individual track artist name
+    - ``artist_id``
+    - ``length``: float: duration of the track in seconds
+    - ``index``: position on the entire release
+    - ``media``: delivery mechanism (Vinyl, etc.)
+    - ``medium``: the disc number this track appears on in the album
+    - ``medium_index``: the track's position on the disc
+    - ``medium_total``: the number of tracks on the item's disc
+    - ``artist_sort``: name of the track artist for sorting
+    - ``disctitle``: name of the individual medium (subtitle)
+    - ``artist_credit``: Recording-specific artist name
+    - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
+    - ``data_url``: The data source release URL.
+    - ``lyricist``: individual track lyricist name
+    - ``composer``: individual track composer name
+    - ``composer_sort``: individual track composer sort name
+    - ``arranger`: individual track arranger name
+    - ``track_alt``: alternative track number (tape, vinyl, etc.)
+    Only ``title`` and ``track_id`` are required. The rest of the fields
+    may be None. The indices ``index``, ``medium``, and ``medium_index``
+    are all 1-based.
     """
 
     REQ_ATTR = set(('title', 'track_id'))
-    """Attributes required to create an TrackInfo"""
+    """Required attributes"""
 
     def __init__(self, **kwargs):
-        """Initialises values. kwargs are optional arguments and may be
-        set to None
-        """
-        super(TrackInfo, self).__init__()
-        for key, val in kwargs.items():
-            setattr(self, key, val)
-
-        # And set attributes
-        for attr, val in kwargs.items():
-            setattr(self, attr, val)
-
-    def __setattr__(self, key, value):
-        """Sets dict-like key value and adds attribute. Be sure to
-        call super's set attribute to avoid recursion: using setattr
-        will try to use this class' __setattr__ which calls setattr.
-
-        :param key: new key in mapping and new attribute
-        :type key: str
-        :param value: value associated to key
-        :type value: any
-        """
-        super(TrackInfo, self).__setitem__(key, value)
-        self.__dict__.update({key: value})
-
-    def __setitem__(self, key, value):
-        """Calls __setattr__"""
-        setattr(self, key, value)
-
-    def __delattr__(self, key):
-        """Deletes attribute and key"""
-        super(TrackInfo, self).__delitem__(key)
-        del self.__dict__[key]
-
-    def __delitem__(self, key):
-        """Calls __delattr__"""
-        self.__delattr__(key)
-
-    def __getattr__(self, key):
-        """Disables default getattr and uses the item way
-        For full backward compatibility, None is returned if key has not
-        been set (everything was set to None before...)
-        """
-        try:
-            return super(TrackInfo, self).__getitem__(key)
-        except KeyError:
-            return None
-
-    def __getitem__(self, key):
-        """For backward compatibility, return None if item is not
-        found
-        """
-        try:
-            return super(TrackInfo, self).__getitem__(key)
-        except KeyError:
-            return None
+        """Sets vars and verifies that REQ_ATTR are in kwargs"""
+        if not self.REQ_ATTR <= set(kwargs.keys()):
+            raise TypeError(
+                "TrackInfo takes at least those 2 keyword arguments "
+                "{}, {}".format(*tuple(self.REQ_ATTR)))
+        else:
+            super(TrackInfo, self).__init__(**kwargs)
 
     def __hash__(self):
-        """Always a good idea to have a hash"""
+        """Track id is supposed unique, and is required"""
         return self.track_id.__hash__()
 
     def __reduce__(self):
@@ -200,13 +255,13 @@ class TrackInfo(dict):
         """Work around a bug in python-musicbrainz-ngs that causes some
         strings to be bytes rather than Unicode.
         https://github.com/alastair/python-musicbrainz-ngs/issues/85
-
         Ensures that all string attributes of this object are converted to
         unicode.
         """
         for fld, val in self.__dict__.items():
             if isinstance(val, bytes):
                 setattr(self, fld, val.decode(codec, errors))
+
 
 # class TrackInfo(dict):
 #    """
