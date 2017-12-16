@@ -34,6 +34,10 @@ New features:
 * :doc:`/plugins/acousticbrainz`: The plugin can now be configured to write only
   a specific list of tags.
   Thanks to :user:`woparry`.
+* A new :ref:`from_scratch` configuration option makes the importer remove old
+  metadata before applying new metadata.
+  Thanks to :user:`tummychow`.
+  :bug:`934` :bug:`2755`
 
 Fixes:
 
