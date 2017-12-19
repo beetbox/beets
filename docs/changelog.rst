@@ -88,6 +88,8 @@ Fixes:
   "Edit Candidates" option is used. :bug:`2734`
 * Fix a crash when numeric metadata fields contain just a minus or plus sign
   with no following numbers. Thanks to :user:`eigengrau`. :bug:`2741`
+* Fixed an issue where images would be resized according to their longest edge,
+  instead of their width. Thanks to :user:`sekjun9878`. :bug:`2729`
 
 For developers:
 
