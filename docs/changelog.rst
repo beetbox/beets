@@ -4,7 +4,12 @@ Changelog
 1.4.6 (in development)
 ----------------------
 
-There are some larger new features in this release:
+The highlight of this release is "album merging," an oft-requested option in
+the importer to add new tracks to an existing album you already have in your
+library. This way, you no longer need to resort to removing the partial album
+from your library, combining the files manually, and importing again.
+
+Here are the larger new features in this release:
 
 * When the importer finds duplicate albums, you can now merge all the
   tracks---old and new---together and try importing them as a single, combined
