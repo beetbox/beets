@@ -4,67 +4,77 @@ Changelog
 1.4.6 (in development)
 ----------------------
 
-New features:
+There are some larger new features in this release:
 
-* When the importer finds duplicate albums, you can now merge all the tracks
-  together and try importing them as a single album.
+* When the importer finds duplicate albums, you can now merge all the
+  tracks---old and new---together and try importing them as a single, combined
+  album.
   Thanks to :user:`udiboy1209`.
   :bug:`112` :bug:`2725`
 * :doc:`/plugins/lyrics`: The plugin can now produce reStructuredText files
   for beautiful, readable books of lyrics. Thanks to :user:`anarcat`.
   :bug:`2628`
-* :doc:`/plugins/convert`: Adds ``no_convert`` option which ignores transcoding
-  items matching provided query string. Thanks to :user:`Stunner`.
+* A new :ref:`from_scratch` configuration option makes the importer remove old
+  metadata before applying new metadata. This new feature complements the
+  :doc:`zero </plugins/zero>` and :doc:`scrub </plugins/scrub>` plugins but is
+  slightly different: beets clears out all the old tags it knows about and
+  only keeps the new data it gets from the remote metadata source.
+  Thanks to :user:`tummychow`.
+  :bug:`934` :bug:`2755`
+
+There are also somewhat littler, but still great, new features:
+
+* :doc:`/plugins/convert`: A new ``no_convert`` option lets you skip
+  transcoding items matching a query. Instead, the files are just copied
+  as-is.  Thanks to :user:`Stunner`.
   :bug:`2732` :bug:`2751`
-* :doc:`/plugins/fetchart`: The plugin has now a quiet switch that will only
-  display missing album arts. Thanks to :user:`euri10`.
+* :doc:`/plugins/fetchart`: A new quiet switch that only prints out messages
+  when album art is missing.
+  Thanks to :user:`euri10`.
   :bug:`2683`
-* :doc:`/plugins/mbcollection`: The plugin now supports a custom MusicBrainz
-  collection via the ``collection`` configuration option.
+* :doc:`/plugins/mbcollection`: You can configure a custom MusicBrainz
+  collection via the new ``collection`` configuration option.
   :bug:`2685`
-* :doc:`/plugins/mbcollection`: The plugin now supports removing albums
-  from collections that are longer in the beets library.
-* :doc:`/plugins/mpdstats`: The plugin now updates song stats when MPD switches
-  from a song to a stream and when it plays the same song consecutively.
-  :bug:`2707`
+* :doc:`/plugins/mbcollection`: The collection update command can now remove
+  albums from collections that are longer in the beets library.
 * :doc:`/plugins/fetchart`: The ``clearart`` command now asks for confirmation
   before touching your files.
   Thanks to :user:`konman2`.
   :bug:`2708` :bug:`2427`
+* :doc:`/plugins/mpdstats`: The plugin now correctly updates song statistics
+  when MPD switches from a song to a stream and when it plays the same song
+  multiple times consecutively.
+  :bug:`2707`
 * :doc:`/plugins/acousticbrainz`: The plugin can now be configured to write only
   a specific list of tags.
   Thanks to :user:`woparry`.
-* A new :ref:`from_scratch` configuration option makes the importer remove old
-  metadata before applying new metadata.
-  Thanks to :user:`tummychow`.
-  :bug:`934` :bug:`2755`
 
-Fixes:
+There are lots and lots of bug fixes:
 
-* :doc:`/plugins/hook`: Fixed a problem whereby accessing non-string properties of
-  objects such as item or album (e.g. item.track) would cause a crash.
+* :doc:`/plugins/hook`: Fixed a problem where accessing non-string properties
+  of ``item`` or ``album`` (e.g., ``item.track``) would cause a crash.
   Thanks to :user:`broddo`.
   :bug:`2740`
-* :doc:`/plugins/play`: When ``relative_to`` is set, correctly emit relative paths
-  even when querying for albums rather than tracks.
+* :doc:`/plugins/play`: When ``relative_to`` is set, the plugin correctly
+  emits relative paths even when querying for albums rather than tracks.
   Thanks to :user:`j000`.
   :bug:`2702`
-* Prevent Python from warning about a ``BrokenPipeError`` being ignored even
-  though we do take it into account. This was an issue when using beets in
-  simple shell scripts.
+* We suppress a spurious Python warning about a ``BrokenPipeError`` being
+  ignored. This was an issue when using beets in simple shell scripts.
   Thanks to :user:`Azphreal`.
   :bug:`2622` :bug:`2631`
 * :doc:`/plugins/replaygain`: Fix a regression in the previous release related
   to the new R128 tags. :bug:`2615` :bug:`2623`
-* :doc:`/plugins/lyrics`: The MusixMatch backend now detect and warns
-  the user when blocked on the server. Thanks to
-  :user:`anarcat`. :bug:`2634` :bug:`2632`
+* :doc:`/plugins/lyrics`: The MusixMatch backend now detects and warns
+  when the server has blocked the client.
+  Thanks to :user:`anarcat`. :bug:`2634` :bug:`2632`
 * :doc:`/plugins/importfeeds`: Fix an error on Python 3 in certain
   configurations. Thanks to :user:`djl`. :bug:`2467` :bug:`2658`
-* :doc:`/plugins/edit`: Fix a bug when editing items during a ``-L``
-  re-import. Previously, diffs against against unrelated items could be
-  shown or beets could crash with a traceback. :bug:`2659`
-* :doc:`/plugins/kodiupdate`: Fix server URL and add better error reporting.
+* :doc:`/plugins/edit`: Fix a bug when editing items during a re-import with
+  the ``-L`` flag. Previously, diffs against against unrelated items could be
+  shown or beets could crash. :bug:`2659`
+* :doc:`/plugins/kodiupdate`: Fix the server URL and add better error
+  reporting.
   :bug:`2662`
 * Fixed a problem where "no-op" modifications would reset files' mtimes,
   resulting in unnecessary writes. This most prominently affected the
@@ -74,18 +84,20 @@ Fixes:
   Python 3 on Windows with non-ASCII filenames. :bug:`2671`
 * :doc:`/plugins/absubmit`: Fix an occasional crash on Python 3 when the AB
   analysis tool produced non-ASCII metadata. :bug:`2673`
-* :doc:`/plugins/duplicates`: Use default tiebreak for any kind (item/album) that
-  does not have a tiebreak specified in the configuration.
+* :doc:`/plugins/duplicates`: Use the default tiebreak for items or albums
+  when the configuration only specifies a tiebreak for the other kind of
+  entity.
   Thanks to :user:`cgevans`.
   :bug:`2758`
-* :doc:`/plugins/duplicates`: Fix the `--key` command line option, which was
+* :doc:`/plugins/duplicates`: Fix the ``--key`` command line option, which was
   ignored.
-* :doc:`/plugins/replaygain`: Fix album replaygain calculation with the
-  gstreamer backend. :bug:`2636`
+* :doc:`/plugins/replaygain`: Fix album ReplayGain calculation with the
+  GStreamer backend. :bug:`2636`
 * :doc:`/plugins/scrub`: Handle errors when manipulating files using newer
   versions of Mutagen. :bug:`2716`
-* :doc:`/plugins/fetchart`: Fix: don't skip running the fetchart plugin during import, when the
-  "Edit Candidates" option is used. :bug:`2734`
+* :doc:`/plugins/fetchart`: The plugin no longer gets skipped during import
+  when the "Edit Candidates" option is used from the :doc:`/plugins/edit`.
+  :bug:`2734`
 * Fix a crash when numeric metadata fields contain just a minus or plus sign
   with no following numbers. Thanks to :user:`eigengrau`. :bug:`2741`
 * :doc:`/plugins/fromfilename`: Recognize file names that contain *only* a
@@ -93,19 +105,22 @@ Fixes:
   separator between fields.
   Thanks to :user:`Vrihub`.
   :bug:`2738` :bug:`2759`
-* Fixed an issue where images would be resized according to their longest edge,
-  instead of their width. Thanks to :user:`sekjun9878`. :bug:`2729`
+* Fixed an issue where images would be resized according to their longest
+  edge, instead of their width, when using the ``maxwidth`` config option in
+  the :doc:`/plugins/fetchart` and :doc:`/plugins/embedart`. Thanks to
+  :user:`sekjun9878`. :bug:`2729`
 
+There are some changes for developers:
 
-For developers:
-
-* Fixed fields in Album and Item objects are now more strict about translating
+* "Fixed fields" in Album and Item objects are now more strict about translating
   missing values into type-specific null-like values. This should help in
   cases where a string field is unexpectedly `None` sometimes instead of just
   showing up as an empty string. :bug:`2605`
-* Refactored the move functions in library.py and the `manipulate_files` function
-  in importer.py to use a single parameter describing the file operation instead
-  of multiple boolean flags. :bug:`2682`
+* Refactored the move functions the `beets.library` module and the
+  `manipulate_files` function in `beets.importer` to use a single parameter
+  describing the file operation instead of multiple Boolean flags.
+  There is a new numerated type describing how to move, copy, or link files.
+  :bug:`2682`
 
 
 1.4.5 (June 20, 2017)
