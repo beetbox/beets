@@ -561,6 +561,11 @@ class Item(LibModel):
         if self.mtime == 0 and 'mtime' in values:
             self.mtime = values['mtime']
 
+    def clear(self):
+        """Set all key/value pairs to None."""
+        for key in self._media_fields:
+            setattr(self, key, None)
+
     def get_album(self):
         """Get the Album object that this item belongs to, if any, or
         None if the item is a singleton or is not associated with a
