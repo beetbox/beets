@@ -34,6 +34,10 @@ New features:
 * :doc:`/plugins/acousticbrainz`: The plugin can now be configured to write only
   a specific list of tags.
   Thanks to :user:`woparry`.
+* A new :ref:`from_scratch` configuration option makes the importer remove old
+  metadata before applying new metadata.
+  Thanks to :user:`tummychow`.
+  :bug:`934` :bug:`2755`
 
 Fixes:
 
@@ -70,6 +74,10 @@ Fixes:
   Python 3 on Windows with non-ASCII filenames. :bug:`2671`
 * :doc:`/plugins/absubmit`: Fix an occasional crash on Python 3 when the AB
   analysis tool produced non-ASCII metadata. :bug:`2673`
+* :doc:`/plugins/duplicates`: Use default tiebreak for any kind (item/album) that
+  does not have a tiebreak specified in the configuration.
+  Thanks to :user:`cgevans`.
+  :bug:`2758`
 * :doc:`/plugins/duplicates`: Fix the `--key` command line option, which was
   ignored.
 * :doc:`/plugins/replaygain`: Fix album replaygain calculation with the
@@ -82,6 +90,9 @@ Fixes:
   with no following numbers. Thanks to :user:`eigengrau`. :bug:`2741`
 * :doc:`/plugins/fromfilename`: Allow file names such as "01.mp3" to extract the track number.
   Also allow "_" as a separator. Refactor some regular expressions. :bug:`2738`
+* Fixed an issue where images would be resized according to their longest edge,
+  instead of their width. Thanks to :user:`sekjun9878`. :bug:`2729`
+
 
 For developers:
 
