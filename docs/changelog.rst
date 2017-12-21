@@ -80,6 +80,8 @@ Fixes:
   "Edit Candidates" option is used. :bug:`2734`
 * Fix a crash when numeric metadata fields contain just a minus or plus sign
   with no following numbers. Thanks to :user:`eigengrau`. :bug:`2741`
+* :doc:`/plugins/fromfilename`: Allow file names such as "01.mp3" to extract the track number.
+  Also allow "_" as a separator. Refactor some regular expressions. :bug:`2738`
 
 For developers:
 
