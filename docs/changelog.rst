@@ -88,8 +88,11 @@ Fixes:
   "Edit Candidates" option is used. :bug:`2734`
 * Fix a crash when numeric metadata fields contain just a minus or plus sign
   with no following numbers. Thanks to :user:`eigengrau`. :bug:`2741`
-* :doc:`/plugins/fromfilename`: Allow file names such as "01.mp3" to extract the track number.
-  Also allow "_" as a separator. Refactor some regular expressions. :bug:`2738`
+* :doc:`/plugins/fromfilename`: Recognize file names that contain *only* a
+  track number, such as `01.mp3`. Also, the plugin now allows underscores as a
+  separator between fields.
+  Thanks to :user:`Vrihub`.
+  :bug:`2738` :bug:`2759`
 * Fixed an issue where images would be resized according to their longest edge,
   instead of their width. Thanks to :user:`sekjun9878`. :bug:`2729`
 
