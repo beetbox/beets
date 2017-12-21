@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.6 (in development)
-----------------------
+1.4.6 (December 21, 2017)
+-------------------------
 
 The highlight of this release is "album merging," an oft-requested option in
 the importer to add new tracks to an existing album you already have in your
