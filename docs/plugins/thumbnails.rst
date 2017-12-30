@@ -1,7 +1,7 @@
 Thumbnails Plugin
 ==================
 
-The ``thumbnails`` plugin creates thumbnails your for album folders with the
+The ``thumbnails`` plugin creates thumbnails for your album folders with the
 album cover. This works on freedesktop.org-compliant file managers such as
 Nautilus or Thunar, and is therefore POSIX-only.
 
