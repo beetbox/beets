@@ -95,7 +95,7 @@ class MBAlbumInfoTest(_common.TestCase):
             })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False):
+    def _make_track(self, title, tr_id, duration, artist=False, video=False):
         track = {
             'title': title,
             'id': tr_id,
@@ -113,6 +113,8 @@ class MBAlbumInfoTest(_common.TestCase):
                     'name': 'RECORDING ARTIST CREDIT',
                 }
             ]
+        if video:
+            track['video'] = 'true'
         return track
 
     def test_parse_release_with_year(self):
@@ -344,6 +346,28 @@ class MBAlbumInfoTest(_common.TestCase):
         release = self._make_release(tracks=tracks, medium_format="DVD-Audio")
         d = mb.album_info(release)
         self.assertEqual(len(d.tracks), 2)
+
+    def test_skip_data_track(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('[data track]', 'ID DATA TRACK',
+                                   100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_skip_video_track(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
+                                   False, True),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
 
 
 class ParseIDTest(_common.TestCase):

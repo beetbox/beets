@@ -39,6 +39,8 @@ else:
 NON_AUDIO_FORMATS = ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD', 'VCD',
                      'SVCD', 'UMD', 'VHS']
 
+SKIPPED_TRACKS = ['[data track]']
+
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
 
@@ -286,6 +288,15 @@ def album_info(release):
             all_tracks.insert(0, medium['pregap'])
 
         for track in all_tracks:
+
+            if ('title' in track['recording'] and
+                    track['recording']['title'] in SKIPPED_TRACKS):
+                continue
+
+            if ('video' in track['recording'] and
+                    track['recording']['video'] == 'true'):
+                continue
+
             # Basic information from the recording.
             index += 1
             ti = track_info(
