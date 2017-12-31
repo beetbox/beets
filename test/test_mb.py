@@ -27,7 +27,7 @@ import mock
 
 class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False):
+                      track_artist=False, medium_format='FORMAT'):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -90,7 +90,7 @@ class MBAlbumInfoTest(_common.TestCase):
             release['medium-list'].append({
                 'position': '1',
                 'track-list': track_list,
-                'format': 'FORMAT',
+                'format': medium_format,
                 'title': 'MEDIUM TITLE',
             })
         return release
@@ -323,6 +323,27 @@ class MBAlbumInfoTest(_common.TestCase):
         release = self._make_release()
         d = mb.album_info(release)
         self.assertEqual(d.data_source, 'MusicBrainz')
+
+    def test_skip_non_audio_dvd(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, medium_format="DVD")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 0)
+
+    def test_skip_non_audio_dvd_video(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, medium_format="DVD-Video")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 0)
+
+    def test_no_skip_dvd_audio(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, medium_format="DVD-Audio")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
 
 
 class ParseIDTest(_common.TestCase):

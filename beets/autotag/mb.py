@@ -36,6 +36,9 @@ if util.SNI_SUPPORTED:
 else:
     BASE_URL = 'http://musicbrainz.org/'
 
+NON_AUDIO_FORMATS = ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD', 'VCD',
+                     'SVCD', 'UMD', 'VHS']
+
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
 
@@ -274,6 +277,9 @@ def album_info(release):
     for medium in release['medium-list']:
         disctitle = medium.get('title')
         format = medium.get('format')
+
+        if format in NON_AUDIO_FORMATS:
+            continue
 
         all_tracks = medium['track-list']
         if 'pregap' in medium:

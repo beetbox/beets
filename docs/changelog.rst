@@ -6,6 +6,9 @@ Changelog
 
 Changelog goes here!
 
+Fixes:
+* Non-audio media (DVD-Video, etc.) are now skipped by the autotagger. :bug:`2688`
+
 
 1.4.6 (December 21, 2017)
 -------------------------
