@@ -223,6 +223,7 @@ class Bs1770gainBackend(Backend):
         album_gain = {}  # mutable variable so it can be set from handlers
         parser = xml.parsers.expat.ParserCreate(encoding='utf-8')
         state = {'file': None, 'gain': None, 'peak': None}
+
         def start_element_handler(name, attrs):
             if name == u'track':
                 state['file'] = bytestring_path(attrs[u'file'])
@@ -233,6 +234,7 @@ class Bs1770gainBackend(Backend):
                 state['gain'] = float(attrs[u'lu'])
             elif name == u'sample-peak':
                 state['peak'] = float(attrs[u'factor'])
+
         def end_element_handler(name):
             if name == u'track':
                 if state['gain'] is None or state['peak'] is None:
