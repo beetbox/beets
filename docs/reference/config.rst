@@ -774,6 +774,17 @@ want to enforce to the ``required`` setting::
 
 No tags are required by default.
 
+.. _ignore_video_tracks:
+
+ignore_video_tracks
+~~~~~~~~~~~~~~~~~~~
+
+By default, video tracks within a release will be ignored. If you want them to
+be included (for example if you would like to track the audio-only versions of
+the video tracks), set it to ``no``.
+
+Default: ``yes``.
+
 .. _path-format-config:
 
 Path Format Configuration

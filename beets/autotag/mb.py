@@ -294,7 +294,8 @@ def album_info(release):
                 continue
 
             if ('video' in track['recording'] and
-                    track['recording']['video'] == 'true'):
+                    track['recording']['video'] == 'true' and
+                    config['match']['ignore_video_tracks'].get(bool) is True):
                 continue
 
             # Basic information from the recording.
