@@ -8,9 +8,13 @@ Changelog goes here!
 
 Fixes:
 
-* Non-audio media (DVD-Video, etc.) are now skipped by the autotagger. :bug:`2688`
-* Non-audio tracks (data tracks, video tracks, etc.) are now skipped by the
-  autotagger. :bug:`1210`
+* Non-audio media (DVD-Video, etc.) are now skipped by default by the
+  autotagger. A new option ``ignored_formats`` controls which formats to
+  ignore. :bug:`2688`
+* Non-audio tracks (data tracks, video tracks) are now skipped by the
+  autotagger. Data tracks will always be ignored, but a new option
+  ``ignore_video_tracks`` has been added to control if video tracks should be
+  ignored or not. :bug:`1210`
 * :doc:`/plugins/replaygain`: Fix a corner-case with the ``bs1770gain`` backend where ReplayGain values were assigned to the wrong files. Now ``bs1770gain`` version 0.4.6 or later is required. :bug:`2777`
 
 
