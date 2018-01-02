@@ -11,6 +11,7 @@ Fixes:
 * Non-audio media (DVD-Video, etc.) are now skipped by the autotagger. :bug:`2688`
 * Non-audio tracks (data tracks, video tracks, etc.) are now skipped by the
   autotagger. :bug:`1210`
+* :doc:`/plugins/replaygain`: Fix a corner-case with the ``bs1770gain`` backend where ReplayGain values were assigned to the wrong files. Now ``bs1770gain`` version 0.4.6 or later is required. :bug:`2777`
 
 
 1.4.6 (December 21, 2017)
