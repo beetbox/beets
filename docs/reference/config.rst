@@ -475,6 +475,15 @@ Either ``yes`` or ``no``, controlling whether imported directories are
 recorded and whether these recorded directories are skipped.  This
 corresponds to the ``-i`` flag to ``beet import``.
 
+.. _from_scratch:
+
+from_scratch
+~~~~~~~~~~~~
+
+Either ``yes`` or ``no`` (default), controlling whether existing metadata is
+discarded when a match is applied. This corresponds to the ``--from_scratch``
+flag to ``beet import``.
+
 quiet_fallback
 ~~~~~~~~~~~~~~
 
@@ -764,6 +773,17 @@ want to enforce to the ``required`` setting::
         required: year label catalognum country
 
 No tags are required by default.
+
+.. _ignore_video_tracks:
+
+ignore_video_tracks
+~~~~~~~~~~~~~~~~~~~
+
+By default, video tracks within a release will be ignored. If you want them to
+be included (for example if you would like to track the audio-only versions of
+the video tracks), set it to ``no``.
+
+Default: ``yes``.
 
 .. _path-format-config:
 
