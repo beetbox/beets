@@ -79,8 +79,8 @@ bs1770gain
 ``````````
 
 To use this backend, you will need to install the `bs1770gain`_ command-line
-tool. Follow the instructions at the `bs1770gain`_ Web site and ensure that
-the tool is on your ``$PATH``.
+tool, version 0.4.6 or greater. Follow the instructions at the `bs1770gain`_
+Web site and ensure that the tool is on your ``$PATH``.
 
 .. _bs1770gain: http://bs1770gain.sourceforge.net/
 
