@@ -36,6 +36,11 @@ if util.SNI_SUPPORTED:
 else:
     BASE_URL = 'http://musicbrainz.org/'
 
+NON_AUDIO_FORMATS = ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD', 'VCD',
+                     'SVCD', 'UMD', 'VHS']
+
+SKIPPED_TRACKS = ['[data track]']
+
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
 
@@ -275,11 +280,24 @@ def album_info(release):
         disctitle = medium.get('title')
         format = medium.get('format')
 
+        if format in NON_AUDIO_FORMATS:
+            continue
+
         all_tracks = medium['track-list']
         if 'pregap' in medium:
             all_tracks.insert(0, medium['pregap'])
 
         for track in all_tracks:
+
+            if ('title' in track['recording'] and
+                    track['recording']['title'] in SKIPPED_TRACKS):
+                continue
+
+            if ('video' in track['recording'] and
+                    track['recording']['video'] == 'true' and
+                    config['match']['ignore_video_tracks']):
+                continue
+
             # Basic information from the recording.
             index += 1
             ti = track_info(

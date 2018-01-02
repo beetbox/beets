@@ -111,6 +111,12 @@ Optional command flags:
   time, when no subdirectories will be skipped. So consider enabling the
   ``incremental`` configuration option.
 
+* When beets applies metadata to your music, it will retain the value of any
+  existing tags that weren't overwritten, and import them into the database. You
+  may prefer to only use existing metadata for finding matches, and to erase it
+  completely when new metadata is applied. You can enforce this behavior with
+  the ``--from-scratch`` option, or the ``from_scratch`` configuration option.
+
 * By default, beets will proceed without asking if it finds a very close
   metadata match. To disable this and have the importer ask you every time,
   use the ``-t`` (for *timid*) option.

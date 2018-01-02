@@ -1005,6 +1005,10 @@ import_cmd.parser.add_option(
     help=u'do not skip already-imported directories'
 )
 import_cmd.parser.add_option(
+    u'--from-scratch', dest='from_scratch', action='store_true',
+    help=u'erase existing metadata before applying new metadata'
+)
+import_cmd.parser.add_option(
     u'--flat', dest='flat', action='store_true',
     help=u'import an entire tree as a single album'
 )
