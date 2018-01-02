@@ -6,6 +6,12 @@ Changelog
 
 Changelog goes here!
 
+New features:
+
+* :doc:`/plugins/replaygain`: add ``--force``, ``--write`` and ``--nowrite``
+  options to ``beet replaygain``. :bug:`2778`
+
+
 Fixes:
 
 * Non-audio media (DVD-Video, etc.) are now skipped by the autotagger. :bug:`2688`
