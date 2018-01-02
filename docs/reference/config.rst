@@ -774,6 +774,19 @@ want to enforce to the ``required`` setting::
 
 No tags are required by default.
 
+.. _ignored_formats:
+
+ignored_formats
+~~~~~~~~~~~~~~~
+
+By default a list of release formats considered not containing audio will be
+ignored. If you want them to be included (for example if you would like to
+consider the audio portion of DVD-Video tracks) you can alter the list
+accordingly.
+
+Default: ``['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD', 'VCD', 'SVCD',
+'UMD', 'VHS']``.
+
 .. _ignore_video_tracks:
 
 ignore_video_tracks

@@ -36,9 +36,6 @@ if util.SNI_SUPPORTED:
 else:
     BASE_URL = 'http://musicbrainz.org/'
 
-NON_AUDIO_FORMATS = ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD', 'VCD',
-                     'SVCD', 'UMD', 'VHS']
-
 SKIPPED_TRACKS = ['[data track]']
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
@@ -280,7 +277,7 @@ def album_info(release):
         disctitle = medium.get('title')
         format = medium.get('format')
 
-        if format in NON_AUDIO_FORMATS:
+        if format in config['match']['ignored_formats'].as_str_seq():
             continue
 
         all_tracks = medium['track-list']
