@@ -920,7 +920,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         self._log.debug(u'applied album gain {0}', album.r128_album_gain)
 
-    def handle_album(self, album, write):
+    def handle_album(self, album, write, force=False):
         """Compute album and track replay gain store it in all of the
         album's items.
 
@@ -928,7 +928,7 @@ class ReplayGainPlugin(BeetsPlugin):
         item. If replay gain information is already present in all
         items, nothing is done.
         """
-        if not self.album_requires_gain(album):
+        if not force and not self.album_requires_gain(album):
             self._log.info(u'Skipping album {0}', album)
             return
 
@@ -971,14 +971,14 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e))
 
-    def handle_track(self, item, write):
+    def handle_track(self, item, write, force=False):
         """Compute track replay gain and store it in the item.
 
         If ``write`` is truthy then ``item.write()`` is called to write
         the data to disk.  If replay gain information is already present
         in the item, nothing is done.
         """
-        if not self.track_requires_gain(item):
+        if not force and not self.track_requires_gain(item):
             self._log.info(u'Skipping track {0}', item)
             return
 
@@ -1034,17 +1034,28 @@ class ReplayGainPlugin(BeetsPlugin):
         """Return the "replaygain" ui subcommand.
         """
         def func(lib, opts, args):
-            write = ui.should_write()
+            write = ui.should_write(opts.write)
+            force = opts.force
 
             if opts.album:
                 for album in lib.albums(ui.decargs(args)):
-                    self.handle_album(album, write)
+                    self.handle_album(album, write, force)
 
             else:
                 for item in lib.items(ui.decargs(args)):
-                    self.handle_track(item, write)
+                    self.handle_track(item, write, force)
 
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
+        cmd.parser.add_option(
+            "-f", "--force", dest="force", action="store_true", default=False,
+            help=u"analyze all files, including those that "
+            "already have ReplayGain metadata")
+        cmd.parser.add_option(
+            "-w", "--write", default=None, action="store_true",
+            help=u"write new metadata to files' tags")
+        cmd.parser.add_option(
+            "-W", "--nowrite", dest="write", action="store_false",
+            help=u"don't write metadata (opposite of -w)")
         cmd.func = func
         return [cmd]
