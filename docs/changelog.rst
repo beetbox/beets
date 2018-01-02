@@ -4,8 +4,6 @@ Changelog
 1.4.7 (in development)
 ----------------------
 
-Changelog goes here!
-
 New features:
 
 * :doc:`/plugins/replaygain`: add ``--force``, ``--write`` and ``--nowrite``
