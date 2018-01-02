@@ -774,13 +774,13 @@ want to enforce to the ``required`` setting::
 
 No tags are required by default.
 
-.. _ignored_formats:
+.. _ignored_media:
 
-ignored_formats
-~~~~~~~~~~~~~~~
+ignored_media
+~~~~~~~~~~~~~
 
-By default a list of release formats considered not containing audio will be
-ignored. If you want them to be included (for example if you would like to
+By default a list of release media formats considered not containing audio will
+be ignored. If you want them to be included (for example if you would like to
 consider the audio portion of DVD-Video tracks) you can alter the list
 accordingly.
 

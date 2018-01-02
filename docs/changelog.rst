@@ -9,7 +9,7 @@ Changelog goes here!
 Fixes:
 
 * Non-audio media (DVD-Video, etc.) are now skipped by default by the
-  autotagger. A new option ``ignored_formats`` controls which formats to
+  autotagger. A new option ``ignored_media`` controls which media formats to
   ignore. :bug:`2688`
 * Non-audio tracks (data tracks, video tracks) are now skipped by the
   autotagger. Data tracks will always be ignored, but a new option

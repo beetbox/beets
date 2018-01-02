@@ -277,7 +277,7 @@ def album_info(release):
         disctitle = medium.get('title')
         format = medium.get('format')
 
-        if format in config['match']['ignored_formats'].as_str_seq():
+        if format in config['match']['ignored_media'].as_str_seq():
             continue
 
         all_tracks = medium['track-list']
