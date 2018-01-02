@@ -140,11 +140,15 @@ By default, the plugin will analyze all items an albums as they are implemented.
 However, you can also manually analyze files that are already in your library.
 Use the ``beet replaygain`` command::
 
-    $ beet replaygain [-a] [QUERY]
+    $ beet replaygain [-Waf] [QUERY]
 
 The ``-a`` flag analyzes whole albums instead of individual tracks. Provide a
 query (see :doc:`/reference/query`) to indicate which items or albums to
-analyze.
+analyze. Files that already have ReplayGain values are skipped unless ``-f`` is
+supplied. Use ``-w`` (write tags) or ``-W`` (don't write tags) to control
+whether ReplayGain tags are written into the music files, or stored in the
+beets database only (the default is to use :ref:`the importer's configuration
+<config-import-write>`).
 
 ReplayGain analysis is not fast, so you may want to disable it during import.
 Use the ``auto`` config option to control this::
