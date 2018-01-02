@@ -1025,9 +1025,8 @@ class ReplayGainPlugin(BeetsPlugin):
             help=u"analyze all files, including those that "
             "already have ReplayGain metadata")
         cmd.parser.add_option(
-            "-w", "--write", dest="write",
-            action="store_true",
-            help=u"write new metadata to files' tags (default)")
+            "-w", "--write", default=None, action="store_true",
+            help=u"write new metadata to files' tags")
         cmd.parser.add_option(
             "-W", "--nowrite", dest="write", action="store_false",
             help=u"don't write metadata (opposite of -w)")
