@@ -326,24 +326,20 @@ class MBAlbumInfoTest(_common.TestCase):
         d = mb.album_info(release)
         self.assertEqual(d.data_source, 'MusicBrainz')
 
-    def test_skip_non_audio_dvd(self):
+    def test_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
-        release = self._make_release(tracks=tracks, medium_format="DVD")
+        release = self._make_release(tracks=tracks, medium_format="IGNORED1")
         d = mb.album_info(release)
         self.assertEqual(len(d.tracks), 0)
 
-    def test_skip_non_audio_dvd_video(self):
+    def test_no_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
-        release = self._make_release(tracks=tracks, medium_format="DVD-Video")
-        d = mb.album_info(release)
-        self.assertEqual(len(d.tracks), 0)
-
-    def test_no_skip_dvd_audio(self):
-        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
-                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
-        release = self._make_release(tracks=tracks, medium_format="DVD-Audio")
+        release = self._make_release(tracks=tracks,
+                                     medium_format="NON-IGNORED")
         d = mb.album_info(release)
         self.assertEqual(len(d.tracks), 2)
 
