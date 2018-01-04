@@ -8,6 +8,10 @@ New features:
 
 * :doc:`/plugins/replaygain`: add ``--force``, ``--write`` and ``--nowrite``
   options to ``beet replaygain``. :bug:`2778`
+* A new importer configuration ``incremental_skip_later`` allows you to avoid
+  recording skipped directories to the incremental list, so you can revisit them
+  later. Thanks to :user:`sekjun9878`.
+  :bug:`2773`
 
 
 Fixes:
