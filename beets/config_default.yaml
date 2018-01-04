@@ -10,6 +10,7 @@ import:
     delete: no
     resume: ask
     incremental: no
+    incremental_skip_later: no
     from_scratch: no
     quiet_fallback: skip
     none_rec_action: ask
