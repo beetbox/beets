@@ -475,6 +475,16 @@ Either ``yes`` or ``no``, controlling whether imported directories are
 recorded and whether these recorded directories are skipped.  This
 corresponds to the ``-i`` flag to ``beet import``.
 
+.. _incremental_skip_later:
+
+incremental_skip_later
+~~~~~~~~~~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, controlling whether skipped directories are
+recorded in the incremental list. Set this option to ``yes`` if you would
+like to revisit skipped directories later whilst using incremental
+mode. Defaults to ``no``.
+
 .. _from_scratch:
 
 from_scratch
