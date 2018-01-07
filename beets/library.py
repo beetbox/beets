@@ -29,7 +29,7 @@ from beets.mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
-    MoveOperation
+    MoveOperation, FilesystemError
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
@@ -701,27 +701,32 @@ class Item(LibModel):
         """
         if not util.samefile(self.path, dest):
             dest = util.unique_path(dest)
-        if operation == MoveOperation.MOVE:
-            plugins.send("before_item_moved", item=self, source=self.path,
-                         destination=dest)
-            util.move(self.path, dest)
-            plugins.send("item_moved", item=self, source=self.path,
-                         destination=dest)
-        elif operation == MoveOperation.COPY:
-            util.copy(self.path, dest)
-            plugins.send("item_copied", item=self, source=self.path,
-                         destination=dest)
-        elif operation == MoveOperation.LINK:
-            util.link(self.path, dest)
-            plugins.send("item_linked", item=self, source=self.path,
-                         destination=dest)
-        elif operation == MoveOperation.HARDLINK:
-            util.hardlink(self.path, dest)
-            plugins.send("item_hardlinked", item=self, source=self.path,
-                         destination=dest)
 
-        # Either copying or moving succeeded, so update the stored path.
-        self.path = dest
+        try:
+            if operation == MoveOperation.MOVE:
+                plugins.send("before_item_moved", item=self, source=self.path,
+                             destination=dest)
+                util.move(self.path, dest)
+                plugins.send("item_moved", item=self, source=self.path,
+                             destination=dest)
+            elif operation == MoveOperation.COPY:
+                util.copy(self.path, dest)
+                plugins.send("item_copied", item=self, source=self.path,
+                             destination=dest)
+            elif operation == MoveOperation.LINK:
+                util.link(self.path, dest)
+                plugins.send("item_linked", item=self, source=self.path,
+                             destination=dest)
+            elif operation == MoveOperation.HARDLINK:
+                util.hardlink(self.path, dest)
+                plugins.send("item_hardlinked", item=self, source=self.path,
+                             destination=dest)
+        except FilesystemError as exc:
+            raise exc
+        else:
+            # Do not update library reference if filesystem operation failed
+            # Either copying or moving succeeded, so update the stored path.
+            self.path = dest
 
     def current_mtime(self):
         """Returns the current mtime of the file, rounded to the nearest
@@ -795,7 +800,10 @@ class Item(LibModel):
 
         # Perform the move and store the change.
         old_path = self.path
-        self.move_file(dest, operation)
+        try:
+            self.move_file(dest, operation)
+        except FilesystemError as exc:
+            exc.log_as_warn(log)
         if store:
             self.store()
 
@@ -803,7 +811,10 @@ class Item(LibModel):
         if with_album:
             album = self.get_album()
             if album:
-                album.move_art(operation)
+                try:
+                    album.move_art(operation)
+                except FilesystemError as exc:
+                    exc.log_as_warn(log)
                 if store:
                     album.store()
 
@@ -1034,16 +1045,22 @@ class Album(LibModel):
         log.debug(u'moving album art {0} to {1}',
                   util.displayable_path(old_art),
                   util.displayable_path(new_art))
-        if operation == MoveOperation.MOVE:
-            util.move(old_art, new_art)
-            util.prune_dirs(os.path.dirname(old_art), self._db.directory)
-        elif operation == MoveOperation.COPY:
-            util.copy(old_art, new_art)
-        elif operation == MoveOperation.LINK:
-            util.link(old_art, new_art)
-        elif operation == MoveOperation.HARDLINK:
-            util.hardlink(old_art, new_art)
-        self.artpath = new_art
+
+        try:
+            if operation == MoveOperation.MOVE:
+                util.move(old_art, new_art)
+                util.prune_dirs(os.path.dirname(old_art), self._db.directory)
+            elif operation == MoveOperation.COPY:
+                util.copy(old_art, new_art)
+            elif operation == MoveOperation.LINK:
+                util.link(old_art, new_art)
+            elif operation == MoveOperation.HARDLINK:
+                util.hardlink(old_art, new_art)
+        except FilesystemError as exc:
+            raise exc
+        else:
+            # Do not update library reference if filesystem operation failed
+            self.artpath = new_art
 
     def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
         """Move, copy, link or hardlink (depending on `operation`)
@@ -1068,11 +1085,15 @@ class Album(LibModel):
         # Move items.
         items = list(self.items())
         for item in items:
+            # Soft failures and warning will be handled within
             item.move(operation, basedir=basedir, with_album=False,
                       store=store)
 
         # Move art.
-        self.move_art(operation)
+        try:
+            self.move_art(operation)
+        except FilesystemError as exc:
+            exc.log_as_warn(log)
         if store:
             self.store()
 
