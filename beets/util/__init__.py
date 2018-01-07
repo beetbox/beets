@@ -52,7 +52,9 @@ class HumanReadableException(Exception):
     associated exception. (Note that this is not necessary in Python 3.x
     and should be removed when we make the transition.)
     """
-    error_kind = 'Error'  # Human-readable description of error type.
+    # Human-readable descriptions of error type.
+    error_kind = 'Error'
+    warn_kind = 'Warning'
 
     def __init__(self, reason, verb, tb=None):
         self.reason = reason
@@ -93,6 +95,14 @@ class HumanReadableException(Exception):
         if self.tb:
             logger.debug(self.tb)
         logger.error(u'{0}: {1}', self.error_kind, self.args[0])
+
+    def log_as_warn(self, logger):
+        """Log to the provided `logger` a human-readable message as a
+        warning and a verbose traceback as a debug message.
+        """
+        if self.tb:
+            logger.debug(self.tb)
+        logger.warn(u'{0}: {1}', self.warn_kind, self.args[0])
 
 
 class FilesystemError(HumanReadableException):
