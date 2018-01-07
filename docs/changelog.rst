@@ -12,6 +12,11 @@ New features:
   recording skipped directories to the incremental list, so you can revisit them
   later. Thanks to :user:`sekjun9878`.
   :bug:`2773`
+* Missing file, album art and other filesystem errors no longer halt batch
+  item moves or updates, leaving your files in a half-completed state.
+  They will now display a warning message and continue moving the rest of files.
+  Thanks to :user:`sekjun9878`.
+  :bug:`1926` :bug:`2419`
 
 
 Fixes:
