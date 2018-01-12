@@ -78,6 +78,7 @@ like this::
    missing
    mpdstats
    mpdupdate
+   mstream
    permissions
    play
    plexupdate
@@ -189,6 +190,7 @@ Miscellaneous
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.
+* :doc:`mstream`: A music streaming server that can be used alognside beets.
 
 .. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
