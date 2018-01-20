@@ -72,16 +72,6 @@ typing ``beet web`` and head to http://localhost:8337 in a browser. You can
 browse your collection with queries and, if your browser supports it, play
 music using HTML5 audio.
 
-But for a great listening experience, pair beets with the `Tomahawk`_ music
-player. Tomahawk lets you listen to music from many different sources,
-including a beets server. Just download Tomahawk and open its settings to
-connect it to beets. `A post on the beets blog`_ has a more detailed guide.
-
-.. _A post on the beets blog:
-    http://beets.io/blog/tomahawk-resolver.html
-.. _Tomahawk: http://www.tomahawk-player.org
-
-
 Transcode music files for media players
 ---------------------------------------
 
