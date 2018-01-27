@@ -565,6 +565,13 @@ class Results(object):
         a `Results` object a second time should be much faster than the
         first.
         """
+
+        # First fetch all flexible attributes for all items in the result.
+        # Doing the per-item filtering in python is faster than issuing
+        # one query per item to sqlite.
+        item_ids = [row['id'] for row in self._rows]
+        flex_attrs = self._get_flex_attrs(item_ids)
+
         index = 0  # Position in the materialized objects.
         while index < len(self._objects) or self._rows:
             # Are there previously-materialized objects to produce?
@@ -577,7 +584,10 @@ class Results(object):
             else:
                 while self._rows:
                     row = self._rows.pop(0)
-                    obj = self._make_model(row)
+                    if flex_attrs:
+                        obj = self._make_model(row, flex_attrs[row['id']])
+                    else:
+                        obj = self._make_model(row)
                     # If there is a slow-query predicate, ensurer that the
                     # object passes it.
                     if not self.query or self.query.match(obj):
@@ -599,20 +609,31 @@ class Results(object):
             # Objects are pre-sorted (i.e., by the database).
             return self._get_objects()
 
-    def _make_model(self, row):
-        # Get the flexible attributes for the object.
+    def _get_flex_attrs(self, ids):
+        # Get the flexible attributes for all ids.
         with self.db.transaction() as tx:
+            id_list = ', '.join(str(id) for id in ids)
             flex_rows = tx.query(
-                'SELECT * FROM {0} WHERE entity_id=?'.format(
-                    self.model_class._flex_table
-                ),
-                (row['id'],)
+                'SELECT * FROM {0} WHERE entity_id IN ({1})'.format(
+                    self.model_class._flex_table,
+                    id_list
+                )
             )
 
+        # Index flexible attributes by the entity id they belong to
+        flex_values = dict()
+        for row in flex_rows:
+            if row['entity_id'] not in flex_values:
+                flex_values[row['entity_id']] = dict()
+
+            flex_values[row['entity_id']][row['key']] = row['value']
+
+        return flex_values
+
+    def _make_model(self, row, flex_values={}):
         cols = dict(row)
         values = dict((k, v) for (k, v) in cols.items()
                       if not k[:4] == 'flex')
-        flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
