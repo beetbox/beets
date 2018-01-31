@@ -24,6 +24,9 @@ Fixes:
   ``ignore_video_tracks`` has been added to control if video tracks should be
   ignored or not. :bug:`1210`
 * :doc:`/plugins/replaygain`: Fix a corner-case with the ``bs1770gain`` backend where ReplayGain values were assigned to the wrong files. Now ``bs1770gain`` version 0.4.6 or later is required. :bug:`2777`
+* :doc:`/plugins/lyrics`: The plugin no longer crashes in the Genius source
+  when BeautifulSoup is not found. Instead, it just logs a message and
+  disables the source.
 
 
 1.4.6 (December 21, 2017)
