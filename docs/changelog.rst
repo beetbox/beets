@@ -39,6 +39,10 @@ Fixes:
 * :doc:`/plugins/importadded`: Fix a crash on non-autotagged imports.
   :bug:`2601` :bug:`1918`
   Thanks to :user:`m42i`.
+* :doc:`/plugins/plexupdate`: The Plex token is now redacted in configuration
+  output.
+  :bug:`2804`
+  Thanks to :user:`Kovrinic`.
 
 
 1.4.6 (December 21, 2017)
