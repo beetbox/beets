@@ -31,6 +31,11 @@ Fixes:
   with Genius. :bug:`2771`
 * :doc:`/plugins/lyrics`: The ``lyrics`` command previously write ReST files
   by default. This default has been fixed.
+* Plugins can now see updated import task state, such as when rejecting the
+  initial candidates and finding new ones via a manual search. Notably, this
+  means that the importer prompt options that the :doc:`/plugins/edit`
+  provides show up more reliably after doing a secondary import search.
+  :bug:`2441` :bug:`2731`
 
 
 1.4.6 (December 21, 2017)
