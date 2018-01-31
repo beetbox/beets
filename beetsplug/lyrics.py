@@ -359,7 +359,12 @@ class Genius(Backend):
 
         # Gotta go regular html scraping... come on Genius.
         page_url = "https://genius.com" + path
-        page = requests.get(page_url)
+        try:
+            page = requests.get(page_url)
+        except requests.RequestException as exc:
+            self._log.debug(u'Genius page request for {0} failed: {1}',
+                            page_url, exc)
+            return None
         html = BeautifulSoup(page.text, "html.parser")
 
         # Remove script tags that they put in the middle of the lyrics.
@@ -374,8 +379,18 @@ class Genius(Backend):
     def fetch(self, artist, title):
         search_url = self.base_url + "/search"
         data = {'q': title}
-        response = requests.get(search_url, data=data, headers=self.headers)
-        json = response.json()
+        try:
+            response = requests.get(search_url, data=data,
+                                    headers=self.headers)
+        except requests.RequestException as exc:
+            self._log.debug(u'Genius API request failed: {0}', exc)
+            return None
+
+        try:
+            json = response.json()
+        except ValueError:
+            self._log.debug(u'Genius API request returned invalid JSON')
+            return None
 
         song_info = None
         for hit in json["response"]["hits"]:
