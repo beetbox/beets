@@ -705,7 +705,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         )
         cmd.parser.add_option(
             u'-r', u'--write-rest', dest='writerest',
-            action='store', default='.', metavar='dir',
+            action='store', default=None, metavar='dir',
             help=u'write lyrics to given directory as ReST files',
         )
         cmd.parser.add_option(

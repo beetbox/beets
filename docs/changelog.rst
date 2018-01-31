@@ -27,6 +27,8 @@ Fixes:
 * :doc:`/plugins/lyrics`: The plugin no longer crashes in the Genius source
   when BeautifulSoup is not found. Instead, it just logs a message and
   disables the source.
+* :doc:`/plugins/lyrics`: The ``lyrics`` command previously write ReST files
+  by default. This default has been fixed.
 
 
 1.4.6 (December 21, 2017)
