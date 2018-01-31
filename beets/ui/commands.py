@@ -691,7 +691,6 @@ class TerminalImportSession(importer.ImportSession):
             return action
 
         # Loop until we have a choice.
-        candidates, rec = task.candidates, task.rec
         while True:
             # Ask for a choice from the user. The result of
             # `choose_candidate` may be an `importer.action`, an
@@ -699,8 +698,8 @@ class TerminalImportSession(importer.ImportSession):
             # `PromptChoice`.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                candidates, False, rec, task.cur_artist, task.cur_album,
-                itemcount=len(task.items), choices=choices
+                task.candidates, False, task.rec, task.cur_artist,
+                task.cur_album, itemcount=len(task.items), choices=choices
             )
 
             # Basic choices that require no more action here.
@@ -716,8 +715,8 @@ class TerminalImportSession(importer.ImportSession):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
                     # Use the new candidates and continue around the loop.
-                    candidates = post_choice.candidates
-                    rec = post_choice.recommendation
+                    task.candidates = post_choice.candidates
+                    task.rec = post_choice.recommendation
 
             # Otherwise, we have a specific match selection.
             else:
