@@ -36,6 +36,9 @@ Fixes:
   means that the importer prompt options that the :doc:`/plugins/edit`
   provides show up more reliably after doing a secondary import search.
   :bug:`2441` :bug:`2731`
+* :doc:`/plugins/importadded`: Fix a crash on non-autotagged imports.
+  :bug:`2601` :bug:`1918`
+  Thanks to :user:`m42i`.
 
 
 1.4.6 (December 21, 2017)
