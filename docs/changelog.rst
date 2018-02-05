@@ -43,6 +43,9 @@ Fixes:
   output.
   :bug:`2804`
   Thanks to :user:`Kovrinic`.
+* Avoid a crash when importing a non-ASCII filename when using an ASCII locale
+  on Unix under Python 3.
+  :bug:`2793` :bug:`2803`
 
 
 1.4.6 (December 21, 2017)
