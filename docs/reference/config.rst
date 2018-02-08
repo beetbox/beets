@@ -789,13 +789,16 @@ No tags are required by default.
 ignored_media
 ~~~~~~~~~~~~~
 
-By default a list of release media formats considered not containing audio will
-be ignored. If you want them to be included (for example if you would like to
-consider the audio portion of DVD-Video tracks) you can alter the list
-accordingly.
+A list of media (i.e., formats) in metadata databases to ignore when matching
+music. You can use this to ignore all media that usually contain video instead
+of audio, for example::
 
-Default: ``['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD', 'VCD', 'SVCD',
-'UMD', 'VHS']``.
+    match:
+        ignored_media: ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD',
+                        'VCD', 'SVCD', 'UMD', 'VHS']
+
+No formats are ignored by default.
+
 
 .. _ignore_video_tracks:
 
