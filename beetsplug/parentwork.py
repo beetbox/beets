@@ -146,21 +146,37 @@ class ParentWorkPlugin(BeetsPlugin):
         parent_composer_sort = []
         parent_work_id       = []
         composer_ids         = set()
+        work_ids             = []
 
         item.read()
         recording_id = item.mb_trackid
-
+        try: 
+            item.parent_work
+            hasparent=True
+        except AttributeError:
+            hasparent=False
+        
         hasawork = True
         if not item.work_id:
-            self._log.info("No work attached, recording id: " + recording_id)
-            self._log.info(item.artist + ' - ' + item.title)
-            self._log.info("add one at https://musicbrainz.org" +
-                           "/recording/" + recording_id)
-            hasawork = False
+            rec_rels=musicbrainzngs.get_recording_by_id(recording_id, 
+                                                includes=['work-rels'])
+            if 'work-relation-list' in rec_rels['recording']:
+                for work_relation in rec_rels['recording']['work-relation-list']:
+                    work_ids.append(work_relation['work']['id'])
+                    hasawork=True
+            else:
+                self._log.info("No work attached, recording id: " + 
+                                recording_id)
+                self._log.info(item.artist + ' - ' + item.title)
+                self._log.info("add one at https://musicbrainz.org" +
+                            "/recording/" + recording_id)
+                hasawork = False
+        else: 
+            work_ids=item.work_id.split(', ')
         found = False
-        if (force or not parent_work) and hasawork:
+        
+        if (force or (not hasparent)) and hasawork:
             try:
-                work_ids = item.work_id.split(', ')
                 for w_id in work_ids:
                     work_info = find_parentwork(w_id)
                     self.get_info(item, work_info, parent_composer,
