@@ -46,6 +46,9 @@ Fixes:
 * Avoid a crash when importing a non-ASCII filename when using an ASCII locale
   on Unix under Python 3.
   :bug:`2793` :bug:`2803`
+* Use NullPaddedInt for R128 tags so that they get properly deleted when empty.
+  :bug:`2757`
+  Thanks to :user:`autrimpo`.
 
 
 1.4.6 (December 21, 2017)
