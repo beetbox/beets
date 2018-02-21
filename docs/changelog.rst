@@ -46,6 +46,11 @@ Fixes:
 * Avoid a crash when importing a non-ASCII filename when using an ASCII locale
   on Unix under Python 3.
   :bug:`2793` :bug:`2803`
+* Fix a problem caused by time zone misalignment that could make date queries
+  fail to match certain dates that are near the edges of a range. For example,
+  querying for dates within a certain month would fail to match dates within
+  hours of the end of that month.
+  :bug:`2652`
 
 
 1.4.6 (December 21, 2017)
