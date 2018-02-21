@@ -46,6 +46,11 @@ Fixes:
 * Avoid a crash when importing a non-ASCII filename when using an ASCII locale
   on Unix under Python 3.
   :bug:`2793` :bug:`2803`
+* Convert plugin now runs before all others in the pipeline to solve an issue
+  with generating ReplayGain data incompatible between the source and target
+  file formats. This option to request (part of) your plugin to run early in the
+  pipeline has been exposed in the plugin API as well (```early_import_stages```).
+  Thanks to :user:`autrimpo`.
 
 
 1.4.6 (December 21, 2017)
