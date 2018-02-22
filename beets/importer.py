@@ -313,6 +313,8 @@ class ImportSession(object):
                 stages += [import_asis(self)]
 
             # Plugin stages.
+            for stage_func in plugins.early_import_stages():
+                stages.append(plugin_stage(self, stage_func))
             for stage_func in plugins.import_stages():
                 stages.append(plugin_stage(self, stage_func))
 

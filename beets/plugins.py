@@ -81,6 +81,7 @@ class BeetsPlugin(object):
             self.template_fields = {}
         if not self.album_template_fields:
             self.album_template_fields = {}
+        self.early_import_stages = []
         self.import_stages = []
 
         self._log = log.getChild(self.name)
@@ -94,6 +95,22 @@ class BeetsPlugin(object):
         """
         return ()
 
+    def _set_stage_log_level(self, stages):
+        """Adjust all the stages in `stages` to WARNING logging level.
+        """
+        return [self._set_log_level_and_params(logging.WARNING, stage)
+                for stage in stages]
+
+    def get_early_import_stages(self):
+        """Return a list of functions that should be called as importer
+        pipelines stages early in the pipeline.
+
+        The callables are wrapped versions of the functions in
+        `self.early_import_stages`. Wrapping provides some bookkeeping for the
+        plugin: specifically, the logging level is adjusted to WARNING.
+        """
+        return self._set_stage_log_level(self.early_import_stages)
+
     def get_import_stages(self):
         """Return a list of functions that should be called as importer
         pipelines stages.
@@ -102,8 +119,7 @@ class BeetsPlugin(object):
         `self.import_stages`. Wrapping provides some bookkeeping for the
         plugin: specifically, the logging level is adjusted to WARNING.
         """
-        return [self._set_log_level_and_params(logging.WARNING, import_stage)
-                for import_stage in self.import_stages]
+        return self._set_stage_log_level(self.import_stages)
 
     def _set_log_level_and_params(self, base_log_level, func):
         """Wrap `func` to temporarily set this plugin's logger level to
@@ -391,6 +407,14 @@ def template_funcs():
         if plugin.template_funcs:
             funcs.update(plugin.template_funcs)
     return funcs
+
+
+def early_import_stages():
+    """Get a list of early import stage functions defined by plugins."""
+    stages = []
+    for plugin in find_plugins():
+        stages += plugin.get_early_import_stages()
+    return stages
 
 
 def import_stages():
