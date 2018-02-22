@@ -51,6 +51,11 @@ Fixes:
   querying for dates within a certain month would fail to match dates within
   hours of the end of that month.
   :bug:`2652`
+* Convert plugin now runs before all others in the pipeline to solve an issue
+  with generating ReplayGain data incompatible between the source and target
+  file formats. This option to request (part of) your plugin to run early in the
+  pipeline has been exposed in the plugin API as well (```early_import_stages```).
+  Thanks to :user:`autrimpo`.
 
 
 1.4.6 (December 21, 2017)
