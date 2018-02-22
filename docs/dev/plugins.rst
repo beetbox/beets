@@ -433,9 +433,9 @@ to register it::
             print('Importing something!')
 
 It is also possible to request your function to run early in the pipeline by
-adding the function to the plugin's ``early_import_stages`` field instead.::
+adding the function to the plugin's ``early_import_stages`` field instead::
 
-  self.early_import_stages = [self.stage]
+    self.early_import_stages = [self.stage]
 
 .. _extend-query:
 
