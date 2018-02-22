@@ -118,8 +118,8 @@ def _preferred_release_event(release):
     """
     countries = config['match']['preferred']['countries'].as_str_seq()
 
-    for event in release.get('release-event-list', {}):
-        for country in countries:
+    for country in countries:
+        for event in release.get('release-event-list', {}):
             try:
                 if country in event['area']['iso-3166-1-code-list']:
                     return country, event['date']
