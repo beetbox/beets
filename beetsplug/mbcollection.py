@@ -103,8 +103,8 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         offset = 0
         albums_in_collection, release_count = _fetch(offset)
         for i in range(0, release_count, FETCH_CHUNK_SIZE):
-            offset += FETCH_CHUNK_SIZE
             albums_in_collection += _fetch(offset)[0]
+            offset += FETCH_CHUNK_SIZE
 
         return albums_in_collection
 
@@ -122,7 +122,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
     def remove_missing(self, collection_id, lib_albums):
         lib_ids = set([x.mb_albumid for x in lib_albums])
         albums_in_collection = self._get_albums_in_collection(collection_id)
-        remove_me = list(lib_ids - set(albums_in_collection))
+        remove_me = list(set(albums_in_collection) - lib_ids)
         for i in range(0, len(remove_me), FETCH_CHUNK_SIZE):
             chunk = remove_me[i:i + FETCH_CHUNK_SIZE]
             mb_call(
