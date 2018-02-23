@@ -535,7 +535,7 @@ def sanitize_pairs(pairs, pairs_all):
         for v in values.split():
             x = (k, v)
             if x in pairs_all:
-                if not x in seen:
+                if x not in seen:
                     seen.add(x)
                     res.append(x)
             elif k == '*':
