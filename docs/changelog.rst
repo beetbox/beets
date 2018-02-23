@@ -56,6 +56,9 @@ Fixes:
   incompatible between the source and target file formats.
   :bug:`2814`
   Thanks to :user:`autrimpo`.
+* :doc:`/plugins/ftintitle`: The ``drop`` config option had no effect; it now
+  does what it says it should do.
+  :bug:`2817`
 
 For developers:
 
