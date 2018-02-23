@@ -56,6 +56,9 @@ Fixes:
   incompatible between the source and target file formats.
   :bug:`2814`
   Thanks to :user:`autrimpo`.
+* Importing a release with multiple release events now selects the
+  event based on the order of your :ref:`preferred` countries rather than
+  the order of release events in MusicBrainz. :bug:`2816`
 
 For developers:
 
