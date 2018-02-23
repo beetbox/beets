@@ -762,8 +762,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 u'google' in available_sources:
             available_sources.remove(u'google')
         available_sources = [(s, c)
-                for s in available_sources
-                for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
+                             for s in available_sources
+                             for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
         sources = plugins.sanitize_pairs(
             self.config['sources'].as_pairs(default_value='*'),
             available_sources)

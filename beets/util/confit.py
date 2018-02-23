@@ -1314,7 +1314,9 @@ class Pairs(StrSeq):
             else:
                 # Is this even possible? -> Likely, if some !directive cause
                 # YAML to parse this to some custom type.
-                self.fail(u'must be a single string, mapping, or a list' + str(x), view, True)
+                self.fail(u'must be a single string, mapping, or a list'
+                          u'' + str(x),
+                          view, True)
             return (super(Pairs, self)._convert_value(k, view),
                     super(Pairs, self)._convert_value(v, view))
 
