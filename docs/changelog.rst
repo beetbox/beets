@@ -59,6 +59,9 @@ Fixes:
 * :doc:`/plugins/ftintitle`: The ``drop`` config option had no effect; it now
   does what it says it should do.
   :bug:`2817`
+* Importing a release with multiple release events now selects the
+  event based on the order of your :ref:`preferred` countries rather than
+  the order of release events in MusicBrainz. :bug:`2816`
 
 For developers:
 
