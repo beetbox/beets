@@ -12,6 +12,9 @@ New features:
   recording skipped directories to the incremental list, so you can revisit them
   later. Thanks to :user:`sekjun9878`.
   :bug:`2773`
+* :doc:`/plugins/fetchart`: extended syntax for the ``sources`` option to give
+  fine-grained control over the search order for backends with several matching
+  strategies.
 
 
 Fixes:
