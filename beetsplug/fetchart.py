@@ -301,13 +301,14 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
-        if album.mb_albumid:
+        use_release_group = self._config["use_release_group"]
+        if album.mb_albumid and not use_release_group:
             yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
                                   match=Candidate.MATCH_EXACT)
         if album.mb_releasegroupid:
             yield self._candidate(
-                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                match=Candidate.MATCH_FALLBACK)
+                    url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
+                    match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
@@ -672,8 +673,8 @@ class FileSystem(LocalArtSource):
 # Try each source in turn.
 
 SOURCES_ALL = [u'filesystem',
-               u'coverart', u'itunes', u'amazon', u'albumart',
-               u'wikipedia', u'google', u'fanarttv']
+               u'coverart', u'itunes', u'amazon', u'albumart', u'wikipedia',
+               u'google', u'fanarttv']
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
@@ -708,12 +709,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': ['filesystem',
-                        'coverart', 'itunes', 'amazon', 'albumart'],
+            'sources': ['filesystem', 'coverart', 'itunes', 'amazon',
+                        'albumart', 'coverartreleasegroup'],
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
             'store_source': False,
+            'use_release_group': False
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True

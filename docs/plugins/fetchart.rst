@@ -65,6 +65,15 @@ file. The available options are:
 - **store_source**: If enabled, fetchart stores the artwork's source in a
   flexible tag named ``art_source``. See below for the rationale behind this.
   Default: ``no``.
+- **use_release_group**: The ``coverart`` source fetches images from the
+  `Cover Art Archive`_. The default source prioritizes the MusicBrainz release
+  ID: i.e., you get release-specific art if it's available. To instead use only
+  *release group* album art, enable this option. This
+  will, for example, avoid using the album art for a specific special edition
+  of an album.
+  Default: ``no``.
+
+.. _Cover Art Archive: http://coverartarchive.org
 
 Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
