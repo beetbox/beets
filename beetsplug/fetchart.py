@@ -192,9 +192,12 @@ class RequestMixin(object):
 # ART SOURCES ################################################################
 
 class ArtSource(RequestMixin):
-    def __init__(self, log, config):
+    VALID_MATCHING_CRITERIA = ['default']
+
+    def __init__(self, log, config, match_by=None):
         self._log = log
         self._config = config
+        self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
     def get(self, album, plugin, paths):
         raise NotImplementedError()
@@ -289,6 +292,7 @@ class RemoteArtSource(ArtSource):
 
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
+    VALID_MATCHING_CRITERIA = ['release', 'releasegroup']
 
     if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
@@ -301,10 +305,10 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
-        if album.mb_albumid:
+        if 'release' in self.match_by and album.mb_albumid:
             yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
                                   match=Candidate.MATCH_EXACT)
-        if album.mb_releasegroupid:
+        if 'releasegroup' in self.match_by and album.mb_releasegroupid:
             yield self._candidate(
                 url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
                 match=Candidate.MATCH_FALLBACK)
@@ -757,21 +761,30 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
-        sources_name = plugins.sanitize_choices(
-            self.config['sources'].as_str_seq(), available_sources)
+        available_sources = [(s, c)
+                             for s in available_sources
+                             for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
+        sources = plugins.sanitize_pairs(
+            self.config['sources'].as_pairs(default_value='*'),
+            available_sources)
+
         if 'remote_priority' in self.config:
             self._log.warning(
                 u'The `fetch_art.remote_priority` configuration option has '
                 u'been deprecated. Instead, place `filesystem` at the end of '
                 u'your `sources` list.')
             if self.config['remote_priority'].get(bool):
-                try:
-                    sources_name.remove(u'filesystem')
-                    sources_name.append(u'filesystem')
-                except ValueError:
-                    pass
-        self.sources = [ART_SOURCES[s](self._log, self.config)
-                        for s in sources_name]
+                fs = []
+                others = []
+                for s, c in sources:
+                    if s == 'filesystem':
+                        fs.append((s, c))
+                    else:
+                        others.append((s, c))
+                sources = others + fs
+
+        self.sources = [ART_SOURCES[s](self._log, self.config, match_by=[c])
+                        for s, c in sources]
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
