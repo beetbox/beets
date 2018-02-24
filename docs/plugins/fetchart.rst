@@ -154,8 +154,8 @@ the absence of well-known names, it will use any image file in the same folder
 as your music files.
 
 For some of the art sources, the backend service can match artwork by various
-criteria. If you want finer control over the search order in such cases, the
-following alternative syntax for the ``sources`` option can be used::
+criteria. If you want finer control over the search order in such cases, you
+can use this alternative syntax for the ``sources`` option::
 
     fetchart:
         sources:
@@ -168,8 +168,8 @@ following alternative syntax for the ``sources`` option can be used::
 where listing a source without matching criteria will default to trying all
 available strategies. Entries of the forms ``coverart: release releasegroup``
 and ``coverart: *`` are also valid.
-Currently, the ``coverart`` source is the only backend to support several
-such values, namely ``release`` and ``releasegroup``, which refer to the
+Currently, only the ``coverart`` source supports multiple criteria:
+namely, ``release`` and ``releasegroup``, which refer to the
 respective MusicBrainz IDs.
 
 When you choose to apply changes during an import, beets will search for art as
