@@ -104,8 +104,6 @@ already have it; the ``-f`` or ``--force`` switch makes it search for art
 in Web databases regardless. If you specify a query, only matching albums will
 be processed; otherwise, the command processes every album in your library.
 
-.. _image-resizing:
-
 Display Only Missing Album Art
 ------------------------------
 
@@ -116,6 +114,8 @@ art::
 
 By default the command will display all results, the ``-q`` or ``--quiet``
 switch will only display results for album arts that are still missing.
+
+.. _image-resizing:
 
 Image Resizing
 --------------
