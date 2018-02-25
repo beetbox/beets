@@ -50,6 +50,9 @@ class KeyFinderPlugin(BeetsPlugin):
     def imported(self, session, task):
         self.find_key(task.items)
 
+    def set_quotation(s):
+        return '\'' + s + '\''
+
     def find_key(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
         bin = self.config['bin'].as_str()
@@ -59,8 +62,8 @@ class KeyFinderPlugin(BeetsPlugin):
                 continue
 
             try:
-                output = util.command_output([bin, '-f',
-                                              util.syspath(item.path)])
+                output = util.command_output([set_quotation(bin), '-f',
+                                              set_quotation(util.syspath(item.path))])
             except (subprocess.CalledProcessError, OSError) as exc:
                 self._log.error(u'execution failed: {0}', exc)
                 continue
