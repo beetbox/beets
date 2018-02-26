@@ -377,7 +377,7 @@ class WebPlugin(BeetsPlugin):
                     app,
                     supports_credentials=self.config[
                         'cors_supports_credentials'
-                    ]
+                    ].get(bool)
                 )
 
             # Allow serving behind a reverse proxy
