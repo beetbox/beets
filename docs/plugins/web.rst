@@ -108,9 +108,11 @@ typing ``pip install flask-cors``. Then set the ``cors`` configuration option to
 the "origin" (protocol, host, and optional port number) where the client is
 served. Or set it to ``'*'`` to enable access from all origins. Note that there
 are security implications if you set the origin to ``'*'``, so please research
-this before using it. In addition, if the ``web`` server is hidden via
-credentials, you might want to set the ``cors_supports_credentials``
-configuration option to True for the in-browser client to be able to login.
+this before using it.
+
+If the ``web`` server is behind a proxy that uses credentials, you might want
+to set the ``cors_supports_credentials`` configuration option to true to let
+in-browser clients log in.
 
 For example::
 
