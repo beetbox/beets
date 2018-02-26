@@ -341,6 +341,7 @@ class WebPlugin(BeetsPlugin):
             'host': u'127.0.0.1',
             'port': 8337,
             'cors': '',
+            'cors_supports_credentials': False,
             'reverse_proxy': False,
             'include_paths': False,
         })
@@ -372,7 +373,12 @@ class WebPlugin(BeetsPlugin):
                 app.config['CORS_RESOURCES'] = {
                     r"/*": {"origins": self.config['cors'].get(str)}
                 }
-                CORS(app)
+                CORS(
+                    app,
+                    supports_credentials=self.config[
+                        'cors_supports_credentials'
+                    ]
+                )
 
             # Allow serving behind a reverse proxy
             if self.config['reverse_proxy']:

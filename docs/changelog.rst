@@ -15,6 +15,9 @@ New features:
 * :doc:`/plugins/fetchart`: extended syntax for the ``sources`` option to give
   fine-grained control over the search order for backends with several matching
   strategies.
+* :doc:`/plugins/web`: added the boolean ``cors_supports_credentials`` option to
+  allow in-browser clients to login to the beet web server even when it is
+  protected by an authorization mechanism.
 
 
 Fixes:
