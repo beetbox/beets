@@ -63,6 +63,8 @@ configuration file. The available options are:
   Default: 8337.
 - **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
+- **cors_supports_credentials**: Support credentials when using CORS (see :ref:`web-cors`, below).
+  Default: CORS_SUPPORTS_CREDENTIALS is disabled.
 - **reverse_proxy**: If true, enable reverse proxy support (see
   :ref:`reverse-proxy`, below).
   Default: false.
@@ -100,13 +102,17 @@ default, browsers will only allow access from clients running on the same
 server as the API. (You will get an arcane error about ``XMLHttpRequest``
 otherwise.) A technology called `CORS`_ lets you relax this restriction.
 
-If you want to use an in-browser client hosted elsewhere (or running from
-a different server on your machine), first install the `flask-cors`_ plugin by
-typing ``pip install flask-cors``. Then set the ``cors`` configuration option
-to the "origin" (protocol, host, and optional port number) where the client is
-served. Or set it to ``'*'`` to enable access from all origins. Note that
-there are security implications if you set the origin to ``'*'``, so please
-research this before using it.
+If you want to use an in-browser client hosted elsewhere (or running from a
+different server on your machine), first install the `flask-cors`_ plugin by
+typing ``pip install flask-cors``. Then set the ``cors`` configuration option to
+the "origin" (protocol, host, and optional port number) where the client is
+served. Or set it to ``'*'`` to enable access from all origins. Note that there
+are security implications if you set the origin to ``'*'``, so please research
+this before using it.
+
+If the ``web`` server is behind a proxy that uses credentials, you might want
+to set the ``cors_supports_credentials`` configuration option to true to let
+in-browser clients log in.
 
 For example::
 

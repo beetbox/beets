@@ -15,6 +15,9 @@ New features:
 * :doc:`/plugins/fetchart`: extended syntax for the ``sources`` option to give
   fine-grained control over the search order for backends with several matching
   strategies.
+* :doc:`/plugins/web`: added the boolean ``cors_supports_credentials`` option to
+  allow in-browser clients to login to the beet web server even when it is
+  protected by an authorization mechanism.
 
 
 Fixes:
@@ -65,6 +68,9 @@ Fixes:
 * Importing a release with multiple release events now selects the
   event based on the order of your :ref:`preferred` countries rather than
   the order of release events in MusicBrainz. :bug:`2816`
+* :doc:`/plugins/web`: The time display in the web interface would incorrectly jump
+  at the 30-second mark of every minute. Now, it correctly changes over at zero
+  seconds. :bug:`2822`
 
 For developers:
 
