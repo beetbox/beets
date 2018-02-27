@@ -1,25 +1,23 @@
 Configuration
 =============
 
-Beets has an extensive configuration system that lets you customize nearly
-every aspect of its operation. To configure beets, you create a file called
-``config.yaml``. The location of the file depend on your platform (type ``beet
-config -p`` to see the path on your system):
+Beets has an extensive configuration system which lets you customize nearly
+every aspect of beets. To configure beets, a configuration file called
+``config.yaml`` must be created. The location of ``config.yaml`` depends on your operating system (OS).
 
-* On Unix-like OSes, write ``~/.config/beets/config.yaml``.
-* On Windows, use ``%APPDATA%\beets\config.yaml``. This is usually in a
-  directory like ``C:\Users\You\AppData\Roaming``.
-* On OS X, you can use either the Unix location or ``~/Library/Application
+* On a Unix OS, use ``~/.config/beets/config.yaml``.
+* On Windows, use ``%APPDATA%\beets\config.yaml``. ``%APPDATA%`` is usually an environment variable
+  which stores a directory like ``C:\Users\[Your Windows' username]\AppData\Roaming``.
+* On OS X, you can use either the Unix OS's location or ``~/Library/Application
   Support/beets/config.yaml``.
 
-You can launch your text editor to create or update your configuration by
-typing ``beet config -e``. (See the :ref:`config-cmd` command for details.) It
-is also possible to customize the location of the configuration file and even
-use multiple layers of configuration. See `Configuration Location`_, below.
+You can launch your text editor to create or update your ``config.yaml`` by
+executing ``beet config -e``. (See the :ref:`config-cmd` command for details.) The location of ``config.yaml`` 
+can be customized as described in `Configuration Location`_. Using beets, you can confirm 
+the ``config.yaml`` file's location by executing ``beet config -p``.
 
-The config file uses `YAML`_ syntax. You can use the full power of YAML, but
-most configuration options are simple key/value pairs. This means your config
-file will look like this::
+``config.yaml`` uses `YAML`_ syntax. Most of beets' configuration options are 
+key/value pairs which look like these examples::
 
     option: value
     another_option: foo
@@ -27,13 +25,13 @@ file will look like this::
         key: value
         foo: bar
 
-In YAML, you will need to use spaces (not tabs!) to indent some lines. If you
-have questions about more sophisticated syntax, take a look at the `YAML`_
+In YAML, you will need to use spaces (not tabs!) to indent lines. If you
+have questions about YAML's syntax, you can review the `YAML`_
 documentation.
 
 .. _YAML: http://yaml.org/
 
-The rest of this page enumerates the dizzying litany of configuration options
+The remainder of this document describes the numerous configuration options that are
 available in beets. You might also want to see an
 :ref:`example <config-example>`.
 
