@@ -71,6 +71,10 @@ Fixes:
 * :doc:`/plugins/web`: The time display in the web interface would incorrectly jump
   at the 30-second mark of every minute. Now, it correctly changes over at zero
   seconds. :bug:`2822`
+* :doc:`/plugins/web`: In a python 3 enviroment, the function to fetch the
+  album art would not work and throw an exception. It now works as expected.
+  Additionally, the server will now return a 404 response when the album id
+  is unknown, instead of a 500 response and a thrown exception. :bug:`2823`
 
 For developers:
 
