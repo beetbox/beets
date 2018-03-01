@@ -228,16 +228,21 @@ def item_file(item_id):
 
     try:
         unicode_item_path = util.text_string(item.path)
-    except:
+    except (UnicodeDecodeError, UnicodeEncodeError):
         unicode_item_path = u"fallback" + os.path.splitext(item_path)[1]
 
     try:
-        os.path.basename(unicode_item_path).encode("latin-1", "strict") #Imitate http.server behaviour
+        # Imitate http.server behaviour
+        os.path.basename(unicode_item_path).encode("latin-1", "strict")
         safe_filename = os.path.basename(unicode_item_path)
-    except:
+    except (UnicodeDecodeError, UnicodeEncodeError):
         safe_filename = unidecode(os.path.basename(unicode_item_path))
 
-    response = flask.send_file(item_path,as_attachment=True, attachment_filename=safe_filename)
+    response = flask.send_file(
+        item_path,
+        as_attachment=True,
+        attachment_filename=safe_filename
+    )
     response.headers['Content-Length'] = os.path.getsize(item_path)
     return response
 
