@@ -24,6 +24,7 @@ import flask
 from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
 import os
+from unidecode import unidecode
 import json
 import base64
 
@@ -224,12 +225,12 @@ def item_file(item_id):
         item_path = util.syspath(item.path)
     else:
         item_path = util.py3_path(item.path)
+    try:
+        os.path.basename(util.py3_path(item.path)).encode("latin-1", "strict") #Imitate http.server behaviour
+        response = flask.send_file(item_path,as_attachment=True)
+    except UnicodeEncodeError:
+        response = flask.send_file(item_path,as_attachment=True, attachment_filename=unidecode(os.path.basename(util.py3_path(item.path))))
 
-    response = flask.send_file(
-        item_path,
-        as_attachment=True,
-        attachment_filename=os.path.basename(util.py3_path(item.path)),
-    )
     response.headers['Content-Length'] = os.path.getsize(item_path)
     return response
 
