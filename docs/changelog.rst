@@ -75,6 +75,10 @@ Fixes:
   album art would not work and throw an exception. It now works as expected.
   Additionally, the server will now return a 404 response when the album id
   is unknown, instead of a 500 response and a thrown exception. :bug:`2823`
+* :doc:`/plugins/web`: In a python 3 enviroment, the server would throw an 
+  exception if non latin-1 characters where in the File name.
+  It now checks if non latin-1 characters are in the filename and changes 
+  them to ascii-characters in that case :bug:`2815`
 
 For developers:
 
