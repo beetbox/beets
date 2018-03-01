@@ -3,18 +3,16 @@ Configuration
 
 Beets has an extensive configuration system which lets you customize nearly
 every aspect of beets. To configure beets, a configuration file called
-``config.yaml`` must be created. The location of ``config.yaml`` depends on your operating system (OS).
+``config.yaml`` must be created. The location of ``config.yaml`` depends on your platform. You can type ``beet config -p`` to see where ``config.yaml`` is on your system.
 
-* On a Unix OS, use ``~/.config/beets/config.yaml``.
+* On Unix-like OSes, use ``~/.config/beets/config.yaml``.
 * On Windows, use ``%APPDATA%\beets\config.yaml``. ``%APPDATA%`` is usually an environment variable
   which stores a directory like ``C:\Users\[Your Windows' username]\AppData\Roaming``.
 * On OS X, you can use either the Unix OS's location or ``~/Library/Application
   Support/beets/config.yaml``.
 
 You can launch your text editor to create or update your ``config.yaml`` by
-executing ``beet config -e``. (See the :ref:`config-cmd` command for details.) The location of ``config.yaml`` 
-can be customized as described in `Configuration Location`_. Using beets, you can confirm 
-the ``config.yaml`` file's location by executing ``beet config -p``.
+typing ``beet config -e`` (See the :ref:`config-cmd` command for details.). `Configuration Location`_ describes how you can customize ``config.yaml``'s location.
 
 ``config.yaml`` uses `YAML`_ syntax. Most of beets' configuration options are 
 key/value pairs which look like these examples::
@@ -31,7 +29,7 @@ documentation.
 
 .. _YAML: http://yaml.org/
 
-The remainder of this document describes the numerous configuration options that are
+The rest of this page describes the dizzying litany of configuration options that are
 available in beets. You might also want to see an
 :ref:`example <config-example>`.
 
