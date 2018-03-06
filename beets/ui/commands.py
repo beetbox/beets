@@ -579,6 +579,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     line.append(ui.colorize('text_highlight_minor',
                                             u'(%s)' % disambig))
 
+                # Is the album/item already in the collection?
+                if True:  # TODO: refactor (obviously!)
+                    line.append(u'(in collection)')
+
                 print_(u' '.join(line))
 
             # Ask the user for a choice.
