@@ -17,12 +17,16 @@
 
 from __future__ import division, absolute_import, print_function
 
+from mock import patch
 import unittest
 from test.helper import TestHelper
+
+from beets.library import Item
 from beetsplug import parentwork
 
 
-class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
+@patch('beets.util.command_output')
+class ParentWorkTest(unittest.TestCase, TestHelper):
     def setUp(self):
         """Set up configuration"""
         self.setup_beets()
@@ -32,7 +36,48 @@ class ParentWorkPluginFunctional(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_father_work(self):
+    def test_normal_case(self, command_output):
+        item = Item(path='/file',
+                    work_id=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53')
+        item.add(self.lib)
+
+        command_output.return_value = u'32c8943f-1b27-3a23-8660-4567f4847c94'
+        self.run_command('parentwork')
+
+        item.load()
+        self.assertEqual(item['parent_work_id'],
+                         u'32c8943f-1b27-3a23-8660-4567f4847c94')
+
+    def test_force(self, command_output):
+        self.config['parentwork']['force'] = True
+        item = Item(path='/file',
+                    work_id=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53',
+                    parent_work_id=u'XXX')
+        item.add(self.lib)
+
+        command_output.return_value = u'32c8943f-1b27-3a23-8660-4567f4847c94'
+        self.run_command('parentwork')
+
+        item.load()
+        self.assertEqual(item['parent_work_id'],
+                         u'32c8943f-1b27-3a23-8660-4567f4847c94')
+
+    def test_no_force(self, command_output):
+        self.config['parentwork']['force'] = True
+        item = Item(path='/file', work_id=u'e27bda6e-531e-36d3-9cd7-\
+                    b8ebc18e8c53', parent_work_id=u'XXX')
+        item.add(self.lib)
+
+        command_output.return_value = u'32c8943f-1b27-3a23-8660-4567f4847c94'
+        self.run_command('parentwork')
+
+        item.load()
+        self.assertEqual(item['parent_work_id'], u'XXX')
+
+    # test different cases, still with Matthew Passion Ouverture or Mozart
+    # requiem
+
+    def test_father_work(self, command_output):
         work_id = u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a'
         self.assertEqual(u'f04b42df-7251-4d86-a5ee-67cfa49580d1',
                          parentwork.work_father(work_id))

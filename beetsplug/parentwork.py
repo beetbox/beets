@@ -88,7 +88,7 @@ class ParentWorkPlugin(BeetsPlugin):
         def func(lib, opts, args):
             for item in lib.items(ui.decargs(args)):
                 self.find_work(
-                    lib, item,
+                    item,
                     opts.force_refetch or self.config['force'],
                 )
 
@@ -103,7 +103,7 @@ class ParentWorkPlugin(BeetsPlugin):
         """
         if self.config['auto']:
             for item in task.imported_items():
-                self.find_work(session.lib, item,
+                self.find_work(item,
                                self.config['force'])
 
     def get_info(self, item, work_info, parent_composer, parent_composer_sort,
@@ -138,7 +138,7 @@ class ParentWorkPlugin(BeetsPlugin):
             else:
                 parent_work_disambig.append('')
 
-    def find_work(self, lib, item, force):
+    def find_work(self, item, force):
 
         parent_work          = []
         parent_work_disambig = []
@@ -148,33 +148,33 @@ class ParentWorkPlugin(BeetsPlugin):
         composer_ids         = set()
         work_ids             = []
 
-        item.read()
         recording_id = item.mb_trackid
-        try: 
+        try:
             item.parent_work
-            hasparent=True
+            hasparent = True
         except AttributeError:
-            hasparent=False
-        
+            hasparent = False
         hasawork = True
         if not item.work_id:
-            rec_rels=musicbrainzngs.get_recording_by_id(recording_id, 
-                                                includes=['work-rels'])
+            rec_rels = musicbrainzngs.get_recording_by_id(recording_id,
+                                                          includes=['work\
+                                                                    -rels'])
             if 'work-relation-list' in rec_rels['recording']:
-                for work_relation in rec_rels['recording']['work-relation-list']:
+                for work_relation in \
+                        rec_rels['recording']['work-relation-list']:
                     work_ids.append(work_relation['work']['id'])
-                    hasawork=True
+                    hasawork = True
             else:
-                self._log.info("No work attached, recording id: " + 
-                                recording_id)
+                self._log.info("No work attached, recording id: " +
+                               recording_id)
                 self._log.info(item.artist + ' - ' + item.title)
                 self._log.info("add one at https://musicbrainz.org" +
-                            "/recording/" + recording_id)
+                               "/recording/" + recording_id)
                 hasawork = False
-        else: 
-            work_ids=item.work_id.split(', ')
+        else:
+            work_ids = item.work_id.split(', ')
         found = False
-        
+
         if (force or (not hasparent)) and hasawork:
             try:
                 for w_id in work_ids:
