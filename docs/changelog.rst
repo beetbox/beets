@@ -18,7 +18,12 @@ New features:
 * :doc:`/plugins/web`: added the boolean ``cors_supports_credentials`` option to
   allow in-browser clients to login to the beet web server even when it is
   protected by an authorization mechanism.
-
+* Added parentwork plugin, to catch work titles and the works they are part
+  of, as well as their composers. 
+  Thanks to :user:`dosoe`. :bug:`2580`
+  
+* Added work, work_id and work_diambig tags and fetching in beets core
+  Thanks to :user:`dosoe`. :bug:`2580`
 
 Fixes:
 
@@ -213,13 +218,6 @@ There are some changes for developers:
   describing the file operation instead of multiple Boolean flags.
   There is a new numerated type describing how to move, copy, or link files.
   :bug:`2682`
-
-* Added parentwork plugin, to catch work titles and the works they are part
-  of, as well as their composers. 
-  Thanks to :user:`dosoe`. :bug:`2580`
-  
-* Added work, work_id and work_diambig tags and fetching in beets core
-  Thanks to :user:`dosoe`. :bug:`2580`
 
 1.4.5 (June 20, 2017)
 ---------------------
