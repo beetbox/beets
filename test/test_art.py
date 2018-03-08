@@ -518,7 +518,8 @@ class ArtImporterTest(UseThePlugin):
         # message "<album> has album art".
         self._fetch_art(True)
         util.remove(self.album.artpath)
-        self.plugin.batch_fetch_art(self.lib, self.lib.albums(), force=False)
+        self.plugin.batch_fetch_art(self.lib, self.lib.albums(), force=False,
+                                    quiet=False)
         self.assertExists(self.album.artpath)
 
 

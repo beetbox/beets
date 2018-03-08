@@ -10,6 +10,8 @@ import:
     delete: no
     resume: ask
     incremental: no
+    incremental_skip_later: no
+    from_scratch: no
     quiet_fallback: skip
     none_rec_action: ask
     timid: no
@@ -125,5 +127,7 @@ match:
         original_year: no
     ignored: []
     required: []
+    ignored_media: []
+    ignore_video_tracks: yes
     track_length_grace: 10
     track_length_max: 30

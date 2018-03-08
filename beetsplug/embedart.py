@@ -163,8 +163,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             'clearart',
             help=u'remove images from file metadata',
         )
+        clear_cmd.parser.add_option(
+            u"-y", u"--yes", action="store_true", help=u"skip confirmation"
+        )
 
         def clear_func(lib, opts, args):
+            items = lib.items(decargs(args))
+            # Confirm with user.
+            if not opts.yes and not _confirm(items, False):
+                return
             art.clear(self._log, lib, decargs(args))
         clear_cmd.func = clear_func
 

@@ -171,36 +171,41 @@ class DateQueryTest(_common.LibTestCase):
 class DateQueryTestRelative(_common.LibTestCase):
     def setUp(self):
         super(DateQueryTestRelative, self).setUp()
-        self.i.added = _parsetime(datetime.now().strftime('%Y-%m-%d %H:%M'))
+
+        # We pick a date near a month changeover, which can reveal some time
+        # zone bugs.
+        self._now = datetime(2017, 12, 31, 22, 55, 4, 101332)
+
+        self.i.added = _parsetime(self._now.strftime('%Y-%m-%d %H:%M'))
         self.i.store()
 
     def test_single_month_match_fast(self):
-        query = DateQuery('added', datetime.now().strftime('%Y-%m'))
+        query = DateQuery('added', self._now.strftime('%Y-%m'))
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 1)
 
     def test_single_month_nonmatch_fast(self):
-        query = DateQuery('added', (datetime.now() + timedelta(days=30))
+        query = DateQuery('added', (self._now + timedelta(days=30))
                           .strftime('%Y-%m'))
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 0)
 
     def test_single_month_match_slow(self):
-        query = DateQuery('added', datetime.now().strftime('%Y-%m'))
+        query = DateQuery('added', self._now.strftime('%Y-%m'))
         self.assertTrue(query.match(self.i))
 
     def test_single_month_nonmatch_slow(self):
-        query = DateQuery('added', (datetime.now() + timedelta(days=30))
+        query = DateQuery('added', (self._now + timedelta(days=30))
                           .strftime('%Y-%m'))
         self.assertFalse(query.match(self.i))
 
     def test_single_day_match_fast(self):
-        query = DateQuery('added', datetime.now().strftime('%Y-%m-%d'))
+        query = DateQuery('added', self._now.strftime('%Y-%m-%d'))
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 1)
 
     def test_single_day_nonmatch_fast(self):
-        query = DateQuery('added', (datetime.now() + timedelta(days=1))
+        query = DateQuery('added', (self._now + timedelta(days=1))
                           .strftime('%Y-%m-%d'))
         matched = self.lib.items(query)
         self.assertEqual(len(matched), 0)

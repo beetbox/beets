@@ -2,7 +2,7 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Lyric Wiki`_, 
+Namely, the current version of the plugin uses `Lyric Wiki`_,
 `Musixmatch`_, `Genius.com`_, and, optionally, the Google custom search API.
 
 .. _Lyric Wiki: http://lyrics.wikia.com/
@@ -59,9 +59,11 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google lyricwiki musixmatch``, i.e., all the
-  sources except for `genius`. The `google` source will be automatically
+  Default: ``google lyricwiki musixmatch genius``, i.e., all the
+  available sources. The `google` source will be automatically
   deactivated if no ``google_API_key`` is setup.
+  Both it and the `genius` source will only be enabled if BeautifulSoup is
+  installed.
 
 Here's an example of ``config.yaml``::
 
@@ -153,6 +155,16 @@ After that, the lyrics plugin will fall back on other declared data sources.
 
 .. _pip: http://www.pip-installer.org/
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/
+
+Activate Genius Lyrics
+----------------------
+
+Like the Google backend, the Genius backend requires the `BeautifulSoup`_
+library. Install it by typing::
+
+    pip install beautifulsoup4
+
+The backend is enabled by default.
 
 .. _lyrics-translation:
 

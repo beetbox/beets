@@ -633,6 +633,17 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assert_file_in_lib(
             b'Applied Artist', b'Applied Album', b'Applied Title 1.mp3')
 
+    def test_apply_from_scratch_removes_other_metadata(self):
+        config['import']['from_scratch'] = True
+
+        for mediafile in self.import_media:
+            mediafile.genre = u'Tag Genre'
+            mediafile.save()
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().genre, u'')
+
     def test_apply_with_move_deletes_import(self):
         config['import']['move'] = True
 
@@ -1247,6 +1258,12 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.title, u't\xeftle 0')
+
+    def test_merge_duplicate_album(self):
+        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.albums()), 1)
 
     def test_twice_in_import_dir(self):
         self.skipTest('write me')

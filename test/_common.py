@@ -95,6 +95,7 @@ def item(lib=None):
         mb_artistid='someID-3',
         mb_albumartistid='someID-4',
         album_id=None,
+        mtime=12345,
     )
     if lib:
         lib.add(i)

@@ -50,3 +50,13 @@ Manually Triggering Zero
 
 You can also type ``beet zero [QUERY]`` to manually invoke the plugin on music
 in your library.
+
+Preserving Album Art
+--------------------
+
+If you use the ``keep_fields`` option, the plugin will remove embedded album
+art from files' tags unless you tell it not to. To keep the album art, include
+the special field ``images`` in the list. For example::
+
+    zero:
+        keep_fields: title artist album year track genre images

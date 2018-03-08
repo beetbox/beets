@@ -34,7 +34,8 @@ from beets.autotag import hooks
 from beets import plugins
 from beets import importer
 from beets import util
-from beets.util import syspath, normpath, ancestry, displayable_path
+from beets.util import syspath, normpath, ancestry, displayable_path, \
+    MoveOperation
 from beets import library
 from beets import config
 from beets import logging
@@ -690,7 +691,6 @@ class TerminalImportSession(importer.ImportSession):
             return action
 
         # Loop until we have a choice.
-        candidates, rec = task.candidates, task.rec
         while True:
             # Ask for a choice from the user. The result of
             # `choose_candidate` may be an `importer.action`, an
@@ -698,8 +698,8 @@ class TerminalImportSession(importer.ImportSession):
             # `PromptChoice`.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                candidates, False, rec, task.cur_artist, task.cur_album,
-                itemcount=len(task.items), choices=choices
+                task.candidates, False, task.rec, task.cur_artist,
+                task.cur_album, itemcount=len(task.items), choices=choices
             )
 
             # Basic choices that require no more action here.
@@ -715,8 +715,8 @@ class TerminalImportSession(importer.ImportSession):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
                     # Use the new candidates and continue around the loop.
-                    candidates = post_choice.candidates
-                    rec = post_choice.recommendation
+                    task.candidates = post_choice.candidates
+                    task.rec = post_choice.recommendation
 
             # Otherwise, we have a specific match selection.
             else:
@@ -790,7 +790,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                (u'Skip new', u'Keep both', u'Remove old')
+                (u'Skip new', u'Keep both', u'Remove old', u'Merge all')
             )
 
         if sel == u's':
@@ -802,6 +802,8 @@ class TerminalImportSession(importer.ImportSession):
         elif sel == u'r':
             # Remove old.
             task.should_remove_duplicates = True
+        elif sel == u'm':
+            task.should_merge_duplicates = True
         else:
             assert False
 
@@ -931,6 +933,13 @@ def import_func(lib, opts, args):
         if not paths:
             raise ui.UserError(u'no path specified')
 
+        # On Python 2, we get filenames as raw bytes, which is what we
+        # need. On Python 3, we need to undo the "helpful" conversion to
+        # Unicode strings to get the real bytestring filename.
+        if not six.PY2:
+            paths = [p.encode(util.arg_encoding(), 'surrogateescape')
+                     for p in paths]
+
     import_files(lib, paths, query)
 
 
@@ -1000,6 +1009,10 @@ import_cmd.parser.add_option(
 import_cmd.parser.add_option(
     u'-I', u'--noincremental', dest='incremental', action='store_false',
     help=u'do not skip already-imported directories'
+)
+import_cmd.parser.add_option(
+    u'--from-scratch', dest='from_scratch', action='store_true',
+    help=u'erase existing metadata before applying new metadata'
 )
 import_cmd.parser.add_option(
     u'--flat', dest='flat', action='store_true',
@@ -1499,10 +1512,14 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False,
 
             if export:
                 # Copy without affecting the database.
-                obj.move(True, basedir=dest, store=False)
+                obj.move(operation=MoveOperation.COPY, basedir=dest,
+                         store=False)
             else:
                 # Ordinary move/copy: store the new path.
-                obj.move(copy, basedir=dest)
+                if copy:
+                    obj.move(operation=MoveOperation.COPY, basedir=dest)
+                else:
+                    obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
 def move_func(lib, opts, args):

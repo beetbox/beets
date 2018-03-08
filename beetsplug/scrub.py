@@ -24,6 +24,7 @@ from beets import ui
 from beets import util
 from beets import config
 from beets import mediafile
+import mutagen
 
 _MUTAGEN_FORMATS = {
     'asf': 'ASF',
@@ -106,7 +107,7 @@ class ScrubPlugin(BeetsPlugin):
                 for tag in f.keys():
                     del f[tag]
                 f.save()
-            except IOError as exc:
+            except (IOError, mutagen.MutagenError) as exc:
                 self._log.error(u'could not scrub {0}: {1}',
                                 util.displayable_path(path), exc)
 
