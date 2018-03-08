@@ -110,6 +110,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         self.config.add({
             'auto': True,
             'force': False,
+            'tags': []
         })
 
         if self.config['auto']:
@@ -164,6 +165,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def _fetch_info(self, items, write, force):
         """Fetch additional information from AcousticBrainz for the `item`s.
         """
+        tags = self.config['tags'].as_str_seq()
         for item in items:
             # If we're not forcing re-downloading for all tracks, check
             # whether the data is already present. We use one
@@ -183,11 +185,18 @@ class AcousticPlugin(plugins.BeetsPlugin):
             data = self._get_data(item.mb_trackid)
             if data:
                 for attr, val in self._map_data_to_scheme(data, ABSCHEME):
-                    self._log.debug(u'attribute {} of {} set to {}',
-                                    attr,
-                                    item,
-                                    val)
-                    setattr(item, attr, val)
+                    if not tags or attr in tags:
+                        self._log.debug(u'attribute {} of {} set to {}',
+                                        attr,
+                                        item,
+                                        val)
+                        setattr(item, attr, val)
+                    else:
+                        self._log.debug(u'skipping attribute {} of {}'
+                                        u' (value {}) due to config',
+                                        attr,
+                                        item,
+                                        val)
                 item.store()
                 if write:
                     item.try_write()

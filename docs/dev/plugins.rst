@@ -432,6 +432,11 @@ to register it::
         def stage(self, session, task):
             print('Importing something!')
 
+It is also possible to request your function to run early in the pipeline by
+adding the function to the plugin's ``early_import_stages`` field instead::
+
+    self.early_import_stages = [self.stage]
+
 .. _extend-query:
 
 Extend the Query Syntax

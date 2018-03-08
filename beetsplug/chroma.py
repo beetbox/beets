@@ -295,7 +295,7 @@ def fingerprint_item(log, item, write=False):
         log.info(u'{0}: fingerprinting',
                  util.displayable_path(item.path))
         try:
-            _, fp = acoustid.fingerprint_file(item.path)
+            _, fp = acoustid.fingerprint_file(util.syspath(item.path))
             item.acoustid_fingerprint = fp
             if write:
                 log.info(u'{0}: writing fingerprint',

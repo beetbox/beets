@@ -88,14 +88,13 @@ def im_resize(maxwidth, path_in, path_out=None):
     log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
-    # "-resize widthxheight>" shrinks images with dimension(s) larger
-    # than the corresponding width and/or height dimension(s). The >
-    # "only shrink" flag is prefixed by ^ escape char for Windows
-    # compatibility.
+    # "-resize WIDTHx>" shrinks images with the width larger
+    # than the given width while maintaining the aspect ratio
+    # with regards to the height.
     try:
         util.command_output([
             'convert', util.syspath(path_in, prefix=False),
-            '-resize', '{0}x^>'.format(maxwidth),
+            '-resize', '{0}x>'.format(maxwidth),
             util.syspath(path_out, prefix=False),
         ])
     except subprocess.CalledProcessError:

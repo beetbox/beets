@@ -27,7 +27,7 @@ import mock
 
 class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False):
+                      track_artist=False, medium_format='FORMAT'):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -90,12 +90,12 @@ class MBAlbumInfoTest(_common.TestCase):
             release['medium-list'].append({
                 'position': '1',
                 'track-list': track_list,
-                'format': 'FORMAT',
+                'format': medium_format,
                 'title': 'MEDIUM TITLE',
             })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False):
+    def _make_track(self, title, tr_id, duration, artist=False, video=False):
         track = {
             'title': title,
             'id': tr_id,
@@ -113,6 +113,8 @@ class MBAlbumInfoTest(_common.TestCase):
                     'name': 'RECORDING ARTIST CREDIT',
                 }
             ]
+        if video:
+            track['video'] = 'true'
         return track
 
     def test_parse_release_with_year(self):
@@ -323,6 +325,58 @@ class MBAlbumInfoTest(_common.TestCase):
         release = self._make_release()
         d = mb.album_info(release)
         self.assertEqual(d.data_source, 'MusicBrainz')
+
+    def test_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, medium_format="IGNORED1")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 0)
+
+    def test_no_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks,
+                                     medium_format="NON-IGNORED")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+
+    def test_skip_data_track(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('[data track]', 'ID DATA TRACK',
+                                   100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_skip_video_tracks_by_default(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
+                                   False, True),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_no_skip_video_tracks_if_configured(self):
+        config['match']['ignore_video_tracks'] = False
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
+                                   False, True),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 3)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE VIDEO')
+        self.assertEqual(d.tracks[2].title, 'TITLE TWO')
 
 
 class ParseIDTest(_common.TestCase):
