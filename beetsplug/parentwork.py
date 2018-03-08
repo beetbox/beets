@@ -41,22 +41,12 @@ def work_father(work_id, work_date=None):
             if work_father['type'] == 'parts' \
                     and work_father.get('direction') == 'backward':
                 father_id = work_father['work']['id']
-                print(father_id, work_date)
                 return(father_id, work_date)
-        if work_date:
-            print(None, work_date)
-            return(None, work_date)
         else:
-            print(None, None)
-            return(None, None)
+            return(None, work_date)
 
     else:
-        if work_date:
-            print(None, work_date)
-            return(None, work_date)
-        else:
-            print(None, None)
-            return(None, None)
+        return(None, work_date)
 
 
 def work_parent(work_id):
