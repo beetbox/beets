@@ -25,40 +25,54 @@ from beets.plugins import BeetsPlugin
 import musicbrainzngs
 
 
-def work_father(work_id):
+def work_father(work_id, work_date=None):
     """ This function finds the id of the father work given its id"""
     work_info = musicbrainzngs.get_work_by_id(work_id,
-                                              includes=["work-rels"])
+                                              includes=["work-rels",
+                                                        "artist-rels"])
+    if 'artist-relation-list' in work_info['work'] and work_date is None:
+        for artist in work_info['work']['artist-relation-list']:
+                if artist['type'] == 'composer':
+                    if 'end' in artist.keys():
+                        work_date = artist['end']
+
     if 'work-relation-list' in work_info['work']:
         for work_father in work_info['work']['work-relation-list']:
             if work_father['type'] == 'parts' \
                     and work_father.get('direction') == 'backward':
                 father_id = work_father['work']['id']
-                return(father_id)
-        return(None)
+                return(father_id, work_date)
+        if work_date:
+            return(None, work_date)
+        else:
+            return(None, None)
 
     else:
-        return(None)
+        if work_date:
+            return(None, work_date)
+        else:
+            return(None, None)
 
 
 def work_parent(work_id):
     """This function finds the parentwork id of a work given its id. """
+    work_date = None
     while True:
-        new_work_id = work_father(work_id)
+        new_work_id, work_date = work_father(work_id, work_date)
         if not new_work_id:
             return work_id
             break
         work_id = new_work_id
-    return work_id
+    return work_id, work_date
 
 
 def find_parentwork(work_id):
     """This function gives the work relationships (dict) of a parent_work
     given the id of the work"""
-    parent_id = work_parent(work_id)
+    parent_id, work_date = work_parent(work_id)
     work_info = musicbrainzngs.get_work_by_id(parent_id,
                                               includes=["artist-rels"])
-    return(work_info)
+    return(work_info, work_date)
 
 
 class ParentWorkPlugin(BeetsPlugin):
@@ -114,6 +128,7 @@ class ParentWorkPlugin(BeetsPlugin):
         composer_ids"""
         composer_exists = False
         if 'artist-relation-list' in work_info['work']:
+            print(work_info['work']['artist-relation-list'])
             for artist in work_info['work']['artist-relation-list']:
                 if artist['type'] == 'composer':
                     composer_exists = True
@@ -178,7 +193,7 @@ class ParentWorkPlugin(BeetsPlugin):
         if (force or (not hasparent)) and hasawork:
             try:
                 for w_id in work_ids:
-                    work_info = find_parentwork(w_id)
+                    work_info, work_date = find_parentwork(w_id)
                     self.get_info(item, work_info, parent_composer,
                                   parent_composer_sort, parent_work,
                                   parent_work_disambig,
@@ -202,5 +217,6 @@ class ParentWorkPlugin(BeetsPlugin):
             item['parent_work_id']       = u', '.join(parent_work_id)
             item['parent_composer']      = u', '.join(parent_composer)
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
+            item['work_date']            = work_date
 
             item.store()
