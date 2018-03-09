@@ -162,8 +162,8 @@ class ParentWorkPlugin(BeetsPlugin):
         hasawork = True
         if not item.work_id:
             rec_rels = musicbrainzngs.get_recording_by_id(recording_id,
-                                                          includes=['work\
-                                                                    -rels'])
+                                                          includes=['work-' +
+                                                                    'rels'])
             if 'work-relation-list' in rec_rels['recording']:
                 for work_relation in \
                         rec_rels['recording']['work-relation-list']:
