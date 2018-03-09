@@ -42,11 +42,7 @@ def work_father(work_id, work_date=None):
                     and work_father.get('direction') == 'backward':
                 father_id = work_father['work']['id']
                 return(father_id, work_date)
-        else:
-            return(None, work_date)
-
-    else:
-        return(None, work_date)
+    return(None, work_date)
 
 
 def work_parent(work_id):
