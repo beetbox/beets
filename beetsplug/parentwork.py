@@ -29,7 +29,7 @@ def work_father(work_id, work_date=None):
     """ This function finds the id of the father work given its id"""
     work_info = musicbrainzngs.get_work_by_id(work_id,
                                               includes=["work-rels",
-                                                        "artist-rels"])
+                                                        "artist-rels",])
     if 'artist-relation-list' in work_info['work'] and work_date is None:
         for artist in work_info['work']['artist-relation-list']:
                 if artist['type'] == 'composer':
