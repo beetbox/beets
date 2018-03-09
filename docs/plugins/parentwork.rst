@@ -23,6 +23,8 @@ This plugin adds five tags:
 - **parent_work_disambig**: The disambiguation of the parentwork title. 
 - **parent_composer**: The composer of the parentwork. 
 - **parent_composer_sort**: The sort name of the parentwork composer. 
+- **work_date**: THe composition date of the work, or the first parent work 
+that has a composition date. Format: yyyy-mm-dd
 
 To fill in the parentwork tag and the associated parent** tags, in case there 
 are several works on the recording, it fills it with the results of the first 
@@ -50,5 +52,8 @@ configuration file. The available options are:
 - **force**: As a default, ``parentwork`` only fetches work info for 
   recordings that do not already have a ``parent_work`` tag. If ``force`` 
   is enabled, it fetches it for all recordings. 
+  Default: ``no``
+  
+- **auto**: If enabled, automatically fetches works at import
   Default: ``no``
 
