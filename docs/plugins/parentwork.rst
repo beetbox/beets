@@ -24,7 +24,7 @@ This plugin adds five tags:
 - **parent_composer**: The composer of the parentwork. 
 - **parent_composer_sort**: The sort name of the parentwork composer. 
 - **work_date**: THe composition date of the work, or the first parent work 
-that has a composition date. Format: yyyy-mm-dd
+  that has a composition date. Format: yyyy-mm-dd
 
 To fill in the parentwork tag and the associated parent** tags, in case there 
 are several works on the recording, it fills it with the results of the first 
