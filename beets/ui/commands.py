@@ -1324,8 +1324,21 @@ default_commands.append(stats_cmd)
 # version: Show current beets version.
 
 def show_version(lib, opts, args):
+    # Use the improved 'distro' package for platform info, if available
+    # (the stdlib platform module has simplistic logic, and 3.7 will drop it)
+    from platform import platform
+    os_id = platform()
+    if os.name == 'posix':
+        try:
+            import distro
+        except ImportError:
+            pass
+        else:
+            os_id = distro.name(pretty=True) or platform()
+
     print_(u'beets version %s' % beets.__version__)
     print_(u'Python version {}'.format(python_version()))
+    print_(u'Platform: {}'.format(os_id))
     # Show plugins.
     names = sorted(p.name for p in plugins.find_plugins())
     if names:

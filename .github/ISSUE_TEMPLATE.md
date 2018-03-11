@@ -19,10 +19,12 @@ Here's a link to the music files that trigger the bug (if relevant):
 
 ### Setup
 
-* OS: 
-* Python version: 
-* beets version: 
-* Turning off plugins made problem go away (yes/no): 
+Note that calling `beet version` shows this information (platform only in newer versions).
+
+* beets version:
+* Python version:
+* Platform:
+* Turning off plugins made problem go away (yes/no):
 
 My configuration (output of `beet config`) is:
 
