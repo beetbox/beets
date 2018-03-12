@@ -36,6 +36,20 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
+        
+    def test_add_work(self, command_output):
+        item = Item(path='/file',
+                    work_id=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53')
+        item.add(self.lib)
+
+        command_output.return_value = 'dbm'
+        self.run_command('parentwork')
+
+        item.load()
+        self.assertEqual(item['parent_work_id'],
+                         u'32c8943f-1b27-3a23-8660-4567f4847c94')
+        command_output.assert_called_with(
+            ['parentwork', '-f', util.syspath(item.path)])
 
     def test_normal_case(self, command_output):
         item = Item(path='/file',
