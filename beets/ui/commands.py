@@ -1758,7 +1758,7 @@ def completion_script(commands):
     # Command aliases
     yield u"  local aliases='%s'\n" % ' '.join(aliases.keys())
     for alias, cmd in aliases.items():
-        yield u"  local alias__%s=%s\n" % (alias, cmd)
+        yield u"  local alias__%s=%s\n" % (alias.replace('-', '_'), cmd)
     yield u'\n'
 
     # Fields
@@ -1775,7 +1775,7 @@ def completion_script(commands):
             if option_list:
                 option_list = u' '.join(option_list)
                 yield u"  local %s__%s='%s'\n" % (
-                    option_type, cmd, option_list)
+                    option_type, cmd.replace('-', '_'), option_list)
 
     yield u'  _beet_dispatch\n'
     yield u'}\n'
