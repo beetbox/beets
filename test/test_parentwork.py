@@ -37,12 +37,12 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_normal_case(self, command_output):
+    def test_normal_case(self):
         item = Item(path='/file',
                     work_id=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53')
         item.add(self.lib)
 
-        command_output.return_value = 'dbm'
+        #command_output.return_value = 'dbm'
         self.run_command('parentwork')
 
         item.load()
