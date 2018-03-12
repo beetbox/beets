@@ -13,29 +13,29 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-#"""Tests for the 'parentwork' plugin."""
-#
-#from __future__ import division, absolute_import, print_function
-#
-#from mock import patch
-#import unittest
-#from test.helper import TestHelper
-#
-#from beets.library import Item
-#from beetsplug import parentwork
-#
-#
-#@patch('beets.util.command_output')
-#class ParentWorkTest(unittest.TestCase, TestHelper):
-#    def setUp(self):
-#        """Set up configuration"""
-#        self.setup_beets()
-#        self.load_plugins('parentwork')
-#
-#    def tearDown(self):
-#        self.unload_plugins()
-#        self.teardown_beets()
-#
+"""Tests for the 'parentwork' plugin."""
+
+from __future__ import division, absolute_import, print_function
+
+from mock import patch
+import unittest
+from test.helper import TestHelper
+
+from beets.library import Item
+from beetsplug import parentwork
+
+
+@patch('beets.util.command_output')
+class ParentWorkTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        """Set up configuration"""
+        self.setup_beets()
+        self.load_plugins('parentwork')
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
+
 #    def test_normal_case(self, command_output):
 #        item = Item(path='/file',
 #                    work_id=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53')
@@ -83,10 +83,10 @@
 #                         parentwork.work_father(work_id)[0])
 #        self.assertEqual(u'45afb3b2-18ac-4187-bc72-beb1b1c194ba',
 #                         parentwork.work_parent(work_id)[0])
-#
-#
-#def suite():
-#    return unittest.TestLoader().loadTestsFromName(__name__)
-#
-#if __name__ == '__main__':
-#    unittest.main(defaultTest='suite')
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
