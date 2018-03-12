@@ -67,49 +67,50 @@ def find_parentwork(work_id):
 
 
 class ParentWorkPlugin(BeetsPlugin):
-
     def __init__(self):
         super(ParentWorkPlugin, self).__init__()
-        self.import_stages = [self.imported]
+
         self.config.add({
-            u'bin': u'parentwork',
-            u'auto': True,
-            u'force': False,
+            'auto': False,
+            'force': False,
         })
 
-        if self.config['auto'].get(bool):
+        self._command = ui.Subcommand(
+            'parentwork',
+            help=u'Fetches parent works, composers and dates')
+
+        self._command.parser.add_option(
+            u'-f', u'--force', dest='force',
+            action='store_true', default=None,
+            help=u'Re-fetches all parent works')
+
+        if self.config['auto']:
             self.import_stages = [self.imported]
 
     def commands(self):
-        cmd = ui.Subcommand('parentwork',
-                            help=u'fetches parent works, composers \
-                                and performers')
-        cmd.parser.add_option(
-            u'-f', u'--force', dest='force_refetch',
-            action='store_true', default=False,
-            help=u'always re-fetch works',
-        )
 
         def func(lib, opts, args):
+            self.config.set_args(opts)
+            force_parent = self.config['force'].get(bool)
+            write = ui.should_write()
+
             for item in lib.items(ui.decargs(args)):
-                self.find_work(
-                    item,
-                    opts.force_refetch or self.config['force'],
-                )
+                self.find_work(item, force_parent)
+                item.store()
+                if write:
+                    item.try_write()
 
-        cmd.func = func
-        return [cmd]
-
-    def command(self, lib, opts, args):
-        self.find_work(lib.items(ui.decargs(args)))
+        self._command.func = func
+        return [self._command]
 
     def imported(self, session, task):
-        """Import hook for fetching parentworks automatically.
+        """Import hook for fetching parent works automatically.
         """
-        if self.config['auto']:
-            for item in task.imported_items():
-                self.find_work(item,
-                               self.config['force'])
+        force_parent = self.config['force'].get(bool)
+
+        for item in task.imported_items():
+            self.find_work(item, force_parent)
+            item.store()
 
     def get_info(self, item, work_info, parent_composer, parent_composer_sort,
                  parent_work, parent_work_disambig, parent_work_id,
