@@ -23,6 +23,7 @@ from test.helper import TestHelper
 
 from beets.library import Item
 from beetsplug import parentwork
+from beets import util
 
 
 @patch('beets.util.command_output')
@@ -47,6 +48,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         item.load()
         self.assertEqual(item['parent_work_id'],
                          u'32c8943f-1b27-3a23-8660-4567f4847c94')
+        command_output.assert_called_with(
+            ['ParentWork', '-f', util.syspath(item.path)])
+
 #
 #    def test_force(self, command_output):
 #        self.config['parentwork']['force'] = True
