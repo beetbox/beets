@@ -79,6 +79,9 @@ Fixes:
   exception if non latin-1 characters where in the File name.
   It now checks if non latin-1 characters are in the filename and changes 
   them to ascii-characters in that case :bug:`2815`
+* Partially fix bash completion for subcommand names that contain hyphens.
+  :bug:`2836` :bug:`2837`
+  Thanks to :user:`jhermann`.
 
 For developers:
 
