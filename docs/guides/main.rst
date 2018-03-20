@@ -112,6 +112,15 @@ get it right:
 4. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
+The default Windows Command prompt does not support Colorama's ANSI color replacement
+and this makes beets output almost impossible to read. (Reference: `Issue #2607`_)
+To fix that you can apply this fix `ANSI Command Line Colors under Windows`_
+or you use an console emulator like `Cmder`_.
+
+.. _Issue #2607: https://github.com/beetbox/beets/issues/2607
+.. _ANSI Command Line Colors under Windows: http://softkube.com/blog/ansi-command-line-colors-under-windows
+.. _Cmder: http://cmder.net/
+
 Windows users may also want to install a context menu item for importing files
 into beets. Download the `beets.reg`_ file and open it in a text file to make
 sure the paths to Python match your system. Then double-click the file add the
