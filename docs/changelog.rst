@@ -82,6 +82,7 @@ Fixes:
 * Partially fix bash completion for subcommand names that contain hyphens.
   :bug:`2836` :bug:`2837`
   Thanks to :user:`jhermann`.
+* Really fix album replaygain calculation with gstreamer backend. :bug:`2846`
 
 For developers:
 
