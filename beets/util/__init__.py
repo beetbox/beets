@@ -855,7 +855,9 @@ def open_anything():
     if sys_name == 'Darwin':
         base_cmd = 'open'
     elif sys_name == 'Windows':
-        base_cmd = 'start'
+        # python is not aware of cmd commands
+        # Start cmd.exe with start as argument
+        base_cmd = 'cmd /c \"start {}\"'
     else:  # Assume Unix
         base_cmd = 'xdg-open'
     return base_cmd
@@ -894,10 +896,11 @@ def shlex_split(s):
 
 
 def interactive_open(targets, command):
-    """Open the files in `targets` by `exec`ing a new `command`, given
-    as a Unicode string. (The new program takes over, and Python
-    execution ends: this does not fork a subprocess.)
-
+    """On Unix like OS's open the files in `targets`
+    by `exec`ing a new `command` given as a Unicode string.
+    The new program takes over and Python execution ends.
+    This does not fork a subprocess.
+    On Windows each file in targets is invoked via `start file`.
     Can raise `OSError`.
     """
     assert command
@@ -907,6 +910,11 @@ def interactive_open(targets, command):
         args = shlex_split(command)
     except ValueError:  # Malformed shell tokens.
         args = [command]
+
+    if platform.system() == 'Windows':
+        for f in targets:
+            subprocess.call(' '.join(args).format(f))
+        return
 
     args.insert(0, args[0])  # for argv[0]
 

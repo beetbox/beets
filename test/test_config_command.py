@@ -3,6 +3,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import platform
 import yaml
 from mock import patch
 from tempfile import mkdtemp
@@ -97,23 +98,44 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
 
     def test_edit_config_with_editor_env(self):
         os.environ['EDITOR'] = 'myeditor'
-        with patch('os.execlp') as execlp:
+        if platform.system() == 'Windows':
+            func = 'subprocess.call'
+        else:
+            func = 'os.execlp'
+
+        with patch(func) as process:
             self.run_command('config', '-e')
-        execlp.assert_called_once_with(
-            'myeditor', 'myeditor', self.config_path)
+        if platform.system() == 'Windows':
+            process.assert_called_once_with('myeditor')
+        else:
+            process.assert_called_once_with(
+                'myeditor', 'myeditor', self.config_path)
 
     def test_edit_config_with_automatic_open(self):
         with patch('beets.util.open_anything') as open:
             open.return_value = 'please_open'
-            with patch('os.execlp') as execlp:
+            if platform.system() == 'Windows':
+                func = 'subprocess.call'
+            else:
+                func = 'os.execlp'
+
+            with patch(func) as process:
                 self.run_command('config', '-e')
-        execlp.assert_called_once_with(
-            'please_open', 'please_open', self.config_path)
+        if platform.system() == 'Windows':
+            process.assert_called_once_with('please_open')
+        else:
+            process.assert_called_once_with(
+                'please_open', 'please_open', self.config_path)
 
     def test_config_editor_not_found(self):
         with self.assertRaises(ui.UserError) as user_error:
-            with patch('os.execlp') as execlp:
-                execlp.side_effect = OSError('here is problem')
+            if platform.system() == 'Windows':
+                func = 'subprocess.call'
+            else:
+                func = 'os.execlp'
+
+            with patch(func) as process:
+                process.side_effect = OSError('here is problem')
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
                       six.text_type(user_error.exception))
@@ -126,10 +148,18 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         config._materialized = False
 
         os.environ['EDITOR'] = 'myeditor'
-        with patch('os.execlp') as execlp:
+        if platform.system() == 'Windows':
+            func = 'subprocess.call'
+        else:
+            func = 'os.execlp'
+
+        with patch(func) as process:
             self.run_command('config', '-e')
-        execlp.assert_called_once_with(
-            'myeditor', 'myeditor', self.config_path)
+        if platform.system() == 'Windows':
+            process.assert_called_once_with('myeditor')
+        else:
+            process.assert_called_once_with(
+                'myeditor', 'myeditor', self.config_path)
 
 
 def suite():

@@ -19,6 +19,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import re
 import os
+import platform
 import subprocess
 import unittest
 
@@ -32,7 +33,7 @@ import six
 class UtilTest(unittest.TestCase):
     def test_open_anything(self):
         with _common.system_mock('Windows'):
-            self.assertEqual(util.open_anything(), 'start')
+            self.assertEqual(util.open_anything(), 'cmd /c \"start {}\"')
 
         with _common.system_mock('Darwin'):
             self.assertEqual(util.open_anything(), 'open')
@@ -40,7 +41,12 @@ class UtilTest(unittest.TestCase):
         with _common.system_mock('Tagada'):
             self.assertEqual(util.open_anything(), 'xdg-open')
 
-    @patch('os.execlp')
+    if platform.system() == 'Windows':
+        process = 'subprocess.call'
+    else:
+        process = 'os.execlp'
+
+    @patch(process)
     @patch('beets.util.open_anything')
     def test_interactive_open(self, mock_open, mock_execlp):
         mock_open.return_value = u'tagada'
