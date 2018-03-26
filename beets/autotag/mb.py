@@ -304,6 +304,7 @@ def album_info(release):
                 int(track['position']),
                 len(medium['track-list']),
             )
+            ti.release_track_id = track['id']
             ti.disctitle = disctitle
             ti.media = format
             ti.track_alt = track['number']

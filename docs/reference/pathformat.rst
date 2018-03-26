@@ -239,6 +239,7 @@ Audio information:
 MusicBrainz and fingerprint information:
 
 * mb_trackid
+* mb_releasetrackid
 * mb_albumid
 * mb_artistid
 * mb_albumartistid
