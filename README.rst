@@ -85,6 +85,11 @@ You can install beets by typing ``pip install beets``. Then check out the
 
 .. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 
+Contributing
+---------
+
+Information for developers looking to contribute to beets can be found in the `wiki <https://github.com/beetbox/beets/wiki//>`_.
+
 Read More
 ---------
 
