@@ -1,3 +1,5 @@
+Beets
+=====
 .. image:: http://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
 
@@ -25,6 +27,9 @@ Here's an example of beets' brainy tag corrector doing its thing::
    * Beauty                 -> Beauty*2
    * White Light Generation -> Whitelightgenerator
    * All the Way            -> All the Way...
+
+Features
+---------
 
 Because beets is designed as a library, it can do almost anything you can
 imagine for your music collection. Via `plugins`_, beets becomes a panacea:
@@ -72,17 +77,21 @@ shockingly simple if you know a little Python.
 .. _MusicBrainz: http://musicbrainz.org/
 .. _Beatport: https://www.beatport.com
 
+Install
+---------
+
+You can install beets by typing ``pip install beets``. Then check out the
+`Getting Started`_ guide.
+
+.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+
 Read More
 ---------
 
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-You can install beets by typing ``pip install beets``. Then check out the
-`Getting Started`_ guide.
-
 .. _its Web site: http://beets.io/
-.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
 
 Authors
