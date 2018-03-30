@@ -89,6 +89,7 @@ Contribute
 Check out the `Hacking`_ page on the wiki for tips on how to help out.
 You might also be interested in the `For Developers`_ section in the docs.
 
+.. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
 .. _For Developers: http://docs.beets.io/page/dev/
 
 Read More
