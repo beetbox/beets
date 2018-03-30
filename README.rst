@@ -104,7 +104,7 @@ Authors
 -------
 
 Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
-please contact the `mailing list`_.
+please visit our `forum`_.
 
-.. _mailing list: https://groups.google.com/forum/#!forum/beets-users
+.. _forum: https://discourse.beets.io
 .. _Adrian Sampson: http://www.cs.cornell.edu/~asampson/
