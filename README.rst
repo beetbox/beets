@@ -8,6 +8,9 @@
     :target: https://travis-ci.org/beetbox/beets
 
 
+beets
+=====
+
 Beets is the media library management system for obsessive-compulsive music
 geeks.
 
@@ -72,17 +75,28 @@ shockingly simple if you know a little Python.
 .. _MusicBrainz: http://musicbrainz.org/
 .. _Beatport: https://www.beatport.com
 
+Install
+---------
+
+You can install beets by typing ``pip install beets``. Then check out the
+`Getting Started`_ guide.
+
+.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+
+Contributing
+---------
+
+Developers can consult the technical documentation in the `wiki <https://github.com/beetbox/beets/wiki//>`_.
+
+To learn how to contribute, read the `Hacking page <https://github.com/beetbox/beets/wiki/Hacking//>`_.
+
 Read More
 ---------
 
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-You can install beets by typing ``pip install beets``. Then check out the
-`Getting Started`_ guide.
-
 .. _its Web site: http://beets.io/
-.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
 
 Authors
