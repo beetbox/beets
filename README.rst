@@ -76,19 +76,20 @@ shockingly simple if you know a little Python.
 .. _Beatport: https://www.beatport.com
 
 Install
----------
+-------
 
 You can install beets by typing ``pip install beets``. Then check out the
 `Getting Started`_ guide.
 
 .. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 
-Contributing
----------
+Contribute
+----------
 
-Developers can consult the technical documentation in the `wiki <https://github.com/beetbox/beets/wiki//>`_.
+Check out the `Hacking`_ page on the wiki for tips on how to help out.
+You might also be interested in the `For Developers`_ section in the docs.
 
-To learn how to contribute, read the `Hacking page <https://github.com/beetbox/beets/wiki/Hacking//>`_.
+.. _For Developers: http://docs.beets.io/page/dev/
 
 Read More
 ---------
