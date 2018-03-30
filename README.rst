@@ -1,5 +1,3 @@
-Beets
-=====
 .. image:: http://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
 
@@ -9,6 +7,9 @@ Beets
 .. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
     :target: https://travis-ci.org/beetbox/beets
 
+
+beets
+=====
 
 Beets is the media library management system for obsessive-compulsive music
 geeks.
@@ -27,9 +28,6 @@ Here's an example of beets' brainy tag corrector doing its thing::
    * Beauty                 -> Beauty*2
    * White Light Generation -> Whitelightgenerator
    * All the Way            -> All the Way...
-
-Features
----------
 
 Because beets is designed as a library, it can do almost anything you can
 imagine for your music collection. Via `plugins`_, beets becomes a panacea:
@@ -88,7 +86,9 @@ You can install beets by typing ``pip install beets``. Then check out the
 Contributing
 ---------
 
-Information for developers looking to contribute to beets can be found in the `wiki <https://github.com/beetbox/beets/wiki//>`_.
+Developers can consult the technical documentation in the `wiki <https://github.com/beetbox/beets/wiki//>`_.
+
+To learn how to contribute, read the `Hacking page <https://github.com/beetbox/beets/wiki/Hacking//>`_.
 
 Read More
 ---------
