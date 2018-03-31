@@ -700,6 +700,7 @@ def split_into_lines(string, raw_string, width_tuple):
     result = { 'col': [], 'raw': [] }
     next_substr_raw = u''
     next_substr     = u''
+
     # Iterate over all words.
     for i in range(len(words_raw)):
         if i == 0:
@@ -708,8 +709,6 @@ def split_into_lines(string, raw_string, width_tuple):
         else:
             pot_substr_raw = ' '.join([next_substr_raw, words_raw[i]])
             pot_substr     = ' '.join([next_substr,     words[i]])
-
-        #print_('pot_substr_raw: {}'.format(pot_substr_raw))
 
         # Find out if the pot(ential)_substr fits into the next substring.
         fits_first = \
