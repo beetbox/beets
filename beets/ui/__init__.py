@@ -139,13 +139,13 @@ def print_(*strings, **kwargs):
 
 
 def indent(count):
-    """Indents string with spaces.
+    """Returns a string with `count` many spaces.
     """
     return u' ' * count
 
 
 def indent_str(count, string):
-    """Indents string with spaces.
+    """Returns `string`, indented with `count` many spaces.
     """
     return indent(count) + string
 
@@ -681,13 +681,16 @@ def term_width():
 
 
 def split_into_lines(string, raw_string, width_tuple):
-    """Splits string into substrings at whitespace. The first substring has a
-    length not longer than first_width, the last substring has a length not
-    longer than last_width, and all other substrings have a length not longer
-    than middle_width.
-    If raw_string is defined, raw_string and string contain the same words, but
-    string contains ANSI codes at word borders. Use raw_string to find
-    substrings, but return the words of string.
+    """Splits string into a list of substrings at whitespace.
+
+    `width_tuple` is a 3-tuple of `(first_width, last_width, middle_width)`.
+    The first substring has a length not longer than `first_width`, the last
+    substring has a length not longer than `last_width`, and all other
+    substrings have a length not longer than `middle_width`.
+
+    `raw_string` and `string` are two strings that contain the same words,
+    but `string` may contain ANSI codes at word borders. Use `raw_string`
+    to find substrings, but return the words in `string`.
     """
     first_width, middle_width, last_width = width_tuple
 
@@ -708,7 +711,7 @@ def split_into_lines(string, raw_string, width_tuple):
 
         #print_('pot_substr_raw: {}'.format(pot_substr_raw))
 
-        # Find out if pot(ential)_substr fits into next substring
+        # Find out if the pot(ential)_substr fits into the next substring.
         fits_first = \
             (len(result['raw']) == 0 and len(pot_substr_raw) <= first_width)
         fits_middle = \
