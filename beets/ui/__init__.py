@@ -724,26 +724,19 @@ def split_into_lines(string, raw_string, width_tuple):
             result['col'].append(next_substr)
             next_substr_raw = words_raw[i]
             next_substr     = words[i]
-    # Assure that last line fits.
-    if len(next_substr_raw) <= last_width:
-        result['raw'].append(next_substr_raw)
-        result['col'].append(next_substr)
-    else:
-        words_raw = next_substr_raw.split()
-        words     = next_substr.split()
-        assert len(words_raw) == len(words)
-        if len(words_raw) > 1:
-            last_substr_raw = words_raw.pop()
-            last_substr     = words.pop()
-            next_substr_raw = ' '.join(words_raw)
-            next_substr     = ' '.join(words)
-        else:
-            last_substr_raw = u''
-            last_substr     = u''
-        result['raw'].append(next_substr_raw)
-        result['col'].append(next_substr)
-        result['raw'].append(last_substr_raw)
-        result['col'].append(last_substr)
+
+    # We finished constructing the substrings, but the last substring
+    # has not yet been added to the result.
+    result['raw'].append(next_substr_raw)
+    result['col'].append(next_substr)
+
+    # Also, the length of the last substring was only checked against
+    # `middle_width`. Append an empty substring as the new last substring if
+    # the last substring is too long.
+    if not len(next_substr_raw) <= last_width:
+        result['raw'].append(u'')
+        result['col'].append(u'')
+
     return result
 
 
