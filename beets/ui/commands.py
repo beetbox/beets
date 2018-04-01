@@ -249,7 +249,7 @@ def show_change(cur_artist, cur_album, match):
         detail_indent = get_match_details_indentation()
 
         # Artist.
-        artist_l, artist_r = cur_artist or '', match.info.artist
+        artist_l, artist_r = cur_artist or u'', match.info.artist
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = u'', u''
