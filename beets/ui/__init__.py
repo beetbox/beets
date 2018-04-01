@@ -551,13 +551,17 @@ def color_len(colored_text):
     return len(uncolorize(colored_text))
 
 
-def _colordiff(a, b, highlight='text_highlight',
-               minor_highlight='text_highlight_minor'):
+def _colordiff(a, b):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
     stringified and highlighted in their entirety.
     """
+    # Set highlight colors.
+    highlight_added = 'text_diff_added'
+    highlight_removed = 'text_diff_removed'
+    minor_highlight = 'text_highlight_minor'
+
     if not isinstance(a, basestring) or not isinstance(b, basestring):
         # Non-strings: use ordinary equality.
         a = unicode(a)
@@ -565,7 +569,7 @@ def _colordiff(a, b, highlight='text_highlight',
         if a == b:
             return a, b
         else:
-            return colorize(highlight, a), colorize(highlight, b)
+            return colorize(highlight_removed, a), colorize(highlight_added, b)
 
     if isinstance(a, bytes) or isinstance(b, bytes):
         # A path field.
@@ -585,22 +589,22 @@ def _colordiff(a, b, highlight='text_highlight',
             # Right only.
             words = re.split('(\s)', b[b_start:b_end])
             mapper = lambda w: \
-                w if re.match('(\s)', w) else colorize('text_diff_added', w)
+                w if re.match('(\s)', w) else colorize(highlight_added, w)
             words_colorized = map(mapper, words)
             b_out.append(''.join(words_colorized))
         elif op == 'delete':
             # Left only.
             words = re.split('(\s)', a[a_start:a_end])
             mapper = lambda w: \
-                w if re.match('(\s)', w) else colorize('text_diff_removed', w)
+                w if re.match('(\s)', w) else colorize(highlight_removed, w)
             words_colorized = map(mapper, words)
             a_out.append(''.join(words_colorized))
         elif op == 'replace':
             # Right and left differ. Colorise with second highlight if
             # it's just a case change.
             if a[a_start:a_end].lower() != b[b_start:b_end].lower():
-                color_a = 'text_diff_removed'
-                color_b = 'text_diff_added'
+                color_a = highlight_removed
+                color_b = highlight_added
             else:
                 color_a = minor_highlight
                 color_b = minor_highlight
@@ -620,12 +624,12 @@ def _colordiff(a, b, highlight='text_highlight',
     return u''.join(a_out), u''.join(b_out)
 
 
-def colordiff(a, b, highlight='text_highlight'):
+def colordiff(a, b):
     """Colorize differences between two values if color is enabled.
     (Like _colordiff but conditional.)
     """
     if config['ui']['color']:
-        return _colordiff(a, b, highlight)
+        return _colordiff(a, b)
     else:
         return unicode(a), unicode(b)
 
