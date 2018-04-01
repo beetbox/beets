@@ -152,7 +152,7 @@ def disambig_string(info):
             disambig.append(info.albumdisambig)
 
     if disambig:
-        return u' | '.join(disambig)
+        return ui.colorize('text_highlight_minor', u' | '.join(disambig))
 
 
 def dist_colorize(string, dist):
@@ -226,7 +226,7 @@ def show_change(cur_artist, cur_album, match):
         # Disambiguation.
         disambig = disambig_string(match.info)
         if disambig:
-            print_(header_indent + ui.colorize('text_highlight_minor', disambig))
+            print_(header_indent + disambig)
 
         # Data URL.
         if match.info.data_url:
@@ -777,7 +777,7 @@ def show_item_change(item, match):
     # Disambiguation.
     disambig = disambig_string(match.info)
     if disambig:
-        info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
+        info.append('(%s)' % disambig)
     print_(' '.join(info))
 
 
@@ -947,7 +947,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 # Disambiguation
                 disambig = disambig_string(match.info)
                 if disambig:
-                    print_(ui.indent(13) +                         ui.colorize('text_highlight_minor', disambig))
+                    print_(ui.indent(13) + disambig)
 
             # Ask the user for a choice.
             if singleton:
