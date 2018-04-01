@@ -156,7 +156,8 @@ def disambig_string(info):
 
 
 def dist_colorize(string, dist):
-    """Formats a string as a colorized similarity string accoring to a distance.
+    """Formats a string as a colorized similarity string according to
+    a distance.
     """
     if dist <= config['match']['strong_rec_thresh'].as_number():
         string = ui.colorize('text_success', string)
@@ -409,7 +410,12 @@ def show_change(cur_artist, cur_album, match):
                 return (info, lhs, {})
 
         def calc_column_width(col_width, max_width_l, max_width_r):
-            """docstring for calc_column_width
+            """Calculate column widths for a two-column layout.
+            `col_width` is the naive width for each column (the total width
+                divided by 2).
+            `max_width_l` and `max_width_r` are the maximum width of the
+                content of each column.
+            Returns a 2-tuple of the left and right column width.
             """
             if (max_width_l <= col_width) and (max_width_r <= col_width):
                 col_width_l = max_width_l
