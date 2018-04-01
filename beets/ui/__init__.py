@@ -579,6 +579,10 @@ def _colordiff(a, b):
     a_out = []
     b_out = []
 
+    add_mapper    = lambda w: w if re.match('(\s)', w) else colorize(highlight_added, w)
+    remove_mapper = lambda w: w if re.match('(\s)', w) else colorize(highlight_removed, w)
+    minor_mapper  = lambda w: w if re.match('(\s)', w) else colorize(minor_highlight, w)
+
     matcher = SequenceMatcher(lambda x: False, a, b)
     for op, a_start, a_end, b_start, b_end in matcher.get_opcodes():
         if op == 'equal':
@@ -588,34 +592,24 @@ def _colordiff(a, b):
         elif op == 'insert':
             # Right only.
             words = re.split('(\s)', b[b_start:b_end])
-            mapper = lambda w: \
-                w if re.match('(\s)', w) else colorize(highlight_added, w)
-            words_colorized = map(mapper, words)
+            words_colorized = map(add_mapper, words)
             b_out.append(''.join(words_colorized))
         elif op == 'delete':
             # Left only.
             words = re.split('(\s)', a[a_start:a_end])
-            mapper = lambda w: \
-                w if re.match('(\s)', w) else colorize(highlight_removed, w)
-            words_colorized = map(mapper, words)
+            words_colorized = map(remove_mapper, words)
             a_out.append(''.join(words_colorized))
         elif op == 'replace':
             # Right and left differ. Colorise with second highlight if
             # it's just a case change.
-            if a[a_start:a_end].lower() != b[b_start:b_end].lower():
-                color_a = highlight_removed
-                color_b = highlight_added
-            else:
-                color_a = minor_highlight
-                color_b = minor_highlight
             words_a = re.split('(\s)', a[a_start:a_end])
             words_b = re.split('(\s)', b[b_start:b_end])
-            mapper_a = lambda w: \
-                w if re.match('(\s)', w) else colorize(color_a, w)
-            mapper_b = lambda w: \
-                w if re.match('(\s)', w) else colorize(color_b, w)
-            words_a_colorized = map(mapper_a, words_a)
-            words_b_colorized = map(mapper_b, words_b)
+            if a[a_start:a_end].lower() != b[b_start:b_end].lower():
+                words_a_colorized = map(remove_mapper, words_a)
+                words_b_colorized = map(add_mapper, words_b)
+            else:
+                words_a_colorized = map(minor_mapper, words_a)
+                words_b_colorized = map(minor_mapper, words_b)
             a_out.append(''.join(words_a_colorized))
             b_out.append(''.join(words_b_colorized))
         else:
