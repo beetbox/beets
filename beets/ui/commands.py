@@ -194,83 +194,104 @@ def penalty_string(distance, limit=None):
         return ui.colorize('changed', penalty_string)
 
 
-def show_change(cur_artist, cur_album, match):
-    """Print out a representation of the changes that will be made if an
-    album's tags are changed according to `match`, which must be an AlbumMatch
-    object.
+class ChangeRepresentation(object):
+    """Keeps track of all information needed to generate a (colored) text
+    representation of the changes that will be made if an album's tags are
+    changed according to `match`, which must be an AlbumMatch object.
     """
-    def show_match_header():
+
+    cur_artist = None
+    cur_album = None
+    match = None
+
+    indent_header = u''
+    indent_detail = u''
+
+    def __init__(self, cur_artist, cur_album, match):
+        self.cur_artist = cur_artist
+        self.cur_album  = cur_album
+        self.match      = match
+
+        # Read match header indentation width from config.
+        match_header_indent_width = \
+            config['ui']['import']['indentation']['match_header'].as_number()
+        self.indent_header = ui.indent(match_header_indent_width)
+
+        # Read match detail indentation width from config.
+        match_detail_indent_width = \
+            config['ui']['import']['indentation']['match_details'].as_number()
+        self.indent_detail = ui.indent(match_detail_indent_width)
+
+    def show_match_header(self):
         """Print out a 'header' identifying the suggested match (album name,
         artist name,...) and summarizing the changes that would be made should
         the user accept the match.
         """
-        # Read match header indentation width from config.
-        match_header_indent_width = \
-            config['ui']['import']['indentation']['match_header'].as_number()
-        header_indent = ui.indent(match_header_indent_width)
-
         # Print newline at beginning of change block.
         print_(u'')
 
         # 'Match' line and similarity.
-        print_(header_indent + u'Match (%s):' % dist_string(match.distance))
+        print_(self.indent_header + u'Match (%s):' % dist_string(self.match.distance))
 
         # Artist name and album title.
-        artist_album_str = u'{0.artist} - {0.album}'.format(match.info)
-        print_(header_indent + dist_colorize(artist_album_str, match.distance))
+        artist_album_str = u'{0.artist} - {0.album}'.format(self.match.info)
+        print_(self.indent_header + dist_colorize(artist_album_str, self.match.distance))
 
         # Penalties.
-        penalties = penalty_string(match.distance)
+        penalties = penalty_string(self.match.distance)
         if penalties:
-            print_(header_indent + penalties)
+            print_(self.indent_header + penalties)
 
         # Disambiguation.
-        disambig = disambig_string(match.info)
+        disambig = disambig_string(self.match.info)
         if disambig:
-            print_(header_indent + disambig)
+            print_(self.indent_header + disambig)
 
         # Data URL.
-        if match.info.data_url:
-            url = ui.colorize('text_highlight_minor', '%s' % match.info.data_url)
-            print_(header_indent + url)
+        if self.match.info.data_url:
+            url = ui.colorize('text_highlight_minor', '%s' % self.match.info.data_url)
+            print_(self.indent_header + url)
 
-    def get_match_details_indentation():
-        """Reads match detail indentation width from config.
-        """
-        match_detail_indent_width = \
-            config['ui']['import']['indentation']['match_details'].as_number()
-        return ui.indent(match_detail_indent_width)
-
-    def show_match_details():
+    def show_match_details(self):
         """Print out the details of the match, including changes in album name
         and artist name.
         """
-        # Read match detail indentation width from config.
-        detail_indent = get_match_details_indentation()
-
         # Artist.
-        artist_l, artist_r = cur_artist or u'', match.info.artist
+        artist_l, artist_r = self.cur_artist or u'', self.match.info.artist
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = u'', u''
         if artist_l != artist_r:
             artist_l, artist_r = ui.colordiff(artist_l, artist_r)
             # Prefix with U+2260: Not Equal To
-            print_(detail_indent + ui.colorize('changed', u'\u2260'),
+            print_(self.indent_detail + ui.colorize('changed', u'\u2260'),
                    u'Artist:', artist_l, u'->', artist_r)
         else:
-            print_(detail_indent + '*', 'Artist:', artist_r)
+            print_(self.indent_detail + '*', 'Artist:', artist_r)
 
         # Album
-        album_l, album_r = cur_album or '', match.info.album
-        if (cur_album != match.info.album \
-                and match.info.album != VARIOUS_ARTISTS):
+        album_l, album_r = self.cur_album or '', self.match.info.album
+        if (self.cur_album != self.match.info.album \
+                and self.match.info.album != VARIOUS_ARTISTS):
             album_l, album_r = ui.colordiff(album_l, album_r)
             # Prefix with U+2260: Not Equal To
-            print_(detail_indent + ui.colorize('changed', u'\u2260'),
+            print_(self.indent_detail + ui.colorize('changed', u'\u2260'),
                    u'Album:', album_l, u'->', album_r)
         else:
-            print_(detail_indent + '*', 'Album:', album_r)
+            print_(self.indent_detail + '*', 'Album:', album_r)
+
+
+def show_change(cur_artist, cur_album, match):
+    """Print out a representation of the changes that will be made if an
+    album's tags are changed according to `match`, which must be an AlbumMatch
+    object.
+    """
+    def get_match_details_indentation():
+        """Reads match detail indentation width from config.
+        """
+        match_detail_indent_width = \
+            config['ui']['import']['indentation']['match_details'].as_number()
+        return ui.indent(match_detail_indent_width)
 
     def show_match_tracks():
         """Print out the tracks of the match, summarizing changes the match
@@ -739,11 +760,13 @@ def show_change(cur_artist, cur_album, match):
                 line += ' (%s)' % ui.human_seconds_short(item.length)
             print_(ui.colorize('text_warning', line))
 
+    change = ChangeRepresentation(cur_artist=cur_artist, cur_album=cur_album, match=match)
+
     # Print the match header.
-    show_match_header()
+    change.show_match_header()
 
     # Print the match details.
-    show_match_details()
+    change.show_match_details()
 
     # Print the match tracks.
     show_match_tracks()
