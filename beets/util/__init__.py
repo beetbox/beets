@@ -422,6 +422,8 @@ def syspath(path, prefix=True):
 
 def samefile(p1, p2):
     """Safer equality for paths."""
+    if p1 == p2:
+        return True
     return shutil._samefile(syspath(p1), syspath(p2))
 
 

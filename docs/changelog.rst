@@ -83,6 +83,8 @@ Fixes:
   :bug:`2836` :bug:`2837`
   Thanks to :user:`jhermann`.
 * Really fix album replaygain calculation with gstreamer backend. :bug:`2846`
+* Avoid an error when doing a "no-op" move on non-existent files (i.e., moving
+  a file onto itself). :bug:`2863`
 
 For developers:
 
