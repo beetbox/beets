@@ -616,12 +616,13 @@ class AssignmentTest(unittest.TestCase):
 
 
 class ApplyTestUtil(object):
-    def _apply(self, info=None, per_disc_numbering=False):
+    def _apply(self, info=None, per_disc_numbering=False, artist_credit=False):
         info = info or self.info
         mapping = {}
         for i, t in zip(self.items, info.tracks):
             mapping[i] = t
         config['per_disc_numbering'] = per_disc_numbering
+        config['artist_credit'] = artist_credit
         autotag.apply_metadata(info, mapping)
 
 
@@ -705,6 +706,24 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self._apply(per_disc_numbering=True)
         self.assertEqual(self.items[0].tracktotal, 1)
         self.assertEqual(self.items[1].tracktotal, 1)
+
+    def test_artist_credit(self):
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[0].artist, 'trackArtistCredit')
+        self.assertEqual(self.items[1].artist, 'albumArtistCredit')
+        self.assertEqual(self.items[0].albumartist, 'albumArtistCredit')
+        self.assertEqual(self.items[1].albumartist, 'albumArtistCredit')
+
+    def test_artist_credit_prefers_artist_over_albumartist_credit(self):
+        self.info.tracks[0].artist = 'oldArtist'
+        self.info.tracks[0].artist_credit = None
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[0].artist, 'oldArtist')
+
+    def test_artist_credit_falls_back_to_albumartist(self):
+        self.info.artist_credit = None
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[1].artist, 'artistNew')
 
     def test_mb_trackid_applied(self):
         self._apply()
