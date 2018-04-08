@@ -63,12 +63,19 @@ def apply_metadata(album_info, mapping):
     mapping from Items to TrackInfo objects.
     """
     for item, track_info in mapping.items():
-        # Album, artist, track count.
-        if track_info.artist:
-            item.artist = track_info.artist
+        # Artist or artist credit.
+        if config['artist_credit']:
+            item.artist = (track_info.artist_credit or
+                           track_info.artist or
+                           album_info.artist_credit or
+                           album_info.artist)
+            item.albumartist = (album_info.artist_credit or
+                                album_info.artist)
         else:
-            item.artist = album_info.artist
-        item.albumartist = album_info.artist
+            item.artist = (track_info.artist or album_info.artist)
+            item.albumartist = album_info.artist
+
+        # Album.
         item.album = album_info.album
 
         # Artist sort and credit names.

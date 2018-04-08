@@ -56,6 +56,7 @@ per_disc_numbering: no
 verbose: 0
 terminal_encoding:
 original_date: no
+artist_credit: no
 id3v23: no
 va_name: "Various Artists"
 
