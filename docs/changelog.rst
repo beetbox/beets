@@ -18,12 +18,28 @@ New features:
 * :doc:`/plugins/web`: added the boolean ``cors_supports_credentials`` option to
   allow in-browser clients to login to the beet web server even when it is
   protected by an authorization mechanism.
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
 * Added parentwork plugin, to catch work titles and the works they are part
   of, as well as their composers. 
   Thanks to :user:`dosoe`. :bug:`2580`
   
 * Added work, work_id and work_diambig tags and fetching in beets core
   Thanks to :user:`dosoe`. :bug:`2580`
+=======
+* A new importer configuration ``artist_credit`` will tell beets to prefer the
+  artist credit over the artist when autotagging.
+  :bug:`1249`
+
+
 
 Fixes:
 
@@ -80,10 +96,16 @@ Fixes:
   album art would not work and throw an exception. It now works as expected.
   Additionally, the server will now return a 404 response when the album id
   is unknown, instead of a 500 response and a thrown exception. :bug:`2823`
-* :doc:`/plugins/web`: In a python 3 enviroment, the server would throw an 
+* :doc:`/plugins/web`: In a python 3 enviroment, the server would throw an
   exception if non latin-1 characters where in the File name.
-  It now checks if non latin-1 characters are in the filename and changes 
+  It now checks if non latin-1 characters are in the filename and changes
   them to ascii-characters in that case :bug:`2815`
+* Partially fix bash completion for subcommand names that contain hyphens.
+  :bug:`2836` :bug:`2837`
+  Thanks to :user:`jhermann`.
+* Really fix album replaygain calculation with gstreamer backend. :bug:`2846`
+* Avoid an error when doing a "no-op" move on non-existent files (i.e., moving
+  a file onto itself). :bug:`2863`
 
 For developers:
 

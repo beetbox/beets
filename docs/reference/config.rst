@@ -253,6 +253,15 @@ Either ``yes`` or ``no``, indicating whether matched albums should have their
 That is, if this option is turned on, then ``year`` will always equal
 ``original_year`` and so on. Default: ``no``.
 
+.. _artist_credit:
+
+artist_credit
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether matched tracks and albums should
+use the artist credit, rather than the artist. That is, if this option is turned
+on, then ``artist`` will contain the artist as credited on the release.
+
 .. _per_disc_numbering:
 
 per_disc_numbering
