@@ -18,16 +18,6 @@ New features:
 * :doc:`/plugins/web`: added the boolean ``cors_supports_credentials`` option to
   allow in-browser clients to login to the beet web server even when it is
   protected by an authorization mechanism.
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
 * Added parentwork plugin, to catch work titles and the works they are part
   of, as well as their composers. 
   Thanks to :user:`dosoe`. :bug:`2580`
