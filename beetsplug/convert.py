@@ -24,12 +24,15 @@ import tempfile
 import shlex
 import six
 from string import Template
+import platform
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from beets.util.confit import ConfigTypeError
 from beets import art
 from beets.util.artresizer import ArtResizer
+from beets.library import parse_query_string
+from beets.library import Item
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -91,6 +94,12 @@ def should_transcode(item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
+    no_convert_queries = config['convert']['no_convert'].as_str_seq()
+    if no_convert_queries:
+        for query_string in no_convert_queries:
+            query, _ = parse_query_string(query_string, Item)
+            if query.match(item):
+                return False
     if config['convert']['never_convert_lossy_files'] and \
             not (item.format.lower() in LOSSLESS_FORMATS):
         return False
@@ -132,11 +141,12 @@ class ConvertPlugin(BeetsPlugin):
             u'quiet': False,
             u'embed': True,
             u'paths': {},
+            u'no_convert': u'',
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
         })
-        self.import_stages = [self.auto_convert]
+        self.early_import_stages = [self.auto_convert]
 
         self.register_listener('import_task_files', self._cleanup)
 
@@ -183,12 +193,22 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
-        # Substitute $source and $dest in the argument list.
+        # On Python 3, we need to construct the command to invoke as a
+        # Unicode string. On Unix, this is a little unfortunate---the OS is
+        # expecting bytes---so we use surrogate escaping and decode with the
+        # argument encoding, which is the same encoding that will then be
+        # *reversed* to recover the same bytes before invoking the OS. On
+        # Windows, we want to preserve the Unicode filename "as is."
         if not six.PY2:
             command = command.decode(util.arg_encoding(), 'surrogateescape')
-            source = source.decode(util.arg_encoding(), 'surrogateescape')
-            dest = dest.decode(util.arg_encoding(), 'surrogateescape')
+            if platform.system() == 'Windows':
+                source = source.decode(util._fsencoding())
+                dest = dest.decode(util._fsencoding())
+            else:
+                source = source.decode(util.arg_encoding(), 'surrogateescape')
+                dest = dest.decode(util.arg_encoding(), 'surrogateescape')
 
+        # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
         encode_cmd = []
         for i, arg in enumerate(args):

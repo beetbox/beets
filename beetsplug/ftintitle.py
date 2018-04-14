@@ -49,29 +49,28 @@ def find_feat_part(artist, albumartist):
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
     """
-    feat_part = None
-
     # Look for the album artist in the artist field. If it's not
     # present, give up.
     albumartist_split = artist.split(albumartist, 1)
     if len(albumartist_split) <= 1:
-        return feat_part
+        return None
 
     # If the last element of the split (the right-hand side of the
     # album artist) is nonempty, then it probably contains the
     # featured artist.
-    elif albumartist_split[-1] != '':
+    elif albumartist_split[1] != '':
         # Extract the featured artist from the right-hand side.
-        _, feat_part = split_on_feat(albumartist_split[-1])
+        _, feat_part = split_on_feat(albumartist_split[1])
+        return feat_part
 
     # Otherwise, if there's nothing on the right-hand side, look for a
     # featuring artist on the left-hand side.
     else:
         lhs, rhs = split_on_feat(albumartist_split[0])
         if lhs:
-            feat_part = lhs
+            return lhs
 
-    return feat_part
+    return None
 
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
@@ -90,7 +89,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         self._command.parser.add_option(
             u'-d', u'--drop', dest='drop',
-            action='store_true', default=False,
+            action='store_true', default=None,
             help=u'drop featuring from artists and ignore title update')
 
         if self.config['auto']:

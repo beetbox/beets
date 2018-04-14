@@ -18,6 +18,7 @@
 
 from __future__ import division, absolute_import, print_function
 
+import errno
 import hashlib
 import json
 import os
@@ -132,8 +133,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     item=item, error=e
                 )
                 return None
-            with open(filename) as tmp_file:
-                analysis = json.loads(tmp_file.read())
+            with open(filename, 'rb') as tmp_file:
+                analysis = json.load(tmp_file)
             # Add the hash to the output.
             analysis['metadata']['version']['essentia_build_sha'] = \
                 self.extractor_sha
@@ -142,8 +143,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             try:
                 os.remove(filename)
             except OSError as e:
-                # errno 2 means file does not exist, just ignore this error.
-                if e.errno != 2:
+                # ENOENT means file does not exist, just ignore this error.
+                if e.errno != errno.ENOENT:
                     raise
 
     def _submit_data(self, item, data):

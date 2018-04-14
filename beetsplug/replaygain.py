@@ -20,12 +20,13 @@ import os
 import collections
 import sys
 import warnings
-import re
+import xml.parsers.expat
 from six.moves import zip
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import syspath, command_output, displayable_path, py3_path
+from beets.util import (syspath, command_output, bytestring_path,
+                        displayable_path, py3_path)
 
 
 # Utilities.
@@ -194,12 +195,13 @@ class Bs1770gainBackend(Backend):
         # Construct shell command.
         cmd = [self.command]
         cmd += [self.method]
-        cmd += ['-p']
+        cmd += ['--xml', '-p']
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
         # prevents the backend from working with long paths.
         args = cmd + [syspath(i.path, prefix=False) for i in items]
+        path_list = [i.path for i in items]
 
         # Invoke the command.
         self._log.debug(
@@ -208,40 +210,65 @@ class Bs1770gainBackend(Backend):
         output = call(args)
 
         self._log.debug(u'analysis finished: {0}', output)
-        results = self.parse_tool_output(output,
-                                         len(items) + is_album)
+        results = self.parse_tool_output(output, path_list, is_album)
         self._log.debug(u'{0} items, {1} results', len(items), len(results))
         return results
 
-    def parse_tool_output(self, text, num_lines):
+    def parse_tool_output(self, text, path_list, is_album):
         """Given the  output from bs1770gain, parse the text and
         return a list of dictionaries
         containing information about each analyzed file.
         """
-        out = []
-        data = text.decode('utf-8', errors='ignore')
-        regex = re.compile(
-            u'(\\s{2,2}\\[\\d+\\/\\d+\\].*?|\\[ALBUM\\].*?)'
-            '(?=\\s{2,2}\\[\\d+\\/\\d+\\]|\\s{2,2}\\[ALBUM\\]'
-            ':|done\\.\\s)', re.DOTALL | re.UNICODE)
-        results = re.findall(regex, data)
-        for parts in results[0:num_lines]:
-            part = parts.split(u'\n')
-            if len(part) == 0:
-                self._log.debug(u'bad tool output: {0!r}', text)
-                raise ReplayGainError(u'bs1770gain failed')
+        per_file_gain = {}
+        album_gain = {}  # mutable variable so it can be set from handlers
+        parser = xml.parsers.expat.ParserCreate(encoding='utf-8')
+        state = {'file': None, 'gain': None, 'peak': None}
 
-            try:
-                song = {
-                    'file': part[0],
-                    'gain': float((part[1].split('/'))[1].split('LU')[0]),
-                    'peak': float(part[2].split('/')[1]),
-                }
-            except IndexError:
-                self._log.info(u'bs1770gain reports (faulty file?): {}', parts)
-                continue
+        def start_element_handler(name, attrs):
+            if name == u'track':
+                state['file'] = bytestring_path(attrs[u'file'])
+                if state['file'] in per_file_gain:
+                    raise ReplayGainError(
+                        u'duplicate filename in bs1770gain output')
+            elif name == u'integrated':
+                state['gain'] = float(attrs[u'lu'])
+            elif name == u'sample-peak':
+                state['peak'] = float(attrs[u'factor'])
 
-            out.append(Gain(song['gain'], song['peak']))
+        def end_element_handler(name):
+            if name == u'track':
+                if state['gain'] is None or state['peak'] is None:
+                    raise ReplayGainError(u'could not parse gain or peak from '
+                                          'the output of bs1770gain')
+                per_file_gain[state['file']] = Gain(state['gain'],
+                                                    state['peak'])
+                state['gain'] = state['peak'] = None
+            elif name == u'summary':
+                if state['gain'] is None or state['peak'] is None:
+                    raise ReplayGainError(u'could not parse gain or peak from '
+                                          'the output of bs1770gain')
+                album_gain["album"] = Gain(state['gain'], state['peak'])
+                state['gain'] = state['peak'] = None
+        parser.StartElementHandler = start_element_handler
+        parser.EndElementHandler = end_element_handler
+        parser.Parse(text, True)
+
+        if len(per_file_gain) != len(path_list):
+            raise ReplayGainError(
+                u'the number of results returned by bs1770gain does not match '
+                'the number of files passed to it')
+
+        # bs1770gain does not return the analysis results in the order that
+        # files are passed on the command line, because it is sorting the files
+        # internally. We must recover the order from the filenames themselves.
+        try:
+            out = [per_file_gain[os.path.basename(p)] for p in path_list]
+        except KeyError:
+            raise ReplayGainError(
+                u'unrecognized filename in bs1770gain output '
+                '(bs1770gain can only deal with utf-8 file names)')
+        if is_album:
+            out.append(album_gain["album"])
         return out
 
 
@@ -586,6 +613,16 @@ class GStreamerBackend(Backend):
 
         self._file = self._files.pop(0)
 
+        # Ensure the filesrc element received the paused state of the
+        # pipeline in a blocking manner
+        self._src.sync_state_with_parent()
+        self._src.get_state(self.Gst.CLOCK_TIME_NONE)
+
+        # Ensure the decodebin element receives the paused state of the
+        # pipeline in a blocking manner
+        self._decbin.sync_state_with_parent()
+        self._decbin.get_state(self.Gst.CLOCK_TIME_NONE)
+
         # Disconnect the decodebin element from the pipeline, set its
         # state to READY to to clear it.
         self._decbin.unlink(self._conv)
@@ -596,15 +633,8 @@ class GStreamerBackend(Backend):
         self._src.set_state(self.Gst.State.READY)
         self._src.set_property("location", py3_path(syspath(self._file.path)))
 
-        # Ensure the filesrc element received the paused state of the
-        # pipeline in a blocking manner
-        self._src.sync_state_with_parent()
-        self._src.get_state(self.Gst.CLOCK_TIME_NONE)
-
-        # Ensure the decodebin element receives the paused state of the
-        # pipeline in a blocking manner
-        self._decbin.sync_state_with_parent()
-        self._decbin.get_state(self.Gst.CLOCK_TIME_NONE)
+        self._decbin.link(self._conv)
+        self._pipe.set_state(self.Gst.State.READY)
 
         return True
 
@@ -805,6 +835,7 @@ class ReplayGainPlugin(BeetsPlugin):
             'auto': True,
             'backend': u'command',
             'targetlevel': 89,
+            'r128': ['Opus'],
         })
 
         self.overwrite = self.config['overwrite'].get(bool)
@@ -822,6 +853,9 @@ class ReplayGainPlugin(BeetsPlugin):
         if self.config['auto']:
             self.import_stages = [self.imported]
 
+        # Formats to use R128.
+        self.r128_whitelist = self.config['r128'].as_str_seq()
+
         try:
             self.backend_instance = self.backends[backend_name](
                 self.config, self._log
@@ -830,9 +864,19 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(
                 u'replaygain initialization failed: {0}'.format(e))
 
+        self.r128_backend_instance = ''
+
+    def should_use_r128(self, item):
+        """Checks the plugin setting to decide whether the calculation
+        should be done using the EBU R128 standard and use R128_ tags instead.
+        """
+        return item.format in self.r128_whitelist
+
     def track_requires_gain(self, item):
         return self.overwrite or \
-            (not item.rg_track_gain or not item.rg_track_peak)
+            (self.should_use_r128(item) and not item.r128_track_gain) or \
+            (not self.should_use_r128(item) and
+                (not item.rg_track_gain or not item.rg_track_peak))
 
     def album_requires_gain(self, album):
         # Skip calculating gain only when *all* files don't need
@@ -840,8 +884,12 @@ class ReplayGainPlugin(BeetsPlugin):
         # needs recalculation, we still get an accurate album gain
         # value.
         return self.overwrite or \
-            any([not item.rg_album_gain or not item.rg_album_peak
-                 for item in album.items()])
+            any([self.should_use_r128(item) and
+                (not item.r128_track_gain or not item.r128_album_gain)
+                for item in album.items()]) or \
+            any([not self.should_use_r128(item) and
+                (not item.rg_album_gain or not item.rg_album_peak)
+                for item in album.items()])
 
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
@@ -851,6 +899,12 @@ class ReplayGainPlugin(BeetsPlugin):
         self._log.debug(u'applied track gain {0}, peak {1}',
                         item.rg_track_gain, item.rg_track_peak)
 
+    def store_track_r128_gain(self, item, track_gain):
+        item.r128_track_gain = int(round(track_gain.gain * pow(2, 8)))
+        item.store()
+
+        self._log.debug(u'applied track gain {0}', item.r128_track_gain)
+
     def store_album_gain(self, album, album_gain):
         album.rg_album_gain = album_gain.gain
         album.rg_album_peak = album_gain.peak
@@ -859,7 +913,13 @@ class ReplayGainPlugin(BeetsPlugin):
         self._log.debug(u'applied album gain {0}, peak {1}',
                         album.rg_album_gain, album.rg_album_peak)
 
-    def handle_album(self, album, write):
+    def store_album_r128_gain(self, album, album_gain):
+        album.r128_album_gain = int(round(album_gain.gain * pow(2, 8)))
+        album.store()
+
+        self._log.debug(u'applied album gain {0}', album.r128_album_gain)
+
+    def handle_album(self, album, write, force=False):
         """Compute album and track replay gain store it in all of the
         album's items.
 
@@ -867,23 +927,41 @@ class ReplayGainPlugin(BeetsPlugin):
         item. If replay gain information is already present in all
         items, nothing is done.
         """
-        if not self.album_requires_gain(album):
+        if not force and not self.album_requires_gain(album):
             self._log.info(u'Skipping album {0}', album)
             return
 
         self._log.info(u'analyzing {0}', album)
 
+        if (any([self.should_use_r128(item) for item in album.items()]) and not
+                all(([self.should_use_r128(item) for item in album.items()]))):
+                raise ReplayGainError(
+                    u"Mix of ReplayGain and EBU R128 detected"
+                    u" for some tracks in album {0}".format(album)
+                )
+
+        if any([self.should_use_r128(item) for item in album.items()]):
+            if self.r128_backend_instance == '':
+                self.init_r128_backend()
+            backend_instance = self.r128_backend_instance
+            store_track_gain = self.store_track_r128_gain
+            store_album_gain = self.store_album_r128_gain
+        else:
+            backend_instance = self.backend_instance
+            store_track_gain = self.store_track_gain
+            store_album_gain = self.store_album_gain
+
         try:
-            album_gain = self.backend_instance.compute_album_gain(album)
+            album_gain = backend_instance.compute_album_gain(album)
             if len(album_gain.track_gains) != len(album.items()):
                 raise ReplayGainError(
                     u"ReplayGain backend failed "
                     u"for some tracks in album {0}".format(album)
                 )
 
-            self.store_album_gain(album, album_gain.album_gain)
+            store_album_gain(album, album_gain.album_gain)
             for item, track_gain in zip(album.items(), album_gain.track_gains):
-                self.store_track_gain(item, track_gain)
+                store_track_gain(item, track_gain)
                 if write:
                     item.try_write()
         except ReplayGainError as e:
@@ -892,27 +970,36 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e))
 
-    def handle_track(self, item, write):
+    def handle_track(self, item, write, force=False):
         """Compute track replay gain and store it in the item.
 
         If ``write`` is truthy then ``item.write()`` is called to write
         the data to disk.  If replay gain information is already present
         in the item, nothing is done.
         """
-        if not self.track_requires_gain(item):
+        if not force and not self.track_requires_gain(item):
             self._log.info(u'Skipping track {0}', item)
             return
 
         self._log.info(u'analyzing {0}', item)
 
+        if self.should_use_r128(item):
+            if self.r128_backend_instance == '':
+                self.init_r128_backend()
+            backend_instance = self.r128_backend_instance
+            store_track_gain = self.store_track_r128_gain
+        else:
+            backend_instance = self.backend_instance
+            store_track_gain = self.store_track_gain
+
         try:
-            track_gains = self.backend_instance.compute_track_gain([item])
+            track_gains = backend_instance.compute_track_gain([item])
             if len(track_gains) != 1:
                 raise ReplayGainError(
                     u"ReplayGain backend failed for track {0}".format(item)
                 )
 
-            self.store_track_gain(item, track_gains[0])
+            store_track_gain(item, track_gains[0])
             if write:
                 item.try_write()
         except ReplayGainError as e:
@@ -920,6 +1007,19 @@ class ReplayGainPlugin(BeetsPlugin):
         except FatalReplayGainError as e:
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e))
+
+    def init_r128_backend(self):
+        backend_name = 'bs1770gain'
+
+        try:
+            self.r128_backend_instance = self.backends[backend_name](
+                self.config, self._log
+            )
+        except (ReplayGainError, FatalReplayGainError) as e:
+            raise ui.UserError(
+                u'replaygain initialization failed: {0}'.format(e))
+
+        self.r128_backend_instance.method = '--ebu'
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
@@ -933,17 +1033,28 @@ class ReplayGainPlugin(BeetsPlugin):
         """Return the "replaygain" ui subcommand.
         """
         def func(lib, opts, args):
-            write = ui.should_write()
+            write = ui.should_write(opts.write)
+            force = opts.force
 
             if opts.album:
                 for album in lib.albums(ui.decargs(args)):
-                    self.handle_album(album, write)
+                    self.handle_album(album, write, force)
 
             else:
                 for item in lib.items(ui.decargs(args)):
-                    self.handle_track(item, write)
+                    self.handle_track(item, write, force)
 
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
+        cmd.parser.add_option(
+            "-f", "--force", dest="force", action="store_true", default=False,
+            help=u"analyze all files, including those that "
+            "already have ReplayGain metadata")
+        cmd.parser.add_option(
+            "-w", "--write", default=None, action="store_true",
+            help=u"write new metadata to files' tags")
+        cmd.parser.add_option(
+            "-W", "--nowrite", dest="write", action="store_false",
+            help=u"don't write metadata (opposite of -w)")
         cmd.func = func
         return [cmd]

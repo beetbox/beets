@@ -174,6 +174,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         genre tree.
         """
         depth_tag_pairs = [(self._get_depth(t), t) for t in tags]
+        depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
         depth_tag_pairs.sort(reverse=True)
         return [p[1] for p in depth_tag_pairs]
 

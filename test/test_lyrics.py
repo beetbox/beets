@@ -15,21 +15,25 @@
 
 """Tests for the 'lyrics' plugin."""
 
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
 import os
-import sys
 import re
+import six
+import sys
 import unittest
 
+from mock import patch
 from test import _common
-from mock import MagicMock
+
+from beets import logging
+from beets.library import Item
+from beets.util import bytestring_path, confit
 
 from beetsplug import lyrics
-from beets.library import Item
-from beets.util import confit, bytestring_path
-from beets import logging
-import six
+
+from mock import MagicMock
+
 
 log = logging.getLogger('beets.test_lyrics')
 raw_backend = lyrics.Backend({}, log)
@@ -37,8 +41,9 @@ google = lyrics.Google(MagicMock(), log)
 
 
 class LyricsPluginTest(unittest.TestCase):
+
     def setUp(self):
-        """Set up configuration"""
+        """Set up configuration."""
         lyrics.LyricsPlugin()
 
     def test_search_artist(self):
@@ -194,16 +199,8 @@ def url_to_filename(url):
     return fn
 
 
-def check_lyrics_fetched():
-    """Return True if lyrics_download_samples.py has been runned and lyrics
-    pages are present in resources directory"""
-    lyrics_dirs = len([d for d in os.listdir(LYRICS_ROOT_DIR) if
-                      os.path.isdir(os.path.join(LYRICS_ROOT_DIR, d))])
-    # example.com is the only lyrics dir added to repo
-    return lyrics_dirs > 1
-
-
 class MockFetchUrl(object):
+
     def __init__(self, pathval='fetched_path'):
         self.pathval = pathval
         self.fetched = None
@@ -217,174 +214,172 @@ class MockFetchUrl(object):
 
 
 def is_lyrics_content_ok(title, text):
-    """Compare lyrics text to expected lyrics for given title"""
-
-    keywords = LYRICS_TEXTS[google.slugify(title)]
-    return all(x in text.lower() for x in keywords)
+    """Compare lyrics text to expected lyrics for given title."""
+    if not text:
+        return
+    keywords = set(LYRICS_TEXTS[google.slugify(title)].split())
+    words = set(x.strip(".?, ") for x in text.lower().split())
+    return keywords <= words
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b'lyrics')
 LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, b'lyricstext.yaml'))
-DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
-
-DEFAULT_SOURCES = [
-    dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
-         path=u'The_Beatles:Lady_Madonna'),
-    dict(artist=u'Santana', title=u'Black magic woman',
-         url='http://www.lyrics.com/',
-         path=u'black-magic-woman-lyrics-santana.html'),
-    dict(DEFAULT_SONG, url='https://www.musixmatch.com/',
-         path=u'lyrics/The-Beatles/Lady-Madonna'),
-]
-
-# Every source entered in default beets google custom search engine
-# must be listed below.
-# Use default query when possible, or override artist and title fields
-# if website don't have lyrics for default query.
-GOOGLE_SOURCES = [
-    dict(DEFAULT_SONG,
-         url=u'http://www.absolutelyrics.com',
-         path=u'/lyrics/view/the_beatles/lady_madonna'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.azlyrics.com',
-         path=u'/lyrics/beatles/ladymadonna.html'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.chartlyrics.com',
-         path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.elyricsworld.com',
-         path=u'/lady_madonna_lyrics_beatles.html'),
-    dict(url=u'http://www.lacoccinelle.net',
-         artist=u'Jacques Brel', title=u"Amsterdam",
-         path=u'/paroles-officielles/275679.html'),
-    dict(DEFAULT_SONG,
-         url=u'http://letras.mus.br/', path=u'the-beatles/275/'),
-    dict(DEFAULT_SONG,
-         url='http://www.lyricsmania.com/',
-         path='lady_madonna_lyrics_the_beatles.html'),
-    dict(artist=u'Santana', title=u'Black magic woman',
-         url='http://www.lyrics.com/',
-         path=u'black-magic-woman-lyrics-santana.html'),
-    dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
-         path=u'The_Beatles:Lady_Madonna'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.lyrics.net', path=u'/lyric/19110224'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.lyricsmode.com',
-         path=u'/lyrics/b/beatles/lady_madonna.html'),
-    dict(url=u'http://www.lyricsontop.com',
-         artist=u'Amy Winehouse', title=u"Jazz'n'blues",
-         path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
-    dict(DEFAULT_SONG,
-         url='http://www.metrolyrics.com/',
-         path='lady-madonna-lyrics-beatles.html'),
-    dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
-         artist=u'Santana', title=u'Black magic woman'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.onelyrics.net/',
-         artist=u'Ben & Ellen Harper', title=u'City of dreams',
-         path='ben-ellen-harper-city-of-dreams-lyrics'),
-    dict(url=u'http://www.paroles.net/',
-         artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
-         path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
-    dict(DEFAULT_SONG,
-         url='http://www.releaselyrics.com',
-         path=u'/346e/the-beatles-lady-madonna-(love-version)/'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.smartlyrics.com',
-         path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
-    dict(DEFAULT_SONG,
-         url='http://www.songlyrics.com',
-         path=u'/the-beatles/lady-madonna-lyrics'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.stlyrics.com',
-         path=u'/songs/r/richiehavens48961/ladymadonna2069109.html'),
-    dict(DEFAULT_SONG,
-         url=u'http://www.sweetslyrics.com',
-         path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html')
-]
 
 
-class LyricsGooglePluginTest(unittest.TestCase):
-    """Test scraping heuristics on a fake html page.
-    Or run lyrics_download_samples.py first to check that beets google
-    custom search engine sources are correctly scraped.
-    """
-    source = dict(url=u'http://www.example.com', artist=u'John Doe',
-                  title=u'Beets song', path=u'/lyrics/beetssong')
+class LyricsGoogleBaseTest(unittest.TestCase):
 
     def setUp(self):
-        """Set up configuration"""
+        """Set up configuration."""
         try:
             __import__('bs4')
         except ImportError:
             self.skipTest('Beautiful Soup 4 not available')
         if sys.version_info[:3] < (2, 7, 3):
             self.skipTest("Python's built-in HTML parser is not good enough")
-        lyrics.LyricsPlugin()
-        raw_backend.fetch_url = MockFetchUrl()
 
+
+class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
+    """Check that beets google custom search engine sources are correctly
+       scraped.
+    """
+
+    DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
+
+    DEFAULT_SOURCES = [
+        dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
+        dict(artist=u'Santana', title=u'Black magic woman',
+             backend=lyrics.MusiXmatch),
+        dict(DEFAULT_SONG, backend=lyrics.Genius),
+    ]
+
+    GOOGLE_SOURCES = [
+        dict(DEFAULT_SONG,
+             url=u'http://www.absolutelyrics.com',
+             path=u'/lyrics/view/the_beatles/lady_madonna'),
+        dict(DEFAULT_SONG,
+             url=u'http://www.azlyrics.com',
+             path=u'/lyrics/beatles/ladymadonna.html'),
+        dict(DEFAULT_SONG,
+             url=u'http://www.chartlyrics.com',
+             path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
+        dict(DEFAULT_SONG,
+             url=u'http://www.elyricsworld.com',
+             path=u'/lady_madonna_lyrics_beatles.html'),
+        dict(url=u'http://www.lacoccinelle.net',
+             artist=u'Jacques Brel', title=u"Amsterdam",
+             path=u'/paroles-officielles/275679.html'),
+        dict(DEFAULT_SONG,
+             url=u'http://letras.mus.br/', path=u'the-beatles/275/'),
+        dict(DEFAULT_SONG,
+             url='http://www.lyricsmania.com/',
+             path='lady_madonna_lyrics_the_beatles.html'),
+        dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
+             path=u'The_Beatles:Lady_Madonna'),
+        dict(DEFAULT_SONG,
+             url=u'http://www.lyricsmode.com',
+             path=u'/lyrics/b/beatles/lady_madonna.html'),
+        dict(url=u'http://www.lyricsontop.com',
+             artist=u'Amy Winehouse', title=u"Jazz'n'blues",
+             path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
+        dict(DEFAULT_SONG,
+             url='http://www.metrolyrics.com/',
+             path='lady-madonna-lyrics-beatles.html'),
+        dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
+             artist=u'Santana', title=u'Black magic woman'),
+        dict(url=u'http://www.paroles.net/',
+             artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
+             path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
+        dict(DEFAULT_SONG,
+             url='http://www.songlyrics.com',
+             path=u'/the-beatles/lady-madonna-lyrics'),
+        dict(DEFAULT_SONG,
+             url=u'http://www.sweetslyrics.com',
+             path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html')
+    ]
+
+    def setUp(self):
+        LyricsGoogleBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+
+    @unittest.skipUnless(os.environ.get(
+        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
+        'lyrics sources testing not enabled')
+    def test_backend_sources_ok(self):
+        """Test default backends with songs known to exist in respective databases.
+        """
+        errors = []
+        for s in self.DEFAULT_SOURCES:
+            res = s['backend'](self.plugin.config, self.plugin._log).fetch(
+                s['artist'], s['title'])
+            if not is_lyrics_content_ok(s['title'], res):
+                errors.append(s['backend'].__name__)
+        self.assertFalse(errors)
+
+    @unittest.skipUnless(os.environ.get(
+        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
+        'lyrics sources testing not enabled')
+    def test_google_sources_ok(self):
+        """Test if lyrics present on websites registered in beets google custom
+           search engine are correctly scraped.
+        """
+        for s in self.GOOGLE_SOURCES:
+            url = s['url'] + s['path']
+            res = lyrics.scrape_lyrics_from_html(
+                raw_backend.fetch_url(url))
+            self.assertTrue(google.is_lyrics(res), url)
+            self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
+
+
+class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
+    """Test scraping heuristics on a fake html page.
+    """
+
+    source = dict(url=u'http://www.example.com', artist=u'John Doe',
+                  title=u'Beets song', path=u'/lyrics/beetssong')
+
+    def setUp(self):
+        """Set up configuration"""
+        LyricsGoogleBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+
+    @patch.object(lyrics.Backend, 'fetch_url', MockFetchUrl())
     def test_mocked_source_ok(self):
         """Test that lyrics of the mocked page are correctly scraped"""
         url = self.source['url'] + self.source['path']
-        if os.path.isfile(url_to_filename(url)):
-            res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
-            self.assertTrue(google.is_lyrics(res), url)
-            self.assertTrue(is_lyrics_content_ok(self.source['title'], res),
-                            url)
+        res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
+        self.assertTrue(google.is_lyrics(res), url)
+        self.assertTrue(is_lyrics_content_ok(self.source['title'], res),
+                        url)
 
-    def test_google_sources_ok(self):
-        """Test if lyrics present on websites registered in beets google custom
-        search engine are correctly scraped."""
-        if not check_lyrics_fetched():
-            self.skipTest("Run lyrics_download_samples.py script first.")
-        for s in GOOGLE_SOURCES:
-            url = s['url'] + s['path']
-            if os.path.isfile(url_to_filename(url)):
-                res = lyrics.scrape_lyrics_from_html(
-                    raw_backend.fetch_url(url))
-                self.assertTrue(google.is_lyrics(res), url)
-                self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
-
-    def test_default_ok(self):
-        """Test default engines with the default query"""
-        if not check_lyrics_fetched():
-            self.skipTest("Run lyrics_download_samples.py script first.")
-        for (source, s) in zip([lyrics.LyricsWiki,
-                                lyrics.LyricsCom,
-                                lyrics.MusiXmatch], DEFAULT_SOURCES):
-            url = s['url'] + s['path']
-            if os.path.isfile(url_to_filename(url)):
-                res = source({}, log).fetch(s['artist'], s['title'])
-                self.assertTrue(google.is_lyrics(res), url)
-                self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
-
+    @patch.object(lyrics.Backend, 'fetch_url', MockFetchUrl())
     def test_is_page_candidate_exact_match(self):
         """Test matching html page title with song infos -- when song infos are
-        present in the title."""
+           present in the title.
+        """
         from bs4 import SoupStrainer, BeautifulSoup
         s = self.source
         url = six.text_type(s['url'] + s['path'])
         html = raw_backend.fetch_url(url)
         soup = BeautifulSoup(html, "html.parser",
                              parse_only=SoupStrainer('title'))
-        self.assertEqual(google.is_page_candidate(url, soup.title.string,
-                                                  s['title'], s['artist']),
-                         True, url)
+        self.assertEqual(
+            google.is_page_candidate(url, soup.title.string,
+                                     s['title'], s['artist']), True, url)
 
     def test_is_page_candidate_fuzzy_match(self):
         """Test matching html page title with song infos -- when song infos are
-        not present in the title."""
+           not present in the title.
+        """
         s = self.source
         url = s['url'] + s['path']
         url_title = u'example.com | Beats song by John doe'
 
         # very small diffs (typo) are ok eg 'beats' vs 'beets' with same artist
         self.assertEqual(google.is_page_candidate(url, url_title, s['title'],
-                         s['artist']), True, url)
+                                                  s['artist']), True, url)
         # reject different title
         url_title = u'example.com | seets bong lyrics by John doe'
         self.assertEqual(google.is_page_candidate(url, url_title, s['title'],
-                         s['artist']), False, url)
+                                                  s['artist']), False, url)
 
     def test_is_page_candidate_special_chars(self):
         """Ensure that `is_page_candidate` doesn't crash when the artist
@@ -396,6 +391,26 @@ class LyricsGooglePluginTest(unittest.TestCase):
         url_title = u'foo'
 
         google.is_page_candidate(url, url_title, s['title'], u'Sunn O)))')
+
+
+class SlugTests(unittest.TestCase):
+
+    def test_slug(self):
+        # plain ascii passthrough
+        text = u"test"
+        self.assertEqual(lyrics.slug(text), 'test')
+        # german unicode and capitals
+        text = u"Mørdag"
+        self.assertEqual(lyrics.slug(text), 'mordag')
+        # more accents and quotes
+        text = u"l'été c'est fait pour jouer"
+        self.assertEqual(lyrics.slug(text), 'l-ete-c-est-fait-pour-jouer')
+        # accents, parens and spaces
+        text = u"\xe7afe au lait (boisson)"
+        self.assertEqual(lyrics.slug(text), 'cafe-au-lait-boisson')
+        text = u"Multiple  spaces -- and symbols! -- merged"
+        self.assertEqual(lyrics.slug(text),
+                         'multiple-spaces-and-symbols-merged')
 
 
 def suite():

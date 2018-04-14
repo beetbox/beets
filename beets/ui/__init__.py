@@ -41,6 +41,7 @@ from beets import config
 from beets.util import confit, as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
+from beets.dbcore import db
 import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -769,6 +770,34 @@ def show_path_changes(path_changes):
             log.info(u'{0} {1} -> {2}', source, ' ' * pad, dest)
 
 
+# Helper functions for option parsing.
+
+def _store_dict(option, opt_str, value, parser):
+    """Custom action callback to parse options which have ``key=value``
+    pairs as values. All such pairs passed for this option are
+    aggregated into a dictionary.
+    """
+    dest = option.dest
+    option_values = getattr(parser.values, dest, None)
+
+    if option_values is None:
+        # This is the first supplied ``key=value`` pair of option.
+        # Initialize empty dictionary and get a reference to it.
+        setattr(parser.values, dest, dict())
+        option_values = getattr(parser.values, dest)
+
+    try:
+        key, value = map(lambda s: util.text_string(s), value.split('='))
+        if not (key and value):
+            raise ValueError
+    except ValueError:
+        raise UserError(
+            "supplied argument `{0}' is not of the form `key=value'"
+            .format(value))
+
+    option_values[key] = value
+
+
 class CommonOptionsParser(optparse.OptionParser, object):
     """Offers a simple way to add common formatting options.
 
@@ -1247,9 +1276,16 @@ def main(args=None):
     except IOError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
-            pass
+            sys.stderr.close()
         else:
             raise
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
         log.debug(u'{}', traceback.format_exc())
+    except db.DBAccessError as exc:
+        log.error(
+            u'database access error: {0}\n'
+            u'the library file might have a permissions problem',
+            exc
+        )
+        sys.exit(1)

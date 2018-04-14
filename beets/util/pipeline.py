@@ -270,7 +270,7 @@ class FirstPipelineThread(PipelineThread):
                             return
                     self.out_queue.put(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -318,7 +318,7 @@ class MiddlePipelineThread(PipelineThread):
                             return
                     self.out_queue.put(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -357,7 +357,7 @@ class LastPipelineThread(PipelineThread):
                 # Send to consumer.
                 self.coro.send(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -425,7 +425,7 @@ class Pipeline(object):
             while threads[-1].is_alive():
                 threads[-1].join(1)
 
-        except:
+        except BaseException:
             # Stop all the threads immediately.
             for thread in threads:
                 thread.abort()

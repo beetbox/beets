@@ -30,7 +30,7 @@ import beets.library
 from beets import dbcore
 from beets.dbcore import types
 from beets.dbcore.query import (NoneQuery, ParsingError,
-                                InvalidQueryArgumentTypeError)
+                                InvalidQueryArgumentValueError)
 from beets.library import Library, Item
 from beets import util
 import platform
@@ -79,10 +79,10 @@ class AnyFieldQueryTest(_common.LibTestCase):
 
 class AssertsMixin(object):
     def assert_items_matched(self, results, titles):
-        self.assertEqual([i.title for i in results], titles)
+        self.assertEqual(set([i.title for i in results]), set(titles))
 
     def assert_albums_matched(self, results, albums):
-        self.assertEqual([a.album for a in results], albums)
+        self.assertEqual(set([a.album for a in results]), set(albums))
 
 
 # A test case class providing a library with some dummy data and some
@@ -301,11 +301,11 @@ class GetTest(DummyDataTestCase):
         self.assertFalse(results)
 
     def test_invalid_query(self):
-        with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
+        with self.assertRaises(InvalidQueryArgumentValueError) as raised:
             dbcore.query.NumericQuery('year', u'199a')
         self.assertIn(u'not an int', six.text_type(raised.exception))
 
-        with self.assertRaises(InvalidQueryArgumentTypeError) as raised:
+        with self.assertRaises(InvalidQueryArgumentValueError) as raised:
             dbcore.query.RegexpQuery('year', u'199(')
         exception_text = six.text_type(raised.exception)
         self.assertIn(u'not a regular expression', exception_text)
@@ -891,9 +891,12 @@ class NotQueryTest(DummyDataTestCase):
         self.assertNegationProperties(q)
 
     def test_type_date(self):
-        q = dbcore.query.DateQuery(u'mtime', u'0.0')
+        q = dbcore.query.DateQuery(u'added', u'2000-01-01')
         not_results = self.lib.items(dbcore.query.NotQuery(q))
-        self.assert_items_matched(not_results, [])
+        # query date is in the past, thus the 'not' results should contain all
+        # items
+        self.assert_items_matched(not_results, [u'foo bar', u'baz qux',
+                                                u'beets 4 eva'])
         self.assertNegationProperties(q)
 
     def test_type_false(self):
@@ -992,7 +995,7 @@ class NotQueryTest(DummyDataTestCase):
         AttributeError: type object 'NoneQuery' has no attribute 'field'
         at NoneQuery.match() (due to being @classmethod, and no self?)
         """
-        classes = [(dbcore.query.DateQuery, [u'mtime', u'0.0']),
+        classes = [(dbcore.query.DateQuery, [u'added', u'2001-01-01']),
                    (dbcore.query.MatchQuery, [u'artist', u'one']),
                    # (dbcore.query.NoneQuery, ['rg_track_gain']),
                    (dbcore.query.NumericQuery, [u'year', u'2002']),

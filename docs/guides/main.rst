@@ -43,6 +43,8 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 * On **Fedora** 22 or later, there is a `DNF package`_ (or three)::
 
       $ sudo dnf install beets beets-plugins beets-doc
+      
+* On **Solus**, run ``eopkg install beets``.
 
 * On **NixOS**, run ``nix-env -i beets``.
 
@@ -181,6 +183,11 @@ here, including the directory and file naming scheme. See
 
 Importing Your Library
 ----------------------
+
+The next step is to import your music files into the beets library database.
+Because this can involve modifying files and moving them around, data loss is
+always a possibility, so now would be a good time to make sure you have a
+recent backup of all your music. We'll wait.
 
 There are two good ways to bring your existing library into beets. You can
 either: (a) quickly bring all your files with all their current metadata into

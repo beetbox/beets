@@ -325,7 +325,7 @@ class Parser(object):
     # Common parsing resources.
     special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
                      ESCAPE_CHAR)
-    special_char_re = re.compile(r'[%s]|$' %
+    special_char_re = re.compile(r'[%s]|\Z' %
                                  u''.join(re.escape(c) for c in special_chars))
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
     terminator_chars = (GROUP_CLOSE,)
@@ -343,8 +343,11 @@ class Parser(object):
         if self.in_argument:
             extra_special_chars = (ARG_SEP,)
             special_char_re = re.compile(
-                r'[%s]|$' % u''.join(re.escape(c) for c in
-                                     self.special_chars + extra_special_chars))
+                r'[%s]|\Z' % u''.join(
+                    re.escape(c) for c in
+                    self.special_chars + extra_special_chars
+                )
+            )
 
         text_parts = []
 
@@ -570,7 +573,7 @@ class Template(object):
         """
         try:
             res = self.compiled(values, functions)
-        except:  # Handle any exceptions thrown by compiled version.
+        except Exception:  # Handle any exceptions thrown by compiled version.
             res = self.interpret(values, functions)
 
         return res

@@ -54,10 +54,12 @@ like this::
    embyupdate
    export
    fetchart
+   filefilter
+   freedesktop
    fromfilename
    ftintitle
    fuzzy
-   freedesktop
+   gmusic
    hook
    ihate
    importadded
@@ -81,7 +83,6 @@ like this::
    play
    plexupdate
    random
-   filefilter
    replaygain
    rewrite
    scrub
@@ -146,6 +147,7 @@ Path Formats
 Interoperability
 ----------------
 
+* :doc:`badfiles`: Check audio file integrity.
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
@@ -158,7 +160,6 @@ Interoperability
   changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
-* :doc:`badfiles`: Check audio file integrity.
 
 
 .. _Emby: http://emby.media
@@ -174,7 +175,10 @@ Miscellaneous
   a different directory.
 * :doc:`duplicates`: List duplicate tracks or albums.
 * :doc:`export`: Export data from queries to a format.
+* :doc:`filefilter`: Automatically skip files during the import process based
+  on regular expressions.
 * :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
+* :doc:`gmusic`: Search and upload files to Google Play Music.
 * :doc:`hook`: Run a command when an event is emitted by beets.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
@@ -182,8 +186,6 @@ Miscellaneous
 * :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
 * :doc:`random`: Randomly choose albums and tracks from your library.
-* :doc:`filefilter`: Automatically skip files during the import process based
-  on regular expressions.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.

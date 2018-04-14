@@ -81,6 +81,11 @@ class PlayPlugin(BeetsPlugin):
             action='store',
             help=u'add additional arguments to the command',
         )
+        play_command.parser.add_option(
+            u'-y', u'--yes',
+            action="store_true",
+            help=u'skip the warning threshold',
+        )
         play_command.func = self._play_command
         return [play_command]
 
@@ -111,9 +116,10 @@ class PlayPlugin(BeetsPlugin):
         else:
             selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
-            if relative_to:
-                paths = [relpath(path, relative_to) for path in paths]
             item_type = 'track'
+
+        if relative_to:
+            paths = [relpath(path, relative_to) for path in paths]
 
         if not selection:
             ui.print_(ui.colorize('text_warning',
@@ -125,8 +131,8 @@ class PlayPlugin(BeetsPlugin):
 
         # Check if the selection exceeds configured threshold. If True,
         # cancel, otherwise proceed with play command.
-        if not self._exceeds_threshold(selection, command_str, open_args,
-                                       item_type):
+        if opts.yes or not self._exceeds_threshold(
+                selection, command_str, open_args, item_type):
             play(command_str, selection, paths, open_args, self._log,
                  item_type)
 

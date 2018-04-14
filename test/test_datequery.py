@@ -18,14 +18,19 @@
 from __future__ import division, absolute_import, print_function
 
 from test import _common
-from datetime import datetime
+from datetime import datetime, timedelta
 import unittest
 import time
-from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
+from beets.dbcore.query import _parse_periods, DateInterval, DateQuery,\
+    InvalidQueryArgumentValueError
 
 
 def _date(string):
     return datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
+
+
+def _datepattern(datetimedate):
+    return datetimedate.strftime('%Y-%m-%dT%H:%M:%S')
 
 
 class DateIntervalTest(unittest.TestCase):
@@ -43,6 +48,9 @@ class DateIntervalTest(unittest.TestCase):
         self.assertContains('..2001', '2001-12-31T23:59:59')
         self.assertExcludes('..2001', '2002-01-01T00:00:00')
 
+        self.assertContains('-1d..1d', _datepattern(datetime.now()))
+        self.assertExcludes('-2d..-1d', _datepattern(datetime.now()))
+
     def test_day_precision_intervals(self):
         self.assertContains('2000-06-20..2000-06-20', '2000-06-20T00:00:00')
         self.assertContains('2000-06-20..2000-06-20', '2000-06-20T10:20:30')
@@ -56,6 +64,51 @@ class DateIntervalTest(unittest.TestCase):
         self.assertContains('1999-12..2000-02', '2000-02-29T23:59:59')
         self.assertExcludes('1999-12..2000-02', '1999-11-30T23:59:59')
         self.assertExcludes('1999-12..2000-02', '2000-03-01T00:00:00')
+
+    def test_hour_precision_intervals(self):
+        # test with 'T' separator
+        self.assertExcludes('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T11:59:59')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T12:00:00')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T12:30:00')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T13:30:00')
+        self.assertContains('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T13:59:59')
+        self.assertExcludes('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T14:00:00')
+        self.assertExcludes('2000-01-01T12..2000-01-01T13',
+                            '2000-01-01T14:30:00')
+
+        # test non-range query
+        self.assertContains('2008-12-01T22',
+                            '2008-12-01T22:30:00')
+        self.assertExcludes('2008-12-01T22',
+                            '2008-12-01T23:30:00')
+
+    def test_minute_precision_intervals(self):
+        self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:29:59')
+        self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:30:00')
+        self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:30:30')
+        self.assertContains('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:31:59')
+        self.assertExcludes('2000-01-01T12:30..2000-01-01T12:31',
+                            '2000-01-01T12:32:00')
+
+    def test_second_precision_intervals(self):
+        self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:49')
+        self.assertContains('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:50')
+        self.assertContains('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:55')
+        self.assertExcludes('2000-01-01T12:30:50..2000-01-01T12:30:55',
+                            '2000-01-01T12:30:56')
 
     def test_unbounded_endpoints(self):
         self.assertContains('..', date=datetime.max)
@@ -115,12 +168,134 @@ class DateQueryTest(_common.LibTestCase):
         self.assertEqual(len(matched), 0)
 
 
+class DateQueryTestRelative(_common.LibTestCase):
+    def setUp(self):
+        super(DateQueryTestRelative, self).setUp()
+
+        # We pick a date near a month changeover, which can reveal some time
+        # zone bugs.
+        self._now = datetime(2017, 12, 31, 22, 55, 4, 101332)
+
+        self.i.added = _parsetime(self._now.strftime('%Y-%m-%d %H:%M'))
+        self.i.store()
+
+    def test_single_month_match_fast(self):
+        query = DateQuery('added', self._now.strftime('%Y-%m'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 1)
+
+    def test_single_month_nonmatch_fast(self):
+        query = DateQuery('added', (self._now + timedelta(days=30))
+                          .strftime('%Y-%m'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 0)
+
+    def test_single_month_match_slow(self):
+        query = DateQuery('added', self._now.strftime('%Y-%m'))
+        self.assertTrue(query.match(self.i))
+
+    def test_single_month_nonmatch_slow(self):
+        query = DateQuery('added', (self._now + timedelta(days=30))
+                          .strftime('%Y-%m'))
+        self.assertFalse(query.match(self.i))
+
+    def test_single_day_match_fast(self):
+        query = DateQuery('added', self._now.strftime('%Y-%m-%d'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 1)
+
+    def test_single_day_nonmatch_fast(self):
+        query = DateQuery('added', (self._now + timedelta(days=1))
+                          .strftime('%Y-%m-%d'))
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 0)
+
+
+class DateQueryTestRelativeMore(_common.LibTestCase):
+    def setUp(self):
+        super(DateQueryTestRelativeMore, self).setUp()
+        self.i.added = _parsetime(datetime.now().strftime('%Y-%m-%d %H:%M'))
+        self.i.store()
+
+    def test_relative(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '-4' + timespan + '..+4' + timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 1)
+
+    def test_relative_fail(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '-2' + timespan + '..-1' + timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 0)
+
+    def test_start_relative(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '-4' + timespan + '..')
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 1)
+
+    def test_start_relative_fail(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '4' + timespan + '..')
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 0)
+
+    def test_end_relative(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '..+4' + timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 1)
+
+    def test_end_relative_fail(self):
+        for timespan in ['d', 'w', 'm', 'y']:
+            query = DateQuery('added', '..-4' + timespan)
+            matched = self.lib.items(query)
+            self.assertEqual(len(matched), 0)
+
+
 class DateQueryConstructTest(unittest.TestCase):
     def test_long_numbers(self):
-        DateQuery('added', '1409830085..1412422089')
+        with self.assertRaises(InvalidQueryArgumentValueError):
+            DateQuery('added', '1409830085..1412422089')
 
     def test_too_many_components(self):
-        DateQuery('added', '12-34-56-78')
+        with self.assertRaises(InvalidQueryArgumentValueError):
+            DateQuery('added', '12-34-56-78')
+
+    def test_invalid_date_query(self):
+        q_list = [
+            '2001-01-0a',
+            '2001-0a',
+            '200a',
+            '2001-01-01..2001-01-0a',
+            '2001-0a..2001-01',
+            '200a..2002',
+            '20aa..',
+            '..2aa'
+        ]
+        for q in q_list:
+            with self.assertRaises(InvalidQueryArgumentValueError):
+                DateQuery('added', q)
+
+    def test_datetime_uppercase_t_separator(self):
+        date_query = DateQuery('added', '2000-01-01T12')
+        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
+        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+
+    def test_datetime_lowercase_t_separator(self):
+        date_query = DateQuery('added', '2000-01-01t12')
+        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
+        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+
+    def test_datetime_space_separator(self):
+        date_query = DateQuery('added', '2000-01-01 12')
+        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
+        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+
+    def test_datetime_invalid_separator(self):
+        with self.assertRaises(InvalidQueryArgumentValueError):
+            DateQuery('added', '2000-01-01x12')
 
 
 def suite():

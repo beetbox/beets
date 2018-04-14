@@ -73,6 +73,9 @@ file. The available options are:
   this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration.
   Default: none.
+- **no_convert**: Does not transcode items matching provided query string
+  (see :doc:`/reference/query`). (i.e. ``format:AAC, format:WMA`` or
+  ``path::\.(m4a|wma)$``)
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied.
@@ -140,3 +143,31 @@ and the given command is used for all conversions.
     convert:
         command: ffmpeg -i $source -y -vn -aq 2 $dest
         extension: mp3
+
+
+Gapless MP3 encoding
+````````````````````
+
+While FFmpeg cannot produce "`gapless`_" MP3s by itself, you can create them
+by using `LAME`_ directly. Use a shell script like this to pipe the output of
+FFmpeg into the LAME tool::
+
+    #!/bin/sh
+    ffmpeg -i "$1" -f wav - | lame -V 2 --noreplaygain - "$2"
+
+Then configure the ``convert`` plugin to use the script::
+
+    convert:
+        command: /path/to/script.sh $source $dest
+        extension: mp3
+
+This strategy configures FFmpeg to produce a WAV file with an accurate length
+header for LAME to use. Using ``--noreplaygain`` disables gain analysis; you
+can use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
+`documentation`_ and the `HydrogenAudio wiki`_ for other LAME configuration
+options and a thorough discussion of MP3 encoding.
+
+.. _documentation: http://lame.sourceforge.net/using.php
+.. _HydrogenAudio wiki: http://wiki.hydrogenaud.io/index.php?title=LAME
+.. _gapless: http://wiki.hydrogenaud.io/index.php?title=Gapless_playback
+.. _LAME: http://lame.sourceforge.net/

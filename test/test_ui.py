@@ -40,7 +40,7 @@ from beets import config
 from beets import plugins
 from beets.util.confit import ConfigError
 from beets import util
-from beets.util import syspath
+from beets.util import syspath, MoveOperation
 
 
 class ListTest(unittest.TestCase):
@@ -126,7 +126,7 @@ class RemoveTest(_common.TestCase):
         item_path = os.path.join(_common.RSRC, b'full.mp3')
         self.i = library.Item.from_path(item_path)
         self.lib.add(self.i)
-        self.i.move(True)
+        self.i.move(operation=MoveOperation.COPY)
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
@@ -421,8 +421,9 @@ class MoveTest(_common.TestCase):
         self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
 
     def _move(self, query=(), dest=None, copy=False, album=False,
-              pretend=False):
-        commands.move_items(self.lib, dest, query, copy, album, pretend)
+              pretend=False, export=False):
+        commands.move_items(self.lib, dest, query, copy, album, pretend,
+                            export=export)
 
     def test_move_item(self):
         self._move()
@@ -476,6 +477,24 @@ class MoveTest(_common.TestCase):
         self.i.load()
         self.assertIn(b'srcfile', self.i.path)
 
+    def test_export_item_custom_dir(self):
+        self._move(dest=self.otherdir, export=True)
+        self.i.load()
+        self.assertEqual(self.i.path, self.itempath)
+        self.assertExists(self.otherdir)
+
+    def test_export_album_custom_dir(self):
+        self._move(dest=self.otherdir, album=True, export=True)
+        self.i.load()
+        self.assertEqual(self.i.path, self.itempath)
+        self.assertExists(self.otherdir)
+
+    def test_pretend_export_item(self):
+        self._move(dest=self.otherdir, pretend=True, export=True)
+        self.i.load()
+        self.assertIn(b'srcfile', self.i.path)
+        self.assertNotExists(self.otherdir)
+
 
 class UpdateTest(_common.TestCase):
     def setUp(self):
@@ -490,7 +509,7 @@ class UpdateTest(_common.TestCase):
         item_path = os.path.join(_common.RSRC, b'full.mp3')
         self.i = library.Item.from_path(item_path)
         self.lib.add(self.i)
-        self.i.move(True)
+        self.i.move(operation=MoveOperation.COPY)
         self.album = self.lib.add_album([self.i])
 
         # Album art.

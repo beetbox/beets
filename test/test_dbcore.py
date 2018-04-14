@@ -320,7 +320,7 @@ class ModelTest(unittest.TestCase):
     def test_items(self):
         model = TestModel1(self.db)
         model.id = 5
-        self.assertEqual({('id', 5), ('field_one', None)},
+        self.assertEqual({('id', 5), ('field_one', 0)},
                          set(model.items()))
 
     def test_delete_internal_field(self):

@@ -24,7 +24,9 @@ import flask
 from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
 import os
+from unidecode import unidecode
 import json
+import base64
 
 
 # Utilities.
@@ -41,6 +43,11 @@ def _rep(obj, expand=False):
             out['path'] = util.displayable_path(out['path'])
         else:
             del out['path']
+
+        # Filter all bytes attributes and convert them to strings.
+        for key, value in out.items():
+            if isinstance(out[key], bytes):
+                out[key] = base64.b64encode(value).decode('ascii')
 
         # Get the size (in bytes) of the backing file. This is useful
         # for the Tomahawk resolver API.
@@ -211,12 +218,34 @@ def all_items():
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
     item = g.lib.get_item(item_id)
+
+    # On Windows under Python 2, Flask wants a Unicode path. On Python 3, it
+    # *always* wants a Unicode path.
+    if os.name == 'nt':
+        item_path = util.syspath(item.path)
+    else:
+        item_path = util.py3_path(item.path)
+
+    try:
+        unicode_item_path = util.text_string(item.path)
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        unicode_item_path = util.displayable_path(item.path)
+
+    base_filename = os.path.basename(unicode_item_path)
+    try:
+        # Imitate http.server behaviour
+        base_filename.encode("latin-1", "strict")
+    except UnicodeEncodeError:
+        safe_filename = unidecode(base_filename)
+    else:
+        safe_filename = base_filename
+
     response = flask.send_file(
-        util.py3_path(item.path),
+        item_path,
         as_attachment=True,
-        attachment_filename=os.path.basename(util.py3_path(item.path)),
+        attachment_filename=safe_filename
     )
-    response.headers['Content-Length'] = os.path.getsize(item.path)
+    response.headers['Content-Length'] = os.path.getsize(item_path)
     return response
 
 
@@ -271,8 +300,8 @@ def album_query(queries):
 @app.route('/album/<int:album_id>/art')
 def album_art(album_id):
     album = g.lib.get_album(album_id)
-    if album.artpath:
-        return flask.send_file(album.artpath)
+    if album and album.artpath:
+        return flask.send_file(album.artpath.decode())
     else:
         return flask.abort(404)
 
@@ -327,6 +356,7 @@ class WebPlugin(BeetsPlugin):
             'host': u'127.0.0.1',
             'port': 8337,
             'cors': '',
+            'cors_supports_credentials': False,
             'reverse_proxy': False,
             'include_paths': False,
         })
@@ -358,7 +388,12 @@ class WebPlugin(BeetsPlugin):
                 app.config['CORS_RESOURCES'] = {
                     r"/*": {"origins": self.config['cors'].get(str)}
                 }
-                CORS(app)
+                CORS(
+                    app,
+                    supports_credentials=self.config[
+                        'cors_supports_credentials'
+                    ].get(bool)
+                )
 
             # Allow serving behind a reverse proxy
             if self.config['reverse_proxy']:

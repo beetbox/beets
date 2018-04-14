@@ -33,6 +33,15 @@ from .query import MatchQuery, NullSort, TrueQuery
 import six
 
 
+class DBAccessError(Exception):
+    """The SQLite database became inaccessible.
+
+    This can happen when trying to read or write the database when, for
+    example, the database file is deleted or otherwise disappears. There
+    is probably no way to recover from this error.
+    """
+
+
 class FormattedMapping(collections.Mapping):
     """A `dict`-like formatted view of a model.
 
@@ -208,6 +217,21 @@ class Model(object):
         if need_id and not self.id:
             raise ValueError(u'{0} has no id'.format(type(self).__name__))
 
+    def copy(self):
+        """Create a copy of the model object.
+
+        The field values and other state is duplicated, but the new copy
+        remains associated with the same database as the old object.
+        (A simple `copy.deepcopy` will not work because it would try to
+        duplicate the SQLite connection.)
+        """
+        new = self.__class__()
+        new._db = self._db
+        new._values_fixed = self._values_fixed.copy()
+        new._values_flex = self._values_flex.copy()
+        new._dirty = self._dirty.copy()
+        return new
+
     # Essential field accessors.
 
     @classmethod
@@ -227,14 +251,15 @@ class Model(object):
         if key in getters:  # Computed.
             return getters[key](self)
         elif key in self._fields:  # Fixed.
-            return self._values_fixed.get(key)
+            return self._values_fixed.get(key, self._type(key).null)
         elif key in self._values_flex:  # Flexible.
             return self._values_flex[key]
         else:
             raise KeyError(key)
 
-    def __setitem__(self, key, value):
-        """Assign the value for a field.
+    def _setitem(self, key, value):
+        """Assign the value for a field, return whether new and old value
+        differ.
         """
         # Choose where to place the value.
         if key in self._fields:
@@ -248,8 +273,16 @@ class Model(object):
         # Assign value and possibly mark as dirty.
         old_value = source.get(key)
         source[key] = value
-        if self._always_dirty or old_value != value:
+        changed = old_value != value
+        if self._always_dirty or changed:
             self._dirty.add(key)
+
+        return changed
+
+    def __setitem__(self, key, value):
+        """Assign the value for a field.
+        """
+        self._setitem(key, value)
 
     def __delitem__(self, key):
         """Remove a flexible attribute from the model.
@@ -680,8 +713,18 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        cursor = self.db._connection().execute(statement, subvals)
-        return cursor.lastrowid
+        try:
+            cursor = self.db._connection().execute(statement, subvals)
+            return cursor.lastrowid
+        except sqlite3.OperationalError as e:
+            # In two specific cases, SQLite reports an error while accessing
+            # the underlying database file. We surface these exceptions as
+            # DBAccessError so the application can abort.
+            if e.args[0] in ("attempt to write a readonly database",
+                             "unable to open database file"):
+                raise DBAccessError(e.args[0])
+            else:
+                raise
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""

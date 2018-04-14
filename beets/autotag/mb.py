@@ -36,6 +36,8 @@ if util.SNI_SUPPORTED:
 else:
     BASE_URL = 'http://musicbrainz.org/'
 
+SKIPPED_TRACKS = ['[data track]']
+
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.io/')
 
@@ -116,8 +118,8 @@ def _preferred_release_event(release):
     """
     countries = config['match']['preferred']['countries'].as_str_seq()
 
-    for event in release.get('release-event-list', {}):
-        for country in countries:
+    for country in countries:
+        for event in release.get('release-event-list', {}):
             try:
                 if country in event['area']['iso-3166-1-code-list']:
                     return country, event['date']
@@ -207,6 +209,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
 
     lyricist = []
     composer = []
+    composer_sort = []
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
@@ -218,10 +221,13 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                     lyricist.append(artist_relation['artist']['name'])
                 elif type == 'composer':
                     composer.append(artist_relation['artist']['name'])
+                    composer_sort.append(
+                        artist_relation['artist']['sort-name'])
     if lyricist:
         info.lyricist = u', '.join(lyricist)
     if composer:
         info.composer = u', '.join(composer)
+        info.composer_sort = u', '.join(composer_sort)
 
     arranger = []
     for artist_relation in recording.get('artist-relation-list', ()):
@@ -271,11 +277,24 @@ def album_info(release):
         disctitle = medium.get('title')
         format = medium.get('format')
 
+        if format in config['match']['ignored_media'].as_str_seq():
+            continue
+
         all_tracks = medium['track-list']
         if 'pregap' in medium:
             all_tracks.insert(0, medium['pregap'])
 
         for track in all_tracks:
+
+            if ('title' in track['recording'] and
+                    track['recording']['title'] in SKIPPED_TRACKS):
+                continue
+
+            if ('video' in track['recording'] and
+                    track['recording']['video'] == 'true' and
+                    config['match']['ignore_video_tracks']):
+                continue
+
             # Basic information from the recording.
             index += 1
             ti = track_info(
@@ -329,11 +348,25 @@ def album_info(release):
         disambig.append(release.get('disambiguation'))
     info.albumdisambig = u', '.join(disambig)
 
-    # Release type not always populated.
+    # Get the "classic" Release type. This data comes from a legacy API
+    # feature before MusicBrainz supported multiple release types.
     if 'type' in release['release-group']:
         reltype = release['release-group']['type']
         if reltype:
             info.albumtype = reltype.lower()
+
+    # Log the new-style "primary" and "secondary" release types.
+    # Eventually, we'd like to actually store this data, but we just log
+    # it for now to help understand the differences.
+    if 'primary-type' in release['release-group']:
+        rel_primarytype = release['release-group']['primary-type']
+        if rel_primarytype:
+            log.debug('primary MB release type: ' + rel_primarytype.lower())
+    if 'secondary-type-list' in release['release-group']:
+        if release['release-group']['secondary-type-list']:
+            log.debug('secondary MB release type(s): ' + ', '.join(
+                [secondarytype.lower() for secondarytype in
+                    release['release-group']['secondary-type-list']]))
 
     # Release events.
     info.country, release_date = _preferred_release_event(release)

@@ -34,12 +34,14 @@ from beets.autotag import hooks
 from beets import plugins
 from beets import importer
 from beets import util
-from beets.util import syspath, normpath, ancestry, displayable_path
+from beets.util import syspath, normpath, ancestry, displayable_path, \
+    MoveOperation
 from beets import library
 from beets import config
 from beets import logging
 from beets.util.confit import _package_path
 import six
+from . import _store_dict
 
 VARIOUS_ARTISTS = u'Various Artists'
 PromptChoice = namedtuple('PromptChoice', ['short', 'long', 'callback'])
@@ -84,7 +86,7 @@ def _do_query(lib, query, album, also_items=True):
 
 def _print_keys(query):
     """Given a SQLite query result, print the `key` field of each
-    returned row, with identation of 2 spaces.
+    returned row, with indentation of 2 spaces.
     """
     for row in query:
         print_(u' ' * 2 + row['key'])
@@ -615,7 +617,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             require = True
         # Bell ring when user interaction is needed.
         if config['import']['bell']:
-            ui.print_('\a', end='')
+            ui.print_(u'\a', end=u'')
         sel = ui.input_options((u'Apply', u'More candidates') + choice_opts,
                                require=require, default=default)
         if sel == u'a':
@@ -689,7 +691,6 @@ class TerminalImportSession(importer.ImportSession):
             return action
 
         # Loop until we have a choice.
-        candidates, rec = task.candidates, task.rec
         while True:
             # Ask for a choice from the user. The result of
             # `choose_candidate` may be an `importer.action`, an
@@ -697,8 +698,8 @@ class TerminalImportSession(importer.ImportSession):
             # `PromptChoice`.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                candidates, False, rec, task.cur_artist, task.cur_album,
-                itemcount=len(task.items), choices=choices
+                task.candidates, False, task.rec, task.cur_artist,
+                task.cur_album, itemcount=len(task.items), choices=choices
             )
 
             # Basic choices that require no more action here.
@@ -714,8 +715,8 @@ class TerminalImportSession(importer.ImportSession):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
                     # Use the new candidates and continue around the loop.
-                    candidates = post_choice.candidates
-                    rec = post_choice.recommendation
+                    task.candidates = post_choice.candidates
+                    task.rec = post_choice.recommendation
 
             # Otherwise, we have a specific match selection.
             else:
@@ -789,7 +790,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                (u'Skip new', u'Keep both', u'Remove old')
+                (u'Skip new', u'Keep both', u'Remove old', u'Merge all')
             )
 
         if sel == u's':
@@ -801,6 +802,8 @@ class TerminalImportSession(importer.ImportSession):
         elif sel == u'r':
             # Remove old.
             task.should_remove_duplicates = True
+        elif sel == u'm':
+            task.should_merge_duplicates = True
         else:
             assert False
 
@@ -930,6 +933,13 @@ def import_func(lib, opts, args):
         if not paths:
             raise ui.UserError(u'no path specified')
 
+        # On Python 2, we get filenames as raw bytes, which is what we
+        # need. On Python 3, we need to undo the "helpful" conversion to
+        # Unicode strings to get the real bytestring filename.
+        if not six.PY2:
+            paths = [p.encode(util.arg_encoding(), 'surrogateescape')
+                     for p in paths]
+
     import_files(lib, paths, query)
 
 
@@ -1001,6 +1011,10 @@ import_cmd.parser.add_option(
     help=u'do not skip already-imported directories'
 )
 import_cmd.parser.add_option(
+    u'--from-scratch', dest='from_scratch', action='store_true',
+    help=u'erase existing metadata before applying new metadata'
+)
+import_cmd.parser.add_option(
     u'--flat', dest='flat', action='store_true',
     help=u'import an entire tree as a single album'
 )
@@ -1016,6 +1030,12 @@ import_cmd.parser.add_option(
     u'-S', u'--search-id', dest='search_ids', action='append',
     metavar='ID',
     help=u'restrict matching to a specific metadata backend ID'
+)
+import_cmd.parser.add_option(
+    u'--set', dest='set_fields', action='callback',
+    callback=_store_dict,
+    metavar='FIELD=VALUE',
+    help=u'set the given fields to the supplied values'
 )
 import_cmd.func = import_func
 default_commands.append(import_cmd)
@@ -1450,7 +1470,8 @@ default_commands.append(modify_cmd)
 
 # move: Move/copy files to the library or a new base directory.
 
-def move_items(lib, dest, query, copy, album, pretend, confirm=False):
+def move_items(lib, dest, query, copy, album, pretend, confirm=False,
+               export=False):
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
@@ -1463,6 +1484,7 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False):
     isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
 
+    copy = copy or export  # Exporting always copies.
     action = u'Copying' if copy else u'Moving'
     act = u'copy' if copy else u'move'
     entity = u'album' if album else u'item'
@@ -1488,8 +1510,16 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False):
         for obj in objs:
             log.debug(u'moving: {0}', util.displayable_path(obj.path))
 
-            obj.move(copy, basedir=dest)
-            obj.store()
+            if export:
+                # Copy without affecting the database.
+                obj.move(operation=MoveOperation.COPY, basedir=dest,
+                         store=False)
+            else:
+                # Ordinary move/copy: store the new path.
+                if copy:
+                    obj.move(operation=MoveOperation.COPY, basedir=dest)
+                else:
+                    obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
 def move_func(lib, opts, args):
@@ -1500,7 +1530,7 @@ def move_func(lib, opts, args):
             raise ui.UserError(u'no such directory: %s' % dest)
 
     move_items(lib, dest, decargs(args), opts.copy, opts.album, opts.pretend,
-               opts.timid)
+               opts.timid, opts.export)
 
 
 move_cmd = ui.Subcommand(
@@ -1521,6 +1551,10 @@ move_cmd.parser.add_option(
 move_cmd.parser.add_option(
     u'-t', u'--timid', dest='timid', action='store_true',
     help=u'always confirm all actions'
+)
+move_cmd.parser.add_option(
+    u'-e', u'--export', default=False, action='store_true',
+    help=u'copy without changing the database path'
 )
 move_cmd.parser.add_album_option()
 move_cmd.func = move_func
@@ -1724,7 +1758,7 @@ def completion_script(commands):
     # Command aliases
     yield u"  local aliases='%s'\n" % ' '.join(aliases.keys())
     for alias, cmd in aliases.items():
-        yield u"  local alias__%s=%s\n" % (alias, cmd)
+        yield u"  local alias__%s=%s\n" % (alias.replace('-', '_'), cmd)
     yield u'\n'
 
     # Fields
@@ -1741,7 +1775,7 @@ def completion_script(commands):
             if option_list:
                 option_list = u' '.join(option_list)
                 yield u"  local %s__%s='%s'\n" % (
-                    option_type, cmd, option_list)
+                    option_type, cmd.replace('-', '_'), option_list)
 
     yield u'  _beet_dispatch\n'
     yield u'}\n'

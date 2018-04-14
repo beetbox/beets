@@ -49,6 +49,8 @@ def apply_item_metadata(item, track_info):
         item.lyricist = track_info.lyricist
     if track_info.composer is not None:
         item.composer = track_info.composer
+    if track_info.composer_sort is not None:
+        item.composer_sort = track_info.composer_sort
     if track_info.arranger is not None:
         item.arranger = track_info.arranger
 
@@ -61,12 +63,19 @@ def apply_metadata(album_info, mapping):
     mapping from Items to TrackInfo objects.
     """
     for item, track_info in mapping.items():
-        # Album, artist, track count.
-        if track_info.artist:
-            item.artist = track_info.artist
+        # Artist or artist credit.
+        if config['artist_credit']:
+            item.artist = (track_info.artist_credit or
+                           track_info.artist or
+                           album_info.artist_credit or
+                           album_info.artist)
+            item.albumartist = (album_info.artist_credit or
+                                album_info.artist)
         else:
-            item.artist = album_info.artist
-        item.albumartist = album_info.artist
+            item.artist = (track_info.artist or album_info.artist)
+            item.albumartist = album_info.artist
+
+        # Album.
         item.album = album_info.album
 
         # Artist sort and credit names.
@@ -155,6 +164,8 @@ def apply_metadata(album_info, mapping):
             item.lyricist = track_info.lyricist
         if track_info.composer is not None:
             item.composer = track_info.composer
+        if track_info.composer_sort is not None:
+            item.composer_sort = track_info.composer_sort
         if track_info.arranger is not None:
             item.arranger = track_info.arranger
 

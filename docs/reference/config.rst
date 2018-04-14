@@ -131,6 +131,7 @@ unexpected behavior on all popular platforms::
         '\.$': _
         '\s+$': ''
         '^\s+': ''
+        '^-': _
 
 These substitutions remove forward and back slashes, leading dots, and
 control characters—all of which is a good idea on any OS. The fourth line
@@ -251,6 +252,15 @@ Either ``yes`` or ``no``, indicating whether matched albums should have their
 *original* version of an album rather than the selected version of the release.
 That is, if this option is turned on, then ``year`` will always equal
 ``original_year`` and so on. Default: ``no``.
+
+.. _artist_credit:
+
+artist_credit
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether matched tracks and albums should
+use the artist credit, rather than the artist. That is, if this option is turned
+on, then ``artist`` will contain the artist as credited on the release.
 
 .. _per_disc_numbering:
 
@@ -474,6 +484,25 @@ Either ``yes`` or ``no``, controlling whether imported directories are
 recorded and whether these recorded directories are skipped.  This
 corresponds to the ``-i`` flag to ``beet import``.
 
+.. _incremental_skip_later:
+
+incremental_skip_later
+~~~~~~~~~~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, controlling whether skipped directories are
+recorded in the incremental list. Set this option to ``yes`` if you would
+like to revisit skipped directories later whilst using incremental
+mode. Defaults to ``no``.
+
+.. _from_scratch:
+
+from_scratch
+~~~~~~~~~~~~
+
+Either ``yes`` or ``no`` (default), controlling whether existing metadata is
+discarded when a match is applied. This corresponds to the ``--from_scratch``
+flag to ``beet import``.
+
 quiet_fallback
 ~~~~~~~~~~~~~~
 
@@ -570,11 +599,12 @@ Default: ``yes``.
 duplicate_action
 ~~~~~~~~~~~~~~~~
 
-Either ``skip``, ``keep``, ``remove``, or ``ask``. Controls how duplicates
-are treated in import task. "skip" means that new item(album or track) will be
-skipped; "keep" means keep both old and new items; "remove" means remove old
-item; "ask" means the user should be prompted for the action each time.
-The default is ``ask``.
+Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``. 
+Controls how duplicates are treated in import task. 
+"skip" means that new item(album or track) will be skipped; 
+"keep" means keep both old and new items; "remove" means remove old
+item; "merge" means merge into one album; "ask" means the user 
+should be prompted for the action each time. The default is ``ask``.
 
 .. _bell:
 
@@ -584,6 +614,23 @@ bell
 Ring the terminal bell to get your attention when the importer needs your input.
 
 Default: ``no``.
+
+.. _set_fields:
+
+set_fields
+~~~~~~~~~~
+
+A dictionary indicating fields to set to values for newly imported music.
+Here's an example::
+
+    set_fields:
+        genre: 'To Listen'
+        collection: 'Unordered'
+
+Other field/value pairs supplied via the ``--set`` option on the command-line
+override any settings here for fields with the same name.
+
+Default: ``{}`` (empty).
 
 .. _musicbrainz-config:
 
@@ -745,6 +792,33 @@ want to enforce to the ``required`` setting::
         required: year label catalognum country
 
 No tags are required by default.
+
+.. _ignored_media:
+
+ignored_media
+~~~~~~~~~~~~~
+
+A list of media (i.e., formats) in metadata databases to ignore when matching
+music. You can use this to ignore all media that usually contain video instead
+of audio, for example::
+
+    match:
+        ignored_media: ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD',
+                        'VCD', 'SVCD', 'UMD', 'VHS']
+
+No formats are ignored by default.
+
+
+.. _ignore_video_tracks:
+
+ignore_video_tracks
+~~~~~~~~~~~~~~~~~~~
+
+By default, video tracks within a release will be ignored. If you want them to
+be included (for example if you would like to track the audio-only versions of
+the video tracks), set it to ``no``.
+
+Default: ``yes``.
 
 .. _path-format-config:
 

@@ -111,6 +111,12 @@ Optional command flags:
   time, when no subdirectories will be skipped. So consider enabling the
   ``incremental`` configuration option.
 
+* When beets applies metadata to your music, it will retain the value of any
+  existing tags that weren't overwritten, and import them into the database. You
+  may prefer to only use existing metadata for finding matches, and to erase it
+  completely when new metadata is applied. You can enforce this behavior with
+  the ``--from-scratch`` option, or the ``from_scratch`` configuration option.
+
 * By default, beets will proceed without asking if it finds a very close
   metadata match. To disable this and have the importer ask you every time,
   use the ``-t`` (for *timid*) option.
@@ -137,6 +143,13 @@ Optional command flags:
   imported, you can instruct beets to restrict the search to that ID instead of
   searching for other candidates by using the ``--search-id SEARCH_ID`` option.
   Multiple IDs can be specified by simply repeating the option several times.
+
+* You can supply ``--set field=value`` to assign `field` to `value` on import.
+  These assignments will merge with (and possibly override) the
+  :ref:`set_fields` configuration dictionary. You can use the option multiple
+  times on the command line, like so::
+
+    beet import --set genre="Alternative Rock" --set mood="emotional"
 
 .. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
 
@@ -275,6 +288,7 @@ query are renamed into your library directory structure. By specifying a
 destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
+The ``-e`` flag (for "export") copies files without changing the database.
 
 To perform a "dry run", just use the ``-p`` (for "pretend") flag. This will
 show you a list of files that would be moved but won't actually change anything
@@ -412,8 +426,8 @@ import ...``.
 * ``-c FILE``: read a specified YAML :doc:`configuration file <config>`. This
   configuration works as an overlay: rather than replacing your normal
   configuration options entirely, the two are merged. Any individual options set
-  in this config file will override your base configuration.
-
+  in this config file will override the corresponding settings in your base
+  configuration.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
