@@ -12,6 +12,15 @@ New features:
   recording skipped directories to the incremental list, so you can revisit them
   later. Thanks to :user:`sekjun9878`.
   :bug:`2773`
+* :doc:`/plugins/fetchart`: extended syntax for the ``sources`` option to give
+  fine-grained control over the search order for backends with several matching
+  strategies.
+* :doc:`/plugins/web`: added the boolean ``cors_supports_credentials`` option to
+  allow in-browser clients to login to the beet web server even when it is
+  protected by an authorization mechanism.
+* A new importer configuration ``artist_credit`` will tell beets to prefer the
+  artist credit over the artist when autotagging.
+  :bug:`1249`
 * A new interoperability plugin to automatically notify Sonos controllers to
   update the music library once the beets library got updated.
   Thanks to :user:`cgtobi`.
