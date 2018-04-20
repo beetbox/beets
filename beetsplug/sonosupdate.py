@@ -38,12 +38,11 @@ class SonosUpdate(BeetsPlugin):
         """
         self._log.info(u'Requesting a Sonos library update...')
 
-        # Try to send update request.
-        try:
-            device = soco.discovery.any_soco()
-            device.music_library.start_library_update()
+        device = soco.discovery.any_soco()
 
-        except NoneType:
+        if device:
+            device.music_library.start_library_update()
+        else:
             self._log.warning(u'Could not find a Sonos device.')
             return
 
