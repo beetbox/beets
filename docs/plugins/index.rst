@@ -158,6 +158,8 @@ Interoperability
 * :doc:`plexupdate`: Automatically notifies `Plex`_ whenever the beets library
   changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
+* :doc:`sonosupdate`: Automatically notifies `Sonos`_ whenever the beets library
+  changes.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
 * :doc:`badfiles`: Check audio file integrity.
 
@@ -165,6 +167,7 @@ Interoperability
 .. _Emby: http://emby.media
 .. _Plex: http://plex.tv
 .. _Kodi: http://kodi.tv
+.. _Sonos: http://sonos.com
 
 Miscellaneous
 -------------
@@ -262,4 +265,3 @@ Here are a few of the plugins written by the beets community:
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
 .. _beets-usertag: https://github.com/igordertigor/beets-usertag
 .. _beets-popularity: https://github.com/abba23/beets-popularity
-

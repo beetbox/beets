@@ -15,17 +15,9 @@
 
 """Updates a Sonos library whenever the beets library is changed.
 This is based on the Kodi Update plugin.
-
-Put something like the following in your config.yaml to configure:
-    kodi:
-        host: localhost
-        port: 8080
-        user: user
-        pwd: secret
 """
 from __future__ import division, absolute_import, print_function
 
-from beets import config
 from beets.plugins import BeetsPlugin
 import six
 import soco
@@ -51,8 +43,8 @@ class SonosUpdate(BeetsPlugin):
             device = soco.discovery.any_soco()
             device.music_library.start_library_update()
 
-        except:
-            self._log.warning(u'Sonos update failed')
+        except NoneType:
+            self._log.warning(u'Could not find a Sonos device.')
             return
 
         self._log.info(u'Sonos update triggered')

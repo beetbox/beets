@@ -16,8 +16,3 @@ controller every time you change your beets library.
 
 .. Sonos: http://sonos.com/
 .. _soco: http://python-soco.com
-
-Configuration
--------------
-
-There is nothing to configure.

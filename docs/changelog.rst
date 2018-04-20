@@ -12,6 +12,9 @@ New features:
   recording skipped directories to the incremental list, so you can revisit them
   later. Thanks to :user:`sekjun9878`.
   :bug:`2773`
+* A new interoperability plugin to automatically notify Sonos controllers to
+  update the music library once the beets library got updated.
+  Thanks to :user:`cgtobi`.
 
 
 Fixes:
