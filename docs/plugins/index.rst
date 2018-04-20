@@ -87,6 +87,7 @@ like this::
    rewrite
    scrub
    smartplaylist
+   sonosupdate
    spotify
    the
    thumbnails
