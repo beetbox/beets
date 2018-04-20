@@ -1,5 +1,5 @@
 SonosUpdate Plugin
-=================
+==================
 
 The ``sonosupdate`` plugin lets you automatically update `Sonos`_'s music
 library whenever you change your beets library.
