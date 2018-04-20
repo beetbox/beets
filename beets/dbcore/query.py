@@ -708,7 +708,7 @@ class DateQuery(FieldQuery):
         if self.field not in item:
             return False
         timestamp = float(item[self.field])
-        date = datetime.utcfromtimestamp(timestamp)
+        date = datetime.fromtimestamp(timestamp)
         return self.interval.contains(date)
 
     _clause_tmpl = "{0} {1} ?"

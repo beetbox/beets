@@ -89,7 +89,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         self._command.parser.add_option(
             u'-d', u'--drop', dest='drop',
-            action='store_true', default=False,
+            action='store_true', default=None,
             help=u'drop featuring from artists and ignore title update')
 
         if self.config['auto']:
