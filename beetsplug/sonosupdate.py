@@ -19,7 +19,6 @@ This is based on the Kodi Update plugin.
 from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
-import six
 import soco
 
 
