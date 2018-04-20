@@ -8,6 +8,9 @@
     :target: https://travis-ci.org/beetbox/beets
 
 
+beets
+=====
+
 Beets is the media library management system for obsessive-compulsive music
 geeks.
 
@@ -72,24 +75,37 @@ shockingly simple if you know a little Python.
 .. _MusicBrainz: http://musicbrainz.org/
 .. _Beatport: https://www.beatport.com
 
+Install
+-------
+
+You can install beets by typing ``pip install beets``. Then check out the
+`Getting Started`_ guide.
+
+.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+
+Contribute
+----------
+
+Check out the `Hacking`_ page on the wiki for tips on how to help out.
+You might also be interested in the `For Developers`_ section in the docs.
+
+.. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
+.. _For Developers: http://docs.beets.io/page/dev/
+
 Read More
 ---------
 
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-You can install beets by typing ``pip install beets``. Then check out the
-`Getting Started`_ guide.
-
 .. _its Web site: http://beets.io/
-.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
 
 Authors
 -------
 
 Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
-please contact the `mailing list`_.
+please visit our `forum`_.
 
-.. _mailing list: https://groups.google.com/forum/#!forum/beets-users
-.. _Adrian Sampson: http://homes.cs.washington.edu/~asampson/
+.. _forum: https://discourse.beets.io
+.. _Adrian Sampson: http://www.cs.cornell.edu/~asampson/

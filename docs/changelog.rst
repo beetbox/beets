@@ -58,6 +58,46 @@ Fixes:
 * Avoid a crash when importing a non-ASCII filename when using an ASCII locale
   on Unix under Python 3.
   :bug:`2793` :bug:`2803`
+* Fix a problem caused by time zone misalignment that could make date queries
+  fail to match certain dates that are near the edges of a range. For example,
+  querying for dates within a certain month would fail to match dates within
+  hours of the end of that month.
+  :bug:`2652`
+* :doc:`/plugins/convert`: The plugin now runs before other plugin-provided
+  import stages, which addresses an issue with generating ReplayGain data
+  incompatible between the source and target file formats.
+  :bug:`2814`
+  Thanks to :user:`autrimpo`.
+* :doc:`/plugins/ftintitle`: The ``drop`` config option had no effect; it now
+  does what it says it should do.
+  :bug:`2817`
+* Importing a release with multiple release events now selects the
+  event based on the order of your :ref:`preferred` countries rather than
+  the order of release events in MusicBrainz. :bug:`2816`
+* :doc:`/plugins/web`: The time display in the web interface would incorrectly jump
+  at the 30-second mark of every minute. Now, it correctly changes over at zero
+  seconds. :bug:`2822`
+* :doc:`/plugins/web`: In a python 3 enviroment, the function to fetch the
+  album art would not work and throw an exception. It now works as expected.
+  Additionally, the server will now return a 404 response when the album id
+  is unknown, instead of a 500 response and a thrown exception. :bug:`2823`
+* :doc:`/plugins/web`: In a python 3 enviroment, the server would throw an
+  exception if non latin-1 characters where in the File name.
+  It now checks if non latin-1 characters are in the filename and changes
+  them to ascii-characters in that case :bug:`2815`
+* Partially fix bash completion for subcommand names that contain hyphens.
+  :bug:`2836` :bug:`2837`
+  Thanks to :user:`jhermann`.
+* Really fix album replaygain calculation with gstreamer backend. :bug:`2846`
+* Avoid an error when doing a "no-op" move on non-existent files (i.e., moving
+  a file onto itself). :bug:`2863`
+
+For developers:
+
+* Plugins can now run their import stages *early*, before other plugins. Use
+  the ``early_import_stages`` list instead of plain ``import_stages`` to
+  request this behavior.
+  :bug:`2814`
 
 
 1.4.6 (December 21, 2017)

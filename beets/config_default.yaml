@@ -56,6 +56,7 @@ per_disc_numbering: no
 verbose: 0
 terminal_encoding:
 original_date: no
+artist_credit: no
 id3v23: no
 va_name: "Various Artists"
 
@@ -127,7 +128,7 @@ match:
         original_year: no
     ignored: []
     required: []
-    ignored_media: ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD', 'VCD', 'SVCD', 'UMD', 'VHS']
+    ignored_media: []
     ignore_video_tracks: yes
     track_length_grace: 10
     track_length_max: 30

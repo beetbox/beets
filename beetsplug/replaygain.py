@@ -613,16 +613,6 @@ class GStreamerBackend(Backend):
 
         self._file = self._files.pop(0)
 
-        # Disconnect the decodebin element from the pipeline, set its
-        # state to READY to to clear it.
-        self._decbin.unlink(self._conv)
-        self._decbin.set_state(self.Gst.State.READY)
-
-        # Set a new file on the filesrc element, can only be done in the
-        # READY state
-        self._src.set_state(self.Gst.State.READY)
-        self._src.set_property("location", py3_path(syspath(self._file.path)))
-
         # Ensure the filesrc element received the paused state of the
         # pipeline in a blocking manner
         self._src.sync_state_with_parent()
@@ -633,9 +623,18 @@ class GStreamerBackend(Backend):
         self._decbin.sync_state_with_parent()
         self._decbin.get_state(self.Gst.CLOCK_TIME_NONE)
 
+        # Disconnect the decodebin element from the pipeline, set its
+        # state to READY to to clear it.
+        self._decbin.unlink(self._conv)
+        self._decbin.set_state(self.Gst.State.READY)
+
+        # Set a new file on the filesrc element, can only be done in the
+        # READY state
+        self._src.set_state(self.Gst.State.READY)
+        self._src.set_property("location", py3_path(syspath(self._file.path)))
+
         self._decbin.link(self._conv)
         self._pipe.set_state(self.Gst.State.READY)
-        self._pipe.set_state(self.Gst.State.PLAYING)
 
         return True
 
