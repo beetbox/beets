@@ -246,7 +246,7 @@ class DiscogsPlugin(BeetsPlugin):
         # Extract information for the optional AlbumInfo fields, if possible.
         va = result.data['artists'][0].get('name', '').lower() == 'various'
         year = result.data.get('year')
-        mediums = len(set(t.medium for t in tracks))
+        mediums = [t.medium for t in tracks]
         country = result.data.get('country')
         data_url = result.data.get('uri')
 
@@ -270,11 +270,11 @@ class DiscogsPlugin(BeetsPlugin):
         # `autotag.apply_metadata`, and set `medium_total`.
         for track in tracks:
             track.media = media
-            track.medium_total = mediums
+            track.medium_total = mediums.count(track.medium)
 
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
-                         day=None, label=label, mediums=mediums,
+                         day=None, label=label, mediums=len(set(mediums)),
                          artist_sort=None, releasegroup_id=None,
                          catalognum=catalogno, script=None, language=None,
                          country=country, albumstatus=None, media=media,
@@ -351,7 +351,7 @@ class DiscogsPlugin(BeetsPlugin):
             # are the track index, not the medium.
             medium_is_index = track.medium and not track.medium_index and (
                 len(track.medium) != 1 or
-                ord(track.medium) - 64 != medium_count + 1
+                ord(track.medium) - 64 != medium_count * sides_per_medium + side_count
             )
 
             if not medium_is_index and medium != track.medium:
