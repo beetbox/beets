@@ -274,10 +274,13 @@ class DiscogsPlugin(BeetsPlugin):
             # Invent our own track IDs as Discogs doesn't have them
             track.track_id = str(album_id) + "-" + track.track_alt
 
+        # Retrieve master release id (returns None if there isn't one)
+        master_id = result.data.get('master_id')
+
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
                          day=None, label=label, mediums=len(set(mediums)),
-                         artist_sort=None, releasegroup_id=None,
+                         artist_sort=None, releasegroup_id=master_id,
                          catalognum=catalogno, script=None, language=None,
                          country=country, albumstatus=None, media=media,
                          albumdisambig=None, artist_credit=None,
