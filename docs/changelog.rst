@@ -21,6 +21,9 @@ New features:
 * A new importer configuration ``artist_credit`` will tell beets to prefer the
   artist credit over the artist when autotagging.
   :bug:`1249`
+* A new interoperability plugin to automatically notify Sonos controllers to
+  update the music library once the beets library got updated.
+  Thanks to :user:`cgtobi`.
 
 
 Fixes:
