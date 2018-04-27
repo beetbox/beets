@@ -271,6 +271,8 @@ class DiscogsPlugin(BeetsPlugin):
         for track in tracks:
             track.media = media
             track.medium_total = mediums.count(track.medium)
+            # Invent our own track IDs as Discogs doesn't have them
+            track.track_id = str(album_id) + "-" + track.track_alt
 
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
