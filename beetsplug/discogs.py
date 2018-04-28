@@ -271,7 +271,8 @@ class DiscogsPlugin(BeetsPlugin):
         for track in tracks:
             track.media = media
             track.medium_total = mediums.count(track.medium)
-            # Invent our own track IDs as Discogs doesn't have them
+            # Discogs does not have track IDs. Invent our own IDs as proposed
+            # in #2336.
             track.track_id = str(album_id) + "-" + track.track_alt
 
         # Retrieve master release id (returns None if there isn't one)
