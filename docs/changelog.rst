@@ -24,6 +24,10 @@ New features:
 * A new interoperability plugin to automatically notify Sonos controllers to
   update the music library once the beets library got updated.
   Thanks to :user:`cgtobi`.
+* :doc:`/plugins/discogs`: The plugin now stores master release ids into
+  ``mb_releasegroupid`` as well as simulates track ids using release id
+  and tracklist positions. Track ids are stored in ``mb_trackid``. :bug:`#2336`
+  Thanks to :user:`dbogdanov`.
 
 
 Fixes:
@@ -35,7 +39,9 @@ Fixes:
   autotagger. Data tracks will always be ignored, but a new option
   ``ignore_video_tracks`` has been added to control if video tracks should be
   ignored or not. :bug:`1210`
-* :doc:`/plugins/replaygain`: Fix a corner-case with the ``bs1770gain`` backend where ReplayGain values were assigned to the wrong files. Now ``bs1770gain`` version 0.4.6 or later is required. :bug:`2777`
+* :doc:`/plugins/replaygain`: Fix a corner-case with the ``bs1770gain`` backend
+  where ReplayGain values were assigned to the wrong files. Now ``bs1770gain``
+  version 0.4.6 or later is required. :bug:`2777`
 * :doc:`/plugins/lyrics`: The plugin no longer crashes in the Genius source
   when BeautifulSoup is not found. Instead, it just logs a message and
   disables the source.
@@ -91,6 +97,13 @@ Fixes:
 * Really fix album replaygain calculation with gstreamer backend. :bug:`2846`
 * Avoid an error when doing a "no-op" move on non-existent files (i.e., moving
   a file onto itself). :bug:`2863`
+* :doc:`/plugins/discogs`: Fix ``medium`` and ``medium_index`` values which
+  were occasionally incorrect for releases with two-sided mediums. Fix
+  ``medium_total`` value. It now contains total number of tracks on the medium
+  to which a track belongs, not the total number of different mediums present
+  on the release. :bug:`2887`
+  Thanks to :user:`dbogdanov`.
+
 
 For developers:
 
