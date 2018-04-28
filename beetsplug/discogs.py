@@ -354,11 +354,11 @@ class DiscogsPlugin(BeetsPlugin):
             # new disc, when there is no medium_index and the ordinal of medium
             # is not sequential. For example, I, II, III, IV, V. Assume these
             # are the track index, not the medium.
-            # side_count is the number of mediums or medium sides (in the case
-            # of two-sided mediums) that were seen before
+            # side_count is the number of mediums or medium sides (in the case
+            # of two-sided mediums) that were seen before.
             medium_is_index = track.medium and not track.medium_index and (
                 len(track.medium) != 1 or
-                # Not witin standard incremental medium values (A, B, C, ...)
+                # Not within standard incremental medium values (A, B, C, ...).
                 ord(track.medium) - 64 != side_count + 1
             )
 
@@ -366,11 +366,11 @@ class DiscogsPlugin(BeetsPlugin):
                 side_count += 1
                 if sides_per_medium == 2:
                     if side_count % sides_per_medium:
-                        # Two-sided medium changed. Reset index_count
+                        # Two-sided medium changed. Reset index_count.
                         index_count = 0
                         medium_count += 1
                 else:
-                    # Medium changed. Reset index_count
+                    # Medium changed. Reset index_count.
                     medium_count += 1
                     index_count = 0
                 medium = track.medium

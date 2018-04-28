@@ -99,7 +99,7 @@ Fixes:
   a file onto itself). :bug:`2863`
 * :doc:`/plugins/discogs`: Fix ``medium`` and ``medium_index`` values which
   were occasionally incorrect for releases with two-sided mediums. Fix
-  'medium_total' value. It now contains total number of tracks on the medium
+  ``medium_total`` value. It now contains total number of tracks on the medium
   to which a track belongs, not the total number of different mediums present
   on the release. :bug:`2887`
   Thanks to :user:`dbogdanov`.
