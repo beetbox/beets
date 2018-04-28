@@ -347,30 +347,34 @@ class DiscogsPlugin(BeetsPlugin):
             # a 2-sided medium.
             if ''.join(m) in ascii_lowercase:
                 sides_per_medium = 2
-                side_count = 1  # Force for first item, where medium == None
 
         for track in tracks:
             # Handle special case where a different medium does not indicate a
             # new disc, when there is no medium_index and the ordinal of medium
             # is not sequential. For example, I, II, III, IV, V. Assume these
             # are the track index, not the medium.
+
+            # side_count is the number of mediums or medium sides (in the case 
+            # of two-sided mediums) that were seen before
             medium_is_index = track.medium and not track.medium_index and (
                 len(track.medium) != 1 or
-                ord(track.medium) - 64 != medium_count * sides_per_medium + side_count
+                # Not witin standard incremental medium values (A, B, C, ...)
+                ord(track.medium) - 64 != side_count + 1
             )
 
             if not medium_is_index and medium != track.medium:
-                if side_count < (sides_per_medium - 1):
-                    # Increment side count: side changed, but not medium.
-                    side_count += 1
-                    medium = track.medium
+                side_count += 1
+                if sides_per_medium == 2:
+                    if side_count % sides_per_medium:
+                        # Two-sided medium changed. Reset index_count
+                        index_count = 0
+                        medium_count += 1
                 else:
-                    # Increment medium_count and reset index_count and side
-                    # count when medium changes.
-                    medium = track.medium
+                    # Medium changed. Reset index_count
                     medium_count += 1
                     index_count = 0
-                    side_count = 0
+                medium = track.medium
+
             index_count += 1
             medium_count = 1 if medium_count == 0 else medium_count
             track.medium, track.medium_index = medium_count, index_count
