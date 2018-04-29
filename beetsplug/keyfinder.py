@@ -48,7 +48,7 @@ class KeyFinderPlugin(BeetsPlugin):
         self.find_key(lib.items(ui.decargs(args)), write=ui.should_write())
 
     def imported(self, session, task):
-        self.find_key(task.items)
+        self.find_key(task.imported_items())
 
     def find_key(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
