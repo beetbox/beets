@@ -281,6 +281,10 @@ def album_info(release):
             continue
 
         all_tracks = medium['track-list']
+        if 'data-track-list' in medium:
+            all_tracks += medium['data-track-list']
+        track_count = len(all_tracks)
+
         if 'pregap' in medium:
             all_tracks.insert(0, medium['pregap'])
 
@@ -302,7 +306,7 @@ def album_info(release):
                 index,
                 int(medium['position']),
                 int(track['position']),
-                len(medium['track-list']),
+                track_count,
             )
             ti.disctitle = disctitle
             ti.media = format
