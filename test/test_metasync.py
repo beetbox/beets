@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Tom Jaspers.
+# Copyright 2016, Tom Jaspers.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -11,14 +12,18 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
+
+from __future__ import division, absolute_import, print_function
+
 import os
 import platform
 import time
 from datetime import datetime
 from beets.library import Item
+from beets.util import py3_path
+import unittest
 
 from test import _common
-from test._common import unittest
 from test.helper import TestHelper
 
 
@@ -32,9 +37,9 @@ def _is_windows():
 
 class MetaSyncTest(_common.TestCase, TestHelper):
     itunes_library_unix = os.path.join(_common.RSRC,
-                                       'itunes_library_unix.xml')
+                                       b'itunes_library_unix.xml')
     itunes_library_windows = os.path.join(_common.RSRC,
-                                          'itunes_library_windows.xml')
+                                          b'itunes_library_windows.xml')
 
     def setUp(self):
         self.setup_beets()
@@ -44,10 +49,10 @@ class MetaSyncTest(_common.TestCase, TestHelper):
 
         if _is_windows():
             self.config['metasync']['itunes']['library'] = \
-                self.itunes_library_windows
+                py3_path(self.itunes_library_windows)
         else:
             self.config['metasync']['itunes']['library'] = \
-                self.itunes_library_unix
+                py3_path(self.itunes_library_unix)
 
         self._set_up_data()
 
@@ -119,5 +124,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

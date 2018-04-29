@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Bruno Cauet
+# Copyright 2016, Bruno Cauet
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,17 +13,17 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os.path
 from mock import Mock, patch, call
 from tempfile import mkdtemp
 from shutil import rmtree
+import unittest
 
-from test._common import unittest
 from test.helper import TestHelper
 
+from beets.util import bytestring_path
 from beetsplug.thumbnails import (ThumbnailsPlugin, NORMAL_DIR, LARGE_DIR,
                                   write_metadata_im, write_metadata_pil,
                                   PathlibURI, GioURI)
@@ -37,13 +38,13 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
     @patch('beetsplug.thumbnails.util')
     def test_write_metadata_im(self, mock_util):
-        metadata = {"a": "A", "b": "B"}
+        metadata = {"a": u"A", "b": u"B"}
         write_metadata_im("foo", metadata)
         try:
-            command = "convert foo -set a A -set b B foo".split(' ')
+            command = u"convert foo -set a A -set b B foo".split(' ')
             mock_util.command_output.assert_called_once_with(command)
         except AssertionError:
-            command = "convert foo -set b B -set a A foo".split(' ')
+            command = u"convert foo -set b B -set a A foo".split(' ')
             mock_util.command_output.assert_called_once_with(command)
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
@@ -58,16 +59,16 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         plugin.add_tags(album, b"/path/to/thumbnail")
 
-        metadata = {"Thumb::URI": b"COVER_URI",
-                    "Thumb::MTime": "12345"}
+        metadata = {"Thumb::URI": "COVER_URI",
+                    "Thumb::MTime": u"12345"}
         plugin.write_metadata.assert_called_once_with(b"/path/to/thumbnail",
                                                       metadata)
         mock_stat.assert_called_once_with(album.artpath)
 
     @patch('beetsplug.thumbnails.os')
     @patch('beetsplug.thumbnails.ArtResizer')
-    @patch('beetsplug.thumbnails.has_IM')
-    @patch('beetsplug.thumbnails.has_PIL')
+    @patch('beetsplug.thumbnails.get_im_version')
+    @patch('beetsplug.thumbnails.get_pil_version')
     @patch('beetsplug.thumbnails.GioURI')
     def test_check_local_ok(self, mock_giouri, mock_pil, mock_im,
                             mock_artresizer, mock_os):
@@ -84,7 +85,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
                 return False
             if path == LARGE_DIR:
                 return True
-            raise ValueError("unexpected path {0!r}".format(path))
+            raise ValueError(u"unexpected path {0!r}".format(path))
         mock_os.path.exists = exists
         plugin = ThumbnailsPlugin()
         mock_os.makedirs.assert_called_once_with(NORMAL_DIR)
@@ -114,7 +115,8 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         self.assertEqual(ThumbnailsPlugin().get_uri, giouri_inst.uri)
 
         giouri_inst.available = False
-        self.assertEqual(ThumbnailsPlugin().get_uri.im_class, PathlibURI)
+        self.assertEqual(ThumbnailsPlugin().get_uri.__self__.__class__,
+                         PathlibURI)
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     @patch('beetsplug.thumbnails.ArtResizer')
@@ -133,7 +135,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         album = Mock(artpath=path_to_art)
         mock_util.syspath.side_effect = lambda x: x
-        plugin.thumbnail_file_name = Mock(return_value="md5")
+        plugin.thumbnail_file_name = Mock(return_value=b'md5')
         mock_os.path.exists.return_value = False
 
         def os_stat(target):
@@ -142,7 +144,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
             elif target == path_to_art:
                 return Mock(st_mtime=2)
             else:
-                raise ValueError("invalid target {0}".format(target))
+                raise ValueError(u"invalid target {0}".format(target))
         mock_os.stat.side_effect = os_stat
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
@@ -168,7 +170,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
             elif target == path_to_art:
                 return Mock(st_mtime=2)
             else:
-                raise ValueError("invalid target {0}".format(target))
+                raise ValueError(u"invalid target {0}".format(target))
         mock_os.stat.side_effect = os_stat
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
@@ -182,7 +184,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     def test_make_dolphin_cover_thumbnail(self, _):
         plugin = ThumbnailsPlugin()
-        tmp = mkdtemp()
+        tmp = bytestring_path(mkdtemp())
         album = Mock(path=tmp,
                      artpath=os.path.join(tmp, b"cover.jpg"))
         plugin.make_dolphin_cover_thumbnail(album)
@@ -265,30 +267,25 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     @patch('beetsplug.thumbnails.BaseDirectory')
     def test_thumbnail_file_name(self, mock_basedir):
         plug = ThumbnailsPlugin()
-        plug.get_uri = Mock(return_value="file:///my/uri")
-        self.assertEqual(plug.thumbnail_file_name("idontcare"),
+        plug.get_uri = Mock(return_value=u"file:///my/uri")
+        self.assertEqual(plug.thumbnail_file_name(b'idontcare'),
                          b"9488f5797fbe12ffb316d607dfd93d04.png")
 
     def test_uri(self):
         gio = GioURI()
-        plib = PathlibURI()
         if not gio.available:
-            self.skipTest("GIO library not found")
+            self.skipTest(u"GIO library not found")
 
-        self.assertEqual(gio.uri("/foo"), b"file:///")  # silent fail
-        self.assertEqual(gio.uri(b"/foo"), b"file:///foo")
-        self.assertEqual(gio.uri(b"/foo!"), b"file:///foo!")
-        self.assertEqual(plib.uri(b"/foo!"), b"file:///foo%21")
+        self.assertEqual(gio.uri(u"/foo"), u"file:///")  # silent fail
+        self.assertEqual(gio.uri(b"/foo"), u"file:///foo")
+        self.assertEqual(gio.uri(b"/foo!"), u"file:///foo!")
         self.assertEqual(
             gio.uri(b'/music/\xec\x8b\xb8\xec\x9d\xb4'),
-            b'file:///music/%EC%8B%B8%EC%9D%B4')
-        self.assertEqual(
-            plib.uri(b'/music/\xec\x8b\xb8\xec\x9d\xb4'),
-            b'file:///music/%EC%8B%B8%EC%9D%B4')
+            u'file:///music/%EC%8B%B8%EC%9D%B4')
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

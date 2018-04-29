@@ -71,11 +71,21 @@ These functions are built in to beets:
   For example, "café" becomes "cafe". Uses the mapping provided by the
   `unidecode module`_. See the :ref:`asciify-paths` configuration
   option.
-* ``%aunique{identifiers,disambiguators}``: Provides a unique string to
-  disambiguate similar albums in the database. See :ref:`aunique`, below.
+* ``%aunique{identifiers,disambiguators,brackets}``: Provides a unique string
+  to disambiguate similar albums in the database. See :ref:`aunique`, below.
 * ``%time{date_time,format}``: Return the date and time in any format accepted
   by `strftime`_. For example, to get the year some music was added to your
   library, use ``%time{$added,%Y}``.
+* ``%first{text}``: Returns the first item, separated by ``;`` (a semicolon
+  followed by a space).
+  You can use ``%first{text,count,skip}``, where ``count`` is the number of
+  items (default 1) and ``skip`` is number to skip (default 0). You can also use
+  ``%first{text,count,skip,sep,join}`` where ``sep`` is the separator, like
+  ``;`` or ``/`` and join is the text to concatenate the items.
+* ``%ifdef{field}``, ``%ifdef{field,truetext}`` or
+  ``%ifdef{field,truetext,falsetext}``: If ``field`` exists, then return
+  ``truetext`` or ``field`` (default). Otherwise, returns ``falsetext``.
+  The ``field`` should be entered without ``$``.
 
 .. _unidecode module: http://pypi.python.org/pypi/Unidecode
 .. _strftime: http://docs.python.org/2/library/time.html#time.strftime
@@ -102,20 +112,26 @@ will expand to "[2008]" for one album and "[2010]" for the other. The
 function detects that you have two albums with the same artist and title but
 that they have different release years.
 
-For full flexibility, the ``%aunique`` function takes two arguments, each of
-which are whitespace-separated lists of album field names: a set of
-*identifiers* and a set of *disambiguators*. Any group of albums with identical
-values for all the identifiers will be considered "duplicates". Then, the
-function tries each disambiguator field, looking for one that distinguishes each
-of the duplicate albums from each other. The first such field is used as the
-result for ``%aunique``. If no field suffices, an arbitrary number is used to
-distinguish the two albums.
+For full flexibility, the ``%aunique`` function takes three arguments. The
+first two are whitespace-separated lists of album field names: a set of
+*identifiers* and a set of *disambiguators*. The third argument is a pair of
+characters used to surround the disambiguator.
+
+Any group of albums with identical values for all the identifiers will be
+considered "duplicates". Then, the function tries each disambiguator field,
+looking for one that distinguishes each of the duplicate albums from each
+other. The first such field is used as the result for ``%aunique``. If no field
+suffices, an arbitrary number is used to distinguish the two albums.
 
 The default identifiers are ``albumartist album`` and the default disambiguators
 are ``albumtype year label catalognum albumdisambig``. So you can get reasonable
 disambiguation behavior if you just use ``%aunique{}`` with no parameters in
 your path forms (as in the default path formats), but you can customize the
 disambiguation if, for example, you include the year by default in path formats.
+
+The default characters used as brackets are ``[]``. To change this, provide a
+third argument to the ``%aunique`` function consisting of two characters: the left
+and right brackets. Or, to turn off bracketing entirely, leave argument blank.
 
 One caveat: When you import an album that is named identically to one already in
 your library, the *first* album—the one already in your library— will not
@@ -132,11 +148,17 @@ Syntax Details
 The characters ``$``, ``%``, ``{``, ``}``, and ``,`` are "special" in the path
 template syntax. This means that, for example, if you want a ``%`` character to
 appear in your paths, you'll need to be careful that you don't accidentally
-write a function call. To escape any of these characters (except ``{``), prefix
-it with a ``$``.  For example, ``$$`` becomes ``$``; ``$%`` becomes ``%``, etc.
-The only exception is ``${``, which is ambiguous with the variable reference
-syntax (like ``${title}``). To insert a ``{`` alone, it's always sufficient to
-just type ``{``.
+write a function call. To escape any of these characters (except ``{``, and
+``,`` outside a function argument), prefix it with a ``$``.  For example,
+``$$`` becomes ``$``; ``$%`` becomes ``%``, etc. The only exceptions are:
+
+* ``${``, which is ambiguous with the variable reference syntax (like
+  ``${title}``). To insert a ``{`` alone, it's always sufficient to just type
+  ``{``.
+* commas are used as argument separators in function calls. Inside of a
+  function's argument, use ``$,`` to get a literal ``,`` character. Outside of
+  any function argument, escaping is not necessary: ``,`` by itself will
+  produce ``,`` in the output.
 
 If a value or function is undefined, the syntax is simply left unreplaced. For
 example, if you write ``$foo`` in a path template, this will yield ``$foo`` in

@@ -1,20 +1,29 @@
 version: "{build}"
 build: off
 deploy: off
+skip_commits:
+    # add [appveyor skip] as an alias for [skip appveyor] (like [ci skip])
+    message: /\[appveyor skip\]/
 
 environment:
+    # Undocumented feature of nose-show-skipped.
+    NOSE_SHOW_SKIPPED: 1
+
     matrix:
-        - PYTHON: "C:\\Python27"
-          TOXENV: py27
+        - PYTHON: C:\Python27
+          TOX_ENV: py27-test
+        - PYTHON: C:\Python35
+          TOX_ENV: py35-test
+        - PYTHON: C:\Python36
+          TOX_ENV: py36-test
 
 # Install Tox for running tests.
 install:
+    - cinst imagemagick -y
+    # TODO: remove --allow-empty-checksums when unrar offers a proper checksum
+    - cinst unrar -y --allow-empty-checksums
     - "%PYTHON%/Scripts/pip.exe install tox"
+    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
 test_script:
-    - "%PYTHON%/Scripts/tox.exe"
-
-# Allow all failures for now: the tests don't yet pass!
-matrix:
-    allow_failures:
-        - TOXENV: py27
+    - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV%"

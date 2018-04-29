@@ -66,9 +66,9 @@ file. The available options are:
   Default: ``no``.
 
 Note: ``compare_threshold`` option requires `ImageMagick`_, and ``maxwidth``
-requires either `ImageMagick`_ or `PIL`_.
+requires either `ImageMagick`_ or `Pillow`_.
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 .. _PHASH: http://www.fmwconcepts.com/misc_tests/perceptual_hash_test_results_510/
 
@@ -81,7 +81,8 @@ embedded album art:
 * ``beet embedart [-f IMAGE] QUERY``: embed images into the every track on the
   albums matching the query. If the ``-f`` (``--file``) option is given, then
   use a specific image file from the filesystem; otherwise, each album embeds
-  its own currently associated album art.
+  its own currently associated album art. The command prompts for confirmation
+  before making the change unless you specify the ``-y`` (``--yes``) option.
 
 * ``beet extractart [-a] [-n FILE] QUERY``: extracts the images for all albums
   matching the query. The images are placed inside the album folder. You can
@@ -98,4 +99,5 @@ embedded album art:
   automatically.
 
 * ``beet clearart QUERY``: removes all embedded images from all items matching
-  the query. (Use with caution!)
+  the query. The command prompts for confirmation before making the change
+  unless you specify the ``-y`` (``--yes``) option.

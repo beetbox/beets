@@ -1,6 +1,6 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,10 +15,63 @@
 
 """Test module for file ui/__init__.py
 """
+
+from __future__ import division, absolute_import, print_function
+
+import unittest
 from test import _common
-from test._common import unittest
 
 from beets import ui
+
+
+class InputMethodsTest(_common.TestCase):
+    def setUp(self):
+        super(InputMethodsTest, self).setUp()
+        self.io.install()
+
+    def _print_helper(self, s):
+        print(s)
+
+    def _print_helper2(self, s, prefix):
+        print(prefix, s)
+
+    def test_input_select_objects(self):
+        full_items = ['1', '2', '3', '4', '5']
+
+        # Test no
+        self.io.addinput('n')
+        items = ui.input_select_objects(
+            "Prompt", full_items, self._print_helper)
+        self.assertEqual(items, [])
+
+        # Test yes
+        self.io.addinput('y')
+        items = ui.input_select_objects(
+            "Prompt", full_items, self._print_helper)
+        self.assertEqual(items, full_items)
+
+        # Test selective 1
+        self.io.addinput('s')
+        self.io.addinput('n')
+        self.io.addinput('y')
+        self.io.addinput('n')
+        self.io.addinput('y')
+        self.io.addinput('n')
+        items = ui.input_select_objects(
+            "Prompt", full_items, self._print_helper)
+        self.assertEqual(items, ['2', '4'])
+
+        # Test selective 2
+        self.io.addinput('s')
+        self.io.addinput('y')
+        self.io.addinput('y')
+        self.io.addinput('n')
+        self.io.addinput('y')
+        self.io.addinput('n')
+        items = ui.input_select_objects(
+            "Prompt", full_items,
+            lambda s: self._print_helper2(s, "Prefix"))
+        self.assertEqual(items, ['1', '2', '4'])
 
 
 class InitTest(_common.LibTestCase):
@@ -63,5 +116,5 @@ class InitTest(_common.LibTestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

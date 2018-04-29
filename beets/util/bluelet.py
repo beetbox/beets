@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Extremely simple pure-Python implementation of coroutine-style
 asynchronous socket I/O. Inspired by, but inferior to, Eventlet.
 Bluelet can also be thought of as a less-terrible replacement for
@@ -5,9 +7,9 @@ asyncore.
 
 Bluelet: easy concurrency without all the messy parallelism.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
+import six
 import socket
 import select
 import sys
@@ -16,20 +18,6 @@ import errno
 import traceback
 import time
 import collections
-
-
-# A little bit of "six" (Python 2/3 compatibility): cope with PEP 3109 syntax
-# changes.
-
-PY3 = sys.version_info[0] == 3
-if PY3:
-    def _reraise(typ, exc, tb):
-        raise exc.with_traceback(tb)
-else:
-    exec("""
-def _reraise(typ, exc, tb):
-    raise typ, exc, tb
-""")
 
 
 # Basic events used for thread scheduling.
@@ -213,7 +201,7 @@ class ThreadException(Exception):
         self.exc_info = exc_info
 
     def reraise(self):
-        _reraise(self.exc_info[0], self.exc_info[1], self.exc_info[2])
+        six.reraise(self.exc_info[0], self.exc_info[1], self.exc_info[2])
 
 
 SUSPENDED = Event()  # Special sentinel placeholder for suspended threads.
@@ -281,7 +269,7 @@ def run(root_coro):
         except StopIteration:
             # Thread is done.
             complete_thread(coro, None)
-        except:
+        except BaseException:
             # Thread raised some other exception.
             del threads[coro]
             raise ThreadException(coro, sys.exc_info())
@@ -378,7 +366,7 @@ def run(root_coro):
                 exit_te = te
                 break
 
-        except:
+        except BaseException:
             # For instance, KeyboardInterrupt during select(). Raise
             # into root thread and terminate others.
             threads = {root_coro: ExceptionEvent(sys.exc_info())}
@@ -553,7 +541,7 @@ def spawn(coro):
     and child coroutines run concurrently.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError('%s is not a coroutine' % coro)
+        raise ValueError(u'%s is not a coroutine' % coro)
     return SpawnEvent(coro)
 
 
@@ -563,7 +551,7 @@ def call(coro):
     returns a value using end(), then this event returns that value.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError('%s is not a coroutine' % coro)
+        raise ValueError(u'%s is not a coroutine' % coro)
     return DelegationEvent(coro)
 
 

@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,10 +15,11 @@
 
 """Test the "pipeline.py" restricted parallel programming library.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
-from test._common import unittest
+import six
+import unittest
+
 from beets.util import pipeline
 
 
@@ -133,8 +135,11 @@ class ExceptionTest(unittest.TestCase):
         pl = pipeline.Pipeline((_produce(), _exc_work()))
         pull = pl.pull()
         for i in range(3):
-            pull.next()
-        self.assertRaises(TestException, pull.next)
+            next(pull)
+        if six.PY2:
+            self.assertRaises(TestException, pull.next)
+        else:
+            self.assertRaises(TestException, pull.__next__)
 
 
 class ParallelExceptionTest(unittest.TestCase):
@@ -240,5 +245,5 @@ class StageDecoratorTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

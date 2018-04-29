@@ -1,5 +1,6 @@
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+# -*- coding: utf-8 -*-
+
+from __future__ import division, absolute_import, print_function
 
 import re
 import webbrowser
@@ -39,17 +40,17 @@ class SpotifyPlugin(BeetsPlugin):
                 self.output_results(results)
         spotify_cmd = ui.Subcommand(
             'spotify',
-            help='build a Spotify playlist'
+            help=u'build a Spotify playlist'
         )
         spotify_cmd.parser.add_option(
-            '-m', '--mode', action='store',
-            help='"open" to open Spotify with playlist, '
-                 '"list" to print (default)'
+            u'-m', u'--mode', action='store',
+            help=u'"open" to open Spotify with playlist, '
+                 u'"list" to print (default)'
         )
         spotify_cmd.parser.add_option(
-            '-f', '--show-failures', action='store_true',
-            help='list tracks that did not match a Spotify ID',
-            dest='show_failures',
+            u'-f', u'--show-failures',
+            action='store_true', dest='show_failures',
+            help=u'list tracks that did not match a Spotify ID'
         )
         spotify_cmd.func = queries
         return [spotify_cmd]
@@ -62,8 +63,8 @@ class SpotifyPlugin(BeetsPlugin):
             self.config['show_failures'].set(True)
 
         if self.config['mode'].get() not in ['list', 'open']:
-            self._log.warn(u'{0} is not a valid mode',
-                           self.config['mode'].get())
+            self._log.warning(u'{0} is not a valid mode',
+                              self.config['mode'].get())
             return False
 
         self.opts = opts
@@ -123,9 +124,8 @@ class SpotifyPlugin(BeetsPlugin):
             # Apply market filter if requested
             region_filter = self.config['region_filter'].get()
             if region_filter:
-                r_data = filter(
-                    lambda x: region_filter in x['available_markets'], r_data
-                )
+                r_data = [x for x in r_data if region_filter
+                          in x['available_markets']]
 
             # Simplest, take the first result
             chosen_result = None
@@ -154,15 +154,15 @@ class SpotifyPlugin(BeetsPlugin):
                     self._log.info(u'track: {0}', track)
                 self._log.info(u'')
             else:
-                self._log.warn(u'{0} track(s) did not match a Spotify ID;\n'
-                               u'use --show-failures to display',
-                               failure_count)
+                self._log.warning(u'{0} track(s) did not match a Spotify ID;\n'
+                                  u'use --show-failures to display',
+                                  failure_count)
 
         return results
 
     def output_results(self, results):
         if results:
-            ids = map(lambda x: x['id'], results)
+            ids = [x['id'] for x in results]
             if self.config['mode'].get() == "open":
                 self._log.info(u'Attempting to open Spotify with playlist')
                 spotify_url = self.playlist_partial + ",".join(ids)
@@ -170,6 +170,6 @@ class SpotifyPlugin(BeetsPlugin):
 
             else:
                 for item in ids:
-                    print(unicode.encode(self.open_url + item))
+                    print(self.open_url + item)
         else:
-            self._log.warn(u'No Spotify tracks found from beets query')
+            self._log.warning(u'No Spotify tracks found from beets query')

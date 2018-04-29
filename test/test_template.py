@@ -1,6 +1,6 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,12 +15,10 @@
 
 """Tests for template engine.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
-import warnings
-
-from test._common import unittest
+import unittest
+import six
 from beets.util import functemplate
 
 
@@ -31,7 +29,7 @@ def _normexpr(expr):
     """
     textbuf = []
     for part in expr.parts:
-        if isinstance(part, basestring):
+        if isinstance(part, six.string_types):
             textbuf.append(part)
         else:
             if textbuf:
@@ -213,12 +211,26 @@ class ParseTest(unittest.TestCase):
         self._assert_call(arg_parts[0], u"bar", 1)
         self.assertEqual(list(_normexpr(arg_parts[0].args[0])), [u'baz'])
 
-    def test_fail_on_utf8(self):
-        parts = u'é'.encode('utf8')
-        warnings.simplefilter("ignore")
-        with self.assertRaises(UnicodeDecodeError):
-            functemplate._parse(parts)
-        warnings.simplefilter("default")
+    def test_sep_before_call_two_args(self):
+        parts = list(_normparse(u'hello, %foo{bar,baz}'))
+        self.assertEqual(len(parts), 2)
+        self.assertEqual(parts[0], u'hello, ')
+        self._assert_call(parts[1], u"foo", 2)
+        self.assertEqual(list(_normexpr(parts[1].args[0])), [u'bar'])
+        self.assertEqual(list(_normexpr(parts[1].args[1])), [u'baz'])
+
+    def test_sep_with_symbols(self):
+        parts = list(_normparse(u'hello,$foo,$bar'))
+        self.assertEqual(len(parts), 4)
+        self.assertEqual(parts[0], u'hello,')
+        self._assert_symbol(parts[1], u"foo")
+        self.assertEqual(parts[2], u',')
+        self._assert_symbol(parts[3], u"bar")
+
+    def test_newline_at_end(self):
+        parts = list(_normparse(u'foo\n'))
+        self.assertEqual(len(parts), 1)
+        self.assertEqual(parts[0], u'foo\n')
 
 
 class EvalTest(unittest.TestCase):
@@ -228,7 +240,7 @@ class EvalTest(unittest.TestCase):
             u'baz': u'BaR',
         }
         functions = {
-            u'lower': unicode.lower,
+            u'lower': six.text_type.lower,
             u'len': len,
         }
         return functemplate.Template(template).substitute(values, functions)
@@ -259,7 +271,7 @@ class EvalTest(unittest.TestCase):
 
     def test_function_call_exception(self):
         res = self._eval(u"%lower{a,b,c,d,e}")
-        self.assertTrue(isinstance(res, basestring))
+        self.assertTrue(isinstance(res, six.string_types))
 
     def test_function_returning_integer(self):
         self.assertEqual(self._eval(u"%len{foo}"), u"3")
@@ -277,5 +289,5 @@ class EvalTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

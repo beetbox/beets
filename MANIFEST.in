@@ -1,6 +1,8 @@
 # Include tests (but avoid including *.pyc, etc.)
 prune test
 recursive-include test/rsrc *
+recursive-exclude test/rsrc *.pyc
+recursive-exclude test/rsrc *.pyo
 include test/*.py
 
 # Include relevant text files.
@@ -29,3 +31,6 @@ include beets/config_default.yaml
 
 # Shell completion template
 include beets/ui/completion_base.sh
+
+# Include extra bits
+recursive-include extra *

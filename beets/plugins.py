@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Support for beets plugins."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import inspect
 import traceback
@@ -27,8 +27,9 @@ from functools import wraps
 import beets
 from beets import logging
 from beets import mediafile
+import six
 
-PLUGIN_NAMESPACE = b'beetsplug'
+PLUGIN_NAMESPACE = 'beetsplug'
 
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
@@ -54,10 +55,10 @@ class PluginLogFilter(logging.Filter):
 
     def filter(self, record):
         if hasattr(record.msg, 'msg') and isinstance(record.msg.msg,
-                                                     basestring):
+                                                     six.string_types):
             # A _LogMessage from our hacked-up Logging replacement.
             record.msg.msg = self.prefix + record.msg.msg
-        elif isinstance(record.msg, basestring):
+        elif isinstance(record.msg, six.string_types):
             record.msg = self.prefix + record.msg
         return True
 
@@ -72,7 +73,7 @@ class BeetsPlugin(object):
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
-        self.name = name or self.__module__.decode('utf8').split('.')[-1]
+        self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
         if not self.template_funcs:
             self.template_funcs = {}
@@ -80,6 +81,7 @@ class BeetsPlugin(object):
             self.template_fields = {}
         if not self.album_template_fields:
             self.album_template_fields = {}
+        self.early_import_stages = []
         self.import_stages = []
 
         self._log = log.getChild(self.name)
@@ -93,6 +95,22 @@ class BeetsPlugin(object):
         """
         return ()
 
+    def _set_stage_log_level(self, stages):
+        """Adjust all the stages in `stages` to WARNING logging level.
+        """
+        return [self._set_log_level_and_params(logging.WARNING, stage)
+                for stage in stages]
+
+    def get_early_import_stages(self):
+        """Return a list of functions that should be called as importer
+        pipelines stages early in the pipeline.
+
+        The callables are wrapped versions of the functions in
+        `self.early_import_stages`. Wrapping provides some bookkeeping for the
+        plugin: specifically, the logging level is adjusted to WARNING.
+        """
+        return self._set_stage_log_level(self.early_import_stages)
+
     def get_import_stages(self):
         """Return a list of functions that should be called as importer
         pipelines stages.
@@ -101,8 +119,7 @@ class BeetsPlugin(object):
         `self.import_stages`. Wrapping provides some bookkeeping for the
         plugin: specifically, the logging level is adjusted to WARNING.
         """
-        return [self._set_log_level_and_params(logging.WARNING, import_stage)
-                for import_stage in self.import_stages]
+        return self._set_stage_log_level(self.import_stages)
 
     def _set_log_level_and_params(self, base_log_level, func):
         """Wrap `func` to temporarily set this plugin's logger level to
@@ -247,26 +264,25 @@ def load_plugins(names=()):
     BeetsPlugin subclasses desired.
     """
     for name in names:
-        bname = name.encode('utf8')
-        modname = b'%s.%s' % (PLUGIN_NAMESPACE, bname)
+        modname = '{0}.{1}'.format(PLUGIN_NAMESPACE, name)
         try:
             try:
                 namespace = __import__(modname, None, None)
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
-                    log.warn(u'** plugin {0} not found', name)
+                    log.warning(u'** plugin {0} not found', name)
                 else:
                     raise
             else:
-                for obj in getattr(namespace, bname).__dict__.values():
+                for obj in getattr(namespace, name).__dict__.values():
                     if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
                             and obj != BeetsPlugin and obj not in _classes:
                         _classes.add(obj)
 
-        except:
-            log.warn(
-                '** error loading plugin {}:\n{}',
+        except Exception:
+            log.warning(
+                u'** error loading plugin {}:\n{}',
                 name,
                 traceback.format_exc(),
             )
@@ -313,7 +329,7 @@ def queries():
 
 def types(model_cls):
     # Gives us `item_types` and `album_types`
-    attr_name = b'{0}_types'.format(model_cls.__name__.lower())
+    attr_name = '{0}_types'.format(model_cls.__name__.lower())
     types = {}
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
@@ -321,8 +337,8 @@ def types(model_cls):
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictException(
                     u'Plugin {0} defines flexible field {1} '
-                    'which has already been defined with '
-                    'another type.'.format(plugin.name, field)
+                    u'which has already been defined with '
+                    u'another type.'.format(plugin.name, field)
                 )
         types.update(plugin_types)
     return types
@@ -351,41 +367,35 @@ def album_distance(items, album_info, mapping):
 def candidates(items, artist, album, va_likely):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
-    out = []
     for plugin in find_plugins():
-        out.extend(plugin.candidates(items, artist, album, va_likely))
-    return out
+        for candidate in plugin.candidates(items, artist, album, va_likely):
+            yield candidate
 
 
 def item_candidates(item, artist, title):
     """Gets MusicBrainz candidates for an item from the plugins.
     """
-    out = []
     for plugin in find_plugins():
-        out.extend(plugin.item_candidates(item, artist, title))
-    return out
+        for item_candidate in plugin.item_candidates(item, artist, title):
+            yield item_candidate
 
 
 def album_for_id(album_id):
     """Get AlbumInfo objects for a given ID string.
     """
-    out = []
     for plugin in find_plugins():
-        res = plugin.album_for_id(album_id)
-        if res:
-            out.append(res)
-    return out
+        album = plugin.album_for_id(album_id)
+        if album:
+            yield album
 
 
 def track_for_id(track_id):
     """Get TrackInfo objects for a given ID string.
     """
-    out = []
     for plugin in find_plugins():
-        res = plugin.track_for_id(track_id)
-        if res:
-            out.append(res)
-    return out
+        track = plugin.track_for_id(track_id)
+        if track:
+            yield track
 
 
 def template_funcs():
@@ -397,6 +407,14 @@ def template_funcs():
         if plugin.template_funcs:
             funcs.update(plugin.template_funcs)
     return funcs
+
+
+def early_import_stages():
+    """Get a list of early import stage functions defined by plugins."""
+    stages = []
+    for plugin in find_plugins():
+        stages += plugin.get_early_import_stages()
+    return stages
 
 
 def import_stages():
@@ -484,7 +502,64 @@ def sanitize_choices(choices, choices_all):
     others = [x for x in choices_all if x not in choices]
     res = []
     for s in choices:
-        if s in list(choices_all) + ['*']:
-            if not (s in seen or seen.add(s)):
-                res.extend(list(others) if s == '*' else [s])
+        if s not in seen:
+            if s in list(choices_all):
+                res.append(s)
+            elif s == '*':
+                res.extend(others)
+        seen.add(s)
     return res
+
+
+def sanitize_pairs(pairs, pairs_all):
+    """Clean up a single-element mapping configuration attribute as returned
+    by `confit`'s `Pairs` template: keep only two-element tuples present in
+    pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
+    wildcards while keeping the original order. Note that ('*', '*') and
+    ('*', 'whatever') have the same effect.
+
+    For example,
+
+    >>> sanitize_pairs(
+    ...     [('foo', 'baz bar'), ('key', '*'), ('*', '*')],
+    ...     [('foo', 'bar'), ('foo', 'baz'), ('foo', 'foobar'),
+    ...      ('key', 'value')]
+    ...     )
+    [('foo', 'baz'), ('foo', 'bar'), ('key', 'value'), ('foo', 'foobar')]
+    """
+    pairs_all = list(pairs_all)
+    seen = set()
+    others = [x for x in pairs_all if x not in pairs]
+    res = []
+    for k, values in pairs:
+        for v in values.split():
+            x = (k, v)
+            if x in pairs_all:
+                if x not in seen:
+                    seen.add(x)
+                    res.append(x)
+            elif k == '*':
+                new = [o for o in others if o not in seen]
+                seen.update(new)
+                res.extend(new)
+            elif v == '*':
+                new = [o for o in others if o not in seen and o[0] == k]
+                seen.update(new)
+                res.extend(new)
+    return res
+
+
+def notify_info_yielded(event):
+    """Makes a generator send the event 'event' every time it yields.
+    This decorator is supposed to decorate a generator, but any function
+    returning an iterable should work.
+    Each yielded value is passed to plugins using the 'info' parameter of
+    'send'.
+    """
+    def decorator(generator):
+        def decorated(*args, **kwargs):
+            for v in generator(*args, **kwargs):
+                send(event, info=v)
+                yield v
+        return decorated
+    return decorator

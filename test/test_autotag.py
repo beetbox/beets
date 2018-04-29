@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,14 +15,13 @@
 
 """Tests for autotagging functionality.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 import copy
+import unittest
 
 from test import _common
-from test._common import unittest
 from beets import autotag
 from beets.autotag import match
 from beets.autotag.hooks import Distance, string_dist
@@ -47,7 +47,7 @@ class PluralityTest(_common.TestCase):
     def test_plurality_conflict(self):
         objs = [1, 1, 2, 2, 3]
         obj, freq = plurality(objs)
-        self.assert_(obj in (1, 2))
+        self.assertTrue(obj in (1, 2))
         self.assertEqual(freq, 2)
 
     def test_plurality_empty_sequence_raises_error(self):
@@ -611,17 +611,18 @@ class AssignmentTest(unittest.TestCase):
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
         self.assertEqual(extra_tracks, [])
-        for item, info in mapping.iteritems():
+        for item, info in mapping.items():
             self.assertEqual(items.index(item), trackinfo.index(info))
 
 
 class ApplyTestUtil(object):
-    def _apply(self, info=None, per_disc_numbering=False):
+    def _apply(self, info=None, per_disc_numbering=False, artist_credit=False):
         info = info or self.info
         mapping = {}
         for i, t in zip(self.items, info.tracks):
             mapping[i] = t
         config['per_disc_numbering'] = per_disc_numbering
+        config['artist_credit'] = artist_credit
         autotag.apply_metadata(info, mapping)
 
 
@@ -635,7 +636,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         trackinfo = []
         trackinfo.append(TrackInfo(
             u'oneNew',
-            'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
             medium=1,
             medium_index=1,
             medium_total=1,
@@ -645,7 +646,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         ))
         trackinfo.append(TrackInfo(
             u'twoNew',
-            '40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
             medium=2,
             medium_index=1,
             index=2,
@@ -705,6 +706,24 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self._apply(per_disc_numbering=True)
         self.assertEqual(self.items[0].tracktotal, 1)
         self.assertEqual(self.items[1].tracktotal, 1)
+
+    def test_artist_credit(self):
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[0].artist, 'trackArtistCredit')
+        self.assertEqual(self.items[1].artist, 'albumArtistCredit')
+        self.assertEqual(self.items[0].albumartist, 'albumArtistCredit')
+        self.assertEqual(self.items[1].albumartist, 'albumArtistCredit')
+
+    def test_artist_credit_prefers_artist_over_albumartist_credit(self):
+        self.info.tracks[0].artist = 'oldArtist'
+        self.info.tracks[0].artist_credit = None
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[0].artist, 'oldArtist')
+
+    def test_artist_credit_falls_back_to_albumartist(self):
+        self.info.artist_credit = None
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[1].artist, 'artistNew')
 
     def test_mb_trackid_applied(self):
         self._apply()
@@ -807,16 +826,16 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
         trackinfo = []
         trackinfo.append(TrackInfo(
             u'oneNew',
-            'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
             u'artistOneNew',
-            'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+            u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
             index=1,
         ))
         trackinfo.append(TrackInfo(
             u'twoNew',
-            '40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
             u'artistTwoNew',
-            '80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+            u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
             index=2,
         ))
         self.info = AlbumInfo(
@@ -879,17 +898,17 @@ class StringDistanceTest(unittest.TestCase):
     def test_leading_the_has_lower_weight(self):
         dist1 = string_dist(u'XXX Band Name', u'Band Name')
         dist2 = string_dist(u'The Band Name', u'Band Name')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_parens_have_lower_weight(self):
         dist1 = string_dist(u'One .Two.', u'One')
         dist2 = string_dist(u'One (Two)', u'One')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_brackets_have_lower_weight(self):
         dist1 = string_dist(u'One .Two.', u'One')
         dist2 = string_dist(u'One [Two]', u'One')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_ep_label_has_zero_weight(self):
         dist = string_dist(u'My Song (EP)', u'My Song')
@@ -898,7 +917,7 @@ class StringDistanceTest(unittest.TestCase):
     def test_featured_has_lower_weight(self):
         dist1 = string_dist(u'My Song blah Someone', u'My Song')
         dist2 = string_dist(u'My Song feat Someone', u'My Song')
-        self.assert_(dist2 < dist1)
+        self.assertTrue(dist2 < dist1)
 
     def test_postfix_the(self):
         dist = string_dist(u'The Song Title', u'Song Title, The')
@@ -940,17 +959,17 @@ class EnumTest(_common.TestCase):
     Test Enum Subclasses defined in beets.util.enumeration
     """
     def test_ordered_enum(self):
-        OrderedEnumTest = match.OrderedEnum('OrderedEnumTest', ['a', 'b', 'c'])
-        self.assertLess(OrderedEnumTest.a, OrderedEnumTest.b)
-        self.assertLess(OrderedEnumTest.a, OrderedEnumTest.c)
-        self.assertLess(OrderedEnumTest.b, OrderedEnumTest.c)
-        self.assertGreater(OrderedEnumTest.b, OrderedEnumTest.a)
-        self.assertGreater(OrderedEnumTest.c, OrderedEnumTest.a)
-        self.assertGreater(OrderedEnumTest.c, OrderedEnumTest.b)
+        OrderedEnumClass = match.OrderedEnum('OrderedEnumTest', ['a', 'b', 'c'])  # noqa
+        self.assertLess(OrderedEnumClass.a, OrderedEnumClass.b)
+        self.assertLess(OrderedEnumClass.a, OrderedEnumClass.c)
+        self.assertLess(OrderedEnumClass.b, OrderedEnumClass.c)
+        self.assertGreater(OrderedEnumClass.b, OrderedEnumClass.a)
+        self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.a)
+        self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.b)
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

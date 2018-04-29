@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -17,8 +18,7 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 from string import Template
@@ -35,17 +35,18 @@ from beets.util import bluelet
 from beets.library import Item
 from beets import dbcore
 from beets.mediafile import MediaFile
+import six
 
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
-HELLO = 'OK MPD %s' % PROTOCOL_VERSION
-CLIST_BEGIN = 'command_list_begin'
-CLIST_VERBOSE_BEGIN = 'command_list_ok_begin'
-CLIST_END = 'command_list_end'
-RESP_OK = 'OK'
-RESP_CLIST_VERBOSE = 'list_OK'
-RESP_ERR = 'ACK'
+HELLO = u'OK MPD %s' % PROTOCOL_VERSION
+CLIST_BEGIN = u'command_list_begin'
+CLIST_VERBOSE_BEGIN = u'command_list_ok_begin'
+CLIST_END = u'command_list_end'
+RESP_OK = u'OK'
+RESP_CLIST_VERBOSE = u'list_OK'
+RESP_ERR = u'ACK'
 
 NEWLINE = u"\n"
 
@@ -123,9 +124,9 @@ def make_bpd_error(s_code, s_message):
             pass
     return NewBPDError
 
-ArgumentTypeError = make_bpd_error(ERROR_ARG, 'invalid type for argument')
-ArgumentIndexError = make_bpd_error(ERROR_ARG, 'argument out of range')
-ArgumentNotFoundError = make_bpd_error(ERROR_NO_EXIST, 'argument not found')
+ArgumentTypeError = make_bpd_error(ERROR_ARG, u'invalid type for argument')
+ArgumentIndexError = make_bpd_error(ERROR_ARG, u'argument out of range')
+ArgumentNotFoundError = make_bpd_error(ERROR_NO_EXIST, u'argument not found')
 
 
 def cast_arg(t, val):
@@ -268,7 +269,7 @@ class BaseServer(object):
             conn.authenticated = True
         else:
             conn.authenticated = False
-            raise BPDError(ERROR_PASSWORD, 'incorrect password')
+            raise BPDError(ERROR_PASSWORD, u'incorrect password')
 
     def cmd_commands(self, conn):
         """Lists the commands available to the user."""
@@ -305,12 +306,12 @@ class BaseServer(object):
         playlist, playlistlength, and xfade.
         """
         yield (
-            u'volume: ' + unicode(self.volume),
-            u'repeat: ' + unicode(int(self.repeat)),
-            u'random: ' + unicode(int(self.random)),
-            u'playlist: ' + unicode(self.playlist_version),
-            u'playlistlength: ' + unicode(len(self.playlist)),
-            u'xfade: ' + unicode(self.crossfade),
+            u'volume: ' + six.text_type(self.volume),
+            u'repeat: ' + six.text_type(int(self.repeat)),
+            u'random: ' + six.text_type(int(self.random)),
+            u'playlist: ' + six.text_type(self.playlist_version),
+            u'playlistlength: ' + six.text_type(len(self.playlist)),
+            u'xfade: ' + six.text_type(self.crossfade),
         )
 
         if self.current_index == -1:
@@ -323,8 +324,8 @@ class BaseServer(object):
 
         if self.current_index != -1:  # i.e., paused or playing
             current_id = self._item_id(self.playlist[self.current_index])
-            yield u'song: ' + unicode(self.current_index)
-            yield u'songid: ' + unicode(current_id)
+            yield u'song: ' + six.text_type(self.current_index)
+            yield u'songid: ' + six.text_type(current_id)
 
         if self.error:
             yield u'error: ' + self.error
@@ -468,8 +469,8 @@ class BaseServer(object):
         Also a dummy implementation.
         """
         for idx, track in enumerate(self.playlist):
-            yield u'cpos: ' + unicode(idx)
-            yield u'Id: ' + unicode(track.id)
+            yield u'cpos: ' + six.text_type(idx)
+            yield u'Id: ' + six.text_type(track.id)
 
     def cmd_currentsong(self, conn):
         """Sends information about the currently-playing song.
@@ -569,12 +570,12 @@ class Connection(object):
         added after every string. Returns a Bluelet event that sends
         the data.
         """
-        if isinstance(lines, basestring):
+        if isinstance(lines, six.string_types):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
         log.debug('{}', out[:-1])  # Don't log trailing newline.
-        if isinstance(out, unicode):
-            out = out.encode('utf8')
+        if isinstance(out, six.text_type):
+            out = out.encode('utf-8')
         return self.sock.sendall(out)
 
     def do_command(self, command):
@@ -603,7 +604,8 @@ class Connection(object):
             line = line.strip()
             if not line:
                 break
-            log.debug('{}', line)
+            line = line.decode('utf8')  # MPD protocol uses UTF-8.
+            log.debug(u'{}', line)
 
             if clist is not None:
                 # Command list already opened.
@@ -639,8 +641,8 @@ class Command(object):
     """A command issued by the client for processing by the server.
     """
 
-    command_re = re.compile(br'^([^ \t]+)[ \t]*')
-    arg_re = re.compile(br'"((?:\\"|[^"])+)"|([^ \t"]+)')
+    command_re = re.compile(r'^([^ \t]+)[ \t]*')
+    arg_re = re.compile(r'"((?:\\"|[^"])+)"|([^ \t"]+)')
 
     def __init__(self, s):
         """Creates a new `Command` from the given string, `s`, parsing
@@ -655,11 +657,10 @@ class Command(object):
             if match[0]:
                 # Quoted argument.
                 arg = match[0]
-                arg = arg.replace(b'\\"', b'"').replace(b'\\\\', b'\\')
+                arg = arg.replace(u'\\"', u'"').replace(u'\\\\', u'\\')
             else:
                 # Unquoted argument.
                 arg = match[1]
-            arg = arg.decode('utf8')
             self.args.append(arg)
 
     def run(self, conn):
@@ -771,28 +772,28 @@ class Server(BaseServer):
     def _item_info(self, item):
         info_lines = [
             u'file: ' + item.destination(fragment=True),
-            u'Time: ' + unicode(int(item.length)),
+            u'Time: ' + six.text_type(int(item.length)),
             u'Title: ' + item.title,
             u'Artist: ' + item.artist,
             u'Album: ' + item.album,
             u'Genre: ' + item.genre,
         ]
 
-        track = unicode(item.track)
+        track = six.text_type(item.track)
         if item.tracktotal:
-            track += u'/' + unicode(item.tracktotal)
+            track += u'/' + six.text_type(item.tracktotal)
         info_lines.append(u'Track: ' + track)
 
-        info_lines.append(u'Date: ' + unicode(item.year))
+        info_lines.append(u'Date: ' + six.text_type(item.year))
 
         try:
             pos = self._id_to_index(item.id)
-            info_lines.append(u'Pos: ' + unicode(pos))
+            info_lines.append(u'Pos: ' + six.text_type(pos))
         except ArgumentNotFoundError:
             # Don't include position if not in playlist.
             pass
 
-        info_lines.append(u'Id: ' + unicode(item.id))
+        info_lines.append(u'Id: ' + six.text_type(item.id))
 
         return info_lines
 
@@ -806,9 +807,9 @@ class Server(BaseServer):
         """
         # Path is ignored. Also, the real MPD does this asynchronously;
         # this is done inline.
-        print('Building directory tree...')
+        print(u'Building directory tree...')
         self.tree = vfs.libtree(self.lib)
-        print('... done.')
+        print(u'... done.')
         self.updated_time = time.time()
 
     # Path (directory tree) browsing.
@@ -847,12 +848,12 @@ class Server(BaseServer):
         node = self._resolve_path(path)
         if isinstance(node, int):
             # Trying to list a track.
-            raise BPDError(ERROR_ARG, 'this is not a directory')
+            raise BPDError(ERROR_ARG, u'this is not a directory')
         else:
             for name, itemid in iter(sorted(node.files.items())):
                 item = self.lib.get_item(itemid)
                 yield self._item_info(item)
-            for name, _ in iter(sorted(node.dirs.iteritems())):
+            for name, _ in iter(sorted(node.dirs.items())):
                 dirpath = self._path_join(path, name)
                 if dirpath.startswith(u"/"):
                     # Strip leading slash (libmpc rejects this).
@@ -872,12 +873,12 @@ class Server(BaseServer):
                 yield u'file: ' + basepath
         else:
             # List a directory. Recurse into both directories and files.
-            for name, itemid in sorted(node.files.iteritems()):
+            for name, itemid in sorted(node.files.items()):
                 newpath = self._path_join(basepath, name)
                 # "yield from"
                 for v in self._listall(newpath, itemid, info):
                     yield v
-            for name, subdir in sorted(node.dirs.iteritems()):
+            for name, subdir in sorted(node.dirs.items()):
                 newpath = self._path_join(basepath, name)
                 yield u'directory: ' + newpath
                 for v in self._listall(newpath, subdir, info):
@@ -902,11 +903,11 @@ class Server(BaseServer):
             yield self.lib.get_item(node)
         else:
             # Recurse into a directory.
-            for name, itemid in sorted(node.files.iteritems()):
+            for name, itemid in sorted(node.files.items()):
                 # "yield from"
                 for v in self._all_items(itemid):
                     yield v
-            for name, subdir in sorted(node.dirs.iteritems()):
+            for name, subdir in sorted(node.dirs.items()):
                 for v in self._all_items(subdir):
                     yield v
 
@@ -917,7 +918,7 @@ class Server(BaseServer):
         for item in self._all_items(self._resolve_path(path)):
             self.playlist.append(item)
             if send_id:
-                yield u'Id: ' + unicode(item.id)
+                yield u'Id: ' + six.text_type(item.id)
         self.playlist_version += 1
 
     def cmd_add(self, conn, path):
@@ -938,11 +939,11 @@ class Server(BaseServer):
         if self.current_index > -1:
             item = self.playlist[self.current_index]
 
-            yield u'bitrate: ' + unicode(item.bitrate / 1000)
+            yield u'bitrate: ' + six.text_type(item.bitrate / 1000)
             # Missing 'audio'.
 
             (pos, total) = self.player.time()
-            yield u'time: ' + unicode(pos) + u':' + unicode(total)
+            yield u'time: ' + six.text_type(pos) + u':' + six.text_type(total)
 
         # Also missing 'updating_db'.
 
@@ -957,13 +958,13 @@ class Server(BaseServer):
             artists, albums, songs, totaltime = tx.query(statement)[0]
 
         yield (
-            u'artists: ' + unicode(artists),
-            u'albums: ' + unicode(albums),
-            u'songs: ' + unicode(songs),
-            u'uptime: ' + unicode(int(time.time() - self.startup_time)),
+            u'artists: ' + six.text_type(artists),
+            u'albums: ' + six.text_type(albums),
+            u'songs: ' + six.text_type(songs),
+            u'uptime: ' + six.text_type(int(time.time() - self.startup_time)),
             u'playtime: ' + u'0',  # Missing.
-            u'db_playtime: ' + unicode(int(totaltime)),
-            u'db_update: ' + unicode(int(self.updated_time)),
+            u'db_playtime: ' + six.text_type(int(totaltime)),
+            u'db_update: ' + six.text_type(int(self.updated_time)),
         )
 
     # Searching.
@@ -1059,7 +1060,7 @@ class Server(BaseServer):
             rows = tx.query(statement, subvals)
 
         for row in rows:
-            yield show_tag_canon + u': ' + unicode(row[0])
+            yield show_tag_canon + u': ' + six.text_type(row[0])
 
     def cmd_count(self, conn, tag, value):
         """Returns the number and total time of songs matching the
@@ -1071,8 +1072,8 @@ class Server(BaseServer):
         for item in self.lib.items(dbcore.query.MatchQuery(key, value)):
             songs += 1
             playtime += item.length
-        yield u'songs: ' + unicode(songs)
-        yield u'playtime: ' + unicode(int(playtime))
+        yield u'songs: ' + six.text_type(songs)
+        yield u'playtime: ' + six.text_type(int(playtime))
 
     # "Outputs." Just a dummy implementation because we don't control
     # any outputs.
@@ -1167,24 +1168,25 @@ class BPDPlugin(BeetsPlugin):
             server.run()
         except NoGstreamerError:
             global_log.error(u'Gstreamer Python bindings not found.')
-            global_log.error(u'Install "python-gst0.10", "py27-gst-python", '
+            global_log.error(u'Install "gstreamer1.0" and "python-gi"'
                              u'or similar package to use BPD.')
 
     def commands(self):
         cmd = beets.ui.Subcommand(
-            'bpd', help='run an MPD-compatible music player server'
+            'bpd', help=u'run an MPD-compatible music player server'
         )
         cmd.parser.add_option(
             '-d', '--debug', action='store_true',
-            help='dump all MPD traffic to stdout'
+            help=u'dump all MPD traffic to stdout'
         )
 
         def func(lib, opts, args):
-            host = args.pop(0) if args else self.config['host'].get(unicode)
+            host = self.config['host'].as_str()
+            host = args.pop(0) if args else host
             port = args.pop(0) if args else self.config['port'].get(int)
             if args:
-                raise beets.ui.UserError('too many arguments')
-            password = self.config['password'].get(unicode)
+                raise beets.ui.UserError(u'too many arguments')
+            password = self.config['password'].as_str()
             volume = self.config['volume'].get(int)
             debug = opts.debug or False
             self.start_bpd(lib, host, int(port), password, volume, debug)

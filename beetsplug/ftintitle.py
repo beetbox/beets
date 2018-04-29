@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Verrus, <github.com/Verrus/beets-plugin-featInTitle>
+# Copyright 2016, Verrus, <github.com/Verrus/beets-plugin-featInTitle>
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,15 +15,13 @@
 
 """Moves "featured" artists to the title from the artist field.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 
 from beets import plugins
 from beets import ui
 from beets.util import displayable_path
-from beets import config
 
 
 def split_on_feat(artist):
@@ -50,29 +49,28 @@ def find_feat_part(artist, albumartist):
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
     """
-    feat_part = None
-
     # Look for the album artist in the artist field. If it's not
     # present, give up.
     albumartist_split = artist.split(albumartist, 1)
     if len(albumartist_split) <= 1:
-        return feat_part
+        return None
 
     # If the last element of the split (the right-hand side of the
     # album artist) is nonempty, then it probably contains the
     # featured artist.
-    elif albumartist_split[-1] != '':
+    elif albumartist_split[1] != '':
         # Extract the featured artist from the right-hand side.
-        _, feat_part = split_on_feat(albumartist_split[-1])
+        _, feat_part = split_on_feat(albumartist_split[1])
+        return feat_part
 
     # Otherwise, if there's nothing on the right-hand side, look for a
     # featuring artist on the left-hand side.
     else:
         lhs, rhs = split_on_feat(albumartist_split[0])
         if lhs:
-            feat_part = lhs
+            return lhs
 
-    return feat_part
+    return None
 
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
@@ -87,12 +85,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         self._command = ui.Subcommand(
             'ftintitle',
-            help='move featured artists to the title field')
+            help=u'move featured artists to the title field')
 
         self._command.parser.add_option(
-            '-d', '--drop', dest='drop',
-            action='store_true', default=False,
-            help='drop featuring from artists and ignore title update')
+            u'-d', u'--drop', dest='drop',
+            action='store_true', default=None,
+            help=u'drop featuring from artists and ignore title update')
 
         if self.config['auto']:
             self.import_stages = [self.imported]
@@ -102,7 +100,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         def func(lib, opts, args):
             self.config.set_args(opts)
             drop_feat = self.config['drop'].get(bool)
-            write = config['import']['write'].get(bool)
+            write = ui.should_write()
 
             for item in lib.items(ui.decargs(args)):
                 self.ft_in_title(item, drop_feat)
@@ -138,7 +136,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
         if not drop_feat and not contains_feat(item.title):
-            feat_format = self.config['format'].get(unicode)
+            feat_format = self.config['format'].as_str()
             new_format = feat_format.format(feat_part)
             new_title = u"{0} {1}".format(item.title, new_format)
             self._log.info(u'title: {0} -> {1}', item.title, new_title)

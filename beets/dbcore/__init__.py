@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,7 +16,7 @@
 """DBCore is an abstract database package that forms the basis for beets'
 Library.
 """
-from __future__ import absolute_import
+from __future__ import division, absolute_import, print_function
 
 from .db import Model, Database
 from .query import Query, FieldQuery, MatchQuery, AndQuery, OrQuery

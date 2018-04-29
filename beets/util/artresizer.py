@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Fabrice Laporte
+# Copyright 2016, Fabrice Laporte
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,24 +16,26 @@
 """Abstraction layer to resize images using PIL, ImageMagick, or a
 public resizing proxy if neither is available.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
-import urllib
 import subprocess
 import os
 import re
 from tempfile import NamedTemporaryFile
-
+from six.moves.urllib.parse import urlencode
 from beets import logging
 from beets import util
+import six
 
 # Resizing methods
 PIL = 1
 IMAGEMAGICK = 2
 WEBPROXY = 3
 
-PROXY_URL = 'http://images.weserv.nl/'
+if util.SNI_SUPPORTED:
+    PROXY_URL = 'https://images.weserv.nl/'
+else:
+    PROXY_URL = 'http://images.weserv.nl/'
 
 log = logging.getLogger('beets')
 
@@ -41,9 +44,9 @@ def resize_url(url, maxwidth):
     """Return a proxied image URL that resizes the original image to
     maxwidth (preserving aspect ratio).
     """
-    return '{0}?{1}'.format(PROXY_URL, urllib.urlencode({
+    return '{0}?{1}'.format(PROXY_URL, urlencode({
         'url': url.replace('http://', ''),
-        'w': bytes(maxwidth),
+        'w': maxwidth,
     }))
 
 
@@ -52,8 +55,8 @@ def temp_file_for(path):
     specified path.
     """
     ext = os.path.splitext(path)[1]
-    with NamedTemporaryFile(suffix=ext, delete=False) as f:
-        return f.name
+    with NamedTemporaryFile(suffix=util.py3_path(ext), delete=False) as f:
+        return util.bytestring_path(f.name)
 
 
 def pil_resize(maxwidth, path_in, path_out=None):
@@ -85,18 +88,18 @@ def im_resize(maxwidth, path_in, path_out=None):
     log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
-    # "-resize widthxheight>" shrinks images with dimension(s) larger
-    # than the corresponding width and/or height dimension(s). The >
-    # "only shrink" flag is prefixed by ^ escape char for Windows
-    # compatibility.
+    # "-resize WIDTHx>" shrinks images with the width larger
+    # than the given width while maintaining the aspect ratio
+    # with regards to the height.
     try:
         util.command_output([
-            b'convert', util.syspath(path_in),
-            b'-resize', b'{0}x^>'.format(maxwidth), path_out
+            'convert', util.syspath(path_in, prefix=False),
+            '-resize', '{0}x>'.format(maxwidth),
+            util.syspath(path_out, prefix=False),
         ])
     except subprocess.CalledProcessError:
-        log.warn(u'artresizer: IM convert failed for {0}',
-                 util.displayable_path(path_in))
+        log.warning(u'artresizer: IM convert failed for {0}',
+                    util.displayable_path(path_in))
         return path_in
     return path_out
 
@@ -112,23 +115,28 @@ def pil_getsize(path_in):
     try:
         im = Image.open(util.syspath(path_in))
         return im.size
-    except IOError:
-        log.error(u"PIL cannot compute size of '{0}'",
-                  util.displayable_path(path_in))
+    except IOError as exc:
+        log.error(u"PIL could not read file {}: {}",
+                  util.displayable_path(path_in), exc)
 
 
 def im_getsize(path_in):
+    cmd = ['identify', '-format', '%w %h',
+           util.syspath(path_in, prefix=False)]
     try:
-        out = util.command_output([b'identify', b'-format', b'%w %h',
-                                   util.syspath(path_in)])
-    except subprocess.CalledProcessError:
-        log.warn(u'IM cannot compute size of {0}',
-                 util.displayable_path(path_in))
+        out = util.command_output(cmd)
+    except subprocess.CalledProcessError as exc:
+        log.warning(u'ImageMagick size query failed')
+        log.debug(
+            u'`convert` exited with (status {}) when '
+            u'getting size with command {}:\n{}',
+            exc.returncode, cmd, exc.output.strip()
+        )
         return
     try:
         return tuple(map(int, out.split(b' ')))
     except IndexError:
-        log.warn(u'Could not understand IM output: {0!r}', out)
+        log.warning(u'Could not understand IM output: {0!r}', out)
 
 
 BACKEND_GET_SIZE = {
@@ -143,21 +151,20 @@ class Shareable(type):
     lazily-created shared instance of ``MyClass`` while calling
     ``MyClass()`` to construct a new object works as usual.
     """
-    def __init__(cls, name, bases, dict):
-        super(Shareable, cls).__init__(name, bases, dict)
-        cls._instance = None
+    def __init__(self, name, bases, dict):
+        super(Shareable, self).__init__(name, bases, dict)
+        self._instance = None
 
     @property
-    def shared(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
+    def shared(self):
+        if self._instance is None:
+            self._instance = self()
+        return self._instance
 
 
-class ArtResizer(object):
+class ArtResizer(six.with_metaclass(Shareable, object)):
     """A singleton class that performs image resizes.
     """
-    __metaclass__ = Shareable
 
     def __init__(self):
         """Create a resizer object with an inferred method.
@@ -212,25 +219,26 @@ class ArtResizer(object):
     @staticmethod
     def _check_method():
         """Return a tuple indicating an available method and its version."""
-        version = has_IM()
+        version = get_im_version()
         if version:
             return IMAGEMAGICK, version
 
-        version = has_PIL()
+        version = get_pil_version()
         if version:
             return PIL, version
 
         return WEBPROXY, (0)
 
 
-def has_IM():
+def get_im_version():
     """Return Image Magick version or None if it is unavailable
-    Try invoking ImageMagick's "convert"."""
+    Try invoking ImageMagick's "convert".
+    """
     try:
-        out = util.command_output([b'identify', b'--version'])
+        out = util.command_output(['convert', '--version'])
 
-        if 'imagemagick' in out.lower():
-            pattern = r".+ (\d+)\.(\d+)\.(\d+).*"
+        if b'imagemagick' in out.lower():
+            pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
             match = re.search(pattern, out)
             if match:
                 return (int(match.group(1)),
@@ -238,11 +246,12 @@ def has_IM():
                         int(match.group(3)))
             return (0,)
 
-    except (subprocess.CalledProcessError, OSError):
+    except (subprocess.CalledProcessError, OSError) as exc:
+        log.debug(u'ImageMagick check `convert --version` failed: {}', exc)
         return None
 
 
-def has_PIL():
+def get_pil_version():
     """Return Image Magick version or None if it is unavailable
     Try importing PIL."""
     try:

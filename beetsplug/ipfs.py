@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -13,6 +14,9 @@
 
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
 """
+
+from __future__ import division, absolute_import, print_function
+
 from beets import ui, util, library, config
 from beets.plugins import BeetsPlugin
 
@@ -268,9 +272,11 @@ class IPFSPlugin(BeetsPlugin):
                     break
             except AttributeError:
                 pass
+            item_path = os.path.basename(item.path).decode(
+                util._fsencoding(), 'ignore'
+            )
             # Clear current path from item
-            item.path = '/ipfs/{0}/{1}'.format(album.ipfs,
-                                               os.path.basename(item.path))
+            item.path = '/ipfs/{0}/{1}'.format(album.ipfs, item_path)
 
             item.id = None
             items.append(item)

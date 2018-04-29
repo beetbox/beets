@@ -28,7 +28,7 @@ duplicates themselves via command-line switches ::
   -d, --delete          delete items from library and disk
   -F, --full            show all versions of duplicate tracks or albums
   -s, --strict          report duplicates only if all attributes are set
-  -k, --keys            report duplicates based on keys
+  -k, --key            report duplicates based on keys (can be used multiple times)
   -M, --merge           merge duplicate items
   -m DEST, --move=DEST  move items to dest
   -o DEST, --copy=DEST  copy items to dest
@@ -46,9 +46,9 @@ file. The available options mirror the command-line options:
 - **checksum**: Use an arbitrary command to compute a checksum
   of items. This overrides the ``keys`` option the first time it is run;
   however, because it caches the resulting checksum as ``flexattrs`` in the
-  database, you can use ``--keys=name_of_the_checksumming_program
-  any_other_keys`` (or set configuration ``keys`` option) the second time
-  around.
+  database, you can use ``--key=name_of_the_checksumming_program
+  --key=any_other_keys`` (or set the ``keys`` configuration option) the second
+  time around.
   Default: ``ffmpeg -i {file} -f crc -``.
 - **copy**: A destination base directory into which to copy matched
   items.
@@ -67,9 +67,6 @@ file. The available options mirror the command-line options:
 - **full**: List every track or album that has duplicates, not just the
   duplicates themselves.
   Default: ``no``
-- **strict**: Do not report duplicate matches if some of the
-  attributes are not defined (ie. null or empty).
-  Default: ``no``
 - **keys**: Define in which track or album fields duplicates are to be
   searched. By default, the plugin uses the musicbrainz track and album IDs for
   this purpose. Using the ``keys`` option (as a YAML list in the configuration
@@ -83,6 +80,9 @@ file. The available options mirror the command-line options:
   Default: none (disabled).
 - **path**: Output the path instead of metadata when listing duplicates.
   Default: ``no``.
+- **strict**: Do not report duplicate matches if some of the
+  attributes are not defined (ie. null or empty).
+  Default: ``no``
 - **tag**: A ``key=value`` pair. The plugin will add a new ``key`` attribute
   with ``value`` value as a flexattr to the database for duplicate items.
   Default: ``no``.
@@ -120,7 +120,7 @@ The same as the above but include the original album, and show the path::
 
 Get tracks with the same title, artist, and album::
 
-  beet duplicates -k title albumartist album
+  beet duplicates -k title -k albumartist -k album
 
 Compute Adler CRC32 or MD5 checksums, storing them as flexattrs, and report
 back duplicates based on those values::
@@ -138,7 +138,7 @@ Move likely duplicates to ``trash`` directory::
 
 Delete items (careful!), if they're Nickelback::
 
-  beet duplicates --delete --keys albumartist albumartist:nickelback
+  beet duplicates --delete -k albumartist -k albumartist:nickelback
 
 Tag duplicate items with some flag::
 

@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,19 +15,19 @@
 
 """Tests for MusicBrainz API wrapper.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from test import _common
-from test._common import unittest
 from beets.autotag import mb
 from beets import config
+
+import unittest
 import mock
 
 
 class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False):
+                      track_artist=False, medium_format='FORMAT'):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -66,7 +67,8 @@ class MBAlbumInfoTest(_common.TestCase):
             for i, recording in enumerate(tracks):
                 track = {
                     'recording': recording,
-                    'position': bytes(i + 1),
+                    'position': i + 1,
+                    'number': 'A1',
                 }
                 if track_length:
                     # Track lengths are distinct from recording lengths.
@@ -88,12 +90,12 @@ class MBAlbumInfoTest(_common.TestCase):
             release['medium-list'].append({
                 'position': '1',
                 'track-list': track_list,
-                'format': 'FORMAT',
+                'format': medium_format,
                 'title': 'MEDIUM TITLE',
             })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False):
+    def _make_track(self, title, tr_id, duration, artist=False, video=False):
         track = {
             'title': title,
             'id': tr_id,
@@ -111,6 +113,8 @@ class MBAlbumInfoTest(_common.TestCase):
                     'name': 'RECORDING ARTIST CREDIT',
                 }
             ]
+        if video:
+            track['video'] = 'true'
         return track
 
     def test_parse_release_with_year(self):
@@ -181,6 +185,7 @@ class MBAlbumInfoTest(_common.TestCase):
         second_track_list = [{
             'recording': tracks[1],
             'position': '1',
+            'number': 'A1',
         }]
         release['medium-list'].append({
             'position': '2',
@@ -321,6 +326,58 @@ class MBAlbumInfoTest(_common.TestCase):
         d = mb.album_info(release)
         self.assertEqual(d.data_source, 'MusicBrainz')
 
+    def test_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, medium_format="IGNORED1")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 0)
+
+    def test_no_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks,
+                                     medium_format="NON-IGNORED")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+
+    def test_skip_data_track(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('[data track]', 'ID DATA TRACK',
+                                   100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_skip_video_tracks_by_default(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
+                                   False, True),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_no_skip_video_tracks_if_configured(self):
+        config['match']['ignore_video_tracks'] = False
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
+                                   False, True),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 3)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE VIDEO')
+        self.assertEqual(d.tracks[2].title, 'TITLE TWO')
+
 
 class ParseIDTest(_common.TestCase):
     def test_parse_id_correct(self):
@@ -453,6 +510,7 @@ class MBLibraryTest(unittest.TestCase):
                                     'length': 42,
                                 },
                                 'position': 9,
+                                'number': 'A1',
                             }],
                             'position': 5,
                         }],
@@ -491,5 +549,5 @@ class MBLibraryTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

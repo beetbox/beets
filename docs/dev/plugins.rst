@@ -133,39 +133,43 @@ registration process in this case::
 
 The events currently available are:
 
-* *pluginload*: called after all the plugins have been loaded after the ``beet``
+* `pluginload`: called after all the plugins have been loaded after the ``beet``
   command starts
 
-* *import*: called after a ``beet import`` command finishes (the ``lib`` keyword
+* `import`: called after a ``beet import`` command finishes (the ``lib`` keyword
   argument is a Library object; ``paths`` is a list of paths (strings) that were
   imported)
 
-* *album_imported*: called with an ``Album`` object every time the ``import``
+* `album_imported`: called with an ``Album`` object every time the ``import``
   command finishes adding an album to the library. Parameters: ``lib``,
   ``album``
 
-* *item_copied*: called with an ``Item`` object whenever its file is copied.
+* `item_copied`: called with an ``Item`` object whenever its file is copied.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
-* *item_imported*: called with an ``Item`` object every time the importer adds a
+* `item_imported`: called with an ``Item`` object every time the importer adds a
   singleton to the library (not called for full-album imports). Parameters:
   ``lib``, ``item``
 
-* *before_item_moved*: called with an ``Item`` object immediately before its
+* `before_item_moved`: called with an ``Item`` object immediately before its
   file is moved. Parameters: ``item``, ``source`` path, ``destination`` path
 
-* *item_moved*: called with an ``Item`` object whenever its file is moved.
+* `item_moved`: called with an ``Item`` object whenever its file is moved.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
-* *item_linked*: called with an ``Item`` object whenever a symlink is created
+* `item_linked`: called with an ``Item`` object whenever a symlink is created
   for a file.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
-* *item_removed*: called with an ``Item`` object every time an item (singleton
+* `item_hardlinked`: called with an ``Item`` object whenever a hardlink is
+  created for a file.
+  Parameters: ``item``, ``source`` path, ``destination`` path
+
+* `item_removed`: called with an ``Item`` object every time an item (singleton
   or album's part) is removed from the library (even when its file is not
   deleted from disk).
 
-* *write*: called with an ``Item`` object, a ``path``, and a ``tags``
+* `write`: called with an ``Item`` object, a ``path``, and a ``tags``
   dictionary just before a file's metadata is written to disk (i.e.,
   just before the file on disk is opened). Event handlers may change
   the ``tags`` dictionary to customize the tags that are written to the
@@ -174,49 +178,70 @@ The events currently available are:
   operation. Beets will catch that exception, print an error message
   and continue.
 
-* *after_write*: called with an ``Item`` object after a file's metadata is
+* `after_write`: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).
 
-* *import_task_created*: called immediately after an import task is
+* `import_task_created`: called immediately after an import task is
   initialized. Plugins can use this to, for example, change imported files of a
   task before anything else happens. It's also possible to replace the task
   with another task by returning a list of tasks. This list can contain zero
   or more `ImportTask`s. Returning an empty list will stop the task.
   Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
 
-* *import_task_start*: called when before an import task begins processing.
+* `import_task_start`: called when before an import task begins processing.
   Parameters: ``task`` and ``session``.
 
-* *import_task_apply*: called after metadata changes have been applied in an
-  import task. Parameters: ``task`` and ``session``.
+* `import_task_apply`: called after metadata changes have been applied in an
+  import task. This is called on the same thread as the UI, so use this
+  sparingly and only for tasks that can be done quickly. For most plugins, an
+  import pipeline stage is a better choice (see :ref:`plugin-stage`).
+  Parameters: ``task`` and ``session``.
 
-* *import_task_choice*: called after a decision has been made about an import
+* `import_task_choice`: called after a decision has been made about an import
   task. This event can be used to initiate further interaction with the user.
   Use ``task.choice_flag`` to determine or change the action to be
   taken. Parameters: ``task`` and ``session``.
 
-* *import_task_files*: called after an import task finishes manipulating the
+* `import_task_files`: called after an import task finishes manipulating the
   filesystem (copying and moving files, writing metadata tags). Parameters:
   ``task`` and ``session``.
 
-* *library_opened*: called after beets starts up and initializes the main
+* `library_opened`: called after beets starts up and initializes the main
   Library object. Parameter: ``lib``.
 
-* *database_change*: a modification has been made to the library database. The
+* `database_change`: a modification has been made to the library database. The
   change might not be committed yet. Parameters: ``lib`` and ``model``.
 
-* *cli_exit*: called just before the ``beet`` command-line program exits.
+* `cli_exit`: called just before the ``beet`` command-line program exits.
   Parameter: ``lib``.
 
-* *import_begin*: called just before a ``beet import`` session starts up.
+* `import_begin`: called just before a ``beet import`` session starts up.
   Parameter: ``session``.
+
+* `trackinfo_received`: called after metadata for a track item has been
+  fetched from a data source, such as MusicBrainz. You can modify the tags
+  that the rest of the pipeline sees on a ``beet import`` operation or during
+  later adjustments, such as ``mbsync``. Slow handlers of the event can impact
+  the operation, since the event is fired for any fetched possible match
+  `before` the user (or the autotagger machinery) gets to see the match.
+  Parameter: ``info``.
+
+* `albuminfo_received`: like `trackinfo_received`, the event indicates new
+  metadata for album items. The parameter is an ``AlbumInfo`` object instead
+  of a ``TrackInfo``.
+  Parameter: ``info``.
+
+* `before_choose_candidate`: called before the user is prompted for a decision
+  during a ``beet import`` interactive session. Plugins can use this event for
+  :ref:`appending choices to the prompt <append_prompt_choices>` by returning a
+  list of ``PromptChoices``. Parameters: ``task`` and ``session``.
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
 ^^^^^^^^^^^^^^^^^^^^^
 
-Plugins in can also enhance the functionality of the autotagger. For a
+Plugins can also enhance the functionality of the autotagger. For a
 comprehensive example, try looking at the ``chroma`` plugin, which is included
 with beets.
 
@@ -378,6 +403,8 @@ Here's an example plugin that provides a meaningless new field "foo"::
     # The "foo" tag of the file is now "ham"
 
 
+.. _plugin-stage:
+
 Add Import Pipeline Stages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -404,6 +431,11 @@ to register it::
             self.import_stages = [self.stage]
         def stage(self, session, task):
             print('Importing something!')
+
+It is also possible to request your function to run early in the pipeline by
+adding the function to the plugin's ``early_import_stages`` field instead::
+
+    self.early_import_stages = [self.stage]
 
 .. _extend-query:
 
@@ -494,19 +526,81 @@ str.format-style string formatting. So you can write logging calls like this::
 When beets is in verbose mode, plugin messages are prefixed with the plugin
 name to make them easier to see.
 
-What messages will be logged depends on the logging level and the action
+Which messages will be logged depends on the logging level and the action
 performed:
 
-* On import stages and event handlers, the default is ``WARNING`` messages and
-  above.
-* On direct actions, the default is ``INFO`` or above, as with the rest of
-  beets.
+* Inside import stages and event handlers, the default is ``WARNING`` messages
+  and above.
+* Everywhere else, the default is ``INFO`` or above.
 
-The verbosity can be increased with ``--verbose`` flags: each flags lowers the
-level by a notch.
+The verbosity can be increased with ``--verbose`` (``-v``) flags: each flags
+lowers the level by a notch. That means that, with a single ``-v`` flag, event
+handlers won't have their ``DEBUG`` messages displayed, but command functions
+(for example) will. With ``-vv`` on the command line, ``DEBUG`` messages will
+be displayed everywhere.
 
 This addresses a common pattern where plugins need to use the same code for a
 command and an import stage, but the command needs to print more messages than
 the import stage. (For example, you'll want to log "found lyrics for this song"
 when you're run explicitly as a command, but you don't want to noisily
 interrupt the importer interface when running automatically.)
+
+.. _append_prompt_choices:
+
+Append Prompt Choices
+^^^^^^^^^^^^^^^^^^^^^
+
+Plugins can also append choices to the prompt presented to the user during
+an import session.
+
+To do so, add a listener for the ``before_choose_candidate`` event, and return
+a list of ``PromptChoices`` that represent the additional choices that your
+plugin shall expose to the user::
+
+    from beets.plugins import BeetsPlugin
+    from beets.ui.commands import PromptChoice
+
+    class ExamplePlugin(BeetsPlugin):
+        def __init__(self):
+            super(ExamplePlugin, self).__init__()
+            self.register_listener('before_choose_candidate',
+                                   self.before_choose_candidate_event)
+
+        def before_choose_candidate_event(self, session, task):
+            return [PromptChoice('p', 'Print foo', self.foo),
+                    PromptChoice('d', 'Do bar', self.bar)]
+
+        def foo(self, session, task):
+            print('User has chosen "Print foo"!')
+
+        def bar(self, session, task):
+            print('User has chosen "Do bar"!')
+
+The previous example modifies the standard prompt::
+
+    # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
+    Enter search, enter Id, aBort?
+
+by appending two additional options (``Print foo`` and ``Do bar``)::
+
+    # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
+    Enter search, enter Id, aBort, Print foo, Do bar?
+
+If the user selects a choice, the ``callback`` attribute of the corresponding
+``PromptChoice`` will be called. It is the responsibility of the plugin to
+check for the status of the import session and decide the choices to be
+appended: for example, if a particular choice should only be presented if the
+album has no candidates, the relevant checks against ``task.candidates`` should
+be performed inside the plugin's ``before_choose_candidate_event`` accordingly.
+
+Please make sure that the short letter for each of the choices provided by the
+plugin is not already in use: the importer will emit a warning and discard
+all but one of the choices using the same letter, giving priority to the
+core importer prompt choices. As a reference, the following characters are used
+by the choices on the core importer prompt, and hence should not be used:
+``a``, ``s``, ``u``, ``t``, ``g``, ``e``, ``i``, ``b``.
+
+Additionally, the callback function can optionally specify the next action to
+be performed by returning a ``importer.action`` value. It may also return a
+``autotag.Proposal`` value to update the set of current proposals to be
+considered.

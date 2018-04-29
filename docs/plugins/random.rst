@@ -23,3 +23,7 @@ of Bob Dylan won't make you listen to Bob Dylan 50% of the time.
 The ``-n NUMBER`` option controls the number of objects that are selected and
 printed (default 1). To select 5 tracks from your library, type ``beet random
 -n5``.
+
+As an alternative, you can use ``-t MINUTES`` to choose a set of music with a
+given play time. To select tracks that total one hour, for example, type
+``beet random -t60``.

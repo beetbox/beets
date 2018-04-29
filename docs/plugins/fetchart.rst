@@ -42,31 +42,54 @@ file. The available options are:
   too big. The resize operation reduces image width to at most ``maxwidth``
   pixels. The height is recomputed so that the aspect ratio is preserved.
 - **enforce_ratio**: Only images with a width:height ratio of 1:1 are
-  considered as valid album art candidates. Default: ``no``.
-- **remote_priority**: Query remote sources every time and use local image only
-  as fallback.
-  Default: ``no``; remote (Web) art sources are only queried if no local art is
-  found in the filesystem.
+  considered as valid album art candidates if set to ``yes``.
+  It is also possible to specify a certain deviation to the exact ratio to
+  still be considered valid. This can be done either in pixels
+  (``enforce_ratio: 10px``) or as a percentage of the longer edge
+  (``enforce_ratio: 0.5%``). Default: ``no``.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``coverart itunes amazon albumart``, i.e., everything but
-  ``wikipedia`` and ``google``. Enable those two sources for more matches at
-  the cost of some speed.
+  Default: ``filesystem coverart amazon albumart``, i.e., everything but
+  ``wikipedia``, ``google`` and ``fanarttv``. Enable those sources for more
+  matches at the cost of some speed. They are searched in the given order,
+  thus in the default config, no remote (Web) art source are queried if
+  local art is found in the filesystem. To use a local image as fallback,
+  move it to the end of the list. For even more fine-grained control over
+  the search order, see the section on :ref:`album-art-sources` below.
+- **google_key**: Your Google API key (to enable the Google Custom Search
+  backend).
+  Default: None.
+- **google_engine**: The custom search engine to use.
+  Default: The `beets custom search engine`_, which searches the entire web.
+- **fanarttv_key**: The personal API key for requesting art from
+  fanart.tv. See below.
+- **store_source**: If enabled, fetchart stores the artwork's source in a
+  flexible tag named ``art_source``. See below for the rationale behind this.
+  Default: ``no``.
 
-Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
-or `PIL`_.
+Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
+or `Pillow`_.
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. note::
+
+    Previously, there was a `remote_priority` option to specify when to
+    look for art on the filesystem. This is
+    still respected, but a deprecation message will be shown until you
+    replace this configuration with the new `filesystem` value in the
+    `sources` array.
+
+.. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
+.. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 
 Here's an example that makes plugin select only images that contain *front* or
-*back* keywords in their filenames and prioritizes the iTunes source over
+*back* keywords in their filenames and prioritizes the Amazon source over
 others::
 
     fetchart:
         cautious: true
         cover_names: front back
-        sources: itunes *
+        sources: amazon *
 
 
 Manually Fetching Album Art
@@ -82,32 +105,46 @@ already have it; the ``-f`` or ``--force`` switch makes it search for art
 in Web databases regardless. If you specify a query, only matching albums will
 be processed; otherwise, the command processes every album in your library.
 
+Display Only Missing Album Art
+------------------------------
+
+Use the ``fetchart`` command with the ``-q`` switch in order to display only missing
+art::
+
+    $ beet fetchart [-q] [query]
+
+By default the command will display all results, the ``-q`` or ``--quiet``
+switch will only display results for album arts that are still missing.
+
 .. _image-resizing:
 
 Image Resizing
 --------------
 
-Beets can resize images using `PIL`_, `ImageMagick`_, or a server-side resizing
-proxy. If either PIL or ImageMagick is installed, beets will use those;
+Beets can resize images using `Pillow`_, `ImageMagick`_, or a server-side resizing
+proxy. If either Pillow or ImageMagick is installed, beets will use those;
 otherwise, it falls back to the resizing proxy. If the resizing proxy is used,
 no resizing is performed for album art found on the filesystem---only downloaded
 art is resized. Server-side resizing can also be slower than local resizing, so
 consider installing one of the two backends for better performance.
 
-When using ImageMagic, beets looks for the ``convert`` executable in your path.
+When using ImageMagick, beets looks for the ``convert`` executable in your path.
 On some versions of Windows, the program can be shadowed by a system-provided
 ``convert.exe``. On these systems, you may need to modify your ``%PATH%``
-environment variable so that ImageMagick comes first or use PIL instead.
+environment variable so that ImageMagick comes first or use Pillow instead.
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
+
+.. _album-art-sources:
 
 Album Art Sources
 -----------------
 
 By default, this plugin searches for art in the local filesystem as well as on
-the Cover Art Archive, the iTunes Store, Amazon, AlbumArt.org,
-and Google Image Search, and Wikipedia, in that order. You can reorder the sources or remove
+the Cover Art Archive, Amazon, and AlbumArt.org, in that
+order.
+You can reorder the sources or remove
 some to speed up the process using the ``sources`` configuration option.
 
 When looking for local album art, beets checks for image files located in the
@@ -116,33 +153,75 @@ file whose name contains "cover", "front", "art", "album" or "folder", but in
 the absence of well-known names, it will use any image file in the same folder
 as your music files.
 
+For some of the art sources, the backend service can match artwork by various
+criteria. If you want finer control over the search order in such cases, you
+can use this alternative syntax for the ``sources`` option::
+
+    fetchart:
+        sources:
+            - filesystem
+            - coverart: release
+            - itunes
+            - coverart: releasegroup
+            - '*'
+
+where listing a source without matching criteria will default to trying all
+available strategies. Entries of the forms ``coverart: release releasegroup``
+and ``coverart: *`` are also valid.
+Currently, only the ``coverart`` source supports multiple criteria:
+namely, ``release`` and ``releasegroup``, which refer to the
+respective MusicBrainz IDs.
+
 When you choose to apply changes during an import, beets will search for art as
 described above.  For "as-is" imports (and non-autotagged imports using the
 ``-A`` flag), beets only looks for art on the local filesystem.
 
-iTunes Store
-''''''''''''
+Google custom search
+''''''''''''''''''''
 
-To use the iTunes Store as an art source, install the `python-itunes`_
-library. You can do this using `pip`_, like so::
+To use the google image search backend you need to
+`register for a Google API key`_. Set the ``google_key`` configuration
+option to your key, then add ``google`` to the list of sources in your
+configuration.
 
-    $ pip install python-itunes
+.. _register for a Google API key: https://console.developers.google.com.
 
-Once the library is installed, the plugin will use it to search automatically.
+Optionally, you can `define a custom search engine`_. Get your search engine's
+token and use it for your ``google_engine`` configuration option. The
+default engine searches the entire web for cover art.
 
-.. _python-itunes: https://github.com/ocelma/python-itunes
-.. _pip: http://pip.openplans.org/
+.. _define a custom search engine: http://www.google.com/cse/all
 
-Google Image Search
-'''''''''''''''''''
+Note that the Google custom search API is limited to 100 queries per day.
+After that, the fetchart plugin will fall back on other declared data sources.
 
-You can optionally search for cover art on `Google Images`_. This option uses
-the first hit for a search query consisting of the artist and album name. It
-is therefore approximate: "incorrect" image matches are possible (although
-unlikely).
+Fanart.tv
+'''''''''
 
-.. _Google Images: http://images.google.com/
+Although not strictly necessary right now, you might think about
+`registering a personal fanart.tv API key`_. Set the ``fanarttv_key``
+configuration option to your key, then add ``fanarttv`` to the list of sources
+in your configuration.
 
+.. _registering a personal fanart.tv API key: https://fanart.tv/get-an-api-key/
+
+More detailed information can be found `on their blog`_. Specifically, the
+personal key will give you earlier access to new art.
+
+.. _on their blog: https://fanart.tv/2015/01/personal-api-keys/
+
+Storing the Artwork's Source
+----------------------------
+
+Storing the current artwork's source might be used to narrow down
+``fetchart`` commands. For example, if some albums have artwork placed
+manually in their directories that should not be replaced by a forced
+album art fetch, you could do
+
+``beet fetchart -f ^art_source:filesystem``
+
+The values written to ``art_source`` are the same names used in the ``sources``
+configuration value.
 
 Embedding Album Art
 -------------------

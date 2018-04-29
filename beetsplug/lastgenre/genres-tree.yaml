@@ -133,7 +133,6 @@
     - chutney
     - chutney soca
     - compas
-    - dance hall
     - mambo
     - merengue
     - méringue
@@ -148,7 +147,6 @@
     - punta
     - punta rock
     - rasin
-    - reggae
     - reggaeton
     - salsa
     - soca
@@ -291,7 +289,7 @@
         - neurofunk
         - oldschool jungle:
             - darkside jungle
-            - ragga-jungle
+            - ragga jungle
         - raggacore
         - sambass
         - techstep
@@ -494,8 +492,8 @@
     - lyrical hip hop
     - merenrap
     - midwest hip hop:
-        - chicago hip hop:
-        - detroit hip hop:
+        - chicago hip hop
+        - detroit hip hop
         - horrorcore
         - st. louis hip hop
         - twin cities hip hop
@@ -505,12 +503,10 @@
     - new school hip hop
     - old school hip hop
     - political hip hop
-    - ragga
     - rap opera
     - rap rock:
         - rap metal
         - rapcore
-    - reggae español/spanish reggae
     - songo-salsa
     - southern hip hop:
         - atlanta hip hop:
@@ -652,7 +648,7 @@
     - glam rock
     - hard rock
     - heavy metal:
-        - alternative metal:
+        - alternative metal
         - black metal:
             - viking metal
         - christian metal
@@ -735,12 +731,19 @@
     - surf rock
     - visual kei:
         - nagoya kei
-- ska:
-    - 2 tone
-    - dancehall
-    - dub
-    - lovers rock
-    - ragga jungle
-        - polish reggae
+- reggae:
+    - roots reggae
     - reggae fusion
-    - rocksteady
+    - reggae en español:
+        - spanish reggae
+        - reggae 110
+        - reggae bultrón
+        - romantic flow
+    - lovers rock
+    - raggamuffin:
+        - ragga
+    - dancehall
+    - ska:
+        - 2 tone
+        - dub
+        - rocksteady

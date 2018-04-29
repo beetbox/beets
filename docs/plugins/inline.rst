@@ -6,9 +6,9 @@ it, you can define template fields in your beets configuration file and refer
 to them from your template strings in the ``paths:`` section (see
 :doc:`/reference/config/`).
 
-To use the `ìnline`` plugin, enable it in your configuration
+To use the ``inline`` plugin, enable it in your configuration
 (see :ref:`using-plugins`).
-Then, make a `item_fields:`` block in your config file. Under this key, every line defines a
+Then, make a ``item_fields:`` block in your config file. Under this key, every line defines a
 new template field; the key is the name of the field (you'll use the name to
 refer to the field in your templates) and the value is a Python expression or
 function body. The Python code has all of a track's fields in scope, so you can

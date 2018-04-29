@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Jan-Erik Dahlin
+# Copyright 2016, Jan-Erik Dahlin
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,41 +16,32 @@
 """If the title is empty, try to extract track and title from the
 filename.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets.util import displayable_path
 import os
 import re
+import six
 
 
 # Filename field extraction patterns.
 PATTERNS = [
-    # "01 - Track 01" and "01": do nothing
-    r'^(\d+)\s*-\s*track\s*\d$',
-    r'^\d+$',
-
-    # Useful patterns.
-    r'^(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    r'^(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<title>.+)$',
-    r'^(?P<track>\d+)\.\s*(?P<title>.+)$',
-    r'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
-    r'^(?P<track>\d+)\s(?P<title>.+)$',
-    r'^(?P<title>.+) by (?P<artist>.+)$',
+  # Useful patterns.
+  r'^(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
+  r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
+  r'^(?P<artist>.+)[\-_](?P<title>.+)$',
+  r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)$',
+  r'^(?P<title>.+)$',
+  r'^(?P<track>\d+)[\s.\-_]+(?P<title>.+)$',
+  r'^(?P<track>\d+)\s+(?P<title>.+)$',
+  r'^(?P<title>.+) by (?P<artist>.+)$',
+  r'^(?P<track>\d+).*$',
 ]
 
 # Titles considered "empty" and in need of replacement.
 BAD_TITLE_PATTERNS = [
     r'^$',
-    r'\d+?\s?-?\s*track\s*\d+',
 ]
 
 
@@ -100,7 +92,7 @@ def apply_matches(d):
     """Given a mapping from items to field dicts, apply the fields to
     the objects.
     """
-    some_map = d.values()[0]
+    some_map = list(d.values())[0]
     keys = some_map.keys()
 
     # Only proceed if the "tag" field is equal across all filenames.
@@ -132,7 +124,7 @@ def apply_matches(d):
     # Apply the title and track.
     for item in d:
         if bad_title(item.title):
-            item.title = unicode(d[item][title_field])
+            item.title = six.text_type(d[item][title_field])
         if 'track' in d[item] and item.track == 0:
             item.track = int(d[item]['track'])
 

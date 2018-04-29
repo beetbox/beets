@@ -6,9 +6,12 @@ import:
     copy: yes
     move: no
     link: no
+    hardlink: no
     delete: no
     resume: ask
     incremental: no
+    incremental_skip_later: no
+    from_scratch: no
     quiet_fallback: skip
     none_rec_action: ask
     timid: no
@@ -22,9 +25,15 @@ import:
     flat: no
     group_albums: no
     pretend: false
+    search_ids: []
+    duplicate_action: ask
+    bell: no
+    set_fields: {}
 
 clutter: ["Thumbs.DB", ".DS_Store"]
-ignore: [".*", "*~", "System Volume Information"]
+ignore: [".*", "*~", "System Volume Information", "lost+found"]
+ignore_hidden: yes
+
 replace:
     '[\\/]': _
     '^\.': _
@@ -33,6 +42,7 @@ replace:
     '\.$': _
     '\s+$': ''
     '^\s+': ''
+    '^-': _
 path_sep_replace: _
 asciify_paths: false
 art_filename: cover
@@ -46,7 +56,9 @@ per_disc_numbering: no
 verbose: 0
 terminal_encoding:
 original_date: no
+artist_credit: no
 id3v23: no
+va_name: "Various Artists"
 
 ui:
     terminal_width: 80
@@ -64,6 +76,7 @@ ui:
 format_item: $artist - $album - $title
 format_album: $albumartist - $album
 time_format: '%Y-%m-%d %H:%M:%S'
+format_raw_length: no
 
 sort_album: albumartist+ album+
 sort_item: artist+ album+ disc+ track+
@@ -115,5 +128,7 @@ match:
         original_year: no
     ignored: []
     required: []
+    ignored_media: []
+    ignore_video_tracks: yes
     track_length_grace: 10
     track_length_max: 30

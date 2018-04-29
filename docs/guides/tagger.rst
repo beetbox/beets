@@ -60,8 +60,8 @@ all of these limitations.
   because beets by default infers tags based on existing metadata. But this is
   not a hard and fast rule---there are a few ways to tag metadata-poor music:
 
-    * You can use the *E* option described below to search in MusicBrainz for
-      a specific album or song.
+    * You can use the *E* or *I* options described below to search in
+      MusicBrainz for a specific album or song.
     * The :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to
       use acoustic fingerprinting to find information for arbitrary audio.
       Install that plugin if you're willing to spend a little more CPU power
@@ -76,7 +76,7 @@ all of these limitations.
   Musepack, Windows Media, Opus, and AIFF files are supported. (Do you use
   some other format? Please `file a feature request`_!)
 
-.. _file a feature request: https://github.com/sampsyo/beets/issues/new
+.. _file a feature request: https://github.com/beetbox/beets/issues/new
 
 Now that that's out of the way, let's tag some music.
 
@@ -94,6 +94,9 @@ command-line options you should know:
 
 * ``beet import -C``: don't copy imported files to your music directory; leave
   them where they are
+
+* ``beet import -m``: move imported files to your music directory (overrides
+  the ``-c`` option)
 
 * ``beet import -l LOGFILE``: write a message to ``LOGFILE`` every time you skip
   an album or choose to take its tags "as-is" (see below) or the album is
@@ -160,10 +163,10 @@ When beets needs your input about a match, it says something like this::
         Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
-    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, or aBort?
+    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, enter Id, or aBort?
 
 When beets asks you this question, it wants you to enter one of the capital
-letters: A, M, S, U, T, G, E, or B. That is, you can choose one of the
+letters: A, M, S, U, T, G, E, I or B. That is, you can choose one of the
 following:
 
 * *A*: Apply the suggested changes shown and move on.
@@ -189,6 +192,11 @@ following:
 * *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
   or untagged.
+
+* *I*: Enter a metadata backend ID to use as search in the database. Use this
+  option to specify a backend entity (for example, a MusicBrainz release or
+  recording) directly, by pasting its ID or the full URL. You can also specify
+  several IDs by separating them by a space.
 
 * *B*: Cancel this import task altogether. No further albums will be tagged;
   beets shuts down immediately. The next time you attempt to import the same
@@ -226,16 +234,24 @@ If beets finds an album or item in your library that seems to be the same as the
 one you're importing, you may see a prompt like this::
 
     This album is already in the library!
-    [S]kip new, Keep both, Remove old?
+    [S]kip new, Keep both, Remove old, Merge all?
 
 Beets wants to keep you safe from duplicates, which can be a real pain, so you
-have three choices in this situation. You can skip importing the new music,
+have four choices in this situation. You can skip importing the new music,
 choosing to keep the stuff you already have in your library; you can keep both
-the old and the new music; or you can remove the existing music and choose the
-new stuff. If you choose that last "trump" option, any duplicates will be
+the old and the new music; you can remove the existing music and choose the
+new stuff; or you can merge all the new and old tracks into a single album.
+If you choose that "remove" option, any duplicates will be
 removed from your library database---and, if the corresponding files are located
 inside of your beets library directory, the files themselves will be deleted as
 well.
+
+If you choose "merge", beets will try re-importing the existing and new tracks
+as one bundle together.
+This is particularly helpful when you have an album that's missing some tracks
+and then want to import the remaining songs.
+The importer will ask you the same questions as it would if you were importing
+all tracks at once.
 
 If you choose to keep two identically-named albums, beets can avoid storing both
 in the same directory. See :ref:`aunique` for details.
@@ -281,12 +297,13 @@ MusicBrainz---so consider adding the data yourself.
 If you think beets is ignoring an album that's listed in MusicBrainz, please
 `file a bug report`_.
 
-.. _file a bug report: https://github.com/sampsyo/beets/issues
+.. _file a bug report: https://github.com/beetbox/beets/issues
 
 I Hope That Makes Sense
 -----------------------
 
-If I haven't made the process clear, please send an email to `the mailing
-list`_ and I'll try to improve this guide.
+If we haven't made the process clear, please post on `the discussion
+board`_ and we'll try to improve this guide.
 
 .. _the mailing list: http://groups.google.com/group/beets-users
+.. _the discussion board: http://discourse.beets.io
