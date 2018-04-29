@@ -103,6 +103,8 @@ Fixes:
   to which a track belongs, not the total number of different mediums present
   on the release. :bug:`2887`
   Thanks to :user:`dbogdanov`.
+* :doc:`/plugins/keyfinder`: Avoid a crash when trying to process unmatched
+  tracks. :bug:`2537`
 
 
 For developers:
