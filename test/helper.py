@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
+# Copyright 2016, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -30,8 +31,7 @@ information or mock the environment.
 """
 
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import sys
 import os
@@ -40,7 +40,7 @@ import shutil
 import subprocess
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
-from StringIO import StringIO
+from six import StringIO
 from enum import Enum
 
 import beets
@@ -51,10 +51,12 @@ from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
-from beets.ui import _arg_encoding
+from beets import util
+from beets.util import MoveOperation
 
 # TODO Move AutotagMock here
 from test import _common
+import six
 
 
 class LogCapture(logging.Handler):
@@ -64,7 +66,7 @@ class LogCapture(logging.Handler):
         self.messages = []
 
     def emit(self, record):
-        self.messages.append(unicode(record.msg))
+        self.messages.append(six.text_type(record.msg))
 
 
 @contextmanager
@@ -88,7 +90,8 @@ def control_stdin(input=None):
     """
     org = sys.stdin
     sys.stdin = StringIO(input)
-    sys.stdin.encoding = 'utf8'
+    if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
+        sys.stdin.encoding = 'utf-8'
     try:
         yield sys.stdin
     finally:
@@ -107,7 +110,8 @@ def capture_stdout():
     """
     org = sys.stdout
     sys.stdout = capture = StringIO()
-    sys.stdout.encoding = 'utf8'
+    if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
+        sys.stdout.encoding = 'utf-8'
     try:
         yield sys.stdout
     finally:
@@ -115,13 +119,25 @@ def capture_stdout():
         print(capture.getvalue())
 
 
+def _convert_args(args):
+    """Convert args to bytestrings for Python 2 and convert them to strings
+       on Python 3.
+    """
+    for i, elem in enumerate(args):
+        if six.PY2:
+            if isinstance(elem, six.text_type):
+                args[i] = elem.encode(util.arg_encoding())
+        else:
+            if isinstance(elem, bytes):
+                args[i] = elem.decode(util.arg_encoding())
+
+    return args
+
+
 def has_program(cmd, args=['--version']):
     """Returns `True` if `cmd` can be executed.
     """
-    full_cmd = [cmd] + args
-    for i, elem in enumerate(full_cmd):
-        if isinstance(elem, unicode):
-            full_cmd[i] = elem.encode(_arg_encoding())
+    full_cmd = _convert_args([cmd] + args)
     try:
         with open(os.devnull, 'wb') as devnull:
             subprocess.check_call(full_cmd, stderr=devnull,
@@ -165,7 +181,7 @@ class TestHelper(object):
         Make sure you call ``teardown_beets()`` afterwards.
         """
         self.create_temp_dir()
-        os.environ['BEETSDIR'] = self.temp_dir
+        os.environ['BEETSDIR'] = util.py3_path(self.temp_dir)
 
         self.config = beets.config
         self.config.clear()
@@ -176,18 +192,20 @@ class TestHelper(object):
         self.config['ui']['color'] = False
         self.config['threaded'] = False
 
-        self.libdir = os.path.join(self.temp_dir, 'libdir')
+        self.libdir = os.path.join(self.temp_dir, b'libdir')
         os.mkdir(self.libdir)
-        self.config['directory'] = self.libdir
+        self.config['directory'] = util.py3_path(self.libdir)
 
         if disk:
-            dbpath = self.config['library'].as_filename()
+            dbpath = util.bytestring_path(
+                self.config['library'].as_filename()
+            )
         else:
             dbpath = ':memory:'
         self.lib = Library(dbpath, self.libdir)
 
     def teardown_beets(self):
-        del self.lib._connections
+        self.lib._close()
         if 'BEETSDIR' in os.environ:
             del os.environ['BEETSDIR']
         self.remove_temp_dir()
@@ -226,13 +244,13 @@ class TestHelper(object):
         Copies the specified number of files to a subdirectory of
         `self.temp_dir` and creates a `TestImportSession` for this path.
         """
-        import_dir = os.path.join(self.temp_dir, 'import')
+        import_dir = os.path.join(self.temp_dir, b'import')
         if not os.path.isdir(import_dir):
             os.mkdir(import_dir)
 
         album_no = 0
         while album_count:
-            album = u'album {0}'.format(album_no)
+            album = util.bytestring_path(u'album {0}'.format(album_no))
             album_dir = os.path.join(import_dir, album)
             if os.path.exists(album_dir):
                 album_no += 1
@@ -243,9 +261,10 @@ class TestHelper(object):
             track_no = 0
             album_item_count = item_count
             while album_item_count:
-                title = 'track {0}'.format(track_no)
-                src = os.path.join(_common.RSRC, 'full.mp3')
-                dest = os.path.join(album_dir, '{0}.mp3'.format(title))
+                title = u'track {0}'.format(track_no)
+                src = os.path.join(_common.RSRC, b'full.mp3')
+                title_file = util.bytestring_path('{0}.mp3'.format(title))
+                dest = os.path.join(album_dir, title_file)
                 if os.path.exists(dest):
                     track_no += 1
                     continue
@@ -297,6 +316,8 @@ class TestHelper(object):
         item = Item(**values_)
         if 'path' not in values:
             item['path'] = 'audio.' + item['format'].lower()
+        # mtime needs to be set last since other assignments reset it.
+        item.mtime = 12345
         return item
 
     def add_item(self, **values):
@@ -306,11 +327,19 @@ class TestHelper(object):
 
         If `path` is not set in `values` it is set to `item.destination()`.
         """
+        # When specifying a path, store it normalized (as beets does
+        # ordinarily).
+        if 'path' in values:
+            values['path'] = util.normpath(values['path'])
+
         item = self.create_item(**values)
         item.add(self.lib)
+
+        # Ensure every item has a path.
         if 'path' not in values:
             item['path'] = item.destination()
             item.store()
+
         return item
 
     def add_item_fixture(self, **values):
@@ -318,9 +347,10 @@ class TestHelper(object):
         """
         item = self.create_item(**values)
         extension = item['format'].lower()
-        item['path'] = os.path.join(_common.RSRC, 'min.' + extension)
+        item['path'] = os.path.join(_common.RSRC,
+                                    util.bytestring_path('min.' + extension))
         item.add(self.lib)
-        item.move(copy=True)
+        item.move(operation=MoveOperation.COPY)
         item.store()
         return item
 
@@ -333,13 +363,15 @@ class TestHelper(object):
         """
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, 'full.' + ext)
+        path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         for i in range(count):
-            item = Item.from_path(bytes(path))
+            item = Item.from_path(path)
             item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
+            # mtime needs to be set last since other assignments reset it.
+            item.mtime = 12345
             item.add(self.lib)
-            item.move(copy=True)
+            item.move(operation=MoveOperation.COPY)
             item.store()
             items.append(item)
         return items
@@ -348,13 +380,15 @@ class TestHelper(object):
         """Add an album with files to the database.
         """
         items = []
-        path = os.path.join(_common.RSRC, 'full.' + ext)
+        path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         for i in range(track_count):
-            item = Item.from_path(bytes(path))
+            item = Item.from_path(path)
             item.album = u'\u00e4lbum'  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
+            # mtime needs to be set last since other assignments reset it.
+            item.mtime = 12345
             item.add(self.lib)
-            item.move(copy=True)
+            item.move(operation=MoveOperation.COPY)
             item.store()
             items.append(item)
         return self.lib.add_album(items)
@@ -370,7 +404,7 @@ class TestHelper(object):
         specified extension a cover art image is added to the media
         file.
         """
-        src = os.path.join(_common.RSRC, 'full.' + ext)
+        src = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         handle, path = mkstemp()
         os.close(handle)
         shutil.copyfile(src, path)
@@ -379,8 +413,8 @@ class TestHelper(object):
             mediafile = MediaFile(path)
             imgs = []
             for img_ext in images:
-                img_path = os.path.join(_common.RSRC,
-                                        'image-2x3.{0}'.format(img_ext))
+                file = util.bytestring_path('image-2x3.{0}'.format(img_ext))
+                img_path = os.path.join(_common.RSRC, file)
                 with open(img_path, 'rb') as f:
                     imgs.append(Image(f.read()))
             mediafile.images = imgs
@@ -405,17 +439,22 @@ class TestHelper(object):
 
     # Running beets commands
 
-    def run_command(self, *args):
+    def run_command(self, *args, **kwargs):
+        """Run a beets command with an arbitrary amount of arguments. The
+           Library` defaults to `self.lib`, but can be overridden with
+           the keyword argument `lib`.
+        """
+        sys.argv = ['beet']  # avoid leakage from test suite args
+        lib = None
         if hasattr(self, 'lib'):
             lib = self.lib
-        else:
-            lib = Library(':memory:')
-        beets.ui._raw_main(list(args), lib)
+        lib = kwargs.get('lib', lib)
+        beets.ui._raw_main(_convert_args(list(args)), lib)
 
     def run_with_output(self, *args):
         with capture_stdout() as out:
             self.run_command(*args)
-        return out.getvalue().decode('utf-8')
+        return util.text_string(out.getvalue())
 
     # Safe file operations
 
@@ -423,7 +462,8 @@ class TestHelper(object):
         """Create a temporary directory and assign it into
         `self.temp_dir`. Call `remove_temp_dir` later to delete it.
         """
-        self.temp_dir = mkdtemp()
+        temp_dir = mkdtemp()
+        self.temp_dir = util.bytestring_path(temp_dir)
 
     def remove_temp_dir(self):
         """Delete the temporary directory created by `create_temp_dir`.
@@ -445,9 +485,9 @@ class TestHelper(object):
 
         parent = os.path.dirname(path)
         if not os.path.isdir(parent):
-            os.makedirs(parent)
+            os.makedirs(util.syspath(parent))
 
-        with open(path, 'a+') as f:
+        with open(util.syspath(path), 'a+') as f:
             f.write(content)
         return path
 
@@ -495,7 +535,7 @@ class TestImportSession(importer.ImportSession):
 
     choose_item = choose_match
 
-    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH')
+    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH MERGE')
 
     default_resolution = 'REMOVE'
 
@@ -513,6 +553,8 @@ class TestImportSession(importer.ImportSession):
             task.set_choice(importer.action.SKIP)
         elif res == self.Resolution.REMOVE:
             task.should_remove_duplicates = True
+        elif res == self.Resolution.MERGE:
+            task.should_merge_duplicates = True
 
 
 def generate_album_info(album_id, track_ids):
@@ -526,14 +568,14 @@ def generate_album_info(album_id, track_ids):
     """
     tracks = [generate_track_info(id) for id in track_ids]
     album = AlbumInfo(
-        album_id='album info',
-        album='album info',
-        artist='album info',
-        artist_id='album info',
+        album_id=u'album info',
+        album=u'album info',
+        artist=u'album info',
+        artist_id=u'album info',
         tracks=tracks,
     )
     for field in ALBUM_INFO_FIELDS:
-        setattr(album, field, 'album info')
+        setattr(album, field, u'album info')
 
     return album
 
@@ -552,11 +594,11 @@ def generate_track_info(track_id='track info', values={}):
     string fields are set to "track info".
     """
     track = TrackInfo(
-        title='track info',
+        title=u'track info',
         track_id=track_id,
     )
     for field in TRACK_INFO_FIELDS:
-        setattr(track, field, 'track info')
+        setattr(track, field, u'track info')
     for field, value in values.items():
         setattr(track, field, value)
     return track

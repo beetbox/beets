@@ -1,11 +1,15 @@
-.. image:: https://travis-ci.org/sampsyo/beets.svg?branch=master
-    :target: https://travis-ci.org/sampsyo/beets
-
-.. image:: http://img.shields.io/codecov/c/github/sampsyo/beets.svg
-    :target: https://codecov.io/github/sampsyo/beets
-
 .. image:: http://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
+
+.. image:: http://img.shields.io/codecov/c/github/beetbox/beets.svg
+    :target: https://codecov.io/github/beetbox/beets
+
+.. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
+    :target: https://travis-ci.org/beetbox/beets
+
+
+beets
+=====
 
 Beets is the media library management system for obsessive-compulsive music
 geeks.
@@ -31,7 +35,7 @@ imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 - Fetch or calculate all the metadata you could possibly need: `album art`_,
   `lyrics`_, `genres`_, `tempos`_, `ReplayGain`_ levels, or `acoustic
   fingerprints`_.
-- Get metadata from `MusicBrainz`_ or `Discogs`_. Or guess
+- Get metadata from `MusicBrainz`_, `Discogs`_, and `Beatport`_. Or guess
   metadata using songs' filenames or their acoustic fingerprints.
 - `Transcode audio`_ to any format you like.
 - Check your library for `duplicate tracks and albums`_ or for `albums that
@@ -64,11 +68,29 @@ shockingly simple if you know a little Python.
 .. _acoustic fingerprints:
     http://beets.readthedocs.org/page/plugins/chroma.html
 .. _ReplayGain: http://beets.readthedocs.org/page/plugins/replaygain.html
-.. _tempos: http://beets.readthedocs.org/page/plugins/echonest.html
+.. _tempos: http://beets.readthedocs.org/page/plugins/acousticbrainz.html
 .. _genres: http://beets.readthedocs.org/page/plugins/lastgenre.html
 .. _album art: http://beets.readthedocs.org/page/plugins/fetchart.html
 .. _lyrics: http://beets.readthedocs.org/page/plugins/lyrics.html
 .. _MusicBrainz: http://musicbrainz.org/
+.. _Beatport: https://www.beatport.com
+
+Install
+-------
+
+You can install beets by typing ``pip install beets``. Then check out the
+`Getting Started`_ guide.
+
+.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+
+Contribute
+----------
+
+Check out the `Hacking`_ page on the wiki for tips on how to help out.
+You might also be interested in the `For Developers`_ section in the docs.
+
+.. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
+.. _For Developers: http://docs.beets.io/page/dev/
 
 Read More
 ---------
@@ -76,18 +98,14 @@ Read More
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-You can install beets by typing ``pip install beets``. Then check out the
-`Getting Started`_ guide.
-
-.. _its Web site: http://beets.radbox.org/
-.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+.. _its Web site: http://beets.io/
 .. _@b33ts: http://twitter.com/b33ts/
 
 Authors
 -------
 
 Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
-please contact the `mailing list`_.
+please visit our `forum`_.
 
-.. _mailing list: https://groups.google.com/forum/#!forum/beets-users
-.. _Adrian Sampson: http://homes.cs.washington.edu/~asampson/
+.. _forum: https://discourse.beets.io
+.. _Adrian Sampson: http://www.cs.cornell.edu/~asampson/

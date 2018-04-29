@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,26 +13,30 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import division, absolute_import, print_function
 
 import os
 
-import beets.library
 from beets.util import confit
 
-__version__ = '1.3.15'
-__author__ = 'Adrian Sampson <adrian@radbox.org>'
+__version__ = u'1.4.7'
+__author__ = u'Adrian Sampson <adrian@radbox.org>'
 
-Library = beets.library.Library
 
-config = confit.LazyConfig('beets', __name__)
+class IncludeLazyConfig(confit.LazyConfig):
+    """A version of Confit's LazyConfig that also merges in data from
+    YAML files specified in an `include` setting.
+    """
+    def read(self, user=True, defaults=True):
+        super(IncludeLazyConfig, self).read(user, defaults)
 
-try:
-    included_filenames = config['include'].get(list)
-except confit.NotFoundError:
-    included_filenames = []
+        try:
+            for view in self['include']:
+                filename = view.as_filename()
+                if os.path.isfile(filename):
+                    self.set_file(filename)
+        except confit.NotFoundError:
+            pass
 
-for filename in included_filenames:
-    filename = os.path.join(config.config_dir(), filename)
-    if os.path.isfile(filename):
-        config.set_file(filename)
+
+config = IncludeLazyConfig('beets', __name__)

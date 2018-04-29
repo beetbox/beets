@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,35 +17,32 @@
 automatically whenever tags are written.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import util
 from beets import config
 from beets import mediafile
+import mutagen
 
 _MUTAGEN_FORMATS = {
-    b'asf': b'ASF',
-    b'apev2': b'APEv2File',
-    b'flac': b'FLAC',
-    b'id3': b'ID3FileType',
-    b'mp3': b'MP3',
-    b'mp4': b'MP4',
-    b'oggflac': b'OggFLAC',
-    b'oggspeex': b'OggSpeex',
-    b'oggtheora': b'OggTheora',
-    b'oggvorbis': b'OggVorbis',
-    b'oggopus': b'OggOpus',
-    b'trueaudio': b'TrueAudio',
-    b'wavpack': b'WavPack',
-    b'monkeysaudio': b'MonkeysAudio',
-    b'optimfrog': b'OptimFROG',
+    'asf': 'ASF',
+    'apev2': 'APEv2File',
+    'flac': 'FLAC',
+    'id3': 'ID3FileType',
+    'mp3': 'MP3',
+    'mp4': 'MP4',
+    'oggflac': 'OggFLAC',
+    'oggspeex': 'OggSpeex',
+    'oggtheora': 'OggTheora',
+    'oggvorbis': 'OggVorbis',
+    'oggopus': 'OggOpus',
+    'trueaudio': 'TrueAudio',
+    'wavpack': 'WavPack',
+    'monkeysaudio': 'MonkeysAudio',
+    'optimfrog': 'OptimFROG',
 }
-
-
-scrubbing = False
 
 
 class ScrubPlugin(BeetsPlugin):
@@ -54,49 +52,23 @@ class ScrubPlugin(BeetsPlugin):
         self.config.add({
             'auto': True,
         })
-        self.register_listener("write", self.write_item)
+
+        if self.config['auto']:
+            self.register_listener("import_task_files", self.import_task_files)
 
     def commands(self):
         def scrub_func(lib, opts, args):
-            # This is a little bit hacky, but we set a global flag to
-            # avoid autoscrubbing when we're also explicitly scrubbing.
-            global scrubbing
-            scrubbing = True
-
             # Walk through matching files and remove tags.
             for item in lib.items(ui.decargs(args)):
                 self._log.info(u'scrubbing: {0}',
                                util.displayable_path(item.path))
+                self._scrub_item(item, opts.write)
 
-                # Get album art if we need to restore it.
-                if opts.write:
-                    try:
-                        mf = mediafile.MediaFile(util.syspath(item.path),
-                                                 config['id3v23'].get(bool))
-                    except IOError as exc:
-                        self._log.error(u'could not open file to scrub: {0}',
-                                        exc)
-                    art = mf.art
-
-                # Remove all tags.
-                self._scrub(item.path)
-
-                # Restore tags, if enabled.
-                if opts.write:
-                    self._log.debug(u'writing new tags after scrub')
-                    item.try_write()
-                    if art:
-                        self._log.info(u'restoring art')
-                        mf = mediafile.MediaFile(util.syspath(item.path))
-                        mf.art = art
-                        mf.save()
-
-            scrubbing = False
-
-        scrub_cmd = ui.Subcommand('scrub', help='clean audio tags')
-        scrub_cmd.parser.add_option('-W', '--nowrite', dest='write',
-                                    action='store_false', default=True,
-                                    help='leave tags empty')
+        scrub_cmd = ui.Subcommand('scrub', help=u'clean audio tags')
+        scrub_cmd.parser.add_option(
+            u'-W', u'--nowrite', dest='write',
+            action='store_false', default=True,
+            help=u'leave tags empty')
         scrub_cmd.func = scrub_func
 
         return [scrub_cmd]
@@ -107,7 +79,7 @@ class ScrubPlugin(BeetsPlugin):
         """
         classes = []
         for modname, clsname in _MUTAGEN_FORMATS.items():
-            mod = __import__(b'mutagen.{0}'.format(modname),
+            mod = __import__('mutagen.{0}'.format(modname),
                              fromlist=[clsname])
             classes.append(getattr(mod, clsname))
         return classes
@@ -135,12 +107,45 @@ class ScrubPlugin(BeetsPlugin):
                 for tag in f.keys():
                     del f[tag]
                 f.save()
-            except IOError as exc:
+            except (IOError, mutagen.MutagenError) as exc:
                 self._log.error(u'could not scrub {0}: {1}',
                                 util.displayable_path(path), exc)
 
-    def write_item(self, item, path, tags):
-        """Automatically embed art into imported albums."""
-        if not scrubbing and self.config['auto']:
-            self._log.debug(u'auto-scrubbing {0}', util.displayable_path(path))
-            self._scrub(path)
+    def _scrub_item(self, item, restore=True):
+        """Remove tags from an Item's associated file and, if `restore`
+        is enabled, write the database's tags back to the file.
+        """
+        # Get album art if we need to restore it.
+        if restore:
+            try:
+                mf = mediafile.MediaFile(util.syspath(item.path),
+                                         config['id3v23'].get(bool))
+            except mediafile.UnreadableFileError as exc:
+                self._log.error(u'could not open file to scrub: {0}',
+                                exc)
+                return
+            images = mf.images
+
+        # Remove all tags.
+        self._scrub(item.path)
+
+        # Restore tags, if enabled.
+        if restore:
+            self._log.debug(u'writing new tags after scrub')
+            item.try_write()
+            if images:
+                self._log.debug(u'restoring art')
+                try:
+                    mf = mediafile.MediaFile(util.syspath(item.path),
+                                             config['id3v23'].get(bool))
+                    mf.images = images
+                    mf.save()
+                except mediafile.UnreadableFileError as exc:
+                    self._log.error(u'could not write tags: {0}', exc)
+
+    def import_task_files(self, session, task):
+        """Automatically scrub imported files."""
+        for item in task.imported_items():
+            self._log.debug(u'auto-scrubbing {0}',
+                            util.displayable_path(item.path))
+            self._scrub_item(item)

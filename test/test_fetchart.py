@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
+# Copyright 2016, Thomas Scholtes.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,12 +13,12 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import os
-from test._common import unittest
+import unittest
 from test.helper import TestHelper
+from beets import util
 
 
 class FetchartCliTest(unittest.TestCase, TestHelper):
@@ -25,7 +26,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
         self.load_plugins('fetchart')
-        self.config['fetchart']['cover_names'] = b'c\xc3\xb6ver.jpg'
+        self.config['fetchart']['cover_names'] = 'c\xc3\xb6ver.jpg'
         self.config['art_filename'] = 'mycover'
         self.album = self.add_album()
 
@@ -41,7 +42,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
 
         self.album.load()
         self.assertEqual(self.album['artpath'], cover_path)
-        with open(cover_path, 'r') as f:
+        with open(util.syspath(cover_path), 'r') as f:
             self.assertEqual(f.read(), 'IMAGE')
 
     def test_filesystem_does_not_pick_up_folder(self):
@@ -54,5 +55,5 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

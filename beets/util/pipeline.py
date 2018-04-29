@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -31,15 +32,15 @@ To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
-import Queue
+from six.moves import queue
 from threading import Thread, Lock
 import sys
+import six
 
-BUBBLE = b'__PIPELINE_BUBBLE__'
-POISON = b'__PIPELINE_POISON__'
+BUBBLE = '__PIPELINE_BUBBLE__'
+POISON = '__PIPELINE_POISON__'
 
 DEFAULT_QUEUE_SIZE = 16
 
@@ -63,7 +64,17 @@ def _invalidate_queue(q, val=None, sync=True):
         q.mutex.acquire()
 
     try:
-        q.maxsize = 0
+        # Originally, we set `maxsize` to 0 here, which is supposed to mean
+        # an unlimited queue size. However, there is a race condition since
+        # Python 3.2 when this attribute is changed while another thread is
+        # waiting in put()/get() due to a full/empty queue.
+        # Setting it to 2 is still hacky because Python does not give any
+        # guarantee what happens if Queue methods/attributes are overwritten
+        # when it is already in use. However, because of our dummy _put()
+        # and _get() methods, it provides a workaround to let the queue appear
+        # to be never empty or full.
+        # See issue https://github.com/beetbox/beets/issues/2078
+        q.maxsize = 2
         q._qsize = _qsize
         q._put = _put
         q._get = _get
@@ -75,13 +86,13 @@ def _invalidate_queue(q, val=None, sync=True):
             q.mutex.release()
 
 
-class CountedQueue(Queue.Queue):
+class CountedQueue(queue.Queue):
     """A queue that keeps track of the number of threads that are
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
     """
     def __init__(self, maxsize=0):
-        Queue.Queue.__init__(self, maxsize)
+        queue.Queue.__init__(self, maxsize)
         self.nthreads = 0
         self.poisoned = False
 
@@ -248,7 +259,7 @@ class FirstPipelineThread(PipelineThread):
 
                 # Get the value from the generator.
                 try:
-                    msg = self.coro.next()
+                    msg = next(self.coro)
                 except StopIteration:
                     break
 
@@ -259,7 +270,7 @@ class FirstPipelineThread(PipelineThread):
                             return
                     self.out_queue.put(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -281,7 +292,7 @@ class MiddlePipelineThread(PipelineThread):
     def run(self):
         try:
             # Prime the coroutine.
-            self.coro.next()
+            next(self.coro)
 
             while True:
                 with self.abort_lock:
@@ -307,7 +318,7 @@ class MiddlePipelineThread(PipelineThread):
                             return
                     self.out_queue.put(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -326,7 +337,7 @@ class LastPipelineThread(PipelineThread):
 
     def run(self):
         # Prime the coroutine.
-        self.coro.next()
+        next(self.coro)
 
         try:
             while True:
@@ -346,7 +357,7 @@ class LastPipelineThread(PipelineThread):
                 # Send to consumer.
                 self.coro.send(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -361,7 +372,7 @@ class Pipeline(object):
         be at least two stages.
         """
         if len(stages) < 2:
-            raise ValueError('pipeline must have at least two stages')
+            raise ValueError(u'pipeline must have at least two stages')
         self.stages = []
         for stage in stages:
             if isinstance(stage, (list, tuple)):
@@ -411,10 +422,10 @@ class Pipeline(object):
         try:
             # Using a timeout allows us to receive KeyboardInterrupt
             # exceptions during the join().
-            while threads[-1].isAlive():
+            while threads[-1].is_alive():
                 threads[-1].join(1)
 
-        except:
+        except BaseException:
             # Stop all the threads immediately.
             for thread in threads:
                 thread.abort()
@@ -431,7 +442,7 @@ class Pipeline(object):
             exc_info = thread.exc_info
             if exc_info:
                 # Make the exception appear as it was raised originally.
-                raise exc_info[0], exc_info[1], exc_info[2]
+                six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
     def pull(self):
         """Yield elements from the end of the pipeline. Runs the stages
@@ -444,7 +455,7 @@ class Pipeline(object):
 
         # "Prime" the coroutines.
         for coro in coros[1:]:
-            coro.next()
+            next(coro)
 
         # Begin the pipeline.
         for out in coros[0]:
@@ -459,21 +470,21 @@ class Pipeline(object):
                 yield msg
 
 # Smoke test.
-if __name__ == b'__main__':
+if __name__ == '__main__':
     import time
 
     # Test a normally-terminating pipeline both in sequence and
     # in parallel.
     def produce():
         for i in range(5):
-            print('generating %i' % i)
+            print(u'generating %i' % i)
             time.sleep(1)
             yield i
 
     def work():
         num = yield
         while True:
-            print('processing %i' % num)
+            print(u'processing %i' % num)
             time.sleep(2)
             num = yield num * 2
 
@@ -481,7 +492,7 @@ if __name__ == b'__main__':
         while True:
             num = yield
             time.sleep(1)
-            print('received %i' % num)
+            print(u'received %i' % num)
 
     ts_start = time.time()
     Pipeline([produce(), work(), consume()]).run_sequential()
@@ -490,22 +501,22 @@ if __name__ == b'__main__':
     ts_par = time.time()
     Pipeline([produce(), (work(), work()), consume()]).run_parallel()
     ts_end = time.time()
-    print('Sequential time:', ts_seq - ts_start)
-    print('Parallel time:', ts_par - ts_seq)
-    print('Multiply-parallel time:', ts_end - ts_par)
+    print(u'Sequential time:', ts_seq - ts_start)
+    print(u'Parallel time:', ts_par - ts_seq)
+    print(u'Multiply-parallel time:', ts_end - ts_par)
     print()
 
     # Test a pipeline that raises an exception.
     def exc_produce():
         for i in range(10):
-            print('generating %i' % i)
+            print(u'generating %i' % i)
             time.sleep(1)
             yield i
 
     def exc_work():
         num = yield
         while True:
-            print('processing %i' % num)
+            print(u'processing %i' % num)
             time.sleep(3)
             if num == 3:
                 raise Exception()
@@ -514,6 +525,6 @@ if __name__ == b'__main__':
     def exc_consume():
         while True:
             num = yield
-            print('received %i' % num)
+            print(u'received %i' % num)
 
     Pipeline([exc_produce(), exc_work(), exc_consume()]).run_parallel(1)

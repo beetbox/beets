@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,8 +16,7 @@
 """Adds Chromaprint/Acoustid acoustic fingerprinting support to the
 autotagger. Requires the pyacoustid library.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets import ui
@@ -121,7 +121,7 @@ def _all_releases(items):
         for release_id in release_ids:
             relcounts[release_id] += 1
 
-    for release_id, count in relcounts.iteritems():
+    for release_id, count in relcounts.items():
         if float(count) / len(items) > COMMON_REL_THRESH:
             yield release_id
 
@@ -177,25 +177,24 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         submit_cmd = ui.Subcommand('submit',
-                                   help='submit Acoustid fingerprints')
+                                   help=u'submit Acoustid fingerprints')
 
         def submit_cmd_func(lib, opts, args):
             try:
-                apikey = config['acoustid']['apikey'].get(unicode)
+                apikey = config['acoustid']['apikey'].as_str()
             except confit.NotFoundError:
-                raise ui.UserError('no Acoustid user API key provided')
+                raise ui.UserError(u'no Acoustid user API key provided')
             submit_items(self._log, apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
 
         fingerprint_cmd = ui.Subcommand(
             'fingerprint',
-            help='generate fingerprints for items without them'
+            help=u'generate fingerprints for items without them'
         )
 
         def fingerprint_cmd_func(lib, opts, args):
             for item in lib.items(ui.decargs(args)):
-                fingerprint_item(self._log, item,
-                                 write=config['import']['write'].get(bool))
+                fingerprint_item(self._log, item, write=ui.should_write())
         fingerprint_cmd.func = fingerprint_cmd_func
 
         return [submit_cmd, fingerprint_cmd]
@@ -237,7 +236,7 @@ def submit_items(log, userkey, items, chunksize=64):
         try:
             acoustid.submit(API_KEY, userkey, data)
         except acoustid.AcoustidError as exc:
-            log.warn(u'acoustid submission error: {0}', exc)
+            log.warning(u'acoustid submission error: {0}', exc)
         del data[:]
 
     for item in items:
@@ -296,7 +295,7 @@ def fingerprint_item(log, item, write=False):
         log.info(u'{0}: fingerprinting',
                  util.displayable_path(item.path))
         try:
-            _, fp = acoustid.fingerprint_file(item.path)
+            _, fp = acoustid.fingerprint_file(util.syspath(item.path))
             item.acoustid_fingerprint = fp
             if write:
                 log.info(u'{0}: writing fingerprint',

@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Jakob Schnitzer.
+# Copyright 2016, Jakob Schnitzer.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,13 +15,11 @@
 
 """Update library's tags using MusicBrainz.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
-from beets import config
 from collections import defaultdict
 
 
@@ -43,15 +42,20 @@ class MBSyncPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('mbsync',
-                            help='update metadata from musicbrainz')
-        cmd.parser.add_option('-p', '--pretend', action='store_true',
-                              help='show all changes but do nothing')
-        cmd.parser.add_option('-M', '--nomove', action='store_false',
-                              default=True, dest='move',
-                              help="don't move files in library")
-        cmd.parser.add_option('-W', '--nowrite', action='store_false',
-                              default=config['import']['write'], dest='write',
-                              help="don't write updated metadata to files")
+                            help=u'update metadata from musicbrainz')
+        cmd.parser.add_option(
+            u'-p', u'--pretend', action='store_true',
+            help=u'show all changes but do nothing')
+        cmd.parser.add_option(
+            u'-m', u'--move', action='store_true', dest='move',
+            help=u"move files in the library directory")
+        cmd.parser.add_option(
+            u'-M', u'--nomove', action='store_false', dest='move',
+            help=u"don't move files in library")
+        cmd.parser.add_option(
+            u'-W', u'--nowrite', action='store_false',
+            default=None, dest='write',
+            help=u"don't write updated metadata to files")
         cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
@@ -59,9 +63,9 @@ class MBSyncPlugin(BeetsPlugin):
     def func(self, lib, opts, args):
         """Command handler for the mbsync function.
         """
-        move = opts.move
+        move = ui.should_move(opts.move)
         pretend = opts.pretend
-        write = opts.write
+        write = ui.should_write(opts.write)
         query = ui.decargs(args)
 
         self.singletons(lib, query, move, pretend, write)
@@ -71,7 +75,7 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items(query + ['singleton:true']):
+        for item in lib.items(query + [u'singleton:true']):
             item_formatted = format(item)
             if not item.mb_trackid:
                 self._log.info(u'Skipping singleton with no mb_trackid: {0}',
@@ -137,6 +141,7 @@ class MBSyncPlugin(BeetsPlugin):
                             break
 
             # Apply.
+            self._log.debug(u'applying changes to {}', album_formatted)
             with lib.transaction():
                 autotag.apply_metadata(album_info, mapping)
                 changed = False

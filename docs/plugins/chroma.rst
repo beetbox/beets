@@ -31,7 +31,7 @@ First, install pyacoustid itself. You can do this using `pip`_, like so::
 
     $ pip install pyacoustid
 
-.. _pip: http://pip.openplans.org/
+.. _pip: http://www.pip-installer.org/
 
 Then, you will need to install `Chromaprint`_, either as a dynamic library or
 in the form of a command-line tool (``fpcalc``).
@@ -75,22 +75,21 @@ You will also need a mechanism for decoding audio files supported by the
   Note that if you install beets in a virtualenv, you'll need it to have
   ``--system-site-packages`` enabled for Python to see the GStreamer bindings.
 
-* On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
+* On Windows, builds are provided by `GStreamer`_
 
-.. _audioread: https://github.com/sampsyo/audioread
-.. _pyacoustid: http://github.com/sampsyo/pyacoustid
+.. _audioread: https://github.com/beetbox/audioread
+.. _pyacoustid: http://github.com/beetbox/pyacoustid
 .. _FFmpeg: http://ffmpeg.org/
 .. _MAD: http://spacepants.org/src/pymad/
 .. _pymad: http://www.underbit.com/products/mad/
 .. _Core Audio: http://developer.apple.com/technologies/mac/audio-and-video.html
-.. _OSSBuild: http://code.google.com/p/ossbuild/
 .. _Gstreamer: http://gstreamer.freedesktop.org/
 .. _PyGObject: https://wiki.gnome.org/Projects/PyGObject
 
 To decode audio formats (MP3, FLAC, etc.) with GStreamer, you'll need the
 standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
-``gstreamer0.10-plugins-good``, ``gstreamer0.10-plugins-bad``, and
-``gstreamer0.10-plugins-ugly``.
+``gstreamer1.0-plugins-good``, ``gstreamer1.0-plugins-bad``, and
+``gstreamer1.0-plugins-ugly``.
 
 Usage
 -----

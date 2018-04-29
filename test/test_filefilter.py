@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Malte Ried.
+# Copyright 2016, Malte Ried.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,17 +15,20 @@
 
 """Tests for the `filefilter` plugin.
 """
+
+from __future__ import division, absolute_import, print_function
+
 import os
 import shutil
+import unittest
 
-from _common import unittest
-from beets import config
-from beets.mediafile import MediaFile
-from beets.util import displayable_path
-from beetsplug.filefilter import FileFilterPlugin
 from test import _common
 from test.helper import capture_log
 from test.test_importer import ImportHelper
+from beets import config
+from beets.mediafile import MediaFile
+from beets.util import displayable_path, bytestring_path
+from beetsplug.filefilter import FileFilterPlugin
 
 
 class FileFilterPluginTest(unittest.TestCase, ImportHelper):
@@ -39,7 +43,7 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     def __copy_file(self, dest_path, metadata):
         # Copy files
-        resource_path = os.path.join(_common.RSRC, 'full.mp3')
+        resource_path = os.path.join(_common.RSRC, b'full.mp3')
         shutil.copy(resource_path, dest_path)
         medium = MediaFile(dest_path)
         # Set metadata
@@ -48,13 +52,13 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         medium.save()
 
     def __create_import_dir(self, count):
-        self.import_dir = os.path.join(self.temp_dir, 'testsrcdir')
+        self.import_dir = os.path.join(self.temp_dir, b'testsrcdir')
         if os.path.isdir(self.import_dir):
             shutil.rmtree(self.import_dir)
 
-        self.artist_path = os.path.join(self.import_dir, 'artist')
-        self.album_path = os.path.join(self.artist_path, 'album')
-        self.misc_path = os.path.join(self.import_dir, 'misc')
+        self.artist_path = os.path.join(self.import_dir, b'artist')
+        self.album_path = os.path.join(self.artist_path, b'album')
+        self.misc_path = os.path.join(self.import_dir, b'misc')
         os.makedirs(self.album_path)
         os.makedirs(self.misc_path)
 
@@ -70,8 +74,8 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         for i in range(count):
             metadata['track'] = i + 1
             metadata['title'] = 'Tag Title Album %d' % (i + 1)
-            dest_path = os.path.join(self.album_path,
-                                     '%02d - track.mp3' % (i + 1))
+            track_file = bytestring_path('%02d - track.mp3' % (i + 1))
+            dest_path = os.path.join(self.album_path, track_file)
             self.__copy_file(dest_path, metadata)
             self.album_paths.append(dest_path)
 
@@ -80,8 +84,8 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
         for i in range(count):
             metadata['track'] = i + 10
             metadata['title'] = 'Tag Title Artist %d' % (i + 1)
-            dest_path = os.path.join(self.artist_path,
-                                     'track_%d.mp3' % (i + 1))
+            track_file = bytestring_path('track_%d.mp3' % (i + 1))
+            dest_path = os.path.join(self.artist_path, track_file)
             self.__copy_file(dest_path, metadata)
             self.artist_paths.append(dest_path)
 
@@ -90,7 +94,8 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
             metadata['artist'] = 'Artist %d' % (i + 42)
             metadata['track'] = i + 5
             metadata['title'] = 'Tag Title Misc %d' % (i + 1)
-            dest_path = os.path.join(self.misc_path, 'track_%d.mp3' % (i + 1))
+            track_file = bytestring_path('track_%d.mp3' % (i + 1))
+            dest_path = os.path.join(self.misc_path, track_file)
             self.__copy_file(dest_path, metadata)
             self.misc_paths.append(dest_path)
 
@@ -127,7 +132,8 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     def test_import_nothing(self):
         config['filefilter']['path'] = 'not_there'
-        self.__run(['No files imported from %s' % self.import_dir])
+        self.__run(['No files imported from %s' % displayable_path(
+            self.import_dir)])
 
     # Global options
     def test_import_global(self):

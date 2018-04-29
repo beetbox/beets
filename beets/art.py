@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,13 +17,14 @@
 music and items' embedded album art.
 """
 
+from __future__ import division, absolute_import, print_function
+
 import subprocess
 import platform
 from tempfile import NamedTemporaryFile
-import imghdr
 import os
 
-from beets.util import displayable_path, syspath
+from beets.util import displayable_path, syspath, bytestring_path
 from beets.util.artresizer import ArtResizer
 from beets import mediafile
 
@@ -121,26 +123,49 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             is_windows = platform.system() == "Windows"
 
             # Converting images to grayscale tends to minimize the weight
-            # of colors in the diff score.
+            # of colors in the diff score. So we first convert both images
+            # to grayscale and then pipe them into the `compare` command.
+            # On Windows, ImageMagick doesn't support the magic \\?\ prefix
+            # on paths, so we pass `prefix=False` to `syspath`.
+            convert_cmd = ['convert', syspath(imagepath, prefix=False),
+                           syspath(art, prefix=False),
+                           '-colorspace', 'gray', 'MIFF:-']
+            compare_cmd = ['compare', '-metric', 'PHASH', '-', 'null:']
+            log.debug(u'comparing images with pipeline {} | {}',
+                      convert_cmd, compare_cmd)
             convert_proc = subprocess.Popen(
-                [b'convert', syspath(imagepath), syspath(art),
-                 b'-colorspace', b'gray', b'MIFF:-'],
+                convert_cmd,
                 stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 close_fds=not is_windows,
             )
             compare_proc = subprocess.Popen(
-                [b'compare', b'-metric', b'PHASH', b'-', b'null:'],
+                compare_cmd,
                 stdin=convert_proc.stdout,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 close_fds=not is_windows,
             )
-            convert_proc.stdout.close()
 
+            # Check the convert output. We're not interested in the
+            # standard output; that gets piped to the next stage.
+            convert_proc.stdout.close()
+            convert_stderr = convert_proc.stderr.read()
+            convert_proc.stderr.close()
+            convert_proc.wait()
+            if convert_proc.returncode:
+                log.debug(
+                    u'ImageMagick convert failed with status {}: {!r}',
+                    convert_proc.returncode,
+                    convert_stderr,
+                )
+                return
+
+            # Check the compare output.
             stdout, stderr = compare_proc.communicate()
             if compare_proc.returncode:
                 if compare_proc.returncode != 1:
-                    log.debug(u'IM phashes compare failed for {0}, {1}',
+                    log.debug(u'ImageMagick compare failed: {0}, {1}',
                               displayable_path(imagepath),
                               displayable_path(art))
                     return
@@ -154,7 +179,7 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
                 log.debug(u'IM output is not a number: {0!r}', out_str)
                 return
 
-            log.debug(u'compare PHASH score is {0}', phash_diff)
+            log.debug(u'ImageMagick compare score: {0}', phash_diff)
             return phash_diff <= compare_threshold
 
     return True
@@ -162,18 +187,18 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
 
 def extract(log, outpath, item):
     art = get_art(log, item)
-
+    outpath = bytestring_path(outpath)
     if not art:
         log.info(u'No album art present in {0}, skipping.', item)
         return
 
     # Add an extension to the filename.
-    ext = imghdr.what(None, h=art)
+    ext = mediafile.image_extension(art)
     if not ext:
         log.warning(u'Unknown image type in {0}.',
                     displayable_path(item.path))
         return
-    outpath += b'.' + ext
+    outpath += bytestring_path('.' + ext)
 
     log.info(u'Extracting album art from: {0} to: {1}',
              item, displayable_path(outpath))

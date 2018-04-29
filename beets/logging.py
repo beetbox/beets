@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -20,13 +21,13 @@ that when getLogger(name) instantiates a logger that logger uses
 {}-style formatting.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from copy import copy
 from logging import *  # noqa
 import subprocess
 import threading
+import six
 
 
 def logsafe(val):
@@ -42,7 +43,7 @@ def logsafe(val):
       example.
     """
     # Already Unicode.
-    if isinstance(val, unicode):
+    if isinstance(val, six.text_type):
         return val
 
     # Bytestring: needs decoding.
@@ -51,16 +52,16 @@ def logsafe(val):
         # (a) only do this for paths, if they can be given a distinct
         # type, and (b) warn the developer if they do this for other
         # bytestrings.
-        return val.decode('utf8', 'replace')
+        return val.decode('utf-8', 'replace')
 
     # A "problem" object: needs a workaround.
     elif isinstance(val, subprocess.CalledProcessError):
         try:
-            return unicode(val)
+            return six.text_type(val)
         except UnicodeDecodeError:
             # An object with a broken __unicode__ formatter. Use __str__
             # instead.
-            return str(val).decode('utf8', 'replace')
+            return str(val).decode('utf-8', 'replace')
 
     # Other objects are used as-is so field access, etc., still works in
     # the format string.
@@ -126,7 +127,7 @@ my_manager = copy(Logger.manager)
 my_manager.loggerClass = BeetsLogger
 
 
-def getLogger(name=None):
+def getLogger(name=None):  # noqa
     if name:
         return my_manager.getLogger(name)
     else:

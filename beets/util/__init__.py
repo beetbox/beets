@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,11 +15,11 @@
 
 """Miscellaneous utility functions."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
-
+from __future__ import division, absolute_import, print_function
 import os
 import sys
+import errno
+import locale
 import re
 import shutil
 import fnmatch
@@ -27,10 +28,15 @@ import traceback
 import subprocess
 import platform
 import shlex
+from beets.util import hidden
+import six
+from unidecode import unidecode
+from enum import Enum
 
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
+SNI_SUPPORTED = sys.version_info >= (2, 7, 9)
 
 
 class HumanReadableException(Exception):
@@ -57,22 +63,22 @@ class HumanReadableException(Exception):
     def _gerund(self):
         """Generate a (likely) gerund form of the English verb.
         """
-        if ' ' in self.verb:
+        if u' ' in self.verb:
             return self.verb
-        gerund = self.verb[:-1] if self.verb.endswith('e') else self.verb
-        gerund += 'ing'
+        gerund = self.verb[:-1] if self.verb.endswith(u'e') else self.verb
+        gerund += u'ing'
         return gerund
 
     def _reasonstr(self):
         """Get the reason as a string."""
-        if isinstance(self.reason, unicode):
+        if isinstance(self.reason, six.text_type):
             return self.reason
-        elif isinstance(self.reason, basestring):  # Byte string.
-            return self.reason.decode('utf8', 'ignore')
+        elif isinstance(self.reason, bytes):
+            return self.reason.decode('utf-8', 'ignore')
         elif hasattr(self.reason, 'strerror'):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
-            return u'"{0}"'.format(unicode(self.reason))
+            return u'"{0}"'.format(six.text_type(self.reason))
 
     def get_message(self):
         """Create the human-readable description of the error, sans
@@ -119,6 +125,15 @@ class FilesystemError(HumanReadableException):
         return u'{0} {1}'.format(self._reasonstr(), clause)
 
 
+class MoveOperation(Enum):
+    """The file operations that e.g. various move functions can carry out.
+    """
+    MOVE = 0
+    COPY = 1
+    LINK = 2
+    HARDLINK = 3
+
+
 def normpath(path):
     """Provide the canonical form of the path suitable for storing in
     the database.
@@ -152,21 +167,22 @@ def ancestry(path):
     return out
 
 
-def sorted_walk(path, ignore=(), logger=None):
+def sorted_walk(path, ignore=(), ignore_hidden=False, logger=None):
     """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
     pattern in `ignore` are skipped. If `logger` is provided, then
     warning messages are logged there when a directory cannot be listed.
     """
-    # Make sure the path isn't a Unicode string.
+    # Make sure the pathes aren't Unicode strings.
     path = bytestring_path(path)
+    ignore = [bytestring_path(i) for i in ignore]
 
     # Get all the directories and files at this level.
     try:
         contents = os.listdir(syspath(path))
     except OSError as exc:
         if logger:
-            logger.warn(u'could not list directory {0}: {1}'.format(
+            logger.warning(u'could not list directory {0}: {1}'.format(
                 displayable_path(path), exc.strerror
             ))
         return
@@ -186,10 +202,11 @@ def sorted_walk(path, ignore=(), logger=None):
 
         # Add to output as either a file or a directory.
         cur = os.path.join(path, base)
-        if os.path.isdir(syspath(cur)):
-            dirs.append(base)
-        else:
-            files.append(base)
+        if (ignore_hidden and not hidden.is_hidden(cur)) or not ignore_hidden:
+            if os.path.isdir(syspath(cur)):
+                dirs.append(base)
+            else:
+                files.append(base)
 
     # Sort lists (case-insensitive) and yield the current level.
     dirs.sort(key=bytes.lower)
@@ -200,7 +217,7 @@ def sorted_walk(path, ignore=(), logger=None):
     for base in dirs:
         cur = os.path.join(path, base)
         # yield from sorted_walk(...)
-        for res in sorted_walk(cur, ignore, logger):
+        for res in sorted_walk(cur, ignore, ignore_hidden, logger):
             yield res
 
 
@@ -263,7 +280,9 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
         if not os.path.exists(directory):
             # Directory gone already.
             continue
-        if fnmatch_all(os.listdir(directory), clutter):
+        clutter = [bytestring_path(c) for c in clutter]
+        match_paths = [bytestring_path(d) for d in os.listdir(directory)]
+        if fnmatch_all(match_paths, clutter):
             # Directory contains only clutter (or nothing).
             try:
                 shutil.rmtree(directory)
@@ -297,18 +316,30 @@ def components(path):
     return comps
 
 
+def arg_encoding():
+    """Get the encoding for command-line arguments (and other OS
+    locale-sensitive strings).
+    """
+    try:
+        return locale.getdefaultlocale()[1] or 'utf-8'
+    except ValueError:
+        # Invalid locale environment variable setting. To avoid
+        # failing entirely for no good reason, assume UTF-8.
+        return 'utf-8'
+
+
 def _fsencoding():
     """Get the system's filesystem encoding. On Windows, this is always
     UTF-8 (not MBCS).
     """
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    if encoding == b'mbcs':
+    if encoding == 'mbcs':
         # On Windows, a broken encoding known to Python as "MBCS" is
         # used for the filesystem. However, we only use the Unicode API
         # for Windows paths, so the encoding is actually immaterial so
         # we can avoid dealing with this nastiness. We arbitrarily
         # choose UTF-8.
-        encoding = b'utf8'
+        encoding = 'utf-8'
     return encoding
 
 
@@ -323,14 +354,17 @@ def bytestring_path(path):
     # On Windows, remove the magic prefix added by `syspath`. This makes
     # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
     # round-trip through `syspath`.
-    if os.path.__name__ == b'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
+    if os.path.__name__ == 'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
         path = path[len(WINDOWS_MAGIC_PREFIX):]
 
-    # Try to encode with default encodings, but fall back to UTF8.
+    # Try to encode with default encodings, but fall back to utf-8.
     try:
         return path.encode(_fsencoding())
     except (UnicodeError, LookupError):
-        return path.encode('utf8')
+        return path.encode('utf-8')
+
+
+PATH_SEP = bytestring_path(os.sep)
 
 
 def displayable_path(path, separator=u'; '):
@@ -340,16 +374,16 @@ def displayable_path(path, separator=u'; '):
     """
     if isinstance(path, (list, tuple)):
         return separator.join(displayable_path(p) for p in path)
-    elif isinstance(path, unicode):
+    elif isinstance(path, six.text_type):
         return path
     elif not isinstance(path, bytes):
         # A non-string object: just get its unicode representation.
-        return unicode(path)
+        return six.text_type(path)
 
     try:
         return path.decode(_fsencoding(), 'ignore')
     except (UnicodeError, LookupError):
-        return path.decode('utf8', 'ignore')
+        return path.decode('utf-8', 'ignore')
 
 
 def syspath(path, prefix=True):
@@ -360,15 +394,15 @@ def syspath(path, prefix=True):
     *really* know what you're doing.
     """
     # Don't do anything if we're not on windows
-    if os.path.__name__ != b'ntpath':
+    if os.path.__name__ != 'ntpath':
         return path
 
-    if not isinstance(path, unicode):
+    if not isinstance(path, six.text_type):
         # Beets currently represents Windows paths internally with UTF-8
         # arbitrarily. But earlier versions used MBCS because it is
         # reported as the FS encoding by Windows. Try both.
         try:
-            path = path.decode('utf8')
+            path = path.decode('utf-8')
         except UnicodeError:
             # The encoding should always be MBCS, Windows' broken
             # Unicode representation.
@@ -388,6 +422,8 @@ def syspath(path, prefix=True):
 
 def samefile(p1, p2):
     """Safer equality for paths."""
+    if p1 == p2:
+        return True
     return shutil._samefile(syspath(p1), syspath(p2))
 
 
@@ -415,7 +451,7 @@ def copy(path, dest, replace=False):
     path = syspath(path)
     dest = syspath(dest)
     if not replace and os.path.exists(dest):
-        raise FilesystemError('file exists', 'copy', (path, dest))
+        raise FilesystemError(u'file exists', 'copy', (path, dest))
     try:
         shutil.copyfile(path, dest)
     except (OSError, IOError) as exc:
@@ -436,8 +472,7 @@ def move(path, dest, replace=False):
     path = syspath(path)
     dest = syspath(dest)
     if os.path.exists(dest) and not replace:
-        raise FilesystemError('file exists', 'rename', (path, dest),
-                              traceback.format_exc())
+        raise FilesystemError(u'file exists', 'rename', (path, dest))
 
     # First, try renaming the file.
     try:
@@ -455,21 +490,50 @@ def move(path, dest, replace=False):
 def link(path, dest, replace=False):
     """Create a symbolic link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
-    `path` == `dest`."""
-    if (samefile(path, dest)):
+    `path` == `dest`.
+    """
+    if samefile(path, dest):
         return
 
-    path = syspath(path)
-    dest = syspath(dest)
-    if os.path.exists(dest) and not replace:
-        raise FilesystemError('file exists', 'rename', (path, dest),
-                              traceback.format_exc())
+    if os.path.exists(syspath(dest)) and not replace:
+        raise FilesystemError(u'file exists', 'rename', (path, dest))
     try:
-        os.symlink(path, dest)
-    except OSError:
-        raise FilesystemError('Operating system does not support symbolic '
-                              'links.', 'link', (path, dest),
+        os.symlink(syspath(path), syspath(dest))
+    except NotImplementedError:
+        # raised on python >= 3.2 and Windows versions before Vista
+        raise FilesystemError(u'OS does not support symbolic links.'
+                              'link', (path, dest), traceback.format_exc())
+    except OSError as exc:
+        # TODO: Windows version checks can be removed for python 3
+        if hasattr('sys', 'getwindowsversion'):
+            if sys.getwindowsversion()[0] < 6:  # is before Vista
+                exc = u'OS does not support symbolic links.'
+        raise FilesystemError(exc, 'link', (path, dest),
                               traceback.format_exc())
+
+
+def hardlink(path, dest, replace=False):
+    """Create a hard link from path to `dest`. Raises an OSError if
+    `dest` already exists, unless `replace` is True. Does nothing if
+    `path` == `dest`.
+    """
+    if samefile(path, dest):
+        return
+
+    if os.path.exists(syspath(dest)) and not replace:
+        raise FilesystemError(u'file exists', 'rename', (path, dest))
+    try:
+        os.link(syspath(path), syspath(dest))
+    except NotImplementedError:
+        raise FilesystemError(u'OS does not support hard links.'
+                              'link', (path, dest), traceback.format_exc())
+    except OSError as exc:
+        if exc.errno == errno.EXDEV:
+            raise FilesystemError(u'Cannot hard link across devices.'
+                                  'link', (path, dest), traceback.format_exc())
+        else:
+            raise FilesystemError(exc, 'link', (path, dest),
+                                  traceback.format_exc())
 
 
 def unique_path(path):
@@ -489,7 +553,8 @@ def unique_path(path):
         num = 0
     while True:
         num += 1
-        new_path = b'%s.%i%s' % (base, num, ext)
+        suffix = u'.{}'.format(num).encode() + ext
+        new_path = base + suffix
         if not os.path.exists(new_path):
             return new_path
 
@@ -593,7 +658,7 @@ def legalize_path(path, replacements, length, extension, fragment):
 
     if fragment:
         # Outputting Unicode.
-        extension = extension.decode('utf8', 'ignore')
+        extension = extension.decode('utf-8', 'ignore')
 
     first_stage_path, _ = _legalize_stage(
         path, replacements, length, extension, fragment
@@ -617,23 +682,59 @@ def legalize_path(path, replacements, length, extension, fragment):
     return second_stage_path, retruncated
 
 
+def py3_path(path):
+    """Convert a bytestring path to Unicode on Python 3 only. On Python
+    2, return the bytestring path unchanged.
+
+    This helps deal with APIs on Python 3 that *only* accept Unicode
+    (i.e., `str` objects). I philosophically disagree with this
+    decision, because paths are sadly bytes on Unix, but that's the way
+    it is. So this function helps us "smuggle" the true bytes data
+    through APIs that took Python 3's Unicode mandate too seriously.
+    """
+    if isinstance(path, six.text_type):
+        return path
+    assert isinstance(path, bytes)
+    if six.PY2:
+        return path
+    return os.fsdecode(path)
+
+
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
-    return value.lower() in ('yes', '1', 'true', 't', 'y')
+    return value.lower() in (u'yes', u'1', u'true', u't', u'y')
 
 
 def as_string(value):
     """Convert a value to a Unicode object for matching with a query.
     None becomes the empty string. Bytestrings are silently decoded.
     """
+    if six.PY2:
+        buffer_types = buffer, memoryview  # noqa: F821
+    else:
+        buffer_types = memoryview
+
     if value is None:
         return u''
-    elif isinstance(value, buffer):
-        return bytes(value).decode('utf8', 'ignore')
+    elif isinstance(value, buffer_types):
+        return bytes(value).decode('utf-8', 'ignore')
     elif isinstance(value, bytes):
-        return value.decode('utf8', 'ignore')
+        return value.decode('utf-8', 'ignore')
     else:
-        return unicode(value)
+        return six.text_type(value)
+
+
+def text_string(value, encoding='utf-8'):
+    """Convert a string, which can either be bytes or unicode, to
+    unicode.
+
+    Text (unicode) is left untouched; bytes are decoded. This is useful
+    to convert from a "native string" (bytes on Python 2, str on Python
+    3) to a consistently unicode value.
+    """
+    if isinstance(value, bytes):
+        return value.decode(encoding)
+    return value
 
 
 def plurality(objs):
@@ -643,7 +744,7 @@ def plurality(objs):
     """
     c = Counter(objs)
     if not c:
-        raise ValueError('sequence must be non-empty')
+        raise ValueError(u'sequence must be non-empty')
     return c.most_common(1)[0]
 
 
@@ -653,19 +754,19 @@ def cpu_count():
     """
     # Adapted from the soundconverter project:
     # https://github.com/kassoulet/soundconverter
-    if sys.platform == b'win32':
+    if sys.platform == 'win32':
         try:
             num = int(os.environ['NUMBER_OF_PROCESSORS'])
         except (ValueError, KeyError):
             num = 0
-    elif sys.platform == b'darwin':
+    elif sys.platform == 'darwin':
         try:
-            num = int(command_output([b'/usr/sbin/sysctl', b'-n', b'hw.ncpu']))
+            num = int(command_output(['/usr/sbin/sysctl', '-n', 'hw.ncpu']))
         except (ValueError, OSError, subprocess.CalledProcessError):
             num = 0
     else:
         try:
-            num = os.sysconf(b'SC_NPROCESSORS_ONLN')
+            num = os.sysconf('SC_NPROCESSORS_ONLN')
         except (ValueError, OSError, AttributeError):
             num = 0
     if num >= 1:
@@ -674,10 +775,28 @@ def cpu_count():
         return 1
 
 
+def convert_command_args(args):
+    """Convert command arguments to bytestrings on Python 2 and
+    surrogate-escaped strings on Python 3."""
+    assert isinstance(args, list)
+
+    def convert(arg):
+        if six.PY2:
+            if isinstance(arg, six.text_type):
+                arg = arg.encode(arg_encoding())
+        else:
+            if isinstance(arg, bytes):
+                arg = arg.decode(arg_encoding(), 'surrogateescape')
+        return arg
+
+    return [convert(a) for a in args]
+
+
 def command_output(cmd, shell=False):
     """Runs the command and returns its output after it has exited.
 
-    ``cmd`` is a list of byte string arguments starting with the command names.
+    ``cmd`` is a list of arguments starting with the command names. The
+    arguments are bytes on Unix and strings on Windows.
     If ``shell`` is true, ``cmd`` is assumed to be a string and passed to a
     shell to execute.
 
@@ -688,18 +807,27 @@ def command_output(cmd, shell=False):
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
+    cmd = convert_command_args(cmd)
+
+    try:  # python >= 3.3
+        devnull = subprocess.DEVNULL
+    except AttributeError:
+        devnull = open(os.devnull, 'r+b')
+
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        close_fds=platform.system() != b'Windows',
+        stdin=devnull,
+        close_fds=platform.system() != 'Windows',
         shell=shell
     )
     stdout, stderr = proc.communicate()
     if proc.returncode:
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
-            cmd=b' '.join(cmd),
+            cmd=' '.join(cmd),
+            output=stdout + stderr,
         )
     return stdout
 
@@ -711,7 +839,7 @@ def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
     misreports its capacity). If it cannot be determined (e.g., on
     Windows), return `limit`.
     """
-    if hasattr(os, b'statvfs'):
+    if hasattr(os, 'statvfs'):
         try:
             res = os.statvfs(path)
         except OSError:
@@ -735,28 +863,149 @@ def open_anything():
     return base_cmd
 
 
-def interactive_open(targets, command=None):
-    """Open the files in `targets` by `exec`ing a new command. (The new
-    program takes over, and Python execution ends: this does not fork a
-    subprocess.)
+def editor_command():
+    """Get a command for opening a text file.
 
-    If `command` is provided, use it. Otherwise, use an OS-specific
-    command (from `open_anything`) to open the file.
+    Use the `EDITOR` environment variable by default. If it is not
+    present, fall back to `open_anything()`, the platform-specific tool
+    for opening files in general.
+    """
+    editor = os.environ.get('EDITOR')
+    if editor:
+        return editor
+    return open_anything()
+
+
+def shlex_split(s):
+    """Split a Unicode or bytes string according to shell lexing rules.
+
+    Raise `ValueError` if the string is not a well-formed shell string.
+    This is a workaround for a bug in some versions of Python.
+    """
+    if not six.PY2 or isinstance(s, bytes):  # Shlex works fine.
+        return shlex.split(s)
+
+    elif isinstance(s, six.text_type):
+        # Work around a Python bug.
+        # http://bugs.python.org/issue6988
+        bs = s.encode('utf-8')
+        return [c.decode('utf-8') for c in shlex.split(bs)]
+
+    else:
+        raise TypeError(u'shlex_split called with non-string')
+
+
+def interactive_open(targets, command):
+    """Open the files in `targets` by `exec`ing a new `command`, given
+    as a Unicode string. (The new program takes over, and Python
+    execution ends: this does not fork a subprocess.)
 
     Can raise `OSError`.
     """
-    if command:
-        command = command.encode('utf8')
-        try:
-            command = [c.decode('utf8')
-                       for c in shlex.split(command)]
-        except ValueError:  # Malformed shell tokens.
-            command = [command]
-        command.insert(0, command[0])  # for argv[0]
+    assert command
+
+    # Split the command string into its arguments.
+    try:
+        args = shlex_split(command)
+    except ValueError:  # Malformed shell tokens.
+        args = [command]
+
+    args.insert(0, args[0])  # for argv[0]
+
+    args += targets
+
+    return os.execlp(*args)
+
+
+def _windows_long_path_name(short_path):
+    """Use Windows' `GetLongPathNameW` via ctypes to get the canonical,
+    long path given a short filename.
+    """
+    if not isinstance(short_path, six.text_type):
+        short_path = short_path.decode(_fsencoding())
+
+    import ctypes
+    buf = ctypes.create_unicode_buffer(260)
+    get_long_path_name_w = ctypes.windll.kernel32.GetLongPathNameW
+    return_value = get_long_path_name_w(short_path, buf, 260)
+
+    if return_value == 0 or return_value > 260:
+        # An error occurred
+        return short_path
     else:
-        base_cmd = open_anything()
-        command = [base_cmd, base_cmd]
+        long_path = buf.value
+        # GetLongPathNameW does not change the case of the drive
+        # letter.
+        if len(long_path) > 1 and long_path[1] == ':':
+            long_path = long_path[0].upper() + long_path[1:]
+        return long_path
 
-    command += targets
 
-    return os.execlp(*command)
+def case_sensitive(path):
+    """Check whether the filesystem at the given path is case sensitive.
+
+    To work best, the path should point to a file or a directory. If the path
+    does not exist, assume a case sensitive file system on every platform
+    except Windows.
+    """
+    # A fallback in case the path does not exist.
+    if not os.path.exists(syspath(path)):
+        # By default, the case sensitivity depends on the platform.
+        return platform.system() != 'Windows'
+
+    # If an upper-case version of the path exists but a lower-case
+    # version does not, then the filesystem must be case-sensitive.
+    # (Otherwise, we have more work to do.)
+    if not (os.path.exists(syspath(path.lower())) and
+            os.path.exists(syspath(path.upper()))):
+        return True
+
+    # Both versions of the path exist on the file system. Check whether
+    # they refer to different files by their inodes. Alas,
+    # `os.path.samefile` is only available on Unix systems on Python 2.
+    if platform.system() != 'Windows':
+        return not os.path.samefile(syspath(path.lower()),
+                                    syspath(path.upper()))
+
+    # On Windows, we check whether the canonical, long filenames for the
+    # files are the same.
+    lower = _windows_long_path_name(path.lower())
+    upper = _windows_long_path_name(path.upper())
+    return lower != upper
+
+
+def raw_seconds_short(string):
+    """Formats a human-readable M:SS string as a float (number of seconds).
+
+    Raises ValueError if the conversion cannot take place due to `string` not
+    being in the right format.
+    """
+    match = re.match(r'^(\d+):([0-5]\d)$', string)
+    if not match:
+        raise ValueError(u'String not in M:SS format')
+    minutes, seconds = map(int, match.groups())
+    return float(minutes * 60 + seconds)
+
+
+def asciify_path(path, sep_replace):
+    """Decodes all unicode characters in a path into ASCII equivalents.
+
+    Substitutions are provided by the unidecode module. Path separators in the
+    input are preserved.
+
+    Keyword arguments:
+    path -- The path to be asciified.
+    sep_replace -- the string to be used to replace extraneous path separators.
+    """
+    # if this platform has an os.altsep, change it to os.sep.
+    if os.altsep:
+        path = path.replace(os.altsep, os.sep)
+    path_components = path.split(os.sep)
+    for index, item in enumerate(path_components):
+        path_components[index] = unidecode(item).replace(os.sep, sep_replace)
+        if os.altsep:
+            path_components[index] = unidecode(item).replace(
+                os.altsep,
+                sep_replace
+            )
+    return os.sep.join(path_components)

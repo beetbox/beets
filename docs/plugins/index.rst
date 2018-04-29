@@ -13,7 +13,7 @@ Using Plugins
 -------------
 
 To use one of the plugins included with beets (see the rest of this page for a
-list), just use the `plugins` option in your :doc:`config.yaml </reference/config>`: file, like so::
+list), just use the `plugins` option in your :doc:`config.yaml </reference/config>` file, like so::
 
     plugins: inline convert web
 
@@ -28,10 +28,20 @@ Each plugin has its own set of options that can be defined in a section bearing 
     convert:
         auto: true
 
+Some plugins have special dependencies that you'll need to install. The
+documentation page for each plugin will list them in the setup instructions.
+For some, you can use `pip`'s "extras" feature to install the dependencies,
+like this::
+
+    pip install beets[fetchart,lyrics,lastgenre]
+
 .. toctree::
    :hidden:
 
+   absubmit
+   acousticbrainz
    badfiles
+   beatport
    bpd
    bpm
    bucket
@@ -39,13 +49,18 @@ Each plugin has its own set of options that can be defined in a section bearing 
    convert
    discogs
    duplicates
-   echonest
+   edit
    embedart
+   embyupdate
+   export
    fetchart
+   filefilter
+   freedesktop
    fromfilename
    ftintitle
    fuzzy
-   freedesktop
+   gmusic
+   hook
    ihate
    importadded
    importfeeds
@@ -53,10 +68,12 @@ Each plugin has its own set of options that can be defined in a section bearing 
    inline
    ipfs
    keyfinder
+   kodiupdate
    lastgenre
    lastimport
    lyrics
    mbcollection
+   mbsubmit
    mbsync
    metasync
    missing
@@ -66,11 +83,11 @@ Each plugin has its own set of options that can be defined in a section bearing 
    play
    plexupdate
    random
-   filefilter
    replaygain
    rewrite
    scrub
    smartplaylist
+   sonosupdate
    spotify
    the
    thumbnails
@@ -92,9 +109,10 @@ Autotagger Extensions
 Metadata
 --------
 
+* :doc:`absubmit`: Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to the AcousticBrainz server
+* :doc:`acousticbrainz`: Fetch various AcousticBrainz metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
-* :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
-  `the Echo Nest`_ (tempo, energy, danceability, ...).
+* :doc:`edit`: Edit metadata from a text editor.
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`ftintitle`: Move "featured" artists from the artist field to the title
@@ -114,9 +132,8 @@ Metadata
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 
-.. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
-.. _the Echo Nest: http://www.echonest.com
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
+.. _streaming_extractor_music: http://acousticbrainz.org/download
 
 Path Formats
 ------------
@@ -131,19 +148,27 @@ Path Formats
 Interoperability
 ----------------
 
+* :doc:`badfiles`: Check audio file integrity.
+* :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
+* :doc:`kodiupdate`: Automatically notifies `Kodi`_ whenever the beets library
+  changes.
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
 * :doc:`play`: Play beets queries in your music player.
 * :doc:`plexupdate`: Automatically notifies `Plex`_ whenever the beets library
   changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
+* :doc:`sonosupdate`: Automatically notifies `Sonos`_ whenever the beets library
+  changes.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
-* :doc:`badfiles`: Check audio file integrity.
 
 
+.. _Emby: http://emby.media
 .. _Plex: http://plex.tv
+.. _Kodi: http://kodi.tv
+.. _Sonos: http://sonos.com
 
 Miscellaneous
 -------------
@@ -153,14 +178,18 @@ Miscellaneous
 * :doc:`convert`: Transcode music and embed album art while exporting to
   a different directory.
 * :doc:`duplicates`: List duplicate tracks or albums.
+* :doc:`export`: Export data from queries to a format.
+* :doc:`filefilter`: Automatically skip files during the import process based
+  on regular expressions.
 * :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
+* :doc:`gmusic`: Search and upload files to Google Play Music.
+* :doc:`hook`: Run a command when an event is emitted by beets.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
+* :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
 * :doc:`random`: Randomly choose albums and tracks from your library.
-* :doc:`filefilter`: Automatically skip files during the import process based
-  on regular expressions.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.
@@ -215,11 +244,15 @@ Here are a few of the plugins written by the beets community:
 
 * `whatlastgenre`_ fetches genres from various music sites.
 
+* `beets-usertag`_ lets you use keywords to tag and organize your music.
+
+* `beets-popularity`_ fetches popularity values from Spotify.
+
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
-.. _beetFs: https://code.google.com/p/beetfs/
+.. _beetFs: https://github.com/jbaiter/beetfs
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
 .. _A cmus plugin:
@@ -229,5 +262,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
-.. _beets-noimport: https://github.com/ttsda/beets-noimport
+.. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
+.. _beets-usertag: https://github.com/igordertigor/beets-usertag
+.. _beets-popularity: https://github.com/abba23/beets-popularity

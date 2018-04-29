@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,11 +15,14 @@
 
 """Representation of type information for DBCore model fields.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from . import query
 from beets.util import str2bool
+import six
+
+if not six.PY2:
+    buffer = memoryview  # sqlite won't accept memoryview in python 2
 
 
 # Abstract base.
@@ -37,7 +41,7 @@ class Type(object):
     """The `Query` subclass to be used when querying the field.
     """
 
-    model_type = unicode
+    model_type = six.text_type
     """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
@@ -61,9 +65,9 @@ class Type(object):
         if value is None:
             value = u''
         if isinstance(value, bytes):
-            value = value.decode('utf8', 'ignore')
+            value = value.decode('utf-8', 'ignore')
 
-        return unicode(value)
+        return six.text_type(value)
 
     def parse(self, string):
         """Parse a (possibly human-written) string and return the
@@ -97,12 +101,12 @@ class Type(object):
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
         Flexible fields have the type affinity `TEXT`. This means the
-        `sql_value` is either a `buffer` or a `unicode` object` and the
-        method must handle these in addition.
+        `sql_value` is either a `buffer`/`memoryview` or a `unicode` object`
+        and the method must handle these in addition.
         """
         if isinstance(sql_value, buffer):
-            sql_value = bytes(sql_value).decode('utf8', 'ignore')
-        if isinstance(sql_value, unicode):
+            sql_value = bytes(sql_value).decode('utf-8', 'ignore')
+        if isinstance(sql_value, six.text_type):
             return self.parse(sql_value)
         else:
             return self.normalize(sql_value)
@@ -194,7 +198,7 @@ class Boolean(Type):
     model_type = bool
 
     def format(self, value):
-        return unicode(bool(value))
+        return six.text_type(bool(value))
 
     def parse(self, string):
         return str2bool(string)

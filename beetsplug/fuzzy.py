@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Philippe Mongeau.
+# Copyright 2016, Philippe Mongeau.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,8 +16,7 @@
 """Provides a fuzzy matching query.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.dbcore.query import StringFieldQuery
@@ -26,13 +26,13 @@ import difflib
 
 class FuzzyQuery(StringFieldQuery):
     @classmethod
-    def string_match(self, pattern, val):
+    def string_match(cls, pattern, val):
         # smartcase
         if pattern.islower():
             val = val.lower()
-        queryMatcher = difflib.SequenceMatcher(None, pattern, val)
+        query_matcher = difflib.SequenceMatcher(None, pattern, val)
         threshold = config['fuzzy']['threshold'].as_number()
-        return queryMatcher.quick_ratio() >= threshold
+        return query_matcher.quick_ratio() >= threshold
 
 
 class FuzzyPlugin(BeetsPlugin):
@@ -44,5 +44,5 @@ class FuzzyPlugin(BeetsPlugin):
         })
 
     def queries(self):
-        prefix = self.config['prefix'].get(basestring)
+        prefix = self.config['prefix'].as_str()
         return {prefix: FuzzyQuery}

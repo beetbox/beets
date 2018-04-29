@@ -4,7 +4,7 @@ var timeFormat = function(secs) {
         return '0:00';
     }
     secs = Math.round(secs);
-    var mins = '' + Math.round(secs / 60);
+    var mins = '' + Math.floor(secs / 60);
     secs = '' + (secs % 60);
     if (secs.length < 2) {
         secs = '0' + secs;
@@ -147,7 +147,7 @@ var BeetsRouter = Backbone.Router.extend({
     },
     itemQuery: function(query) {
         var queryURL = query.split(/\s+/).map(encodeURIComponent).join('/');
-        $.getJSON('/item/query/' + queryURL, function(data) {
+        $.getJSON('item/query/' + queryURL, function(data) {
             var models = _.map(
                 data['results'],
                 function(d) { return new Item(d); }
@@ -161,7 +161,7 @@ var router = new BeetsRouter();
 
 // Model.
 var Item = Backbone.Model.extend({
-    urlRoot: '/item'
+    urlRoot: 'item'
 });
 var Items = Backbone.Collection.extend({
     model: Item
@@ -264,7 +264,7 @@ var AppView = Backbone.View.extend({
         $('#extra-detail').empty().append(extraDetailView.render().el);
     },
     playItem: function(item) {
-        var url = '/item/' + item.get('id') + '/file';
+        var url = 'item/' + item.get('id') + '/file';
         $('#player audio').attr('src', url);
         $('#player audio').get(0).play();
 

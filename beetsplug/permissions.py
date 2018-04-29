@@ -1,5 +1,6 @@
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+# -*- coding: utf-8 -*-
+
+from __future__ import division, absolute_import, print_function
 
 """Fixes file permissions after the file gets written on import. Put something
 like the following in your config.yaml to configure:
@@ -12,22 +13,41 @@ import os
 from beets import config, util
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry
+import six
 
 
 def convert_perm(perm):
-    """If the perm is a int it will first convert it to a string and back
-    to an oct int. Else it just converts it to oct.
+    """Convert a string to an integer, interpreting the text as octal.
+    Or, if `perm` is an integer, reinterpret it as an octal number that
+    has been "misinterpreted" as decimal.
     """
-    if isinstance(perm, int):
-        return int(bytes(perm), 8)
-    else:
-        return int(perm, 8)
+    if isinstance(perm, six.integer_types):
+        perm = six.text_type(perm)
+    return int(perm, 8)
 
 
 def check_permissions(path, permission):
-    """Checks the permissions of a path.
+    """Check whether the file's permissions equal the given vector.
+    Return a boolean.
     """
     return oct(os.stat(path).st_mode & 0o777) == oct(permission)
+
+
+def assert_permissions(path, permission, log):
+    """Check whether the file's permissions are as expected, otherwise,
+    log a warning message. Return a boolean indicating the match, like
+    `check_permissions`.
+    """
+    if not check_permissions(util.syspath(path), permission):
+        log.warning(
+            u'could not set permissions on {}',
+            util.displayable_path(path),
+        )
+        log.debug(
+            u'set permissions to {}, but permissions are now {}',
+            permission,
+            os.stat(util.syspath(path)).st_mode & 0o777,
+        )
 
 
 def dirs_in_library(library, item):
@@ -44,58 +64,60 @@ class Permissions(BeetsPlugin):
 
         # Adding defaults.
         self.config.add({
-            u'file': 644,
-            u'dir': 755
+            u'file': '644',
+            u'dir': '755',
         })
 
-        self.register_listener('item_imported', permissions)
-        self.register_listener('album_imported', permissions)
+        self.register_listener('item_imported', self.fix)
+        self.register_listener('album_imported', self.fix)
 
+    def fix(self, lib, item=None, album=None):
+        """Fix the permissions for an imported Item or Album.
+        """
+        # Get the configured permissions. The user can specify this either a
+        # string (in YAML quotes) or, for convenience, as an integer so the
+        # quotes can be omitted. In the latter case, we need to reinterpret the
+        # integer as octal, not decimal.
+        file_perm = config['permissions']['file'].get()
+        dir_perm = config['permissions']['dir'].get()
+        file_perm = convert_perm(file_perm)
+        dir_perm = convert_perm(dir_perm)
 
-def permissions(lib, item=None, album=None):
-    """Running the permission fixer.
-    """
-    # Getting the config.
-    file_perm = config['permissions']['file'].get()
-    dir_perm = config['permissions']['dir'].get()
+        # Create chmod_queue.
+        file_chmod_queue = []
+        if item:
+            file_chmod_queue.append(item.path)
+        elif album:
+            for album_item in album.items():
+                file_chmod_queue.append(album_item.path)
 
-    # Converts permissions to oct.
-    file_perm = convert_perm(file_perm)
-    dir_perm = convert_perm(dir_perm)
+        # A set of directories to change permissions for.
+        dir_chmod_queue = set()
 
-    # Create chmod_queue.
-    file_chmod_queue = []
-    if item:
-        file_chmod_queue.append(item.path)
-    elif album:
-        for album_item in album.items():
-            file_chmod_queue.append(album_item.path)
+        for path in file_chmod_queue:
+            # Changing permissions on the destination file.
+            self._log.debug(
+                u'setting file permissions on {}',
+                util.displayable_path(path),
+            )
+            os.chmod(util.syspath(path), file_perm)
 
-    # A set of directories to change permissions for.
-    dir_chmod_queue = set()
+            # Checks if the destination path has the permissions configured.
+            assert_permissions(path, file_perm, self._log)
 
-    for path in file_chmod_queue:
-        # Changing permissions on the destination file.
-        os.chmod(util.bytestring_path(path), file_perm)
+            # Adding directories to the directory chmod queue.
+            dir_chmod_queue.update(
+                dirs_in_library(lib.directory,
+                                path))
 
-        # Checks if the destination path has the permissions configured.
-        if not check_permissions(util.bytestring_path(path), file_perm):
-            message = 'There was a problem setting permission on {}'.format(
-                path)
-            print(message)
+        # Change permissions for the directories.
+        for path in dir_chmod_queue:
+            # Chaning permissions on the destination directory.
+            self._log.debug(
+                u'setting directory permissions on {}',
+                util.displayable_path(path),
+            )
+            os.chmod(util.syspath(path), dir_perm)
 
-        # Adding directories to the directory chmod queue.
-        dir_chmod_queue.update(
-            dirs_in_library(lib.directory,
-                            path))
-
-    # Change permissions for the directories.
-    for path in dir_chmod_queue:
-        # Chaning permissions on the destination directory.
-        os.chmod(util.bytestring_path(path), dir_perm)
-
-        # Checks if the destination path has the permissions configured.
-        if not check_permissions(util.bytestring_path(path), dir_perm):
-            message = 'There was a problem setting permission on {}'.format(
-                path)
-            print(message)
+            # Checks if the destination path has the permissions configured.
+            assert_permissions(path, dir_perm, self._log)

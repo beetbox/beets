@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, aroquen
+# Copyright 2016, aroquen
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,10 +15,10 @@
 
 """Determine BPM by pressing a key to the rhythm."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import time
+from six.moves import input
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -31,7 +32,7 @@ def bpm(max_strokes):
     dt = []
     for i in range(max_strokes):
         # Press enter to the rhythm...
-        s = raw_input()
+        s = input()
         if s == '':
             t1 = time.time()
             # Only start measuring at the second stroke
@@ -58,18 +59,20 @@ class BPMPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('bpm',
-                            help='determine bpm of a song by pressing \
-                            a key to the rhythm')
+                            help=u'determine bpm of a song by pressing '
+                            u'a key to the rhythm')
         cmd.func = self.command
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.get_bpm(lib.items(ui.decargs(args)))
+        items = lib.items(ui.decargs(args))
+        write = ui.should_write()
+        self.get_bpm(items, write)
 
     def get_bpm(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
         if len(items) > 1:
-            raise ValueError('Can only get bpm of one song at time')
+            raise ValueError(u'Can only get bpm of one song at time')
 
         item = items[0]
         if item['bpm']:

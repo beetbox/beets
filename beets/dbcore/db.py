@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """The central Model and Database constructs for DBCore.
 """
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import time
 import os
@@ -27,8 +27,19 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
+from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
+import six
+
+
+class DBAccessError(Exception):
+    """The SQLite database became inaccessible.
+
+    This can happen when trying to read or write the database when, for
+    example, the database file is deleted or otherwise disappears. There
+    is probably no way to recover from this error.
+    """
 
 
 class FormattedMapping(collections.Mapping):
@@ -66,10 +77,10 @@ class FormattedMapping(collections.Mapping):
     def _get_formatted(self, model, key):
         value = model._type(key).format(model.get(key))
         if isinstance(value, bytes):
-            value = value.decode('utf8', 'ignore')
+            value = value.decode('utf-8', 'ignore')
 
         if self.for_path:
-            sep_repl = beets.config['path_sep_replace'].get(unicode)
+            sep_repl = beets.config['path_sep_replace'].as_str()
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
                     value = value.replace(sep, sep_repl)
@@ -176,9 +187,9 @@ class Model(object):
         ordinary construction are bypassed.
         """
         obj = cls(db)
-        for key, value in fixed_values.iteritems():
+        for key, value in fixed_values.items():
             obj._values_fixed[key] = cls._type(key).from_sql(value)
-        for key, value in flex_values.iteritems():
+        for key, value in flex_values.items():
             obj._values_flex[key] = cls._type(key).from_sql(value)
         return obj
 
@@ -200,20 +211,37 @@ class Model(object):
         exception is raised otherwise.
         """
         if not self._db:
-            raise ValueError('{0} has no database'.format(type(self).__name__))
+            raise ValueError(
+                u'{0} has no database'.format(type(self).__name__)
+            )
         if need_id and not self.id:
-            raise ValueError('{0} has no id'.format(type(self).__name__))
+            raise ValueError(u'{0} has no id'.format(type(self).__name__))
+
+    def copy(self):
+        """Create a copy of the model object.
+
+        The field values and other state is duplicated, but the new copy
+        remains associated with the same database as the old object.
+        (A simple `copy.deepcopy` will not work because it would try to
+        duplicate the SQLite connection.)
+        """
+        new = self.__class__()
+        new._db = self._db
+        new._values_fixed = self._values_fixed.copy()
+        new._values_flex = self._values_flex.copy()
+        new._dirty = self._dirty.copy()
+        return new
 
     # Essential field accessors.
 
     @classmethod
-    def _type(self, key):
+    def _type(cls, key):
         """Get the type of a field, a `Type` instance.
 
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
         """
-        return self._fields.get(key) or self._types.get(key) or types.DEFAULT
+        return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
 
     def __getitem__(self, key):
         """Get the value for a field. Raise a KeyError if the field is
@@ -223,14 +251,15 @@ class Model(object):
         if key in getters:  # Computed.
             return getters[key](self)
         elif key in self._fields:  # Fixed.
-            return self._values_fixed.get(key)
+            return self._values_fixed.get(key, self._type(key).null)
         elif key in self._values_flex:  # Flexible.
             return self._values_flex[key]
         else:
             raise KeyError(key)
 
-    def __setitem__(self, key, value):
-        """Assign the value for a field.
+    def _setitem(self, key, value):
+        """Assign the value for a field, return whether new and old value
+        differ.
         """
         # Choose where to place the value.
         if key in self._fields:
@@ -244,8 +273,16 @@ class Model(object):
         # Assign value and possibly mark as dirty.
         old_value = source.get(key)
         source[key] = value
-        if self._always_dirty or old_value != value:
+        changed = old_value != value
+        if self._always_dirty or changed:
             self._dirty.add(key)
+
+        return changed
+
+    def __setitem__(self, key, value):
+        """Assign the value for a field.
+        """
+        self._setitem(key, value)
 
     def __delitem__(self, key):
         """Remove a flexible attribute from the model.
@@ -254,29 +291,29 @@ class Model(object):
             del self._values_flex[key]
             self._dirty.add(key)  # Mark for dropping on store.
         elif key in self._getters():  # Computed.
-            raise KeyError('computed field {0} cannot be deleted'.format(key))
+            raise KeyError(u'computed field {0} cannot be deleted'.format(key))
         elif key in self._fields:  # Fixed.
-            raise KeyError('fixed field {0} cannot be deleted'.format(key))
+            raise KeyError(u'fixed field {0} cannot be deleted'.format(key))
         else:
-            raise KeyError('no such field {0}'.format(key))
+            raise KeyError(u'no such field {0}'.format(key))
 
     def keys(self, computed=False):
         """Get a list of available field names for this object. The
         `computed` parameter controls whether computed (plugin-provided)
         fields are included in the key list.
         """
-        base_keys = list(self._fields) + self._values_flex.keys()
+        base_keys = list(self._fields) + list(self._values_flex.keys())
         if computed:
-            return base_keys + self._getters().keys()
+            return base_keys + list(self._getters().keys())
         else:
             return base_keys
 
     @classmethod
-    def all_keys(self):
+    def all_keys(cls):
         """Get a list of available keys for objects of this type.
         Includes fixed and computed fields.
         """
-        return list(self._fields) + self._getters().keys()
+        return list(cls._fields) + list(cls._getters().keys())
 
     # Act like a dictionary.
 
@@ -317,12 +354,12 @@ class Model(object):
 
     def __getattr__(self, key):
         if key.startswith('_'):
-            raise AttributeError('model has no attribute {0!r}'.format(key))
+            raise AttributeError(u'model has no attribute {0!r}'.format(key))
         else:
             try:
                 return self[key]
             except KeyError:
-                raise AttributeError('no such field {0!r}'.format(key))
+                raise AttributeError(u'no such field {0!r}'.format(key))
 
     def __setattr__(self, key, value):
         if key.startswith('_'):
@@ -338,15 +375,19 @@ class Model(object):
 
     # Database interaction (CRUD methods).
 
-    def store(self):
+    def store(self, fields=None):
         """Save the object's metadata into the library database.
+        :param fields: the fields to be stored. If not specified, all fields
+        will be.
         """
+        if fields is None:
+            fields = self._fields
         self._check_db()
 
         # Build assignments for query.
         assignments = []
         subvars = []
-        for key in self._fields:
+        for key in fields:
             if key != 'id' and key in self._dirty:
                 self._dirty.remove(key)
                 assignments.append(key + '=?')
@@ -389,7 +430,7 @@ class Model(object):
         """
         self._check_db()
         stored_obj = self._db._get(type(self), self.id)
-        assert stored_obj is not None, "object {0} not in DB".format(self.id)
+        assert stored_obj is not None, u"object {0} not in DB".format(self.id)
         self._values_fixed = {}
         self._values_flex = {}
         self.update(dict(stored_obj))
@@ -450,7 +491,7 @@ class Model(object):
         separators will be added to the template.
         """
         # Perform substitution.
-        if isinstance(template, basestring):
+        if isinstance(template, six.string_types):
             template = Template(template)
         return template.substitute(self.formatted(for_path),
                                    self._template_funcs())
@@ -461,10 +502,15 @@ class Model(object):
     def _parse(cls, key, string):
         """Parse a string as a value for the given key.
         """
-        if not isinstance(string, basestring):
-            raise TypeError("_parse() argument must be a string")
+        if not isinstance(string, six.string_types):
+            raise TypeError(u"_parse() argument must be a string")
 
         return cls._type(key).parse(string)
+
+    def set_parse(self, key, string):
+        """Set the object's key to a value represented by a string.
+        """
+        self[key] = self._parse(key, string)
 
 
 # Database controller and supporting interfaces.
@@ -555,13 +601,13 @@ class Results(object):
                 'SELECT * FROM {0} WHERE entity_id=?'.format(
                     self.model_class._flex_table
                 ),
-                (row[b'id'],)
+                (row['id'],)
             )
 
         cols = dict(row)
         values = dict((k, v) for (k, v) in cols.items()
                       if not k[:4] == 'flex')
-        flex_values = dict((row[b'key'], row[b'value']) for row in flex_rows)
+        flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
@@ -588,6 +634,11 @@ class Results(object):
     def __nonzero__(self):
         """Does this result contain any objects?
         """
+        return self.__bool__()
+
+    def __bool__(self):
+        """Does this result contain any objects?
+        """
         return bool(len(self))
 
     def __getitem__(self, n):
@@ -602,10 +653,10 @@ class Results(object):
         it = iter(self)
         try:
             for i in range(n):
-                it.next()
-            return it.next()
+                next(it)
+            return next(it)
         except StopIteration:
-            raise IndexError('result index {0} out of range'.format(n))
+            raise IndexError(u'result index {0} out of range'.format(n))
 
     def get(self):
         """Return the first matching object, or None if no objects
@@ -613,7 +664,7 @@ class Results(object):
         """
         it = iter(self)
         try:
-            return it.next()
+            return next(it)
         except StopIteration:
             return None
 
@@ -662,8 +713,18 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        cursor = self.db._connection().execute(statement, subvals)
-        return cursor.lastrowid
+        try:
+            cursor = self.db._connection().execute(statement, subvals)
+            return cursor.lastrowid
+        except sqlite3.OperationalError as e:
+            # In two specific cases, SQLite reports an error while accessing
+            # the underlying database file. We surface these exceptions as
+            # DBAccessError so the application can abort.
+            if e.args[0] in ("attempt to write a readonly database",
+                             "unable to open database file"):
+                raise DBAccessError(e.args[0])
+            else:
+                raise
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
@@ -678,8 +739,9 @@ class Database(object):
     """The Model subclasses representing tables in this database.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, timeout=5.0):
         self.path = path
+        self.timeout = timeout
 
         self._connections = {}
         self._tx_stacks = defaultdict(list)
@@ -714,17 +776,35 @@ class Database(object):
             if thread_id in self._connections:
                 return self._connections[thread_id]
             else:
-                # Make a new connection.
-                conn = sqlite3.connect(
-                    self.path,
-                    timeout=beets.config['timeout'].as_number(),
-                )
-
-                # Access SELECT results like dictionaries.
-                conn.row_factory = sqlite3.Row
-
+                conn = self._create_connection()
                 self._connections[thread_id] = conn
                 return conn
+
+    def _create_connection(self):
+        """Create a SQLite connection to the underlying database.
+
+        Makes a new connection every time. If you need to configure the
+        connection settings (e.g., add custom functions), override this
+        method.
+        """
+        # Make a new connection. The `sqlite3` module can't use
+        # bytestring paths here on Python 3, so we need to
+        # provide a `str` using `py3_path`.
+        conn = sqlite3.connect(
+            py3_path(self.path), timeout=self.timeout
+        )
+
+        # Access SELECT results like dictionaries.
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def _close(self):
+        """Close the all connections to the underlying SQLite database
+        from all threads. This does not render the database object
+        unusable; new connections can still be opened on demand.
+        """
+        with self._shared_map_lock:
+            self._connections.clear()
 
     @contextlib.contextmanager
     def _tx_stack(self):

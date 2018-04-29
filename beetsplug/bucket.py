@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Fabrice Laporte.
+# Copyright 2016, Fabrice Laporte.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,15 +16,18 @@
 """Provides the %bucket{} function for path formatting.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 from datetime import datetime
 import re
 import string
-from itertools import tee, izip
+from six.moves import zip
+from itertools import tee
 
 from beets import plugins, ui
+
+
+ASCII_DIGITS = string.digits + string.ascii_lowercase
 
 
 class BucketError(Exception):
@@ -34,7 +38,7 @@ def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = tee(iterable)
     next(b, None)
-    return izip(a, b)
+    return zip(a, b)
 
 
 def span_from_str(span_str):
@@ -45,7 +49,7 @@ def span_from_str(span_str):
         """Convert string to a 4 digits year
         """
         if yearfrom < 100:
-            raise BucketError("%d must be expressed on 4 digits" % yearfrom)
+            raise BucketError(u"%d must be expressed on 4 digits" % yearfrom)
 
         # if two digits only, pick closest year that ends by these two
         # digits starting from yearfrom
@@ -58,12 +62,12 @@ def span_from_str(span_str):
 
     years = [int(x) for x in re.findall('\d+', span_str)]
     if not years:
-        raise ui.UserError("invalid range defined for year bucket '%s': no "
-                           "year found" % span_str)
+        raise ui.UserError(u"invalid range defined for year bucket '%s': no "
+                           u"year found" % span_str)
     try:
         years = [normalize_year(x, years[0]) for x in years]
     except BucketError as exc:
-        raise ui.UserError("invalid range defined for year bucket '%s': %s" %
+        raise ui.UserError(u"invalid range defined for year bucket '%s': %s" %
                            (span_str, exc))
 
     res = {'from': years[0], 'str': span_str}
@@ -118,8 +122,8 @@ def build_year_spans(year_spans_str):
 def str2fmt(s):
     """Deduces formatting syntax from a span string.
     """
-    regex = re.compile("(?P<bef>\D*)(?P<fromyear>\d+)(?P<sep>\D*)"
-                       "(?P<toyear>\d*)(?P<after>\D*)")
+    regex = re.compile(r"(?P<bef>\D*)(?P<fromyear>\d+)(?P<sep>\D*)"
+                       r"(?P<toyear>\d*)(?P<after>\D*)")
     m = re.match(regex, s)
 
     res = {'fromnchars': len(m.group('fromyear')),
@@ -134,9 +138,10 @@ def str2fmt(s):
 def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
     """Return a span string representation.
     """
-    args = (bytes(yearfrom)[-fromnchars:])
+    args = (str(yearfrom)[-fromnchars:])
     if tonchars:
-        args = (bytes(yearfrom)[-fromnchars:], bytes(yearto)[-tonchars:])
+        args = (str(yearfrom)[-fromnchars:], str(yearto)[-tonchars:])
+
     return fmt % args
 
 
@@ -155,23 +160,23 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
     [from...to]
     """
     spans = []
-    ASCII_DIGITS = string.digits + string.ascii_lowercase
+
     for elem in alpha_spans_str:
         if elem in alpha_regexs:
             spans.append(re.compile(alpha_regexs[elem]))
         else:
             bucket = sorted([x for x in elem.lower() if x.isalnum()])
             if bucket:
-                beginIdx = ASCII_DIGITS.index(bucket[0])
-                endIdx = ASCII_DIGITS.index(bucket[-1])
+                begin_index = ASCII_DIGITS.index(bucket[0])
+                end_index = ASCII_DIGITS.index(bucket[-1])
             else:
-                raise ui.UserError("invalid range defined for alpha bucket "
-                                   "'%s': no alphanumeric character found" %
+                raise ui.UserError(u"invalid range defined for alpha bucket "
+                                   u"'%s': no alphanumeric character found" %
                                    elem)
             spans.append(
                 re.compile(
-                    "^[" + ASCII_DIGITS[beginIdx:endIdx + 1] +
-                    ASCII_DIGITS[beginIdx:endIdx + 1].upper() + "]"
+                    "^[" + ASCII_DIGITS[begin_index:end_index + 1] +
+                    ASCII_DIGITS[begin_index:end_index + 1].upper() + "]"
                 )
             )
     return spans

@@ -2,11 +2,12 @@ FAQ
 ###
 
 Here are some answers to frequently-asked questions from IRC and elsewhere.
-Got a question that isn't answered here? Try `IRC`_, the `mailing list`_, or
+Got a question that isn't answered here? Try `IRC`_, the `discussion board`_, or
 :ref:`filing an issue <bugs>` in the bug tracker.
 
 .. _IRC: irc://irc.freenode.net/beets
 .. _mailing list: http://groups.google.com/group/beets-users
+.. _discussion board: http://discourse.beets.io
 
 .. contents::
     :local:
@@ -138,13 +139,13 @@ it's helpful to run on the "bleeding edge". To run the latest source:
 2. Install from source. There are a few easy ways to do this:
 
    -  Use ``pip`` to install the latest snapshot tarball: just type
-      ``pip install https://github.com/sampsyo/beets/tarball/master``.
+      ``pip install https://github.com/beetbox/beets/tarball/master``.
    -  Grab the source using Git:
-      ``git clone https://github.com/sampsyo/beets.git``. Then
+      ``git clone https://github.com/beetbox/beets.git``. Then
       ``cd beets`` and type ``python setup.py install``.
    -  Use ``pip`` to install an "editable" version of beets based on an
       automatic source checkout. For example, run
-      ``pip install -e git+https://github.com/sampsyo/beets#egg=beets``
+      ``pip install -e git+https://github.com/beetbox/beets#egg=beets``
       to clone beets and install it, allowing you to modify the source
       in-place to try out changes.
 
@@ -157,8 +158,8 @@ pages.
 …report a bug in beets?
 -----------------------
 
-We use the `issue tracker <https://github.com/sampsyo/beets/issues>`__
-on GitHub. `Enter a new issue <https://github.com/sampsyo/beets/issues/new>`__
+We use the `issue tracker <https://github.com/beetbox/beets/issues>`__
+on GitHub. `Enter a new issue <https://github.com/beetbox/beets/issues/new>`__
 there to report a bug. Please follow these guidelines when reporting an issue:
 
 -  Most importantly: if beets is crashing, please `include the
@@ -206,6 +207,23 @@ You create this file yourself; beets just reads it. See
 
 Use the ``%asciify{}`` function in your path formats. See
 :ref:`template-functions`.
+
+
+.. _move-dir:
+
+…point beets at a new music directory?
+--------------------------------------
+
+If you want to move your music from one directory to another, the best way is
+to let beets do it for you. First, edit your configuration and set the
+``directory`` setting to the new place. Then, type ``beet move`` to have beets
+move all your files.
+
+If you've already moved your music *outside* of beets, you have a few options:
+
+- Move the music back (with an ordinary ``mv``) and then use the above steps.
+- Delete your database and re-create it from the new paths using ``beet import -AWC``.
+- Resort to manually modifying the SQLite database (not recommended).
 
 
 Why does beets…
@@ -272,7 +290,7 @@ Also note that beets may take some time to quit after ^C is typed; it
 tries to clean up after itself briefly even when canceled.
 
 (For developers: this is because the UI thread is blocking on
-``raw_input`` and cannot be interrupted by the main thread, which is
+``input`` and cannot be interrupted by the main thread, which is
 trying to close all pipeline stages in the exception handler by setting
 a flag. There is no simple way to remedy this.)
 
@@ -308,9 +326,9 @@ integrity---for example, type ``metaflac --list music.flac`` to check
 FLAC files.
 
 If beets still complains about a file that seems to be valid, `file a
-bug <https://github.com/sampsyo/beets/issues/new>`__ and we'll look into
+bug <https://github.com/beetbox/beets/issues/new>`__ and we'll look into
 it. There's always a possibility that there's a bug "upstream" in the
-`Mutagen <http://code.google.com/p/mutagen/>`__ library used by beets,
+`Mutagen <https://github.com/quodlibet/mutagen>`__ library used by beets,
 in which case we'll forward the bug to that project's tracker.
 
 

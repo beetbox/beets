@@ -22,8 +22,11 @@ The ``item.added`` field is populated as follows:
   set to the oldest mtime of the files in the album before they were imported.
   The mtime of album directories is ignored.
 
-This plugin can optionally be configured to also preserve mtimes using the
-``preserve_mtimes`` option.
+This plugin can optionally be configured to also preserve mtimes at
+import using the ``preserve_mtimes`` option.
+
+When ``preserve_write_mtimes`` option is set, this plugin preserves
+mtimes after each write to files using the ``item.added`` attribute.
 
 File modification times are preserved as follows:
 
@@ -40,9 +43,13 @@ Configuration
 -------------
 
 To configure the plugin, make an ``importadded:`` section in your
-configuration file. There is one option available:
+configuration file. There are two options available:
 
-- **preserve_mtimes**: After writing files, re-set their mtimes to their
+- **preserve_mtimes**: After importing files, re-set their mtimes to their
+  original value.
+  Default: ``no``.
+
+- **preserve_write_mtimes**: After writing files, re-set their mtimes to their
   original value.
   Default: ``no``.
 

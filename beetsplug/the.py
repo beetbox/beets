@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
+# Copyright 2016, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,8 +15,7 @@
 
 """Moves patterns in path formats (suitable for moving articles)."""
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
+from __future__ import division, absolute_import, print_function
 
 import re
 from beets.plugins import BeetsPlugin
@@ -54,14 +54,14 @@ class ThePlugin(BeetsPlugin):
                     self._log.error(u'invalid pattern: {0}', p)
                 else:
                     if not (p.startswith('^') or p.endswith('$')):
-                        self._log.warn(u'warning: \"{0}\" will not '
-                                       u'match string start/end', p)
+                        self._log.warning(u'warning: \"{0}\" will not '
+                                          u'match string start/end', p)
         if self.config['a']:
             self.patterns = [PATTERN_A] + self.patterns
         if self.config['the']:
             self.patterns = [PATTERN_THE] + self.patterns
         if not self.patterns:
-            self._log.warn(u'no patterns defined!')
+            self._log.warning(u'no patterns defined!')
 
     def unthe(self, text, pattern):
         """Moves pattern in the path format string or strips it
@@ -81,7 +81,7 @@ class ThePlugin(BeetsPlugin):
                 if self.config['strip']:
                     return r
                 else:
-                    fmt = self.config['format'].get(unicode)
+                    fmt = self.config['format'].as_str()
                     return fmt.format(r, t.strip()).strip()
         else:
             return u''

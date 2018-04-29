@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Heinz Wiesinger.
+# Copyright 2016, Heinz Wiesinger.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,10 +16,12 @@
 """Synchronize information from amarok's library via dbus
 """
 
+from __future__ import division, absolute_import, print_function
+
 from os.path import basename
 from datetime import datetime
 from time import mktime
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import quoteattr
 
 from beets.util import displayable_path
 from beets.dbcore import types
@@ -48,7 +51,7 @@ class Amarok(MetaSource):
 
     queryXML = u'<query version="1.0"> \
                     <filters> \
-                        <and><include field="filename" value="%s" /></and> \
+                        <and><include field="filename" value=%s /></and> \
                     </filters> \
                 </query>'
 
@@ -68,7 +71,9 @@ class Amarok(MetaSource):
         # for the patch relative to the mount point. But the full path is part
         # of the result set. So query for the filename and then try to match
         # the correct item from the results we get back
-        results = self.collection.Query(self.queryXML % escape(basename(path)))
+        results = self.collection.Query(
+            self.queryXML % quoteattr(basename(path))
+        )
         for result in results:
             if result['xesam:url'] != path:
                 continue

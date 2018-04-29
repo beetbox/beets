@@ -1,6 +1,6 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2015, Adrian Sampson.
+# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,11 +15,14 @@
 
 """Test module for file ui/commands.py
 """
+
+from __future__ import division, absolute_import, print_function
+
 import os
 import shutil
+import unittest
 
 from test import _common
-from test._common import unittest
 
 from beets import library
 from beets import ui
@@ -30,16 +33,16 @@ class QueryTest(_common.TestCase):
     def setUp(self):
         super(QueryTest, self).setUp()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, b'testlibdir')
         os.mkdir(self.libdir)
 
         # Add a file to the library but don't copy it in yet.
         self.lib = library.Library(':memory:', self.libdir)
 
         # Alternate destination directory.
-        self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
+        self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
 
-    def add_item(self, filename='srcfile', templatefile='full.mp3'):
+    def add_item(self, filename=b'srcfile', templatefile=b'full.mp3'):
         itempath = os.path.join(self.libdir, filename)
         shutil.copy(os.path.join(_common.RSRC, templatefile), itempath)
         item = library.Item.from_path(itempath)
@@ -116,5 +119,5 @@ class FieldsTest(_common.LibTestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == b'__main__':
+if __name__ == '__main__':
     unittest.main(defaultTest='suite')

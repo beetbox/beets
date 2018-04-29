@@ -83,13 +83,27 @@ have multiple paths, format them as a YAML list like so::
         - /path/one
         - /path/two
 
+.. _ignore:
+
 ignore
 ~~~~~~
 
 A list of glob patterns specifying file and directory names to be ignored when
-importing. By default, this consists of ``.*``,  ``*~``, and ``System Volume
-Information`` (i.e., beets ignores Unix-style hidden files, backup files, and
-a directory that appears at the root of some Windows filesystems).
+importing. By default, this consists of ``.*``,  ``*~``,  ``System Volume
+Information``, ``lost+found`` (i.e., beets ignores Unix-style hidden files,
+backup files, and directories that appears at the root of some Linux and Windows
+filesystems).
+
+.. _ignore_hidden:
+
+ignore_hidden
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``; whether to ignore hidden files when importing. On
+Windows, the "Hidden" property of files is used to detect whether or not a file
+is hidden. On OS X, the file's "IsHidden" flag is used to detect whether or not
+a file is hidden. On both OS X and other platforms (excluding Windows), files
+(and directories) starting with a dot are detected as hidden files.
 
 .. _replace:
 
@@ -117,6 +131,7 @@ unexpected behavior on all popular platforms::
         '\.$': _
         '\s+$': ''
         '^\s+': ''
+        '^-': _
 
 These substitutions remove forward and back slashes, leading dots, and
 control characters—all of which is a good idea on any OS. The fourth line
@@ -215,7 +230,7 @@ Default sort order to use when fetching items from the database. Defaults to
 sort_album
 ~~~~~~~~~~
 
-Default sort order to use when fetching items from the database. Defaults to
+Default sort order to use when fetching albums from the database. Defaults to
 ``albumartist+ album+``. Explicit sort orders override this default.
 
 .. _sort_case_insensitive:
@@ -237,6 +252,15 @@ Either ``yes`` or ``no``, indicating whether matched albums should have their
 *original* version of an album rather than the selected version of the release.
 That is, if this option is turned on, then ``year`` will always equal
 ``original_year`` and so on. Default: ``no``.
+
+.. _artist_credit:
+
+artist_credit
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether matched tracks and albums should
+use the artist credit, rather than the artist. That is, if this option is turned
+on, then ``artist`` will contain the artist as credited on the release.
 
 .. _per_disc_numbering:
 
@@ -268,7 +292,8 @@ terminal_encoding
 ~~~~~~~~~~~~~~~~~
 
 The text encoding, as `known to Python`_, to use for messages printed to the
-standard output. By default, this is determined automatically from the locale
+standard output. It's also used to read messages from the standard input.
+By default, this is determined automatically from the locale
 environment variables.
 
 .. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
@@ -303,6 +328,15 @@ id3v23
 By default, beets writes MP3 tags using the ID3v2.4 standard, the latest
 version of ID3. Enable this option to instead use the older ID3v2.3 standard,
 which is preferred by certain older software such as Windows Media Player.
+
+.. _va_name:
+
+va_name
+~~~~~~~
+
+Sets the albumartist for various-artist compilations. Defaults to ``'Various
+Artists'`` (the MusicBrainz standard). Affects other sources, such as
+:doc:`/plugins/discogs`, too.
 
 
 UI Options
@@ -363,12 +397,16 @@ file that looks like this::
 
 These options are available in this section:
 
+.. _config-import-write:
+
 write
 ~~~~~
 
 Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
 written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
 and ``-W`` command-line options override this setting.
+
+.. _config-import-copy:
 
 copy
 ~~~~
@@ -379,6 +417,8 @@ overridden with the ``-c`` and ``-C`` command-line options.
 
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
+
+.. _config-import-move:
 
 move
 ~~~~
@@ -403,14 +443,27 @@ link
 ~~~~
 
 Either ``yes`` or ``no``, indicating whether to use symbolic links instead of
-moving or copying files. (It conflicts with the ``move`` and ``copy``
-options.) Defaults to ``no``.
+moving or copying files. (It conflicts with the ``move``, ``copy`` and
+``hardlink`` options.) Defaults to ``no``.
 
 This option only works on platforms that support symbolic links: i.e., Unixes.
 It will fail on Windows.
 
 It's likely that you'll also want to set ``write`` to ``no`` if you use this
 option to preserve the metadata on the linked files.
+
+.. _hardlink:
+
+hardlink
+~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether to use hard links instead of
+moving or copying or symlinking files. (It conflicts with the ``move``,
+``copy``, and ``link`` options.) Defaults to ``no``.
+
+As with symbolic links (see :ref:`link`, above), this will not work on Windows
+and you will want to set ``write`` to ``no``.  Otherwise, metadata on the
+original file will be modified.
 
 resume
 ~~~~~~
@@ -430,6 +483,25 @@ incremental
 Either ``yes`` or ``no``, controlling whether imported directories are
 recorded and whether these recorded directories are skipped.  This
 corresponds to the ``-i`` flag to ``beet import``.
+
+.. _incremental_skip_later:
+
+incremental_skip_later
+~~~~~~~~~~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, controlling whether skipped directories are
+recorded in the incremental list. Set this option to ``yes`` if you would
+like to revisit skipped directories later whilst using incremental
+mode. Defaults to ``no``.
+
+.. _from_scratch:
+
+from_scratch
+~~~~~~~~~~~~
+
+Either ``yes`` or ``no`` (default), controlling whether existing metadata is
+discarded when a match is applied. This corresponds to the ``--from_scratch``
+flag to ``beet import``.
 
 quiet_fallback
 ~~~~~~~~~~~~~~
@@ -522,6 +594,43 @@ with the ``-a`` flag to the :ref:`import-cmd` command.)
 
 Default: ``yes``.
 
+.. _duplicate_action:
+
+duplicate_action
+~~~~~~~~~~~~~~~~
+
+Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``. 
+Controls how duplicates are treated in import task. 
+"skip" means that new item(album or track) will be skipped; 
+"keep" means keep both old and new items; "remove" means remove old
+item; "merge" means merge into one album; "ask" means the user 
+should be prompted for the action each time. The default is ``ask``.
+
+.. _bell:
+
+bell
+~~~~
+
+Ring the terminal bell to get your attention when the importer needs your input.
+
+Default: ``no``.
+
+.. _set_fields:
+
+set_fields
+~~~~~~~~~~
+
+A dictionary indicating fields to set to values for newly imported music.
+Here's an example::
+
+    set_fields:
+        genre: 'To Listen'
+        collection: 'Unordered'
+
+Other field/value pairs supplied via the ``--set`` option on the command-line
+override any settings here for fields with the same name.
+
+Default: ``{}`` (empty).
 
 .. _musicbrainz-config:
 
@@ -579,7 +688,7 @@ automatically accept any matches above 90% similarity, use::
 The default strong recommendation threshold is 0.04.
 
 The ``medium_rec_thresh`` and ``rec_gap_thresh`` options work similarly. When a
-match is above the *medium* recommendation threshold or the distance between it
+match is below the *medium* recommendation threshold or the distance between it
 and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.
@@ -684,6 +793,33 @@ want to enforce to the ``required`` setting::
 
 No tags are required by default.
 
+.. _ignored_media:
+
+ignored_media
+~~~~~~~~~~~~~
+
+A list of media (i.e., formats) in metadata databases to ignore when matching
+music. You can use this to ignore all media that usually contain video instead
+of audio, for example::
+
+    match:
+        ignored_media: ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD',
+                        'VCD', 'SVCD', 'UMD', 'VHS']
+
+No formats are ignored by default.
+
+
+.. _ignore_video_tracks:
+
+ignore_video_tracks
+~~~~~~~~~~~~~~~~~~~
+
+By default, video tracks within a release will be ignored. If you want them to
+be included (for example if you would like to track the audio-only versions of
+the video tracks), set it to ``no``.
+
+Default: ``yes``.
+
 .. _path-format-config:
 
 Path Format Configuration
@@ -702,7 +838,7 @@ defaults look like this::
         singleton: Non-Album/$artist/$title
         comp: Compilations/$album%aunique{}/$track $title
 
-Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
+Note the use of ``$albumartist`` instead of ``$artist``; this ensures that albums
 will be well-organized. For more about these format strings, see
 :doc:`pathformat`. The ``aunique{}`` function ensures that identically-named
 albums are placed in different directories; see :ref:`aunique` for details.
@@ -775,21 +911,16 @@ Example
 
 Here's an example file::
 
-    library: /var/music.blb
     directory: /var/mp3
     import:
         copy: yes
         write: yes
-        resume: ask
-        quiet_fallback: skip
-        timid: no
         log: beetslog.txt
-    ignore: .AppleDouble ._* *~ .DS_Store
     art_filename: albumart
     plugins: bpd
     pluginpath: ~/beets/myplugins
-    threaded: yes
-    color: yes
+    ui:
+        color: yes
 
     paths:
         default: $genre/$albumartist/$album/$track $title
