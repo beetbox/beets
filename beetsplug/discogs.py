@@ -23,7 +23,7 @@ from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
 from beets.util import confit
-from discogs_client import Release, Client
+from discogs_client import Release, Master, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
 from six.moves import http_client
@@ -216,6 +216,27 @@ class DiscogsPlugin(BeetsPlugin):
         return [album for album in map(self.get_album_info, releases[:5])
                 if album]
 
+    def get_master_year(self, master_id):
+        """Fetches a master release given its Discogs ID and returns its year
+        or None if the master release is not found.
+        """
+        self._log.debug(u'Searching for master release {0}', master_id)
+        result = Master(self.discogs_client, {'id': master_id})
+        try:
+            year = result.fetch('year')
+            return year
+        except DiscogsAPIError as e:
+            if e.status_code != 404:
+                self._log.debug(u'API Error: {0} (query: {1})', e, result._uri)
+                if e.status_code == 401:
+                    self.reset_auth()
+                    return self.get_master_year(master_id)
+            return None
+        except CONNECTION_ERRORS:
+            self._log.debug(u'Connection error in master release lookup',
+                            exc_info=True)
+            return None
+
     def get_album_info(self, result):
         """Returns an AlbumInfo object for a discogs Release object.
         """
@@ -275,8 +296,11 @@ class DiscogsPlugin(BeetsPlugin):
             # in #2336.
             track.track_id = str(album_id) + "-" + track.track_alt
 
-        # Retrieve master release id (returns None if there isn't one)
+        # Retrieve master release id (returns None if there isn't one).
         master_id = result.data.get('master_id')
+        # Assume `original_year` is equal to `year` for releases without
+        # a master release, otherwise fetch the master release.
+        original_year = self.get_master_year(master_id) if master_id else year
 
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
@@ -285,7 +309,7 @@ class DiscogsPlugin(BeetsPlugin):
                          catalognum=catalogno, script=None, language=None,
                          country=country, albumstatus=None, media=media,
                          albumdisambig=None, artist_credit=None,
-                         original_year=None, original_month=None,
+                         original_year=original_year, original_month=None,
                          original_day=None, data_source='Discogs',
                          data_url=data_url)
 
