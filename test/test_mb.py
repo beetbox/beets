@@ -27,7 +27,8 @@ import mock
 
 class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False, medium_format='FORMAT'):
+                      track_artist=False, data_tracks=None,
+                      medium_format='FORMAT'):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -62,8 +63,8 @@ class MBAlbumInfoTest(_common.TestCase):
             'country': 'COUNTRY',
             'status': 'STATUS',
         }
+        track_list = []
         if tracks:
-            track_list = []
             for i, recording in enumerate(tracks):
                 track = {
                     'recording': recording,
@@ -87,12 +88,22 @@ class MBAlbumInfoTest(_common.TestCase):
                         }
                     ]
                 track_list.append(track)
-            release['medium-list'].append({
-                'position': '1',
-                'track-list': track_list,
-                'format': medium_format,
-                'title': 'MEDIUM TITLE',
-            })
+        data_track_list = []
+        if data_tracks:
+            for i, recording in enumerate(data_tracks):
+                data_track = {
+                    'recording': recording,
+                    'position': len(track_list) + i + 1,
+                    'number': 'A1',
+                }
+                data_track_list.append(data_track)
+        release['medium-list'].append({
+            'position': '1',
+            'track-list': track_list,
+            'data-track-list': data_track_list,
+            'format': medium_format,
+            'title': 'MEDIUM TITLE',
+        })
         return release
 
     def _make_track(self, title, tr_id, duration, artist=False, video=False):
@@ -353,6 +364,18 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(len(d.tracks), 2)
         self.assertEqual(d.tracks[0].title, 'TITLE ONE')
         self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_no_skip_audio_data_tracks(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        data_tracks = [self._make_track('TITLE AUDIO DATA', 'ID DATA TRACK',
+                                        100.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 3)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+        self.assertEqual(d.tracks[2].title, 'TITLE AUDIO DATA')
 
     def test_skip_video_tracks_by_default(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
