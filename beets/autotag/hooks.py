@@ -43,6 +43,9 @@ class AlbumInfo(object):
     - ``artist``: name of the release's primary artist
     - ``artist_id``
     - ``tracks``: list of TrackInfo objects making up the release
+    - ``releasedate``: release date
+    - ``genre``: genre (useless)
+    - ``styles``: styles (useful)
     - ``asin``: Amazon ASIN
     - ``albumtype``: string describing the kind of release
     - ``va``: boolean: whether the release has "various artists"
@@ -67,7 +70,7 @@ class AlbumInfo(object):
     The fields up through ``tracks`` are required. The others are
     optional and may be None.
     """
-    def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
+    def __init__(self, album, album_id, artist, artist_id, tracks, releasedate=None, genre=None, styles=None, asin=None,
                  albumtype=None, va=False, year=None, month=None, day=None,
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
@@ -80,6 +83,9 @@ class AlbumInfo(object):
         self.artist = artist
         self.artist_id = artist_id
         self.tracks = tracks
+        self.releasedate = releasedate
+        self.genre = genre
+        self.styles = styles
         self.asin = asin
         self.albumtype = albumtype
         self.va = va
@@ -566,6 +572,8 @@ def albums_for_id(album_id):
     if a:
         yield a
     for a in plugins.album_for_id(album_id):
+        print("ECCOLO")
+        print(a.styles)
         if a:
             plugins.send(u'albuminfo_received', info=a)
             yield a

@@ -19,6 +19,7 @@ discogs-client library.
 from __future__ import division, absolute_import, print_function
 
 import beets.ui
+from beets import mediafile
 from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
@@ -61,6 +62,12 @@ class DiscogsPlugin(BeetsPlugin):
         self.config['user_token'].redact = True
         self.discogs_client = None
         self.register_listener('import_begin', self.setup)
+        for style in [u'styleone', u'styletwo', u'stylethree']:
+            field = mediafile.MediaField(
+                mediafile.MP3DescStorageStyle(style),
+                mediafile.StorageStyle(style)
+            )
+            self.add_media_field(style, field)
 
     def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary.
@@ -258,6 +265,24 @@ class DiscogsPlugin(BeetsPlugin):
         artist, artist_id = self.get_artist([a.data for a in result.artists])
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
+        
+        # This information is almost always very accurate in Discogs, when available.
+        if 'released' in result.data:
+            releasedate = result.data['released']
+        else:
+            self._log.warn(u"Discogs 'released' field not found")
+            releasedate = ''
+        if 'genres' in result.data:
+            genre = result.data['genres']
+        else:
+            self._log.warn(u"Discogs 'genres' field not found")
+            genre = ''
+        if 'styles' in result.data:
+            styles = result.data['styles']
+        else:
+            self._log.warn(u"Discogs 'styles' field not found")
+            styles = ''
+        
         # Use `.data` to access the tracklist directly instead of the
         # convenient `.tracklist` property, which will strip out useful artist
         # information and leave us with skeleton `Artist` objects that will
@@ -311,7 +336,7 @@ class DiscogsPlugin(BeetsPlugin):
                          albumdisambig=None, artist_credit=None,
                          original_year=original_year, original_month=None,
                          original_day=None, data_source='Discogs',
-                         data_url=data_url)
+                         data_url=data_url, releasedate=releasedate, genre=genre, styles=styles)
 
     def get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main

@@ -64,20 +64,26 @@ def apply_metadata(album_info, mapping):
     mapping from Items to TrackInfo objects.
     """
     for item, track_info in mapping.items():
-        # Artist or artist credit.
-        if config['artist_credit']:
-            item.artist = (track_info.artist_credit or
-                           track_info.artist or
-                           album_info.artist_credit or
-                           album_info.artist)
-            item.albumartist = (album_info.artist_credit or
-                                album_info.artist)
+        # Album, artist, track count.
+        if track_info.artist:
+            item.artist = track_info.artist
         else:
-            item.artist = (track_info.artist or album_info.artist)
-            item.albumartist = album_info.artist
-
-        # Album.
+            item.artist = album_info.artist
+        item.albumartist = album_info.artist
         item.album = album_info.album
+
+        # Genre and style
+        item.genre = ','.join(album_info.genre)
+
+        # Let's just put everything together! The deep issue is that there one single data model for both the database
+        # item and the tag instance, sqlite3 does not have arrays out of the box, a "styles" tag does not exist in the
+        # tags.
+        if len(album_info.styles) >= 1:
+            item.styleone = album_info.styles[0]
+        if len(album_info.styles) >= 2:
+            item.styletwo = album_info.styles[1]
+        if len(album_info.styles) >= 3:
+            item.stylethree = album_info.styles[2]
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
