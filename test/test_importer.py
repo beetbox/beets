@@ -1819,6 +1819,7 @@ def mocked_get_release_by_id(id_, includes=[], release_status=[],
             'id': id_,
             'medium-list': [{
                 'track-list': [{
+                    'id': 'baz',
                     'recording': {
                         'title': 'foo',
                         'id': 'bar',
