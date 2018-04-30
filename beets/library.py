@@ -455,6 +455,7 @@ class Item(LibModel):
         'mb_albumid':           types.STRING,
         'mb_artistid':          types.STRING,
         'mb_albumartistid':     types.STRING,
+        'mb_releasetrackid':    types.STRING,
         'albumtype':            types.STRING,
         'label':                types.STRING,
         'acoustid_fingerprint': types.STRING,
