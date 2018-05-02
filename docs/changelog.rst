@@ -28,6 +28,9 @@ New features:
   ``mb_releasegroupid`` as well as simulates track ids using release id
   and tracklist positions. Track ids are stored in ``mb_trackid``. :bug:`#2336`
   Thanks to :user:`dbogdanov`.
+* As a first step to get :bug:`#406` implemented, beets now imports the
+  ``musicbrainz_releasetrackid`` field into the library and tags media files
+  accordingly. Thanks to :user:`Rawrmonkeys`.
 
 
 Fixes:
