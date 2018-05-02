@@ -40,6 +40,7 @@ def apply_item_metadata(item, track_info):
     item.artist_credit = track_info.artist_credit
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
+    item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
     if track_info.data_source:
@@ -129,6 +130,7 @@ def apply_metadata(album_info, mapping):
 
         # MusicBrainz IDs.
         item.mb_trackid = track_info.track_id
+        item.mb_releasetrackid = track_info.release_track_id
         item.mb_albumid = album_info.album_id
         if track_info.artist_id:
             item.mb_artistid = track_info.artist_id
