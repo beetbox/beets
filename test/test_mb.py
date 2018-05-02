@@ -63,12 +63,15 @@ class MBAlbumInfoTest(_common.TestCase):
             'country': 'COUNTRY',
             'status': 'STATUS',
         }
+        i = 0
         track_list = []
         if tracks:
-            for i, recording in enumerate(tracks):
+            for recording in tracks:
+                i += 1
                 track = {
+                    'id': 'RELEASE TRACK ID %d' % i,
                     'recording': recording,
-                    'position': i + 1,
+                    'position': i,
                     'number': 'A1',
                 }
                 if track_length:
@@ -90,10 +93,12 @@ class MBAlbumInfoTest(_common.TestCase):
                 track_list.append(track)
         data_track_list = []
         if data_tracks:
-            for i, recording in enumerate(data_tracks):
+            for recording in data_tracks:
+                i += 1
                 data_track = {
+                    'id': 'RELEASE TRACK ID %d' % i,
                     'recording': recording,
-                    'position': len(track_list) + i + 1,
+                    'position': i,
                     'number': 'A1',
                 }
                 data_track_list.append(data_track)
@@ -194,6 +199,7 @@ class MBAlbumInfoTest(_common.TestCase):
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         release = self._make_release(tracks=[tracks[0]])
         second_track_list = [{
+            'id': 'RELEASE TRACK ID 2',
             'recording': tracks[1],
             'position': '1',
             'number': 'A1',
@@ -551,6 +557,7 @@ class MBLibraryTest(unittest.TestCase):
                         'id': mbid,
                         'medium-list': [{
                             'track-list': [{
+                                'id': 'baz',
                                 'recording': {
                                     'title': 'foo',
                                     'id': 'bar',
