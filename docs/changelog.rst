@@ -29,6 +29,9 @@ New features:
   and tracklist positions. Track ids are stored in ``mb_trackid``. :bug:`#2336`
   Thanks to :user:`dbogdanov`.
 * :doc:`/plugins/discogs`: Fetch original year from master releases. :bug:`#1122`
+* As a first step to get :bug:`#406` implemented, beets now imports the
+  ``musicbrainz_releasetrackid`` field into the library and tags media files
+  accordingly. Thanks to :user:`Rawrmonkeys`.
 
 
 Fixes:
@@ -104,6 +107,11 @@ Fixes:
   to which a track belongs, not the total number of different mediums present
   on the release. :bug:`2887`
   Thanks to :user:`dbogdanov`.
+* The importer now supports audio files contained in data tracks when they are
+  listed in MusicBrainz: the corresponding audio tracks are now merged into the
+  main track list. Thanks to :user:`jdetrey`. :bug:`1638`
+* :doc:`/plugins/keyfinder`: Avoid a crash when trying to process unmatched
+  tracks. :bug:`2537`
 
 
 For developers:

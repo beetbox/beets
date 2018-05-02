@@ -129,6 +129,8 @@ class TrackInfo(object):
 
     - ``title``: name of the track
     - ``track_id``: MusicBrainz ID; UUID fragment only
+    - ``release_track_id``: MusicBrainz ID respective to a track on a
+            particular release; UUID fragment only
     - ``artist``: individual track artist name
     - ``artist_id``
     - ``length``: float: duration of the track in seconds
@@ -152,14 +154,15 @@ class TrackInfo(object):
     may be None. The indices ``index``, ``medium``, and ``medium_index``
     are all 1-based.
     """
-    def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None, index=None, medium=None, medium_index=None,
-                 medium_total=None, artist_sort=None, disctitle=None,
-                 artist_credit=None, data_source=None, data_url=None,
-                 media=None, lyricist=None, composer=None, composer_sort=None,
-                 arranger=None, track_alt=None):
+    def __init__(self, title, track_id, release_track_id=None, artist=None,
+                 artist_id=None, length=None, index=None, medium=None,
+                 medium_index=None, medium_total=None, artist_sort=None,
+                 disctitle=None, artist_credit=None, data_source=None,
+                 data_url=None, media=None, lyricist=None, composer=None,
+                 composer_sort=None, arranger=None, track_alt=None):
         self.title = title
         self.track_id = track_id
+        self.release_track_id = release_track_id
         self.artist = artist
         self.artist_id = artist_id
         self.length = length

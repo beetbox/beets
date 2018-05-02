@@ -103,9 +103,9 @@ def _make_item(title, track, artist=u'some artist'):
 
 def _make_trackinfo():
     return [
-        TrackInfo(u'one', None, u'some artist', length=1, index=1),
-        TrackInfo(u'two', None, u'some artist', length=1, index=2),
-        TrackInfo(u'three', None, u'some artist', length=1, index=3),
+        TrackInfo(u'one', None, artist=u'some artist', length=1, index=1),
+        TrackInfo(u'two', None, artist=u'some artist', length=1, index=2),
+        TrackInfo(u'three', None, artist=u'some artist', length=1, index=3),
     ]
 
 
@@ -827,15 +827,15 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
         trackinfo.append(TrackInfo(
             u'oneNew',
             u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-            u'artistOneNew',
-            u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+            artist=u'artistOneNew',
+            artist_id=u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
             index=1,
         ))
         trackinfo.append(TrackInfo(
             u'twoNew',
             u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
-            u'artistTwoNew',
-            u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+            artist=u'artistTwoNew',
+            artist_id=u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
             index=2,
         ))
         self.info = AlbumInfo(
