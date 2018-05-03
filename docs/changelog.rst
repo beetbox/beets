@@ -36,6 +36,7 @@ New features:
 
 Fixes:
 
+* Incorrect disabling of Genius backend. :bug:`2911`
 * Non-audio media (DVD-Video, etc.) are now skipped by default by the
   autotagger. A new option ``ignored_media`` controls which media formats to
   ignore. :bug:`2688`
