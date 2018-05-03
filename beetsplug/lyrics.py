@@ -679,7 +679,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 u'The Genius backend requires BeautifulSoup, which is not '
                 u'installed, so the source is disabled.'
             )
-            sources.remove('google')
+            sources.remove('genius')
 
         self.config['bing_lang_from'] = [
             x.lower() for x in self.config['bing_lang_from'].as_str_seq()]
