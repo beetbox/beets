@@ -41,7 +41,7 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
     @patch('beets.autotag.hooks.track_for_mbid')
     def test_update_library(self, track_for_mbid, album_for_mbid):
         album_for_mbid.return_value = \
-            generate_album_info('album id', ['track id'])
+            generate_album_info('album id', [('track id', {})])
         track_for_mbid.return_value = \
             generate_track_info(u'singleton track id',
                                 {'title': u'singleton info'})
