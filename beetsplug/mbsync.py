@@ -152,10 +152,13 @@ class MBSyncPlugin(BeetsPlugin):
             with lib.transaction():
                 autotag.apply_metadata(album_info, mapping)
                 changed = False
+                # Find any changed item to apply MusicBrainz changes to album.
+                any_changed_item = items[0]
                 for item in items:
                     item_changed = ui.show_model_changes(item)
                     changed |= item_changed
                     if item_changed:
+                        any_changed_item = item
                         apply_item_changes(lib, item, move, pretend, write)
 
                 if not changed:
@@ -165,7 +168,7 @@ class MBSyncPlugin(BeetsPlugin):
                 if not pretend:
                     # Update album structure to reflect an item in it.
                     for key in library.Album.item_keys:
-                        a[key] = items[0][key]
+                        a[key] = any_changed_item[key]
                     a.store()
 
                     # Move album art (and any inconsistent items).
