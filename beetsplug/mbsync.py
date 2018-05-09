@@ -117,28 +117,35 @@ class MBSyncPlugin(BeetsPlugin):
                                album_formatted)
                 continue
 
-            # Map recording MBIDs to their information. Recordings can appear
-            # multiple times on a release, so each MBID maps to a list of
-            # TrackInfo objects.
+            # Map release track and recording MBIDs to their information.
+            # Recordings can appear multiple times on a release, so each MBID
+            # maps to a list of TrackInfo objects.
+            releasetrack_index = dict()
             track_index = defaultdict(list)
             for track_info in album_info.tracks:
+                releasetrack_index[track_info.release_track_id] = track_info
                 track_index[track_info.track_id].append(track_info)
 
-            # Construct a track mapping according to MBIDs. This should work
-            # for albums that have missing or extra tracks. If there are
-            # multiple copies of a recording, they are disambiguated using
-            # their disc and track number.
+            # Construct a track mapping according to MBIDs (release track MBIDs
+            # first, if available, and recording MBIDs otherwise). This should
+            # work for albums that have missing or extra tracks.
             mapping = {}
             for item in items:
-                candidates = track_index[item.mb_trackid]
-                if len(candidates) == 1:
-                    mapping[item] = candidates[0]
+                if item.mb_releasetrackid and \
+                        item.mb_releasetrackid in releasetrack_index:
+                    mapping[item] = releasetrack_index[item.mb_releasetrackid]
                 else:
-                    for c in candidates:
-                        if (c.medium_index == item.track and
-                                c.medium == item.disc):
-                            mapping[item] = c
-                            break
+                    candidates = track_index[item.mb_trackid]
+                    if len(candidates) == 1:
+                        mapping[item] = candidates[0]
+                    else:
+                        # If there are multiple copies of a recording, they are
+                        # disambiguated using their disc and track number.
+                        for c in candidates:
+                            if (c.medium_index == item.track and
+                                    c.medium == item.disc):
+                                mapping[item] = c
+                                break
 
             # Apply.
             self._log.debug(u'applying changes to {}', album_formatted)
