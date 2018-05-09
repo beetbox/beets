@@ -41,7 +41,10 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
     @patch('beets.autotag.hooks.track_for_mbid')
     def test_update_library(self, track_for_mbid, album_for_mbid):
         album_for_mbid.return_value = \
-            generate_album_info('album id', ['track id'])
+            generate_album_info(
+                'album id',
+                [('track id', {'release_track_id': u'release track id'})]
+            )
         track_for_mbid.return_value = \
             generate_track_info(u'singleton track id',
                                 {'title': u'singleton info'})
@@ -49,7 +52,8 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         album_item = Item(
             album=u'old title',
             mb_albumid=u'album id',
-            mb_trackid=u'track id',
+            mb_trackid=u'old track id',
+            mb_releasetrackid=u'release track id',
             path=''
         )
         album = self.lib.add_album([album_item])
@@ -68,6 +72,7 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
 
         album_item.load()
         self.assertEqual(album_item.title, u'track info')
+        self.assertEqual(album_item.mb_trackid, u'track id')
 
         album.load()
         self.assertEqual(album.album, u'album info')

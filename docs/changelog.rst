@@ -113,6 +113,8 @@ Fixes:
   main track list. Thanks to :user:`jdetrey`. :bug:`1638`
 * :doc:`/plugins/keyfinder`: Avoid a crash when trying to process unmatched
   tracks. :bug:`2537`
+* In the ``mbsync`` plugin, support MusicBrainz recording ID changes, relying
+  on release track IDs instead. Thanks to :user:`jdetrey`. :bug:`1234`
 
 
 For developers:

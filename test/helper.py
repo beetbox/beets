@@ -557,16 +557,16 @@ class TestImportSession(importer.ImportSession):
             task.should_merge_duplicates = True
 
 
-def generate_album_info(album_id, track_ids):
+def generate_album_info(album_id, track_values):
     """Return `AlbumInfo` populated with mock data.
 
     Sets the album info's `album_id` field is set to the corresponding
-    argument. For each value in `track_ids` the `TrackInfo` from
-    `generate_track_info` is added to the album info's `tracks` field.
+    argument. For each pair (`id`, `values`) in `track_values` the `TrackInfo`
+    from `generate_track_info` is added to the album info's `tracks` field.
     Most other fields of the album and track info are set to "album
     info" and "track info", respectively.
     """
-    tracks = [generate_track_info(id) for id in track_ids]
+    tracks = [generate_track_info(id, values) for id, values in track_values]
     album = AlbumInfo(
         album_id=u'album info',
         album=u'album info',
