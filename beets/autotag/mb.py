@@ -86,6 +86,12 @@ def configure():
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),
     )
+    config['musicbrainz']['pass'].redact = True
+    if config['musicbrainz']['user'] and config['musicbrainz']['pass']:
+        musicbrainzngs.auth(
+            config['musicbrainz']['user'].as_str(),
+            config['musicbrainz']['pass'].as_str(),
+        )
 
 
 def _preferred_alias(aliases):
