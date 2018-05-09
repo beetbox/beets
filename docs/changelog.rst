@@ -115,6 +115,8 @@ Fixes:
   tracks. :bug:`2537`
 * In the ``mbsync`` plugin, support MusicBrainz recording ID changes, relying
   on release track IDs instead. Thanks to :user:`jdetrey`. :bug:`1234`
+* In the ``mbsync`` plugin, allow beets to update album if the first track
+  has a missing MusicBrainz recording ID.
 
 
 For developers:
