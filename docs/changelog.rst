@@ -118,6 +118,8 @@ Fixes:
 * Properly send ``albuminfo_received`` and ``trackinfo_received`` in all cases,
   most notably when using the ``mbsync`` plugin. This was a regression since
   version 1.4.1. :bug:`2921`
+* In the ``mbsync`` plugin, allow beets to update album if the first track
+  has a missing MusicBrainz recording ID.
 
 
 For developers:
