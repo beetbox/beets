@@ -115,6 +115,9 @@ Fixes:
   tracks. :bug:`2537`
 * In the ``mbsync`` plugin, support MusicBrainz recording ID changes, relying
   on release track IDs instead. Thanks to :user:`jdetrey`. :bug:`1234`
+* Properly send ``albuminfo_received`` and ``trackinfo_received`` in all cases,
+  most notably when using the ``mbsync`` plugin. This was a regression since
+  version 1.4.1. :bug:`2921`
 
 
 For developers:
