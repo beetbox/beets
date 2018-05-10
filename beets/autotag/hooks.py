@@ -539,7 +539,10 @@ def album_for_mbid(release_id):
     if the ID is not found.
     """
     try:
-        return mb.album_for_id(release_id)
+        album = mb.album_for_id(release_id)
+        if album:
+            plugins.send(u'albuminfo_received', info=album)
+        return album
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
@@ -549,12 +552,14 @@ def track_for_mbid(recording_id):
     if the ID is not found.
     """
     try:
-        return mb.track_for_id(recording_id)
+        track = mb.track_for_id(recording_id)
+        if track:
+            plugins.send(u'trackinfo_received', info=track)
+        return track
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
 
-@plugins.notify_info_yielded(u'albuminfo_received')
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     a = album_for_mbid(album_id)
@@ -562,10 +567,10 @@ def albums_for_id(album_id):
         yield a
     for a in plugins.album_for_id(album_id):
         if a:
+            plugins.send(u'albuminfo_received', info=a)
             yield a
 
 
-@plugins.notify_info_yielded(u'trackinfo_received')
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     t = track_for_mbid(track_id)
@@ -573,6 +578,7 @@ def tracks_for_id(track_id):
         yield t
     for t in plugins.track_for_id(track_id):
         if t:
+            plugins.send(u'trackinfo_received', info=t)
             yield t
 
 
