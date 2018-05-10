@@ -119,7 +119,7 @@ Fixes:
   most notably when using the ``mbsync`` plugin. This was a regression since
   version 1.4.1. :bug:`2921`
 * In the ``mbsync`` plugin, allow beets to update album if the first track
-  has a missing MusicBrainz recording ID.
+  has a missing MusicBrainz recording ID. :bug:`2920`
 
 
 For developers:
