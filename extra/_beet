@@ -41,7 +41,7 @@ dirs=("$matchany" ':dir:directory:_dirs')
 # Retrieve or update caches
 if ! _retrieve_cache beetslibrary || _cache_invalid beetslibrary; then
     local BEETS_LIBRARY="${$(beet config|grep library|cut -f 2 -d ' '):-${BEETS_LIBRARY}}"
-    local BEETS_CONFIG="$(dirname ${BEETS_LIBRARY})/config.yaml"
+    local BEETS_CONFIG="${$(beet config -p):-${BEETS_CONFIG}}"
     _store_cache beetslibrary BEETS_LIBRARY BEETS_CONFIG
 fi
 
