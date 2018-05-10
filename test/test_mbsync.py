@@ -37,15 +37,15 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    @patch('beets.autotag.hooks.album_for_mbid')
-    @patch('beets.autotag.hooks.track_for_mbid')
-    def test_update_library(self, track_for_mbid, album_for_mbid):
-        album_for_mbid.return_value = \
+    @patch('beets.autotag.mb.album_for_id')
+    @patch('beets.autotag.mb.track_for_id')
+    def test_update_library(self, track_for_id, album_for_id):
+        album_for_id.return_value = \
             generate_album_info(
                 'album id',
                 [('track id', {'release_track_id': u'release track id'})]
             )
-        track_for_mbid.return_value = \
+        track_for_id.return_value = \
             generate_track_info(u'singleton track id',
                                 {'title': u'singleton info'})
 
@@ -65,7 +65,10 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         )
         self.lib.add(item)
 
-        self.run_command('mbsync')
+        with capture_log() as logs:
+            self.run_command('mbsync')
+        self.assertIn('Sending event: albuminfo_received', logs)
+        self.assertIn('Sending event: trackinfo_received', logs)
 
         item.load()
         self.assertEqual(item.title, u'singleton info')
