@@ -772,7 +772,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         writing continuously to the same files.
         """
 
-        if item is None or slug(self.artist) != slug(item.artist):
+        if item is None or slug(self.artist) != slug(item.albumartist):
             if self.rest is not None:
                 path = os.path.join(directory, 'artists',
                                     slug(self.artist) + u'.rst')
@@ -781,7 +781,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 self.rest = None
                 if item is None:
                     return
-            self.artist = item.artist.strip()
+            self.artist = item.albumartist.strip()
             self.rest = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
                         % (self.artist,
                            u'=' * len(self.artist))
