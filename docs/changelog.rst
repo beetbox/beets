@@ -54,6 +54,9 @@ Fixes:
   with Genius. :bug:`2771`
 * :doc:`/plugins/lyrics`: The ``lyrics`` command previously write ReST files
   by default. This default has been fixed.
+* :doc:`/plugins/lyrics`: When writing ReST files, the ``lyrics`` command
+  now groups lyrics by the ``albumartist`` field, rather than ``artist``.
+  :bug:`2924`
 * Plugins can now see updated import task state, such as when rejecting the
   initial candidates and finding new ones via a manual search. Notably, this
   means that the importer prompt options that the :doc:`/plugins/edit`
