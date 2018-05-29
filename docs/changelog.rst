@@ -4,7 +4,32 @@ Changelog
 1.4.7 (in development)
 ----------------------
 
-New features:
+This new release includes lots of new features in the importer and the
+metadata source backends that it uses.
+We've changed how the beets importer handles non-audio tracks listed in
+metadata sources like MusicBrainz:
+
+* The importer now ignores non-audio tracks (namely, data and video tracks)
+  listed in MusicBrainz. Also, a new option, :ref:`ignore_video_tracks`, lets
+  you return to the old behavior and include these video tracks.
+  :bug:`1210`
+* A new importer option, :ref:`ignored_media`, can let you skip certain media
+  formats.
+  :bug:`2688`
+
+
+There are other subtle improvements to metadata handling in the importer:
+
+* In the MusicBrainz backend, beets now imports the
+  ``musicbrainz_releasetrackid`` field. This is a first step toward
+  :bug:`406`.
+  Thanks to :user:`Rawrmonkeys`.
+* A new importer configuration option, :ref:`artist_credit`, will tell beets
+  to prefer the artist credit over the artist when autotagging.
+  :bug:`1249`
+
+
+And there are even more new features:
 
 * :doc:`/plugins/replaygain`: The ``beet replaygain`` command now has
   ``--force``, ``--write`` and ``--nowrite`` options. :bug:`2778`
@@ -21,9 +46,6 @@ New features:
   option lets in-browser clients communicate with the server even when it is
   protected by an authorization mechanism (a proxy with HTTP authentication
   enabled, for example).
-* A new importer configuration option, :ref:`artist_credit`, will tell beets
-  to prefer the artist credit over the artist when autotagging.
-  :bug:`1249`
 * A new :doc:`/plugins/sonosupdate` plugin automatically notifies Sonos
   controllers to update the music library when the beets library changes.
   Thanks to :user:`cgtobi`.
@@ -34,20 +56,9 @@ New features:
   :bug:`2336`
 * :doc:`/plugins/discogs`: Fetch the original year from master releases.
   :bug:`1122`
-* In the MusicBrainz backend, beets now imports the
-  ``musicbrainz_releasetrackid`` field. This is a first step toward
-  :bug:`406`.
-  Thanks to :user:`Rawrmonkeys`.
-* A new importer option, :ref:`ignored_media`, can let you skim some media
-  formats.
-  :bug:`2688`
-* The importer now ignores non-audio tracks (namely, data and video tracks)
-  listed in MusicBrainz. Also, a new option, :ref:`ignore_video_tracks`, lets
-  you return to the old behavior and include these video tracks.
-  :bug:`1210`
 
 
-Fixes:
+There are lots and lots of fixes:
 
 * :doc:`/plugins/replaygain`: Fix a corner-case with the ``bs1770gain`` backend
   where ReplayGain values were assigned to the wrong files. The plugin now
@@ -132,7 +143,7 @@ Fixes:
   first track has a missing MusicBrainz recording ID. :bug:`2920`
 
 
-For developers:
+There are a couple of changes for developers:
 
 * Plugins can now run their import stages *early*, before other plugins. Use
   the ``early_import_stages`` list instead of plain ``import_stages`` to
