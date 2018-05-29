@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.7 (in development)
-----------------------
+1.4.7 (May 29, 2018)
+--------------------
 
 This new release includes lots of new features in the importer and the
 metadata source backends that it uses.
