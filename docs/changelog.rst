@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.4.8 (in development)
+----------------------
+
+Changelog goes here!
+
+
 1.4.7 (May 29, 2018)
 --------------------
 
