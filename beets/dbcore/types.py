@@ -143,6 +143,12 @@ class PaddedInt(Integer):
         return u'{0:0{1}d}'.format(value or 0, self.digits)
 
 
+class NullPaddedInt(PaddedInt):
+    """Same as `PaddedInt`, but does not normalize `None` to `0.0`.
+    """
+    null = None
+
+
 class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
