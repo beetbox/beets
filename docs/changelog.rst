@@ -4,7 +4,12 @@ Changelog
 1.4.8 (in development)
 ----------------------
 
-Changelog goes here!
+Fixes:
+
+* R128 normalization tags are now properly deleted from files when the values
+  are missing.
+  Thanks to :user:`autrimpo`.
+  :bug:`2757`
 
 
 1.4.7 (May 29, 2018)
