@@ -248,6 +248,10 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-popularity`_ fetches popularity values from Spotify.
 
+* `beets-barcode`_ lets you scan or enter barcodes for physical media to
+  search for their metadata.
+
+.. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
