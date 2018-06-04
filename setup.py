@@ -104,7 +104,7 @@ setup(
         'rarfile',
         'responses',
         'pyxdg',
-        'pathlib',
+        (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'python-mpd2',
         'discogs-client'
     ],
