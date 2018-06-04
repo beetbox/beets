@@ -215,9 +215,10 @@ def fingerprint_task(log, task, session):
 def apply_acoustid_metadata(task, session):
     """Apply Acoustid metadata (fingerprint and ID) to the task's items.
     """
+    fp_enc = util.arg_encoding()
     for item in task.imported_items():
         if item.path in _fingerprints:
-            item.acoustid_fingerprint = _fingerprints[item.path]
+            item.acoustid_fingerprint = _fingerprints[item.path].decode(fp_enc)
         if item.path in _acoustids:
             item.acoustid_id = _acoustids[item.path]
 
@@ -292,11 +293,12 @@ def fingerprint_item(log, item, write=False):
                      util.displayable_path(item.path))
             return item.acoustid_fingerprint
     else:
+        fp_enc = util.arg_encoding()
         log.info(u'{0}: fingerprinting',
                  util.displayable_path(item.path))
         try:
             _, fp = acoustid.fingerprint_file(util.syspath(item.path))
-            item.acoustid_fingerprint = fp
+            item.acoustid_fingerprint = fp.decode(fp_enc)
             if write:
                 log.info(u'{0}: writing fingerprint',
                          util.displayable_path(item.path))
