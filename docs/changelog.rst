@@ -10,6 +10,10 @@ New features:
   the catalog number.
   Thanks to :user:`8h2a`.
   :bug:`2951`
+* The play plugin can now emit a UTF-8 BOM, fixing some issues with foobar2000
+  and Winamp.
+  Thanks to :user:`mz2212`.
+  :bug:`2944`
 
 Fixes:
 

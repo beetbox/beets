@@ -65,6 +65,7 @@ class PlayPlugin(BeetsPlugin):
             'relative_to': None,
             'raw': False,
             'warning_threshold': 100,
+            'bom': False,
         })
 
         self.register_listener('before_choose_candidate',
@@ -185,7 +186,12 @@ class PlayPlugin(BeetsPlugin):
     def _create_tmp_playlist(self, paths_list):
         """Create a temporary .m3u file. Return the filename.
         """
+        utf8_bom = config['play']['bom'].get(bool)
         m3u = NamedTemporaryFile('wb', suffix='.m3u', delete=False)
+
+        if utf8_bom:
+            m3u.write(b'\xEF\xBB\xBF')
+
         for item in paths_list:
             m3u.write(item + b'\n')
         m3u.close()
