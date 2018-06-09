@@ -4,6 +4,13 @@ Changelog
 1.4.8 (in development)
 ----------------------
 
+New features:
+
+* The disambiguation string for identifying albums in the importer now shows
+  the catalog number.
+  Thanks to :user:`8h2a`.
+  :bug:`2951`
+
 Fixes:
 
 * R128 normalization tags are now properly deleted from files when the values
