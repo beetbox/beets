@@ -29,7 +29,7 @@ Beets의 목적은 음악들을 한번에 다 받는 것이다.
    * All the Way            -> All the Way...
 
 Beets는 라이브러리로 디자인 되었기 때문에, 니가 음악들에 대해 상상하는 모든 것을 할 수 있다.
-`plugins`_을 통해서 모든 것을 할 수 있는 것이다!
+`plugins`_ 을 통해서 모든 것을 할 수 있는 것이다!
 
 - 필요하는 메타 데이터를 계산하거나 패치 할 때: `album art`_,
   `lyrics`_, `genres`_, `tempos`_, `ReplayGain`_ levels, or `acoustic
@@ -92,7 +92,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 니가 음악들에 �
 Read More
 ---------
 
-`its Web site`  에서 Beets에 대해 조금 더 알아볼 수 있다. 
+`its Web site`_ 에서 Beets에 대해 조금 더 알아볼 수 있다. 
 트위터에서 `@b33ts`_ 를 팔로우하면 새 소식을 볼 수 있다.
 
 .. _its Web site: http://beets.io/
