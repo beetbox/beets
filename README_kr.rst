@@ -34,19 +34,19 @@ Beets는 라이브러리로 디자인 되었기 때문에, 니가 음악들에 �
 - 필요하는 메타 데이터를 계산하거나 패치 할 때: `album art`_,
   `lyrics`_, `genres`_, `tempos`_, `ReplayGain`_ levels, or `acoustic
   fingerprints`_.
-- `MusicBrainz`_, `Discogs`_, `Beatport`_로부터 메타데이터를 가져오거나, 
+- `MusicBrainz`_, `Discogs`_,`Beatport`_로부터 메타데이터를 가져오거나, 
   노래 제목이나 음향 특징으로 메타데이터를 추측한다
 - `Transcode audio`_ 니가 좋아하는 어떤 포맷으로든 변경한다.
-- 너의 라이브러리에서 `duplicate tracks and albums`_이나 `albums that are missing tracks`_를 검사한다.
+- 너의 라이브러리에서 `duplicate tracks and albums`_ 이나 `albums that are missing tracks`_ 를 검사한다.
 - 남이 남기거나, 좋지 않은 도구로 남긴 잡다한 태그들을 지운다.
 - 파일의 메타데이터에서 앨범 아트를 삽입이나 추출한다.
-- 너의 음악들을 `HTML5 Audio`_를 사용하여 어떤 브라우저든 재생할 수 있고,
+- 너의 음악들을 `HTML5 Audio`_ 를 사용하여 어떤 브라우저든 재생할 수 있고,
   웹 브라우저에 표시 할 수 있다.
 - 명령어로부터 음악 파일의 메타데이터를 분석할 수 있다.
 - `MPD`_ 프로토콜을 사용하여 음악 플레이어로 음악을 들으면, 엄청나게 다양한 인터페이스로 작동한다.
 
 만약 Beets에 니가 원하는게 아직 없다면, 
-니가 python을 안다면 `writing your own plugin`_은 놀라울정도로 간단하다.
+니가 python을 안다면 `writing your own plugin`_ _은 놀라울정도로 간단하다.
 
 .. _plugins: http://beets.readthedocs.org/page/plugins/
 .. _MPD: http://www.musicpd.org/
@@ -75,7 +75,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 니가 음악들에 �
 설치
 -------
 
-너는 ``pip install beets``을 사용해서 Beets를 설치할 수 있다.
+너는 ``pip install beets`` 을 사용해서 Beets를 설치할 수 있다.
 그리고 `Getting Started`_ 가이드를 확인할 수 있다.
 
 .. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
@@ -84,7 +84,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 니가 음악들에 �
 ----------
 
 어떻게 도우려는지 알고싶다면 `Hacking`_ 위키페이지를 확인하라.
-너는 docs 안에 `For Developers`_에도 관심이 있을수 있다.
+너는 docs 안에 `For Developers`_ 에도 관심이 있을수 있다.
 
 .. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
 .. _For Developers: http://docs.beets.io/page/dev/
@@ -93,7 +93,7 @@ Read More
 ---------
 
 `its Web site`_에서 Beets에 대해 조금 더 알아볼 수 있다. 
-트위터에서 `@b33ts`를 팔로우하면 새 소식을 볼 수 있다.
+트위터에서 `@b33ts`_ 를 팔로우하면 새 소식을 볼 수 있다.
 
 .. _its Web site: http://beets.io/
 .. _@b33ts: http://twitter.com/b33ts/
