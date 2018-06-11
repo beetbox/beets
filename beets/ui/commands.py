@@ -256,6 +256,9 @@ def show_change(cur_artist, cur_album, match):
             # Hide artists for VA releases.
             artist_l, artist_r = u'', u''
 
+        if config['artist_credit']:
+            artist_r = match.info.artist_credit
+
         artist_l, artist_r = ui.colordiff(artist_l, artist_r)
         album_l, album_r = ui.colordiff(album_l, album_r)
 
