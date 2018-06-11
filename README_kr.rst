@@ -17,7 +17,7 @@ Beets의 목적은 음악들을 한번에 다 받는 것이다.
 음악들을 카탈로그화 하고, 자동으로 메타 데이터를 개선한다.
 그리고 음악에 접근하고 조작할 수 있는 도구들을 제공한다.
 
-다음은 Beets의 binary tag corrector가 한 일의 예시이다.
+다음은 Beets의 brainy tag corrector가 한 일의 예시이다.
 
   $ beet import ~/music/ladytron
   Tagging:
