@@ -92,7 +92,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 니가 음악들에 �
 Read More
 ---------
 
-`its Web site`_에서 Beets에 대해 조금 더 알아볼 수 있다. 
+`its Web site`  에서 Beets에 대해 조금 더 알아볼 수 있다. 
 트위터에서 `@b33ts`_ 를 팔로우하면 새 소식을 볼 수 있다.
 
 .. _its Web site: http://beets.io/
