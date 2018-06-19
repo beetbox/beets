@@ -23,7 +23,6 @@ import subprocess
 import shutil
 from setuptools import setup
 
-
 def _read(fn):
     path = os.path.join(os.path.dirname(__file__), fn)
     return open(path).read()
