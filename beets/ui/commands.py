@@ -378,15 +378,22 @@ def show_change(cur_artist, cur_album, match):
                len(match.info.tracks),
                len(match.extra_tracks) / len(match.info.tracks)
                ))
+        pad_width = max(len(track_info.title) for track_info in
+                        match.extra_tracks)
     for track_info in match.extra_tracks:
-        line = u' ! %s (#%s)' % (track_info.title, format_index(track_info))
+        line = u' ! {0: <{width}} (#{1: >2})'.format(track_info.title,
+                                                     format_index(track_info),
+                                                     width=pad_width)
         if track_info.length:
             line += u' (%s)' % ui.human_seconds_short(track_info.length)
         print_(ui.colorize('text_warning', line))
     if match.extra_items:
         print_(u'Unmatched tracks ({0}):'.format(len(match.extra_items)))
+        pad_width = max(len(item.title) for item in match.extra_items)
     for item in match.extra_items:
-        line = u' ! %s (#%s)' % (item.title, format_index(item))
+        line = u' ! {0: <{width}} (#{1: >2})'.format(item.title,
+                                                     format_index(item),
+                                                     width=pad_width)
         if item.length:
             line += u' (%s)' % ui.human_seconds_short(item.length)
         print_(ui.colorize('text_warning', line))

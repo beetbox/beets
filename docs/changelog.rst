@@ -14,6 +14,8 @@ New features:
   and Winamp.
   Thanks to :user:`mz2212`.
   :bug:`2944`
+* Added whitespace padding to missing tracks dialog to improve readability.
+  :user:`jams2`
 
 Fixes:
 
