@@ -794,6 +794,8 @@ class Configuration(RootView):
         super(Configuration, self).__init__([])
         self.appname = appname
         self.modname = modname
+        # Pre-resolve default source location
+        self._package_path = _package_path(appname)
 
         self._env_var = '{0}DIR'.format(self.appname.upper())
 
@@ -822,9 +824,8 @@ class Configuration(RootView):
         `modname` if it was given.
         """
         if self.modname:
-            pkg_path = _package_path(self.modname)
-            if pkg_path:
-                filename = os.path.join(pkg_path, DEFAULT_FILENAME)
+            if self._package_path:
+                filename = os.path.join(self._package_path, DEFAULT_FILENAME)
                 if os.path.isfile(filename):
                     self.add(ConfigSource(load_yaml(filename), filename, True))
 
