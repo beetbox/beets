@@ -138,6 +138,21 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(self.plugin._resolve_genres(['iota blues']),
                          u'')
 
+    def test_prefer_specific_loads_tree(self):
+        """When prefer_specific is enabled but canonical is not the
+        tree still has to be loaded.
+        """
+        self._setup_config(prefer_specific=True, canonical=False)
+        self.assertNotEqual(self.plugin.c14n_branches, [])
+
+    def test_prefer_specific_without_canonical(self):
+        """When prefer_specific is enabled but canonical is not the
+        tree still has to be loaded.
+        """
+        self._setup_config(prefer_specific=True, canonical=False)
+        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
+                         u'Delta Blues')
+
     def test_no_duplicate(self):
         """Remove duplicated genres.
         """
