@@ -36,9 +36,11 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    def _setup_config(self, whitelist=False, canonical=False, count=1):
+    def _setup_config(self, whitelist=False, canonical=False, count=1,
+                      prefer_specific=False):
         config['lastgenre']['canonical'] = canonical
         config['lastgenre']['count'] = count
+        config['lastgenre']['prefer_specific'] = prefer_specific
         if isinstance(whitelist, (bool, six.string_types)):
             # Filename, default, or disabled.
             config['lastgenre']['whitelist'] = whitelist
