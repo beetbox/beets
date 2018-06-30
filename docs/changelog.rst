@@ -23,7 +23,7 @@ Fixes:
   are missing.
   Thanks to :user:`autrimpo`.
   :bug:`2757`
-* Display the artist credit when matching albums if the ref:`artist_credit`
+* Display the artist credit when matching albums if the :ref:`artist_credit`
   configuration option is set.
   :bug:`2953`
 
