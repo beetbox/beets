@@ -195,7 +195,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return None
 
         count = self.config['count'].get(int)
-        if self.c14n_branches and self.canonicalize:
+        if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
             for tag in tags:
