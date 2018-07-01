@@ -146,12 +146,12 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         self.assertNotEqual(self.plugin.c14n_branches, [])
 
     def test_prefer_specific_without_canonical(self):
-        """When prefer_specific is enabled but canonical is not the
-        tree still has to be loaded.
+        """Prefer_specific works without canonical.
         """
-        self._setup_config(prefer_specific=True, canonical=False)
-        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         u'Delta Blues')
+        self._setup_config(prefer_specific=True, canonical=False, count=4)
+        self.assertEqual(self.plugin._resolve_genres(
+                         ['math rock', 'post-rock']),
+                         u'Post-Rock, Math Rock')
 
     def test_no_duplicate(self):
         """Remove duplicated genres.
