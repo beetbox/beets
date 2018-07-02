@@ -564,7 +564,7 @@ class Item(LibModel):
 
     def clear(self):
         """Set all key/value pairs to None."""
-        for key in self._media_fields:
+        for key in self._media_tag_fields:
             setattr(self, key, None)
 
     def get_album(self):
