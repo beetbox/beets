@@ -23,12 +23,15 @@ Fixes:
   are missing.
   Thanks to :user:`autrimpo`.
   :bug:`2757`
-* Display the artist credit when matching albums if the ref:`artist_credit`
+* Display the artist credit when matching albums if the :ref:`artist_credit`
   configuration option is set.
   :bug:`2953`
 * With the :ref:`from_scratch` configuration option set, only writable fields
   are cleared. Beets now no longer ignores the format your music is saved in. 
   :bug:`2972`
+* LastGenre: Allow to set the configuration option ``prefer_specific``
+  without setting ``canonical``.
+  :bug:`2973`
 
 
 1.4.7 (May 29, 2018)
