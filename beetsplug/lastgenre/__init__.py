@@ -138,9 +138,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
         c14n_filename = self.config['canonical'].get()
-        if c14n_filename in (True, ''):  # Default tree.
+        self.canonicalize = c14n_filename is not False
+
+        # Default tree
+        if c14n_filename in (True, ''):
             c14n_filename = C14N_TREE
+        elif not self.canonicalize and self.config['prefer_specific'].get():
+            # prefer_specific requires a tree, load default tree
+            c14n_filename = C14N_TREE
+
+        # Read the tree
         if c14n_filename:
+            self._log.debug('Loading canonicalization tree {0}', c14n_filename)
             c14n_filename = normpath(c14n_filename)
             with codecs.open(c14n_filename, 'r', encoding='utf-8') as f:
                 genres_tree = yaml.load(f)
@@ -186,7 +195,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return None
 
         count = self.config['count'].get(int)
-        if self.c14n_branches:
+        if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
             for tag in tags:

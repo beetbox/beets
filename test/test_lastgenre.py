@@ -36,9 +36,11 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    def _setup_config(self, whitelist=False, canonical=False, count=1):
+    def _setup_config(self, whitelist=False, canonical=False, count=1,
+                      prefer_specific=False):
         config['lastgenre']['canonical'] = canonical
         config['lastgenre']['count'] = count
+        config['lastgenre']['prefer_specific'] = prefer_specific
         if isinstance(whitelist, (bool, six.string_types)):
             # Filename, default, or disabled.
             config['lastgenre']['whitelist'] = whitelist
@@ -135,6 +137,21 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         self._setup_config(whitelist='')
         self.assertEqual(self.plugin._resolve_genres(['iota blues']),
                          u'')
+
+    def test_prefer_specific_loads_tree(self):
+        """When prefer_specific is enabled but canonical is not the
+        tree still has to be loaded.
+        """
+        self._setup_config(prefer_specific=True, canonical=False)
+        self.assertNotEqual(self.plugin.c14n_branches, [])
+
+    def test_prefer_specific_without_canonical(self):
+        """Prefer_specific works without canonical.
+        """
+        self._setup_config(prefer_specific=True, canonical=False, count=4)
+        self.assertEqual(self.plugin._resolve_genres(
+                         ['math rock', 'post-rock']),
+                         u'Post-Rock, Math Rock')
 
     def test_no_duplicate(self):
         """Remove duplicated genres.
