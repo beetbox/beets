@@ -27,11 +27,15 @@ Fixes:
   configuration option is set.
   :bug:`2953`
 * With the :ref:`from_scratch` configuration option set, only writable fields
-  are cleared. Beets now no longer ignores the format your music is saved in. 
+  are cleared. Beets now no longer ignores the format your music is saved in.
   :bug:`2972`
 * LastGenre: Allow to set the configuration option ``prefer_specific``
   without setting ``canonical``.
   :bug:`2973`
+* :doc:`/plugins/web`: Fix an error when using more recent versions of Flask
+  with CORS enabled.
+  Thanks to :user:`rveachkc`.
+  :bug:`2979`: :bug:`2980`
 
 
 1.4.7 (May 29, 2018)
