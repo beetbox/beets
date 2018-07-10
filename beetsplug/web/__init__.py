@@ -383,7 +383,7 @@ class WebPlugin(BeetsPlugin):
             if self.config['cors']:
                 self._log.info(u'Enabling CORS with origin: {0}',
                                self.config['cors'])
-                from flask.ext.cors import CORS
+                from flask_cors import CORS
                 app.config['CORS_ALLOW_HEADERS'] = "Content-Type"
                 app.config['CORS_RESOURCES'] = {
                     r"/*": {"origins": self.config['cors'].get(str)}
