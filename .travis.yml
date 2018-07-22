@@ -43,7 +43,6 @@ addons:
             - gstreamer1.0-plugins-good
             - gstreamer1.0-plugins-bad
             - imagemagick
-            - mp3gain
             - python-gi
             - python-gst-1.0
             - python3-gi
