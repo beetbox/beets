@@ -376,6 +376,9 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     def __init__(self, item, for_path=False):
         super(FormattedItemMapping, self).__init__(item, for_path)
+        # We treat album and item keys specially here,
+        # so exclude transitive album keys from the model's keys.
+        self.model_keys = item.keys(computed=True, with_album=False)
         self.item = item
 
     @lazy_property
