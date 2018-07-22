@@ -31,6 +31,12 @@ import six
 
 log = logging.getLogger('beets')
 
+# The name of the type for patterns in re changed in Python 3.7.
+try:
+    Pattern = re._pattern_type
+except AttributeError:
+    Pattern = re.Pattern
+
 
 # Classes used to represent candidate options.
 
@@ -433,7 +439,7 @@ class Distance(object):
         be a compiled regular expression, in which case it will be
         matched against `value2`.
         """
-        if isinstance(value1, re._pattern_type):
+        if isinstance(value1, Pattern):
             return bool(value1.match(value2))
         return value1 == value2
 
