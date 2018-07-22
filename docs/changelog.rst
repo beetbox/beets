@@ -19,6 +19,8 @@ New features:
 
 Fixes:
 
+* Fix compatibility Python 3.7 and its change to a name in the ``re`` module.
+  :bug:`2978`
 * R128 normalization tags are now properly deleted from files when the values
   are missing.
   Thanks to :user:`autrimpo`.
