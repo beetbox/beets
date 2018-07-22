@@ -23,6 +23,7 @@ matrix:
           env: {TOX_ENV: py36-test}
         - python: 3.7
           env: {TOX_ENV: py37-test}
+          dist: xenial
         # - python: pypy
         #   - env: {TOX_ENV: pypy-test}
         - python: 3.4
