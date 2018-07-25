@@ -189,6 +189,7 @@ Miscellaneous
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
+* `mstream`_: A music streaming server + webapp that can be used alongside beets. 
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
@@ -196,6 +197,7 @@ Miscellaneous
 
 .. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
+.. _mstream: https://github.com/IrosTheBeggar/mStream
 
 .. _other-plugins:
 
