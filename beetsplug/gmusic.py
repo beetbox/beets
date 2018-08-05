@@ -37,7 +37,10 @@ class Gmusic(BeetsPlugin):
             self.m.login()
         else:
             self.m.perform_oauth()
-            
+        
+        self.config.add({
+            u'auto': False,
+        })
         if self.config['auto'].get(bool):
             self.import_stages = [self.autoupload]
 
