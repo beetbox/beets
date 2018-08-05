@@ -37,7 +37,7 @@ class Gmusic(BeetsPlugin):
             self.m.login()
         else:
             self.m.perform_oauth()
-        
+
         self.config.add({
             u'auto': False,
         })
@@ -67,13 +67,14 @@ class Gmusic(BeetsPlugin):
         ui.print_(u'Uploading your files...')
         self.m.upload(filepaths=files)
         ui.print_(u'Your files were successfully added to library')
-        
+
     def autoupload(self, session, task):
         items = task.imported_items()
         files = [x.path.decode('utf-8') for x in items]
         ui.print_(u'Uploading your files to Google Play Music...')
         self.m.upload(filepaths=files)
-        ui.print_(u'Your files were successfully added to your Google Play Music library')
+        ui.print_(u'Your files were successfully added to your '
+                  + 'Google Play Music library')
 
     def search(self, lib, opts, args):
         password = config['gmusic']['password']
