@@ -37,6 +37,9 @@ class Gmusic(BeetsPlugin):
             self.m.login()
         else:
             self.m.perform_oauth()
+            
+        if self.config['auto'].get(bool):
+            self.import_stages = [self.autoupload]
 
     def commands(self):
         gupload = Subcommand('gmusic-upload',
@@ -57,6 +60,13 @@ class Gmusic(BeetsPlugin):
 
     def upload(self, lib, opts, args):
         items = lib.items(ui.decargs(args))
+        files = [x.path.decode('utf-8') for x in items]
+        ui.print_(u'Uploading your files...')
+        self.m.upload(filepaths=files)
+        ui.print_(u'Your files were successfully added to library')
+        
+    def autoupload(self, session, task):
+        items = task.imported_items()
         files = [x.path.decode('utf-8') for x in items]
         ui.print_(u'Uploading your files...')
         self.m.upload(filepaths=files)
