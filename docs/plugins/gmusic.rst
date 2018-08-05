@@ -21,11 +21,11 @@ Then, you can enable the ``gmusic`` plugin in your configuration (see
 Usage
 -----
 
-To automatically upload all tracks to Google Play Music, add the ``auto``
-parameter to your configuration file like the example below:
+To automatically upload all tracks to Google Play Music, add the ``auto: yes``
+parameter to your configuration file like the example below::
 
     gmusic:
-        auto
+        auto: yes
         email: user@example.com
         password: seekrit
 
