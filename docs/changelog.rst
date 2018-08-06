@@ -16,6 +16,8 @@ New features:
   :bug:`2944`
 * Added whitespace padding to missing tracks dialog to improve readability.
   :user:`jams2`
+* Automatically upload to Google Play Music library on track import.
+  :user:`shuaiscott`
 
 Fixes:
 
