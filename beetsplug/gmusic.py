@@ -74,7 +74,7 @@ class Gmusic(BeetsPlugin):
         self._log.info(u'Uploading files to Google Play Music...', files)
         self.m.upload(filepaths=files)
         self._log.info(u'Your files were successfully added to your '
-                  + 'Google Play Music library')
+                       + 'Google Play Music library')
 
     def getpaths(self, items):
         return [x.path for x in items]
