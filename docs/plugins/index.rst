@@ -89,6 +89,7 @@ like this::
    smartplaylist
    sonosupdate
    spotify
+   subsonic
    the
    thumbnails
    types
