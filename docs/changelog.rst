@@ -18,6 +18,8 @@ New features:
   :user:`jams2`
 * Automatically upload to Google Play Music library on track import.
   :user:`shuaiscott`
+* New options for Google Play Music authentication in gmusic plugin.
+  :user:`thetarkus`
 
 Fixes:
 
