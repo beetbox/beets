@@ -110,7 +110,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             for item in items:
                 self.analyze_submit(item)
         else:
-            # Create threadpool
+            # Analyze in parallel using a thread pool.
             pool = ThreadPool()
             pool.map(self.analyze_submit, items)
             pool.close()
