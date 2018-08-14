@@ -18,6 +18,9 @@ New features:
   :user:`jams2`
 * Automatically upload to Google Play Music library on track import.
   :user:`shuaiscott`
+* The `absubmit` plugin now works in parallel.
+  Thanks to :user:`bemeurer`
+  :bug:`2442`
 
 Fixes:
 
