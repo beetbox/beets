@@ -25,7 +25,7 @@ import os
 import subprocess
 import tempfile
 
-from multiprocessing.pool import ThreadPool
+from concurrent.futures import ThreadPoolExecutor
 from distutils.spawn import find_executable
 import requests
 
@@ -103,11 +103,12 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         return [cmd]
 
     def command(self, lib, opts, args):
-        # Create threadpool
-        pool = ThreadPool()
         # Get items from arguments
         items = lib.items(ui.decargs(args))
-        pool.map(self.analyze_submit, items)
+
+        with ThreadPoolExecutor() as executor:
+            for item in items:
+                executor.submit(self.analyze_submit, (item))
 
     def analyze_submit(self, item):
         analysis = self._get_analysis(item)
