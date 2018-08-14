@@ -20,8 +20,8 @@ New features:
   :user:`shuaiscott`
 * New options for Google Play Music authentication in gmusic plugin.
   :user:`thetarkus`
-* The `absubmit` plugin now works in parallel.
-  Thanks to :user:`bemeurer`
+* The `absubmit` plugin now works in parallel (on Python 3 only).
+  Thanks to :user:`bemeurer`.
   :bug:`2442`
 
 Fixes:
