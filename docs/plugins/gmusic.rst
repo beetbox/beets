@@ -20,7 +20,15 @@ Then, you can enable the ``gmusic`` plugin in your configuration (see
 
 Usage
 -----
-**Configuration required before use.**
+Configuration is required before use. Below is an example configuration::
+
+    gmusic:
+        email: user@example.com
+        password: seekrit
+        auto: yes
+        uploader_id: 00:11:22:33:AA:BB
+        device_id: F96AE4C643A5
+
 
 To upload tracks to Google Play Music, use the ``gmusic-upload`` command::
 
@@ -73,12 +81,3 @@ The available options are:
 Refer to the `Google Play Music Help
 <https://support.google.com/googleplaymusic/answer/3139562?hl=en>`__
 page for more details on authorized devices.
-
-Below is an example configuration::
-
-    gmusic:
-        email: user@example.com
-        password: seekrit
-        auto: yes
-        uploader_id: 00:11:22:33:AA:BB
-        device_id: F96AE4C643A5
