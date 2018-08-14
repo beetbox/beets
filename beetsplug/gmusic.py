@@ -30,17 +30,23 @@ import gmusicapi.clients
 class Gmusic(BeetsPlugin):
     def __init__(self):
         super(Gmusic, self).__init__()
+        self.config.add({
+            u'auto': False,
+            u'uploader_id': '',
+            u'uploader_name': '',
+            u'device_id': '',
+        })
         # Checks for OAuth2 credentials,
         # if they don't exist - performs authorization
         self.m = Musicmanager()
         if os.path.isfile(gmusicapi.clients.OAUTH_FILEPATH):
-            self.m.login()
+            uploader_id = self.config['uploader_id']
+            uploader_name = self.config['uploader_name']
+            self.m.login(uploader_id=uploader_id.as_str().upper() or None,
+                         uploader_name=uploader_name.as_str() or None)
         else:
             self.m.perform_oauth()
 
-        self.config.add({
-            u'auto': False,
-        })
         if self.config['auto']:
             self.import_stages = [self.autoupload]
 
@@ -82,6 +88,7 @@ class Gmusic(BeetsPlugin):
     def search(self, lib, opts, args):
         password = config['gmusic']['password']
         email = config['gmusic']['email']
+        device_id = config['gmusic']['device_id']
         password.redact = True
         email.redact = True
         # Since Musicmanager doesn't support library management
@@ -89,7 +96,7 @@ class Gmusic(BeetsPlugin):
         mobile = Mobileclient()
         try:
             mobile.login(email.as_str(), password.as_str(),
-                         Mobileclient.FROM_MAC_ADDRESS)
+                         device_id.as_str() or Mobileclient.FROM_MAC_ADDRESS)
             files = mobile.get_all_songs()
         except NotLoggedIn:
             ui.print_(
