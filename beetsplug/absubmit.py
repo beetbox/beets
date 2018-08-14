@@ -24,8 +24,10 @@ import json
 import os
 import subprocess
 import tempfile
+import sys
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent import futures
+
 from distutils.spawn import find_executable
 import requests
 
@@ -106,7 +108,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         # Get items from arguments
         items = lib.items(ui.decargs(args))
 
-        with ThreadPoolExecutor() as executor:
+        with futures.ThreadPoolExecutor() as executor:
             for item in items:
                 executor.submit(self.analyze_submit, (item))
 
