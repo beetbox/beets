@@ -25,7 +25,7 @@ import os
 import subprocess
 import tempfile
 
-from multiprocessing import ThreadPool
+from multiprocessing.pool import ThreadPool
 from distutils.spawn import find_executable
 import requests
 
