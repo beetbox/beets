@@ -1195,7 +1195,7 @@ def _open_library(config):
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug(u'{}', traceback.format_exc())
-        raise UserError(u"database file {0} could not be opened, reason: {1}".format(
+        raise UserError(u"database file {0} cannot not be opened: {1}".format(
             util.displayable_path(dbpath),
             db_error
         ))
