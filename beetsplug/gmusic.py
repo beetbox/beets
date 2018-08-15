@@ -36,7 +36,7 @@ class Gmusic(BeetsPlugin):
             u'uploader_id': '',
             u'uploader_name': '',
             u'device_id': '',
-            u'oauth_filepath': '',
+            u'oauth_file': gmusicapi.clients.OAUTH_FILEPATH,
         })
         if self.config['auto']:
             self.import_stages = [self.autoupload]
@@ -62,16 +62,15 @@ class Gmusic(BeetsPlugin):
             return
         # Checks for OAuth2 credentials,
         # if they don't exist - performs authorization
-        oauth_filepath = (self.config['oauth_filepath'].as_str()
-                          or gmusicapi.clients.OAUTH_FILEPATH)
-        if os.path.isfile(oauth_filepath):
+        oauth_file = self.config['oauth_file'].as_str()
+        if os.path.isfile(oauth_file):
             uploader_id = self.config['uploader_id']
             uploader_name = self.config['uploader_name']
-            self.m.login(oauth_credentials=oauth_filepath,
+            self.m.login(oauth_credentials=oauth_file,
                          uploader_id=uploader_id.as_str().upper() or None,
                          uploader_name=uploader_name.as_str() or None)
         else:
-            self.m.perform_oauth(oauth_filepath)
+            self.m.perform_oauth(oauth_file)
 
     def upload(self, lib, opts, args):
         items = lib.items(ui.decargs(args))
