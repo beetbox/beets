@@ -50,6 +50,9 @@ Fixes:
   with CORS enabled.
   Thanks to :user:`rveachkc`.
   :bug:`2979`: :bug:`2980`
+* Improve error reporting: during startup if sqlite returns an error the
+  sqlite error message is attached to the beets message.
+  :bug:`3005`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
