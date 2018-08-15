@@ -30,23 +30,13 @@ import gmusicapi.clients
 class Gmusic(BeetsPlugin):
     def __init__(self):
         super(Gmusic, self).__init__()
+        self.m = Musicmanager()
         self.config.add({
             u'auto': False,
             u'uploader_id': '',
             u'uploader_name': '',
             u'device_id': '',
         })
-        # Checks for OAuth2 credentials,
-        # if they don't exist - performs authorization
-        self.m = Musicmanager()
-        if os.path.isfile(gmusicapi.clients.OAUTH_FILEPATH):
-            uploader_id = self.config['uploader_id']
-            uploader_name = self.config['uploader_name']
-            self.m.login(uploader_id=uploader_id.as_str().upper() or None,
-                         uploader_name=uploader_name.as_str() or None)
-        else:
-            self.m.perform_oauth()
-
         if self.config['auto']:
             self.import_stages = [self.autoupload]
 
@@ -67,9 +57,23 @@ class Gmusic(BeetsPlugin):
         search.func = self.search
         return [gupload, search]
 
+    def authenticate(self):
+        if self.m.is_authenticated():
+            return
+        # Checks for OAuth2 credentials,
+        # if they don't exist - performs authorization
+        if os.path.isfile(gmusicapi.clients.OAUTH_FILEPATH):
+            uploader_id = self.config['uploader_id']
+            uploader_name = self.config['uploader_name']
+            self.m.login(uploader_id=uploader_id.as_str().upper() or None,
+                         uploader_name=uploader_name.as_str() or None)
+        else:
+            self.m.perform_oauth()
+
     def upload(self, lib, opts, args):
         items = lib.items(ui.decargs(args))
         files = self.getpaths(items)
+        self.authenticate()
         ui.print_(u'Uploading your files...')
         self.m.upload(filepaths=files)
         ui.print_(u'Your files were successfully added to library')
@@ -77,6 +81,7 @@ class Gmusic(BeetsPlugin):
     def autoupload(self, session, task):
         items = task.imported_items()
         files = self.getpaths(items)
+        self.authenticate()
         self._log.info(u'Uploading files to Google Play Music...', files)
         self.m.upload(filepaths=files)
         self._log.info(u'Your files were successfully added to your '
