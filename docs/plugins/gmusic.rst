@@ -27,7 +27,8 @@ Configuration is required before use. Below is an example configuration::
         password: seekrit
         auto: yes
         uploader_id: 00:11:22:33:AA:BB
-        device_id: F96AE4C643A5
+        device_id: 00112233AABB
+        oauth_filepath: ~/.config/beets/oauth.cred
 
 
 To upload tracks to Google Play Music, use the ``gmusic-upload`` command::
@@ -67,15 +68,18 @@ The available options are:
 - **auto**: Set to ``yes`` to automatically upload new imports to Google Play
   Music.  
   Default: ``no``
-- **uploader_id**: Unique id as a MAC address, eg ``'00:11:22:33:AA:BB'``.
+- **uploader_id**: Unique id as a MAC address, eg ``00:11:22:33:AA:BB``.
   This option should be set before the maximum number of authorized devices is
   reached.  
   If provided, use the same id for all future runs on this, and other, beets
   installations as to not reach the maximum number of authorized devices.  
   Default: device's MAC address.
-- **device_id**: Unique device ID for authorized devices.
+- **device_id**: Unique device ID for authorized devices. It is usually
+  the same as your MAC address with the colons removed, eg ``00112233AABB``.  
   This option only needs to be set if you receive an `InvalidDeviceId`
   exception. Below the exception will be a list of valid device IDs.  
+  Default: none.
+- **oauth_filepath**: Filepath for oauth credentials file.  
   Default: none.
 
 Refer to the `Google Play Music Help
