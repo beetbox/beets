@@ -36,6 +36,7 @@ class Gmusic(BeetsPlugin):
             u'uploader_id': '',
             u'uploader_name': '',
             u'device_id': '',
+            u'oauth_filepath': '',
         })
         if self.config['auto']:
             self.import_stages = [self.autoupload]
@@ -46,8 +47,7 @@ class Gmusic(BeetsPlugin):
         gupload.func = self.upload
 
         search = Subcommand('gmusic-songs',
-                            help=u'list of songs in Google Play Music library'
-                            )
+                            help=u'list of songs in Google Play Music library')
         search.parser.add_option('-t', '--track', dest='track',
                                  action='store_true',
                                  help='Search by track name')
@@ -62,13 +62,16 @@ class Gmusic(BeetsPlugin):
             return
         # Checks for OAuth2 credentials,
         # if they don't exist - performs authorization
-        if os.path.isfile(gmusicapi.clients.OAUTH_FILEPATH):
+        oauth_filepath = (self.config['oauth_filepath'].as_str()
+                          or gmusicapi.clients.OAUTH_FILEPATH)
+        if os.path.isfile(oauth_filepath):
             uploader_id = self.config['uploader_id']
             uploader_name = self.config['uploader_name']
-            self.m.login(uploader_id=uploader_id.as_str().upper() or None,
+            self.m.login(oauth_credentials=oauth_filepath,
+                         uploader_id=uploader_id.as_str().upper() or None,
                          uploader_name=uploader_name.as_str() or None)
         else:
-            self.m.perform_oauth()
+            self.m.perform_oauth(oauth_filepath)
 
     def upload(self, lib, opts, args):
         items = lib.items(ui.decargs(args))
@@ -93,6 +96,7 @@ class Gmusic(BeetsPlugin):
     def search(self, lib, opts, args):
         password = config['gmusic']['password']
         email = config['gmusic']['email']
+        uploader_id = config['gmusic']['uploader_id']
         device_id = config['gmusic']['device_id']
         password.redact = True
         email.redact = True
@@ -100,8 +104,10 @@ class Gmusic(BeetsPlugin):
         # we need to use mobileclient interface
         mobile = Mobileclient()
         try:
-            mobile.login(email.as_str(), password.as_str(),
-                         device_id.as_str() or Mobileclient.FROM_MAC_ADDRESS)
+            new_device_id = (device_id.as_str()
+                             or uploader_id.as_str().replace(':', '')
+                             or Mobileclient.FROM_MAC_ADDRESS).upper()
+            mobile.login(email.as_str(), password.as_str(), new_device_id)
             files = mobile.get_all_songs()
         except NotLoggedIn:
             ui.print_(
