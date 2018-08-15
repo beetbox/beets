@@ -16,12 +16,13 @@ The plugin uses `requests`_ to fetch album art from the Web.
 Fetching Album Art During Import
 --------------------------------
 
-When the plugin is enabled, it automatically gets album art for every album
-you import.
+When the plugin is enabled, it automatically tries to get album art for every
+album you import.
 
 By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
-the :ref:`art-filename` config option.
+the :ref:`art-filename` config option. To embed the art into the files'tag,
+use the :doc:`/plugins/embedart`. (You'll want to have both plugins enabled.)
 
 Configuration
 -------------
@@ -49,7 +50,7 @@ file. The available options are:
   (``enforce_ratio: 0.5%``). Default: ``no``.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``filesystem coverart amazon albumart``, i.e., everything but
+  Default: ``filesystem coverart itunes amazon albumart``, i.e., everything but
   ``wikipedia``, ``google`` and ``fanarttv``. Enable those sources for more
   matches at the cost of some speed. They are searched in the given order,
   thus in the default config, no remote (Web) art source are queried if
@@ -83,13 +84,13 @@ or `Pillow`_.
 .. _ImageMagick: http://www.imagemagick.org/
 
 Here's an example that makes plugin select only images that contain *front* or
-*back* keywords in their filenames and prioritizes the Amazon source over
+*back* keywords in their filenames and prioritizes the iTunes source over
 others::
 
     fetchart:
         cautious: true
         cover_names: front back
-        sources: amazon *
+        sources: itunes *
 
 
 Manually Fetching Album Art
@@ -142,7 +143,7 @@ Album Art Sources
 -----------------
 
 By default, this plugin searches for art in the local filesystem as well as on
-the Cover Art Archive, Amazon, and AlbumArt.org, in that
+the Cover Art Archive, the iTunes Store, Amazon, and AlbumArt.org, in that
 order.
 You can reorder the sources or remove
 some to speed up the process using the ``sources`` configuration option.
@@ -222,10 +223,3 @@ album art fetch, you could do
 
 The values written to ``art_source`` are the same names used in the ``sources``
 configuration value.
-
-Embedding Album Art
--------------------
-
-This plugin fetches album art but does not embed images into files' tags. To do
-that, use the :doc:`/plugins/embedart`. (You'll want to have both plugins
-enabled.)
