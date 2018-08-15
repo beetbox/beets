@@ -35,12 +35,6 @@ from beets.util import confit
 from beets.util import syspath, bytestring_path, py3_path
 import six
 
-try:
-    import itunes
-    HAVE_ITUNES = True
-except ImportError:
-    HAVE_ITUNES = False
-
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],
     'image/png': [b'png']
@@ -458,37 +452,65 @@ class FanartTV(RemoteArtSource):
 
 class ITunesStore(RemoteArtSource):
     NAME = u"iTunes Store"
+    API_URL = u'https://itunes.apple.com/search'
 
     def get(self, album, plugin, paths):
         """Return art URL from iTunes Store given an album title.
         """
         if not (album.albumartist and album.album):
             return
-        search_string = (album.albumartist + ' ' + album.album).encode('utf-8')
+
+        payload = {
+            'term': album.albumartist + u' ' + album.album,
+            'entity': u'album',
+            'media': u'music',
+            'limit': 200
+        }
         try:
-            # Isolate bugs in the iTunes library while searching.
+            r = self.request(self.API_URL, params=payload)
+            r.raise_for_status()
+        except requests.RequestException as e:
+            self._log.debug(u'iTunes search failed: {0}', e)
+            return
+
+        try:
+            candidates = r.json()['results']
+        except ValueError as e:
+            self._log.debug(u'Could not decode json response: {0}', e)
+            return
+        except KeyError as e:
+            self._log.debug(u'{} not found in json. Fields are {} ',
+                            e,
+                            list(r.json().keys()))
+            return
+
+        if not candidates:
+            self._log.debug(u'iTunes search for {!r} got no results',
+                            payload['term'])
+            return
+
+        for c in candidates:
             try:
-                results = itunes.search_album(search_string)
-            except Exception as exc:
-                self._log.debug(u'iTunes search failed: {0}', exc)
-                return
+                if (c['artistName'] == album.albumartist
+                        and c['collectionName'] == album.album):
+                    art_url = c['artworkUrl100']
+                    art_url = art_url.replace('100x100', '1200x1200')
+                    yield self._candidate(url=art_url,
+                                          match=Candidate.MATCH_EXACT)
+            except KeyError as e:
+                self._log.debug(u'Malformed itunes candidate: {} not found in {}',  # NOQA E501
+                                e,
+                                list(c.keys()))
 
-            # Get the first match.
-            if results:
-                itunes_album = results[0]
-            else:
-                self._log.debug(u'iTunes search for {:r} got no results',
-                                search_string)
-                return
-
-            if itunes_album.get_artwork()['100']:
-                small_url = itunes_album.get_artwork()['100']
-                big_url = small_url.replace('100x100', '1200x1200')
-                yield self._candidate(url=big_url, match=Candidate.MATCH_EXACT)
-            else:
-                self._log.debug(u'album has no artwork in iTunes Store')
-        except IndexError:
-            self._log.debug(u'album not found in iTunes Store')
+        try:
+            fallback_art_url = candidates[0]['artworkUrl100']
+            fallback_art_url = fallback_art_url.replace('100x100', '1200x1200')
+            yield self._candidate(url=fallback_art_url,
+                                  match=Candidate.MATCH_FALLBACK)
+        except KeyError as e:
+            self._log.debug(u'Malformed itunes candidate: {} not found in {}',
+                            e,
+                            list(c.keys()))
 
 
 class Wikipedia(RemoteArtSource):
@@ -756,8 +778,6 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.register_listener('import_task_files', self.assign_art)
 
         available_sources = list(SOURCES_ALL)
-        if not HAVE_ITUNES and u'itunes' in available_sources:
-            available_sources.remove(u'itunes')
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
