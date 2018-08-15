@@ -21,7 +21,7 @@ album you import.
 
 By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
-the :ref:`art-filename` config option. To embed the art into the files'tag,
+the :ref:`art-filename` config option. To embed the art into the files' tags,
 use the :doc:`/plugins/embedart`. (You'll want to have both plugins enabled.)
 
 Configuration
