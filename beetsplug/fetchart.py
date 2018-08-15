@@ -479,11 +479,13 @@ class ITunesStore(RemoteArtSource):
             self._log.debug(u'Could not decode json response: {0}', e)
             return
         except KeyError as e:
-            self._log.debug(u'No results lists in response: {0}', e)
+            self._log.debug(u'{} not found in json. Fields are {} ',
+                            e,
+                            list(r.json().keys()))
             return
 
         if not candidates:
-            self._log.debug(u'iTunes search for {:r} got no results',
+            self._log.debug(u'iTunes search for {!r} got no results',
                             payload['term'])
             return
 
@@ -496,7 +498,9 @@ class ITunesStore(RemoteArtSource):
                     yield self._candidate(url=art_url,
                                           match=Candidate.MATCH_EXACT)
             except KeyError as e:
-                self._log.debug(u'Malformed itunes candidate {0}', e)
+                self._log.debug(u'Malformed itunes candidate: {} not found in {}',  # NOQA E501
+                                e,
+                                list(c.keys()))
 
         try:
             fallback_art_url = candidates[0]['artworkUrl100']
@@ -504,7 +508,9 @@ class ITunesStore(RemoteArtSource):
             yield self._candidate(url=fallback_art_url,
                                   match=Candidate.MATCH_FALLBACK)
         except KeyError as e:
-            self._log.debug(u'Malformed itunes candidate {0}', e)
+            self._log.debug(u'Malformed itunes candidate: {} not found in {}',
+                            e,
+                            list(c.keys()))
 
 
 class Wikipedia(RemoteArtSource):
