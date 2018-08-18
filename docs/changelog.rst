@@ -18,6 +18,11 @@ New features:
   :user:`jams2`
 * Automatically upload to Google Play Music library on track import.
   :user:`shuaiscott`
+* New options for Google Play Music authentication in gmusic plugin.
+  :user:`thetarkus`
+* The `absubmit` plugin now works in parallel (on Python 3 only).
+  Thanks to :user:`bemeurer`.
+  :bug:`2442`
 * Added :doc:`/plugins/subsonicupdate` that can automatically update your Subsonic library.
   :user:`maffo999`
 
