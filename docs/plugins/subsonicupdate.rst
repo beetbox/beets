@@ -1,15 +1,15 @@
-Subsonic Plugin
+SubsonicUpdate Plugin
 ================
 
-``subsonic`` is a very simple plugin for beets that lets you automatically
+``subsonicupdate`` is a very simple plugin for beets that lets you automatically
 update `Subsonic`_'s index whenever you change your beets library.
 
 .. _Subsonic: http://www.subsonic.org
 
-To use ``subsonic`` plugin, enable it in your configuration
+To use ``subsonicupdate`` plugin, enable it in your configuration
 (see :ref:`using-plugins`).
 Then, you'll probably want to configure the specifics of your Subsonic server.
-You can do that using an ``subsonic:`` section in your ``config.yaml``,
+You can do that using a ``subsonic:`` section in your ``config.yaml``,
 which looks like this::
 
     subsonic: 
