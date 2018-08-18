@@ -1,5 +1,5 @@
 SubsonicUpdate Plugin
-================
+=====================
 
 ``subsonicupdate`` is a very simple plugin for beets that lets you automatically
 update `Subsonic`_'s index whenever you change your beets library.
