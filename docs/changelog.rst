@@ -28,6 +28,11 @@ New features:
 
 Fixes:
 
+* Restore iTunes Store album art source, and remove the dependency on
+  python-itunes_, which had gone unmaintained and was not py3 compatible.
+  Thanks to :user:`ocelma` for creating python-itunes_ in the first place.
+  Thanks to :user:`nathdwek`.
+  :bug:`2371` :bug:`2551` :bug:`2718`
 * Fix compatibility Python 3.7 and its change to a name in the ``re`` module.
   :bug:`2978`
 * R128 normalization tags are now properly deleted from files when the values
@@ -47,6 +52,11 @@ Fixes:
   with CORS enabled.
   Thanks to :user:`rveachkc`.
   :bug:`2979`: :bug:`2980`
+* Improve error reporting: during startup if sqlite returns an error the
+  sqlite error message is attached to the beets message.
+  :bug:`3005`
+
+.. _python-itunes: https://github.com/ocelma/python-itunes
 
 
 1.4.7 (May 29, 2018)
