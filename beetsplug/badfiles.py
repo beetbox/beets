@@ -18,16 +18,17 @@
 
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand
-from beets.util import displayable_path, confit, par_map
-from beets import ui
 from subprocess import check_output, CalledProcessError, list2cmdline, STDOUT
+
 import shlex
 import os
 import errno
 import sys
 import six
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand
+from beets.util import displayable_path, confit, par_map
+from beets import ui
 
 
 class CheckerCommandException(Exception):
