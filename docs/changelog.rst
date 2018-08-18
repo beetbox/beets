@@ -18,7 +18,8 @@ New features:
   :user:`jams2`
 * Automatically upload to Google Play Music library on track import.
   :user:`shuaiscott`
-* Added Subsonic automatic library update plugin
+* Added :doc:`/plugins/subsonicupdate` that can automatically update your Subsonic library.
+  :user:`maffo999`
 
 Fixes:
 
