@@ -183,7 +183,7 @@ class Bs1770gainBackend(Backend):
                 albumgaintot += returnchunk[-1].gain
                 albumpeaktot = max(albumpeaktot, returnchunk[-1].peak)
                 returnchunks = returnchunks + returnchunk[0:-1]
-            returnchunks.append(Gain(albumgaintot / i, albumpeaktot / i))
+            returnchunks.append(Gain(albumgaintot / i, albumpeaktot))
             return returnchunks
         else:
             return self.compute_chunk_gain(items, is_album)
