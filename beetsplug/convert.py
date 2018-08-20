@@ -25,6 +25,8 @@ import shlex
 import six
 from string import Template
 import platform
+from multiprocessing.pool import ThreadPool
+from itertools import repeat
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -172,8 +174,10 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, config, task):
         if self.config['auto']:
-            for item in task.imported_items():
-                self.convert_on_import(config.lib, item)
+            pool = ThreadPool()
+            pool.starmap(self.convert_on_import, zip(repeat(config.lib),list(task.imported_items())))
+            pool.close()
+            pool.join()
 
     # Utilities converted from functions to methods on logging overhaul
 

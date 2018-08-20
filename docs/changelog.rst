@@ -25,6 +25,7 @@ New features:
   :bug:`2442`
 * replaygain: albumpeak on large collections is calculated as average, not maximum
   :bug:`3008`
+* The `convert` plugin now works in parallel (on Python 3 only).
 
 Fixes:
 
