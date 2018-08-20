@@ -23,6 +23,8 @@ New features:
 * The `absubmit` plugin now works in parallel (on Python 3 only).
   Thanks to :user:`bemeurer`.
   :bug:`2442`
+* replaygain: albumpeak on large collections is calculated as average, not maximum
+  :bug:`3008`
 
 Fixes:
 
