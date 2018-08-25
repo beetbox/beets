@@ -25,6 +25,8 @@ New features:
   :bug:`2442`
 * Added :doc:`/plugins/subsonicupdate` that can automatically update your Subsonic library.
   :user:`maffo999`
+* replaygain: albumpeak on large collections is calculated as average, not maximum
+  :bug:`3008`
 
 Fixes:
 
