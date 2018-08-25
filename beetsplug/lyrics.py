@@ -131,7 +131,7 @@ def unescape(text):
     def replchar(m):
         num = m.group(1)
         return unichar(int(num))
-    out = re.sub(u"&#(\d+);", replchar, out)
+    out = re.sub(u"&#(\\d+);", replchar, out)
     return out
 
 
@@ -537,12 +537,12 @@ class Google(Backend):
         """
         text = re.sub(r"[-'_\s]", '_', text)
         text = re.sub(r"_+", '_', text).strip('_')
-        pat = "([^,\(]*)\((.*?)\)"  # Remove content within parentheses
-        text = re.sub(pat, '\g<1>', text).strip()
+        pat = r"([^,\(]*)\((.*?)\)"  # Remove content within parentheses
+        text = re.sub(pat, r'\g<1>', text).strip()
         try:
             text = unicodedata.normalize('NFKD', text).encode('ascii',
                                                               'ignore')
-            text = six.text_type(re.sub('[-\s]+', ' ', text.decode('utf-8')))
+            text = six.text_type(re.sub(r'[-\s]+', ' ', text.decode('utf-8')))
         except UnicodeDecodeError:
             self._log.exception(u"Failing to normalize '{0}'", text)
         return text
