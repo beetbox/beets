@@ -78,18 +78,18 @@ class SubsonicUpdate(BeetsPlugin):
         url = "http://{}:{}/rest/startScan".format(host, port)
         response = requests.post(url, params=payload)
 
-        # TODO: Log an eventual error by the server or success on status code 200
-        #if response.status_code == 0:
-        #    self._log.error(u'Generic error, please try again later.')
-        #elif response.status_code == 30:
+        # TODO Log an error by the server or success on status code 200
+        if response.status_code != 200:
+            self._log.error(u'Generic error, please try again later.')
+        # elif response.status_code == 30:
         #    self._log.error(u'Subsonic server not compatible with plugin.')
-        #elif response.status_code == 40:
+        # elif response.status_code == 40:
         #    self._log.error(u'Wrong username or password.')
-        #elif response.status_code == 50:
+        # elif response.status_code == 50:
         #    self._log.error(u'User not allowed to perform the operation.')
-        #elif response.status_code == 60:
+        # elif response.status_code == 60:
         #    self._log.error(u'This feature requires Subsonic Premium.')
-        #elif response.status_code == 200:
+        # elif response.status_code == 200:
         #    self._log.info('Operation completed successfully!')
-        #else:
+        # else:
         #    self._log.error(u'Unknown error code returned from server.')
