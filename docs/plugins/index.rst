@@ -79,6 +79,7 @@ like this::
    missing
    mpdstats
    mpdupdate
+   parentwork
    permissions
    play
    plexupdate
@@ -128,6 +129,7 @@ Metadata
 * :doc:`metasync`: Fetch metadata from local or remote sources
 * :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
   statistics (last_played, play_count, skip_count, rating).
+* :doc:`parentwork`: Fetch work titles and works they are part of. 
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
