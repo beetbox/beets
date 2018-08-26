@@ -79,7 +79,6 @@ like this::
    missing
    mpdstats
    mpdupdate
-   parentwork
    permissions
    play
    plexupdate
