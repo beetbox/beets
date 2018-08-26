@@ -21,6 +21,9 @@ matrix:
           env: {TOX_ENV: py35-test}
         - python: 3.6
           env: {TOX_ENV: py36-test}
+        - python: 3.7
+          env: {TOX_ENV: py37-test}
+          dist: xenial
         # - python: pypy
         #   - env: {TOX_ENV: pypy-test}
         - python: 3.4
@@ -40,7 +43,6 @@ addons:
             - gstreamer1.0-plugins-good
             - gstreamer1.0-plugins-bad
             - imagemagick
-            - mp3gain
             - python-gi
             - python-gst-1.0
             - python3-gi

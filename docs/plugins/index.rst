@@ -88,6 +88,7 @@ like this::
    rewrite
    scrub
    smartplaylist
+   sonosupdate
    spotify
    the
    thumbnails
@@ -161,12 +162,15 @@ Interoperability
 * :doc:`plexupdate`: Automatically notifies `Plex`_ whenever the beets library
   changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
+* :doc:`sonosupdate`: Automatically notifies `Sonos`_ whenever the beets library
+  changes.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
 
 
 .. _Emby: http://emby.media
 .. _Plex: http://plex.tv
 .. _Kodi: http://kodi.tv
+.. _Sonos: http://sonos.com
 
 Miscellaneous
 -------------
@@ -187,6 +191,7 @@ Miscellaneous
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
+* `mstream`_: A music streaming server + webapp that can be used alongside beets. 
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
@@ -194,6 +199,7 @@ Miscellaneous
 
 .. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
+.. _mstream: https://github.com/IrosTheBeggar/mStream
 
 .. _other-plugins:
 
@@ -246,6 +252,10 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-popularity`_ fetches popularity values from Spotify.
 
+* `beets-barcode`_ lets you scan or enter barcodes for physical media to
+  search for their metadata.
+
+.. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -264,4 +274,3 @@ Here are a few of the plugins written by the beets community:
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
 .. _beets-usertag: https://github.com/igordertigor/beets-usertag
 .. _beets-popularity: https://github.com/abba23/beets-popularity
-

@@ -31,6 +31,12 @@ import six
 
 log = logging.getLogger('beets')
 
+# The name of the type for patterns in re changed in Python 3.7.
+try:
+    Pattern = re._pattern_type
+except AttributeError:
+    Pattern = re.Pattern
+
 
 # Classes used to represent candidate options.
 
@@ -129,6 +135,8 @@ class TrackInfo(object):
 
     - ``title``: name of the track
     - ``track_id``: MusicBrainz ID; UUID fragment only
+    - ``release_track_id``: MusicBrainz ID respective to a track on a
+            particular release; UUID fragment only
     - ``artist``: individual track artist name
     - ``artist_id``
     - ``length``: float: duration of the track in seconds
@@ -164,6 +172,7 @@ class TrackInfo(object):
                  work=None, work_id=None, work_disambig=None):
         self.title = title
         self.track_id = track_id
+        self.release_track_id = release_track_id
         self.artist = artist
         self.artist_id = artist_id
         self.length = length
@@ -181,9 +190,6 @@ class TrackInfo(object):
         self.composer = composer
         self.composer_sort = composer_sort
         self.arranger = arranger
-        self.work = work
-        self.work_id = work_id
-        self.work_disambig = work_disambig
         self.track_alt = track_alt
 
     # As above, work around a bug in python-musicbrainz-ngs.

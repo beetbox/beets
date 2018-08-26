@@ -89,7 +89,7 @@ def parse_query_part(part, query_classes={}, prefixes={},
     assert match  # Regex should always match
     negate = bool(match.group(1))
     key = match.group(2)
-    term = match.group(3).replace('\:', ':')
+    term = match.group(3).replace('\\:', ':')
 
     # Check whether there's a prefix in the query and use the
     # corresponding query type.

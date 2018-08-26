@@ -458,6 +458,7 @@ class Item(LibModel):
         'mb_albumid':           types.STRING,
         'mb_artistid':          types.STRING,
         'mb_albumartistid':     types.STRING,
+        'mb_releasetrackid':    types.STRING,
         'albumtype':            types.STRING,
         'label':                types.STRING,
         'acoustid_fingerprint': types.STRING,
@@ -477,8 +478,8 @@ class Item(LibModel):
         'rg_track_peak':        types.NULL_FLOAT,
         'rg_album_gain':        types.NULL_FLOAT,
         'rg_album_peak':        types.NULL_FLOAT,
-        'r128_track_gain':      types.PaddedInt(6),
-        'r128_album_gain':      types.PaddedInt(6),
+        'r128_track_gain':      types.NullPaddedInt(6),
+        'r128_album_gain':      types.NullPaddedInt(6),
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
@@ -566,7 +567,7 @@ class Item(LibModel):
 
     def clear(self):
         """Set all key/value pairs to None."""
-        for key in self._media_fields:
+        for key in self._media_tag_fields:
             setattr(self, key, None)
 
     def get_album(self):

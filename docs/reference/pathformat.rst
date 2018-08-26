@@ -83,9 +83,11 @@ These functions are built in to beets:
   ``%first{text,count,skip,sep,join}`` where ``sep`` is the separator, like
   ``;`` or ``/`` and join is the text to concatenate the items.
 * ``%ifdef{field}``, ``%ifdef{field,truetext}`` or
-  ``%ifdef{field,truetext,falsetext}``: If ``field`` exists, then return
-  ``truetext`` or ``field`` (default). Otherwise, returns ``falsetext``.
-  The ``field`` should be entered without ``$``.
+  ``%ifdef{field,truetext,falsetext}``: Checks if an flexible attribute
+  ``field`` is defined. If it exists, then return ``truetext`` or ``field``
+  (default). Otherwise, returns ``falsetext``. The ``field`` should be entered
+  without ``$``. Note that this doesn't work with built-in :ref:`itemfields`, as
+  they are always defined.
 
 .. _unidecode module: http://pypi.python.org/pypi/Unidecode
 .. _strftime: http://docs.python.org/2/library/time.html#time.strftime
@@ -239,6 +241,7 @@ Audio information:
 MusicBrainz and fingerprint information:
 
 * mb_trackid
+* mb_releasetrackid
 * mb_albumid
 * mb_artistid
 * mb_albumartistid

@@ -181,9 +181,9 @@ class Bs1770gainBackend(Backend):
                 i += 1
                 returnchunk = self.compute_chunk_gain(chunk, is_album)
                 albumgaintot += returnchunk[-1].gain
-                albumpeaktot += returnchunk[-1].peak
+                albumpeaktot = max(albumpeaktot, returnchunk[-1].peak)
                 returnchunks = returnchunks + returnchunk[0:-1]
-            returnchunks.append(Gain(albumgaintot / i, albumpeaktot / i))
+            returnchunks.append(Gain(albumgaintot / i, albumpeaktot))
             return returnchunks
         else:
             return self.compute_chunk_gain(items, is_album)
@@ -903,7 +903,7 @@ class ReplayGainPlugin(BeetsPlugin):
         item.r128_track_gain = int(round(track_gain.gain * pow(2, 8)))
         item.store()
 
-        self._log.debug(u'applied track gain {0}', item.r128_track_gain)
+        self._log.debug(u'applied r128 track gain {0}', item.r128_track_gain)
 
     def store_album_gain(self, album, album_gain):
         album.rg_album_gain = album_gain.gain
@@ -917,7 +917,7 @@ class ReplayGainPlugin(BeetsPlugin):
         album.r128_album_gain = int(round(album_gain.gain * pow(2, 8)))
         album.store()
 
-        self._log.debug(u'applied album gain {0}', album.r128_album_gain)
+        self._log.debug(u'applied r128 album gain {0}', album.r128_album_gain)
 
     def handle_album(self, album, write, force=False):
         """Compute album and track replay gain store it in all of the

@@ -172,6 +172,8 @@ def disambig_string(info):
             disambig.append(info.country)
         if info.label:
             disambig.append(info.label)
+        if info.catalognum:
+            disambig.append(info.catalognum)
         if info.albumdisambig:
             disambig.append(info.albumdisambig)
 
@@ -237,7 +239,7 @@ def show_change(cur_artist, cur_album, match):
             medium = track_info.disc
             mediums = track_info.disctotal
         if config['per_disc_numbering']:
-            if mediums > 1:
+            if mediums and mediums > 1:
                 return u'{0}-{1}'.format(medium, medium_index)
             else:
                 return six.text_type(medium_index or index)
@@ -253,6 +255,9 @@ def show_change(cur_artist, cur_album, match):
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = u'', u''
+
+        if config['artist_credit']:
+            artist_r = match.info.artist_credit
 
         artist_l, artist_r = ui.colordiff(artist_l, artist_r)
         album_l, album_r = ui.colordiff(album_l, album_r)
@@ -373,15 +378,22 @@ def show_change(cur_artist, cur_album, match):
                len(match.info.tracks),
                len(match.extra_tracks) / len(match.info.tracks)
                ))
+        pad_width = max(len(track_info.title) for track_info in
+                        match.extra_tracks)
     for track_info in match.extra_tracks:
-        line = u' ! %s (#%s)' % (track_info.title, format_index(track_info))
+        line = u' ! {0: <{width}} (#{1: >2})'.format(track_info.title,
+                                                     format_index(track_info),
+                                                     width=pad_width)
         if track_info.length:
             line += u' (%s)' % ui.human_seconds_short(track_info.length)
         print_(ui.colorize('text_warning', line))
     if match.extra_items:
         print_(u'Unmatched tracks ({0}):'.format(len(match.extra_items)))
+        pad_width = max(len(item.title) for item in match.extra_items)
     for item in match.extra_items:
-        line = u' ! %s (#%s)' % (item.title, format_index(item))
+        line = u' ! {0: <{width}} (#{1: >2})'.format(item.title,
+                                                     format_index(item),
+                                                     width=pad_width)
         if item.length:
             line += u' (%s)' % ui.human_seconds_short(item.length)
         print_(ui.colorize('text_warning', line))

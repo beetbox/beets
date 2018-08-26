@@ -346,6 +346,7 @@ There are some changes for developers:
   There is a new numerated type describing how to move, copy, or link files.
   :bug:`2682`
 
+
 1.4.5 (June 20, 2017)
 ---------------------
 

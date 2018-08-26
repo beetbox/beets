@@ -151,15 +151,15 @@ class Shareable(type):
     lazily-created shared instance of ``MyClass`` while calling
     ``MyClass()`` to construct a new object works as usual.
     """
-    def __init__(self, name, bases, dict):
-        super(Shareable, self).__init__(name, bases, dict)
-        self._instance = None
+    def __init__(cls, name, bases, dict):
+        super(Shareable, cls).__init__(name, bases, dict)
+        cls._instance = None
 
     @property
-    def shared(self):
-        if self._instance is None:
-            self._instance = self()
-        return self._instance
+    def shared(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
 
 class ArtResizer(six.with_metaclass(Shareable, object)):

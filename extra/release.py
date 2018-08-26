@@ -281,7 +281,7 @@ def prep():
 
     # Build.
     with chdir(BASE):
-        subprocess.check_call(['python2', 'setup.py', 'sdist'])
+        subprocess.check_call(['python', 'setup.py', 'sdist'])
 
     # Generate Markdown changelog.
     cl = changelog_as_markdown()

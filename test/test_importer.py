@@ -644,6 +644,21 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         self.assertEqual(self.lib.items().get().genre, u'')
 
+    def test_apply_from_scratch_keeps_format(self):
+        config['import']['from_scratch'] = True
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().format, u'MP3')
+
+    def test_apply_from_scratch_keeps_bitrate(self):
+        config['import']['from_scratch'] = True
+        bitrate = 80000
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().bitrate, bitrate)
+
     def test_apply_with_move_deletes_import(self):
         config['import']['move'] = True
 
@@ -1819,6 +1834,7 @@ def mocked_get_release_by_id(id_, includes=[], release_status=[],
             'id': id_,
             'medium-list': [{
                 'track-list': [{
+                    'id': 'baz',
                     'recording': {
                         'title': 'foo',
                         'id': 'bar',

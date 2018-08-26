@@ -60,7 +60,7 @@ def span_from_str(span_str):
                 d = (yearfrom - yearfrom % 100) + d
         return d
 
-    years = [int(x) for x in re.findall('\d+', span_str)]
+    years = [int(x) for x in re.findall(r'\d+', span_str)]
     if not years:
         raise ui.UserError(u"invalid range defined for year bucket '%s': no "
                            u"year found" % span_str)
