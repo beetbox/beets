@@ -28,14 +28,7 @@ Configuration
 
 The available options under the ``subsonic:`` section are:
 
-- **host**: The Subsonic server name/IP.
-- **port**: The Subsonic server port.
-- **user**: The Subsonic user.
-- **pass**: The Subsonic user password.
-
-This plugin sets the following default values:
-
-- **host**: localhost
-- **port**: 4040
-- **user**: admin
-- **pass**: admin
+- **host**: The Subsonic server name/IP. Default: ``localhost``
+- **port**: The Subsonic server port. Default: ``4040``
+- **user**: The Subsonic user. Default: ``admin``
+- **pass**: The Subsonic user password. Default: ``admin``
