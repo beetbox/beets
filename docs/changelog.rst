@@ -32,6 +32,9 @@ New features:
   :bug:`3008` :bug:`3009`
 * Added work, work_id and work_diambig tags and fetching in beets core
   Thanks to :user:`dosoe`. :bug:`2580`
+* A new :doc:`/plugins/subsonicupdate` can automatically update your Subsonic library.
+  Thanks to :user:`maffo999`.
+  :bug:`3001`
 
 Fixes:
 
