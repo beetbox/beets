@@ -10,21 +10,26 @@ New features:
   the catalog number.
   Thanks to :user:`8h2a`.
   :bug:`2951`
-* The play plugin can now emit a UTF-8 BOM, fixing some issues with foobar2000
-  and Winamp.
+* :doc:`/plugins/play`: The plugin can now emit a UTF-8 BOM, fixing some
+  issues with foobar2000 and Winamp.
   Thanks to :user:`mz2212`.
   :bug:`2944`
 * Added whitespace padding to missing tracks dialog to improve readability.
-  :user:`jams2`
-* Automatically upload to Google Play Music library on track import.
-  :user:`shuaiscott`
-* New options for Google Play Music authentication in gmusic plugin.
-  :user:`thetarkus`
-* The `absubmit` plugin now works in parallel (on Python 3 only).
+  Thanks to :user:`jams2`.
+  :bug:`2962`
+* :bug:`/plugins/gmusic`: Add a new option to automatically upload to Google
+  Play Music library on track import.
+  Thanks to :user:`shuaiscott`.
+* :doc:`/plugins/gmusic`: Add new options for Google Play Music
+  authentication.
+  Thanks to :user:`thetarkus`.
+  :bug:`3002`
+* :doc:`/plugins/absubmit`: Analysis now works in parallel (on Python 3 only).
   Thanks to :user:`bemeurer`.
-  :bug:`2442`
-* replaygain: albumpeak on large collections is calculated as average, not maximum
-  :bug:`3008`
+  :bug:`2442` :bug:`3003`
+* :doc:`/plugins/replaygain`: albumpeak on large collections is calculated as
+  the average, not the maximum.
+  :bug:`3008` :bug:`3009`
 
 Fixes:
 
