@@ -50,6 +50,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
 
         item.load()
         print(item['parent_work_id'])
+        print(item['parent_work_id']==u'32c8943f-1b27-3a23-8660-4567f4847c94')
         self.assertEqual(item['parent_work_id'],
                          u'32c8943f-1b27-3a23-8660-4567f4847c94')
 
