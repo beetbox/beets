@@ -120,9 +120,12 @@ class ParentWorkPlugin(BeetsPlugin):
         composer_ids"""
         composer_exists = False
         if 'artist-relation-list' in work_info['work']:
+            #print(work_info['work']['artist-relation-list'])
             for artist in work_info['work']['artist-relation-list']:
                 if artist['type'] == 'composer':
                     composer_exists = True
+                    #print(artist['artist']['name'])
+                    #print(artist['type'])
                     if artist['artist']['id'] not in composer_ids:
                         composer_ids.add(artist['artist']['id'])
                         parent_composer.append(artist['artist']['name'])
@@ -162,6 +165,8 @@ class ParentWorkPlugin(BeetsPlugin):
             hasparent = False
         hasawork = True
         if not item.work_id:
+            if not item.mb_trackid: 
+                return
             rec_rels = musicbrainzngs.get_recording_by_id(recording_id,
                                                           includes=['work-' +
                                                                     'rels'])
