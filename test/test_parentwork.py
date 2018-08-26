@@ -32,6 +32,11 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.setup_beets()
         self.load_plugins('parentwork')
 
+        self.config['parentwork'] = {
+            'auto': True,
+            'force': False,
+        }
+
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
