@@ -49,10 +49,10 @@ class SubsonicUpdate(BeetsPlugin):
         self.register_listener('import', self.loaded)
 
     def loaded(self):
-        host = config['host'].as_str()
-        port = config['port'].as_str()
-        user = config['user'].as_str()
-        passw = config['pass'].as_str()
+        host = config['subsonic']['host'].as_str()
+        port = config['subsonic']['port'].as_str()
+        user = config['subsonic']['user'].as_str()
+        passw = config['subsonic']['pass'].as_str()
 
         # To avoid sending plaintext passwords, authentication will be
         # performed via username, a token, and a 6 random
