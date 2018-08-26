@@ -191,6 +191,9 @@ class TrackInfo(object):
         self.composer_sort = composer_sort
         self.arranger = arranger
         self.track_alt = track_alt
+        self.work = work
+        self.work_id = work_id
+        self.work_disambig = work_disambig
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf-8'):
