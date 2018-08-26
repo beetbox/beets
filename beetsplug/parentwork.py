@@ -162,7 +162,7 @@ class ParentWorkPlugin(BeetsPlugin):
             hasparent = False
         hasawork = True
         if not item.work_id:
-            if not item.mb_trackid: 
+            if not item.mb_trackid:
                 return
             rec_rels = musicbrainzngs.get_recording_by_id(recording_id,
                                                           includes=['work-' +
