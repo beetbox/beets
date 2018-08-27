@@ -51,7 +51,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
 
         item.load()
         self.assertEqual(item['parent_work_id'],
-                         u'32c8943f-1b27-3a23-8660-4567f4847c94')
+                         u'45afb3b2-18ac-4187-bc72-beb1b1c194ba')
 
 
 def suite():
