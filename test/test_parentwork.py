@@ -22,6 +22,7 @@ import unittest
 from test.helper import TestHelper
 
 from beets.library import Item
+from beetsplug import parentwork
 
 
 @patch('beets.util.command_output')
