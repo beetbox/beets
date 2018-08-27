@@ -43,15 +43,13 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
 
     def test_normal_case(self, command_output):
         item = Item(path='/file',
-                    work_id=u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a')
+                    work_id=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53')
         item.add(self.lib)
-
-        command_output.return_value = u'45afb3b2-18ac-4187-bc72-beb1b1c194ba'
+        command_output.return_value = u'32c8943f-1b27-3a23-8660-4567f4847c94'
         self.run_command('parentwork')
-
         item.load()
         self.assertEqual(item['parent_work_id'],
-                         u'45afb3b2-18ac-4187-bc72-beb1b1c194ba')
+                         u'32c8943f-1b27-3a23-8660-4567f4847c94')
 
 
 def suite():
