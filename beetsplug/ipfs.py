@@ -25,6 +25,10 @@ import shutil
 import os
 import tempfile
 
+import sys
+
+reload(sys)
+sys.setdefaultencoding('UTF8')
 
 class IPFSPlugin(BeetsPlugin):
 
