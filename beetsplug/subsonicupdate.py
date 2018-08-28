@@ -40,10 +40,10 @@ class SubsonicUpdate(BeetsPlugin):
 
         # Set default configuration values
         config['subsonic'].add({
-            u'host': u'localhost',
-            u'port': 4040,
-            u'user': u'admin',
-            u'pass': u'admin',
+            'host': 'localhost',
+            'port': '4040',
+            'user': 'admin',
+            'pass': 'admin',
         })
         config['subsonic']['pass'].redact = True
         self.register_listener('import', self.loaded)
