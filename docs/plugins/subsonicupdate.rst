@@ -19,7 +19,8 @@ which looks like this::
         pass: password
 
 With that all in place, beets will send a Rest API to your Subsonic
-server every time you change your beets library.
+server every time you import new music.
+Due to a current limitation of the API, all libraries visible to that user will be scanned.
 
 This plugin requires Subsonic v6.1 or higher and an active Premium license (or trial).
 
