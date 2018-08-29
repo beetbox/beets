@@ -199,16 +199,21 @@ class ParentWorkPlugin(BeetsPlugin):
             self._log.debug("Work already in library, not necessary fetching")
             return
 
-        if found:
+        if found or force:
             self._log.debug("Finished searching work for: " +
                             item.artist + ' - ' + item.title)
             self._log.debug("Work fetched: " + u', '.join(parent_work) +
                             ' - ' + u', '.join(parent_composer))
+            item['parent_work']          = u''
             item['parent_work']          = u', '.join(parent_work)
+            item['parent_work_disambig'] = u''
             if all(dis for dis in parent_work_disambig):
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
+            item['parent_work_id']       = u''
             item['parent_work_id']       = u', '.join(parent_work_id)
+            item['parent_composer']      = u''
             item['parent_composer']      = u', '.join(parent_composer)
+            item['parent_composer_sort'] = u''
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
             item['work_date']            = work_date
 
