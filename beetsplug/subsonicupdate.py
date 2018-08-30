@@ -72,9 +72,9 @@ class SubsonicUpdate(BeetsPlugin):
             'u': user,
             't': token.hexdigest(),
             's': salt,
-            'v': '1.15.0',          # Subsonic 6.1 and newer
+            'v': '1.15.0',  # Subsonic 6.1 and newer.
             'c': 'beets'
-            }
+        }
         url = "http://{}:{}/rest/startScan".format(host, port)
         response = requests.post(url, params=payload)
 
