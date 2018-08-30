@@ -26,6 +26,8 @@ from beets.util import confit
 from beets.autotag import hooks
 import acoustid
 from collections import defaultdict
+from functools import partial
+import re
 
 API_KEY = '1vOwZtEn'
 SCORE_THRESH = 0.5
@@ -55,6 +57,29 @@ def prefix(it, count):
         if i >= count:
             break
         yield v
+
+
+def releases_key(release, countries, original_year):
+    """Used as a key to sort releases by date then preferred country
+    """
+    date = release.get('date')
+    if date and original_year:
+        year = date.get('year', 9999)
+        month = date.get('month', 99)
+        day = date.get('day', 99)
+        key = '{0:04d}{1:02d}{2:02d}'.format(year, month, day)
+    else:
+        key = '99999999'
+
+    # Uses index of preferred countries to sort
+    if release.get('country'):
+        for i, country in enumerate(countries):
+            if country.match(release['country']):
+                key += '{0:02d}'.format(i)
+                return key
+
+    key += '99'
+    return key
 
 
 def acoustid_match(log, path):
@@ -88,16 +113,24 @@ def acoustid_match(log, path):
         return None
     _acoustids[path] = result['id']
 
-    # Get recording and releases from the result.
+    # Get recording and releases from the result,
+    #  sorted by date and/or country depending on 'match'>'preferred' config.
     if not result.get('recordings'):
         log.debug(u'no recordings found')
         return None
     recording_ids = []
-    release_ids = []
+    releases = []
     for recording in result['recordings']:
         recording_ids.append(recording['id'])
         if 'releases' in recording:
-            release_ids += [rel['id'] for rel in recording['releases']]
+            releases.extend(recording['releases'])
+    country_patterns = config['match']['preferred']['countries'].as_str_seq()
+    countries = [re.compile(pat, re.I) for pat in country_patterns]
+    original_year = config['match']['preferred']['original_year']
+    releases.sort(key=partial(releases_key,
+                              countries=countries,
+                              original_year=original_year))
+    release_ids = [rel['id'] for rel in releases]
 
     log.debug(u'matched recordings {0} on releases {1}',
               recording_ids, release_ids)
