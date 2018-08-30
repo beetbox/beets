@@ -12,7 +12,7 @@ Then, you'll probably want to configure the specifics of your Subsonic server.
 You can do that using a ``subsonic:`` section in your ``config.yaml``,
 which looks like this::
 
-    subsonic: 
+    subsonic:
         host: X.X.X.X
         port: 4040
         user: username
