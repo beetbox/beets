@@ -33,6 +33,10 @@ New features:
 * A new :doc:`/plugins/subsonicupdate` can automatically update your Subsonic library.
   Thanks to :user:`maffo999`.
   :bug:`3001`
+* :doc:`/plugins/chroma`: Now optionally has a bias toward looking up more
+  relevant releases according to the :ref:`preferred` configuration options.
+  Thanks to :user:`archer4499`.
+  :bug:`3017`
 
 Fixes:
 
