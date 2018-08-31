@@ -67,19 +67,20 @@ def releases_key(release, countries, original_year):
         year = date.get('year', 9999)
         month = date.get('month', 99)
         day = date.get('day', 99)
-        key = '{0:04d}{1:02d}{2:02d}'.format(year, month, day)
     else:
-        key = '99999999'
+        year = 9999
+        month = 99
+        day = 99
 
     # Uses index of preferred countries to sort
+    country_key = 99
     if release.get('country'):
         for i, country in enumerate(countries):
             if country.match(release['country']):
-                key += '{0:02d}'.format(i)
-                return key
+                country_key = i
+                break
 
-    key += '99'
-    return key
+    return (year, month, day, country_key)
 
 
 def acoustid_match(log, path):
@@ -113,8 +114,7 @@ def acoustid_match(log, path):
         return None
     _acoustids[path] = result['id']
 
-    # Get recording and releases from the result,
-    #  sorted by date and/or country depending on 'match'>'preferred' config.
+    # Get recording and releases from the result
     if not result.get('recordings'):
         log.debug(u'no recordings found')
         return None
@@ -124,6 +124,11 @@ def acoustid_match(log, path):
         recording_ids.append(recording['id'])
         if 'releases' in recording:
             releases.extend(recording['releases'])
+
+    # The releases list is essentially in random order from the Acoustid lookup
+    # so we optionally sort it using the match.preferred configuration options.
+    # 'original_year' to sort the earliest first and
+    # 'countries' to then sort preferred countries first.
     country_patterns = config['match']['preferred']['countries'].as_str_seq()
     countries = [re.compile(pat, re.I) for pat in country_patterns]
     original_year = config['match']['preferred']['original_year']
