@@ -26,6 +26,8 @@ from beets.util import confit
 from beets.autotag import hooks
 import acoustid
 from collections import defaultdict
+from functools import partial
+import re
 
 API_KEY = '1vOwZtEn'
 SCORE_THRESH = 0.5
@@ -55,6 +57,30 @@ def prefix(it, count):
         if i >= count:
             break
         yield v
+
+
+def releases_key(release, countries, original_year):
+    """Used as a key to sort releases by date then preferred country
+    """
+    date = release.get('date')
+    if date and original_year:
+        year = date.get('year', 9999)
+        month = date.get('month', 99)
+        day = date.get('day', 99)
+    else:
+        year = 9999
+        month = 99
+        day = 99
+
+    # Uses index of preferred countries to sort
+    country_key = 99
+    if release.get('country'):
+        for i, country in enumerate(countries):
+            if country.match(release['country']):
+                country_key = i
+                break
+
+    return (year, month, day, country_key)
 
 
 def acoustid_match(log, path):
@@ -88,16 +114,28 @@ def acoustid_match(log, path):
         return None
     _acoustids[path] = result['id']
 
-    # Get recording and releases from the result.
+    # Get recording and releases from the result
     if not result.get('recordings'):
         log.debug(u'no recordings found')
         return None
     recording_ids = []
-    release_ids = []
+    releases = []
     for recording in result['recordings']:
         recording_ids.append(recording['id'])
         if 'releases' in recording:
-            release_ids += [rel['id'] for rel in recording['releases']]
+            releases.extend(recording['releases'])
+
+    # The releases list is essentially in random order from the Acoustid lookup
+    # so we optionally sort it using the match.preferred configuration options.
+    # 'original_year' to sort the earliest first and
+    # 'countries' to then sort preferred countries first.
+    country_patterns = config['match']['preferred']['countries'].as_str_seq()
+    countries = [re.compile(pat, re.I) for pat in country_patterns]
+    original_year = config['match']['preferred']['original_year']
+    releases.sort(key=partial(releases_key,
+                              countries=countries,
+                              original_year=original_year))
+    release_ids = [rel['id'] for rel in releases]
 
     log.debug(u'matched recordings {0} on releases {1}',
               recording_ids, release_ids)
