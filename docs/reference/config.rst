@@ -809,6 +809,17 @@ of audio, for example::
 No formats are ignored by default.
 
 
+.. _ignore_data_tracks:
+
+ignore_data_tracks
+~~~~~~~~~~~~~~~~~~~
+
+By default, audio files contained in data tracks within a release are included
+in the album's tracklist. If you do not want them to be included, set it to
+``yes``.
+
+Default: ``no``.
+
 .. _ignore_video_tracks:
 
 ignore_video_tracks
