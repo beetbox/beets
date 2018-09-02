@@ -40,6 +40,8 @@ New features:
 
 Fixes:
 
+* A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
+  contained in data files :bug:`xxxx`
 * Restore iTunes Store album art source, and remove the dependency on
   python-itunes_, which had gone unmaintained and was not py3 compatible.
   Thanks to :user:`ocelma` for creating python-itunes_ in the first place.

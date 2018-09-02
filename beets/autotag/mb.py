@@ -281,7 +281,8 @@ def album_info(release):
             continue
 
         all_tracks = medium['track-list']
-        if 'data-track-list' in medium:
+        if ('data-track-list' in medium
+                and not config['match']['ignore_data_tracks']):
             all_tracks += medium['data-track-list']
         track_count = len(all_tracks)
 

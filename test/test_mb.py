@@ -383,6 +383,18 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.tracks[1].title, 'TITLE TWO')
         self.assertEqual(d.tracks[2].title, 'TITLE AUDIO DATA')
 
+    def test_skip_audio_data_tracks_if_configured(self):
+        config['match']['ignore_data_tracks'] = True
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        data_tracks = [self._make_track('TITLE AUDIO DATA', 'ID DATA TRACK',
+                                        100.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
     def test_skip_video_tracks_by_default(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
