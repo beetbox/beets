@@ -48,6 +48,12 @@ asciify_paths: false
 art_filename: cover
 max_filename_length: 0
 
+aunique:
+    keys: albumartist album
+    disambiguators: albumtype year label catalognum albumdisambig
+    bracket: '[]'
+
+
 plugins: []
 pluginpath: []
 threaded: yes

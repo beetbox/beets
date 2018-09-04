@@ -37,6 +37,8 @@ New features:
   relevant releases according to the :ref:`preferred` configuration options.
   Thanks to :user:`archer4499`.
   :bug:`3017`
+* A new ``aunique`` configuration option allows setting default options
+  for the :ref:`aunique` template function.
 
 Fixes:
 
