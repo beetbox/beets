@@ -1510,10 +1510,10 @@ class DefaultTemplateFunctions(object):
         if memoval is not None:
             return memoval
 
-        keys = keys or 'albumartist album'
-        disam = disam or 'albumtype year label catalognum albumdisambig'
+        keys = keys or beets.config['aunique']['keys'].as_str()
+        disam = disam or beets.config['aunique']['disambiguators'].as_str()
         if bracket is None:
-            bracket = '[]'
+            bracket = beets.config['aunique']['bracket'].as_str()
         keys = keys.split()
         disam = disam.split()
 

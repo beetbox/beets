@@ -286,6 +286,23 @@ numbered from one, not zero, so other track numbers may appear to be bumped up
 by one. When it is on, the pregap track for each disc can be numbered zero.
 
 
+.. _config-aunique:
+
+anique
+~~~~~~
+
+These options are used to generate a string that is guaranteed to be unique
+among all albums in the library who share the same set of keys.
+
+The defaults look like this::
+
+    aunique:
+        keys: albumartist album
+        disambiguators: albumtype year label catalognum albumdisambig
+        bracket: '[]'
+
+See :ref:`aunique` for more details.
+
 .. _terminal_encoding:
 
 terminal_encoding
