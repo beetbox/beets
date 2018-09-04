@@ -815,10 +815,9 @@ ignore_data_tracks
 ~~~~~~~~~~~~~~~~~~~
 
 By default, audio files contained in data tracks within a release are included
-in the album's tracklist. If you do not want them to be included, set it to
-``yes``.
+in the album's tracklist. If you want them to be included, set it ``no``.
 
-Default: ``no``.
+Default: ``yes``.
 
 .. _ignore_video_tracks:
 

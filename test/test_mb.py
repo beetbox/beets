@@ -371,7 +371,8 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.tracks[0].title, 'TITLE ONE')
         self.assertEqual(d.tracks[1].title, 'TITLE TWO')
 
-    def test_no_skip_audio_data_tracks(self):
+    def test_no_skip_audio_data_tracks_if_configured(self):
+        config['match']['ignore_data_tracks'] = False
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         data_tracks = [self._make_track('TITLE AUDIO DATA', 'ID DATA TRACK',
@@ -383,8 +384,7 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.tracks[1].title, 'TITLE TWO')
         self.assertEqual(d.tracks[2].title, 'TITLE AUDIO DATA')
 
-    def test_skip_audio_data_tracks_if_configured(self):
-        config['match']['ignore_data_tracks'] = True
+    def test_skip_audio_data_tracks(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         data_tracks = [self._make_track('TITLE AUDIO DATA', 'ID DATA TRACK',
