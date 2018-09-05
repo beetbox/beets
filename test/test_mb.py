@@ -302,8 +302,8 @@ class MBAlbumInfoTest(_common.TestCase):
     def test_parse_disambig(self):
         release = self._make_release(None)
         d = mb.album_info(release)
-        self.assertEqual(d.albumdisambig,
-                         'RG_DISAMBIGUATION, R_DISAMBIGUATION')
+        self.assertEqual(d.albumdisambig, 'R_DISAMBIGUATION')
+        self.assertEqual(d.releasegroupdisambig, 'RG_DISAMBIGUATION')
 
     def test_parse_disctitle(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
