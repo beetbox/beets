@@ -346,13 +346,11 @@ def album_info(release):
     info.releasegroup_id = release['release-group']['id']
     info.albumstatus = release.get('status')
 
-    # Build up the disambiguation string from the release group and release.
-    disambig = []
     if release['release-group'].get('disambiguation'):
-        disambig.append(release['release-group'].get('disambiguation'))
+        info.releasegroupdisambig = \
+            release['release-group'].get('disambiguation')
     if release.get('disambiguation'):
-        disambig.append(release.get('disambiguation'))
-    info.albumdisambig = u', '.join(disambig)
+        info.albumdisambig = release.get('disambiguation')
 
     # Get the "classic" Release type. This data comes from a legacy API
     # feature before MusicBrainz supported multiple release types.

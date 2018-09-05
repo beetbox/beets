@@ -125,11 +125,13 @@ looking for one that distinguishes each of the duplicate albums from each
 other. The first such field is used as the result for ``%aunique``. If no field
 suffices, an arbitrary number is used to distinguish the two albums.
 
-The default identifiers are ``albumartist album`` and the default disambiguators
-are ``albumtype year label catalognum albumdisambig``. So you can get reasonable
-disambiguation behavior if you just use ``%aunique{}`` with no parameters in
-your path forms (as in the default path formats), but you can customize the
-disambiguation if, for example, you include the year by default in path formats.
+The default identifiers are ``albumartist album`` and the default
+disambiguators are ``albumtype year label catalognum albumdisambig
+releasegroupdisambig``. So you can get reasonable disambiguation
+behavior if you just use ``%aunique{}`` with no parameters in your
+path forms (as in the default path formats), but you can customize the
+disambiguation if, for example, you include the year by default in
+path formats.
 
 The default characters used as brackets are ``[]``. To change this, provide a
 third argument to the ``%aunique`` function consisting of two characters: the left

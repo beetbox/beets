@@ -152,6 +152,7 @@ def apply_metadata(album_info, mapping):
                       'country',
                       'albumstatus',
                       'albumdisambig',
+                      'releasegroupdisambig',
                       'data_source',):
             value = getattr(album_info, field)
             if value is not None:

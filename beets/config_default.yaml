@@ -50,7 +50,7 @@ max_filename_length: 0
 
 aunique:
     keys: albumartist album
-    disambiguators: albumtype year label catalognum albumdisambig
+    disambiguators: albumtype year label catalognum albumdisambig releasegroupdisambig
     bracket: '[]'
 
 
