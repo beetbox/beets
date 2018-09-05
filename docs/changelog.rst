@@ -39,6 +39,9 @@ New features:
   :bug:`3017`
 * A new ``aunique`` configuration option allows setting default options
   for the :ref:`aunique` template function.
+* The ``albumdisambig`` field no longer includes the MusicBrainz release group
+  disambiguation comment. A new ``releasegroupdisambig`` field has been added.
+  :bug:`3024`
 
 Fixes:
 

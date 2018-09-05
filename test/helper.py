@@ -583,7 +583,7 @@ ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
                      'asin', 'albumtype', 'va', 'label',
                      'artist_sort', 'releasegroup_id', 'catalognum',
                      'language', 'country', 'albumstatus', 'media',
-                     'albumdisambig', 'artist_credit',
+                     'albumdisambig', 'releasegroupdisambig', 'artist_credit',
                      'data_source', 'data_url']
 
 
