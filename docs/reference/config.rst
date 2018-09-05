@@ -298,7 +298,7 @@ The defaults look like this::
 
     aunique:
         keys: albumartist album
-        disambiguators: albumtype year label catalognum albumdisambig
+        disambiguators: albumtype year label catalognum albumdisambig releasegroupdisambig
         bracket: '[]'
 
 See :ref:`aunique` for more details.

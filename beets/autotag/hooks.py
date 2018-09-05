@@ -66,6 +66,7 @@ class AlbumInfo(object):
     - ``albumstatus``: MusicBrainz release status (Official, etc.)
     - ``media``: delivery mechanism (Vinyl, etc.)
     - ``albumdisambig``: MusicBrainz release disambiguation comment
+    - ``releasegroupdisambig``: MusicBrainz release group disambiguation comment
     - ``artist_credit``: Release-specific artist name
     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
     - ``data_url``: The data source release URL.
@@ -78,9 +79,9 @@ class AlbumInfo(object):
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
                  language=None, country=None, albumstatus=None, media=None,
-                 albumdisambig=None, artist_credit=None, original_year=None,
-                 original_month=None, original_day=None, data_source=None,
-                 data_url=None):
+                 albumdisambig=None, releasegroupdisambig=None,
+                 artist_credit=None, original_year=None, original_month=None,
+                 original_day=None, data_source=None, data_url=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -103,6 +104,7 @@ class AlbumInfo(object):
         self.albumstatus = albumstatus
         self.media = media
         self.albumdisambig = albumdisambig
+        self.releasegroupdisambig = releasegroupdisambig
         self.artist_credit = artist_credit
         self.original_year = original_year
         self.original_month = original_month
@@ -119,7 +121,8 @@ class AlbumInfo(object):
         """
         for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
                     'catalognum', 'script', 'language', 'country',
-                    'albumstatus', 'albumdisambig', 'artist_credit', 'media']:
+                    'albumstatus', 'albumdisambig', 'releasegroupdisambig',
+                    'artist_credit', 'media']:
             value = getattr(self, fld)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
