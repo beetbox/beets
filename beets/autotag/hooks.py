@@ -66,7 +66,8 @@ class AlbumInfo(object):
     - ``albumstatus``: MusicBrainz release status (Official, etc.)
     - ``media``: delivery mechanism (Vinyl, etc.)
     - ``albumdisambig``: MusicBrainz release disambiguation comment
-    - ``releasegroupdisambig``: MusicBrainz release group disambiguation comment
+    - ``releasegroupdisambig``: MusicBrainz release group
+            disambiguation comment.
     - ``artist_credit``: Release-specific artist name
     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
     - ``data_url``: The data source release URL.

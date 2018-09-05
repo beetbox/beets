@@ -346,6 +346,7 @@ def album_info(release):
     info.releasegroup_id = release['release-group']['id']
     info.albumstatus = release.get('status')
 
+    # Get the disambiguation strings at the release and release group level.
     if release['release-group'].get('disambiguation'):
         info.releasegroupdisambig = \
             release['release-group'].get('disambiguation')
