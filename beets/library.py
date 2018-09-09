@@ -1030,6 +1030,12 @@ class Album(LibModel):
         if not old_art:
             return
 
+        if not os.path.exists(old_art):
+            log.error(u'removing reference to missing album art file {}',
+                      util.displayable_path(old_art))
+            self.artpath = None
+            return
+
         new_art = self.art_destination(old_art)
         if new_art == old_art:
             return
