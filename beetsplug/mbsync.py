@@ -22,6 +22,8 @@ from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from collections import defaultdict
 
+import re
+
 
 def apply_item_changes(lib, item, move, pretend, write):
     """Store, move and write the item according to the arguments.
@@ -82,12 +84,17 @@ class MBSyncPlugin(BeetsPlugin):
                                item_formatted)
                 continue
 
+            valid_trackid = re.match(
+                     r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}",
+                     item.mb_trackid)
+
             # Do we have a valid MusicBrainz TrackId
-            if re.match(r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}", item.mb_trackid):
+            if valid_trackid:
                 # Get the MusicBrainz recording info.
                 track_info = hooks.track_for_mbid(item.mb_trackid)
                 if not track_info:
-                    self._log.info(u'Recording ID not found: {0} for track {0}',
+                    self._log.info(u'Recording ID not found: {0}' +
+                                   ' for track {0}',
                                    item.mb_trackid,
                                    item_formatted)
                     continue
@@ -97,8 +104,8 @@ class MBSyncPlugin(BeetsPlugin):
                     autotag.apply_item_metadata(item, track_info)
                     apply_item_changes(lib, item, move, pretend, write)
             else:
-                self._log.info(u'Skipping singleton with invalid mb_trackid: {0}',
-                               item_formatted)
+                self._log.info(u'Skipping singleton with invalid mb_trackid:' +
+                               ' {0}', item_formatted)
                 continue
 
     def albums(self, lib, query, move, pretend, write):
@@ -115,8 +122,13 @@ class MBSyncPlugin(BeetsPlugin):
 
             items = list(a.items())
 
+            valid_albumid = re.match(
+                     r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}",
+                     a.mb_albumid)
+
             # Do we have a valid MusicBrainz AlbumId
-            if re.match(r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}", a.mb_albumid):
+
+            if valid_albumid:
                 # Get the MusicBrainz album information.
                 album_info = hooks.album_for_mbid(a.mb_albumid)
                 if not album_info:
@@ -126,17 +138,18 @@ class MBSyncPlugin(BeetsPlugin):
                     continue
 
                 # Map release track and recording MBIDs to their information.
-                # Recordings can appear multiple times on a release, so each MBID
-                # maps to a list of TrackInfo objects.
+                # Recordings can appear multiple times on a release, so each
+                # MBID maps to a list of TrackInfo objects.
                 releasetrack_index = dict()
                 track_index = defaultdict(list)
                 for track_info in album_info.tracks:
                     releasetrack_index[track_info.release_track_id] = track_info
                     track_index[track_info.track_id].append(track_info)
 
-                # Construct a track mapping according to MBIDs (release track MBIDs
-                # first, if available, and recording MBIDs otherwise). This should
-                # work for albums that have missing or extra tracks.
+                # Construct a track mapping according to MBIDs (release track
+                # MBIDs first, if available, and recording MBIDs otherwise).
+                # This should work for albums that have missing or
+                # extra tracks.
                 mapping = {}
                 for item in items:
                     if item.mb_releasetrackid and \
@@ -147,8 +160,9 @@ class MBSyncPlugin(BeetsPlugin):
                         if len(candidates) == 1:
                             mapping[item] = candidates[0]
                         else:
-                            # If there are multiple copies of a recording, they are
-                            # disambiguated using their disc and track number.
+                            # If there are multiple copies of a recording,
+                            # they aredisambiguated using their disc and
+                            # track number.
                             for c in candidates:
                                 if (c.medium_index == item.track and
                                         c.medium == item.disc):
@@ -160,7 +174,8 @@ class MBSyncPlugin(BeetsPlugin):
                 with lib.transaction():
                     autotag.apply_metadata(album_info, mapping)
                     changed = False
-                    # Find any changed item to apply MusicBrainz changes to album.
+                    # Find any changed item to apply MusicBrainz changes to
+                    # album.
                     any_changed_item = items[0]
                     for item in items:
                         item_changed = ui.show_model_changes(item)
@@ -180,8 +195,10 @@ class MBSyncPlugin(BeetsPlugin):
                         a.store()
 
                         # Move album art (and any inconsistent items).
-                        if move and lib.directory in util.ancestry(items[0].path):
-                            self._log.debug(u'moving album {0}', album_formatted)
+                        if move and \
+                           lib.directory in util.ancestry(items[0].path):
+                            self._log.debug(
+                                u'moving album {0}', album_formatted)
                             a.move()
 
             else:
