@@ -86,6 +86,9 @@ Fixes:
 * Fix a problem when resizing images with PIL/Pillow on Python 3.
   Thanks to :user:`architek`.
   :bug:`2504` :bug:`3029`
+* Missing album art file during an update no longer causes a fatal exception
+  (instead, an error is logged and the missing file path is removed from the
+  library). :bug:`3030`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
