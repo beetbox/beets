@@ -47,7 +47,7 @@ Changes:
 
 * :doc:`/plugins/mbsync` no longer queries MusicBrainz when the either the
   ``mb_albumid`` or ``mb_trackid`` field is invalid
-  Discussion here https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
+.. _Discussion here: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
   Thanks to :user:`arogl`.
 
 Fixes:
