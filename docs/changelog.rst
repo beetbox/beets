@@ -74,6 +74,9 @@ Fixes:
 * Improve error reporting: during startup if sqlite returns an error the
   sqlite error message is attached to the beets message.
   :bug:`3005`
+* Fix a problem when resizing images with PIL/Pillow on Python 3.
+  Thanks to :user:`architek`.
+  :bug:`2504` :bug:`3029`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
