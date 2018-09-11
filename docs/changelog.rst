@@ -45,12 +45,12 @@ New features:
 
 Changes:
 
-* :doc:`/plugins/mbsync` no longer queries MusicBrainz when the either the
+* :doc:`/plugins/mbsync` no longer queries MusicBrainz when either the
   ``mb_albumid`` or ``mb_trackid`` field is invalid
-  Discussion on Google groups here_
+  See also the discussion on Google Groups_
   Thanks to :user:`arogl`.
 
-.. _here: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
+.. _Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
 
 Fixes:
 
