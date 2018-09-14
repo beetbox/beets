@@ -251,6 +251,11 @@ class Model(object):
     value is the same as the old value (e.g., `o.f = o.f`).
     """
 
+    _revision = -1
+    """A revision number from when the model was loaded from or written
+    to the database.
+    """
+
     @classmethod
     def _getters(cls):
         """Return a mapping from field names to getter functions.
@@ -303,9 +308,11 @@ class Model(object):
 
     def clear_dirty(self):
         """Mark all fields as *clean* (i.e., not needing to be stored to
-        the database).
+        the database). Also update the revision.
         """
         self._dirty = set()
+        if self._db:
+            self._revision = self._db.revision
 
     def _check_db(self, need_id=True):
         """Ensure that this object is associated with a database row: it
@@ -533,8 +540,14 @@ class Model(object):
 
     def load(self):
         """Refresh the object's metadata from the library database.
+
+        If check_revision is true, the database is only queried loaded when a
+        transaction has been committed since the item was last loaded.
         """
         self._check_db()
+        if not self._dirty and self._db.revision == self._revision:
+            # Exit early
+            return
         stored_obj = self._db._get(type(self), self.id)
         assert stored_obj is not None, u"object {0} not in DB".format(self.id)
         self._values_fixed = LazyConvertDict(self)
@@ -789,6 +802,12 @@ class Transaction(object):
     """A context manager for safe, concurrent access to the database.
     All SQL commands should be executed through a transaction.
     """
+
+    _mutated = False
+    """A flag storing whether a mutation has been executed in the
+    current transaction.
+    """
+
     def __init__(self, db):
         self.db = db
 
@@ -810,12 +829,15 @@ class Transaction(object):
         entered but not yet exited transaction. If it is the last active
         transaction, the database updates are committed.
         """
+        # Beware of races; currently secured by db._db_lock
+        self.db.revision += self._mutated
         with self.db._tx_stack() as stack:
             assert stack.pop() is self
             empty = not stack
         if empty:
             # Ending a "root" transaction. End the SQLite transaction.
             self.db._connection().commit()
+            self._mutated = False
             self.db._db_lock.release()
 
     def query(self, statement, subvals=()):
@@ -831,7 +853,6 @@ class Transaction(object):
         """
         try:
             cursor = self.db._connection().execute(statement, subvals)
-            return cursor.lastrowid
         except sqlite3.OperationalError as e:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
@@ -841,9 +862,14 @@ class Transaction(object):
                 raise DBAccessError(e.args[0])
             else:
                 raise
+        else:
+            self._mutated = True
+            return cursor.lastrowid
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
+        # We don't know whether this mutates, but quite likely it does.
+        self._mutated = True
         self.db._connection().executescript(statements)
 
 
@@ -858,6 +884,11 @@ class Database(object):
 
     supports_extensions = hasattr(sqlite3.Connection, 'enable_load_extension')
     """Whether or not the current version of SQLite supports extensions"""
+
+    revision = 0
+    """The current revision of the database. To be increased whenever
+    data is written in a transaction.
+    """
 
     def __init__(self, path, timeout=5.0):
         self.path = path
