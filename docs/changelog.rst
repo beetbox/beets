@@ -17,6 +17,11 @@ New features:
   to MPD commands we don't support yet. Let us know if you find an MPD client
   that doesn't get along with BPD!
   :bug:`3214` :bug:`800`
+* Fields in queries now fall back to an item's album and check its fields too.
+  Notably, this allows querying items by an album flex attribute (also in path
+  configuration). Plugins: Also applies to normal item access.
+  Thanks to :user:`FichteFoll`.
+  :bug:`2797` :bug:`2988`
 
 Fixes:
 
