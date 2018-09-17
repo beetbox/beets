@@ -72,7 +72,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
         im = Image.open(util.syspath(path_in))
         size = maxwidth, maxwidth
         im.thumbnail(size, Image.ANTIALIAS)
-        im.save(path_out)
+        im.save(util.py3_path(path_out))
         return path_out
     except IOError:
         log.error(u"PIL cannot create thumbnail for '{0}'",
