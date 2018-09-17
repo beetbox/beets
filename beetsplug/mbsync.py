@@ -22,6 +22,10 @@ from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from collections import defaultdict
 
+import re
+
+MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
+
 
 def apply_item_changes(lib, item, move, pretend, write):
     """Store, move and write the item according to the arguments.
@@ -82,6 +86,12 @@ class MBSyncPlugin(BeetsPlugin):
                                item_formatted)
                 continue
 
+            # Do we have a valid MusicBrainz track ID?
+            if not re.match(MBID_REGEX, item.mb_trackid):
+                self._log.info(u'Skipping singleton with invalid mb_trackid:' +
+                               ' {0}', item_formatted)
+                continue
+
             # Get the MusicBrainz recording info.
             track_info = hooks.track_for_mbid(item.mb_trackid)
             if not track_info:
@@ -108,6 +118,12 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             items = list(a.items())
+
+            # Do we have a valid MusicBrainz album ID?
+            if not re.match(MBID_REGEX, a.mb_albumid):
+                self._log.info(u'Skipping album with invalid mb_albumid: {0}',
+                               album_formatted)
+                continue
 
             # Get the MusicBrainz album information.
             album_info = hooks.album_for_mbid(a.mb_albumid)

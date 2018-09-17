@@ -43,6 +43,15 @@ New features:
   disambiguation comment. A new ``releasegroupdisambig`` field has been added.
   :bug:`3024`
 
+Changes:
+
+* :doc:`/plugins/mbsync` no longer queries MusicBrainz when either the
+  ``mb_albumid`` or ``mb_trackid`` field is invalid
+  See also the discussion on Google Groups_
+  Thanks to :user:`arogl`.
+
+.. _Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
+
 Fixes:
 
 * A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
