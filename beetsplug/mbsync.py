@@ -24,7 +24,7 @@ from collections import defaultdict
 
 import re
 
-MB_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
+MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
 
 
 def apply_item_changes(lib, item, move, pretend, write):
@@ -86,9 +86,8 @@ class MBSyncPlugin(BeetsPlugin):
                                item_formatted)
                 continue
 
-            # Do we have a valid MusicBrainz TrackId?
-            valid_trackid = re.match(MB_REGEX, item.mb_trackid)
-            if not valid_trackid:
+            # Do we have a valid MusicBrainz track ID?
+            if not re.match(MBID_REGEX, item.mb_trackid):
                 self._log.info(u'Skipping singleton with invalid mb_trackid:' +
                                ' {0}', item_formatted)
                 continue
@@ -120,9 +119,8 @@ class MBSyncPlugin(BeetsPlugin):
 
             items = list(a.items())
 
-            # Do we have a valid MusicBrainz AlbumId?
-            valid_albumid = re.match(MB_REGEX, a.mb_albumid)
-            if not valid_albumid:
+            # Do we have a valid MusicBrainz album ID?
+            if not re.match(MBID_REGEX, a.mb_albumid):
                 self._log.info(u'Skipping album with invalid mb_albumid: {0}',
                                album_formatted)
                 continue
