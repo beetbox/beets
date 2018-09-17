@@ -800,16 +800,18 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         self.run_command('test', lib=None)
         replacements = self.test_cmd.lib.replacements
-        self.assertEqual(replacements, [(re.compile(u'[xy]'), 'z')])
+        repls = [(p.pattern, s) for p, s in replacements]  # Compare patterns.
+        self.assertEqual(repls, [(u'[xy]', 'z')])
 
     def test_multiple_replacements_parsed(self):
         with self.write_config_file() as config:
             config.write("replace: {'[xy]': z, foo: bar}")
         self.run_command('test', lib=None)
         replacements = self.test_cmd.lib.replacements
-        self.assertEqual(replacements, [
-            (re.compile(u'[xy]'), u'z'),
-            (re.compile(u'foo'), u'bar'),
+        repls = [(p.pattern, s) for p, s in replacements]
+        self.assertEqual(repls, [
+            (u'[xy]', u'z'),
+            (u'foo', u'bar'),
         ])
 
     def test_cli_config_option(self):
