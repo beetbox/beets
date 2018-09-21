@@ -86,6 +86,8 @@ Fixes:
 * Fix a problem when resizing images with PIL/Pillow on Python 3.
   Thanks to :user:`architek`.
   :bug:`2504` :bug:`3029`
+* Avoid a crash when archive extraction fails during import.
+  :bug:`3041`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
