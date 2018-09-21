@@ -1059,9 +1059,9 @@ class ArchiveImportTask(SentinelImportTask):
             if path_test(util.py3_path(self.toppath)):
                 break
 
+        extract_to = mkdtemp()
+        archive = handler_class(util.py3_path(self.toppath), mode='r')
         try:
-            extract_to = mkdtemp()
-            archive = handler_class(util.py3_path(self.toppath), mode='r')
             archive.extractall(extract_to)
         finally:
             archive.close()
