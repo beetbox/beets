@@ -42,6 +42,10 @@ New features:
 * The ``albumdisambig`` field no longer includes the MusicBrainz release group
   disambiguation comment. A new ``releasegroupdisambig`` field has been added.
   :bug:`3024`
+* The :ref:`modify-cmd` command now allows resetting fixed attributes. For
+  example, ``beet modify -a artist:beatles artpath!`` resets ``artpath``
+  attribute from matching albums back to the default value.
+  :bug:`2497`
 
 Changes:
 
