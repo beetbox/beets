@@ -290,10 +290,11 @@ class Model(object):
         if key in self._values_flex:  # Flexible.
             del self._values_flex[key]
             self._dirty.add(key)  # Mark for dropping on store.
+        elif key in self._fields:  # Fixed
+            setattr(self, key, self._type(key).null)
+            self._dirty.add(key)  # Mark for dropping on store.
         elif key in self._getters():  # Computed.
             raise KeyError(u'computed field {0} cannot be deleted'.format(key))
-        elif key in self._fields:  # Fixed.
-            raise KeyError(u'fixed field {0} cannot be deleted'.format(key))
         else:
             raise KeyError(u'no such field {0}'.format(key))
 
