@@ -1395,6 +1395,8 @@ class Library(dbcore.Database):
         """
         if isinstance(item_or_id, int):
             album_id = item_or_id
+        elif isinstance(item_or_id, Album):
+            album_id = item_or_id.id
         else:
             album_id = item_or_id.album_id
         if album_id is None:
@@ -1506,9 +1508,16 @@ class DefaultTemplateFunctions(object):
         # Fast paths: no album, no item or library, or memoized value.
         if not self.item or not self.lib:
             return u''
-        if self.item.album_id is None:
+
+        if isinstance(self.item, Item):
+            album_id = self.item.album_id
+        elif isinstance(self.item, Album):
+            album_id = self.item.id
+
+        if album_id is None:
             return u''
-        memokey = ('aunique', keys, disam, self.item.album_id)
+
+        memokey = ('aunique', keys, disam, album_id)
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
