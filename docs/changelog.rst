@@ -92,6 +92,9 @@ Fixes:
   :bug:`2504` :bug:`3029`
 * Avoid a crash when archive extraction fails during import.
   :bug:`3041`
+* The ``%aunique`` template function now works correctly with the
+  ``-f/--format`` option.
+  :bug:`3043`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
