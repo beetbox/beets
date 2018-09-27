@@ -292,7 +292,6 @@ class Model(object):
             self._dirty.add(key)  # Mark for dropping on store.
         elif key in self._fields:  # Fixed
             setattr(self, key, self._type(key).null)
-            self._dirty.add(key)  # Mark for dropping on store.
         elif key in self._getters():  # Computed.
             raise KeyError(u'computed field {0} cannot be deleted'.format(key))
         else:
