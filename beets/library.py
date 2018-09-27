@@ -1395,8 +1395,6 @@ class Library(dbcore.Database):
         """
         if isinstance(item_or_id, int):
             album_id = item_or_id
-        elif isinstance(item_or_id, Album):
-            album_id = item_or_id.id
         else:
             album_id = item_or_id.album_id
         if album_id is None:
@@ -1537,7 +1535,7 @@ class DefaultTemplateFunctions(object):
             bracket_l = u''
             bracket_r = u''
 
-        album = self.lib.get_album(self.item)
+        album = self.lib.get_album(album_id)
         if not album:
             # Do nothing for singletons.
             self.lib._memotable[memokey] = u''
