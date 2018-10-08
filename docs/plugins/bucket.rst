@@ -21,7 +21,7 @@ Then, define your ranges in the ``bucket:`` section of the config file::
         bucket_alpha: ['A-F', 'G-M', 'N-Z']
         bucket_year:  ['1980s', '1990s', '2000s']
 
-The ``bucket_year`` parameter is used for all substitutions occuring on the
+The ``bucket_year`` parameter is used for all substitutions occurring on the
 ``$year`` field, while ``bucket_alpha`` takes care of textual fields.
 
 The definition of a range is somewhat loose, and multiple formats are allowed:
@@ -34,6 +34,13 @@ The definition of a range is somewhat loose, and multiple formats are allowed:
   equivalent. If no upper bound is given, the range is extended to current year
   (unless a later range is defined). For example, *1975* encompasses all years
   from 1975 until now.
+
+The `%bucket` template function guesses whether to use alpha- or year-style
+buckets depending on the text it receives. It can guess wrong if, for example,
+an artist or album happens to begin with four digits. Provide `alpha` as the
+second argument to the template to avoid this automatic detection: for
+example, use `%bucket{$artist,alpha}`.
+
 
 Configuration
 -------------
