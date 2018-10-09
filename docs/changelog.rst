@@ -95,6 +95,9 @@ Fixes:
 * The ``%aunique`` template function now works correctly with the
   ``-f/--format`` option.
   :bug:`3043`
+* Missing album art file during an update no longer causes a fatal exception
+  (instead, an error is logged and the missing file path is removed from the
+  library). :bug:`3030`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
