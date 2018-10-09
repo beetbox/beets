@@ -130,7 +130,7 @@ These options only works with the "bs1770gain" backend:
   the reference level: -18, -23, or -24 LUFS respectively. Default:
   `replaygain`
 - **chunk_at**: Splits an album in groups of tracks of this amount.
-  Usefull when running into memory problems when analysing albums with
+  Useful when running into memory problems when analysing albums with
   an exceptionally large amount of tracks. Default:5000
 
 Manual Analysis
