@@ -158,7 +158,7 @@ class DestinationTest(_common.TestCase):
         self.lib.path_formats = [(u'default', u'two')]
         self.assertEqual(self.i.destination(), np('one/two'))
 
-    def test_destination_substitues_metadata_values(self):
+    def test_destination_substitutes_metadata_values(self):
         self.lib.directory = b'base'
         self.lib.path_formats = [(u'default', u'$album/$artist $title')]
         self.i.title = 'three'

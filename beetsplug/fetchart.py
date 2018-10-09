@@ -433,7 +433,7 @@ class FanartTV(RemoteArtSource):
         # can there be more than one releasegroupid per response?
         for mbid, art in data.get(u'albums', dict()).items():
             # there might be more art referenced, e.g. cdart, and an albumcover
-            # might not be present, even if the request was succesful
+            # might not be present, even if the request was successful
             if album.mb_releasegroupid == mbid and u'albumcover' in art:
                 matches.extend(art[u'albumcover'])
             # can this actually occur?
@@ -597,7 +597,7 @@ class Wikipedia(RemoteArtSource):
             )
 
             # Try to see if one of the images on the pages matches our
-            # imcomplete cover_filename
+            # incomplete cover_filename
             try:
                 data = wikipedia_response.json()
                 results = data['query']['pages'][page_id]['images']

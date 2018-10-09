@@ -1463,7 +1463,7 @@ And many little fixes and improvements:
 * The error message when MusicBrainz is not reachable on the network is now
   much clearer. Thanks to Tom Jaspers. :bug:`1190` :bug:`1272`
 * Improve error messages when parsing query strings with shlex. :bug:`1290`
-* :doc:`/plugins/embedart`: Fix a crash that occured when used together
+* :doc:`/plugins/embedart`: Fix a crash that occurred when used together
   with the *check* plugin. :bug:`1241`
 * :doc:`/plugins/scrub`: Log an error instead of stopping when the ``beet
   scrub`` command cannot write a file. Also, avoid problems on Windows with

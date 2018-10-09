@@ -81,7 +81,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
     def build_queries(self):
         """
-        Instanciate queries for the playlists.
+        Instantiate queries for the playlists.
 
         Each playlist has 2 queries: one or items one for albums, each with a
         sort. We must also remember its name. _unmatched_playlists is a set of
