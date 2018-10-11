@@ -21,6 +21,7 @@ a "subsonic" section like the following:
         port: 4040 (default)
         user: <your username>
         pass: <your password>
+        contextpath: /subsonic
 """
 from __future__ import division, absolute_import, print_function
 
@@ -44,15 +45,17 @@ class SubsonicUpdate(BeetsPlugin):
             'port': '4040',
             'user': 'admin',
             'pass': 'admin',
+            'contextpath': '/',
         })
         config['subsonic']['pass'].redact = True
         self.register_listener('import', self.loaded)
 
     def loaded(self):
         host = config['subsonic']['host'].as_str()
-        port = config['subsonic']['port'].as_str()
+        port = config['subsonic']['port'].get(int)
         user = config['subsonic']['user'].as_str()
         passw = config['subsonic']['pass'].as_str()
+        contextpath = config['subsonic']['contextpath'].as_str()
 
         # To avoid sending plaintext passwords, authentication will be
         # performed via username, a token, and a 6 random
@@ -75,7 +78,9 @@ class SubsonicUpdate(BeetsPlugin):
             'v': '1.15.0',  # Subsonic 6.1 and newer.
             'c': 'beets'
         }
-        url = "http://{}:{}/rest/startScan".format(host, port)
+        if contextpath is '/':
+            contextpath = ''
+        url = "http://{}:{}{}/rest/startScan".format(host, port, contextpath)
         response = requests.post(url, params=payload)
 
         if response.status_code != 200:

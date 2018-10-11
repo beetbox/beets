@@ -17,6 +17,7 @@ which looks like this::
         port: 4040
         user: username
         pass: password
+        contextpath: /subsonic
 
 With that all in place, beets will send a Rest API to your Subsonic
 server every time you import new music.
@@ -33,3 +34,4 @@ The available options under the ``subsonic:`` section are:
 - **port**: The Subsonic server port. Default: ``4040``
 - **user**: The Subsonic user. Default: ``admin``
 - **pass**: The Subsonic user password. Default: ``admin``
+- **contextpath**: The Subsonic context path. Default: ``/``
