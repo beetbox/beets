@@ -373,7 +373,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd = ui.Subcommand('lastgenre', help=u'fetch genres')
         lastgenre_cmd.parser.add_option(
             u'-f', u'--force', dest='force',
-            action='store_true', default=False,
+            action='store_true',
             help=u're-download genre when already present'
         )
         lastgenre_cmd.parser.add_option(
