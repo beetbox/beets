@@ -102,6 +102,8 @@ This backend uses the python module `r128gain`_. It can be installed from PyPI::
     pip3 install r128gain
 
 Also see the `r128gain installation`_ page.
+Please note that `r128gain`_ describes itself as "beta software", this backend
+could possibly break.
 
 .. _r128gain: https://github.com/desbma/r128gain
 .. _r128gain installation: https://github.com/desbma/r128gain/blob/master/README.md#installation
