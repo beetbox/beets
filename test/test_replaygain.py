@@ -43,6 +43,12 @@ if has_program('bs1770gain', ['--replaygain']):
 else:
     LOUDNESS_PROG_AVAILABLE = False
 
+try:
+    import r128gain
+    R128GAIN_AVAILABLE = hasattr(r128gain, 'scan')
+except ImportError:
+    R128GAIN_AVAILABLE = False
+
 
 class ReplayGainCliTestBase(TestHelper):
 
@@ -164,6 +170,11 @@ class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
 @unittest.skipIf(not LOUDNESS_PROG_AVAILABLE, u'bs1770gain cannot be found')
 class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'bs1770gain'
+
+
+@unittest.skipIf(not R128GAIN_AVAILABLE, u'r128gain cannot be found')
+class ReplayGainR128gainCliTest(ReplayGainCliTestBase, unittest.TestCase):
+    backend = u'r128gain'
 
 
 def suite():
