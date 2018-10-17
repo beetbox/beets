@@ -10,10 +10,10 @@ playback levels.
 Installation
 ------------
 
-This plugin can use one of four backends to compute the ReplayGain values:
-GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools and bs1770gain. mp3gain
-can be easier to install but GStreamer, Audio Tools and bs1770gain support more audio
-formats.
+This plugin can use one of five backends to compute the ReplayGain values:
+GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools, bs1770gain and
+r128gain. mp3gain can be easier to install but GStreamer, Audio Tools, bs1770gain
+and r128gain support more audio formats.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -94,6 +94,18 @@ For Windows users: the tool currently has issues with long and non-ASCII path
 names. You may want to use the :ref:`asciify-paths` configuration option until
 this is resolved.
 
+r128gain
+````````
+
+This backend uses the python module `r128gain`_. It can be installed from PyPI::
+
+    pip3 install r128gain
+
+Also see the `r128gain installation`_ page.
+
+.. _r128gain: https://github.com/desbma/r128gain
+.. _r128gain installation: https://github.com/desbma/r128gain/blob/master/README.md#installation
+
 Configuration
 -------------
 
@@ -110,7 +122,7 @@ configuration file. The available options are:
   Default: 89.
 - **r128**: A space separated list of formats that will use ``R128_`` tags with
   integer values instead of the common ``REPLAYGAIN_`` tags with floating point
-  values. Requires the "bs1770gain" backend.
+  values. Requires the "bs1770gain" or "r128gain" backend.
   Default: ``Opus``.
 
 These options only work with the "command" backend:
