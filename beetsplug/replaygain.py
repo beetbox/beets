@@ -821,6 +821,72 @@ class AudioToolsBackend(Backend):
         )
 
 
+# r128gain (https://github.com/desbma/r128gain) backend
+class R128gainBackend(Backend):
+    """r128gain (https://github.com/desbma/r128gain) ReplayGain backend.
+
+    Provides a Backend to the replaygain plugin using the r128gain python
+    module.
+    """
+
+    def __init__(self, config, log):
+        super(R128gainBackend, self).__init__(config, log)
+        self.__import_r128gain()
+
+    def __import_r128gain(self):
+        """Try to import the r128gain module to self._mod_r128gain.
+        """
+        try:
+            import r128gain
+        except ImportError:
+            raise FatalReplayGainError(
+                u"failed to load r128gain: please install r128gain"
+            )
+        self._mod_r128gain = r128gain
+
+    def compute_track_gain(self, items):
+        """Computes the track gain of the given tracks, returns a list
+        of Gain objects (the track gains).
+        """
+        gains, album_gain = self.compute_gain(items, False)
+        return gains
+
+    def compute_album_gain(self, album):
+        """Computes the album gain of the given album, returns an
+        AlbumGain object.
+        """
+        items = album.items()
+        gains, album_gain = self.compute_gain(items, True)
+        return AlbumGain(album_gain, gains)
+
+    def compute_gain(self, items, is_album):
+        """Computes the track (and optionally album gain) of a list of
+        items, returns a pair of a list of Gain objects (the track gains)
+        and a optional Gain object (the album gain).
+        """
+        # scan files
+        print(items)
+        paths = [i.path.decode() for i in items]
+        self._log.debug(u"scanning {0} with r128gain".format(paths))
+        output = self._mod_r128gain.scan(paths, album_gain=is_album)
+
+        # track gains
+        try:
+            gains = [Gain(*output[path]) for path in paths]
+        except KeyError as e:
+            raise ReplayGainError(u"failed to analyse file: {0}".format(e))
+
+        # album gain
+        album_gain_key = self._mod_r128gain.ALBUM_GAIN_KEY
+        album_gain = output.pop(album_gain_key, None)
+        if is_album:
+            if album_gain is None:
+                raise ReplayGainError(u"failed to analyse album")
+            album_gain = Gain(*album_gain)
+
+        return gains, album_gain
+
+
 # Main plugin logic.
 
 class ReplayGainPlugin(BeetsPlugin):
@@ -832,9 +898,10 @@ class ReplayGainPlugin(BeetsPlugin):
         "gstreamer": GStreamerBackend,
         "audiotools": AudioToolsBackend,
         "bs1770gain": Bs1770gainBackend,
+        "r128gain": R128gainBackend,
     }
 
-    r128_backend_names = ["bs1770gain"]
+    r128_backend_names = ["bs1770gain", "r128gain"]
 
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
