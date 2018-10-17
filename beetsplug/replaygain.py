@@ -88,6 +88,10 @@ class Backend(object):
         # individual tracks which can be used for any backend.
         raise NotImplementedError()
 
+    def use_ebu_r128(self):
+        """Set this Backend up to use EBU R128."""
+        pass
+
 
 # bsg1770gain backend
 class Bs1770gainBackend(Backend):
@@ -270,6 +274,10 @@ class Bs1770gainBackend(Backend):
         if is_album:
             out.append(album_gain["album"])
         return out
+
+    def use_ebu_r128(self):
+        """Set this Backend up to use EBU R128."""
+        self.method = '--ebu'
 
 
 # mpgain/aacgain CLI tool backend.
@@ -826,6 +834,8 @@ class ReplayGainPlugin(BeetsPlugin):
         "bs1770gain": Bs1770gainBackend,
     }
 
+    r128_backend_names = ["bs1770gain"]
+
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
 
@@ -1009,7 +1019,9 @@ class ReplayGainPlugin(BeetsPlugin):
                 u"Fatal replay gain error: {0}".format(e))
 
     def init_r128_backend(self):
-        backend_name = 'bs1770gain'
+        backend_name = self.config["backend"].as_str()
+        if backend_name not in self.r128_backend_names:
+            backend_name = "bs1770gain"
 
         try:
             self.r128_backend_instance = self.backends[backend_name](
@@ -1019,7 +1031,7 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(
                 u'replaygain initialization failed: {0}'.format(e))
 
-        self.r128_backend_instance.method = '--ebu'
+        self.r128_backend_instance.use_ebu_r128()
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
