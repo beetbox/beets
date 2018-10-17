@@ -865,7 +865,6 @@ class R128gainBackend(Backend):
         and a optional Gain object (the album gain).
         """
         # scan files
-        print(items)
         paths = [i.path.decode() for i in items]
         self._log.debug(u"scanning {0} with r128gain".format(paths))
         output = self._mod_r128gain.scan(paths, album_gain=is_album)
