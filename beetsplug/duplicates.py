@@ -205,7 +205,7 @@ class DuplicatesPlugin(BeetsPlugin):
                             u'computing checksum',
                             key, displayable_path(item.path))
             try:
-                checksum = command_output(args)
+                checksum = command_output(args).stdout
                 setattr(item, key, checksum)
                 item.store()
                 self._log.debug(u'computed checksum for {0} using {1}',

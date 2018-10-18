@@ -47,12 +47,12 @@ class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
     loading the required plugins."""
 
 
-def call(args):
+def call(args, **kwargs):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
     """
     try:
-        return command_output(args)
+        return command_output(args, **kwargs)
     except subprocess.CalledProcessError as e:
         raise ReplayGainError(
             u"{0} exited with status {1}".format(args[0], e.returncode)
@@ -206,7 +206,7 @@ class Bs1770gainBackend(Backend):
         self._log.debug(
             u'executing {0}', u' '.join(map(displayable_path, args))
         )
-        output = call(args)
+        output = call(args).stdout
 
         self._log.debug(u'analysis finished: {0}', output)
         results = self.parse_tool_output(output, path_list, is_album)
@@ -378,7 +378,7 @@ class CommandBackend(Backend):
 
         self._log.debug(u'analyzing {0} files', len(items))
         self._log.debug(u"executing {0}", " ".join(map(displayable_path, cmd)))
-        output = call(cmd)
+        output = call(cmd).stdout
         self._log.debug(u'analysis finished')
         return self.parse_tool_output(output,
                                       len(items) + (1 if is_album else 0))

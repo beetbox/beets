@@ -123,7 +123,7 @@ class IPFSPlugin(BeetsPlugin):
             cmd = "ipfs add -q -r".split()
         cmd.append(album_dir)
         try:
-            output = util.command_output(cmd).split()
+            output = util.command_output(cmd).stdout.split()
         except (OSError, subprocess.CalledProcessError) as exc:
             self._log.error(u'Failed to add {0}, error: {1}', album_dir, exc)
             return False
@@ -183,7 +183,7 @@ class IPFSPlugin(BeetsPlugin):
                 else:
                     cmd = "ipfs add -q ".split()
                 cmd.append(tmp.name)
-                output = util.command_output(cmd)
+                output = util.command_output(cmd).stdout
             except (OSError, subprocess.CalledProcessError) as err:
                 msg = "Failed to publish library. Error: {0}".format(err)
                 self._log.error(msg)
