@@ -24,7 +24,7 @@ import re
 import shutil
 import fnmatch
 import functools
-from collections import Counter
+from collections import Counter, namedtuple
 from multiprocessing.pool import ThreadPool
 import traceback
 import subprocess
@@ -763,7 +763,11 @@ def cpu_count():
             num = 0
     elif sys.platform == 'darwin':
         try:
-            num = int(command_output(['/usr/sbin/sysctl', '-n', 'hw.ncpu']))
+            num = int(command_output([
+                '/usr/sbin/sysctl',
+                '-n',
+                'hw.ncpu',
+                ]).stdout)
         except (ValueError, OSError, subprocess.CalledProcessError):
             num = 0
     else:
@@ -794,8 +798,14 @@ def convert_command_args(args):
     return [convert(a) for a in args]
 
 
+# stdout and stderr as bytes
+CommandOutput = namedtuple("CommandOutput", ("stdout", "stderr"))
+
+
 def command_output(cmd, shell=False):
     """Runs the command and returns its output after it has exited.
+
+    Returns a CommandOutput.
 
     ``cmd`` is a list of arguments starting with the command names. The
     arguments are bytes on Unix and strings on Windows.
@@ -831,7 +841,7 @@ def command_output(cmd, shell=False):
             cmd=' '.join(cmd),
             output=stdout + stderr,
         )
-    return stdout
+    return CommandOutput(stdout, stderr)
 
 
 def max_filename_length(path, limit=MAX_FILENAME_LENGTH):

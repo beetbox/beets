@@ -129,7 +129,7 @@ def im_getsize(path_in):
         ['-format', '%w %h', util.syspath(path_in, prefix=False)]
 
     try:
-        out = util.command_output(cmd)
+        out = util.command_output(cmd).stdout
     except subprocess.CalledProcessError as exc:
         log.warning(u'ImageMagick size query failed')
         log.debug(
@@ -265,7 +265,7 @@ def get_im_version():
         cmd = cmd_name + ['--version']
 
         try:
-            out = util.command_output(cmd)
+            out = util.command_output(cmd).stdout
         except (subprocess.CalledProcessError, OSError) as exc:
             log.debug(u'ImageMagick version check failed: {}', exc)
         else:
