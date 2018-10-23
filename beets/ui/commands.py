@@ -1376,10 +1376,10 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # objects.
     print_(u'Modifying {0} {1}s.'
            .format(len(objs), u'album' if album else u'item'))
-    changed = set()
+    changed = []
     for obj in objs:
         if print_and_modify(obj, mods, dels):
-            changed.add(obj)
+            changed.append(obj)
 
     # Still something to do?
     if not changed:
