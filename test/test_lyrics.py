@@ -165,7 +165,7 @@ class LyricsPluginTest(unittest.TestCase):
                   &nbsp;one
                   <br class='myclass'>
                   two  !
-                  <br><br \>
+                  <br><br \\>
                   <blink>four</blink>"""
         self.assertEqual(lyrics._scrape_strip_cruft(text, True),
                          "one\ntwo !\n\nfour")

@@ -137,7 +137,7 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     # Global options
     def test_import_global(self):
-        config['filefilter']['path'] = '.*track_1.*\.mp3'
+        config['filefilter']['path'] = '.*track_1.*\\.mp3'
         self.__run([
             'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
@@ -151,7 +151,7 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     # Album options
     def test_import_album(self):
-        config['filefilter']['album_path'] = '.*track_1.*\.mp3'
+        config['filefilter']['album_path'] = '.*track_1.*\\.mp3'
         self.__run([
             'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
@@ -169,7 +169,7 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     # Singleton options
     def test_import_singleton(self):
-        config['filefilter']['singleton_path'] = '.*track_1.*\.mp3'
+        config['filefilter']['singleton_path'] = '.*track_1.*\\.mp3'
         self.__run([
             'Singleton: %s' % displayable_path(self.artist_paths[0]),
             'Singleton: %s' % displayable_path(self.misc_paths[0])
@@ -188,8 +188,8 @@ class FileFilterPluginTest(unittest.TestCase, ImportHelper):
 
     # Album and singleton options
     def test_import_both(self):
-        config['filefilter']['album_path'] = '.*track_1.*\.mp3'
-        config['filefilter']['singleton_path'] = '.*track_2.*\.mp3'
+        config['filefilter']['album_path'] = '.*track_1.*\\.mp3'
+        config['filefilter']['singleton_path'] = '.*track_2.*\\.mp3'
         self.__run([
             'Album: %s' % displayable_path(self.artist_path),
             '  %s' % displayable_path(self.artist_paths[0]),
