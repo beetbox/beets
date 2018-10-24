@@ -1378,7 +1378,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
            .format(len(objs), u'album' if album else u'item'))
     changed = []
     for obj in objs:
-        if print_and_modify(obj, mods, dels):
+        if print_and_modify(obj, mods, dels) and obj not in changed:
             changed.append(obj)
 
     # Still something to do?
