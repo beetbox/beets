@@ -60,7 +60,7 @@ class CommandParseTest(unittest.TestCase):
     def test_backslash_in_arg(self):
         s = r'command "hello \\ there"'
         c = bpd.Command(s)
-        self.assertEqual(c.args, [u'hello \ there'])
+        self.assertEqual(c.args, [u'hello \\ there'])
 
 
 def suite():
