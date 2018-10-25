@@ -399,7 +399,7 @@ class ConvertPlugin(BeetsPlugin):
                                util.displayable_path(album.artpath),
                                util.displayable_path(dest))
             else:
-                self._log.info(u'Copying cover art to {0}',
+                self._log.info(u'Copying cover art from {0} to {1}',
                                util.displayable_path(album.artpath),
                                util.displayable_path(dest))
                 util.copy(album.artpath, dest)
