@@ -102,8 +102,7 @@ Fixes:
   tags
   Thanks to :user:`TaizoSimpson`.
   :bug:`3501`
-* Confusing typo when the convert plugin copies the art covers.
-
+* Confusing typo when the convert plugin copies the art covers. :bug:`3063`
 
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
