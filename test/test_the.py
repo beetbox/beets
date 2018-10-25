@@ -50,7 +50,7 @@ class ThePluginTest(_common.TestCase):
         self.assertEqual(ThePlugin().the_template_func(u'An A'), u'A, An')
 
     def test_custom_pattern(self):
-        config['the']['patterns'] = [u'^test\s']
+        config['the']['patterns'] = [u'^test\\s']
         config['the']['format'] = FORMAT
         self.assertEqual(ThePlugin().the_template_func(u'test passed'),
                          u'passed, test')
