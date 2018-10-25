@@ -98,6 +98,8 @@ Fixes:
 * Missing album art file during an update no longer causes a fatal exception
   (instead, an error is logged and the missing file path is removed from the
   library). :bug:`3030`
+  
+* Confusing typo when the convert plugin copies the art covers.
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
