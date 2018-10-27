@@ -87,6 +87,16 @@ class ReplayGainCliTestBase(TestHelper):
         self.teardown_beets()
         self.unload_plugins()
 
+    def _reset_replaygain(self, item):
+        item['rg_track_peak'] = None
+        item['rg_track_gain'] = None
+        item['rg_album_peak'] = None
+        item['rg_album_gain'] = None
+        item['r128_track_gain'] = None
+        item['r128_album_gain'] = None
+        item.write()
+        item.store()
+
     def test_cli_saves_track_gain(self):
         for item in self.lib.items():
             self.assertIsNone(item.rg_track_peak)
@@ -142,6 +152,26 @@ class ReplayGainCliTestBase(TestHelper):
 
         self.assertNotEqual(max(gains), 0.0)
         self.assertNotEqual(max(peaks), 0.0)
+
+    def test_cli_writes_only_r128_tags(self):
+        if self.backend == "command":
+            # opus not supported by command backend
+            return
+
+        album = self.add_album_fixture(2, ext="opus")
+        for item in album.items():
+            self._reset_replaygain(item)
+
+        self.run_command(u'replaygain', u'-a')
+
+        for item in album.items():
+            mediafile = MediaFile(item.path)
+            # does not write REPLAYGAIN_* tags
+            self.assertIsNone(mediafile.rg_track_gain)
+            self.assertIsNone(mediafile.rg_album_gain)
+            # writes R128_* tags
+            self.assertIsNotNone(mediafile.r128_track_gain)
+            self.assertIsNotNone(mediafile.r128_album_gain)
 
     def test_target_level_has_effect(self):
         item = self.lib.items()[0]
