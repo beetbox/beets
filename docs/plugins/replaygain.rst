@@ -96,8 +96,13 @@ configuration file. The available options are:
   Default: ``command``.
 - **overwrite**: Re-analyze files that already have ReplayGain tags.
   Default: ``no``.
-- **targetlevel**: A number of decibels for the target loudness level.
-  Default: 89.
+- **targetlevel**: A number of decibels for the target loudness level for files
+  using ``REPLAYGAIN_`` tags.
+  Default: ``89``.
+- **r128_targetlevel**: The target loudness level in decibels (i.e.
+  ``<loudness in LUFS> + 107``) for files using ``R128_`` tags.
+  Default: 84 (Use ``83`` for ATSC A/85, ``84`` for EBU R128 or ``89`` for
+  ReplayGain 2.0.)
 - **r128**: A space separated list of formats that will use ``R128_`` tags with
   integer values instead of the common ``REPLAYGAIN_`` tags with floating point
   values. Requires the "ffmpeg" backend.
@@ -119,6 +124,13 @@ This option only works with the "ffmpeg" backend:
 
 - **peak**: Either ``true`` (the default) or ``sample``. ``true`` is
   more accurate but slower.
+
+This option is deprecated:
+
+- **method**: The loudness scanning standard: either `replaygain` for
+  ReplayGain 2.0, `ebu` for EBU R128, or `atsc` for ATSC A/85. This dictates
+  the reference level: -18, -23, or -24 LUFS respectively. Only supported by
+  "bs1770gain" backend.
 
 Manual Analysis
 ---------------
