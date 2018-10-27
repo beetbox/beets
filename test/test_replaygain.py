@@ -143,6 +143,25 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertNotEqual(max(gains), 0.0)
         self.assertNotEqual(max(peaks), 0.0)
 
+    def test_target_level_has_effect(self):
+        item = self.lib.items()[0]
+
+        def analyse(target_level):
+            self.config['replaygain']['targetlevel'] = target_level
+            self._reset_replaygain(item)
+            self.run_command(u'replaygain', '-f')
+            mediafile = MediaFile(item.path)
+            return mediafile.rg_track_gain
+
+        gain_relative_to_84 = analyse(84)
+        gain_relative_to_89 = analyse(89)
+
+        # check that second calculation did work
+        if gain_relative_to_84 is not None:
+            self.assertIsNotNone(gain_relative_to_89)
+
+        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
+
 
 @unittest.skipIf(not GST_AVAILABLE, u'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
