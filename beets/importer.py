@@ -737,6 +737,8 @@ class ImportTask(BaseImportTask):
                     # old paths.
                     item.move(operation)
 
+            plugins.send('write_import', lib=session.lib, item=item)
+
             if write and (self.apply or self.choice_flag == action.RETAG):
                 item.try_write()
 
