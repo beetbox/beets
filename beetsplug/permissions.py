@@ -8,6 +8,7 @@ like the following in your config.yaml to configure:
     permissions:
             file: 644
             dir: 755
+            before_write: yes
 """
 import os
 from beets import config, util
@@ -66,8 +67,12 @@ class Permissions(BeetsPlugin):
         self.config.add({
             u'file': '644',
             u'dir': '755',
+            u'before_write': True,
         })
+        self.before_write = self.config['before_write'].get(bool)
 
+        if self.config['before_write']:
+            self.register_listener('write_import', self.fix)
         self.register_listener('item_imported', self.fix)
         self.register_listener('album_imported', self.fix)
 
