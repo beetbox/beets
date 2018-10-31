@@ -73,7 +73,8 @@ class Permissions(BeetsPlugin):
 
         if self.config['before_write']:
             self.register_listener('write_import', self.fix)
-        self.register_listener('item_imported', self.fix)
+        else:
+            self.register_listener('item_imported', self.fix)
         self.register_listener('album_imported', self.fix)
 
     def fix(self, lib, item=None, album=None):
