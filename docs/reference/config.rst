@@ -288,8 +288,8 @@ by one. When it is on, the pregap track for each disc can be numbered zero.
 
 .. _config-aunique:
 
-anique
-~~~~~~
+aunique
+~~~~~~~
 
 These options are used to generate a string that is guaranteed to be unique
 among all albums in the library who share the same set of keys.
