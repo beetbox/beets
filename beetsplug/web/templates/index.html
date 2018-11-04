@@ -1,98 +1,138 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>beets</title>
+<html lang="en">
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
 
-        <link rel="stylesheet"
-        href="{{ url_for('static', filename='beets.css') }}" type="text/css">
+      <title>beets</title>
+      <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
+      <link href="{{ url_for('static', filename='css/beets.css') }}" rel="stylesheet">
 
-        <script src="{{ url_for('static', filename='jquery.js') }}"></script>
-        <script src="{{ url_for('static', filename='underscore.js') }}">
-        </script>
-        <script src="{{ url_for('static', filename='backbone.js') }}"></script>
-        <script src="{{ url_for('static', filename='beets.js') }}"></script>
-    </head>
-    <body>
-        <div id="header">
-            <h1>beets</h1>
-            <div id="player">
-                <audio></audio>
+  </head>
+  <body>
+<!-- Static navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">
+              <span>
+                  <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
+                  Beets
+              </span>
+          </a>
+        </div>
+      </div>
+    </nav>
 
-                <button class="disabled">&#9654;</button>
-                <button class="play">&#9654;</button>
-                <button class="pause" style="letter-spacing: 1px;">&#10073;&#10073;</button>
+    <div class="container-fluid">
+        <div class="row">
+            <div id="entities" class="col-md-4">
+                <form id="queryForm">
+                    <div class="input-group">
+                        <input class="form-control" type="search" id="query" placeholder="Query + Enter">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="submit">
+                                <i class="glyphicon glyphicon-search"></i>
+                            </button>
+                        </span>
+                    </div>
+                </form>
+                <div class="pre-scrollable">
+                    <div id="results" class="list-group"></div>
+                </div>
+            </div>
 
-                <span class="times">
-                    <span class="currentTime">
-                    </span>
-                </span>
+            <div class="col-md-4 pre-scrollable">
+                <h4>Meta Data</h4>
+                <div id='details'></div>
+            </div>
+
+            <div class="col-md-4 pre-scrollable">
+                <h4>Lyrics</h4>
+                <div id="lyrics"></div>
             </div>
         </div>
+    </div>
 
-        <div id="entities">
-            <form id="queryForm">
-                <input type="search" id="query" placeholder="Query">
-            </form>
-            <ul id="results">
-            </ul>
+    <nav class="navbar navbar-default navbar-fixed-bottom">
+        <div id="player">
+            <audio></audio>
+
+            <div class="container-fluid">
+                <div class="row">
+                    <section class="btn-group col-sm-12">
+                        <button type="button" class="btn btn-default btn-lg col-sm-1" id='stateButton'>
+                            <i class="glyphicon glyphicon-play"></i>
+                        </button>
+                        <button type="button" class="btn btn-default btn-lg col-sm-8">
+                            <input type="range" min="0" max="100" step="0.01" value="0" id='slider'>
+                        </button>
+                        <button type="button" class="btn btn-default btn-lg col-sm-1" title="">
+                            <span id="currentTime">0:00</span>
+                            /
+                            <span id="totalTime">0:00</span>
+                        </button>
+
+                        <button type="button" class="btn btn-default btn-lg col-sm-1" title="" id='repeatButton'>
+                            <i class="glyphicon glyphicon-repeat"></i>
+                        </button>
+                        <button type="button" class="btn btn-default btn-lg col-sm-1" title="" id='randomButton'>
+                            <i class="glyphicon glyphicon-random"></i>
+                        </button>
+                    </section>
+                </div>
+
+                <p id="nowPlaying"></p>
+
+            </div>
         </div>
+    </nav>
 
-        <div id="main-detail">
-        </div>
 
-        <div id="extra-detail">
-        </div>
-
-        <!-- Templates. -->
-        <script type="text/template" id="item-entry-template">
-            <%= title %>
-            <span class="playing">&#9654;</span>
-        </script>
-        <script type="text/template" id="item-main-detail-template">
-            <span class="artist"><%= artist %></span>
-            <span class="album">
-                <span class="albumtitle"><%= album %></span>
-                <span class="year">(<%= year %>)</span>
+    <script type='text/template' id='result-item-template'>
+        <a href="#" class="list-group-item clearfix">
+            <%= artist %> - <%= title %>
+            <span class="pull-right">
+                <button id="play-button" class="btn btn-xs btn-info">
+                    <span class="glyphicon glyphicon-play"></span>
+                </button>
             </span>
-            <span class="title"><%= title %></span>
+        </a>
+    </script>
 
-            <button class="play">&#9654;</button>
+    <script type="text/template" id="result-lyrics-template">
+        <div class="lyrics"><%= lyrics %></div>
+    </script>
 
-            
-        </script>
-        <script type="text/template" id="item-extra-detail-template">
-            <dl>
-                <dt>Track</dt>
-                <dd><%= track %>/<%= tracktotal %></dd>
-                <% if (disc) { %>
-                    <dt>Disc</dt>
-                    <dd><%= disc %>/<%= disctotal %></dd>
-                <% } %>
-                <dt>Length</dt>
-                <dd><%= timeFormat(length) %></dd>
-                <dt>Format</dt>
-                <dd><%= format %></dd>
-                <dt>Bitrate</dt>
-                <dd><%= Math.round(bitrate/1000) %> kbps</dd>
-                <% if (mb_trackid) { %>
-                    <dt>MusicBrainz entry</dt>
-                    <dd>
-                        <a target="_blank" href="http://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
-                    </dd>
-                <% } %>
-                <dt>File</dt>
-                <dd>
-                    <a target="_blank" class="download" href="item/<%= id %>/file">download</a>
-                </dd>
-                <% if (lyrics) { %>
-                    <dt>Lyrics</dt>
-                    <dd class="lyrics"><%= lyrics %></dd>
-                <% } %>
-                <% if (comments) { %>
-                    <dt>Comments</dt>
-                    <dd><%= comments %></dd>
-                <% } %>
-            </dl>
-        </script>
-    </body>
+    <script type="text/template" id="result-detail-template">
+        <table class="table table-bordered table-striped table-condensed" id="metadata">
+        <tbody>
+            <tr class="success"><th>Artist</th><td><%= artist %></td></tr>
+            <tr><th>Title</th><td><%= title %></td></tr>
+            <tr><th>Album</th><td><%= album %></td></tr>
+            <tr><th>Track</th><td><%= track %>/<%= tracktotal %></td></tr>
+            <tr><th>Bitrate</th><td><%= formatedBitrate %> kbps</td></tr>
+            <tr><th>Format</th><td><%= format %></td></tr>
+            <tr><th>Genre</th><td><%= genre %></td></tr>
+            <tr><th>Time</th><td><%= time %></td></tr>
+        </tbody>
+        </table>
+    </script>
+
+    <script type="text/template" id="now-playing-template">
+        <i class="glyphicon glyphicon-music"></i>
+        <%= artist %> - <%= title %>
+    </script>
+
+    <script src="{{ url_for('static', filename='bundle.js') }}"></script>
+
+  </body>
 </html>

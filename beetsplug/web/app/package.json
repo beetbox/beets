@@ -1,0 +1,26 @@
+{
+  "name": "beets-web",
+  "version": "1.0.0",
+  "description": "Web Interface to beets",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "browserify main.js --debug | exorcist bundle.js.map > bundle.js",
+    "watch": "watchify main.js -d -o 'exorcist bundle.js.map > bundle.js' -v",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Martin Atukunda <matlads@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "backbone": "^1.3.3",
+    "backbone.marionette": "^4.0.0",
+    "marionette.approuter": "^1.0.1",
+    "underscore": "^1.9.1"
+  },
+  "devDependencies": {
+    "browserify": "^16.2.3",
+    "exorcist": "^1.0.1",
+    "watchify": "^3.11.0"
+  }
+}
