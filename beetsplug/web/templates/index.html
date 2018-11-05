@@ -8,6 +8,7 @@
 
       <title>beets</title>
       <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
+      <link href="{{ url_for('static', filename='css/bootstrap-theme.css') }}" rel="stylesheet">
       <link href="{{ url_for('static', filename='css/beets.css') }}" rel="stylesheet">
 
   </head>
@@ -35,6 +36,7 @@
     <div class="container-fluid">
         <div class="row">
             <div id="entities" class="col-md-4">
+                <h4>Search/Results</h4>
                 <form id="queryForm">
                     <div class="input-group">
                         <input class="form-control" type="search" id="query" placeholder="Query + Enter">
@@ -45,17 +47,15 @@
                         </span>
                     </div>
                 </form>
-                <div class="pre-scrollable">
-                    <div id="results" class="list-group"></div>
-                </div>
+                <div id='results'></div>
             </div>
 
-            <div class="col-md-4 pre-scrollable">
+            <div class="col-md-4">
                 <h4>Meta Data</h4>
                 <div id='details'></div>
             </div>
 
-            <div class="col-md-4 pre-scrollable">
+            <div class="col-md-4">
                 <h4>Lyrics</h4>
                 <div id="lyrics"></div>
             </div>
@@ -69,7 +69,7 @@
             <div class="container-fluid">
                 <div class="row">
                     <section class="btn-group col-sm-12">
-                        <button type="button" class="btn btn-default btn-lg col-sm-1" id='stateButton'>
+                        <button type="button" class="btn btn-default btn-lg col-sm-1" id='stateButton' disabled=true>
                             <i class="glyphicon glyphicon-play"></i>
                         </button>
                         <button type="button" class="btn btn-default btn-lg col-sm-8">
@@ -109,15 +109,16 @@
     </script>
 
     <script type="text/template" id="result-lyrics-template">
-        <div class="lyrics"><%= lyrics %></div>
+        <div class="lyrics pre-scrollable"><%= lyrics %></div>
     </script>
 
     <script type="text/template" id="result-detail-template">
-        <table class="table table-bordered table-striped table-condensed" id="metadata">
+        <table class="table table-bordered table-striped table-condensed table-responsive" id="metadata">
         <tbody>
             <tr class="success"><th>Artist</th><td><%= artist %></td></tr>
             <tr><th>Title</th><td><%= title %></td></tr>
             <tr><th>Album</th><td><%= album %></td></tr>
+            <tr><th>Year</th><td><%= year %></td></tr>
             <tr><th>Track</th><td><%= track %>/<%= tracktotal %></td></tr>
             <tr><th>Bitrate</th><td><%= formatedBitrate %> kbps</td></tr>
             <tr><th>Format</th><td><%= format %></td></tr>
