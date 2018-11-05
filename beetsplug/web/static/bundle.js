@@ -40,25 +40,13 @@ var Items = Bb.Collection.extend({
         var queryURL = query.split(/\s+/).map(encodeURIComponent).join('/');
         var url = api + 'item/query/' + queryURL;
         var that = this;
-        $.getJSON(url, null, function(data){
+        $.getJSON(url, function(data){
             that.set(data.results);
         });
     }
 });
-
 // Another Global (Oh My God!! :=D )
 const items = new Items();
-
-var Router = AppRouter.extend({
-    routes: {
-        'item/query/:query': 'itemQuery'
-    },
-
-    itemQuery: function(query){
-        items.search(query);
-    }
-});
-var router = new Router();
 
 var ItemDetailView = Mn.View.extend({
     template: _.template($('#result-detail-template').html()),
@@ -92,6 +80,8 @@ var ResultView = Mn.View.extend({
 });
 
 var ResultsView = Mn.CollectionView.extend({
+
+    className: 'pre-scrollable list-group',
     childView: ResultView,
     emptyView: EmptyView,
 
@@ -111,20 +101,23 @@ var ResultsView = Mn.CollectionView.extend({
         this.trigger('player:play', view.model);
     },
 
-    selectNext: function(model, repeat, random){
-        var nextItem;
-        if (repeat && !random) {
-            nextItem = model;
-        } else if (!repeat && random) {
-            // TODO: make me into a real boy
-            console.log('Random mode is not implemented');
-        } else if (!random && !repeat) {
+    selectNext: function(model, random){
+        var nextItem = null;
+
+        if (model){
             var index = this.collection.indexOf(model);
             if(index >= 0 && index < this.collection.length - 1) {
                 nextItem = this.collection.at(index + 1);
             }
         }
-        this.trigger('player:play', nextItem);
+
+        if (random) {
+            nextItem = this.collection.sample();
+        }
+
+        if (nextItem) {
+            this.trigger('player:play', nextItem);
+        }
     },
 
 });
@@ -136,9 +129,13 @@ var NowPlayingView = Mn.View.extend({
 var PlayerView = Mn.View.extend({
     el: '#player',
 
+    modelEvents: {
+        'change': 'onModelChange'
+    },
+
     ui: {
         stateButton: '#stateButton',
-        repeatButton: '#repeatButton',
+        loopButton: '#repeatButton',
         randomButton: '#randomButton',
         stateI: '#stateButton i.glyphicon',
         label: '#nowPlaying',
@@ -149,22 +146,14 @@ var PlayerView = Mn.View.extend({
 
     events: {
         'click @ui.stateButton': 'onStateButtonClick',
-        'click @ui.repeatButton'(event) {
-            this.getUI('repeatButton').toggleClass('active');
-            this.getUI('randomButton').removeClass('active');
-            this.repeat = !this.repeat;
-        },
-        'click @ui.randomButton'(event){
-            this.getUI('randomButton').toggleClass('active');
-            this.getUI('repeatButton').removeClass('active');
-            this.random = !this.random;
-        }
+        'click @ui.loopButton': 'onLoopButtonClick',
+        'click @ui.randomButton': 'onRandomButtonClick',
+
     },
 
     initialize: function(){
         var audio = this.audio = globalAudioObject;
-        this.random = false;
-        this.repeat = false;
+        this.audio.loop = false;
         this.onModelChange();
 
         var that = this;
@@ -181,20 +170,22 @@ var PlayerView = Mn.View.extend({
     },
 
     sendEndedTrigger: function(){
-        if (!this.repeat){
-            this.trigger('audio:ended', this.model, this.random, this.repeat);
+        if (!this.audio.loop){
+            this.trigger('audio:ended', this.model, this.random);
         }
     },
 
     onModelChange: function(){
-        if (this.repeat) {
-            this.play();
-        } else {
-            this.audio.setAttribute('src', this.model.getFileUrl());
-            this.updateLabel();
-            this.setupSlider();
-            this.play();
+        if (!this.model) {
+            this.getUI('stateButton').prop('disabled', true);
+            return;
         }
+
+        this.audio.setAttribute('src', this.model.getFileUrl());
+        this.getUI('stateButton').prop('disabled', true);
+        this.updateLabel();
+        this.setupSlider();
+        this.play();
     },
 
     updateLabel: function(){
@@ -221,6 +212,7 @@ var PlayerView = Mn.View.extend({
     play: function(){
         if (! this.playing) {
             this.audio.play();
+            this.getUI('stateButton').prop('disabled', false);
             this.getUI('stateI').removeClass('glyphicon-play').addClass('glyphicon-pause');
             this.playing = true;
         }
@@ -238,8 +230,22 @@ var PlayerView = Mn.View.extend({
         if (this.playing) {
             this.pause();
         } else {
-            this.play();
+            if (this.model) {
+                this.play();
+            } else {
+                this.trigger('player:first');
+            }
         }
+    },
+
+    onLoopButtonClick: function() {
+        this.getUI('loopButton').toggleClass('active');
+        this.audio.loop = this.getUI('loopButton').hasClass('active');
+    },
+
+    onRandomButtonClick: function() {
+        this.getUI('randomButton').toggleClass('active');
+        this.random = this.getUI('randomButton').hasClass('active');
     }
 });
 
@@ -257,9 +263,7 @@ var SearchView = Mn.View.extend({
     onSubmit: function(ev){
         ev.preventDefault();
         var value = this.getUI('query').val();
-        var queryItem = encodeURIComponent(value);
-
-        router.navigate('item/query/' + queryItem, true);
+        this.trigger('search:query', value);
     }
 });
 
@@ -269,7 +273,9 @@ var RootView = Mn.View.extend({
     childViewEvents: {
         'detail:show': 'showDetail',
         'player:play': 'playItem',
+        'player:first': 'playFirst',
         'audio:ended': 'selectNext',
+        'search:query': 'doSearch',
     },
 
     regions: {
@@ -279,7 +285,7 @@ var RootView = Mn.View.extend({
         },
         results: {
             el: '#results',
-            replaceElement: true,
+            replaceElement: false,
         },
         details: '#details',
         lyrics: '#lyrics',
@@ -291,9 +297,13 @@ var RootView = Mn.View.extend({
     },
 
     initialize: function(){
+
+        this.items = items;
+
         // show the children here, since they are already rendered
         this.showChildView('search', new SearchView());
-        this.showChildView('results', new ResultsView({collection: items}));
+        this.showChildView('results', new ResultsView({collection: this.items}));
+        this.showChildView('player', new PlayerView());
     },
 
     showDetail: function(model){
@@ -303,14 +313,35 @@ var RootView = Mn.View.extend({
     },
 
     playItem: function(model) {
-        this.showChildView('player', new PlayerView({ model: model }));
+        this.showChildView('player', new PlayerView({model: model}));
     },
 
-    selectNext: function(model, repeat, random){
+    playFirst: function(){
+        if (this.items.length){
+            this.playItem( this.items.at(0) );
+        }
+    },
+
+    selectNext: function(model, random){
         var v = this.getChildView('results');
-        v.selectNext(model, repeat, random);
+        v.selectNext(model, random);
+    },
+
+    doSearch: function(searchItem){
+        router.navigate('item/query/' + searchItem, true);
     }
 });
+
+var Router = AppRouter.extend({
+    routes: {
+        'item/query/:query': 'itemQuery'
+    },
+
+    itemQuery: function(query){
+        items.search(query);
+    }
+});
+var router = new Router();
 
 var App = Mn.Application.extend({
     onBeforeStart: function(){
