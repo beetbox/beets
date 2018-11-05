@@ -92,7 +92,7 @@ class CountedQueue(queue.Queue):
     finished with the queue.
     """
     def __init__(self, maxsize=0):
-        queue.Queue.__init__(self, maxsize)
+        super(CountedQueue, self).__init__(maxsize)
         self.nthreads = 0
         self.poisoned = False
 
