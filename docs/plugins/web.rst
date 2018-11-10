@@ -2,8 +2,8 @@ Web Plugin
 ==========
 
 The ``web`` plugin is a very basic alternative interface to beets that
-supplements the CLI. It can't do much right now, and the interface is a little
-clunky, but you can use it to query and browse your music and---in browsers that
+supplements the CLI. It can't do much right now, and the interface is bootstrap
+based, but you can use it to query and browse your music and---in browsers that
 support HTML5 Audio---you can even play music.
 
 While it's not meant to replace the CLI, a graphical interface has a number of
