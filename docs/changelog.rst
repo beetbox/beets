@@ -49,11 +49,14 @@ New features:
 
 Changes:
 
+* :doc:`/plugins/web` is now updated to the newer javascript, and CSS
+  libraries, and sports a bootstrap based interface. All previously exposed
+  functionality is still present, with stop, loop, and random options added.
+  Thanks to :user:`matlads`.
 * :doc:`/plugins/mbsync` no longer queries MusicBrainz when either the
   ``mb_albumid`` or ``mb_trackid`` field is invalid
   See also the discussion on Google Groups_
   Thanks to :user:`arogl`.
-
 .. _Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
 
 Fixes:
