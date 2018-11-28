@@ -177,6 +177,8 @@ class Model(object):
         """
         self._db = db
         self._dirty = set()
+        self._raw_values_fixed = {}
+        self._raw_values_flex = {}
         self._values_fixed = {}
         self._values_flex = {}
 
@@ -193,9 +195,9 @@ class Model(object):
         """
         obj = cls(db)
         for key, value in fixed_values.items():
-            obj._values_fixed[key] = cls._type(key).from_sql(value)
+            obj._raw_values_fixed[key] = value
         for key, value in flex_values.items():
-            obj._values_flex[key] = cls._type(key).from_sql(value)
+            obj._raw_values_flex[key] = value
         return obj
 
     def __repr__(self):
@@ -232,7 +234,9 @@ class Model(object):
         """
         new = self.__class__()
         new._db = self._db
+        new._raw_values_fixed = self._raw_values_fixed.copy()
         new._values_fixed = self._values_fixed.copy()
+        new._raw_values_flex = self._raw_values_flex.copy()
         new._values_flex = self._values_flex.copy()
         new._dirty = self._dirty.copy()
         return new
@@ -256,8 +260,17 @@ class Model(object):
         if key in getters:  # Computed.
             return getters[key](self)
         elif key in self._fields:  # Fixed.
-            return self._values_fixed.get(key, self._type(key).null)
+            if key in self._values_fixed:
+                return self._values_fixed[key]
+            elif key in self._raw_values_fixed:
+                self._values_fixed[key] = self._type(key).from_sql(self._raw_values_fixed[key])
+                return self._values_fixed[key]
+            else:
+                return self._type(key).null
         elif key in self._values_flex:  # Flexible.
+            return self._values_flex[key]
+        elif key in self._raw_values_flex:  # Flexible.
+            self._values_flex[key] = self._type(key).from_sql(self._raw_values_flex[key])
             return self._values_flex[key]
         else:
             raise KeyError(key)
@@ -268,8 +281,12 @@ class Model(object):
         """
         # Choose where to place the value.
         if key in self._fields:
+            if not key in self._values_fixed and key in self._raw_values_fixed:
+                self._values_fixed[key] = self._type(key).from_sql(self._raw_values_fixed[key])
             source = self._values_fixed
         else:
+            if not key in self._values_flex and key in self._raw_values_flex:
+                self._values_flex[key] = self._type(key).from_sql(self._raw_values_flex[key])
             source = self._values_flex
 
         # If the field has a type, filter the value.
@@ -294,6 +311,11 @@ class Model(object):
         """
         if key in self._values_flex:  # Flexible.
             del self._values_flex[key]
+            if key in self._raw_values_flex:
+                del self._raw_values_flex[key]
+            self._dirty.add(key)  # Mark for dropping on store.
+        elif key in self._raw_values_flex:  # Flexible
+            del self._raw_values_flex[key]
             self._dirty.add(key)  # Mark for dropping on store.
         elif key in self._fields:  # Fixed
             setattr(self, key, self._type(key).null)
@@ -307,7 +329,7 @@ class Model(object):
         `computed` parameter controls whether computed (plugin-provided)
         fields are included in the key list.
         """
-        base_keys = list(self._fields) + list(self._values_flex.keys())
+        base_keys = list(self._fields) + list(self._values_flex.keys()) + list(self._raw_values_flex.keys())
         if computed:
             return base_keys + list(self._getters().keys())
         else:
@@ -436,7 +458,9 @@ class Model(object):
         self._check_db()
         stored_obj = self._db._get(type(self), self.id)
         assert stored_obj is not None, u"object {0} not in DB".format(self.id)
+        self._raw_values_fixed = {}
         self._values_fixed = {}
+        self._raw_values_flex = {}
         self._values_flex = {}
         self.update(dict(stored_obj))
         self.clear_dirty()
