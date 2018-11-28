@@ -46,6 +46,8 @@ New features:
   example, ``beet modify -a artist:beatles artpath!`` resets ``artpath``
   attribute from matching albums back to the default value.
   :bug:`2497`
+* Modify selection can now be applied early without selecting every item.
+  :bug:`3083`
 
 Changes:
 

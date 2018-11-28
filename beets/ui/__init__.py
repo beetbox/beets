@@ -408,9 +408,14 @@ def input_select_objects(prompt, objs, rep):
         out = []
         for obj in objs:
             rep(obj)
-            if input_yn(u'%s? (yes/no)' % prompt, True):
+            answer = input_options(
+                ('y', 'n', 'q'), True, u'%s? (yes/no/quit)' % prompt,
+                u'Enter Y or N:'
+            )
+            if answer == u'y':
                 out.append(obj)
-            print()  # go to a new line
+            elif answer == u'q':
+                return out
         return out
 
     else:  # No.
