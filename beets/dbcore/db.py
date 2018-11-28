@@ -32,6 +32,7 @@ from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
 
+
 class DBAccessError(Exception):
     """The SQLite database became inaccessible.
 
@@ -567,9 +568,7 @@ class Results(object):
         first.
         """
 
-        # First fetch all flexible attributes for all items in the result.
-        # Doing the per-item filtering in python is faster than issuing
-        # one query per item to sqlite.
+        # Index flexible attributes by the item ID, so we have easier access
         flex_attrs = self._get_indexed_flex_attrs()
 
         index = 0  # Position in the materialized objects.
@@ -913,7 +912,9 @@ class Database(object):
             "ORDER BY {0}".format(order_by) if order_by else '',
         )
 
-        # Fetch flexible attributes for items matching the main query
+        # Fetch flexible attributes for items matching the main query.
+        # Doing the per-item filtering in python is faster than issuing
+        # one query per item to sqlite.
         flex_sql = ("""
             SELECT * FROM {0} WHERE entity_id IN
                 (SELECT id FROM {1} WHERE {2});
