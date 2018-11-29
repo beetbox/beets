@@ -589,7 +589,7 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._setf(u'%title{$title}')
         self._assert_dest(b'/base/The Title')
 
-    def test_title_case_variable(self):
+    def test_title_case_variable_aphostrophe(self):
         self._setf(u'%title{I can\'t}')
         self._assert_dest(b'/base/I Can\'t')
 
