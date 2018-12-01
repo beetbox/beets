@@ -53,6 +53,8 @@ Changes:
   ``mb_albumid`` or ``mb_trackid`` field is invalid
   See also the discussion on Google Groups_
   Thanks to :user:`arogl`.
+* :doc:`/plugins/export` now also exports ``path`` field if user explicitly
+  specifies it with ``-i`` parameter. Only works when exporting library fields.
 
 .. _Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
 
