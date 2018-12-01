@@ -220,8 +220,13 @@ def make_key_filter(include):
     dictionary that only includes the key-value pairs where the key
     glob-matches one of the keys in `include`.
     """
+    # By default, if no field inclusions are specified, include
+    # everything but `path`.
     if not include:
-        return identity
+        def filter_(data):
+            return {k: v for k, v in data.items()
+                    if k != 'path'}
+        return filter_
 
     matchers = []
     for key in include:
@@ -237,8 +242,3 @@ def make_key_filter(include):
         return filtered
 
     return filter_
-
-
-def identity(val):
-    val.pop('path', None)  # path is fetched from item
-    return val
