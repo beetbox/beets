@@ -583,10 +583,7 @@ class Results(object):
             else:
                 while self._rows:
                     row = self._rows.pop(0)
-                    if flex_attrs:
-                        obj = self._make_model(row, flex_attrs[row['id']])
-                    else:
-                        obj = self._make_model(row)
+                    obj = self._make_model(row, flex_attrs.get(row['id'], {}))
                     # If there is a slow-query predicate, ensurer that the
                     # object passes it.
                     if not self.query or self.query.match(obj):
