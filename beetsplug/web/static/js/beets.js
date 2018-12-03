@@ -1,3 +1,4 @@
+// vim expandtab ts=4 sw=4 ai
 $(document).ready(function(){
 
     var api = "/";
@@ -20,7 +21,8 @@ $(document).ready(function(){
         defaults: {
             artist: 'Artist',
             title: 'Track Title',
-            time: 0
+            time: 0,
+            playing: false
         },
 
         getFileUrl: function(){
@@ -54,7 +56,7 @@ $(document).ready(function(){
         }
     });
 
-    var ItemView = Backbone.View.extend({
+    var ItemView = BaseView.extend({
         template: _.template( $('#item-template').html()),
         events: {
             'click #play-button': 'onPlayButtonClick',
@@ -63,6 +65,8 @@ $(document).ready(function(){
         },
         initialize: function(){
             _.bindAll(this, 'render');
+            this.listenTo(this.model, 'change', this.render);
+            this.listenTo(Backbone, 'play:stop', this.stop);
             this.render();
         },
         render: function(){
@@ -75,14 +79,34 @@ $(document).ready(function(){
         },
         onPlayButtonClick: function(ev){
             ev.preventDefault();
-            Backbone.trigger('play:item', this.model);
+            if (this.model.get('playing')){
+                Backbone.trigger('play:pause');
+                this.stop();
+            } else {
+                Backbone.trigger('play:clear', this.model);
+                Backbone.trigger('play:item', this.model);
+                this.play();
+            }
+        },
+        stop: function(){
+            this.model.set('playing', false);
+            this.render();
+        }, 
+        play: function(){
+            this.model.set('playing', true);
+            this.render();
         }
     });
 
-    var ItemsView = Backbone.View.extend({
+    var ItemsView = BaseView.extend({
         initialize: function(){
+            this.repeat = false;
+
+            this.listenTo(Backbone, 'play:setRepeat', this.setRepeat);
+            this.listenTo(Backbone, 'play:clear', this.clearPlaying);
             this.listenTo(Backbone, 'play:first', this.onPlayFirst);
             this.listenTo(Backbone, 'play:next', this.onPlayNext);
+            this.listenTo(Backbone, 'items:shuffle', this.shuffle);
             this.collection.on('reset', this.render, this);
             this.collection.on('update', this.render, this);
         },
@@ -99,7 +123,8 @@ $(document).ready(function(){
             return this;
         },
 
-        onPlayFirst: function(random){
+        onPlayFirst: function(){
+            this.clearPlaying();
             var first = this.collection.at(0);
             if (random) {
                 first = this.collection.sample();
@@ -109,7 +134,13 @@ $(document).ready(function(){
             }
         },
 
-        onPlayNext: function(current, random) {
+        onPlayNext: function(current) {
+            if (this.repeat) {
+                Backbone.trigger('play:repeat');
+                return;
+            }
+
+            this.clearPlaying();
             var next = null;
             if (current) {
                 var n = this.collection.findWhere({id: current.get('id')});
@@ -120,17 +151,28 @@ $(document).ready(function(){
                 }
             }
 
-            if (random) {
-                next = this.collection.sample();
-            }
-
             if (next) {
                 Backbone.trigger('play:item', next);
             }
+        },
+
+        clearPlaying: function(){
+            this.collection.each(function(item){
+                item.set('playing', false);
+            });
+        },
+
+        shuffle: function(){
+            this.collection.reset(this.collection.shuffle(), {silent:true});
+            this.render();
+        },
+
+        setRepeat: function(){
+            this.repeat = !this.repeat;
         }
     });
 
-    var MetaView = Backbone.View.extend({
+    var MetaView = BaseView.extend({
         template: _.template( $('#metadata-template').html() ),
         initialize: function(){
             this.listenTo(Backbone, 'show:item', this.show);
@@ -145,7 +187,7 @@ $(document).ready(function(){
         }
     });
 
-    var LyricsView = Backbone.View.extend({
+    var LyricsView = BaseView.extend({
         template: _.template($('#lyrics-template').html()),
         initialize: function(){
             this.listenTo(Backbone, 'show:item', this.show);
@@ -160,121 +202,122 @@ $(document).ready(function(){
         }
     });
 
-    var PlayerView = BaseView.extend({
-        playingTemplate: _.template($('#playing-template').html()),
-
+    var PlayPauseButtonView = BaseView.extend({
         events: {
-            'click .play-button': 'onPlayButtonClick',
-            'click .stop-button': 'onStopButtonClick',
-            'click .pause-button': 'onPauseButtonClick',
-            'click .repeat-button': 'onRepeatButtonClick',
-            'click .random-button': 'onRandomButtonClick',
+            'click': 'togglePlay'
+        },
+        togglePlay: function(){
+            Backbone.trigger('play:PlayOrPause');
+        },
+    });
+
+    var StopButtonView = BaseView.extend({
+        events: {
+            'click': 'stopPlay',
+        },
+        stopPlay: function(){
+            Backbone.trigger('play:stop');
+        }
+    });
+
+    var SliderView = BaseView.extend({
+        events: {
+            'input': 'setSlider',
         },
 
-        initialize: function( options ){
+        initialize: function(){
+            this.listenTo(Backbone, 'play:item', this.reset);
+            this.listenTo(Backbone, 'update:currentTime', this.updateSlider);
+        },
+
+        render(){
+            this.$el.prop('value', 0); 
+            return this;
+        },
+
+        updateSlider: function(value){
+            this.$el.prop('value', value); 
+        },
+
+        setSlider: function(value) {
+            Backbone.trigger('play:advance', value.timeStamp);
+        },
+
+        reset: function(model) {
+            this.$el.prop('value', 0);
+            this.$el.prop('max', model.get('length'));
+        }
+    });
+
+    var CurrentTimeView = BaseView.extend({
+        initialize: function(){
+            this.listenTo(Backbone, 'update:currentTime', this.updateCurrentTime);
+        },
+
+        render() {
+            this.$el.html('0:00');
+            return this;
+        },
+
+        updateCurrentTime: function(value) {
+            this.$el.html(formatTime(value));
+        }
+    });
+
+    var TotalTimeView = BaseView.extend({
+        initialize: function(){
+            this.listenTo(Backbone, 'play:item', this.updateTotalTime);
+        },
+
+        render() {
+            this.$el.html('0:00');
+            return this;
+        },
+
+        updateTotalTime: function(model) {
+            this.$el.html(formatTime(model.get('length')));
+        }
+    });
+
+    var PlayingView = BaseView.extend({
+        template: _.template($('#playing-template').html()),
+
+        initialize: function(){
             this.model = new Item();
-            this.audio = options.audio;
-
-            this.listenTo(Backbone, 'play:item', this.show);
-            this.listenTo(this.model, 'change', this.play);
-
-            this.$playButton = this.$('.play-button');
-            this.$pauseButton = this.$('.pause-button');
-
-            this.$label = this.$('#playingLabel');
-            this.$slider = this.$('#slider');
-            this.$totalTime = this.$('#totalTime');
-            this.$currentTime = this.$('#currentTime');
-            this.$repeatButton = this.$('.repeat-button');
-            this.$randomButton = this.$('.random-button');
-            this.repeat = false;
-            this.random = false;
-            this.bindEvents();
+            this.listenTo(Backbone, 'play:item', this.set);
+            this.listenTo(this.model, 'change', this.render);
         },
 
-        show: function(model) {
+        render: function(){
+            this.$el.html(this.template(this.model.toJSON()));
+        },
+
+        set: function(model){
             this.model = model;
-            this.audio.src = this.model.getFileUrl();
-            this.audio.play();
-
-            // setup the slider
-            this.$slider.prop('min', 0);
-            this.$slider.prop('max', this.model.get('length'));
-
-            // setup the 'Now Playing' label
-            this.$label.html(this.playingTemplate(this.model.toJSON()));
-            this.$totalTime.html(formatTime(this.model.get('length')));
-
-            Backbone.trigger('show:item', this.model);
-        },
-
-        play: function(model){
-            this.audio.play();
-        },
-
-        pause: function(model){
-            this.audio.pause();
-        },
-
-        bindEvents: function(){
-            var self = this;
-
-            this.audio.addEventListener('ended', function(){
-                if (!this.repeat) {
-                    Backbone.trigger('play:next', self.model, self.random);
-                } else {
-                    this.audio.play();
-                }
-            });
-
-            this.audio.addEventListener('timeupdate', function(){
-                self.updateSlider();
-                self.updateCurrentTime();
-            });
-        },
-
-        onRepeatButtonClick: function(event){
-            event.preventDefault();
-            $(event.target).toggleClass('active');
-            this.audio.loop = !this.audio.loop;
-        },
-
-        onRandomButtonClick: function(event){
-            event.preventDefault();
-            $(event.target).toggleClass('active');
-            this.random = !this.random;
-        },
-
-        onPlayButtonClick: function(ev) {
-            ev.preventDefault();
-            if (!this.audio.src) {
-                Backbone.trigger('play:first', this.random);
-            } else {
-                this.play();
-            }
-        },
-
-        onPauseButtonClick: function(ev) {
-            ev.preventDefault();
-            this.pause();
-        },
-
-        onStopButtonClick: function(ev) {
-            ev.preventDefault();
-            this.audio.pause();
-            this.audio.currentTime = 0;
-            this.audio.load();
-        },
-
-        updateSlider: function() {
-            this.$slider.attr('value', this.audio.currentTime);
-        },
-
-        updateCurrentTime: function() {
-            this.$currentTime.html(formatTime(this.audio.currentTime));
-        },
+            this.render();
+        }
 
     });
+
+    var RepeatButtonView = BaseView.extend({
+        events: {
+            'click': 'onClick'
+        },
+        onClick: function(event){
+            Backbone.trigger('play:setRepeat');
+            $(event.target).toggleClass('active');            
+        }
+    });
+
+    var ShuffleButtonView = BaseView.extend({
+        events: {
+            'click': 'onClick'
+        },
+        onClick: function(){
+            Backbone.trigger('items:shuffle');
+        }
+    });
+
     var Router = Backbone.Router.extend({
         routes: {
             'item/query/:query': 'doSearch',
@@ -285,7 +328,58 @@ $(document).ready(function(){
         }
     });
 
-    var AppView = Backbone.View.extend({
+    var initAudio = function(){
+        var audio = new Audio();
+        _.extend(audio, Backbone.Events);
+
+        audio.listenTo(Backbone, 'play:item', function(model) {
+            audio.model = model;
+            audio.src = model.getFileUrl();
+            audio.play();
+        });
+
+        audio.listenTo(Backbone, 'play:pause', function() {
+            audio.pause();
+        });
+
+        audio.listenTo(Backbone, 'play:resume', function() {
+            audio.play();
+        });
+
+        audio.listenTo(Backbone, 'play:stop', function() {
+            audio.pause();
+        });
+
+        audio.listenTo(Backbone, 'play:PlayOrPause', function(){
+            if (audio.paused){
+                audio.play();
+            } else {
+                audio.pause();
+            }
+        });
+
+        audio.listenTo(Backbone, 'play:advance', function(secs) {
+            audio.currentTime = secs;
+        });
+
+
+        audio.addEventListener('timeupdate', function(){
+            Backbone.trigger('update:currentTime', audio.currentTime);
+        });
+
+        audio.addEventListener('ended', function(){
+            Backbone.trigger('play:next', audio.current);
+        });
+
+        audio.listenTo(Backbone, 'play:repeat', function(){
+            audio.currentTime = 0;
+            audio.play();
+        });
+
+        return audio;
+    };
+
+    var AppView = BaseView.extend({
 
         events: {
             'submit #queryForm': 'onSubmit',
@@ -296,7 +390,15 @@ $(document).ready(function(){
             new ItemsView({el: '#results', collection: new Items()});
             new MetaView({el: '#meta'});
             new LyricsView({ el: '#lyrics'});
-            new PlayerView({ el: '#player', audio: options.audio});
+            // new PlayerView({ el: '#player', audio: options.audio});
+            new PlayPauseButtonView({el: '#play-pause-button'});
+            new StopButtonView({el: '#stop-button'});
+            new SliderView({el: '#slider'});
+            new CurrentTimeView({el: '#currentTime'});
+            new TotalTimeView({el: '#totalTime'});
+            new PlayingView({el: '#playingLabel'});
+            new RepeatButtonView({el: '#repeat-button'});
+            new ShuffleButtonView({el: '#shuffle-button'});
         },
 
         onSubmit: function(e){
@@ -307,7 +409,10 @@ $(document).ready(function(){
 
     });
 
+
+    var audio = initAudio();
+
     new Router();
-    new AppView({ el: 'body', audio: new Audio() });
+    new AppView({ el: 'body', audio: audio });
     Backbone.history.start({pushState: false});
 });

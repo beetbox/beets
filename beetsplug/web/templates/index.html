@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/beets.css') }}">
         <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
         <script src="{{ url_for('static', filename='js/underscore.js') }}"></script>
         <script src="{{ url_for('static', filename='js/backbone.js') }}"></script>
         <script src="{{ url_for('static', filename='js/beets.js') }}"></script>
@@ -18,12 +19,6 @@
         <nav class="navbar navbar-inverse navbar-fixed-top">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
                     <a class="navbar-brand" href="#">
                         <span>
                             <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
@@ -36,7 +31,7 @@
 
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-sm-4">
                     <h4>Search</h4>
                     <form id="queryForm">
                         <div class="input-group">
@@ -48,18 +43,18 @@
                             </span>
                         </div>
                     </form>
-                    <div id='results' class='pre-scrollable list-group'></div>
+                    <div id='results' class='list-group'></div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-sm-4">
                     <h4>Metadata</h4>
                     <table class="table table-bordered table-sm table-condensed table-hover">
                         <tbody id='meta'>
                         </tbody>
                     </table>
                 </div>
-                <div class="col-md-4">
+                <div class="col-sm-4">
                     <h4>Lyrics</h4>
-                    <div id='lyrics' class='lyrics pre-scrollable'></div>
+                    <div id='lyrics' class='lyrics'></div>
                 </div>
             </div>
         </div>
@@ -68,43 +63,41 @@
             <div id="player">
                 <div class="container-fluid">
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-sm-3">
                             <div class="btn-group btn-group-justified" role="group">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-default play-button"><i class="glyphicon glyphicon-play"></i></button>
+                                    <button type="button" class="btn btn-default" id="play-pause-button">
+                                        <i class="glyphicon glyphicon-play"></i>
+                                        <i class="glyphicon glyphicon-pause"></i>
+                                    </button>
                                 </div>
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-default pause-button"><i class="glyphicon glyphicon-pause"></i></button>
-                                </div>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-default stop-button"><i class="glyphicon glyphicon-stop"></i></button>
+                                    <button type="button" class="btn btn-default" id="stop-button"><i class="glyphicon glyphicon-stop"></i></button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="btn-group btn-group-justified" role="group">
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-default">
-                                        <input type="range" min="0" max="100" step="0.01" value="0" id='slider'>
-                                        <div id="playingLabel"></div>
-                                    </button>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="currentTime">0:00</span>
+                                    <input class="form-control" type="range" min="0" max="100" step="0.01" value="0.0" id="slider">
+                                    <span class="input-group-addon" id="totalTime">0:00</span>
                                 </div>
+                            </div>
+                            <div id="playingLabel">
+                                &nbsp; <!-- This chap gets replaced -->
                             </div>
                         </div>
 
-                        <div class="col-md-3">
+
+                        <div class="col-sm-3">
                             <div class="btn-group btn-group-justified" role="group">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-default">
-                                        <span id="currentTime">0:00</span>/<span id="totalTime">0:00</span>
-                                    </button>
+                                <button type="button" class="btn btn-default" id="repeat-button"><i class="glyphicon glyphicon-repeat"></i></button>
                                 </div>
                                 <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-default repeat-button"><i class="glyphicon glyphicon-repeat"></i></button>
-                                </div>
-                                <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-default random-button"><i class="glyphicon glyphicon-random"></i></button>
+                                <button type="button" class="btn btn-default" id="shuffle-button"><i class="glyphicon glyphicon-random"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -118,7 +111,11 @@
                 <%= artist %> - <%= title %>
                 <span class="pull-right">
                     <button id="play-button" class="btn btn-xs btn-info">
+                    <% if (playing) { %>
+                        <span class="glyphicon glyphicon-pause"></span>
+                    <%  } else { %>
                         <span class="glyphicon glyphicon-play"></span>
+                    <% } %>
                     </button>
                 </span>
             </a>
@@ -169,12 +166,16 @@
             <% if (comments) { %>
             <tr><th>Comments</th><td><%= comments %></td></tr>
             <% } %>
+
+            <% if (album_id) { %>
+            <tr><td colspan="2"><img src="/album/<%= album_id %>/art" class="img-responsive"/></td></tr>
+            <% } %>
         </script>
 
         <script type="text/template" id="playing-template">
             <div class="text-center">
                 <i class="glyphicon glyphicon-music"></i>
-                <%= artist %> - <%= title %>
+                <%= artist %> - <%= album %> - <%= title %>
             </div>
         </script>
     </body>
