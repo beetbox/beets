@@ -269,9 +269,10 @@ affected items in the library and asks for your permission before making any
 changes. You can then choose to abort the change (type `n`), confirm
 (`y`), or interactively choose some of the items (`s`). In the latter case,
 the command will prompt you for every matching item or album and invite you to
-type `y` or `n`. This option lets you choose precisely which data to change
-without spending too much time to carefully craft a query. To skip the prompts
-entirely, use the ``-y`` option.
+type `y` to apply the changes, `n` to discard them or `q` to exit and apply
+the selected changes. This option lets you choose precisely which data to
+change without spending too much time to carefully craft a query. To skip the
+prompts entirely, use the ``-y`` option.
 
 .. _move-cmd:
 

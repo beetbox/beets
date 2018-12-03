@@ -23,6 +23,7 @@ import unicodedata
 import time
 import re
 import six
+import string
 
 from beets import logging
 from beets.mediafile import MediaFile, UnreadableFileError
@@ -1456,7 +1457,7 @@ class DefaultTemplateFunctions(object):
     @staticmethod
     def tmpl_title(s):
         """Convert a string to title case."""
-        return s.title()
+        return string.capwords(s)
 
     @staticmethod
     def tmpl_left(s, chars):

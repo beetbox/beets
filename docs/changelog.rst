@@ -46,6 +46,8 @@ New features:
   example, ``beet modify -a artist:beatles artpath!`` resets ``artpath``
   attribute from matching albums back to the default value.
   :bug:`2497`
+* Modify selection can now be applied early without selecting every item.
+  :bug:`3083`
 
 Changes:
 
@@ -58,7 +60,10 @@ Changes:
   See also the discussion on Google Groups_
   Thanks to :user:`arogl`.
 .. _Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
-
+* :doc:`/plugins/export` now also exports ``path`` field if user explicitly
+  specifies it with ``-i`` parameter. Only works when exporting library fields.
+  :bug:`3084`
+  
 Fixes:
 
 * A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
@@ -106,7 +111,9 @@ Fixes:
   Thanks to :user:`TaizoSimpson`.
   :bug:`3501`
 * Confusing typo when the convert plugin copies the art covers. :bug:`3063`
-
+* The ``%title`` template function now works correctly with apostrophes.
+  Thanks to :user:`GuilhermeHideki`.
+  :bug:`3033`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
