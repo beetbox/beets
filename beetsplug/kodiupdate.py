@@ -25,17 +25,20 @@ to re-scan your entire library after importing one or more albums:
         pwd: secret
 
 Alternatively, you can choose to only scan each newly imported album directory.
-To do so, add all the config.yaml settings above, but also add 'source' and 'library'
-settings that look something like this:
+To do so, add all the config.yaml settings above, but also add 'source' and
+'library' settings that look something like this:
 
        source: nfs://myserver.local/music/library/
        library: /home/music/library/
 
-The value for 'source' should be the Kodi Music source found in .kodi/userdata/sources.xml
+The value for 'source' should be the Kodi Music source found in
+.kodi/userdata/sources.xml.
+
 The value for 'library' should be the path to your beets library.
 
-After an album is imported, this plugin strips off the 'library' portion of the album path
-and appends the remaining portion to the 'source', then issues a Kodi update for that path.
+After an album is imported, this plugin strips off the 'library' portion of
+the album path and appends the remaining portion to the 'source', then issues
+a Kodi update for that path.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -60,7 +63,7 @@ def update_kodi(host, port, user, password, path=None):
 
     # Create the payload. Id seems to be mandatory.
     payload = {'jsonrpc': '2.0', 'method': 'AudioLibrary.Scan', 'id': 1}
-    if not path is None:
+    if path is not None:
         payload['params'] = {'directory': path}
     r = requests.post(
         url,
@@ -86,22 +89,27 @@ class KodiUpdate(BeetsPlugin):
 
         config['kodi']['pwd'].redact = True
         if config['source'] == '':
-            self.register_listener('database_change', self.listen_for_db_change) # rescan entire library
+            # rescan entire library
+            self.register_listener('database_change',
+                                   self.listen_for_db_change)
         else:
-            self.register_listener('album_imported', self.album_imported) # onyl rescan the path to this album
+            # only rescan the path to this album
+            self.register_listener('album_imported',
+                                   self.album_imported)
 
     def listen_for_db_change(self, lib, model):
-        """Listens for beets db change, waits for cli exit, then registers the update"""
+        """Listens for beets db change, waits for cli exit,
+        then registers the update"""
         self.register_listener('cli_exit', self.cli_exit)
 
     def album_imported(self, lib, album):
         source = config['kodi']['source'].get()
         library = config['kodi']['library'].get()
         apath = album.item_dir()
-        suffix = os.path.relpath (apath,library)
-        self.update (path=os.path.join (source,suffix.decode('utf-8')))
+        suffix = os.path.relpath(apath, library)
+        self.update(path=os.path.join(source, suffix.decode('utf-8')))
 
-    def cli_exit(self,lib):
+    def cli_exit(self, lib):
         """When the client exits try to send refresh request to Kodi server.
         """
         self.update()
@@ -110,7 +118,7 @@ class KodiUpdate(BeetsPlugin):
         if path is None:
             self._log.info(u'Requesting a Kodi library update...')
         else:
-            self._log.info(u'Requesting a Kodi update for {0}',path)
+            self._log.info(u'Requesting a Kodi update for {0}', path)
 
         # Try to send update request.
         try:
