@@ -16,12 +16,27 @@
 """Updates a Kodi library whenever the beets library is changed.
 This is based on the Plex Update plugin.
 
-Put something like the following in your config.yaml to configure:
+Put something like the following in your config.yaml to configure this plugin
+to re-scan your entire library after importing one or more albums:
     kodi:
         host: localhost
         port: 8080
         user: user
         pwd: secret
+
+Alternatively, you can choose to only scan each newly imported album directory.
+To do so, add all the config.yaml settings above, but also add 'source' and 'library'
+settings that look something like this:
+
+       source: nfs://myserver.local/music/library/
+       library: /home/music/library/
+
+The value for 'source' should be the Kodi Music source found in .kodi/userdata/sources.xml
+The value for 'library' should be the path to your beets library.
+
+After an album is imported, this plugin strips off the 'library' portion of the album path
+and appends the remaining portion to the 'source', then issues a Kodi update for that path.
+
 """
 from __future__ import division, absolute_import, print_function
 
@@ -29,10 +44,12 @@ import requests
 from beets import config
 from beets.plugins import BeetsPlugin
 import six
+import os
 
 
-def update_kodi(host, port, user, password):
+def update_kodi(host, port, user, password, path=None):
     """Sends request to the Kodi api to start a library refresh.
+       If 'path' is provided, only refresh that path.
     """
     url = "http://{0}:{1}/jsonrpc".format(host, port)
 
@@ -43,6 +60,8 @@ def update_kodi(host, port, user, password):
 
     # Create the payload. Id seems to be mandatory.
     payload = {'jsonrpc': '2.0', 'method': 'AudioLibrary.Scan', 'id': 1}
+    if not path is None:
+        payload['params'] = {'directory': path}
     r = requests.post(
         url,
         auth=(user, password),
@@ -61,19 +80,37 @@ class KodiUpdate(BeetsPlugin):
             u'host': u'localhost',
             u'port': 8080,
             u'user': u'kodi',
-            u'pwd': u'kodi'})
+            u'pwd': u'kodi',
+            u'source': u'',
+            u'library': u''})
 
         config['kodi']['pwd'].redact = True
-        self.register_listener('database_change', self.listen_for_db_change)
+        if config['source'] == '':
+            self.register_listener('database_change', self.listen_for_db_change) # rescan entire library
+        else:
+            self.register_listener('album_imported', self.album_imported) # onyl rescan the path to this album
 
     def listen_for_db_change(self, lib, model):
-        """Listens for beets db change and register the update"""
-        self.register_listener('cli_exit', self.update)
+        """Listens for beets db change, waits for cli exit, then registers the update"""
+        self.register_listener('cli_exit', self.cli_exit)
 
-    def update(self, lib):
-        """When the client exists try to send refresh request to Kodi server.
+    def album_imported(self, lib, album):
+        source = config['kodi']['source'].get()
+        library = config['kodi']['library'].get()
+        apath = album.item_dir()
+        suffix = os.path.relpath (apath,library)
+        self.update (path=os.path.join (source,suffix.decode('utf-8')))
+
+    def cli_exit(self,lib):
+        """When the client exits try to send refresh request to Kodi server.
         """
-        self._log.info(u'Requesting a Kodi library update...')
+        self.update()
+
+    def update(self, path=None):
+        if path is None:
+            self._log.info(u'Requesting a Kodi library update...')
+        else:
+            self._log.info(u'Requesting a Kodi update for {0}',path)
 
         # Try to send update request.
         try:
@@ -81,7 +118,8 @@ class KodiUpdate(BeetsPlugin):
                 config['kodi']['host'].get(),
                 config['kodi']['port'].get(),
                 config['kodi']['user'].get(),
-                config['kodi']['pwd'].get())
+                config['kodi']['pwd'].get(),
+                path)
             r.raise_for_status()
 
         except requests.exceptions.RequestException as e:
