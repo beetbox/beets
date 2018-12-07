@@ -2,7 +2,8 @@ KodiUpdate Plugin
 =================
 
 The ``kodiupdate`` plugin lets you automatically update `Kodi`_'s music
-library whenever you change your beets library.
+library whenever you change your beets library or, alternatively, every
+time a new album is imported.
 
 To use ``kodiupdate`` plugin, enable it in your configuration
 (see :ref:`using-plugins`).
@@ -15,6 +16,27 @@ which looks like this::
         port: 8080
         user: kodi
         pwd: kodi
+
+With the basic configuration settings above, the ``kodiupdate`` plugin
+will notify Kodi to scan your entire music library after the import
+operation has completed. For large music libraries you may prefer to have
+Kodi only scan the directory where each album was imported. To enable
+this behavior, add `source` and `library` settings, like this:
+
+    kodi:
+        host: localhost
+        port: 8080
+        user: kodi
+        pwd: kodi
+        source: nfs://myserver.local/music/library/
+        library: /home/music/library/
+
+`source` should be the Kodi Music source found in .kodi/userdata/sources.xml.
+`library` should be the path to your beets library.
+
+With this configuration, after every album import, the `library` path is stripped
+from the imported album's path and the remaining part is added to the `source`.
+Kodi is then asked to scan the resulting directory.
 
 To use the ``kodiupdate`` plugin you need to install the `requests`_ library with::
 
@@ -42,3 +64,7 @@ The available options under the ``kodi:`` section are:
   Default: ``kodi``
 - **pwd**: The Kodi host password.
   Default: ``kodi``
+- **source**: The Kodi Music source.
+  Default: ````
+- **library**: The beets library directory.
+  Default: ````

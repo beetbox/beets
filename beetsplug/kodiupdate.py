@@ -25,19 +25,19 @@ to re-scan your entire library after importing one or more albums:
         pwd: secret
 
 Alternatively, you can choose to only scan each newly imported album directory.
-To do so, add all the config.yaml settings above, but also add 'source' and
-'library' settings that look something like this:
+To do so, add all the config.yaml settings above, but also add `source` and
+`library` settings that look something like this:
 
        source: nfs://myserver.local/music/library/
        library: /home/music/library/
 
-The value for 'source' should be the Kodi Music source found in
+The value for `source` should be the Kodi Music source found in
 .kodi/userdata/sources.xml.
 
-The value for 'library' should be the path to your beets library.
+The value for `library` should be the path to your beets library.
 
-After an album is imported, this plugin strips off the 'library' portion of
-the album path and appends the remaining portion to the 'source', then issues
+After an album is imported, this plugin strips off the `library` portion of
+the album path and appends the remaining portion to the `source`, then issues
 a Kodi update for that path.
 
 """
@@ -52,18 +52,18 @@ import os
 
 def update_kodi(host, port, user, password, path=None):
     """Sends request to the Kodi api to start a library refresh.
-       If 'path' is provided, only refresh that path.
+    If `path` is provided, only refresh that path.
     """
     url = "http://{0}:{1}/jsonrpc".format(host, port)
 
     """Content-Type: application/json is mandatory
-    according to the kodi jsonrpc documentation"""
+    according to the kodi jsonrpc documentation."""
 
     headers = {'Content-Type': 'application/json'}
 
     # Create the payload. Id seems to be mandatory.
     payload = {'jsonrpc': '2.0', 'method': 'AudioLibrary.Scan', 'id': 1}
-    if path is not None:
+    if path:
         payload['params'] = {'directory': path}
     r = requests.post(
         url,
@@ -89,17 +89,17 @@ class KodiUpdate(BeetsPlugin):
 
         config['kodi']['pwd'].redact = True
         if config['source'] == '':
-            # rescan entire library
+            # Re-scan the entire library.
             self.register_listener('database_change',
                                    self.listen_for_db_change)
         else:
-            # only rescan the path to this album
+            # Scan only the path to this album.
             self.register_listener('album_imported',
                                    self.album_imported)
 
     def listen_for_db_change(self, lib, model):
         """Listens for beets db change, waits for cli exit,
-        then registers the update"""
+        then registers the update."""
         self.register_listener('cli_exit', self.cli_exit)
 
     def album_imported(self, lib, album):
