@@ -65,6 +65,6 @@ The available options under the ``kodi:`` section are:
 - **pwd**: The Kodi host password.
   Default: ``kodi``
 - **source**: The Kodi Music source.
-  Default: ````
+  Default: none
 - **library**: The beets library directory.
-  Default: ````
+  Default: none
