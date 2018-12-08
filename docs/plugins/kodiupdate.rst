@@ -18,10 +18,14 @@ which looks like this::
         pwd: kodi
 
 With the basic configuration settings above, the ``kodiupdate`` plugin
-will notify Kodi to scan your entire music library after the import
-operation has completed. For large music libraries you may prefer to have
-Kodi only scan the directory where each album was imported. To enable
-this behavior, add `source` and `library` settings, like this:
+will notify Kodi to scan your entire music library after any changes to
+the beets database. For importing albums into large music libraries you
+may prefer to have Kodi only scan the directory where each album was
+imported. To enable this behavior, add a `source` setting, which reflects
+the Kodi `Music` source found in Kodi's sources.xml file, and a `library`
+setting, which indicates exactly how much of the beets library album
+path should be removed before appending the remaining portion to
+the `source`:
 
     kodi:
         host: localhost
