@@ -127,7 +127,10 @@ class BeetsPlugin(object):
         value after the function returns). Also determines which params may not
         be sent for backwards-compatibility.
         """
-        argspec = inspect.getargspec(func)
+        if six.PY2:
+            argspec = inspect.getargspec(func)
+        else:
+            argspec = inspect.getfullargspec(func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
