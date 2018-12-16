@@ -84,7 +84,7 @@ $(document).ready(function(){
                 this.stop();
             } else {
                 Backbone.trigger('play:clear', this.model);
-                Backbone.trigger('play:item', this.model);
+                Backbone.trigger('play:PlayOrResume', this.model);
                 this.play();
             }
         },
@@ -285,6 +285,7 @@ $(document).ready(function(){
         initialize: function(){
             this.model = new Item();
             this.listenTo(Backbone, 'play:item', this.set);
+            this.listenTo(Backbone, 'play:PlayOrResume', this.set);
             this.listenTo(this.model, 'change', this.render);
         },
 
@@ -348,6 +349,14 @@ $(document).ready(function(){
 
         audio.listenTo(Backbone, 'play:stop', function() {
             audio.pause();
+        });
+
+        audio.listenTo(Backbone, 'play:PlayOrResume', function(model) {
+            if (!audio.paused || model != audio.model){
+                audio.model = model;
+                audio.src = model.getFileUrl();
+            }
+            audio.play();
         });
 
         audio.listenTo(Backbone, 'play:PlayOrPause', function(){
