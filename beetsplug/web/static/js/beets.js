@@ -67,6 +67,7 @@ $(document).ready(function(){
         initialize: function(){
             _.bindAll(this, 'render');
             this.listenTo(this.model, 'change', this.render);
+            this.listenTo(Backbone, 'play:item', this.play);
             this.listenTo(Backbone, 'play:stop', this.stop);
             this.listenTo(Backbone, 'play:pause', this.stop); //For now
             this.listenTo(Backbone, 'play:resume', this.resume);
@@ -86,12 +87,15 @@ $(document).ready(function(){
                 Backbone.trigger('play:pause');
                 this.stop();
             } else {
-                Backbone.trigger('play:clear', this.model);
+                Backbone.trigger('play:clear');
                 Backbone.trigger('play:PlayOrResume', this.model);
                 this.play();
             }
         },
-        play: function(){
+        play: function(model){
+            if(model && model != this.model) {
+              return;
+            }
             this.model.set('playing', true);
             this.model.set('selected', true);
             this.render();
@@ -104,7 +108,6 @@ $(document).ready(function(){
             if (this.model.get('selected')){
                 this.play(); //This is probably not right
             }
-            this.render();
         },
         
     });
@@ -170,7 +173,7 @@ $(document).ready(function(){
         clearList: function(){
             this.collection.each(function(item){
                 item.set('playing', false);
-                item.set('selected', false); //TODO: See if this works
+                item.set('selected', false);
             });
         },
 
@@ -365,10 +368,11 @@ $(document).ready(function(){
 
         audio.listenTo(Backbone, 'play:PlayOrResume', function(model) {
             if (!audio.paused || model != audio.model){
-                audio.model = model;
-                audio.src = model.getFileUrl();
+                Backbone.trigger('play:item', model);
             }
-            audio.play();
+            else {
+                audio.play();
+            }
         });
 
         audio.listenTo(Backbone, 'play:PlayOrPause', function(){
@@ -389,7 +393,7 @@ $(document).ready(function(){
         });
 
         audio.addEventListener('ended', function(){
-            Backbone.trigger('play:next', audio.current);
+            Backbone.trigger('play:next', audio.model);
         });
 
         audio.listenTo(Backbone, 'play:repeat', function(){
