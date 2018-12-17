@@ -345,7 +345,7 @@ def _sort_candidates(candidates):
     return sorted(candidates, key=lambda match: match.distance)
 
 
-def _add_candidate(items, results, info):
+def _add_candidate(items, results, info, force=False):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
     checking the track count, ordering the items, checking for
@@ -364,11 +364,12 @@ def _add_candidate(items, results, info):
         log.debug(u'Duplicate.')
         return
 
-    # Discard matches without required tags.
-    for req_tag in config['match']['required'].as_str_seq():
-        if getattr(info, req_tag) is None:
-            log.debug(u'Ignored. Missing required tag: {0}', req_tag)
-            return
+    if not force:
+        # Discard matches without required tags.
+        for req_tag in config['match']['required'].as_str_seq():
+            if getattr(info, req_tag) is None:
+                log.debug(u'Ignored. Missing required tag: {0}', req_tag)
+                return
 
     # Find mapping between the items and the track info.
     mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
@@ -376,12 +377,13 @@ def _add_candidate(items, results, info):
     # Get the change distance.
     dist = distance(items, info, mapping)
 
-    # Skip matches with ignored penalties.
-    penalties = [key for key, _ in dist]
-    for penalty in config['match']['ignored'].as_str_seq():
-        if penalty in penalties:
-            log.debug(u'Ignored. Penalty: {0}', penalty)
-            return
+    if not force:
+        # Skip matches with ignored penalties.
+        penalties = [key for key, _ in dist]
+        for penalty in config['match']['ignored'].as_str_seq():
+            if penalty in penalties:
+                log.debug(u'Ignored. Penalty: {0}', penalty)
+                return
 
     log.debug(u'Success. Distance: {0}', dist)
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
@@ -422,7 +424,7 @@ def tag_album(items, search_artist=None, search_album=None,
         for search_id in search_ids:
             log.debug(u'Searching for album ID: {0}', search_id)
             for id_candidate in hooks.albums_for_id(search_id):
-                _add_candidate(items, candidates, id_candidate)
+                _add_candidate(items, candidates, id_candidate, force=True)
 
     # Use existing metadata or text search.
     else:
