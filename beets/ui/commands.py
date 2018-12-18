@@ -591,6 +591,11 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     line.append(ui.colorize('text_highlight_minor',
                                             u'(%s)' % disambig))
 
+                if not singleton:
+                    for problem in match.problems:
+                        line.append(ui.colorize('text_highlight',
+                                                u'(%s)' % problem))
+
                 print_(u' '.join(line))
 
             # Ask the user for a choice.

@@ -1060,7 +1060,7 @@ class ShowChangeTest(_common.TestCase):
         commands.show_change(
             cur_artist,
             cur_album,
-            autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
+            autotag.AlbumMatch(album_dist, info, mapping, set(), set(), set()),
         )
         # FIXME decoding shouldn't be done here
         return util.text_string(self.io.getoutput().lower())

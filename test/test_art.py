@@ -454,7 +454,7 @@ class ArtImporterTest(UseThePlugin):
             artist_id=u'artistid',
             tracks=[],
         )
-        self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
+        self.task.set_choice(AlbumMatch(0, info, {}, set(), set(), set()))
 
     def tearDown(self):
         self.lib._connection().close()

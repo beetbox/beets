@@ -301,6 +301,10 @@ def _recommendation(results):
         # No candidates: no recommendation.
         return Recommendation.none
 
+    # Problematic candidate: no recommendation.
+    if isinstance(results[0], hooks.AlbumMatch) and results[0].problems:
+        return Recommendation.none
+
     # Basic distance thresholding.
     min_dist = results[0].distance
     if min_dist < config['match']['strong_rec_thresh'].as_number():
@@ -354,6 +358,8 @@ def _add_candidate(items, results, info, force=False):
     log.debug(u'Candidate: {0} - {1} ({2})',
               info.artist, info.album, info.album_id)
 
+    problems = set()
+
     # Discard albums with zero tracks.
     if not info.tracks:
         log.debug(u'No tracks.')
@@ -364,11 +370,12 @@ def _add_candidate(items, results, info, force=False):
         log.debug(u'Duplicate.')
         return
 
-    if not force:
-        # Discard matches without required tags.
-        for req_tag in config['match']['required'].as_str_seq():
-            if getattr(info, req_tag) is None:
-                log.debug(u'Ignored. Missing required tag: {0}', req_tag)
+    # Discard matches without required tags.
+    for req_tag in config['match']['required'].as_str_seq():
+        if getattr(info, req_tag) is None:
+            log.debug(u'Ignored. Missing required tag: {0}', req_tag)
+            problems.add(u'missing required tag: {0}'.format(req_tag))
+            if not force:
                 return
 
     # Find mapping between the items and the track info.
@@ -377,17 +384,19 @@ def _add_candidate(items, results, info, force=False):
     # Get the change distance.
     dist = distance(items, info, mapping)
 
-    if not force:
-        # Skip matches with ignored penalties.
-        penalties = [key for key, _ in dist]
-        for penalty in config['match']['ignored'].as_str_seq():
-            if penalty in penalties:
-                log.debug(u'Ignored. Penalty: {0}', penalty)
+    # Skip matches with ignored penalties.
+    penalties = [key for key, _ in dist]
+    for penalty in config['match']['ignored'].as_str_seq():
+        if penalty in penalties:
+            log.debug(u'Ignored. Penalty: {0}', penalty)
+            problems.add(u'ignored penalty: {0}'.format(penalty))
+            if not force:
                 return
 
     log.debug(u'Success. Distance: {0}', dist)
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
-                                              extra_items, extra_tracks)
+                                              extra_items, extra_tracks,
+                                              problems)
 
 
 def tag_album(items, search_artist=None, search_album=None,

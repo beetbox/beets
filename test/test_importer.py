@@ -1154,7 +1154,7 @@ class InferAlbumDataTest(_common.TestCase):
                          u'some album artist id')
 
     def test_apply_gets_artist_and_id(self):
-        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
+        self.task.set_choice(AlbumMatch(0, None, {}, set(), set(), set()))
 
         self.task.align_album_level_fields()
 
@@ -1166,7 +1166,7 @@ class InferAlbumDataTest(_common.TestCase):
         for item in self.items:
             item.albumartist = u'some album artist'
             item.mb_albumartistid = u'some album artist id'
-        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
+        self.task.set_choice(AlbumMatch(0, None, {}, set(), set(), set()))
 
         self.task.align_album_level_fields()
 

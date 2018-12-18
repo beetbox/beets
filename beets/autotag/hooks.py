@@ -537,7 +537,8 @@ class Distance(object):
 # Structures that compose all the information for a candidate match.
 
 AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
-                                       'extra_items', 'extra_tracks'])
+                                       'extra_items', 'extra_tracks',
+                                       'problems'])
 
 TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
 
