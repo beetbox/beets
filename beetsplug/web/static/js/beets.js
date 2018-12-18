@@ -22,7 +22,8 @@ $(document).ready(function(){
             artist: 'Artist',
             title: 'Track Title',
             time: 0,
-            playing: false
+            playing: false,
+            selected: false
         },
 
         getFileUrl: function(){
@@ -66,7 +67,10 @@ $(document).ready(function(){
         initialize: function(){
             _.bindAll(this, 'render');
             this.listenTo(this.model, 'change', this.render);
+            this.listenTo(Backbone, 'play:item', this.play);
             this.listenTo(Backbone, 'play:stop', this.stop);
+            this.listenTo(Backbone, 'play:pause', this.stop); //For now
+            this.listenTo(Backbone, 'play:resume', this.resume);
             this.render();
         },
         render: function(){
@@ -83,19 +87,29 @@ $(document).ready(function(){
                 Backbone.trigger('play:pause');
                 this.stop();
             } else {
-                Backbone.trigger('play:clear', this.model);
-                Backbone.trigger('play:item', this.model);
+                Backbone.trigger('play:clear');
+                Backbone.trigger('play:PlayOrResume', this.model);
                 this.play();
             }
+        },
+        play: function(model){
+            if(model && model != this.model) {
+              return;
+            }
+            this.model.set('playing', true);
+            this.model.set('selected', true);
+            this.render();
         },
         stop: function(){
             this.model.set('playing', false);
             this.render();
-        }, 
-        play: function(){
-            this.model.set('playing', true);
-            this.render();
-        }
+        },
+        resume: function(){
+            if (this.model.get('selected')){
+                this.play(); //This is probably not right
+            }
+        },
+        
     });
 
     var ItemsView = BaseView.extend({
@@ -103,7 +117,7 @@ $(document).ready(function(){
             this.repeat = false;
 
             this.listenTo(Backbone, 'play:setRepeat', this.setRepeat);
-            this.listenTo(Backbone, 'play:clear', this.clearPlaying);
+            this.listenTo(Backbone, 'play:clear', this.clearList);
             this.listenTo(Backbone, 'play:first', this.onPlayFirst);
             this.listenTo(Backbone, 'play:next', this.onPlayNext);
             this.listenTo(Backbone, 'items:shuffle', this.shuffle);
@@ -124,7 +138,7 @@ $(document).ready(function(){
         },
 
         onPlayFirst: function(){
-            this.clearPlaying();
+            this.clearList();
             var first = this.collection.at(0);
             if (random) {
                 first = this.collection.sample();
@@ -140,7 +154,7 @@ $(document).ready(function(){
                 return;
             }
 
-            this.clearPlaying();
+            this.clearList();
             var next = null;
             if (current) {
                 var n = this.collection.findWhere({id: current.get('id')});
@@ -156,9 +170,10 @@ $(document).ready(function(){
             }
         },
 
-        clearPlaying: function(){
+        clearList: function(){
             this.collection.each(function(item){
                 item.set('playing', false);
+                item.set('selected', false);
             });
         },
 
@@ -285,6 +300,7 @@ $(document).ready(function(){
         initialize: function(){
             this.model = new Item();
             this.listenTo(Backbone, 'play:item', this.set);
+            this.listenTo(Backbone, 'play:PlayOrResume', this.set);
             this.listenTo(this.model, 'change', this.render);
         },
 
@@ -350,11 +366,20 @@ $(document).ready(function(){
             audio.pause();
         });
 
+        audio.listenTo(Backbone, 'play:PlayOrResume', function(model) {
+            if (!audio.paused || model != audio.model){
+                Backbone.trigger('play:item', model);
+            }
+            else {
+                audio.play();
+            }
+        });
+
         audio.listenTo(Backbone, 'play:PlayOrPause', function(){
             if (audio.paused){
-                audio.play();
+                Backbone.trigger('play:resume');
             } else {
-                audio.pause();
+                Backbone.trigger('play:pause');
             }
         });
 
@@ -368,7 +393,7 @@ $(document).ready(function(){
         });
 
         audio.addEventListener('ended', function(){
-            Backbone.trigger('play:next', audio.current);
+            Backbone.trigger('play:next', audio.model);
         });
 
         audio.listenTo(Backbone, 'play:repeat', function(){

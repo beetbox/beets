@@ -107,7 +107,11 @@
         </nav>
 
         <script type="text/template" id="item-template">
-            <a href="#" class="list-group-item clearfix">
+            <% if (selected) { %>
+                <a href="#" class="list-group-item active clearfix">
+            <%  } else { %>
+                <a href="#" class="list-group-item clearfix">
+            <% } %>
                 <%= artist %> - <%= title %>
                 <span class="pull-right">
                     <button id="play-button" class="btn btn-xs btn-info">
