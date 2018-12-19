@@ -1595,9 +1595,21 @@ def write_items(lib, query, pretend, force):
                       displayable_path(item.path), exc)
             continue
 
+        fields = library.Item._media_tag_fields
+        if beets.config['id3v23'].get(bool):
+            # Filter unsupported fields (ugly hack, affects ALL file types)
+            # https://github.com/quodlibet/mutagen/blob/a1db79ece62c4e86259f15825e360d1ce0986a22/mutagen/id3/_tags.py#L465-L469
+            fields = fields.difference([
+                'original_date',  # TDOR
+                'original_month',  # TDOR
+                'original_day',  # TDOR
+                'arranger',  # TIPL
+                'artist_sort',  # TSOP
+                'disctitle',  # TSST
+            ])
+
         # Check for and display changes.
-        changed = ui.show_model_changes(item, clean_item,
-                                        library.Item._media_tag_fields, force)
+        changed = ui.show_model_changes(item, clean_item, fields, force)
         if (changed or force) and not pretend:
             # We use `try_sync` here to keep the mtime up to date in the
             # database.
