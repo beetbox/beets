@@ -54,6 +54,43 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
         self.album.load()
         self.assertEqual(self.album['artpath'], None)
 
+    def test_filesystem_does_not_pick_up_ignored_file(self):
+        self.touch(b'co_ver.jpg', dir=self.album.path, content='IMAGE')
+        self.config['ignore'] = ['*_*']
+        self.run_command('fetchart')
+        self.album.load()
+        self.assertEqual(self.album['artpath'], None)
+
+    def test_filesystem_picks_up_non_ignored_file(self):
+        self.touch(b'cover.jpg', dir=self.album.path, content='IMAGE')
+        self.config['ignore'] = ['*_*']
+        self.run_command('fetchart')
+        self.album.load()
+        self.check_cover_is_stored()
+
+    def test_filesystem_does_not_pick_up_hidden_file(self):
+        self.touch(b'.cover.jpg', dir=self.album.path, content='IMAGE')
+        self.config['ignore'] = []  # By default, ignore includes '.*'.
+        self.config['ignore_hidden'] = True
+        self.run_command('fetchart')
+        self.album.load()
+        self.assertEqual(self.album['artpath'], None)
+
+    def test_filesystem_picks_up_non_hidden_file(self):
+        self.touch(b'cover.jpg', dir=self.album.path, content='IMAGE')
+        self.config['ignore_hidden'] = True
+        self.run_command('fetchart')
+        self.album.load()
+        self.check_cover_is_stored()
+
+    def test_filesystem_picks_up_hidden_file(self):
+        self.touch(b'.cover.jpg', dir=self.album.path, content='IMAGE')
+        self.config['ignore'] = []  # By default, ignore includes '.*'.
+        self.config['ignore_hidden'] = False
+        self.run_command('fetchart')
+        self.album.load()
+        self.check_cover_is_stored()
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
