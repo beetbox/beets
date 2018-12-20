@@ -31,7 +31,7 @@ from beets import util
 from beets import config
 from beets.mediafile import image_mime_type
 from beets.util.artresizer import ArtResizer
-from beets.util import confit
+from beets.util import confit, sorted_walk
 from beets.util import syspath, bytestring_path, py3_path
 import six
 
@@ -666,12 +666,16 @@ class FileSystem(LocalArtSource):
 
             # Find all files that look like images in the directory.
             images = []
-            for fn in os.listdir(syspath(path)):
-                fn = bytestring_path(fn)
-                for ext in IMAGE_EXTENSIONS:
-                    if fn.lower().endswith(b'.' + ext) and \
-                       os.path.isfile(syspath(os.path.join(path, fn))):
-                        images.append(fn)
+            ignore = config['ignore'].as_str_seq()
+            ignore_hidden = config['ignore_hidden'].get(bool)
+            for _, _, files in sorted_walk(path, ignore=ignore,
+                                           ignore_hidden=ignore_hidden):
+                for fn in files:
+                    fn = bytestring_path(fn)
+                    for ext in IMAGE_EXTENSIONS:
+                        if fn.lower().endswith(b'.' + ext) and \
+                           os.path.isfile(syspath(os.path.join(path, fn))):
+                            images.append(fn)
 
             # Look for "preferred" filenames.
             images = sorted(images,
