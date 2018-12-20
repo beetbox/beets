@@ -111,6 +111,7 @@ Fixes:
 * The ``%title`` template function now works correctly with apostrophes.
   Thanks to :user:`GuilhermeHideki`.
   :bug:`3033`
+* Fetchart now respects the ``ignore`` and ``ignore_hidden`` settings. :bug:`1632`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
