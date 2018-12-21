@@ -48,6 +48,10 @@ New features:
   :bug:`2497`
 * Modify selection can now be applied early without selecting every item.
   :bug:`3083`
+* :doc:`/plugins/chroma`: Fingerprint values are now properly stored as
+  strings, which prevents strange repeated output when running ``beet write``.
+  Thanks to :user:`Holzhaus`.
+  :bug:`3097` :bug:`2942`
 
 Changes:
 
