@@ -93,6 +93,7 @@ def acoustid_match(log, path):
         log.error(u'fingerprinting of {0} failed: {1}',
                   util.displayable_path(repr(path)), exc)
         return None
+    fp = fp.decode()
     _fingerprints[path] = fp
     try:
         res = acoustid.lookup(API_KEY, fp, duration,
@@ -334,7 +335,7 @@ def fingerprint_item(log, item, write=False):
                  util.displayable_path(item.path))
         try:
             _, fp = acoustid.fingerprint_file(util.syspath(item.path))
-            item.acoustid_fingerprint = fp
+            item.acoustid_fingerprint = fp.decode()
             if write:
                 log.info(u'{0}: writing fingerprint',
                          util.displayable_path(item.path))
