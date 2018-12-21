@@ -15,7 +15,9 @@
 
 from __future__ import division, absolute_import, print_function
 
+import ctypes
 import os
+import sys
 import unittest
 from test.helper import TestHelper
 from beets import util
@@ -39,6 +41,13 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
         self.assertEqual(self.album['artpath'], self.cover_path)
         with open(util.syspath(self.cover_path), 'r') as f:
             self.assertEqual(f.read(), 'IMAGE')
+
+    def hide_file_windows(self):
+        hidden_mask = 2
+        success = ctypes.windll.kernel32.SetFileAttributesW(self.cover_path,
+                                                            hidden_mask)
+        if not success:
+            self.skipTest("unable to set file attributes")
 
     def test_set_art_from_folder(self):
         self.touch(b'c\xc3\xb6ver.jpg', dir=self.album.path, content='IMAGE')
@@ -70,6 +79,8 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
 
     def test_filesystem_does_not_pick_up_hidden_file(self):
         self.touch(b'.cover.jpg', dir=self.album.path, content='IMAGE')
+        if sys.platform == 'win32':
+            self.hide_file_windows()
         self.config['ignore'] = []  # By default, ignore includes '.*'.
         self.config['ignore_hidden'] = True
         self.run_command('fetchart')
@@ -85,6 +96,8 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
 
     def test_filesystem_picks_up_hidden_file(self):
         self.touch(b'.cover.jpg', dir=self.album.path, content='IMAGE')
+        if sys.platform == 'win32':
+            self.hide_file_windows()
         self.config['ignore'] = []  # By default, ignore includes '.*'.
         self.config['ignore_hidden'] = False
         self.run_command('fetchart')
