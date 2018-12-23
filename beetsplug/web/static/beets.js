@@ -145,6 +145,11 @@ var AppView = Backbone.View.extend({
         this.shownItems.remove(view.model);
         $(view.el).remove();
     },
+    dropItem: function(fromI, toI) {
+        movedItem = this.shownItems.at(fromI);
+        this.shownItems.remove(movedItem);
+        this.shownItems.add(movedItem, {at: toI});
+    },
     selectItem: function(view) {
         // Mark row as selected.
         $('#results li').removeClass("selected");
@@ -201,5 +206,12 @@ Backbone.history.start({pushState: false});
 // Disable selection on UI elements.
 $('#entities ul').disableSelection();
 $('#header').disableSelection();
+
+var sortable = Sortable.create(
+    document.getElementById('results'),
+    {
+        onEnd: function(event){ app.dropItem(event.oldIndex, event.newIndex); },
+    }
+);
 
 });
