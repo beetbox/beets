@@ -173,7 +173,7 @@ var ItemEntryView = Backbone.View.extend({
     template: _.template($('#item-entry-template').html()),
     events: {
         'click .title': 'select',
-        'click .remove': 'remove',  ////////// FIXME don't select() when remove() - then commit - then remove player-controls fuss
+        'click .remove': 'remove',
         'dblclick': 'play'
     },
     initialize: function() {
