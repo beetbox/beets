@@ -133,8 +133,12 @@ var AppView = Backbone.View.extend({
         });
     },
     showItems: function(items) {
-        this.shownItems = items;
-        $('#results').empty();
+        if ($('#replaceItems').is(':checked')) {
+            this.shownItems = items;
+            $('#results').empty();
+        } else {
+            this.shownItems.add(items);
+        }
         items.each(function(item) {
             var view = new ItemEntryView({model: item});
             item.entryView = view;
