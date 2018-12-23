@@ -86,6 +86,16 @@ body {
     margin-left: 5px;
     font-size: 0.9em;
 }
+#entities ul li .remove {
+    display: none;
+    float: right;
+    position: absolute;
+    right: 0;
+    cursor: pointer;
+}
+#entities ul li:hover .remove {
+    display: block;
+}
 
 
 #main-detail, #extra-detail {

@@ -172,7 +172,8 @@ var ItemEntryView = Backbone.View.extend({
     tagName: "li",
     template: _.template($('#item-entry-template').html()),
     events: {
-        'click': 'select',
+        'click .title': 'select',
+        'click .remove': 'remove',  ////////// FIXME don't select() when remove() - then commit - then remove player-controls fuss
         'dblclick': 'play'
     },
     initialize: function() {
@@ -182,6 +183,9 @@ var ItemEntryView = Backbone.View.extend({
         $(this.el).html(this.template(this.model.toJSON()));
         this.setPlaying(this.playing);
         return this;
+    },
+    remove: function() {
+        app.removeItem(this);
     },
     select: function() {
         app.selectItem(this);
@@ -250,6 +254,12 @@ var AppView = Backbone.View.extend({
             item.entryView = view;
             $('#results').append(view.render().el);
         });
+    },
+    removeItem: function(view) {
+        console.log(this.shownItems);
+        this.shownItems.remove(view.model);
+        console.log(this.shownItems);
+        $(view.el).remove();
     },
     selectItem: function(view) {
         // Mark row as selected.
