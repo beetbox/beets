@@ -141,16 +141,22 @@ var AppView = Backbone.View.extend({
         });
     },
     showItems: function(items) {
+        var startAt = 0;
         if ($('#replaceItems').is(':checked')) {
             this.shownItems = items;
             $('#results').empty();
         } else {
-            this.shownItems.add(items);
+            startAt = this.shownItems.size();
+            items.forEach(item => {
+                this.shownItems.add(item);
+            });
         }
-        items.each(function(item) {
-            var view = new ItemEntryView({model: item});
-            item.entryView = view;
-            $('#results').append(view.render().el);
+        this.shownItems.each(function(item, index) {
+            if (index >= startAt) {
+                var view = new ItemEntryView({model: item});
+                item.entryView = view;
+                $('#results').append(view.render().el);
+            }
         });
     },
     removeItem: function(view) {
@@ -166,26 +172,28 @@ var AppView = Backbone.View.extend({
         // Mark row as selected.
         $('#results li').removeClass("selected");
         $(view.el).addClass("selected");
-
-        // Show main and extra detail.
-        var mainDetailView = new ItemMainDetailView({model: view.model});
-        $('#main-detail').empty().append(mainDetailView.render().el);
-
-        var extraDetailView = new ItemExtraDetailView({model: view.model});
-        $('#extra-detail').empty().append(extraDetailView.render().el);
+        this.showItem(view.model)
     },
     playItem: function(item) {
         var url = 'item/' + item.get('id') + '/file';
-        $('#player audio').attr('src', url);
-        $('#player audio').get(0).play();
+        $('audio').attr('src', url);
+        $('audio').get(0).play();
 
         if (this.playingItem != null) {
             this.playingItem.entryView.setPlaying(false);
         }
         item.entryView.setPlaying(true);
+        this.showItem(item);
         this.playingItem = item;
     },
+    showItem(item) {
+        // Show main and extra detail.
+        var mainDetailView = new ItemMainDetailView({model: item});
+        $('#main-detail').empty().append(mainDetailView.render().el);
 
+        var extraDetailView = new ItemExtraDetailView({model: item});
+        $('#extra-detail').empty().append(extraDetailView.render().el);
+    },
     audioPause: function() {
         this.playingItem.entryView.setPlaying(false);
     },
