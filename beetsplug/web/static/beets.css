@@ -31,6 +31,13 @@ body {
     float: left;
 }
 
+#newest {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+
 #entities {
     width: 17em;
 
@@ -143,28 +150,4 @@ body {
 }
 #extra-detail dl dd {
     margin-left: 10.5em;
-}
-
-
-#player {
-    float: left;
-    width: 150px;
-    height: 36px;
-}
-#player .play, #player .pause, #player .disabled {
-    -webkit-appearance: none;
-    font-size: 1em;
-    font-family: Helvetica, Arial, sans-serif;
-    background: none;
-    border: none;
-    color: white;
-    padding: 5px;
-    margin: 0;
-    text-align: center;
-
-    width: 36px;
-    height: 36px;
-}
-#player .disabled {
-    color: #666;
 }

@@ -116,10 +116,18 @@ var AppView = Backbone.View.extend({
     el: $('body'),
     events: {
         'submit #queryForm': 'querySubmit',
+        'click #newest': 'queryNewest',
     },
     querySubmit: function(ev) {
         ev.preventDefault();
         router.navigate('item/query/' + encodeURIComponent($('#query').val()), true);
+    },
+    queryNewest: function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        latestQuery = 'added:-1w..';
+        router.navigate('item/query/' + encodeURIComponent(latestQuery), true);
+        $('#query').val(latestQuery);
     },
     initialize: function() {
         this.playingItem = null;
