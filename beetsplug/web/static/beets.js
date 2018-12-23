@@ -1,3 +1,17 @@
+// Format times as minutes and seconds. Used by item-extra-detail-template
+var timeFormat = function(secs) {
+    if (secs == undefined || isNaN(secs)) {
+        return '0:00';
+    }
+    secs = Math.round(secs);
+    var mins = '' + Math.floor(secs / 60);
+    secs = '' + (secs % 60);
+    if (secs.length < 2) {
+        secs = '0' + secs;
+    }
+    return mins + ':' + secs;
+}
+
 // Simple selection disable for jQuery.
 // Cut-and-paste from:
 // http://stackoverflow.com/questions/2700000
@@ -43,7 +57,7 @@ var ItemEntryView = Backbone.View.extend({
     tagName: "li",
     template: _.template($('#item-entry-template').html()),
     events: {
-        'click .title': 'select',
+        'click': 'select',
         'click .remove': 'remove',
         'dblclick': 'play'
     },
@@ -55,7 +69,8 @@ var ItemEntryView = Backbone.View.extend({
         this.setPlaying(this.playing);
         return this;
     },
-    remove: function() {
+    remove: function(event) {
+        event.stopPropagation();
         app.removeItem(this);
     },
     select: function() {
@@ -127,9 +142,7 @@ var AppView = Backbone.View.extend({
         });
     },
     removeItem: function(view) {
-        console.log(this.shownItems);
         this.shownItems.remove(view.model);
-        console.log(this.shownItems);
         $(view.el).remove();
     },
     selectItem: function(view) {
