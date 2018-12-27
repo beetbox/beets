@@ -310,8 +310,7 @@ class ITunesStoreTest(UseThePlugin):
         with self.assertRaises(StopIteration):
             next(self.source.get(self.album, self.settings, []))
 
-    def test_itunesstore_bad_url(self):
-        self.mock_response(u'https://www.apple.com', "")
+    def test_itunesstore_requestexception(self):
         with self.assertRaises(StopIteration):
             next(self.source.get(self.album, self.settings, []))
 
