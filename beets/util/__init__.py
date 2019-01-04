@@ -32,6 +32,7 @@ from beets.util import hidden
 import six
 from unidecode import unidecode
 from enum import Enum
+import win32file
 
 
 MAX_FILENAME_LENGTH = 200
@@ -133,6 +134,11 @@ class MoveOperation(Enum):
     LINK = 2
     HARDLINK = 3
 
+def symlink(source, link_name):
+    win32file.CreateSymbolicLink(link_name,source)
+
+def hrdlink(source, link_name):
+    win32file.CreateHardLink(link_name,source)
 
 def normpath(path):
     """Provide the canonical form of the path suitable for storing in
@@ -497,8 +503,9 @@ def link(path, dest, replace=False):
 
     if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError(u'file exists', 'rename', (path, dest))
+
     try:
-        os.symlink(syspath(path), syspath(dest))
+	symlink(syspath(path), syspath(dest))
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(u'OS does not support symbolic links.'
@@ -522,8 +529,10 @@ def hardlink(path, dest, replace=False):
 
     if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError(u'file exists', 'rename', (path, dest))
-    try:
-        os.link(syspath(path), syspath(dest))
+
+    try: 
+	hrdlink(syspath(path), syspath(dest))
+	
     except NotImplementedError:
         raise FilesystemError(u'OS does not support hard links.'
                               'link', (path, dest), traceback.format_exc())
