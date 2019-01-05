@@ -32,7 +32,7 @@ from beets.util import hidden
 import six
 from unidecode import unidecode
 from enum import Enum
-import win32file
+import ctypes
 
 
 MAX_FILENAME_LENGTH = 200
@@ -135,10 +135,10 @@ class MoveOperation(Enum):
     HARDLINK = 3
 
 def symlink(source, link_name):
-    win32file.CreateSymbolicLink(link_name,source)
+    ctypes.windll.kernel32.CreateSymbolicLinkW(link_name,source,0)
 
 def hrdlink(source, link_name):
-    win32file.CreateHardLink(link_name,source)
+    ctypes.windll.kernel32.CreateHardLinkW(link_name,source,0)
 
 def normpath(path):
     """Provide the canonical form of the path suitable for storing in

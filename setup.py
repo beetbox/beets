@@ -91,7 +91,6 @@ setup(
         'munkres',
         'unidecode',
         'musicbrainzngs>=0.4',
-		'pywin32',
         'pyyaml',
         'jellyfish',
     ] + (['colorama'] if (sys.platform == 'win32') else []) +
