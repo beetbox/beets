@@ -25,6 +25,7 @@ import responses
 from mock import patch
 
 from test import _common
+from test.helper import capture_log
 from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import config
@@ -311,8 +312,15 @@ class ITunesStoreTest(UseThePlugin):
             next(self.source.get(self.album, self.settings, []))
 
     def test_itunesstore_requestexception(self):
-        with self.assertRaises(StopIteration):
-            next(self.source.get(self.album, self.settings, []))
+        responses.add(responses.GET, fetchart.ITunesStore.API_URL,
+                      json={'error': 'not found'}, status=404)
+        expected = u'iTunes search failed: 404 Client Error'
+
+        with capture_log('beets.test_art') as logs:
+            with self.assertRaises(StopIteration):
+                next(self.source.get(self.album, self.settings, []))
+
+        self.assertIn(expected, logs[1])
 
     def test_itunesstore_returns_result_without_artist(self):
         json = """{
