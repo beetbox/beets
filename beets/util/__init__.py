@@ -505,7 +505,12 @@ def link(path, dest, replace=False):
         raise FilesystemError(u'file exists', 'rename', (path, dest))
 
     try:
-	symlink(syspath(path), syspath(dest))
+        if sys.platform == 'win32':
+            if ctypes.windll.kernel32.CreateSymbolicLinkW(syspath(dest),syspath(path),0) != 1:
+                raise ctypes.WinError()
+        else:
+            os.symlink(syspath(path), syspath(dest))
+
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(u'OS does not support symbolic links.'
@@ -530,8 +535,12 @@ def hardlink(path, dest, replace=False):
     if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError(u'file exists', 'rename', (path, dest))
 
-    try: 
-	hrdlink(syspath(path), syspath(dest))
+    try:
+        if sys.platform == 'win32':
+            if ctypes.windll.kernel32.CreateHardLinkW(syspath(dest), syspath(path), 0) != 1:
+                raise ctypes.WinError()
+        else:
+            os.link(syspath(path), syspath(dest))
 	
     except NotImplementedError:
         raise FilesystemError(u'OS does not support hard links.'
