@@ -322,7 +322,7 @@ class ITunesStoreTest(UseThePlugin):
 
         self.assertIn(expected, logs[1])
 
-    def test_itunesstore_returns_result_without_artist(self):
+    def test_itunesstore_fallback_match(self):
         json = """{
                     "results":
                         [
