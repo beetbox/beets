@@ -166,7 +166,7 @@ def rst2md(text):
     """Use Pandoc to convert text from ReST to Markdown.
     """
     pandoc = subprocess.Popen(
-        ['pandoc', '--from=rst', '--to=markdown', '--no-wrap'],
+        ['pandoc', '--from=rst', '--to=markdown', '--wrap=none'],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     stdout, _ = pandoc.communicate(text.encode('utf-8'))
@@ -281,7 +281,7 @@ def prep():
 
     # Build.
     with chdir(BASE):
-        subprocess.check_call(['python2', 'setup.py', 'sdist'])
+        subprocess.check_call(['python', 'setup.py', 'sdist'])
 
     # Generate Markdown changelog.
     cl = changelog_as_markdown()

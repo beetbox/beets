@@ -159,11 +159,8 @@ def _safe_cast(out_type, val):
             elif not isinstance(val, six.string_types):
                 val = six.text_type(val)
             # Get a number from the front of the string.
-            val = re.match(r'[\+-]?[0-9]*', val.strip()).group(0)
-            if not val:
-                return 0
-            else:
-                return int(val)
+            match = re.match(r'[\+-]?[0-9]+', val.strip())
+            return int(match.group(0)) if match else 0
 
     elif out_type == bool:
         try:
@@ -1867,6 +1864,12 @@ class MediaFile(object):
         MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id'),
         StorageStyle('MUSICBRAINZ_TRACKID'),
         ASFStorageStyle('MusicBrainz/Track Id'),
+    )
+    mb_releasetrackid = MediaField(
+        MP3DescStorageStyle(u'MusicBrainz Release Track Id'),
+        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Release Track Id'),
+        StorageStyle('MUSICBRAINZ_RELEASETRACKID'),
+        ASFStorageStyle('MusicBrainz/Release Track Id'),
     )
     mb_albumid = MediaField(
         MP3DescStorageStyle(u'MusicBrainz Album Id'),

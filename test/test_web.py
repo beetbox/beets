@@ -35,41 +35,41 @@ class WebPluginTest(_common.LibTestCase):
     def test_config_include_paths_true(self):
         web.app.config['INCLUDE_PATHS'] = True
         response = self.client.get('/item/1')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['path'], u'/path_1')
+        self.assertEqual(res_json['path'], u'/path_1')
 
     def test_config_include_paths_false(self):
         web.app.config['INCLUDE_PATHS'] = False
         response = self.client.get('/item/1')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn('path', response.json)
+        self.assertNotIn('path', res_json)
 
     def test_get_all_items(self):
         response = self.client.get('/item/')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json['items']), 2)
+        self.assertEqual(len(res_json['items']), 2)
 
     def test_get_single_item_by_id(self):
         response = self.client.get('/item/1')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['id'], 1)
-        self.assertEqual(response.json['title'], u'title')
+        self.assertEqual(res_json['id'], 1)
+        self.assertEqual(res_json['title'], u'title')
 
     def test_get_multiple_items_by_id(self):
         response = self.client.get('/item/1,2')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json['items']), 2)
-        response_titles = [item['title'] for item in response.json['items']]
+        self.assertEqual(len(res_json['items']), 2)
+        response_titles = [item['title'] for item in res_json['items']]
         assertCountEqual(self, response_titles, [u'title', u'another title'])
 
     def test_get_single_item_not_found(self):
@@ -80,10 +80,10 @@ class WebPluginTest(_common.LibTestCase):
         data_path = os.path.join(_common.RSRC, b'full.mp3')
         self.lib.add(Item.from_path(data_path))
         response = self.client.get('/item/path/' + data_path.decode('utf-8'))
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['title'], u'full')
+        self.assertEqual(res_json['title'], u'full')
 
     def test_get_single_item_by_path_not_found_if_not_in_library(self):
         data_path = os.path.join(_common.RSRC, b'full.mp3')
@@ -95,50 +95,50 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_get_item_empty_query(self):
         response = self.client.get('/item/query/')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json['items']), 2)
+        self.assertEqual(len(res_json['items']), 2)
 
     def test_get_simple_item_query(self):
         response = self.client.get('/item/query/another')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json['results']), 1)
-        self.assertEqual(response.json['results'][0]['title'],
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['title'],
                          u'another title')
 
     def test_get_all_albums(self):
         response = self.client.get('/album/')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        response_albums = [album['album'] for album in response.json['albums']]
+        response_albums = [album['album'] for album in res_json['albums']]
         assertCountEqual(self, response_albums, [u'album', u'another album'])
 
     def test_get_single_album_by_id(self):
         response = self.client.get('/album/2')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['id'], 2)
-        self.assertEqual(response.json['album'], u'another album')
+        self.assertEqual(res_json['id'], 2)
+        self.assertEqual(res_json['album'], u'another album')
 
     def test_get_multiple_albums_by_id(self):
         response = self.client.get('/album/1,2')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        response_albums = [album['album'] for album in response.json['albums']]
+        response_albums = [album['album'] for album in res_json['albums']]
         assertCountEqual(self, response_albums, [u'album', u'another album'])
 
     def test_get_album_empty_query(self):
         response = self.client.get('/album/query/')
-        response.json = json.loads(response.data.decode('utf-8'))
+        res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json['albums']), 2)
+        self.assertEqual(len(res_json['albums']), 2)
 
 
 def suite():

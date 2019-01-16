@@ -408,9 +408,14 @@ def input_select_objects(prompt, objs, rep):
         out = []
         for obj in objs:
             rep(obj)
-            if input_yn(u'%s? (yes/no)' % prompt, True):
+            answer = input_options(
+                ('y', 'n', 'q'), True, u'%s? (yes/no/quit)' % prompt,
+                u'Enter Y or N:'
+            )
+            if answer == u'y':
                 out.append(obj)
-            print()  # go to a new line
+            elif answer == u'q':
+                return out
         return out
 
     else:  # No.
@@ -1193,10 +1198,11 @@ def _open_library(config):
             get_replacements(),
         )
         lib.get_item(0)  # Test database connection.
-    except (sqlite3.OperationalError, sqlite3.DatabaseError):
+    except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug(u'{}', traceback.format_exc())
-        raise UserError(u"database file {0} could not be opened".format(
-            util.displayable_path(dbpath)
+        raise UserError(u"database file {0} cannot not be opened: {1}".format(
+            util.displayable_path(dbpath),
+            db_error
         ))
     log.debug(u'library database: {0}\n'
               u'library directory: {1}',

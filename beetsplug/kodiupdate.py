@@ -28,12 +28,13 @@ from __future__ import division, absolute_import, print_function
 import requests
 from beets import config
 from beets.plugins import BeetsPlugin
+import six
 
 
 def update_kodi(host, port, user, password):
     """Sends request to the Kodi api to start a library refresh.
     """
-    url = "http://{0}:{1}/jsonrpc/".format(host, port)
+    url = "http://{0}:{1}/jsonrpc".format(host, port)
 
     """Content-Type: application/json is mandatory
     according to the kodi jsonrpc documentation"""
@@ -72,16 +73,26 @@ class KodiUpdate(BeetsPlugin):
     def update(self, lib):
         """When the client exists try to send refresh request to Kodi server.
         """
-        self._log.info(u'Updating Kodi library...')
+        self._log.info(u'Requesting a Kodi library update...')
 
         # Try to send update request.
         try:
-            update_kodi(
+            r = update_kodi(
                 config['kodi']['host'].get(),
                 config['kodi']['port'].get(),
                 config['kodi']['user'].get(),
                 config['kodi']['pwd'].get())
-            self._log.info(u'... started.')
+            r.raise_for_status()
 
-        except requests.exceptions.RequestException:
-            self._log.warning(u'Update failed.')
+        except requests.exceptions.RequestException as e:
+            self._log.warning(u'Kodi update failed: {0}',
+                              six.text_type(e))
+            return
+
+        json = r.json()
+        if json.get('result') != 'OK':
+            self._log.warning(u'Kodi update failed: JSON response was {0!r}',
+                              json)
+            return
+
+        self._log.info(u'Kodi update triggered')

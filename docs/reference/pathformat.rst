@@ -83,9 +83,11 @@ These functions are built in to beets:
   ``%first{text,count,skip,sep,join}`` where ``sep`` is the separator, like
   ``;`` or ``/`` and join is the text to concatenate the items.
 * ``%ifdef{field}``, ``%ifdef{field,truetext}`` or
-  ``%ifdef{field,truetext,falsetext}``: If ``field`` exists, then return
-  ``truetext`` or ``field`` (default). Otherwise, returns ``falsetext``.
-  The ``field`` should be entered without ``$``.
+  ``%ifdef{field,truetext,falsetext}``: Checks if an flexible attribute
+  ``field`` is defined. If it exists, then return ``truetext`` or ``field``
+  (default). Otherwise, returns ``falsetext``. The ``field`` should be entered
+  without ``$``. Note that this doesn't work with built-in :ref:`itemfields`, as
+  they are always defined.
 
 .. _unidecode module: http://pypi.python.org/pypi/Unidecode
 .. _strftime: http://docs.python.org/2/library/time.html#time.strftime
@@ -134,11 +136,13 @@ If no field suffices, beets distinguishes the two albums with their album number
 (used internally in the beets database). If an album is not a duplicate,
 ``%aunique`` just returns an empty string.
 
-The default identifiers are ``albumartist album`` and the default disambiguators
-are ``albumtype year label catalognum albumdisambig``. So you can get reasonable
-disambiguation behavior if you just use ``%aunique{}`` with no parameters in
-your path forms (as in the default path formats), but you can customize the
-disambiguation if, for example, you include the year by default in path formats.
+The default identifiers are ``albumartist album`` and the default
+disambiguators are ``albumtype year label catalognum albumdisambig
+releasegroupdisambig``. So you can get reasonable disambiguation
+behavior if you just use ``%aunique{}`` with no parameters in your
+path forms (as in the default path formats), but you can customize the
+disambiguation if, for example, you include the year by default in
+path formats.
 
 The default characters used as brackets are ``[]``. To change this, provide a
 third argument to the ``%aunique`` function consisting of two characters: the left
@@ -250,6 +254,7 @@ Audio information:
 MusicBrainz and fingerprint information:
 
 * mb_trackid
+* mb_releasetrackid
 * mb_albumid
 * mb_artistid
 * mb_albumartistid

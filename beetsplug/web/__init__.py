@@ -24,6 +24,7 @@ import flask
 from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
 import os
+from unidecode import unidecode
 import json
 import base64
 
@@ -225,10 +226,24 @@ def item_file(item_id):
     else:
         item_path = util.py3_path(item.path)
 
+    try:
+        unicode_item_path = util.text_string(item.path)
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        unicode_item_path = util.displayable_path(item.path)
+
+    base_filename = os.path.basename(unicode_item_path)
+    try:
+        # Imitate http.server behaviour
+        base_filename.encode("latin-1", "strict")
+    except UnicodeEncodeError:
+        safe_filename = unidecode(base_filename)
+    else:
+        safe_filename = base_filename
+
     response = flask.send_file(
         item_path,
         as_attachment=True,
-        attachment_filename=os.path.basename(util.py3_path(item.path)),
+        attachment_filename=safe_filename
     )
     response.headers['Content-Length'] = os.path.getsize(item_path)
     return response
@@ -285,8 +300,8 @@ def album_query(queries):
 @app.route('/album/<int:album_id>/art')
 def album_art(album_id):
     album = g.lib.get_album(album_id)
-    if album.artpath:
-        return flask.send_file(album.artpath)
+    if album and album.artpath:
+        return flask.send_file(album.artpath.decode())
     else:
         return flask.abort(404)
 
@@ -341,6 +356,7 @@ class WebPlugin(BeetsPlugin):
             'host': u'127.0.0.1',
             'port': 8337,
             'cors': '',
+            'cors_supports_credentials': False,
             'reverse_proxy': False,
             'include_paths': False,
         })
@@ -367,12 +383,17 @@ class WebPlugin(BeetsPlugin):
             if self.config['cors']:
                 self._log.info(u'Enabling CORS with origin: {0}',
                                self.config['cors'])
-                from flask.ext.cors import CORS
+                from flask_cors import CORS
                 app.config['CORS_ALLOW_HEADERS'] = "Content-Type"
                 app.config['CORS_RESOURCES'] = {
                     r"/*": {"origins": self.config['cors'].get(str)}
                 }
-                CORS(app)
+                CORS(
+                    app,
+                    supports_credentials=self.config[
+                        'cors_supports_credentials'
+                    ].get(bool)
+                )
 
             # Allow serving behind a reverse proxy
             if self.config['reverse_proxy']:

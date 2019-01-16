@@ -27,6 +27,7 @@ from test import _common
 from test._common import item, touch
 import beets.library
 from beets import util
+from beets.util import MoveOperation
 
 
 class MoveTest(_common.TestCase):
@@ -78,11 +79,11 @@ class MoveTest(_common.TestCase):
         self.assertNotExists(os.path.dirname(old_path))
 
     def test_copy_arrives(self):
-        self.i.move(copy=True)
+        self.i.move(operation=MoveOperation.COPY)
         self.assertExists(self.dest)
 
     def test_copy_does_not_depart(self):
-        self.i.move(copy=True)
+        self.i.move(operation=MoveOperation.COPY)
         self.assertExists(self.path)
 
     def test_move_changes_path(self):
@@ -92,13 +93,13 @@ class MoveTest(_common.TestCase):
     def test_copy_already_at_destination(self):
         self.i.move()
         old_path = self.i.path
-        self.i.move(copy=True)
+        self.i.move(operation=MoveOperation.COPY)
         self.assertEqual(self.i.path, old_path)
 
     def test_move_already_at_destination(self):
         self.i.move()
         old_path = self.i.path
-        self.i.move(copy=False)
+        self.i.move()
         self.assertEqual(self.i.path, old_path)
 
     def test_read_only_file_copied_writable(self):
@@ -106,7 +107,7 @@ class MoveTest(_common.TestCase):
         os.chmod(self.path, 0o444)
 
         try:
-            self.i.move(copy=True)
+            self.i.move(operation=MoveOperation.COPY)
             self.assertTrue(os.access(self.i.path, os.W_OK))
         finally:
             # Make everything writable so it can be cleaned up.
@@ -126,24 +127,24 @@ class MoveTest(_common.TestCase):
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_arrives(self):
-        self.i.move(link=True)
+        self.i.move(operation=MoveOperation.LINK)
         self.assertExists(self.dest)
         self.assertTrue(os.path.islink(self.dest))
         self.assertEqual(os.readlink(self.dest), self.path)
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_does_not_depart(self):
-        self.i.move(link=True)
+        self.i.move(operation=MoveOperation.LINK)
         self.assertExists(self.path)
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_changes_path(self):
-        self.i.move(link=True)
+        self.i.move(operation=MoveOperation.LINK)
         self.assertEqual(self.i.path, util.normpath(self.dest))
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_arrives(self):
-        self.i.move(hardlink=True)
+        self.i.move(operation=MoveOperation.HARDLINK)
         self.assertExists(self.dest)
         s1 = os.stat(self.path)
         s2 = os.stat(self.dest)
@@ -154,12 +155,12 @@ class MoveTest(_common.TestCase):
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_does_not_depart(self):
-        self.i.move(hardlink=True)
+        self.i.move(operation=MoveOperation.HARDLINK)
         self.assertExists(self.path)
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_changes_path(self):
-        self.i.move(hardlink=True)
+        self.i.move(operation=MoveOperation.HARDLINK)
         self.assertEqual(self.i.path, util.normpath(self.dest))
 
 
@@ -236,7 +237,7 @@ class AlbumFileTest(_common.TestCase):
     def test_albuminfo_move_copies_file(self):
         oldpath = self.i.path
         self.ai.album = u'newAlbumName'
-        self.ai.move(True)
+        self.ai.move(operation=MoveOperation.COPY)
         self.ai.store()
         self.i.load()
 
@@ -311,7 +312,7 @@ class ArtFileTest(_common.TestCase):
         i2.path = self.i.path
         i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
-        i2.move(True)
+        i2.move(operation=MoveOperation.COPY)
 
         self.assertEqual(ai.artpath, None)
         ai.set_art(newart)
@@ -327,7 +328,7 @@ class ArtFileTest(_common.TestCase):
         i2.path = self.i.path
         i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
-        i2.move(True)
+        i2.move(operation=MoveOperation.COPY)
         ai.set_art(newart)
 
         # Set the art again.
@@ -341,7 +342,7 @@ class ArtFileTest(_common.TestCase):
         i2.path = self.i.path
         i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
-        i2.move(True)
+        i2.move(operation=MoveOperation.COPY)
 
         # Copy the art to the destination.
         artdest = ai.art_destination(newart)
@@ -358,7 +359,7 @@ class ArtFileTest(_common.TestCase):
         i2.path = self.i.path
         i2.artist = u'someArtist'
         ai = self.lib.add_album((i2,))
-        i2.move(True)
+        i2.move(operation=MoveOperation.COPY)
 
         # Make a file at the destination.
         artdest = ai.art_destination(newart)
@@ -382,7 +383,7 @@ class ArtFileTest(_common.TestCase):
             i2.path = self.i.path
             i2.artist = u'someArtist'
             ai = self.lib.add_album((i2,))
-            i2.move(True)
+            i2.move(operation=MoveOperation.COPY)
             ai.set_art(newart)
 
             mode = stat.S_IMODE(os.stat(ai.artpath).st_mode)

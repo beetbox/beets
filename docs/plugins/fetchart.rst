@@ -16,12 +16,13 @@ The plugin uses `requests`_ to fetch album art from the Web.
 Fetching Album Art During Import
 --------------------------------
 
-When the plugin is enabled, it automatically gets album art for every album
-you import.
+When the plugin is enabled, it automatically tries to get album art for every
+album you import.
 
 By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
-the :ref:`art-filename` config option.
+the :ref:`art-filename` config option. To embed the art into the files' tags,
+use the :doc:`/plugins/embedart`. (You'll want to have both plugins enabled.)
 
 Configuration
 -------------
@@ -49,12 +50,13 @@ file. The available options are:
   (``enforce_ratio: 0.5%``). Default: ``no``.
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
-  Default: ``filesystem coverart amazon albumart``, i.e., everything but
+  Default: ``filesystem coverart itunes amazon albumart``, i.e., everything but
   ``wikipedia``, ``google`` and ``fanarttv``. Enable those sources for more
   matches at the cost of some speed. They are searched in the given order,
   thus in the default config, no remote (Web) art source are queried if
   local art is found in the filesystem. To use a local image as fallback,
-  move it to the end of the list.
+  move it to the end of the list. For even more fine-grained control over
+  the search order, see the section on :ref:`album-art-sources` below.
 - **google_key**: Your Google API key (to enable the Google Custom Search
   backend).
   Default: None.
@@ -66,7 +68,7 @@ file. The available options are:
   flexible tag named ``art_source``. See below for the rationale behind this.
   Default: ``no``.
 
-Note: ``minwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
+Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
 
 .. note::
@@ -82,13 +84,13 @@ or `Pillow`_.
 .. _ImageMagick: http://www.imagemagick.org/
 
 Here's an example that makes plugin select only images that contain *front* or
-*back* keywords in their filenames and prioritizes the Amazon source over
+*back* keywords in their filenames and prioritizes the iTunes source over
 others::
 
     fetchart:
         cautious: true
         cover_names: front back
-        sources: amazon *
+        sources: itunes *
 
 
 Manually Fetching Album Art
@@ -103,6 +105,17 @@ By default, the command will only look for album art when the album doesn't
 already have it; the ``-f`` or ``--force`` switch makes it search for art
 in Web databases regardless. If you specify a query, only matching albums will
 be processed; otherwise, the command processes every album in your library.
+
+Display Only Missing Album Art
+------------------------------
+
+Use the ``fetchart`` command with the ``-q`` switch in order to display only missing
+art::
+
+    $ beet fetchart [-q] [query]
+
+By default the command will display all results, the ``-q`` or ``--quiet``
+switch will only display results for album arts that are still missing.
 
 .. _image-resizing:
 
@@ -124,11 +137,13 @@ environment variable so that ImageMagick comes first or use Pillow instead.
 .. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 
+.. _album-art-sources:
+
 Album Art Sources
 -----------------
 
 By default, this plugin searches for art in the local filesystem as well as on
-the Cover Art Archive, Amazon, and AlbumArt.org, in that
+the Cover Art Archive, the iTunes Store, Amazon, and AlbumArt.org, in that
 order.
 You can reorder the sources or remove
 some to speed up the process using the ``sources`` configuration option.
@@ -138,6 +153,25 @@ same folder as the music files you're importing. Beets prefers to use an image
 file whose name contains "cover", "front", "art", "album" or "folder", but in
 the absence of well-known names, it will use any image file in the same folder
 as your music files.
+
+For some of the art sources, the backend service can match artwork by various
+criteria. If you want finer control over the search order in such cases, you
+can use this alternative syntax for the ``sources`` option::
+
+    fetchart:
+        sources:
+            - filesystem
+            - coverart: release
+            - itunes
+            - coverart: releasegroup
+            - '*'
+
+where listing a source without matching criteria will default to trying all
+available strategies. Entries of the forms ``coverart: release releasegroup``
+and ``coverart: *`` are also valid.
+Currently, only the ``coverart`` source supports multiple criteria:
+namely, ``release`` and ``releasegroup``, which refer to the
+respective MusicBrainz IDs.
 
 When you choose to apply changes during an import, beets will search for art as
 described above.  For "as-is" imports (and non-autotagged imports using the
@@ -189,10 +223,3 @@ album art fetch, you could do
 
 The values written to ``art_source`` are the same names used in the ``sources``
 configuration value.
-
-Embedding Album Art
--------------------
-
-This plugin fetches album art but does not embed images into files' tags. To do
-that, use the :doc:`/plugins/embedart`. (You'll want to have both plugins
-enabled.)

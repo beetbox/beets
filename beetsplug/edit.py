@@ -23,7 +23,6 @@ from beets import ui
 from beets.dbcore import types
 from beets.importer import action
 from beets.ui.commands import _do_query, PromptChoice
-from copy import deepcopy
 import codecs
 import subprocess
 import yaml
@@ -283,7 +282,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 # Show the changes.
                 # If the objects are not on the DB yet, we need a copy of their
                 # original state for show_model_changes.
-                objs_old = [deepcopy(obj) if not obj._db else None
+                objs_old = [obj.copy() if obj.id < 0 else None
                             for obj in objs]
                 self.apply_data(objs, old_data, new_data)
                 changed = False
@@ -302,9 +301,13 @@ class EditPlugin(plugins.BeetsPlugin):
                 elif choice == u'c':  # Cancel.
                     return False
                 elif choice == u'e':  # Keep editing.
-                    # Reset the temporary changes to the objects.
+                    # Reset the temporary changes to the objects. I we have a
+                    # copy from above, use that, else reload from the database.
+                    objs = [(old_obj or obj)
+                            for old_obj, obj in zip(objs_old, objs)]
                     for obj in objs:
-                        obj.read()
+                        if not obj.id < 0:
+                            obj.load()
                     continue
 
         # Remove the temporary file before returning.
@@ -365,9 +368,13 @@ class EditPlugin(plugins.BeetsPlugin):
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
         """
-        # Assign temporary ids to the Items.
-        for i, obj in enumerate(task.items):
-            obj.id = i + 1
+        # Assign negative temporary ids to Items that are not in the database
+        # yet. By using negative values, no clash with items in the database
+        # can occur.
+        for i, obj in enumerate(task.items, start=1):
+            # The importer may set the id to None when re-importing albums.
+            if not obj._db or obj.id is None:
+                obj.id = -i
 
         # Present the YAML to the user and let her change it.
         fields = self._get_fields(album=False, extra=[])
@@ -375,7 +382,8 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Remove temporary ids.
         for obj in task.items:
-            obj.id = None
+            if obj.id < 0:
+                obj.id = None
 
         # Save the new data.
         if success:

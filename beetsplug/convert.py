@@ -31,6 +31,8 @@ from beets.plugins import BeetsPlugin
 from beets.util.confit import ConfigTypeError
 from beets import art
 from beets.util.artresizer import ArtResizer
+from beets.library import parse_query_string
+from beets.library import Item
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -92,6 +94,12 @@ def should_transcode(item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
+    no_convert_queries = config['convert']['no_convert'].as_str_seq()
+    if no_convert_queries:
+        for query_string in no_convert_queries:
+            query, _ = parse_query_string(query_string, Item)
+            if query.match(item):
+                return False
     if config['convert']['never_convert_lossy_files'] and \
             not (item.format.lower() in LOSSLESS_FORMATS):
         return False
@@ -133,11 +141,12 @@ class ConvertPlugin(BeetsPlugin):
             u'quiet': False,
             u'embed': True,
             u'paths': {},
+            u'no_convert': u'',
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
         })
-        self.import_stages = [self.auto_convert]
+        self.early_import_stages = [self.auto_convert]
 
         self.register_listener('import_task_files', self._cleanup)
 
@@ -390,7 +399,7 @@ class ConvertPlugin(BeetsPlugin):
                                util.displayable_path(album.artpath),
                                util.displayable_path(dest))
             else:
-                self._log.info(u'Copying cover art to {0}',
+                self._log.info(u'Copying cover art from {0} to {1}',
                                util.displayable_path(album.artpath),
                                util.displayable_path(dest))
                 util.copy(album.artpath, dest)

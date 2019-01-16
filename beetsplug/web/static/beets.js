@@ -4,7 +4,7 @@ var timeFormat = function(secs) {
         return '0:00';
     }
     secs = Math.round(secs);
-    var mins = '' + Math.round(secs / 60);
+    var mins = '' + Math.floor(secs / 60);
     secs = '' + (secs % 60);
     if (secs.length < 2) {
         secs = '0' + secs;

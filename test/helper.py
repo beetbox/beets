@@ -52,6 +52,7 @@ from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.mediafile import MediaFile, Image
 from beets import util
+from beets.util import MoveOperation
 
 # TODO Move AutotagMock here
 from test import _common
@@ -315,6 +316,8 @@ class TestHelper(object):
         item = Item(**values_)
         if 'path' not in values:
             item['path'] = 'audio.' + item['format'].lower()
+        # mtime needs to be set last since other assignments reset it.
+        item.mtime = 12345
         return item
 
     def add_item(self, **values):
@@ -347,7 +350,7 @@ class TestHelper(object):
         item['path'] = os.path.join(_common.RSRC,
                                     util.bytestring_path('min.' + extension))
         item.add(self.lib)
-        item.move(copy=True)
+        item.move(operation=MoveOperation.COPY)
         item.store()
         return item
 
@@ -365,8 +368,10 @@ class TestHelper(object):
             item = Item.from_path(path)
             item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
+            # mtime needs to be set last since other assignments reset it.
+            item.mtime = 12345
             item.add(self.lib)
-            item.move(copy=True)
+            item.move(operation=MoveOperation.COPY)
             item.store()
             items.append(item)
         return items
@@ -380,8 +385,10 @@ class TestHelper(object):
             item = Item.from_path(path)
             item.album = u'\u00e4lbum'  # Check unicode paths
             item.title = u't\u00eftle {0}'.format(i)
+            # mtime needs to be set last since other assignments reset it.
+            item.mtime = 12345
             item.add(self.lib)
-            item.move(copy=True)
+            item.move(operation=MoveOperation.COPY)
             item.store()
             items.append(item)
         return self.lib.add_album(items)
@@ -528,7 +535,7 @@ class TestImportSession(importer.ImportSession):
 
     choose_item = choose_match
 
-    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH')
+    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH MERGE')
 
     default_resolution = 'REMOVE'
 
@@ -546,18 +553,20 @@ class TestImportSession(importer.ImportSession):
             task.set_choice(importer.action.SKIP)
         elif res == self.Resolution.REMOVE:
             task.should_remove_duplicates = True
+        elif res == self.Resolution.MERGE:
+            task.should_merge_duplicates = True
 
 
-def generate_album_info(album_id, track_ids):
+def generate_album_info(album_id, track_values):
     """Return `AlbumInfo` populated with mock data.
 
     Sets the album info's `album_id` field is set to the corresponding
-    argument. For each value in `track_ids` the `TrackInfo` from
-    `generate_track_info` is added to the album info's `tracks` field.
+    argument. For each pair (`id`, `values`) in `track_values` the `TrackInfo`
+    from `generate_track_info` is added to the album info's `tracks` field.
     Most other fields of the album and track info are set to "album
     info" and "track info", respectively.
     """
-    tracks = [generate_track_info(id) for id in track_ids]
+    tracks = [generate_track_info(id, values) for id, values in track_values]
     album = AlbumInfo(
         album_id=u'album info',
         album=u'album info',
@@ -574,7 +583,7 @@ ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
                      'asin', 'albumtype', 'va', 'label',
                      'artist_sort', 'releasegroup_id', 'catalognum',
                      'language', 'country', 'albumstatus', 'media',
-                     'albumdisambig', 'artist_credit',
+                     'albumdisambig', 'releasegroupdisambig', 'artist_credit',
                      'data_source', 'data_url']
 
 

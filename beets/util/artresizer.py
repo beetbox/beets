@@ -72,7 +72,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
         im = Image.open(util.syspath(path_in))
         size = maxwidth, maxwidth
         im.thumbnail(size, Image.ANTIALIAS)
-        im.save(path_out)
+        im.save(util.py3_path(path_out))
         return path_out
     except IOError:
         log.error(u"PIL cannot create thumbnail for '{0}'",
@@ -88,14 +88,13 @@ def im_resize(maxwidth, path_in, path_out=None):
     log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
-    # "-resize widthxheight>" shrinks images with dimension(s) larger
-    # than the corresponding width and/or height dimension(s). The >
-    # "only shrink" flag is prefixed by ^ escape char for Windows
-    # compatibility.
+    # "-resize WIDTHx>" shrinks images with the width larger
+    # than the given width while maintaining the aspect ratio
+    # with regards to the height.
     try:
         util.command_output([
             'convert', util.syspath(path_in, prefix=False),
-            '-resize', '{0}x^>'.format(maxwidth),
+            '-resize', '{0}x>'.format(maxwidth),
             util.syspath(path_out, prefix=False),
         ])
     except subprocess.CalledProcessError:
@@ -152,15 +151,15 @@ class Shareable(type):
     lazily-created shared instance of ``MyClass`` while calling
     ``MyClass()`` to construct a new object works as usual.
     """
-    def __init__(self, name, bases, dict):
-        super(Shareable, self).__init__(name, bases, dict)
-        self._instance = None
+    def __init__(cls, name, bases, dict):
+        super(Shareable, cls).__init__(name, bases, dict)
+        cls._instance = None
 
     @property
-    def shared(self):
-        if self._instance is None:
-            self._instance = self()
-        return self._instance
+    def shared(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
 
 class ArtResizer(six.with_metaclass(Shareable, object)):

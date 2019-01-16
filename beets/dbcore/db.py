@@ -217,6 +217,21 @@ class Model(object):
         if need_id and not self.id:
             raise ValueError(u'{0} has no id'.format(type(self).__name__))
 
+    def copy(self):
+        """Create a copy of the model object.
+
+        The field values and other state is duplicated, but the new copy
+        remains associated with the same database as the old object.
+        (A simple `copy.deepcopy` will not work because it would try to
+        duplicate the SQLite connection.)
+        """
+        new = self.__class__()
+        new._db = self._db
+        new._values_fixed = self._values_fixed.copy()
+        new._values_flex = self._values_flex.copy()
+        new._dirty = self._dirty.copy()
+        return new
+
     # Essential field accessors.
 
     @classmethod
@@ -242,8 +257,9 @@ class Model(object):
         else:
             raise KeyError(key)
 
-    def __setitem__(self, key, value):
-        """Assign the value for a field.
+    def _setitem(self, key, value):
+        """Assign the value for a field, return whether new and old value
+        differ.
         """
         # Choose where to place the value.
         if key in self._fields:
@@ -257,8 +273,16 @@ class Model(object):
         # Assign value and possibly mark as dirty.
         old_value = source.get(key)
         source[key] = value
-        if self._always_dirty or old_value != value:
+        changed = old_value != value
+        if self._always_dirty or changed:
             self._dirty.add(key)
+
+        return changed
+
+    def __setitem__(self, key, value):
+        """Assign the value for a field.
+        """
+        self._setitem(key, value)
 
     def __delitem__(self, key):
         """Remove a flexible attribute from the model.
@@ -266,10 +290,10 @@ class Model(object):
         if key in self._values_flex:  # Flexible.
             del self._values_flex[key]
             self._dirty.add(key)  # Mark for dropping on store.
+        elif key in self._fields:  # Fixed
+            setattr(self, key, self._type(key).null)
         elif key in self._getters():  # Computed.
             raise KeyError(u'computed field {0} cannot be deleted'.format(key))
-        elif key in self._fields:  # Fixed.
-            raise KeyError(u'fixed field {0} cannot be deleted'.format(key))
         else:
             raise KeyError(u'no such field {0}'.format(key))
 

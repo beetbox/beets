@@ -43,6 +43,8 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 * On **Fedora** 22 or later, there is a `DNF package`_ (or three)::
 
       $ sudo dnf install beets beets-plugins beets-doc
+      
+* On **Solus**, run ``eopkg install beets``.
 
 * On **NixOS**, run ``nix-env -i beets``.
 
@@ -56,8 +58,8 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
 .. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/
 
-If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
-front of that).
+If you have `pip`_, just say ``pip install beets`` (or ``pip install --user
+beets`` if you run into permissions problems).
 
 To install without pip, download beets from `its PyPI page`_ and run ``python
 setup.py install`` in the directory therein.
@@ -77,12 +79,12 @@ Installing on macOS 10.11 and Higher
 Starting with version 10.11 (El Capitan), macOS has a new security feature
 called `System Integrity Protection`_ (SIP) that prevents you from modifying
 some parts of the system. This means that some ``pip`` commands may fail with
-a permissions error, even when you use ``sudo``. (You probably *won't* run
-into this if you've installed Python yourself with `Homebrew`_ or otherwise.)
+a permissions error. (You probably *won't* run into this if you've installed
+Python yourself with `Homebrew`_ or otherwise.)
 
-If this happens, you can install beets for the current user only (sans
-``sudo``) by typing ``pip install --user beets``. If you do that, you might want
-to add ``~/Library/Python/3.6/bin`` to your ``$PATH``.
+If this happens, you can install beets for the current user only by typing
+``pip install --user beets``. If you do that, you might want to add
+``~/Library/Python/3.6/bin`` to your ``$PATH``.
 
 .. _System Integrity Protection: https://support.apple.com/en-us/HT204899
 .. _Homebrew: http://brew.sh
@@ -181,6 +183,11 @@ here, including the directory and file naming scheme. See
 
 Importing Your Library
 ----------------------
+
+The next step is to import your music files into the beets library database.
+Because this can involve modifying files and moving them around, data loss is
+always a possibility, so now would be a good time to make sure you have a
+recent backup of all your music. We'll wait.
 
 There are two good ways to bring your existing library into beets. You can
 either: (a) quickly bring all your files with all their current metadata into

@@ -79,8 +79,8 @@ bs1770gain
 ``````````
 
 To use this backend, you will need to install the `bs1770gain`_ command-line
-tool. Follow the instructions at the `bs1770gain`_ Web site and ensure that
-the tool is on your ``$PATH``.
+tool, version 0.4.6 or greater. Follow the instructions at the `bs1770gain`_
+Web site and ensure that the tool is on your ``$PATH``.
 
 .. _bs1770gain: http://bs1770gain.sourceforge.net/
 
@@ -130,7 +130,7 @@ These options only works with the "bs1770gain" backend:
   the reference level: -18, -23, or -24 LUFS respectively. Default:
   `replaygain`
 - **chunk_at**: Splits an album in groups of tracks of this amount.
-  Usefull when running into memory problems when analysing albums with
+  Useful when running into memory problems when analysing albums with
   an exceptionally large amount of tracks. Default:5000
 
 Manual Analysis
@@ -140,11 +140,15 @@ By default, the plugin will analyze all items an albums as they are implemented.
 However, you can also manually analyze files that are already in your library.
 Use the ``beet replaygain`` command::
 
-    $ beet replaygain [-a] [QUERY]
+    $ beet replaygain [-Waf] [QUERY]
 
 The ``-a`` flag analyzes whole albums instead of individual tracks. Provide a
 query (see :doc:`/reference/query`) to indicate which items or albums to
-analyze.
+analyze. Files that already have ReplayGain values are skipped unless ``-f`` is
+supplied. Use ``-w`` (write tags) or ``-W`` (don't write tags) to control
+whether ReplayGain tags are written into the music files, or stored in the
+beets database only (the default is to use :ref:`the importer's configuration
+<config-import-write>`).
 
 ReplayGain analysis is not fast, so you may want to disable it during import.
 Use the ``auto`` config option to control this::

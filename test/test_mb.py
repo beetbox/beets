@@ -27,7 +27,8 @@ import mock
 
 class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False):
+                      track_artist=False, data_tracks=None,
+                      medium_format='FORMAT'):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -62,12 +63,15 @@ class MBAlbumInfoTest(_common.TestCase):
             'country': 'COUNTRY',
             'status': 'STATUS',
         }
+        i = 0
+        track_list = []
         if tracks:
-            track_list = []
-            for i, recording in enumerate(tracks):
+            for recording in tracks:
+                i += 1
                 track = {
+                    'id': 'RELEASE TRACK ID %d' % i,
                     'recording': recording,
-                    'position': i + 1,
+                    'position': i,
                     'number': 'A1',
                 }
                 if track_length:
@@ -87,15 +91,27 @@ class MBAlbumInfoTest(_common.TestCase):
                         }
                     ]
                 track_list.append(track)
-            release['medium-list'].append({
-                'position': '1',
-                'track-list': track_list,
-                'format': 'FORMAT',
-                'title': 'MEDIUM TITLE',
-            })
+        data_track_list = []
+        if data_tracks:
+            for recording in data_tracks:
+                i += 1
+                data_track = {
+                    'id': 'RELEASE TRACK ID %d' % i,
+                    'recording': recording,
+                    'position': i,
+                    'number': 'A1',
+                }
+                data_track_list.append(data_track)
+        release['medium-list'].append({
+            'position': '1',
+            'track-list': track_list,
+            'data-track-list': data_track_list,
+            'format': medium_format,
+            'title': 'MEDIUM TITLE',
+        })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False):
+    def _make_track(self, title, tr_id, duration, artist=False, video=False):
         track = {
             'title': title,
             'id': tr_id,
@@ -113,6 +129,8 @@ class MBAlbumInfoTest(_common.TestCase):
                     'name': 'RECORDING ARTIST CREDIT',
                 }
             ]
+        if video:
+            track['video'] = 'true'
         return track
 
     def test_parse_release_with_year(self):
@@ -181,6 +199,7 @@ class MBAlbumInfoTest(_common.TestCase):
                   self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
         release = self._make_release(tracks=[tracks[0]])
         second_track_list = [{
+            'id': 'RELEASE TRACK ID 2',
             'recording': tracks[1],
             'position': '1',
             'number': 'A1',
@@ -283,8 +302,8 @@ class MBAlbumInfoTest(_common.TestCase):
     def test_parse_disambig(self):
         release = self._make_release(None)
         d = mb.album_info(release)
-        self.assertEqual(d.albumdisambig,
-                         'RG_DISAMBIGUATION, R_DISAMBIGUATION')
+        self.assertEqual(d.albumdisambig, 'R_DISAMBIGUATION')
+        self.assertEqual(d.releasegroupdisambig, 'RG_DISAMBIGUATION')
 
     def test_parse_disctitle(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
@@ -323,6 +342,108 @@ class MBAlbumInfoTest(_common.TestCase):
         release = self._make_release()
         d = mb.album_info(release)
         self.assertEqual(d.data_source, 'MusicBrainz')
+
+    def test_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, medium_format="IGNORED1")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 0)
+
+    def test_no_ignored_media(self):
+        config['match']['ignored_media'] = ['IGNORED1', 'IGNORED2']
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks,
+                                     medium_format="NON-IGNORED")
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+
+    def test_skip_data_track(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('[data track]', 'ID DATA TRACK',
+                                   100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_skip_audio_data_tracks_by_default(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        data_tracks = [self._make_track('TITLE AUDIO DATA', 'ID DATA TRACK',
+                                        100.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_no_skip_audio_data_tracks_if_configured(self):
+        config['match']['ignore_data_tracks'] = False
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        data_tracks = [self._make_track('TITLE AUDIO DATA', 'ID DATA TRACK',
+                                        100.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 3)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+        self.assertEqual(d.tracks[2].title, 'TITLE AUDIO DATA')
+
+    def test_skip_video_tracks_by_default(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
+                                   False, True),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_skip_video_data_tracks_by_default(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        data_tracks = [self._make_track('TITLE VIDEO', 'ID VIDEO',
+                                        100.0 * 1000.0, False, True)]
+        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 2)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+
+    def test_no_skip_video_tracks_if_configured(self):
+        config['match']['ignore_data_tracks'] = False
+        config['match']['ignore_video_tracks'] = False
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE VIDEO', 'ID VIDEO', 100.0 * 1000.0,
+                                   False, True),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 3)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE VIDEO')
+        self.assertEqual(d.tracks[2].title, 'TITLE TWO')
+
+    def test_no_skip_video_data_tracks_if_configured(self):
+        config['match']['ignore_data_tracks'] = False
+        config['match']['ignore_video_tracks'] = False
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        data_tracks = [self._make_track('TITLE VIDEO', 'ID VIDEO',
+                                        100.0 * 1000.0, False, True)]
+        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        d = mb.album_info(release)
+        self.assertEqual(len(d.tracks), 3)
+        self.assertEqual(d.tracks[0].title, 'TITLE ONE')
+        self.assertEqual(d.tracks[1].title, 'TITLE TWO')
+        self.assertEqual(d.tracks[2].title, 'TITLE VIDEO')
 
 
 class ParseIDTest(_common.TestCase):
@@ -450,6 +571,7 @@ class MBLibraryTest(unittest.TestCase):
                         'id': mbid,
                         'medium-list': [{
                             'track-list': [{
+                                'id': 'baz',
                                 'recording': {
                                     'title': 'foo',
                                     'id': 'bar',

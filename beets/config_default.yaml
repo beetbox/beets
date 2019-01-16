@@ -10,6 +10,8 @@ import:
     delete: no
     resume: ask
     incremental: no
+    incremental_skip_later: no
+    from_scratch: no
     quiet_fallback: skip
     none_rec_action: ask
     timid: no
@@ -46,6 +48,12 @@ asciify_paths: false
 art_filename: cover
 max_filename_length: 0
 
+aunique:
+    keys: albumartist album
+    disambiguators: albumtype year label catalognum albumdisambig releasegroupdisambig
+    bracket: '[]'
+
+
 plugins: []
 pluginpath: []
 threaded: yes
@@ -54,6 +62,7 @@ per_disc_numbering: no
 verbose: 0
 terminal_encoding:
 original_date: no
+artist_credit: no
 id3v23: no
 va_name: "Various Artists"
 
@@ -125,5 +134,8 @@ match:
         original_year: no
     ignored: []
     required: []
+    ignored_media: []
+    ignore_data_tracks: yes
+    ignore_video_tracks: yes
     track_length_grace: 10
     track_length_max: 30

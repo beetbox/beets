@@ -19,7 +19,7 @@ import os
 
 from beets.util import confit
 
-__version__ = u'1.4.6'
+__version__ = u'1.4.8'
 __author__ = u'Adrian Sampson <adrian@radbox.org>'
 
 

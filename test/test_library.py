@@ -158,7 +158,7 @@ class DestinationTest(_common.TestCase):
         self.lib.path_formats = [(u'default', u'two')]
         self.assertEqual(self.i.destination(), np('one/two'))
 
-    def test_destination_substitues_metadata_values(self):
+    def test_destination_substitutes_metadata_values(self):
         self.lib.directory = b'base'
         self.lib.path_formats = [(u'default', u'$album/$artist $title')]
         self.i.title = 'three'
@@ -427,7 +427,7 @@ class DestinationTest(_common.TestCase):
         self.lib.directory = b'lib'
         self.lib.path_formats = [(u'default', u'$title')]
         self.i.title = u'ab\xa2\xbdd'
-        self.assertEqual(self.i.destination(), np('lib/abC_1_2d'))
+        self.assertEqual(self.i.destination(), np('lib/abC_ 1_2 d'))
 
     def test_destination_with_replacements(self):
         self.lib.directory = b'base'
@@ -589,9 +589,13 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._setf(u'%title{$title}')
         self._assert_dest(b'/base/The Title')
 
+    def test_title_case_variable_aphostrophe(self):
+        self._setf(u'%title{I can\'t}')
+        self._assert_dest(b'/base/I Can\'t')
+
     def test_asciify_variable(self):
         self._setf(u'%asciify{ab\xa2\xbdd}')
-        self._assert_dest(b'/base/abC_1_2d')
+        self._assert_dest(b'/base/abC_ 1_2 d')
 
     def test_left_variable(self):
         self._setf(u'%left{$title, 3}')

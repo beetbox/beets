@@ -633,6 +633,32 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assert_file_in_lib(
             b'Applied Artist', b'Applied Album', b'Applied Title 1.mp3')
 
+    def test_apply_from_scratch_removes_other_metadata(self):
+        config['import']['from_scratch'] = True
+
+        for mediafile in self.import_media:
+            mediafile.genre = u'Tag Genre'
+            mediafile.save()
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().genre, u'')
+
+    def test_apply_from_scratch_keeps_format(self):
+        config['import']['from_scratch'] = True
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().format, u'MP3')
+
+    def test_apply_from_scratch_keeps_bitrate(self):
+        config['import']['from_scratch'] = True
+        bitrate = 80000
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().bitrate, bitrate)
+
     def test_apply_with_move_deletes_import(self):
         config['import']['move'] = True
 
@@ -1248,6 +1274,12 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         item = self.lib.items().get()
         self.assertEqual(item.title, u't\xeftle 0')
 
+    def test_merge_duplicate_album(self):
+        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.albums()), 1)
+
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
 
@@ -1802,6 +1834,7 @@ def mocked_get_release_by_id(id_, includes=[], release_status=[],
             'id': id_,
             'medium-list': [{
                 'track-list': [{
+                    'id': 'baz',
                     'recording': {
                         'title': 'foo',
                         'id': 'bar',

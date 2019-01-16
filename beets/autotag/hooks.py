@@ -31,6 +31,12 @@ import six
 
 log = logging.getLogger('beets')
 
+# The name of the type for patterns in re changed in Python 3.7.
+try:
+    Pattern = re._pattern_type
+except AttributeError:
+    Pattern = re.Pattern
+
 
 # Classes used to represent candidate options.
 
@@ -60,6 +66,8 @@ class AlbumInfo(object):
     - ``albumstatus``: MusicBrainz release status (Official, etc.)
     - ``media``: delivery mechanism (Vinyl, etc.)
     - ``albumdisambig``: MusicBrainz release disambiguation comment
+    - ``releasegroupdisambig``: MusicBrainz release group
+            disambiguation comment.
     - ``artist_credit``: Release-specific artist name
     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
     - ``data_url``: The data source release URL.
@@ -72,9 +80,9 @@ class AlbumInfo(object):
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
                  language=None, country=None, albumstatus=None, media=None,
-                 albumdisambig=None, artist_credit=None, original_year=None,
-                 original_month=None, original_day=None, data_source=None,
-                 data_url=None):
+                 albumdisambig=None, releasegroupdisambig=None,
+                 artist_credit=None, original_year=None, original_month=None,
+                 original_day=None, data_source=None, data_url=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -97,6 +105,7 @@ class AlbumInfo(object):
         self.albumstatus = albumstatus
         self.media = media
         self.albumdisambig = albumdisambig
+        self.releasegroupdisambig = releasegroupdisambig
         self.artist_credit = artist_credit
         self.original_year = original_year
         self.original_month = original_month
@@ -113,7 +122,8 @@ class AlbumInfo(object):
         """
         for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
                     'catalognum', 'script', 'language', 'country',
-                    'albumstatus', 'albumdisambig', 'artist_credit', 'media']:
+                    'albumstatus', 'albumdisambig', 'releasegroupdisambig',
+                    'artist_credit', 'media']:
             value = getattr(self, fld)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
@@ -129,6 +139,8 @@ class TrackInfo(object):
 
     - ``title``: name of the track
     - ``track_id``: MusicBrainz ID; UUID fragment only
+    - ``release_track_id``: MusicBrainz ID respective to a track on a
+            particular release; UUID fragment only
     - ``artist``: individual track artist name
     - ``artist_id``
     - ``length``: float: duration of the track in seconds
@@ -152,14 +164,15 @@ class TrackInfo(object):
     may be None. The indices ``index``, ``medium``, and ``medium_index``
     are all 1-based.
     """
-    def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None, index=None, medium=None, medium_index=None,
-                 medium_total=None, artist_sort=None, disctitle=None,
-                 artist_credit=None, data_source=None, data_url=None,
-                 media=None, lyricist=None, composer=None, composer_sort=None,
-                 arranger=None, track_alt=None):
+    def __init__(self, title, track_id, release_track_id=None, artist=None,
+                 artist_id=None, length=None, index=None, medium=None,
+                 medium_index=None, medium_total=None, artist_sort=None,
+                 disctitle=None, artist_credit=None, data_source=None,
+                 data_url=None, media=None, lyricist=None, composer=None,
+                 composer_sort=None, arranger=None, track_alt=None):
         self.title = title
         self.track_id = track_id
+        self.release_track_id = release_track_id
         self.artist = artist
         self.artist_id = artist_id
         self.length = length
@@ -430,7 +443,7 @@ class Distance(object):
         be a compiled regular expression, in which case it will be
         matched against `value2`.
         """
-        if isinstance(value1, re._pattern_type):
+        if isinstance(value1, Pattern):
             return bool(value1.match(value2))
         return value1 == value2
 
@@ -536,7 +549,10 @@ def album_for_mbid(release_id):
     if the ID is not found.
     """
     try:
-        return mb.album_for_id(release_id)
+        album = mb.album_for_id(release_id)
+        if album:
+            plugins.send(u'albuminfo_received', info=album)
+        return album
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
@@ -546,12 +562,14 @@ def track_for_mbid(recording_id):
     if the ID is not found.
     """
     try:
-        return mb.track_for_id(recording_id)
+        track = mb.track_for_id(recording_id)
+        if track:
+            plugins.send(u'trackinfo_received', info=track)
+        return track
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
 
-@plugins.notify_info_yielded(u'albuminfo_received')
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     a = album_for_mbid(album_id)
@@ -559,10 +577,10 @@ def albums_for_id(album_id):
         yield a
     for a in plugins.album_for_id(album_id):
         if a:
+            plugins.send(u'albuminfo_received', info=a)
             yield a
 
 
-@plugins.notify_info_yielded(u'trackinfo_received')
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     t = track_for_mbid(track_id)
@@ -570,6 +588,7 @@ def tracks_for_id(track_id):
         yield t
     for t in plugins.track_for_id(track_id):
         if t:
+            plugins.send(u'trackinfo_received', info=t)
             yield t
 
 

@@ -105,6 +105,9 @@ class InvalidValueToleranceTest(unittest.TestCase):
     def test_safe_cast_string_to_int(self):
         self.assertEqual(_sc(int, u'something'), 0)
 
+    def test_safe_cast_string_to_int_with_no_numbers(self):
+        self.assertEqual(_sc(int, u'-'), 0)
+
     def test_safe_cast_int_string_to_int(self):
         self.assertEqual(_sc(int, u'20'), 20)
 

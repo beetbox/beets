@@ -103,9 +103,9 @@ def _make_item(title, track, artist=u'some artist'):
 
 def _make_trackinfo():
     return [
-        TrackInfo(u'one', None, u'some artist', length=1, index=1),
-        TrackInfo(u'two', None, u'some artist', length=1, index=2),
-        TrackInfo(u'three', None, u'some artist', length=1, index=3),
+        TrackInfo(u'one', None, artist=u'some artist', length=1, index=1),
+        TrackInfo(u'two', None, artist=u'some artist', length=1, index=2),
+        TrackInfo(u'three', None, artist=u'some artist', length=1, index=3),
     ]
 
 
@@ -616,12 +616,13 @@ class AssignmentTest(unittest.TestCase):
 
 
 class ApplyTestUtil(object):
-    def _apply(self, info=None, per_disc_numbering=False):
+    def _apply(self, info=None, per_disc_numbering=False, artist_credit=False):
         info = info or self.info
         mapping = {}
         for i, t in zip(self.items, info.tracks):
             mapping[i] = t
         config['per_disc_numbering'] = per_disc_numbering
+        config['artist_credit'] = artist_credit
         autotag.apply_metadata(info, mapping)
 
 
@@ -706,6 +707,24 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[0].tracktotal, 1)
         self.assertEqual(self.items[1].tracktotal, 1)
 
+    def test_artist_credit(self):
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[0].artist, 'trackArtistCredit')
+        self.assertEqual(self.items[1].artist, 'albumArtistCredit')
+        self.assertEqual(self.items[0].albumartist, 'albumArtistCredit')
+        self.assertEqual(self.items[1].albumartist, 'albumArtistCredit')
+
+    def test_artist_credit_prefers_artist_over_albumartist_credit(self):
+        self.info.tracks[0].artist = 'oldArtist'
+        self.info.tracks[0].artist_credit = None
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[0].artist, 'oldArtist')
+
+    def test_artist_credit_falls_back_to_albumartist(self):
+        self.info.artist_credit = None
+        self._apply(artist_credit=True)
+        self.assertEqual(self.items[1].artist, 'artistNew')
+
     def test_mb_trackid_applied(self):
         self._apply()
         self.assertEqual(self.items[0].mb_trackid,
@@ -732,7 +751,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[0].artist, 'artistNew')
         self.assertEqual(self.items[1].artist, 'artistNew')
 
-    def test_album_artist_overriden_by_nonempty_track_artist(self):
+    def test_album_artist_overridden_by_nonempty_track_artist(self):
         my_info = copy.deepcopy(self.info)
         my_info.tracks[0].artist = 'artist1!'
         my_info.tracks[1].artist = 'artist2!'
@@ -808,15 +827,15 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
         trackinfo.append(TrackInfo(
             u'oneNew',
             u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-            u'artistOneNew',
-            u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+            artist=u'artistOneNew',
+            artist_id=u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
             index=1,
         ))
         trackinfo.append(TrackInfo(
             u'twoNew',
             u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
-            u'artistTwoNew',
-            u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+            artist=u'artistTwoNew',
+            artist_id=u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
             index=2,
         ))
         self.info = AlbumInfo(

@@ -24,7 +24,9 @@ import json
 import os
 import subprocess
 import tempfile
+import sys
 
+from multiprocessing.pool import ThreadPool
 from distutils.spawn import find_executable
 import requests
 
@@ -104,10 +106,20 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
     def command(self, lib, opts, args):
         # Get items from arguments
         items = lib.items(ui.decargs(args))
-        for item in items:
-            analysis = self._get_analysis(item)
-            if analysis:
-                self._submit_data(item, analysis)
+        if sys.version_info[0] < 3:
+            for item in items:
+                self.analyze_submit(item)
+        else:
+            # Analyze in parallel using a thread pool.
+            pool = ThreadPool()
+            pool.map(self.analyze_submit, items)
+            pool.close()
+            pool.join()
+
+    def analyze_submit(self, item):
+        analysis = self._get_analysis(item)
+        if analysis:
+            self._submit_data(item, analysis)
 
     def _get_analysis(self, item):
         mbid = item['mb_trackid']
@@ -133,8 +145,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     item=item, error=e
                 )
                 return None
-            with open(filename) as tmp_file:
-                analysis = json.loads(tmp_file.read())
+            with open(filename, 'rb') as tmp_file:
+                analysis = json.load(tmp_file)
             # Add the hash to the output.
             analysis['metadata']['version']['essentia_build_sha'] = \
                 self.extractor_sha

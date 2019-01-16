@@ -413,6 +413,12 @@ class ConfigView(object):
         """
         return self.get(StrSeq(split=split))
 
+    def as_pairs(self, default_value=None):
+        """Get the value as a sequence of pairs of two strings. Equivalent to
+        `get(Pairs())`.
+        """
+        return self.get(Pairs(default_value=default_value))
+
     def as_str(self):
         """Get the value as a (Unicode) string. Equivalent to
         `get(unicode)` on Python 2 and `get(str)` on Python 3.
@@ -789,6 +795,10 @@ class Configuration(RootView):
         self.appname = appname
         self.modname = modname
 
+        # Resolve default source location. We do this ahead of time to
+        # avoid unexpected problems if the working directory changes.
+        self._package_path = _package_path(appname)
+
         self._env_var = '{0}DIR'.format(self.appname.upper())
 
         if read:
@@ -816,9 +826,8 @@ class Configuration(RootView):
         `modname` if it was given.
         """
         if self.modname:
-            pkg_path = _package_path(self.modname)
-            if pkg_path:
-                filename = os.path.join(pkg_path, DEFAULT_FILENAME)
+            if self._package_path:
+                filename = os.path.join(self._package_path, DEFAULT_FILENAME)
                 if os.path.isfile(filename):
                     self.add(ConfigSource(load_yaml(filename), filename, True))
 
@@ -1242,30 +1251,77 @@ class StrSeq(Template):
         super(StrSeq, self).__init__()
         self.split = split
 
+    def _convert_value(self, x, view):
+        if isinstance(x, STRING):
+            return x
+        elif isinstance(x, bytes):
+            return x.decode('utf-8', 'ignore')
+        else:
+            self.fail(u'must be a list of strings', view, True)
+
     def convert(self, value, view):
         if isinstance(value, bytes):
             value = value.decode('utf-8', 'ignore')
 
         if isinstance(value, STRING):
             if self.split:
-                return value.split()
+                value = value.split()
             else:
-                return [value]
+                value = [value]
+        else:
+            try:
+                value = list(value)
+            except TypeError:
+                self.fail(u'must be a whitespace-separated string or a list',
+                          view, True)
 
+        return [self._convert_value(v, view) for v in value]
+
+
+class Pairs(StrSeq):
+    """A template for ordered key-value pairs.
+
+    This can either be given with the same syntax as for `StrSeq` (i.e. without
+    values), or as a list of strings and/or single-element mappings such as::
+
+        - key: value
+        - [key, value]
+        - key
+
+    The result is a list of two-element tuples. If no value is provided, the
+    `default_value` will be returned as the second element.
+    """
+
+    def __init__(self, default_value=None):
+        """Create a new template.
+
+        `default` is the dictionary value returned for items that are not
+        a mapping, but a single string.
+        """
+        super(Pairs, self).__init__(split=True)
+        self.default_value = default_value
+
+    def _convert_value(self, x, view):
         try:
-            value = list(value)
-        except TypeError:
-            self.fail(u'must be a whitespace-separated string or a list',
-                      view, True)
-
-        def convert(x):
-            if isinstance(x, STRING):
-                return x
-            elif isinstance(x, bytes):
-                return x.decode('utf-8', 'ignore')
+            return (super(Pairs, self)._convert_value(x, view),
+                    self.default_value)
+        except ConfigTypeError:
+            if isinstance(x, collections.Mapping):
+                if len(x) != 1:
+                    self.fail(u'must be a single-element mapping', view, True)
+                k, v = iter_first(x.items())
+            elif isinstance(x, collections.Sequence):
+                if len(x) != 2:
+                    self.fail(u'must be a two-element list', view, True)
+                k, v = x
             else:
-                self.fail(u'must be a list of strings', view, True)
-        return list(map(convert, value))
+                # Is this even possible? -> Likely, if some !directive cause
+                # YAML to parse this to some custom type.
+                self.fail(u'must be a single string, mapping, or a list'
+                          u'' + str(x),
+                          view, True)
+            return (super(Pairs, self)._convert_value(k, view),
+                    super(Pairs, self)._convert_value(v, view))
 
 
 class Filename(Template):

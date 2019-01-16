@@ -114,6 +114,19 @@ class AnotherTestModel(TestModel1):
     }
 
 
+class TestModel5(TestModel1):
+    _fields = {
+        'some_string_field': dbcore.types.STRING,
+        'some_float_field': dbcore.types.FLOAT,
+        'some_boolean_field': dbcore.types.BOOLEAN,
+    }
+
+
+class TestDatabase5(dbcore.Database):
+    _models = (TestModel5,)
+    pass
+
+
 class TestDatabaseTwoModels(dbcore.Database):
     _models = (TestModel2, AnotherTestModel)
     pass
@@ -266,9 +279,17 @@ class ModelTest(unittest.TestCase):
             del model['foo']
 
     def test_delete_fixed_attribute(self):
-        model = TestModel1()
-        with self.assertRaises(KeyError):
-            del model['field_one']
+        model = TestModel5()
+        model.some_string_field = 'foo'
+        model.some_float_field = 1.23
+        model.some_boolean_field = True
+
+        for field, type_ in model._fields.items():
+            self.assertNotEqual(model[field], type_.null)
+
+        for field, type_ in model._fields.items():
+            del model[field]
+            self.assertEqual(model[field], type_.null)
 
     def test_null_value_normalization_by_type(self):
         model = TestModel1()

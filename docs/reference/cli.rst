@@ -111,6 +111,12 @@ Optional command flags:
   time, when no subdirectories will be skipped. So consider enabling the
   ``incremental`` configuration option.
 
+* When beets applies metadata to your music, it will retain the value of any
+  existing tags that weren't overwritten, and import them into the database. You
+  may prefer to only use existing metadata for finding matches, and to erase it
+  completely when new metadata is applied. You can enforce this behavior with
+  the ``--from-scratch`` option, or the ``from_scratch`` configuration option.
+
 * By default, beets will proceed without asking if it finds a very close
   metadata match. To disable this and have the importer ask you every time,
   use the ``-t`` (for *timid*) option.
@@ -263,9 +269,10 @@ affected items in the library and asks for your permission before making any
 changes. You can then choose to abort the change (type `n`), confirm
 (`y`), or interactively choose some of the items (`s`). In the latter case,
 the command will prompt you for every matching item or album and invite you to
-type `y` or `n`. This option lets you choose precisely which data to change
-without spending too much time to carefully craft a query. To skip the prompts
-entirely, use the ``-y`` option.
+type `y` to apply the changes, `n` to discard them or `q` to exit and apply
+the selected changes. This option lets you choose precisely which data to
+change without spending too much time to carefully craft a query. To skip the
+prompts entirely, use the ``-y`` option.
 
 .. _move-cmd:
 

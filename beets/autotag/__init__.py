@@ -40,6 +40,7 @@ def apply_item_metadata(item, track_info):
     item.artist_credit = track_info.artist_credit
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
+    item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
     if track_info.data_source:
@@ -63,12 +64,19 @@ def apply_metadata(album_info, mapping):
     mapping from Items to TrackInfo objects.
     """
     for item, track_info in mapping.items():
-        # Album, artist, track count.
-        if track_info.artist:
-            item.artist = track_info.artist
+        # Artist or artist credit.
+        if config['artist_credit']:
+            item.artist = (track_info.artist_credit or
+                           track_info.artist or
+                           album_info.artist_credit or
+                           album_info.artist)
+            item.albumartist = (album_info.artist_credit or
+                                album_info.artist)
         else:
-            item.artist = album_info.artist
-        item.albumartist = album_info.artist
+            item.artist = (track_info.artist or album_info.artist)
+            item.albumartist = album_info.artist
+
+        # Album.
         item.album = album_info.album
 
         # Artist sort and credit names.
@@ -122,6 +130,7 @@ def apply_metadata(album_info, mapping):
 
         # MusicBrainz IDs.
         item.mb_trackid = track_info.track_id
+        item.mb_releasetrackid = track_info.release_track_id
         item.mb_albumid = album_info.album_id
         if track_info.artist_id:
             item.mb_artistid = track_info.artist_id
@@ -143,6 +152,7 @@ def apply_metadata(album_info, mapping):
                       'country',
                       'albumstatus',
                       'albumdisambig',
+                      'releasegroupdisambig',
                       'data_source',):
             value = getattr(album_info, field)
             if value is not None:

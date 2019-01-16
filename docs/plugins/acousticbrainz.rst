@@ -54,10 +54,12 @@ Configuration
 -------------
 
 To configure the plugin, make a ``acousticbrainz:`` section in your
-configuration file. There is one option:
+configuration file. There are three options:
 
 - **auto**: Enable AcousticBrainz during ``beet import``.
   Default: ``yes``.
 - **force**: Download AcousticBrainz data even for tracks that already have
   it.
   Default: ``no``.
+- **tags**: Which tags from the list above to set on your files.
+  Default: [] (all)

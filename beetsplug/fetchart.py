@@ -31,15 +31,9 @@ from beets import util
 from beets import config
 from beets.mediafile import image_mime_type
 from beets.util.artresizer import ArtResizer
-from beets.util import confit
+from beets.util import confit, sorted_walk
 from beets.util import syspath, bytestring_path, py3_path
 import six
-
-try:
-    import itunes
-    HAVE_ITUNES = True
-except ImportError:
-    HAVE_ITUNES = False
 
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],
@@ -192,9 +186,12 @@ class RequestMixin(object):
 # ART SOURCES ################################################################
 
 class ArtSource(RequestMixin):
-    def __init__(self, log, config):
+    VALID_MATCHING_CRITERIA = ['default']
+
+    def __init__(self, log, config, match_by=None):
         self._log = log
         self._config = config
+        self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
     def get(self, album, plugin, paths):
         raise NotImplementedError()
@@ -289,6 +286,7 @@ class RemoteArtSource(ArtSource):
 
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
+    VALID_MATCHING_CRITERIA = ['release', 'releasegroup']
 
     if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
@@ -301,10 +299,10 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
-        if album.mb_albumid:
+        if 'release' in self.match_by and album.mb_albumid:
             yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
                                   match=Candidate.MATCH_EXACT)
-        if album.mb_releasegroupid:
+        if 'releasegroup' in self.match_by and album.mb_releasegroupid:
             yield self._candidate(
                 url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
                 match=Candidate.MATCH_FALLBACK)
@@ -435,7 +433,7 @@ class FanartTV(RemoteArtSource):
         # can there be more than one releasegroupid per response?
         for mbid, art in data.get(u'albums', dict()).items():
             # there might be more art referenced, e.g. cdart, and an albumcover
-            # might not be present, even if the request was succesful
+            # might not be present, even if the request was successful
             if album.mb_releasegroupid == mbid and u'albumcover' in art:
                 matches.extend(art[u'albumcover'])
             # can this actually occur?
@@ -454,37 +452,65 @@ class FanartTV(RemoteArtSource):
 
 class ITunesStore(RemoteArtSource):
     NAME = u"iTunes Store"
+    API_URL = u'https://itunes.apple.com/search'
 
     def get(self, album, plugin, paths):
         """Return art URL from iTunes Store given an album title.
         """
         if not (album.albumartist and album.album):
             return
-        search_string = (album.albumartist + ' ' + album.album).encode('utf-8')
+
+        payload = {
+            'term': album.albumartist + u' ' + album.album,
+            'entity': u'album',
+            'media': u'music',
+            'limit': 200
+        }
         try:
-            # Isolate bugs in the iTunes library while searching.
+            r = self.request(self.API_URL, params=payload)
+            r.raise_for_status()
+        except requests.RequestException as e:
+            self._log.debug(u'iTunes search failed: {0}', e)
+            return
+
+        try:
+            candidates = r.json()['results']
+        except ValueError as e:
+            self._log.debug(u'Could not decode json response: {0}', e)
+            return
+        except KeyError as e:
+            self._log.debug(u'{} not found in json. Fields are {} ',
+                            e,
+                            list(r.json().keys()))
+            return
+
+        if not candidates:
+            self._log.debug(u'iTunes search for {!r} got no results',
+                            payload['term'])
+            return
+
+        for c in candidates:
             try:
-                results = itunes.search_album(search_string)
-            except Exception as exc:
-                self._log.debug(u'iTunes search failed: {0}', exc)
-                return
+                if (c['artistName'] == album.albumartist
+                        and c['collectionName'] == album.album):
+                    art_url = c['artworkUrl100']
+                    art_url = art_url.replace('100x100', '1200x1200')
+                    yield self._candidate(url=art_url,
+                                          match=Candidate.MATCH_EXACT)
+            except KeyError as e:
+                self._log.debug(u'Malformed itunes candidate: {} not found in {}',  # NOQA E501
+                                e,
+                                list(c.keys()))
 
-            # Get the first match.
-            if results:
-                itunes_album = results[0]
-            else:
-                self._log.debug(u'iTunes search for {:r} got no results',
-                                search_string)
-                return
-
-            if itunes_album.get_artwork()['100']:
-                small_url = itunes_album.get_artwork()['100']
-                big_url = small_url.replace('100x100', '1200x1200')
-                yield self._candidate(url=big_url, match=Candidate.MATCH_EXACT)
-            else:
-                self._log.debug(u'album has no artwork in iTunes Store')
-        except IndexError:
-            self._log.debug(u'album not found in iTunes Store')
+        try:
+            fallback_art_url = candidates[0]['artworkUrl100']
+            fallback_art_url = fallback_art_url.replace('100x100', '1200x1200')
+            yield self._candidate(url=fallback_art_url,
+                                  match=Candidate.MATCH_FALLBACK)
+        except KeyError as e:
+            self._log.debug(u'Malformed itunes candidate: {} not found in {}',
+                            e,
+                            list(c.keys()))
 
 
 class Wikipedia(RemoteArtSource):
@@ -571,7 +597,7 @@ class Wikipedia(RemoteArtSource):
             )
 
             # Try to see if one of the images on the pages matches our
-            # imcomplete cover_filename
+            # incomplete cover_filename
             try:
                 data = wikipedia_response.json()
                 results = data['query']['pages'][page_id]['images']
@@ -640,12 +666,16 @@ class FileSystem(LocalArtSource):
 
             # Find all files that look like images in the directory.
             images = []
-            for fn in os.listdir(syspath(path)):
-                fn = bytestring_path(fn)
-                for ext in IMAGE_EXTENSIONS:
-                    if fn.lower().endswith(b'.' + ext) and \
-                       os.path.isfile(syspath(os.path.join(path, fn))):
-                        images.append(fn)
+            ignore = config['ignore'].as_str_seq()
+            ignore_hidden = config['ignore_hidden'].get(bool)
+            for _, _, files in sorted_walk(path, ignore=ignore,
+                                           ignore_hidden=ignore_hidden):
+                for fn in files:
+                    fn = bytestring_path(fn)
+                    for ext in IMAGE_EXTENSIONS:
+                        if fn.lower().endswith(b'.' + ext) and \
+                           os.path.isfile(syspath(os.path.join(path, fn))):
+                            images.append(fn)
 
             # Look for "preferred" filenames.
             images = sorted(images,
@@ -752,26 +782,33 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.register_listener('import_task_files', self.assign_art)
 
         available_sources = list(SOURCES_ALL)
-        if not HAVE_ITUNES and u'itunes' in available_sources:
-            available_sources.remove(u'itunes')
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
-        sources_name = plugins.sanitize_choices(
-            self.config['sources'].as_str_seq(), available_sources)
+        available_sources = [(s, c)
+                             for s in available_sources
+                             for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
+        sources = plugins.sanitize_pairs(
+            self.config['sources'].as_pairs(default_value='*'),
+            available_sources)
+
         if 'remote_priority' in self.config:
             self._log.warning(
                 u'The `fetch_art.remote_priority` configuration option has '
                 u'been deprecated. Instead, place `filesystem` at the end of '
                 u'your `sources` list.')
             if self.config['remote_priority'].get(bool):
-                try:
-                    sources_name.remove(u'filesystem')
-                    sources_name.append(u'filesystem')
-                except ValueError:
-                    pass
-        self.sources = [ART_SOURCES[s](self._log, self.config)
-                        for s in sources_name]
+                fs = []
+                others = []
+                for s, c in sources:
+                    if s == 'filesystem':
+                        fs.append((s, c))
+                    else:
+                        others.append((s, c))
+                sources = others + fs
+
+        self.sources = [ART_SOURCES[s](self._log, self.config, match_by=[c])
+                        for s, c in sources]
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
@@ -783,7 +820,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             if task.choice_flag == importer.action.ASIS:
                 # For as-is imports, don't search Web sources for art.
                 local = True
-            elif task.choice_flag == importer.action.APPLY:
+            elif task.choice_flag in (importer.action.APPLY,
+                                      importer.action.RETAG):
                 # Search everywhere for art.
                 local = False
             else:
@@ -824,9 +862,15 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             action='store_true', default=False,
             help=u're-download art when already present'
         )
+        cmd.parser.add_option(
+            u'-q', u'--quiet', dest='quiet',
+            action='store_true', default=False,
+            help=u'shows only quiet art'
+        )
 
         def func(lib, opts, args):
-            self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)
+            self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
+                                 opts.quiet)
         cmd.func = func
         return [cmd]
 
@@ -866,13 +910,16 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         return out
 
-    def batch_fetch_art(self, lib, albums, force):
+    def batch_fetch_art(self, lib, albums, force, quiet):
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
         """
         for album in albums:
             if album.artpath and not force and os.path.isfile(album.artpath):
-                message = ui.colorize('text_highlight_minor', u'has album art')
+                if not quiet:
+                    message = ui.colorize('text_highlight_minor',
+                                          u'has album art')
+                    self._log.info(u'{0}: {1}', album, message)
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
@@ -885,5 +932,4 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize('text_success', u'found album art')
                 else:
                     message = ui.colorize('text_error', u'no art found')
-
-            self._log.info(u'{0}: {1}', album, message)
+                self._log.info(u'{0}: {1}', album, message)

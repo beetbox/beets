@@ -67,6 +67,7 @@ class PlexUpdate(BeetsPlugin):
             u'token': u'',
             u'library_name': u'Music'})
 
+        config['plex']['token'].redact = True
         self.register_listener('database_change', self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
