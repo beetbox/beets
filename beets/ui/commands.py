@@ -1497,10 +1497,11 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False,
     isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
     num_unmoved = num_objs - len(objs)
+    # Report unmoved files that match the query.
     unmoved_msg = u''
     if num_unmoved > 0:
         unmoved_msg = u' ({} already in place)'.format(num_unmoved)
-    
+
     copy = copy or export  # Exporting always copies.
     action = u'Copying' if copy else u'Moving'
     act = u'copy' if copy else u'move'
