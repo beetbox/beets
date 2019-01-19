@@ -52,6 +52,10 @@ New features:
   strings, which prevents strange repeated output when running ``beet write``.
   Thanks to :user:`Holzhaus`.
   :bug:`3097` :bug:`2942`
+* The ``move`` command now lists the number of items already in-place.
+  Thanks to :user:`RollingStar`.
+  :bug:`3117`
+
 
 Changes:
 
