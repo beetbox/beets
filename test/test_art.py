@@ -304,6 +304,7 @@ class ITunesStoreTest(UseThePlugin):
         self.mock_response(fetchart.ITunesStore.API_URL, json)
         candidate = next(self.source.get(self.album, self.settings, []))
         self.assertEqual(candidate.url, 'url_to_the_image')
+        self.assertEqual(candidate.match, fetchart.Candidate.MATCH_EXACT)
 
     def test_itunesstore_no_result(self):
         json = '{"results": []}'
@@ -335,6 +336,7 @@ class ITunesStoreTest(UseThePlugin):
         self.mock_response(fetchart.ITunesStore.API_URL, json)
         candidate = next(self.source.get(self.album, self.settings, []))
         self.assertEqual(candidate.url, 'url_to_the_image')
+        self.assertEqual(candidate.match, fetchart.Candidate.MATCH_FALLBACK)
 
     def test_itunesstore_returns_result_without_artwork(self):
         json = """{
