@@ -654,8 +654,8 @@ Default: ``{}`` (empty).
 MusicBrainz Options
 -------------------
 
-If you run your own `MusicBrainz`_ server, you can instruct beets to use it
-instead of the main server. Use the ``host`` and ``ratelimit`` options under a
+You can instruct beets to use `your own MusicBrainz database`_ instead of
+the `main server`_. Use the ``host`` and ``ratelimit`` options under a
 ``musicbrainz:`` header, like so::
 
     musicbrainz:
@@ -663,14 +663,18 @@ instead of the main server. Use the ``host`` and ``ratelimit`` options under a
         ratelimit: 100
 
 The ``host`` key, of course, controls the Web server hostname (and port,
-optionally) that will be contacted by beets (default: musicbrainz.org). The
-``ratelimit`` option, an integer, controls the number of Web service requests
+optionally) that will be contacted by beets (default: musicbrainz.org).
+The server must have search indices enabled (see `Building search indexes`_).
+
+The ``ratelimit`` option, an integer, controls the number of Web service requests
 per second (default: 1). **Do not change the rate limit setting** if you're
 using the main MusicBrainz server---on this public server, you're `limited`_
 to one request per second.
 
+.. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
+.. _main server: https://musicbrainz.org/
 .. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
-.. _MusicBrainz: http://musicbrainz.org/
+.. _Building search indexes: https://musicbrainz.org/doc/MusicBrainz_Server/Setup#Building_search_indexes
 
 .. _searchlimit:
 
