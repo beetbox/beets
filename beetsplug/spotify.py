@@ -229,14 +229,28 @@ class SpotifyPlugin(BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
-        spotify_id = self._get_spotify_id('track', track_id)
-        if spotify_id is None:
+        spotify_id_track = self._get_spotify_id('track', track_id)
+        if spotify_id_track is None:
             return None
 
-        response = self._handle_response(
-            requests.get, self.track_url + spotify_id
+        response_track = self._handle_response(
+            requests.get, self.track_url + spotify_id_track
         )
-        return self._get_track(response.json())
+        response_data_track = response_track.json()
+        track = self._get_track(response_data_track)
+
+        # get album tracks set index/position on entire release
+        spotify_id_album = response_track['album']['id']
+        response_album = self._handle_response(
+            requests.get, self.album_url + spotify_id_album
+        )
+        response_data_album = response_album.json()
+        for i, track_data in enumerate(response_data_album['tracks']['items']):
+            if track_data['id'] == spotify_id_track:
+                track.index = i + 1
+                break
+
+        return track
 
     def _get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
