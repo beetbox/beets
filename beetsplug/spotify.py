@@ -215,6 +215,7 @@ class SpotifyPlugin(BeetsPlugin):
             artist_id=artist_id,
             length=track_data['duration_ms'] / 1000,
             index=track_data['track_number'],
+            medium=track_data['disc_number'],
             medium_index=track_data['track_number'],
             data_source='Spotify',
             data_url=track_data['external_urls']['spotify'],
