@@ -22,7 +22,7 @@ Why Use This Plugin?
 * You're a Beets user and Spotify user already.
 * You have playlists or albums you'd like to make available in Spotify from Beets without having to search for each artist/album/track.
 * You want to check which tracks in your library are available on Spotify.
-* You want to autotag music with Spotify metadata
+* You want to autotag music with metadata from the Spotify API.
 
 Basic Usage
 -----------
@@ -58,7 +58,7 @@ Command-line options include:
 * ``--show-failures`` or ``-f``: List the tracks that did not match a Spotify
   ID.
 
-A Spotify ID or URL may also be provided to the ``Enter release ID``
+A Spotify ID or URL may also be provided to the ``Enter release ID:``
 prompt during import::
 
     Enter search, enter Id, aBort, eDit, edit Candidates, plaY? i
