@@ -51,7 +51,7 @@ class SpotifyPlugin(BeetsPlugin):
         self.tokenfile = self.config['tokenfile'].get(
             confit.Filename(in_app_dir=True)
         )
-        # self.register_listener('import_begin', self.setup)
+        self.setup()
 
     def setup(self):
         """Retrieve previously saved OAuth token or generate a new one"""
@@ -64,16 +64,13 @@ class SpotifyPlugin(BeetsPlugin):
             self.access_token = token_data['access_token']
 
     def authenticate(self):
-        headers = {
-            'Authorization': 'Basic {}'.format(
-                base64.b64encode(
-                    '{}:{}'.format(
-                        self.config['client_id'].as_str(),
-                        self.config['client_secret'].as_str(),
-                    )
-                )
-            )
-        }
+        b64_encoded = base64.b64encode(
+            ':'.join(
+                self.config[k].as_str() for k in ('client_id', 'client_secret')
+            ).encode()
+        ).decode()
+        headers = {'Authorization': 'Basic {}'.format(b64_encoded)}
+
         response = requests.post(
             self.oauth_token_url,
             data={'grant_type': 'client_credentials'},
@@ -96,8 +93,6 @@ class SpotifyPlugin(BeetsPlugin):
 
     @property
     def auth_header(self):
-        if not hasattr(self, 'access_token'):
-            self.setup()
         return {'Authorization': 'Bearer {}'.format(self.access_token)}
 
     def _handle_response(self, request_type, url, params=None):
@@ -128,30 +123,32 @@ class SpotifyPlugin(BeetsPlugin):
             requests.get, self.album_url + spotify_album_id
         )
 
-        data = response.json()
+        response_data = response.json()
 
-        artist, artist_id = self._get_artist(data['artists'])
+        artist, artist_id = self._get_artist(response_data['artists'])
 
-        date_parts = [int(part) for part in data['release_date'].split('-')]
+        date_parts = [
+            int(part) for part in response_data['release_date'].split('-')
+        ]
 
-        if data['release_date_precision'] == 'day':
+        if response_data['release_date_precision'] == 'day':
             year, month, day = date_parts
-        elif data['release_date_precision'] == 'month':
+        elif response_data['release_date_precision'] == 'month':
             year, month = date_parts
             day = None
-        elif data['release_date_precision'] == 'year':
+        elif response_data['release_date_precision'] == 'year':
             year = date_parts
             month = None
             day = None
 
         album = AlbumInfo(
-            album=data['name'],
+            album=response_data['name'],
             album_id=album_id,
             artist=artist,
             artist_id=artist_id,
             tracks=None,
             asin=None,
-            albumtype=data['album_type'],
+            albumtype=response_data['album_type'],
             va=False,
             year=year,
             month=month,
@@ -315,48 +312,49 @@ class SpotifyPlugin(BeetsPlugin):
             artist = item[self.config['artist_field'].get()]
             album = item[self.config['album_field'].get()]
             query = item[self.config['track_field'].get()]
-            search_url = query + " album:" + album + " artist:" + artist
+            search_url = '{} album:{} artist:{}'.format(query, album, artist)
 
             # Query the Web API for each track, look for the items' JSON data
-            r = self._handle_response(
-                requests.get,
-                self.base_url,
-                params={"q": search_url, "type": "track"},
-            )
-            self._log.debug('{}', r.url)
             try:
-                r.raise_for_status()
-            except requests.exceptions.HTTPError as e:
-                self._log.debug(
-                    u'URL returned a {0} error', e.response.status_code
+                response = self._handle_response(
+                    requests.get,
+                    self.base_url,
+                    params={'q': search_url, 'type': 'track'},
                 )
+            except ui.UserError:
                 failures.append(search_url)
                 continue
 
-            r_data = r.json()['tracks']['items']
+            response_data = response.json()['tracks']['items']
 
             # Apply market filter if requested
             region_filter = self.config['region_filter'].get()
             if region_filter:
-                r_data = [
+                response_data = [
                     x
-                    for x in r_data
+                    for x in response_data
                     if region_filter in x['available_markets']
                 ]
 
             # Simplest, take the first result
             chosen_result = None
-            if len(r_data) == 1 or self.config['tiebreak'].get() == "first":
+            if (
+                len(response_data) == 1
+                or self.config['tiebreak'].get() == 'first'
+            ):
                 self._log.debug(
-                    u'Spotify track(s) found, count: {0}', len(r_data)
+                    u'Spotify track(s) found, count: {0}', len(response_data)
                 )
-                chosen_result = r_data[0]
-            elif len(r_data) > 1:
+                chosen_result = response_data[0]
+            elif len(response_data) > 1:
                 # Use the popularity filter
                 self._log.debug(
-                    u'Most popular track chosen, count: {0}', len(r_data)
+                    u'Most popular track chosen, count: {0}',
+                    len(response_data),
                 )
-                chosen_result = max(r_data, key=lambda x: x['popularity'])
+                chosen_result = max(
+                    response_data, key=lambda x: x['popularity']
+                )
 
             if chosen_result:
                 results.append(chosen_result)
@@ -385,9 +383,9 @@ class SpotifyPlugin(BeetsPlugin):
     def output_results(self, results):
         if results:
             ids = [x['id'] for x in results]
-            if self.config['mode'].get() == "open":
+            if self.config['mode'].get() == 'open':
                 self._log.info(u'Attempting to open Spotify with playlist')
-                spotify_url = self.playlist_partial + ",".join(ids)
+                spotify_url = self.playlist_partial + ','.join(ids)
                 webbrowser.open(spotify_url)
 
             else:
