@@ -12,7 +12,7 @@ import requests
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import confit
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 
 
 class SpotifyPlugin(BeetsPlugin):
@@ -272,6 +272,26 @@ class SpotifyPlugin(BeetsPlugin):
             artist_names.append(name)
         artist = ', '.join(artist_names).replace(' ,', ',') or None
         return artist, artist_id
+
+    def album_distance(self, items, album_info, mapping):
+        """
+        Returns the Spotify source weight and the maximum source weight
+        for albums.
+        """
+        dist = Distance()
+        if album_info.data_source == 'Spotify':
+            dist.add('source', self.config['source_weight'].as_number())
+        return dist
+
+    def track_distance(self, item, track_info):
+        """
+        Returns the Spotify source weight and the maximum source weight
+        for individual tracks.
+        """
+        dist = Distance()
+        if track_info.data_source == 'Spotify':
+            dist.add('source', self.config['source_weight'].as_number())
+        return dist
 
     def commands(self):
         def queries(lib, opts, args):
