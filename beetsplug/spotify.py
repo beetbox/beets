@@ -68,10 +68,10 @@ class SpotifyPlugin(BeetsPlugin):
             'Authorization': 'Basic {}'.format(
                 base64.b64encode(
                     '{}:{}'.format(
-                        bytes(self.config['client_id'].as_str()),
-                        bytes(self.config['client_secret'].as_str()),
+                        self.config['client_id'].as_str().encode(),
+                        self.config['client_secret'].as_str().encode(),
                     )
-                )
+                ).decode()
             )
         }
         response = requests.post(
