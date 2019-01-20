@@ -52,7 +52,7 @@ class SpotifyPlugin(BeetsPlugin):
         self.tokenfile = self.config['tokenfile'].get(
             confit.Filename(in_app_dir=True)
         )
-        self.register_listener('import_begin', self.setup)
+        # self.register_listener('import_begin', self.setup)
 
     def setup(self):
         """Retrieve previously saved OAuth token or generate a new one"""
