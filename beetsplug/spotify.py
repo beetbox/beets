@@ -104,6 +104,20 @@ class SpotifyPlugin(BeetsPlugin):
         return {'Authorization': 'Bearer {}'.format(self.access_token)}
 
     def _handle_response(self, request_type, url, params=None):
+        """
+        Send a request, reauthenticating if necessary.
+
+        :param request_type: Type of :class:`Request` constructor,
+            e.g. ``requests.get``, ``requests.post``, etc.
+        :type request_type: function
+        :param url: URL for the new :class:`Request` object.
+        :type url: str
+        :param params: (optional) list of tuples or bytes to send
+            in the query string for the :class:`Request`.
+        :type params: dict
+        :return: class:`Response <Response>` object
+        :rtype: requests.Response
+        """
         response = request_type(url, headers=self._auth_header, params=params)
         if response.status_code != 200:
             if u'token expired' in response.text:
@@ -122,6 +136,8 @@ class SpotifyPlugin(BeetsPlugin):
 
         :param url_type: Type of Spotify URL, either 'album' or 'track'
         :type url_type: str
+        :param id_: Spotify ID or URL
+        :type id_: str
         :return: Spotify ID
         :rtype: str
         """
