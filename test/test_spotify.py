@@ -116,7 +116,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             length=10,
         )
         item.add(self.lib)
-        results = self.spotify.query_spotify(self.lib, u'Happy')
+        results = self.spotify.query_spotify(self.lib, u"Happy")
         self.assertEqual(1, len(results))
         self.assertEqual(u"6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
         self.spotify.output_results(results)
