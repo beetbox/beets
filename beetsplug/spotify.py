@@ -117,19 +117,30 @@ class SpotifyPlugin(BeetsPlugin):
                 raise ui.UserError(u'Spotify API error:\n{}', response.text)
         return response
 
+    def _get_spotify_id(self, url_type, id_):
+        """
+        Parse a Spotify ID from its URL if necessary.
+
+        :param url_type: Type of Spotify URL, either 'album' or 'track'
+        :type url_type: str
+        :return: Spotify ID
+        :rtype: str
+        """
+        self._log.debug(u'Searching for {} {}', url_type, id_)
+        match = re.search(self.id_regex.format(url_type), id_)
+        return match.group(2) if match else None
+
     def album_for_id(self, album_id):
         """
         Fetches an album by its Spotify ID or URL and returns an
         AlbumInfo object or None if the album is not found.
         """
-        self._log.debug(u'Searching for album {}', album_id)
-        match = re.search(self.id_regex.format('album'), album_id)
-        if not match:
+        spotify_id = self._get_spotify_id('album', album_id)
+        if spotify_id is None:
             return None
-        spotify_album_id = match.group(2)
 
         response = self._handle_response(
-            requests.get, self.album_url + spotify_album_id
+            requests.get, self.album_url + spotify_id
         )
         response_data = response.json()
         artist, artist_id = self._get_artist(response_data['artists'])
@@ -168,8 +179,7 @@ class SpotifyPlugin(BeetsPlugin):
             tracks=tracks,
             albumtype=response_data['album_type'],
             va=len(response_data['artists']) == 1
-            and artist_id
-            == '0LyfQWJT6nXafLPZqxe9Of',  # Spotify ID for "Various Artists"
+            and artist.lower() == 'various artists',
             year=year,
             month=month,
             day=day,
@@ -211,14 +221,12 @@ class SpotifyPlugin(BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
-        self._log.debug(u'Searching for track {}', track_id)
-        match = re.search(self.id_regex.format('track'), track_id)
-        if not match:
+        spotify_id = self._get_spotify_id('track', track_id)
+        if spotify_id is None:
             return None
-        spotify_track_id = match.group(2)
 
         response = self._handle_response(
-            requests.get, self.track_url + spotify_track_id
+            requests.get, self.track_url + spotify_id
         )
         return self._get_track(response.json())
 
