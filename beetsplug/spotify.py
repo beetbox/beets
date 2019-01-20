@@ -388,9 +388,9 @@ class SpotifyPlugin(BeetsPlugin):
     def output_results(self, results):
         if results:
             ids = [x['id'] for x in results]
-            if self.config['mode'].get() == 'open':
+            if self.config['mode'].get() == "open":
                 self._log.info(u'Attempting to open Spotify with playlist')
-                spotify_url = self.playlist_partial + ','.join(ids)
+                spotify_url = self.playlist_partial + ",".join(ids)
                 webbrowser.open(spotify_url)
 
             else:

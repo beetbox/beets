@@ -46,20 +46,20 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             },
         )
         self.spotify = spotify.SpotifyPlugin()
-        opts = ArgumentsMock('list', False)
+        opts = ArgumentsMock("list", False)
         self.spotify.parse_opts(opts)
 
     def tearDown(self):
         self.teardown_beets()
 
     def test_args(self):
-        opts = ArgumentsMock('fail', True)
+        opts = ArgumentsMock("fail", True)
         self.assertEqual(False, self.spotify.parse_opts(opts))
-        opts = ArgumentsMock('list', False)
+        opts = ArgumentsMock("list", False)
         self.assertEqual(True, self.spotify.parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertEqual(None, self.spotify.query_spotify(self.lib, u'1=2'))
+        self.assertEqual(None, self.spotify.query_spotify(self.lib, u"1=2"))
 
     @responses.activate
     def test_missing_request(self):
@@ -118,7 +118,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         item.add(self.lib)
         results = self.spotify.query_spotify(self.lib, u'Happy')
         self.assertEqual(1, len(results))
-        self.assertEqual(u'6NPVjNh8Jhru9xOmyQigds', results[0]['id'])
+        self.assertEqual(u"6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
         self.spotify.output_results(results)
 
         params = _params(responses.calls[0].request.url)
