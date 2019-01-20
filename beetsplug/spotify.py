@@ -41,7 +41,6 @@ class SpotifyPlugin(BeetsPlugin):
                 'client_secret': '6DRS7k66h4643yQEbepPxOuxeVW0yZpk',
                 'tokenfile': 'spotify_token.json',
                 'source_weight': 0.5,
-                'user_token': '',
             }
         )
         self.config['client_secret'].redact = True
@@ -184,7 +183,7 @@ class SpotifyPlugin(BeetsPlugin):
 
         return AlbumInfo(
             album=response_data['name'],
-            album_id=album_id,
+            album_id=spotify_id,
             artist=artist,
             artist_id=artist_id,
             tracks=tracks,
