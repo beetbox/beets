@@ -16,11 +16,11 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 
 
 class SpotifyPlugin(BeetsPlugin):
-    # Endpoints for the Spotify API
+    # Base URLs for the Spotify API
     # Documentation: https://developer.spotify.com/web-api
     oauth_token_url = 'https://accounts.spotify.com/api/token'
-    base_url = 'https://api.spotify.com/v1/search'
-    open_url = 'http://open.spotify.com/track/'
+    open_track_url = 'http://open.spotify.com/track/'
+    search_url = 'https://api.spotify.com/v1/search'
     album_url = 'https://api.spotify.com/v1/albums/'
     track_url = 'https://api.spotify.com/v1/tracks/'
     playlist_partial = 'spotify:trackset:Playlist:'
@@ -55,7 +55,7 @@ class SpotifyPlugin(BeetsPlugin):
 
     def setup(self):
         """
-        Retrieve previously saved OAuth token or generate a new one
+        Retrieve previously saved OAuth token or generate a new one.
         """
         try:
             with open(self.tokenfile) as f:
@@ -331,17 +331,19 @@ class SpotifyPlugin(BeetsPlugin):
             artist = item[self.config['artist_field'].get()]
             album = item[self.config['album_field'].get()]
             query = item[self.config['track_field'].get()]
-            search_url = '{} album:{} artist:{}'.format(query, album, artist)
+            query_keywords = '{} album:{} artist:{}'.format(
+                query, album, artist
+            )
 
             # Query the Web API for each track, look for the items' JSON data
             try:
                 response = self._handle_response(
                     requests.get,
-                    self.base_url,
-                    params={'q': search_url, 'type': 'track'},
+                    self.search_url,
+                    params={'q': query_keywords, 'type': 'track'},
                 )
             except ui.UserError:
-                failures.append(search_url)
+                failures.append(query_keywords)
                 continue
 
             response_data = response.json()['tracks']['items']
@@ -378,8 +380,11 @@ class SpotifyPlugin(BeetsPlugin):
             if chosen_result:
                 results.append(chosen_result)
             else:
-                self._log.debug(u'No spotify track found: {0}', search_url)
-                failures.append(search_url)
+                self._log.debug(
+                    u'No Spotify track found for the following query: {}',
+                    query_keywords,
+                )
+                failures.append(query_keywords)
 
         failure_count = len(failures)
         if failure_count > 0:
@@ -409,6 +414,6 @@ class SpotifyPlugin(BeetsPlugin):
 
             else:
                 for item in ids:
-                    print(self.open_url + item)
+                    print(self.open_track_url + item)
         else:
             self._log.warning(u'No Spotify tracks found from beets query')
