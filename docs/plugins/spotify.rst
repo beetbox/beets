@@ -7,7 +7,7 @@ any tracks that can be matched with a Spotify ID are returned, and the
 results can be either pasted in to a playlist or opened directly in the
 Spotify app.
 
-Spotify URLs and IDs may also be provided in the ``Enter release ID:`` prompt
+Spotify URLs and IDs may also be provided to the ``Enter release ID:`` prompt
 during ``beet import`` to autotag music with data from the Spotify
 `Album`_ and `Track`_ APIs.
 
