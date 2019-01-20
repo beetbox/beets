@@ -46,16 +46,13 @@ class SpotifyPlugin(BeetsPlugin):
         )
         self.config['client_secret'].redact = True
 
-        """Path to the JSON file for storing the OAuth access token."""
         self.tokenfile = self.config['tokenfile'].get(
             confit.Filename(in_app_dir=True)
-        )
+        )  # Path to the JSON file for storing the OAuth access token.
         self.setup()
 
     def setup(self):
-        """
-        Retrieve previously saved OAuth token or generate a new one.
-        """
+        """Retrieve previously saved OAuth token or generate a new one."""
         try:
             with open(self.tokenfile) as f:
                 token_data = json.load(f)
@@ -65,8 +62,7 @@ class SpotifyPlugin(BeetsPlugin):
             self.access_token = token_data['access_token']
 
     def _authenticate(self):
-        """
-        Request an access token via the Client Credentials Flow:
+        """Request an access token via the Client Credentials Flow:
         https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow
         """
         headers = {
@@ -104,8 +100,7 @@ class SpotifyPlugin(BeetsPlugin):
         return {'Authorization': 'Bearer {}'.format(self.access_token)}
 
     def _handle_response(self, request_type, url, params=None):
-        """
-        Send a request, reauthenticating if necessary.
+        """Send a request, reauthenticating if necessary.
 
         :param request_type: Type of :class:`Request` constructor,
             e.g. ``requests.get``, ``requests.post``, etc.
@@ -131,8 +126,7 @@ class SpotifyPlugin(BeetsPlugin):
         return response
 
     def _get_spotify_id(self, url_type, id_):
-        """
-        Parse a Spotify ID from its URL if necessary.
+        """Parse a Spotify ID from its URL if necessary.
 
         :param url_type: Type of Spotify URL, either 'album' or 'track'
         :type url_type: str
@@ -149,8 +143,7 @@ class SpotifyPlugin(BeetsPlugin):
         return match.group(2) if match else None
 
     def album_for_id(self, album_id):
-        """
-        Fetches an album by its Spotify ID or URL and returns an
+        """Fetches an album by its Spotify ID or URL and returns an
         AlbumInfo object or None if the album is not found.
         """
         spotify_id = self._get_spotify_id('album', album_id)
@@ -207,8 +200,7 @@ class SpotifyPlugin(BeetsPlugin):
         )
 
     def _get_track(self, track_data):
-        """
-        Convert a Spotify track object dict to a TrackInfo object.
+        """Convert a Spotify track object dict to a TrackInfo object.
 
         :param track_data: Simplified track object
             (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
@@ -230,8 +222,7 @@ class SpotifyPlugin(BeetsPlugin):
         )
 
     def track_for_id(self, track_id):
-        """
-        Fetches a track by its Spotify ID or URL and returns a
+        """Fetches a track by its Spotify ID or URL and returns a
         TrackInfo object or None if the track is not found.
 
         :param track_id: Spotify ID or URL for the track
@@ -249,8 +240,7 @@ class SpotifyPlugin(BeetsPlugin):
         return self._get_track(response.json())
 
     def _get_artist(self, artists):
-        """
-        Returns an artist string (all artists) and an artist_id (the main
+        """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Spotify artist object dicts.
 
         :param artists: Iterable of simplified Spotify artist objects
@@ -274,8 +264,7 @@ class SpotifyPlugin(BeetsPlugin):
         return artist, artist_id
 
     def album_distance(self, items, album_info, mapping):
-        """
-        Returns the Spotify source weight and the maximum source weight
+        """Returns the Spotify source weight and the maximum source weight
         for albums.
         """
         dist = Distance()
@@ -284,8 +273,7 @@ class SpotifyPlugin(BeetsPlugin):
         return dist
 
     def track_distance(self, item, track_info):
-        """
-        Returns the Spotify source weight and the maximum source weight
+        """Returns the Spotify source weight and the maximum source weight
         for individual tracks.
         """
         dist = Distance()
@@ -344,7 +332,7 @@ class SpotifyPlugin(BeetsPlugin):
 
         if not items:
             self._log.debug(
-                u'Your beets query returned no items, ' u'skipping spotify'
+                u'Your beets query returned no items, skipping Spotify'
             )
             return
 
