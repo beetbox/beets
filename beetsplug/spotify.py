@@ -239,7 +239,7 @@ class SpotifyPlugin(BeetsPlugin):
         response_data_track = response_track.json()
         track = self._get_track(response_data_track)
 
-        # get album tracks set index/position on entire release
+        # get album's tracks to set the track's index/position on entire release
         spotify_id_album = response_track['album']['id']
         response_album = self._handle_response(
             requests.get, self.album_url + spotify_id_album
