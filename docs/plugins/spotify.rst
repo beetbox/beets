@@ -108,13 +108,10 @@ in config.yaml under the ``spotify:`` section:
   Default: None.
 - **tokenfile**: Filename of the JSON file stored in the beets configuration
   directory to use for caching the OAuth access token.
-  access token.
   Default: ``spotify_token.json``.
 - **source_weight**: Penalty applied to Spotify matches during import. Set to
   0.0 to disable.
   Default: ``0.5``.
-
-.. _beets configuration directory: https://beets.readthedocs.io/en/stable/reference/config.html#default-location
 
 Here's an example::
 
