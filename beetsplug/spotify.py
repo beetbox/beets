@@ -203,7 +203,7 @@ class SpotifyPlugin(BeetsPlugin):
             day=day,
             label=response_data['label'],
             data_source='Spotify',
-            data_url=response_data['uri'],
+            data_url=response_data['external_urls']['spotify'],
         )
 
     def _get_track(self, track_data):
@@ -226,7 +226,7 @@ class SpotifyPlugin(BeetsPlugin):
             index=track_data['track_number'],
             medium_index=track_data['track_number'],
             data_source='Spotify',
-            data_url=track_data['uri'],
+            data_url=track_data['external_urls']['spotify'],
         )
 
     def track_for_id(self, track_id):
