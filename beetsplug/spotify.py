@@ -61,11 +61,15 @@ class SpotifyPlugin(BeetsPlugin):
             with open(self.tokenfile) as f:
                 token_data = json.load(f)
         except IOError:
-            self.authenticate()
+            self._authenticate()
         else:
             self.access_token = token_data['access_token']
 
-    def authenticate(self):
+    def _authenticate(self):
+        """
+        Request an access token via the Client Credentials Flow:
+        https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow
+        """
         headers = {
             'Authorization': 'Basic {}'.format(
                 base64.b64encode(
@@ -97,17 +101,17 @@ class SpotifyPlugin(BeetsPlugin):
             json.dump({'access_token': self.access_token}, f)
 
     @property
-    def auth_header(self):
+    def _auth_header(self):
         return {'Authorization': 'Bearer {}'.format(self.access_token)}
 
     def _handle_response(self, request_type, url, params=None):
-        response = request_type(url, headers=self.auth_header, params=params)
+        response = request_type(url, headers=self._auth_header, params=params)
         if response.status_code != 200:
             if u'token expired' in response.text:
                 self._log.debug(
                     'Spotify access token has expired. Reauthenticating.'
                 )
-                self.authenticate()
+                self._authenticate()
                 self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(u'Spotify API error:\n{}', response.text)
