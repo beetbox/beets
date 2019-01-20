@@ -64,13 +64,16 @@ class SpotifyPlugin(BeetsPlugin):
             self.access_token = token_data['access_token']
 
     def authenticate(self):
-        b64_encoded = base64.b64encode(
-            ':'.join(
-                self.config[k].as_str() for k in ('client_id', 'client_secret')
-            ).encode()
-        ).decode()
-        headers = {'Authorization': 'Basic {}'.format(b64_encoded)}
-
+        headers = {
+            'Authorization': 'Basic {}'.format(
+                base64.b64encode(
+                    ':'.join(
+                        self.config[k].as_str()
+                        for k in ('client_id', 'client_secret')
+                    ).encode()
+                ).decode()
+            )
+        }
         response = requests.post(
             self.oauth_token_url,
             data={'grant_type': 'client_credentials'},
