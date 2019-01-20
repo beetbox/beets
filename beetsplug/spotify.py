@@ -49,7 +49,9 @@ class SpotifyPlugin(BeetsPlugin):
         self.config['client_secret'].redact = True
 
         """Path to the JSON file for storing the OAuth access token."""
-        self.tokenfile = self.config['tokenfile'].get(confit.Filename(in_app_dir=True))
+        self.tokenfile = self.config['tokenfile'].get(
+            confit.Filename(in_app_dir=True)
+        )
         self.register_listener('import_begin', self.setup)
 
     def setup(self):
@@ -82,7 +84,9 @@ class SpotifyPlugin(BeetsPlugin):
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise ui.UserError(
-                u'Spotify authorization failed: {}\n{}'.format(e, response.content)
+                u'Spotify authorization failed: {}\n{}'.format(
+                    e, response.content
+                )
             )
         self.access_token = response.json()['access_token']
 
@@ -101,7 +105,9 @@ class SpotifyPlugin(BeetsPlugin):
         response = request_type(url, headers=self.auth_header, params=params)
         if response.status_code != 200:
             if u'token expired' in response.text:
-                self._log.debug('Spotify access token has expired. Reauthenticating.')
+                self._log.debug(
+                    'Spotify access token has expired. Reauthenticating.'
+                )
                 self.authenticate()
                 self._handle_response(request_type, url, params=params)
             else:
@@ -240,12 +246,15 @@ class SpotifyPlugin(BeetsPlugin):
                 results = self.query_spotify(lib, ui.decargs(args))
                 self.output_results(results)
 
-        spotify_cmd = ui.Subcommand('spotify', help=u'build a Spotify playlist')
+        spotify_cmd = ui.Subcommand(
+            'spotify', help=u'build a Spotify playlist'
+        )
         spotify_cmd.parser.add_option(
             u'-m',
             u'--mode',
             action='store',
-            help=u'"open" to open Spotify with playlist, ' u'"list" to print (default)',
+            help=u'"open" to open Spotify with playlist, '
+            u'"list" to print (default)',
         )
         spotify_cmd.parser.add_option(
             u'-f',
@@ -265,7 +274,9 @@ class SpotifyPlugin(BeetsPlugin):
             self.config['show_failures'].set(True)
 
         if self.config['mode'].get() not in ['list', 'open']:
-            self._log.warning(u'{0} is not a valid mode', self.config['mode'].get())
+            self._log.warning(
+                u'{0} is not a valid mode', self.config['mode'].get()
+            )
             return False
 
         self.opts = opts
@@ -278,7 +289,9 @@ class SpotifyPlugin(BeetsPlugin):
         items = lib.items(query)
 
         if not items:
-            self._log.debug(u'Your beets query returned no items, ' u'skipping spotify')
+            self._log.debug(
+                u'Your beets query returned no items, ' u'skipping spotify'
+            )
             return
 
         self._log.info(u'Processing {0} tracks...', len(items))
@@ -287,11 +300,17 @@ class SpotifyPlugin(BeetsPlugin):
 
             # Apply regex transformations if provided
             for regex in self.config['regex'].get():
-                if not regex['field'] or not regex['search'] or not regex['replace']:
+                if (
+                    not regex['field']
+                    or not regex['search']
+                    or not regex['replace']
+                ):
                     continue
 
                 value = item[regex['field']]
-                item[regex['field']] = re.sub(regex['search'], regex['replace'], value)
+                item[regex['field']] = re.sub(
+                    regex['search'], regex['replace'], value
+                )
 
             # Custom values can be passed in the config (just in case)
             artist = item[self.config['artist_field'].get()]
@@ -301,13 +320,17 @@ class SpotifyPlugin(BeetsPlugin):
 
             # Query the Web API for each track, look for the items' JSON data
             r = self._handle_response(
-                requests.get, self.base_url, params={"q": search_url, "type": "track"}
+                requests.get,
+                self.base_url,
+                params={"q": search_url, "type": "track"},
             )
             self._log.debug('{}', r.url)
             try:
                 r.raise_for_status()
             except requests.exceptions.HTTPError as e:
-                self._log.debug(u'URL returned a {0} error', e.response.status_code)
+                self._log.debug(
+                    u'URL returned a {0} error', e.response.status_code
+                )
                 failures.append(search_url)
                 continue
 
@@ -316,16 +339,24 @@ class SpotifyPlugin(BeetsPlugin):
             # Apply market filter if requested
             region_filter = self.config['region_filter'].get()
             if region_filter:
-                r_data = [x for x in r_data if region_filter in x['available_markets']]
+                r_data = [
+                    x
+                    for x in r_data
+                    if region_filter in x['available_markets']
+                ]
 
             # Simplest, take the first result
             chosen_result = None
             if len(r_data) == 1 or self.config['tiebreak'].get() == "first":
-                self._log.debug(u'Spotify track(s) found, count: {0}', len(r_data))
+                self._log.debug(
+                    u'Spotify track(s) found, count: {0}', len(r_data)
+                )
                 chosen_result = r_data[0]
             elif len(r_data) > 1:
                 # Use the popularity filter
-                self._log.debug(u'Most popular track chosen, count: {0}', len(r_data))
+                self._log.debug(
+                    u'Most popular track chosen, count: {0}', len(r_data)
+                )
                 chosen_result = max(r_data, key=lambda x: x['popularity'])
 
             if chosen_result:
