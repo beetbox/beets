@@ -132,7 +132,6 @@ class SpotifyPlugin(BeetsPlugin):
             requests.get, self.album_url + spotify_album_id
         )
         response_data = response.json()
-
         artist, artist_id = self._get_artist(response_data['artists'])
 
         date_parts = [
@@ -155,39 +154,29 @@ class SpotifyPlugin(BeetsPlugin):
                 u"from Spotify API: '{}'".format(release_date_precision)
             )
 
-        album = AlbumInfo(
+        tracks = []
+        for i, track_data in enumerate(response_data['tracks']['items']):
+            track = self._get_track(track_data)
+            track.index = i + 1
+            tracks.append(track)
+
+        return AlbumInfo(
             album=response_data['name'],
             album_id=album_id,
             artist=artist,
             artist_id=artist_id,
-            tracks=None,
-            asin=None,
+            tracks=tracks,
             albumtype=response_data['album_type'],
-            va=False,
+            va=len(response_data['artists']) == 1
+            and artist_id
+            == '0LyfQWJT6nXafLPZqxe9Of',  # Spotify ID for "Various Artists"
             year=year,
             month=month,
             day=day,
             label=response_data['label'],
-            mediums=None,
-            artist_sort=None,
-            releasegroup_id=None,
-            catalognum=None,
-            script=None,
-            language=None,
-            country=None,
-            albumstatus=None,
-            media=None,
-            albumdisambig=None,
-            releasegroupdisambig=None,
-            artist_credit=None,
-            original_year=None,
-            original_month=None,
-            original_day=None,
             data_source='Spotify',
-            data_url=None,
+            data_url=response_data['uri'],
         )
-
-        return album
 
     def _get_track(self, track_data):
         """
@@ -201,27 +190,15 @@ class SpotifyPlugin(BeetsPlugin):
         """
         artist, artist_id = self._get_artist(track_data['artists'])
         return TrackInfo(
-            title=track_data['title'],
+            title=track_data['name'],
             track_id=track_data['id'],
-            release_track_id=track_data.get('album').get('id'),
             artist=artist,
             artist_id=artist_id,
             length=track_data['duration_ms'] / 1000,
-            index=None,
-            medium=None,
+            index=track_data['track_number'],
             medium_index=track_data['track_number'],
-            medium_total=None,
-            artist_sort=None,
-            disctitle=None,
-            artist_credit=None,
-            data_source=None,
-            data_url=None,
-            media=None,
-            lyricist=None,
-            composer=None,
-            composer_sort=None,
-            arranger=None,
-            track_alt=None,
+            data_source='Spotify',
+            data_url=track_data['uri'],
         )
 
     def track_for_id(self, track_id):
@@ -328,7 +305,6 @@ class SpotifyPlugin(BeetsPlugin):
         self._log.info(u'Processing {0} tracks...', len(items))
 
         for item in items:
-
             # Apply regex transformations if provided
             for regex in self.config['regex'].get():
                 if (
