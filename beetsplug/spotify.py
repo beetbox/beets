@@ -24,7 +24,6 @@ class SpotifyPlugin(BeetsPlugin):
     album_url = 'https://api.spotify.com/v1/albums/'
     track_url = 'https://api.spotify.com/v1/tracks/'
     playlist_partial = 'spotify:trackset:Playlist:'
-    id_regex = r'(^|open\.spotify\.com/{}/)([0-9A-Za-z]{{22}})'
 
     def __init__(self):
         super(SpotifyPlugin, self).__init__()
@@ -126,8 +125,11 @@ class SpotifyPlugin(BeetsPlugin):
         :return: Spotify ID
         :rtype: str
         """
+        # Spotify IDs consist of 22 alphanumeric characters
+        # (zero-left-padded base62 representation of randomly generated UUID4)
+        id_regex = r'(^|open\.spotify\.com/{}/)([0-9A-Za-z]{{22}})'
         self._log.debug(u'Searching for {} {}', url_type, id_)
-        match = re.search(self.id_regex.format(url_type), id_)
+        match = re.search(id_regex.format(url_type), id_)
         return match.group(2) if match else None
 
     def album_for_id(self, album_id):

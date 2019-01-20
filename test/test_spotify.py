@@ -71,7 +71,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.base_url,
+            spotify.SpotifyPlugin.search_url,
             body=response_body,
             status=200,
             content_type='application/json',
@@ -103,7 +103,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.base_url,
+            spotify.SpotifyPlugin.search_url,
             body=response_body,
             status=200,
             content_type='application/json',
