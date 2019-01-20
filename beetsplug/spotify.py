@@ -17,7 +17,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 
 class SpotifyPlugin(BeetsPlugin):
     # Endpoints for the Spotify API
-    # Documentation here: https://developer.spotify.com/web-api/search-item/
+    # Documentation: https://developer.spotify.com/web-api
     oauth_token_url = 'https://accounts.spotify.com/api/token'
     base_url = 'https://api.spotify.com/v1/search'
     open_url = 'http://open.spotify.com/track/'
@@ -119,7 +119,7 @@ class SpotifyPlugin(BeetsPlugin):
 
     def album_for_id(self, album_id):
         """
-        Fetches an album by its Spotify album ID or URL and returns an
+        Fetches an album by its Spotify ID or URL and returns an
         AlbumInfo object or None if the album is not found.
         """
         self._log.debug(u'Searching for album {}', album_id)
@@ -131,7 +131,6 @@ class SpotifyPlugin(BeetsPlugin):
         response = self._handle_response(
             requests.get, self.album_url + spotify_album_id
         )
-
         response_data = response.json()
 
         artist, artist_id = self._get_artist(response_data['artists'])
@@ -140,15 +139,21 @@ class SpotifyPlugin(BeetsPlugin):
             int(part) for part in response_data['release_date'].split('-')
         ]
 
-        if response_data['release_date_precision'] == 'day':
+        release_date_precision = response_data['release_date_precision']
+        if release_date_precision == 'day':
             year, month, day = date_parts
-        elif response_data['release_date_precision'] == 'month':
+        elif release_date_precision == 'month':
             year, month = date_parts
             day = None
-        elif response_data['release_date_precision'] == 'year':
+        elif release_date_precision == 'year':
             year = date_parts
             month = None
             day = None
+        else:
+            raise ui.UserError(
+                u"Invalid `release_date_precision` returned "
+                u"from Spotify API: '{}'".format(release_date_precision)
+            )
 
         album = AlbumInfo(
             album=response_data['name'],
@@ -162,7 +167,7 @@ class SpotifyPlugin(BeetsPlugin):
             year=year,
             month=month,
             day=day,
-            label=None,
+            label=response_data['label'],
             mediums=None,
             artist_sort=None,
             releasegroup_id=None,
@@ -184,32 +189,27 @@ class SpotifyPlugin(BeetsPlugin):
 
         return album
 
-    def track_for_id(self, track_id):
+    def _get_track(self, track_data):
         """
-        Fetches a track by its Spotify track ID or URL and returns a
-        TrackInfo object or None if the track is not found.
-        """
-        self._log.debug(u'Searching for track {}', track_id)
-        match = re.search(self.id_regex.format('track'), track_id)
-        if not match:
-            return None
-        spotify_track_id = match.group(2)
+        Convert a Spotify track object dict to a TrackInfo object.
 
-        response = self._handle_response(
-            requests.get, self.track_url + spotify_track_id
-        )
-        data = response.json()
-        artist, artist_id = self._get_artist(data['artists'])
-        track = TrackInfo(
-            title=data['title'],
-            track_id=spotify_track_id,
-            release_track_id=data.get('album').get('id'),
+        :param track_data: Simplified track object
+            (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
+        :type track_data: dict
+        :return: TrackInfo object for track
+        :rtype: beets.autotag.hooks.TrackInfo
+        """
+        artist, artist_id = self._get_artist(track_data['artists'])
+        return TrackInfo(
+            title=track_data['title'],
+            track_id=track_data['id'],
+            release_track_id=track_data.get('album').get('id'),
             artist=artist,
             artist_id=artist_id,
-            length=data['duration_ms'] / 1000,
+            length=track_data['duration_ms'] / 1000,
             index=None,
             medium=None,
-            medium_index=data['track_number'],
+            medium_index=track_data['track_number'],
             medium_total=None,
             artist_sort=None,
             disctitle=None,
@@ -223,12 +223,38 @@ class SpotifyPlugin(BeetsPlugin):
             arranger=None,
             track_alt=None,
         )
-        return track
+
+    def track_for_id(self, track_id):
+        """
+        Fetches a track by its Spotify ID or URL and returns a
+        TrackInfo object or None if the track is not found.
+
+        :param track_id: Spotify ID or URL for the track
+        :type track_id: str
+        :return: TrackInfo object for track
+        :rtype: beets.autotag.hooks.TrackInfo
+        """
+        self._log.debug(u'Searching for track {}', track_id)
+        match = re.search(self.id_regex.format('track'), track_id)
+        if not match:
+            return None
+        spotify_track_id = match.group(2)
+
+        response = self._handle_response(
+            requests.get, self.track_url + spotify_track_id
+        )
+        return self._get_track(response.json())
 
     def _get_artist(self, artists):
         """
         Returns an artist string (all artists) and an artist_id (the main
-        artist) for a list of Beatport release or track artists.
+        artist) for a list of Spotify artist object dicts.
+
+        :param artists: Iterable of simplified Spotify artist objects
+            (https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-simplified)
+        :type artists: list[dict]
+        :return: Normalized artist string
+        :rtype: str
         """
         artist_id = None
         artist_names = []
