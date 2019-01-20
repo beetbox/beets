@@ -16,7 +16,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 
 
 class SpotifyPlugin(BeetsPlugin):
-    # URL for the Web API of Spotify
+    # Endpoints for the Spotify API
     # Documentation here: https://developer.spotify.com/web-api/search-item/
     oauth_token_url = 'https://accounts.spotify.com/api/token'
     base_url = 'https://api.spotify.com/v1/search'
@@ -54,7 +54,9 @@ class SpotifyPlugin(BeetsPlugin):
         self.setup()
 
     def setup(self):
-        """Retrieve previously saved OAuth token or generate a new one"""
+        """
+        Retrieve previously saved OAuth token or generate a new one
+        """
         try:
             with open(self.tokenfile) as f:
                 token_data = json.load(f)
@@ -113,8 +115,8 @@ class SpotifyPlugin(BeetsPlugin):
 
     def album_for_id(self, album_id):
         """
-        Fetches an album by its Spotify album ID or URL and returns an AlbumInfo object
-        or None if the album is not found.
+        Fetches an album by its Spotify album ID or URL and returns an
+        AlbumInfo object or None if the album is not found.
         """
         self._log.debug(u'Searching for album {}', album_id)
         match = re.search(self.id_regex.format('album'), album_id)
@@ -180,8 +182,8 @@ class SpotifyPlugin(BeetsPlugin):
 
     def track_for_id(self, track_id):
         """
-        Fetches a track by its Spotify track ID or URL and returns a TrackInfo object
-        or None if the track is not found.
+        Fetches a track by its Spotify track ID or URL and returns a
+        TrackInfo object or None if the track is not found.
         """
         self._log.debug(u'Searching for track {}', track_id)
         match = re.search(self.id_regex.format('track'), track_id)

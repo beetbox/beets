@@ -38,27 +38,28 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             spotify.SpotifyPlugin.oauth_token_url,
             status=200,
             json={
-                'access_token': '3XyiC3raJySbIAV5LVYj1DaWbcocNi3LAJTNXRnYYGVUl6mbbqXNhW3YcZnQgYXNWHFkVGSMlc0tMuvq8CF',
+                'access_token': '3XyiC3raJySbIAV5LVYj1DaWbcocNi3LAJTNXRnYY'
+                'GVUl6mbbqXNhW3YcZnQgYXNWHFkVGSMlc0tMuvq8CF',
                 'token_type': 'Bearer',
                 'expires_in': 3600,
                 'scope': '',
             },
         )
         self.spotify = spotify.SpotifyPlugin()
-        opts = ArgumentsMock("list", False)
+        opts = ArgumentsMock('list', False)
         self.spotify.parse_opts(opts)
 
     def tearDown(self):
         self.teardown_beets()
 
     def test_args(self):
-        opts = ArgumentsMock("fail", True)
+        opts = ArgumentsMock('fail', True)
         self.assertEqual(False, self.spotify.parse_opts(opts))
-        opts = ArgumentsMock("list", False)
+        opts = ArgumentsMock('list', False)
         self.assertEqual(True, self.spotify.parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertEqual(None, self.spotify.query_spotify(self.lib, u"1=2"))
+        self.assertEqual(None, self.spotify.query_spotify(self.lib, u'1=2'))
 
     @responses.activate
     def test_missing_request(self):
@@ -102,7 +103,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.GET,
-            'https://api.spotify.com/v1/search',
+            spotify.SpotifyPlugin.base_url,
             body=response_body,
             status=200,
             content_type='application/json',
@@ -115,9 +116,9 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             length=10,
         )
         item.add(self.lib)
-        results = self.spotify.query_spotify(self.lib, u"Happy")
+        results = self.spotify.query_spotify(self.lib, u'Happy')
         self.assertEqual(1, len(results))
-        self.assertEqual(u"6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
+        self.assertEqual(u'6NPVjNh8Jhru9xOmyQigds', results[0]['id'])
         self.spotify.output_results(results)
 
         params = _params(responses.calls[0].request.url)
