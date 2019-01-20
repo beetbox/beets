@@ -6,6 +6,7 @@ import re
 import json
 import base64
 import webbrowser
+import collections
 
 import requests
 
@@ -176,10 +177,14 @@ class SpotifyPlugin(BeetsPlugin):
             )
 
         tracks = []
+        medium_totals = collections.defaultdict(int)
         for i, track_data in enumerate(response_data['tracks']['items']):
             track = self._get_track(track_data)
             track.index = i + 1
+            medium_totals[track.medium] += 1
             tracks.append(track)
+        for track in tracks:
+            track.medium_total = medium_totals[track.medium]
 
         return AlbumInfo(
             album=response_data['name'],
@@ -240,17 +245,20 @@ class SpotifyPlugin(BeetsPlugin):
         response_data_track = response_track.json()
         track = self._get_track(response_data_track)
 
-        # get album's tracks to set the track's index/position on entire release
+        # get album's tracks to set the track's index/position on
+        # the entire release
         spotify_id_album = response_track['album']['id']
         response_album = self._handle_response(
             requests.get, self.album_url + spotify_id_album
         )
         response_data_album = response_album.json()
+        medium_total = 0
         for i, track_data in enumerate(response_data_album['tracks']['items']):
-            if track_data['id'] == spotify_id_track:
-                track.index = i + 1
-                break
-
+            if track_data['disc_number'] == track.medium:
+                medium_total += 1
+                if track_data['id'] == spotify_id_track:
+                    track.index = i + 1
+        track.medium_total = medium_total
         return track
 
     def _get_artist(self, artists):
