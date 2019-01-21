@@ -95,10 +95,6 @@ class SpotifyPlugin(BeetsPlugin):
         with open(self.tokenfile, 'w') as f:
             json.dump({'access_token': self.access_token}, f)
 
-    @property
-    def _auth_header(self):
-        return {'Authorization': 'Bearer {}'.format(self.access_token)}
-
     def _handle_response(self, request_type, url, params=None):
         """Send a request, reauthenticating if necessary.
 
@@ -113,7 +109,11 @@ class SpotifyPlugin(BeetsPlugin):
         :return: class:`Response <Response>` object
         :rtype: requests.Response
         """
-        response = request_type(url, headers=self._auth_header, params=params)
+        response = request_type(
+            url,
+            headers={'Authorization': 'Bearer {}'.format(self.access_token)},
+            params=params,
+        )
         if response.status_code != 200:
             if u'token expired' in response.text:
                 self._log.debug(
