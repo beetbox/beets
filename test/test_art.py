@@ -25,6 +25,7 @@ import responses
 from mock import patch
 
 from test import _common
+from test.helper import capture_log
 from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import config
@@ -272,6 +273,111 @@ class AAOTest(UseThePlugin):
         album = _common.Bag(asin=self.ASIN)
         with self.assertRaises(StopIteration):
             next(self.source.get(album, self.settings, []))
+
+
+class ITunesStoreTest(UseThePlugin):
+    def setUp(self):
+        super(ITunesStoreTest, self).setUp()
+        self.source = fetchart.ITunesStore(logger, self.plugin.config)
+        self.settings = Settings()
+        self.album = _common.Bag(albumartist="some artist", album="some album")
+
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super(ITunesStoreTest, self).run(*args, **kwargs)
+
+    def mock_response(self, url, json):
+        responses.add(responses.GET, url, body=json,
+                      content_type='application/json')
+
+    def test_itunesstore_finds_image(self):
+        json = """{
+                    "results":
+                        [
+                            {
+                                "artistName": "some artist",
+                                "collectionName": "some album",
+                                "artworkUrl100": "url_to_the_image"
+                            }
+                        ]
+                  }"""
+        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        candidate = next(self.source.get(self.album, self.settings, []))
+        self.assertEqual(candidate.url, 'url_to_the_image')
+        self.assertEqual(candidate.match, fetchart.Candidate.MATCH_EXACT)
+
+    def test_itunesstore_no_result(self):
+        json = '{"results": []}'
+        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        expected = u"got no results"
+
+        with capture_log('beets.test_art') as logs:
+            with self.assertRaises(StopIteration):
+                next(self.source.get(self.album, self.settings, []))
+        self.assertIn(expected, logs[1])
+
+    def test_itunesstore_requestexception(self):
+        responses.add(responses.GET, fetchart.ITunesStore.API_URL,
+                      json={'error': 'not found'}, status=404)
+        expected = u'iTunes search failed: 404 Client Error'
+
+        with capture_log('beets.test_art') as logs:
+            with self.assertRaises(StopIteration):
+                next(self.source.get(self.album, self.settings, []))
+        self.assertIn(expected, logs[1])
+
+    def test_itunesstore_fallback_match(self):
+        json = """{
+                    "results":
+                        [
+                            {
+                                "collectionName": "some album",
+                                "artworkUrl100": "url_to_the_image"
+                            }
+                        ]
+                  }"""
+        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        candidate = next(self.source.get(self.album, self.settings, []))
+        self.assertEqual(candidate.url, 'url_to_the_image')
+        self.assertEqual(candidate.match, fetchart.Candidate.MATCH_FALLBACK)
+
+    def test_itunesstore_returns_result_without_artwork(self):
+        json = """{
+                    "results":
+                        [
+                            {
+                                "artistName": "some artist",
+                                "collectionName": "some album"
+                            }
+                        ]
+                  }"""
+        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        expected = u'Malformed itunes candidate'
+
+        with capture_log('beets.test_art') as logs:
+            with self.assertRaises(StopIteration):
+                next(self.source.get(self.album, self.settings, []))
+        self.assertIn(expected, logs[1])
+
+    def test_itunesstore_returns_no_result_when_error_received(self):
+        json = '{"error": {"errors": [{"reason": "some reason"}]}}'
+        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        expected = u"not found in json. Fields are"
+
+        with capture_log('beets.test_art') as logs:
+            with self.assertRaises(StopIteration):
+                next(self.source.get(self.album, self.settings, []))
+        self.assertIn(expected, logs[1])
+
+    def test_itunesstore_returns_no_result_with_malformed_response(self):
+        json = """bla blup"""
+        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        expected = u"Could not decode json response:"
+
+        with capture_log('beets.test_art') as logs:
+            with self.assertRaises(StopIteration):
+                next(self.source.get(self.album, self.settings, []))
+        self.assertIn(expected, logs[1])
 
 
 class GoogleImageTest(UseThePlugin):
