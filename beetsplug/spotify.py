@@ -240,12 +240,12 @@ class SpotifyPlugin(BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
-        spotify_id_track = self._get_spotify_id('track', track_id)
-        if spotify_id_track is None:
+        spotify_id = self._get_spotify_id('track', track_id)
+        if spotify_id is None:
             return None
 
         response_track = self._handle_response(
-            requests.get, self.track_url + spotify_id_track
+            requests.get, self.track_url + spotify_id
         )
         response_data_track = response_track.json()
         track = self._get_track(response_data_track)
@@ -260,7 +260,7 @@ class SpotifyPlugin(BeetsPlugin):
         for i, track_data in enumerate(response_data_album['tracks']['items']):
             if track_data['disc_number'] == track.medium:
                 medium_total += 1
-                if track_data['id'] == spotify_id_track:
+                if track_data['id'] == spotify_id:
                     track.index = i + 1
         track.medium_total = medium_total
         return track
