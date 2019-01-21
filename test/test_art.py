@@ -372,7 +372,7 @@ class ITunesStoreTest(UseThePlugin):
     def test_itunesstore_returns_no_result_with_malformed_response(self):
         json = """bla blup"""
         self.mock_response(fetchart.ITunesStore.API_URL, json)
-        expected = u"Could not decode json response: Expecting value"
+        expected = u"Could not decode json response:"
 
         with capture_log('beets.test_art') as logs:
             with self.assertRaises(StopIteration):
