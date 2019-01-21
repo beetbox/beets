@@ -29,10 +29,22 @@ def _params(url):
 
 
 class SpotifyPluginTest(_common.TestCase, TestHelper):
-
+    @responses.activate
     def setUp(self):
         config.clear()
         self.setup_beets()
+        responses.add(
+            responses.POST,
+            spotify.SpotifyPlugin.oauth_token_url,
+            status=200,
+            json={
+                'access_token': '3XyiC3raJySbIAV5LVYj1DaWbcocNi3LAJTNXRnYY'
+                'GVUl6mbbqXNhW3YcZnQgYXNWHFkVGSMlc0tMuvq8CF',
+                'token_type': 'Bearer',
+                'expires_in': 3600,
+                'scope': '',
+            },
+        )
         self.spotify = spotify.SpotifyPlugin()
         opts = ArgumentsMock("list", False)
         self.spotify.parse_opts(opts)
@@ -51,20 +63,25 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     @responses.activate
     def test_missing_request(self):
-        json_file = os.path.join(_common.RSRC, b'spotify',
-                                 b'missing_request.json')
+        json_file = os.path.join(
+            _common.RSRC, b'spotify', b'missing_request.json'
+        )
         with open(json_file, 'rb') as f:
             response_body = f.read()
 
-        responses.add(responses.GET, 'https://api.spotify.com/v1/search',
-                      body=response_body, status=200,
-                      content_type='application/json')
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.search_url,
+            body=response_body,
+            status=200,
+            content_type='application/json',
+        )
         item = Item(
             mb_trackid=u'01234',
             album=u'lkajsdflakjsd',
             albumartist=u'ujydfsuihse',
             title=u'duifhjslkef',
-            length=10
+            length=10,
         )
         item.add(self.lib)
         self.assertEqual([], self.spotify.query_spotify(self.lib, u""))
@@ -78,21 +95,25 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     @responses.activate
     def test_track_request(self):
-
-        json_file = os.path.join(_common.RSRC, b'spotify',
-                                 b'track_request.json')
+        json_file = os.path.join(
+            _common.RSRC, b'spotify', b'track_request.json'
+        )
         with open(json_file, 'rb') as f:
             response_body = f.read()
 
-        responses.add(responses.GET, 'https://api.spotify.com/v1/search',
-                      body=response_body, status=200,
-                      content_type='application/json')
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.search_url,
+            body=response_body,
+            status=200,
+            content_type='application/json',
+        )
         item = Item(
             mb_trackid=u'01234',
             album=u'Despicable Me 2',
             albumartist=u'Pharrell Williams',
             title=u'Happy',
-            length=10
+            length=10,
         )
         item.add(self.lib)
         results = self.spotify.query_spotify(self.lib, u"Happy")
@@ -110,6 +131,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
