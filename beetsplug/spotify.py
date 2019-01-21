@@ -145,6 +145,11 @@ class SpotifyPlugin(BeetsPlugin):
     def album_for_id(self, album_id):
         """Fetches an album by its Spotify ID or URL and returns an
         AlbumInfo object or None if the album is not found.
+
+        :param album_id: Spotify ID or URL for the album
+        :type album_id: str
+        :return: AlbumInfo object for album
+        :rtype: beets.autotag.hooks.AlbumInfo
         """
         spotify_id = self._get_spotify_id('album', album_id)
         if spotify_id is None:
@@ -247,9 +252,8 @@ class SpotifyPlugin(BeetsPlugin):
 
         # get album's tracks to set the track's index/position on
         # the entire release
-        spotify_id_album = response_track['album']['id']
         response_album = self._handle_response(
-            requests.get, self.album_url + spotify_id_album
+            requests.get, self.album_url + response_data_track['album']['id']
         )
         response_data_album = response_album.json()
         medium_total = 0
@@ -261,7 +265,8 @@ class SpotifyPlugin(BeetsPlugin):
         track.medium_total = medium_total
         return track
 
-    def _get_artist(self, artists):
+    @staticmethod
+    def _get_artist(artists):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Spotify artist object dicts.
 
