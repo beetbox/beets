@@ -309,7 +309,7 @@ class ITunesStoreTest(UseThePlugin):
     def test_itunesstore_no_result(self):
         json = '{"results": []}'
         self.mock_response(fetchart.ITunesStore.API_URL, json)
-        expected = u"iTunes search for 'some artist some album' got no results"
+        expected = u"got no results"
 
         with capture_log('beets.test_art') as logs:
             with self.assertRaises(StopIteration):
@@ -362,7 +362,7 @@ class ITunesStoreTest(UseThePlugin):
     def test_itunesstore_returns_no_result_when_error_received(self):
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
         self.mock_response(fetchart.ITunesStore.API_URL, json)
-        expected = u"'results' not found in json. Fields are ['error']"
+        expected = u"not found in json. Fields are"
 
         with capture_log('beets.test_art') as logs:
             with self.assertRaises(StopIteration):
