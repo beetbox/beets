@@ -22,19 +22,8 @@ Why Use This Plugin?
 
 Basic Usage
 -----------
-
-First, register a `Spotify application`_ to use with beets and add your Client ID
-and Client Secret to your :doc:`configuration file </reference/config>` under a
-``spotify`` section::
-
-    spotify:
-        client_id: N3dliiOOTBEEFqCH5NDDUmF5Eo8bl7AN
-        client_secret: 6DRS7k66h4643yQEbepPxOuxeVW0yZpk
-
-.. _Spotify application: https://developer.spotify.com/documentation/general/guides/app-settings/
-
-Then, enable the ``spotify`` plugin (see :ref:`using-plugins`) and use the ``spotify``
-command with a beets query::
+First, enable the ``spotify`` plugin (see :ref:`using-plugins`).
+Then, use the ``spotify`` command with a beets query::
 
     beet spotify [OPTIONS...] QUERY
 
@@ -97,8 +86,6 @@ in config.yaml under the ``spotify:`` section:
 Here's an example::
 
     spotify:
-        client_id: N3dliiOOTBEEFqCH5NDDUmF5Eo8bl7AN
-        client_secret: 6DRS7k66h4643yQEbepPxOuxeVW0yZpk
         source_weight: 0.7
         mode: open
         region_filter: US

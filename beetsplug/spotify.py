@@ -38,8 +38,8 @@ class SpotifyPlugin(BeetsPlugin):
                 'track_field': 'title',
                 'region_filter': None,
                 'regex': [],
-                'client_id': 'N3dliiOOTBEEFqCH5NDDUmF5Eo8bl7AN',
-                'client_secret': '6DRS7k66h4643yQEbepPxOuxeVW0yZpk',
+                'client_id': '4e414367a1d14c75a5c5129a627fcab8',
+                'client_secret': 'f82bdc09b2254f1a8286815d02fd46dc',
                 'tokenfile': 'spotify_token.json',
                 'source_weight': 0.5,
             }
