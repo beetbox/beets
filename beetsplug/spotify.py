@@ -313,14 +313,15 @@ class SpotifyPlugin(BeetsPlugin):
     def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for Spotify Search API results
         matching an ``album`` and ``artist`` (if not various).
-        
-        :param items: List of tracks on the candidate album
+
+        :param items: List of items comprised by an album to be matched
         :type items: list[beets.library.Item]
-        :param artist: The of the candidate album
+        :param artist: The artist of the album to be matched
         :type artist: str
-        :param album: The name of the candidate album
+        :param album: The name of the album to be matched
         :type album: str
-        :param va_likely: True if the candidate album likely has Various Artists
+        :param va_likely: True if the album to be matched likely has
+            Various Artists
         :type va_likely: bool
         :return: Candidate AlbumInfo objects
         :rtype: list[beets.autotag.hooks.AlbumInfo]
@@ -342,11 +343,11 @@ class SpotifyPlugin(BeetsPlugin):
         """Returns a list of TrackInfo objects for Spotify Search API results
         matching ``title`` and ``artist``.
 
-        :param item: Candidate track
+        :param item: Singleton item to be matched
         :type item: beets.library.Item
-        :param artist: The artist of the candidate track
+        :param artist: The artist of the track to be matched
         :type artist: str
-        :param title: The title of the candidate track
+        :param title: The title of the track to be matched
         :type title: str
         :return: Candidate TrackInfo objects
         :rtype: list[beets.autotag.hooks.TrackInfo]
