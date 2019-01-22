@@ -320,6 +320,8 @@ class SpotifyPlugin(BeetsPlugin):
         response_data = self._search_spotify(
             query_type='album', filters=query_filters
         )
+        if response_data is None:
+            return []
         return [
             self.album_for_id(album_id=album_data['id'])
             for album_data in response_data['albums']['items']
@@ -332,6 +334,8 @@ class SpotifyPlugin(BeetsPlugin):
         response_data = self._search_spotify(
             query_type='track', keywords=title, filters={'artist': artist}
         )
+        if response_data is None:
+            return []
         return [
             self.track_for_id(track_data=track_data)
             for track_data in response_data['tracks']['items']
@@ -469,7 +473,7 @@ class SpotifyPlugin(BeetsPlugin):
             keywords = item[self.config['track_field'].get()]
 
             # Query the Web API for each track, look for the items' JSON data
-            query_filters = {'artist': artist, 'album': album}
+            query_filters = {'album': album, 'artist': artist}
             response_data = self._search_spotify(
                 query_type='track', keywords=keywords, filters=query_filters
             )
