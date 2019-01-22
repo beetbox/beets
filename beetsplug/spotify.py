@@ -230,12 +230,16 @@ class SpotifyPlugin(BeetsPlugin):
             data_url=track_data['external_urls']['spotify'],
         )
 
-    def track_for_id(self, track_id):
+    def track_for_id(self, track_id=None, track_data=None):
         """Fetches a track by its Spotify ID or URL and returns a
         TrackInfo object or None if the track is not found.
 
-        :param track_id: Spotify ID or URL for the track
+        :param track_id: (Optional) Spotify ID or URL for the track. Either
+            ``track_id`` or ``track_data`` must be provided.
         :type track_id: str
+        :param track_data: (Optional) Simplified track object dict. May be
+            provided instead of ``track_id`` to avoid unnecessary API calls.
+        :type track_data: dict
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
@@ -243,15 +247,16 @@ class SpotifyPlugin(BeetsPlugin):
         if spotify_id is None:
             return None
 
-        response_data_track = self._handle_response(
-            requests.get, self.track_url + spotify_id
-        )
-        track = self._get_track(response_data_track)
+        if track_data is None:
+            track_data = self._handle_response(
+                requests.get, self.track_url + spotify_id
+            )
+        track = self._get_track(track_data)
 
         # get album's tracks to set the track's index/position on
         # the entire release
         response_data_album = self._handle_response(
-            requests.get, self.album_url + response_data_track['album']['id']
+            requests.get, self.album_url + track_data['album']['id']
         )
         medium_total = 0
         for i, track_data in enumerate(response_data_album['tracks']['items']):
@@ -328,7 +333,7 @@ class SpotifyPlugin(BeetsPlugin):
             query_type='track', keywords=title, filters={'artist': artist}
         )
         return [
-            self._get_track(track_data)
+            self.track_for_id(track_data=track_data)
             for track_data in response_data['tracks']['items']
         ]
 
