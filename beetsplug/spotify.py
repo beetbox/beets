@@ -106,7 +106,7 @@ class SpotifyPlugin(BeetsPlugin):
         :param params: (optional) list of tuples or bytes to send
             in the query string for the :class:`Request`.
         :type params: dict
-        :return: JSON data for the class:`Response <Response>` object
+        :return: JSON data for the class:`Response <Response>` object.
         :rtype: dict
         """
         response = request_type(
@@ -128,11 +128,11 @@ class SpotifyPlugin(BeetsPlugin):
     def _get_spotify_id(self, url_type, id_):
         """Parse a Spotify ID from its URL if necessary.
 
-        :param url_type: Type of Spotify URL, either 'album' or 'track'
+        :param url_type: Type of Spotify URL, either 'album' or 'track'.
         :type url_type: str
-        :param id_: Spotify ID or URL
+        :param id_: Spotify ID or URL.
         :type id_: str
-        :return: Spotify ID
+        :return: Spotify ID.
         :rtype: str
         """
         # Spotify IDs consist of 22 alphanumeric characters
@@ -314,16 +314,16 @@ class SpotifyPlugin(BeetsPlugin):
         """Returns a list of AlbumInfo objects for Spotify Search API results
         matching an ``album`` and ``artist`` (if not various).
 
-        :param items: List of items comprised by an album to be matched
+        :param items: List of items comprised by an album to be matched.
         :type items: list[beets.library.Item]
-        :param artist: The artist of the album to be matched
+        :param artist: The artist of the album to be matched.
         :type artist: str
-        :param album: The name of the album to be matched
+        :param album: The name of the album to be matched.
         :type album: str
         :param va_likely: True if the album to be matched likely has
-            Various Artists
+            Various Artists.
         :type va_likely: bool
-        :return: Candidate AlbumInfo objects
+        :return: Candidate AlbumInfo objects.
         :rtype: list[beets.autotag.hooks.AlbumInfo]
         """
         query_filters = {'album': album}
@@ -343,13 +343,13 @@ class SpotifyPlugin(BeetsPlugin):
         """Returns a list of TrackInfo objects for Spotify Search API results
         matching ``title`` and ``artist``.
 
-        :param item: Singleton item to be matched
+        :param item: Singleton item to be matched.
         :type item: beets.library.Item
-        :param artist: The artist of the track to be matched
+        :param artist: The artist of the track to be matched.
         :type artist: str
-        :param title: The title of the track to be matched
+        :param title: The title of the track to be matched.
         :type title: str
-        :return: Candidate TrackInfo objects
+        :return: Candidate TrackInfo objects.
         :rtype: list[beets.autotag.hooks.TrackInfo]
         """
         response_data = self._search_spotify(
@@ -366,14 +366,13 @@ class SpotifyPlugin(BeetsPlugin):
     def _construct_search_query(filters=None, keywords=''):
         """Construct a query string with the specified filters and keywords to
         be provided to the Spotify Search API
-        (https://developer.spotify.com/documentation/web-api/reference/search/search/).
+        (https://developer.spotify.com/documentation/web-api/reference/search/search/#writing-a-query---guidelines).
 
         :param filters: (Optional) Field filters to apply.
         :type filters: dict
         :param keywords: (Optional) Query keywords to use.
         :type keywords: str
-        :return: Search query string to be provided to the Search API
-            (https://developer.spotify.com/documentation/web-api/reference/search/search/#writing-a-query---guidelines)
+        :return: Query string to be provided to the Search API.
         :rtype: str
         """
         query_string = keywords
@@ -385,7 +384,7 @@ class SpotifyPlugin(BeetsPlugin):
 
     def _search_spotify(self, query_type, filters=None, keywords=''):
         """Query the Spotify Search API for the specified ``keywords``, applying
-        the provided filters.
+        the provided ``filters``.
 
         :param query_type: A comma-separated list of item types to search
             across. Valid types are: 'album', 'artist', 'playlist', and
@@ -397,7 +396,7 @@ class SpotifyPlugin(BeetsPlugin):
         :param keywords: (Optional) Query keywords to use.
         :type keywords: str
         :return: JSON data for the class:`Response <Response>` object or None
-            if no search results are returned
+            if no search results are returned.
         :rtype: dict or None
         """
         query = self._construct_search_query(
