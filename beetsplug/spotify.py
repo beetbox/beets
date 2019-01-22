@@ -255,11 +255,11 @@ class SpotifyPlugin(BeetsPlugin):
 
         # get album's tracks to set the track's index/position on
         # the entire release
-        response_data_album = self._handle_response(
+        album_data = self._handle_response(
             requests.get, self.album_url + track_data['album']['id']
         )
         medium_total = 0
-        for i, track_data in enumerate(response_data_album['tracks']['items']):
+        for i, track_data in enumerate(album_data['tracks']['items']):
             if track_data['disc_number'] == track.medium:
                 medium_total += 1
                 if track_data['id'] == spotify_id:
@@ -473,7 +473,7 @@ class SpotifyPlugin(BeetsPlugin):
             keywords = item[self.config['track_field'].get()]
 
             # Query the Web API for each track, look for the items' JSON data
-            query_filters = {'album': album, 'artist': artist}
+            query_filters = {'artist': artist, 'album': album}
             response_data = self._search_spotify(
                 query_type='track', keywords=keywords, filters=query_filters
             )

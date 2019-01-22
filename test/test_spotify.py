@@ -124,7 +124,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         params = _params(responses.calls[0].request.url)
         self.assertEqual(
             params['q'],
-            [u'Happy album:Despicable Me 2 artist:Pharrell Williams'],
+            [u'Happy artist:Pharrell Williams album:Despicable Me 2'],
         )
         self.assertEqual(params['type'], [u'track'])
 
