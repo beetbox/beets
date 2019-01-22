@@ -120,7 +120,7 @@ class SpotifyPlugin(BeetsPlugin):
                     'Spotify access token has expired. Reauthenticating.'
                 )
                 self._authenticate()
-                self._handle_response(request_type, url, params=params)
+                return self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(u'Spotify API error:\n{}', response.text)
         return response.json()
@@ -374,12 +374,11 @@ class SpotifyPlugin(BeetsPlugin):
         :return: Query string to be provided to the Search API.
         :rtype: str
         """
-        query_string = keywords
-        if filters is not None:
-            query_string += ' ' + ' '.join(
-                ':'.join((k, v)) for k, v in filters.items()
-            )
-        return query_string
+        query_components = [
+            keywords,
+            ' '.join(':'.join((k, v)) for k, v in filters.items()),
+        ]
+        return ' '.join([s for s in query_components if s])
 
     def _search_spotify(self, query_type, filters=None, keywords=''):
         """Query the Spotify Search API for the specified ``keywords``, applying
