@@ -122,7 +122,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.spotify._output_results(results)
 
         params = _params(responses.calls[0].request.url)
-        query = params['q']
+        query = params['q'][0]
         self.assertIn(u'Happy', query)
         self.assertIn(u'artist:Pharrell Williams', query)
         self.assertIn(u'album:Despicable Me 2', query)

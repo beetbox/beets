@@ -313,6 +313,17 @@ class SpotifyPlugin(BeetsPlugin):
     def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for Spotify Search API results
         matching an ``album`` and ``artist`` (if not various).
+        
+        :param items: List of tracks on the candidate album
+        :type items: list[beets.library.Item]
+        :param artist: The of the candidate album
+        :type artist: str
+        :param album: The name of the candidate album
+        :type album: str
+        :param va_likely: True if the candidate album likely has Various Artists
+        :type va_likely: bool
+        :return: Candidate AlbumInfo objects
+        :rtype: list[beets.autotag.hooks.AlbumInfo]
         """
         query_filters = {'album': album}
         if not va_likely:
@@ -330,6 +341,15 @@ class SpotifyPlugin(BeetsPlugin):
     def item_candidates(self, item, artist, title):
         """Returns a list of TrackInfo objects for Spotify Search API results
         matching ``title`` and ``artist``.
+
+        :param item: Candidate track
+        :type item: beets.library.Item
+        :param artist: The artist of the candidate track
+        :type artist: str
+        :param title: The title of the candidate track
+        :type title: str
+        :return: Candidate TrackInfo objects
+        :rtype: list[beets.autotag.hooks.TrackInfo]
         """
         response_data = self._search_spotify(
             query_type='track', keywords=title, filters={'artist': artist}
@@ -374,6 +394,7 @@ class SpotifyPlugin(BeetsPlugin):
         :param filters: (Optional) Field filters to apply.
         :type filters: dict
         :param keywords: (Optional) Query keywords to use.
+        :type keywords: str
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned
         :rtype: dict or None
