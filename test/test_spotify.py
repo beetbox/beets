@@ -59,7 +59,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.assertEqual(True, self.spotify._parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertEqual(None, self.spotify._query_spotify(self.lib, u"1=2"))
+        self.assertEqual(None, self.spotify._match_library_tracks(self.lib, u"1=2"))
 
     @responses.activate
     def test_missing_request(self):
@@ -84,7 +84,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             length=10,
         )
         item.add(self.lib)
-        self.assertEqual([], self.spotify._query_spotify(self.lib, u""))
+        self.assertEqual([], self.spotify._match_library_tracks(self.lib, u""))
 
         params = _params(responses.calls[0].request.url)
         query = params['q'][0]
@@ -116,10 +116,10 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             length=10,
         )
         item.add(self.lib)
-        results = self.spotify._query_spotify(self.lib, u"Happy")
+        results = self.spotify._match_library_tracks(self.lib, u"Happy")
         self.assertEqual(1, len(results))
         self.assertEqual(u"6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
-        self.spotify._output_results(results)
+        self.spotify._output_match_results(results)
 
         params = _params(responses.calls[0].request.url)
         query = params['q'][0]

@@ -261,7 +261,7 @@ class SpotifyPlugin(BeetsPlugin):
         for i, track_data in enumerate(album_data['tracks']['items']):
             if track_data['disc_number'] == track.medium:
                 medium_total += 1
-                if track_data['id'] == spotify_id:
+                if track_data['id'] == track.track_id:
                     track.index = i + 1
         track.medium_total = medium_total
         return track
@@ -419,8 +419,8 @@ class SpotifyPlugin(BeetsPlugin):
         def queries(lib, opts, args):
             success = self._parse_opts(opts)
             if success:
-                results = self._query_spotify(lib, ui.decargs(args))
-                self._output_results(results)
+                results = self._match_library_tracks(lib, ui.decargs(args))
+                self._output_match_results(results)
 
         spotify_cmd = ui.Subcommand(
             'spotify', help=u'build a Spotify playlist'
@@ -458,11 +458,23 @@ class SpotifyPlugin(BeetsPlugin):
         self.opts = opts
         return True
 
-    def _query_spotify(self, lib, keywords):
+    def _match_library_tracks(self, library, keywords):
+        """
+        Get a list of simplified track objects dicts for library tracks
+        matching the specified ``keywords``.
+        
+        :param library: beets library object to query.
+        :type library: beets.library.Library
+        :param keywords: Query to match library items against.
+        :type keywords: str
+        :return: List of simplified track object dicts for library items
+            matching the specified query.
+        :rtype: list[dict]
+        """
         results = []
         failures = []
 
-        items = lib.items(keywords)
+        items = library.items(keywords)
 
         if not items:
             self._log.debug(
@@ -509,9 +521,9 @@ class SpotifyPlugin(BeetsPlugin):
             region_filter = self.config['region_filter'].get()
             if region_filter:
                 response_data_tracks = [
-                    x
-                    for x in response_data_tracks
-                    if region_filter in x['available_markets']
+                    track_data
+                    for track_data in response_data_tracks
+                    if region_filter in track_data['available_markets']
                 ]
 
             if (
@@ -552,16 +564,22 @@ class SpotifyPlugin(BeetsPlugin):
 
         return results
 
-    def _output_results(self, results):
-        if results:
-            ids = [x['id'] for x in results]
-            if self.config['mode'].get() == "open":
-                self._log.info(u'Attempting to open Spotify with playlist')
-                spotify_url = self.playlist_partial + ",".join(ids)
-                webbrowser.open(spotify_url)
+    def _output_match_results(self, results):
+        """
+        Open a playlist or print Spotify URLs for the provided track object dicts.
 
+        :param results: List of simplified track object dicts
+            (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
+        :type results: list[dict]
+        """
+        if results:
+            spotify_ids = [track_data['id'] for track_data in results]
+            if self.config['mode'].get() == 'open':
+                self._log.info(u'Attempting to open Spotify with playlist')
+                spotify_url = self.playlist_partial + ",".join(spotify_ids)
+                webbrowser.open(spotify_url)
             else:
-                for item in ids:
-                    print(self.open_track_url + item)
+                for spotify_id in spotify_ids:
+                    print(self.open_track_url + spotify_id)
         else:
             self._log.warning(u'No Spotify tracks found from beets query')
