@@ -462,7 +462,7 @@ class SpotifyPlugin(BeetsPlugin):
         """
         Get a list of simplified track objects dicts for library tracks
         matching the specified ``keywords``.
-        
+
         :param library: beets library object to query.
         :type library: beets.library.Library
         :param keywords: Query to match library items against.
@@ -566,7 +566,8 @@ class SpotifyPlugin(BeetsPlugin):
 
     def _output_match_results(self, results):
         """
-        Open a playlist or print Spotify URLs for the provided track object dicts.
+        Open a playlist or print Spotify URLs for the provided track
+        object dicts.
 
         :param results: List of simplified track object dicts
             (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
