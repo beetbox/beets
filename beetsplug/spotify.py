@@ -311,7 +311,7 @@ class SpotifyPlugin(BeetsPlugin):
         return dist
 
     def candidates(self, items, artist, album, va_likely):
-        """Returns a list of AlbumInfo objects for Spotify Search results
+        """Returns a list of AlbumInfo objects for Spotify Search API results
         matching an ``album`` and ``artist`` (if not various).
         """
         query_filters = {'album': album}
@@ -326,7 +326,7 @@ class SpotifyPlugin(BeetsPlugin):
         ]
 
     def item_candidates(self, item, artist, title):
-        """Returns a list of TrackInfo objects for Spotify Search results
+        """Returns a list of TrackInfo objects for Spotify Search API results
         matching ``title`` and ``artist``.
         """
         response_data = self._search_spotify(
