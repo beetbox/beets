@@ -370,8 +370,9 @@ class SpotifyPlugin(BeetsPlugin):
         :param filters: (Optional) Field filters to apply.
         :type filters: dict
         :param keywords: (Optional) Query keywords to use.
-        :return: JSON data for the class:`Response <Response>` object
-        :rtype: dict
+        :return: JSON data for the class:`Response <Response>` object or None
+            if no search results are returned
+        :rtype: dict or None
         """
         query = self._construct_search_query(
             keywords=keywords, filters=filters
