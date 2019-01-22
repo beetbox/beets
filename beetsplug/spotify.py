@@ -243,11 +243,10 @@ class SpotifyPlugin(BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
-        spotify_id = self._get_spotify_id('track', track_id)
-        if spotify_id is None:
-            return None
-
         if track_data is None:
+            spotify_id = self._get_spotify_id('track', track_id)
+            if spotify_id is None:
+                return None
             track_data = self._handle_response(
                 requests.get, self.track_url + spotify_id
             )
