@@ -89,7 +89,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         params = _params(responses.calls[0].request.url)
         self.assertEqual(
             params['q'],
-            [u'duifhjslkef album:lkajsdflakjsd artist:ujydfsuihse'],
+            [u'duifhjslkef artist:ujydfsuihse album:lkajsdflakjsd'],
         )
         self.assertEqual(params['type'], [u'track'])
 
