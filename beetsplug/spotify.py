@@ -9,6 +9,7 @@ import webbrowser
 import collections
 
 import requests
+import six
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -379,7 +380,10 @@ class SpotifyPlugin(BeetsPlugin):
             keywords,
             ' '.join(':'.join((k, v)) for k, v in filters.items()),
         ]
-        return ' '.join([q for q in query_components if q])
+        query = ' '.join([q for q in query_components if q])
+        if not isinstance(query, six.text_type):
+            query = query.decode('utf8')
+        return query
 
     def _search_spotify(self, query_type, filters=None, keywords=''):
         """Query the Spotify Search API for the specified ``keywords``, applying
@@ -403,9 +407,7 @@ class SpotifyPlugin(BeetsPlugin):
         )
         if not query:
             return None
-        self._log.debug(
-            u'Searching Spotify for "{}"'.format(query.decode('utf8'))
-        )
+        self._log.debug(u"Searching Spotify for '{}'".format(query))
         response_data = self._handle_response(
             requests.get,
             self.search_url,
@@ -414,7 +416,9 @@ class SpotifyPlugin(BeetsPlugin):
         num_results = 0
         for result_type_data in response_data.values():
             num_results += len(result_type_data['items'])
-        self._log.debug(u'Found {} results from Spotify'.format(num_results))
+        self._log.debug(
+            u"Found {} results from Spotify for '{}'", num_results, query
+        )
         return response_data if num_results > 0 else None
 
     def commands(self):
