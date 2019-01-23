@@ -8,8 +8,9 @@ import base64
 import webbrowser
 import collections
 
-import requests
 import six
+import unidecode
+import requests
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -383,7 +384,7 @@ class SpotifyPlugin(BeetsPlugin):
         query = ' '.join([q for q in query_components if q])
         if not isinstance(query, six.text_type):
             query = query.decode('utf8')
-        return query
+        return unidecode.unidecode(query)
 
     def _search_spotify(self, query_type, filters=None, keywords=''):
         """Query the Spotify Search API for the specified ``keywords``, applying
