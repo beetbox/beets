@@ -151,7 +151,7 @@ class SpotifyPlugin(BeetsPlugin):
         :param album_id: Spotify ID or URL for the album
         :type album_id: str
         :return: AlbumInfo object for album
-        :rtype: beets.autotag.hooks.AlbumInfo
+        :rtype: beets.autotag.hooks.AlbumInfo or None
         """
         spotify_id = self._get_spotify_id('album', album_id)
         if spotify_id is None:
@@ -243,7 +243,7 @@ class SpotifyPlugin(BeetsPlugin):
             provided instead of ``track_id`` to avoid unnecessary API calls.
         :type track_data: dict
         :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo
+        :rtype: beets.autotag.hooks.TrackInfo or None
         """
         if track_data is None:
             spotify_id = self._get_spotify_id('track', track_id)
