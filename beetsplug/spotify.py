@@ -143,7 +143,7 @@ class SpotifyPlugin(BeetsPlugin):
         return match.group(2) if match else None
 
     def album_for_id(self, album_id):
-        """Fetches an album by its Spotify ID or URL and returns an
+        """Fetch an album by its Spotify ID or URL and return an
         AlbumInfo object or None if the album is not found.
 
         :param album_id: Spotify ID or URL for the album
@@ -177,7 +177,7 @@ class SpotifyPlugin(BeetsPlugin):
         else:
             raise ui.UserError(
                 u"Invalid `release_date_precision` returned "
-                u"from Spotify API: '{}'".format(release_date_precision)
+                u"by Spotify API: '{}'".format(release_date_precision)
             )
 
         tracks = []
@@ -231,7 +231,7 @@ class SpotifyPlugin(BeetsPlugin):
         )
 
     def track_for_id(self, track_id=None, track_data=None):
-        """Fetches a track by its Spotify ID or URL and returns a
+        """Fetch a track by its Spotify ID or URL and return a
         TrackInfo object or None if the track is not found.
 
         :param track_id: (Optional) Spotify ID or URL for the track. Either
@@ -252,8 +252,9 @@ class SpotifyPlugin(BeetsPlugin):
             )
         track = self._get_track(track_data)
 
-        # get album's tracks to set the track's index/position on
-        # the entire release
+        # Get album's tracks to set `track.index` (position on the entire
+        # release) and `track.medium_total` (total number of tracks on
+        # the track's disc).
         album_data = self._handle_response(
             requests.get, self.album_url + track_data['album']['id']
         )
@@ -378,7 +379,7 @@ class SpotifyPlugin(BeetsPlugin):
             keywords,
             ' '.join(':'.join((k, v)) for k, v in filters.items()),
         ]
-        return ' '.join([s for s in query_components if s])
+        return ' '.join([q for q in query_components if q])
 
     def _search_spotify(self, query_type, filters=None, keywords=''):
         """Query the Spotify Search API for the specified ``keywords``, applying
@@ -402,7 +403,9 @@ class SpotifyPlugin(BeetsPlugin):
         )
         if not query:
             return None
-        self._log.debug(u'Searching Spotify for "{}"'.format(query))
+        self._log.debug(
+            u'Searching Spotify for "{}"'.format(query.decode('utf8'))
+        )
         response_data = self._handle_response(
             requests.get,
             self.search_url,
@@ -458,8 +461,7 @@ class SpotifyPlugin(BeetsPlugin):
         return True
 
     def _match_library_tracks(self, library, keywords):
-        """
-        Get a list of simplified track objects dicts for library tracks
+        """Get a list of simplified track object dicts for library tracks
         matching the specified ``keywords``.
 
         :param library: beets library object to query.
@@ -564,8 +566,7 @@ class SpotifyPlugin(BeetsPlugin):
         return results
 
     def _output_match_results(self, results):
-        """
-        Open a playlist or print Spotify URLs for the provided track
+        """Open a playlist or print Spotify URLs for the provided track
         object dicts.
 
         :param results: List of simplified track object dicts
