@@ -47,19 +47,21 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         )
         self.spotify = spotify.SpotifyPlugin()
         opts = ArgumentsMock("list", False)
-        self.spotify.parse_opts(opts)
+        self.spotify._parse_opts(opts)
 
     def tearDown(self):
         self.teardown_beets()
 
     def test_args(self):
         opts = ArgumentsMock("fail", True)
-        self.assertEqual(False, self.spotify.parse_opts(opts))
+        self.assertEqual(False, self.spotify._parse_opts(opts))
         opts = ArgumentsMock("list", False)
-        self.assertEqual(True, self.spotify.parse_opts(opts))
+        self.assertEqual(True, self.spotify._parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertEqual(None, self.spotify.query_spotify(self.lib, u"1=2"))
+        self.assertEqual(
+            None, self.spotify._match_library_tracks(self.lib, u"1=2")
+        )
 
     @responses.activate
     def test_missing_request(self):
@@ -84,13 +86,13 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             length=10,
         )
         item.add(self.lib)
-        self.assertEqual([], self.spotify.query_spotify(self.lib, u""))
+        self.assertEqual([], self.spotify._match_library_tracks(self.lib, u""))
 
         params = _params(responses.calls[0].request.url)
-        self.assertEqual(
-            params['q'],
-            [u'duifhjslkef album:lkajsdflakjsd artist:ujydfsuihse'],
-        )
+        query = params['q'][0]
+        self.assertIn(u'duifhjslkef', query)
+        self.assertIn(u'artist:ujydfsuihse', query)
+        self.assertIn(u'album:lkajsdflakjsd', query)
         self.assertEqual(params['type'], [u'track'])
 
     @responses.activate
@@ -116,16 +118,16 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             length=10,
         )
         item.add(self.lib)
-        results = self.spotify.query_spotify(self.lib, u"Happy")
+        results = self.spotify._match_library_tracks(self.lib, u"Happy")
         self.assertEqual(1, len(results))
         self.assertEqual(u"6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
-        self.spotify.output_results(results)
+        self.spotify._output_match_results(results)
 
         params = _params(responses.calls[0].request.url)
-        self.assertEqual(
-            params['q'],
-            [u'Happy album:Despicable Me 2 artist:Pharrell Williams'],
-        )
+        query = params['q'][0]
+        self.assertIn(u'Happy', query)
+        self.assertIn(u'artist:Pharrell Williams', query)
+        self.assertIn(u'album:Despicable Me 2', query)
         self.assertEqual(params['type'], [u'track'])
 
 
