@@ -205,6 +205,7 @@ class SpotifyPlugin(BeetsPlugin):
             month=month,
             day=day,
             label=response_data['label'],
+            mediums=max(medium_totals.keys()),
             data_source='Spotify',
             data_url=response_data['external_urls']['spotify'],
         )
@@ -286,8 +287,6 @@ class SpotifyPlugin(BeetsPlugin):
             if not artist_id:
                 artist_id = artist['id']
             name = artist['name']
-            # Strip disambiguation number.
-            name = re.sub(r' \(\d+\)$', '', name)
             # Move articles to the front.
             name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
             artist_names.append(name)
