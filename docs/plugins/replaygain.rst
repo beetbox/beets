@@ -10,9 +10,9 @@ playback levels.
 Installation
 ------------
 
-This plugin can use one of four backends to compute the ReplayGain values:
-GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools and bs1770gain. mp3gain
-can be easier to install but GStreamer, Audio Tools and bs1770gain support more audio
+This plugin can use one of three backends to compute the ReplayGain values:
+GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools. mp3gain
+can be easier to install but GStreamer and Audio Tools support more audio
 formats.
 
 Once installed, this plugin analyzes all files during the import process. This
@@ -75,25 +75,6 @@ On OS X, most of the dependencies can be installed with `Homebrew`_::
 
 .. _Python Audio Tools: http://audiotools.sourceforge.net
 
-bs1770gain
-``````````
-
-To use this backend, you will need to install the `bs1770gain`_ command-line
-tool, version 0.4.6 or greater. Follow the instructions at the `bs1770gain`_
-Web site and ensure that the tool is on your ``$PATH``.
-
-.. _bs1770gain: http://bs1770gain.sourceforge.net/
-
-Then, enable the plugin (see :ref:`using-plugins`) and specify the
-backend in your configuration file::
-
-    replaygain:
-        backend: bs1770gain
-
-For Windows users: the tool currently has issues with long and non-ASCII path
-names. You may want to use the :ref:`asciify-paths` configuration option until
-this is resolved.
-
 Configuration
 -------------
 
@@ -108,10 +89,6 @@ configuration file. The available options are:
   Default: ``no``.
 - **targetlevel**: A number of decibels for the target loudness level.
   Default: 89.
-- **r128**: A space separated list of formats that will use ``R128_`` tags with
-  integer values instead of the common ``REPLAYGAIN_`` tags with floating point
-  values. Requires the "bs1770gain" backend.
-  Default: ``Opus``.
 
 These options only work with the "command" backend:
 
@@ -122,16 +99,6 @@ These options only work with the "command" backend:
 - **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
   would keep clipping from occurring.
   Default: ``yes``.
-
-These options only works with the "bs1770gain" backend:
-
-- **method**: The loudness scanning standard: either `replaygain` for
-  ReplayGain 2.0, `ebu` for EBU R128, or `atsc` for ATSC A/85. This dictates
-  the reference level: -18, -23, or -24 LUFS respectively. Default:
-  `replaygain`
-- **chunk_at**: Splits an album in groups of tracks of this amount.
-  Useful when running into memory problems when analysing albums with
-  an exceptionally large amount of tracks. Default:5000
 
 Manual Analysis
 ---------------
