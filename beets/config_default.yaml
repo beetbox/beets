@@ -30,6 +30,19 @@ import:
     bell: no
     set_fields: {}
 
+no_clobber:
+  - albumtype
+  - label
+  - asin
+  - catalognum
+  - script
+  - language
+  - country
+  - albumstatus
+  - albumdisambig
+  - releasegroupdisambig
+  - data_source
+
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]
 ignore_hidden: yes

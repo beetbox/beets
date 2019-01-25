@@ -154,9 +154,14 @@ def apply_metadata(album_info, mapping):
                       'albumdisambig',
                       'releasegroupdisambig',
                       'data_source',):
+            # Don't overwrite fields with empty values unless the
+            # field is explicitly allowed to be overwritten
+            clobber = field not in config['no_clobber'].get()
             value = getattr(album_info, field)
-            if value is not None:
-                item[field] = value
+            if value is None and not clobber:
+                continue
+            item[field] = value
+
         if track_info.disctitle is not None:
             item.disctitle = track_info.disctitle
 
