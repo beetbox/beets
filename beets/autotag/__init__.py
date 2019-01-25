@@ -156,7 +156,7 @@ def apply_metadata(album_info, mapping):
                       'data_source',):
             # Don't overwrite fields with empty values unless the
             # field is explicitly allowed to be overwritten
-            clobber = field not in config['no_clobber'].get()
+            clobber = field not in config['no_clobber'].as_str_seq()
             value = getattr(album_info, field)
             if value is None and not clobber:
                 continue
