@@ -63,6 +63,9 @@ New features:
   provider: you can match tracks and albums using the Spotify database.
   Thanks to :user:`rhlahuja`.
   :bug:`3123`
+* A new ``no_clobber`` configuration option allows setting a list of
+  fields not to be overwritten by empty values upon re-importing items.
+  :bug:`3132`
 
 
 Changes:
