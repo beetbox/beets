@@ -89,6 +89,10 @@ configuration file. The available options are:
   Default: ``no``.
 - **targetlevel**: A number of decibels for the target loudness level.
   Default: 89.
+- **r128**: A space separated list of formats that will use ``R128_`` tags with
+  integer values instead of the common ``REPLAYGAIN_`` tags with floating point
+  values. Requires the "ffmpeg" backend.
+  Default: ``Opus``.
 
 These options only work with the "command" backend:
 
