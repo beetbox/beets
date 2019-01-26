@@ -185,4 +185,3 @@ def apply_metadata(album_info, mapping):
             if value is None and not clobber:
                 continue
             item[field] = value
-
