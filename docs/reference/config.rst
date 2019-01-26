@@ -304,30 +304,6 @@ The defaults look like this::
 See :ref:`aunique` for more details.
 
 
-.. _no_clobber:
-
-no_clobber
-~~~~~~~~~~
-
-A list of fields that should not be overwritten by empty values when
-re-importing items.
-
-The default is::
-
-    no_clobber:
-      - albumtype
-      - label
-      - asin
-      - catalognum
-      - script
-      - language
-      - country
-      - albumstatus
-      - albumdisambig
-      - releasegroupdisambig
-      - data_source
-
-
 .. _terminal_encoding:
 
 terminal_encoding

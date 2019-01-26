@@ -30,19 +30,6 @@ import:
     bell: no
     set_fields: {}
 
-no_clobber:
-  - albumtype
-  - label
-  - asin
-  - catalognum
-  - script
-  - language
-  - country
-  - albumstatus
-  - albumdisambig
-  - releasegroupdisambig
-  - data_source
-
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]
 ignore_hidden: yes
@@ -66,6 +53,9 @@ aunique:
     disambiguators: albumtype year label catalognum albumdisambig releasegroupdisambig
     bracket: '[]'
 
+overwrite_null:
+  album: []
+  track: []
 
 plugins: []
 pluginpath: []
