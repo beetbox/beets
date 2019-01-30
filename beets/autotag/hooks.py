@@ -72,8 +72,8 @@ class AlbumInfo(object):
     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
     - ``data_url``: The data source release URL.
 
-    The fields up through ``tracks`` are required. The others are
-    optional and may be None.
+    ``mediums`` along with the fields up through ``tracks`` are required.
+    The others are optional and may be None.
     """
     def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
                  albumtype=None, va=False, year=None, month=None, day=None,

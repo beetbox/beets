@@ -48,6 +48,22 @@ New features:
   :bug:`2497`
 * Modify selection can now be applied early without selecting every item.
   :bug:`3083`
+* :doc:`/plugins/chroma`: Fingerprint values are now properly stored as
+  strings, which prevents strange repeated output when running ``beet write``.
+  Thanks to :user:`Holzhaus`.
+  :bug:`3097` :bug:`2942`
+* The ``move`` command now lists the number of items already in-place.
+  Thanks to :user:`RollingStar`.
+  :bug:`3117`
+* :doc:`/plugins/spotify`: The plugin now uses OAuth for authentication to the
+  Spotify API.
+  Thanks to :user:`rhlahuja`.
+  :bug:`2694` :bug:`3123`
+* :doc:`/plugins/spotify`: The plugin now works as an import metadata
+  provider: you can match tracks and albums using the Spotify database.
+  Thanks to :user:`rhlahuja`.
+  :bug:`3123`
+
 
 Changes:
 
@@ -114,6 +130,7 @@ Fixes:
 * The ``%title`` template function now works correctly with apostrophes.
   Thanks to :user:`GuilhermeHideki`.
   :bug:`3033`
+* Fetchart now respects the ``ignore`` and ``ignore_hidden`` settings. :bug:`1632`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
