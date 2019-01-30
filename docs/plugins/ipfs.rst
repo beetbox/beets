@@ -70,3 +70,5 @@ Configuration
 The ipfs plugin will automatically add imported albums to ipfs and add those
 hashes to the database. This can be turned off by setting the ``auto`` option
 in the ``ipfs:`` section of the config to ``no``.
+
+If the setting ``nocopy`` is true (defaults false) then the plugin will pass the ``--nocopy`` option when adding things to ipfs. If the filestore option of ipfs is enabled this will mean files are neither removed from beets nor copied somewhere else.
