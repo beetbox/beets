@@ -286,7 +286,7 @@ class DiscogsPlugin(BeetsPlugin):
         if va:
             artist = config['va_name'].as_str()
         if catalogno == 'none':
-                catalogno = None
+            catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
         # `autotag.apply_metadata`, and set `medium_total`.
         for track in tracks:
