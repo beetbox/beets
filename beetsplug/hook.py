@@ -91,28 +91,28 @@ class HookPlugin(BeetsPlugin):
 
     def create_and_register_hook(self, event, command):
         def hook_function(**kwargs):
-                if command is None or len(command) == 0:
-                    self._log.error('invalid command "{0}"', command)
-                    return
+            if command is None or len(command) == 0:
+                self._log.error('invalid command "{0}"', command)
+                return
 
-                # Use a string formatter that works on Unicode strings.
-                if six.PY2:
-                    formatter = CodingFormatter(arg_encoding())
-                else:
-                    formatter = string.Formatter()
+            # Use a string formatter that works on Unicode strings.
+            if six.PY2:
+                formatter = CodingFormatter(arg_encoding())
+            else:
+                formatter = string.Formatter()
 
-                command_pieces = shlex_split(command)
+            command_pieces = shlex_split(command)
 
-                for i, piece in enumerate(command_pieces):
-                    command_pieces[i] = formatter.format(piece, event=event,
-                                                         **kwargs)
+            for i, piece in enumerate(command_pieces):
+                command_pieces[i] = formatter.format(piece, event=event,
+                                                     **kwargs)
 
-                self._log.debug(u'running command "{0}" for event {1}',
-                                u' '.join(command_pieces), event)
+            self._log.debug(u'running command "{0}" for event {1}',
+                            u' '.join(command_pieces), event)
 
-                try:
-                    subprocess.Popen(command_pieces).wait()
-                except OSError as exc:
-                    self._log.error(u'hook for {0} failed: {1}', event, exc)
+            try:
+                subprocess.Popen(command_pieces).wait()
+            except OSError as exc:
+                self._log.error(u'hook for {0} failed: {1}', event, exc)
 
         self.register_listener(event, hook_function)
