@@ -64,7 +64,7 @@ New features:
   Thanks to :user:`rhlahuja`.
   :bug:`3123`
 * :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which passes that flag to ipfs.
-  THanks to :user:`wildthyme`.
+  Thanks to :user:`wildthyme`.
 
 
 Changes:
