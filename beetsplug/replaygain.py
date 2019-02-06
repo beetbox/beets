@@ -904,34 +904,18 @@ class ReplayGainPlugin(BeetsPlugin):
 
         self._log.debug(u'applied r128 track gain {0}', item.r128_track_gain)
 
-    def store_album_gain(self, album, album_gain):
-        album.rg_album_gain = album_gain.gain
-        album.rg_album_peak = album_gain.peak
-        album.store()
-
+    def store_album_gain(self, item, album_gain):
+        item.rg_album_gain = album_gain.gain
+        item.rg_album_peak = album_gain.peak
+        item.store()
         self._log.debug(u'applied album gain {0}, peak {1}',
-                        album.rg_album_gain, album.rg_album_peak)
+                        item.rg_album_gain, item.rg_album_peak)
 
-    def store_album_r128_gain(self, album, album_gain):
-        album.r128_album_gain = int(round(album_gain.gain * pow(2, 8)))
-        album.store()
-
-        self._log.debug(u'applied r128 album gain {0}', album.r128_album_gain)
-
-    def store_album_gain_item_level(self, items, album_gain):
-        for item in items:
-            item.rg_album_gain = album_gain.gain
-            item.rg_album_peak = album_gain.peak
-            item.store()
-            self._log.debug(u'applied album gain {0}, peak {1}',
-                            item.rg_album_gain, item.rg_album_peak)
-
-    def store_album_r128_gain_item_level(self, items, album_gain):
-        for item in items:
-            item.r128_album_gain = album_gain.gain
-            item.store()
-            self._log.debug(u'applied r128 album gain {0}',
-                            item.r128_album_gain)
+    def store_album_r128_gain(self, item, album_gain):
+        item.r128_album_gain = album_gain.gain
+        item.store()
+        self._log.debug(u'applied r128 album gain {0}',
+                        item.r128_album_gain)
 
     def handle_album(self, album, write, force=False):
         """Compute album and track replay gain store it in all of the
@@ -960,12 +944,10 @@ class ReplayGainPlugin(BeetsPlugin):
             backend_instance = self.r128_backend_instance
             store_track_gain = self.store_track_r128_gain
             store_album_gain = self.store_album_r128_gain
-            store_album_gain_item_level = self.store_album_r128_gain_item_level
         else:
             backend_instance = self.backend_instance
             store_track_gain = self.store_track_gain
             store_album_gain = self.store_album_gain
-            store_album_gain_item_level = self.store_album_gain_item_level
 
         discs = dict()
         if self.per_disc:
@@ -986,12 +968,9 @@ class ReplayGainPlugin(BeetsPlugin):
                         u"for some tracks in album {0}".format(album)
                     )
 
-                if len(items) == len(album.items()):
-                    store_album_gain(album, album_gain.album_gain)
-                else:
-                    store_album_gain_item_level(items, album_gain.album_gain)
                 for item, track_gain in zip(items, album_gain.track_gains):
                     store_track_gain(item, track_gain)
+                    store_album_gain(item, album_gain.album_gain)
                     if write:
                         item.try_write()
             except ReplayGainError as e:
