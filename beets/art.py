@@ -60,8 +60,8 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
             log.info(u'Image not similar; skipping.')
             return
     if ifempty and get_art(log, item):
-            log.info(u'media file already contained art')
-            return
+        log.info(u'media file already contained art')
+        return
     if maxwidth and not as_album:
         imagepath = resize_image(log, imagepath, maxwidth)
 

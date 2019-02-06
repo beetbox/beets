@@ -78,7 +78,7 @@ class SubsonicUpdate(BeetsPlugin):
             'v': '1.15.0',  # Subsonic 6.1 and newer.
             'c': 'beets'
         }
-        if contextpath is '/':
+        if contextpath == '/':
             contextpath = ''
         url = "http://{}:{}{}/rest/startScan".format(host, port, contextpath)
         response = requests.post(url, params=payload)

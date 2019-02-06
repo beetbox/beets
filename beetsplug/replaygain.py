@@ -949,10 +949,10 @@ class ReplayGainPlugin(BeetsPlugin):
 
         if (any([self.should_use_r128(item) for item in album.items()]) and not
                 all(([self.should_use_r128(item) for item in album.items()]))):
-                raise ReplayGainError(
-                    u"Mix of ReplayGain and EBU R128 detected"
-                    u" for some tracks in album {0}".format(album)
-                )
+            raise ReplayGainError(
+                u"Mix of ReplayGain and EBU R128 detected"
+                u" for some tracks in album {0}".format(album)
+            )
 
         if any([self.should_use_r128(item) for item in album.items()]):
             if self.r128_backend_instance == '':

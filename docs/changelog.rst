@@ -63,6 +63,8 @@ New features:
   provider: you can match tracks and albums using the Spotify database.
   Thanks to :user:`rhlahuja`.
   :bug:`3123`
+* :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which passes that flag to ipfs.
+  Thanks to :user:`wildthyme`.
 
 
 Changes:
