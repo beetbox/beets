@@ -65,6 +65,10 @@ New features:
   :bug:`3123`
 * :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which passes that flag to ipfs.
   Thanks to :user:`wildthyme`.
+* :doc:`/plugins/replaygain`: The plugin now supports a ``per_disc`` option
+  which enables calculation of album ReplayGain on disc level instead of album
+  level.
+  Thanks to :user:`samuelnilsson`
 
 
 Changes:
