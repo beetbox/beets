@@ -958,9 +958,8 @@ class ReplayGainPlugin(BeetsPlugin):
         else:
             discs[1] = album.items()
 
-        for discnumber in discs:
+        for discnumber, items in discs.items():
             try:
-                items = discs[discnumber]
                 album_gain = backend_instance.compute_album_gain(items)
                 if len(album_gain.track_gains) != len(items):
                     raise ReplayGainError(
