@@ -802,7 +802,7 @@ class AudioToolsBackend(Backend):
         # album values.
         rg_album_gain, rg_album_peak = rg.album_gain()
         self._log.debug(u'ReplayGain for album {0}: {1:.2f}, {2:.2f}',
-                        album, rg_album_gain, rg_album_peak)
+                        items[0].album, rg_album_gain, rg_album_peak)
 
         return AlbumGain(
             Gain(gain=rg_album_gain, peak=rg_album_peak),
