@@ -93,6 +93,8 @@ configuration file. The available options are:
   integer values instead of the common ``REPLAYGAIN_`` tags with floating point
   values. Requires the "ffmpeg" backend.
   Default: ``Opus``.
+- **per_disc**: Calculate album ReplayGain on disc level instead of album level.
+  Default: ``no``
 
 These options only work with the "command" backend:
 
