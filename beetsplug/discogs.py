@@ -61,6 +61,8 @@ class DiscogsPlugin(BeetsPlugin):
         self.config['user_token'].redact = True
         self.discogs_client = None
         self.register_listener('import_begin', self.setup)
+        self.rate_limit_per_minute = 25
+        self.last_request_timestamp = 0
 
     def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary.
@@ -71,6 +73,7 @@ class DiscogsPlugin(BeetsPlugin):
         # Try using a configured user token (bypassing OAuth login).
         user_token = self.config['user_token'].as_str()
         if user_token:
+            self.rate_limit_per_minute = 60
             self.discogs_client = Client(USER_AGENT, user_token=user_token)
             return
 
@@ -87,6 +90,20 @@ class DiscogsPlugin(BeetsPlugin):
 
         self.discogs_client = Client(USER_AGENT, c_key, c_secret,
                                      token, secret)
+
+    def _time_to_next_request(self):
+        seconds_between_requests = 60 / self.rate_limit_per_minute
+        seconds_since_last_request = time.time() - self.last_request_timestamp
+        seconds_to_wait = seconds_between_requests - seconds_since_last_request
+        if seconds_to_wait > 0:
+            return seconds_to_wait
+        return 0
+
+    def wait_for_rate_limiter(self):
+        time_to_next_request = self._time_to_next_request()
+        if time_to_next_request > 0:
+            self._log.debug('hit rate limit, waiting for {0} seconds', time_to_next_request)
+            time.sleep(time_to_next_request)
 
     def reset_auth(self):
         """Delete token file & redo the auth steps.
@@ -206,9 +223,13 @@ class DiscogsPlugin(BeetsPlugin):
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
         query = re.sub(br'(?i)\b(CD|disc)\s*\d+', b'', query)
+
+        self.wait_for_rate_limiter()
         try:
             releases = self.discogs_client.search(query,
                                                   type='release').page(1)
+            self.last_request_timestamp = time.time()
+
         except CONNECTION_ERRORS:
             self._log.debug(u"Communication error while searching for {0!r}",
                             query, exc_info=True)
@@ -222,8 +243,11 @@ class DiscogsPlugin(BeetsPlugin):
         """
         self._log.debug(u'Searching for master release {0}', master_id)
         result = Master(self.discogs_client, {'id': master_id})
+
+        self.wait_for_rate_limiter()
         try:
             year = result.fetch('year')
+            self.last_request_timestamp = time.time()
             return year
         except DiscogsAPIError as e:
             if e.status_code != 404:
