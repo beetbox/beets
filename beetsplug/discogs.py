@@ -235,6 +235,7 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             releases = self.discogs_client.search(query,
                                                   type='release').page(1)
+            self.request_finished()
 
         except CONNECTION_ERRORS:
             self._log.debug(u"Communication error while searching for {0!r}",
