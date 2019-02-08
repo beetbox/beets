@@ -65,7 +65,8 @@ New features:
   :bug:`3123`
 * :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which passes that flag to ipfs.
   Thanks to :user:`wildthyme`.
-
+* :doc:`/plugins/discogs`: The plugin has rate limiting for the discogs API now.
+  :bug:`3081`
 
 Changes:
 
