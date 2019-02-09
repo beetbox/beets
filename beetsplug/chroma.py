@@ -250,6 +250,10 @@ def fingerprint_task(log, task, session):
     for item in items:
         acoustid_match(log, item.path)
 
+        if session.cancellable.cancelled():
+            log.debug("chroma: import session cancelled, stopping")
+            return
+
 
 def apply_acoustid_metadata(task, session):
     """Apply Acoustid metadata (fingerprint and ID) to the task's items.
