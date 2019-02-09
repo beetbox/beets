@@ -73,7 +73,8 @@ class DiscogsPlugin(BeetsPlugin):
         # Try using a configured user token (bypassing OAuth login).
         user_token = self.config['user_token'].as_str()
         if user_token:
-            # rate limit for authenticated users is 60 per minute
+            # The rate limit for authenticated users goes up to 60
+            # requests per minute.
             self.rate_limit_per_minute = 60
             self.discogs_client = Client(USER_AGENT, user_token=user_token)
             return
