@@ -677,7 +677,7 @@ def manual_id(session, task):
 def abort_action(session, task):
     """A prompt choice callback that aborts the importer.
     """
-    raise importer.ImportAbort()
+    session.abort()
 
 
 class TerminalImportSession(importer.ImportSession):

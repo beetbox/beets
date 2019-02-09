@@ -405,7 +405,7 @@ class Pipeline(object):
         """
         list(self.pull())
 
-    def run_parallel(self, queue_size=DEFAULT_QUEUE_SIZE):
+    def run_parallel(self, queue_size=DEFAULT_QUEUE_SIZE, cancellable=None):
         """Run the pipeline in parallel using one thread per stage. The
         messages between the stages are stored in queues of the given
         size.
@@ -443,6 +443,10 @@ class Pipeline(object):
                 threads[-1].join(1)
 
         except BaseException:
+            # Set flag for running task functions to abort as soon as possible.
+            if cancellable is not None:
+                cancellable.cancel()
+
             # Stop all the threads immediately.
             for thread in threads:
                 thread.abort()

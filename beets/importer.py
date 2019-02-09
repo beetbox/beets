@@ -185,6 +185,7 @@ class ImportSession(object):
         """
         self.lib = lib
         self.logger = self._setup_logging(loghandler)
+        self.cancellable = pipeline.Cancellable()
         self.paths = paths
         self.query = query
         self._is_resuming = dict()
@@ -326,12 +327,17 @@ class ImportSession(object):
         plugins.send('import_begin', session=self)
         try:
             if config['threaded']:
-                pl.run_parallel(QUEUE_SIZE)
+                pl.run_parallel(QUEUE_SIZE, self.cancellable)
             else:
                 pl.run_sequential()
         except ImportAbort:
             # User aborted operation. Silently stop.
             pass
+
+    def abort(self):
+        """Stop processing as soon as possible."""
+        self.cancellable.cancel()
+        raise ImportAbort()
 
     # Incremental and resumed imports
 
