@@ -45,6 +45,23 @@ POISON = '__PIPELINE_POISON__'
 DEFAULT_QUEUE_SIZE = 16
 
 
+class Cancellable(object):
+    """For sharing a 'cancelled' state between objects and threads."""
+    def __init__(self):
+        self.flag = False
+        self.lock = Lock()
+
+    def cancel(self):
+        """Mark as cancelled."""
+        with self.lock:
+            self.flag = True
+
+    def cancelled(self):
+        """Returns False if work should continue, True if work should stop."""
+        with self.lock:
+            return self.flag
+
+
 def _invalidate_queue(q, val=None, sync=True):
     """Breaks a Queue such that it never blocks, always has size 1,
     and has no maximum size. get()ing from the queue returns `val`,
