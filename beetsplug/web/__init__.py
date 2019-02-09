@@ -232,13 +232,7 @@ def item_file(item_id):
         unicode_item_path = util.displayable_path(item.path)
 
     base_filename = os.path.basename(unicode_item_path)
-    try:
-        # Imitate http.server behaviour
-        base_filename.encode("latin-1", "strict")
-    except UnicodeEncodeError:
-        safe_filename = unidecode(base_filename)
-    else:
-        safe_filename = base_filename
+    safe_filename = unidecode(base_filename)
 
     response = flask.send_file(
         item_path,
