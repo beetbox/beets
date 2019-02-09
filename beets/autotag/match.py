@@ -389,7 +389,7 @@ def _add_candidate(items, results, info):
 
 
 def tag_album(items, search_artist=None, search_album=None,
-              search_ids=[]):
+              search_ids=[], cancellable=None):
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
 
@@ -459,6 +459,9 @@ def tag_album(items, search_artist=None, search_album=None,
                                                         search_album,
                                                         va_likely):
             _add_candidate(items, candidates, matched_candidate)
+            if cancellable and cancellable.cancelled():
+                log.debug(u'Got cancellation flag. Aborting')
+                break
 
     log.debug(u'Evaluating {0} candidates.', len(candidates))
     # Sort and get the recommendation.
@@ -468,7 +471,7 @@ def tag_album(items, search_artist=None, search_album=None,
 
 
 def tag_item(item, search_artist=None, search_title=None,
-             search_ids=[]):
+             search_ids=[], cancellable=None):
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.
 
@@ -496,6 +499,9 @@ def tag_item(item, search_artist=None, search_title=None,
                         not config['import']['timid']:
                     log.debug(u'Track ID match.')
                     return Proposal(_sort_candidates(candidates.values()), rec)
+                if cancellable and cancellable.cancelled():
+                    log.debug(u'Got cancellation flag.')
+                    break
 
     # If we're searching by ID, don't proceed.
     if search_ids:

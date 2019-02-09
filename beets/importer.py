@@ -638,13 +638,14 @@ class ImportTask(BaseImportTask):
             tasks = [t for inner in tasks for t in inner]
         return tasks
 
-    def lookup_candidates(self):
+    def lookup_candidates(self, session):
         """Retrieve and store candidates for this album. User-specified
         candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
         """
         artist, album, prop = \
-            autotag.tag_album(self.items, search_ids=self.search_ids)
+            autotag.tag_album(self.items, search_ids=self.search_ids,
+                              cancellable=session.cancellable)
         self.cur_artist = artist
         self.cur_album = album
         self.candidates = prop.candidates
@@ -894,8 +895,9 @@ class SingletonImportTask(ImportTask):
         for item in self.imported_items():
             plugins.send('item_imported', lib=lib, item=item)
 
-    def lookup_candidates(self):
-        prop = autotag.tag_item(self.item, search_ids=self.search_ids)
+    def lookup_candidates(self, session):
+        prop = autotag.tag_item(self.item, search_ids=self.search_ids,
+                                cancellable=session.cancellable)
         self.candidates = prop.candidates
         self.rec = prop.recommendation
 
@@ -1354,7 +1356,7 @@ def lookup_candidates(session, task):
     # option. Currently all the IDs are passed onto the tasks directly.
     task.search_ids = session.config['search_ids'].as_str_seq()
 
-    task.lookup_candidates()
+    task.lookup_candidates(session)
 
 
 @pipeline.stage
