@@ -657,14 +657,14 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send('after_write', item=self, path=path)
 
-    def try_write(self, path=None, tags=None):
+    def try_write(self, *args, **kwargs):
         """Calls `write()` but catches and logs `FileOperationError`
         exceptions.
 
         Returns `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(path, tags)
+            self.write(*args, **kwargs)
             return True
         except FileOperationError as exc:
             log.error(u"{0}", exc)
