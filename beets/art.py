@@ -51,7 +51,8 @@ def get_art(log, item):
 
 
 def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
-               compare_threshold=0, ifempty=False, as_album=False):
+               compare_threshold=0, ifempty=False, as_album=False,
+               id3v23=None):
     """Embed an image into the item's media file.
     """
     # Conditions and filters.
@@ -80,7 +81,7 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
                  image.mime_type)
         return
 
-    item.try_write(path=itempath, tags={'images': [image]})
+    item.try_write(path=itempath, tags={'images': [image]}, id3v23=id3v23)
 
 
 def embed_album(log, album, maxwidth=None, quiet=False,
