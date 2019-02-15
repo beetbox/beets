@@ -88,7 +88,7 @@ setup(
     install_requires=[
         'six>=1.9',
         'mutagen>=1.33',
-        'munkres',
+        'munkres~=1.0.0',
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
