@@ -19,7 +19,7 @@ import beets
 class PlaylistQuery(beets.dbcore.FieldQuery):
     """Matches files listed by a playlist file.
     """
-    def __init__(self, field, pattern, fast=False):
+    def __init__(self, field, pattern, fast=True):
         super(PlaylistQuery, self).__init__(field, pattern, fast)
         config = beets.config['playlist']
 
@@ -50,6 +50,14 @@ class PlaylistQuery(beets.dbcore.FieldQuery):
                 self.paths.append(beets.util.normpath(
                     os.path.join(relative_to, line.rstrip())
                 ))
+
+    def col_clause(self):
+        if not self.paths:
+            # Playlist is empty
+            return '0', ()
+        clause  = 'BYTELOWER(path) IN ({0})'.format(
+            ', '.join('BYTELOWER(?)' for path in self.paths))
+        return clause, (beets.library.BLOB_TYPE(p) for p in self.paths)
 
     def match(self, item):
         return item.path in self.paths
