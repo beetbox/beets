@@ -37,6 +37,10 @@ New features:
   relevant releases according to the :ref:`preferred` configuration options.
   Thanks to :user:`archer4499`.
   :bug:`3017`
+* :doc:`/plugins/convert`: The plugin now has a ``id3v23`` option that allows
+  to override the global ``id3v23`` option.
+  Thanks to :user:`Holzhaus`.
+  :bug:`3104`
 * A new ``aunique`` configuration option allows setting default options
   for the :ref:`aunique` template function.
 * The ``albumdisambig`` field no longer includes the MusicBrainz release group
