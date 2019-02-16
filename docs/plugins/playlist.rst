@@ -8,6 +8,7 @@ To use it, enable the ``playlist`` plugin in your configuration
 Then configure your playlists like this::
 
     playlist:
+        auto: no
         relative_to: ~/Music
         playlist_dir: ~/.mpd/playlists
 
@@ -22,6 +23,10 @@ name::
 
     $ beet ls playlist:anotherplaylist
 
+The plugin can also update playlists in the playlist directory automatically
+every time an item is moved or deleted. This can be controlled by the ``auto``
+configuration option.
+
 Configuration
 -------------
 
@@ -29,6 +34,10 @@ To configure the plugin, make a ``smartplaylist:`` section in your
 configuration file. In addition to the ``playlists`` described above, the
 other configuration options are:
 
+- **auto**: If this is set to ``yes``, then anytime an item in the library is
+  moved or removed, the plugin will update all playlists in the
+  ``playlist_dir`` directory that contain that item to reflect the change.
+  Default: ``no``
 - **playlist_dir**: Where to read playlist files from.
   Default: The current working directory (i.e., ``'.'``).
 - **relative_to**: Interpret paths in the playlist files relative to a base
