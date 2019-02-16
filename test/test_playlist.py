@@ -79,6 +79,8 @@ class PlaylistTestHelper(helper.TestHelper):
         shutil.rmtree(self.playlist_dir)
         self.teardown_beets()
 
+
+class PlaylistQueryTestHelper(PlaylistTestHelper):
     def test_name_query_with_absolute_paths_in_playlist(self):
         q = u'playlist:absolute'
         results = self.lib.items(q)
@@ -132,7 +134,7 @@ class PlaylistTestHelper(helper.TestHelper):
         self.assertEqual(set(results), set())
 
 
-class PlaylistTestRelativeToLib(PlaylistTestHelper, unittest.TestCase):
+class PlaylistTestRelativeToLib(PlaylistQueryTestHelper, unittest.TestCase):
     def setup_test(self):
         with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
             f.write('{0}\n'.format(os.path.join(
@@ -150,7 +152,7 @@ class PlaylistTestRelativeToLib(PlaylistTestHelper, unittest.TestCase):
         self.config['playlist']['relative_to'] = 'library'
 
 
-class PlaylistTestRelativeToDir(PlaylistTestHelper, unittest.TestCase):
+class PlaylistTestRelativeToDir(PlaylistQueryTestHelper, unittest.TestCase):
     def setup_test(self):
         with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
             f.write('{0}\n'.format(os.path.join(
@@ -168,7 +170,7 @@ class PlaylistTestRelativeToDir(PlaylistTestHelper, unittest.TestCase):
         self.config['playlist']['relative_to'] = self.music_dir
 
 
-class PlaylistTestRelativeToPls(PlaylistTestHelper, unittest.TestCase):
+class PlaylistTestRelativeToPls(PlaylistQueryTestHelper, unittest.TestCase):
     def setup_test(self):
         with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
             f.write('{0}\n'.format(os.path.join(
