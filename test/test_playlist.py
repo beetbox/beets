@@ -198,6 +198,109 @@ class PlaylistTestRelativeToPls(PlaylistQueryTestHelper, unittest.TestCase):
         self.config['playlist']['playlist_dir'] = self.playlist_dir
 
 
+class PlaylistUpdateTestHelper(PlaylistTestHelper):
+    def setup_test(self):
+        with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'd', 'e', 'f.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'nonexisting.mp3')))
+
+        with open(os.path.join(self.playlist_dir, 'relative.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join('a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join('d', 'e', 'f.mp3')))
+            f.write('{0}\n'.format('nonexisting.mp3'))
+
+        self.config['playlist']['auto'] = True
+        self.config['playlist']['relative_to'] = 'library'
+
+
+class PlaylistTestItemMoved(PlaylistUpdateTestHelper, unittest.TestCase):
+    def test_item_moved(self):
+        # Emit item_moved event for an item that is in a playlist
+        results = self.lib.items('path:{0}'.format(shlex_quote(
+            os.path.join(self.music_dir, 'd', 'e', 'f.mp3'))))
+        item = results[0]
+        beets.plugins.send(
+            'item_moved', item=item, source=item.path,
+            destination=beets.util.bytestring_path(
+                os.path.join(self.music_dir, 'g', 'h', 'i.mp3')))
+
+        # Emit item_moved event for an item that is not in a playlist
+        results = self.lib.items('path:{0}'.format(shlex_quote(
+            os.path.join(self.music_dir, 'x', 'y', 'z.mp3'))))
+        item = results[0]
+        beets.plugins.send(
+            'item_moved', item=item, source=item.path,
+            destination=beets.util.bytestring_path(
+                os.path.join(self.music_dir, 'u', 'v', 'w.mp3')))
+
+        # Emit cli_exit event
+        beets.plugins.send('cli_exit', lib=self.lib)
+
+        # Check playlist with absolute paths
+        playlist_path = os.path.join(self.playlist_dir, 'absolute.m3u')
+        with open(playlist_path, 'r') as f:
+            lines = [line.strip() for line in f.readlines()]
+
+        self.assertEqual(lines, [
+            os.path.join(self.music_dir, 'a', 'b', 'c.mp3'),
+            os.path.join(self.music_dir, 'g', 'h', 'i.mp3'),
+            os.path.join(self.music_dir, 'nonexisting.mp3'),
+        ])
+
+        # Check playlist with relative paths
+        playlist_path = os.path.join(self.playlist_dir, 'relative.m3u')
+        with open(playlist_path, 'r') as f:
+            lines = [line.strip() for line in f.readlines()]
+
+        self.assertEqual(lines, [
+            os.path.join('a', 'b', 'c.mp3'),
+            os.path.join('g', 'h', 'i.mp3'),
+            'nonexisting.mp3',
+        ])
+
+
+class PlaylistTestItemRemoved(PlaylistUpdateTestHelper, unittest.TestCase):
+    def test_item_removed(self):
+        # Emit item_removed event for an item that is in a playlist
+        results = self.lib.items('path:{0}'.format(shlex_quote(
+            os.path.join(self.music_dir, 'd', 'e', 'f.mp3'))))
+        item = results[0]
+        beets.plugins.send('item_removed', item=item)
+
+        # Emit item_removed event for an item that is not in a playlist
+        results = self.lib.items('path:{0}'.format(shlex_quote(
+            os.path.join(self.music_dir, 'x', 'y', 'z.mp3'))))
+        item = results[0]
+        beets.plugins.send('item_removed', item=item)
+
+        # Emit cli_exit event
+        beets.plugins.send('cli_exit', lib=self.lib)
+
+        # Check playlist with absolute paths
+        playlist_path = os.path.join(self.playlist_dir, 'absolute.m3u')
+        with open(playlist_path, 'r') as f:
+            lines = [line.strip() for line in f.readlines()]
+
+        self.assertEqual(lines, [
+            os.path.join(self.music_dir, 'a', 'b', 'c.mp3'),
+            os.path.join(self.music_dir, 'nonexisting.mp3'),
+        ])
+
+        # Check playlist with relative paths
+        playlist_path = os.path.join(self.playlist_dir, 'relative.m3u')
+        with open(playlist_path, 'r') as f:
+            lines = [line.strip() for line in f.readlines()]
+
+        self.assertEqual(lines, [
+            os.path.join('a', 'b', 'c.mp3'),
+            'nonexisting.mp3',
+        ])
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
