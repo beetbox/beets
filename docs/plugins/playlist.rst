@@ -32,6 +32,7 @@ other configuration options are:
 - **playlist_dir**: Where to read playlist files from.
   Default: The current working directory (i.e., ``'.'``).
 - **relative_to**: Interpret paths in the playlist files relative to a base
-  directory. It is also possible to set it to ``playlist`` to use the
-  playlist's parent directory as base directory.
+  directory. Instead of setting it to a fixed path, it is also possible to
+  set it to ``playlist`` to use the playlist's parent directory or to
+  ``library`` to use the library directory.
   Default: ``library``
