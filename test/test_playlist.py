@@ -31,22 +31,33 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         self.setup_beets()
         self.lib = beets.library.Library(':memory:')
 
+        self.music_dir = os.path.expanduser('~/Music')
+
         i1 = _common.item()
-        i1.path = beets.util.normpath('/a/b/c.mp3')
+        i1.path = beets.util.normpath(os.path.join(
+            self.music_dir,
+            'a/b/c.mp3',
+        ))
         i1.title = u'some item'
         i1.album = u'some album'
         self.lib.add(i1)
         self.lib.add_album([i1])
 
         i2 = _common.item()
-        i2.path = beets.util.normpath('/d/e/f.mp3')
+        i2.path = beets.util.normpath(os.path.join(
+            self.music_dir,
+            'd/e/f.mp3',
+        ))
         i2.title = 'another item'
         i2.album = 'another album'
         self.lib.add(i2)
         self.lib.add_album([i2])
 
         i3 = _common.item()
-        i3.path = beets.util.normpath('/x/y/z.mp3')
+        i3.path = beets.util.normpath(os.path.join(
+            self.music_dir,
+            'x/y/z.mp3',
+        ))
         i3.title = 'yet another item'
         i3.album = 'yet another album'
         self.lib.add(i3)
@@ -57,7 +68,7 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
             f.write('{0}\n'.format(beets.util.displayable_path(i1.path)))
             f.write('{0}\n'.format(beets.util.displayable_path(i2.path)))
 
-        self.config['directory'] = '/'
+        self.config['directory'] = self.music_dir
         self.config['playlist']['relative_to'] = 'library'
         self.config['playlist']['playlist_dir'] = self.playlist_dir
         self.load_plugins('playlist')
