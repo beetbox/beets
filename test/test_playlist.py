@@ -27,7 +27,7 @@ from test import helper
 import beets
 
 
-class PlaylistTest(unittest.TestCase, helper.TestHelper):
+class PlaylistTestHelper(helper.TestHelper):
     def setUp(self):
         self.setup_beets()
         self.lib = beets.library.Library(':memory:')
@@ -65,20 +65,14 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         self.lib.add_album([i3])
 
         self.playlist_dir = tempfile.mkdtemp()
-        with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
-            f.write('{0}\n'.format(beets.util.displayable_path(i1.path)))
-            f.write('{0}\n'.format(beets.util.displayable_path(i2.path)))
-            f.write('{0}\n'.format(os.path.join(
-                self.music_dir, 'nonexisting.mp3')))
-        with open(os.path.join(self.playlist_dir, 'relative.m3u'), 'w') as f:
-            f.write('{0}\n'.format(os.path.join('a', 'b', 'c.mp3')))
-            f.write('{0}\n'.format(os.path.join('d', 'e', 'f.mp3')))
-            f.write('{0}\n'.format('nonexisting.mp3'))
-
         self.config['directory'] = self.music_dir
-        self.config['playlist']['relative_to'] = 'library'
         self.config['playlist']['playlist_dir'] = self.playlist_dir
+
+        self.setup_test()
         self.load_plugins('playlist')
+
+    def setup_test(self):
+        raise NotImplementedError
 
     def tearDown(self):
         self.unload_plugins()
@@ -136,6 +130,70 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         )))
         results = self.lib.items(q)
         self.assertEqual(set(results), set())
+
+
+class PlaylistTestRelativeToLib(PlaylistTestHelper, unittest.TestCase):
+    def setup_test(self):
+        with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'd', 'e', 'f.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'nonexisting.mp3')))
+
+        with open(os.path.join(self.playlist_dir, 'relative.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join('a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join('d', 'e', 'f.mp3')))
+            f.write('{0}\n'.format('nonexisting.mp3'))
+
+        self.config['playlist']['relative_to'] = 'library'
+
+
+class PlaylistTestRelativeToDir(PlaylistTestHelper, unittest.TestCase):
+    def setup_test(self):
+        with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'd', 'e', 'f.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'nonexisting.mp3')))
+
+        with open(os.path.join(self.playlist_dir, 'relative.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join('a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join('d', 'e', 'f.mp3')))
+            f.write('{0}\n'.format('nonexisting.mp3'))
+
+        self.config['playlist']['relative_to'] = self.music_dir
+
+
+class PlaylistTestRelativeToPls(PlaylistTestHelper, unittest.TestCase):
+    def setup_test(self):
+        with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'd', 'e', 'f.mp3')))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'nonexisting.mp3')))
+
+        with open(os.path.join(self.playlist_dir, 'relative.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.relpath(
+                os.path.join(self.music_dir, 'a', 'b', 'c.mp3'),
+                start=self.playlist_dir,
+            )))
+            f.write('{0}\n'.format(os.path.relpath(
+                os.path.join(self.music_dir, 'd', 'e', 'f.mp3'),
+                start=self.playlist_dir,
+            )))
+            f.write('{0}\n'.format(os.path.relpath(
+                os.path.join(self.music_dir, 'nonexisting.mp3'),
+                start=self.playlist_dir,
+            )))
+
+        self.config['playlist']['relative_to'] = 'playlist'
+        self.config['playlist']['playlist_dir'] = self.playlist_dir
 
 
 def suite():
