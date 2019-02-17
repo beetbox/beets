@@ -41,7 +41,7 @@ class PlaylistQuery(beets.dbcore.FieldQuery):
 
             try:
                 f = open(beets.util.syspath(playlist_path), mode='rb')
-            except OSError:
+            except (OSError, IOError):
                 continue
 
             if config['relative_to'].get() == 'library':
