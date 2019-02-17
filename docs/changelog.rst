@@ -144,6 +144,14 @@ Fixes:
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
+For developers:
+
+* In addition to prefix-based field queries, plugins can now define *named
+  queries* that are not associated with any specific field.
+  For example, the new :doc:`/plugins/playlist` supports queries like
+  ``playlist:name`` although there is no field named ``playlist``.
+  See :ref:`extend-query` for details.
+
 
 1.4.7 (May 29, 2018)
 --------------------
