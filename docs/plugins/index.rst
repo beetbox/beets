@@ -159,7 +159,7 @@ Interoperability
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
 * :doc:`play`: Play beets queries in your music player.
-* :doc:`playlist`: Use M3U playlists tp query the beets library.
+* :doc:`playlist`: Use M3U playlists to query the beets library.
 * :doc:`plexupdate`: Automatically notifies `Plex`_ whenever the beets library
   changes.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
