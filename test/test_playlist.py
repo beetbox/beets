@@ -82,6 +82,16 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
             u'another item',
         ]))
 
+    def test_query_name_nonexisting(self):
+        q = u'playlist:nonexisting'.format(self.playlist_dir.name)
+        results = self.lib.items(q)
+        self.assertEqual(set(results), set())
+
+    def test_query_path_nonexisting(self):
+        q = u'playlist:{0}/nonexisting.m3u'.format(self.playlist_dir.name)
+        results = self.lib.items(q)
+        self.assertEqual(set(results), set())
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
