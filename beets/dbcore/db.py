@@ -143,6 +143,11 @@ class Model(object):
     are subclasses of `Sort`.
     """
 
+    _queries = {}
+    """Named queries that use a field-like `name:value` syntax but which
+    do not relate to any specific field.
+    """
+
     _always_dirty = False
     """By default, fields only become "dirty" when their value actually
     changes. Enabling this flag marks fields as dirty even when the new

@@ -19,11 +19,11 @@ import fnmatch
 import beets
 
 
-class PlaylistQuery(beets.dbcore.FieldQuery):
+class PlaylistQuery(beets.dbcore.Query):
     """Matches files listed by a playlist file.
     """
-    def __init__(self, field, pattern, fast=True):
-        super(PlaylistQuery, self).__init__(field, pattern, fast)
+    def __init__(self, pattern):
+        self.pattern = pattern
         config = beets.config['playlist']
 
         # Get the full path to the playlist
@@ -76,14 +76,8 @@ class PlaylistQuery(beets.dbcore.FieldQuery):
         return item.path in self.paths
 
 
-class PlaylistType(beets.dbcore.types.String):
-    """Custom type for playlist query.
-    """
-    query = PlaylistQuery
-
-
 class PlaylistPlugin(beets.plugins.BeetsPlugin):
-    item_types = {'playlist': PlaylistType()}
+    item_queries = {'playlist': PlaylistQuery}
 
     def __init__(self):
         super(PlaylistPlugin, self).__init__()

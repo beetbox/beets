@@ -36,6 +36,17 @@ class TestSort(dbcore.query.FieldSort):
     pass
 
 
+class TestQuery(dbcore.query.Query):
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def clause(self):
+        return None, ()
+
+    def match(self):
+        return True
+
+
 class TestModel1(dbcore.Model):
     _table = 'test'
     _flex_table = 'testflex'
@@ -48,6 +59,9 @@ class TestModel1(dbcore.Model):
     }
     _sorts = {
         'some_sort': TestSort,
+    }
+    _queries = {
+        'some_query': TestQuery,
     }
 
     @classmethod
@@ -518,6 +532,10 @@ class QueryFromStringsTest(unittest.TestCase):
     def test_empty_query_part(self):
         q = self.qfs([''])
         self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
+
+    def test_parse_named_query(self):
+        q = self.qfs(['some_query:foo'])
+        self.assertIsInstance(q.subqueries[0], TestQuery)
 
 
 class SortFromStringsTest(unittest.TestCase):

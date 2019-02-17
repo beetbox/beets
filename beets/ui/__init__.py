@@ -1143,8 +1143,12 @@ def _setup(options, lib=None):
     if lib is None:
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
+
+    # Add types and queries defined by plugins.
     library.Item._types.update(plugins.types(library.Item))
     library.Album._types.update(plugins.types(library.Album))
+    library.Item._queries.update(plugins.named_queries(library.Item))
+    library.Album._queries.update(plugins.named_queries(library.Album))
 
     return subcommands, plugins, lib
 
