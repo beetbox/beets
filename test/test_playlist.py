@@ -16,6 +16,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -51,19 +52,19 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         self.lib.add(i3)
         self.lib.add_album([i3])
 
-        self.playlist_dir = tempfile.TemporaryDirectory()
-        with open(os.path.join(self.playlist_dir.name, 'test.m3u'), 'w') as f:
+        self.playlist_dir = tempfile.mkdtemp()
+        with open(os.path.join(self.playlist_dir, 'test.m3u'), 'w') as f:
             f.write('{0}\n'.format(beets.util.displayable_path(i1.path)))
             f.write('{0}\n'.format(beets.util.displayable_path(i2.path)))
 
         self.config['directory'] = '/'
         self.config['playlist']['relative_to'] = 'library'
-        self.config['playlist']['playlist_dir'] = self.playlist_dir.name
+        self.config['playlist']['playlist_dir'] = self.playlist_dir
         self.load_plugins('playlist')
 
     def tearDown(self):
         self.unload_plugins()
-        self.playlist_dir.cleanup()
+        shutil.rmtree(self.playlist_dir)
         self.teardown_beets()
 
     def test_query_name(self):
@@ -75,7 +76,7 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         ]))
 
     def test_query_path(self):
-        q = u'playlist:{0}/test.m3u'.format(self.playlist_dir.name)
+        q = u'playlist:{0}/test.m3u'.format(self.playlist_dir)
         results = self.lib.items(q)
         self.assertEqual(set([i.title for i in results]), set([
             u'some item',
@@ -83,12 +84,12 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         ]))
 
     def test_query_name_nonexisting(self):
-        q = u'playlist:nonexisting'.format(self.playlist_dir.name)
+        q = u'playlist:nonexisting'.format(self.playlist_dir)
         results = self.lib.items(q)
         self.assertEqual(set(results), set())
 
     def test_query_path_nonexisting(self):
-        q = u'playlist:{0}/nonexisting.m3u'.format(self.playlist_dir.name)
+        q = u'playlist:{0}/nonexisting.m3u'.format(self.playlist_dir)
         results = self.lib.items(q)
         self.assertEqual(set(results), set())
 
