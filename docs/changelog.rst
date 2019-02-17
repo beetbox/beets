@@ -14,6 +14,10 @@ New features:
   issues with foobar2000 and Winamp.
   Thanks to :user:`mz2212`.
   :bug:`2944`
+* :doc:`/plugins/playlist`: Add a plugin that can query the beets library using
+  M3U playlists.
+  Thanks to :user:`Holzhaus` and :user:`Xenopathic`.
+  :bug:`123`
 * Added whitespace padding to missing tracks dialog to improve readability.
   Thanks to :user:`jams2`.
   :bug:`2962`
