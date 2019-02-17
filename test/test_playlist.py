@@ -14,6 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 from __future__ import division, absolute_import, print_function
+from six.moves import shlex_quote
 
 import os
 import shutil
@@ -87,10 +88,10 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         ]))
 
     def test_query_path(self):
-        q = u'playlist:{0}'.format(os.path.join(
+        q = u'playlist:{0}'.format(shlex_quote(os.path.join(
             self.playlist_dir,
             'test.m3u',
-        ))
+        )))
         results = self.lib.items(q)
         self.assertEqual(set([i.title for i in results]), set([
             u'some item',
@@ -103,10 +104,11 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         self.assertEqual(set(results), set())
 
     def test_query_path_nonexisting(self):
-        q = u'playlist:{0}'.format(os.path.join(
+        q = u'playlist:{0}'.format(shlex_quote(os.path.join(
+            self.playlist_dir,
             self.playlist_dir,
             'nonexisting.m3u',
-        ))
+        )))
         results = self.lib.items(q)
         self.assertEqual(set(results), set())
 
