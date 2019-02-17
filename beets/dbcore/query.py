@@ -115,6 +115,10 @@ class FieldQuery(Query):
             return None, ()
 
     @classmethod
+    def check_fast(cls, key, model_cls):
+        return key in model_cls._fields
+
+    @classmethod
     def value_match(cls, pattern, value):
         """Determine whether the value matches the pattern. Both
         arguments are strings.

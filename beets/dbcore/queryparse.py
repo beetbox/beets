@@ -153,7 +153,8 @@ def construct_query_part(model_cls, prefixes, query_part):
     # Otherwise, this must be a `FieldQuery`. Use the field name to
     # construct the query object.
     key = key.lower()
-    q = query_class(key.lower(), pattern, key in model_cls._fields)
+    fast = query_class.check_fast(key, model_cls)
+    q = query_class(key, pattern, fast)
     if negate:
         return query.NotQuery(q)
     return q
