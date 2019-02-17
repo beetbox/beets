@@ -156,7 +156,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
                     original_path = line.rstrip(b'\r\n')
 
                     # Ensure that path from playlist is absolute
-                    is_relative = not os.path.isabs(beets.util.syspath(line))
+                    is_relative = not os.path.isabs(line)
                     if is_relative:
                         lookup = os.path.join(base_dir, original_path)
                     else:
