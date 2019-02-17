@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 import os
+import fnmatch
 import beets
 
 
@@ -24,24 +25,33 @@ class PlaylistQuery(beets.dbcore.FieldQuery):
         config = beets.config['playlist']
 
         # Get the full path to the playlist
-        if os.path.isabs(beets.util.syspath(pattern)):
-            playlist_path = pattern
-        else:
-            playlist_path = os.path.abspath(os.path.join(
+        playlist_paths = (
+            pattern,
+            os.path.abspath(os.path.join(
                 config['playlist_dir'].as_filename(),
                 '{0}.m3u'.format(pattern),
-            ))
-
-        if config['relative_to'].get() == 'library':
-            relative_to = beets.config['directory'].as_filename()
-        elif config['relative_to'].get() == 'playlist':
-            relative_to = os.path.dirname(playlist_path)
-        else:
-            relative_to = config['relative_to'].as_filename()
-        relative_to = beets.util.bytestring_path(relative_to)
+            )),
+        )
 
         self.paths = []
-        with open(beets.util.syspath(playlist_path), 'rb') as f:
+        for playlist_path in playlist_paths:
+            if not fnmatch.fnmatch(playlist_path, '*.[mM]3[uU]'):
+                # This is not am M3U playlist, skip this candidate
+                continue
+
+            try:
+                f = open(beets.util.syspath(playlist_path), mode='rb')
+            except OSError:
+                continue
+
+            if config['relative_to'].get() == 'library':
+                relative_to = beets.config['directory'].as_filename()
+            elif config['relative_to'].get() == 'playlist':
+                relative_to = os.path.dirname(playlist_path)
+            else:
+                relative_to = config['relative_to'].as_filename()
+            relative_to = beets.util.bytestring_path(relative_to)
+
             for line in f:
                 if line[0] == '#':
                     # ignore comments, and extm3u extension
@@ -50,6 +60,8 @@ class PlaylistQuery(beets.dbcore.FieldQuery):
                 self.paths.append(beets.util.normpath(
                     os.path.join(relative_to, line.rstrip())
                 ))
+            f.close()
+            break
 
     def col_clause(self):
         if not self.paths:
