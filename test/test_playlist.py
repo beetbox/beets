@@ -65,9 +65,12 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         self.lib.add_album([i3])
 
         self.playlist_dir = tempfile.mkdtemp()
-        with open(os.path.join(self.playlist_dir, 'test.m3u'), 'w') as f:
+        with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
             f.write('{0}\n'.format(beets.util.displayable_path(i1.path)))
             f.write('{0}\n'.format(beets.util.displayable_path(i2.path)))
+        with open(os.path.join(self.playlist_dir, 'relative.m3u'), 'w') as f:
+            f.write('{0}\n'.format(os.path.join('a', 'b', 'c.mp3')))
+            f.write('{0}\n'.format(os.path.join('d', 'e', 'f.mp3')))
 
         self.config['directory'] = self.music_dir
         self.config['playlist']['relative_to'] = 'library'
@@ -79,18 +82,18 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         shutil.rmtree(self.playlist_dir)
         self.teardown_beets()
 
-    def test_query_name(self):
-        q = u'playlist:test'
+    def test_name_query_with_absolute_paths_in_playlist(self):
+        q = u'playlist:absolute'
         results = self.lib.items(q)
         self.assertEqual(set([i.title for i in results]), set([
             u'some item',
             u'another item',
         ]))
 
-    def test_query_path(self):
+    def test_path_query_with_absolute_paths_in_playlist(self):
         q = u'playlist:{0}'.format(shlex_quote(os.path.join(
             self.playlist_dir,
-            'test.m3u',
+            'absolute.m3u',
         )))
         results = self.lib.items(q)
         self.assertEqual(set([i.title for i in results]), set([
@@ -98,12 +101,31 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
             u'another item',
         ]))
 
-    def test_query_name_nonexisting(self):
+    def test_name_query_with_relative_paths_in_playlist(self):
+        q = u'playlist:relative'
+        results = self.lib.items(q)
+        self.assertEqual(set([i.title for i in results]), set([
+            u'some item',
+            u'another item',
+        ]))
+
+    def test_path_query_with_relative_paths_in_playlist(self):
+        q = u'playlist:{0}'.format(shlex_quote(os.path.join(
+            self.playlist_dir,
+            'relative.m3u',
+        )))
+        results = self.lib.items(q)
+        self.assertEqual(set([i.title for i in results]), set([
+            u'some item',
+            u'another item',
+        ]))
+
+    def test_name_query_with_nonexisting_playlist(self):
         q = u'playlist:nonexisting'.format(self.playlist_dir)
         results = self.lib.items(q)
         self.assertEqual(set(results), set())
 
-    def test_query_path_nonexisting(self):
+    def test_path_query_with_nonexisting_playlist(self):
         q = u'playlist:{0}'.format(shlex_quote(os.path.join(
             self.playlist_dir,
             self.playlist_dir,
