@@ -86,7 +86,8 @@ Changes:
 
 Fixes:
 
-* Pin jellyfish requirement to version 0.6.0 to maintain python 2 compatibility.
+* On Python 2, pin the Jellyfish requirement to version 0.6.0 for
+  compatibility.
 * A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
   contained in data files :bug:`3021`
 * Restore iTunes Store album art source, and remove the dependency on
