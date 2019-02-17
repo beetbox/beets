@@ -32,7 +32,7 @@ class PlaylistTestHelper(helper.TestHelper):
         self.setup_beets()
         self.lib = beets.library.Library(':memory:')
 
-        self.music_dir = os.path.expanduser('~/Music')
+        self.music_dir = os.path.expanduser(os.path.join('~', 'Music'))
 
         i1 = _common.item()
         i1.path = beets.util.normpath(os.path.join(
