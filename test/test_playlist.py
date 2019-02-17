@@ -68,9 +68,12 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         with open(os.path.join(self.playlist_dir, 'absolute.m3u'), 'w') as f:
             f.write('{0}\n'.format(beets.util.displayable_path(i1.path)))
             f.write('{0}\n'.format(beets.util.displayable_path(i2.path)))
+            f.write('{0}\n'.format(os.path.join(
+                self.music_dir, 'nonexisting.mp3')))
         with open(os.path.join(self.playlist_dir, 'relative.m3u'), 'w') as f:
             f.write('{0}\n'.format(os.path.join('a', 'b', 'c.mp3')))
             f.write('{0}\n'.format(os.path.join('d', 'e', 'f.mp3')))
+            f.write('{0}\n'.format('nonexisting.mp3'))
 
         self.config['directory'] = self.music_dir
         self.config['playlist']['relative_to'] = 'library'
