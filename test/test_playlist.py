@@ -37,7 +37,7 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         i1 = _common.item()
         i1.path = beets.util.normpath(os.path.join(
             self.music_dir,
-            'a/b/c.mp3',
+            'a', 'b', 'c.mp3',
         ))
         i1.title = u'some item'
         i1.album = u'some album'
@@ -47,7 +47,7 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         i2 = _common.item()
         i2.path = beets.util.normpath(os.path.join(
             self.music_dir,
-            'd/e/f.mp3',
+            'd', 'e', 'f.mp3',
         ))
         i2.title = 'another item'
         i2.album = 'another album'
@@ -57,7 +57,7 @@ class PlaylistTest(unittest.TestCase, helper.TestHelper):
         i3 = _common.item()
         i3.path = beets.util.normpath(os.path.join(
             self.music_dir,
-            'x/y/z.mp3',
+            'x', 'y', 'z.mp3',
         ))
         i3.title = 'yet another item'
         i3.album = 'yet another album'
