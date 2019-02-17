@@ -162,7 +162,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
                         lookup = original_path
 
                     try:
-                        new_path = self.changes[lookup]
+                        new_path = self.changes[beets.util.normpath(lookup)]
                     except KeyError:
                         tempfp.write(line)
                     else:
