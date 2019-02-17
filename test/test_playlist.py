@@ -220,7 +220,7 @@ class PlaylistUpdateTestHelper(PlaylistTestHelper):
 class PlaylistTestItemMoved(PlaylistUpdateTestHelper, unittest.TestCase):
     def test_item_moved(self):
         # Emit item_moved event for an item that is in a playlist
-        results = self.lib.items('path:{0}'.format(shlex_quote(
+        results = self.lib.items(u'path:{0}'.format(shlex_quote(
             os.path.join(self.music_dir, 'd', 'e', 'f.mp3'))))
         item = results[0]
         beets.plugins.send(
@@ -229,7 +229,7 @@ class PlaylistTestItemMoved(PlaylistUpdateTestHelper, unittest.TestCase):
                 os.path.join(self.music_dir, 'g', 'h', 'i.mp3')))
 
         # Emit item_moved event for an item that is not in a playlist
-        results = self.lib.items('path:{0}'.format(shlex_quote(
+        results = self.lib.items(u'path:{0}'.format(shlex_quote(
             os.path.join(self.music_dir, 'x', 'y', 'z.mp3'))))
         item = results[0]
         beets.plugins.send(
@@ -266,13 +266,13 @@ class PlaylistTestItemMoved(PlaylistUpdateTestHelper, unittest.TestCase):
 class PlaylistTestItemRemoved(PlaylistUpdateTestHelper, unittest.TestCase):
     def test_item_removed(self):
         # Emit item_removed event for an item that is in a playlist
-        results = self.lib.items('path:{0}'.format(shlex_quote(
+        results = self.lib.items(u'path:{0}'.format(shlex_quote(
             os.path.join(self.music_dir, 'd', 'e', 'f.mp3'))))
         item = results[0]
         beets.plugins.send('item_removed', item=item)
 
         # Emit item_removed event for an item that is not in a playlist
-        results = self.lib.items('path:{0}'.format(shlex_quote(
+        results = self.lib.items(u'path:{0}'.format(shlex_quote(
             os.path.join(self.music_dir, 'x', 'y', 'z.mp3'))))
         item = results[0]
         beets.plugins.send('item_removed', item=item)
