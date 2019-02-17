@@ -149,7 +149,8 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
         changes = 0
         deletions = 0
 
-        with tempfile.NamedTemporaryFile(mode='w+b') as tempfp:
+        with tempfile.NamedTemporaryFile(mode='w+b', delete=False) as tempfp:
+            new_playlist = tempfp.name
             with open(filename, mode='rb') as fp:
                 for line in fp:
                     original_path = line.rstrip(b'\r\n')
@@ -176,9 +177,10 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
                             new_path = os.path.relpath(new_path, base_dir)
 
                         tempfp.write(line.replace(original_path, new_path))
-            if changes or deletions:
-                self._log.info(
-                    'Updated playlist {0} ({1} changes, {2} deletions)'.format(
-                        filename, changes, deletions))
-                tempfp.flush()
-                beets.util.copy(tempfp.name, filename, replace=True)
+
+        if changes or deletions:
+            self._log.info(
+                'Updated playlist {0} ({1} changes, {2} deletions)'.format(
+                    filename, changes, deletions))
+            beets.util.copy(new_playlist, filename, replace=True)
+        beets.util.remove(new_playlist)
