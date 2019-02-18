@@ -99,13 +99,12 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             self.relative_to = beets.util.bytestring_path(
                 beets.config['directory'].as_filename())
         elif self.config['relative_to'].get() != 'playlist':
-            print(repr(self.config['relative_to'].get()))
             self.relative_to = beets.util.bytestring_path(
                 self.config['relative_to'].as_filename())
         else:
             self.relative_to = None
 
-        if self.config['auto'].get(bool):
+        if self.config['auto']:
             self.register_listener('item_moved', self.item_moved)
             self.register_listener('item_removed', self.item_removed)
             self.register_listener('cli_exit', self.cli_exit)
