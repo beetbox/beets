@@ -1013,15 +1013,17 @@ def asciify_path(path, sep_replace):
 
 
 def par_map(transform, items):
-    """
-    This module implements a simple utility to either:
-        a) Perform a parallel map when running under Python >=3
-        b) Perform a sequential map otherwise
+    """Apply the function `transform` to all the elements in the
+    iterable `items`, like `map(transform, items)` but with no return
+    value. The map *might* happen in parallel: it's parallel on Python 3
+    and sequential on Python 2.
 
-    This is useful whenever there is some operation `do_something()` which we
-    want to efficiently apply to our music library.
+    The parallelism uses threads (not processes), so this is only useful
+    for IO-bound `transform`s.
     """
     if sys.version_info[0] < 3:
+        # multiprocessing.pool.ThreadPool does not seem to work on
+        # Python 2. We could consider switching to futures instead.
         for item in items:
             transform(item)
     else:
