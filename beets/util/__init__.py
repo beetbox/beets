@@ -24,6 +24,7 @@ import re
 import shutil
 import fnmatch
 from collections import Counter
+from multiprocessing.pool import ThreadPool
 import traceback
 import subprocess
 import platform
@@ -1009,3 +1010,22 @@ def asciify_path(path, sep_replace):
                 sep_replace
             )
     return os.sep.join(path_components)
+
+
+def par_map(transform, items):
+    """
+    This module implements a simple utility to either:
+        a) Perform a parallel map when running under Python >=3
+        b) Perform a sequential map otherwise
+
+    This is useful whenever there is some operation `do_something()` which we
+    want to efficiently apply to our music library.
+    """
+    if sys.version_info[0] < 3:
+        for item in items:
+            transform(item)
+    else:
+        pool = ThreadPool()
+        pool.map(transform, items)
+        pool.close()
+        pool.join()
