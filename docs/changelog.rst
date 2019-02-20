@@ -75,6 +75,8 @@ New features:
   Thanks to :user:`wildthyme`.
 * :doc:`/plugins/discogs`: The plugin has rate limiting for the discogs API now.
   :bug:`3081`
+* The `badfiles` plugin now works in parallel (on Python 3 only).
+  Thanks to :user:`bemeurer`.
 
 Changes:
 
