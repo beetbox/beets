@@ -50,6 +50,7 @@ class CheckerCommandException(Exception):
 
 class BadFiles(BeetsPlugin):
     def __init__(self):
+        super(BadFiles, self).__init__()
         self.verbose = False
 
     def run_command(self, cmd):
