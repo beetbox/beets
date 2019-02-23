@@ -82,8 +82,8 @@ ui:
         action_default: turquoise
         action: blue
 
-format_item: $artist - $album - $title
-format_album: $albumartist - $album
+format_item: $artist_credit - $album - $title
+format_album: $albumartist_credit - $album
 time_format: '%Y-%m-%d %H:%M:%S'
 format_raw_length: no
 
@@ -92,8 +92,8 @@ sort_item: artist+ album+ disc+ track+
 sort_case_insensitive: yes
 
 paths:
-    default: $albumartist/$album%aunique{}/$track $title
-    singleton: Non-Album/$artist/$title
+    default: $albumartist_credit/$album%aunique{}/$track $title
+    singleton: Non-Album/$artist_credit/$title
     comp: Compilations/$album%aunique{}/$track $title
 
 statefile: state.pickle
