@@ -147,6 +147,9 @@ Fixes:
   Thanks to :user:`Holzhaus`.
   :bug:`1579`
 * Fetchart now respects the ``ignore`` and ``ignore_hidden`` settings. :bug:`1632`
+* :doc:`/plugins/badfiles`: Avoid a crash when the underlying tool emits
+  undecodable output.
+  :bug:`3165`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 

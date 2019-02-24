@@ -66,7 +66,7 @@ class BadFiles(BeetsPlugin):
             status = e.returncode
         except OSError as e:
             raise CheckerCommandException(cmd, e)
-        output = output.decode(sys.getfilesystemencoding())
+        output = output.decode(sys.getdefaultencoding(), 'replace')
         return status, errors, [line for line in output.split("\n") if line]
 
     def check_mp3val(self, path):
@@ -134,12 +134,12 @@ class BadFiles(BeetsPlugin):
             ui.print_(u"{}: checker exited with status {}"
                       .format(ui.colorize('text_error', dpath), status))
             for line in output:
-                ui.print_(u"  {}".format(displayable_path(line)))
+                ui.print_(u"  {}".format(line))
         elif errors > 0:
             ui.print_(u"{}: checker found {} errors or warnings"
                       .format(ui.colorize('text_warning', dpath), errors))
             for line in output:
-                ui.print_(u"  {}".format(displayable_path(line)))
+                ui.print_(u"  {}".format(line))
         elif self.verbose:
             ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
 
