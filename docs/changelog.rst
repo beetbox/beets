@@ -150,6 +150,8 @@ Fixes:
 * :doc:`/plugins/badfiles`: Avoid a crash when the underlying tool emits
   undecodable output.
   :bug:`3165`
+* :doc:`/plugins/hook`: Fix byte string interpolation in hook commands.
+  :bug:`2967` :bug:`3167`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
