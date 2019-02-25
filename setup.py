@@ -88,10 +88,14 @@ setup(
     install_requires=[
         'six>=1.9',
         'mutagen>=1.33',
-        'munkres~=1.0.0',
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
+    ] + [
+        # Avoid a version of munkres incompatible with Python 3.
+        'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else
+        'munkres!=1.1.0,!=1.1.1' if sys.version_info < (3, 6, 0) else
+        'munkres>=1.0.0',
     ] + (
         # Use the backport of Python 3.4's `enum` module.
         ['enum34>=1.0.4'] if sys.version_info < (3, 4, 0) else []
