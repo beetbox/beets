@@ -31,7 +31,7 @@ from beets import util
 from beets import config
 from beets.mediafile import image_mime_type
 from beets.util.artresizer import ArtResizer
-from beets.util import confit
+from beets.util import confit, sorted_walk
 from beets.util import syspath, bytestring_path, py3_path
 import six
 
@@ -365,12 +365,17 @@ class GoogleImages(RemoteArtSource):
         if not (album.albumartist and album.album):
             return
         search_string = (album.albumartist + ',' + album.album).encode('utf-8')
-        response = self.request(self.URL, params={
-            'key': self.key,
-            'cx': self.cx,
-            'q': search_string,
-            'searchType': 'image'
-        })
+
+        try:
+            response = self.request(self.URL, params={
+                'key': self.key,
+                'cx': self.cx,
+                'q': search_string,
+                'searchType': 'image'
+            })
+        except requests.RequestException:
+            self._log.debug(u'google: error receiving response')
+            return
 
         # Get results using JSON.
         try:
@@ -406,10 +411,14 @@ class FanartTV(RemoteArtSource):
         if not album.mb_releasegroupid:
             return
 
-        response = self.request(
-            self.API_ALBUMS + album.mb_releasegroupid,
-            headers={'api-key': self.PROJECT_KEY,
-                     'client-key': self.client_key})
+        try:
+            response = self.request(
+                self.API_ALBUMS + album.mb_releasegroupid,
+                headers={'api-key': self.PROJECT_KEY,
+                         'client-key': self.client_key})
+        except requests.RequestException:
+            self._log.debug(u'fanart.tv: error receiving response')
+            return
 
         try:
             data = response.json()
@@ -545,16 +554,22 @@ class Wikipedia(RemoteArtSource):
 
         # Find the name of the cover art filename on DBpedia
         cover_filename, page_id = None, None
-        dbpedia_response = self.request(
-            self.DBPEDIA_URL,
-            params={
-                'format': 'application/sparql-results+json',
-                'timeout': 2500,
-                'query': self.SPARQL_QUERY.format(
-                    artist=album.albumartist.title(), album=album.album)
-            },
-            headers={'content-type': 'application/json'},
-        )
+
+        try:
+            dbpedia_response = self.request(
+                self.DBPEDIA_URL,
+                params={
+                    'format': 'application/sparql-results+json',
+                    'timeout': 2500,
+                    'query': self.SPARQL_QUERY.format(
+                        artist=album.albumartist.title(), album=album.album)
+                },
+                headers={'content-type': 'application/json'},
+            )
+        except requests.RequestException:
+            self._log.debug(u'dbpedia: error receiving response')
+            return
+
         try:
             data = dbpedia_response.json()
             results = data['results']['bindings']
@@ -584,17 +599,21 @@ class Wikipedia(RemoteArtSource):
             lpart, rpart = cover_filename.rsplit(' .', 1)
 
             # Query all the images in the page
-            wikipedia_response = self.request(
-                self.WIKIPEDIA_URL,
-                params={
-                    'format': 'json',
-                    'action': 'query',
-                    'continue': '',
-                    'prop': 'images',
-                    'pageids': page_id,
-                },
-                headers={'content-type': 'application/json'},
-            )
+            try:
+                wikipedia_response = self.request(
+                    self.WIKIPEDIA_URL,
+                    params={
+                        'format': 'json',
+                        'action': 'query',
+                        'continue': '',
+                        'prop': 'images',
+                        'pageids': page_id,
+                    },
+                    headers={'content-type': 'application/json'},
+                )
+            except requests.RequestException:
+                self._log.debug(u'wikipedia: error receiving response')
+                return
 
             # Try to see if one of the images on the pages matches our
             # incomplete cover_filename
@@ -613,18 +632,22 @@ class Wikipedia(RemoteArtSource):
                 return
 
         # Find the absolute url of the cover art on Wikipedia
-        wikipedia_response = self.request(
-            self.WIKIPEDIA_URL,
-            params={
-                'format': 'json',
-                'action': 'query',
-                'continue': '',
-                'prop': 'imageinfo',
-                'iiprop': 'url',
-                'titles': cover_filename.encode('utf-8'),
-            },
-            headers={'content-type': 'application/json'},
-        )
+        try:
+            wikipedia_response = self.request(
+                self.WIKIPEDIA_URL,
+                params={
+                    'format': 'json',
+                    'action': 'query',
+                    'continue': '',
+                    'prop': 'imageinfo',
+                    'iiprop': 'url',
+                    'titles': cover_filename.encode('utf-8'),
+                },
+                headers={'content-type': 'application/json'},
+            )
+        except requests.RequestException:
+            self._log.debug(u'wikipedia: error receiving response')
+            return
 
         try:
             data = wikipedia_response.json()
@@ -666,12 +689,16 @@ class FileSystem(LocalArtSource):
 
             # Find all files that look like images in the directory.
             images = []
-            for fn in os.listdir(syspath(path)):
-                fn = bytestring_path(fn)
-                for ext in IMAGE_EXTENSIONS:
-                    if fn.lower().endswith(b'.' + ext) and \
-                       os.path.isfile(syspath(os.path.join(path, fn))):
-                        images.append(fn)
+            ignore = config['ignore'].as_str_seq()
+            ignore_hidden = config['ignore_hidden'].get(bool)
+            for _, _, files in sorted_walk(path, ignore=ignore,
+                                           ignore_hidden=ignore_hidden):
+                for fn in files:
+                    fn = bytestring_path(fn)
+                    for ext in IMAGE_EXTENSIONS:
+                        if fn.lower().endswith(b'.' + ext) and \
+                           os.path.isfile(syspath(os.path.join(path, fn))):
+                            images.append(fn)
 
             # Look for "preferred" filenames.
             images = sorted(images,
