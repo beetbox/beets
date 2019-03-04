@@ -43,8 +43,8 @@ class FileFilterPlugin(BeetsPlugin):
                 bytestring_path(self.config['album_path'].get()))
 
         if 'singleton_path' in self.config:
-                self.path_singleton_regex = re.compile(
-                    bytestring_path(self.config['singleton_path'].get()))
+            self.path_singleton_regex = re.compile(
+                bytestring_path(self.config['singleton_path'].get()))
 
     def import_task_created_event(self, session, task):
         if task.items and len(task.items) > 0:

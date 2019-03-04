@@ -347,6 +347,16 @@ def types(model_cls):
     return types
 
 
+def named_queries(model_cls):
+    # Gather `item_queries` and `album_queries` from the plugins.
+    attr_name = '{0}_queries'.format(model_cls.__name__.lower())
+    queries = {}
+    for plugin in find_plugins():
+        plugin_queries = getattr(plugin, attr_name, {})
+        queries.update(plugin_queries)
+    return queries
+
+
 def track_distance(item, info):
     """Gets the track distance calculated by all loaded plugins.
     Returns a Distance object.

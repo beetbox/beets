@@ -68,6 +68,8 @@ file. The available options are:
 - **dest**: The directory where the files will be converted (or copied) to.
   Default: none.
 - **embed**: Embed album art in converted items. Default: ``yes``.
+- **id3v23**: Can be used to override the global ``id3v23`` option. Default:
+  ``inherit``.
 - **max_bitrate**: All lossy files with a higher bitrate will be
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower

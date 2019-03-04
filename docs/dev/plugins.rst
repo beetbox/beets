@@ -443,15 +443,24 @@ Extend the Query Syntax
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 You can add new kinds of queries to beets' :doc:`query syntax
-</reference/query>` indicated by a prefix. As an example, beets already
+</reference/query>`. There are two ways to add custom queries: using a prefix
+and using a name. Prefix-based query extension can apply to *any* field, while
+named queries are not associated with any field. For example, beets already
 supports regular expression queries, which are indicated by a colon
 prefix---plugins can do the same.
 
-To do so, define a subclass of the ``Query`` type from the
-``beets.dbcore.query`` module. Then, in the ``queries`` method of your plugin
-class, return a dictionary mapping prefix strings to query classes.
+For either kind of query extension, define a subclass of the ``Query`` type
+from the ``beets.dbcore.query`` module. Then:
 
-One simple kind of query you can extend is the ``FieldQuery``, which
+- To define a prefix-based query, define a ``queries`` method in your plugin
+  class. Return from this method a dictionary mapping prefix strings to query
+  classes.
+- To define a named query, defined dictionaries named either ``item_queries``
+  or ``album_queries``. These should map names to query types. So if you
+  use ``{ "foo": FooQuery }``, then the query ``foo:bar`` will construct a
+  query like ``FooQuery("bar")``.
+
+For prefix-based queries, you will want to extend ``FieldQuery``, which
 implements string comparisons on fields. To use it, create a subclass
 inheriting from that class and override the ``value_match`` class method.
 (Remember the ``@classmethod`` decorator!) The following example plugin
