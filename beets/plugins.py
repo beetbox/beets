@@ -17,7 +17,6 @@
 
 from __future__ import division, absolute_import, print_function
 
-import inspect
 import traceback
 import re
 from collections import defaultdict
@@ -27,6 +26,7 @@ from functools import wraps
 import beets
 from beets import logging
 from beets import mediafile
+from beets.util import inspect
 import six
 
 PLUGIN_NAMESPACE = 'beetsplug'
@@ -127,10 +127,7 @@ class BeetsPlugin(object):
         value after the function returns). Also determines which params may not
         be sent for backwards-compatibility.
         """
-        if six.PY2:
-            argspec = inspect.getargspec(func)
-        else:
-            argspec = inspect.getfullargspec(func)
+        argspec = inspect.getargspec(func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
