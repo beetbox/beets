@@ -21,11 +21,12 @@ from collections import namedtuple
 from six import PY2
 
 
+ArgSpec = namedtuple('ArgSpec', 'args varargs keywords defaults')
+
+
 def getargspec(func):
     if PY2:
         return inspect.getargspec(func)
-
-    ArgSpec = namedtuple('ArgSpec', 'args varargs keywords defaults')
 
     sig = inspect.signature(func)
     args = [
