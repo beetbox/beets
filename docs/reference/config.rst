@@ -802,6 +802,8 @@ the penalty name to the ``ignored`` setting::
 
 The available penalties are the same as those for the :ref:`max_rec` setting.
 
+For example, setting ``ignored: missing_tracks`` will skip any album matches where your audio files are missing some of the tracks. The importer will not attempt to display these matches. It does not ignore the fact that the album is missing tracks, which would allow these matches to apply more easily. To do that, you'll want to adjust the penalty for missing tracks.
+
 .. _required:
 
 required
