@@ -191,7 +191,7 @@ class BeatportClient(object):
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
             raise BeatportAPIError("Error connecting to Beatport API: {}"
-                                   .format(e.message))
+                                   .format(e))
         if not response:
             raise BeatportAPIError(
                 "Error {0.status_code} for '{0.request.path_url}"

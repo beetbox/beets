@@ -156,6 +156,8 @@ Fixes:
   library.
   Thanks to :user:`zhelezov`.
   :bug:`2826` :bug:`3092`
+* :doc:`/plugins/beatport`: Avoid a crash when the server produces an error.
+  :bug:`3184`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
