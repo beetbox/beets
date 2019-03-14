@@ -152,6 +152,10 @@ Fixes:
   :bug:`3165`
 * :doc:`/plugins/hook`: Fix byte string interpolation in hook commands.
   :bug:`2967` :bug:`3167`
+* Avoid some deprecation warnings with certain versions of the MusicBrainz
+  library.
+  Thanks to :user:`zhelezov`.
+  :bug:`2826` :bug:`3092`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
