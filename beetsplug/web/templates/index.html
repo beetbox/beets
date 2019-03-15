@@ -108,12 +108,17 @@
 
         <script type="text/template" id="item-template">
             <% if (selected) { %>
-                <a href="#" class="list-group-item active clearfix">
+                <li class="list-group-item active clearfix">
             <%  } else { %>
-                <a href="#" class="list-group-item clearfix">
+                <li class="list-group-item clearfix">
             <% } %>
                 <%= artist %> - <%= title %>
+                <br/>
                 <span class="pull-right">
+                    <div class="btn-group" role="group">
+                    <button id='view-button' class="btn btn-xs btn-info">
+                       <span class="glyphicon glyphicon-eye-open"></span>
+                    </button>
                     <button id="play-button" class="btn btn-xs btn-info">
                     <% if (playing) { %>
                         <span class="glyphicon glyphicon-pause"></span>
@@ -121,8 +126,9 @@
                         <span class="glyphicon glyphicon-play"></span>
                     <% } %>
                     </button>
+                    </div>
                 </span>
-            </a>
+            </li>
         </script>
 
         <script type="text/template" id="lyrics-template"><%= lyrics %></script>

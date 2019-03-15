@@ -61,8 +61,7 @@ $(document).ready(function(){
         template: _.template( $('#item-template').html()),
         events: {
             'click #play-button': 'onPlayButtonClick',
-            'click': 'onClick',
-            'dblclick': 'onPlayButtonClick',
+            'click #view-button': 'onClick',
         },
         initialize: function(){
             _.bindAll(this, 'render');
@@ -109,7 +108,6 @@ $(document).ready(function(){
                 this.play(); //This is probably not right
             }
         },
-        
     });
 
     var ItemsView = BaseView.extend({
