@@ -119,6 +119,7 @@ $(document).ready(function(){
             this.listenTo(Backbone, 'play:first', this.onPlayFirst);
             this.listenTo(Backbone, 'play:next', this.onPlayNext);
             this.listenTo(Backbone, 'items:shuffle', this.shuffle);
+            this.listenTo(Backbone, 'collection:reorder', this.reorder);
             this.collection.on('reset', this.render, this);
             this.collection.on('update', this.render, this);
         },
@@ -182,6 +183,11 @@ $(document).ready(function(){
 
         setRepeat: function(){
             this.repeat = !this.repeat;
+        },
+
+        reorder: function(oldIndex, newIndex) {
+            // reorganise the collection, so that playNext just works
+            this.collection.models.splice(newIndex, 0, this.collection.models.splice(oldIndex, 1)[0]);
         }
     });
 
@@ -438,4 +444,11 @@ $(document).ready(function(){
     new Router();
     new AppView({ el: 'body', audio: audio });
     Backbone.history.start({pushState: false});
+
+    var el = document.getElementById('results');
+    var sortable = new Sortable(el, {
+        onEnd: function(evt){
+            Backbone.trigger('collection:reorder', evt.oldIndex, evt.newIndex);
+        }
+    });
 });
