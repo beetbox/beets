@@ -17,7 +17,6 @@
 
 from __future__ import division, absolute_import, print_function
 
-import inspect
 import traceback
 import re
 from collections import defaultdict
@@ -27,6 +26,7 @@ from functools import wraps
 import beets
 from beets import logging
 from beets import mediafile
+from beets.util import inspect
 import six
 
 PLUGIN_NAMESPACE = 'beetsplug'
@@ -342,6 +342,16 @@ def types(model_cls):
                 )
         types.update(plugin_types)
     return types
+
+
+def named_queries(model_cls):
+    # Gather `item_queries` and `album_queries` from the plugins.
+    attr_name = '{0}_queries'.format(model_cls.__name__.lower())
+    queries = {}
+    for plugin in find_plugins():
+        plugin_queries = getattr(plugin, attr_name, {})
+        queries.update(plugin_queries)
+    return queries
 
 
 def track_distance(item, info):
