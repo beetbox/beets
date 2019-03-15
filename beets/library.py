@@ -611,7 +611,7 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self, path=None, tags=None):
+    def write(self, path=None, tags=None, id3v23=None):
         """Write the item's metadata to a media file.
 
         All fields in `_media_fields` are written to disk according to
@@ -623,12 +623,18 @@ class Item(LibModel):
         `tags` is a dictionary of additional metadata the should be
         written to the file. (These tags need not be in `_media_fields`.)
 
+        `id3v23` will override the global `id3v23` config option if it is
+        set to something other than `None`.
+
         Can raise either a `ReadError` or a `WriteError`.
         """
         if path is None:
             path = self.path
         else:
             path = normpath(path)
+
+        if id3v23 is None:
+            id3v23 = beets.config['id3v23'].get(bool)
 
         # Get the data to write to the file.
         item_tags = dict(self)
@@ -640,8 +646,7 @@ class Item(LibModel):
 
         # Open the file.
         try:
-            mediafile = MediaFile(syspath(path),
-                                  id3v23=beets.config['id3v23'].get(bool))
+            mediafile = MediaFile(syspath(path), id3v23=id3v23)
         except UnreadableFileError as exc:
             raise ReadError(path, exc)
 
@@ -657,14 +662,14 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send('after_write', item=self, path=path)
 
-    def try_write(self, path=None, tags=None):
+    def try_write(self, *args, **kwargs):
         """Calls `write()` but catches and logs `FileOperationError`
         exceptions.
 
         Returns `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(path, tags)
+            self.write(*args, **kwargs)
             return True
         except FileOperationError as exc:
             log.error(u"{0}", exc)

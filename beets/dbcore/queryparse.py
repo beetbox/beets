@@ -119,12 +119,13 @@ def construct_query_part(model_cls, prefixes, query_part):
     if not query_part:
         return query.TrueQuery()
 
-    # Use `model_cls` to build up a map from field names to `Query`
-    # classes.
+    # Use `model_cls` to build up a map from field (or query) names to
+    # `Query` classes.
     query_classes = {}
     for k, t in itertools.chain(model_cls._fields.items(),
                                 model_cls._types.items()):
         query_classes[k] = t.query
+    query_classes.update(model_cls._queries)  # Non-field queries.
 
     # Parse the string.
     key, pattern, query_class, negate = \
@@ -137,26 +138,27 @@ def construct_query_part(model_cls, prefixes, query_part):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
-            q = query.AnyFieldQuery(pattern, model_cls._search_fields,
-                                    query_class)
-            if negate:
-                return query.NotQuery(q)
-            else:
-                return q
+            out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
+                                            query_class)
         else:
             # Non-field query type.
-            if negate:
-                return query.NotQuery(query_class(pattern))
-            else:
-                return query_class(pattern)
+            out_query = query_class(pattern)
 
-    # Otherwise, this must be a `FieldQuery`. Use the field name to
-    # construct the query object.
-    key = key.lower()
-    q = query_class(key.lower(), pattern, key in model_cls._fields)
+    # Field queries get constructed according to the name of the field
+    # they are querying.
+    elif issubclass(query_class, query.FieldQuery):
+        key = key.lower()
+        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
+
+    # Non-field (named) query.
+    else:
+        out_query = query_class(pattern)
+
+    # Apply negation.
     if negate:
-        return query.NotQuery(q)
-    return q
+        return query.NotQuery(out_query)
+    else:
+        return out_query
 
 
 def query_from_strings(query_cls, model_cls, prefixes, query_parts):

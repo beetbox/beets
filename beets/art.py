@@ -51,7 +51,8 @@ def get_art(log, item):
 
 
 def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
-               compare_threshold=0, ifempty=False, as_album=False):
+               compare_threshold=0, ifempty=False, as_album=False,
+               id3v23=None):
     """Embed an image into the item's media file.
     """
     # Conditions and filters.
@@ -60,8 +61,8 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
             log.info(u'Image not similar; skipping.')
             return
     if ifempty and get_art(log, item):
-            log.info(u'media file already contained art')
-            return
+        log.info(u'media file already contained art')
+        return
     if maxwidth and not as_album:
         imagepath = resize_image(log, imagepath, maxwidth)
 
@@ -80,7 +81,7 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
                  image.mime_type)
         return
 
-    item.try_write(path=itempath, tags={'images': [image]})
+    item.try_write(path=itempath, tags={'images': [image]}, id3v23=id3v23)
 
 
 def embed_album(log, album, maxwidth=None, quiet=False,
