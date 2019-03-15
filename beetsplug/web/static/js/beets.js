@@ -255,7 +255,7 @@ $(document).ready(function(){
         },
 
         setSlider: function(value) {
-            Backbone.trigger('play:advance', value.timeStamp);
+            Backbone.trigger('play:advance', value.target.valueAsNumber);
         },
 
         reset: function(model) {
