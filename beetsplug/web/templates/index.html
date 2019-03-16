@@ -4,10 +4,10 @@
         <meta charset="UTF-8">
         <title>beets</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/beets.css') }}">
         <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap-bundle.js') }}"></script>
         <script src="{{ url_for('static', filename='js/underscore.js') }}"></script>
         <script src="{{ url_for('static', filename='js/backbone.js') }}"></script>
         <script src="{{ url_for('static', filename='js/Sortable.js') }}"></script>
@@ -16,17 +16,12 @@
     </head>
     <body id='app'>
 
-        <!-- Static navbar -->
-        <nav class="navbar navbar-inverse navbar-fixed-top">
+        <nav class="navbar fixed-top navbar-dark bg-dark">
             <div class="container-fluid">
-                <div class="navbar-header">
-                    <a class="navbar-brand" href="#">
-                        <span>
-                            <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
-                            Beets
-                        </span>
-                    </a>
-                </div>
+                <a class="navbar-brand" href="#">
+                    <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
+                    Beets
+                </a>
             </div>
         </nav>
 
@@ -35,14 +30,12 @@
                 <div class="col-sm-4">
                     <h4>Search</h4>
                     <form id="queryForm">
-                        <div class="input-group">
-                            <input class="form-control" type="search" id="query" placeholder="Query + Enter">
-                            <span class="input-group-btn">
-                                <button class="btn btn-default" type="button" id="searchButton">
-                                    <i class="glyphicon glyphicon-search"></i>
-                                </button>
-                            </span>
-                        </div>
+                        <div class="input-group mb-3">
+                            <input type="search" id="query" class="form-control" placeholder="Query + Enter" aria-label="Query">
+                            <div class="input-group-append" id="searchButton">
+                              <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            </div>
+                          </div>
                     </form>
                     <div id='results' class='list-group'></div>
                 </div>
@@ -60,52 +53,43 @@
             </div>
         </div>
 
-        <nav class="navbar navbar-default navbar-fixed-bottom">
-            <div id="player">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-sm-3">
-                            <div class="btn-group btn-group-justified" role="group">
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-default" id="play-pause-button">
-                                        <i class="glyphicon glyphicon-play"></i>
-                                        <i class="glyphicon glyphicon-pause"></i>
-                                    </button>
-                                </div>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-default" id="stop-button"><i class="glyphicon glyphicon-stop"></i></button>
-                                </div>
-                            </div>
+
+        <div class="container-fluid navbar-light bg-light fixed-bottom" id="player">
+            <div class="row btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
+                <div class="col col-sm-2 btn-group" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-secondary" id="play-pause-button">
+                        <i class="fas fa-play"></i>
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="stop-button">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                </div>
+
+                <div class="col col-sm-8" aria-label="Middle group">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <button class="btn btn-outline-secondary" type="button"><span id="currentTime">0:00</span></button>
                         </div>
-
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <div class="input-group">
-                                    <span class="input-group-addon" id="currentTime">0:00</span>
-                                    <input class="form-control" type="range" min="0" max="100" step="0.01" value="0.0" id="slider">
-                                    <span class="input-group-addon" id="totalTime">0:00</span>
-                                </div>
-                            </div>
-                            <div id="playingLabel">
-                                &nbsp; <!-- This chap gets replaced -->
-                            </div>
-                        </div>
-
-
-                        <div class="col-sm-3">
-                            <div class="btn-group btn-group-justified" role="group">
-                                <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-default" id="repeat-button"><i class="glyphicon glyphicon-repeat"></i></button>
-                                </div>
-                                <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-default" id="shuffle-button"><i class="glyphicon glyphicon-random"></i></button>
-                                </div>
-                            </div>
+                        <input class="form-control" type="range" min="0" max="100" step="1" value="0.0" id="slider">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button"><span id="totalTime">0:00</span></button>
                         </div>
                     </div>
+                    <div id="playingLabel" class="clearfix">
+                        &nbsp;
+                    </div>
+                </div>
+                <div class="col col-sm-2 btn-group" role="group" aria-label="control group">
+                    <button type="button" class="btn btn-secondary" id="repeat-button">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="shuffle-button">
+                        <i class="fas fa-random"></i>
+                    </button>
                 </div>
             </div>
-        </nav>
+        </div>
 
         <script type="text/template" id="item-template">
             <% if (selected) { %>
@@ -115,16 +99,22 @@
             <% } %>
                 <%= artist %> - <%= title %>
                 <br/>
-                <span class="pull-right">
+                <% if (album) { %>
+                <span class="float-left">
+                    <i class="fa fa-compact-disc"></i>
+                    <%= album %>
+                </span>
+                <% } %>
+                <span class="float-right">
                     <div class="btn-group" role="group">
                     <button id='view-button' class="btn btn-xs btn-info">
-                       <span class="glyphicon glyphicon-eye-open"></span>
+                       <span class="fas fa-eye"></i>
                     </button>
                     <button id="play-button" class="btn btn-xs btn-info">
                     <% if (playing) { %>
-                        <span class="glyphicon glyphicon-pause"></span>
+                        <span class="fas fa-pause"></span>
                     <%  } else { %>
-                        <span class="glyphicon glyphicon-play"></span>
+                        <span class="fas fa-play"></span>
                     <% } %>
                     </button>
                     </div>
@@ -157,7 +147,7 @@
                 <th>MusicBrainz entry</th>
                 <td>
                     <a target="_blank" href="http://musicbrainz.org/recording/<%= mb_trackid %>">
-                        <i class="glyphicon glyphicon-link"></i>
+                        <i class="fas fa-link"></i>
                         View
                     </a>
                 </td>
@@ -168,7 +158,7 @@
                 <th>File</th>
                 <td>
                     <a target="_blank" href="/item/<%= id %>/file">
-                        <i class="glyphicon glyphicon-download"></i>
+                        <i class="fas fa-download"></i>
                         Download
                     </a>
                 </td>
@@ -179,13 +169,13 @@
             <% } %>
 
             <% if (album_id) { %>
-            <tr><td colspan="2"><img src="/album/<%= album_id %>/art" class="img-responsive"/></td></tr>
+            <tr><td colspan="2"><img src="/album/<%= album_id %>/art" class="img-fluid img-thumbnail"/></td></tr>
             <% } %>
         </script>
 
         <script type="text/template" id="playing-template">
             <div class="text-center">
-                <i class="glyphicon glyphicon-music"></i>
+                <i class="fas fa-music"></i>
                 <%= artist %> - <%= album %> - <%= title %>
             </div>
         </script>
