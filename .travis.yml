@@ -34,7 +34,7 @@ addons:
             - python3-gst-1.0
             - unrar
 
-install: pip install --user tox sphinx codecov
+install: pip install tox sphinx codecov
 
 script: tox
 
