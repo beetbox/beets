@@ -14,6 +14,10 @@ New features:
   issues with foobar2000 and Winamp.
   Thanks to :user:`mz2212`.
   :bug:`2944`
+* A new :doc:`/plugins/playlist` can query the beets library using
+  M3U playlists.
+  Thanks to :user:`Holzhaus` and :user:`Xenopathic`.
+  :bug:`123` :bug:`3145`
 * Added whitespace padding to missing tracks dialog to improve readability.
   Thanks to :user:`jams2`.
   :bug:`2962`
@@ -37,6 +41,10 @@ New features:
   relevant releases according to the :ref:`preferred` configuration options.
   Thanks to :user:`archer4499`.
   :bug:`3017`
+* :doc:`/plugins/convert`: The plugin now has a ``id3v23`` option that allows
+  to override the global ``id3v23`` option.
+  Thanks to :user:`Holzhaus`.
+  :bug:`3104`
 * A new ``aunique`` configuration option allows setting default options
   for the :ref:`aunique` template function.
 * The ``albumdisambig`` field no longer includes the MusicBrainz release group
@@ -52,6 +60,23 @@ New features:
   strings, which prevents strange repeated output when running ``beet write``.
   Thanks to :user:`Holzhaus`.
   :bug:`3097` :bug:`2942`
+* The ``move`` command now lists the number of items already in-place.
+  Thanks to :user:`RollingStar`.
+  :bug:`3117`
+* :doc:`/plugins/spotify`: The plugin now uses OAuth for authentication to the
+  Spotify API.
+  Thanks to :user:`rhlahuja`.
+  :bug:`2694` :bug:`3123`
+* :doc:`/plugins/spotify`: The plugin now works as an import metadata
+  provider: you can match tracks and albums using the Spotify database.
+  Thanks to :user:`rhlahuja`.
+  :bug:`3123`
+* :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which passes that flag to ipfs.
+  Thanks to :user:`wildthyme`.
+* :doc:`/plugins/discogs`: The plugin has rate limiting for the discogs API now.
+  :bug:`3081`
+* The `badfiles` plugin now works in parallel (on Python 3 only).
+  Thanks to :user:`bemeurer`.
 
 Changes:
 
@@ -67,6 +92,8 @@ Changes:
 
 Fixes:
 
+* On Python 2, pin the Jellyfish requirement to version 0.6.0 for
+  compatibility.
 * A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
   contained in data files :bug:`3021`
 * Restore iTunes Store album art source, and remove the dependency on
@@ -115,9 +142,32 @@ Fixes:
 * The ``%title`` template function now works correctly with apostrophes.
   Thanks to :user:`GuilhermeHideki`.
   :bug:`3033`
+* :doc:`/plugins/fetchart`: Added network connection error handling to backends
+  so that beets won't crash if a request fails.
+  Thanks to :user:`Holzhaus`.
+  :bug:`1579`
 * Fetchart now respects the ``ignore`` and ``ignore_hidden`` settings. :bug:`1632`
+* :doc:`/plugins/badfiles`: Avoid a crash when the underlying tool emits
+  undecodable output.
+  :bug:`3165`
+* :doc:`/plugins/hook`: Fix byte string interpolation in hook commands.
+  :bug:`2967` :bug:`3167`
+* Avoid some deprecation warnings with certain versions of the MusicBrainz
+  library.
+  Thanks to :user:`zhelezov`.
+  :bug:`2826` :bug:`3092`
+* :doc:`/plugins/beatport`: Avoid a crash when the server produces an error.
+  :bug:`3184`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
+
+For developers:
+
+* In addition to prefix-based field queries, plugins can now define *named
+  queries* that are not associated with any specific field.
+  For example, the new :doc:`/plugins/playlist` supports queries like
+  ``playlist:name`` although there is no field named ``playlist``.
+  See :ref:`extend-query` for details.
 
 
 1.4.7 (May 29, 2018)

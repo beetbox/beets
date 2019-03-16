@@ -18,16 +18,17 @@
 
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand
-from beets.util import displayable_path, confit
-from beets import ui
 from subprocess import check_output, CalledProcessError, list2cmdline, STDOUT
+
 import shlex
 import os
 import errno
 import sys
 import six
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand
+from beets.util import displayable_path, confit, par_map
+from beets import ui
 
 
 class CheckerCommandException(Exception):
@@ -48,6 +49,10 @@ class CheckerCommandException(Exception):
 
 
 class BadFiles(BeetsPlugin):
+    def __init__(self):
+        super(BadFiles, self).__init__()
+        self.verbose = False
+
     def run_command(self, cmd):
         self._log.debug(u"running command: {}",
                         displayable_path(list2cmdline(cmd)))
@@ -61,7 +66,7 @@ class BadFiles(BeetsPlugin):
             status = e.returncode
         except OSError as e:
             raise CheckerCommandException(cmd, e)
-        output = output.decode(sys.getfilesystemencoding())
+        output = output.decode(sys.getdefaultencoding(), 'replace')
         return status, errors, [line for line in output.split("\n") if line]
 
     def check_mp3val(self, path):
@@ -89,56 +94,60 @@ class BadFiles(BeetsPlugin):
             command = None
         if command:
             return self.check_custom(command)
-        elif ext == "mp3":
+        if ext == "mp3":
             return self.check_mp3val
-        elif ext == "flac":
+        if ext == "flac":
             return self.check_flac
 
-    def check_bad(self, lib, opts, args):
-        for item in lib.items(ui.decargs(args)):
+    def check_item(self, item):
+        # First, check whether the path exists. If not, the user
+        # should probably run `beet update` to cleanup your library.
+        dpath = displayable_path(item.path)
+        self._log.debug(u"checking path: {}", dpath)
+        if not os.path.exists(item.path):
+            ui.print_(u"{}: file does not exist".format(
+                ui.colorize('text_error', dpath)))
 
-            # First, check whether the path exists. If not, the user
-            # should probably run `beet update` to cleanup your library.
-            dpath = displayable_path(item.path)
-            self._log.debug(u"checking path: {}", dpath)
-            if not os.path.exists(item.path):
-                ui.print_(u"{}: file does not exist".format(
-                    ui.colorize('text_error', dpath)))
+        # Run the checker against the file if one is found
+        ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
+        checker = self.get_checker(ext)
+        if not checker:
+            self._log.error(u"no checker specified in the config for {}",
+                            ext)
+            return
+        path = item.path
+        if not isinstance(path, six.text_type):
+            path = item.path.decode(sys.getfilesystemencoding())
+        try:
+            status, errors, output = checker(path)
+        except CheckerCommandException as e:
+            if e.errno == errno.ENOENT:
+                self._log.error(
+                    u"command not found: {} when validating file: {}",
+                    e.checker,
+                    e.path
+                )
+            else:
+                self._log.error(u"error invoking {}: {}", e.checker, e.msg)
+            return
+        if status > 0:
+            ui.print_(u"{}: checker exited with status {}"
+                      .format(ui.colorize('text_error', dpath), status))
+            for line in output:
+                ui.print_(u"  {}".format(line))
+        elif errors > 0:
+            ui.print_(u"{}: checker found {} errors or warnings"
+                      .format(ui.colorize('text_warning', dpath), errors))
+            for line in output:
+                ui.print_(u"  {}".format(line))
+        elif self.verbose:
+            ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
 
-            # Run the checker against the file if one is found
-            ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
-            checker = self.get_checker(ext)
-            if not checker:
-                self._log.error(u"no checker specified in the config for {}",
-                                ext)
-                continue
-            path = item.path
-            if not isinstance(path, six.text_type):
-                path = item.path.decode(sys.getfilesystemencoding())
-            try:
-                status, errors, output = checker(path)
-            except CheckerCommandException as e:
-                if e.errno == errno.ENOENT:
-                    self._log.error(
-                        u"command not found: {} when validating file: {}",
-                        e.checker,
-                        e.path
-                    )
-                else:
-                    self._log.error(u"error invoking {}: {}", e.checker, e.msg)
-                continue
-            if status > 0:
-                ui.print_(u"{}: checker exited with status {}"
-                          .format(ui.colorize('text_error', dpath), status))
-                for line in output:
-                    ui.print_(u"  {}".format(displayable_path(line)))
-            elif errors > 0:
-                ui.print_(u"{}: checker found {} errors or warnings"
-                          .format(ui.colorize('text_warning', dpath), errors))
-                for line in output:
-                    ui.print_(u"  {}".format(displayable_path(line)))
-            elif opts.verbose:
-                ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
+    def command(self, lib, opts, args):
+        # Get items from arguments
+        items = lib.items(ui.decargs(args))
+        self.verbose = opts.verbose
+        par_map(self.check_item, items)
 
     def commands(self):
         bad_command = Subcommand('bad',
@@ -148,5 +157,5 @@ class BadFiles(BeetsPlugin):
             action='store_true', default=False, dest='verbose',
             help=u'view results for both the bad and uncorrupted files'
         )
-        bad_command.func = self.check_bad
+        bad_command.func = self.command
         return [bad_command]
