@@ -51,6 +51,9 @@ $(document).ready(function(){
     var Albums = Backbone.Collection.extend({
         model: Album,
         url: '/album/',
+        initialize: function(){
+            this.fetch();
+        },
         parse: function(data) {
             return data.albums;
         },
@@ -219,12 +222,17 @@ $(document).ready(function(){
             this.listenTo(Backbone, 'show:item', this.show);
         },
         render: function(){
-            this.$el.html(this.template(this.model.toJSON()));
+            var album = this.albums.get(this.model.get('album_id'));
+            album_json = album.toJSON();
+
+            this.$el.html(this.template({
+                model: this.model.toJSON(),
+                album: album_json
+            }));
             return this;
         },
         show: function(model){
             this.model = model;
-            mergeAlbum(this.model, this.albums);
             this.render();
         }
     });

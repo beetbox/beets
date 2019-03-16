@@ -125,28 +125,28 @@
         <script type="text/template" id="lyrics-template"><%= lyrics %></script>
 
         <script type="text/template" id="metadata-template">
-            <tr class="success"><th>Artist</th><td><%= artist %></td></tr>
-            <tr><th>Album</th><td><%= album %></td></tr>
-            <tr><th>Year</th><td><%= year %></td></tr>
-            <tr><th>Title</th><td><%= title %></td></tr>
-            <tr><th>Track</th><td><%= track %>/<%= tracktotal %></td></tr>
-            <% if (disc) { %>
+            <tr class="success"><th>Artist</th><td><%= model.artist %></td></tr>
+            <tr><th>Album</th><td><%= model.album %></td></tr>
+            <tr><th>Year</th><td><%= model.year %></td></tr>
+            <tr><th>Title</th><td><%= model.title %></td></tr>
+            <tr><th>Track</th><td><%= model.track %>/<%= model.tracktotal %></td></tr>
+            <% if (model.disc) { %>
             <tr>
                 <th>Disc</th>
-                <td><%= disc %>/<%= disctotal %></td>
+                <td><%= model.disc %>/<%= model.disctotal %></td>
             </tr>
             <% } %>
-            <tr><th>Length</th><td><%= time %></td></tr>
-            <tr><th>Format</th><td><%= format %></td></tr>
-            <tr><th>Bitrate</th><td><%= Math.round(bitrate/1000) %> kbps</td></tr>
-            <% if (genre) { %>
-            <tr><th>Genre</th><td><%= genre %></td></tr>
+            <tr><th>Length</th><td><%= model.time %></td></tr>
+            <tr><th>Format</th><td><%= model.format %></td></tr>
+            <tr><th>Bitrate</th><td><%= Math.round(model.bitrate/1000) %> kbps</td></tr>
+            <% if (model.genre) { %>
+            <tr><th>Genre</th><td><%= model.genre %></td></tr>
             <% } %>
-            <% if (mb_trackid) { %>
+            <% if (model.mb_trackid) { %>
             <tr>
                 <th>MusicBrainz entry</th>
                 <td>
-                    <a target="_blank" href="http://musicbrainz.org/recording/<%= mb_trackid %>">
+                    <a target="_blank" href="http://musicbrainz.org/recording/<%= model.mb_trackid %>">
                         <i class="fas fa-link"></i>
                         View
                     </a>
@@ -157,19 +157,19 @@
             <tr>
                 <th>File</th>
                 <td>
-                    <a target="_blank" href="/item/<%= id %>/file">
+                    <a target="_blank" href="/item/<%= model.id %>/file">
                         <i class="fas fa-download"></i>
                         Download
                     </a>
                 </td>
             </tr>
 
-            <% if (comments) { %>
-            <tr><th>Comments</th><td><%= comments %></td></tr>
+            <% if (model.comments) { %>
+            <tr><th>Comments</th><td><%= model.comments %></td></tr>
             <% } %>
 
-            <% if (album_details.attributes.hasart) { %>
-            <tr><td colspan="2"><img src="/album/<%= album_id %>/art" class="img-fluid img-thumbnail"/></td></tr>
+            <% if (album && album.hasart) { %>
+            <tr><td colspan="2"><img src="/album/<%= model.album_id %>/art" class="img-fluid img-thumbnail"/></td></tr>
             <% } %>
         </script>
 
