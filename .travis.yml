@@ -18,7 +18,7 @@ before_install:
     - echo "deb http://archive.ubuntu.com/ubuntu/ trusty multiverse" | sudo tee -a /etc/apt/sources.list
     - echo "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse" | sudo tee -a /etc/apt/sources.list
     - sudo apt-get update
-    - sudo apt-get -y install --no-recommends bash-completion girl2 gir1.2-gst-plugins-base-1.0 gir1.2-gstreamer-1.0 gstreamer1.0-plugins-good gstreamer1.0-plugins-bad imagemagick python-gi python-gst-1.0 python3-gi python3-gst-1.0 unrar
+    - sudo apt-get install -y --no-install-recommends bash-completion gir1.2-gst-plugins-base-1.0 gir1.2-gstreamer-1.0 gstreamer1.0-plugins-good gstreamer1.0-plugins-bad imagemagick python-gi python-gst-1.0 python3-gi python3-gst-1.0 unrar
 
 install: pip install --user tox sphinx codecov
 
