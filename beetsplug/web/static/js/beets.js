@@ -17,13 +17,24 @@ $(document).ready(function(){
         return t;
     };
 
+    var mergeAlbum = function(model, albums){
+        if (model.get('album_id')) {
+            album_id = model.get('album_id');
+            album = albums.get(album_id);
+            model.set('album_details', album);
+            return true;
+        }
+        return false;
+    }
+
     var Item = Backbone.Model.extend({
         defaults: {
             artist: 'Artist',
             title: 'Track Title',
             time: 0,
             playing: false,
-            selected: false
+            selected: false,
+            album_details: {}
         },
 
         getFileUrl: function(){
@@ -32,6 +43,16 @@ $(document).ready(function(){
 
         prepForDisplay: function(){
             this.set('time', formatTime(this.get('length')));
+        },
+    });
+
+    var Album = Backbone.Model.extend({})
+
+    var Albums = Backbone.Collection.extend({
+        model: Album,
+        url: '/album/',
+        parse: function(data) {
+            return data.albums;
         },
     });
 
@@ -193,7 +214,8 @@ $(document).ready(function(){
 
     var MetaView = BaseView.extend({
         template: _.template( $('#metadata-template').html() ),
-        initialize: function(){
+        initialize: function(options){
+            this.albums = options.albums;
             this.listenTo(Backbone, 'show:item', this.show);
         },
         render: function(){
@@ -202,6 +224,7 @@ $(document).ready(function(){
         },
         show: function(model){
             this.model = model;
+            mergeAlbum(this.model, this.albums);
             this.render();
         }
     });
@@ -416,8 +439,10 @@ $(document).ready(function(){
         },
 
         initialize: function(options){
+            this.albums = new Albums();
+
             new ItemsView({el: '#results', collection: new Items()});
-            new MetaView({el: '#meta'});
+            new MetaView({el: '#meta', albums: this.albums});
             new LyricsView({ el: '#lyrics'});
             // new PlayerView({ el: '#player', audio: options.audio});
             new PlayPauseButtonView({el: '#play-pause-button'});

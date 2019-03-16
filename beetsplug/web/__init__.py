@@ -59,6 +59,9 @@ def _rep(obj, expand=False):
         return out
 
     elif isinstance(obj, beets.library.Album):
+        out['hasart'] = 0
+        if out['artpath']:
+            out['hasart'] = 1
         del out['artpath']
         if expand:
             out['items'] = [_rep(item) for item in obj.items()]

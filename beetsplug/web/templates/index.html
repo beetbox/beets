@@ -168,7 +168,7 @@
             <tr><th>Comments</th><td><%= comments %></td></tr>
             <% } %>
 
-            <% if (album_id) { %>
+            <% if (album_details.attributes.hasart) { %>
             <tr><td colspan="2"><img src="/album/<%= album_id %>/art" class="img-fluid img-thumbnail"/></td></tr>
             <% } %>
         </script>
