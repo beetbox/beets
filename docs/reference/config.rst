@@ -509,7 +509,7 @@ incremental_skip_later
 
 Either ``yes`` or ``no``, controlling whether skipped directories are
 recorded in the incremental list. Set this option to ``yes`` if you would
-like to revisit skipped directories later whilst using incremental
+like to ignore skipped directories later whilst using incremental
 mode. Defaults to ``no``.
 
 .. _from_scratch:
