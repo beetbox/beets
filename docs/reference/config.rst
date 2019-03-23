@@ -508,9 +508,10 @@ incremental_skip_later
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Either ``yes`` or ``no``, controlling whether skipped directories are
-recorded in the incremental list. Set this option to ``yes`` if you would
-like to ignore skipped directories later whilst using incremental
-mode. Defaults to ``no``.
+recorded in the incremental list. When set to ``yes``, skipped directories
+will be recorded, and skipped later. When set to ``no``, skipped
+directories won't be recorded, and beets will try to import them again
+later. Defaults to ``no``.
 
 .. _from_scratch:
 
