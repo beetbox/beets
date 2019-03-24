@@ -785,14 +785,14 @@ class ImportTask(BaseImportTask):
             replaced_album = self.replaced_albums.get(self.album.path)
             if replaced_album:
                 self.album.added = replaced_album.added
-                self.album.update(replaced_album._raw_values_flex)
+                self.album.update(replaced_album._values_flex)
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
                     u'Reimported album: added {0}, flexible '
                     u'attributes {1} from album {2} for {3}',
                     self.album.added,
-                    replaced_album._raw_values_flex.keys(),
+                    replaced_album._values_flex.keys(),
                     replaced_album.id,
                     displayable_path(self.album.path)
                 )
@@ -809,11 +809,11 @@ class ImportTask(BaseImportTask):
                         dup_item.id,
                         displayable_path(item.path)
                     )
-                item.update(dup_item._raw_values_flex)
+                item.update(dup_item._values_flex)
                 log.debug(
                     u'Reimported item flexible attributes {0} '
                     u'from item {1} for {2}',
-                    dup_item._raw_values_flex.keys(),
+                    dup_item._values_flex.keys(),
                     dup_item.id,
                     displayable_path(item.path)
                 )
