@@ -164,6 +164,26 @@ class BPDTest(unittest.TestCase, TestHelper):
         response = self.client.send_command(b'ping')
         self.assertTrue(response.ok)
 
+    def test_cmd_password(self):
+        self.server_proc.terminate()
+        self.server_proc, self.client = self.make_server_client(
+                password='abc123')
+
+        response = self.client.send_command(b'status')
+        self.assertTrue(response.err)
+        self.assertEqual(response.status,
+                         b'ACK [4@0] {} insufficient privileges')
+
+        response = self.client.send_command(b'password', b'wrong')
+        self.assertTrue(response.err)
+        self.assertEqual(response.status,
+                         b'ACK [3@0] {password} incorrect password')
+
+        response = self.client.send_command(b'password', b'abc123')
+        self.assertTrue(response.ok)
+        response = self.client.send_command(b'status')
+        self.assertTrue(response.ok)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
