@@ -18,14 +18,33 @@
 from __future__ import division, absolute_import, print_function
 
 import unittest
-from beetsplug import bpd
-
+import sys
+import imp
 import multiprocessing as mp
 import socket
 import time
 
 from test import _common
 from test.helper import TestHelper
+
+from beetsplug import bpd
+
+# Intercept and mock the GstPlayer player:
+gstplayer = imp.new_module('beetsplug.bpg.gstplayer')
+gstplayer.GstPlayer = type('fake.GstPlayer', (), {
+    '__init__': lambda self, callback: None,
+    'playing': False,
+    'volume': 0.0,
+    'run': lambda self: None,
+    'time': lambda self: (0, 0),
+    'play': lambda self: None,
+    'pause': lambda self: None,
+    'play_file': lambda self, path: None,
+    'seek': lambda self, pos: None,
+    'stop': lambda self: None,
+    })
+sys.modules['beetsplug.bpd.gstplayer'] = gstplayer
+bpd.gstplayer = gstplayer
 
 
 class CommandParseTest(unittest.TestCase):
@@ -94,6 +113,11 @@ class MPCClient(object):
         self.sock.close()
 
     def get_response(self):
+        """ Wait for a full server response and wrap it in a helper class.
+        If the request was a batch request then this will return a list of
+        `MPCResponse`s, one for each processed subcommand.
+        """
+
         response = b''
         while True:
             line = self.readline()
@@ -112,7 +136,8 @@ class MPCClient(object):
         return self.get_response()
 
     def readline(self, terminator=b'\n', bufsize=1024):
-        ''' Reads a line of data from the socket. '''
+        """ Reads a line of data from the socket.
+        """
 
         while True:
             if terminator in self.buf:
@@ -144,7 +169,8 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.item = self.add_item()
         self.lib.add_album([self.item])
 
-        self.server_proc, self.client = self.make_server_client()
+        self.server_proc = None
+        self.client = self.make_server_client()
 
     def tearDown(self):
         self.server_proc.terminate()
@@ -152,47 +178,25 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def make_server(self, host, port, password=None):
-        bpd_server = bpd.BaseServer(host, port, password)
-        server_proc = mp.Process(target=bpd_server.run)
-        server_proc.start()
-        return server_proc
+        bpd_server = bpd.Server(self.lib, host, port, password)
+        self.server = bpd_server
+        if self.server_proc:
+            self.server_proc.terminate()
+        self.server_proc = mp.Process(target=bpd_server.run)
+        self.server_proc.start()
 
     def make_client(self, host='localhost', port=9876, do_hello=True):
         return MPCClient(host, port, do_hello)
 
     def make_server_client(self, host='localhost', port=9876, password=None):
-        server_proc = self.make_server(host, port, password)
+        self.make_server(host, port, password)
         time.sleep(0.1)  # wait for the server to start
         client = self.make_client(host, port)
-        return server_proc, client
+        return client
 
     def test_server_hello(self):
         alt_client = self.make_client(do_hello=False)
         self.assertEqual(alt_client.readline(), b'OK MPD 0.13.0\n')
-
-    def test_cmd_ping(self):
-        response = self.client.send_command(b'ping')
-        self.assertTrue(response.ok)
-
-    def test_cmd_password(self):
-        self.server_proc.terminate()
-        self.server_proc, self.client = self.make_server_client(
-                password='abc123')
-
-        response = self.client.send_command(b'status')
-        self.assertTrue(response.err)
-        self.assertEqual(response.status,
-                         b'ACK [4@0] {} insufficient privileges')
-
-        response = self.client.send_command(b'password', b'wrong')
-        self.assertTrue(response.err)
-        self.assertEqual(response.status,
-                         b'ACK [3@0] {password} incorrect password')
-
-        response = self.client.send_command(b'password', b'abc123')
-        self.assertTrue(response.ok)
-        response = self.client.send_command(b'status')
-        self.assertTrue(response.ok)
 
     test_implements_query = implements({
             b'clearerror', b'currentsong', b'idle', b'status', b'stats',
@@ -239,7 +243,29 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     test_implements_connection = implements({
             b'close', b'kill', b'password', b'ping', b'tagtypes',
-            }, expectedFailure=True)
+            })
+
+    def test_cmd_password(self):
+        self.client = self.make_server_client(password='abc123')
+
+        response = self.client.send_command(b'status')
+        self.assertTrue(response.err)
+        self.assertEqual(response.status,
+                         b'ACK [4@0] {} insufficient privileges')
+
+        response = self.client.send_command(b'password', b'wrong')
+        self.assertTrue(response.err)
+        self.assertEqual(response.status,
+                         b'ACK [3@0] {password} incorrect password')
+
+        response = self.client.send_command(b'password', b'abc123')
+        self.assertTrue(response.ok)
+        response = self.client.send_command(b'status')
+        self.assertTrue(response.ok)
+
+    def test_cmd_ping(self):
+        response = self.client.send_command(b'ping')
+        self.assertTrue(response.ok)
 
     test_implements_partitions = implements({
             b'partition', b'listpartitions', b'newpartition',
