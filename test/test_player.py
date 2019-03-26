@@ -124,6 +124,8 @@ class MPCClient(object):
             response += line
             if line.startswith(b'OK') or line.startswith(b'ACK'):
                 return MPCResponse(response)
+            elif not line:
+                raise RuntimeError('Empty response')
 
     def send_command(self, command, *args):
         cmd = [command]
@@ -132,7 +134,8 @@ class MPCClient(object):
                 cmd.append(b'"{}"'.format(arg))
             else:
                 cmd.append(arg)
-        self.sock.sendall(b' '.join(cmd) + b'\n')
+        request = b' '.join(cmd) + b'\n'
+        self.sock.sendall(request)
         return self.get_response()
 
     def readline(self, terminator=b'\n', bufsize=1024):
@@ -144,6 +147,7 @@ class MPCClient(object):
                 line, self.buf = self.buf.split(terminator, 1)
                 line += terminator
                 return line
+            self.sock.settimeout(1)
             data = self.sock.recv(bufsize)
             if data:
                 self.buf += data
@@ -265,6 +269,24 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     def test_cmd_ping(self):
         response = self.client.send_command(b'ping')
+        self.assertTrue(response.ok)
+
+    @unittest.expectedFailure
+    def test_cmd_tagtypes(self):
+        response = self.client.send_command(b'tagtypes')
+        types = {line[9:].lower() for line in response.body.split(b'\n')}
+        self.assertEqual({
+            b'artist', b'artistsort', b'album', b'albumsort', b'albumartist',
+            b'albumartistsort', b'title', b'track', b'name', b'genre', b'date',
+            b'composer', b'performer', b'comment', b'disc', b'label',
+            b'musicbrainz_artistid', b'musicbrainz_albumid',
+            b'musicbrainz_albumartistid', b'musicbrainz_trackid',
+            b'musicbrainz_releasetrackid', b'musicbrainz_workid',
+            }, types)
+
+    @unittest.expectedFailure
+    def test_tagtypes_mask(self):
+        response = self.client.send_command(b'tagtypes', b'clear')
         self.assertTrue(response.ok)
 
     test_implements_partitions = implements({
