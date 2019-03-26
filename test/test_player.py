@@ -24,6 +24,7 @@ import multiprocessing as mp
 import socket
 import time
 
+from test import _common
 from test.helper import TestHelper
 
 
@@ -127,6 +128,15 @@ class MPCClient(object):
                 return line
 
 
+def implements(commands, expectedFailure=False):
+    def _test(self):
+        response = self.client.send_command(b'commands')
+        implemented = {line[9:] for line in response.body.split(b'\n')}
+        self.assertEqual(commands.intersection(implemented), commands)
+    return unittest.expectedFailure(_test) if expectedFailure else _test
+
+
+@_common.slow_test()
 class BPDTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
@@ -152,7 +162,7 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     def make_server_client(self, host='localhost', port=9876, password=None):
         server_proc = self.make_server(host, port, password)
-        time.sleep(1)
+        time.sleep(0.1)  # wait for the server to start
         client = self.make_client(host, port)
         return server_proc, client
 
@@ -183,6 +193,71 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.assertTrue(response.ok)
         response = self.client.send_command(b'status')
         self.assertTrue(response.ok)
+
+    test_implements_query = implements({
+            b'clearerror', b'currentsong', b'idle', b'status', b'stats',
+            }, expectedFailure=True)
+
+    test_implements_playback = implements({
+            b'consume', b'crossfade', b'mixrampdb', b'mixrampdelay', b'random',
+            b'repeat', b'setvol', b'single', b'replay_gain_mode',
+            b'replay_gain_status', b'volume',
+            }, expectedFailure=True)
+
+    test_implements_control = implements({
+            b'next', b'pause', b'play', b'playid', b'previous', b'seek',
+            b'seekid', b'seekcur', b'stop',
+            }, expectedFailure=True)
+
+    test_implements_queue = implements({
+            b'add', b'addid', b'clear', b'delete', b'deleteid', b'move',
+            b'moveid', b'playlist', b'playlistfind', b'playlistid',
+            b'playlistinfo', b'playlistsearch', b'plchanges',
+            b'plchangesposid', b'prio', b'prioid', b'rangeid', b'shuffle',
+            b'swap', b'swapid', b'addtagid', b'cleartagid',
+            }, expectedFailure=True)
+
+    test_implements_playlists = implements({
+            b'listplaylist', b'listplaylistinfo', b'listplaylists', b'load',
+            b'playlistadd', b'playlistclear', b'playlistdelete',
+            b'playlistmove', b'rename', b'rm', b'save',
+            }, expectedFailure=True)
+
+    test_implements_database = implements({
+            b'albumart', b'count', b'find', b'findadd', b'list', b'listall',
+            b'listallinfo', b'listfiles', b'lsinfo', b'readcomments',
+            b'search', b'searchadd', b'searchaddpl', b'update', b'rescan',
+            }, expectedFailure=True)
+
+    test_implements_mounts = implements({
+            b'mount', b'unmount', b'listmounts', b'listneighbors',
+            }, expectedFailure=True)
+
+    test_implements_stickers = implements({
+            b'sticker',
+            }, expectedFailure=True)
+
+    test_implements_connection = implements({
+            b'close', b'kill', b'password', b'ping', b'tagtypes',
+            }, expectedFailure=True)
+
+    test_implements_partitions = implements({
+            b'partition', b'listpartitions', b'newpartition',
+            }, expectedFailure=True)
+
+    test_implements_devices = implements({
+            b'disableoutput', b'enableoutput', b'toggleoutput', b'outputs',
+            }, expectedFailure=True)
+
+    test_implements_reflection = implements({
+            b'config', b'commands', b'notcommands', b'urlhandlers',
+            b'decoders',
+            }, expectedFailure=True)
+
+    test_implements_peers = implements({
+            b'subscribe', b'unsubscribe', b'channels', b'readmessages',
+            b'sendmessage',
+            }, expectedFailure=True)
 
 
 def suite():
