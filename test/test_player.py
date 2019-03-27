@@ -93,9 +93,10 @@ class MPCResponse(object):
     def __init__(self, raw_response):
         self.body = b'\n'.join(raw_response.split(b'\n')[:-2])
         self.status = raw_response.split(b'\n')[-2]
-        self.ok = self.status.startswith(b'OK')
+        self.ok = (self.status.startswith(b'OK') or
+                   self.status.startswith(b'list_OK'))
         self.err = self.status.startswith(b'ACK')
-        if self.err:
+        if not self.ok:
             print(self.status)
 
 
@@ -119,22 +120,51 @@ class MPCClient(object):
         """
 
         response = b''
+        responses = []
         while True:
             line = self.readline()
             response += line
             if line.startswith(b'OK') or line.startswith(b'ACK'):
-                return MPCResponse(response)
+                if any(responses):
+                    if line.startswith(b'ACK'):
+                        responses.append(MPCResponse(response))
+                    return responses
+                else:
+                    return MPCResponse(response)
+            if line.startswith(b'list_OK'):
+                responses.append(MPCResponse(response))
+                response = b''
             elif not line:
-                raise RuntimeError('Empty response')
+                raise RuntimeError('Unexpected response: {!r}'.format(line))
 
-    def send_command(self, command, *args):
+    def serialise_command(self, command, *args):
         cmd = [command]
         for arg in args:
             if b' ' in arg:
-                cmd.append(b'"{}"'.format(arg))
+                cmd.append(b'"' + arg + b'"')
             else:
                 cmd.append(arg)
-        request = b' '.join(cmd) + b'\n'
+        return b' '.join(cmd) + b'\n'
+
+    def send_command(self, command, *args):
+        request = self.serialise_command(command, *args)
+        self.sock.sendall(request)
+        return self.get_response()
+
+    def send_commands(self, *commands):
+        """ Use MPD command batching to send multiple commands at once.
+        Each item of commands is a tuple containing a command followed by
+        any arguments.
+        """
+
+        requests = []
+        for command_and_args in commands:
+            command = command_and_args[0]
+            args = command_and_args[1:]
+            requests.append(self.serialise_command(command, *args))
+        requests.insert(0, b'command_list_ok_begin\n')
+        requests.append(b'command_list_end\n')
+        request = b''.join(requests)
         self.sock.sendall(request)
         return self.get_response()
 
