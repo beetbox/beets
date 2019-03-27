@@ -89,3 +89,4 @@ ENV/
 /.project
 /.pydevproject
 /.settings
+.vscode
