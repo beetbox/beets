@@ -31,7 +31,7 @@ from beetsplug import bpd
 
 # Intercept and mock the GstPlayer player:
 gstplayer = imp.new_module('beetsplug.bpg.gstplayer')
-gstplayer.GstPlayer = type('fake.GstPlayer', (), {
+gstplayer.GstPlayer = type('GstPlayer', (), {
     '__init__': lambda self, callback: None,
     'playing': False,
     'volume': 0.0,
@@ -97,7 +97,7 @@ class MPCResponse(object):
                    self.status.startswith(b'list_OK'))
         self.err = self.status.startswith(b'ACK')
         if not self.ok:
-            print(self.status)
+            print(self.status.decode('utf-8'))
 
 
 class MPCClient(object):
@@ -187,7 +187,7 @@ class MPCClient(object):
                 return line
 
 
-def implements(commands, expectedFailure=False):
+def implements(commands, expectedFailure=False):  # noqa: N803
     def _test(self):
         response = self.client.send_command(b'commands')
         implemented = {line[9:] for line in response.body.split(b'\n')}
