@@ -200,8 +200,13 @@ class BPDTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
         self.load_plugins('bpd')
-        self.item = self.add_item()
-        self.lib.add_album([self.item])
+        self.item1 = self.add_item(title='Track One Title',
+                                   album='Album Title', artist='Artist Name',
+                                   track=1)
+        self.item2 = self.add_item(title='Track Two Title',
+                                   album='Album Title', artist='Artist Name',
+                                   track=2)
+        self.lib.add_album([self.item1, self.item2])
 
         self.server_proc = None
         self.client = self.make_server_client()
@@ -247,6 +252,16 @@ class BPDTest(unittest.TestCase, TestHelper):
             b'seekid', b'seekcur', b'stop',
             }, expectedFailure=True)
 
+    def test_cmd_play(self):
+        responses = self.client.send_commands(
+                (b'add', b'Artist Name/Album Title/01 Track One Title.mp3'),
+                (b'status',),
+                (b'play',),
+                (b'status',))
+        self.assertIn(b'state: stop', responses[1].body.split(b'\n'))
+        self.assertTrue(responses[2].ok)
+        self.assertIn(b'state: play', responses[3].body.split(b'\n'))
+
     test_implements_queue = implements({
             b'add', b'addid', b'clear', b'delete', b'deleteid', b'move',
             b'moveid', b'playlist', b'playlistfind', b'playlistid',
@@ -254,6 +269,27 @@ class BPDTest(unittest.TestCase, TestHelper):
             b'plchangesposid', b'prio', b'prioid', b'rangeid', b'shuffle',
             b'swap', b'swapid', b'addtagid', b'cleartagid',
             }, expectedFailure=True)
+
+    def test_cmd_add(self):
+        response = self.client.send_command(
+                b'add',
+                b'Artist Name/Album Title/01 Track One Title.mp3')
+        self.assertTrue(response.ok)
+
+    def test_cmd_playlistinfo(self):
+        responses = self.client.send_commands(
+                (b'add', b'Artist Name/Album Title/01 Track One Title.mp3'),
+                (b'playlistinfo',),
+                (b'playlistinfo', b'0'))
+        self.assertTrue(responses[1].ok)
+        self.assertTrue(responses[2].ok)
+        self.assertEqual(responses[1].body, responses[2].body)
+
+        response = self.client.send_command(b'playlistinfo', b'1')
+        self.assertTrue(response.err)
+        self.assertEqual(
+                b'ACK [2@0] {playlistinfo} argument out of range',
+                response.status)
 
     test_implements_playlists = implements({
             b'listplaylist', b'listplaylistinfo', b'listplaylists', b'load',
@@ -266,6 +302,23 @@ class BPDTest(unittest.TestCase, TestHelper):
             b'listallinfo', b'listfiles', b'lsinfo', b'readcomments',
             b'search', b'searchadd', b'searchaddpl', b'update', b'rescan',
             }, expectedFailure=True)
+
+    def test_cmd_search(self):
+        response = self.client.send_command(b'search', b'track', b'1')
+        self.assertEqual(
+                b'file: Artist Name/Album Title/01 Track One Title.mp3',
+                response.body.split(b'\n')[0])
+
+    def test_cmd_list_simple(self):
+        response = self.client.send_command(b'list', b'album')
+        self.assertEqual(b'Album: Album Title', response.body)
+
+        response = self.client.send_command(b'list', b'track')
+        self.assertEqual(b'Track: 1\nTrack: 2', response.body)
+
+    def test_cmd_count(self):
+        response = self.client.send_command(b'count', b'track', b'1')
+        self.assertEqual(b'songs: 1\nplaytime: 0', response.body)
 
     test_implements_mounts = implements({
             b'mount', b'unmount', b'listmounts', b'listneighbors',
