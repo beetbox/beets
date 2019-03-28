@@ -18,33 +18,20 @@
 from __future__ import division, absolute_import, print_function
 
 import unittest
+import os
 import sys
-import imp
-import multiprocessing as mp
+import subprocess
 import socket
 import time
+import yaml
+import tempfile
+from contextlib import contextmanager
 
 from test import _common
 from test.helper import TestHelper
 
+from beets.util import confit
 from beetsplug import bpd
-
-# Intercept and mock the GstPlayer player:
-gstplayer = imp.new_module('beetsplug.bpg.gstplayer')
-gstplayer.GstPlayer = type('GstPlayer', (), {
-    '__init__': lambda self, callback: None,
-    'playing': False,
-    'volume': 0.0,
-    'run': lambda self: None,
-    'time': lambda self: (0, 0),
-    'play': lambda self: None,
-    'pause': lambda self: None,
-    'play_file': lambda self, path: None,
-    'seek': lambda self, pos: None,
-    'stop': lambda self: None,
-    })
-sys.modules['beetsplug.bpd.gstplayer'] = gstplayer
-bpd.gstplayer = gstplayer
 
 
 class CommandParseTest(unittest.TestCase):
@@ -97,8 +84,6 @@ class MPCResponse(object):
         self.ok = (self.status.startswith('OK') or
                    self.status.startswith('list_OK'))
         self.err = self.status.startswith('ACK')
-        if not self.ok:
-            print(self.status)
 
     def _parse_body(self, body):
         """ Messages are generally in the format "header: content".
@@ -133,9 +118,6 @@ class MPCClient(object):
             hello = self.get_response()
             if not hello.ok:
                 raise RuntimeError('Bad hello: {}'.format(hello.status))
-
-    def __del__(self):
-        self.sock.close()
 
     def get_response(self):
         """ Wait for a full server response and wrap it in a helper class.
@@ -213,7 +195,8 @@ class MPCClient(object):
 
 def implements(commands, expectedFailure=False):  # noqa: N803
     def _test(self):
-        response = self.client.send_command('commands')
+        with self.run_bpd() as client:
+            response = client.send_command('commands')
         implemented = response.data['command']
         self.assertEqual(commands.intersection(implemented), commands)
     return unittest.expectedFailure(_test) if expectedFailure else _test
@@ -222,7 +205,7 @@ def implements(commands, expectedFailure=False):  # noqa: N803
 @_common.slow_test()
 class BPDTest(unittest.TestCase, TestHelper):
     def setUp(self):
-        self.setup_beets()
+        self.setup_beets(disk=True)
         self.load_plugins('bpd')
         self.item1 = self.add_item(title='Track One Title',
                                    album='Album Title', artist='Artist Name',
@@ -232,34 +215,83 @@ class BPDTest(unittest.TestCase, TestHelper):
                                    track=2)
         self.lib.add_album([self.item1, self.item2])
 
-        self.server_proc = None
-        self.client = self.make_server_client()
+        with open(os.path.join(self.temp_dir, b'bpd_mock.py'), 'wb') as f:
+            f.write(b'from unittest import mock\n')
+            f.write(b'import sys, imp\n')
+            f.write(b'gstplayer = imp.new_module("beetsplug.bpg.gstplayer")\n')
+            f.write(b'gstplayer._GstPlayer = mock.MagicMock(spec_set=["time",')
+            f.write(b'"volume", "playing", "run", "play_file", "pause", "stop')
+            f.write(b'", "seek"])\n')
+            f.write(b'gstplayer._GstPlayer.time.return_value = (0, 0)\n')
+            f.write(b'gstplayer._GstPlayer.volume = 0.0\n')
+            f.write(b'gstplayer._GstPlayer.playing = False\n')
+            f.write(b'gstplayer.GstPlayer = lambda _: gstplayer._GstPlayer\n')
+            f.write(b'sys.modules["beetsplug.bpd.gstplayer"] = gstplayer\n')
+            f.write(b'import beetsplug, beetsplug.bpd\n')
+            f.write(b'beetsplug.bpd.gstplayer = gstplayer\n')
+            f.write(b'sys.modules["beetsplug.bpd_mock"] = beetsplug.bpd\n')
+            f.write(b'beetsplug.bpd_mock = beetsplug.bpd\n')
 
     def tearDown(self):
-        self.server_proc.terminate()
         self.teardown_beets()
         self.unload_plugins()
 
-    def make_server(self, host, port, password=None):
-        bpd_server = bpd.Server(self.lib, host, port, password)
-        self.server = bpd_server
-        if self.server_proc:
-            self.server_proc.terminate()
-        self.server_proc = mp.Process(target=bpd_server.run)
-        self.server_proc.start()
+    @contextmanager
+    def run_bpd(self, host='localhost', port=9876, password=None,
+                           do_hello=True):
+        """ Runs BPD in another process, configured with the same library
+        database as we created in the setUp method. Exposes a client that is
+        connected to the server, and kills the server at the end.
+        """
+        # Create a config file:
+        config = {
+                'pluginpath': [self.temp_dir.decode('utf-8')],
+                'plugins': 'bpd_mock',
+                'bpd': {'host': host, 'port': port},
+        }
+        if password:
+            config['bpd']['password'] = password
+        config_file = tempfile.NamedTemporaryFile(
+                mode='wb', dir=self.temp_dir, suffix=b'.yaml', delete=False)
+        config_file.write(
+                yaml.dump(config, Dumper=confit.Dumper, encoding='utf-8'))
+        config_file.close()
 
-    def make_client(self, host='localhost', port=9876, do_hello=True):
-        return MPCClient(host, port, do_hello)
+        # Launch BPD in a new process:
+        env = dict(os.environ.items())
+        env['PYTHONPATH'] = ':'.join(
+                [self.temp_dir.decode('utf-8')] + sys.path[1:])
+        beet = os.path.join(os.path.dirname(__file__), '..', 'beet')
+        server = subprocess.Popen([
+            beet,
+            '--library', self.config['library'].as_filename(),
+            '--directory', self.libdir,
+            '--config', config_file.name,
+            '--verbose', '--verbose',
+            'bpd', '--debug',
+        ], env=env)
 
-    def make_server_client(self, host='localhost', port=9876, password=None):
-        self.make_server(host, port, password)
-        time.sleep(0.1)  # wait for the server to start
-        client = self.make_client(host, port)
-        return client
+        # Wait until the socket is bound:
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        for _ in range(20):
+            if self.sock.connect_ex((host, port)) == 0:
+                self.sock.close()
+                break
+            else:
+                time.sleep(0.01)
+        else:
+            raise RuntimeError('Timed out waiting for the BPD server')
+
+        try:
+            yield MPCClient(host, port, do_hello)
+        finally:
+            server.terminate()
+            server.wait(timeout=0.1)
+            server.kill()
 
     def test_server_hello(self):
-        alt_client = self.make_client(do_hello=False)
-        self.assertEqual(alt_client.readline(), b'OK MPD 0.13.0\n')
+        with self.run_bpd(do_hello=False) as client:
+            self.assertEqual(client.readline(), b'OK MPD 0.13.0\n')
 
     test_implements_query = implements({
             'clearerror', 'currentsong', 'idle', 'status', 'stats',
@@ -277,11 +309,12 @@ class BPDTest(unittest.TestCase, TestHelper):
             }, expectedFailure=True)
 
     def test_cmd_play(self):
-        responses = self.client.send_commands(
-                ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
-                ('status',),
-                ('play',),
-                ('status',))
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
+                    ('status',),
+                    ('play',),
+                    ('status',))
         self.assertEqual('stop', responses[1].data['state'])
         self.assertTrue(responses[2].ok)
         self.assertEqual('play', responses[3].data['state'])
@@ -295,21 +328,23 @@ class BPDTest(unittest.TestCase, TestHelper):
             }, expectedFailure=True)
 
     def test_cmd_add(self):
-        response = self.client.send_command(
-                'add',
-                'Artist Name/Album Title/01 Track One Title.mp3')
+        with self.run_bpd() as client:
+            response = client.send_command(
+                    'add',
+                    'Artist Name/Album Title/01 Track One Title.mp3')
         self.assertTrue(response.ok)
 
     def test_cmd_playlistinfo(self):
-        responses = self.client.send_commands(
-                ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
-                ('playlistinfo',),
-                ('playlistinfo', '0'))
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
+                    ('playlistinfo',),
+                    ('playlistinfo', '0'))
+            response = client.send_command('playlistinfo', '200')
+
         self.assertTrue(responses[1].ok)
         self.assertTrue(responses[2].ok)
-        self.assertEqual(responses[1].data, responses[2].data)
 
-        response = self.client.send_command('playlistinfo', '1')
         self.assertTrue(response.err)
         self.assertEqual(
                 'ACK [2@0] {playlistinfo} argument out of range',
@@ -328,20 +363,22 @@ class BPDTest(unittest.TestCase, TestHelper):
             }, expectedFailure=True)
 
     def test_cmd_search(self):
-        response = self.client.send_command('search', 'track', '1')
+        with self.run_bpd() as client:
+            response = client.send_command('search', 'track', '1')
         self.assertEqual(
                 'Artist Name/Album Title/01 Track One Title.mp3',
                 response.data['file'])
 
     def test_cmd_list_simple(self):
-        response = self.client.send_command('list', 'album')
-        self.assertEqual('Album Title', response.data['Album'])
-
-        response = self.client.send_command('list', 'track')
-        self.assertEqual(['1', '2'], response.data['Track'])
+        with self.run_bpd() as client:
+            response1 = client.send_command('list', 'album')
+            response2 = client.send_command('list', 'track')
+        self.assertEqual('Album Title', response1.data['Album'])
+        self.assertEqual(['1', '2'], response2.data['Track'])
 
     def test_cmd_count(self):
-        response = self.client.send_command('count', 'track', '1')
+        with self.run_bpd() as client:
+            response = client.send_command('count', 'track', '1')
         self.assertEqual('1', response.data['songs'])
         self.assertEqual('0', response.data['playtime'])
 
@@ -358,30 +395,32 @@ class BPDTest(unittest.TestCase, TestHelper):
             })
 
     def test_cmd_password(self):
-        self.client = self.make_server_client(password='abc123')
+        with self.run_bpd(password='abc123') as client:
 
-        response = self.client.send_command('status')
-        self.assertTrue(response.err)
-        self.assertEqual(response.status,
-                         'ACK [4@0] {} insufficient privileges')
+            response = client.send_command('status')
+            self.assertTrue(response.err)
+            self.assertEqual(response.status,
+                             'ACK [4@0] {} insufficient privileges')
 
-        response = self.client.send_command('password', 'wrong')
-        self.assertTrue(response.err)
-        self.assertEqual(response.status,
-                         'ACK [3@0] {password} incorrect password')
+            response = client.send_command('password', 'wrong')
+            self.assertTrue(response.err)
+            self.assertEqual(response.status,
+                             'ACK [3@0] {password} incorrect password')
 
-        response = self.client.send_command('password', 'abc123')
-        self.assertTrue(response.ok)
-        response = self.client.send_command('status')
-        self.assertTrue(response.ok)
+            response = client.send_command('password', 'abc123')
+            self.assertTrue(response.ok)
+            response = client.send_command('status')
+            self.assertTrue(response.ok)
 
     def test_cmd_ping(self):
-        response = self.client.send_command('ping')
+        with self.run_bpd() as client:
+            response = client.send_command('ping')
         self.assertTrue(response.ok)
 
     @unittest.expectedFailure
     def test_cmd_tagtypes(self):
-        response = self.client.send_command('tagtypes')
+        with self.run_bpd() as client:
+            response = client.send_command('tagtypes')
         types = {tag.lower() for tag in response.data['tag']}
         self.assertEqual({
             'artist', 'artistsort', 'album', 'albumsort', 'albumartist',
@@ -394,7 +433,8 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     @unittest.expectedFailure
     def test_tagtypes_mask(self):
-        response = self.client.send_command('tagtypes', 'clear')
+        with self.run_bpd() as client:
+            response = client.send_command('tagtypes', 'clear')
         self.assertTrue(response.ok)
 
     test_implements_partitions = implements({
