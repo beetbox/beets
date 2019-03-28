@@ -91,13 +91,37 @@ class CommandParseTest(unittest.TestCase):
 
 class MPCResponse(object):
     def __init__(self, raw_response):
-        self.body = b'\n'.join(raw_response.split(b'\n')[:-2])
-        self.status = raw_response.split(b'\n')[-2]
-        self.ok = (self.status.startswith(b'OK') or
-                   self.status.startswith(b'list_OK'))
-        self.err = self.status.startswith(b'ACK')
+        body = b'\n'.join(raw_response.split(b'\n')[:-2]).decode('utf-8')
+        self.data = self._parse_body(body)
+        self.status = raw_response.split(b'\n')[-2].decode('utf-8')
+        self.ok = (self.status.startswith('OK') or
+                   self.status.startswith('list_OK'))
+        self.err = self.status.startswith('ACK')
         if not self.ok:
-            print(self.status.decode('utf-8'))
+            print(self.status)
+
+    def _parse_body(self, body):
+        """ Messages are generally in the format "header: content".
+        Convert them into a dict, storing the values for repeated headers as
+        lists of strings, and non-repeated ones as string.
+        """
+        data = {}
+        repeated_headers = set()
+        for line in body.split('\n'):
+            if not line:
+                continue
+            if ':' not in line:
+                raise RuntimeError('Unexpected line: {!r}'.format(line))
+            header, content = line.split(':', 1)
+            content = content.lstrip()
+            if header in repeated_headers:
+                data[header].append(content)
+            elif header in data:
+                data[header] = [data[header], content]
+                repeated_headers.add(header)
+            else:
+                data[header] = content
+        return data
 
 
 class MPCClient(object):
@@ -138,8 +162,8 @@ class MPCClient(object):
                 raise RuntimeError('Unexpected response: {!r}'.format(line))
 
     def serialise_command(self, command, *args):
-        cmd = [command]
-        for arg in args:
+        cmd = [command.encode('utf-8')]
+        for arg in [a.encode('utf-8') for a in args]:
             if b' ' in arg:
                 cmd.append(b'"' + arg + b'"')
             else:
@@ -189,8 +213,8 @@ class MPCClient(object):
 
 def implements(commands, expectedFailure=False):  # noqa: N803
     def _test(self):
-        response = self.client.send_command(b'commands')
-        implemented = {line[9:] for line in response.body.split(b'\n')}
+        response = self.client.send_command('commands')
+        implemented = response.data['command']
         self.assertEqual(commands.intersection(implemented), commands)
     return unittest.expectedFailure(_test) if expectedFailure else _test
 
@@ -238,156 +262,157 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.assertEqual(alt_client.readline(), b'OK MPD 0.13.0\n')
 
     test_implements_query = implements({
-            b'clearerror', b'currentsong', b'idle', b'status', b'stats',
+            'clearerror', 'currentsong', 'idle', 'status', 'stats',
             }, expectedFailure=True)
 
     test_implements_playback = implements({
-            b'consume', b'crossfade', b'mixrampdb', b'mixrampdelay', b'random',
-            b'repeat', b'setvol', b'single', b'replay_gain_mode',
-            b'replay_gain_status', b'volume',
+            'consume', 'crossfade', 'mixrampd', 'mixrampdelay', 'random',
+            'repeat', 'setvol', 'single', 'replay_gain_mode',
+            'replay_gain_status', 'volume',
             }, expectedFailure=True)
 
     test_implements_control = implements({
-            b'next', b'pause', b'play', b'playid', b'previous', b'seek',
-            b'seekid', b'seekcur', b'stop',
+            'next', 'pause', 'play', 'playid', 'previous', 'seek',
+            'seekid', 'seekcur', 'stop',
             }, expectedFailure=True)
 
     def test_cmd_play(self):
         responses = self.client.send_commands(
-                (b'add', b'Artist Name/Album Title/01 Track One Title.mp3'),
-                (b'status',),
-                (b'play',),
-                (b'status',))
-        self.assertIn(b'state: stop', responses[1].body.split(b'\n'))
+                ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
+                ('status',),
+                ('play',),
+                ('status',))
+        self.assertEqual('stop', responses[1].data['state'])
         self.assertTrue(responses[2].ok)
-        self.assertIn(b'state: play', responses[3].body.split(b'\n'))
+        self.assertEqual('play', responses[3].data['state'])
 
     test_implements_queue = implements({
-            b'add', b'addid', b'clear', b'delete', b'deleteid', b'move',
-            b'moveid', b'playlist', b'playlistfind', b'playlistid',
-            b'playlistinfo', b'playlistsearch', b'plchanges',
-            b'plchangesposid', b'prio', b'prioid', b'rangeid', b'shuffle',
-            b'swap', b'swapid', b'addtagid', b'cleartagid',
+            'add', 'addid', 'clear', 'delete', 'deleteid', 'move',
+            'moveid', 'playlist', 'playlistfind', 'playlistid',
+            'playlistinfo', 'playlistsearch', 'plchanges',
+            'plchangesposid', 'prio', 'prioid', 'rangeid', 'shuffle',
+            'swap', 'swapid', 'addtagid', 'cleartagid',
             }, expectedFailure=True)
 
     def test_cmd_add(self):
         response = self.client.send_command(
-                b'add',
-                b'Artist Name/Album Title/01 Track One Title.mp3')
+                'add',
+                'Artist Name/Album Title/01 Track One Title.mp3')
         self.assertTrue(response.ok)
 
     def test_cmd_playlistinfo(self):
         responses = self.client.send_commands(
-                (b'add', b'Artist Name/Album Title/01 Track One Title.mp3'),
-                (b'playlistinfo',),
-                (b'playlistinfo', b'0'))
+                ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
+                ('playlistinfo',),
+                ('playlistinfo', '0'))
         self.assertTrue(responses[1].ok)
         self.assertTrue(responses[2].ok)
-        self.assertEqual(responses[1].body, responses[2].body)
+        self.assertEqual(responses[1].data, responses[2].data)
 
-        response = self.client.send_command(b'playlistinfo', b'1')
+        response = self.client.send_command('playlistinfo', '1')
         self.assertTrue(response.err)
         self.assertEqual(
-                b'ACK [2@0] {playlistinfo} argument out of range',
+                'ACK [2@0] {playlistinfo} argument out of range',
                 response.status)
 
     test_implements_playlists = implements({
-            b'listplaylist', b'listplaylistinfo', b'listplaylists', b'load',
-            b'playlistadd', b'playlistclear', b'playlistdelete',
-            b'playlistmove', b'rename', b'rm', b'save',
+            'listplaylist', 'listplaylistinfo', 'listplaylists', 'load',
+            'playlistadd', 'playlistclear', 'playlistdelete',
+            'playlistmove', 'rename', 'rm', 'save',
             }, expectedFailure=True)
 
     test_implements_database = implements({
-            b'albumart', b'count', b'find', b'findadd', b'list', b'listall',
-            b'listallinfo', b'listfiles', b'lsinfo', b'readcomments',
-            b'search', b'searchadd', b'searchaddpl', b'update', b'rescan',
+            'albumart', 'count', 'find', 'findadd', 'list', 'listall',
+            'listallinfo', 'listfiles', 'lsinfo', 'readcomments',
+            'search', 'searchadd', 'searchaddpl', 'update', 'rescan',
             }, expectedFailure=True)
 
     def test_cmd_search(self):
-        response = self.client.send_command(b'search', b'track', b'1')
+        response = self.client.send_command('search', 'track', '1')
         self.assertEqual(
-                b'file: Artist Name/Album Title/01 Track One Title.mp3',
-                response.body.split(b'\n')[0])
+                'Artist Name/Album Title/01 Track One Title.mp3',
+                response.data['file'])
 
     def test_cmd_list_simple(self):
-        response = self.client.send_command(b'list', b'album')
-        self.assertEqual(b'Album: Album Title', response.body)
+        response = self.client.send_command('list', 'album')
+        self.assertEqual('Album Title', response.data['Album'])
 
-        response = self.client.send_command(b'list', b'track')
-        self.assertEqual(b'Track: 1\nTrack: 2', response.body)
+        response = self.client.send_command('list', 'track')
+        self.assertEqual(['1', '2'], response.data['Track'])
 
     def test_cmd_count(self):
-        response = self.client.send_command(b'count', b'track', b'1')
-        self.assertEqual(b'songs: 1\nplaytime: 0', response.body)
+        response = self.client.send_command('count', 'track', '1')
+        self.assertEqual('1', response.data['songs'])
+        self.assertEqual('0', response.data['playtime'])
 
     test_implements_mounts = implements({
-            b'mount', b'unmount', b'listmounts', b'listneighbors',
+            'mount', 'unmount', 'listmounts', 'listneighbors',
             }, expectedFailure=True)
 
     test_implements_stickers = implements({
-            b'sticker',
+            'sticker',
             }, expectedFailure=True)
 
     test_implements_connection = implements({
-            b'close', b'kill', b'password', b'ping', b'tagtypes',
+            'close', 'kill', 'password', 'ping', 'tagtypes',
             })
 
     def test_cmd_password(self):
         self.client = self.make_server_client(password='abc123')
 
-        response = self.client.send_command(b'status')
+        response = self.client.send_command('status')
         self.assertTrue(response.err)
         self.assertEqual(response.status,
-                         b'ACK [4@0] {} insufficient privileges')
+                         'ACK [4@0] {} insufficient privileges')
 
-        response = self.client.send_command(b'password', b'wrong')
+        response = self.client.send_command('password', 'wrong')
         self.assertTrue(response.err)
         self.assertEqual(response.status,
-                         b'ACK [3@0] {password} incorrect password')
+                         'ACK [3@0] {password} incorrect password')
 
-        response = self.client.send_command(b'password', b'abc123')
+        response = self.client.send_command('password', 'abc123')
         self.assertTrue(response.ok)
-        response = self.client.send_command(b'status')
+        response = self.client.send_command('status')
         self.assertTrue(response.ok)
 
     def test_cmd_ping(self):
-        response = self.client.send_command(b'ping')
+        response = self.client.send_command('ping')
         self.assertTrue(response.ok)
 
     @unittest.expectedFailure
     def test_cmd_tagtypes(self):
-        response = self.client.send_command(b'tagtypes')
-        types = {line[9:].lower() for line in response.body.split(b'\n')}
+        response = self.client.send_command('tagtypes')
+        types = {tag.lower() for tag in response.data['tag']}
         self.assertEqual({
-            b'artist', b'artistsort', b'album', b'albumsort', b'albumartist',
-            b'albumartistsort', b'title', b'track', b'name', b'genre', b'date',
-            b'composer', b'performer', b'comment', b'disc', b'label',
-            b'musicbrainz_artistid', b'musicbrainz_albumid',
-            b'musicbrainz_albumartistid', b'musicbrainz_trackid',
-            b'musicbrainz_releasetrackid', b'musicbrainz_workid',
+            'artist', 'artistsort', 'album', 'albumsort', 'albumartist',
+            'albumartistsort', 'title', 'track', 'name', 'genre', 'date',
+            'composer', 'performer', 'comment', 'disc', 'label',
+            'musicbrainz_artistid', 'musicbrainz_albumid',
+            'musicbrainz_albumartistid', 'musicbrainz_trackid',
+            'musicbrainz_releasetrackid', 'musicbrainz_workid',
             }, types)
 
     @unittest.expectedFailure
     def test_tagtypes_mask(self):
-        response = self.client.send_command(b'tagtypes', b'clear')
+        response = self.client.send_command('tagtypes', 'clear')
         self.assertTrue(response.ok)
 
     test_implements_partitions = implements({
-            b'partition', b'listpartitions', b'newpartition',
+            'partition', 'listpartitions', 'newpartition',
             }, expectedFailure=True)
 
     test_implements_devices = implements({
-            b'disableoutput', b'enableoutput', b'toggleoutput', b'outputs',
+            'disableoutput', 'enableoutput', 'toggleoutput', 'outputs',
             }, expectedFailure=True)
 
     test_implements_reflection = implements({
-            b'config', b'commands', b'notcommands', b'urlhandlers',
-            b'decoders',
+            'config', 'commands', 'notcommands', 'urlhandlers',
+            'decoders',
             }, expectedFailure=True)
 
     test_implements_peers = implements({
-            b'subscribe', b'unsubscribe', b'channels', b'readmessages',
-            b'sendmessage',
+            'subscribe', 'unsubscribe', 'channels', 'readmessages',
+            'sendmessage',
             }, expectedFailure=True)
 
 
