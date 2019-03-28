@@ -216,7 +216,7 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.lib.add_album([self.item1, self.item2])
 
         with open(os.path.join(self.temp_dir, b'bpd_mock.py'), 'wb') as f:
-            f.write(b'from unittest import mock\n')
+            f.write(b'import mock\n')
             f.write(b'import sys, imp\n')
             f.write(b'gstplayer = imp.new_module("beetsplug.bpg.gstplayer")\n')
             f.write(b'gstplayer._GstPlayer = mock.MagicMock(spec_set=["time",')
@@ -260,7 +260,7 @@ class BPDTest(unittest.TestCase, TestHelper):
         # Launch BPD in a new process:
         env = dict(os.environ.items())
         env['PYTHONPATH'] = ':'.join(
-                [self.temp_dir.decode('utf-8')] + sys.path[1:])
+                [self.temp_dir.decode('utf-8')] + sys.path[1:]).encode('utf-8')
         beet = os.path.join(os.path.dirname(__file__), '..', 'beet')
         server = subprocess.Popen([
             beet,
