@@ -18,6 +18,9 @@
 from __future__ import division, absolute_import, print_function
 
 import unittest
+from test.helper import TestHelper
+
+import os
 import sys
 import multiprocessing as mp
 import socket
@@ -29,7 +32,6 @@ from contextlib import contextmanager
 from beets.util import confit, py3_path
 from beetsplug import bpd
 
-from test.helper import TestHelper
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
 import mock
@@ -225,6 +227,8 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.item1 = self.add_item(title='Track One Title',
                                    album='Album Title', artist='Artist Name',
                                    track=1)
+        self.item1_path = os.path.join(
+                'Artist Name', 'Album Title', '01 Track One Title.mp3')
         self.item2 = self.add_item(title='Track Two Title',
                                    album='Album Title', artist='Artist Name',
                                    track=2)
@@ -243,14 +247,15 @@ class BPDTest(unittest.TestCase, TestHelper):
         """
         # Create a config file:
         config = {
-                'pluginpath': [self.temp_dir.decode('utf-8')],
+                'pluginpath': [os.fsdecode(self.temp_dir)],
                 'plugins': 'bpd',
                 'bpd': {'host': host, 'port': port},
         }
         if password:
             config['bpd']['password'] = password
         config_file = tempfile.NamedTemporaryFile(
-                mode='wb', dir=self.temp_dir, suffix=b'.yaml', delete=False)
+                mode='wb', dir=os.fsdecode(self.temp_dir), suffix='.yaml',
+                delete=False)
         config_file.write(
                 yaml.dump(config, Dumper=confit.Dumper, encoding='utf-8'))
         config_file.close()
@@ -304,7 +309,7 @@ class BPDTest(unittest.TestCase, TestHelper):
     def test_cmd_play(self):
         with self.run_bpd() as client:
             responses = client.send_commands(
-                    ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
+                    ('add', self.item1_path),
                     ('status',),
                     ('play',),
                     ('status',))
@@ -322,15 +327,13 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     def test_cmd_add(self):
         with self.run_bpd() as client:
-            response = client.send_command(
-                    'add',
-                    'Artist Name/Album Title/01 Track One Title.mp3')
+            response = client.send_command('add', self.item1_path)
         self.assertTrue(response.ok)
 
     def test_cmd_playlistinfo(self):
         with self.run_bpd() as client:
             responses = client.send_commands(
-                    ('add', 'Artist Name/Album Title/01 Track One Title.mp3'),
+                    ('add', self.item1_path),
                     ('playlistinfo',),
                     ('playlistinfo', '0'))
             response = client.send_command('playlistinfo', '200')
@@ -358,9 +361,7 @@ class BPDTest(unittest.TestCase, TestHelper):
     def test_cmd_search(self):
         with self.run_bpd() as client:
             response = client.send_command('search', 'track', '1')
-        self.assertEqual(
-                'Artist Name/Album Title/01 Track One Title.mp3',
-                response.data['file'])
+        self.assertEqual(self.item1_path, response.data['file'])
 
     def test_cmd_list_simple(self):
         with self.run_bpd() as client:
