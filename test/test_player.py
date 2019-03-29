@@ -132,7 +132,7 @@ class MPCClient(object):
             if not hello.ok:
                 raise RuntimeError('Bad hello: {}'.format(hello.status))
 
-    def get_response(self):
+    def get_response(self, force_multi=None):
         """ Wait for a full server response and wrap it in a helper class.
         If the request was a batch request then this will return a list of
         `MPCResponse`s, one for each processed subcommand.
@@ -144,7 +144,7 @@ class MPCClient(object):
             line = self.readline()
             response += line
             if line.startswith(b'OK') or line.startswith(b'ACK'):
-                if any(responses):
+                if force_multi or any(responses):
                     if line.startswith(b'ACK'):
                         responses.append(MPCResponse(response))
                     return responses
@@ -185,7 +185,7 @@ class MPCClient(object):
         requests.append(b'command_list_end\n')
         request = b''.join(requests)
         self.sock.sendall(request)
-        return self.get_response()
+        return self.get_response(force_multi=True)
 
     def readline(self, terminator=b'\n', bufsize=1024):
         """ Reads a line of data from the socket.
@@ -227,8 +227,6 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.item1 = self.add_item(title='Track One Title',
                                    album='Album Title', artist='Artist Name',
                                    track=1)
-        self.item1_path = os.path.join(
-                'Artist Name', 'Album Title', '01 Track One Title.mp3')
         self.item2 = self.add_item(title='Track Two Title',
                                    album='Album Title', artist='Artist Name',
                                    track=2)
@@ -306,16 +304,24 @@ class BPDTest(unittest.TestCase, TestHelper):
             'seekid', 'seekcur', 'stop',
             }, expectedFailure=True)
 
+    def bpd_add_item(self, client, item):
+        """ Add the given item to the BPD playlist
+        """
+        name = py3_path(os.path.basename(item.path))
+        path = '/'.join([item.artist, item.album, name])
+        response = client.send_command('add', path)
+        self.assertTrue(response.ok)
+
     def test_cmd_play(self):
         with self.run_bpd() as client:
+            self.bpd_add_item(client, self.item1)
             responses = client.send_commands(
-                    ('add', self.item1_path),
                     ('status',),
                     ('play',),
                     ('status',))
-        self.assertEqual('stop', responses[1].data['state'])
-        self.assertTrue(responses[2].ok)
-        self.assertEqual('play', responses[3].data['state'])
+        self.assertEqual('stop', responses[0].data['state'])
+        self.assertTrue(responses[1].ok)
+        self.assertEqual('play', responses[2].data['state'])
 
     test_implements_queue = implements({
             'add', 'addid', 'clear', 'delete', 'deleteid', 'move',
@@ -327,19 +333,18 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     def test_cmd_add(self):
         with self.run_bpd() as client:
-            response = client.send_command('add', self.item1_path)
-        self.assertTrue(response.ok)
+            self.bpd_add_item(client, self.item1)
 
     def test_cmd_playlistinfo(self):
         with self.run_bpd() as client:
+            self.bpd_add_item(client, self.item1)
             responses = client.send_commands(
-                    ('add', self.item1_path),
                     ('playlistinfo',),
                     ('playlistinfo', '0'))
             response = client.send_command('playlistinfo', '200')
 
+        self.assertTrue(responses[0].ok)
         self.assertTrue(responses[1].ok)
-        self.assertTrue(responses[2].ok)
 
         self.assertTrue(response.err)
         self.assertEqual(
@@ -361,7 +366,7 @@ class BPDTest(unittest.TestCase, TestHelper):
     def test_cmd_search(self):
         with self.run_bpd() as client:
             response = client.send_command('search', 'track', '1')
-        self.assertEqual(self.item1_path, response.data['file'])
+        self.assertEqual(self.item1.title, response.data['Title'])
 
     def test_cmd_list_simple(self):
         with self.run_bpd() as client:
@@ -369,6 +374,15 @@ class BPDTest(unittest.TestCase, TestHelper):
             response2 = client.send_command('list', 'track')
         self.assertEqual('Album Title', response1.data['Album'])
         self.assertEqual(['1', '2'], response2.data['Track'])
+
+    def test_cmd_lsinfo(self):
+        with self.run_bpd() as client:
+            response1 = client.send_command('lsinfo')
+            response2 = client.send_command(
+                    'lsinfo', response1.data['directory'])
+            response3 = client.send_command(
+                    'lsinfo', response2.data['directory'])
+        self.assertIn(self.item1.title, response3.data['Title'])
 
     def test_cmd_count(self):
         with self.run_bpd() as client:
