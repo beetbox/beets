@@ -247,14 +247,14 @@ class BPDTest(unittest.TestCase, TestHelper):
         """
         # Create a config file:
         config = {
-                'pluginpath': [os.fsdecode(self.temp_dir)],
+                'pluginpath': [py3_path(self.temp_dir)],
                 'plugins': 'bpd',
                 'bpd': {'host': host, 'port': port},
         }
         if password:
             config['bpd']['password'] = password
         config_file = tempfile.NamedTemporaryFile(
-                mode='wb', dir=os.fsdecode(self.temp_dir), suffix='.yaml',
+                mode='wb', dir=py3_path(self.temp_dir), suffix='.yaml',
                 delete=False)
         config_file.write(
                 yaml.dump(config, Dumper=confit.Dumper, encoding='utf-8'))
