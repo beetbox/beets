@@ -429,15 +429,14 @@ class BPDTest(unittest.TestCase, TestHelper):
     def test_cmd_tagtypes(self):
         with self.run_bpd() as client:
             response = client.send_command('tagtypes')
-        types = {tag.lower() for tag in response.data['tag']}
         self.assertEqual({
-            'artist', 'artistsort', 'album', 'albumsort', 'albumartist',
-            'albumartistsort', 'title', 'track', 'name', 'genre', 'date',
-            'composer', 'performer', 'comment', 'disc', 'label',
-            'musicbrainz_artistid', 'musicbrainz_albumid',
-            'musicbrainz_albumartistid', 'musicbrainz_trackid',
-            'musicbrainz_releasetrackid', 'musicbrainz_workid',
-            }, types)
+            'Artist', 'ArtistSort', 'Album', 'AlbumSort', 'AlbumArtist',
+            'AlbumArtistSort', 'Title', 'Track', 'Name', 'Genre', 'Date',
+            'Composer', 'Performer', 'Comment', 'Disc', 'Label',
+            'OriginalDate', 'MUSICBRAINZ_ARTISTID', 'MUSICBRAINZ_ALBUMID',
+            'MUSICBRAINZ_ALBUMARTISTID', 'MUSICBRAINZ_TRACKID',
+            'MUSICBRAINZ_RELEASETRACKID', 'MUSICBRAINZ_WORKID',
+            }, set(response.data['tag']))
 
     @unittest.expectedFailure
     def test_tagtypes_mask(self):
