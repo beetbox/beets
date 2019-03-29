@@ -260,8 +260,7 @@ class BPDTest(unittest.TestCase, TestHelper):
             '--library', self.config['library'].as_filename(),
             '--directory', py3_path(self.libdir),
             '--config', py3_path(config_file.name),
-            '--verbose', '--verbose',
-            'bpd', '--debug'
+            'bpd'
         )
         server = mp.Process(target=start_beets, args=args)
         server.start()
@@ -281,8 +280,7 @@ class BPDTest(unittest.TestCase, TestHelper):
             yield MPCClient(host, port, do_hello)
         finally:
             server.terminate()
-            server.join(timeout=0.1)
-            server.kill()
+            server.join(timeout=0.2)
 
     def test_server_hello(self):
         with self.run_bpd(do_hello=False) as client:
