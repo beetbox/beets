@@ -361,7 +361,7 @@ class BPDQueryTest(BPDTestHelper):
 
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
-            'consume', 'mixrampd', 'mixrampdelay', 'random',
+            'consume', 'random',
             'repeat', 'setvol', 'single', 'replay_gain_mode',
             'replay_gain_status', 'volume',
             }, expectedFailure=True)
@@ -378,6 +378,26 @@ class BPDPlaybackTest(BPDTestHelper):
         self._assert_failed(response, bpd.ERROR_ARG)
         self.assertNotIn('xfade', responses[0].data)
         self.assertAlmostEqual(123, int(responses[2].data['xfade']))
+
+    def test_cmd_mixrampdb(self):
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('mixrampdb', '-17'),
+                    ('status',))
+        self._assert_ok(*responses)
+        self.assertAlmostEqual(-17, float(responses[1].data['mixrampdb']))
+
+    def test_cmd_mixrampdelay(self):
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('mixrampdelay', '2'),
+                    ('status',),
+                    ('mixrampdelay', 'nan'),
+                    ('status',),
+                    ('mixrampdelay', '-2'))
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=4)
+        self.assertAlmostEqual(2, float(responses[1].data['mixrampdelay']))
+        self.assertNotIn('mixrampdelay', responses[3].data)
 
 
 class BPDControlTest(BPDTestHelper):

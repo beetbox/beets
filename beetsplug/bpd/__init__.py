@@ -25,6 +25,7 @@ from string import Template
 import traceback
 import random
 import time
+import math
 
 import beets
 from beets.plugins import BeetsPlugin
@@ -174,6 +175,8 @@ class BaseServer(object):
         self.repeat = False
         self.volume = VOLUME_MAX
         self.crossfade = 0
+        self.mixrampdb = 0.0
+        self.mixrampdelay = float('nan')
         self.playlist = []
         self.playlist_version = 0
         self.current_index = -1
@@ -307,8 +310,11 @@ class BaseServer(object):
             u'random: ' + six.text_type(int(self.random)),
             u'playlist: ' + six.text_type(self.playlist_version),
             u'playlistlength: ' + six.text_type(len(self.playlist)),
+            u'mixrampdb: ' + six.text_type(self.mixrampdb),
         )
 
+        if not math.isnan(self.mixrampdelay):
+            yield u'mixrampdelay: ' + six.text_type(self.mixrampdelay)
         if self.crossfade > 0:
             yield u'xfade: ' + six.text_type(self.crossfade)
 
@@ -357,6 +363,22 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'crossfade time must be nonnegative')
         self._log.warning(u'crossfade is not implemented in bpd')
         self.crossfade = crossfade
+
+    def cmd_mixrampdb(self, conn, db):
+        """Set the mixramp normalised max volume in dB."""
+        db = cast_arg(float, db)
+        if db > 0:
+            raise BPDError(ERROR_ARG, u'mixrampdb time must be negative')
+        self._log.warning('mixramp is not implemented in bpd')
+        self.mixrampdb = db
+
+    def cmd_mixrampdelay(self, conn, delay):
+        """Set the mixramp delay in seconds."""
+        delay = cast_arg(float, delay)
+        if delay < 0:
+            raise BPDError(ERROR_ARG, u'mixrampdelay time must be nonnegative')
+        self._log.warning('mixramp is not implemented in bpd')
+        self.mixrampdelay = delay
 
     def cmd_clear(self, conn):
         """Clear the playlist."""
