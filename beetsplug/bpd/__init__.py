@@ -729,7 +729,7 @@ class CommandList(list):
                 e.index = i  # Give the error the correct index.
                 raise e
 
-            # Otherwise, possibly send the output delimeter if we're in a
+            # Otherwise, possibly send the output delimiter if we're in a
             # verbose ("OK") command list.
             if self.verbose:
                 yield conn.send(RESP_CLIST_VERBOSE)
@@ -807,9 +807,9 @@ class Server(BaseServer):
         """
         # Path is ignored. Also, the real MPD does this asynchronously;
         # this is done inline.
-        print(u'Building directory tree...')
+        log.debug(u'Building directory tree...')
         self.tree = vfs.libtree(self.lib)
-        print(u'... done.')
+        log.debug(u'Finished building directory tree.')
         self.updated_time = time.time()
 
     # Path (directory tree) browsing.
