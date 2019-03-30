@@ -123,9 +123,8 @@ class MPCResponse(object):
 
 
 class MPCClient(object):
-    def __init__(self, host, port, do_hello=True):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((host, port))
+    def __init__(self, sock, do_hello=True):
+        self.sock = sock
         self.buf = b''
         if do_hello:
             hello = self.get_response()
@@ -268,20 +267,22 @@ class BPDTest(unittest.TestCase, TestHelper):
         server = mp.Process(target=start_beets, args=args)
         server.start()
 
-        # Wait until the socket is bound:
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Wait until the socket is connected:
+        sock = None
         for _ in range(20):
-            if self.sock.connect_ex((host, port)) == 0:
-                self.sock.close()
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if sock.connect_ex((host, port)) == 0:
                 break
             else:
+                sock.close()
                 time.sleep(0.01)
         else:
             raise RuntimeError('Timed out waiting for the BPD server')
 
         try:
-            yield MPCClient(host, port, do_hello)
+            yield MPCClient(sock, do_hello)
         finally:
+            sock.close()
             server.terminate()
             server.join(timeout=0.2)
 
