@@ -674,7 +674,8 @@ class Command(object):
         # Attempt to get correct command function.
         func_name = 'cmd_' + self.name
         if not hasattr(conn.server, func_name):
-            raise BPDError(ERROR_UNKNOWN, u'unknown command', self.name)
+            raise BPDError(ERROR_UNKNOWN,
+                           u'unknown command "{}"'.format(self.name))
         func = getattr(conn.server, func_name)
 
         # Ensure we have permission for this command.
@@ -689,6 +690,13 @@ class Command(object):
             if results:
                 for data in results:
                     yield conn.send(data)
+
+        except TypeError:
+            # The client provided too many arguments.
+            raise BPDError(ERROR_ARG,
+                           u'wrong number of arguments for "{}"'
+                           .format(self.name),
+                           self.name)
 
         except BPDError as e:
             # An exposed error. Set the command name and then let

@@ -347,6 +347,11 @@ class BPDTest(BPDTestHelper):
             response = client.send_command('notacommand')
         self._assert_failed(response, bpd.ERROR_UNKNOWN)
 
+    def test_unexpected_argument(self):
+        with self.run_bpd() as client:
+            response = client.send_command('clearerror', 'extra argument')
+        self._assert_failed(response, bpd.ERROR_ARG)
+
 
 class BPDQueryTest(BPDTestHelper):
     test_implements_query = implements({
