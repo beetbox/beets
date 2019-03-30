@@ -224,12 +224,12 @@ class BPDTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets(disk=True)
         self.load_plugins('bpd')
-        self.item1 = self.add_item(title='Track One Title',
-                                   album='Album Title', artist='Artist Name',
-                                   track=1)
-        self.item2 = self.add_item(title='Track Two Title',
-                                   album='Album Title', artist='Artist Name',
-                                   track=2)
+        self.item1 = self.add_item(
+                title='Track One Title', track=1,
+                album='Album Title', artist='Artist Name')
+        self.item2 = self.add_item(
+                title='Track Two Title', track=2,
+                album='Album Title', artist='Artist Name')
         self.lib.add_album([self.item1, self.item2])
 
     def tearDown(self):
@@ -238,7 +238,7 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     @contextmanager
     def run_bpd(self, host='localhost', port=9876, password=None,
-                           do_hello=True):
+                do_hello=True):
         """ Runs BPD in another process, configured with the same library
         database as we created in the setUp method. Exposes a client that is
         connected to the server, and kills the server at the end.
@@ -404,7 +404,6 @@ class BPDTest(unittest.TestCase, TestHelper):
 
     def test_cmd_password(self):
         with self.run_bpd(password='abc123') as client:
-
             response = client.send_command('status')
             self.assertTrue(response.err)
             self.assertEqual(response.status,
