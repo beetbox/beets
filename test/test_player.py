@@ -469,7 +469,7 @@ class BPDTest(unittest.TestCase, TestHelper):
             response = client.send_command('ping')
         self._assert_ok(response)
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_cmd_tagtypes(self):
         with self.run_bpd() as client:
             response = client.send_command('tagtypes')
@@ -483,7 +483,7 @@ class BPDTest(unittest.TestCase, TestHelper):
             'MUSICBRAINZ_RELEASETRACKID', 'MUSICBRAINZ_WORKID',
             }, set(response.data['tag']))
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_tagtypes_mask(self):
         with self.run_bpd() as client:
             response = client.send_command('tagtypes', 'clear')
