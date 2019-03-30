@@ -307,8 +307,10 @@ class BaseServer(object):
             u'random: ' + six.text_type(int(self.random)),
             u'playlist: ' + six.text_type(self.playlist_version),
             u'playlistlength: ' + six.text_type(len(self.playlist)),
-            u'xfade: ' + six.text_type(self.crossfade),
         )
+
+        if self.crossfade > 0:
+            yield u'xfade: ' + six.text_type(self.crossfade)
 
         if self.current_index == -1:
             state = u'stop'
@@ -353,6 +355,8 @@ class BaseServer(object):
         crossfade = cast_arg(int, crossfade)
         if crossfade < 0:
             raise BPDError(ERROR_ARG, u'crossfade time must be nonnegative')
+        self._log.warning(u'crossfade is not implemented in bpd')
+        self.crossfade = crossfade
 
     def cmd_clear(self, conn):
         """Clear the playlist."""

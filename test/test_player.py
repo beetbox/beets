@@ -356,10 +356,23 @@ class BPDQueryTest(BPDTestHelper):
 
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
-            'consume', 'crossfade', 'mixrampd', 'mixrampdelay', 'random',
+            'consume', 'mixrampd', 'mixrampdelay', 'random',
             'repeat', 'setvol', 'single', 'replay_gain_mode',
             'replay_gain_status', 'volume',
             }, expectedFailure=True)
+
+    def test_cmd_crossfade(self):
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('status',),
+                    ('crossfade', '123'),
+                    ('status',),
+                    ('crossfade', '-2'))
+            response = client.send_command('crossfade', '0.5')
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=3)
+        self._assert_failed(response, bpd.ERROR_ARG)
+        self.assertNotIn('xfade', responses[0].data)
+        self.assertAlmostEqual(123, int(responses[2].data['xfade']))
 
 
 class BPDControlTest(BPDTestHelper):
