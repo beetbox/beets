@@ -160,6 +160,9 @@ Fixes:
   :bug:`2826` :bug:`3092`
 * :doc:`/plugins/beatport`: Avoid a crash when the server produces an error.
   :bug:`3184`
+* :doc:`/plugins/lastgenre`: Avoid a deprecation warning from the YAML
+  library.
+  :bug:`3192`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
