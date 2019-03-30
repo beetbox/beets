@@ -362,8 +362,7 @@ class BPDQueryTest(BPDTestHelper):
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
             'consume', 'random',
-            'repeat', 'single', 'replay_gain_mode',
-            'replay_gain_status',
+            'repeat', 'single',
             }, expectedFailure=True)
 
     def test_cmd_crossfade(self):
@@ -415,6 +414,15 @@ class BPDPlaybackTest(BPDTestHelper):
         with self.run_bpd() as client:
             response = client.send_command('volume', '10')
         self._assert_failed(response, bpd.ERROR_SYSTEM)
+
+    def test_cmd_replay_gain(self):
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('replay_gain_mode', 'track'),
+                    ('replay_gain_status',),
+                    ('replay_gain_mode', 'notanoption'))
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
+        self.assertAlmostEqual('track', responses[1].data['replay_gain_mode'])
 
 
 class BPDControlTest(BPDTestHelper):
