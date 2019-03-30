@@ -46,7 +46,7 @@ gstplayer._GstPlayer = mock.MagicMock(
         "seek"
     ], **{
         'playing': False,
-        'volume': 0.0,
+        'volume': 0,
         'time.return_value': (0, 0),
         'play_file.side_effect': _gstplayer_play,
     })
@@ -362,8 +362,8 @@ class BPDQueryTest(BPDTestHelper):
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
             'consume', 'random',
-            'repeat', 'setvol', 'single', 'replay_gain_mode',
-            'replay_gain_status', 'volume',
+            'repeat', 'single', 'replay_gain_mode',
+            'replay_gain_status',
             }, expectedFailure=True)
 
     def test_cmd_crossfade(self):
@@ -398,6 +398,23 @@ class BPDPlaybackTest(BPDTestHelper):
         self._assert_failed(responses, bpd.ERROR_ARG, pos=4)
         self.assertAlmostEqual(2, float(responses[1].data['mixrampdelay']))
         self.assertNotIn('mixrampdelay', responses[3].data)
+
+    def test_cmd_setvol(self):
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('setvol', '67'),
+                    ('status',),
+                    ('setvol', '32'),
+                    ('status',),
+                    ('setvol', '101'))
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=4)
+        self.assertEqual('67', responses[1].data['volume'])
+        self.assertEqual('32', responses[3].data['volume'])
+
+    def test_cmd_volume(self):
+        with self.run_bpd() as client:
+            response = client.send_command('volume', '10')
+        self._assert_failed(response, bpd.ERROR_SYSTEM)
 
 
 class BPDControlTest(BPDTestHelper):

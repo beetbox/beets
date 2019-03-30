@@ -356,6 +356,10 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'volume out of range')
         self.volume = vol
 
+    def cmd_volume(self, conn, vol_delta):
+        """Deprecated command to change the volume by a relative amount."""
+        raise BPDError(ERROR_SYSTEM, u'No mixer')
+
     def cmd_crossfade(self, conn, crossfade):
         """Set the number of seconds of crossfading."""
         crossfade = cast_arg(int, crossfade)
