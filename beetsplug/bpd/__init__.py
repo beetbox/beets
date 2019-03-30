@@ -177,6 +177,7 @@ class BaseServer(object):
         self.crossfade = 0
         self.mixrampdb = 0.0
         self.mixrampdelay = float('nan')
+        self.replay_gain_mode = 'off'
         self.playlist = []
         self.playlist_version = 0
         self.current_index = -1
@@ -383,6 +384,17 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'mixrampdelay time must be nonnegative')
         self._log.warning('mixramp is not implemented in bpd')
         self.mixrampdelay = delay
+
+    def cmd_replay_gain_mode(self, conn, mode):
+        """Set the replay gain mode."""
+        if mode not in ['off', 'track', 'album', 'auto']:
+            raise BPDError(ERROR_ARG, u'Unrecognised replay gain mode')
+        self._log.warning('replay gain is not implemented in bpd')
+        self.replay_gain_mode = mode
+
+    def cmd_replay_gain_status(self, conn):
+        """Get the replaygain mode."""
+        yield u'replay_gain_mode: ' + six.text_type(self.replay_gain_mode)
 
     def cmd_clear(self, conn):
         """Clear the playlist."""
