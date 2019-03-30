@@ -36,12 +36,20 @@ from beetsplug import bpd
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
 import mock
 import imp
-gstplayer = imp.new_module("beetsplug.bpg.gstplayer")
-gstplayer._GstPlayer = mock.MagicMock(spec_set=[
-    "time", "volume", "playing", "run", "play_file", "pause", "stop", "seek"])
-gstplayer._GstPlayer.time.return_value = (0, 0)
-gstplayer._GstPlayer.volume = 0.0
-gstplayer._GstPlayer.playing = False
+gstplayer = imp.new_module("beetsplug.bpd.gstplayer")
+def _gstplayer_play(_):  # noqa: 42
+    bpd.gstplayer._GstPlayer.playing = True
+    return mock.DEFAULT
+gstplayer._GstPlayer = mock.MagicMock(
+    spec_set=[
+        "time", "volume", "playing", "run", "play_file", "pause", "stop",
+        "seek"
+    ], **{
+        'playing': False,
+        'volume': 0.0,
+        'time.return_value': (0, 0),
+        'play_file.side_effect': _gstplayer_play,
+    })
 gstplayer.GstPlayer = lambda _: gstplayer._GstPlayer
 sys.modules["beetsplug.bpd.gstplayer"] = gstplayer
 bpd.gstplayer = gstplayer
