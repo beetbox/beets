@@ -23,7 +23,6 @@ from collections import defaultdict
 import threading
 import sqlite3
 import contextlib
-import collections
 
 import beets
 from beets.util.functemplate import Template
@@ -31,6 +30,10 @@ from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
+if six.PY2:
+    from collections import Mapping
+else:
+    from collections.abc import Mapping
 
 
 class DBAccessError(Exception):
@@ -42,7 +45,7 @@ class DBAccessError(Exception):
     """
 
 
-class FormattedMapping(collections.Mapping):
+class FormattedMapping(Mapping):
     """A `dict`-like formatted view of a model.
 
     The accessor `mapping[key]` returns the formatted version of
