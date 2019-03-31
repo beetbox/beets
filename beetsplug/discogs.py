@@ -284,7 +284,7 @@ class DiscogsPlugin(BeetsPlugin):
         # https://www.discogs.com/help/doc/submission-guidelines-general-rules
         if not all([result.data.get(k) for k in ['artists', 'title', 'id',
                                                  'tracklist']]):
-            self._log.warn(u"Release does not contain the required fields")
+            self._log.warning(u"Release does not contain the required fields")
             return None
 
         artist, artist_id = self.get_artist([a.data for a in result.artists])
