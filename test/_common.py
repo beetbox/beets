@@ -284,6 +284,9 @@ class DummyIn(object):
         else:
             self.buf.append(s + '\n')
 
+    def close(self):
+        pass
+
     def readline(self):
         if not self.buf:
             if self.out:
