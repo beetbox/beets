@@ -29,7 +29,6 @@ import time
 import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
-from beets import logging
 from beets import vfs
 from beets.util import bluelet
 from beets.library import Item
@@ -72,10 +71,6 @@ SAFE_COMMANDS = (
 )
 
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
-
-# Loggers.
-log = logging.getLogger('beets.bpd')
-global_log = logging.getLogger('beets')
 
 
 # Gstreamer import error.
@@ -166,12 +161,13 @@ class BaseServer(object):
     This is a generic superclass and doesn't support many commands.
     """
 
-    def __init__(self, host, port, password):
+    def __init__(self, host, port, password, log):
         """Create a new server bound to address `host` and listening
         on port `port`. If `password` is given, it is required to do
         anything significant on the server.
         """
         self.host, self.port, self.password = host, port, password
+        self._log = log
 
         # Default server values.
         self.random = False
@@ -573,7 +569,9 @@ class Connection(object):
         if isinstance(lines, six.string_types):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
-        log.debug('{}', out[:-1])  # Don't log trailing newline.
+        # Don't log trailing newline:
+        message = out[:-1].replace(u'\n', u'\n' + u' ' * 13)
+        self.server._log.debug('server: {}', message)
         if isinstance(out, six.text_type):
             out = out.encode('utf-8')
         return self.sock.sendall(out)
@@ -594,6 +592,7 @@ class Connection(object):
         """Send a greeting to the client and begin processing commands
         as they arrive.
         """
+        self.server._log.debug('New client connected')
         yield self.send(HELLO)
 
         clist = None  # Initially, no command list is being constructed.
@@ -605,7 +604,8 @@ class Connection(object):
             if not line:
                 break
             line = line.decode('utf8')  # MPD protocol uses UTF-8.
-            log.debug(u'{}', line)
+            message = line.replace(u'\n', u'\n' + u' ' * 13)
+            self.server._log.debug(u'client: {}', message)
 
             if clist is not None:
                 # Command list already opened.
@@ -699,7 +699,7 @@ class Command(object):
 
         except Exception as e:
             # An "unintentional" error. Hide it from the client.
-            log.error('{}', traceback.format_exc(e))
+            conn.server._log.error('{}', traceback.format_exc(e))
             raise BPDError(ERROR_SYSTEM, u'server error', self.name)
 
 
@@ -729,7 +729,7 @@ class CommandList(list):
                 e.index = i  # Give the error the correct index.
                 raise e
 
-            # Otherwise, possibly send the output delimeter if we're in a
+            # Otherwise, possibly send the output delimiter if we're in a
             # verbose ("OK") command list.
             if self.verbose:
                 yield conn.send(RESP_CLIST_VERBOSE)
@@ -743,7 +743,7 @@ class Server(BaseServer):
     to store its library.
     """
 
-    def __init__(self, library, host, port, password):
+    def __init__(self, library, host, port, password, log):
         try:
             from beetsplug.bpd import gstplayer
         except ImportError as e:
@@ -752,7 +752,7 @@ class Server(BaseServer):
                 raise NoGstreamerError()
             else:
                 raise
-        super(Server, self).__init__(host, port, password)
+        super(Server, self).__init__(host, port, password, log)
         self.lib = library
         self.player = gstplayer.GstPlayer(self.play_finished)
         self.cmd_update(None)
@@ -807,9 +807,9 @@ class Server(BaseServer):
         """
         # Path is ignored. Also, the real MPD does this asynchronously;
         # this is done inline.
-        print(u'Building directory tree...')
+        self._log.debug(u'Building directory tree...')
         self.tree = vfs.libtree(self.lib)
-        print(u'... done.')
+        self._log.debug(u'Finished building directory tree.')
         self.updated_time = time.time()
 
     # Path (directory tree) browsing.
@@ -1156,28 +1156,20 @@ class BPDPlugin(BeetsPlugin):
         })
         self.config['password'].redact = True
 
-    def start_bpd(self, lib, host, port, password, volume, debug):
+    def start_bpd(self, lib, host, port, password, volume):
         """Starts a BPD server."""
-        if debug:  # FIXME this should be managed by BeetsPlugin
-            self._log.setLevel(logging.DEBUG)
-        else:
-            self._log.setLevel(logging.WARNING)
         try:
-            server = Server(lib, host, port, password)
+            server = Server(lib, host, port, password, self._log)
             server.cmd_setvol(None, volume)
             server.run()
         except NoGstreamerError:
-            global_log.error(u'Gstreamer Python bindings not found.')
-            global_log.error(u'Install "gstreamer1.0" and "python-gi"'
-                             u'or similar package to use BPD.')
+            self._log.error(u'Gstreamer Python bindings not found.')
+            self._log.error(u'Install "gstreamer1.0" and "python-gi"'
+                            u'or similar package to use BPD.')
 
     def commands(self):
         cmd = beets.ui.Subcommand(
             'bpd', help=u'run an MPD-compatible music player server'
-        )
-        cmd.parser.add_option(
-            '-d', '--debug', action='store_true',
-            help=u'dump all MPD traffic to stdout'
         )
 
         def func(lib, opts, args):
@@ -1188,8 +1180,7 @@ class BPDPlugin(BeetsPlugin):
                 raise beets.ui.UserError(u'too many arguments')
             password = self.config['password'].as_str()
             volume = self.config['volume'].get(int)
-            debug = opts.debug or False
-            self.start_bpd(lib, host, int(port), password, volume, debug)
+            self.start_bpd(lib, host, int(port), password, volume)
 
         cmd.func = func
         return [cmd]
