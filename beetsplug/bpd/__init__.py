@@ -750,7 +750,7 @@ class Command(object):
                            u'unknown command "{}"'.format(self.name))
         func = getattr(conn.server, func_name)
         argspec = inspect.getargspec(func)
-        max_args = len(argspec.args) - 1
+        max_args = len(argspec.args) - 2
         min_args = max_args
         if argspec.defaults:
             min_args -= len(argspec.defaults)
