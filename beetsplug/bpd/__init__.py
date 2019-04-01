@@ -233,10 +233,10 @@ class BaseServer(object):
 
     def _succ_idx(self):
         """Returns the index for the next song to play.
-        It also considers random and repeat flags.
+        It also considers random, single and repeat flags.
         No boundaries are checked.
         """
-        if self.repeat:
+        if self.repeat and self.single:
             return self.current_index
         if self.random:
             return self._random_idx()
@@ -535,13 +535,17 @@ class BaseServer(object):
         old_index = self.current_index
         self.current_index = self._succ_idx()
         if self.consume:
+            # TODO how does consume interact with single+repeat?
             self.playlist.pop(old_index)
             if self.current_index > old_index:
                 self.current_index -= 1
         if self.current_index >= len(self.playlist):
-            # Fallen off the end. Just move to stopped state.
+            # Fallen off the end. Move to stopped state or loop.
+            if self.repeat:
+                self.current_index = -1
+                return self.cmd_play(conn)
             return self.cmd_stop(conn)
-        elif self.single:
+        elif self.single and not self.repeat:
             return self.cmd_stop(conn)
         else:
             return self.cmd_play(conn)
