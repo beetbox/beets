@@ -446,7 +446,7 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = html.replace('\r', '\n')  # Normalize EOL.
     html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
     html = BREAK_RE.sub('\n', html)  # <br> eats up surrounding '\n'.
-    html = re.sub(r'<(script).*?</\1>(?s)', '', html)  # Strip script tags.
+    html = re.sub(r'(?s)<(script).*?</\1>', '', html)  # Strip script tags.
 
     if plain_text_out:  # Strip remaining HTML tags
         html = COMMENT_RE.sub('', html)

@@ -22,9 +22,13 @@ import os
 import pkgutil
 import sys
 import yaml
-import collections
 import re
+import six
 from collections import OrderedDict
+if six.PY2:
+    from collections import Mapping, Sequence
+else:
+    from collections.abc import Mapping, Sequence
 
 UNIX_DIR_VAR = 'XDG_CONFIG_HOME'
 UNIX_DIR_FALLBACK = '~/.config'
@@ -1165,7 +1169,7 @@ class Choice(Template):
                 view
             )
 
-        if isinstance(self.choices, collections.Mapping):
+        if isinstance(self.choices, Mapping):
             return self.choices[value]
         else:
             return value
@@ -1306,11 +1310,11 @@ class Pairs(StrSeq):
             return (super(Pairs, self)._convert_value(x, view),
                     self.default_value)
         except ConfigTypeError:
-            if isinstance(x, collections.Mapping):
+            if isinstance(x, Mapping):
                 if len(x) != 1:
                     self.fail(u'must be a single-element mapping', view, True)
                 k, v = iter_first(x.items())
-            elif isinstance(x, collections.Sequence):
+            elif isinstance(x, Sequence):
                 if len(x) != 2:
                     self.fail(u'must be a two-element list', view, True)
                 k, v = x
@@ -1367,7 +1371,7 @@ class Filename(Template):
         return 'Filename({0})'.format(', '.join(args))
 
     def resolve_relative_to(self, view, template):
-        if not isinstance(template, (collections.Mapping, MappingTemplate)):
+        if not isinstance(template, (Mapping, MappingTemplate)):
             # disallow config.get(Filename(relative_to='foo'))
             raise ConfigTemplateError(
                 u'relative_to may only be used when getting multiple values.'
@@ -1486,7 +1490,7 @@ def as_template(value):
     if isinstance(value, Template):
         # If it's already a Template, pass it through.
         return value
-    elif isinstance(value, collections.Mapping):
+    elif isinstance(value, Mapping):
         # Dictionaries work as templates.
         return MappingTemplate(value)
     elif value is int:
@@ -1507,9 +1511,9 @@ def as_template(value):
     elif value is None:
         return Template()
     elif value is dict:
-        return TypeTemplate(collections.Mapping)
+        return TypeTemplate(Mapping)
     elif value is list:
-        return TypeTemplate(collections.Sequence)
+        return TypeTemplate(Sequence)
     elif isinstance(value, type):
         return TypeTemplate(value)
     else:
