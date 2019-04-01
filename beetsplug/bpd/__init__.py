@@ -247,7 +247,7 @@ class BaseServer(object):
         It also considers random and repeat flags.
         No boundaries are checked.
         """
-        if self.repeat:
+        if self.repeat and self.single:
             return self.current_index
         if self.random:
             return self._random_idx()
@@ -552,9 +552,15 @@ class BaseServer(object):
 
     def cmd_previous(self, conn):
         """Step back to the last song."""
+        old_index = self.current_index
         self.current_index = self._prev_idx()
+        if self.consume:
+            self.playlist.pop(old_index)
         if self.current_index < 0:
-            self.current_index = 0
+            if self.repeat:
+                self.current_index = len(self.playlist) - 1
+            else:
+                self.current_index = 0
         return self.cmd_play(conn)
 
     def cmd_pause(self, conn, state=None):

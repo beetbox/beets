@@ -409,6 +409,21 @@ class BPDPlaybackTest(BPDTestHelper):
         self.assertEqual('1', responses[9].data['consume'])
         self.assertEqual('play', responses[9].data['state'])
 
+    def test_cmd_consume_in_reverse(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('consume', '1'),
+                    ('play', '1'),
+                    ('playlistinfo',),
+                    ('previous',),
+                    ('playlistinfo',),
+                    ('status',))
+        self._assert_ok(*responses)
+        self.assertEqual(['1', '2'], responses[2].data['Id'])
+        self.assertEqual('1', responses[4].data['Id'])
+        self.assertEqual('play', responses[5].data['state'])
+
     def test_cmd_single(self):
         with self.run_bpd() as client:
             self._bpd_add(client, self.item1, self.item2)
@@ -450,6 +465,35 @@ class BPDPlaybackTest(BPDTestHelper):
                     ('play',),
                     ('currentsong',),
                     ('next',),
+                    ('status',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('1', responses[3].data['Id'])
+        self.assertEqual('play', responses[5].data['state'])
+        self.assertEqual('1', responses[6].data['Id'])
+
+    def test_cmd_repeat_in_reverse(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('repeat', '1'),
+                    ('play',),
+                    ('currentsong',),
+                    ('previous',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('1', responses[2].data['Id'])
+        self.assertEqual('2', responses[4].data['Id'])
+
+    def test_cmd_repeat_with_single_in_reverse(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('repeat', '1'),
+                    ('single', '1'),
+                    ('play',),
+                    ('currentsong',),
+                    ('previous',),
                     ('status',),
                     ('currentsong',))
         self._assert_ok(*responses)
