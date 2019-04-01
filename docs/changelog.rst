@@ -168,6 +168,9 @@ Fixes:
   The special-purpose ``--debug`` flag has been removed.
   Thanks to :user:`arcresu`.
   :bug:`3196`
+* Fix several uses of deprecated standard-library features on Python 3.7.
+  Thanks to :user:`arcresu`.
+  :bug:`3197`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
