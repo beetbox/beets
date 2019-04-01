@@ -160,6 +160,10 @@ Fixes:
   :bug:`2826` :bug:`3092`
 * :doc:`/plugins/beatport`: Avoid a crash when the server produces an error.
   :bug:`3184`
+* :doc:`/plugins/the`: Log a message when something has changed, not when it
+  hasn't.
+  Thanks to :user:`arcresu`.
+  :bug:`3195`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
