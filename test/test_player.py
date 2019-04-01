@@ -367,8 +367,8 @@ class BPDQueryTest(BPDTestHelper):
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
             'random',
-            'repeat', 'single',
-            }, expectedFailure=True)
+            'repeat',
+            })
 
     def test_cmd_consume(self):
         with self.run_bpd() as client:
@@ -390,6 +390,22 @@ class BPDPlaybackTest(BPDTestHelper):
         self.assertEqual('2', responses[8].data['Id'])
         self.assertEqual('1', responses[9].data['consume'])
         self.assertEqual('play', responses[9].data['state'])
+
+    def test_cmd_single(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('status',),
+                    ('single', '1'),
+                    ('play',),
+                    ('status',),
+                    ('next',),
+                    ('status',))
+        self._assert_ok(*responses)
+        self.assertEqual('0', responses[0].data['single'])
+        self.assertEqual('1', responses[3].data['single'])
+        self.assertEqual('play', responses[3].data['state'])
+        self.assertEqual('stop', responses[5].data['state'])
 
     def test_cmd_crossfade(self):
         with self.run_bpd() as client:
