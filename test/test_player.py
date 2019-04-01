@@ -525,14 +525,17 @@ class BPDControlTest(BPDTestHelper):
 
     def test_cmd_play(self):
         with self.run_bpd() as client:
-            self._bpd_add(client, self.item1)
+            self._bpd_add(client, self.item1, self.item2)
             responses = client.send_commands(
                     ('status',),
                     ('play',),
-                    ('status',))
+                    ('status',),
+                    ('play', '1'),
+                    ('currentsong',))
         self._assert_ok(*responses)
         self.assertEqual('stop', responses[0].data['state'])
         self.assertEqual('play', responses[2].data['state'])
+        self.assertEqual('2', responses[4].data['Id'])
 
     def test_cmd_next(self):
         with self.run_bpd() as client:
