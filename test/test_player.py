@@ -386,7 +386,6 @@ class BPDQueryTest(BPDTestHelper):
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
             'random',
-            'repeat',
             })
 
     def test_cmd_consume(self):
@@ -425,6 +424,38 @@ class BPDPlaybackTest(BPDTestHelper):
         self.assertEqual('1', responses[3].data['single'])
         self.assertEqual('play', responses[3].data['state'])
         self.assertEqual('stop', responses[5].data['state'])
+
+    def test_cmd_repeat(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('repeat', '1'),
+                    ('play',),
+                    ('currentsong',),
+                    ('next',),
+                    ('currentsong',),
+                    ('next',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('1', responses[2].data['Id'])
+        self.assertEqual('2', responses[4].data['Id'])
+        self.assertEqual('1', responses[6].data['Id'])
+
+    def test_cmd_repeat_with_single(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('repeat', '1'),
+                    ('single', '1'),
+                    ('play',),
+                    ('currentsong',),
+                    ('next',),
+                    ('status',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('1', responses[3].data['Id'])
+        self.assertEqual('play', responses[5].data['state'])
+        self.assertEqual('1', responses[6].data['Id'])
 
     def test_cmd_crossfade(self):
         with self.run_bpd() as client:
@@ -488,7 +519,7 @@ class BPDPlaybackTest(BPDTestHelper):
 
 class BPDControlTest(BPDTestHelper):
     test_implements_control = implements({
-            'next', 'pause', 'playid', 'previous', 'seek',
+            'pause', 'playid', 'previous', 'seek',
             'seekid', 'seekcur', 'stop',
             }, expectedFailure=True)
 
@@ -502,6 +533,21 @@ class BPDControlTest(BPDTestHelper):
         self._assert_ok(*responses)
         self.assertEqual('stop', responses[0].data['state'])
         self.assertEqual('play', responses[2].data['state'])
+
+    def test_cmd_next(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('play',),
+                    ('currentsong',),
+                    ('next',),
+                    ('currentsong',),
+                    ('next',),
+                    ('status',))
+        self._assert_ok(*responses)
+        self.assertEqual('1', responses[1].data['Id'])
+        self.assertEqual('2', responses[3].data['Id'])
+        self.assertEqual('stop', responses[5].data['state'])
 
 
 class BPDQueueTest(BPDTestHelper):
