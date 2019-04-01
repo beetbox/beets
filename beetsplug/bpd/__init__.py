@@ -554,9 +554,8 @@ class BaseServer(object):
         """Step back to the last song."""
         self.current_index = self._prev_idx()
         if self.current_index < 0:
-            return self.cmd_stop(conn)
-        else:
-            return self.cmd_play(conn)
+            self.current_index = 0
+        return self.cmd_play(conn)
 
     def cmd_pause(self, conn, state=None):
         """Set the pause state playback."""
