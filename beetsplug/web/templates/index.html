@@ -1,105 +1,110 @@
 <!DOCTYPE HTML>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>beets</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/beets.css') }}">
-        <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/underscore.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/backbone.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/Sortable.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/beets.js') }}"></script>
-        <link rel="shortcut icon" href="{{ url_for('static', filename='img/brand.png') }}">
-    </head>
-    <body id='app'>
-      <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">
-          <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
-          Beets
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+  <head>
+    <meta charset="UTF-8">
+    <title>beets</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/beets.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/underscore.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/backbone.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Sortable.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/beets.js') }}"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/brand.png') }}">
+  </head>
+  <body>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">
+        <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
+        Beets
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon">&nbsp;</span>
+      </button>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item"><a class="nav-link" href="#player">Player</a></li>
-            <li class="nav-item"><a class="nav-link" href="#library">Library</a></li>
-            <li class="nav-item"><a class="nav-link" href="#stats">Stats</a></li>
-            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
-        </div>
-      </nav>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item"><a class="nav-link" href="#playlist"><i class="fa fa-play"></i> Player</a></li>
+          <li class="nav-item"><a class="nav-link" href="#library"><i class="fa fa-list-alt"></i>Library</a></li>
+          <li class="nav-item"><a class="nav-link" href="#stats"><i class="fa fa-bar-chart"></i>Stats</a></li>
+          <li class="nav-item"><a class="nav-link" href="#about"><i class="fa fa-info"></i>About</a></li>
+        </ul>
+      </div>
+    </nav>
 
-        <div class="container-fluid" id="content">
-            <div class="row">
-                <div class="col-sm-4">
-                    <h4>Search</h4>
-                    <form id="queryForm">
-                        <div class="input-group mb-3">
-                            <input type="search" id="query" class="form-control" placeholder="Query + Enter" aria-label="Query">
-                            <div class="input-group-append" id="searchButton">
-                              <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            </div>
-                          </div>
-                    </form>
-                    <div id='results' class='list-group'></div>
-                </div>
-                <div class="col-sm-4">
-                    <h4>Metadata</h4>
-                    <table class="table table-bordered table-sm table-condensed table-hover">
-                        <tbody id='meta'>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="col-sm-4">
-                    <h4>Lyrics</h4>
-                    <div id='lyrics' class='lyrics'></div>
-                </div>
+    <div id="app"></div>
+
+    
+    <script type="text/template" id="player-template">
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-sm-4">
+          <h4>Search</h4>
+          <form id="queryForm">
+            <div class="input-group mb-3">
+              <input type="search" id="query" class="form-control" placeholder="Query + Enter" aria-label="Query">
+              <div class="input-group-append" id="searchButton">
+                <span class="input-group-text"><i class="fa fa-search">&nbsp;</i></span>
+              </div>
             </div>
+          </form>
+          <div id='results' class='list-group'></div>
+        </div>
+        <div class="col-sm-4">
+          <h4>Metadata</h4>
+          <table class="table table-bordered table-sm table-condensed table-hover">
+            <tbody id='meta'>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-sm-4">
+          <h4>Lyrics</h4>
+          <div id='lyrics' class='lyrics'></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid navbar-light bg-light fixed-bottom" id="player">
+      <div class="row btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="col col-sm-2 btn-group" role="group" aria-label="First group">
+          <button type="button" class="btn btn-secondary" id="play-pause-button">
+            <span class="fa fa-play"></span>
+            <span class="fa fa-pause"></span>
+          </button>
+          <button type="button" class="btn btn-secondary" id="stop-button">
+            <i class="fa fa-stop"></i>
+          </button>
         </div>
 
-
-        <div class="container-fluid navbar-light bg-light fixed-bottom" id="player">
-            <div class="row btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
-                <div class="col col-sm-2 btn-group" role="group" aria-label="First group">
-                    <button type="button" class="btn btn-secondary" id="play-pause-button">
-                        <i class="fas fa-play"></i>
-                        <i class="fas fa-pause"></i>
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="stop-button">
-                        <i class="fas fa-stop"></i>
-                    </button>
-                </div>
-
-                <div class="col col-sm-8" aria-label="Middle group">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <button class="btn btn-outline-secondary" type="button"><span id="currentTime">0:00</span></button>
-                        </div>
-                        <input class="form-control" type="range" min="0" max="100" step="1" value="0.0" id="slider">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button"><span id="totalTime">0:00</span></button>
-                        </div>
-                    </div>
-                    <div id="playingLabel" class="clearfix">
-                        &nbsp;
-                    </div>
-                </div>
-                <div class="col col-sm-2 btn-group" role="group" aria-label="control group">
-                    <button type="button" class="btn btn-secondary" id="repeat-button">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="shuffle-button">
-                        <i class="fas fa-random"></i>
-                    </button>
-                </div>
+        <div class="col col-sm-8" aria-label="Middle group">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <button class="btn btn-outline-secondary" type="button"><span id="currentTime">0:00</span></button>
             </div>
+            <input class="form-control" type="range" min="0" max="100" step="1" value="0.0" id="slider">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button"><span id="totalTime">0:00</span></button>
+            </div>
+          </div>
+          <div id="playingLabel" class="clearfix">
+            &nbsp;
+          </div>
         </div>
+        <div class="col col-sm-2 btn-group" role="group" aria-label="control group">
+          <button type="button" class="btn btn-secondary" id="repeat-button">
+            <i class="fa fa-repeat"></i>
+          </button>
+          <button type="button" class="btn btn-secondary" id="shuffle-button">
+            <i class="fa fa-random"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    </script>
 
-        <script type="text/template" id="item-template">
+    <script type="text/template" id="item-template">
             <% if (selected) { %>
                 <li class="list-group-item active clearfix">
             <%  } else { %>
@@ -116,23 +121,23 @@
                 <span class="float-right">
                     <div class="btn-group" role="group">
                     <button id='view-button' class="btn btn-xs btn-info">
-                       <span class="fas fa-eye"></i>
+                       <span class="fa fa-eye"></i>
                     </button>
                     <button id="play-button" class="btn btn-xs btn-info">
                     <% if (playing) { %>
-                        <span class="fas fa-pause"></span>
+                        <span class="fa fa-pause"></span>
                     <%  } else { %>
-                        <span class="fas fa-play"></span>
+                        <span class="fa fa-play"></span>
                     <% } %>
                     </button>
                     </div>
                 </span>
             </li>
-        </script>
+    </script>
 
-        <script type="text/template" id="lyrics-template"><%= lyrics %></script>
+    <script type="text/template" id="lyrics-template"><%= lyrics %></script>
 
-        <script type="text/template" id="metadata-template">
+    <script type="text/template" id="metadata-template">
             <tr class="success"><th>Artist</th><td><%= model.artist %></td></tr>
             <tr><th>Album</th><td><%= model.album %></td></tr>
             <tr><th>Year</th><td><%= model.year %></td></tr>
@@ -155,7 +160,7 @@
                 <th>MusicBrainz entry</th>
                 <td>
                     <a target="_blank" href="http://musicbrainz.org/recording/<%= model.mb_trackid %>">
-                        <i class="fas fa-link"></i>
+                        <i class="fa fa-link"></i>
                         View
                     </a>
                 </td>
@@ -165,8 +170,8 @@
             <tr>
                 <th>File</th>
                 <td>
-                    <a target="_blank" href="/item/<%= model.id %>/file">
-                        <i class="fas fa-download"></i>
+                    <a target="_blank" href="<%= api %>item/<%= model.id %>/file">
+                        <i class="fa fa-download"></i>
                         Download
                     </a>
                 </td>
@@ -177,15 +182,15 @@
             <% } %>
 
             <% if (album && album.hasart) { %>
-            <tr><td colspan="2"><img src="/album/<%= model.album_id %>/art" class="img-fluid img-thumbnail"/></td></tr>
+            <tr><td colspan="2"><img src="<%= api %>album/<%= model.album_id %>/art" class="img-fluid img-thumbnail"/></td></tr>
             <% } %>
-        </script>
+    </script>
 
-        <script type="text/template" id="playing-template">
-            <div class="text-center">
-                <i class="fas fa-music"></i>
-                <%= artist %> - <%= album %> - <%= title %>
-            </div>
-        </script>
-    </body>
+    <script type="text/template" id="playing-template">
+      <div class="text-center">
+        <i class="fas fa-music"></i>
+        <%= artist %> - <%= album %> - <%= title %>
+      </div>
+    </script>
+  </body>
 </html>
