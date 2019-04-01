@@ -93,8 +93,8 @@ class ThePlugin(BeetsPlugin):
             for p in self.patterns:
                 r = self.unthe(text, p)
                 if r != text:
+                    self._log.debug(u'\"{0}\" -> \"{1}\"', text, r)
                     break
-            self._log.debug(u'\"{0}\" -> \"{1}\"', text, r)
             return r
         else:
             return u''
