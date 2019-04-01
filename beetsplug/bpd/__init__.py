@@ -1009,11 +1009,19 @@ class Server(BaseServer):
         if self.current_index > -1:
             item = self.playlist[self.current_index]
 
-            yield u'bitrate: ' + six.text_type(item.bitrate / 1000)
-            # Missing 'audio'.
+            yield (
+                u'bitrate: ' + six.text_type(item.bitrate / 1000),
+                # TODO provide a real value samplerate:bits:channels 44100:24:2
+                u'audio: 0:0:0',
+            )
 
             (pos, total) = self.player.time()
-            yield u'time: ' + six.text_type(pos) + u':' + six.text_type(total)
+            yield (
+                u'time: ' + six.text_type(pos) + u':' + six.text_type(total),
+                # TODO provide elapsed and duration with higher precision
+                u'elapsed: ' + six.text_type(float(pos)),
+                u'duration: ' + six.text_type(float(total)),
+            )
 
         # Also missing 'updating_db'.
 
