@@ -569,7 +569,7 @@ class BaseServer(object):
         """Begin playback, possibly at a specified playlist index."""
         index = cast_arg(int, index)
 
-        if index < -1 or index > len(self.playlist):
+        if index < -1 or index >= len(self.playlist):
             raise ArgumentIndexError()
 
         if index == -1:  # No index specified: start where we are.
