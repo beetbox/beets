@@ -360,8 +360,27 @@ class BPDTest(BPDTestHelper):
 
 class BPDQueryTest(BPDTestHelper):
     test_implements_query = implements({
-            'clearerror', 'currentsong', 'idle', 'status', 'stats',
+            'clearerror', 'currentsong', 'idle', 'stats',
             }, expectedFailure=True)
+
+    def test_cmd_status(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('status',),
+                    ('play',),
+                    ('status',))
+        self._assert_ok(*responses)
+        fields_not_playing = {
+            'repeat', 'random', 'single', 'consume', 'playlist',
+            'playlistlength', 'mixrampdb', 'state',
+            'volume'  # not (always?) returned by MPD
+        }
+        self.assertEqual(fields_not_playing, set(responses[0].data.keys()))
+        fields_playing = fields_not_playing | {
+            'song', 'songid', 'time', 'elapsed', 'bitrate', 'duration', 'audio'
+        }
+        self.assertEqual(fields_playing, set(responses[2].data.keys()))
 
 
 class BPDPlaybackTest(BPDTestHelper):
