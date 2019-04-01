@@ -683,9 +683,10 @@ class FileSystem(LocalArtSource):
         cover_names_str = b'|'.join(cover_names)
         cover_pat = br''.join([br"(\b|_)(", cover_names_str, br")(\b|_)"])
 
-        for path in paths:
+        for _path in paths:
+            path = _path
             if not os.path.isdir(syspath(path)):
-                continue
+                path = os.path.dirname(_path)
 
             # Find all files that look like images in the directory.
             images = []
