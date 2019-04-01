@@ -77,6 +77,10 @@ New features:
   :bug:`3081`
 * The `badfiles` plugin now works in parallel (on Python 3 only).
   Thanks to :user:`bemeurer`.
+* Querying the library is now faster because we only convert fields that need
+  to be displayed.
+  Thanks to :user:`pprkut`.
+  :bug:`3089`
 
 Changes:
 
