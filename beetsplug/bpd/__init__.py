@@ -31,7 +31,7 @@ import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
 from beets import vfs
-from beets.util import bluelet
+from beets.util import bluelet, inspect
 from beets.library import Item
 from beets import dbcore
 from beets.mediafile import MediaFile
@@ -613,11 +613,16 @@ class BaseServer(object):
         index = self._id_to_index(track_id)
         return self.cmd_seek(conn, index, pos)
 
+    # Debugging/testing commands that are not part of the MPD protocol.
+
     def cmd_profile(self, conn):
         """Memory profiling for debugging."""
         from guppy import hpy
         heap = hpy().heap()
         print(heap)
+
+    def cmd_crash_TypeError(self, conn):
+        'a' + 2
 
 
 class Connection(object):
@@ -744,6 +749,17 @@ class Command(object):
             raise BPDError(ERROR_UNKNOWN,
                            u'unknown command "{}"'.format(self.name))
         func = getattr(conn.server, func_name)
+        argspec = inspect.getargspec(func)
+        max_args = len(argspec.args) - 1
+        min_args = max_args
+        if argspec.defaults:
+            min_args -= len(argspec.defaults)
+        wrong_num = (len(self.args) > max_args) or (len(self.args) < min_args)
+        if wrong_num and not argspec.varargs:
+            raise BPDError(ERROR_ARG,
+                           u'wrong number of arguments for "{}"'
+                           .format(self.name),
+                           self.name)
 
         # Ensure we have permission for this command.
         if conn.server.password and \
@@ -758,13 +774,6 @@ class Command(object):
                 for data in results:
                     yield conn.send(data)
 
-        except TypeError:
-            # The client provided too many arguments.
-            raise BPDError(ERROR_ARG,
-                           u'wrong number of arguments for "{}"'
-                           .format(self.name),
-                           self.name)
-
         except BPDError as e:
             # An exposed error. Set the command name and then let
             # the Connection handle it.
@@ -776,9 +785,9 @@ class Command(object):
             # it on the Connection.
             raise
 
-        except Exception as e:
+        except Exception:
             # An "unintentional" error. Hide it from the client.
-            conn.server._log.error('{}', traceback.format_exc(e))
+            conn.server._log.error('{}', traceback.format_exc())
             raise BPDError(ERROR_SYSTEM, u'server error', self.name)
 
 
