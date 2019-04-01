@@ -1029,8 +1029,11 @@ class Server(BaseServer):
 
             yield (
                 u'bitrate: ' + six.text_type(item.bitrate / 1000),
-                # TODO provide a real value samplerate:bits:channels 44100:24:2
-                u'audio: 0:0:0',
+                u'audio: {}:{}:{}'.format(
+                    six.text_type(item.samplerate),
+                    six.text_type(item.bitdepth),
+                    six.text_type(item.channels),
+                ),
             )
 
             (pos, total) = self.player.time()
