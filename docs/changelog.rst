@@ -164,6 +164,10 @@ Fixes:
   hasn't.
   Thanks to :user:`arcresu`.
   :bug:`3195`
+* :doc:`/plugins/bpd`: The plugin now uses the main beets logging system.
+  The special-purpose ``--debug`` flag has been removed.
+  Thanks to :user:`arcresu`.
+  :bug:`3196`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
