@@ -1136,6 +1136,42 @@ class Server(BaseServer):
         yield u'songs: ' + six.text_type(songs)
         yield u'playtime: ' + six.text_type(int(playtime))
 
+    # Persistent playlist manipulation. In MPD this is an optional feature so
+    # these dummy implementations match MPD's behaviour with the feature off.
+
+    def cmd_listplaylist(self, conn, playlist):
+        raise BPDError(ERROR_NO_EXIST, u'No such playlist')
+
+    def cmd_listplaylistinfo(self, conn, playlist):
+        raise BPDError(ERROR_NO_EXIST, u'No such playlist')
+
+    def cmd_listplaylists(self, conn):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
+    def cmd_load(self, conn, playlist):
+        raise BPDError(ERROR_NO_EXIST, u'Stored playlists are disabled')
+
+    def cmd_playlistadd(self, conn, playlist, uri):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
+    def cmd_playlistclear(self, conn, playlist):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
+    def cmd_playlistdelete(self, conn, playlist, index):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
+    def cmd_playlistmove(self, conn, playlist, from_index, to_index):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
+    def cmd_rename(self, conn, playlist, new_name):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
+    def cmd_rm(self, conn, playlist):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
+    def cmd_save(self, conn, playlist):
+        raise BPDError(ERROR_UNKNOWN, u'Stored playlists are disabled')
+
     # "Outputs." Just a dummy implementation because we don't control
     # any outputs.
 

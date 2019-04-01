@@ -327,13 +327,18 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         if code is not None:
             self.assertEqual(code, response.err_data[0])
 
-    def _bpd_add(self, client, *items):
-        """ Add the given item to the BPD playlist
+    def _bpd_add(self, client, *items, **kwargs):
+        """ Add the given item to the BPD playlist or queue.
         """
         paths = ['/'.join([
             item.artist, item.album,
             py3_path(os.path.basename(item.path))]) for item in items]
-        responses = client.send_commands(*[('add', path) for path in paths])
+        playlist = kwargs.get('playlist')
+        if playlist:
+            commands = [('playlistadd', playlist, path) for path in paths]
+        else:
+            commands = [('add', path) for path in paths]
+        responses = client.send_commands(*commands)
         self._assert_ok(*responses)
 
 
@@ -488,11 +493,64 @@ class BPDQueueTest(BPDTestHelper):
 
 
 class BPDPlaylistsTest(BPDTestHelper):
-    test_implements_playlists = implements({
-            'listplaylist', 'listplaylistinfo', 'listplaylists', 'load',
-            'playlistadd', 'playlistclear', 'playlistdelete',
-            'playlistmove', 'rename', 'rm', 'save',
-            }, expectedFailure=True)
+    test_implements_playlists = implements({'playlistadd'})
+
+    def test_cmd_listplaylist(self):
+        with self.run_bpd() as client:
+            response = client.send_command('listplaylist', 'anything')
+        self._assert_failed(response, bpd.ERROR_NO_EXIST)
+
+    def test_cmd_listplaylistinfo(self):
+        with self.run_bpd() as client:
+            response = client.send_command('listplaylistinfo', 'anything')
+        self._assert_failed(response, bpd.ERROR_NO_EXIST)
+
+    def test_cmd_listplaylists(self):
+        with self.run_bpd() as client:
+            response = client.send_command('listplaylists')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
+    def test_cmd_load(self):
+        with self.run_bpd() as client:
+            response = client.send_command('load', 'anything')
+        self._assert_failed(response, bpd.ERROR_NO_EXIST)
+
+    @unittest.skip
+    def test_cmd_playlistadd(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, playlist='anything')
+
+    def test_cmd_playlistclear(self):
+        with self.run_bpd() as client:
+            response = client.send_command('playlistclear', 'anything')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
+    def test_cmd_playlistdelete(self):
+        with self.run_bpd() as client:
+            response = client.send_command('playlistdelete', 'anything', '0')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
+    def test_cmd_playlistmove(self):
+        with self.run_bpd() as client:
+            response = client.send_command(
+                    'playlistmove', 'anything', '0', '1')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
+    def test_cmd_rename(self):
+        with self.run_bpd() as client:
+            response = client.send_command('rename', 'anything', 'newname')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
+    def test_cmd_rm(self):
+        with self.run_bpd() as client:
+            response = client.send_command('rm', 'anything')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
+    def test_cmd_save(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            response = client.send_command('save', 'newplaylist')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
 
 
 class BPDDatabaseTest(BPDTestHelper):
