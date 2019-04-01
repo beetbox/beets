@@ -171,6 +171,10 @@ Fixes:
 * Fix several uses of deprecated standard-library features on Python 3.7.
   Thanks to :user:`arcresu`.
   :bug:`3197`
+* :doc:`/plugins/lastgenre`: Avoid a deprecation warning from the YAML
+  library.
+  Thanks to :user:`translit`.
+  :bug:`3192`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
