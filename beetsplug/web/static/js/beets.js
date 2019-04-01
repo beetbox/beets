@@ -276,7 +276,7 @@ $(document).ready(function(){
         },
 
         initialize: function(){
-            this.listenTo(Backbone, 'play:item', this.reset);
+            this.listenTo(Backbone, 'play:  item', this.reset);
             this.listenTo(Backbone, 'update:currentTime', this.updateSlider);
         },
 
@@ -369,16 +369,6 @@ $(document).ready(function(){
         }
     });
 
-    var Router = Backbone.Router.extend({
-        routes: {
-            'item/query/:query': 'doSearch',
-        },
-
-        doSearch: function(query){
-            Backbone.trigger('items:search', query);
-        }
-    });
-
     var initAudio = function(){
         var audio = new Audio();
         _.extend(audio, Backbone.Events);
@@ -466,16 +456,42 @@ $(document).ready(function(){
         onSubmit: function(e){
             e.preventDefault();
             var q = this.$('#query').val().trim();
-            Backbone.history.navigate('item/query/' + q, true);
+            Backbone.history.navigate('playlist/item/query/' + q, true);
         }
 
+    });
+
+    var Router = Backbone.Router.extend({
+        routes: {
+            'playlist/item/query/:query': 'doSearch',
+            'playlist': 'doPlaylist',
+            'stats/:query': 'doStats',
+            'about': 'doAbout',
+            'library': 'doLibrary',
+        },
+
+        doPlaylist: function(){
+          new AppView({ el: 'body', audio: audio });
+        },
+
+        doSearch: function(query){
+            Backbone.trigger('items:search', query);
+        },
+        doStats: function(query){
+            Backbone.trigger('stats:show', query);
+        },
+        doAbout: function(){
+            Backbone.trigger('about:show');
+        },
+        doLibrary: function(){
+            Backbone.trigger('library:show');
+        }
     });
 
 
     var audio = initAudio();
 
     new Router();
-    new AppView({ el: 'body', audio: audio });
     Backbone.history.start({pushState: false});
 
     var el = document.getElementById('results');

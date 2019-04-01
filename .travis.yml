@@ -1,26 +1,41 @@
-dist: xenial
+dist: trusty
+sudo: required
 language: python
+
+env:
+    global:
+        # Undocumented feature of nose-show-skipped.
+        NOSE_SHOW_SKIPPED: 1
 
 matrix:
     include:
-        - python: 2.7
-          env: TOXENV=py27-test COVERAGE=1
-        - python: 2.7
-          env: TOXENV=py27-flake8 COVERAGE=1
+        - python: 2.7.13
+          env: {TOX_ENV: py27-cov, COVERAGE: 1}
+        - python: 2.7.13
+          env: {TOX_ENV: py27-test}
+        - python: 3.4
+          env: {TOX_ENV: py34-test}
+        - python: 3.4_with_system_site_packages
+          env: {TOX_ENV: py34-test}
+        - python: 3.5
+          env: {TOX_ENV: py35-test}
+        - python: 3.6
+          env: {TOX_ENV: py36-test}
         - python: 3.7
-          env: TOXENV=py37-test COVERAGE=1
-        - python: 3.7
-          env: TOXENV=py37-flake8 COVERAGE=1
-        - python: 2.7
-          env: TOXENV=docs
-
-
+          env: {TOX_ENV: py37-test}
+          dist: xenial
+        # - python: pypy
+        #   - env: {TOX_ENV: pypy-test}
+        - python: 3.4
+          env: {TOX_ENV: py34-flake8}
+        - python: 2.7.13
+          env: {TOX_ENV: docs}
+# Non-Python dependencies.
 addons:
     apt:
-        update: true
         sources:
-            sourceline: 'deb http://archive.ubuntu.com/ubuntu/ trusty multiverse'
-            sourceline: 'deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse'
+            - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty multiverse"
+            - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
         packages:
             - bash-completion
             - gir1.2-gst-plugins-base-1.0
@@ -42,9 +57,17 @@ install:
     - if [[ $TRAVIS_PYTHON_VERSION == *_site_packages ]]; then pip install -U requests; fi
     - travis_retry tox -e $TOX_ENV --notest
 
-script: tox
+script:
+    # prevents "libdc1394 error: Failed to initialize libdc1394" errors
+    - sudo ln -s /dev/null /dev/raw1394
+    - if [[ $TRAVIS_PYTHON_VERSION == *_site_packages ]]; then SITE_PACKAGES=--sitepackages; fi
+    # pip in trusty breaks on packages prefixed with "_". See https://github.com/pypa/pip/issues/3681
+    - if [[ $TRAVIS_PYTHON_VERSION == 3.4_with_system_site_packages ]]; then sudo rm -rf /usr/lib/python3/dist-packages/_lxc-0.1.egg-info; fi
+    - tox -e $TOX_ENV $SITE_PACKAGES
 
 # Report coverage to codecov.io.
+before_install:
+    - "[ ! -z $COVERAGE ] && travis_retry pip install codecov || true"
 after_success:
     - "[ ! -z $COVERAGE ] && codecov || true"
 

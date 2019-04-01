@@ -15,17 +15,25 @@
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/brand.png') }}">
     </head>
     <body id='app'>
+      <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+          <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
+          Beets
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-        <nav class="navbar fixed-top navbar-dark bg-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#">
-                    <img alt="Beets" width=30 height=30 src="{{ url_for('static', filename='img/brand.png') }}">
-                    Beets
-                </a>
-            </div>
-        </nav>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item"><a class="nav-link" href="#player">Player</a></li>
+            <li class="nav-item"><a class="nav-link" href="#library">Library</a></li>
+            <li class="nav-item"><a class="nav-link" href="#stats">Stats</a></li>
+            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+        </div>
+      </nav>
 
-        <div class="container-fluid">
+        <div class="container-fluid" id="content">
             <div class="row">
                 <div class="col-sm-4">
                     <h4>Search</h4>
