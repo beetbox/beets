@@ -571,7 +571,7 @@ default is ``apply``.
 languages
 ~~~~~~~~~
 
-A list of locale names to search for preferred aliases (e.g. ``[de,en]``. For example, setting
+A list of locale names to search for preferred aliases (e.g. ``en jp es``. For example, setting
 this to "en" uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
 instead of the Cyrillic script for the composer's name when tagging from
 MusicBrainz. Defaults to an empty list, meaning that no language is preferred.
