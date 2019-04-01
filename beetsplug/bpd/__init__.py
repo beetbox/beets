@@ -174,6 +174,7 @@ class BaseServer(object):
         self.random = False
         self.repeat = False
         self.consume = False
+        self.single = False
         self.volume = VOLUME_MAX
         self.crossfade = 0
         self.mixrampdb = 0.0
@@ -311,6 +312,7 @@ class BaseServer(object):
             u'repeat: ' + six.text_type(int(self.repeat)),
             u'random: ' + six.text_type(int(self.random)),
             u'consume: ' + six.text_type(int(self.consume)),
+            u'single: ' + six.text_type(int(self.single)),
             u'playlist: ' + six.text_type(self.playlist_version),
             u'playlistlength: ' + six.text_type(len(self.playlist)),
             u'mixrampdb: ' + six.text_type(self.mixrampdb),
@@ -355,6 +357,11 @@ class BaseServer(object):
     def cmd_consume(self, conn, state):
         """Set or unset consume mode."""
         self.consume = cast_arg('intbool', state)
+
+    def cmd_single(self, conn, state):
+        """Set or unset single mode."""
+        # TODO support oneshot in addition to 0 and 1 [MPD 0.20]
+        self.single = cast_arg('intbool', state)
 
     def cmd_setvol(self, conn, vol):
         """Set the player's volume level (0-100)."""
@@ -533,6 +540,8 @@ class BaseServer(object):
                 self.current_index -= 1
         if self.current_index >= len(self.playlist):
             # Fallen off the end. Just move to stopped state.
+            return self.cmd_stop(conn)
+        elif self.single:
             return self.cmd_stop(conn)
         else:
             return self.cmd_play(conn)
