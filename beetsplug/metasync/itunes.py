@@ -24,6 +24,7 @@ import shutil
 import tempfile
 import plistlib
 
+import six
 from six.moves.urllib.parse import urlparse, unquote
 from time import mktime
 
@@ -84,7 +85,11 @@ class Itunes(MetaSource):
             self._log.debug(
                 u'loading iTunes library from {0}'.format(library_path))
             with create_temporary_copy(library_path) as library_copy:
-                raw_library = plistlib.readPlist(library_copy)
+                if six.PY2:
+                    raw_library = plistlib.readPlist(library_copy)
+                else:
+                    with open(library_copy, 'rb') as library_copy_f:
+                        raw_library = plistlib.load(library_copy_f)
         except IOError as e:
             raise ConfigValueError(u'invalid iTunes library: ' + e.strerror)
         except Exception:
