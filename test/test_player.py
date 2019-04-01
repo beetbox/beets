@@ -354,8 +354,18 @@ class BPDTest(BPDTestHelper):
 
     def test_unexpected_argument(self):
         with self.run_bpd() as client:
-            response = client.send_command('clearerror', 'extra argument')
+            response = client.send_command('ping', 'extra argument')
         self._assert_failed(response, bpd.ERROR_ARG)
+
+    def test_missing_argument(self):
+        with self.run_bpd() as client:
+            response = client.send_command('add')
+        self._assert_failed(response, bpd.ERROR_ARG)
+
+    def test_system_error(self):
+        with self.run_bpd() as client:
+            response = client.send_command('crash_TypeError')
+        self._assert_failed(response, bpd.ERROR_SYSTEM)
 
 
 class BPDQueryTest(BPDTestHelper):
