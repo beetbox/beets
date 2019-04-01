@@ -26,12 +26,13 @@ import traceback
 import random
 import time
 import math
+import inspect
 
 import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
 from beets import vfs
-from beets.util import bluelet, inspect
+from beets.util import bluelet
 from beets.library import Item
 from beets import dbcore
 from beets.mediafile import MediaFile
@@ -749,7 +750,13 @@ class Command(object):
             raise BPDError(ERROR_UNKNOWN,
                            u'unknown command "{}"'.format(self.name))
         func = getattr(conn.server, func_name)
-        argspec = inspect.getargspec(func)
+
+        if six.PY2:
+            # caution: the fields of the namedtuple are slightly different
+            argspec = inspect.getargspec(func)
+        else:
+            argspec = inspect.getfullargspec(func)
+
         max_args = len(argspec.args) - 2
         min_args = max_args
         if argspec.defaults:
