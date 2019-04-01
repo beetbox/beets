@@ -241,7 +241,7 @@ def implements(commands, expectedFailure=False):  # noqa: N803
     return unittest.expectedFailure(_test) if expectedFailure else _test
 
 
-class BPDTest(unittest.TestCase, TestHelper):
+class BPDTestHelper(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets(disk=True)
         self.load_plugins('bpd')
@@ -327,25 +327,6 @@ class BPDTest(unittest.TestCase, TestHelper):
         if code is not None:
             self.assertEqual(code, response.err_data[0])
 
-    def test_server_hello(self):
-        with self.run_bpd(do_hello=False) as client:
-            self.assertEqual(client.readline(), b'OK MPD 0.13.0\n')
-
-    test_implements_query = implements({
-            'clearerror', 'currentsong', 'idle', 'status', 'stats',
-            }, expectedFailure=True)
-
-    test_implements_playback = implements({
-            'consume', 'crossfade', 'mixrampd', 'mixrampdelay', 'random',
-            'repeat', 'setvol', 'single', 'replay_gain_mode',
-            'replay_gain_status', 'volume',
-            }, expectedFailure=True)
-
-    test_implements_control = implements({
-            'next', 'pause', 'play', 'playid', 'previous', 'seek',
-            'seekid', 'seekcur', 'stop',
-            }, expectedFailure=True)
-
     def _bpd_add(self, client, *items):
         """ Add the given item to the BPD playlist
         """
@@ -355,10 +336,37 @@ class BPDTest(unittest.TestCase, TestHelper):
         responses = client.send_commands(*[('add', path) for path in paths])
         self._assert_ok(*responses)
 
+
+class BPDTest(BPDTestHelper):
+    def test_server_hello(self):
+        with self.run_bpd(do_hello=False) as client:
+            self.assertEqual(client.readline(), b'OK MPD 0.13.0\n')
+
     def test_unknown_cmd(self):
         with self.run_bpd() as client:
             response = client.send_command('notacommand')
         self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
+
+class BPDQueryTest(BPDTestHelper):
+    test_implements_query = implements({
+            'clearerror', 'currentsong', 'idle', 'status', 'stats',
+            }, expectedFailure=True)
+
+
+class BPDPlaybackTest(BPDTestHelper):
+    test_implements_playback = implements({
+            'consume', 'crossfade', 'mixrampd', 'mixrampdelay', 'random',
+            'repeat', 'setvol', 'single', 'replay_gain_mode',
+            'replay_gain_status', 'volume',
+            }, expectedFailure=True)
+
+
+class BPDControlTest(BPDTestHelper):
+    test_implements_control = implements({
+            'next', 'pause', 'playid', 'previous', 'seek',
+            'seekid', 'seekcur', 'stop',
+            }, expectedFailure=True)
 
     def test_cmd_play(self):
         with self.run_bpd() as client:
@@ -371,10 +379,12 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.assertEqual('stop', responses[0].data['state'])
         self.assertEqual('play', responses[2].data['state'])
 
+
+class BPDQueueTest(BPDTestHelper):
     test_implements_queue = implements({
-            'add', 'addid', 'clear', 'delete', 'deleteid', 'move',
+            'addid', 'clear', 'delete', 'deleteid', 'move',
             'moveid', 'playlist', 'playlistfind', 'playlistid',
-            'playlistinfo', 'playlistsearch', 'plchanges',
+            'playlistsearch', 'plchanges',
             'plchangesposid', 'prio', 'prioid', 'rangeid', 'shuffle',
             'swap', 'swapid', 'addtagid', 'cleartagid',
             }, expectedFailure=True)
@@ -390,19 +400,22 @@ class BPDTest(unittest.TestCase, TestHelper):
                     ('playlistinfo',),
                     ('playlistinfo', '0'),
                     ('playlistinfo', '200'))
-
         self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
 
+
+class BPDPlaylistsTest(BPDTestHelper):
     test_implements_playlists = implements({
             'listplaylist', 'listplaylistinfo', 'listplaylists', 'load',
             'playlistadd', 'playlistclear', 'playlistdelete',
             'playlistmove', 'rename', 'rm', 'save',
             }, expectedFailure=True)
 
+
+class BPDDatabaseTest(BPDTestHelper):
     test_implements_database = implements({
-            'albumart', 'count', 'find', 'findadd', 'list', 'listall',
-            'listallinfo', 'listfiles', 'lsinfo', 'readcomments',
-            'search', 'searchadd', 'searchaddpl', 'update', 'rescan',
+            'albumart', 'find', 'findadd', 'listall',
+            'listallinfo', 'listfiles', 'readcomments',
+            'searchadd', 'searchaddpl', 'update', 'rescan',
             }, expectedFailure=True)
 
     def test_cmd_search(self):
@@ -411,7 +424,7 @@ class BPDTest(unittest.TestCase, TestHelper):
         self._assert_ok(response)
         self.assertEqual(self.item1.title, response.data['Title'])
 
-    def test_cmd_list_simple(self):
+    def test_cmd_list(self):
         with self.run_bpd() as client:
             responses = client.send_commands(
                     ('list', 'album'),
@@ -439,16 +452,22 @@ class BPDTest(unittest.TestCase, TestHelper):
         self.assertEqual('1', response.data['songs'])
         self.assertEqual('0', response.data['playtime'])
 
+
+class BPDMountsTest(BPDTestHelper):
     test_implements_mounts = implements({
             'mount', 'unmount', 'listmounts', 'listneighbors',
             }, expectedFailure=True)
 
+
+class BPDStickerTest(BPDTestHelper):
     test_implements_stickers = implements({
             'sticker',
             }, expectedFailure=True)
 
+
+class BPDConnectionTest(BPDTestHelper):
     test_implements_connection = implements({
-            'close', 'kill', 'password', 'ping', 'tagtypes',
+            'close', 'kill', 'tagtypes',
             })
 
     def test_cmd_password(self):
@@ -489,19 +508,27 @@ class BPDTest(unittest.TestCase, TestHelper):
             response = client.send_command('tagtypes', 'clear')
         self._assert_ok(response)
 
+
+class BPDPartitionTest(BPDTestHelper):
     test_implements_partitions = implements({
             'partition', 'listpartitions', 'newpartition',
             }, expectedFailure=True)
 
+
+class BPDDeviceTest(BPDTestHelper):
     test_implements_devices = implements({
             'disableoutput', 'enableoutput', 'toggleoutput', 'outputs',
             }, expectedFailure=True)
 
+
+class BPDReflectionTest(BPDTestHelper):
     test_implements_reflection = implements({
             'config', 'commands', 'notcommands', 'urlhandlers',
             'decoders',
             }, expectedFailure=True)
 
+
+class BPDPeersTest(BPDTestHelper):
     test_implements_peers = implements({
             'subscribe', 'unsubscribe', 'channels', 'readmessages',
             'sendmessage',
