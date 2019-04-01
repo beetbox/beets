@@ -179,6 +179,8 @@ Fixes:
   library.
   Thanks to :user:`translit`.
   :bug:`3192`
+* Fix compatibility with pre-release versions of Python 3.8.
+  :bug:`3201` :bug:`3202`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
