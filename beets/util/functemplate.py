@@ -141,7 +141,13 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
             decorator_list=[],
         )
 
-    mod = ast.Module([func_def])
+    # The ast.Module signature changed in 3.8 to accept a list of types to
+    # ignore.
+    if sys.version_info >= (3, 8):
+        mod = ast.Module([func_def], [])
+    else:
+        mod = ast.Module([func_def])
+
     ast.fix_missing_locations(mod)
 
     prog = compile(mod, '<generated>', 'exec')
