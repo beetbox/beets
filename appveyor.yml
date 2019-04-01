@@ -22,7 +22,7 @@ install:
     - cinst imagemagick -y
     # TODO: remove --allow-empty-checksums when unrar offers a proper checksum
     - cinst unrar -y --allow-empty-checksums
-    - "%PYTHON%/Scripts/pip.exe install tox"
+    - '%PYTHON%/Scripts/pip.exe install "tox<=3.8.1"'
     - "%PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
 test_script:

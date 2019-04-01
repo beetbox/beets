@@ -147,6 +147,8 @@ Fixes:
 * The ``%title`` template function now works correctly with apostrophes.
   Thanks to :user:`GuilhermeHideki`.
   :bug:`3033`
+* When updating the database, beets no longer tries to move album art twice.
+  :bug:`3189`
 * :doc:`/plugins/fetchart`: Added network connection error handling to backends
   so that beets won't crash if a request fails.
   Thanks to :user:`Holzhaus`.

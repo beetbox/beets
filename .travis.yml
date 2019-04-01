@@ -34,7 +34,13 @@ addons:
             - python3-gst-1.0
             - unrar
 
-install: pip install tox sphinx codecov
+# To install dependencies, tell tox to do everything but actually running the
+# test.
+install:
+    - travis_retry pip install 'tox<=3.8.1' sphinx
+    # upgrade requests to satisfy sphinx linkcheck (for building man pages)
+    - if [[ $TRAVIS_PYTHON_VERSION == *_site_packages ]]; then pip install -U requests; fi
+    - travis_retry tox -e $TOX_ENV --notest
 
 script: tox
 
