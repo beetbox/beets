@@ -1223,13 +1223,14 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
     """
     def setUp(self):
         self.setup_beets()
-        self.lib = library.Library(':memory:')
         self.item = _common.item()
         self.item.path = b'xxx/yyy'
         self.lib.add(self.item)
         self.lib.add_album([self.item])
+        self.load_plugins()
 
     def tearDown(self):
+        self.unload_plugins()
         self.teardown_beets()
 
     def test_base(self):
