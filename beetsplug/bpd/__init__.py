@@ -622,7 +622,7 @@ class BaseServer(object):
         heap = hpy().heap()
         print(heap)
 
-    def cmd_crash_TypeError(self, conn):
+    def cmd_crash_TypeError(self, conn):  # noqa: N802
         """Deliberately trigger a TypeError for testing purposes.
         We want to test that the server properly responds with ERROR_SYSTEM
         without crashing, and that this is not treated as ERROR_ARG (since it
