@@ -858,10 +858,13 @@ class Server(BaseServer):
                 raise NoGstreamerError()
             else:
                 raise
+        log.info(u'Starting server...')
         super(Server, self).__init__(host, port, password, log)
         self.lib = library
         self.player = gstplayer.GstPlayer(self.play_finished)
         self.cmd_update(None)
+        log.info(u'Server ready and listening on {}:{}'.format(
+            host, port))
 
     def run(self):
         self.player.run()
