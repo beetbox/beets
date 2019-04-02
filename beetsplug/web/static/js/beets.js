@@ -277,6 +277,25 @@ $(document).ready(function(){
     }
   });
 
+  var SearchView = BaseView.extend({
+    events: {
+      'submit #queryForm': 'onSubmit',
+      'click #search-button': 'onSubmit',
+    },
+    initialize: function(){
+      this.template = _.template($('#search-template').html())
+    },
+    render: function(){
+      this.$el.html(this.template())
+    },
+    onSubmit: function(e){
+      e.preventDefault();
+      var q = this.$('#query').val().trim();
+      Backbone.trigger('items:search', q);
+    },
+
+  });
+
   var SliderView = BaseView.extend({
     events: {
       'input': 'setSlider',
@@ -287,7 +306,7 @@ $(document).ready(function(){
       this.listenTo(Backbone, 'update:currentTime', this.updateSlider);
     },
 
-    render(){
+    render: function(){
       this.$el.prop('value', 0); 
       return this;
     },
@@ -311,7 +330,7 @@ $(document).ready(function(){
       this.listenTo(Backbone, 'update:currentTime', this.updateCurrentTime);
     },
 
-    render() {
+    render: function() {
       this.$el.html('0:00');
       return this;
     },
@@ -326,7 +345,7 @@ $(document).ready(function(){
       this.listenTo(Backbone, 'play:item', this.updateTotalTime);
     },
 
-    render() {
+    render: function() {
       this.$el.html('0:00');
       return this;
     },
@@ -420,8 +439,6 @@ $(document).ready(function(){
 
   var PlayerView = BaseView.extend({
     events: {
-      'submit #queryForm': 'onSubmit',
-      'click #searchButton': 'onSubmit',
       'click #play-pause-button': 'togglePlay',
       'click #stop-button': 'stopPlay',
       'input #slider': 'setSlider',
@@ -434,17 +451,13 @@ $(document).ready(function(){
 
       this.itemsView = new ItemsView({ collection: new Items() });
       this.metaView = new MetaView({ albums: new Albums() });
+      this.searchView = new SearchView();
       this.lyricsView = new LyricsView();
       this.sliderView = new SliderView();
       this.currentTimeView = new CurrentTimeView();
       this.totalTimeView = new TotalTimeView();
       this.playingView = new PlayingView();
-    },
 
-    onSubmit: function(e){
-      e.preventDefault();
-      var q = this.$('#query').val().trim();
-      Backbone.history.navigate('playlist/item/query/' + q, true);
     },
 
     togglePlay: function(){
@@ -468,6 +481,7 @@ $(document).ready(function(){
     render: function(){
       this.$el.html(this.template());
 
+      this.assign(this.searchView,       '#search');
       this.assign(this.itemsView,        '#results');
       this.assign(this.metaView,         '#meta');
       this.assign(this.lyricsView,       '#lyrics');
@@ -489,7 +503,9 @@ $(document).ready(function(){
       this.listenTo(this.model, 'change', this.render);
     },
     render: function(){
-      this.$el.html(this.template(this.model.toJSON()));
+      if (this.model) {
+        this.$el.html(this.template(this.model.toJSON()));
+      }
     },
   });
 
@@ -500,7 +516,6 @@ $(document).ready(function(){
       }
     },
     routes: {
-      'playlist/item/query/:query': 'doSearch',
       'playlist': 'doPlaylist',
       'stats': 'doStats',
       'about': 'doAbout',
@@ -514,17 +529,7 @@ $(document).ready(function(){
       playerView.render();
       App.appView.show( playerView );
     },
-
-    doSearch: function(query){
-      var playerView = VM.reuseView("playerView", function(){
-         return new PlayerView();
-      });
-      playerView.render();
-      App.appView.show( playerView );
-      Backbone.trigger('items:search', query);
-    },
     doStats: function(){
-      console.log('in view stats');
       var m = new Stats();
       var statsView = VM.reuseView("statsView", function(){
          return new StatsView({model: m});

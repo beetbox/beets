@@ -43,14 +43,7 @@
       <div class="row">
         <div class="col-sm-4">
           <h4>Search</h4>
-          <form id="queryForm">
-            <div class="input-group mb-3">
-              <input type="search" id="query" class="form-control" placeholder="Query + Enter" aria-label="Query">
-              <div class="input-group-append" id="searchButton">
-                <span class="input-group-text"><i class="fa fa-search">&nbsp;</i></span>
-              </div>
-            </div>
-          </form>
+	  <div id='search'></div>
           <div id='results' class='list-group'></div>
         </div>
         <div class="col-sm-4">
@@ -201,6 +194,17 @@
         <dt>Tracks</dt>
         <dd><%= items %></dd>
       </div>
+    </script>
+
+    <script type="text/template" id="search-template">
+      <form id="queryForm">
+        <div class="input-group mb-3">
+          <input type="search" id="query" class="form-control" placeholder="Query + Enter" aria-label="Query">
+          <div class="input-group-append" id="search-button">
+            <button class="btn btn-outline-secondary" type="button"><i class="fa fa-search">&nbsp;</i></button>
+          </div>
+        </div>
+      </form>
     </script>
   </body>
 </html>
