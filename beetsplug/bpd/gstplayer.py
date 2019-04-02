@@ -177,12 +177,12 @@ class GstPlayer(object):
             posq = self.player.query_position(fmt)
             if not posq[0]:
                 raise QueryError("query_position failed")
-            pos = posq[1] // (10 ** 9)
+            pos = posq[1] / (10 ** 9)
 
             lengthq = self.player.query_duration(fmt)
             if not lengthq[0]:
                 raise QueryError("query_duration failed")
-            length = lengthq[1] // (10 ** 9)
+            length = lengthq[1] / (10 ** 9)
 
             self.cached_time = (pos, length)
             return (pos, length)
