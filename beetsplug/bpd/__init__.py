@@ -1045,10 +1045,12 @@ class Server(BaseServer):
 
             (pos, total) = self.player.time()
             yield (
-                u'time: ' + six.text_type(pos) + u':' + six.text_type(total),
-                # TODO provide elapsed and duration with higher precision
-                u'elapsed: ' + six.text_type(float(pos)),
-                u'duration: ' + six.text_type(float(total)),
+                u'time: {}:{}'.format(
+                    six.text_type(int(pos)),
+                    six.text_type(int(total)),
+                ),
+                u'elapsed: ' + u'{:.3f}'.format(pos),
+                u'duration: ' + u'{:.3f}'.format(total),
             )
 
         # Also missing 'updating_db'.
