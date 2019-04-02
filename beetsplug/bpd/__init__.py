@@ -623,6 +623,11 @@ class BaseServer(object):
         print(heap)
 
     def cmd_crash_TypeError(self, conn):
+        """Deliberately trigger a TypeError for testing purposes.
+        We want to test that the server properly responds with ERROR_SYSTEM
+        without crashing, and that this is not treated as ERROR_ARG (since it
+        is caused by a programming error, not a protocol error).
+        """
         'a' + 2
 
 
@@ -753,15 +758,21 @@ class Command(object):
 
         if six.PY2:
             # caution: the fields of the namedtuple are slightly different
+            # between the results of getargspec and getfullargspec.
             argspec = inspect.getargspec(func)
         else:
             argspec = inspect.getfullargspec(func)
 
+        # Check that `func` is able to handle the number of arguments sent
+        # by the client (so we can raise ERROR_ARG instead of ERROR_SYSTEM).
+        # Maximum accepted arguments: argspec includes "self" and "conn".
         max_args = len(argspec.args) - 2
+        # Minimum accepted arguments: some arguments might be optional/
         min_args = max_args
         if argspec.defaults:
             min_args -= len(argspec.defaults)
         wrong_num = (len(self.args) > max_args) or (len(self.args) < min_args)
+        # If the command accepts a variable number of arguments skip the check.
         if wrong_num and not argspec.varargs:
             raise BPDError(ERROR_ARG,
                            u'wrong number of arguments for "{}"'
