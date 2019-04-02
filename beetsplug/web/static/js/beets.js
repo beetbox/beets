@@ -1,5 +1,5 @@
 // vim expandtab ts=4 sw=4 ai
-/* global $ _ Backbone Sortable */
+/* global $ _ Backbone Sortable VM */
 
 $(document).ready(function(){
 
@@ -508,18 +508,28 @@ $(document).ready(function(){
     },
 
     doPlaylist: function(){
-      App.appView.show( new PlayerView().render() );
+      var playerView = VM.reuseView("playerView", function(){
+        return new PlayerView();
+      });
+      playerView.render();
+      App.appView.show( playerView );
     },
 
     doSearch: function(query){
-      App.appView.show( new PlayerView().render() );
+      var playerView = VM.reuseView("playerView", function(){
+         return new PlayerView();
+      });
+      playerView.render();
+      App.appView.show( playerView );
       Backbone.trigger('items:search', query);
     },
     doStats: function(){
       console.log('in view stats');
       var m = new Stats();
-      var v = new StatsView({model: m});
-      App.appView.show( v );
+      var statsView = VM.reuseView("statsView", function(){
+         return new StatsView({model: m});
+      });
+      App.appView.show( statsView );
       m.fetch();
     },
     doAbout: function(){
