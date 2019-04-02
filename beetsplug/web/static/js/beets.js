@@ -479,6 +479,20 @@ $(document).ready(function(){
     },
   });
 
+  var Stats = Backbone.Model.extend({
+    url: App.api + 'stats'
+  });
+
+  var StatsView = Backbone.View.extend({
+    initialize: function(){
+      this.template = _.template( $('#stats-template').html() );
+      this.listenTo(this.model, 'change', this.render);
+    },
+    render: function(){
+      this.$el.html(this.template(this.model.toJSON()));
+    },
+  });
+
   var Router = Backbone.Router.extend({
     initialize: function(options){
       if (options.audio) {
@@ -488,7 +502,7 @@ $(document).ready(function(){
     routes: {
       'playlist/item/query/:query': 'doSearch',
       'playlist': 'doPlaylist',
-      'stats/:query': 'doStats',
+      'stats': 'doStats',
       'about': 'doAbout',
       'library': 'doLibrary',
     },
@@ -501,8 +515,12 @@ $(document).ready(function(){
       App.appView.show( new PlayerView().render() );
       Backbone.trigger('items:search', query);
     },
-    doStats: function(query){
-      Backbone.trigger('stats:show', query);
+    doStats: function(){
+      console.log('in view stats');
+      var m = new Stats();
+      var v = new StatsView({model: m});
+      App.appView.show( v );
+      m.fetch();
     },
     doAbout: function(){
       Backbone.trigger('about:show');
