@@ -81,6 +81,11 @@ New features:
   to be displayed.
   Thanks to :user:`pprkut`.
   :bug:`3089`
+* :doc:`/plugins/bpd`: MPD protocol commands ``consume`` and ``single`` are now
+  supported along with updated semantics for ``repeat`` and ``previous`` and
+  new fields for ``status``. The bpd server now understands and ignores some
+  additional commands.
+  :bug:`3200` :bug:`800`
 
 Changes:
 
@@ -181,6 +186,8 @@ Fixes:
   :bug:`3192`
 * Fix compatibility with pre-release versions of Python 3.8.
   :bug:`3201` :bug:`3202`
+* :doc:`/plugins/bpd`: Fix crashes in the bpd server during exception handling.
+  :bug:`3200`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
