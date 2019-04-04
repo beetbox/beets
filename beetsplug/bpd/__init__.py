@@ -767,7 +767,7 @@ class Command(object):
         # by the client (so we can raise ERROR_ARG instead of ERROR_SYSTEM).
         # Maximum accepted arguments: argspec includes "self" and "conn".
         max_args = len(argspec.args) - 2
-        # Minimum accepted arguments: some arguments might be optional/
+        # Minimum accepted arguments: some arguments might be optional.
         min_args = max_args
         if argspec.defaults:
             min_args -= len(argspec.defaults)
