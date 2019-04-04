@@ -367,6 +367,11 @@ class BPDTest(BPDTestHelper):
             response = client.send_command('crash_TypeError')
         self._assert_failed(response, bpd.ERROR_SYSTEM)
 
+    def test_empty_request(self):
+        with self.run_bpd() as client:
+            response = client.send_command('')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
 
 class BPDQueryTest(BPDTestHelper):
     test_implements_query = implements({
