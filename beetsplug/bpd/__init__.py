@@ -187,8 +187,21 @@ class BaseServer(object):
         self.paused = False
         self.error = None
 
+        # Current connections
+        self.connections = set()
+
         # Object for random numbers generation
         self.random_obj = random.Random()
+
+    def connect(self, conn):
+        """A new client has connected.
+        """
+        self.connections.add(conn)
+
+    def disconnect(self, conn):
+        """Client has disconnected; clean up residual state.
+        """
+        self.connections.remove(conn)
 
     def run(self):
         """Block and start listening for connections from clients. An
@@ -643,6 +656,7 @@ class Connection(object):
         self.server = server
         self.sock = sock
         self.authenticated = False
+        self.address = u'{}:{}'.format(*sock.sock.getpeername())
 
     def send(self, lines):
         """Send lines, which which is either a single string or an
@@ -653,9 +667,9 @@ class Connection(object):
         if isinstance(lines, six.string_types):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
-        # Don't log trailing newline:
-        message = out[:-1].replace(u'\n', u'\n' + u' ' * 13)
-        self.server._log.debug('server: {}', message)
+        session = u'>[{}]: '.format(self.address)
+        for l in out.split(NEWLINE)[:-1]:
+            self.server._log.debug('{}', session + l)
         if isinstance(out, six.text_type):
             out = out.encode('utf-8')
         return self.sock.sendall(out)
@@ -672,24 +686,36 @@ class Connection(object):
             # Send success code.
             yield self.send(RESP_OK)
 
+    def disconnect(self):
+        """The connection has closed for any reason.
+        """
+        self.server.disconnect(self)
+        self.server._log.debug(u'*[{}]: disconnected', self.address)
+
     def run(self):
         """Send a greeting to the client and begin processing commands
         as they arrive.
         """
-        self.server._log.debug('New client connected')
+        self.server._log.debug(u'*[{}]: connected', self.address)
+        self.server.connect(self)
         yield self.send(HELLO)
 
+        session = u'<[{}]: '.format(self.address)
         clist = None  # Initially, no command list is being constructed.
         while True:
             line = yield self.sock.readline()
             if not line:
+                self.disconnect()  # Client disappeared.
                 break
             line = line.strip()
             if not line:
+                err = BPDError(ERROR_UNKNOWN, u'No command given')
+                yield self.send(err.response())
+                self.disconnect()  # Client sent a blank line.
                 break
             line = line.decode('utf8')  # MPD protocol uses UTF-8.
-            message = line.replace(u'\n', u'\n' + u' ' * 13)
-            self.server._log.debug(u'client: {}', message)
+            for l in line.split(NEWLINE):
+                self.server._log.debug('{}', session + l)
 
             if clist is not None:
                 # Command list already opened.
@@ -710,6 +736,7 @@ class Connection(object):
                 except BPDClose:
                     # Command indicates that the conn should close.
                     self.sock.close()
+                    self.disconnect()  # Client explicitly closed.
                     return
 
     @classmethod
