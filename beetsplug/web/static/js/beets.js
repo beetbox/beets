@@ -287,6 +287,7 @@ $(document).ready(function(){
     },
     render: function(){
       this.$el.html(this.template())
+      return this;
     },
     onSubmit: function(e){
       e.preventDefault();
@@ -367,6 +368,7 @@ $(document).ready(function(){
       if (this.model) {
         this.$el.html(this.template(this.model.toJSON()));
       }
+      return this;
     },
 
     set: function(model){
@@ -506,6 +508,7 @@ $(document).ready(function(){
       if (this.model) {
         this.$el.html(this.template(this.model.toJSON()));
       }
+      return this;
     },
   });
 
@@ -524,9 +527,8 @@ $(document).ready(function(){
 
     doPlaylist: function(){
       var playerView = VM.reuseView("playerView", function(){
-        return new PlayerView();
+        return new PlayerView().render();
       });
-      playerView.render();
       App.appView.show( playerView );
     },
     doStats: function(){
