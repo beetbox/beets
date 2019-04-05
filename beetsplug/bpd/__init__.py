@@ -39,7 +39,7 @@ from beets import dbcore
 from beets.mediafile import MediaFile
 import six
 
-PROTOCOL_VERSION = '0.13.0'
+PROTOCOL_VERSION = '0.14.0'
 BUFSIZE = 1024
 
 HELLO = u'OK MPD %s' % PROTOCOL_VERSION
