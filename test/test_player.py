@@ -354,7 +354,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
 class BPDTest(BPDTestHelper):
     def test_server_hello(self):
         with self.run_bpd(do_hello=False) as client:
-            self.assertEqual(client.readline(), b'OK MPD 0.13.0\n')
+            self.assertEqual(client.readline(), b'OK MPD 0.14.0\n')
 
     def test_unknown_cmd(self):
         with self.run_bpd() as client:
