@@ -309,7 +309,6 @@ class BaseServer(object):
         playlist, playlistlength, and xfade.
         """
         yield (
-            u'volume: ' + six.text_type(self.volume),
             u'repeat: ' + six.text_type(int(self.repeat)),
             u'random: ' + six.text_type(int(self.random)),
             u'consume: ' + six.text_type(int(self.consume)),
@@ -318,6 +317,9 @@ class BaseServer(object):
             u'playlistlength: ' + six.text_type(len(self.playlist)),
             u'mixrampdb: ' + six.text_type(self.mixrampdb),
         )
+
+        if self.volume > 0:
+            yield u'volume: ' + six.text_type(self.volume)
 
         if not math.isnan(self.mixrampdelay):
             yield u'mixrampdelay: ' + six.text_type(self.mixrampdelay)
