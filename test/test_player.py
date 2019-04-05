@@ -384,7 +384,7 @@ class BPDQueryTest(BPDTestHelper):
         fields_not_playing = {
             'repeat', 'random', 'single', 'consume', 'playlist',
             'playlistlength', 'mixrampdb', 'state',
-            'volume'  # not (always?) returned by MPD
+            'volume'
         }
         self.assertEqual(fields_not_playing, set(responses[0].data.keys()))
         fields_playing = fields_not_playing | {
