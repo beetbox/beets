@@ -188,6 +188,11 @@ Fixes:
   :bug:`3201` :bug:`3202`
 * :doc:`/plugins/bpd`: Fix crashes in the bpd server during exception handling.
   :bug:`3200`
+* :doc:`/plugins/mpdstats`: Use the ``currentsong`` MPD command instead of
+  ``playlist`` to get the current song, improving performance when the playlist
+  is long.
+  Thanks to :user:`ray66`.
+  :bug:`3207` :bug:`2752`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
