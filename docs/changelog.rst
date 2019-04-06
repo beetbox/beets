@@ -188,6 +188,8 @@ Fixes:
   :bug:`3201` :bug:`3202`
 * :doc:`/plugins/bpd`: Fix crashes in the bpd server during exception handling.
   :bug:`3200`
+* :doc:`/plugins/lastgenre`: The `force` config option now actually works.
+  :bug:`2704` :bug:`3054`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
