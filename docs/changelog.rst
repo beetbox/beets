@@ -190,6 +190,11 @@ Fixes:
   :bug:`3200`
 * :doc:`/plugins/lastgenre`: The `force` config option now actually works.
   :bug:`2704` :bug:`3054`
+* :doc:`/plugins/mpdstats`: Use the ``currentsong`` MPD command instead of
+  ``playlist`` to get the current song, improving performance when the playlist
+  is long.
+  Thanks to :user:`ray66`.
+  :bug:`3207` :bug:`2752`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
