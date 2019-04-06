@@ -67,7 +67,7 @@ class RandomTest(unittest.TestCase, TestHelper):
             positions = []
             for _ in range(500):
                 shuffled = list(random._equal_chance_permutation(
-                    self.items, field=field))
+                    self.items, field=field, random_gen=self.random_gen))
                 positions.append(shuffled.index(self.item1))
             # Print a histogram (useful for debugging).
             if histogram:
