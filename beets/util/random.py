@@ -31,11 +31,13 @@ def _length(obj, album):
         return obj.length
 
 
-def _equal_chance_permutation(objs, field='albumartist'):
+def _equal_chance_permutation(objs, field='albumartist', random_gen=None):
     """Generate (lazily) a permutation of the objects where every group
     with equal values for `field` have an equal chance of appearing in
     any given position.
     """
+    rand = random_gen or random
+
     # Group the objects by artist so we can sample from them.
     key = attrgetter(field)
     objs.sort(key=key)
@@ -48,9 +50,9 @@ def _equal_chance_permutation(objs, field='albumartist'):
     while objs_by_artists:
         # Choose an artist and an object for that artist, removing
         # this choice from the pool.
-        artist = random.choice(list(objs_by_artists.keys()))
+        artist = rand.choice(list(objs_by_artists.keys()))
         objs_from_artist = objs_by_artists[artist]
-        i = random.randint(0, len(objs_from_artist) - 1)
+        i = rand.randint(0, len(objs_from_artist) - 1)
         yield objs_from_artist.pop(i)
 
         # Remove the artist if we've used up all of its objects.
@@ -86,7 +88,8 @@ def _take_time(iter, secs, album):
     return out
 
 
-def random_objs(objs, album, number=1, time=None, equal_chance=False):
+def random_objs(objs, album, number=1, time=None, equal_chance=False,
+                random_gen=None):
     """Get a random subset of the provided `objs`.
 
     If `number` is provided, produce that many matches. Otherwise, if
@@ -95,13 +98,15 @@ def random_objs(objs, album, number=1, time=None, equal_chance=False):
     artist an equal chance of being included so that artists with more
     songs are not represented disproportionately.
     """
+    rand = random_gen or random
+
     # Permute the objects either in a straightforward way or an
     # artist-balanced way.
     if equal_chance:
         perm = _equal_chance_permutation(objs)
     else:
         perm = objs
-        random.shuffle(perm)  # N.B. This shuffles the original list.
+        rand.shuffle(perm)  # N.B. This shuffles the original list.
 
     # Select objects by time our count.
     if time:
