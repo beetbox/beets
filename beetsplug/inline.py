@@ -102,6 +102,8 @@ class InlinePlugin(BeetsPlugin):
             out = dict(obj)
             if album:
                 out['items'] = list(obj.items())
+            else:
+                out['item'] = obj
             return out
 
         if is_expr:
