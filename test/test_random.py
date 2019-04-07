@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Test the beets.util.random utilities associated with the random plugin.
+"""Test the beets.random utilities associated with the random plugin.
 """
 
 from __future__ import division, absolute_import, print_function
@@ -24,7 +24,7 @@ from test.helper import TestHelper
 import math
 from random import Random
 
-from beets.util import random
+from beets import random
 
 
 class RandomTest(unittest.TestCase, TestHelper):

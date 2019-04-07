@@ -19,7 +19,7 @@ from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
-from beets.util.random import random_objs
+from beets.random import random_objs
 
 
 def random_func(lib, opts, args):
