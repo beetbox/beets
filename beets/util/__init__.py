@@ -283,13 +283,13 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
             continue
         clutter = [bytestring_path(c) for c in clutter]
         match_paths = [bytestring_path(d) for d in os.listdir(directory)]
-        if fnmatch_all(match_paths, clutter):
-            # Directory contains only clutter (or nothing).
-            try:
+        try:
+            if fnmatch_all(match_paths, clutter):
+                # Directory contains only clutter (or nothing).
                 shutil.rmtree(directory)
-            except OSError:
+            else:
                 break
-        else:
+        except OSError:
             break
 
 
