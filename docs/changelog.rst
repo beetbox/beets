@@ -195,6 +195,8 @@ Fixes:
   is long.
   Thanks to :user:`ray66`.
   :bug:`3207` :bug:`2752`
+* Fix an unhandled exception when pruning empty directories.
+  :bug:`1996` :bug:`3209`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
