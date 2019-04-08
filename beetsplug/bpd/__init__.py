@@ -27,6 +27,7 @@ import random
 import time
 import math
 import inspect
+import socket
 
 import beets
 from beets.plugins import BeetsPlugin
@@ -71,6 +72,10 @@ SAFE_COMMANDS = (
     # Commands that are available when unauthenticated.
     u'close', u'commands', u'notcommands', u'password', u'ping',
 )
+
+# List of subsystems/events used by the `idle` command.
+SUBSYSTEMS = [
+]
 
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
 
@@ -147,6 +152,16 @@ class BPDClose(Exception):
     should be closed.
     """
 
+
+class BPDIdle(Exception):
+    """Raised by a command to indicate the client wants to enter the idle state
+    and should be notified when a relevant event happens.
+    """
+    def __init__(self, subsystems):
+        super(BPDIdle, self).__init__()
+        self.subsystems = set(subsystems)
+
+
 # Generic server infrastructure, implementing the basic protocol.
 
 
@@ -211,6 +226,11 @@ class BaseServer(object):
         bluelet.run(bluelet.server(self.host, self.port,
                                    Connection.handler(self)))
 
+    def _send_event(self, event):
+        """Notify subscribed connections of an event."""
+        for conn in self.connections:
+            conn.notify(event)
+
     def _item_info(self, item):
         """An abstract method that should response lines containing a
         single song's metadata.
@@ -270,6 +290,14 @@ class BaseServer(object):
     def cmd_ping(self, conn):
         """Succeeds."""
         pass
+
+    def cmd_idle(self, conn, *subsystems):
+        subsystems = subsystems or SUBSYSTEMS
+        for system in subsystems:
+            if system not in SUBSYSTEMS:
+                raise BPDError(ERROR_ARG,
+                               u'Unrecognised idle event: {}'.format(system))
+        raise BPDIdle(subsystems)  # put the connection to sleep
 
     def cmd_kill(self, conn):
         """Exits the server process."""
@@ -657,6 +685,7 @@ class Connection(object):
         self.sock = sock
         self.authenticated = False
         self.address = u'{}:{}'.format(*sock.sock.getpeername())
+        self.notifications = set()
 
     def send(self, lines):
         """Send lines, which which is either a single string or an
@@ -691,6 +720,50 @@ class Connection(object):
         """
         self.server.disconnect(self)
         self.server._log.debug(u'*[{}]: disconnected', self.address)
+
+    def poll_notifications(self, subsystems):
+        """Sleep until we have some notifications from the subsystems given.
+        In order to promptly detect if the client has disconnected while
+        idling, try reading a single byte from the socket. According to the MPD
+        protocol the client can send the special command `noidle` to cancel
+        idle mode, otherwise we're expecting either a timeout or a zero-byte
+        reply. When we have notifications, send them to the client.
+        """
+        while True:
+            mpd_events = self.notifications.intersection(subsystems)
+            if mpd_events:
+                break
+            current_timeout = self.sock.sock.gettimeout()
+            try:
+                self.sock.sock.settimeout(0.01)
+                data = self.sock.sock.recv(1)
+                if data:  # Client sent data when it was meant to by idle.
+                    line = yield self.sock.readline()
+                    command = (data + line).rstrip()
+                    if command == b'noidle':
+                        self.server._log.debug(
+                                u'<[{}]: noidle'.format(self.address))
+                        break
+                    err = BPDError(
+                            ERROR_UNKNOWN,
+                            u'Got command while idle: {}'.format(
+                                command.decode('utf-8')))
+                    yield self.send(err.response())
+                    return
+                else:  # The socket has been closed.
+                    return
+            except socket.timeout:  # The socket is still alive.
+                pass
+            finally:
+                self.sock.sock.settimeout(current_timeout)
+            yield bluelet.sleep(0.02)
+        self.notifications = self.notifications.difference(subsystems)
+        for event in mpd_events:
+            yield self.send(u'changed: {}'.format(event))
+        yield self.send(RESP_OK)
+
+    def notify(self, event):
+        self.notifications.add(event)
 
     def run(self):
         """Send a greeting to the client and begin processing commands
@@ -738,6 +811,8 @@ class Connection(object):
                     self.sock.close()
                     self.disconnect()  # Client explicitly closed.
                     return
+                except BPDIdle as e:
+                    yield bluelet.call(self.poll_notifications(e.subsystems))
 
     @classmethod
     def handler(cls, server):
@@ -830,6 +905,9 @@ class Command(object):
         except BPDClose:
             # An indication that the connection should close. Send
             # it on the Connection.
+            raise
+
+        except BPDIdle:
             raise
 
         except Exception:
