@@ -75,6 +75,10 @@ SAFE_COMMANDS = (
 
 # List of subsystems/events used by the `idle` command.
 SUBSYSTEMS = [
+    u'update', u'player', u'mixer', u'options', u'playlist', u'database',
+    # Related to unsupported commands:
+    # u'stored_playlist', u'output', u'subscription', u'sticker', u'message',
+    # u'partition',
 ]
 
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
@@ -393,19 +397,23 @@ class BaseServer(object):
     def cmd_random(self, conn, state):
         """Set or unset random (shuffle) mode."""
         self.random = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_repeat(self, conn, state):
         """Set or unset repeat mode."""
         self.repeat = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_consume(self, conn, state):
         """Set or unset consume mode."""
         self.consume = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_single(self, conn, state):
         """Set or unset single mode."""
         # TODO support oneshot in addition to 0 and 1 [MPD 0.20]
         self.single = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_setvol(self, conn, vol):
         """Set the player's volume level (0-100)."""
@@ -413,6 +421,7 @@ class BaseServer(object):
         if vol < VOLUME_MIN or vol > VOLUME_MAX:
             raise BPDError(ERROR_ARG, u'volume out of range')
         self.volume = vol
+        self._send_event('mixer')
 
     def cmd_volume(self, conn, vol_delta):
         """Deprecated command to change the volume by a relative amount."""
@@ -425,6 +434,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'crossfade time must be nonnegative')
         self._log.warning(u'crossfade is not implemented in bpd')
         self.crossfade = crossfade
+        self._send_event('options')
 
     def cmd_mixrampdb(self, conn, db):
         """Set the mixramp normalised max volume in dB."""
@@ -433,6 +443,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'mixrampdb time must be negative')
         self._log.warning('mixramp is not implemented in bpd')
         self.mixrampdb = db
+        self._send_event('options')
 
     def cmd_mixrampdelay(self, conn, delay):
         """Set the mixramp delay in seconds."""
@@ -441,6 +452,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'mixrampdelay time must be nonnegative')
         self._log.warning('mixramp is not implemented in bpd')
         self.mixrampdelay = delay
+        self._send_event('options')
 
     def cmd_replay_gain_mode(self, conn, mode):
         """Set the replay gain mode."""
@@ -448,6 +460,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'Unrecognised replay gain mode')
         self._log.warning('replay gain is not implemented in bpd')
         self.replay_gain_mode = mode
+        self._send_event('options')
 
     def cmd_replay_gain_status(self, conn):
         """Get the replaygain mode."""
@@ -458,6 +471,7 @@ class BaseServer(object):
         self.playlist = []
         self.playlist_version += 1
         self.cmd_stop(conn)
+        self._send_event('playlist')
 
     def cmd_delete(self, conn, index):
         """Remove the song at index from the playlist."""
@@ -473,6 +487,7 @@ class BaseServer(object):
         elif index < self.current_index:  # Deleted before playing.
             # Shift playing index down.
             self.current_index -= 1
+        self._send_event('playlist')
 
     def cmd_deleteid(self, conn, track_id):
         self.cmd_delete(conn, self._id_to_index(track_id))
@@ -496,6 +511,7 @@ class BaseServer(object):
             self.current_index += 1
 
         self.playlist_version += 1
+        self._send_event('playlist')
 
     def cmd_moveid(self, conn, idx_from, idx_to):
         idx_from = self._id_to_index(idx_from)
@@ -521,6 +537,7 @@ class BaseServer(object):
             self.current_index = i
 
         self.playlist_version += 1
+        self._send_event('playlist')
 
     def cmd_swapid(self, conn, i_id, j_id):
         i = self._id_to_index(i_id)
@@ -578,6 +595,7 @@ class BaseServer(object):
         """Advance to the next song in the playlist."""
         old_index = self.current_index
         self.current_index = self._succ_idx()
+        self._send_event('playlist')
         if self.consume:
             # TODO how does consume interact with single+repeat?
             self.playlist.pop(old_index)
@@ -598,6 +616,7 @@ class BaseServer(object):
         """Step back to the last song."""
         old_index = self.current_index
         self.current_index = self._prev_idx()
+        self._send_event('playlist')
         if self.consume:
             self.playlist.pop(old_index)
         if self.current_index < 0:
@@ -613,6 +632,7 @@ class BaseServer(object):
             self.paused = not self.paused  # Toggle.
         else:
             self.paused = cast_arg('intbool', state)
+        self._send_event('player')
 
     def cmd_play(self, conn, index=-1):
         """Begin playback, possibly at a specified playlist index."""
@@ -632,6 +652,7 @@ class BaseServer(object):
             self.current_index = index
 
         self.paused = False
+        self._send_event('player')
 
     def cmd_playid(self, conn, track_id=0):
         track_id = cast_arg(int, track_id)
@@ -645,6 +666,7 @@ class BaseServer(object):
         """Stop playback."""
         self.current_index = -1
         self.paused = False
+        self._send_event('player')
 
     def cmd_seek(self, conn, index, pos):
         """Seek to a specified point in a specified song."""
@@ -652,6 +674,7 @@ class BaseServer(object):
         if index < 0 or index >= len(self.playlist):
             raise ArgumentIndexError()
         self.current_index = index
+        self._send_event('player')
 
     def cmd_seekid(self, conn, track_id, pos):
         index = self._id_to_index(track_id)
@@ -1027,6 +1050,8 @@ class Server(BaseServer):
         self.tree = vfs.libtree(self.lib)
         self._log.debug(u'Finished building directory tree.')
         self.updated_time = time.time()
+        self._send_event('update')
+        self._send_event('database')
 
     # Path (directory tree) browsing.
 
@@ -1136,6 +1161,7 @@ class Server(BaseServer):
             if send_id:
                 yield u'Id: ' + six.text_type(item.id)
         self.playlist_version += 1
+        self._send_event('playlist')
 
     def cmd_add(self, conn, path):
         """Adds a track or directory to the playlist, specified by a
