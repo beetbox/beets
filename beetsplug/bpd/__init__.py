@@ -27,7 +27,6 @@ import random
 import time
 import math
 import inspect
-import socket
 
 import beets
 from beets.plugins import BeetsPlugin
@@ -230,6 +229,14 @@ class BaseServer(object):
         bluelet.run(bluelet.server(self.host, self.port,
                                    Connection.handler(self)))
 
+    def dispatch_events(self):
+        """If any clients have idle events ready, send them.
+        """
+        # We need a copy of `self.connections` here since clients might
+        # disconnect once we try and send to them, changing `self.connections`.
+        for conn in list(self.connections):
+            yield bluelet.spawn(conn.send_notifications())
+
     def _send_event(self, event):
         """Notify subscribed connections of an event."""
         for conn in self.connections:
@@ -301,7 +308,7 @@ class BaseServer(object):
             if system not in SUBSYSTEMS:
                 raise BPDError(ERROR_ARG,
                                u'Unrecognised idle event: {}'.format(system))
-        raise BPDIdle(subsystems)  # put the connection to sleep
+        raise BPDIdle(subsystems)  # put the connection into idle mode
 
     def cmd_kill(self, conn):
         """Exits the server process."""
@@ -709,6 +716,7 @@ class Connection(object):
         self.authenticated = False
         self.address = u'{}:{}'.format(*sock.sock.getpeername())
         self.notifications = set()
+        self.idle_subscriptions = set()
 
     def send(self, lines):
         """Send lines, which which is either a single string or an
@@ -744,49 +752,24 @@ class Connection(object):
         self.server.disconnect(self)
         self.server._log.debug(u'*[{}]: disconnected', self.address)
 
-    def poll_notifications(self, subsystems):
-        """Sleep until we have some notifications from the subsystems given.
-        In order to promptly detect if the client has disconnected while
-        idling, try reading a single byte from the socket. According to the MPD
-        protocol the client can send the special command `noidle` to cancel
-        idle mode, otherwise we're expecting either a timeout or a zero-byte
-        reply. When we have notifications, send them to the client.
-        """
-        while True:
-            mpd_events = self.notifications.intersection(subsystems)
-            if mpd_events:
-                break
-            current_timeout = self.sock.sock.gettimeout()
-            try:
-                self.sock.sock.settimeout(0.01)
-                data = self.sock.sock.recv(1)
-                if data:  # Client sent data when it was meant to by idle.
-                    line = yield self.sock.readline()
-                    command = (data + line).rstrip()
-                    if command == b'noidle':
-                        self.server._log.debug(
-                                u'<[{}]: noidle'.format(self.address))
-                        break
-                    err = BPDError(
-                            ERROR_UNKNOWN,
-                            u'Got command while idle: {}'.format(
-                                command.decode('utf-8')))
-                    yield self.send(err.response())
-                    return
-                else:  # The socket has been closed.
-                    return
-            except socket.timeout:  # The socket is still alive.
-                pass
-            finally:
-                self.sock.sock.settimeout(current_timeout)
-            yield bluelet.sleep(0.02)
-        self.notifications = self.notifications.difference(subsystems)
-        for event in mpd_events:
-            yield self.send(u'changed: {}'.format(event))
-        yield self.send(RESP_OK)
-
     def notify(self, event):
+        """Queue up an event for sending to this client.
+        """
         self.notifications.add(event)
+
+    def send_notifications(self, force_close_idle=False):
+        """Send the client any queued events now.
+        """
+        pending = self.notifications.intersection(self.idle_subscriptions)
+        try:
+            for event in pending:
+                yield self.send(u'changed: {}'.format(event))
+            if pending or force_close_idle:
+                self.idle_subscriptions = set()
+                self.notifications = self.notifications.difference(pending)
+                yield self.send(RESP_OK)
+        except bluelet.SocketClosedError:
+            self.disconnect()  # Client disappeared.
 
     def run(self):
         """Send a greeting to the client and begin processing commands
@@ -813,6 +796,17 @@ class Connection(object):
             for l in line.split(NEWLINE):
                 self.server._log.debug('{}', session + l)
 
+            if self.idle_subscriptions:
+                # The connection is in idle mode.
+                if line == u'noidle':
+                    yield bluelet.call(self.send_notifications(True))
+                else:
+                    err = BPDError(ERROR_UNKNOWN,
+                                   u'Got command while idle: {}'.format(line))
+                    yield self.send(err.response())
+                    break
+                continue
+
             if clist is not None:
                 # Command list already opened.
                 if line == CLIST_END:
@@ -835,7 +829,10 @@ class Connection(object):
                     self.disconnect()  # Client explicitly closed.
                     return
                 except BPDIdle as e:
-                    yield bluelet.call(self.poll_notifications(e.subsystems))
+                    self.idle_subscriptions = e.subsystems
+                    self.server._log.debug('z[{}]: awaiting: {}', self.address,
+                                           ' '.join(e.subsystems))
+            yield bluelet.call(self.server.dispatch_events())
 
     @classmethod
     def handler(cls, server):
