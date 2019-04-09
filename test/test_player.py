@@ -270,7 +270,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         config = {
                 'pluginpath': [py3_path(self.temp_dir)],
                 'plugins': 'bpd',
-                'bpd': {'host': host, 'port': port},
+                'bpd': {'host': host, 'port': port, 'control_port': port + 1},
         }
         if password:
             config['bpd']['password'] = password
