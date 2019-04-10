@@ -75,6 +75,8 @@ The available options are:
   Default: No password.
 - **volume**: Initial volume, as a percentage.
   Default: 100
+- **control_port**: Port for the internal control socket.
+  Default: 6601
 
 Here's an example::
 
