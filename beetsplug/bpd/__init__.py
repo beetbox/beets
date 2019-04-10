@@ -186,6 +186,9 @@ class BaseServer(object):
         """Create a new server bound to address `host` and listening
         on port `port`. If `password` is given, it is required to do
         anything significant on the server.
+        A separate control socket is established listening to `ctrl_host` on
+        port `ctrl_port` which is used to forward notifications from the player
+        and can be sent debug commands (e.g. using netcat).
         """
         self.host, self.port, self.password = host, port, password
         self.ctrl_host, self.ctrl_port = ctrl_host or host, ctrl_port
@@ -245,6 +248,16 @@ class BaseServer(object):
         # disconnect once we try and send to them, changing `self.connections`.
         for conn in list(self.connections):
             yield bluelet.spawn(conn.send_notifications())
+
+    def _ctrl_send(self, message):
+        """Send some data over the control socket.
+        If it's our first time, open the socket. The message should be a
+        string without a terminal newline.
+        """
+        if not self.ctrl_sock:
+            self.ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.ctrl_sock.connect((self.ctrl_host, self.ctrl_port))
+        self.ctrl_sock.sendall((message + u'\n').encode('utf-8'))
 
     def _send_event(self, event):
         """Notify subscribed connections of an event."""
@@ -696,7 +709,7 @@ class BaseServer(object):
         index = self._id_to_index(track_id)
         return self.cmd_seek(conn, index, pos)
 
-    # Debugging/testing commands that are not part of the MPD protocol.
+    # Additions to the MPD protocol.
 
     def cmd_crash_TypeError(self, conn):  # noqa: N802
         """Deliberately trigger a TypeError for testing purposes.
@@ -709,7 +722,6 @@ class BaseServer(object):
 
 class Connection(object):
     """A connection between a client and the server.
-
     """
     def __init__(self, server, sock):
         """Create a new connection for the accepted socket `client`.
@@ -719,6 +731,8 @@ class Connection(object):
         self.address = u'{}:{}'.format(*sock.sock.getpeername())
 
     def debug(self, message, kind=' '):
+        """Log a debug message about this connection.
+        """
         self.server._log.debug(u'{}[{}]: {}', kind, self.address, message)
 
     def run(self):
@@ -836,6 +850,7 @@ class MPDConnection(Connection):
                 if line == CLIST_END:
                     yield bluelet.call(self.do_command(clist))
                     clist = None  # Clear the command list.
+                    yield bluelet.call(self.server.dispatch_events())
                 else:
                     clist.append(Command(line))
 
@@ -856,7 +871,7 @@ class MPDConnection(Connection):
                     self.idle_subscriptions = e.subsystems
                     self.debug('awaiting: {}'.format(' '.join(e.subsystems)),
                                kind='z')
-            yield bluelet.call(self.server.dispatch_events())
+                yield bluelet.call(self.server.dispatch_events())
 
 
 class ControlConnection(Connection):
@@ -1085,14 +1100,10 @@ class Server(BaseServer):
         super(Server, self).run()
 
     def play_finished(self):
-        """A callback invoked every time our player finishes a
-        track.
+        """A callback invoked every time our player finishes a track.
         """
-        if not self.ctrl_sock:
-            self.ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.ctrl_sock.connect((self.ctrl_host, self.ctrl_port))
         self.cmd_next(None)
-        self.ctrl_sock.sendall(u'play_finished\n'.encode('utf-8'))
+        self._ctrl_send(u'play_finished')
 
     # Metadata helper functions.
 
