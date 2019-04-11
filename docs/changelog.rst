@@ -86,6 +86,9 @@ New features:
   new fields for ``status``. The bpd server now understands and ignores some
   additional commands.
   :bug:`3200` :bug:`800`
+* :doc:`/plugins/bpd`: MPD protocol command ``idle`` is now supported, allowing
+  the MPD version to be bumped to 0.14.
+  :bug:`3205` :bug:`800`
 
 Changes:
 

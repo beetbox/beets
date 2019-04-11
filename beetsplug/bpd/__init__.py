@@ -27,6 +27,7 @@ import random
 import time
 import math
 import inspect
+import socket
 
 import beets
 from beets.plugins import BeetsPlugin
@@ -38,7 +39,7 @@ from beets import dbcore
 from beets.mediafile import MediaFile
 import six
 
-PROTOCOL_VERSION = '0.13.0'
+PROTOCOL_VERSION = '0.14.0'
 BUFSIZE = 1024
 
 HELLO = u'OK MPD %s' % PROTOCOL_VERSION
@@ -71,6 +72,14 @@ SAFE_COMMANDS = (
     # Commands that are available when unauthenticated.
     u'close', u'commands', u'notcommands', u'password', u'ping',
 )
+
+# List of subsystems/events used by the `idle` command.
+SUBSYSTEMS = [
+    u'update', u'player', u'mixer', u'options', u'playlist', u'database',
+    # Related to unsupported commands:
+    # u'stored_playlist', u'output', u'subscription', u'sticker', u'message',
+    # u'partition',
+]
 
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
 
@@ -147,6 +156,16 @@ class BPDClose(Exception):
     should be closed.
     """
 
+
+class BPDIdle(Exception):
+    """Raised by a command to indicate the client wants to enter the idle state
+    and should be notified when a relevant event happens.
+    """
+    def __init__(self, subsystems):
+        super(BPDIdle, self).__init__()
+        self.subsystems = set(subsystems)
+
+
 # Generic server infrastructure, implementing the basic protocol.
 
 
@@ -163,12 +182,17 @@ class BaseServer(object):
     This is a generic superclass and doesn't support many commands.
     """
 
-    def __init__(self, host, port, password, log):
+    def __init__(self, host, port, password, ctrl_port, log, ctrl_host=None):
         """Create a new server bound to address `host` and listening
         on port `port`. If `password` is given, it is required to do
         anything significant on the server.
+        A separate control socket is established listening to `ctrl_host` on
+        port `ctrl_port` which is used to forward notifications from the player
+        and can be sent debug commands (e.g. using netcat).
         """
         self.host, self.port, self.password = host, port, password
+        self.ctrl_host, self.ctrl_port = ctrl_host or host, ctrl_port
+        self.ctrl_sock = None
         self._log = log
 
         # Default server values.
@@ -187,16 +211,58 @@ class BaseServer(object):
         self.paused = False
         self.error = None
 
+        # Current connections
+        self.connections = set()
+
         # Object for random numbers generation
         self.random_obj = random.Random()
+
+    def connect(self, conn):
+        """A new client has connected.
+        """
+        self.connections.add(conn)
+
+    def disconnect(self, conn):
+        """Client has disconnected; clean up residual state.
+        """
+        self.connections.remove(conn)
 
     def run(self):
         """Block and start listening for connections from clients. An
         interrupt (^C) closes the server.
         """
         self.startup_time = time.time()
-        bluelet.run(bluelet.server(self.host, self.port,
-                                   Connection.handler(self)))
+
+        def start():
+            yield bluelet.spawn(
+                    bluelet.server(self.ctrl_host, self.ctrl_port,
+                                   ControlConnection.handler(self)))
+            yield bluelet.server(self.host, self.port,
+                                 MPDConnection.handler(self))
+        bluelet.run(start())
+
+    def dispatch_events(self):
+        """If any clients have idle events ready, send them.
+        """
+        # We need a copy of `self.connections` here since clients might
+        # disconnect once we try and send to them, changing `self.connections`.
+        for conn in list(self.connections):
+            yield bluelet.spawn(conn.send_notifications())
+
+    def _ctrl_send(self, message):
+        """Send some data over the control socket.
+        If it's our first time, open the socket. The message should be a
+        string without a terminal newline.
+        """
+        if not self.ctrl_sock:
+            self.ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.ctrl_sock.connect((self.ctrl_host, self.ctrl_port))
+        self.ctrl_sock.sendall((message + u'\n').encode('utf-8'))
+
+    def _send_event(self, event):
+        """Notify subscribed connections of an event."""
+        for conn in self.connections:
+            conn.notify(event)
 
     def _item_info(self, item):
         """An abstract method that should response lines containing a
@@ -258,6 +324,14 @@ class BaseServer(object):
         """Succeeds."""
         pass
 
+    def cmd_idle(self, conn, *subsystems):
+        subsystems = subsystems or SUBSYSTEMS
+        for system in subsystems:
+            if system not in SUBSYSTEMS:
+                raise BPDError(ERROR_ARG,
+                               u'Unrecognised idle event: {}'.format(system))
+        raise BPDIdle(subsystems)  # put the connection into idle mode
+
     def cmd_kill(self, conn):
         """Exits the server process."""
         exit(0)
@@ -309,7 +383,6 @@ class BaseServer(object):
         playlist, playlistlength, and xfade.
         """
         yield (
-            u'volume: ' + six.text_type(self.volume),
             u'repeat: ' + six.text_type(int(self.repeat)),
             u'random: ' + six.text_type(int(self.random)),
             u'consume: ' + six.text_type(int(self.consume)),
@@ -318,6 +391,9 @@ class BaseServer(object):
             u'playlistlength: ' + six.text_type(len(self.playlist)),
             u'mixrampdb: ' + six.text_type(self.mixrampdb),
         )
+
+        if self.volume > 0:
+            yield u'volume: ' + six.text_type(self.volume)
 
         if not math.isnan(self.mixrampdelay):
             yield u'mixrampdelay: ' + six.text_type(self.mixrampdelay)
@@ -350,19 +426,23 @@ class BaseServer(object):
     def cmd_random(self, conn, state):
         """Set or unset random (shuffle) mode."""
         self.random = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_repeat(self, conn, state):
         """Set or unset repeat mode."""
         self.repeat = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_consume(self, conn, state):
         """Set or unset consume mode."""
         self.consume = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_single(self, conn, state):
         """Set or unset single mode."""
         # TODO support oneshot in addition to 0 and 1 [MPD 0.20]
         self.single = cast_arg('intbool', state)
+        self._send_event('options')
 
     def cmd_setvol(self, conn, vol):
         """Set the player's volume level (0-100)."""
@@ -370,6 +450,7 @@ class BaseServer(object):
         if vol < VOLUME_MIN or vol > VOLUME_MAX:
             raise BPDError(ERROR_ARG, u'volume out of range')
         self.volume = vol
+        self._send_event('mixer')
 
     def cmd_volume(self, conn, vol_delta):
         """Deprecated command to change the volume by a relative amount."""
@@ -382,6 +463,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'crossfade time must be nonnegative')
         self._log.warning(u'crossfade is not implemented in bpd')
         self.crossfade = crossfade
+        self._send_event('options')
 
     def cmd_mixrampdb(self, conn, db):
         """Set the mixramp normalised max volume in dB."""
@@ -390,6 +472,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'mixrampdb time must be negative')
         self._log.warning('mixramp is not implemented in bpd')
         self.mixrampdb = db
+        self._send_event('options')
 
     def cmd_mixrampdelay(self, conn, delay):
         """Set the mixramp delay in seconds."""
@@ -398,6 +481,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'mixrampdelay time must be nonnegative')
         self._log.warning('mixramp is not implemented in bpd')
         self.mixrampdelay = delay
+        self._send_event('options')
 
     def cmd_replay_gain_mode(self, conn, mode):
         """Set the replay gain mode."""
@@ -405,6 +489,7 @@ class BaseServer(object):
             raise BPDError(ERROR_ARG, u'Unrecognised replay gain mode')
         self._log.warning('replay gain is not implemented in bpd')
         self.replay_gain_mode = mode
+        self._send_event('options')
 
     def cmd_replay_gain_status(self, conn):
         """Get the replaygain mode."""
@@ -415,6 +500,7 @@ class BaseServer(object):
         self.playlist = []
         self.playlist_version += 1
         self.cmd_stop(conn)
+        self._send_event('playlist')
 
     def cmd_delete(self, conn, index):
         """Remove the song at index from the playlist."""
@@ -430,6 +516,7 @@ class BaseServer(object):
         elif index < self.current_index:  # Deleted before playing.
             # Shift playing index down.
             self.current_index -= 1
+        self._send_event('playlist')
 
     def cmd_deleteid(self, conn, track_id):
         self.cmd_delete(conn, self._id_to_index(track_id))
@@ -453,6 +540,7 @@ class BaseServer(object):
             self.current_index += 1
 
         self.playlist_version += 1
+        self._send_event('playlist')
 
     def cmd_moveid(self, conn, idx_from, idx_to):
         idx_from = self._id_to_index(idx_from)
@@ -478,6 +566,7 @@ class BaseServer(object):
             self.current_index = i
 
         self.playlist_version += 1
+        self._send_event('playlist')
 
     def cmd_swapid(self, conn, i_id, j_id):
         i = self._id_to_index(i_id)
@@ -535,6 +624,7 @@ class BaseServer(object):
         """Advance to the next song in the playlist."""
         old_index = self.current_index
         self.current_index = self._succ_idx()
+        self._send_event('playlist')
         if self.consume:
             # TODO how does consume interact with single+repeat?
             self.playlist.pop(old_index)
@@ -555,6 +645,7 @@ class BaseServer(object):
         """Step back to the last song."""
         old_index = self.current_index
         self.current_index = self._prev_idx()
+        self._send_event('playlist')
         if self.consume:
             self.playlist.pop(old_index)
         if self.current_index < 0:
@@ -570,6 +661,7 @@ class BaseServer(object):
             self.paused = not self.paused  # Toggle.
         else:
             self.paused = cast_arg('intbool', state)
+        self._send_event('player')
 
     def cmd_play(self, conn, index=-1):
         """Begin playback, possibly at a specified playlist index."""
@@ -589,6 +681,7 @@ class BaseServer(object):
             self.current_index = index
 
         self.paused = False
+        self._send_event('player')
 
     def cmd_playid(self, conn, track_id=0):
         track_id = cast_arg(int, track_id)
@@ -602,6 +695,7 @@ class BaseServer(object):
         """Stop playback."""
         self.current_index = -1
         self.paused = False
+        self._send_event('player')
 
     def cmd_seek(self, conn, index, pos):
         """Seek to a specified point in a specified song."""
@@ -609,18 +703,13 @@ class BaseServer(object):
         if index < 0 or index >= len(self.playlist):
             raise ArgumentIndexError()
         self.current_index = index
+        self._send_event('player')
 
     def cmd_seekid(self, conn, track_id, pos):
         index = self._id_to_index(track_id)
         return self.cmd_seek(conn, index, pos)
 
-    # Debugging/testing commands that are not part of the MPD protocol.
-
-    def cmd_profile(self, conn):
-        """Memory profiling for debugging."""
-        from guppy import hpy
-        heap = hpy().heap()
-        print(heap)
+    # Additions to the MPD protocol.
 
     def cmd_crash_TypeError(self, conn):  # noqa: N802
         """Deliberately trigger a TypeError for testing purposes.
@@ -632,15 +721,22 @@ class BaseServer(object):
 
 
 class Connection(object):
-    """A connection between a client and the server. Handles input and
-    output from and to the client.
+    """A connection between a client and the server.
     """
     def __init__(self, server, sock):
         """Create a new connection for the accepted socket `client`.
         """
         self.server = server
         self.sock = sock
-        self.authenticated = False
+        self.address = u'{}:{}'.format(*sock.sock.getpeername())
+
+    def debug(self, message, kind=' '):
+        """Log a debug message about this connection.
+        """
+        self.server._log.debug(u'{}[{}]: {}', kind, self.address, message)
+
+    def run(self):
+        pass
 
     def send(self, lines):
         """Send lines, which which is either a single string or an
@@ -651,12 +747,31 @@ class Connection(object):
         if isinstance(lines, six.string_types):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
-        # Don't log trailing newline:
-        message = out[:-1].replace(u'\n', u'\n' + u' ' * 13)
-        self.server._log.debug('server: {}', message)
+        for l in out.split(NEWLINE)[:-1]:
+            self.debug(l, kind='>')
         if isinstance(out, six.text_type):
             out = out.encode('utf-8')
         return self.sock.sendall(out)
+
+    @classmethod
+    def handler(cls, server):
+        def _handle(sock):
+            """Creates a new `Connection` and runs it.
+            """
+            return cls(server, sock).run()
+        return _handle
+
+
+class MPDConnection(Connection):
+    """A connection that receives commands from an MPD-compatible client.
+    """
+    def __init__(self, server, sock):
+        """Create a new connection for the accepted socket `client`.
+        """
+        super(MPDConnection, self).__init__(server, sock)
+        self.authenticated = False
+        self.notifications = set()
+        self.idle_subscriptions = set()
 
     def do_command(self, command):
         """A coroutine that runs the given command and sends an
@@ -670,30 +785,72 @@ class Connection(object):
             # Send success code.
             yield self.send(RESP_OK)
 
+    def disconnect(self):
+        """The connection has closed for any reason.
+        """
+        self.server.disconnect(self)
+        self.debug('disconnected', kind='*')
+
+    def notify(self, event):
+        """Queue up an event for sending to this client.
+        """
+        self.notifications.add(event)
+
+    def send_notifications(self, force_close_idle=False):
+        """Send the client any queued events now.
+        """
+        pending = self.notifications.intersection(self.idle_subscriptions)
+        try:
+            for event in pending:
+                yield self.send(u'changed: {}'.format(event))
+            if pending or force_close_idle:
+                self.idle_subscriptions = set()
+                self.notifications = self.notifications.difference(pending)
+                yield self.send(RESP_OK)
+        except bluelet.SocketClosedError:
+            self.disconnect()  # Client disappeared.
+
     def run(self):
         """Send a greeting to the client and begin processing commands
         as they arrive.
         """
-        self.server._log.debug('New client connected')
+        self.debug('connected', kind='*')
+        self.server.connect(self)
         yield self.send(HELLO)
 
         clist = None  # Initially, no command list is being constructed.
         while True:
             line = yield self.sock.readline()
             if not line:
+                self.disconnect()  # Client disappeared.
                 break
             line = line.strip()
             if not line:
+                err = BPDError(ERROR_UNKNOWN, u'No command given')
+                yield self.send(err.response())
+                self.disconnect()  # Client sent a blank line.
                 break
             line = line.decode('utf8')  # MPD protocol uses UTF-8.
-            message = line.replace(u'\n', u'\n' + u' ' * 13)
-            self.server._log.debug(u'client: {}', message)
+            for l in line.split(NEWLINE):
+                self.debug(l, kind='<')
+
+            if self.idle_subscriptions:
+                # The connection is in idle mode.
+                if line == u'noidle':
+                    yield bluelet.call(self.send_notifications(True))
+                else:
+                    err = BPDError(ERROR_UNKNOWN,
+                                   u'Got command while idle: {}'.format(line))
+                    yield self.send(err.response())
+                    break
+                continue
 
             if clist is not None:
                 # Command list already opened.
                 if line == CLIST_END:
                     yield bluelet.call(self.do_command(clist))
                     clist = None  # Clear the command list.
+                    yield bluelet.call(self.server.dispatch_events())
                 else:
                     clist.append(Command(line))
 
@@ -708,15 +865,71 @@ class Connection(object):
                 except BPDClose:
                     # Command indicates that the conn should close.
                     self.sock.close()
+                    self.disconnect()  # Client explicitly closed.
                     return
+                except BPDIdle as e:
+                    self.idle_subscriptions = e.subsystems
+                    self.debug('awaiting: {}'.format(' '.join(e.subsystems)),
+                               kind='z')
+                yield bluelet.call(self.server.dispatch_events())
 
-    @classmethod
-    def handler(cls, server):
-        def _handle(sock):
-            """Creates a new `Connection` and runs it.
-            """
-            return cls(server, sock).run()
-        return _handle
+
+class ControlConnection(Connection):
+    """A connection used to control BPD for debugging and internal events.
+    """
+    def __init__(self, server, sock):
+        """Create a new connection for the accepted socket `client`.
+        """
+        super(ControlConnection, self).__init__(server, sock)
+
+    def debug(self, message, kind=' '):
+        self.server._log.debug(u'CTRL {}[{}]: {}', kind, self.address, message)
+
+    def run(self):
+        """Listen for control commands and delegate to `ctrl_*` methods.
+        """
+        self.debug('connected', kind='*')
+        while True:
+            line = yield self.sock.readline()
+            if not line:
+                break  # Client disappeared.
+            line = line.strip()
+            if not line:
+                break  # Client sent a blank line.
+            line = line.decode('utf8')  # Protocol uses UTF-8.
+            for l in line.split(NEWLINE):
+                self.debug(l, kind='<')
+            command = Command(line)
+            try:
+                func = command.delegate('ctrl_', self)
+                yield bluelet.call(func(*command.args))
+            except (AttributeError, TypeError) as e:
+                yield self.send('ERROR: {}'.format(e.args[0]))
+            except Exception:
+                yield self.send(['ERROR: server error',
+                                 traceback.format_exc().rstrip()])
+
+    def ctrl_play_finished(self):
+        """Callback from the player signalling a song finished playing.
+        """
+        yield bluelet.call(self.server.dispatch_events())
+
+    def ctrl_profile(self):
+        """Memory profiling for debugging.
+        """
+        from guppy import hpy
+        heap = hpy().heap()
+        yield self.send(heap)
+
+    def ctrl_nickname(self, oldlabel, newlabel):
+        """Rename a client in the log messages.
+        """
+        for c in self.server.connections:
+            if c.address == oldlabel:
+                c.address = newlabel
+                break
+        else:
+            yield self.send(u'ERROR: no such client: {}'.format(oldlabel))
 
 
 class Command(object):
@@ -745,16 +958,17 @@ class Command(object):
                 arg = match[1]
             self.args.append(arg)
 
-    def run(self, conn):
-        """A coroutine that executes the command on the given
-        connection.
+    def delegate(self, prefix, target, extra_args=0):
+        """Get the target method that corresponds to this command.
+        The `prefix` is prepended to the command name and then the resulting
+        name is used to search `target` for a method with a compatible number
+        of arguments.
         """
         # Attempt to get correct command function.
-        func_name = 'cmd_' + self.name
-        if not hasattr(conn.server, func_name):
-            raise BPDError(ERROR_UNKNOWN,
-                           u'unknown command "{}"'.format(self.name))
-        func = getattr(conn.server, func_name)
+        func_name = prefix + self.name
+        if not hasattr(target, func_name):
+            raise AttributeError(u'unknown command "{}"'.format(self.name))
+        func = getattr(target, func_name)
 
         if six.PY2:
             # caution: the fields of the namedtuple are slightly different
@@ -765,19 +979,31 @@ class Command(object):
 
         # Check that `func` is able to handle the number of arguments sent
         # by the client (so we can raise ERROR_ARG instead of ERROR_SYSTEM).
-        # Maximum accepted arguments: argspec includes "self" and "conn".
-        max_args = len(argspec.args) - 2
-        # Minimum accepted arguments: some arguments might be optional/
+        # Maximum accepted arguments: argspec includes "self".
+        max_args = len(argspec.args) - 1 - extra_args
+        # Minimum accepted arguments: some arguments might be optional.
         min_args = max_args
         if argspec.defaults:
             min_args -= len(argspec.defaults)
         wrong_num = (len(self.args) > max_args) or (len(self.args) < min_args)
         # If the command accepts a variable number of arguments skip the check.
         if wrong_num and not argspec.varargs:
-            raise BPDError(ERROR_ARG,
-                           u'wrong number of arguments for "{}"'
-                           .format(self.name),
-                           self.name)
+            raise TypeError(u'wrong number of arguments for "{}"'
+                            .format(self.name), self.name)
+
+        return func
+
+    def run(self, conn):
+        """A coroutine that executes the command on the given
+        connection.
+        """
+        try:
+            # `conn` is an extra argument to all cmd handlers.
+            func = self.delegate('cmd_', conn.server, extra_args=1)
+        except AttributeError as e:
+            raise BPDError(ERROR_UNKNOWN, e.args[0])
+        except TypeError as e:
+            raise BPDError(ERROR_ARG, e.args[0], self.name)
 
         # Ensure we have permission for this command.
         if conn.server.password and \
@@ -801,6 +1027,9 @@ class Command(object):
         except BPDClose:
             # An indication that the connection should close. Send
             # it on the Connection.
+            raise
+
+        except BPDIdle:
             raise
 
         except Exception:
@@ -849,7 +1078,7 @@ class Server(BaseServer):
     to store its library.
     """
 
-    def __init__(self, library, host, port, password, log):
+    def __init__(self, library, host, port, password, ctrl_port, log):
         try:
             from beetsplug.bpd import gstplayer
         except ImportError as e:
@@ -859,7 +1088,7 @@ class Server(BaseServer):
             else:
                 raise
         log.info(u'Starting server...')
-        super(Server, self).__init__(host, port, password, log)
+        super(Server, self).__init__(host, port, password, ctrl_port, log)
         self.lib = library
         self.player = gstplayer.GstPlayer(self.play_finished)
         self.cmd_update(None)
@@ -871,10 +1100,10 @@ class Server(BaseServer):
         super(Server, self).run()
 
     def play_finished(self):
-        """A callback invoked every time our player finishes a
-        track.
+        """A callback invoked every time our player finishes a track.
         """
         self.cmd_next(None)
+        self._ctrl_send(u'play_finished')
 
     # Metadata helper functions.
 
@@ -920,6 +1149,8 @@ class Server(BaseServer):
         self.tree = vfs.libtree(self.lib)
         self._log.debug(u'Finished building directory tree.')
         self.updated_time = time.time()
+        self._send_event('update')
+        self._send_event('database')
 
     # Path (directory tree) browsing.
 
@@ -1029,6 +1260,7 @@ class Server(BaseServer):
             if send_id:
                 yield u'Id: ' + six.text_type(item.id)
         self.playlist_version += 1
+        self._send_event('playlist')
 
     def cmd_add(self, conn, path):
         """Adds a track or directory to the playlist, specified by a
@@ -1309,15 +1541,16 @@ class BPDPlugin(BeetsPlugin):
         self.config.add({
             'host': u'',
             'port': 6600,
+            'control_port': 6601,
             'password': u'',
             'volume': VOLUME_MAX,
         })
         self.config['password'].redact = True
 
-    def start_bpd(self, lib, host, port, password, volume):
+    def start_bpd(self, lib, host, port, password, volume, ctrl_port):
         """Starts a BPD server."""
         try:
-            server = Server(lib, host, port, password, self._log)
+            server = Server(lib, host, port, password, ctrl_port, self._log)
             server.cmd_setvol(None, volume)
             server.run()
         except NoGstreamerError:
@@ -1335,10 +1568,15 @@ class BPDPlugin(BeetsPlugin):
             host = args.pop(0) if args else host
             port = args.pop(0) if args else self.config['port'].get(int)
             if args:
+                ctrl_port = args.pop(0)
+            else:
+                ctrl_port = self.config['control_port'].get(int)
+            if args:
                 raise beets.ui.UserError(u'too many arguments')
             password = self.config['password'].as_str()
             volume = self.config['volume'].get(int)
-            self.start_bpd(lib, host, int(port), password, volume)
+            self.start_bpd(lib, host, int(port), password, volume,
+                           int(ctrl_port))
 
         cmd.func = func
         return [cmd]
