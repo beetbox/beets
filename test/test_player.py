@@ -23,6 +23,7 @@ from test.helper import TestHelper
 import os
 import sys
 import multiprocessing as mp
+import threading
 import socket
 import time
 import yaml
@@ -37,18 +38,19 @@ from beetsplug import bpd
 import mock
 import imp
 gstplayer = imp.new_module("beetsplug.bpd.gstplayer")
-def _gstplayer_play(_):  # noqa: 42
+def _gstplayer_play(*_):  # noqa: 42
     bpd.gstplayer._GstPlayer.playing = True
     return mock.DEFAULT
 gstplayer._GstPlayer = mock.MagicMock(
     spec_set=[
         "time", "volume", "playing", "run", "play_file", "pause", "stop",
-        "seek"
+        "seek", "play"
     ], **{
         'playing': False,
         'volume': 0,
         'time.return_value': (0, 0),
         'play_file.side_effect': _gstplayer_play,
+        'play.side_effect': _gstplayer_play,
     })
 gstplayer.GstPlayer = lambda _: gstplayer._GstPlayer
 sys.modules["beetsplug.bpd.gstplayer"] = gstplayer
@@ -259,7 +261,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
 
     @contextmanager
     def run_bpd(self, host='localhost', port=9876, password=None,
-                do_hello=True):
+                do_hello=True, second_client=False):
         """ Runs BPD in another process, configured with the same library
         database as we created in the setUp method. Exposes a client that is
         connected to the server, and kills the server at the end.
@@ -268,7 +270,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         config = {
                 'pluginpath': [py3_path(self.temp_dir)],
                 'plugins': 'bpd',
-                'bpd': {'host': host, 'port': port},
+                'bpd': {'host': host, 'port': port, 'control_port': port + 1},
         }
         if password:
             config['bpd']['password'] = password
@@ -290,7 +292,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         server.start()
 
         # Wait until the socket is connected:
-        sock = None
+        sock, sock2 = None, None
         for _ in range(20):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if sock.connect_ex((host, port)) == 0:
@@ -302,9 +304,16 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
             raise RuntimeError('Timed out waiting for the BPD server')
 
         try:
-            yield MPCClient(sock, do_hello)
+            if second_client:
+                sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock2.connect((host, port))
+                yield MPCClient(sock, do_hello), MPCClient(sock2, do_hello)
+            else:
+                yield MPCClient(sock, do_hello)
         finally:
             sock.close()
+            if sock2:
+                sock2.close()
             server.terminate()
             server.join(timeout=0.2)
 
@@ -345,7 +354,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
 class BPDTest(BPDTestHelper):
     def test_server_hello(self):
         with self.run_bpd(do_hello=False) as client:
-            self.assertEqual(client.readline(), b'OK MPD 0.13.0\n')
+            self.assertEqual(client.readline(), b'OK MPD 0.14.0\n')
 
     def test_unknown_cmd(self):
         with self.run_bpd() as client:
@@ -367,11 +376,16 @@ class BPDTest(BPDTestHelper):
             response = client.send_command('crash_TypeError')
         self._assert_failed(response, bpd.ERROR_SYSTEM)
 
+    def test_empty_request(self):
+        with self.run_bpd() as client:
+            response = client.send_command('')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
 
 class BPDQueryTest(BPDTestHelper):
     test_implements_query = implements({
-            'clearerror', 'currentsong', 'idle', 'stats',
-            }, expectedFailure=True)
+            'clearerror', 'currentsong', 'stats',
+            })
 
     def test_cmd_status(self):
         with self.run_bpd() as client:
@@ -384,13 +398,48 @@ class BPDQueryTest(BPDTestHelper):
         fields_not_playing = {
             'repeat', 'random', 'single', 'consume', 'playlist',
             'playlistlength', 'mixrampdb', 'state',
-            'volume'  # not (always?) returned by MPD
+            'volume'
         }
         self.assertEqual(fields_not_playing, set(responses[0].data.keys()))
         fields_playing = fields_not_playing | {
             'song', 'songid', 'time', 'elapsed', 'bitrate', 'duration', 'audio'
         }
         self.assertEqual(fields_playing, set(responses[2].data.keys()))
+
+    def test_cmd_idle(self):
+        def _toggle(c):
+            for _ in range(3):
+                rs = c.send_commands(('play',), ('pause',))
+                # time.sleep(0.05)  # uncomment if test is flaky
+                if any(not r.ok for r in rs):
+                    raise RuntimeError('Toggler failed')
+        with self.run_bpd(second_client=True) as (client, client2):
+            self._bpd_add(client, self.item1, self.item2)
+            toggler = threading.Thread(target=_toggle, args=(client2,))
+            toggler.start()
+            # Idling will hang until the toggler thread changes the play state.
+            # Since the client sockets have a 1s timeout set at worst this will
+            # raise a socket.timeout and fail the test if the toggler thread
+            # manages to finish before the idle command is sent here.
+            response = client.send_command('idle', 'player')
+            toggler.join()
+        self._assert_ok(response)
+
+    def test_cmd_idle_with_pending(self):
+        with self.run_bpd(second_client=True) as (client, client2):
+            response1 = client.send_command('random', '1')
+            response2 = client2.send_command('idle')
+        self._assert_ok(response1, response2)
+        self.assertEqual('options', response2.data['changed'])
+
+    def test_cmd_noidle(self):
+        with self.run_bpd() as client:
+            # Manually send a command without reading a response.
+            request = client.serialise_command('idle')
+            client.sock.sendall(request)
+            time.sleep(0.01)
+            response = client.send_command('noidle')
+        self._assert_ok(response)
 
 
 class BPDPlaybackTest(BPDTestHelper):
