@@ -433,7 +433,8 @@ class BPDQueryTest(BPDTestHelper):
         }
         self.assertEqual(fields_not_playing, set(responses[0].data.keys()))
         fields_playing = fields_not_playing | {
-            'song', 'songid', 'time', 'elapsed', 'bitrate', 'duration', 'audio'
+            'song', 'songid', 'time', 'elapsed', 'bitrate', 'duration',
+            'audio', 'nextsong', 'nextsongid'
         }
         self.assertEqual(fields_playing, set(responses[2].data.keys()))
 
