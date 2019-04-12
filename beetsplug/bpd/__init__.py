@@ -1094,6 +1094,8 @@ class Server(BaseServer):
         self.cmd_update(None)
         log.info(u'Server ready and listening on {}:{}'.format(
             host, port))
+        log.debug(u'Listening for control signals on {}:{}'.format(
+            host, ctrl_port))
 
     def run(self):
         self.player.run()
