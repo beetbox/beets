@@ -412,6 +412,11 @@ class BaseServer(object):
             current_id = self._item_id(self.playlist[self.current_index])
             yield u'song: ' + six.text_type(self.current_index)
             yield u'songid: ' + six.text_type(current_id)
+            if len(self.playlist) > self.current_index + 1:
+                # If there's a next song, report its index too.
+                next_id = self._item_id(self.playlist[self.current_index + 1])
+                yield u'nextsong: ' + six.text_type(self.current_index + 1)
+                yield u'nextsongid: ' + six.text_type(next_id)
 
         if self.error:
             yield u'error: ' + self.error
