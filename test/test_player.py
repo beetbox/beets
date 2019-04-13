@@ -339,8 +339,9 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
             previous_commands = response[0:pos]
             self._assert_ok(*previous_commands)
             response = response[pos]
-            self.assertEqual(pos, response.err_data[1])
         self.assertFalse(response.ok)
+        if pos is not None:
+            self.assertEqual(pos, response.err_data[1])
         if code is not None:
             self.assertEqual(code, response.err_data[0])
 
@@ -781,12 +782,15 @@ class BPDQueueTest(BPDTestHelper):
 
     def test_cmd_playlistinfo(self):
         with self.run_bpd() as client:
-            self._bpd_add(client, self.item1)
+            self._bpd_add(client, self.item1, self.item2)
             responses = client.send_commands(
                     ('playlistinfo',),
                     ('playlistinfo', '0'),
+                    ('playlistinfo', '0:2'),
                     ('playlistinfo', '200'))
-        self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=3)
+        self.assertEqual('1', responses[1].data['Id'])
+        self.assertEqual(['1', '2'], responses[2].data['Id'])
 
     def test_cmd_playlistinfo_tagtypes(self):
         with self.run_bpd() as client:
