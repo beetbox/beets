@@ -392,7 +392,7 @@ class BPDTest(BPDTestHelper):
 
 class BPDQueryTest(BPDTestHelper):
     test_implements_query = implements({
-            'clearerror', 'currentsong', 'stats',
+            'clearerror', 'currentsong',
             })
 
     def test_cmd_status(self):
@@ -413,6 +413,14 @@ class BPDQueryTest(BPDTestHelper):
             'song', 'songid', 'time', 'elapsed', 'bitrate', 'duration', 'audio'
         }
         self.assertEqual(fields_playing, set(responses[2].data.keys()))
+
+    def test_cmd_stats(self):
+        with self.run_bpd() as client:
+            response = client.send_command('stats')
+        self._assert_ok(response)
+        details = {'artists', 'albums', 'songs', 'uptime', 'db_playtime',
+                   'db_update', 'playtime'}
+        self.assertEqual(details, set(response.data.keys()))
 
     def test_cmd_idle(self):
         def _toggle(c):
@@ -630,9 +638,8 @@ class BPDPlaybackTest(BPDTestHelper):
 
 class BPDControlTest(BPDTestHelper):
     test_implements_control = implements({
-            'pause', 'playid', 'seek',
-            'seekid', 'seekcur', 'stop',
-            }, expectedFailure=True)
+        'seek', 'seekid', 'seekcur',
+    }, expectedFailure=True)
 
     def test_cmd_play(self):
         with self.run_bpd() as client:
@@ -647,6 +654,45 @@ class BPDControlTest(BPDTestHelper):
         self.assertEqual('stop', responses[0].data['state'])
         self.assertEqual('play', responses[2].data['state'])
         self.assertEqual('2', responses[4].data['Id'])
+
+    def test_cmd_playid(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('playid', '2'),
+                    ('currentsong',),
+                    ('clear',))
+            self._bpd_add(client, self.item2, self.item1)
+            responses.extend(client.send_commands(
+                    ('playid', '2'),
+                    ('currentsong',)))
+        self._assert_ok(*responses)
+        self.assertEqual('2', responses[1].data['Id'])
+        self.assertEqual('2', responses[4].data['Id'])
+
+    def test_cmd_pause(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('pause',),
+                    ('status',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('pause', responses[2].data['state'])
+        self.assertEqual('1', responses[3].data['Id'])
+
+    def test_cmd_stop(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('stop',),
+                    ('status',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('stop', responses[2].data['state'])
+        self.assertNotIn('Id', responses[3].data)
 
     def test_cmd_next(self):
         with self.run_bpd() as client:
