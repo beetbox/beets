@@ -583,23 +583,25 @@ class BaseServer(object):
         """Indicates supported URL schemes. None by default."""
         pass
 
-    def cmd_playlistinfo(self, conn, index=-1):
+    def cmd_playlistinfo(self, conn, index=None):
         """Gives metadata information about the entire playlist or a
         single track, given by its index.
         """
-        index = cast_arg(int, index)
-        if index == -1:
+        if index is None:
             for track in self.playlist:
                 yield self._item_info(track)
         else:
+            indices = self._parse_range(index, accept_single_number=True)
             try:
-                track = self.playlist[index]
+                tracks = [self.playlist[i] for i in indices]
             except IndexError:
                 raise ArgumentIndexError()
-            yield self._item_info(track)
+            for track in tracks:
+                yield self._item_info(track)
 
-    def cmd_playlistid(self, conn, track_id=-1):
-        if track_id != -1:
+    def cmd_playlistid(self, conn, track_id=None):
+        if track_id is not None:
+            track_id = cast_arg(int, track_id)
             track_id = self._id_to_index(track_id)
         return self.cmd_playlistinfo(conn, track_id)
 
@@ -1138,6 +1140,21 @@ class Server(BaseServer):
                 tagtype, six.text_type(getattr(item, field))))
 
         return info_lines
+
+    def _parse_range(self, items, accept_single_number=False):
+        """Convert a range of positions to a list of item info.
+        MPD specifies ranges as START:STOP (endpoint excluded) for some
+        commands. Sometimes a single number can be provided instead.
+        """
+        try:
+            start, stop = str(items).split(':', 1)
+        except ValueError:
+            if accept_single_number:
+                return [cast_arg(int, items)]
+            raise BPDError(ERROR_ARG, u'bad range syntax')
+        start = cast_arg(int, start)
+        stop = cast_arg(int, stop)
+        return range(start, stop)
 
     def _item_id(self, item):
         return item.id
