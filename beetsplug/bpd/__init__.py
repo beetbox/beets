@@ -593,7 +593,9 @@ class BaseServer(object):
             yield self._item_info(track)
 
     def cmd_playlistid(self, conn, track_id=-1):
-        return self.cmd_playlistinfo(conn, self._id_to_index(track_id))
+        if track_id != -1:
+            track_id = self._id_to_index(track_id)
+        return self.cmd_playlistinfo(conn, track_id)
 
     def cmd_plchanges(self, conn, version):
         """Sends playlist changes since the given version.
