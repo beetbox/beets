@@ -103,7 +103,7 @@ but doesn't support many advanced playback features.
 Differences from the real MPD
 -----------------------------
 
-BPD currently supports version 0.14 of `the MPD protocol`_, but several of the
+BPD currently supports version 0.16 of `the MPD protocol`_, but several of the
 commands and features are "pretend" implementations or have slightly different
 behaviour to their MPD equivalents. BPD aims to look enough like MPD that it
 can interact with the ecosystem of clients, but doesn't try to be
