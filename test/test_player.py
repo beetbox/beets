@@ -684,7 +684,7 @@ class BPDControlTest(BPDTestHelper):
 class BPDQueueTest(BPDTestHelper):
     test_implements_queue = implements({
             'addid', 'clear', 'delete', 'deleteid', 'move',
-            'moveid', 'playlist', 'playlistfind', 'playlistid',
+            'moveid', 'playlist', 'playlistfind',
             'playlistsearch', 'plchanges',
             'plchangesposid', 'prio', 'prioid', 'rangeid', 'shuffle',
             'swap', 'swapid', 'addtagid', 'cleartagid',
@@ -702,6 +702,16 @@ class BPDQueueTest(BPDTestHelper):
                     ('playlistinfo', '0'),
                     ('playlistinfo', '200'))
         self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
+
+    def test_cmd_playlistid(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('playlistid', '2'),
+                    ('playlistid',))
+        self._assert_ok(*responses)
+        self.assertEqual('Track Two Title', responses[0].data['Title'])
+        self.assertEqual(['1', '2'], responses[1].data['Track'])
 
 
 class BPDPlaylistsTest(BPDTestHelper):
