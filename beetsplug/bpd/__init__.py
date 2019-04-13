@@ -77,8 +77,8 @@ SAFE_COMMANDS = (
 SUBSYSTEMS = [
     u'update', u'player', u'mixer', u'options', u'playlist', u'database',
     # Related to unsupported commands:
-    # u'stored_playlist', u'output', u'subscription', u'sticker', u'message',
-    # u'partition',
+    u'stored_playlist', u'output', u'subscription', u'sticker', u'message',
+    u'partition',
 ]
 
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
