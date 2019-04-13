@@ -774,10 +774,20 @@ class BPDDatabaseTest(BPDTestHelper):
         with self.run_bpd() as client:
             responses = client.send_commands(
                     ('list', 'album'),
-                    ('list', 'track'))
-        self._assert_ok(*responses)
+                    ('list', 'track'),
+                    ('list', 'album', 'artist', 'Artist Name', 'track'))
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
         self.assertEqual('Album Title', responses[0].data['Album'])
         self.assertEqual(['1', '2'], responses[1].data['Track'])
+
+    def test_cmd_list_three_arg_form(self):
+        with self.run_bpd() as client:
+            responses = client.send_commands(
+                    ('list', 'album', 'artist', 'Artist Name'),
+                    ('list', 'album', 'Artist Name'),
+                    ('list', 'track', 'Artist Name'))
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
+        self.assertEqual(responses[0].data, responses[1].data)
 
     def test_cmd_lsinfo(self):
         with self.run_bpd() as client:
