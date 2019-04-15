@@ -454,7 +454,8 @@ class BaseServer(object):
 
     def cmd_volume(self, conn, vol_delta):
         """Deprecated command to change the volume by a relative amount."""
-        raise BPDError(ERROR_SYSTEM, u'No mixer')
+        vol_delta = cast_arg(int, vol_delta)
+        return self.cmd_setvol(conn, self.volume + vol_delta)
 
     def cmd_crossfade(self, conn, crossfade):
         """Set the number of seconds of crossfading."""

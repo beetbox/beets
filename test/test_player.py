@@ -623,8 +623,13 @@ class BPDPlaybackTest(BPDTestHelper):
 
     def test_cmd_volume(self):
         with self.run_bpd() as client:
-            response = client.send_command('volume', '10')
-        self._assert_failed(response, bpd.ERROR_SYSTEM)
+            responses = client.send_commands(
+                    ('setvol', '10'),
+                    ('volume', '5'),
+                    ('volume', '-2'),
+                    ('status',))
+        self._assert_ok(*responses)
+        self.assertEqual('13', responses[3].data['volume'])
 
     def test_cmd_replay_gain(self):
         with self.run_bpd() as client:
