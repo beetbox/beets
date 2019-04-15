@@ -207,7 +207,7 @@ class DiscogsPlugin(BeetsPlugin):
             getattr(result, 'title')
         except DiscogsAPIError as e:
             if e.status_code != 404:
-                self._log.debug(u'API Error: {0} (query: {1})', e, result._uri)
+                self._log.debug(u'API Error: {0} (query: {1})', e, result.data['resource_url'])
                 if e.status_code == 401:
                     self.reset_auth()
                     return self.album_for_id(album_id)
@@ -259,7 +259,7 @@ class DiscogsPlugin(BeetsPlugin):
             return year
         except DiscogsAPIError as e:
             if e.status_code != 404:
-                self._log.debug(u'API Error: {0} (query: {1})', e, result._uri)
+                self._log.debug(u'API Error: {0} (query: {1})', e, result.data['resource_url'])
                 if e.status_code == 401:
                     self.reset_auth()
                     return self.get_master_year(master_id)
