@@ -200,6 +200,9 @@ Fixes:
   :bug:`3207` :bug:`2752`
 * Fix an unhandled exception when pruning empty directories.
   :bug:`1996` :bug:`3209`
+* :doc:`/plugins/bpd`: Fix a crash triggered when certain clients tried to list
+  the albums belonging to a particular artist.
+  :bug:`3007` :bug:`3215`
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 

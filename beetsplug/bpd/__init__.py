@@ -1404,16 +1404,31 @@ class Server(BaseServer):
         filtered by matching match_tag to match_term.
         """
         show_tag_canon, show_key = self._tagtype_lookup(show_tag)
+        if len(kv) == 1:
+            if show_tag_canon == 'Album':
+                # If no tag was given, assume artist. This is because MPD
+                # supports a short version of this command for fetching the
+                # albums belonging to a particular artist, and some clients
+                # rely on this behaviour (e.g. MPDroid, M.A.L.P.).
+                kv = ('Artist', kv[0])
+            else:
+                raise BPDError(ERROR_ARG, u'should be "Album" for 3 arguments')
+        elif len(kv) % 2 != 0:
+            raise BPDError(ERROR_ARG, u'Incorrect number of filter arguments')
         query = self._metadata_query(dbcore.query.MatchQuery, None, kv)
 
         clause, subvals = query.clause()
         statement = 'SELECT DISTINCT ' + show_key + \
                     ' FROM items WHERE ' + clause + \
                     ' ORDER BY ' + show_key
+        self._log.debug(statement)
         with self.lib.transaction() as tx:
             rows = tx.query(statement, subvals)
 
         for row in rows:
+            if not row[0]:
+                # Skip any empty values of the field.
+                continue
             yield show_tag_canon + u': ' + six.text_type(row[0])
 
     def cmd_count(self, conn, tag, value):
