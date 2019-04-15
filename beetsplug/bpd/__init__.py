@@ -847,6 +847,9 @@ class MPDConnection(Connection):
                     yield self.send(err.response())
                     break
                 continue
+            if line == u'noidle':
+                # When not in idle, this command sends no response.
+                continue
 
             if clist is not None:
                 # Command list already opened.

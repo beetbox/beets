@@ -457,6 +457,14 @@ class BPDQueryTest(BPDTestHelper):
             response = client.send_command('noidle')
         self._assert_ok(response)
 
+    def test_cmd_noidle_when_not_idle(self):
+        with self.run_bpd() as client:
+            # Manually send a command without reading a response.
+            request = client.serialise_command('noidle')
+            client.sock.sendall(request)
+            response = client.send_command('notacommand')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
+
 
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
