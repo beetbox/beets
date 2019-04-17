@@ -402,7 +402,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
                     if write:
                         item.try_write()
-
+                        
+            for item in lib.items(ui.decargs(args)):
+                item.genre, src = self._get_genre(item)
+                self._log.debug(u'added last.fm item genre ({0}): {1}', src,
+                                item.genre)
+                item.store()
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
