@@ -42,7 +42,8 @@ configuration file. The available options are:
   Default: The ``$MPD_HOST`` environment variable if set,
   falling back to ``localhost`` otherwise.
 - **port**: The MPD server port.
-  Default: 6600.
+  Default: The ``$MPD_PORT`` environment variable if set,
+  falling back to 6600 otherwise.
 - **password**: The MPD server password.
   Default: None.
 - **music_directory**: If your MPD library is at a different location from the
