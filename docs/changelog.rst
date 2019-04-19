@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* LastGenre can now be used to fetch genres for singletons.
 * The disambiguation string for identifying albums in the importer now shows
   the catalog number.
   Thanks to :user:`8h2a`.
