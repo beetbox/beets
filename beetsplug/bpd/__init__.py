@@ -1321,6 +1321,16 @@ class Server(BaseServer):
             u'db_update: ' + six.text_type(int(self.updated_time)),
         )
 
+    def cmd_decoders(self, conn):
+        """Send list of supported decoders and formats."""
+        decoders = self.player.get_decoders()
+        for name, (mimes, exts) in decoders.items():
+            yield u'plugin: {}'.format(name)
+            for ext in exts:
+                yield u'suffix: {}'.format(ext)
+            for mime in mimes:
+                yield u'mime_type: {}'.format(mime)
+
     # Searching.
 
     tagtype_map = {
