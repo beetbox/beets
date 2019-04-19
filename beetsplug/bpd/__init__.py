@@ -1548,7 +1548,7 @@ class Server(BaseServer):
     def cmd_seek(self, conn, index, pos):
         """Seeks to the specified position in the specified song."""
         index = cast_arg(int, index)
-        pos = cast_arg(int, pos)
+        pos = cast_arg(float, pos)
         super(Server, self).cmd_seek(conn, index, pos)
         self.player.seek(pos)
 
