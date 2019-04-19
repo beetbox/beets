@@ -389,7 +389,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             help=u'match albums instead of items')
         lastgenre_cmd.parser.set_defaults(query_type='albums')
 
-
         def lastgenre_func(lib, opts, args):
             write = ui.should_write()
             self.config.set_args(opts)
