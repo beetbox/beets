@@ -81,6 +81,9 @@ New features:
   to be displayed.
   Thanks to :user:`pprkut`.
   :bug:`3089`
+* :doc:`/plugins/mpdstats`, :doc:`/plugins/mpdupdate`: Use the ``MPD_PORT``
+  environment variable if no port is specified in the configuration file.
+  :bug:`3223`
 * :doc:`/plugins/bpd`: MPD protocol commands ``consume`` and ``single`` are now
   supported along with updated semantics for ``repeat`` and ``previous`` and
   new fields for ``status``. The bpd server now understands and ignores some
