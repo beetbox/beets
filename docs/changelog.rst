@@ -89,6 +89,8 @@ New features:
 * :doc:`/plugins/bpd`: MPD protocol command ``idle`` is now supported, allowing
   the MPD version to be bumped to 0.14.
   :bug:`3205` :bug:`800`
+* :doc:`/plugins/bpd`: MPD protocol command ``decoders`` is now supported.
+  :bug:`3222`
 
 Changes:
 
