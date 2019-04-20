@@ -44,13 +44,14 @@ def _gstplayer_play(*_):  # noqa: 42
 gstplayer._GstPlayer = mock.MagicMock(
     spec_set=[
         "time", "volume", "playing", "run", "play_file", "pause", "stop",
-        "seek", "play"
+        "seek", "play", "get_decoders",
     ], **{
         'playing': False,
         'volume': 0,
         'time.return_value': (0, 0),
         'play_file.side_effect': _gstplayer_play,
         'play.side_effect': _gstplayer_play,
+        'get_decoders.return_value': {'default': ({'audio/mpeg'}, {'mp3'})},
     })
 gstplayer.GstPlayer = lambda _: gstplayer._GstPlayer
 sys.modules["beetsplug.bpd.gstplayer"] = gstplayer
@@ -879,9 +880,16 @@ class BPDDeviceTest(BPDTestHelper):
 
 class BPDReflectionTest(BPDTestHelper):
     test_implements_reflection = implements({
-            'config', 'commands', 'notcommands', 'urlhandlers',
-            'decoders',
-            }, expectedFailure=True)
+        'config', 'commands', 'notcommands', 'urlhandlers',
+    }, expectedFailure=True)
+
+    def test_cmd_decoders(self):
+        with self.run_bpd() as client:
+            response = client.send_command('decoders')
+        self._assert_ok(response)
+        self.assertEqual('default', response.data['plugin'])
+        self.assertEqual('mp3', response.data['suffix'])
+        self.assertEqual('audio/mpeg', response.data['mime_type'])
 
 
 class BPDPeersTest(BPDTestHelper):
