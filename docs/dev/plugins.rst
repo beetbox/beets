@@ -103,19 +103,18 @@ operation. For instance, a plugin could write a log message every time an album
 is successfully autotagged or update MPD's index whenever the database is
 changed.
 
-You can "listen" for events using the ``BeetsPlugin.listen`` decorator. Here's
+You can "listen" for events using ``BeetsPlugin.register_listener``. Here's
 an example::
 
     from beets.plugins import BeetsPlugin
 
-    class SomePlugin(BeetsPlugin):
-        pass
-
-    @SomePlugin.listen('pluginload')
     def loaded():
         print 'Plugin loaded!'
 
-Pass the name of the event in question to the ``listen`` decorator.
+    class SomePlugin(BeetsPlugin):
+      def __init__(self):
+        super(SomePlugin, self).__init__()
+        self.register_listener('pluginload', loaded)
 
 Note that if you want to access an attribute of your plugin (e.g. ``config`` or
 ``log``) you'll have to define a method and not a function. Here is the usual
