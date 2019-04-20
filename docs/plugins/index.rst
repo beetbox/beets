@@ -71,6 +71,7 @@ like this::
    kodiupdate
    lastgenre
    lastimport
+   loadext
    lyrics
    mbcollection
    mbsubmit
@@ -189,6 +190,7 @@ Miscellaneous
 * :doc:`hook`: Run a command when an event is emitted by beets.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
+* :doc:`loadext`: Load SQLite extensions.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
