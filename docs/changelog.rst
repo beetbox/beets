@@ -94,6 +94,9 @@ New features:
   :bug:`3205` :bug:`800`
 * :doc:`/plugins/bpd`: MPD protocol command ``decoders`` is now supported.
   :bug:`3222`
+* The new :doc:`/plugins/loadext` allows loading of SQLite extensions, primarily
+  for use with the ICU SQLite extension for internationalization.
+  :bug:`3160` :bug:`3226`
 
 Changes:
 
