@@ -183,10 +183,10 @@ Fixes:
 * Fix several uses of deprecated standard-library features on Python 3.7.
   Thanks to :user:`arcresu`.
   :bug:`3197`
-* :doc:`/plugins/lastgenre`: Avoid a deprecation warning from the YAML
-  library.
-  Thanks to :user:`translit`.
-  :bug:`3192`
+* :doc:`/plugins/lastgenre`, :doc:`/plugins/edit`: Avoid a deprecation warnings
+  from the YAML library by switching to the safe loader.
+  Thanks to :user:`translit` and :user:`sbraz`.
+  :bug:`3192` :bug:`3225`
 * Fix compatibility with pre-release versions of Python 3.8.
   :bug:`3201` :bug:`3202`
 * :doc:`/plugins/bpd`: Fix crashes in the bpd server during exception handling.
