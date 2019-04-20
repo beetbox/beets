@@ -326,7 +326,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'rating':          True,
             'rating_mix':      0.75,
             'host':            os.environ.get('MPD_HOST', u'localhost'),
-            'port':            6600,
+            'port':            int(os.environ.get('MPD_PORT', 6600)),
             'password':        u'',
         })
         mpd_config['password'].redact = True
