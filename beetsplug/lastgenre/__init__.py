@@ -382,22 +382,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             help=u'genre source: artist, album, or track'
         )
         lastgenre_cmd.parser.add_option(
-            u'-A', u'--items', action='store_true',
+            u'-A', u'--items', action='store_false', dest='album',
             help=u'match items instead of albums')
         lastgenre_cmd.parser.add_option(
-            u'-a', u'--albums', action='store_true',
+            u'-a', u'--albums', action='store_true', dest='album',
             help=u'match albums instead of items')
-        lastgenre_cmd.parser.set_defaults(query_type='albums')
+        lastgenre_cmd.parser.set_defaults(album=True)
 
         def lastgenre_func(lib, opts, args):
             write = ui.should_write()
             self.config.set_args(opts)
 
-            if opts.albums and opts.items:
-                self._log.error(u'options -a and -A are mutually exclusive')
-                return
-
-            if opts.albums:
+            if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
                     album.genre, src = self._get_genre(album)
@@ -417,7 +413,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
                         if write:
                             item.try_write()
-            elif opts.items:
+            else:
                 # Just query singletons, i.e. items that are not part of
                 # an album
                 for item in lib.items(ui.decargs(args)):
