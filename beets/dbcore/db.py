@@ -850,9 +850,13 @@ class Database(object):
     """A container for Model objects that wraps an SQLite database as
     the backend.
     """
+
     _models = ()
     """The Model subclasses representing tables in this database.
     """
+
+    supports_extensions = hasattr(sqlite3.Connection, 'enable_load_extension')
+    """Whether or not the current version of SQLite supports extensions"""
 
     def __init__(self, path, timeout=5.0):
         self.path = path
@@ -860,6 +864,7 @@ class Database(object):
 
         self._connections = {}
         self._tx_stacks = defaultdict(list)
+        self._extensions = []
 
         # A lock to protect the _connections and _tx_stacks maps, which
         # both map thread IDs to private resources.
@@ -909,6 +914,13 @@ class Database(object):
             py3_path(self.path), timeout=self.timeout
         )
 
+        if self.supports_extensions:
+            conn.enable_load_extension(True)
+
+            # Load any extension that are already loaded for other connections.
+            for path in self._extensions:
+                conn.load_extension(path)
+
         # Access SELECT results like dictionaries.
         conn.row_factory = sqlite3.Row
         return conn
@@ -936,6 +948,18 @@ class Database(object):
         with the underlying SQLite database.
         """
         return Transaction(self)
+
+    def load_extension(self, path):
+        """Load an SQLite extension into all open connections."""
+        if not self.supports_extensions:
+            raise ValueError(
+                    'this sqlite3 installation does not support extensions')
+
+        self._extensions.append(path)
+
+        # Load the extension into every open connection.
+        for conn in self._connections.values():
+            conn.load_extension(path)
 
     # Schema setup and migration.
 
