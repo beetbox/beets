@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/lastgenre`: Added option ``-A`` to match individual tracks and singletons.
 * The disambiguation string for identifying albums in the importer now shows
   the catalog number.
   Thanks to :user:`8h2a`.
