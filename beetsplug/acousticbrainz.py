@@ -17,9 +17,10 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from collections import defaultdict
+
 import requests
 
-from collections import defaultdict
 from beets import plugins, ui
 
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
@@ -101,6 +102,10 @@ ABSCHEME = {
 
     }
 }
+FLOAT_FIELDS = ['danceable', 'mood_acoustic', 'mood_aggressive',
+                'mood_electronic', 'mood_happy', 'mood_party', 'mood_relaxed',
+                'mood_sad', 'tonal', 'average_loudness', 'chords_changes_rate',
+                'chords_number_rate', 'key_strength']
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
@@ -186,6 +191,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
             if data:
                 for attr, val in self._map_data_to_scheme(data, ABSCHEME):
                     if not tags or attr in tags:
+                        if attr in FLOAT_FIELDS:
+                            val = '%f' % val
                         self._log.debug(u'attribute {} of {} set to {}',
                                         attr,
                                         item,
