@@ -60,7 +60,7 @@ And many improvements to existing plugins:
      Thanks to :user:`Holzhaus`.
      :bug:`3097` :bug:`2942`
 * :doc:`/plugins/convert`: The plugin now has a ``id3v23`` option that allows
-  youto override the global ``id3v23`` option.
+  you to override the global ``id3v23`` option.
   Thanks to :user:`Holzhaus`.
   :bug:`3104`
 * :doc:`/plugins/spotify`: The plugin now uses OAuth for authentication to the
