@@ -252,7 +252,9 @@ For developers:
 
 For packagers:
 
-* Note the changes to the dependencies on jellyfish and python-itunes.
+* Note the changes to the dependencies on jellyfish and munkres.
+* The optional python-itunes dependency has been removed.
+* Python versions 3.7 and 3.8 are now supported.
 
 
 1.4.7 (May 29, 2018)
