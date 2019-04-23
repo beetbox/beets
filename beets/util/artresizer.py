@@ -93,7 +93,7 @@ def im_resize(maxwidth, path_in, path_out=None):
     # with regards to the height.
     try:
         util.command_output([
-            'convert', util.syspath(path_in, prefix=False),
+            'magick', util.syspath(path_in, prefix=False),
             '-resize', '{0}x>'.format(maxwidth),
             util.syspath(path_out, prefix=False),
         ])
@@ -121,7 +121,7 @@ def pil_getsize(path_in):
 
 
 def im_getsize(path_in):
-    cmd = ['identify', '-format', '%w %h',
+    cmd = ['magick', 'identify', '-format', '%w %h',
            util.syspath(path_in, prefix=False)]
     try:
         out = util.command_output(cmd)
@@ -235,7 +235,7 @@ def get_im_version():
     Try invoking ImageMagick's "convert".
     """
     try:
-        out = util.command_output(['convert', '--version'])
+        out = util.command_output(['magick', '-version'])
 
         if b'imagemagick' in out.lower():
             pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
