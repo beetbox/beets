@@ -94,7 +94,7 @@ def im_resize(maxwidth, path_in, path_out=None):
     # with regards to the height.
     try:
         cmds = (['magick'], ['convert'])
-        cmd = cmds[0] if not im_legacy else cmds[1]
+        cmd = cmds[0] if not ArtResizer.shared.im_legacy else cmds[1]
         args = [util.syspath(path_in, prefix=False),
                 '-resize', '{0}x>'.format(maxwidth),
                 util.syspath(path_out, prefix=False)]
@@ -125,7 +125,7 @@ def pil_getsize(path_in):
 
 def im_getsize(path_in):
     cmds = (['magick', 'identify'], ['identify'])
-    cmd = cmds[0] if not im_legacy else cmds[1]
+    cmd = cmds[0] if not ArtResizer.shared.im_legacy else cmds[1]
     args = ['-format', '%w %h', util.syspath(path_in, prefix=False)]
 
     try:
@@ -178,6 +178,9 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         log.debug(u"artresizer: method is {0}", self.method)
         self.can_compare = self._can_compare()
 
+        if self.method[0] == IMAGEMAGICK:
+            self.im_legacy = self.method[2]
+
     def resize(self, maxwidth, path_in, path_out=None):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
@@ -224,9 +227,9 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
     @staticmethod
     def _check_method():
         """Return a tuple indicating an available method and its version."""
-        version = get_im_version()
+        version, isLegacy = get_im_version()
         if version:
-            return IMAGEMAGICK, version
+            return IMAGEMAGICK, version, isLegacy
 
         version = get_pil_version()
         if version:
@@ -235,13 +238,13 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         return WEBPROXY, (0)
 
 
-im_legacy = None
-
-
 def get_im_version():
     """Return Image Magick version or None if it is unavailable
     Try invoking ImageMagick's "magick". If "magick" is unavailable,
     as with older versions, fall back to "convert"
+
+    Our iterator `isLegacy` will be non-zero when the first command
+    fails, and will be returned in a tuple along with the version
     """
     cmds = ('magick', 'convert')
     for isLegacy, cmd in enumerate(cmds):
@@ -253,11 +256,11 @@ def get_im_version():
                 pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
                 match = re.search(pattern, out)
                 if match:
-                    global im_legacy
-                    im_legacy = bool(isLegacy)
-                    return (int(match.group(1)),
+                    return ((int(match.group(1)),
                             int(match.group(2)),
-                            int(match.group(3)))
+                            int(match.group(3))),
+                            bool(isLegacy)
+                            )
 
         except (subprocess.CalledProcessError, OSError) as exc:
             log.debug(u'ImageMagick version check failed: {}', exc)
