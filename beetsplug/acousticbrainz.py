@@ -107,16 +107,16 @@ ABSCHEME = {
 
 class AcousticPlugin(plugins.BeetsPlugin):
     item_types = {
-        'average_loudness': types.FLOAT,
-        'chords_changes_rate': types.FLOAT,
+        'average_loudness': types.PaddedFloat(6),
+        'chords_changes_rate': types.PaddedFloat(6),
         'chords_key': types.STRING,
-        'chords_number_rate': types.FLOAT,
+        'chords_number_rate': types.PaddedFloat(6),
         'chords_scale': types.STRING,
-        'danceable': types.FLOAT,
+        'danceable': types.PaddedFloat(6),
         'gender': types.STRING,
         'genre_rosamerica': types.STRING,
         'initial_key': types.STRING,
-        'key_strength': types.FLOAT,
+        'key_strength': types.PaddedFloat(6),
         'mood_acoustic': types.PaddedFloat(6),
         'mood_aggressive': types.PaddedFloat(6),
         'mood_electronic': types.PaddedFloat(6),
@@ -124,8 +124,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
         'mood_party': types.PaddedFloat(6),
         'mood_relaxed': types.PaddedFloat(6),
         'mood_sad': types.PaddedFloat(6),
-        'rhythm': types.FLOAT,
-        'tonal': types.FLOAT,
+        'rhythm': types.PaddedFloat(6),
+        'tonal': types.PaddedFloat(6),
         'voice_instrumental': types.STRING,
     }
 
