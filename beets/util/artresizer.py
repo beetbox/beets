@@ -227,9 +227,12 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
     @staticmethod
     def _check_method():
         """Return a tuple indicating an available method and its version."""
-        version, isLegacy = get_im_version()
-        if version:
-            return IMAGEMAGICK, version, isLegacy
+        try:
+            version, isLegacy = get_im_version()
+            if version:
+                return IMAGEMAGICK, version, isLegacy
+        except TypeError:
+            pass
 
         version = get_pil_version()
         if version:
