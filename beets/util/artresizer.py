@@ -93,11 +93,11 @@ def im_resize(maxwidth, path_in, path_out=None):
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
     try:
-        cmds = (['magick'],['convert'])
+        cmds = (['magick'], ['convert'])
         cmd = cmds[0] if not im_legacy else cmds[1]
         args = [util.syspath(path_in, prefix=False),
-            '-resize', '{0}x>'.format(maxwidth),
-            util.syspath(path_out, prefix=False)]
+                '-resize', '{0}x>'.format(maxwidth),
+                util.syspath(path_out, prefix=False)]
 
         util.command_output(cmd + args)
     except subprocess.CalledProcessError:
@@ -124,7 +124,7 @@ def pil_getsize(path_in):
 
 
 def im_getsize(path_in):
-    cmds = (['magick', 'identify'],['identify'])
+    cmds = (['magick', 'identify'], ['identify'])
     cmd = cmds[0] if not im_legacy else cmds[1]
     args = ['-format', '%w %h', util.syspath(path_in, prefix=False)]
 
@@ -234,13 +234,16 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
 
         return WEBPROXY, (0)
 
+
 im_legacy = None
+
+
 def get_im_version():
     """Return Image Magick version or None if it is unavailable
-    Try invoking ImageMagick's "magick". If "magick" is unavailable, 
+    Try invoking ImageMagick's "magick". If "magick" is unavailable,
     as with older versions, fall back to "convert"
     """
-    cmds = ('magick','convert')
+    cmds = ('magick', 'convert')
     for isLegacy, cmd in enumerate(cmds):
 
         try:
@@ -250,6 +253,7 @@ def get_im_version():
                 pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
                 match = re.search(pattern, out)
                 if match:
+                    global im_legacy
                     im_legacy = bool(isLegacy)
                     return (int(match.group(1)),
                             int(match.group(2)),
@@ -258,7 +262,7 @@ def get_im_version():
         except (subprocess.CalledProcessError, OSError) as exc:
             log.debug(u'ImageMagick version check failed: {}', exc)
             return None
-        
+
         return (0,)
 
 
