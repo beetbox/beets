@@ -173,25 +173,17 @@ class Id(Integer):
 
 
 class Float(Type):
-    """A basic floating-point type.
+    """A basic floating-point type. Supports padding.
     """
     sql = u'REAL'
     query = query.NumericQuery
     model_type = float
 
-    def format(self, value):
-        return u'{0:.1f}'.format(value or 0.0)
-
-
-class PaddedFloat(Integer):
-    """A float field that is formatted with a given number of digits,
-    padded with zeroes.
-    """
-    def __init__(self, digits):
+    def __init__(self, digits=1):
         self.digits = digits
 
     def format(self, value):
-        return u'{0:0{1}d}'.format(value or 0, self.digits)
+        return u'{0:0{1}f}'.format(value or 0, self.digits)
 
 
 class NullFloat(Float):
