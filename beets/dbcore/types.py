@@ -183,7 +183,7 @@ class Float(Type):
         return u'{0:.1f}'.format(value or 0.0)
 
 
-class PaddedFloat(Integer):
+class PaddedFloat(Float):
     """A float field that is formatted with a given number of digits,
     padded with zeroes.
     """
@@ -191,7 +191,7 @@ class PaddedFloat(Integer):
         self.digits = digits
 
     def format(self, value):
-        return u'{0:0{1}d}'.format(value or 0, self.digits)
+        return u'{0:.{1}f}'.format(value or 0, self.digits)
 
 
 class NullFloat(Float):
