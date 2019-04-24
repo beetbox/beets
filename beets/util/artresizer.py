@@ -228,9 +228,9 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
     def _check_method():
         """Return a tuple indicating an available method and its version."""
         try:
-            version, isLegacy = get_im_version()
+            version, im_legacy = get_im_version()
             if version:
-                return IMAGEMAGICK, version, isLegacy
+                return IMAGEMAGICK, version, im_legacy
         except TypeError:
             pass
 
@@ -246,11 +246,11 @@ def get_im_version():
     Try invoking ImageMagick's "magick". If "magick" is unavailable,
     as with older versions, fall back to "convert"
 
-    Our iterator `isLegacy` will be non-zero when the first command
+    Our iterator `im_legacy` will be non-zero when the first command
     fails, and will be returned in a tuple along with the version
     """
     cmds = ('magick', 'convert')
-    for isLegacy, cmd in enumerate(cmds):
+    for im_legacy, cmd in enumerate(cmds):
 
         try:
             out = util.command_output([cmd, '--version'])
@@ -262,7 +262,7 @@ def get_im_version():
                     return ((int(match.group(1)),
                             int(match.group(2)),
                             int(match.group(3))),
-                            bool(isLegacy)
+                            bool(im_legacy)
                             )
 
         except (subprocess.CalledProcessError, OSError) as exc:
