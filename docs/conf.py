@@ -24,6 +24,8 @@ pygments_style = 'sphinx'
 extlinks = {
     'bug': ('https://github.com/beetbox/beets/issues/%s', '#'),
     'user': ('https://github.com/%s', ''),
+    'pypi': ('https://pypi.org/project/%s/', ''),
+    'stdlib': ('https://docs.python.org/3/library/%s.html', ''),
 }
 
 # Options for HTML output

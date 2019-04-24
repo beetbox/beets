@@ -16,7 +16,7 @@ There are some new core features:
   attribute from matching albums back to the default value.
   :bug:`2497`
 * A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
-  contained in data files :bug:`3021`
+  contained in data files. :bug:`3021`
 
 There are some new plugins:
 
@@ -97,14 +97,14 @@ And many improvements to existing plugins:
      :bug:`3196`
 * :doc:`/plugins/mbsync`: The plugin no longer queries MusicBrainz when either
   the ``mb_albumid`` or ``mb_trackid`` field is invalid.
-  See also the discussion on Google Groups_
+  See also the discussion on `Google Groups`_
   Thanks to :user:`arogl`.
-* :doc:`/plugins/export`: The plugin now also exports ``path`` field if user
+* :doc:`/plugins/export`: The plugin now also exports ``path`` field if the user
   explicitly specifies it with ``-i`` parameter. This only works when exporting
   library fields.
   :bug:`3084`
 
-.. _Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
+.. _Google Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
 
 Some improvements have been focused on improving beets' performance:
 
@@ -136,8 +136,8 @@ Several improvements are related to usability:
   :bug:`3117`
 * Modify selection can now be applied early without selecting every item.
   :bug:`3083`
-* Improve error reporting during startup if sqlite returns an error. The
-  sqlite error message is now attached to the beets message.
+* Beets now emits more useful messages during startup if SQLite returns an error. The
+  SQLite error message is now attached to the beets message.
   :bug:`3005`
 * Fixed a confusing typo when the :doc:`/plugins/convert` plugin copies the art
   covers.
@@ -173,9 +173,10 @@ Many fixes have been focused on issues where beets would previously crash:
 There are many fixes related to compatibility with our dependencies including
 addressing changes interfaces:
 
-* On Python 2, pin the Jellyfish requirement to version 0.6.0 for
+* On Python 2, pin the :pypi:`jellyfish` requirement to version 0.6.0 for
   compatibility.
-* Fix compatibility Python 3.7 and its change to a name in the ``re`` module.
+* Fix compatibility with Python 3.7 and its change to a name in the
+  :stdlib:`re` module.
   :bug:`2978`
 * Fix several uses of deprecated standard-library features on Python 3.7.
   Thanks to :user:`arcresu`.
@@ -191,19 +192,18 @@ addressing changes interfaces:
   Thanks to :user:`zhelezov`.
   :bug:`2826` :bug:`3092`
 * Restore iTunes Store album art source, and remove the dependency on
-  python-itunes_, which had gone unmaintained and was not py3 compatible.
-  Thanks to :user:`ocelma` for creating python-itunes_ in the first place.
+  :pypi:`python-itunes`, which had gone unmaintained and was not
+  Python-3-compatible.
+  Thanks to :user:`ocelma` for creating :pypi:`python-itunes` in the first place.
   Thanks to :user:`nathdwek`.
   :bug:`2371` :bug:`2551` :bug:`2718`
 * :doc:`/plugins/lastgenre`, :doc:`/plugins/edit`: Avoid a deprecation warnings
-  from the YAML library by switching to the safe loader.
+  from the :pypi:`PyYAML` library by switching to the safe loader.
   Thanks to :user:`translit` and :user:`sbraz`.
   :bug:`3192` :bug:`3225`
-* Fix a problem when resizing images with PIL/Pillow on Python 3.
+* Fix a problem when resizing images with :pypi:`PIL`/:pypi:`pillow` on Python 3.
   Thanks to :user:`architek`.
   :bug:`2504` :bug:`3029`
-
-.. _python-itunes: https://github.com/ocelma/python-itunes
 
 And there are many other fixes:
 
@@ -227,8 +227,8 @@ And there are many other fixes:
 * The ``%title`` template function now works correctly with apostrophes.
   Thanks to :user:`GuilhermeHideki`.
   :bug:`3033`
-* :doc:`/plugins/lastgenre`: Allow to set the configuration option
-  ``prefer_specific`` without setting ``canonical``.
+* :doc:`/plugins/lastgenre`: It's now possible to set the ``prefer_specific``
+  option without also setting ``canonical``.
   :bug:`2973`
 * :doc:`/plugins/fetchart`: The plugin now respects the ``ignore`` and
   ``ignore_hidden`` settings.
@@ -239,7 +239,7 @@ And there are many other fixes:
   hasn't.
   Thanks to :user:`arcresu`.
   :bug:`3195`
-* :doc:`/plugins/lastgenre`: The `force` config option now actually works.
+* :doc:`/plugins/lastgenre`: The ``force`` config option now actually works.
   :bug:`2704` :bug:`3054`
 
 For developers:
@@ -252,8 +252,8 @@ For developers:
 
 For packagers:
 
-* Note the changes to the dependencies on jellyfish and munkres.
-* The optional python-itunes dependency has been removed.
+* Note the changes to the dependencies on :pypi:`jellyfish` and :pypi:`munkres`.
+* The optional :pypi:`python-itunes` dependency has been removed.
 * Python versions 3.7 and 3.8 are now supported.
 
 
