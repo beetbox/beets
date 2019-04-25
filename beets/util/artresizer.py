@@ -93,13 +93,12 @@ def im_resize(maxwidth, path_in, path_out=None):
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
     try:
-        cmds = (['magick'], ['convert'])
-        cmd = cmds[0] if not ArtResizer.shared.im_legacy else cmds[1]
-        args = [util.syspath(path_in, prefix=False),
+        cmd = ArtResizer.shared.im_convert_cmd + \
+            [util.syspath(path_in, prefix=False),
                 '-resize', '{0}x>'.format(maxwidth),
                 util.syspath(path_out, prefix=False)]
 
-        util.command_output(cmd + args)
+        util.command_output(cmd)
     except subprocess.CalledProcessError:
         log.warning(u'artresizer: IM convert failed for {0}',
                     util.displayable_path(path_in))
@@ -124,12 +123,11 @@ def pil_getsize(path_in):
 
 
 def im_getsize(path_in):
-    cmds = (['magick', 'identify'], ['identify'])
-    cmd = cmds[0] if not ArtResizer.shared.im_legacy else cmds[1]
-    args = ['-format', '%w %h', util.syspath(path_in, prefix=False)]
-
     try:
-        out = util.command_output(cmd + args)
+        cmd = ArtResizer.shared.im_identify_cmd + \
+            ['-format', '%w %h', util.syspath(path_in, prefix=False)]
+
+        out = util.command_output(cmd)
     except subprocess.CalledProcessError as exc:
         log.warning(u'ImageMagick size query failed')
         log.debug(
@@ -180,6 +178,12 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
 
         if self.method[0] == IMAGEMAGICK:
             self.im_legacy = self.method[2]
+            if self.im_legacy:
+                self.im_convert_cmd = ['convert']
+                self.im_identify_cmd = ['identify']
+            else:
+                self.im_convert_cmd = ['magick']
+                self.im_identify_cmd = ['magick', 'identify']
 
     def resize(self, maxwidth, path_in, path_out=None):
         """Manipulate an image file according to the method, returning a
@@ -246,30 +250,31 @@ def get_im_version():
     Try invoking ImageMagick's "magick". If "magick" is unavailable,
     as with older versions, fall back to "convert"
 
-    Our iterator `im_legacy` will be non-zero when the first command
-    fails, and will be returned in a tuple along with the version
+    Our iterator will be non-zero when the first command fails, and will
+    be returned in a tuple along with the version.
     """
-    cmds = ('magick', 'convert')
-    for im_legacy, cmd in enumerate(cmds):
+    cmd_names = (['magick'],
+                 ['convert'])
+    for i, cmd_name in enumerate(cmd_names):
 
         try:
-            out = util.command_output([cmd, '--version'])
+            cmd = cmd_name + ['--version']
+            out = util.command_output(cmd)
 
             if b'imagemagick' in out.lower():
                 pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
                 match = re.search(pattern, out)
+                version = (int(match.group(1)),
+                           int(match.group(2)),
+                           int(match.group(3)))
+                legacy = bool(i)
                 if match:
-                    return ((int(match.group(1)),
-                            int(match.group(2)),
-                            int(match.group(3))),
-                            bool(im_legacy)
-                            )
+                    return (version, legacy)
 
         except (subprocess.CalledProcessError, OSError) as exc:
             log.debug(u'ImageMagick version check failed: {}', exc)
-            return None
 
-        return (0,)
+        return (0, None)
 
 
 def get_pil_version():
