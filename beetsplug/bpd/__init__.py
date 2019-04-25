@@ -1117,18 +1117,9 @@ class Server(BaseServer):
         info_lines = [
             u'file: ' + item.destination(fragment=True),
             u'Time: ' + six.text_type(int(item.length)),
-            u'Title: ' + item.title,
-            u'Artist: ' + item.artist,
-            u'Album: ' + item.album,
-            u'Genre: ' + item.genre,
+            u'duration: ' + u'{:.3f}'.format(item.length),
+            u'Id: ' + six.text_type(item.id),
         ]
-
-        track = six.text_type(item.track)
-        if item.tracktotal:
-            track += u'/' + six.text_type(item.tracktotal)
-        info_lines.append(u'Track: ' + track)
-
-        info_lines.append(u'Date: ' + six.text_type(item.year))
 
         try:
             pos = self._id_to_index(item.id)
@@ -1137,7 +1128,9 @@ class Server(BaseServer):
             # Don't include position if not in playlist.
             pass
 
-        info_lines.append(u'Id: ' + six.text_type(item.id))
+        for tagtype, field in self.tagtype_map.items():
+            info_lines.append(u'{}: {}'.format(
+                tagtype, six.text_type(getattr(item, field))))
 
         return info_lines
 
@@ -1341,18 +1334,24 @@ class Server(BaseServer):
 
     tagtype_map = {
         u'Artist':          u'artist',
+        u'ArtistSort':      u'artist_sort',
         u'Album':           u'album',
         u'Title':           u'title',
         u'Track':           u'track',
         u'AlbumArtist':     u'albumartist',
         u'AlbumArtistSort': u'albumartist_sort',
-        # Name?
+        u'Label':           u'label',
         u'Genre':           u'genre',
         u'Date':            u'year',
+        u'OriginalDate':    u'original_year',
         u'Composer':        u'composer',
-        # Performer?
         u'Disc':            u'disc',
-        u'filename':        u'path',  # Suspect.
+        u'Comment':         u'comments',
+        u'MUSICBRAINZ_TRACKID':        u'mb_trackid',
+        u'MUSICBRAINZ_ALBUMID':        u'mb_albumid',
+        u'MUSICBRAINZ_ARTISTID':       u'mb_artistid',
+        u'MUSICBRAINZ_ALBUMARTISTID':  u'mb_albumartistid',
+        u'MUSICBRAINZ_RELEASETRACKID': u'mb_releasetrackid',
     }
 
     def cmd_tagtypes(self, conn):
