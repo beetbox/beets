@@ -627,7 +627,6 @@ class BaseServer(object):
         """Advance to the next song in the playlist."""
         old_index = self.current_index
         self.current_index = self._succ_idx()
-        self._send_event('playlist')
         if self.consume:
             # TODO how does consume interact with single+repeat?
             self.playlist.pop(old_index)
@@ -648,7 +647,6 @@ class BaseServer(object):
         """Step back to the last song."""
         old_index = self.current_index
         self.current_index = self._prev_idx()
-        self._send_event('playlist')
         if self.consume:
             self.playlist.pop(old_index)
         if self.current_index < 0:
