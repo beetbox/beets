@@ -392,8 +392,31 @@ class BPDTest(BPDTestHelper):
 
 class BPDQueryTest(BPDTestHelper):
     test_implements_query = implements({
-            'clearerror', 'currentsong',
-            })
+        'clearerror',
+    })
+
+    def test_cmd_currentsong(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('currentsong',),
+                    ('stop',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('1', responses[1].data['Id'])
+        self.assertNotIn('Id', responses[3].data)
+
+    def test_cmd_currentsong_tagtypes(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual(
+                BPDConnectionTest.TAGTYPES.union(BPDQueueTest.METADATA),
+                set(responses[1].data.keys()))
 
     def test_cmd_status(self):
         with self.run_bpd() as client:
@@ -749,6 +772,8 @@ class BPDQueueTest(BPDTestHelper):
             'swap', 'swapid', 'addtagid', 'cleartagid',
             }, expectedFailure=True)
 
+    METADATA = {'Pos', 'Time', 'Id', 'file', 'duration'}
+
     def test_cmd_add(self):
         with self.run_bpd() as client:
             self._bpd_add(client, self.item1)
@@ -761,6 +786,15 @@ class BPDQueueTest(BPDTestHelper):
                     ('playlistinfo', '0'),
                     ('playlistinfo', '200'))
         self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
+
+    def test_cmd_playlistinfo_tagtypes(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            response = client.send_command('playlistinfo', '0')
+        self._assert_ok(response)
+        self.assertEqual(
+                BPDConnectionTest.TAGTYPES.union(BPDQueueTest.METADATA),
+                set(response.data.keys()))
 
     def test_cmd_playlistid(self):
         with self.run_bpd() as client:
@@ -900,8 +934,24 @@ class BPDStickerTest(BPDTestHelper):
 
 class BPDConnectionTest(BPDTestHelper):
     test_implements_connection = implements({
-            'close', 'kill', 'tagtypes',
-            })
+        'close', 'kill',
+    })
+
+    ALL_MPD_TAGTYPES = {
+        'Artist', 'ArtistSort', 'Album', 'AlbumSort', 'AlbumArtist',
+        'AlbumArtistSort', 'Title', 'Track', 'Name', 'Genre', 'Date',
+        'Composer', 'Performer', 'Comment', 'Disc', 'Label',
+        'OriginalDate', 'MUSICBRAINZ_ARTISTID', 'MUSICBRAINZ_ALBUMID',
+        'MUSICBRAINZ_ALBUMARTISTID', 'MUSICBRAINZ_TRACKID',
+        'MUSICBRAINZ_RELEASETRACKID', 'MUSICBRAINZ_WORKID',
+    }
+    UNSUPPORTED_TAGTYPES = {
+        'MUSICBRAINZ_WORKID',  # not tracked by beets
+        'Performer',           # not tracked by beets
+        'AlbumSort',           # not tracked by beets
+        'Name',                # junk field for internet radio
+    }
+    TAGTYPES = ALL_MPD_TAGTYPES.difference(UNSUPPORTED_TAGTYPES)
 
     def test_cmd_password(self):
         with self.run_bpd(password='abc123') as client:
@@ -921,19 +971,13 @@ class BPDConnectionTest(BPDTestHelper):
             response = client.send_command('ping')
         self._assert_ok(response)
 
-    @unittest.skip
     def test_cmd_tagtypes(self):
         with self.run_bpd() as client:
             response = client.send_command('tagtypes')
         self._assert_ok(response)
-        self.assertEqual({
-            'Artist', 'ArtistSort', 'Album', 'AlbumSort', 'AlbumArtist',
-            'AlbumArtistSort', 'Title', 'Track', 'Name', 'Genre', 'Date',
-            'Composer', 'Performer', 'Comment', 'Disc', 'Label',
-            'OriginalDate', 'MUSICBRAINZ_ARTISTID', 'MUSICBRAINZ_ALBUMID',
-            'MUSICBRAINZ_ALBUMARTISTID', 'MUSICBRAINZ_TRACKID',
-            'MUSICBRAINZ_RELEASETRACKID', 'MUSICBRAINZ_WORKID',
-            }, set(response.data['tag']))
+        self.assertEqual(
+                self.TAGTYPES,
+                set(response.data['tagtype']))
 
     @unittest.skip
     def test_tagtypes_mask(self):
