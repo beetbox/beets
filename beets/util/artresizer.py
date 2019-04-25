@@ -232,9 +232,9 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
     def _check_method():
         """Return a tuple indicating an available method and its version."""
         try:
-            version, im_legacy = get_im_version()
-            if version:
-                return IMAGEMAGICK, version, im_legacy
+            version, legacy = get_im_version()
+            if version > (0, 0, 0):
+                return IMAGEMAGICK, version, legacy
         except TypeError:
             pass
 
@@ -274,7 +274,7 @@ def get_im_version():
         except (subprocess.CalledProcessError, OSError) as exc:
             log.debug(u'ImageMagick version check failed: {}', exc)
 
-        return (0, None)
+        return ((0,), None)
 
 
 def get_pil_version():
