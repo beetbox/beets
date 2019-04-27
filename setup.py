@@ -142,6 +142,8 @@ setup(
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
+        'bpd': ['PyGObject'],
+        'replaygain': ['PyGObject'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     #   chroma: chromaprint or fpcalc
