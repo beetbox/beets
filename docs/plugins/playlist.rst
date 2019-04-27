@@ -1,5 +1,5 @@
-Smart Playlist Plugin
-=====================
+Playlist Plugin
+===============
 
 ``playlist`` is a plugin to use playlists in m3u format.
 
