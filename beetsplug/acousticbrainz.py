@@ -176,7 +176,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 return {}
 
             if res.status_code == 404:
-                self._log.info(u'recording ID \'{}\' not found', mbid)
+                self._log.info(u'recording ID {} not found', mbid)
                 return {}
 
             try:
@@ -199,27 +199,27 @@ class AcousticPlugin(plugins.BeetsPlugin):
             if not force:
                 mood_str = item.get('mood_acoustic', u'')
                 if mood_str:
-                    self._log.info(u'data already present for: \'{}\'', item)
+                    self._log.info(u'data already present for: {}', item)
                     continue
 
             # We can only fetch data for tracks with MBIDs.
             if not item.mb_trackid:
                 continue
 
-            self._log.info(u'getting data for: \'{}\'', item)
+            self._log.info(u'getting data for: {}', item)
             data = self._get_data(item.mb_trackid)
             if data:
                 for attr, val in self._map_data_to_scheme(data, ABSCHEME):
                     if not tags or attr in tags:
                         self._log.debug(
-                            u'attribute \'{}\' of \'{}\' set to \'{}\'',
+                            u'attribute {} of {} set to {}',
                             attr,
                             item,
                             val)
                         setattr(item, attr, val)
                     else:
-                        self._log.debug(u'skipping attribute \'{}\' of \'{}\''
-                                        u' (value \'{}\') due to config',
+                        self._log.debug(u'skipping attribute {} of {}'
+                                        u' (value {}) due to config',
                                         attr,
                                         item,
                                         val)
