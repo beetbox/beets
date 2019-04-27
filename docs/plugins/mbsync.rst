@@ -30,7 +30,7 @@ The command has a few command-line options:
 * By default, files will be moved (renamed) according to their metadata if
   they are inside your beets library directory. To disable this, use the
   ``-M`` (``--nomove``) command-line option.
-* If you have the `import.write` configuration option enabled, then this
+* If you have the ``import.write`` configuration option enabled, then this
   plugin will write new metadata to files' tags. To disable this, use the
   ``-W`` (``--nowrite``) option.
 * To customize the output of unrecognized items, use the ``-f``

@@ -34,5 +34,5 @@ The available options under the ``emby:`` section are:
 - **password**: The password for the user. (This is only necessary if no API
   key is provided.)
 
-You can choose to authenticate either with `apikey` or `password`, but only
+You can choose to authenticate either with ``apikey`` or ``password``, but only
 one of those two is required.
