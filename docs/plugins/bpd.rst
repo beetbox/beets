@@ -20,7 +20,7 @@ with its Python bindings) on your system.
   gst-plugins-base pygobject3``.
 
 * On Linux, you need to install GStreamer 1.0 and the GObject bindings for
-  python. Under Ubuntu, they are called `python-gi` and `gstreamer1.0`.
+  python. Under Ubuntu, they are called ``python-gi`` and ``gstreamer1.0``.
 
 * On Windows, you may want to try `GStreamer WinBuilds`_ (caveat emptor: I
   haven't tried this).
