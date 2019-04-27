@@ -211,8 +211,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
             if data:
                 for attr, val in self._map_data_to_scheme(data, ABSCHEME):
                     if not tags or attr in tags:
-                        self._log.debug(
-                            u'attribute {} of {} set to {}',
+                        self._log.debug(u'attribute {} of {} set to {}',
                             attr,
                             item,
                             val)
