@@ -9,6 +9,9 @@ import re
 import subprocess
 from contextlib import contextmanager
 import datetime
+import yaml
+from collections import defaultdict
+import textwrap
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHANGELOG = os.path.join(BASE, 'docs', 'changelog.rst')
@@ -213,6 +216,70 @@ def changelog():
     """Get the most recent version's changelog as Markdown.
     """
     print(changelog_as_markdown())
+
+
+def compile_unreleased_changes(version='1.X.Y'):
+    """Turn the unreleased change files into a changelog.
+    The changelog can then be manually edited.
+    """
+    from extra.changelog import CHANGES, ChangelogEntry
+
+    # Load all the unreleased changes:
+    entries = []
+    for path in os.listdir(CHANGES):
+        if os.path.splitext(path)[1] != '.yaml':
+            continue
+        with open(os.path.join(CHANGES, path)) as f:
+            change = yaml.safe_load(f)
+            entries.append(ChangelogEntry(**change))
+
+    # Sort them into changelog sections based on their attributes:
+    sections = defaultdict(lambda: [])
+    for entry in entries:
+        if entry.type == 'newplugin':
+            sections['new-plugin'].append(entry)
+        elif 'dev' in entry.components:
+            sections['dev'].append(entry)
+        elif (entry.type in ['feature', 'change'] and
+              not any(c.startswith('plugin/') for c in entry.components)):
+            sections['core'].append(entry)
+        elif entry.type in ['feature', 'change']:
+            sections['plugin'].append(entry)
+        else:
+            sections['misc'].append(entry)
+
+    # Format the changelog:
+    def format_section(name, description):
+        if name not in sections:
+            return
+        changelog.extend([description, ''])
+        for entry in sections[name]:
+            line = ', '.join(entry.affects())
+            if line:
+                line += ': '
+            line += entry.title
+            lines = textwrap.wrap(line, initial_indent='* ',
+                                  subsequent_indent='  ')
+            changelog.extend(lines)
+            if entry.username:
+                changelog.append('  Thanks to :user:`{}`.'.format(
+                    entry.username))
+            changelog.append('  ' + ' '.join(entry.issues()))
+        changelog.append('')
+    changelog = ['', version + ' (in development)', '-' * 21, '']
+    format_section('core', 'There are some new features:')
+    format_section('plugin', 'There are some improvements to plugins:')
+    format_section('new-plugin', 'There are some new plugins:')
+    format_section('misc', 'There are many other changes:')
+    format_section('dev', 'For plugin developers:')
+    return '\n'.join(changelog)
+
+
+@release.command()
+def unreleased():
+    """Compile and print the unreleased changes as ReST.
+    """
+    print(compile_unreleased_changes())
 
 
 def get_version(index=0):
