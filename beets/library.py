@@ -1239,8 +1239,10 @@ def parse_query_parts(parts, model_cls):
         else:
             non_path_parts.append(s)
 
+    case_insensitive = beets.config['sort_case_insensitive'].get(bool)
+
     query, sort = dbcore.parse_sorted_query(
-        model_cls, non_path_parts, prefixes
+        model_cls, non_path_parts, prefixes, case_insensitive
     )
 
     # Add path queries to aggregate query.
