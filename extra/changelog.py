@@ -27,6 +27,8 @@ COMPONENTS = CORE_COMPONENTS + PLUGINS
 
 
 class ChangelogEntry(object):
+    """Represents a single entry in the (unreleased) changelog.
+    """
     def __init__(self, title, pull_request, type, username=None,
                  components=None, related=None):
         self.title = title
@@ -37,6 +39,8 @@ class ChangelogEntry(object):
         self.related = related or []
 
     def as_dict(self):
+        """Collect data for serialisation.
+        """
         entry = {
             'title': self.title,
             'pull_request': self.pr,
@@ -49,14 +53,20 @@ class ChangelogEntry(object):
         return entry
 
     def write(self, path):
+        """Serialise the entry as YAML to the given path.
+        """
         with open(path, 'wb') as entry_file:
             yaml.safe_dump(self.as_dict(), entry_file, encoding='utf-8',
                            explicit_start=True)
 
     def print(self):
+        """Print out the serialised version of this entry.
+        """
         print(yaml.safe_dump(self.as_dict(), explicit_start=True))
 
     def affects(self):
+        """Sort the list of components and convert plugins to doc links.
+        """
         core = [x for x in sorted(self.components) if '/' not in x]
         plugins = [':doc:`/plugins/{}`'.format(x.split('/')[1])
                    for x in sorted(self.components)
@@ -64,8 +74,12 @@ class ChangelogEntry(object):
         return core + plugins
 
     def issues(self):
+        """Returns a list of relevant issues in ReST format.
+        """
         return [':bug:`{}`'.format(i) for i in [self.pr] + self.related]
 
+
+# Check the environment for default values we can suggest.
 
 def guess_name():
     log_entry = subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
@@ -88,6 +102,11 @@ def guess_username():
 
 
 def ask_value(name, default=None, convert=str):
+    """Prompt for a value and convert to the necessary type.
+    If a default value is provided, it can be accepted with a single key press.
+    The convert function is responsible for raising (any) exception if the
+    value typed by the user is invalid.
+    """
     prompt = '    {}>  '.format(name)
     if default:
         print("Default (press enter to accept): {}".format(default))
@@ -107,6 +126,8 @@ def ask_value(name, default=None, convert=str):
                 print(e)
                 print("That value wasn't valid!")
 
+
+# Validate entered data and convert it into the relevant types.
 
 def convert_components(components_string):
     components = components_string.split()
@@ -174,6 +195,8 @@ def parse_arguments():
 if __name__ == '__main__':
     args = parse_arguments()
 
+    # The filename for the YAML document is derived from the current git branch
+    # name, and can be overridden with a flag. Asks confirmation to clobber.
     name = convert_name(args.name or guess_name())
     path = os.path.join(CHANGES, name + '.yaml')
     if os.path.exists(path):
