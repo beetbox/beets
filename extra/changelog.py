@@ -83,7 +83,7 @@ def guess_username():
     return os.getenv(
             'GITHUB_USER',
             subprocess.Popen(
-                ['git', 'config', '--global', 'github.user'],
+                ['git', 'config', 'github.user'],
                 stdout=subprocess.PIPE).stdout.read())
 
 
