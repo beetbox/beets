@@ -173,7 +173,8 @@ class Id(Integer):
 
 
 class Float(Type):
-    """A basic floating-point type. Supports padding.
+    """A basic floating-point type. The `digits` parameter specifies how
+    many decimal places to use in the human-readable representation.
     """
     sql = u'REAL'
     query = query.NumericQuery
