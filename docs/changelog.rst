@@ -6,8 +6,8 @@ Changelog
 
 There are some new core features:
 
-* A new ``aunique`` configuration option allows setting default options
-  for the :ref:`aunique` template function.
+* A new :ref:`config-aunique` configuration option allows setting default
+  options for the :ref:`aunique` template function.
 * The ``albumdisambig`` field no longer includes the MusicBrainz release group
   disambiguation comment. A new ``releasegroupdisambig`` field has been added.
   :bug:`3024`
