@@ -81,9 +81,10 @@ def pil_resize(maxwidth, path_in, path_out=None):
 
 
 def im_resize(maxwidth, path_in, path_out=None):
-    """Resize using ImageMagick's ``magick`` tool
-    (or fall back to ``convert`` for older versions).
-    Return the output path of resized image.
+    """Resize using ImageMagick.
+
+    Use the ``magick`` program or ``convert`` on older versions. Return
+    the output path of resized image.
     """
     path_out = path_out or temp_file_for(path_in)
     log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
@@ -235,8 +236,14 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
     @staticmethod
     def _check_method():
         """Return a tuple indicating an available method and its version.
-        If the method is ImageMagick, also return a bool indicating whether to
-        use the `magick` binary or legacy utils (`convert`, `identify`, etc.)
+
+        The result has at least two elements:
+        - The method, eitehr WEBPROXY, PIL, or IMAGEMAGICK.
+        - The version.
+
+        If the method is IMAGEMAGICK, there is also a third element: a
+        bool flag indicating whether to use the `magick` binary or
+        legacy single-purpose executables (`convert`, `identify`, etc.)
         """
         version = get_im_version()
         if version:
@@ -251,17 +258,17 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
 
 
 def get_im_version():
-    """Return ImageMagick version/legacy-flag pair or None if the check fails.
-
-    Try invoking ImageMagick's `magick` binary first, then `convert` if
-    `magick` is unavailable.
+    """Get the ImageMagick version and legacy flag as a pair. Or return
+    None if ImageMagick is not available.
     """
     for cmd_name, legacy in ((['magick'], False), (['convert'], True)):
         cmd = cmd_name + ['--version']
 
         try:
             out = util.command_output(cmd)
-
+        except (subprocess.CalledProcessError, OSError) as exc:
+            log.debug(u'ImageMagick version check failed: {}', exc)
+        else:
             if b'imagemagick' in out.lower():
                 pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
                 match = re.search(pattern, out)
@@ -271,15 +278,11 @@ def get_im_version():
                                int(match.group(3)))
                     return version, legacy
 
-        except (subprocess.CalledProcessError, OSError) as exc:
-            log.debug(u'ImageMagick version check failed: {}', exc)
-
         return None
 
 
 def get_pil_version():
-    """Return Pillow version or None if it is unavailable
-    Try importing PIL.
+    """Get the PIL/Pillow version, or None if it is unavailable.
     """
     try:
         __import__('PIL', fromlist=[str('Image')])
