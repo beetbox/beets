@@ -103,6 +103,11 @@ And many improvements to existing plugins:
   explicitly specifies it with ``-i`` parameter. This only works when exporting
   library fields.
   :bug:`3084`
+* :doc:`/plugins/acousticbrainz`: The plugin now declares types for all its
+  fields, which enables easier querying and avoids a problem where very small
+  numbers would be stored as strings.
+  Thanks to :user:`rain0r`.
+  :bug:`2790` :bug:`3238`
 
 .. _Google Groups: https://groups.google.com/forum/#!searchin/beets-users/mbsync|sort:date/beets-users/iwCF6bNdh9A/i1xl4Gx8BQAJ
 
