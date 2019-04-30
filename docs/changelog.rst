@@ -59,22 +59,22 @@ And many improvements to existing plugins:
      strange repeated output when running ``beet write``.
      Thanks to :user:`Holzhaus`.
      :bug:`3097` :bug:`2942`
-* :doc:`/plugins/convert`: The plugin now has a ``id3v23`` option that allows
+* :doc:`/plugins/convert`: The plugin now has an ``id3v23`` option that allows
   you to override the global ``id3v23`` option.
   Thanks to :user:`Holzhaus`.
   :bug:`3104`
-* :doc:`/plugins/spotify`: The plugin now uses OAuth for authentication to the
-  Spotify API.
-  Thanks to :user:`rhlahuja`.
-  :bug:`2694` :bug:`3123`
-* :doc:`/plugins/spotify`: The plugin now works as an import metadata
-  provider: you can match tracks and albums using the Spotify database.
-  Thanks to :user:`rhlahuja`.
-  :bug:`3123`
+* :doc:`/plugins/spotify`:
+   * The plugin now uses OAuth for authentication to the Spotify API.
+     Thanks to :user:`rhlahuja`.
+     :bug:`2694` :bug:`3123`
+   * The plugin now works as an import metadata
+     provider: you can match tracks and albums using the Spotify database.
+     Thanks to :user:`rhlahuja`.
+     :bug:`3123`
 * :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which
   passes that flag to ipfs.
   Thanks to :user:`wildthyme`.
-* :doc:`/plugins/discogs`: The plugin has rate limiting for the discogs API now.
+* :doc:`/plugins/discogs`: The plugin now has rate limiting for the Discogs API.
   :bug:`3081`
 * :doc:`/plugins/mpdstats`, :doc:`/plugins/mpdupdate`: These plugins now use
   the ``MPD_PORT`` environment variable if no port is specified in the
