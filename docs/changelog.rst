@@ -246,6 +246,11 @@ And there are many other fixes:
   :bug:`3195`
 * :doc:`/plugins/lastgenre`: The ``force`` config option now actually works.
   :bug:`2704` :bug:`3054`
+* Resizing image files with ImageMagick now avoids problems on systems where
+  there is a ``convert`` command that is *not* ImageMagick's by using the
+  ``magick`` executable when it is available.
+  Thanks to :user:`ababyduck`.
+  :bug:`2093` :bug:`3236`
 
 For developers:
 
