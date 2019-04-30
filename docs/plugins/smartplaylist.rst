@@ -36,7 +36,7 @@ For more advanced usage, you can use template syntax (see
       query: 'year::201(0|1)'
 
 This will query all the songs in 2010 and 2011 and generate the two playlist
-files `ReleasedIn2010.m3u` and `ReleasedIn2011.m3u` using those songs.
+files ``ReleasedIn2010.m3u`` and ``ReleasedIn2011.m3u`` using those songs.
 
 You can also gather the results of several queries by putting them in a list.
 (Items that match both queries are not included twice.) For example::

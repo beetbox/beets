@@ -122,7 +122,7 @@ and select a command with the ``--format`` command-line option or the
 
 In this example ``beet convert`` will use the *speex* command by
 default. To convert the audio to `wav`, run ``beet convert -f wav``.
-This will also use the format key (`wav`) as the file extension.
+This will also use the format key (``wav``) as the file extension.
 
 Each entry in the ``formats`` map consists of a key (the name of the
 format) as well as the command and optionally the file extension.

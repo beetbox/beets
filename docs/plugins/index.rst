@@ -13,11 +13,11 @@ Using Plugins
 -------------
 
 To use one of the plugins included with beets (see the rest of this page for a
-list), just use the `plugins` option in your :doc:`config.yaml </reference/config>` file, like so::
+list), just use the ``plugins`` option in your :doc:`config.yaml </reference/config>` file, like so::
 
     plugins: inline convert web
 
-The value for `plugins` can be a space-separated list of plugin names or a
+The value for ``plugins`` can be a space-separated list of plugin names or a
 YAML list like ``[foo, bar]``. You can see which plugins are currently enabled
 by typing ``beet version``.
 
@@ -30,7 +30,7 @@ Each plugin has its own set of options that can be defined in a section bearing 
 
 Some plugins have special dependencies that you'll need to install. The
 documentation page for each plugin will list them in the setup instructions.
-For some, you can use `pip`'s "extras" feature to install the dependencies,
+For some, you can use ``pip``'s "extras" feature to install the dependencies,
 like this::
 
     pip install beets[fetchart,lyrics,lastgenre]
@@ -213,14 +213,14 @@ In addition to the plugins that come with beets, there are several plugins
 that are maintained by the beets community. To use an external plugin, there
 are two options for installation:
 
-* Make sure it's in the Python path (known as `sys.path` to developers). This
+* Make sure it's in the Python path (known as ``sys.path`` to developers). This
   just means the plugin has to be installed on your system (e.g., with a
-  `setup.py` script or a command like `pip` or `easy_install`).
+  ``setup.py`` script or a command like ``pip`` or ``easy_install``).
 
-* Set the `pluginpath` config variable to point to the directory containing the
+* Set the ``pluginpath`` config variable to point to the directory containing the
   plugin. (See :doc:`/reference/config`.)
 
-Once the plugin is installed, enable it by placing its name on the `plugins`
+Once the plugin is installed, enable it by placing its name on the ``plugins``
 line in your config file.
 
 Here are a few of the plugins written by the beets community:

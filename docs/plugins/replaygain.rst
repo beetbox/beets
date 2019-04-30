@@ -24,9 +24,9 @@ GStreamer
 
 To use `GStreamer`_ for ReplayGain analysis, you will of course need to
 install GStreamer and plugins for compatibility with your audio files.
-You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. python-gi).
+You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. ``python-gi``).
 
-.. _PyGObject 3.x: https://wiki.gnome.org/action/show/Projects/PyGObject
+.. _PyGObject 3.x: https://pygobject.readthedocs.io/en/latest/
 .. _GStreamer: http://gstreamer.freedesktop.org/
 
 Then, enable the ``replaygain`` plugin (see :ref:`using-plugins`) and specify

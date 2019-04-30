@@ -42,7 +42,7 @@ Configuration
 To configure the plugin, make a ``export:`` section in your configuration
 file. Under the ``json`` key, these options are available:
 
-- **ensure_ascii**: Escape non-ASCII characters with `\uXXXX` entities.
+- **ensure_ascii**: Escape non-ASCII characters with ``\uXXXX`` entities.
 
 - **indent**: The number of spaces for indentation.
 
