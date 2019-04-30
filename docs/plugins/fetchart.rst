@@ -73,18 +73,18 @@ or `Pillow`_.
 
 .. note::
 
-    Previously, there was a `remote_priority` option to specify when to
+    Previously, there was a ``remote_priority`` option to specify when to
     look for art on the filesystem. This is
     still respected, but a deprecation message will be shown until you
-    replace this configuration with the new `filesystem` value in the
-    `sources` array.
+    replace this configuration with the new ``filesystem`` value in the
+    ``sources`` array.
 
 .. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
 .. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: http://www.imagemagick.org/
 
-Here's an example that makes plugin select only images that contain *front* or
-*back* keywords in their filenames and prioritizes the iTunes source over
+Here's an example that makes plugin select only images that contain ``front`` or
+``back`` keywords in their filenames and prioritizes the iTunes source over
 others::
 
     fetchart:

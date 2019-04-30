@@ -20,10 +20,12 @@ release = '1.4.8'
 
 pygments_style = 'sphinx'
 
-# External links to the bug tracker.
+# External links to the bug tracker and other sites.
 extlinks = {
     'bug': ('https://github.com/beetbox/beets/issues/%s', '#'),
     'user': ('https://github.com/%s', ''),
+    'pypi': ('https://pypi.org/project/%s/', ''),
+    'stdlib': ('https://docs.python.org/3/library/%s.html', ''),
 }
 
 # Options for HTML output
