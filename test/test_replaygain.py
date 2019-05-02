@@ -19,7 +19,8 @@ from __future__ import division, absolute_import, print_function
 import unittest
 import six
 
-from test.helper import TestHelper, has_program
+from mock import patch
+from test.helper import TestHelper, capture_log, has_program
 
 from beets import config
 from beets.mediafile import MediaFile
@@ -42,6 +43,15 @@ if has_program('bs1770gain', ['--replaygain']):
     LOUDNESS_PROG_AVAILABLE = True
 else:
     LOUDNESS_PROG_AVAILABLE = False
+
+
+def reset_replaygain(item):
+    item['rg_track_peak'] = None
+    item['rg_track_gain'] = None
+    item['rg_album_gain'] = None
+    item['rg_album_gain'] = None
+    item.write()
+    item.store()
 
 
 class ReplayGainCliTestBase(TestHelper):
@@ -68,19 +78,11 @@ class ReplayGainCliTestBase(TestHelper):
 
         album = self.add_album_fixture(2)
         for item in album.items():
-            self._reset_replaygain(item)
+            reset_replaygain(item)
 
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
-
-    def _reset_replaygain(self, item):
-        item['rg_track_peak'] = None
-        item['rg_track_gain'] = None
-        item['rg_album_gain'] = None
-        item['rg_album_gain'] = None
-        item.write()
-        item.store()
 
     def test_cli_saves_track_gain(self):
         for item in self.lib.items():
@@ -164,6 +166,46 @@ class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
 @unittest.skipIf(not LOUDNESS_PROG_AVAILABLE, u'bs1770gain cannot be found')
 class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'bs1770gain'
+
+
+class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
+
+    @patch('beetsplug.replaygain.call')
+    def setUp(self, call_patch):
+        self.setup_beets()
+        self.config['replaygain']['backend'] = 'bs1770gain'
+
+        # Patch call to return nothing, bypassing the bs1770gain installation
+        # check.
+        call_patch.return_value = None
+        self.load_plugins('replaygain')
+
+        for item in self.add_album_fixture(2).items():
+            reset_replaygain(item)
+
+    @patch('beetsplug.replaygain.call')
+    def test_malformed_output(self, call_patch):
+        # Return malformed XML (the ampersand should be &amp;)
+        call_patch.return_value = """
+            <album>
+                <track total="1" number="1" file="&">
+                    <integrated lufs="0" lu="0" />
+                    <sample-peak spfs="0" factor="0" />
+                </track>
+            </album>
+        """
+
+        with capture_log('beets.replaygain') as logs:
+            self.run_command('replaygain')
+
+        # Count how many lines match the expected error.
+        matching = [line for line in logs if
+                    line == 'replaygain: ReplayGain error: bs1770gain '
+                            'returned malformed XML - this is a bug in '
+                            'versions prior to v0.4.10, please ensure that '
+                            'your version is up to date']
+
+        self.assertEqual(len(matching), 2)
 
 
 def suite():
