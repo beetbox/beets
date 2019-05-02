@@ -200,10 +200,7 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
 
         # Count how many lines match the expected error.
         matching = [line for line in logs if
-                    line == 'replaygain: ReplayGain error: bs1770gain '
-                            'returned malformed XML - this is a bug in '
-                            'versions prior to v0.4.10, please ensure that '
-                            'your version is up to date']
+                    'malformed XML' in line]
 
         self.assertEqual(len(matching), 2)
 
