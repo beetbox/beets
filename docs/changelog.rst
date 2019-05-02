@@ -174,6 +174,9 @@ Many fixes have been focused on issues where beets would previously crash:
 * :doc:`/plugins/bpd`: Fix a crash triggered when certain clients tried to list
   the albums belonging to a particular artist.
   :bug:`3007` :bug:`3215`
+* :doc:`/plugins/replaygain`: Avoid a crash when the ``bs1770gain`` tool emits
+  malformed XML.
+  :bug:`2983` :bug:`3247`
 
 There are many fixes related to compatibility with our dependencies including
 addressing changes interfaces:
