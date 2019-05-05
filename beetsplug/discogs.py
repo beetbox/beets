@@ -303,8 +303,10 @@ class DiscogsPlugin(BeetsPlugin):
         country = result.data.get('country')
         data_url = result.data.get('uri')
         style = result.data.get('styles')
+        print('style', style)
         if style is None:
             self._log.info('Style not Found')
+            return "Style not Defined"
         elif len(style) == 0:
             return style
         else:
