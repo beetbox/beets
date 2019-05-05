@@ -302,6 +302,13 @@ class DiscogsPlugin(BeetsPlugin):
         mediums = [t.medium for t in tracks]
         country = result.data.get('country')
         data_url = result.data.get('uri')
+        style = result.data.get('styles')
+        if style is None:
+            self._log.info('Style not Found')
+        elif len(style) == 0:
+            return style
+        else:
+            style = ' - '.join(sorted(style))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
@@ -339,7 +346,8 @@ class DiscogsPlugin(BeetsPlugin):
                          day=None, label=label, mediums=len(set(mediums)),
                          artist_sort=None, releasegroup_id=master_id,
                          catalognum=catalogno, script=None, language=None,
-                         country=country, albumstatus=None, media=media,
+                         country=country, style=style,
+                         albumstatus=None, media=media,
                          albumdisambig=None, artist_credit=None,
                          original_year=original_year, original_month=None,
                          original_day=None, data_source='Discogs',

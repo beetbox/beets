@@ -436,6 +436,7 @@ class Item(LibModel):
         'albumartist_sort':     types.STRING,
         'albumartist_credit':   types.STRING,
         'genre':                types.STRING,
+        'style':                types.STRING,
         'lyricist':             types.STRING,
         'composer':             types.STRING,
         'composer_sort':        types.STRING,
@@ -495,7 +496,7 @@ class Item(LibModel):
     }
 
     _search_fields = ('artist', 'title', 'comments',
-                      'album', 'albumartist', 'genre')
+                      'album', 'albumartist')
 
     _types = {
         'data_source': types.STRING,
@@ -915,6 +916,7 @@ class Album(LibModel):
         'albumartist_credit':   types.STRING,
         'album':                types.STRING,
         'genre':                types.STRING,
+        'style':                types.STRING,
         'year':                 types.PaddedInt(4),
         'month':                types.PaddedInt(2),
         'day':                  types.PaddedInt(2),
