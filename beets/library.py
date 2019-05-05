@@ -496,7 +496,7 @@ class Item(LibModel):
     }
 
     _search_fields = ('artist', 'title', 'comments',
-                      'album', 'albumartist')
+                      'album', 'albumartist', 'genre')
 
     _types = {
         'data_source': types.STRING,
