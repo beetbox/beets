@@ -79,7 +79,7 @@ class AlbumInfo(object):
                  albumtype=None, va=False, year=None, month=None, day=None,
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
-                 language=None, country=None, albumstatus=None, media=None,
+                 language=None, country=None, style=None, albumstatus=None, media=None,
                  albumdisambig=None, releasegroupdisambig=None,
                  artist_credit=None, original_year=None, original_month=None,
                  original_day=None, data_source=None, data_url=None):
@@ -102,6 +102,7 @@ class AlbumInfo(object):
         self.script = script
         self.language = language
         self.country = country
+        self.style = style
         self.albumstatus = albumstatus
         self.media = media
         self.albumdisambig = albumdisambig
@@ -121,7 +122,7 @@ class AlbumInfo(object):
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
         for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
-                    'catalognum', 'script', 'language', 'country',
+                    'catalognum', 'script', 'language', 'country', 'style',
                     'albumstatus', 'albumdisambig', 'releasegroupdisambig',
                     'artist_credit', 'media']:
             value = getattr(self, fld)
