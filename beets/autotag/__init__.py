@@ -155,6 +155,7 @@ def apply_metadata(album_info, mapping):
                 'script',
                 'language',
                 'country',
+                'style',
                 'albumstatus',
                 'albumdisambig',
                 'releasegroupdisambig',
