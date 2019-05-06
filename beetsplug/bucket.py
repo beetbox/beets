@@ -235,7 +235,7 @@ class BucketPlugin(plugins.BeetsPlugin):
         return s[0].upper()
 
     def _tmpl_bucket(self, text, field=None):
-        if not field and len(text) == 4 and text.isdigit():
+        if not field and len(text) == 4 and text.isdigit() and len(self.year_spans):
             field = 'year'
 
         if field == 'year':
