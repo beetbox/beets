@@ -27,12 +27,26 @@ class IncludeLazyConfig(confit.LazyConfig):
     """A version of Confit's LazyConfig that also merges in data from
     YAML files specified in an `include` setting.
     """
+    def __init__(self, *args, **kwargs):
+        super(IncludeLazyConfig, self).__init__(*args, **kwargs)
+
+        self._included_files = []
+
+    def user_config_paths(self):
+        """Points to a list of locations making up the user configuration.
+
+        The files may not exist.
+        """
+        return [self.user_config_path()] + self._included_files
+
     def read(self, user=True, defaults=True):
         super(IncludeLazyConfig, self).read(user, defaults)
 
         try:
             for view in self['include']:
                 filename = view.as_filename()
+                self._included_files.append(filename)
+
                 if os.path.isfile(filename):
                     self.set_file(filename)
         except confit.NotFoundError:

@@ -1177,13 +1177,15 @@ def _configure(options):
         log.debug(u'overlaying configuration: {0}',
                   util.displayable_path(overlay_path))
 
-    config_path = config.user_config_path()
-    if os.path.isfile(config_path):
+    config_paths = config.user_config_paths()
+    existing_config_paths = [p for p in config_paths if os.path.isfile(p)]
+    if len(existing_config_paths) > 0:
         log.debug(u'user configuration: {0}',
-                  util.displayable_path(config_path))
+                  ', '.join(util.displayable_path(p) for p in
+                            existing_config_paths))
     else:
         log.debug(u'no user configuration found at {0}',
-                  util.displayable_path(config_path))
+                  ', '.join(util.displayable_path(p) for p in config_paths))
 
     log.debug(u'data directory: {0}',
               util.displayable_path(config.config_dir()))
