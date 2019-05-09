@@ -554,12 +554,15 @@ def _parse(template):
     return Expression(parts)
 
 
-# Decorator that enables lru_cache on py3, and no caching on py2.
 def cached(func):
-    if six.PY2:
-        # Sorry python2 users, no caching for you :(
+    """Like the `functools.lru_cache` decorator, but works (as a no-op)
+    on Python < 3.2.
+    """
+    if hasattr(functools, 'lru_cache'):
+        return functools.lru_cache(maxsize=128)(func)
+    else:
+        # Do nothing when lru_cache is not available.
         return func
-    return functools.lru_cache(maxsize=128)(func)
 
 
 @cached
