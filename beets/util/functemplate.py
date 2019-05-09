@@ -553,12 +553,21 @@ def _parse(template):
         parts.append(remainder)
     return Expression(parts)
 
-@functools.lru_cache(maxsize=128)
+
+# Decorator that enables lru_cache on py3, and no caching on py2.
+def cached(func):
+    if six.PY2:
+        # Sorry python2 users, no caching for you :(
+        return func
+    return functools.lru_cache(maxsize=128)(func)
+
+
+@cached
 def template(fmt):
     return Template(fmt)
 
-# External interface.
 
+# External interface.
 class Template(object):
     """A string template, including text, Symbols, and Calls.
     """
