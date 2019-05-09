@@ -376,24 +376,41 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     def __init__(self, item, for_path=False):
         super(FormattedItemMapping, self).__init__(item, for_path)
-        self.album = item.get_album()
-        self.album_keys = []
-        if self.album:
-            for key in self.album.keys(True):
-                if key in Album.item_keys or key not in item._fields.keys():
-                    self.album_keys.append(key)
-        self.all_keys = set(self.model_keys).union(self.album_keys)
+        self.album = None
+        self.album_keys = None
+        self.all_keys = None
+        self.item = item
+
+    def _all_keys(self):
+        if not self.all_keys:
+            self.all_keys = set(self.model_keys).union(self._album_keys())
+        return self.all_keys
+
+    def _album_keys(self):
+        if not self.album_keys:
+            album = self._album()
+            self.album_keys = []
+            if album:
+                for key in album.keys(True):
+                    if key in Album.item_keys or key not in self.item._fields.keys():
+                        self.album_keys.append(key)
+        return self.album_keys
+
+    def _album(self):
+        if not self.album:
+            self.album = self.item.get_album()
+        return self.album
 
     def _get(self, key):
         """Get the value for a key, either from the album or the item.
         Raise a KeyError for invalid keys.
         """
-        if self.for_path and key in self.album_keys:
-            return self._get_formatted(self.album, key)
+        if self.for_path and key in self._album_keys():
+            return self._get_formatted(self._album(), key)
         elif key in self.model_keys:
             return self._get_formatted(self.model, key)
-        elif key in self.album_keys:
-            return self._get_formatted(self.album, key)
+        elif key in self._album_keys():
+            return self._get_formatted(self._album(), key)
         else:
             raise KeyError(key)
 
@@ -413,10 +430,10 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             return value
 
     def __iter__(self):
-        return iter(self.all_keys)
+        return iter(self._all_keys())
 
     def __len__(self):
-        return len(self.all_keys)
+        return len(self._all_keys())
 
 
 class Item(LibModel):
