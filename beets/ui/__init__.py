@@ -36,7 +36,7 @@ from beets import logging
 from beets import library
 from beets import plugins
 from beets import util
-from beets.util.functemplate import Template
+from beets.util.functemplate import template
 from beets import config
 from beets.util import confit, as_string
 from beets.autotag import mb
@@ -616,7 +616,7 @@ def get_path_formats(subview=None):
     subview = subview or config['paths']
     for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, Template(view.as_str())))
+        path_formats.append((query, template(view.as_str())))
     return path_formats
 
 
