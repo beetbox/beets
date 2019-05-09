@@ -35,6 +35,7 @@ import dis
 import types
 import sys
 import six
+import functools
 
 SYMBOL_DELIM = u'$'
 FUNC_DELIM = u'%'
@@ -552,6 +553,9 @@ def _parse(template):
         parts.append(remainder)
     return Expression(parts)
 
+@functools.lru_cache(maxsize=128)
+def template(fmt):
+    return Template(fmt)
 
 # External interface.
 

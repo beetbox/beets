@@ -117,6 +117,9 @@ Some improvements have been focused on improving beets' performance:
   to be displayed.
   Thanks to :user:`pprkut`.
   :bug:`3089`
+* Querying the library was further improved by reusing compiled teamplates
+  instead of compiling them over and over again.
+  Thanks to :user:`SimonPersson`.
 * :doc:`/plugins/absubmit`, :doc:`/plugins/badfiles`: Analysis now works in
   parallel (on Python 3 only).
   Thanks to :user:`bemeurer`.
