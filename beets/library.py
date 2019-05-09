@@ -935,7 +935,7 @@ class Album(LibModel):
         'releasegroupdisambig': types.STRING,
         'rg_album_gain':        types.NULL_FLOAT,
         'rg_album_peak':        types.NULL_FLOAT,
-        'r128_album_gain':      types.PaddedInt(6),
+        'r128_album_gain':      types.NullPaddedInt(6),
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
