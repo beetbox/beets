@@ -392,7 +392,8 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             self.album_keys = []
             if album:
                 for key in album.keys(True):
-                    if key in Album.item_keys or key not in self.item._fields.keys():
+                    if key in Album.item_keys \
+                            or key not in self.item._fields.keys():
                         self.album_keys.append(key)
         return self.album_keys
 
