@@ -35,6 +35,7 @@ import dis
 import types
 import sys
 import six
+import functools
 
 SYMBOL_DELIM = u'$'
 FUNC_DELIM = u'%'
@@ -553,8 +554,20 @@ def _parse(template):
     return Expression(parts)
 
 
-# External interface.
+# Decorator that enables lru_cache on py3, and no caching on py2.
+def cached(func):
+    if six.PY2:
+        # Sorry python2 users, no caching for you :(
+        return func
+    return functools.lru_cache(maxsize=128)(func)
 
+
+@cached
+def template(fmt):
+    return Template(fmt)
+
+
+# External interface.
 class Template(object):
     """A string template, including text, Symbols, and Calls.
     """
