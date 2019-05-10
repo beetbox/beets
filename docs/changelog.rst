@@ -117,6 +117,10 @@ Some improvements have been focused on improving beets' performance:
   to be displayed.
   Thanks to :user:`pprkut`.
   :bug:`3089`
+* Another query optimization works by compiling templates once and reusing
+  them instead of recompiling them to print out each matching object.
+  Thanks to :user:`SimonPersson`.
+  :bug:`3258`
 * :doc:`/plugins/absubmit`, :doc:`/plugins/badfiles`: Analysis now works in
   parallel (on Python 3 only).
   Thanks to :user:`bemeurer`.
