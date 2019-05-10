@@ -25,7 +25,7 @@ import sqlite3
 import contextlib
 
 import beets
-from beets.util.functemplate import Template
+from beets.util import functemplate
 from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
@@ -597,7 +597,7 @@ class Model(object):
         """
         # Perform substitution.
         if isinstance(template, six.string_types):
-            template = Template(template)
+            template = functemplate.template(template)
         return template.substitute(self.formatted(for_path),
                                    self._template_funcs())
 

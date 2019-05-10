@@ -31,7 +31,7 @@ from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
     MoveOperation, lazy_property
-from beets.util.functemplate import Template
+from beets.util.functemplate import template, Template
 from beets import dbcore
 from beets.dbcore import types
 import beets
@@ -867,7 +867,7 @@ class Item(LibModel):
         if isinstance(path_format, Template):
             subpath_tmpl = path_format
         else:
-            subpath_tmpl = Template(path_format)
+            subpath_tmpl = template(path_format)
 
         # Evaluate the selected template.
         subpath = self.evaluate_template(subpath_tmpl, True)
@@ -947,7 +947,7 @@ class Album(LibModel):
         'releasegroupdisambig': types.STRING,
         'rg_album_gain':        types.NULL_FLOAT,
         'rg_album_peak':        types.NULL_FLOAT,
-        'r128_album_gain':      types.PaddedInt(6),
+        'r128_album_gain':      types.NullPaddedInt(6),
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
@@ -1146,7 +1146,7 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = Template(
+        filename_tmpl = template(
             beets.config['art_filename'].as_str())
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config['asciify_paths']:
