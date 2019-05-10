@@ -126,6 +126,10 @@ Some improvements have been focused on improving beets' performance:
   is long.
   Thanks to :user:`ray66`.
   :bug:`3207` :bug:`2752`
+* Querying the library for items is now faster, for all queries that do not need
+  to access album level properties. This was implemented by lazily fetching the
+  album only when needed.
+  Thanks to :user:`SimonPersson`.
 
 Several improvements are related to usability:
 
