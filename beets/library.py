@@ -24,14 +24,13 @@ import time
 import re
 import six
 import string
-import functools
 
 from beets import logging
 from beets.mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
-    MoveOperation
+    MoveOperation, lazy_property
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
@@ -367,22 +366,6 @@ class LibModel(dbcore.Model):
 
     def __bytes__(self):
         return self.__str__().encode('utf-8')
-
-
-def lazy_property(func):
-    field_name = '_' + func.__name__
-
-    @property
-    @functools.wraps(func)
-    def wrapper(self):
-        if hasattr(self, field_name):
-            return getattr(self, field_name)
-
-        value = func(self)
-        setattr(self, field_name, value)
-        return value
-
-    return wrapper
 
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
