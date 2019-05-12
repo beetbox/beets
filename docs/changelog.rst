@@ -113,14 +113,19 @@ And many improvements to existing plugins:
 
 Some improvements have been focused on improving beets' performance:
 
-* Querying the library is now faster because we only convert fields that need
-  to be displayed.
-  Thanks to :user:`pprkut`.
-  :bug:`3089`
-* Another query optimization works by compiling templates once and reusing
-  them instead of recompiling them to print out each matching object.
-  Thanks to :user:`SimonPersson`.
-  :bug:`3258`
+* Querying the library is now faster:
+    * We only convert fields that need to be displayed.
+      Thanks to :user:`pprkut`.
+      :bug:`3089`
+    * We now compile templates once and reuse them instead of recompiling them
+      to print out each matching object.
+      Thanks to :user:`SimonPersson`.
+      :bug:`3258`
+    * Querying the library for items is now faster, for all queries that do not
+      need to access album level properties. This was implemented by lazily
+      fetching the album only when needed.
+      Thanks to :user:`SimonPersson`.
+      :bug:`3260`
 * :doc:`/plugins/absubmit`, :doc:`/plugins/badfiles`: Analysis now works in
   parallel (on Python 3 only).
   Thanks to :user:`bemeurer`.
@@ -130,10 +135,6 @@ Some improvements have been focused on improving beets' performance:
   is long.
   Thanks to :user:`ray66`.
   :bug:`3207` :bug:`2752`
-* Querying the library for items is now faster, for all queries that do not need
-  to access album level properties. This was implemented by lazily fetching the
-  album only when needed.
-  Thanks to :user:`SimonPersson`.
 
 Several improvements are related to usability:
 
