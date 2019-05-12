@@ -32,9 +32,9 @@ def work_father(work_id, work_date=None):
                                                         "artist-rels"])
     if 'artist-relation-list' in work_info['work'] and work_date is None:
         for artist in work_info['work']['artist-relation-list']:
-                if artist['type'] == 'composer':
-                    if 'end' in artist.keys():
-                        work_date = artist['end']
+            if artist['type'] == 'composer':
+                if 'end' in artist.keys():
+                    work_date = artist['end']
 
     if 'work-relation-list' in work_info['work']:
         for work_father in work_info['work']['work-relation-list']:
@@ -115,9 +115,9 @@ class ParentWorkPlugin(BeetsPlugin):
     def get_info(self, item, work_info, parent_composer, parent_composer_sort,
                  parent_work, parent_work_disambig, parent_work_id,
                  composer_ids):
-        """Given the parentwork info dict, this function updates parent_composer,
-        parent_composer_sort, parent_work, parent_work_disambig, work_ids and
-        composer_ids"""
+        """Given the parentwork info dict, this function updates
+        parent_composer, parent_composer_sort, parent_work,
+        parent_work_disambig, work_ids and composer_ids"""
         composer_exists = False
         if 'artist-relation-list' in work_info['work']:
             for artist in work_info['work']['artist-relation-list']:
@@ -146,13 +146,13 @@ class ParentWorkPlugin(BeetsPlugin):
 
     def find_work(self, item, force):
 
-        parent_work          = []
+        parent_work = []
         parent_work_disambig = []
-        parent_composer      = []
+        parent_composer = []
         parent_composer_sort = []
-        parent_work_id       = []
-        composer_ids         = set()
-        work_ids             = []
+        parent_work_id = []
+        composer_ids = set()
+        work_ids = []
 
         recording_id = item.mb_trackid
         try:
@@ -204,19 +204,22 @@ class ParentWorkPlugin(BeetsPlugin):
                             item.artist + ' - ' + item.title)
             self._log.debug("Work fetched: " + u', '.join(parent_work) +
                             ' - ' + u', '.join(parent_composer))
-            item['parent_work']          = u''
-            item['parent_work']          = u', '.join(parent_work)
-            if len(parent_work_disambig)>0:
+            item['parent_work'] = u''
+            item['parent_work'] = u', '.join(parent_work)
+            if len(parent_work_disambig) > 0:
+                item['parent_work_disambig'] = u''
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
-            item['parent_work_id']       = u''
-            item['parent_work_id']       = u', '.join(parent_work_id)
-            item['parent_composer']      = u''
-            item['parent_composer']      = u', '.join(parent_composer)
+            item['parent_work_id'] = u''
+            item['parent_work_id'] = u', '.join(parent_work_id)
+            item['parent_composer'] = u''
+            item['parent_composer'] = u', '.join(parent_composer)
             item['parent_composer_sort'] = u''
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
-            if not (work_date==None):
-                item['work_date']        = work_date
+            if not (work_date is None):
+                item['work_date'] = work_date
             ui.show_model_changes(
-                item, fields=['parent_work', 'parent_work_disambig', 'parent_work_id', 'parent_composer', 'parent_composer_sort', 'work_date'])
+                item, fields=['parent_work', 'parent_work_disambig',
+                              'parent_work_id', 'parent_composer',
+                              'parent_composer_sort', 'work_date'])
 
             item.store()
