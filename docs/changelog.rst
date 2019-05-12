@@ -30,9 +30,6 @@ There are some new plugins:
   library.
   Thanks to :user:`maffo999`.
   :bug:`3001`
-* The :doc:`/plugins/parentwork` can automatically fetch the parent works of
-  your recordings.
-  Thanks to :user:`dosoe`.
 
 And many improvements to existing plugins:
 
