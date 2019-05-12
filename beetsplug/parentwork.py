@@ -206,8 +206,7 @@ class ParentWorkPlugin(BeetsPlugin):
                             ' - ' + u', '.join(parent_composer))
             item['parent_work']          = u''
             item['parent_work']          = u', '.join(parent_work)
-            item['parent_work_disambig'] = u''
-            if all(dis for dis in parent_work_disambig):
+            if len(parent_work_disambig)>0:
                 item['parent_work_disambig'] = u', '.join(parent_work_disambig)
             item['parent_work_id']       = u''
             item['parent_work_id']       = u', '.join(parent_work_id)
