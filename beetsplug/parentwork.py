@@ -41,8 +41,8 @@ def work_father(work_id, work_date=None):
             if work_father['type'] == 'parts' \
                     and work_father.get('direction') == 'backward':
                 father_id = work_father['work']['id']
-                return(father_id, work_date)
-    return(None, work_date)
+                return father_id, work_date
+    return None, work_date
 
 
 def work_parent(work_id):
@@ -60,10 +60,10 @@ def work_parent(work_id):
 def find_parentwork(work_id):
     """This function gives the work relationships (dict) of a parent_work
     given the id of the work"""
-    (parent_id, work_date) = work_parent(work_id)
+    parent_id, work_date = work_parent(work_id)
     work_info = musicbrainzngs.get_work_by_id(parent_id,
                                               includes=["artist-rels"])
-    return(work_info, work_date)
+    return work_info, work_date
 
 
 class ParentWorkPlugin(BeetsPlugin):
@@ -199,7 +199,7 @@ class ParentWorkPlugin(BeetsPlugin):
             self._log.debug("Work already in library, not necessary fetching")
             return
 
-        if found or force:
+        if found:
             self._log.debug("Finished searching work for: " +
                             item.artist + ' - ' + item.title)
             self._log.debug("Work fetched: " + u', '.join(parent_work) +
@@ -215,6 +215,9 @@ class ParentWorkPlugin(BeetsPlugin):
             item['parent_composer']      = u', '.join(parent_composer)
             item['parent_composer_sort'] = u''
             item['parent_composer_sort'] = u', '.join(parent_composer_sort)
-            item['work_date']            = work_date
+            if not (work_date==None):
+                item['work_date']        = work_date
+            ui.show_model_changes(
+                item, fields=['parent_work', 'parent_work_disambig', 'parent_work_id', 'parent_composer', 'parent_composer_sort', 'work_date'])
 
             item.store()
