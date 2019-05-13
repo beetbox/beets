@@ -65,6 +65,7 @@ setup(
     platforms='ALL',
     long_description=_read('README.rst'),
     test_suite='test.testall.suite',
+    zip_safe=False,
     include_package_data=True,  # Install plugin resources.
 
     packages=[
