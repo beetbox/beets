@@ -271,7 +271,7 @@ And there are many other fixes:
   Thanks to :user:`ababyduck`.
   :bug:`2093` :bug:`3236`
 
-For developers:
+There is one new thing for plugin developers to know about:
 
 * In addition to prefix-based field queries, plugins can now define *named
   queries* that are not associated with any specific field.
@@ -279,7 +279,7 @@ For developers:
   ``playlist:name`` although there is no field named ``playlist``.
   See :ref:`extend-query` for details.
 
-For packagers:
+And some messages for packagers:
 
 * Note the changes to the dependencies on :pypi:`jellyfish` and :pypi:`munkres`.
 * The optional :pypi:`python-itunes` dependency has been removed.
