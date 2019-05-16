@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.8 (in development)
-----------------------
+1.4.8 (May 16, 2019)
+--------------------
 
 This release is far too long in coming, but it's a good one. There is the
 usual torrent of new features and a ridiculously long line of fixes, but there
