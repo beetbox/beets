@@ -4,7 +4,14 @@ Changelog
 1.4.8 (in development)
 ----------------------
 
-There are some new core features:
+This release is far too long in coming, but it's a good one. There is the
+usual torrent of new features and a ridiculously long line of fixes, but there
+are also some crucial maintenance changes.
+We officially support Python 3.7 and 3.8, and some performance optimizations
+can (anecdotally) make listing your library more than three times faster than
+in the previous version.
+
+The new core features are:
 
 * A new :ref:`config-aunique` configuration option allows setting default
   options for the :ref:`aunique` template function.
