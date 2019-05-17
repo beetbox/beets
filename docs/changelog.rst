@@ -4,7 +4,11 @@ Changelog
 1.4.9 (in development)
 ----------------------
 
-Changelog goes here!
+Fixes:
+
+* Fix a regression in the last release that made the image resizer fail to
+  detect older versions of ImageMagick.
+  :bug:`3269`
 
 
 1.4.8 (May 16, 2019)
