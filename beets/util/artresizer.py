@@ -278,7 +278,7 @@ def get_im_version():
                                int(match.group(3)))
                     return version, legacy
 
-        return None
+    return None
 
 
 def get_pil_version():
