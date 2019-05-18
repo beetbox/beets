@@ -12,6 +12,9 @@ Fixes:
 * :doc:`/plugins/gmusic`: The ``oauth_file`` config option now supports more
   flexible path values, including ``~`` for the home directory.
   :bug:`3270`
+* :doc:`/plugins/gmusic`: Fix a crash when using version 12.0.0 or later of
+  the ``gmusicapi`` module.
+  :bug:`3270`
 
 
 1.4.8 (May 16, 2019)
