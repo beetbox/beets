@@ -31,12 +31,19 @@ class Gmusic(BeetsPlugin):
     def __init__(self):
         super(Gmusic, self).__init__()
         self.m = Musicmanager()
+
+        # OAUTH_FILEPATH was moved in gmusicapi 12.0.0.
+        if hasattr(Musicmanager, 'OAUTH_FILEPATH'):
+            oauth_file = Musicmanager.OAUTH_FILEPATH
+        else:
+            oauth_file = gmusicapi.clients.OAUTH_FILEPATH
+
         self.config.add({
             u'auto': False,
             u'uploader_id': '',
             u'uploader_name': '',
             u'device_id': '',
-            u'oauth_file': gmusicapi.clients.OAUTH_FILEPATH,
+            u'oauth_file': oauth_file,
         })
         if self.config['auto']:
             self.import_stages = [self.autoupload]
