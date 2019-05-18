@@ -9,6 +9,9 @@ Fixes:
 * Fix a regression in the last release that made the image resizer fail to
   detect older versions of ImageMagick.
   :bug:`3269`
+* :doc:`/plugins/gmusic`: The ``oauth_file`` config option now supports more
+  flexible path values, including ``~`` for the home directory.
+  :bug:`3270`
 
 
 1.4.8 (May 16, 2019)

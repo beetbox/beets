@@ -62,7 +62,7 @@ class Gmusic(BeetsPlugin):
             return
         # Checks for OAuth2 credentials,
         # if they don't exist - performs authorization
-        oauth_file = self.config['oauth_file'].as_str()
+        oauth_file = self.config['oauth_file'].as_filename()
         if os.path.isfile(oauth_file):
             uploader_id = self.config['uploader_id']
             uploader_name = self.config['uploader_name']
