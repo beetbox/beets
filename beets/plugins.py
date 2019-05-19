@@ -26,7 +26,7 @@ from functools import wraps
 
 import beets
 from beets import logging
-from beets import mediafile
+import mediafile
 import six
 
 PLUGIN_NAMESPACE = 'beetsplug'

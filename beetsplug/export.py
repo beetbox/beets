@@ -24,7 +24,7 @@ import codecs
 from datetime import datetime, date
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets import mediafile
+import mediafile
 from beetsplug.info import make_key_filter, library_data, tag_data
 
 

@@ -21,7 +21,7 @@ import six
 import re
 
 from beets.plugins import BeetsPlugin
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets.importer import action
 from beets.ui import Subcommand, decargs, input_yn
 from beets.util import confit

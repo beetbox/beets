@@ -26,7 +26,7 @@ from beets.importer import SingletonImportTask, SentinelImportTask, \
 from beets import plugins, config, ui
 from beets.library import Item
 from beets.dbcore import types
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets.util import displayable_path, bytestring_path, syspath
 
 from test.test_importer import ImportHelper, AutotagStub
