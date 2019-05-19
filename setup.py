@@ -87,7 +87,6 @@ setup(
 
     install_requires=[
         'six>=1.9',
-        'mutagen>=1.33',
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
@@ -143,6 +142,7 @@ setup(
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
+        'scrub': ['mutagen>=1.33'],
         'bpd': ['PyGObject'],
         'replaygain': ['PyGObject'],
     },

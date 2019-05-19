@@ -35,7 +35,9 @@ For packagers:
 
 * Beets' library for manipulating media file metadata has now been split to a
   standalone project called `MediaFile`_, released as :pypi:`mediafile`. Beets
-  now depends on this new package.
+  now depends on this new package. Beets now depends on Mutagen transitively
+  through MediaFile rather than directly, except in the case of one of beets'
+  plugins (scrub).
 
 .. _MediaFile: https://github.com/beetbox/mediafile
 
