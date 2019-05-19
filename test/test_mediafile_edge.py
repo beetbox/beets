@@ -402,6 +402,30 @@ class ID3v23Test(unittest.TestCase, _common.TempDirMixin):
             finally:
                 self._delete_test()
 
+class ReadOnlyTagTest(unittest.TestCase, _common.TempDirMixin):
+    def setUp(self):
+        self.create_temp_dir()
+        self.read_only_key = "----:com.apple.iTunes:Label"
+
+    def test_read(self):
+        path = os.path.join(_common.RSRC, b'read_only_tag.m4a')
+        mf = mediafile.MediaFile(path)
+        self.assertEqual(mf.label, "the label")
+
+    def test_write(self):
+        src = os.path.join(_common.RSRC, b'empty.m4a')
+        path = os.path.join(self.temp_dir, b'test.m4a')
+        shutil.copy(src, path)
+        mf = mediafile.MediaFile(path)
+        mf.label = "the label"
+        mf.path = os.path.join(self.temp_dir, b'empty.m4a')
+        mf.save()
+        self.assertNotIn(self.read_only_key, mf.mgfile.tags)
+        
+
+    def tearDown(self):
+        self.remove_temp_dir()
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

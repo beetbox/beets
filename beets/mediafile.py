@@ -462,7 +462,8 @@ class StorageStyle(object):
         - `float_places`: When the value is a floating-point number and
           encoded as a string, the number of digits to store after the
           decimal point.
-        - `read_only`: When true, sets the store method to a callable which does nothing and returns None.
+        - `read_only`: When true, sets the store method to a callable
+          which does nothing and returns None.
         """
         self.key = key
         self.as_type = as_type
@@ -1189,6 +1190,13 @@ class MediaField(object):
         for style in self._styles:
             if mutagen_file.__class__.__name__ in style.formats:
                 yield style
+
+
+    def get_map(self, mediafile):
+        out = {}
+        for style in self.styles(mediafile.mgfile):
+            out[style.key] = _safe_cast(style.get(mediafile.mgfile))
+        return out or None
 
     def __get__(self, mediafile, owner=None):
         out = None
