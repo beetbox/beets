@@ -1191,7 +1191,6 @@ class MediaField(object):
             if mutagen_file.__class__.__name__ in style.formats:
                 yield style
 
-
     def get_map(self, mediafile):
         out = {}
         for style in self.styles(mediafile.mgfile):
