@@ -402,6 +402,7 @@ class ID3v23Test(unittest.TestCase, _common.TempDirMixin):
             finally:
                 self._delete_test()
 
+
 class ReadOnlyTagTest(unittest.TestCase, _common.TempDirMixin):
     def setUp(self):
         self.create_temp_dir()
@@ -421,7 +422,6 @@ class ReadOnlyTagTest(unittest.TestCase, _common.TempDirMixin):
         mf.path = os.path.join(self.temp_dir, b'empty.m4a')
         mf.save()
         self.assertNotIn(self.read_only_key, mf.mgfile.tags)
-        
 
     def tearDown(self):
         self.remove_temp_dir()
