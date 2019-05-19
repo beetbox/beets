@@ -370,17 +370,16 @@ template fields by adding a function accepting an ``Album`` argument to the
 Extend MediaFile
 ^^^^^^^^^^^^^^^^
 
-:ref:`MediaFile` is the file tag abstraction layer that beets uses to make
+`MediaFile`_ is the file tag abstraction layer that beets uses to make
 cross-format metadata manipulation simple. Plugins can add fields to MediaFile
 to extend the kinds of metadata that they can easily manage.
 
 The ``MediaFile`` class uses ``MediaField`` descriptors to provide
-access to file tags. Have a look at the ``beets.mediafile`` source code
-to learn how to use this descriptor class. If you have created a
-descriptor you can add it through your plugins ``add_media_field()``
-method.
+access to file tags. If you have created a descriptor you can add it through
+your plugins ``add_media_field()`` method.
 
 .. automethod:: beets.plugins.BeetsPlugin.add_media_field
+.. _MediaFile: http://mediafile.readthedocs.io/
 
 
 Here's an example plugin that provides a meaningless new field "foo"::
