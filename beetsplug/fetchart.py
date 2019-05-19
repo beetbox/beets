@@ -29,7 +29,7 @@ from beets import importer
 from beets import ui
 from beets import util
 from beets import config
-from beets.mediafile import image_mime_type
+from mediafile import image_mime_type
 from beets.util.artresizer import ArtResizer
 from beets.util import confit, sorted_walk
 from beets.util import syspath, bytestring_path, py3_path

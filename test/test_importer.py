@@ -35,7 +35,7 @@ from beets.util import displayable_path, bytestring_path, py3_path
 from test.helper import TestImportSession, TestHelper, has_program, capture_log
 from beets import importer
 from beets.importer import albums_in_dir
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets import autotag
 from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch
 from beets import config
