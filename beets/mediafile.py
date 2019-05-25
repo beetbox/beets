@@ -1643,6 +1643,12 @@ class MediaFile(object):
         StorageStyle('COMPOSERSORT'),
         ASFStorageStyle('WM/Composersortorder'),
     )
+    work = MediaField(
+        MP3DescStorageStyle(u'Work'),
+        MP4StorageStyle('----:com.apple.iTunes:Work'),
+        StorageStyle('WORK'),
+        ASFStorageStyle('beets/Work'),
+    )
     arranger = MediaField(
         MP3PeopleStorageStyle('TIPL', involvement='arranger'),
         MP4StorageStyle('----:com.apple.iTunes:Arranger'),
