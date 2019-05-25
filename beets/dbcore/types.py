@@ -173,14 +173,18 @@ class Id(Integer):
 
 
 class Float(Type):
-    """A basic floating-point type.
+    """A basic floating-point type. The `digits` parameter specifies how
+    many decimal places to use in the human-readable representation.
     """
     sql = u'REAL'
     query = query.NumericQuery
     model_type = float
 
+    def __init__(self, digits=1):
+        self.digits = digits
+
     def format(self, value):
-        return u'{0:.1f}'.format(value or 0.0)
+        return u'{0:.{1}f}'.format(value or 0, self.digits)
 
 
 class NullFloat(Float):

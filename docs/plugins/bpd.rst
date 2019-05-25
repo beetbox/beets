@@ -20,7 +20,7 @@ with its Python bindings) on your system.
   gst-plugins-base pygobject3``.
 
 * On Linux, you need to install GStreamer 1.0 and the GObject bindings for
-  python. Under Ubuntu, they are called `python-gi` and `gstreamer1.0`.
+  python. Under Ubuntu, they are called ``python-gi`` and ``gstreamer1.0``.
 
 * On Windows, you may want to try `GStreamer WinBuilds`_ (caveat emptor: I
   haven't tried this).
@@ -75,6 +75,8 @@ The available options are:
   Default: No password.
 - **volume**: Initial volume, as a percentage.
   Default: 100
+- **control_port**: Port for the internal control socket.
+  Default: 6601
 
 Here's an example::
 
@@ -95,40 +97,42 @@ on-disk directory structure can. (Note that an obvious solution to this is just
 string matching on items' destination, but this requires examining the entire
 library Python-side for every query.)
 
-We don't currently support versioned playlists. Many clients, however, use
-plchanges instead of playlistinfo to get the current playlist, so plchanges
-contains a dummy implementation that just calls playlistinfo.
+BPD plays music using GStreamer's ``playbin`` player, which has a simple API
+but doesn't support many advanced playback features.
 
-The ``stats`` command always send zero for ``playtime``, which is supposed to
-indicate the amount of time the server has spent playing music. BPD doesn't
-currently keep track of this.
+Differences from the real MPD
+-----------------------------
 
-The ``update`` command regenerates the directory tree from the beets database.
-
-Unimplemented Commands
-----------------------
-
-These are the commands from `the MPD protocol`_ that have not yet been
-implemented in BPD.
+BPD currently supports version 0.14 of `the MPD protocol`_, but several of the
+commands and features are "pretend" implementations or have slightly different
+behaviour to their MPD equivalents. BPD aims to look enough like MPD that it
+can interact with the ecosystem of clients, but doesn't try to be
+a fully-fledged MPD replacement in terms of its playback capabilities.
 
 .. _the MPD protocol: http://www.musicpd.org/doc/protocol/
 
-Saved playlists:
+These are some of the known differences between BPD and MPD:
 
-* playlistclear
-* playlistdelete
-* playlistmove
-* playlistadd
-* playlistsearch
-* listplaylist
-* listplaylistinfo
-* playlistfind
-* rm
-* save
-* load
-* rename
-
-Deprecated:
-
-* playlist
-* volume
+* BPD doesn't currently support versioned playlists. Many clients, however, use
+  plchanges instead of playlistinfo to get the current playlist, so plchanges
+  contains a dummy implementation that just calls playlistinfo.
+* Stored playlists aren't supported (BPD understands the commands though).
+* The ``stats`` command always send zero for ``playtime``, which is supposed to
+  indicate the amount of time the server has spent playing music. BPD doesn't
+  currently keep track of this.
+* The ``update`` command regenerates the directory tree from the beets database
+  synchronously, whereas MPD does this in the background.
+* Advanced playback features like cross-fade, ReplayGain and MixRamp are not
+  supported due to BPD's simple audio player backend.
+* Advanced query syntax is not currently supported.
+* Not all tags (fields) are currently exposed to BPD. Clients also can't use
+  the ``tagtypes`` mask to hide fields.
+* BPD's ``random`` mode is not deterministic and doesn't support priorities.
+* Mounts and streams are not supported. BPD can only play files from disk.
+* Stickers are not supported (although this is basically a flexattr in beets
+  nomenclature so this is feasible to add).
+* There is only a single password, and is enabled it grants access to all
+  features rather than having permissions-based granularity.
+* Partitions and alternative outputs are not supported; BPD can only play one
+  song at a time.
+* Client channels are not implemented.

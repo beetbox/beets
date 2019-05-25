@@ -23,6 +23,7 @@ import locale
 import re
 import shutil
 import fnmatch
+import functools
 from collections import Counter
 from multiprocessing.pool import ThreadPool
 import traceback
@@ -283,13 +284,13 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
             continue
         clutter = [bytestring_path(c) for c in clutter]
         match_paths = [bytestring_path(d) for d in os.listdir(directory)]
-        if fnmatch_all(match_paths, clutter):
-            # Directory contains only clutter (or nothing).
-            try:
+        try:
+            if fnmatch_all(match_paths, clutter):
+                # Directory contains only clutter (or nothing).
                 shutil.rmtree(directory)
-            except OSError:
+            else:
                 break
-        else:
+        except OSError:
             break
 
 
@@ -1031,3 +1032,26 @@ def par_map(transform, items):
         pool.map(transform, items)
         pool.close()
         pool.join()
+
+
+def lazy_property(func):
+    """A decorator that creates a lazily evaluated property. On first access,
+    the property is assigned the return value of `func`. This first value is
+    stored, so that future accesses do not have to evaluate `func` again.
+
+    This behaviour is useful when `func` is expensive to evaluate, and it is
+    not certain that the result will be needed.
+    """
+    field_name = '_' + func.__name__
+
+    @property
+    @functools.wraps(func)
+    def wrapper(self):
+        if hasattr(self, field_name):
+            return getattr(self, field_name)
+
+        value = func(self)
+        setattr(self, field_name, value)
+        return value
+
+    return wrapper

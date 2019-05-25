@@ -30,8 +30,8 @@ from beets.mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
-    MoveOperation
-from beets.util.functemplate import Template
+    MoveOperation, lazy_property
+from beets.util.functemplate import template, Template
 from beets import dbcore
 from beets.dbcore import types
 import beets
@@ -376,13 +376,25 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     def __init__(self, item, for_path=False):
         super(FormattedItemMapping, self).__init__(item, for_path)
-        self.album = item.get_album()
-        self.album_keys = []
+        self.item = item
+
+    @lazy_property
+    def all_keys(self):
+        return set(self.model_keys).union(self.album_keys)
+
+    @lazy_property
+    def album_keys(self):
+        album_keys = []
         if self.album:
             for key in self.album.keys(True):
-                if key in Album.item_keys or key not in item._fields.keys():
-                    self.album_keys.append(key)
-        self.all_keys = set(self.model_keys).union(self.album_keys)
+                if key in Album.item_keys \
+                        or key not in self.item._fields.keys():
+                    album_keys.append(key)
+        return album_keys
+
+    @lazy_property
+    def album(self):
+        return self.item.get_album()
 
     def _get(self, key):
         """Get the value for a key, either from the album or the item.
@@ -855,7 +867,7 @@ class Item(LibModel):
         if isinstance(path_format, Template):
             subpath_tmpl = path_format
         else:
-            subpath_tmpl = Template(path_format)
+            subpath_tmpl = template(path_format)
 
         # Evaluate the selected template.
         subpath = self.evaluate_template(subpath_tmpl, True)
@@ -935,7 +947,7 @@ class Album(LibModel):
         'releasegroupdisambig': types.STRING,
         'rg_album_gain':        types.NULL_FLOAT,
         'rg_album_peak':        types.NULL_FLOAT,
-        'r128_album_gain':      types.PaddedInt(6),
+        'r128_album_gain':      types.NullPaddedInt(6),
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
@@ -1134,7 +1146,7 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = Template(
+        filename_tmpl = template(
             beets.config['art_filename'].as_str())
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config['asciify_paths']:
@@ -1239,8 +1251,10 @@ def parse_query_parts(parts, model_cls):
         else:
             non_path_parts.append(s)
 
+    case_insensitive = beets.config['sort_case_insensitive'].get(bool)
+
     query, sort = dbcore.parse_sorted_query(
-        model_cls, non_path_parts, prefixes
+        model_cls, non_path_parts, prefixes, case_insensitive
     )
 
     # Add path queries to aggregate query.

@@ -56,7 +56,7 @@ if 'sdist' in sys.argv:
 
 setup(
     name='beets',
-    version='1.4.8',
+    version='1.4.9',
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
@@ -123,22 +123,39 @@ setup(
     # Plugin (optional) dependencies:
     extras_require={
         'absubmit': ['requests'],
-        'fetchart': ['requests'],
+        'fetchart': ['requests', 'Pillow'],
+        'embedart': ['Pillow'],
+        'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
+        'gmusic': ['gmusicapi'],
         'discogs': ['discogs-client>=2.2.1'],
         'beatport': ['requests-oauthlib>=0.6.1'],
+        'kodiupdate': ['requests'],
         'lastgenre': ['pylast'],
+        'lastimport': ['pylast'],
+        'lyrics': ['requests', 'beautifulsoup4', 'langdetect'],
         'mpdstats': ['python-mpd2>=0.4.2'],
+        'plexupdate': ['requests'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
-        'thumbnails': ['pyxdg'] +
+        'thumbnails': ['pyxdg', 'Pillow'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
+        'sonosupdate': ['soco'],
+        'bpd': ['PyGObject'],
+        'replaygain': ['PyGObject'],
     },
     # Non-Python/non-PyPI plugin dependencies:
-    # convert: ffmpeg
-    # bpd: python-gi and GStreamer
-    # absubmit: extractor binary from http://acousticbrainz.org/download
+    #   chroma: chromaprint or fpcalc
+    #   convert: ffmpeg
+    #   badfiles: mp3val and flac
+    #   bpd: python-gi and GStreamer 1.0+
+    #   embedart: ImageMagick
+    #   absubmit: extractor binary from http://acousticbrainz.org/download
+    #   keyfinder: KeyFinder
+    #   replaygain: python-gi and GStreamer 1.0+ or mp3gain/aacgain
+    #               or Python Audio Tools
+    #   ipfs: go-ipfs
 
     classifiers=[
         'Topic :: Multimedia :: Sound/Audio',
@@ -154,6 +171,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython',
     ],
 )

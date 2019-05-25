@@ -35,6 +35,7 @@ import dis
 import types
 import sys
 import six
+import functools
 
 SYMBOL_DELIM = u'$'
 FUNC_DELIM = u'%'
@@ -141,7 +142,13 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
             decorator_list=[],
         )
 
-    mod = ast.Module([func_def])
+    # The ast.Module signature changed in 3.8 to accept a list of types to
+    # ignore.
+    if sys.version_info >= (3, 8):
+        mod = ast.Module([func_def], [])
+    else:
+        mod = ast.Module([func_def])
+
     ast.fix_missing_locations(mod)
 
     prog = compile(mod, '<generated>', 'exec')
@@ -547,8 +554,23 @@ def _parse(template):
     return Expression(parts)
 
 
-# External interface.
+def cached(func):
+    """Like the `functools.lru_cache` decorator, but works (as a no-op)
+    on Python < 3.2.
+    """
+    if hasattr(functools, 'lru_cache'):
+        return functools.lru_cache(maxsize=128)(func)
+    else:
+        # Do nothing when lru_cache is not available.
+        return func
 
+
+@cached
+def template(fmt):
+    return Template(fmt)
+
+
+# External interface.
 class Template(object):
     """A string template, including text, Symbols, and Calls.
     """
