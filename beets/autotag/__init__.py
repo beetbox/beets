@@ -173,6 +173,9 @@ def apply_metadata(album_info, mapping):
                 'composer',
                 'composer_sort',
                 'arranger',
+                'work',
+                'work_id',
+                'work_disambig',
             )
         }
 
