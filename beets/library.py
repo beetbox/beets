@@ -452,7 +452,7 @@ class Item(LibModel):
         'composer':             types.STRING,
         'composer_sort':        types.STRING,
         'work':                 types.STRING,
-        'work_id':              types.STRING,
+        'mb_workid':            types.STRING,
         'work_disambig':        types.STRING,
         'arranger':             types.STRING,
         'grouping':             types.STRING,
