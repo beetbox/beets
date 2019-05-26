@@ -1663,7 +1663,7 @@ class MediaFile(object):
     )
 
     grouping = MediaField(
-        MP3StorageStyle('TIT1'),
+        MP3StorageStyle('GRP1'),
         MP4StorageStyle('\xa9grp'),
         StorageStyle('GROUPING'),
         ASFStorageStyle('WM/ContentGroupDescription'),
