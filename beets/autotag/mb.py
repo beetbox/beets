@@ -211,13 +211,13 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     composer = []
     composer_sort = []
     work = []
-    work_id = []
+    mb_workid = []
     work_disambig = []
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
         work.append(work_relation['work']['title'])
-        work_id.append(work_relation['work']['id'])
+        mb_workid.append(work_relation['work']['id'])
         if 'disambiguation' in work_relation['work']:
             work_disambig.append(work_relation['work']['disambiguation'])
 
@@ -247,7 +247,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         info.arranger = u', '.join(arranger)
     if work:
         info.work = u', '.join(work)
-        info.work_id = u', '.join(work_id)
+        info.mb_workid = u', '.join(mb_workid)
         info.work_disambig = u', '.join(work_disambig)
 
     info.decode()

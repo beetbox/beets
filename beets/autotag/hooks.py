@@ -160,7 +160,7 @@ class TrackInfo(object):
     - ``arranger`: individual track arranger name
     - ``track_alt``: alternative track number (tape, vinyl, etc.)
     - ``work`: individual track work title
-    - ``work_id`: individual track work id
+    - ``mb_workid`: individual track work id
     - ``work_disambig`: individual track work diambiguation
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
@@ -173,7 +173,7 @@ class TrackInfo(object):
                  disctitle=None, artist_credit=None, data_source=None,
                  data_url=None, media=None, lyricist=None, composer=None,
                  composer_sort=None, arranger=None, track_alt=None,
-                 work=None, work_id=None, work_disambig=None):
+                 work=None, mb_workid=None, work_disambig=None):
         self.title = title
         self.track_id = track_id
         self.release_track_id = release_track_id
@@ -196,7 +196,7 @@ class TrackInfo(object):
         self.arranger = arranger
         self.track_alt = track_alt
         self.work = work
-        self.work_id = work_id
+        self.mb_workid = mb_workid
         self.work_disambig = work_disambig
 
     # As above, work around a bug in python-musicbrainz-ngs.
