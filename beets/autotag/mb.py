@@ -57,6 +57,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
             self._reasonstr(), self.verb, repr(self.query)
         )
 
+
 log = logging.getLogger('beets')
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
@@ -220,8 +221,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         work_id.append(work_relation['work']['id'])
         if 'disambiguation' in work_relation['work']:
             work_disambig.append(work_relation['work']['disambiguation'])
-        else:
-            work_disambig.append('')
+
         for artist_relation in work_relation['work'].get(
                 'artist-relation-list', ()):
             if 'type' in artist_relation:
@@ -249,8 +249,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if work:
         info.work = u', '.join(work)
         info.work_id = u', '.join(work_id)
-        if all(dis for dis in work_disambig):
-            info.work_disambig = u', '.join(work_disambig)
+        info.work_disambig = u', '.join(work_disambig)
 
     info.decode()
     return info
