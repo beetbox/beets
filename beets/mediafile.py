@@ -1643,27 +1643,14 @@ class MediaFile(object):
         StorageStyle('COMPOSERSORT'),
         ASFStorageStyle('WM/Composersortorder'),
     )
-    work = MediaField(
-        MP3StorageStyle('TIT1'),
-        MP4StorageStyle('\xa9wrk'),
-        StorageStyle('WORK'),
-        ASFStorageStyle('WM/Work'),
-    )
-    mb_workid = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Work Id'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Work Id'),
-        StorageStyle('MUSICBRAINZ_WORKID '),
-        ASFStorageStyle('MusicBrainz/Work Id'),
-    )
     arranger = MediaField(
         MP3PeopleStorageStyle('TIPL', involvement='arranger'),
         MP4StorageStyle('----:com.apple.iTunes:Arranger'),
         StorageStyle('ARRANGER'),
         ASFStorageStyle('beets/Arranger'),
     )
-
     grouping = MediaField(
-        MP3StorageStyle('GRP1'),
+        MP3StorageStyle('TIT1'),
         MP4StorageStyle('\xa9grp'),
         StorageStyle('GROUPING'),
         ASFStorageStyle('WM/ContentGroupDescription'),
