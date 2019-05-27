@@ -1649,7 +1649,7 @@ class MediaFile(object):
         StorageStyle('ARRANGER'),
         ASFStorageStyle('beets/Arranger'),
     )
-    
+
     grouping = MediaField(
         MP3StorageStyle('TIT1'),
         MP4StorageStyle('\xa9grp'),
