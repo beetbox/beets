@@ -16,6 +16,13 @@ Fixes:
   the ``gmusicapi`` module.
   :bug:`3270`
 
+New features:
+
+* Support for the `NO_COLOR`_ environment variable.
+  :bug:`3273`
+
+.. _NO_COLOR: https://no-color.org
+
 
 1.4.8 (May 16, 2019)
 --------------------

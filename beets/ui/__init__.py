@@ -529,21 +529,21 @@ def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if config['ui']['color']:
-        global COLORS
-        if not COLORS:
-            COLORS = dict((name,
-                           config['ui']['colors'][name].as_str())
-                          for name in COLOR_NAMES)
-        # In case a 3rd party plugin is still passing the actual color ('red')
-        # instead of the abstract color name ('text_error')
-        color = COLORS.get(color_name)
-        if not color:
-            log.debug(u'Invalid color_name: {0}', color_name)
-            color = color_name
-        return _colorize(color, text)
-    else:
+    if not config['ui']['color'] or 'NO_COLOR' in os.environ.keys():
         return text
+
+    global COLORS
+    if not COLORS:
+        COLORS = dict((name,
+                       config['ui']['colors'][name].as_str())
+                      for name in COLOR_NAMES)
+    # In case a 3rd party plugin is still passing the actual color ('red')
+    # instead of the abstract color name ('text_error')
+    color = COLORS.get(color_name)
+    if not color:
+        log.debug(u'Invalid color_name: {0}', color_name)
+        color = color_name
+    return _colorize(color, text)
 
 
 def _colordiff(a, b, highlight='text_highlight',
