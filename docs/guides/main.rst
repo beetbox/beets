@@ -26,37 +26,37 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
   as described below by running:
   ``apt-get install python-dev python-pip``
 
-* On **Arch Linux**, `beets is in [community]`_, so just run ``pacman -S
-  beets``. (There's also a bleeding-edge `dev package`_ in the AUR, which will
+* On **Arch Linux**, `beets is in [community] <Arch community_>`_, so just run ``pacman -S
+  beets``. (There's also a bleeding-edge `dev package <AUR_>`_ in the AUR, which will
   probably set your computer on fire.)
 
 * For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
   ``emerge beets`` to install. There are several USE flags available for
   optional plugin dependencies.
 
-* On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
+* On **FreeBSD**, there's a `beets port <FreeBSD_>`_ at ``audio/beets``.
 
-* On **OpenBSD**, beets can be installed with ``pkg_add beets``.
+* On **OpenBSD**, there's a `beets port <OpenBSD_>`_ can be installed with ``pkg_add beets``.
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
-* On **Fedora** 22 or later, there is a `DNF package`_ (or three)::
+* On **Fedora** 22 or later, there is a `DNF package`_::
 
       $ sudo dnf install beets beets-plugins beets-doc
       
 * On **Solus**, run ``eopkg install beets``.
 
-* On **NixOS**, run ``nix-env -i beets``.
+* On **NixOS**, there's a `package <NixOS_>`_ you can install with ``nix-env -i beets``.
 
-.. _copr: https://copr.fedoraproject.org/coprs/afreof/beets/
-.. _dnf package: https://apps.fedoraproject.org/packages/beets
-.. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
-.. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
-.. _beets from AUR: https://aur.archlinux.org/packages/beets-git/
-.. _dev package: https://aur.archlinux.org/packages/beets-git/
-.. _Debian details: http://packages.qa.debian.org/b/beets.html
+.. _DNF package: https://apps.fedoraproject.org/packages/beets
+.. _SlackBuild: http://slackbuilds.org/repository/14.2/multimedia/beets/
+.. _FreeBSD: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
+.. _AUR: https://aur.archlinux.org/packages/beets-git/
+.. _Debian details: https://tracker.debian.org/pkg/beets
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
-.. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/
+.. _OpenBSD: http://openports.se/audio/beets
+.. _Arch community: https://www.archlinux.org/packages/community/any/beets/
+.. _NixOS: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
 
 If you have `pip`_, just say ``pip install beets`` (or ``pip install --user
 beets`` if you run into permissions problems).
