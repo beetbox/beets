@@ -4,7 +4,16 @@ Changelog
 1.4.9 (in development)
 ----------------------
 
-Fixes:
+This small update is part of our attempt to release new versions more often!
+There are a few important fixes, and we're clearing the deck for a change to
+beets' dependencies in the next version.
+
+The new feature is:
+
+* You can use the `NO_COLOR`_ environment variable to disable terminal colors.
+  :bug:`3273`
+
+There are some fixes in this release:
 
 * Fix a regression in the last release that made the image resizer fail to
   detect older versions of ImageMagick.
@@ -16,12 +25,7 @@ Fixes:
   the ``gmusicapi`` module.
   :bug:`3270`
 
-New features:
-
-* Support for the `NO_COLOR`_ environment variable.
-  :bug:`3273`
-
-For packagers:
+Here's a note for packagers:
 
 * ``pathlib`` is now an optional test dependency on Python 3.4+, removing the
   need for `a Debian patch <https://sources.debian.org/src/beets/1.4.7-2/debian/patches/pathlib-is-stdlib/>`_.
