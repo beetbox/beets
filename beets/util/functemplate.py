@@ -125,21 +125,16 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
             kwarg=None,
             defaults=[ex_literal(None) for _ in arg_names],
         )
-    elif sys.version_info >= (3, 8):
-        args = ast.arguments(
-            args=[ast.arg(arg=n, annotation=None) for n in arg_names],
-            posonlyargs=[],
-            kwonlyargs=[],
-            kw_defaults=[],
-            defaults=[ex_literal(None) for _ in arg_names],
-        )
     else:
-        args = ast.arguments(
-            args=[ast.arg(arg=n, annotation=None) for n in arg_names],
-            kwonlyargs=[],
-            kw_defaults=[],
-            defaults=[ex_literal(None) for _ in arg_names],
-        )
+        args_fields = {
+            'args': [ast.arg(arg=n, annotation=None) for n in arg_names],
+            'kwonlyargs': [],
+            'kw_defaults': [],
+            'defaults': [ex_literal(None) for _ in arg_names],
+        }
+        if 'posonlyargs' in ast.arguments._fields:  # Added in Python 3.8.
+            args_fields['posonlyargs'] = []
+        args = ast.arguments(**args_fields)
 
     func_def = ast.FunctionDef(
         name=name,
