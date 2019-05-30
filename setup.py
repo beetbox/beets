@@ -115,10 +115,12 @@ setup(
         'rarfile',
         'responses',
         'pyxdg',
-        'pathlib',
         'python-mpd2',
         'discogs-client'
-    ],
+    ] + (
+        # Tests for the thumbnails plugin need pathlib on Python 2 too.
+        ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
+    ),
 
     # Plugin (optional) dependencies:
     extras_require={
