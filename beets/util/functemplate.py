@@ -118,29 +118,35 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     bytecode of the compiled function.
     """
     if six.PY2:
-        func_def = ast.FunctionDef(
-            name=name.encode('utf-8'),
-            args=ast.arguments(
-                args=[ast.Name(n, ast.Param()) for n in arg_names],
-                vararg=None,
-                kwarg=None,
-                defaults=[ex_literal(None) for _ in arg_names],
-            ),
-            body=statements,
-            decorator_list=[],
+        name = name.encode('utf-8')
+        args = ast.arguments(
+            args=[ast.Name(n, ast.Param()) for n in arg_names],
+            vararg=None,
+            kwarg=None,
+            defaults=[ex_literal(None) for _ in arg_names],
+        )
+    elif sys.version_info >= (3, 8):
+        args = ast.arguments(
+            args=[ast.arg(arg=n, annotation=None) for n in arg_names],
+            posonlyargs=[],
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[ex_literal(None) for _ in arg_names],
         )
     else:
-        func_def = ast.FunctionDef(
-            name=name,
-            args=ast.arguments(
-                args=[ast.arg(arg=n, annotation=None) for n in arg_names],
-                kwonlyargs=[],
-                kw_defaults=[],
-                defaults=[ex_literal(None) for _ in arg_names],
-            ),
-            body=statements,
-            decorator_list=[],
+        args = ast.arguments(
+            args=[ast.arg(arg=n, annotation=None) for n in arg_names],
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[ex_literal(None) for _ in arg_names],
         )
+
+    func_def = ast.FunctionDef(
+        name=name,
+        args=args,
+        body=statements,
+        decorator_list=[],
+    )
 
     # The ast.Module signature changed in 3.8 to accept a list of types to
     # ignore.
