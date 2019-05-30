@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.4.9 (in development)
-----------------------
+1.4.9 (May 30, 2019)
+--------------------
 
 This small update is part of our attempt to release new versions more often!
 There are a few important fixes, and we're clearing the deck for a change to
