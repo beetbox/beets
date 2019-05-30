@@ -21,6 +21,12 @@ New features:
 * Support for the `NO_COLOR`_ environment variable.
   :bug:`3273`
 
+For packagers:
+
+* ``pathlib`` is now an optional test dependency on Python 3.4+, removing the
+  need for `a Debian patch <https://sources.debian.org/src/beets/1.4.7-2/debian/patches/pathlib-is-stdlib/>`_.
+  :bug:`3275`
+
 .. _NO_COLOR: https://no-color.org
 
 
