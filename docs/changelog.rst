@@ -24,6 +24,8 @@ There are some fixes in this release:
 * :doc:`/plugins/gmusic`: Fix a crash when using version 12.0.0 or later of
   the ``gmusicapi`` module.
   :bug:`3270`
+* Fix an incompatibility with Python 3.8's AST changes.
+  :bug:`3278`
 
 Here's a note for packagers:
 
