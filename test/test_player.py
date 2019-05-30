@@ -29,6 +29,7 @@ import time
 import yaml
 import tempfile
 from contextlib import contextmanager
+import random
 
 from beets.util import confit, py3_path
 from beetsplug import bpd
@@ -261,12 +262,17 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     @contextmanager
-    def run_bpd(self, host='localhost', port=9876, password=None,
+    def run_bpd(self, host='localhost', port=None, password=None,
                 do_hello=True, second_client=False):
         """ Runs BPD in another process, configured with the same library
         database as we created in the setUp method. Exposes a client that is
         connected to the server, and kills the server at the end.
         """
+        # Choose a port (randomly) to avoid conflicts between parallel
+        # tests.
+        if not port:
+            port = 9876 + random.randint(0, 10000)
+
         # Create a config file:
         config = {
                 'pluginpath': [py3_path(self.temp_dir)],
