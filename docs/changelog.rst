@@ -4,6 +4,14 @@ Changelog
 1.5.0 (in development)
 ----------------------
 
+New features:
+
+* We now fetch information about `works`_ from MusicBrainz.
+  MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
+  (the MBID), and ``work_disambig`` (the disambiguation string).
+  Thanks to :user:`dosoe`.
+  :bug:`2580` :bug:`3272`
+
 For plugin developers:
 
 * `MediaFile`_ has been split into a standalone project. Where you used to do
@@ -21,6 +29,7 @@ For packagers:
   plugins (scrub).
 
 .. _MediaFile: https://github.com/beetbox/mediafile
+.. _works: https://musicbrainz.org/doc/Work
 
 
 1.4.9 (May 30, 2019)
