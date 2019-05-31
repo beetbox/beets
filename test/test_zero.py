@@ -9,7 +9,7 @@ from test.helper import TestHelper, control_stdin
 
 from beets.library import Item
 from beetsplug.zero import ZeroPlugin
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets.util import syspath
 
 

@@ -23,7 +23,7 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import util
 from beets import config
-from beets import mediafile
+import mediafile
 import mutagen
 
 _MUTAGEN_FORMATS = {

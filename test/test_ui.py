@@ -35,7 +35,7 @@ from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets.autotag.match import distance
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets import config
 from beets import plugins
 from beets.util.confit import ConfigError

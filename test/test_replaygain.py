@@ -23,7 +23,7 @@ from mock import patch
 from test.helper import TestHelper, capture_log, has_program
 
 from beets import config
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
 
