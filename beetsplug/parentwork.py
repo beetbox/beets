@@ -134,10 +134,11 @@ class ParentWorkPlugin(BeetsPlugin):
         mb_parentworkid = work_info['work']['id']
         if 'disambiguation' in work_info['work']:
             parentwork_disambig = work_info['work']['disambiguation']
+            return [parentwork, mb_parentworkid, parent_composer,
+                    parent_composer_sort, parentwork_disambig]
         else:
-            parentwork_disambig.append('')
-        return parentwork, mb_parentworkid, parentwork_disambig,
-        parent_composer, parent_composer_sort
+            return [parentwork, mb_parentworkid, parent_composer,
+                    parent_composer_sort, None]
 
     def find_work(self, item, force):
 
@@ -147,27 +148,29 @@ class ParentWorkPlugin(BeetsPlugin):
             hasparent = True
         except AttributeError:
             hasparent = False
-        hasawork = True
         if not item.mb_workid:
             self._log.info("No work attached, recording id: " +
                            recording_id)
             self._log.info(item.artist + ' - ' + item.title)
             self._log.info("add one at https://musicbrainz.org" +
                            "/recording/" + recording_id)
-            hasawork = False
+            return
         found = False
-
-        if hasawork and (force or (not hasparent)):
+        if force or (not hasparent):
             try:
                 work_info, work_date = find_parentwork(item.mb_workid)
-                (parentwork, mb_parentworkid, parentwork_disambig,
-                 parent_composer,
-                 parent_composer_sort) = self.get_info(item, work_info)
+                parent_info = self.get_info(item, work_info)
+                parentwork = parent_info[0]
+                mb_parentworkid = parent_info[1]
+                parent_composer = parent_info[2]
+                parent_composer_sort = parent_info[3]
+                parentwork_disambig = parent_info[4]
+
                 found = True
             except musicbrainzngs.musicbrainz.WebServiceError:
                 self._log.debug("Work unreachable")
                 found = False
-        elif parentwork:
+        elif hasparent:
             self._log.debug("Work already in library, not necessary fetching")
             return
 
@@ -177,7 +180,8 @@ class ParentWorkPlugin(BeetsPlugin):
             self._log.debug("Work fetched: " + parentwork +
                             ' - ' + u', '.join(parent_composer))
             item['parentwork'] = parentwork
-            item['parentwork_disambig'] = parentwork_disambig
+            if parentwork_disambig:
+                item['parentwork_disambig'] = parentwork_disambig
             item['mb_parentworkid'] = mb_parentworkid
             item['parent_composer'] = u''
             item['parent_composer'] = u', '.join(parent_composer)
