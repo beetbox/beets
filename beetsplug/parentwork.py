@@ -26,7 +26,8 @@ import musicbrainzngs
 
 
 def work_father_id(mb_workid, work_date=None):
-    """ Given a mb_workid, find the id one of the works the work is part of"""
+    """ Given a mb_workid, find the id one of the works the work is part of
+    and the first composition date it encounters. """
     work_info = musicbrainzngs.get_work_by_id(mb_workid,
                                               includes=["work-rels",
                                                         "artist-rels"])
@@ -46,7 +47,7 @@ def work_father_id(mb_workid, work_date=None):
 
 
 def work_parent_id(mb_workid):
-    """Find the parentwork id of a work given its id. """
+    """Find the parentwork id and composition date of a work given its id. """
     work_date = None
     while True:
         new_mb_workid, work_date = work_father_id(mb_workid, work_date)
@@ -57,8 +58,8 @@ def work_parent_id(mb_workid):
 
 
 def find_parentwork_info(mb_workid):
-    """Return the work relationships (dict) of a parentwork given the id of
-    the work"""
+    """Return the work relationships (dict) and composition date of a
+    parentwork given the id of the work"""
     parent_id, work_date = work_parent_id(mb_workid)
     work_info = musicbrainzngs.get_work_by_id(parent_id,
                                               includes=["artist-rels"])
