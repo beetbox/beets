@@ -24,7 +24,7 @@ import unittest
 
 from test import _common
 from beets.library import Item
-from beets import mediafile
+import mediafile
 from beets.plugins import BeetsPlugin
 from beets.util import bytestring_path
 

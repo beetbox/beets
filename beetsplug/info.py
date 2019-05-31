@@ -23,7 +23,7 @@ import re
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets import mediafile
+import mediafile
 from beets.library import Item
 from beets.util import displayable_path, normpath, syspath
 

@@ -26,7 +26,7 @@ import os
 
 from beets.util import displayable_path, syspath, bytestring_path
 from beets.util.artresizer import ArtResizer
-from beets import mediafile
+import mediafile
 
 
 def mediafile_image(image_path, maxwidth=None):

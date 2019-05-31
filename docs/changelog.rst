@@ -41,6 +41,24 @@ Here's a note for packagers:
 
 .. _NO_COLOR: https://no-color.org
 
+For plugin developers:
+
+* `MediaFile`_ has been split into a standalone project. Where you used to do
+  ``from beets import mediafile``, now just do ``import mediafile``. Beets
+  re-exports MediaFile at the old location for backwards-compatibility, but a
+  deprecation warning is raised if you do this since we might drop this wrapper
+  in a future release.
+
+For packagers:
+
+* Beets' library for manipulating media file metadata has now been split to a
+  standalone project called `MediaFile`_, released as :pypi:`mediafile`. Beets
+  now depends on this new package. Beets now depends on Mutagen transitively
+  through MediaFile rather than directly, except in the case of one of beets'
+  plugins (scrub).
+
+.. _MediaFile: https://github.com/beetbox/mediafile
+
 
 1.4.8 (May 16, 2019)
 --------------------

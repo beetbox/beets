@@ -26,7 +26,7 @@ import six
 import string
 
 from beets import logging
-from beets.mediafile import MediaFile, UnreadableFileError
+from mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \

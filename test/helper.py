@@ -50,7 +50,7 @@ import beets.plugins
 from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.mediafile import MediaFile, Image
+from mediafile import MediaFile, Image
 from beets import util
 from beets.util import MoveOperation
 

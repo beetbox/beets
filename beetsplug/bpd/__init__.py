@@ -36,7 +36,7 @@ from beets import vfs
 from beets.util import bluelet
 from beets.library import Item
 from beets import dbcore
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 import six
 
 PROTOCOL_VERSION = '0.14.0'
