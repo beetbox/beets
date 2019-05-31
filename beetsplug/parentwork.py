@@ -181,8 +181,11 @@ class ParentWorkPlugin(BeetsPlugin):
 
         self._log.debug("Finished searching work for: " +
                         item.artist + ' - ' + item.title)
-        self._log.debug("Work fetched: " + parent_info['parentwork'] +
-                        ' - ' + parent_info['parent_composer'])
+        if parent_info['parent_composer']:
+            self._log.debug("Work fetched: " + parent_info['parentwork'] +
+                            ' - ' + parent_info['parent_composer'])
+        else:
+            self._log.debug("Work fetched: " + parent_info['parentwork'])
 
         for key, value in parent_info.items():
             if value:
