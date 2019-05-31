@@ -75,15 +75,6 @@ class ParentWorkPlugin(BeetsPlugin):
             'force': False,
         })
 
-        self._command = ui.Subcommand(
-            'parentwork',
-            help=u'Fetches parent works, composers and dates')
-
-        self._command.parser.add_option(
-            u'-f', u'--force', dest='force',
-            action='store_true', default=None,
-            help=u'Re-fetches all parent works')
-
         if self.config['auto']:
             self.import_stages = [self.imported]
 
@@ -99,9 +90,17 @@ class ParentWorkPlugin(BeetsPlugin):
                 item.store()
                 if write:
                     item.try_write()
+        command = ui.Subcommand(
+            'parentwork',
+            help=u'Fetches parent works, composers and dates')
 
-        self._command.func = func
-        return [self._command]
+        command.parser.add_option(
+            u'-f', u'--force', dest='force',
+            action='store_true', default=None,
+            help=u'Re-fetches all parent works')
+
+        command.func = func
+        return [command]
 
     def imported(self, session, task):
         """Import hook for fetching parent works automatically.
