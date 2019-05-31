@@ -39,7 +39,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path, \
 from beets import library
 from beets import config
 from beets import logging
-from beets.util.confit import _package_path
+from confuse import _package_path
 import six
 from . import _store_dict
 
