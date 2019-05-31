@@ -25,8 +25,8 @@ from beets.plugins import BeetsPlugin
 import musicbrainzngs
 
 
-def work_father(mb_workid, work_date=None):
-    """ This function finds the id of the father work given its id"""
+def work_father_id(mb_workid, work_date=None):
+    """ Given a mb_workid, find the id one of the works the work is part of"""
     work_info = musicbrainzngs.get_work_by_id(mb_workid,
                                               includes=["work-rels",
                                                         "artist-rels"])
@@ -45,21 +45,21 @@ def work_father(mb_workid, work_date=None):
     return None, work_date
 
 
-def work_parent(mb_workid):
-    """This function finds the parentwork id of a work given its id. """
+def work_parent_id(mb_workid):
+    """Find the parentwork id of a work given its id. """
     work_date = None
     while True:
-        (new_mb_workid, work_date) = work_father(mb_workid, work_date)
+        new_mb_workid, work_date = work_father_id(mb_workid, work_date)
         if not new_mb_workid:
             return mb_workid, work_date
         mb_workid = new_mb_workid
     return mb_workid, work_date
 
 
-def find_parentwork(mb_workid):
-    """This function gives the work relationships (dict) of a parentwork
-    given the id of the work"""
-    parent_id, work_date = work_parent(mb_workid)
+def find_parentwork_info(mb_workid):
+    """Return the work relationships (dict) of a parentwork given the id of
+    the work"""
+    parent_id, work_date = work_parent_id(mb_workid)
     work_info = musicbrainzngs.get_work_by_id(parent_id,
                                               includes=["artist-rels"])
     return work_info, work_date
@@ -112,12 +112,13 @@ class ParentWorkPlugin(BeetsPlugin):
             item.store()
 
     def get_info(self, item, work_info):
-        """Given the parentwork info dict, this function fetches
-        parent_composer, parent_composer_sort, parentwork,
-        parentwork_disambig, mb_workid and composer_ids"""
+        """Given the parentwork info dict, fetch parent_composer,
+        parent_composer_sort, parentwork, parentwork_disambig, mb_workid and
+        composer_ids. """
 
         parent_composer = []
         parent_composer_sort = []
+        parentwork_info = {}
 
         composer_exists = False
         if 'artist-relation-list' in work_info['work']:
@@ -125,73 +126,73 @@ class ParentWorkPlugin(BeetsPlugin):
                 if artist['type'] == 'composer':
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
+
+            parentwork_info['parent_composer'] = u', '.join(parent_composer)
+            parentwork_info['parent_composer_sort'] = u', '.join(
+                    parent_composer_sort)
+
         if not composer_exists:
             self._log.info(item.artist + ' - ' + item.title)
             self._log.debug(
                 "no composer, add one at https://musicbrainz.org/work/" +
                 work_info['work']['id'])
-        parentwork = work_info['work']['title']
-        mb_parentworkid = work_info['work']['id']
+
+        parentwork_info['parentwork'] = work_info['work']['title']
+        parentwork_info['mb_parentworkid'] = work_info['work']['id']
+
         if 'disambiguation' in work_info['work']:
-            parentwork_disambig = work_info['work']['disambiguation']
-            return [parentwork, mb_parentworkid, parent_composer,
-                    parent_composer_sort, parentwork_disambig]
+            parentwork_info['parentwork_disambig'] = work_info[
+                    'work']['disambiguation']
+
         else:
-            return [parentwork, mb_parentworkid, parent_composer,
-                    parent_composer_sort, None]
+            parentwork_info['parentwork_disambig'] = None
+
+        return parentwork_info
 
     def find_work(self, item, force):
+        """ Finds the parentwork of a recording and populates the tags
+        accordingly.
 
-        recording_id = item.mb_trackid
-        try:
-            item.parentwork
+        Namely, the tags parentwork, parentwork_disambig, mb_parentworkid,
+        parent_composer, parent_composer_sort and work_date are populated. """
+
+        if hasattr(item, 'parentwork'):
             hasparent = True
-        except AttributeError:
+        else:
             hasparent = False
         if not item.mb_workid:
             self._log.info("No work attached, recording id: " +
-                           recording_id)
+                           item.mb_trackid)
             self._log.info(item.artist + ' - ' + item.title)
             self._log.info("add one at https://musicbrainz.org" +
-                           "/recording/" + recording_id)
+                           "/recording/" + item.mb_trackid)
             return
-        found = False
         if force or (not hasparent):
             try:
-                work_info, work_date = find_parentwork(item.mb_workid)
-                parent_info = self.get_info(item, work_info)
-                parentwork = parent_info[0]
-                mb_parentworkid = parent_info[1]
-                parent_composer = parent_info[2]
-                parent_composer_sort = parent_info[3]
-                parentwork_disambig = parent_info[4]
-
-                found = True
+                work_info, work_date = find_parentwork_info(item.mb_workid)
             except musicbrainzngs.musicbrainz.WebServiceError:
                 self._log.debug("Work unreachable")
-                found = False
+                return
+            parent_info = self.get_info(item, work_info)
+
         elif hasparent:
             self._log.debug("Work already in library, not necessary fetching")
             return
 
-        if found:
-            self._log.debug("Finished searching work for: " +
-                            item.artist + ' - ' + item.title)
-            self._log.debug("Work fetched: " + parentwork +
-                            ' - ' + u', '.join(parent_composer))
-            item['parentwork'] = parentwork
-            if parentwork_disambig:
-                item['parentwork_disambig'] = parentwork_disambig
-            item['mb_parentworkid'] = mb_parentworkid
-            item['parent_composer'] = u''
-            item['parent_composer'] = u', '.join(parent_composer)
-            item['parent_composer_sort'] = u''
-            item['parent_composer_sort'] = u', '.join(parent_composer_sort)
-            if work_date:
-                item['work_date'] = work_date
-            ui.show_model_changes(
-                item, fields=['parentwork', 'parentwork_disambig',
-                              'mb_parentworkid', 'parent_composer',
-                              'parent_composer_sort', 'work_date'])
+        self._log.debug("Finished searching work for: " +
+                        item.artist + ' - ' + item.title)
+        self._log.debug("Work fetched: " + parent_info['parentwork'] +
+                        ' - ' + parent_info['parent_composer'])
 
-            item.store()
+        for key, value in parent_info.items():
+            if value:
+                item[key] = value
+
+        if work_date:
+            item['work_date'] = work_date
+        ui.show_model_changes(
+            item, fields=['parentwork', 'parentwork_disambig',
+                          'mb_parentworkid', 'parent_composer',
+                          'parent_composer_sort', 'work_date'])
+
+        item.store()
