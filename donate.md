@@ -12,9 +12,9 @@ your support.
 These are some organizations doing work that is even more important than music
 organization software. They need support more than I do.
 
-* <a href="http://www.rootstrikers.org/donate">Rootstrikers</a>
+* <a href="https://movetoamend.org/donate">Move to Amend</a>
 * <a href="http://www.stopcorporateabuse.org/">Corporate Accountability International</a>
-* <a href="http://www.hrc.org/">Human Rights Campaign</a>
+* <a href="https://transequality.org">National Center for Transgender Equality</a>
 
 ## Bitcoin
 
