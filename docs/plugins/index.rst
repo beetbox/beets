@@ -258,7 +258,10 @@ Here are a few of the plugins written by the beets community:
 * `beets-barcode`_ lets you scan or enter barcodes for physical media to
   search for their metadata.
 
-* `beets-ydl`_ download audio from youtube-dl sources and import into beets
+* `beets-ydl`_ downloads audio from youtube-dl sources and import into beets.
+
+* `beet-summarize`_ can compute lots of counts and statistics about your music
+  library.
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
@@ -280,3 +283,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-usertag: https://github.com/igordertigor/beets-usertag
 .. _beets-popularity: https://github.com/abba23/beets-popularity
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
+.. _beet-summarize: https://github.com/steven-murray/beet-summarize
