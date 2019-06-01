@@ -16,6 +16,8 @@ environment:
           TOX_ENV: py35-test
         - PYTHON: C:\Python36
           TOX_ENV: py36-test
+        - PYTHON: C:\Python37
+          TOX_ENV: py37-test
 
 # Install Tox for running tests.
 install:
