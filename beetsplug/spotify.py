@@ -14,7 +14,7 @@ import requests
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import confit
+import confuse
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 
 
@@ -49,7 +49,7 @@ class SpotifyPlugin(BeetsPlugin):
         self.config['client_secret'].redact = True
 
         self.tokenfile = self.config['tokenfile'].get(
-            confit.Filename(in_app_dir=True)
+            confuse.Filename(in_app_dir=True)
         )  # Path to the JSON file for storing the OAuth access token.
         self.setup()
 
