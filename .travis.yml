@@ -29,8 +29,8 @@ matrix:
         #   dist: xenial
         # - python: pypy
         #   - env: {TOX_ENV: pypy-test}
-        - python: 3.4
-          env: {TOX_ENV: py34-flake8}
+        - python: 3.6
+          env: {TOX_ENV: py36-flake8}
         - python: 2.7.13
           env: {TOX_ENV: docs}
 # Non-Python dependencies.
