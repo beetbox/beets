@@ -175,8 +175,7 @@ class TestCase(unittest.TestCase, Assertions):
         beets.config['directory'] = \
             util.py3_path(os.path.join(self.temp_dir, b'libdir'))
 
-        # Set $HOME, which is used by confit's `config_dir()` to create
-        # directories.
+        # Set $HOME, which is used by Confuse to create directories.
         self._old_home = os.environ.get('HOME')
         os.environ['HOME'] = util.py3_path(self.temp_dir)
 
