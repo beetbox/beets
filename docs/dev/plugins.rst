@@ -298,10 +298,10 @@ this in their ``config.yaml``::
         foo: bar
 
 To access this value, say ``self.config['foo'].get()`` at any point in your
-plugin's code. The `self.config` object is a *view* as defined by the `Confit`_
+plugin's code. The `self.config` object is a *view* as defined by the `Confuse`_
 library.
 
-.. _Confit: http://confit.readthedocs.org/
+.. _Confuse: http://confuse.readthedocs.org/
 
 If you want to access configuration values *outside* of your plugin's section,
 import the `config` object from the `beets` module. That is, just put ``from

@@ -25,9 +25,10 @@ import os
 import errno
 import sys
 import six
+import confuse
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets.util import displayable_path, confit, par_map
+from beets.util import displayable_path, par_map
 from beets import ui
 
 
@@ -90,7 +91,7 @@ class BadFiles(BeetsPlugin):
         ext = ext.lower()
         try:
             command = self.config['commands'].get(dict).get(ext)
-        except confit.NotFoundError:
+        except confuse.NotFoundError:
             command = None
         if command:
             return self.check_custom(command)
