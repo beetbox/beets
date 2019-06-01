@@ -12,6 +12,15 @@ New features:
   Thanks to :user:`dosoe`.
   :bug:`2580` :bug:`3272`
 
+Fixes:
+
+* :doc:`/plugins/inline`: In function-style field definitions that refer to
+  flexible attributes, values could stick around from one function invocation
+  to the next. This meant that, when displaying a list of objects, later
+  objects could seem to reuse values from earlier objects when they were
+  missing a value for a given field. These values are now properly undefined.
+  :bug:`2406`
+
 For plugin developers:
 
 * `MediaFile`_ has been split into a standalone project. Where you used to do
