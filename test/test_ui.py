@@ -38,7 +38,7 @@ from beets.autotag.match import distance
 from mediafile import MediaFile
 from beets import config
 from beets import plugins
-from beets.util.confit import ConfigError
+from confuse import ConfigError
 from beets import util
 from beets.util import syspath, MoveOperation
 
