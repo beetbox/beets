@@ -19,6 +19,12 @@ For plugin developers:
   re-exports MediaFile at the old location for backwards-compatibility, but a
   deprecation warning is raised if you do this since we might drop this wrapper
   in a future release.
+* We've replaced beets' configuration library confit with a standalone
+  version called `Confuse`_. Where you used to do
+  ``from beets.util import confit``, now just do ``import confuse``. The code
+  is almost identical apart from the name change. Again, we'll re-export at the
+  old location (with a deprecation warning) for backwards compatibility, but
+  might stop doing this in a future release.
 
 For packagers:
 
@@ -27,8 +33,13 @@ For packagers:
   now depends on this new package. Beets now depends on Mutagen transitively
   through MediaFile rather than directly, except in the case of one of beets'
   plugins (scrub).
+* Beets' library for configuration has been split into a standalone project
+  called `Confuse`_, released as :pypi:`confuse`. Beets now depends on this
+  package. Confuse has existed separately for some time and is used by
+  unrelated projects, but until now we've been bundling a copy within beets.
 
 .. _MediaFile: https://github.com/beetbox/mediafile
+.. _Confuse: https://github.com/beetbox/confuse
 .. _works: https://musicbrainz.org/doc/Work
 
 
