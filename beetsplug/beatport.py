@@ -30,7 +30,7 @@ import beets
 import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
-from beets.util import confit
+import confuse
 
 
 AUTH_ERRORS = (TokenRequestDenied, TokenMissing, VerifierMissing)
@@ -318,7 +318,7 @@ class BeatportPlugin(BeetsPlugin):
     def _tokenfile(self):
         """Get the path to the JSON file for storing the OAuth token.
         """
-        return self.config['tokenfile'].get(confit.Filename(in_app_dir=True))
+        return self.config['tokenfile'].get(confuse.Filename(in_app_dir=True))
 
     def album_distance(self, items, album_info, mapping):
         """Returns the beatport source weight and the maximum source weight

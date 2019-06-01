@@ -91,6 +91,7 @@ setup(
         'musicbrainzngs>=0.4',
         'pyyaml',
         'mediafile>=0.1.0',
+        'confuse>=1.0.0',
     ] + [
         # Avoid a version of munkres incompatible with Python 3.
         'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else

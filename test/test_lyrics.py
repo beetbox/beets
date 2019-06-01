@@ -28,7 +28,8 @@ from test import _common
 
 from beets import logging
 from beets.library import Item
-from beets.util import bytestring_path, confit
+from beets.util import bytestring_path
+import confuse
 
 from beetsplug import lyrics
 
@@ -222,7 +223,8 @@ def is_lyrics_content_ok(title, text):
     return keywords <= words
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b'lyrics')
-LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, b'lyricstext.yaml'))
+yaml_path = os.path.join(_common.RSRC, b'lyricstext.yaml')
+LYRICS_TEXTS = confuse.load_yaml(yaml_path)
 
 
 class LyricsGoogleBaseTest(unittest.TestCase):

@@ -34,7 +34,7 @@ from beets import importer
 from beets import logging
 from beets import util
 from beets.util.artresizer import ArtResizer, WEBPROXY
-from beets.util import confit
+import confuse
 
 
 logger = logging.getLogger('beets.test_art')
@@ -753,7 +753,7 @@ class EnforceRatioConfigTest(_common.TestCase):
         if should_raise:
             for v in values:
                 config['fetchart']['enforce_ratio'] = v
-                with self.assertRaises(confit.ConfigValueError):
+                with self.assertRaises(confuse.ConfigValueError):
                     fetchart.FetchArtPlugin()
         else:
             for v in values:

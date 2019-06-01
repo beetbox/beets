@@ -526,7 +526,7 @@ def sanitize_choices(choices, choices_all):
 
 def sanitize_pairs(pairs, pairs_all):
     """Clean up a single-element mapping configuration attribute as returned
-    by `confit`'s `Pairs` template: keep only two-element tuples present in
+    by Confuse's `Pairs` template: keep only two-element tuples present in
     pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
     wildcards while keeping the original order. Note that ('*', '*') and
     ('*', 'whatever') have the same effect.

@@ -38,10 +38,11 @@ from beets import plugins
 from beets import util
 from beets.util.functemplate import template
 from beets import config
-from beets.util import confit, as_string
+from beets.util import as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
 from beets.dbcore import db
+import confuse
 import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -621,7 +622,7 @@ def get_path_formats(subview=None):
 
 
 def get_replacements():
-    """Confit validation function that reads regex/string pairs.
+    """Confuse validation function that reads regex/string pairs.
     """
     replacements = []
     for pattern, repl in config['replace'].get(dict).items():
@@ -1277,7 +1278,7 @@ def main(args=None):
         log.debug('{}', traceback.format_exc())
         log.error('{}', exc)
         sys.exit(1)
-    except confit.ConfigError as exc:
+    except confuse.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
         sys.exit(1)
     except db_query.InvalidQueryError as exc:

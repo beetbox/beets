@@ -31,8 +31,9 @@ import tempfile
 from contextlib import contextmanager
 import random
 
-from beets.util import confit, py3_path
+from beets.util import py3_path
 from beetsplug import bpd
+import confuse
 
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
@@ -285,7 +286,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
                 mode='wb', dir=py3_path(self.temp_dir), suffix='.yaml',
                 delete=False)
         config_file.write(
-                yaml.dump(config, Dumper=confit.Dumper, encoding='utf-8'))
+                yaml.dump(config, Dumper=confuse.Dumper, encoding='utf-8'))
         config_file.close()
 
         # Fork and launch BPD in the new process:
