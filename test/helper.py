@@ -24,7 +24,7 @@ information or mock the environment.
 - The `generate_album_info` and `generate_track_info` functions return
   fixtures to be used when mocking the autotagger.
 
-- The `TestImportSession` allows one to run importer code while
+- The `ImportSessionFixture` allows one to run importer code while
   controlling the interactions through code.
 
 - The `TestHelper` class encapsulates various fixtures that can be set up.
@@ -251,7 +251,7 @@ class TestHelper(object):
         """Create files to import and return corresponding session.
 
         Copies the specified number of files to a subdirectory of
-        `self.temp_dir` and creates a `TestImportSession` for this path.
+        `self.temp_dir` and creates a `ImportSessionFixture` for this path.
         """
         import_dir = os.path.join(self.temp_dir, b'import')
         if not os.path.isdir(import_dir):
@@ -294,8 +294,8 @@ class TestHelper(object):
         config['import']['autotag'] = False
         config['import']['resume'] = False
 
-        return TestImportSession(self.lib, loghandler=None, query=None,
-                                 paths=[import_dir])
+        return ImportSessionFixture(self.lib, loghandler=None, query=None,
+                                    paths=[import_dir])
 
     # Library fixtures methods
 
@@ -501,11 +501,11 @@ class TestHelper(object):
         return path
 
 
-class TestImportSession(importer.ImportSession):
+class ImportSessionFixture(importer.ImportSession):
     """ImportSession that can be controlled programaticaly.
 
     >>> lib = Library(':memory:')
-    >>> importer = TestImportSession(lib, paths=['/path/to/import'])
+    >>> importer = ImportSessionFixture(lib, paths=['/path/to/import'])
     >>> importer.add_choice(importer.action.SKIP)
     >>> importer.add_choice(importer.action.ASIS)
     >>> importer.default_choice = importer.action.APPLY
@@ -517,7 +517,7 @@ class TestImportSession(importer.ImportSession):
     """
 
     def __init__(self, *args, **kwargs):
-        super(TestImportSession, self).__init__(*args, **kwargs)
+        super(ImportSessionFixture, self).__init__(*args, **kwargs)
         self._choices = []
         self._resolutions = []
 
