@@ -522,6 +522,17 @@ Either ``yes`` or ``no`` (default), controlling whether existing metadata is
 discarded when a match is applied. This corresponds to the ``--from_scratch``
 flag to ``beet import``.
 
+.. _quiet:
+
+quiet
+~~~~~
+
+Either ``yes`` or ``no`` (default), controlling whether to ask for a manual
+decision from the user when the importer is unsure how to proceed. This
+corresponds to the ``--quiet`` flag to ``beet import``.
+
+.. _quiet_fallback:
+
 quiet_fallback
 ~~~~~~~~~~~~~~
 
