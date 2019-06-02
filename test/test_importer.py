@@ -32,7 +32,8 @@ import unittest
 
 from test import _common
 from beets.util import displayable_path, bytestring_path, py3_path
-from test.helper import TestImportSession, TestHelper, has_program, capture_log
+from test.helper import TestHelper, has_program, capture_log
+from test.helper import ImportSessionFixture
 from beets import importer
 from beets.importer import albums_in_dir
 from mediafile import MediaFile
@@ -223,7 +224,7 @@ class ImportHelper(TestHelper):
         config['import']['link'] = link
         config['import']['hardlink'] = hardlink
 
-        self.importer = TestImportSession(
+        self.importer = ImportSessionFixture(
             self.lib, loghandler=None, query=None,
             paths=[import_dir or self.import_dir]
         )
