@@ -43,7 +43,7 @@ def _consume(l):
 
 
 # A worker that raises an exception.
-class TestException(Exception):
+class ExceptionFixture(Exception):
     pass
 
 
@@ -52,7 +52,7 @@ def _exc_work(num=3):
     while True:
         i = yield i
         if i == num:
-            raise TestException()
+            raise ExceptionFixture()
         i *= 2
 
 
@@ -126,10 +126,10 @@ class ExceptionTest(unittest.TestCase):
                                      _consume(self.l)))
 
     def test_run_sequential(self):
-        self.assertRaises(TestException, self.pl.run_sequential)
+        self.assertRaises(ExceptionFixture, self.pl.run_sequential)
 
     def test_run_parallel(self):
-        self.assertRaises(TestException, self.pl.run_parallel)
+        self.assertRaises(ExceptionFixture, self.pl.run_parallel)
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _exc_work()))
@@ -137,9 +137,9 @@ class ExceptionTest(unittest.TestCase):
         for i in range(3):
             next(pull)
         if six.PY2:
-            self.assertRaises(TestException, pull.next)
+            self.assertRaises(ExceptionFixture, pull.next)
         else:
-            self.assertRaises(TestException, pull.__next__)
+            self.assertRaises(ExceptionFixture, pull.__next__)
 
 
 class ParallelExceptionTest(unittest.TestCase):
@@ -150,7 +150,7 @@ class ParallelExceptionTest(unittest.TestCase):
         ))
 
     def test_run_parallel(self):
-        self.assertRaises(TestException, self.pl.run_parallel)
+        self.assertRaises(ExceptionFixture, self.pl.run_parallel)
 
 
 class ConstrainedThreadedPipelineTest(unittest.TestCase):
@@ -166,7 +166,7 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
         # Raise an exception in a constrained pipeline.
         l = []
         pl = pipeline.Pipeline((_produce(1000), _exc_work(), _consume(l)))
-        self.assertRaises(TestException, pl.run_parallel, 1)
+        self.assertRaises(ExceptionFixture, pl.run_parallel, 1)
 
     def test_constrained_parallel(self):
         l = []
