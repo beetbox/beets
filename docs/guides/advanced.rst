@@ -179,3 +179,31 @@ The last step is to set up cron or some other automation system to run
 ``beet import /path/to/incoming/music``.
 
 .. _config file: http://beets.readthedocs.org/page/reference/config.html
+
+
+Useful reports
+--------------
+
+Since beets has a quite powerful query tool, this list contains some useful and
+powerful queries to run on your library.
+
+* See a list of all albums which have files which are 128 bit rate::
+
+      beet list bitrate:128000
+
+* See a list of all albums with the tracks listed in order of bit rate::
+
+      beet ls -f '$bitrate $artist - $title' | sort -n
+
+* See a list of all albums with the tracks listed in order of sample rate::
+
+      beet ls -f '$samplerate $artist - $title' | sort -n
+
+* See a list of albums and their formats::
+
+      beet ls -f '$albumartist $album $format' | sort | uniq
+
+  Note that ``beet ls --album -f '... $format'`` doesn't do what you want,
+  because there is no notion of an album format.
+  If an album's tracks exist in multiple formats, the album will appear in the
+  list once for each format.
