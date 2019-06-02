@@ -151,3 +151,31 @@ differently. Put something like this in your configuration file::
 
 Used together, flexible attributes and path format conditions let you sort
 your music by any criteria you can imagine.
+
+
+Automatically add new music to your library
+-------------------------------------------
+
+As a command-line tool, beets is perfect for automated operation via a cron job
+or the like. To use it this way, you might want to use these options in your
+`config file`_::
+
+    [beets]
+    import_incremental: yes
+    import_quiet: yes
+    import_log: /path/to/log.txt
+
+The ``import_incremental`` option will skip importing any directories that have
+been imported in the past.
+``import_quiet`` avoids asking you any questions (since this will be run
+automatically, no input is possible).
+You might also want to use the ``import_quiet_fallback`` options to configure
+what should happen when no near-perfect match is found -- this option depends
+on your level of paranoia.
+Finally, ``import_log`` will make beets record its decisions so you can come
+back later and see what you need to handle manually.
+
+The last step is to set up cron or some other automation system to run
+``beet import /path/to/incoming/music``.
+
+.. _config file: http://beets.readthedocs.org/page/reference/config.html
