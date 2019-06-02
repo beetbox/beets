@@ -151,3 +151,55 @@ differently. Put something like this in your configuration file::
 
 Used together, flexible attributes and path format conditions let you sort
 your music by any criteria you can imagine.
+
+
+Automatically add new music to your library
+-------------------------------------------
+
+As a command-line tool, beets is perfect for automated operation via a cron job
+or the like. To use it this way, you might want to use these options in your
+:doc:`config file </reference/config>`:
+
+.. code-block:: yaml
+
+    import:
+        incremental: yes
+        quiet: yes
+        log: /path/to/log.txt
+
+The :ref:`incremental` option will skip importing any directories that have
+been imported in the past.
+:ref:`quiet` avoids asking you any questions (since this will be run
+automatically, no input is possible).
+You might also want to use the :ref:`quiet_fallback` options to configure
+what should happen when no near-perfect match is found -- this option depends
+on your level of paranoia.
+Finally, :ref:`import_log` will make beets record its decisions so you can come
+back later and see what you need to handle manually.
+
+The last step is to set up cron or some other automation system to run
+``beet import /path/to/incoming/music``.
+
+
+Useful reports
+--------------
+
+Since beets has a quite powerful query tool, this list contains some useful and
+powerful queries to run on your library.
+
+* See a list of all albums which have files which are 128 bit rate::
+
+      beet list bitrate:128000
+
+* See a list of all albums with the tracks listed in order of bit rate::
+
+      beet ls -f '$bitrate $artist - $title' bitrate+
+
+* See a list of albums and their formats::
+
+      beet ls -f '$albumartist $album $format' | sort | uniq
+
+  Note that ``beet ls --album -f '... $format'`` doesn't do what you want,
+  because ``format`` is an item-level field, not an album-level one.
+  If an album's tracks exist in multiple formats, the album will appear in the
+  list once for each format.
