@@ -39,7 +39,6 @@ from beets.util import syspath, normpath, ancestry, displayable_path, \
 from beets import library
 from beets import config
 from beets import logging
-from confuse import _package_path
 import six
 from . import _store_dict
 
@@ -1726,7 +1725,7 @@ def completion_script(commands):
     ``commands`` is alist of ``ui.Subcommand`` instances to generate
     completion data for.
     """
-    base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
+    base_script = os.path.join(os.path.dirname(__file__), 'completion_base.sh')
     with open(base_script, 'r') as base_script:
         yield util.text_string(base_script.read())
 
