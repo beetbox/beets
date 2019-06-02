@@ -158,27 +158,27 @@ Automatically add new music to your library
 
 As a command-line tool, beets is perfect for automated operation via a cron job
 or the like. To use it this way, you might want to use these options in your
-`config file`_::
+:doc:`config file </reference/config>`:
 
-    [beets]
-    import_incremental: yes
-    import_quiet: yes
-    import_log: /path/to/log.txt
+.. code-block:: yaml
 
-The ``import_incremental`` option will skip importing any directories that have
+    import:
+        incremental: yes
+        quiet: yes
+        log: /path/to/log.txt
+
+The :ref:`incremental` option will skip importing any directories that have
 been imported in the past.
-``import_quiet`` avoids asking you any questions (since this will be run
+:ref:`quiet` avoids asking you any questions (since this will be run
 automatically, no input is possible).
-You might also want to use the ``import_quiet_fallback`` options to configure
+You might also want to use the :ref:`quiet_fallback` options to configure
 what should happen when no near-perfect match is found -- this option depends
 on your level of paranoia.
-Finally, ``import_log`` will make beets record its decisions so you can come
+Finally, :ref:`import_log` will make beets record its decisions so you can come
 back later and see what you need to handle manually.
 
 The last step is to set up cron or some other automation system to run
 ``beet import /path/to/incoming/music``.
-
-.. _config file: http://beets.readthedocs.org/page/reference/config.html
 
 
 Useful reports
@@ -193,17 +193,13 @@ powerful queries to run on your library.
 
 * See a list of all albums with the tracks listed in order of bit rate::
 
-      beet ls -f '$bitrate $artist - $title' | sort -n
-
-* See a list of all albums with the tracks listed in order of sample rate::
-
-      beet ls -f '$samplerate $artist - $title' | sort -n
+      beet ls -f '$bitrate $artist - $title' bitrate+
 
 * See a list of albums and their formats::
 
       beet ls -f '$albumartist $album $format' | sort | uniq
 
   Note that ``beet ls --album -f '... $format'`` doesn't do what you want,
-  because there is no notion of an album format.
+  because ``format`` is an item-level field, not an album-level one.
   If an album's tracks exist in multiple formats, the album will appear in the
   list once for each format.
