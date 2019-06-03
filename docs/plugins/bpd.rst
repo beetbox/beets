@@ -103,7 +103,7 @@ but doesn't support many advanced playback features.
 Differences from the real MPD
 -----------------------------
 
-BPD currently supports version 0.14 of `the MPD protocol`_, but several of the
+BPD currently supports version 0.16 of `the MPD protocol`_, but several of the
 commands and features are "pretend" implementations or have slightly different
 behaviour to their MPD equivalents. BPD aims to look enough like MPD that it
 can interact with the ecosystem of clients, but doesn't try to be
@@ -125,8 +125,7 @@ These are some of the known differences between BPD and MPD:
 * Advanced playback features like cross-fade, ReplayGain and MixRamp are not
   supported due to BPD's simple audio player backend.
 * Advanced query syntax is not currently supported.
-* Not all tags (fields) are currently exposed to BPD. Clients also can't use
-  the ``tagtypes`` mask to hide fields.
+* Clients can't use the ``tagtypes`` mask to hide fields.
 * BPD's ``random`` mode is not deterministic and doesn't support priorities.
 * Mounts and streams are not supported. BPD can only play files from disk.
 * Stickers are not supported (although this is basically a flexattr in beets

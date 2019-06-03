@@ -11,6 +11,12 @@ New features:
   (the MBID), and ``work_disambig`` (the disambiguation string).
   Thanks to :user:`dosoe`.
   :bug:`2580` :bug:`3272`
+* :doc:`/plugins/bpd`: BPD now supports most of the features of version 0.16
+  of the MPD protocol. This is enough to get it talking to more complicated
+  clients like ncmpcpp, but there are still some incompatibilities, largely due
+  to MPD commands we don't support yet. Let us know if you find an MPD client
+  that doesn't get along with BPD!
+  :bug:`3214` :bug:`800`
 
 Fixes:
 
@@ -20,6 +26,10 @@ Fixes:
   objects could seem to reuse values from earlier objects when they were
   missing a value for a given field. These values are now properly undefined.
   :bug:`2406`
+* :doc:`/plugins/bpd`: Seeking by fractions of a second now works as intended,
+  fixing crashes in MPD clients like mpDris2 on seek.
+  The ``playlistid`` command now works properly in its zero-argument form.
+  :bug:`3214`
 
 For plugin developers:
 

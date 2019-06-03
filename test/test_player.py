@@ -339,8 +339,9 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
             previous_commands = response[0:pos]
             self._assert_ok(*previous_commands)
             response = response[pos]
-            self.assertEqual(pos, response.err_data[1])
         self.assertFalse(response.ok)
+        if pos is not None:
+            self.assertEqual(pos, response.err_data[1])
         if code is not None:
             self.assertEqual(code, response.err_data[0])
 
@@ -362,7 +363,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
 class BPDTest(BPDTestHelper):
     def test_server_hello(self):
         with self.run_bpd(do_hello=False) as client:
-            self.assertEqual(client.readline(), b'OK MPD 0.14.0\n')
+            self.assertEqual(client.readline(), b'OK MPD 0.16.0\n')
 
     def test_unknown_cmd(self):
         with self.run_bpd() as client:
@@ -392,8 +393,31 @@ class BPDTest(BPDTestHelper):
 
 class BPDQueryTest(BPDTestHelper):
     test_implements_query = implements({
-            'clearerror', 'currentsong', 'stats',
-            })
+        'clearerror',
+    })
+
+    def test_cmd_currentsong(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('currentsong',),
+                    ('stop',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('1', responses[1].data['Id'])
+        self.assertNotIn('Id', responses[3].data)
+
+    def test_cmd_currentsong_tagtypes(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual(
+                BPDConnectionTest.TAGTYPES.union(BPDQueueTest.METADATA),
+                set(responses[1].data.keys()))
 
     def test_cmd_status(self):
         with self.run_bpd() as client:
@@ -410,9 +434,18 @@ class BPDQueryTest(BPDTestHelper):
         }
         self.assertEqual(fields_not_playing, set(responses[0].data.keys()))
         fields_playing = fields_not_playing | {
-            'song', 'songid', 'time', 'elapsed', 'bitrate', 'duration', 'audio'
+            'song', 'songid', 'time', 'elapsed', 'bitrate', 'duration',
+            'audio', 'nextsong', 'nextsongid'
         }
         self.assertEqual(fields_playing, set(responses[2].data.keys()))
+
+    def test_cmd_stats(self):
+        with self.run_bpd() as client:
+            response = client.send_command('stats')
+        self._assert_ok(response)
+        details = {'artists', 'albums', 'songs', 'uptime', 'db_playtime',
+                   'db_update', 'playtime'}
+        self.assertEqual(details, set(response.data.keys()))
 
     def test_cmd_idle(self):
         def _toggle(c):
@@ -448,6 +481,14 @@ class BPDQueryTest(BPDTestHelper):
             time.sleep(0.01)
             response = client.send_command('noidle')
         self._assert_ok(response)
+
+    def test_cmd_noidle_when_not_idle(self):
+        with self.run_bpd() as client:
+            # Manually send a command without reading a response.
+            request = client.serialise_command('noidle')
+            client.sock.sendall(request)
+            response = client.send_command('notacommand')
+        self._assert_failed(response, bpd.ERROR_UNKNOWN)
 
 
 class BPDPlaybackTest(BPDTestHelper):
@@ -615,8 +656,13 @@ class BPDPlaybackTest(BPDTestHelper):
 
     def test_cmd_volume(self):
         with self.run_bpd() as client:
-            response = client.send_command('volume', '10')
-        self._assert_failed(response, bpd.ERROR_SYSTEM)
+            responses = client.send_commands(
+                    ('setvol', '10'),
+                    ('volume', '5'),
+                    ('volume', '-2'),
+                    ('status',))
+        self._assert_ok(*responses)
+        self.assertEqual('13', responses[3].data['volume'])
 
     def test_cmd_replay_gain(self):
         with self.run_bpd() as client:
@@ -630,9 +676,8 @@ class BPDPlaybackTest(BPDTestHelper):
 
 class BPDControlTest(BPDTestHelper):
     test_implements_control = implements({
-            'pause', 'playid', 'seek',
-            'seekid', 'seekcur', 'stop',
-            }, expectedFailure=True)
+        'seek', 'seekid', 'seekcur',
+    }, expectedFailure=True)
 
     def test_cmd_play(self):
         with self.run_bpd() as client:
@@ -647,6 +692,45 @@ class BPDControlTest(BPDTestHelper):
         self.assertEqual('stop', responses[0].data['state'])
         self.assertEqual('play', responses[2].data['state'])
         self.assertEqual('2', responses[4].data['Id'])
+
+    def test_cmd_playid(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('playid', '2'),
+                    ('currentsong',),
+                    ('clear',))
+            self._bpd_add(client, self.item2, self.item1)
+            responses.extend(client.send_commands(
+                    ('playid', '2'),
+                    ('currentsong',)))
+        self._assert_ok(*responses)
+        self.assertEqual('2', responses[1].data['Id'])
+        self.assertEqual('2', responses[4].data['Id'])
+
+    def test_cmd_pause(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('pause',),
+                    ('status',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('pause', responses[2].data['state'])
+        self.assertEqual('1', responses[3].data['Id'])
+
+    def test_cmd_stop(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            responses = client.send_commands(
+                    ('play',),
+                    ('stop',),
+                    ('status',),
+                    ('currentsong',))
+        self._assert_ok(*responses)
+        self.assertEqual('stop', responses[2].data['state'])
+        self.assertNotIn('Id', responses[3].data)
 
     def test_cmd_next(self):
         with self.run_bpd() as client:
@@ -684,11 +768,13 @@ class BPDControlTest(BPDTestHelper):
 class BPDQueueTest(BPDTestHelper):
     test_implements_queue = implements({
             'addid', 'clear', 'delete', 'deleteid', 'move',
-            'moveid', 'playlist', 'playlistfind', 'playlistid',
+            'moveid', 'playlist', 'playlistfind',
             'playlistsearch', 'plchanges',
             'plchangesposid', 'prio', 'prioid', 'rangeid', 'shuffle',
             'swap', 'swapid', 'addtagid', 'cleartagid',
             }, expectedFailure=True)
+
+    METADATA = {'Pos', 'Time', 'Id', 'file', 'duration'}
 
     def test_cmd_add(self):
         with self.run_bpd() as client:
@@ -696,12 +782,34 @@ class BPDQueueTest(BPDTestHelper):
 
     def test_cmd_playlistinfo(self):
         with self.run_bpd() as client:
-            self._bpd_add(client, self.item1)
+            self._bpd_add(client, self.item1, self.item2)
             responses = client.send_commands(
                     ('playlistinfo',),
                     ('playlistinfo', '0'),
+                    ('playlistinfo', '0:2'),
                     ('playlistinfo', '200'))
-        self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
+        self._assert_failed(responses, bpd.ERROR_ARG, pos=3)
+        self.assertEqual('1', responses[1].data['Id'])
+        self.assertEqual(['1', '2'], responses[2].data['Id'])
+
+    def test_cmd_playlistinfo_tagtypes(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1)
+            response = client.send_command('playlistinfo', '0')
+        self._assert_ok(response)
+        self.assertEqual(
+                BPDConnectionTest.TAGTYPES.union(BPDQueueTest.METADATA),
+                set(response.data.keys()))
+
+    def test_cmd_playlistid(self):
+        with self.run_bpd() as client:
+            self._bpd_add(client, self.item1, self.item2)
+            responses = client.send_commands(
+                    ('playlistid', '2'),
+                    ('playlistid',))
+        self._assert_ok(*responses)
+        self.assertEqual('Track Two Title', responses[0].data['Title'])
+        self.assertEqual(['1', '2'], responses[1].data['Track'])
 
 
 class BPDPlaylistsTest(BPDTestHelper):
@@ -831,8 +939,24 @@ class BPDStickerTest(BPDTestHelper):
 
 class BPDConnectionTest(BPDTestHelper):
     test_implements_connection = implements({
-            'close', 'kill', 'tagtypes',
-            })
+        'close', 'kill',
+    })
+
+    ALL_MPD_TAGTYPES = {
+        'Artist', 'ArtistSort', 'Album', 'AlbumSort', 'AlbumArtist',
+        'AlbumArtistSort', 'Title', 'Track', 'Name', 'Genre', 'Date',
+        'Composer', 'Performer', 'Comment', 'Disc', 'Label',
+        'OriginalDate', 'MUSICBRAINZ_ARTISTID', 'MUSICBRAINZ_ALBUMID',
+        'MUSICBRAINZ_ALBUMARTISTID', 'MUSICBRAINZ_TRACKID',
+        'MUSICBRAINZ_RELEASETRACKID', 'MUSICBRAINZ_WORKID',
+    }
+    UNSUPPORTED_TAGTYPES = {
+        'MUSICBRAINZ_WORKID',  # not tracked by beets
+        'Performer',           # not tracked by beets
+        'AlbumSort',           # not tracked by beets
+        'Name',                # junk field for internet radio
+    }
+    TAGTYPES = ALL_MPD_TAGTYPES.difference(UNSUPPORTED_TAGTYPES)
 
     def test_cmd_password(self):
         with self.run_bpd(password='abc123') as client:
@@ -852,19 +976,13 @@ class BPDConnectionTest(BPDTestHelper):
             response = client.send_command('ping')
         self._assert_ok(response)
 
-    @unittest.skip
     def test_cmd_tagtypes(self):
         with self.run_bpd() as client:
             response = client.send_command('tagtypes')
         self._assert_ok(response)
-        self.assertEqual({
-            'Artist', 'ArtistSort', 'Album', 'AlbumSort', 'AlbumArtist',
-            'AlbumArtistSort', 'Title', 'Track', 'Name', 'Genre', 'Date',
-            'Composer', 'Performer', 'Comment', 'Disc', 'Label',
-            'OriginalDate', 'MUSICBRAINZ_ARTISTID', 'MUSICBRAINZ_ALBUMID',
-            'MUSICBRAINZ_ALBUMARTISTID', 'MUSICBRAINZ_TRACKID',
-            'MUSICBRAINZ_RELEASETRACKID', 'MUSICBRAINZ_WORKID',
-            }, set(response.data['tag']))
+        self.assertEqual(
+                self.TAGTYPES,
+                set(response.data['tagtype']))
 
     @unittest.skip
     def test_tagtypes_mask(self):
