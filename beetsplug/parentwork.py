@@ -25,12 +25,9 @@ from beets.plugins import BeetsPlugin
 import musicbrainzngs
 
 
-def work_father_id(mb_workid, work_date=None):
+def direct_parent_id(mb_workid, work_date=None):
     """ Given a mb_workid, find the id one of the works the work is part of
-    and the first composition date it encounters.
-
-    For a give work, hat we call father_work is the work it is part of.
-    The parent_work is the furthest ancestor."""
+    and the first composition date it encounters."""
     work_info = musicbrainzngs.get_work_by_id(mb_workid,
                                               includes=["work-rels",
                                                         "artist-rels"])
@@ -53,7 +50,7 @@ def work_parent_id(mb_workid):
     """Find the parentwork id and composition date of a work given its id. """
     work_date = None
     while True:
-        new_mb_workid, work_date = work_father_id(mb_workid, work_date)
+        new_mb_workid, work_date = direct_parent_id(mb_workid, work_date)
         if not new_mb_workid:
             return mb_workid, work_date
         mb_workid = new_mb_workid
