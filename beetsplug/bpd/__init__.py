@@ -39,7 +39,7 @@ from beets import dbcore
 from mediafile import MediaFile
 import six
 
-PROTOCOL_VERSION = '0.14.0'
+PROTOCOL_VERSION = '0.16.0'
 BUFSIZE = 1024
 
 HELLO = u'OK MPD %s' % PROTOCOL_VERSION
@@ -77,8 +77,8 @@ SAFE_COMMANDS = (
 SUBSYSTEMS = [
     u'update', u'player', u'mixer', u'options', u'playlist', u'database',
     # Related to unsupported commands:
-    # u'stored_playlist', u'output', u'subscription', u'sticker', u'message',
-    # u'partition',
+    u'stored_playlist', u'output', u'subscription', u'sticker', u'message',
+    u'partition',
 ]
 
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
@@ -412,6 +412,11 @@ class BaseServer(object):
             current_id = self._item_id(self.playlist[self.current_index])
             yield u'song: ' + six.text_type(self.current_index)
             yield u'songid: ' + six.text_type(current_id)
+            if len(self.playlist) > self.current_index + 1:
+                # If there's a next song, report its index too.
+                next_id = self._item_id(self.playlist[self.current_index + 1])
+                yield u'nextsong: ' + six.text_type(self.current_index + 1)
+                yield u'nextsongid: ' + six.text_type(next_id)
 
         if self.error:
             yield u'error: ' + self.error
@@ -454,7 +459,8 @@ class BaseServer(object):
 
     def cmd_volume(self, conn, vol_delta):
         """Deprecated command to change the volume by a relative amount."""
-        raise BPDError(ERROR_SYSTEM, u'No mixer')
+        vol_delta = cast_arg(int, vol_delta)
+        return self.cmd_setvol(conn, self.volume + vol_delta)
 
     def cmd_crossfade(self, conn, crossfade):
         """Set the number of seconds of crossfading."""
@@ -577,23 +583,27 @@ class BaseServer(object):
         """Indicates supported URL schemes. None by default."""
         pass
 
-    def cmd_playlistinfo(self, conn, index=-1):
+    def cmd_playlistinfo(self, conn, index=None):
         """Gives metadata information about the entire playlist or a
         single track, given by its index.
         """
-        index = cast_arg(int, index)
-        if index == -1:
+        if index is None:
             for track in self.playlist:
                 yield self._item_info(track)
         else:
+            indices = self._parse_range(index, accept_single_number=True)
             try:
-                track = self.playlist[index]
+                tracks = [self.playlist[i] for i in indices]
             except IndexError:
                 raise ArgumentIndexError()
-            yield self._item_info(track)
+            for track in tracks:
+                yield self._item_info(track)
 
-    def cmd_playlistid(self, conn, track_id=-1):
-        return self.cmd_playlistinfo(conn, self._id_to_index(track_id))
+    def cmd_playlistid(self, conn, track_id=None):
+        if track_id is not None:
+            track_id = cast_arg(int, track_id)
+            track_id = self._id_to_index(track_id)
+        return self.cmd_playlistinfo(conn, track_id)
 
     def cmd_plchanges(self, conn, version):
         """Sends playlist changes since the given version.
@@ -624,7 +634,6 @@ class BaseServer(object):
         """Advance to the next song in the playlist."""
         old_index = self.current_index
         self.current_index = self._succ_idx()
-        self._send_event('playlist')
         if self.consume:
             # TODO how does consume interact with single+repeat?
             self.playlist.pop(old_index)
@@ -645,7 +654,6 @@ class BaseServer(object):
         """Step back to the last song."""
         old_index = self.current_index
         self.current_index = self._prev_idx()
-        self._send_event('playlist')
         if self.consume:
             self.playlist.pop(old_index)
         if self.current_index < 0:
@@ -843,6 +851,9 @@ class MPDConnection(Connection):
                                    u'Got command while idle: {}'.format(line))
                     yield self.send(err.response())
                     break
+                continue
+            if line == u'noidle':
+                # When not in idle, this command sends no response.
                 continue
 
             if clist is not None:
@@ -1094,6 +1105,8 @@ class Server(BaseServer):
         self.cmd_update(None)
         log.info(u'Server ready and listening on {}:{}'.format(
             host, port))
+        log.debug(u'Listening for control signals on {}:{}'.format(
+            host, ctrl_port))
 
     def run(self):
         self.player.run()
@@ -1111,18 +1124,9 @@ class Server(BaseServer):
         info_lines = [
             u'file: ' + item.destination(fragment=True),
             u'Time: ' + six.text_type(int(item.length)),
-            u'Title: ' + item.title,
-            u'Artist: ' + item.artist,
-            u'Album: ' + item.album,
-            u'Genre: ' + item.genre,
+            u'duration: ' + u'{:.3f}'.format(item.length),
+            u'Id: ' + six.text_type(item.id),
         ]
-
-        track = six.text_type(item.track)
-        if item.tracktotal:
-            track += u'/' + six.text_type(item.tracktotal)
-        info_lines.append(u'Track: ' + track)
-
-        info_lines.append(u'Date: ' + six.text_type(item.year))
 
         try:
             pos = self._id_to_index(item.id)
@@ -1131,9 +1135,26 @@ class Server(BaseServer):
             # Don't include position if not in playlist.
             pass
 
-        info_lines.append(u'Id: ' + six.text_type(item.id))
+        for tagtype, field in self.tagtype_map.items():
+            info_lines.append(u'{}: {}'.format(
+                tagtype, six.text_type(getattr(item, field))))
 
         return info_lines
+
+    def _parse_range(self, items, accept_single_number=False):
+        """Convert a range of positions to a list of item info.
+        MPD specifies ranges as START:STOP (endpoint excluded) for some
+        commands. Sometimes a single number can be provided instead.
+        """
+        try:
+            start, stop = str(items).split(':', 1)
+        except ValueError:
+            if accept_single_number:
+                return [cast_arg(int, items)]
+            raise BPDError(ERROR_ARG, u'bad range syntax')
+        start = cast_arg(int, start)
+        stop = cast_arg(int, stop)
+        return range(start, stop)
 
     def _item_id(self, item):
         return item.id
@@ -1335,18 +1356,24 @@ class Server(BaseServer):
 
     tagtype_map = {
         u'Artist':          u'artist',
+        u'ArtistSort':      u'artist_sort',
         u'Album':           u'album',
         u'Title':           u'title',
         u'Track':           u'track',
         u'AlbumArtist':     u'albumartist',
         u'AlbumArtistSort': u'albumartist_sort',
-        # Name?
+        u'Label':           u'label',
         u'Genre':           u'genre',
         u'Date':            u'year',
+        u'OriginalDate':    u'original_year',
         u'Composer':        u'composer',
-        # Performer?
         u'Disc':            u'disc',
-        u'filename':        u'path',  # Suspect.
+        u'Comment':         u'comments',
+        u'MUSICBRAINZ_TRACKID':        u'mb_trackid',
+        u'MUSICBRAINZ_ALBUMID':        u'mb_albumid',
+        u'MUSICBRAINZ_ARTISTID':       u'mb_artistid',
+        u'MUSICBRAINZ_ALBUMARTISTID':  u'mb_albumartistid',
+        u'MUSICBRAINZ_RELEASETRACKID': u'mb_releasetrackid',
     }
 
     def cmd_tagtypes(self, conn):
@@ -1543,7 +1570,7 @@ class Server(BaseServer):
     def cmd_seek(self, conn, index, pos):
         """Seeks to the specified position in the specified song."""
         index = cast_arg(int, index)
-        pos = cast_arg(int, pos)
+        pos = cast_arg(float, pos)
         super(Server, self).cmd_seek(conn, index, pos)
         self.player.seek(pos)
 
