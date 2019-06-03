@@ -918,6 +918,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         )
 
     def test_command_line_option_relative_to_working_dir(self):
+        config.read()
         os.chdir(self.temp_dir)
         self.run_command('--library', 'foo.db', 'test', lib=None)
         self.assert_equal_path(config['library'].as_filename(),
