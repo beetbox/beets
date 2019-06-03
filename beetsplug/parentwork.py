@@ -29,7 +29,7 @@ def work_father_id(mb_workid, work_date=None):
     """ Given a mb_workid, find the id one of the works the work is part of
     and the first composition date it encounters.
 
-    For a give work, hat we call father_work is the work it is part of. 
+    For a give work, hat we call father_work is the work it is part of.
     The parent_work is the furthest ancestor."""
     work_info = musicbrainzngs.get_work_by_id(mb_workid,
                                               includes=["work-rels",
