@@ -13,8 +13,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Gets work title, disambiguation, parent work and its disambiguation,
-composer, composer sort name and performers
+"""Gets parent work, its disambiguation and id, composer, composer sort name
+and work composition date
 """
 
 from __future__ import division, absolute_import, print_function
@@ -27,7 +27,10 @@ import musicbrainzngs
 
 def work_father_id(mb_workid, work_date=None):
     """ Given a mb_workid, find the id one of the works the work is part of
-    and the first composition date it encounters. """
+    and the first composition date it encounters.
+
+    For a give work, hat we call father_work is the work it is part of. 
+    The parent_work is the furthest ancestor."""
     work_info = musicbrainzngs.get_work_by_id(mb_workid,
                                               includes=["work-rels",
                                                         "artist-rels"])
