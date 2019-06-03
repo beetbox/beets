@@ -26,20 +26,6 @@ This plugin adds five tags:
 - **work_date**: THe composition date of the work, or the first parent work 
   that has a composition date. Format: yyyy-mm-dd. 
 
-To fill in the parentwork tag and the associated parent** tags, in case there 
-are several works on the recording, it fills it with the results of the first 
-work and then appends the results of the second work only if they differ from 
-the ones already there. This is to care for cases of, for example, an opera 
-recording that contains several scenes of the opera: neither the parentwork 
-nor all the associated tags will be duplicated. 
-If there are several works linked to a recording, they all get a 
-disambiguation (empty as default) and if all disambiguations are empty, the 
-disambiguation field is left empty, else the disambiguation field can look 
-like ``,disambig,,`` (if there are four works and only the second has a 
-disambiguation) if only the second work has a disambiguation. This may 
-seem clumsy but it allows to identify which of the four works the 
-disambiguation belongs to. 
-
 To use the ``parentwork`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
 
