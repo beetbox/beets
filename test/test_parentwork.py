@@ -82,7 +82,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.assertEqual(u'f04b42df-7251-4d86-a5ee-67cfa49580d1',
                          parentwork.direct_parent_id(mb_workid)[0])
         self.assertEqual(u'45afb3b2-18ac-4187-bc72-beb1b1c194ba',
-                         parentwork.direct_parent_id(mb_workid)[0])
+                         parentwork.work_parent_id(mb_workid)[0])
 
 
 def suite():
