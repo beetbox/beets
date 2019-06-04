@@ -37,8 +37,8 @@ matrix:
 addons:
     apt:
         sources:
-            - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty multiverse"
-            - sourceline: "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
+            - sourceline: "deb https://archive.ubuntu.com/ubuntu/ trusty multiverse"
+            - sourceline: "deb https://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
         packages:
             - bash-completion
             - gir1.2-gst-plugins-base-1.0

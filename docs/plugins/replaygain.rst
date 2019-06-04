@@ -4,7 +4,7 @@ ReplayGain Plugin
 This plugin adds support for `ReplayGain`_, a technique for normalizing audio
 playback levels.
 
-.. _ReplayGain: http://wiki.hydrogenaudio.org/index.php?title=ReplayGain
+.. _ReplayGain: https://wiki.hydrogenaudio.org/index.php?title=ReplayGain
 
 
 Installation
@@ -27,7 +27,7 @@ install GStreamer and plugins for compatibility with your audio files.
 You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. ``python-gi``).
 
 .. _PyGObject 3.x: https://pygobject.readthedocs.io/en/latest/
-.. _GStreamer: http://gstreamer.freedesktop.org/
+.. _GStreamer: https://gstreamer.freedesktop.org/
 
 Then, enable the ``replaygain`` plugin (see :ref:`using-plugins`) and specify
 the GStreamer backend by adding this to your configuration file::
@@ -47,8 +47,8 @@ command-line tool or the `aacgain`_ fork thereof. Here are some hints:
 * On Windows, download and install the original `mp3gain`_.
 
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
-.. _aacgain: http://aacgain.altosdesign.com
-.. _Homebrew: http://mxcl.github.com/homebrew/
+.. _aacgain: https://aacgain.altosdesign.com
+.. _Homebrew: https://brew.sh
 
 Then, enable the plugin (see :ref:`using-plugins`) and specify the "command"
 backend in your configuration file::
