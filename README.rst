@@ -7,6 +7,9 @@
 .. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
     :target: https://travis-ci.org/beetbox/beets
 
+.. image:: https://repology.org/badge/tiny-repos/beets.svg
+    :target: https://repology.org/project/beets/versions
+
 
 beets
 =====
@@ -78,10 +81,12 @@ shockingly simple if you know a little Python.
 Install
 -------
 
-You can install beets by typing ``pip install beets``. Then check out the
-`Getting Started`_ guide.
+You can install beets by typing ``pip install beets``.
+Beets has also been packaged in the `software repositories`_ of several distributions.
+Check out the `Getting Started`_ guide for more information.
 
 .. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
+.. _software repositories: https://repology.org/project/beets/versions
 
 Contribute
 ----------
