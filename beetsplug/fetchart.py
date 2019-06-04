@@ -311,7 +311,10 @@ class CoverArtArchive(RemoteArtSource):
 
 class Amazon(RemoteArtSource):
     NAME = u"Amazon"
-    URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
+    if util.SNI_SUPPORTED:
+        URL = 'https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
+    else:
+        URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
     INDICES = (1, 2)
 
     def get(self, album, plugin, paths):
@@ -325,7 +328,10 @@ class Amazon(RemoteArtSource):
 
 class AlbumArtOrg(RemoteArtSource):
     NAME = u"AlbumArt.org scraper"
-    URL = 'http://www.albumart.org/index_detail.php'
+    if util.SNI_SUPPORTED:
+        URL = 'https://www.albumart.org/index_detail.php'
+    else:
+        URL = 'http://www.albumart.org/index_detail.php'
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
     def get(self, album, plugin, paths):

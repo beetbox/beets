@@ -14,5 +14,5 @@ To use the ``sonosupdate`` plugin you need to install the `soco`_ library with::
 With that all in place, you'll see beets send the "update" command to your Sonos
 controller every time you change your beets library.
 
-.. _Sonos: http://sonos.com/
+.. _Sonos: https://sonos.com/
 .. _soco: http://python-soco.com

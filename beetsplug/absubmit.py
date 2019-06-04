@@ -73,8 +73,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 call([self.extractor])
             except OSError:
                 raise ui.UserError(
-                    u'No extractor command found: please install the '
-                    u'extractor binary from http://acousticbrainz.org/download'
+                    u'No extractor command found: please install the extractor'
+                    u' binary from https://acousticbrainz.org/download'
                 )
             except ABSubmitError:
                 # Extractor found, will exit with an error if not called with

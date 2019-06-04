@@ -29,4 +29,4 @@ configuration file. The available options are:
   `initial_key` value.
   Default: ``no``.
 
-.. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
+.. _KeyFinder: https://www.ibrahimshaath.co.uk/keyfinder/

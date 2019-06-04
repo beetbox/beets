@@ -14,7 +14,7 @@ To use the ``convert`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). By default, the plugin depends on `FFmpeg`_ to
 transcode the audio, so you might want to install it.
 
-.. _FFmpeg: http://ffmpeg.org
+.. _FFmpeg: https://ffmpeg.org
 
 
 Usage
@@ -170,6 +170,6 @@ can use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
 options and a thorough discussion of MP3 encoding.
 
 .. _documentation: http://lame.sourceforge.net/using.php
-.. _HydrogenAudio wiki: http://wiki.hydrogenaud.io/index.php?title=LAME
-.. _gapless: http://wiki.hydrogenaud.io/index.php?title=Gapless_playback
-.. _LAME: http://lame.sourceforge.net/
+.. _HydrogenAudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
+.. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
+.. _LAME: https://lame.sourceforge.net/

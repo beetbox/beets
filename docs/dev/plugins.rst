@@ -15,7 +15,7 @@ structure should look like this::
         myawesomeplugin.py
 
 .. _Stack Overflow question about namespace packages:
-    http://stackoverflow.com/questions/1675734/how-do-i-create-a-namespace-package-in-python/1676069#1676069
+    https://stackoverflow.com/questions/1675734/how-do-i-create-a-namespace-package-in-python/1676069#1676069
 
 Then, you'll need to put this stuff in ``__init__.py`` to make ``beetsplug`` a
 namespace package::
@@ -42,7 +42,7 @@ Then, as described above, edit your ``config.yaml`` to include
 ``plugins: myawesomeplugin`` (substituting the name of the Python module
 containing your plugin).
 
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _virtualenv: https://pypi.org/project/virtualenv
 
 .. _add_subcommands:
 
@@ -73,7 +73,7 @@ but it defaults to an empty parser (you can extend it later). ``help`` is a
 description of your command, and ``aliases`` is a list of shorthand versions of
 your command name.
 
-.. _OptionParser instance: http://docs.python.org/library/optparse.html
+.. _OptionParser instance: https://docs.python.org/library/optparse.html
 
 You'll need to add a function to your command by saying ``mycommand.func =
 myfunction``. This function should take the following parameters: ``lib`` (a
@@ -81,7 +81,7 @@ beets ``Library`` object) and ``opts`` and ``args`` (command-line options and
 arguments as returned by `OptionParser.parse_args`_).
 
 .. _OptionParser.parse_args:
-    http://docs.python.org/library/optparse.html#parsing-arguments
+    https://docs.python.org/library/optparse.html#parsing-arguments
 
 The function should use any of the utility functions defined in ``beets.ui``.
 Try running ``pydoc beets.ui`` to see what's available.
@@ -301,7 +301,7 @@ To access this value, say ``self.config['foo'].get()`` at any point in your
 plugin's code. The `self.config` object is a *view* as defined by the `Confuse`_
 library.
 
-.. _Confuse: http://confuse.readthedocs.org/
+.. _Confuse: https://confuse.readthedocs.org/
 
 If you want to access configuration values *outside* of your plugin's section,
 import the `config` object from the `beets` module. That is, just put ``from
@@ -379,7 +379,7 @@ access to file tags. If you have created a descriptor you can add it through
 your plugins ``add_media_field()`` method.
 
 .. automethod:: beets.plugins.BeetsPlugin.add_media_field
-.. _MediaFile: http://mediafile.readthedocs.io/
+.. _MediaFile: https://mediafile.readthedocs.io/
 
 
 Here's an example plugin that provides a meaningless new field "foo"::

@@ -93,7 +93,7 @@ everything by the Long Winters for listening on the go.
 The plugin has many more dials you can fiddle with to get your conversions how
 you like them. Check out :doc:`its documentation </plugins/convert>`.
 
-.. _ffmpeg: http://www.ffmpeg.org
+.. _ffmpeg: https://www.ffmpeg.org
 
 
 Store any data you like

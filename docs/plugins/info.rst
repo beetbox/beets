@@ -42,4 +42,4 @@ Additional command-line options include:
 * ``--keys-only`` or ``-k``: Show the name of the tags without the values.
 
 .. _id3v2: http://id3v2.sourceforge.net
-.. _mp3info: http://www.ibiblio.org/mp3info/
+.. _mp3info: https://www.ibiblio.org/mp3info/

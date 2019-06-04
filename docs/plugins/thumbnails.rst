@@ -13,7 +13,7 @@ as the :doc:`/plugins/fetchart`.  You'll need 2 additional python packages:
 `ImageMagick`_ or `Pillow`_.
 
 .. _Pillow: https://github.com/python-pillow/Pillow
-.. _ImageMagick: http://www.imagemagick.org/
+.. _ImageMagick: https://www.imagemagick.org/
 
 Configuration
 -------------
