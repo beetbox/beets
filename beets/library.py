@@ -395,9 +395,9 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
                     album_keys.append(key)
         return album_keys
 
-    @lazy_property
+    @property
     def album(self):
-        return self.item.get_album()
+        return self.item._cached_album
 
     def _get(self, key):
         """Get the value for a key, either from the album or the item.
@@ -542,6 +542,29 @@ class Item(LibModel):
 
     _format_config_key = 'format_item'
 
+    __album = None
+    """Cached album object. Read-only."""
+
+    @property
+    def _cached_album(self):
+        """The Album object that this item belongs to, if any, or
+        None if the item is a singleton or is not associated with a
+        library.
+        The instance is cached and refreshed on access.
+
+        DO NOT MODIFY!
+        If you want a copy to modify, use :meth:`get_album`.
+        """
+        if not self.__album and self._db:
+            self.__album = self._db.get_album(self)
+        elif self.__album:
+            self.__album.load()
+        return self.__album
+
+    @_cached_album.setter
+    def _cached_album(self, album):
+        self.__album = album
+
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
@@ -568,6 +591,8 @@ class Item(LibModel):
                 value = bytestring_path(value)
             elif isinstance(value, BLOB_TYPE):
                 value = bytes(value)
+        elif key == 'album_id':
+            self._cached_album = None
 
         changed = super(Item, self)._setitem(key, value)
 
@@ -581,9 +606,8 @@ class Item(LibModel):
         try:
             return super(Item, self).__getitem__(key)
         except KeyError:
-            album = self.get_album()
-            if album:
-                return album[key]
+            if self._cached_album:
+                return self._cached_album[key]
             raise
 
     def keys(self, computed=False, with_album=True):
@@ -591,10 +615,8 @@ class Item(LibModel):
         controls whether the album's fields are included.
         """
         keys = super(Item, self).keys(computed=computed)
-        if with_album:
-            album = self.get_album()
-            if album:
-                keys += album.keys(computed=computed)
+        if with_album and self._cached_album:
+            keys += self._cached_album.keys(computed=computed)
         return keys
 
     def get(self, key, default=None, with_album=True):
@@ -604,9 +626,8 @@ class Item(LibModel):
         try:
             return self._get(key, default, raise_=with_album)
         except KeyError:
-            album = self.get_album()
-            if album:
-                return album.get(key, default)
+            if self._cached_album:
+                return self._cached_album.get(key, default)
             return default
 
     def update(self, values):

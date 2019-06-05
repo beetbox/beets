@@ -332,7 +332,7 @@ class ConvertPlugin(BeetsPlugin):
                 item.store()  # Store new path and audio data.
 
             if self.config['embed']:
-                album = item.get_album()
+                album = item._cached_album
                 if album and album.artpath:
                     self._log.debug(u'embedding album art from {}',
                                     util.displayable_path(album.artpath))
