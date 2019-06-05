@@ -219,3 +219,32 @@ to interact directly with the underlying SQLite database, you must use a
 
 .. autoclass:: Transaction
     :members:
+
+
+Queries
+-------
+
+To access albums and items in a library, we use :doc:`/reference/query`.
+In beets, the :class:`Query` abstract base class represents a criterion that
+matches items or albums in the database.
+Every subclass of :class:`Query` must implement two methods, which implement
+two different ways of identifying matching items/albums.
+
+The ``clause()`` method should return an SQLite ``WHERE`` clause that matches
+appropriate albums/items. This allows for efficient batch queries.
+Correspondingly, the ``match(item)`` method should take an :class:`Item` object
+and return a boolean, indicating whether or not a specific item matches the
+criterion. This alternate implementation allows clients to determine whether
+items that have already been fetched from the database match the query.
+
+There are many different types of queries. Just as an example,
+:class:`FieldQuery` determines whether a certain field matches a certain value
+(an equality query).
+:class:`AndQuery` (like its abstract superclass, :class:`CollectionQuery`)
+takes a set of other query objects and bundles them together, matching only
+albums/items that match all constituent queries.
+
+Beets has a human-writable plain-text query syntax that can be parsed into
+:class:`Query` objects. Calling ``AndQuery.from_strings`` parses a list of
+query parts into a query object that can then be used with :class:`Library`
+objects.
