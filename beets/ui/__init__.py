@@ -475,7 +475,7 @@ def human_seconds_short(interval):
 # Colorization.
 
 # ANSI terminal colorization code heavily inspired by pygments:
-# http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
+# https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
 COLOR_ESCAPE = "\x1b["
 DARK_COLORS = {

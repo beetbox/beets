@@ -64,7 +64,8 @@ class GstPlayer(object):
         """
 
         # Set up the Gstreamer player. From the pygst tutorial:
-        # http://pygstdocs.berlios.de/pygst-tutorial/playbin.html
+        # https://pygstdocs.berlios.de/pygst-tutorial/playbin.html (gone)
+        # https://brettviren.github.io/pygst-tutorial-org/pygst-tutorial.html
         ####
         # Updated to GStreamer 1.0 with:
         # https://wiki.ubuntu.com/Novacut/GStreamer1.0
