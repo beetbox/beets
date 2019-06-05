@@ -13,3 +13,5 @@ and write metadata tags in media files.
 
     plugins
     library
+    importer
+    cli
