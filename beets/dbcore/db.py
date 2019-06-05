@@ -345,9 +345,9 @@ class Model(object):
         """
         return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
 
-    def __getitem__(self, key):
-        """Get the value for a field. Raise a KeyError if the field is
-        not available.
+    def _get(self, key, default=None, raise_=False):
+        """Get the value for a field, or `default`. Alternatively,
+        raise a KeyError if the field is not available.
         """
         getters = self._getters()
         if key in getters:  # Computed.
@@ -359,8 +359,18 @@ class Model(object):
                 return self._type(key).null
         elif key in self._values_flex:  # Flexible.
             return self._values_flex[key]
-        else:
+        elif raise_:
             raise KeyError(key)
+        else:
+            return default
+
+    get = _get
+
+    def __getitem__(self, key):
+        """Get the value for a field. Raise a KeyError if the field is
+        not available.
+        """
+        return self._get(key, raise_=True)
 
     def _setitem(self, key, value):
         """Assign the value for a field, return whether new and old value
@@ -435,19 +445,10 @@ class Model(object):
         for key in self:
             yield key, self[key]
 
-    def get(self, key, default=None):
-        """Get the value for a given key or `default` if it does not
-        exist.
-        """
-        if key in self:
-            return self[key]
-        else:
-            return default
-
     def __contains__(self, key):
         """Determine whether `key` is an attribute on this object.
         """
-        return key in self.keys(True)
+        return key in self.keys(computed=True)
 
     def __iter__(self):
         """Iterate over the available field names (excluding computed

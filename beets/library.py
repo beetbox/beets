@@ -386,7 +386,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     def album_keys(self):
         album_keys = []
         if self.album:
-            for key in self.album.keys(True):
+            for key in self.album.keys(computed=True):
                 if key in Album.item_keys \
                         or key not in self.item._fields.keys():
                     album_keys.append(key)
@@ -570,6 +570,41 @@ class Item(LibModel):
 
         if changed and key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
+
+    def __getitem__(self, key):
+        """Get the value for a field, falling back to the album if
+        necessary. Raise a KeyError if the field is not available.
+        """
+        try:
+            return super(Item, self).__getitem__(key)
+        except KeyError:
+            album = self.get_album()
+            if album:
+                return album[key]
+            raise
+
+    def keys(self, computed=False, with_album=True):
+        """Get a list of available field names. `with_album`
+        controls whether the album's fields are included.
+        """
+        keys = super(Item, self).keys(computed=computed)
+        if with_album:
+            album = self.get_album()
+            if album:
+                keys += album.keys(computed=computed)
+        return keys
+
+    def get(self, key, default=None, with_album=True):
+        """Get the value for a given key or `default` if it does not
+        exist. Set `with_album` to false to skip album fallback.
+        """
+        try:
+            return self._get(key, default, raise_=with_album)
+        except KeyError:
+            album = self.get_album()
+            if album:
+                return album.get(key, default)
+            return default
 
     def update(self, values):
         """Set all key/value pairs in the mapping. If mtime is
