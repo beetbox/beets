@@ -49,7 +49,7 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
         want_item = test_album.items()[2]
         for check_item in added_album.items():
             try:
-                if check_item.ipfs:
+                if check_item.get('ipfs', with_album=False):
                     ipfs_item = os.path.basename(want_item.path).decode(
                         _fsencoding(),
                     )
@@ -57,7 +57,8 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
                                                        ipfs_item)
                     want_path = bytestring_path(want_path)
                     self.assertEqual(check_item.path, want_path)
-                    self.assertEqual(check_item.ipfs, want_item.ipfs)
+                    self.assertEqual(check_item.get('ipfs', with_album=False),
+                                     want_item.ipfs)
                     self.assertEqual(check_item.title, want_item.title)
                     found = True
             except AttributeError:

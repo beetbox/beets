@@ -109,7 +109,7 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         items[2].comp = False
         for item in items:
             self.lib.add(item)
-        self.lib.add_album(items[:2])
+        self.album = self.lib.add_album(items[:2])
 
     def assert_items_matched_all(self, results):
         self.assert_items_matched(results, [
@@ -299,6 +299,17 @@ class GetTest(DummyDataTestCase):
         q = dbcore.query.NumericQuery('year', u'1999')
         results = self.lib.items(q)
         self.assertFalse(results)
+
+    def test_album_field_fallback(self):
+        self.album['albumflex'] = u'foo'
+        self.album.store()
+
+        q = u'albumflex:foo'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, [
+            u'foo bar',
+            u'baz qux',
+        ])
 
     def test_invalid_query(self):
         with self.assertRaises(InvalidQueryArgumentValueError) as raised:
