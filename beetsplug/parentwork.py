@@ -178,7 +178,7 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
                 self._log.debug("Work fetched: {} - {}",
                                 parent_info['parentwork'],
                                 parent_info['parent_composer'])
-            else: 
+            else:
                 self._log.debug("Work fetched: {} - no parent composer",
                                 parent_info['parentwork'])
 
