@@ -1146,8 +1146,13 @@ def _setup(options, lib=None):
         plugins.send("library_opened", lib=lib)
 
     # Add types and queries defined by plugins.
-    library.Item._types.update(plugins.types(library.Item))
-    library.Album._types.update(plugins.types(library.Album))
+    plugin_types_album = plugins.types(library.Album)
+    library.Album._types.update(plugin_types_album)
+    item_types = plugin_types_album.copy()
+    item_types.update(library.Item._types)
+    item_types.update(plugins.types(library.Item))
+    library.Item._types = item_types
+
     library.Item._queries.update(plugins.named_queries(library.Item))
     library.Album._queries.update(plugins.named_queries(library.Album))
 
