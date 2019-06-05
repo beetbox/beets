@@ -120,6 +120,38 @@ update an item's fields (e.g., ``item.title = "Let It Be"``) and then call
 
 .. _MediaFile: https://mediafile.readthedocs.io/
 
+Items also track their modification times (mtimes) to help detect when they
+become out of sync with on-disk metadata, mainly to speed up the
+:ref:`update-cmd` (which needs to check whether the database is in sync with
+the filesystem). This feature turns out to be sort of complicated.
+
+For any :class:`Item`, there are two mtimes: the on-disk mtime (maintained by
+the OS) and the database mtime (maintained by beets). Correspondingly, there is
+on-disk metadata (ID3 tags, for example) and DB metadata. The goal with the
+mtime is to ensure that the on-disk and DB mtimes match when the on-disk and DB
+metadata are in sync; this lets beets do a quick mtime check and avoid
+rereading files in some circumstances.
+
+Specifically, beets attempts to maintain the following invariant:
+
+    If the on-disk metadata differs from the DB metadata, then the on-disk
+    mtime must be greater than the DB mtime.
+
+As a result, it is always valid for the DB mtime to be zero (assuming that real
+disk mtimes are always positive). However, whenever possible, beets tries to
+set ``db_mtime = disk_mtime`` at points where it knows the metadata is
+synchronized. When it is possible that the metadata is out of sync, beets can
+then just set ``db_mtime = 0`` to return to a consistent state.
+
+This leads to the following implementation policy:
+
+  * On every write of disk metadata (``Item.write()``), the DB mtime is updated
+    to match the post-write disk mtime.
+  * Same for metadata reads (``Item.read()``).
+  * On every modification to DB metadata (``item.field = ...``), the DB mtime
+    is reset to zero.
+
+
 .. autoclass:: Item
 
     .. automethod:: __init__
@@ -129,6 +161,8 @@ update an item's fields (e.g., ``item.title = "Let It Be"``) and then call
     .. automethod:: get_album
 
     .. automethod:: destination
+
+    .. automethod:: current_mtime
 
     The methods ``read()`` and ``write()`` are complementary: one reads a
     file's tags and updates the item's metadata fields accordingly while the
@@ -148,11 +182,6 @@ update an item's fields (e.g., ``item.title = "Let It Be"``) and then call
     .. automethod:: move
 
     .. automethod:: remove
-
-    Items also track their modification times (mtimes) to help detect when they
-    become out of sync with on-disk metadata.
-
-    .. automethod:: current_mtime
 
 Album
 '''''
