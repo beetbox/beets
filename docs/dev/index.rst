@@ -12,4 +12,4 @@ and write metadata tags in media files.
 .. toctree::
 
     plugins
-    api
+    library
