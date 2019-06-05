@@ -22,7 +22,7 @@ class SpotifyPlugin(BeetsPlugin):
     # Base URLs for the Spotify API
     # Documentation: https://developer.spotify.com/web-api
     oauth_token_url = 'https://accounts.spotify.com/api/token'
-    open_track_url = 'http://open.spotify.com/track/'
+    open_track_url = 'https://open.spotify.com/track/'
     search_url = 'https://api.spotify.com/v1/search'
     album_url = 'https://api.spotify.com/v1/albums/'
     track_url = 'https://api.spotify.com/v1/tracks/'

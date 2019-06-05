@@ -412,7 +412,7 @@ def syspath(path, prefix=True):
             path = path.decode(encoding, 'replace')
 
     # Add the magic prefix if it isn't already there.
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
     if prefix and not path.startswith(WINDOWS_MAGIC_PREFIX):
         if path.startswith(u'\\\\'):
             # UNC path. Final path should look like \\?\UNC\...
@@ -563,7 +563,7 @@ def unique_path(path):
 # Note: The Windows "reserved characters" are, of course, allowed on
 # Unix. They are forbidden here because they cause problems on Samba
 # shares, which are sufficiently common as to cause frequent problems.
-# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+# https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
 CHAR_REPLACE = [
     (re.compile(r'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
     (re.compile(r'^\.'), u'_'),  # Leading dot (hidden files on Unix).

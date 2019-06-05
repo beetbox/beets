@@ -204,7 +204,7 @@ def input_(prompt=None):
     """
     # raw_input incorrectly sends prompts to stderr, not stdout, so we
     # use print_() explicitly to display prompts.
-    # http://bugs.python.org/issue1927
+    # https://bugs.python.org/issue1927
     if prompt:
         print_(prompt, end=u' ')
 
@@ -929,7 +929,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
 #
 # This is a fairly generic subcommand parser for optparse. It is
 # maintained externally here:
-# http://gist.github.com/462717
+# https://gist.github.com/462717
 # There you will also find a better description of the code and a more
 # succinct example program.
 
