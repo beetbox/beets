@@ -174,8 +174,13 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
                 self._log.debug("error fetching work: {}", e)
                 return
             parent_info = self.get_info(item, work_info)
-            self._log.debug("Work fetched: {} - {}", parent_info['parentwork'],
-                            parent_info['parent_composer'])
+            if 'parent_composer' in parent_info:
+                self._log.debug("Work fetched: {} - {}",
+                                parent_info['parentwork'],
+                                parent_info['parent_composer'])
+            else: 
+                self._log.debug("Work fetched: {} - no parent composer",
+                                parent_info['parentwork'])
 
         elif hasparent:
             self._log.debug("{} : Work present, skipping", item)
