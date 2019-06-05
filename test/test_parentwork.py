@@ -77,7 +77,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
     # test different cases, still with Matthew Passion Ouverture or Mozart
     # requiem
 
-    def test_father_work(self, command_output):
+    def test_direct_parent_work(self, command_output):
         mb_workid = u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a'
         self.assertEqual(u'f04b42df-7251-4d86-a5ee-67cfa49580d1',
                          parentwork.direct_parent_id(mb_workid)[0])
