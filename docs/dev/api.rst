@@ -45,16 +45,22 @@ responsible for handling queries to retrieve stored objects.
 
     .. automethod:: transaction
 
-.. _SQLite: http://sqlite.org/
-.. _ORM: http://en.wikipedia.org/wiki/Object-relational_mapping
+.. _SQLite: https://sqlite.org/
+.. _ORM: https://en.wikipedia.org/wiki/Object-relational_mapping
 
 
 Model Classes
 -------------
 
 The two model entities in beets libraries, :class:`Item` and :class:`Album`,
-share a base class, :class:`LibModel`, that provides common functionality and
-ORM-like abstraction.
+share a base class, :class:`LibModel`, that provides common functionality. That
+class itself specialises :class:`dbcore.Model` which provides an ORM-like
+abstraction.
+
+To get or change the metadata of a model (an item or album), either access its
+attributes (e.g., ``print(album.year)`` or ``album.year = 2012``) or use the
+``dict``-like interface (e.g. ``item['artist']``).
+
 
 Model base
 ''''''''''
@@ -84,8 +90,6 @@ synchronized (via load or store) with the database.
 
     .. automethod:: add
 
-    The fields model classes can be accessed using attributes (dots, as in
-    ``item.artist``) or items (brackets, as in ``item['artist']``).
     The base class :class:`dbcore.Model` has a ``dict``-like interface, so
     normal the normal mapping API is supported:
 
@@ -114,7 +118,7 @@ To make changes to either the database or the tags on a file, you
 update an item's fields (e.g., ``item.title = "Let It Be"``) and then call
 ``item.write()``.
 
-.. _MediaFile: http://mediafile.readthedocs.io/
+.. _MediaFile: https://mediafile.readthedocs.io/
 
 .. autoclass:: Item
 
@@ -157,6 +161,8 @@ An :class:`Album` is a collection of Items in the database. Every item in the
 database has either zero or one associated albums (accessible via
 ``item.album_id``).  An item that has no associated album is called a
 singleton.
+Changing fields on an album (e.g. ``album.year = 2012``) updates the album
+itself and also changes the same field in all associated items.
 
 An :class:`Album` object keeps track of album-level metadata, which is (mostly)
 a subset of the track-level metadata. The album-level metadata fields are
@@ -172,10 +178,8 @@ metadata field.
 
     .. automethod:: item_dir
 
-    To get or change an album's metadata, use its fields (e.g.,
-    ``print(album.year)`` or ``album.year = 2012``). Changing fields in this
-    way updates the album itself and also changes the same field in all
-    associated items:
+    Albums extend the normal model interface to also forward changes to their
+    items:
 
     .. autoattribute:: item_keys
 
