@@ -4,7 +4,7 @@ IPFS Plugin
 The ``ipfs`` plugin makes it easy to share your library and music with friends.
 The plugin uses `ipfs`_ for storing the library and file content.
 
-.. _ipfs: http://ipfs.io/
+.. _ipfs: https://ipfs.io/
 
 Installation
 ------------

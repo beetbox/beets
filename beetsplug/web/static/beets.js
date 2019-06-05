@@ -129,7 +129,7 @@ $.fn.player = function(debug) {
 
 // Simple selection disable for jQuery.
 // Cut-and-paste from:
-// http://stackoverflow.com/questions/2700000
+// https://stackoverflow.com/questions/2700000
 $.fn.disableSelection = function() {
     $(this).attr('unselectable', 'on')
            .css('-moz-user-select', 'none')

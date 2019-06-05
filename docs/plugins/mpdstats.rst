@@ -9,7 +9,7 @@ habits from `MPD`_.  It collects the following information about tracks:
 * last_played:  UNIX timestamp when you last played this track.
 * rating: A rating based on *play_count* and *skip_count*.
 
-.. _MPD: http://www.musicpd.org/
+.. _MPD: https://www.musicpd.org/
 
 Installing Dependencies
 -----------------------
@@ -23,7 +23,7 @@ Install the library from `pip`_, like so::
 
 Add the ``mpdstats`` plugin to your configuration (see :ref:`using-plugins`).
 
-.. _pip: http://www.pip-installer.org/
+.. _pip: https://pip.pypa.io
 
 Usage
 -----

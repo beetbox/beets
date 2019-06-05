@@ -31,7 +31,7 @@ In YAML, you will need to use spaces (not tabs!) to indent some lines. If you
 have questions about more sophisticated syntax, take a look at the `YAML`_
 documentation.
 
-.. _YAML: http://yaml.org/
+.. _YAML: https://yaml.org/
 
 The rest of this page enumerates the dizzying litany of configuration options
 available in beets. You might also want to see an
@@ -167,7 +167,7 @@ equivalent to wrapping all your path templates in the ``%asciify{}``
 
 Default: ``no``.
 
-.. _unidecode module: http://pypi.python.org/pypi/Unidecode
+.. _unidecode module: https://pypi.org/project/Unidecode
 
 
 .. _art-filename:
@@ -314,7 +314,7 @@ standard output. It's also used to read messages from the standard input.
 By default, this is determined automatically from the locale
 environment variables.
 
-.. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
+.. _known to python: https://docs.python.org/2/library/codecs.html#standard-encodings
 
 .. _clutter:
 
@@ -688,7 +688,7 @@ to one request per second.
 
 .. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
 .. _main server: https://musicbrainz.org/
-.. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
+.. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _Building search indexes: https://musicbrainz.org/doc/MusicBrainz_Server/Setup#Building_search_indexes
 
 .. _searchlimit:
@@ -981,6 +981,6 @@ Here's an example file::
     See Also
     --------
 
-    ``http://beets.readthedocs.org/``
+    ``https://beets.readthedocs.org/``
 
     :manpage:`beet(1)`

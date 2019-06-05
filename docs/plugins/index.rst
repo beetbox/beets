@@ -107,7 +107,7 @@ Autotagger Extensions
 * :doc:`fromfilename`: Guess metadata for untagged tracks from their
   filenames.
 
-.. _Discogs: http://www.discogs.com/
+.. _Discogs: https://www.discogs.com/
 
 Metadata
 --------
@@ -136,7 +136,7 @@ Metadata
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
-.. _streaming_extractor_music: http://acousticbrainz.org/download
+.. _streaming_extractor_music: https://acousticbrainz.org/download
 
 Path Formats
 ------------
@@ -169,10 +169,10 @@ Interoperability
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
 
 
-.. _Emby: http://emby.media
-.. _Plex: http://plex.tv
-.. _Kodi: http://kodi.tv
-.. _Sonos: http://sonos.com
+.. _Emby: https://emby.media
+.. _Plex: https://plex.tv
+.. _Kodi: https://kodi.tv
+.. _Sonos: https://sonos.com
 
 Miscellaneous
 -------------
@@ -194,14 +194,14 @@ Miscellaneous
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
-* `mstream`_: A music streaming server + webapp that can be used alongside beets. 
+* `mstream`_: A music streaming server + webapp that can be used alongside beets.
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.
 
-.. _MPD: http://www.musicpd.org/
-.. _MPD clients: http://mpd.wikia.com/wiki/Clients
+.. _MPD: https://www.musicpd.org/
+.. _MPD clients: https://mpd.wikia.com/wiki/Clients
 .. _mstream: https://github.com/IrosTheBeggar/mStream
 
 .. _other-plugins:

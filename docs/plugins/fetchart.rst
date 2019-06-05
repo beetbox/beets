@@ -11,7 +11,7 @@ To use the ``fetchart`` plugin, first enable it in your configuration (see
 
 The plugin uses `requests`_ to fetch album art from the Web.
 
-.. _requests: http://docs.python-requests.org/en/latest/
+.. _requests: https://docs.python-requests.org/en/latest/
 
 Fetching Album Art During Import
 --------------------------------
@@ -81,7 +81,7 @@ or `Pillow`_.
 
 .. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
 .. _Pillow: https://github.com/python-pillow/Pillow
-.. _ImageMagick: http://www.imagemagick.org/
+.. _ImageMagick: https://www.imagemagick.org/
 
 Here's an example that makes plugin select only images that contain ``front`` or
 ``back`` keywords in their filenames and prioritizes the iTunes source over
@@ -135,7 +135,7 @@ On some versions of Windows, the program can be shadowed by a system-provided
 environment variable so that ImageMagick comes first or use Pillow instead.
 
 .. _Pillow: https://github.com/python-pillow/Pillow
-.. _ImageMagick: http://www.imagemagick.org/
+.. _ImageMagick: https://www.imagemagick.org/
 
 .. _album-art-sources:
 
@@ -191,7 +191,7 @@ Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine`` configuration option. The
 default engine searches the entire web for cover art.
 
-.. _define a custom search engine: http://www.google.com/cse/all
+.. _define a custom search engine: https://www.google.com/cse/all
 
 Note that the Google custom search API is limited to 100 queries per day.
 After that, the fetchart plugin will fall back on other declared data sources.
