@@ -6,8 +6,8 @@ Got a question that isn't answered here? Try `IRC`_, the `discussion board`_, or
 :ref:`filing an issue <bugs>` in the bug tracker.
 
 .. _IRC: irc://irc.freenode.net/beets
-.. _mailing list: http://groups.google.com/group/beets-users
-.. _discussion board: http://discourse.beets.io
+.. _mailing list: https://groups.google.com/group/beets-users
+.. _discussion board: https://discourse.beets.io
 
 .. contents::
     :local:
@@ -94,14 +94,14 @@ the tracks into a single directory to force them to be tagged together.
 
 An MBID looks like one of these:
 
--  ``http://musicbrainz.org/release/ded77dcf-7279-457e-955d-625bd3801b87``
+-  ``https://musicbrainz.org/release/ded77dcf-7279-457e-955d-625bd3801b87``
 -  ``d569deba-8c6b-4d08-8c43-d0e5a1b8c7f3``
 
 Beets can recognize either the hex-with-dashes UUID-style string or the
 full URL that contains it (as of 1.0b11).
 
 You can get these IDs by `searching on the MusicBrainz web
-site <http://musicbrainz.org/>`__ and going to a *release* page (when
+site <https://musicbrainz.org/>`__ and going to a *release* page (when
 tagging full albums) or a *recording* page (when tagging singletons).
 Then, copy the URL of the page and paste it into beets.
 
@@ -119,7 +119,7 @@ Run a command like this::
 
     pip install -U beets
 
-The ``-U`` flag tells `pip <http://www.pip-installer.org>`__ to upgrade
+The ``-U`` flag tells `pip <https://pip.pypa.io/>`__ to upgrade
 beets to the latest version. If you want a specific version, you can
 specify with using ``==`` like so::
 
@@ -163,10 +163,10 @@ on GitHub. `Enter a new issue <https://github.com/beetbox/beets/issues/new>`__
 there to report a bug. Please follow these guidelines when reporting an issue:
 
 -  Most importantly: if beets is crashing, please `include the
-   traceback <http://imgur.com/jacoj>`__. Tracebacks can be more
+   traceback <https://imgur.com/jacoj>`__. Tracebacks can be more
    readable if you put them in a pastebin (e.g.,
    `Gist <https://gist.github.com/>`__ or
-   `Hastebin <http://hastebin.com/>`__), especially when communicating
+   `Hastebin <https://hastebin.com/>`__), especially when communicating
    over IRC or email.
 -  Turn on beets' debug output (using the -v option: for example,
    ``beet -v import ...``) and include that with your bug report. Look
@@ -188,7 +188,7 @@ there to report a bug. Please follow these guidelines when reporting an issue:
 
 If you've never reported a bug before, Mozilla has some well-written
 `general guidelines for good bug
-reports <http://www.mozilla.org/bugs/>`__.
+reports <https://www.mozilla.org/bugs/>`__.
 
 
 .. _find-config:
@@ -237,7 +237,7 @@ Why does beets…
 There are a number of possibilities:
 
 -  First, make sure the album is in `the MusicBrainz
-   database <http://musicbrainz.org/>`__. You
+   database <https://musicbrainz.org/>`__. You
    can search on their site to make sure it's cataloged there. (If not,
    anyone can edit MusicBrainz---so consider adding the data yourself.)
 -  If the album in question is a multi-disc release, see the relevant
@@ -320,7 +320,7 @@ it encounters files that *look* like music files (according to their
 extension) but seem to be broken. Most of the time, this is because the
 file is corrupted. To check whether the file is intact, try opening it
 in another media player (e.g.,
-`VLC <http://www.videolan.org/vlc/index.html>`__) to see whether it can
+`VLC <https://www.videolan.org/vlc/index.html>`__) to see whether it can
 read the file. You can also use specialized programs for checking file
 integrity---for example, type ``metaflac --list music.flac`` to check
 FLAC files.
@@ -378,4 +378,4 @@ installed using pip, the command ``pip show -f beets`` can show you where
 ``beet`` was placed on your system. If you need help extending your ``$PATH``,
 try `this Super User answer`_.
 
-.. _this Super User answer: http://superuser.com/a/284361/4569
+.. _this Super User answer: https://superuser.com/a/284361/4569

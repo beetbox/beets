@@ -26,8 +26,8 @@ In Kodi's interface, navigate to System/Settings/Network/Services and choose "Al
 With that all in place, you'll see beets send the "update" command to your Kodi
 host every time you change your beets library.
 
-.. _Kodi: http://kodi.tv/
-.. _requests: http://docs.python-requests.org/en/latest/
+.. _Kodi: https://kodi.tv/
+.. _requests: https://docs.python-requests.org/en/latest/
 
 Configuration
 -------------

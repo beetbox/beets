@@ -41,9 +41,9 @@ To configure the plugin, make a ``absubmit:`` section in your configuration file
 - **extractor**: The absolute path to the `streaming_extractor_music`_ binary.
   Default: search for the program in your ``$PATH``
 
-.. _streaming_extractor_music: http://acousticbrainz.org/download
-.. _FAQ: http://acousticbrainz.org/faq
-.. _pip: http://www.pip-installer.org/
-.. _requests: http://docs.python-requests.org/en/master/
+.. _streaming_extractor_music: https://acousticbrainz.org/download
+.. _FAQ: https://acousticbrainz.org/faq
+.. _pip: https://pip.pypa.io
+.. _requests: https://docs.python-requests.org/en/master/
 .. _github: https://github.com/MTG/essentia
 .. _AcousticBrainz: https://acousticbrainz.org

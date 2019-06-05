@@ -1,6 +1,6 @@
 #compdef beet
 
-# zsh completion for beets music library manager and MusicBrainz tagger: http://beets.radbox.org/
+# zsh completion for beets music library manager and MusicBrainz tagger: http://beets.io/
 
 # Default values for BEETS_LIBRARY & BEETS_CONFIG needed for the cache checking function.
 # They will be updated under the assumption that the config file is in the same directory as the library.

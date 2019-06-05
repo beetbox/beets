@@ -156,7 +156,7 @@ setup(
     #   badfiles: mp3val and flac
     #   bpd: python-gi and GStreamer 1.0+
     #   embedart: ImageMagick
-    #   absubmit: extractor binary from http://acousticbrainz.org/download
+    #   absubmit: extractor binary from https://acousticbrainz.org/download
     #   keyfinder: KeyFinder
     #   replaygain: python-gi and GStreamer 1.0+ or mp3gain/aacgain
     #               or Python Audio Tools

@@ -1216,7 +1216,7 @@ There are even more new features:
   don't actually need to be moved. :bug:`1583`
 
 .. _Google Code-In: https://codein.withgoogle.com/
-.. _AcousticBrainz: http://acousticbrainz.org/
+.. _AcousticBrainz: https://acousticbrainz.org/
 
 Fixes:
 
@@ -1358,7 +1358,7 @@ Fixes:
   communication errors. The backend has also been disabled by default, since
   the API it depends on is currently down. :bug:`1770`
 
-.. _Emby: http://emby.media
+.. _Emby: https://emby.media
 
 
 1.3.15 (October 17, 2015)
@@ -1520,8 +1520,8 @@ Fixes:
 * :doc:`/plugins/convert`: Fix a problem with filename encoding on Windows
   under Python 3. :bug:`2515` :bug:`2516`
 
-.. _Python bug: http://bugs.python.org/issue16512
-.. _ipfs: http://ipfs.io
+.. _Python bug: https://bugs.python.org/issue16512
+.. _ipfs: https://ipfs.io
 
 
 1.3.13 (April 24, 2015)
@@ -1872,7 +1872,7 @@ As usual, there are loads of little fixes and improvements:
 * The :ref:`config-cmd` command can now use ``$EDITOR`` variables with
   arguments.
 
-.. _API changes: http://developer.echonest.com/forums/thread/3650
+.. _API changes: https://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
 .. _musixmatch: https://www.musixmatch.com/
 
@@ -2352,7 +2352,7 @@ Fixes:
 * :doc:`/plugins/convert`: Display a useful error message when the FFmpeg
   executable can't be found.
 
-.. _requests: http://www.python-requests.org/
+.. _requests: https://www.python-requests.org/
 
 
 1.3.3 (February 26, 2014)
@@ -2534,7 +2534,7 @@ As usual, there are also innumerable little fixes and improvements:
 
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
-.. _MPD: http://www.musicpd.org/
+.. _MPD: https://www.musicpd.org/
 
 
 1.3.1 (October 12, 2013)
@@ -2601,7 +2601,7 @@ And some fixes:
 * :doc:`/plugins/scrub`: Avoid preserving certain non-standard ID3 tags such
   as NCON.
 
-.. _Opus: http://www.opus-codec.org/
+.. _Opus: https://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus
 
 
@@ -2833,8 +2833,8 @@ And a batch of fixes:
 * :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
   to some fixes in dealing with special characters.
 
-.. _Discogs: http://discogs.com/
-.. _Beatport: http://www.beatport.com/
+.. _Discogs: https://discogs.com/
+.. _Beatport: https://www.beatport.com/
 
 
 1.1.0 (April 29, 2013)
@@ -2883,7 +2883,7 @@ will automatically migrate your configuration to the new system.
   header. Thanks to Uwe L. Korn.
 * :doc:`/plugins/lastgenre`: Fix an error when using genre canonicalization.
 
-.. _Tomahawk: http://www.tomahawk-player.org/
+.. _Tomahawk: https://tomahawk-player.org/
 
 1.1b3 (March 16, 2013)
 ----------------------
@@ -3058,7 +3058,7 @@ Other new stuff:
   (YAML doesn't like tabs.)
 * Fix the ``-l`` (log path) command-line option for the ``import`` command.
 
-.. _iTunes Sound Check: http://support.apple.com/kb/HT2425
+.. _iTunes Sound Check: https://support.apple.com/kb/HT2425
 
 1.1b1 (January 29, 2013)
 ------------------------
@@ -3067,7 +3067,7 @@ This release entirely revamps beets' configuration system. The configuration
 file is now a `YAML`_ document and is located, along with other support files,
 in a common directory (e.g., ``~/.config/beets`` on Unix-like systems).
 
-.. _YAML: http://en.wikipedia.org/wiki/YAML
+.. _YAML: https://en.wikipedia.org/wiki/YAML
 
 * Renamed plugins: The ``rdm`` plugin has been renamed to ``random`` and
   ``fuzzy_search`` has been renamed to ``fuzzy``.
@@ -3229,7 +3229,7 @@ begins today on features for version 1.1.
 .. _The Echo Nest: http://the.echonest.com/
 .. _Tomahawk resolver: http://beets.io/blog/tomahawk-resolver.html
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
-.. _aacgain: http://aacgain.altosdesign.com
+.. _aacgain: https://aacgain.altosdesign.com
 
 1.0b15 (July 26, 2012)
 ----------------------
@@ -3338,7 +3338,7 @@ fetching cover art for your music, enable this plugin after upgrading to beets
   database with ``beet import -AWC /path/to/music``.
 * Fix ``import`` with relative path arguments on Windows.
 
-.. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
+.. _artist credits: https://wiki.musicbrainz.org/Artist_Credit
 
 1.0b14 (May 12, 2012)
 ---------------------
@@ -3496,7 +3496,7 @@ to come in the next couple of releases.
   data.
 * Fix the ``list`` command in BPD (thanks to Simon Chopin).
 
-.. _Colorama: http://pypi.python.org/pypi/colorama
+.. _Colorama: https://pypi.python.org/pypi/colorama
 
 1.0b12 (January 16, 2012)
 -------------------------
@@ -3609,12 +3609,12 @@ release: one for assigning genres and another for ReplayGain analysis.
   corrupted.
 
 .. _KraYmer: https://github.com/KraYmer
-.. _Next Generation Schema: http://musicbrainz.org/doc/XML_Web_Service/Version_2
+.. _Next Generation Schema: https://musicbrainz.org/doc/XML_Web_Service/Version_2
 .. _python-musicbrainzngs: https://github.com/alastair/python-musicbrainzngs
-.. _acoustid: http://acoustid.org/
+.. _acoustid: https://acoustid.org/
 .. _Peter Brunner: https://github.com/Lugoues
 .. _Simon Chopin: https://github.com/laarmen
-.. _albumart.org: http://www.albumart.org/
+.. _albumart.org: https://www.albumart.org/
 
 1.0b10 (September 22, 2011)
 ---------------------------
@@ -3783,8 +3783,8 @@ below, for a plethora of new features.
 
 * Fix a crash on album queries with item-only field names.
 
-.. _xargs: http://en.wikipedia.org/wiki/xargs
-.. _unidecode: http://pypi.python.org/pypi/Unidecode/0.04.1
+.. _xargs: https://en.wikipedia.org/wiki/xargs
+.. _unidecode: https://pypi.python.org/pypi/Unidecode/0.04.1
 
 1.0b8 (April 28, 2011)
 ----------------------
@@ -3927,7 +3927,7 @@ new configuration options and the ability to clean up empty directory subtrees.
 
 * The old "albumify" plugin for upgrading databases was removed.
 
-.. _as specified by MusicBrainz: http://wiki.musicbrainz.org/ReleaseType
+.. _as specified by MusicBrainz: https://wiki.musicbrainz.org/ReleaseType
 
 1.0b6 (January 20, 2011)
 ------------------------
@@ -4043,7 +4043,7 @@ are also rolled into this release.
 
 * Fixed escaping of ``/`` characters in paths on Windows.
 
-.. _!!!: http://musicbrainz.org/artist/f26c72d3-e52c-467b-b651-679c73d8e1a7.html
+.. _!!!: https://musicbrainz.org/artist/f26c72d3-e52c-467b-b651-679c73d8e1a7.html
 
 1.0b4 (August 9, 2010)
 ----------------------
@@ -4232,7 +4232,7 @@ Vorbis) and an option to log untaggable albums during import.
   removed dependency on the aging ``cmdln`` module in favor of `a hand-rolled
   solution`_.
 
-.. _a hand-rolled solution: http://gist.github.com/462717
+.. _a hand-rolled solution: https://gist.github.com/462717
 
 1.0b1 (June 17, 2010)
 ---------------------

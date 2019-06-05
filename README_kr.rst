@@ -1,7 +1,7 @@
-.. image:: http://img.shields.io/pypi/v/beets.svg
+.. image:: https://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
 
-.. image:: http://img.shields.io/codecov/c/github/beetbox/beets.svg
+.. image:: https://img.shields.io/codecov/c/github/beetbox/beets.svg
     :target: https://codecov.io/github/beetbox/beets
 
 .. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
@@ -48,28 +48,28 @@ Beets는 라이브러리로 디자인 되었기 때문에, 당신이 음악들�
 만약 Beets에 당신이 원하는게 아직 없다면, 
 당신이 python을 안다면 `writing your own plugin`_ _은 놀라울정도로 간단하다.
 
-.. _plugins: http://beets.readthedocs.org/page/plugins/
-.. _MPD: http://www.musicpd.org/
-.. _MusicBrainz music collection: http://musicbrainz.org/doc/Collections/
+.. _plugins: https://beets.readthedocs.org/page/plugins/
+.. _MPD: https://www.musicpd.org/
+.. _MusicBrainz music collection: https://musicbrainz.org/doc/Collections/
 .. _writing your own plugin:
-    http://beets.readthedocs.org/page/dev/plugins.html
+    https://beets.readthedocs.org/page/dev/plugins.html
 .. _HTML5 Audio:
     http://www.w3.org/TR/html-markup/audio.html
 .. _albums that are missing tracks:
-    http://beets.readthedocs.org/page/plugins/missing.html
+    https://beets.readthedocs.org/page/plugins/missing.html
 .. _duplicate tracks and albums:
-    http://beets.readthedocs.org/page/plugins/duplicates.html
+    https://beets.readthedocs.org/page/plugins/duplicates.html
 .. _Transcode audio:
-    http://beets.readthedocs.org/page/plugins/convert.html
-.. _Discogs: http://www.discogs.com/
+    https://beets.readthedocs.org/page/plugins/convert.html
+.. _Discogs: https://www.discogs.com/
 .. _acoustic fingerprints:
-    http://beets.readthedocs.org/page/plugins/chroma.html
-.. _ReplayGain: http://beets.readthedocs.org/page/plugins/replaygain.html
-.. _tempos: http://beets.readthedocs.org/page/plugins/acousticbrainz.html
-.. _genres: http://beets.readthedocs.org/page/plugins/lastgenre.html
-.. _album art: http://beets.readthedocs.org/page/plugins/fetchart.html
-.. _lyrics: http://beets.readthedocs.org/page/plugins/lyrics.html
-.. _MusicBrainz: http://musicbrainz.org/
+    https://beets.readthedocs.org/page/plugins/chroma.html
+.. _ReplayGain: https://beets.readthedocs.org/page/plugins/replaygain.html
+.. _tempos: https://beets.readthedocs.org/page/plugins/acousticbrainz.html
+.. _genres: https://beets.readthedocs.org/page/plugins/lastgenre.html
+.. _album art: https://beets.readthedocs.org/page/plugins/fetchart.html
+.. _lyrics: https://beets.readthedocs.org/page/plugins/lyrics.html
+.. _MusicBrainz: https://musicbrainz.org/
 .. _Beatport: https://www.beatport.com
 
 설치
@@ -78,7 +78,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 당신이 음악들�
 당신은 ``pip install beets`` 을 사용해서 Beets를 설치할 수 있다.
 그리고 `Getting Started`_ 가이드를 확인할 수 있다.
 
-.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+.. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
 
 컨트리뷰션
 ----------
@@ -87,16 +87,16 @@ Beets는 라이브러리로 디자인 되었기 때문에, 당신이 음악들�
 당신은 docs 안에 `For Developers`_ 에도 관심이 있을수 있다.
 
 .. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
-.. _For Developers: http://docs.beets.io/page/dev/
+.. _For Developers: https://beets.readthedocs.io/en/stable/dev/
 
 Read More
 ---------
 
-`its Web site`_ 에서 Beets에 대해 조금 더 알아볼 수 있다. 
+`its Web site`_ 에서 Beets에 대해 조금 더 알아볼 수 있다.
 트위터에서 `@b33ts`_ 를 팔로우하면 새 소식을 볼 수 있다.
 
-.. _its Web site: http://beets.io/
-.. _@b33ts: http://twitter.com/b33ts/
+.. _its Web site: https://beets.io/
+.. _@b33ts: https://twitter.com/b33ts/
 
 저자들
 -------
@@ -105,4 +105,4 @@ Read More
 돕고 싶다면 `forum`_.를 방문하면 된다.
 
 .. _forum: https://discourse.beets.io
-.. _Adrian Sampson: http://www.cs.cornell.edu/~asampson/
+.. _Adrian Sampson: https://www.cs.cornell.edu/~asampson/
