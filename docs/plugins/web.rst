@@ -90,7 +90,7 @@ for unsupported formats/browsers. There are a number of options for this:
 
 .. _audio.js: https://kolber.github.io/audiojs/
 .. _html5media: https://html5media.info/
-.. _MediaElement.js: http://mediaelementjs.com/
+.. _MediaElement.js: https://mediaelementjs.com/
 
 .. _web-cors:
 

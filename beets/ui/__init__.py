@@ -204,7 +204,7 @@ def input_(prompt=None):
     """
     # raw_input incorrectly sends prompts to stderr, not stdout, so we
     # use print_() explicitly to display prompts.
-    # http://bugs.python.org/issue1927
+    # https://bugs.python.org/issue1927
     if prompt:
         print_(prompt, end=u' ')
 
@@ -475,7 +475,7 @@ def human_seconds_short(interval):
 # Colorization.
 
 # ANSI terminal colorization code heavily inspired by pygments:
-# http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
+# https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
 COLOR_ESCAPE = "\x1b["
 DARK_COLORS = {
@@ -929,7 +929,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
 #
 # This is a fairly generic subcommand parser for optparse. It is
 # maintained externally here:
-# http://gist.github.com/462717
+# https://gist.github.com/462717
 # There you will also find a better description of the code and a more
 # succinct example program.
 

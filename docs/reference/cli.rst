@@ -453,7 +453,7 @@ available via your package manager. On OS X, you can install it via Homebrew
 with ``brew install bash-completion``; Homebrew will give you instructions for
 sourcing the script.
 
-.. _bash-completion: http://bash-completion.alioth.debian.org/
+.. _bash-completion: https://github.com/scop/bash-completion
 .. _bash: https://www.gnu.org/software/bash/
 
 The completion script suggests names of subcommands and (after typing
