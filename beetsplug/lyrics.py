@@ -55,6 +55,7 @@ except ImportError:
 
 from beets import plugins
 from beets import ui
+from beets import util
 import beets
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
@@ -406,7 +407,10 @@ class Genius(Backend):
 class LyricsWiki(SymbolsReplaced):
     """Fetch lyrics from LyricsWiki."""
 
-    URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
+    if util.SNI_SUPPORTED:
+        URL_PATTERN = 'https://lyrics.wikia.com/%s:%s'
+    else:
+        URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
 
     def fetch(self, artist, title):
         url = self.build_url(artist, title)
