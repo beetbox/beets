@@ -242,7 +242,7 @@ to interact directly with the underlying SQLite database, you must use a
         items = lib.items(query)
         lib.add_album(list(items))
 
-.. _blog post: http://beets.io/blog/sqlite-nightmare.html
+.. _blog post: https://beets.io/blog/sqlite-nightmare.html
 
 .. currentmodule:: beets.dbcore.db
 

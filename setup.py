@@ -60,7 +60,7 @@ setup(
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
-    url='http://beets.io/',
+    url='https://beets.io/',
     license='MIT',
     platforms='ALL',
     long_description=_read('README.rst'),
