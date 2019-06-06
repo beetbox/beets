@@ -103,7 +103,7 @@ Read More
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-.. _its Web site: http://beets.io/
+.. _its Web site: https://beets.io/
 .. _@b33ts: https://twitter.com/b33ts/
 
 Authors
