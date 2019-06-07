@@ -420,7 +420,7 @@ class FanartTV(RemoteArtSource):
 
         try:
             response = self.request(
-                self.API_ALBUMS + album.mb_releasegroupid,
+                self.API_ALBUMS + str(album.mb_releasegroupid),
                 headers={'api-key': self.PROJECT_KEY,
                          'client-key': self.client_key})
         except requests.RequestException:
