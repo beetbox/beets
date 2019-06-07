@@ -77,14 +77,9 @@ class ParentWorkPlugin(BeetsPlugin):
             'auto': False,
             'force': False,
         })
-        
 
         if self.config['auto']:
             self.import_stages = [self.imported]
-            self.register_listener('database_change', self.find_work2)
-
-    def find_work2(self, lib, model):
-        self.find_work(model, True)
 
     def commands(self):
 
@@ -161,7 +156,8 @@ https://musicbrainz.org/work/{}', item, work_info['work']['id'])
         accordingly.
 
         Namely, the tags parentwork, parentwork_disambig, mb_parentworkid,
-        parent_composer, parent_composer_sort and work_date are populated.
+        parent_composer, parent_composer_sort, mb_workid_current and work_date
+        are populated.
         """
 
         if hasattr(item, 'parentwork'):
@@ -172,13 +168,17 @@ https://musicbrainz.org/work/{}', item, work_info['work']['id'])
             self._log.info('No work for {}, \
 add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
             return
-        if force or (not hasparent):
+        workcorrect=True
+        if hasattr(item, 'mb_workid_current'):
+            workcorrect=item.mb_workid_current==item.mb_workid
+        if force or (not hasparent) or (not workcorrect):
             try:
                 work_info, work_date = find_parentwork_info(item.mb_workid)
             except musicbrainzngs.musicbrainz.WebServiceError as e:
                 self._log.debug("error fetching work: {}", e)
                 return
             parent_info = self.get_info(item, work_info)
+            parent_info['mb_workid_current']=item.mb_workid
             if 'parent_composer' in parent_info:
                 self._log.debug("Work fetched: {} - {}",
                                 parent_info['parentwork'],
