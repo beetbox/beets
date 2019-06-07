@@ -480,7 +480,7 @@ class Model(object):
 
     # Database interaction (CRUD methods).
 
-    def store(self, fields=None):
+    def store(self, fields=None, txn=None):
         """Save the object's metadata into the library database.
         :param fields: the fields to be stored. If not specified, all fields
         will be.
@@ -500,7 +500,7 @@ class Model(object):
                 subvars.append(value)
         assignments = ','.join(assignments)
 
-        with self._db.transaction() as tx:
+        with self._db.transaction(txn) as tx:
             # Main table update.
             if assignments:
                 query = 'UPDATE {0} SET {1} WHERE id=?'.format(
@@ -541,11 +541,11 @@ class Model(object):
         self.update(dict(stored_obj))
         self.clear_dirty()
 
-    def remove(self):
+    def remove(self, txn=None):
         """Remove the object's associated rows from the database.
         """
         self._check_db()
-        with self._db.transaction() as tx:
+        with self._db.transaction(txn) as tx:
             tx.mutate(
                 'DELETE FROM {0} WHERE id=?'.format(self._table),
                 (self.id,)
@@ -555,7 +555,7 @@ class Model(object):
                 (self.id,)
             )
 
-    def add(self, db=None):
+    def add(self, db=None, txn=None):
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -567,7 +567,7 @@ class Model(object):
             self._db = db
         self._check_db(False)
 
-        with self._db.transaction() as tx:
+        with self._db.transaction(txn) as tx:
             new_id = tx.mutate(
                 'INSERT INTO {0} DEFAULT VALUES'.format(self._table)
             )
@@ -933,6 +933,12 @@ class Database(object):
         with self._shared_map_lock:
             self._connections.clear()
 
+    def bulk_add(self, models):
+        """Add a series of items within a single SQLite transaction."""
+        with Transaction(self) as txn:
+            for model in models:
+                model.add(self, txn)
+
     @contextlib.contextmanager
     def _tx_stack(self):
         """A context manager providing access to the current thread's
@@ -943,11 +949,11 @@ class Database(object):
         with self._shared_map_lock:
             yield self._tx_stacks[thread_id]
 
-    def transaction(self):
+    def transaction(self, txn=None):
         """Get a :class:`Transaction` object for interacting directly
         with the underlying SQLite database.
         """
-        return Transaction(self)
+        return txn or Transaction(self)
 
     def load_extension(self, path):
         """Load an SQLite extension into all open connections."""
