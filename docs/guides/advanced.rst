@@ -127,7 +127,7 @@ And, unlike :ref:`built-in fields <itemfields>`, such fields can be removed::
 Read more than you ever wanted to know about the *flexible attributes*
 feature `on the beets blog`_.
 
-.. _on the beets blog: http://beets.io/blog/flexattr.html
+.. _on the beets blog: https://beets.io/blog/flexattr.html
 
 
 Choose a path style manually for some music

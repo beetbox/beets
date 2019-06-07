@@ -34,7 +34,7 @@ import confuse
 
 
 AUTH_ERRORS = (TokenRequestDenied, TokenMissing, VerifierMissing)
-USER_AGENT = u'beets/{0} +http://beets.io/'.format(beets.__version__)
+USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
 
 
 class BeatportAPIError(Exception):
@@ -109,7 +109,7 @@ class BeatportClient(object):
         :rtype:             (unicode, unicode) tuple
         """
         self.api.parse_authorization_response(
-            "http://beets.io/auth?" + auth_data)
+            "https://beets.io/auth?" + auth_data)
         access_data = self.api.fetch_access_token(
             self._make_url('/identity/1/oauth/access-token'))
         return access_data['oauth_token'], access_data['oauth_token_secret']

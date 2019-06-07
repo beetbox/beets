@@ -4,7 +4,7 @@ Getting Started
 Welcome to `beets`_! This guide will help you begin using it to make your music
 collection better.
 
-.. _beets: http://beets.io/
+.. _beets: https://beets.io/
 
 Installing
 ----------
@@ -43,7 +43,7 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 * On **Fedora** 22 or later, there is a `DNF package`_::
 
       $ sudo dnf install beets beets-plugins beets-doc
-      
+
 * On **Solus**, run ``eopkg install beets``.
 
 * On **NixOS**, there's a `package <NixOS_>`_ you can install with ``nix-env -i beets``.

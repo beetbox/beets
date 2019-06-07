@@ -39,7 +39,7 @@ else:
 SKIPPED_TRACKS = ['[data track]']
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
-                             'http://beets.io/')
+                             'https://beets.io/')
 
 
 class MusicBrainzAPIError(util.HumanReadableException):
