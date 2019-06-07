@@ -156,8 +156,7 @@ https://musicbrainz.org/work/{}', item, work_info['work']['id'])
         accordingly.
 
         Namely, the tags parentwork, parentwork_disambig, mb_parentworkid,
-        parent_composer, parent_composer_sort, mb_workid_current and work_date
-        are populated.
+        parent_composer, parent_composer_sort and work_date are populated.
         """
 
         if hasattr(item, 'parentwork'):
