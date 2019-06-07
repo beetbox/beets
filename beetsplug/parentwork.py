@@ -77,9 +77,14 @@ class ParentWorkPlugin(BeetsPlugin):
             'auto': False,
             'force': False,
         })
+        
 
         if self.config['auto']:
             self.import_stages = [self.imported]
+            self.register_listener('database_change', self.find_work2)
+
+    def find_work2(self, lib, model):
+        self.find_work(model, True)
 
     def commands(self):
 
