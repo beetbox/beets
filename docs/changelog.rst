@@ -1241,7 +1241,7 @@ Fixes:
 * :doc:`/plugins/replaygain`: Fix a crash using the Python Audio Tools
   backend. :bug:`1873`
 
-.. _beets.io: http://beets.io/
+.. _beets.io: https://beets.io/
 .. _Beetbox: https://github.com/beetbox
 
 
@@ -2639,7 +2639,7 @@ previous versions would spit out a warning and then list your entire library.
 
 There's more detail than you could ever need `on the beets blog`_.
 
-.. _on the beets blog: http://beets.io/blog/flexattr.html
+.. _on the beets blog: https://beets.io/blog/flexattr.html
 
 
 1.2.2 (August 27, 2013)
@@ -3227,7 +3227,7 @@ begins today on features for version 1.1.
   unintentionally loading the plugins they contain.
 
 .. _The Echo Nest: http://the.echonest.com/
-.. _Tomahawk resolver: http://beets.io/blog/tomahawk-resolver.html
+.. _Tomahawk resolver: https://beets.io/blog/tomahawk-resolver.html
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
 .. _aacgain: https://aacgain.altosdesign.com
 

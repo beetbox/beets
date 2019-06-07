@@ -37,7 +37,7 @@ import traceback
 from string import ascii_lowercase
 
 
-USER_AGENT = u'beets/{0} +http://beets.io/'.format(beets.__version__)
+USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (ConnectionError, socket.error, http_client.HTTPException,

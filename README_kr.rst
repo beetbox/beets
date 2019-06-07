@@ -34,7 +34,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 당신이 음악들�
 - 필요하는 메타 데이터를 계산하거나 패치 할 때: `album art`_,
   `lyrics`_, `genres`_, `tempos`_, `ReplayGain`_ levels, or `acoustic
   fingerprints`_.
-- `MusicBrainz`_, `Discogs`_,`Beatport`_로부터 메타데이터를 가져오거나, 
+- `MusicBrainz`_, `Discogs`_,`Beatport`_로부터 메타데이터를 가져오거나,
   노래 제목이나 음향 특징으로 메타데이터를 추측한다
 - `Transcode audio`_ 당신이 좋아하는 어떤 포맷으로든 변경한다.
 - 당신의 라이브러리에서 `duplicate tracks and albums`_ 이나 `albums that are missing tracks`_ 를 검사한다.
@@ -45,7 +45,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 당신이 음악들�
 - 명령어로부터 음악 파일의 메타데이터를 분석할 수 있다.
 - `MPD`_ 프로토콜을 사용하여 음악 플레이어로 음악을 들으면, 엄청나게 다양한 인터페이스로 작동한다.
 
-만약 Beets에 당신이 원하는게 아직 없다면, 
+만약 Beets에 당신이 원하는게 아직 없다면,
 당신이 python을 안다면 `writing your own plugin`_ _은 놀라울정도로 간단하다.
 
 .. _plugins: https://beets.readthedocs.org/page/plugins/
