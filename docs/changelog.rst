@@ -35,6 +35,9 @@ Fixes:
   fixing crashes in MPD clients like mpDris2 on seek.
   The ``playlistid`` command now works properly in its zero-argument form.
   :bug:`3214`
+* :doc:`/plugins/replaygain`: Fix a Python 3 incompatibility in the Python
+  Audio Tools backend.
+  :bug:`3305`
 
 For plugin developers:
 

@@ -713,7 +713,7 @@ class AudioToolsBackend(Backend):
         file format is not supported
         """
         try:
-            audiofile = self._mod_audiotools.open(item.path)
+            audiofile = self._mod_audiotools.open(py3_path(syspath(item.path)))
         except IOError:
             raise ReplayGainError(
                 u"File {} was not found".format(item.path)
