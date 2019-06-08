@@ -26,7 +26,7 @@ from beets.importer import SingletonImportTask, SentinelImportTask, \
 from beets import plugins, config, ui
 from beets.library import Item
 from beets.dbcore import types
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets.util import displayable_path, bytestring_path, syspath
 
 from test.test_importer import ImportHelper, AutotagStub
@@ -322,7 +322,7 @@ class ListenersTest(unittest.TestCase, TestHelper):
     @patch('beets.plugins.find_plugins')
     @patch('beets.plugins.inspect')
     def test_events_called(self, mock_inspect, mock_find_plugins):
-        mock_inspect.getargspec.return_value = None
+        mock_inspect.getargspec.args.return_value = None
 
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):

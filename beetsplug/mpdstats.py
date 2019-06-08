@@ -107,17 +107,17 @@ class MPDClientWrapper(object):
         self.connect()
         return self.get(command, retries=retries - 1)
 
-    def playlist(self):
-        """Return the currently active playlist.  Prefixes paths with the
+    def currentsong(self):
+        """Return the path to the currently playing song.  Prefixes paths with the
         music_directory, to get the absolute path.
         """
-        result = {}
-        for entry in self.get('playlistinfo'):
+        result = None
+        entry = self.get('currentsong')
+        if 'file' in entry:
             if not is_url(entry['file']):
-                result[entry['id']] = os.path.join(
-                    self.music_directory, entry['file'])
+                result = os.path.join(self.music_directory, entry['file'])
             else:
-                result[entry['id']] = entry['file']
+                result = entry['file']
         return result
 
     def status(self):
@@ -250,8 +250,8 @@ class MPDStats(object):
         self.now_playing = None
 
     def on_play(self, status):
-        playlist = self.mpd.playlist()
-        path = playlist.get(status['songid'])
+
+        path = self.mpd.currentsong()
 
         if not path:
             return
@@ -326,7 +326,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'rating':          True,
             'rating_mix':      0.75,
             'host':            os.environ.get('MPD_HOST', u'localhost'),
-            'port':            6600,
+            'port':            int(os.environ.get('MPD_PORT', 6600)),
             'password':        u'',
         })
         mpd_config['password'].redact = True

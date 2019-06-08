@@ -217,7 +217,7 @@ beatles`` prints out the number of tracks on each Beatles album. In Unix shells,
 remember to enclose the template argument in single quotes to avoid environment
 variable expansion.
 
-.. _xargs: http://en.wikipedia.org/wiki/Xargs
+.. _xargs: https://en.wikipedia.org/wiki/Xargs
 
 .. _remove-cmd:
 
@@ -453,7 +453,7 @@ available via your package manager. On OS X, you can install it via Homebrew
 with ``brew install bash-completion``; Homebrew will give you instructions for
 sourcing the script.
 
-.. _bash-completion: http://bash-completion.alioth.debian.org/
+.. _bash-completion: https://github.com/scop/bash-completion
 .. _bash: https://www.gnu.org/software/bash/
 
 The completion script suggests names of subcommands and (after typing
@@ -498,6 +498,6 @@ defines some bash-specific functions to make this work without errors::
     See Also
     --------
 
-    ``http://beets.readthedocs.org/``
+    ``https://beets.readthedocs.org/``
 
     :manpage:`beetsconfig(5)`

@@ -45,7 +45,7 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
 
     def _run_with_yaml_output(self, *args):
         output = self.run_with_output(*args)
-        return yaml.load(output)
+        return yaml.safe_load(output)
 
     def test_show_user_config(self):
         output = self._run_with_yaml_output('config', '-c')

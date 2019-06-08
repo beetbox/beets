@@ -41,4 +41,4 @@ your entire collection.
 Use the ``-d`` flag to remove featured artists (equivalent of the ``drop``
 config option).
 
-.. _MusicBrainz style: http://musicbrainz.org/doc/Style
+.. _MusicBrainz style: https://musicbrainz.org/doc/Style

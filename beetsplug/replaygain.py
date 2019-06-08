@@ -250,7 +250,14 @@ class Bs1770gainBackend(Backend):
                 state['gain'] = state['peak'] = None
         parser.StartElementHandler = start_element_handler
         parser.EndElementHandler = end_element_handler
-        parser.Parse(text, True)
+
+        try:
+            parser.Parse(text, True)
+        except xml.parsers.expat.ExpatError:
+            raise ReplayGainError(
+                u'The bs1770gain tool produced malformed XML. '
+                'Using version >=0.4.10 may solve this problem.'
+            )
 
         if len(per_file_gain) != len(path_list):
             raise ReplayGainError(

@@ -24,7 +24,7 @@ from test import _common
 from test import helper
 from test.helper import control_stdin, capture_log
 
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets import util
 
 

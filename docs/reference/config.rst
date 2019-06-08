@@ -31,7 +31,7 @@ In YAML, you will need to use spaces (not tabs!) to indent some lines. If you
 have questions about more sophisticated syntax, take a look at the `YAML`_
 documentation.
 
-.. _YAML: http://yaml.org/
+.. _YAML: https://yaml.org/
 
 The rest of this page enumerates the dizzying litany of configuration options
 available in beets. You might also want to see an
@@ -167,7 +167,7 @@ equivalent to wrapping all your path templates in the ``%asciify{}``
 
 Default: ``no``.
 
-.. _unidecode module: http://pypi.python.org/pypi/Unidecode
+.. _unidecode module: https://pypi.org/project/Unidecode
 
 
 .. _art-filename:
@@ -314,7 +314,7 @@ standard output. It's also used to read messages from the standard input.
 By default, this is determined automatically from the locale
 environment variables.
 
-.. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
+.. _known to python: https://docs.python.org/2/library/codecs.html#standard-encodings
 
 .. _clutter:
 
@@ -508,9 +508,10 @@ incremental_skip_later
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Either ``yes`` or ``no``, controlling whether skipped directories are
-recorded in the incremental list. Set this option to ``yes`` if you would
-like to revisit skipped directories later whilst using incremental
-mode. Defaults to ``no``.
+recorded in the incremental list. When set to ``yes``, skipped directories
+will be recorded, and skipped later. When set to ``no``, skipped
+directories won't be recorded, and beets will try to import them again
+later. Defaults to ``no``.
 
 .. _from_scratch:
 
@@ -520,6 +521,17 @@ from_scratch
 Either ``yes`` or ``no`` (default), controlling whether existing metadata is
 discarded when a match is applied. This corresponds to the ``--from_scratch``
 flag to ``beet import``.
+
+.. _quiet:
+
+quiet
+~~~~~
+
+Either ``yes`` or ``no`` (default), controlling whether to ask for a manual
+decision from the user when the importer is unsure how to proceed. This
+corresponds to the ``--quiet`` flag to ``beet import``.
+
+.. _quiet_fallback:
 
 quiet_fallback
 ~~~~~~~~~~~~~~
@@ -571,9 +583,11 @@ languages
 ~~~~~~~~~
 
 A list of locale names to search for preferred aliases. For example, setting
-this to "en" uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
+this to ``en`` uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
 instead of the Cyrillic script for the composer's name when tagging from
-MusicBrainz. Defaults to an empty list, meaning that no language is preferred.
+MusicBrainz. You can use a space-separated list of language abbreviations, like 
+``en jp es``, to specify a preference order. Defaults to an empty list, meaning 
+that no language is preferred.
 
 .. _detail:
 
@@ -674,7 +688,7 @@ to one request per second.
 
 .. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
 .. _main server: https://musicbrainz.org/
-.. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
+.. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _Building search indexes: https://musicbrainz.org/doc/MusicBrainz_Server/Setup#Building_search_indexes
 
 .. _searchlimit:
@@ -801,6 +815,8 @@ the penalty name to the ``ignored`` setting::
         ignored: missing_tracks unmatched_tracks
 
 The available penalties are the same as those for the :ref:`max_rec` setting.
+
+For example, setting ``ignored: missing_tracks`` will skip any album matches where your audio files are missing some of the tracks. The importer will not attempt to display these matches. It does not ignore the fact that the album is missing tracks, which would allow these matches to apply more easily. To do that, you'll want to adjust the penalty for missing tracks.
 
 .. _required:
 
@@ -965,6 +981,6 @@ Here's an example file::
     See Also
     --------
 
-    ``http://beets.readthedocs.org/``
+    ``https://beets.readthedocs.org/``
 
     :manpage:`beet(1)`

@@ -55,6 +55,7 @@ except ImportError:
 
 from beets import plugins
 from beets import ui
+from beets import util
 import beets
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
@@ -406,7 +407,10 @@ class Genius(Backend):
 class LyricsWiki(SymbolsReplaced):
     """Fetch lyrics from LyricsWiki."""
 
-    URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
+    if util.SNI_SUPPORTED:
+        URL_PATTERN = 'https://lyrics.wikia.com/%s:%s'
+    else:
+        URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
 
     def fetch(self, artist, title):
         url = self.build_url(artist, title)
@@ -446,7 +450,7 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = html.replace('\r', '\n')  # Normalize EOL.
     html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
     html = BREAK_RE.sub('\n', html)  # <br> eats up surrounding '\n'.
-    html = re.sub(r'<(script).*?</\1>(?s)', '', html)  # Strip script tags.
+    html = re.sub(r'(?s)<(script).*?</\1>', '', html)  # Strip script tags.
 
     if plain_text_out:  # Strip remaining HTML tags
         html = COMMENT_RE.sub('', html)

@@ -4,7 +4,7 @@ Discogs Plugin
 The ``discogs`` plugin extends the autotagger's search capabilities to
 include matches from the `Discogs`_ database.
 
-.. _Discogs: http://discogs.com
+.. _Discogs: https://discogs.com
 
 Installation
 ------------

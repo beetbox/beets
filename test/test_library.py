@@ -30,12 +30,11 @@ import unittest
 from test import _common
 from test._common import item
 import beets.library
-import beets.mediafile
 import beets.dbcore.query
 from beets import util
 from beets import plugins
 from beets import config
-from beets.mediafile import MediaFile
+from mediafile import MediaFile, UnreadableFileError
 from beets.util import syspath, bytestring_path
 from test.helper import TestHelper
 import six
@@ -1169,7 +1168,7 @@ class ItemReadTest(unittest.TestCase):
         with self.assertRaises(beets.library.ReadError) as cm:
             item.read(unreadable)
         self.assertIsInstance(cm.exception.reason,
-                              beets.mediafile.UnreadableFileError)
+                              UnreadableFileError)
 
     def test_nonexistent_raise_read_error(self):
         item = beets.library.Item()

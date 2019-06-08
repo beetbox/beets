@@ -1,15 +1,15 @@
 AcousticBrainz Submit Plugin
 ============================
 
-The `absubmit` plugin lets you submit acoustic analysis results to the
+The ``absubmit`` plugin lets you submit acoustic analysis results to the
 `AcousticBrainz`_ server.
 
 Installation
 ------------
 
-The `absubmit` plugin requires the `streaming_extractor_music`_ program to run. Its source can be found on `GitHub`_, and while it is possible to compile the extractor from source, AcousticBrainz would prefer if you used their binary (see the AcousticBrainz `FAQ`_).
+The ``absubmit`` plugin requires the `streaming_extractor_music`_ program to run. Its source can be found on `GitHub`_, and while it is possible to compile the extractor from source, AcousticBrainz would prefer if you used their binary (see the AcousticBrainz `FAQ`_).
 
-The `absubmit` also plugin requires `requests`_, which you can install using `pip`_ by typing::
+The ``absubmit`` plugin also requires `requests`_, which you can install using `pip`_ by typing::
 
     pip install requests
 
@@ -41,9 +41,9 @@ To configure the plugin, make a ``absubmit:`` section in your configuration file
 - **extractor**: The absolute path to the `streaming_extractor_music`_ binary.
   Default: search for the program in your ``$PATH``
 
-.. _streaming_extractor_music: http://acousticbrainz.org/download
-.. _FAQ: http://acousticbrainz.org/faq
-.. _pip: http://www.pip-installer.org/
-.. _requests: http://docs.python-requests.org/en/master/
+.. _streaming_extractor_music: https://acousticbrainz.org/download
+.. _FAQ: https://acousticbrainz.org/faq
+.. _pip: https://pip.pypa.io
+.. _requests: https://docs.python-requests.org/en/master/
 .. _github: https://github.com/MTG/essentia
 .. _AcousticBrainz: https://acousticbrainz.org

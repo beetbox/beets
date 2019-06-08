@@ -39,7 +39,7 @@ else:
 SKIPPED_TRACKS = ['[data track]']
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
-                             'http://beets.io/')
+                             'https://beets.io/')
 
 
 class MusicBrainzAPIError(util.HumanReadableException):
@@ -213,6 +213,11 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
+        info.work = work_relation['work']['title']
+        info.mb_workid = work_relation['work']['id']
+        if 'disambiguation' in work_relation['work']:
+            info.work_disambig = work_relation['work']['disambiguation']
+
         for artist_relation in work_relation['work'].get(
                 'artist-relation-list', ()):
             if 'type' in artist_relation:

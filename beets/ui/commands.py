@@ -39,7 +39,6 @@ from beets.util import syspath, normpath, ancestry, displayable_path, \
 from beets import library
 from beets import config
 from beets import logging
-from beets.util.confit import _package_path
 import six
 from . import _store_dict
 
@@ -543,7 +542,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
             print_(u'For help, see: '
-                   u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
+                   u'https://beets.readthedocs.org/en/latest/faq.html#nomatch')
         sel = ui.input_options(choice_opts)
         if sel in choice_actions:
             return choice_actions[sel]
@@ -1177,7 +1176,7 @@ def update_items(lib, query, album, move, pretend, fields):
                 # Manually moving and storing the album.
                 items = list(album.items())
                 for item in items:
-                    item.move(store=False)
+                    item.move(store=False, with_album=False)
                     item.store(fields=fields)
                 album.move(store=False)
                 album.store(fields=fields)
@@ -1726,7 +1725,7 @@ def completion_script(commands):
     ``commands`` is alist of ``ui.Subcommand`` instances to generate
     completion data for.
     """
-    base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
+    base_script = os.path.join(os.path.dirname(__file__), 'completion_base.sh')
     with open(base_script, 'r') as base_script:
         yield util.text_string(base_script.read())
 
