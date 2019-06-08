@@ -126,27 +126,6 @@ The new core features are:
   example, ``beet modify -a artist:beatles artpath!`` resets ``artpath``
   attribute from matching albums back to the default value.
   :bug:`2497`
-* Modify selection can now be applied early without selecting every item.
-  :bug:`3083`
-* :doc:`/plugins/chroma`: Fingerprint values are now properly stored as
-  strings, which prevents strange repeated output when running ``beet write``.
-  Thanks to :user:`Holzhaus`.
-  :bug:`3097` :bug:`2942`
-* The ``move`` command now lists the number of items already in-place.
-  Thanks to :user:`RollingStar`.
-  :bug:`3117`
-* :doc:`/plugins/spotify`: The plugin now uses OAuth for authentication to the
-  Spotify API.
-  Thanks to :user:`rhlahuja`.
-  :bug:`2694` :bug:`3123`
-* :doc:`/plugins/spotify`: The plugin now works as an import metadata
-  provider: you can match tracks and albums using the Spotify database.
-  Thanks to :user:`rhlahuja`.
-  :bug:`3123`
-* :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which passes that flag to ipfs.
-  Thanks to :user:`wildthyme`.
-
-=======
 * A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
   contained in data files. :bug:`3021`
 
