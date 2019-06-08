@@ -2,7 +2,7 @@ Parentwork Plugin
 =================
 
 The ``parentwork`` plugin fetches the work title, parent work title and 
-parent work composer. 
+parent work composer from MusicBrainz.
 
 In the MusicBrainz database, a recording can be associated with a work. A 
 work can itself be associated with another work, for example one being part 
