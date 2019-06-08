@@ -43,4 +43,3 @@ configuration file. The available options are:
 - **auto**: If enabled, automatically fetches works at import. It takes quite 
   some time, because beets is restricted to one musicbrainz query per second. 
   Default: ``no``
-
