@@ -26,8 +26,8 @@ import musicbrainzngs
 
 
 def direct_parent_id(mb_workid, work_date=None):
-    """Given a Musicbrainz id, find the id one of the works the work is part of
-    and the first composition date it encounters.
+    """Given a Musicbrainz work id, find the id one of the works the work is
+    part of and the first composition date it encounters.
     """
     work_info = musicbrainzngs.get_work_by_id(mb_workid,
                                               includes=["work-rels",
