@@ -6,7 +6,7 @@ parent work composer from MusicBrainz.
 
 In the MusicBrainz database, a recording can be associated with a work. A 
 work can itself be associated with another work, for example one being part 
-of the other (what I call the direct parent). This plugin looks the work id 
+of the other (what we call the *direct parent*). This plugin looks the work id 
 from the library and then looks up the direct parent, then the direct parent 
 of the direct parent and so on until it reaches the top. The work at the top 
 is what we call the *parent work*. This plugin is especially designed for 
