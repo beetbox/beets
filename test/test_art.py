@@ -34,7 +34,7 @@ from beets import importer
 from beets import logging
 from beets import util
 from beets.util.artresizer import ArtResizer, WEBPROXY
-from beets.util import confit
+import confuse
 
 
 logger = logging.getLogger('beets.test_art')
@@ -159,9 +159,9 @@ class FSArtTest(UseThePlugin):
 class CombinedTest(FetchImageHelper, UseThePlugin):
     ASIN = 'xxxx'
     MBID = 'releaseid'
-    AMAZON_URL = 'http://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
+    AMAZON_URL = 'https://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
                  .format(ASIN)
-    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}' \
+    AAO_URL = 'https://www.albumart.org/index_detail.php?asin={0}' \
               .format(ASIN)
     CAA_URL = 'coverartarchive.org/release/{0}/front' \
               .format(MBID)
@@ -240,7 +240,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
 
 class AAOTest(UseThePlugin):
     ASIN = 'xxxx'
-    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
+    AAO_URL = 'https://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
 
     def setUp(self):
         super(AAOTest, self).setUp()
@@ -753,7 +753,7 @@ class EnforceRatioConfigTest(_common.TestCase):
         if should_raise:
             for v in values:
                 config['fetchart']['enforce_ratio'] = v
-                with self.assertRaises(confit.ConfigValueError):
+                with self.assertRaises(confuse.ConfigValueError):
                     fetchart.FetchArtPlugin()
         else:
             for v in values:

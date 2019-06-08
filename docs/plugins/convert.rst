@@ -14,7 +14,7 @@ To use the ``convert`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). By default, the plugin depends on `FFmpeg`_ to
 transcode the audio, so you might want to install it.
 
-.. _FFmpeg: http://ffmpeg.org
+.. _FFmpeg: https://ffmpeg.org
 
 
 Usage
@@ -68,6 +68,8 @@ file. The available options are:
 - **dest**: The directory where the files will be converted (or copied) to.
   Default: none.
 - **embed**: Embed album art in converted items. Default: ``yes``.
+- **id3v23**: Can be used to override the global ``id3v23`` option. Default:
+  ``inherit``.
 - **max_bitrate**: All lossy files with a higher bitrate will be
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
@@ -120,7 +122,7 @@ and select a command with the ``--format`` command-line option or the
 
 In this example ``beet convert`` will use the *speex* command by
 default. To convert the audio to `wav`, run ``beet convert -f wav``.
-This will also use the format key (`wav`) as the file extension.
+This will also use the format key (``wav``) as the file extension.
 
 Each entry in the ``formats`` map consists of a key (the name of the
 format) as well as the command and optionally the file extension.
@@ -168,6 +170,6 @@ can use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
 options and a thorough discussion of MP3 encoding.
 
 .. _documentation: http://lame.sourceforge.net/using.php
-.. _HydrogenAudio wiki: http://wiki.hydrogenaud.io/index.php?title=LAME
-.. _gapless: http://wiki.hydrogenaud.io/index.php?title=Gapless_playback
-.. _LAME: http://lame.sourceforge.net/
+.. _HydrogenAudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
+.. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
+.. _LAME: https://lame.sourceforge.net/

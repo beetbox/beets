@@ -26,12 +26,12 @@ import six
 import string
 
 from beets import logging
-from beets.mediafile import MediaFile, UnreadableFileError
+from mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
-    MoveOperation
-from beets.util.functemplate import Template
+    MoveOperation, lazy_property
+from beets.util.functemplate import template, Template
 from beets import dbcore
 from beets.dbcore import types
 import beets
@@ -376,13 +376,25 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     def __init__(self, item, for_path=False):
         super(FormattedItemMapping, self).__init__(item, for_path)
-        self.album = item.get_album()
-        self.album_keys = []
+        self.item = item
+
+    @lazy_property
+    def all_keys(self):
+        return set(self.model_keys).union(self.album_keys)
+
+    @lazy_property
+    def album_keys(self):
+        album_keys = []
         if self.album:
             for key in self.album.keys(True):
-                if key in Album.item_keys or key not in item._fields.keys():
-                    self.album_keys.append(key)
-        self.all_keys = set(self.model_keys).union(self.album_keys)
+                if key in Album.item_keys \
+                        or key not in self.item._fields.keys():
+                    album_keys.append(key)
+        return album_keys
+
+    @lazy_property
+    def album(self):
+        return self.item.get_album()
 
     def _get(self, key):
         """Get the value for a key, either from the album or the item.
@@ -439,6 +451,9 @@ class Item(LibModel):
         'lyricist':             types.STRING,
         'composer':             types.STRING,
         'composer_sort':        types.STRING,
+        'work':                 types.STRING,
+        'mb_workid':            types.STRING,
+        'work_disambig':        types.STRING,
         'arranger':             types.STRING,
         'grouping':             types.STRING,
         'year':                 types.PaddedInt(4),
@@ -611,7 +626,7 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self, path=None, tags=None):
+    def write(self, path=None, tags=None, id3v23=None):
         """Write the item's metadata to a media file.
 
         All fields in `_media_fields` are written to disk according to
@@ -623,12 +638,18 @@ class Item(LibModel):
         `tags` is a dictionary of additional metadata the should be
         written to the file. (These tags need not be in `_media_fields`.)
 
+        `id3v23` will override the global `id3v23` config option if it is
+        set to something other than `None`.
+
         Can raise either a `ReadError` or a `WriteError`.
         """
         if path is None:
             path = self.path
         else:
             path = normpath(path)
+
+        if id3v23 is None:
+            id3v23 = beets.config['id3v23'].get(bool)
 
         # Get the data to write to the file.
         item_tags = dict(self)
@@ -640,8 +661,7 @@ class Item(LibModel):
 
         # Open the file.
         try:
-            mediafile = MediaFile(syspath(path),
-                                  id3v23=beets.config['id3v23'].get(bool))
+            mediafile = MediaFile(syspath(path), id3v23=id3v23)
         except UnreadableFileError as exc:
             raise ReadError(path, exc)
 
@@ -657,14 +677,14 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send('after_write', item=self, path=path)
 
-    def try_write(self, path=None, tags=None):
+    def try_write(self, *args, **kwargs):
         """Calls `write()` but catches and logs `FileOperationError`
         exceptions.
 
         Returns `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(path, tags)
+            self.write(*args, **kwargs)
             return True
         except FileOperationError as exc:
             log.error(u"{0}", exc)
@@ -850,7 +870,7 @@ class Item(LibModel):
         if isinstance(path_format, Template):
             subpath_tmpl = path_format
         else:
-            subpath_tmpl = Template(path_format)
+            subpath_tmpl = template(path_format)
 
         # Evaluate the selected template.
         subpath = self.evaluate_template(subpath_tmpl, True)
@@ -930,7 +950,7 @@ class Album(LibModel):
         'releasegroupdisambig': types.STRING,
         'rg_album_gain':        types.NULL_FLOAT,
         'rg_album_peak':        types.NULL_FLOAT,
-        'r128_album_gain':      types.PaddedInt(6),
+        'r128_album_gain':      types.NullPaddedInt(6),
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
@@ -1129,7 +1149,7 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = Template(
+        filename_tmpl = template(
             beets.config['art_filename'].as_str())
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config['asciify_paths']:
@@ -1234,8 +1254,10 @@ def parse_query_parts(parts, model_cls):
         else:
             non_path_parts.append(s)
 
+    case_insensitive = beets.config['sort_case_insensitive'].get(bool)
+
     query, sort = dbcore.parse_sorted_query(
-        model_cls, non_path_parts, prefixes
+        model_cls, non_path_parts, prefixes, case_insensitive
     )
 
     # Add path queries to aggregate query.

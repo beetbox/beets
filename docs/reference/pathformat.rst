@@ -23,7 +23,7 @@ a dollars sign. As with `Python template strings`_, ``${title}`` is equivalent
 to ``$title``; you can use this if you need to separate a field name from the
 text that follows it.
 
-.. _Python template strings: http://docs.python.org/library/string.html#template-strings
+.. _Python template strings: https://docs.python.org/library/string.html#template-strings
 
 
 A Note About Artists
@@ -38,7 +38,7 @@ tracks in a "Talking Heads" directory and one in a "Tom Tom Club" directory. You
 probably don't want that! So use ``$albumartist``.
 
 .. _Stop Making Sense:
-    http://musicbrainz.org/release/798dcaab-0f1a-4f02-a9cb-61d5b0ddfd36.html
+    https://musicbrainz.org/release/798dcaab-0f1a-4f02-a9cb-61d5b0ddfd36.html
 
 As a convenience, however, beets allows ``$albumartist`` to fall back to the value for ``$artist`` and vice-versa if one tag is present but the other is not.
 
@@ -89,8 +89,8 @@ These functions are built in to beets:
   without ``$``. Note that this doesn't work with built-in :ref:`itemfields`, as
   they are always defined.
 
-.. _unidecode module: http://pypi.python.org/pypi/Unidecode
-.. _strftime: http://docs.python.org/2/library/time.html#time.strftime
+.. _unidecode module: https://pypi.org/project/Unidecode
+.. _strftime: https://docs.python.org/3/library/time.html#time.strftime
 
 Plugins can extend beets with more template functions (see
 :ref:`templ_plugins`).
@@ -228,8 +228,8 @@ Ordinary metadata:
 * disctitle
 * encoder
 
-.. _artist credit: http://wiki.musicbrainz.org/Artist_Credit
-.. _list of type names: http://musicbrainz.org/doc/Release_Group/Type
+.. _artist credit: https://wiki.musicbrainz.org/Artist_Credit
+.. _list of type names: https://musicbrainz.org/doc/Release_Group/Type
 
 Audio information:
 

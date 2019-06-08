@@ -28,7 +28,7 @@ import platform
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from beets.util.confit import ConfigTypeError
+from confuse import ConfigTypeError
 from beets import art
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
@@ -116,6 +116,7 @@ class ConvertPlugin(BeetsPlugin):
             u'pretend': False,
             u'threads': util.cpu_count(),
             u'format': u'mp3',
+            u'id3v23': u'inherit',
             u'formats': {
                 u'aac': {
                     u'command': u'ffmpeg -i $source -y -vn -acodec aac '
@@ -316,8 +317,12 @@ class ConvertPlugin(BeetsPlugin):
             if pretend:
                 continue
 
+            id3v23 = self.config['id3v23'].as_choice([True, False, 'inherit'])
+            if id3v23 == 'inherit':
+                id3v23 = None
+
             # Write tags from the database to the converted file.
-            item.try_write(path=converted)
+            item.try_write(path=converted, id3v23=id3v23)
 
             if keep_new:
                 # If we're keeping the transcoded file, read it again (after
@@ -332,7 +337,7 @@ class ConvertPlugin(BeetsPlugin):
                     self._log.debug(u'embedding album art from {}',
                                     util.displayable_path(album.artpath))
                     art.embed_item(self._log, item, album.artpath,
-                                   itempath=converted)
+                                   itempath=converted, id3v23=id3v23)
 
             if keep_new:
                 plugins.send('after_convert', item=item,

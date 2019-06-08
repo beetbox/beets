@@ -24,7 +24,7 @@ information or mock the environment.
 - The `generate_album_info` and `generate_track_info` functions return
   fixtures to be used when mocking the autotagger.
 
-- The `TestImportSession` allows one to run importer code while
+- The `ImportSessionFixture` allows one to run importer code while
   controlling the interactions through code.
 
 - The `TestHelper` class encapsulates various fixtures that can be set up.
@@ -50,7 +50,7 @@ import beets.plugins
 from beets.library import Library, Item, Album
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.mediafile import MediaFile, Image
+from mediafile import MediaFile, Image
 from beets import util
 from beets.util import MoveOperation
 
@@ -222,11 +222,18 @@ class TestHelper(object):
         beets.config['plugins'] = plugins
         beets.plugins.load_plugins(plugins)
         beets.plugins.find_plugins()
-        # Take a backup of the original _types to restore when unloading
+
+        # Take a backup of the original _types and _queries to restore
+        # when unloading.
         Item._original_types = dict(Item._types)
         Album._original_types = dict(Album._types)
         Item._types.update(beets.plugins.types(Item))
         Album._types.update(beets.plugins.types(Album))
+
+        Item._original_queries = dict(Item._queries)
+        Album._original_queries = dict(Album._queries)
+        Item._queries.update(beets.plugins.named_queries(Item))
+        Album._queries.update(beets.plugins.named_queries(Album))
 
     def unload_plugins(self):
         """Unload all plugins and remove the from the configuration.
@@ -237,12 +244,14 @@ class TestHelper(object):
         beets.plugins._instances = {}
         Item._types = Item._original_types
         Album._types = Album._original_types
+        Item._queries = Item._original_queries
+        Album._queries = Album._original_queries
 
     def create_importer(self, item_count=1, album_count=1):
         """Create files to import and return corresponding session.
 
         Copies the specified number of files to a subdirectory of
-        `self.temp_dir` and creates a `TestImportSession` for this path.
+        `self.temp_dir` and creates a `ImportSessionFixture` for this path.
         """
         import_dir = os.path.join(self.temp_dir, b'import')
         if not os.path.isdir(import_dir):
@@ -285,8 +294,8 @@ class TestHelper(object):
         config['import']['autotag'] = False
         config['import']['resume'] = False
 
-        return TestImportSession(self.lib, loghandler=None, query=None,
-                                 paths=[import_dir])
+        return ImportSessionFixture(self.lib, loghandler=None, query=None,
+                                    paths=[import_dir])
 
     # Library fixtures methods
 
@@ -492,11 +501,11 @@ class TestHelper(object):
         return path
 
 
-class TestImportSession(importer.ImportSession):
+class ImportSessionFixture(importer.ImportSession):
     """ImportSession that can be controlled programaticaly.
 
     >>> lib = Library(':memory:')
-    >>> importer = TestImportSession(lib, paths=['/path/to/import'])
+    >>> importer = ImportSessionFixture(lib, paths=['/path/to/import'])
     >>> importer.add_choice(importer.action.SKIP)
     >>> importer.add_choice(importer.action.ASIS)
     >>> importer.default_choice = importer.action.APPLY
@@ -508,7 +517,7 @@ class TestImportSession(importer.ImportSession):
     """
 
     def __init__(self, *args, **kwargs):
-        super(TestImportSession, self).__init__(*args, **kwargs)
+        super(ImportSessionFixture, self).__init__(*args, **kwargs)
         self._choices = []
         self._resolutions = []
 

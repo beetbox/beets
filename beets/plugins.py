@@ -17,16 +17,16 @@
 
 from __future__ import division, absolute_import, print_function
 
-import inspect
 import traceback
 import re
+import inspect
 from collections import defaultdict
 from functools import wraps
 
 
 import beets
 from beets import logging
-from beets import mediafile
+import mediafile
 import six
 
 PLUGIN_NAMESPACE = 'beetsplug'
@@ -127,7 +127,10 @@ class BeetsPlugin(object):
         value after the function returns). Also determines which params may not
         be sent for backwards-compatibility.
         """
-        argspec = inspect.getargspec(func)
+        if six.PY2:
+            func_args = inspect.getargspec(func).args
+        else:
+            func_args = inspect.getfullargspec(func).args
 
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -142,7 +145,7 @@ class BeetsPlugin(object):
                     if exc.args[0].startswith(func.__name__):
                         # caused by 'func' and not stuff internal to 'func'
                         kwargs = dict((arg, val) for arg, val in kwargs.items()
-                                      if arg in argspec.args)
+                                      if arg in func_args)
                         return func(*args, **kwargs)
                     else:
                         raise
@@ -344,6 +347,16 @@ def types(model_cls):
     return types
 
 
+def named_queries(model_cls):
+    # Gather `item_queries` and `album_queries` from the plugins.
+    attr_name = '{0}_queries'.format(model_cls.__name__.lower())
+    queries = {}
+    for plugin in find_plugins():
+        plugin_queries = getattr(plugin, attr_name, {})
+        queries.update(plugin_queries)
+    return queries
+
+
 def track_distance(item, info):
     """Gets the track distance calculated by all loaded plugins.
     Returns a Distance object.
@@ -513,7 +526,7 @@ def sanitize_choices(choices, choices_all):
 
 def sanitize_pairs(pairs, pairs_all):
     """Clean up a single-element mapping configuration attribute as returned
-    by `confit`'s `Pairs` template: keep only two-element tuples present in
+    by Confuse's `Pairs` template: keep only two-element tuples present in
     pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
     wildcards while keeping the original order. Note that ('*', '*') and
     ('*', 'whatever') have the same effect.

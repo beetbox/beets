@@ -4,7 +4,7 @@ Export Plugin
 The ``export`` plugin lets you get data from the items and export the content
 as `JSON`_.
 
-.. _JSON: http://www.json.org
+.. _JSON: https://www.json.org
 
 Enable the ``export`` plugin (see :ref:`using-plugins` for help). Then, type ``beet export`` followed by a :doc:`query </reference/query>` to get the data from
 your library. For example, run this::
@@ -42,7 +42,7 @@ Configuration
 To configure the plugin, make a ``export:`` section in your configuration
 file. Under the ``json`` key, these options are available:
 
-- **ensure_ascii**: Escape non-ASCII characters with `\uXXXX` entities.
+- **ensure_ascii**: Escape non-ASCII characters with ``\uXXXX`` entities.
 
 - **indent**: The number of spaces for indentation.
 

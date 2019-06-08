@@ -31,6 +31,6 @@ from MusicBrainz and other sources.
 If you have a Beatport ID or a URL for a release or track you want to tag, you
 can just enter one of the two at the "enter Id" prompt in the importer.
 
-.. _requests: http://docs.python-requests.org/en/latest/
+.. _requests: https://docs.python-requests.org/en/latest/
 .. _requests_oauthlib: https://github.com/requests/requests-oauthlib
-.. _Beatport: http://beatport.com
+.. _Beatport: https://beetport.com

@@ -24,9 +24,7 @@ import json
 import os
 import subprocess
 import tempfile
-import sys
 
-from multiprocessing.pool import ThreadPool
 from distutils.spawn import find_executable
 import requests
 
@@ -75,8 +73,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 call([self.extractor])
             except OSError:
                 raise ui.UserError(
-                    u'No extractor command found: please install the '
-                    u'extractor binary from http://acousticbrainz.org/download'
+                    u'No extractor command found: please install the extractor'
+                    u' binary from https://acousticbrainz.org/download'
                 )
             except ABSubmitError:
                 # Extractor found, will exit with an error if not called with
@@ -106,15 +104,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
     def command(self, lib, opts, args):
         # Get items from arguments
         items = lib.items(ui.decargs(args))
-        if sys.version_info[0] < 3:
-            for item in items:
-                self.analyze_submit(item)
-        else:
-            # Analyze in parallel using a thread pool.
-            pool = ThreadPool()
-            pool.map(self.analyze_submit, items)
-            pool.close()
-            pool.join()
+        util.par_map(self.analyze_submit, items)
 
     def analyze_submit(self, item):
         analysis = self._get_analysis(item)

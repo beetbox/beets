@@ -31,8 +31,8 @@ Here's an example::
 
     $ beet spotify "In The Lonely Hour"
     Processing 14 tracks...
-    http://open.spotify.com/track/19w0OHr8SiZzRhjpnjctJ4
-    http://open.spotify.com/track/3PRLM4FzhplXfySa4B7bxS
+    https://open.spotify.com/track/19w0OHr8SiZzRhjpnjctJ4
+    https://open.spotify.com/track/3PRLM4FzhplXfySa4B7bxS
     [...]
 
 Command-line options include:

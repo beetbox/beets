@@ -18,7 +18,6 @@ from __future__ import division, absolute_import, print_function
 
 import string
 import subprocess
-import six
 
 from beets.plugins import BeetsPlugin
 from beets.util import shlex_split, arg_encoding
@@ -46,10 +45,8 @@ class CodingFormatter(string.Formatter):
 
         See str.format and string.Formatter.format.
         """
-        try:
+        if isinstance(format_string, bytes):
             format_string = format_string.decode(self._coding)
-        except UnicodeEncodeError:
-            pass
 
         return super(CodingFormatter, self).format(format_string, *args,
                                                    **kwargs)
@@ -96,10 +93,7 @@ class HookPlugin(BeetsPlugin):
                 return
 
             # Use a string formatter that works on Unicode strings.
-            if six.PY2:
-                formatter = CodingFormatter(arg_encoding())
-            else:
-                formatter = string.Formatter()
+            formatter = CodingFormatter(arg_encoding())
 
             command_pieces = shlex_split(command)
 

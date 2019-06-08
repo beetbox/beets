@@ -30,11 +30,11 @@ import beets
 import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
-from beets.util import confit
+import confuse
 
 
 AUTH_ERRORS = (TokenRequestDenied, TokenMissing, VerifierMissing)
-USER_AGENT = u'beets/{0} +http://beets.io/'.format(beets.__version__)
+USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
 
 
 class BeatportAPIError(Exception):
@@ -109,7 +109,7 @@ class BeatportClient(object):
         :rtype:             (unicode, unicode) tuple
         """
         self.api.parse_authorization_response(
-            "http://beets.io/auth?" + auth_data)
+            "https://beets.io/auth?" + auth_data)
         access_data = self.api.fetch_access_token(
             self._make_url('/identity/1/oauth/access-token'))
         return access_data['oauth_token'], access_data['oauth_token_secret']
@@ -191,7 +191,7 @@ class BeatportClient(object):
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
             raise BeatportAPIError("Error connecting to Beatport API: {}"
-                                   .format(e.message))
+                                   .format(e))
         if not response:
             raise BeatportAPIError(
                 "Error {0.status_code} for '{0.request.path_url}"
@@ -224,7 +224,7 @@ class BeatportRelease(BeatportObject):
         if 'category' in data:
             self.category = data['category']
         if 'slug' in data:
-            self.url = "http://beatport.com/release/{0}/{1}".format(
+            self.url = "https://beatport.com/release/{0}/{1}".format(
                 data['slug'], data['id'])
 
 
@@ -252,8 +252,8 @@ class BeatportTrack(BeatportObject):
             except ValueError:
                 pass
         if 'slug' in data:
-            self.url = "http://beatport.com/track/{0}/{1}".format(data['slug'],
-                                                                  data['id'])
+            self.url = "https://beatport.com/track/{0}/{1}" \
+                .format(data['slug'], data['id'])
         self.track_number = data.get('trackNumber')
 
 
@@ -318,7 +318,7 @@ class BeatportPlugin(BeetsPlugin):
     def _tokenfile(self):
         """Get the path to the JSON file for storing the OAuth token.
         """
-        return self.config['tokenfile'].get(confit.Filename(in_app_dir=True))
+        return self.config['tokenfile'].get(confuse.Filename(in_app_dir=True))
 
     def album_distance(self, items, album_info, mapping):
         """Returns the beatport source weight and the maximum source weight
