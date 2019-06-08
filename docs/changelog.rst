@@ -17,6 +17,11 @@ New features:
   to MPD commands we don't support yet. Let us know if you find an MPD client
   that doesn't get along with BPD!
   :bug:`3214` :bug:`800`
+* :doc:`/plugins/replaygain`: The plugin now supports a ``per_disc`` option
+  which enables calculation of album ReplayGain on disc level instead of album
+  level.
+  Thanks to :user:`samuelnilsson`
+  :bug:`293`
 
 Fixes:
 
@@ -140,10 +145,6 @@ The new core features are:
   :bug:`3123`
 * :doc:`/plugins/ipfs`: The plugin now supports a ``nocopy`` option which passes that flag to ipfs.
   Thanks to :user:`wildthyme`.
-* :doc:`/plugins/replaygain`: The plugin now supports a ``per_disc`` option
-  which enables calculation of album ReplayGain on disc level instead of album
-  level.
-  Thanks to :user:`samuelnilsson`
 
 =======
 * A new importer option, :ref:`ignore_data_tracks`, lets you skip audio tracks
