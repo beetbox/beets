@@ -9,7 +9,7 @@ work can itself be associated with another work, for example one being part
 of the other (what I call the direct parent). This plugin looks the work id 
 from the library and then looks up the direct parent, then the direct parent 
 of the direct parent and so on until it reaches the top. The work at the top 
-is what I call the parent work. This plugin is especially designed for 
+is what we call the *parent work*. This plugin is especially designed for 
 classical music. For classical music, just fetching the work title as in 
 MusicBrainz is not satisfying, because MusicBrainz has separate works for, for 
 example, all the movements of a symphony. This plugin aims to solve this 
