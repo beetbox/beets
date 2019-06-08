@@ -60,8 +60,8 @@ def work_parent_id(mb_workid):
 
 
 def find_parentwork_info(mb_workid):
-    """Return the work relationships (dict) and composition date of a
-    parent work given the id of the work
+    """Get the MusicBrainz information dict about a parent work, including
+    the artist relations, and the composition date for a work's parent work.
     """
     parent_id, work_date = work_parent_id(mb_workid)
     work_info = musicbrainzngs.get_work_by_id(parent_id,
@@ -95,12 +95,12 @@ class ParentWorkPlugin(BeetsPlugin):
                     item.try_write()
         command = ui.Subcommand(
             'parentwork',
-            help=u'Fetches parent works, composers and dates')
+            help=u'fetche parent works, composers and dates')
 
         command.parser.add_option(
             u'-f', u'--force', dest='force',
             action='store_true', default=None,
-            help=u'Re-fetches all parent works')
+            help=u're-fetch when parent work is already present')
 
         command.func = func
         return [command]
@@ -155,19 +155,21 @@ https://musicbrainz.org/work/{}', item, work_info['work']['id'])
         """Finds the parent work of a recording and populates the tags
         accordingly.
 
+        The parent work is found recursively, by finding the direct parent
+        repeatedly until there are no more links in the chain. We return the
+        final, topmost work in the chain.
+
         Namely, the tags parentwork, parentwork_disambig, mb_parentworkid,
         parent_composer, parent_composer_sort and work_date are populated.
         """
 
-        if hasattr(item, 'parentwork'):
-            hasparent = True
-        else:
-            hasparent = False
         if not item.mb_workid:
             self._log.info('No work for {}, \
 add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
             return
-        if force or (not hasparent):
+
+        hasparent = hasattr(item, 'parentwork')
+        if force or not hasparent:
             try:
                 work_info, work_date = find_parentwork_info(item.mb_workid)
             except musicbrainzngs.musicbrainz.WebServiceError as e:
@@ -183,9 +185,10 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
                                 parent_info['parentwork'])
 
         elif hasparent:
-            self._log.debug("{} : Work present, skipping", item)
+            self._log.debug("{}: Work present, skipping", item)
             return
 
+        # apply all non-null values to the item
         for key, value in parent_info.items():
             if value:
                 item[key] = value
@@ -196,5 +199,3 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
             item, fields=['parentwork', 'parentwork_disambig',
                           'mb_parentworkid', 'parent_composer',
                           'parent_composer_sort', 'work_date'])
-
-        item.store()
