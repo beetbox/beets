@@ -55,6 +55,7 @@ class DiscogsPlugin(BeetsPlugin):
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
             'user_token': '',
+            'separator': u', '
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
@@ -303,14 +304,12 @@ class DiscogsPlugin(BeetsPlugin):
         country = result.data.get('country')
         data_url = result.data.get('uri')
         style = result.data.get('styles')
-        print('style', style)
         if style is None:
             self._log.info('Style not Found')
-            return "Style not Defined"
         elif len(style) == 0:
             return style
         else:
-            style = ' - '.join(sorted(style))
+            style = self.config['separator'].as_str().join(sorted(style))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
