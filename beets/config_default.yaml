@@ -131,7 +131,6 @@ match:
         track_index: 1.0
         track_length: 2.0
         track_id: 5.0
-        style: 5.0
     preferred:
         countries: []
         media: []
