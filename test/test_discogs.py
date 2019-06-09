@@ -85,7 +85,6 @@ class DGAlbumInfoTest(_common.TestCase):
         tracks = [self._make_track('TITLE%s' % i, position) for
                   (i, position) in enumerate(positions, start=1)]
         release = self._make_release(tracks)
-        print('release', release)
         return self._make_release(tracks)
 
     def test_parse_media_for_tracks(self):
@@ -94,7 +93,6 @@ class DGAlbumInfoTest(_common.TestCase):
         release = self._make_release(tracks=tracks)
 
         d = DiscogsPlugin().get_album_info(release)
-        print('albumInfo', d.media)
         t = d.tracks
         self.assertEqual(d.media, 'FORMAT')
         self.assertEqual(t[0].media, d.media)
