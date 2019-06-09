@@ -25,19 +25,19 @@ to re-scan your entire library after importing one or more albums:
         pwd: secret
 
 Alternatively, you can choose to only scan each newly imported album directory.
-To do so, add all the config.yaml settings above, but also add `source` and
+To do so, add all the config.yaml settings above, but also add `kodi_dir` and
 `library` settings that look something like this:
 
-       source: nfs://myserver.local/music/library/
+       kodi_dir: nfs://myserver.local/music/library/
        library: /home/music/library/
 
-The value for `source` should be the Kodi Music source found in
+The value for `kodi_dir` should be the Kodi Music path found in
 .kodi/userdata/sources.xml.
 
 The value for `library` should be the path to your beets library.
 
 After an album is imported, this plugin strips off the `library` portion of
-the album path and appends the remaining portion to the `source`, then issues
+the album path and appends the remaining portion to the `kodi_dir`, then issues
 a Kodi update for that path.
 
 """
@@ -84,11 +84,11 @@ class KodiUpdate(BeetsPlugin):
             u'port': 8080,
             u'user': u'kodi',
             u'pwd': u'kodi',
-            u'source': u'',
+            u'kodi_dir': u'',
             u'library': u''})
 
         config['kodi']['pwd'].redact = True
-        if config['source'] == '':
+        if config['kodi']['kodi_dir'] == '':
             # Re-scan the entire library.
             self.register_listener('database_change',
                                    self.listen_for_db_change)
@@ -103,11 +103,11 @@ class KodiUpdate(BeetsPlugin):
         self.register_listener('cli_exit', self.cli_exit)
 
     def album_imported(self, lib, album):
-        source = config['kodi']['source'].get()
+        kodi_dir = config['kodi']['kodi_dir'].get()
         library = config['kodi']['library'].get()
         apath = album.item_dir()
         suffix = os.path.relpath(apath, library)
-        self.update(path=os.path.join(source, suffix.decode('utf-8')))
+        self.update(path=os.path.join(kodi_dir, suffix.decode('utf-8')))
 
     def cli_exit(self, lib):
         """When the client exits try to send refresh request to Kodi server.
