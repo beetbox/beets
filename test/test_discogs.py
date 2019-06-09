@@ -59,7 +59,6 @@ class DGAlbumInfoTest(_common.TestCase):
             for recording in tracks:
                 data['tracklist'].append(recording)
 
-
         return Bag(data=data,
                    # Make some fields available as properties, as they are
                    # accessed by DiscogsPlugin methods.
