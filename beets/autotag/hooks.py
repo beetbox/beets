@@ -79,8 +79,8 @@ class AlbumInfo(object):
                  albumtype=None, va=False, year=None, month=None, day=None,
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
-                 language=None, country=None, style=None, albumstatus=None, media=None,
-                 albumdisambig=None, releasegroupdisambig=None,
+                 language=None, country=None, style=None, albumstatus=None,
+                 media=None, albumdisambig=None, releasegroupdisambig=None,
                  artist_credit=None, original_year=None, original_month=None,
                  original_day=None, data_source=None, data_url=None):
         self.album = album
