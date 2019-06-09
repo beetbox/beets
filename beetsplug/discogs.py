@@ -304,11 +304,9 @@ class DiscogsPlugin(BeetsPlugin):
         country = result.data.get('country')
         data_url = result.data.get('uri')
         style = result.data.get('styles')
-        print('style', style)
         if style is None:
             self._log.debug('Style not Found')
-        elif not style:
-            print('s', style)
+        elif len(style) == 0:
             return style
         else:
             style = self.config['separator'].as_str().join(sorted(style))
