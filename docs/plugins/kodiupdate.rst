@@ -21,25 +21,25 @@ With the basic configuration settings above, the ``kodiupdate`` plugin
 will notify Kodi to scan your entire music library after any changes to
 the beets database. For importing albums into large music libraries you
 may prefer to have Kodi only scan the directory where each album was
-imported. To enable this behavior, add a `source` setting, which reflects
-the Kodi `Music` source found in Kodi's sources.xml file, and a `library`
+imported. To enable this behavior, add a `kodi_dir` setting, which reflects
+the Kodi `Music` directory found in Kodi's sources.xml file, and a `library`
 setting, which indicates exactly how much of the beets library album
 path should be removed before appending the remaining portion to
-the `source`:
+the `kodi_dir`:
 
     kodi:
         host: localhost
         port: 8080
         user: kodi
         pwd: kodi
-        source: nfs://myserver.local/music/library/
+        kodi_dir: nfs://myserver.local/music/library/
         library: /home/music/library/
 
-`source` should be the Kodi Music source found in .kodi/userdata/sources.xml.
+`kodi_dir` should be the Kodi Music path found in .kodi/userdata/sources.xml.
 `library` should be the path to your beets library.
 
 With this configuration, after every album import, the `library` path is stripped
-from the imported album's path and the remaining part is added to the `source`.
+from the imported album's path and the remaining part is added to the `kodi_dir`.
 Kodi is then asked to scan the resulting directory.
 
 To use the ``kodiupdate`` plugin you need to install the `requests`_ library with::
@@ -68,7 +68,7 @@ The available options under the ``kodi:`` section are:
   Default: ``kodi``
 - **pwd**: The Kodi host password.
   Default: ``kodi``
-- **source**: The Kodi Music source.
+- **kodi_dir**: The Kodi Music path.
   Default: none
 - **library**: The beets library directory.
   Default: none
