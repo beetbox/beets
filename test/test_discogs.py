@@ -357,6 +357,7 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(d, None)
         self.assertIn('Release does not contain the required fields', logs[0])
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
