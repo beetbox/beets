@@ -22,6 +22,10 @@ New features:
   level.
   Thanks to :user:`samuelnilsson`
   :bug:`293`
+* A new :doc:`/plugins/parentwork` gets information about the original work,
+  which is useful for classical music.
+  Thanks to :user:`dosoe`.
+  :bug:`2580` :bug:`3279`
 
 Fixes:
 
