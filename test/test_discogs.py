@@ -45,9 +45,9 @@ class DGAlbumInfoTest(_common.TestCase):
                 'name': 'FORMAT',
                 'qty': 1
             }],
-            'styles': [{
-                'STYLE'
-            }],
+            'styles': [
+                'STYLE1', 'STYLE2'
+            ],
             'labels': [{
                 'name': 'LABEL NAME',
                 'catno': 'CATALOG NUMBER',
@@ -58,6 +58,7 @@ class DGAlbumInfoTest(_common.TestCase):
         if tracks:
             for recording in tracks:
                 data['tracklist'].append(recording)
+
 
         return Bag(data=data,
                    # Make some fields available as properties, as they are
@@ -84,6 +85,8 @@ class DGAlbumInfoTest(_common.TestCase):
         tracklist where tracks have the specified `positions`."""
         tracks = [self._make_track('TITLE%s' % i, position) for
                   (i, position) in enumerate(positions, start=1)]
+        release = self._make_release(tracks)
+        print('release', release)
         return self._make_release(tracks)
 
     def test_parse_media_for_tracks(self):
@@ -92,6 +95,7 @@ class DGAlbumInfoTest(_common.TestCase):
         release = self._make_release(tracks=tracks)
 
         d = DiscogsPlugin().get_album_info(release)
+        print('albumInfo', d.media)
         t = d.tracks
         self.assertEqual(d.media, 'FORMAT')
         self.assertEqual(t[0].media, d.media)
