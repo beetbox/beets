@@ -84,7 +84,6 @@ class DGAlbumInfoTest(_common.TestCase):
         tracklist where tracks have the specified `positions`."""
         tracks = [self._make_track('TITLE%s' % i, position) for
                   (i, position) in enumerate(positions, start=1)]
-        release = self._make_release(tracks)
         return self._make_release(tracks)
 
     def test_parse_media_for_tracks(self):
