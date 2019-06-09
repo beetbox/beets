@@ -136,8 +136,11 @@ class ParentWorkPlugin(BeetsPlugin):
                     parent_composer_sort)
 
         if not composer_exists:
-            self._log.debug('no composer for {}; add one at \
-https://musicbrainz.org/work/{}', item, work_info['work']['id'])
+            self._log.debug(
+                'no composer for {}; add one at '
+                'https://musicbrainz.org/work/{}',
+                item, work_info['work']['id'],
+            )
 
         parentwork_info['parentwork'] = work_info['work']['title']
         parentwork_info['mb_parentworkid'] = work_info['work']['id']
