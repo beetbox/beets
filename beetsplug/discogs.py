@@ -351,8 +351,6 @@ class DiscogsPlugin(BeetsPlugin):
     def format_style(self, style):
         if style is None:
             self._log.debug('Style not Found')
-        elif not style:
-            return style
         else:
             return self.config['separator'].as_str().join(sorted(style))
 
