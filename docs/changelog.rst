@@ -26,6 +26,9 @@ New features:
   which is useful for classical music.
   Thanks to :user:`dosoe`.
   :bug:`2580` :bug:`3279`
+* :doc:`/plugins/discogs`: The field now collects the "style" field.
+  Thanks to :user:`thedevilisinthedetails`.
+  :bug:`2579` :bug:`3251`
 
 Fixes:
 
