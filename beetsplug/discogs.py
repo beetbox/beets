@@ -356,7 +356,6 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             return self.config['separator'].as_str().join(sorted(style))
 
-
     def get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of discogs album or track artists.
