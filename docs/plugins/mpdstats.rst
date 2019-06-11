@@ -4,10 +4,14 @@ MPDStats Plugin
 ``mpdstats`` is a plugin for beets that collects statistics about your listening
 habits from `MPD`_.  It collects the following information about tracks:
 
-* play_count: The number of times you *fully* listened to this track.
-* skip_count: The number of times you *skipped* this track.
-* last_played:  UNIX timestamp when you last played this track.
-* rating: A rating based on *play_count* and *skip_count*.
+* ``play_count``: The number of times you *fully* listened to this track.
+* ``skip_count``: The number of times you *skipped* this track.
+* ``last_played``:  UNIX timestamp when you last played this track.
+* ``rating``: A rating based on ``play_count`` and ``skip_count``.
+
+To gather these statistics it runs as an MPD client and watches the current state
+of MPD. This means that ``mpdstats`` needs to be running continuously for it to
+work.
 
 .. _MPD: https://www.musicpd.org/
 
