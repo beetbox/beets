@@ -30,6 +30,9 @@ Fixes:
   fixing crashes in MPD clients like mpDris2 on seek.
   The ``playlistid`` command now works properly in its zero-argument form.
   :bug:`3214`
+* :doc:`/plugins/importadded`: Fixed a crash that occurred when the
+  ``after_write`` signal was emitted.
+  :bug:`3301`
 
 For plugin developers:
 
