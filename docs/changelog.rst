@@ -45,6 +45,9 @@ Fixes:
 * :doc:`/plugins/replaygain`: Fix a Python 3 incompatibility in the Python
   Audio Tools backend.
   :bug:`3305`
+* :doc:`/plugins/importadded`: Fixed a crash that occurred when the
+  ``after_write`` signal was emitted.
+  :bug:`3301`
 
 For plugin developers:
 
