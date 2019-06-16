@@ -303,7 +303,10 @@ class DiscogsPlugin(BeetsPlugin):
         mediums = [t.medium for t in tracks]
         country = result.data.get('country')
         data_url = result.data.get('uri')
-        style = self.format_style(result.data.get('styles'))
+        style = self.format(result.data.get('styles'))
+        genre = self.format(result.data.get('genres'))
+        discogs_release_id = self.extract_release_id(result.data.get('uri'))
+        released_date = result.data.get('released')
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
@@ -341,18 +344,21 @@ class DiscogsPlugin(BeetsPlugin):
                          day=None, label=label, mediums=len(set(mediums)),
                          artist_sort=None, releasegroup_id=master_id,
                          catalognum=catalogno, script=None, language=None,
-                         country=country, style=style,
+                         country=country, style=style, genre=genre,
                          albumstatus=None, media=media,
                          albumdisambig=None, artist_credit=None,
                          original_year=original_year, original_month=None,
                          original_day=None, data_source='Discogs',
-                         data_url=data_url)
+                         data_url=data_url, discogs_release_id=discogs_release_id, released_date=released_date)
 
-    def format_style(self, style):
-        if style is None:
-            self._log.debug('Style not Found')
+    def format(self, classification):
+        if classification is None:
+            self._log.debug('Classification not Found')
         else:
-            return self.config['separator'].as_str().join(sorted(style))
+            return self.config['separator'].as_str().join(sorted(classification))
+
+    def extract_release_id(self, uri):
+        return uri.split("/")[-1]
 
     def get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
